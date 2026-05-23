@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "sculps_home": {
+      "type": "sculps-home",
+      "settings": {}
+    }
+  },
+  "order": ["sculps_home"]
+}
