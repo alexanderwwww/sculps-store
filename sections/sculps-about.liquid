@@ -1,0 +1,148 @@
+<style>
+.sp-about-hero{min-height:70vh;display:flex;align-items:center;background:var(--black);padding:100px 60px;position:relative;overflow:hidden}
+.sp-about-hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1A1410 0%,#3D2314 50%,#7B4F3A 100%);opacity:.8}
+.sp-about-hero-content{position:relative;z-index:2;max-width:700px}
+.sp-about-hero-pre{font-size:9px;font-weight:700;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:24px}
+.sp-about-hero-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,10vw,120px);color:var(--white);line-height:.9;letter-spacing:3px;margin-bottom:28px}
+.sp-about-hero-p{font-size:16px;color:rgba(255,255,255,.6);line-height:1.8;font-weight:300;max-width:520px}
+.sp-about-story{padding:100px 60px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.sp-about-story-label{font-size:9px;font-weight:900;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:20px}
+.sp-about-story-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,60px);letter-spacing:3px;margin-bottom:28px;line-height:.95}
+.sp-about-story-p{font-size:14px;color:var(--grey);line-height:1.9;margin-bottom:20px}
+.sp-about-story-img{aspect-ratio:4/5;overflow:hidden;background:var(--nude)}
+.sp-about-story-img img{width:100%;height:100%;object-fit:cover}
+.sp-about-manifesto{background:var(--black);padding:110px 60px;text-align:center}
+.sp-about-mani-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,96px);color:var(--white);line-height:.9;letter-spacing:4px;margin-bottom:32px}
+.sp-about-tones-s{padding:80px 60px;text-align:center;background:var(--cream)}
+.sp-about-tones-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,52px);letter-spacing:4px;margin-bottom:8px}
+.sp-about-tones-sub{font-size:13px;color:var(--grey);font-style:italic;margin-bottom:40px}
+.sp-about-tones-row{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:12px}
+.sp-about-tone{width:72px;height:72px;border-radius:50%;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.sp-about-vals{padding:80px 60px}
+.sp-about-vals-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4vw,52px);letter-spacing:3px;text-align:center;margin-bottom:48px}
+.sp-about-vals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.sp-about-val-card{background:var(--cream);padding:32px 24px;text-align:center}
+.sp-about-val-icon{font-size:28px;margin-bottom:14px;display:block}
+.sp-about-val-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:8px}
+.sp-about-val-sub{font-size:12px;color:var(--grey);line-height:1.6}
+.sp-about-cs{background:var(--black);padding:80px 60px;text-align:center}
+.sp-about-cs-pre{font-size:9px;font-weight:700;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:20px}
+.sp-about-cs-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,72px);color:var(--white);letter-spacing:3px;margin-bottom:36px}
+.sp-about-cs-btn{padding:15px 48px;background:var(--white);color:var(--black);font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;display:inline-block;transition:all .2s;font-family:'DM Sans',sans-serif;text-decoration:none}
+.sp-about-cs-btn:hover{background:var(--gold);color:var(--white)}
+@media(max-width:900px){
+  .sp-about-hero{padding:80px 20px;min-height:60vh}
+  .sp-about-story{grid-template-columns:1fr;padding:60px 20px;gap:40px}
+  .sp-about-manifesto{padding:80px 20px}
+  .sp-about-tones-s{padding:60px 20px}
+  .sp-about-vals{padding:60px 20px}
+  .sp-about-vals-grid{grid-template-columns:1fr 1fr;gap:16px}
+  .sp-about-cs{padding:60px 20px}
+}
+</style>
+
+<!-- Hero -->
+<section class="sp-about-hero">
+  <div class="sp-about-hero-bg"></div>
+  <div class="sp-about-hero-content">
+    <div class="sp-about-hero-pre">{{ section.settings.hero_pre | default: 'Since Day One' }}</div>
+    <h1 class="sp-about-hero-h">{{ section.settings.hero_h | default: 'The Brand Built Different' }}</h1>
+    <p class="sp-about-hero-p">{{ section.settings.hero_p | default: 'We built SCULPS because every woman deserves to wear what she wants without worrying about what is underneath.' }}</p>
+  </div>
+</section>
+
+<!-- Brand Story -->
+<section class="sp-about-story">
+  <div>
+    <div class="sp-about-story-label">{{ section.settings.story_label | default: 'Our Story' }}</div>
+    <h2 class="sp-about-story-h">{{ section.settings.story_h | default: 'One Question. One Brand.' }}</h2>
+    <p class="sp-about-story-p">{{ section.settings.story_p1 | default: "We started with one question: why does nobody make invisible support for every skin tone? The answer became SCULPS. Made for every body. Every shade. Every size." }}</p>
+    <p class="sp-about-story-p">{{ section.settings.story_p2 | default: "We don't hire models. We work with real women because we believe in showing what our products actually look like on real people. That's the SCULPS difference." }}</p>
+  </div>
+  <div class="sp-about-story-img">
+    {%- if section.settings.story_image -%}
+      <img src="{{ section.settings.story_image | image_url: width: 800 }}" alt="SCULPS Story" loading="lazy">
+    {%- else -%}
+      <div style="width:100%;height:100%;background:linear-gradient(160deg,#F5E6D8,#C8956C,#7B4F3A)"></div>
+    {%- endif -%}
+  </div>
+</section>
+
+<!-- Manifesto -->
+<section class="sp-about-manifesto">
+  <h2 class="sp-about-mani-h">{{ section.settings.mani_h | default: "We Don't Hire Models.\nWe Work With\nReal Women." | newline_to_br }}</h2>
+</section>
+
+<!-- 6 Tones -->
+<section class="sp-about-tones-s">
+  <h2 class="sp-about-tones-h">{{ section.settings.tones_h | default: '6 Shades. Finally.' }}</h2>
+  <p class="sp-about-tones-sub">{{ section.settings.tones_sub | default: 'From Porcelain to Rich. Every woman. Every outfit.' }}</p>
+  <div class="sp-about-tones-row">
+    <div class="sp-about-tone" style="background:var(--tone1)" title="Porcelain"></div>
+    <div class="sp-about-tone" style="background:var(--tone2)" title="Light"></div>
+    <div class="sp-about-tone" style="background:var(--tone3)" title="Medium"></div>
+    <div class="sp-about-tone" style="background:var(--tone4)" title="Tan"></div>
+    <div class="sp-about-tone" style="background:var(--tone5)" title="Deep"></div>
+    <div class="sp-about-tone" style="background:var(--tone6)" title="Rich"></div>
+  </div>
+</section>
+
+<!-- Values -->
+<section class="sp-about-vals">
+  <h2 class="sp-about-vals-h">What We Stand For</h2>
+  <div class="sp-about-vals-grid">
+    <div class="sp-about-val-card">
+      <span class="sp-about-val-icon">&#9633;</span>
+      <div class="sp-about-val-title">Invisible Design</div>
+      <div class="sp-about-val-sub">Engineered to disappear under any fabric. Zero lines. Zero straps.</div>
+    </div>
+    <div class="sp-about-val-card">
+      <span class="sp-about-val-icon">&#8634;</span>
+      <div class="sp-about-val-title">Reusable</div>
+      <div class="sp-about-val-sub">30 to 40 wears with proper care. Better for you and the planet.</div>
+    </div>
+    <div class="sp-about-val-card">
+      <span class="sp-about-val-icon">&#9672;</span>
+      <div class="sp-about-val-title">Medical Grade</div>
+      <div class="sp-about-val-sub">Body-safe silicone. Latex free. Hypoallergenic. Dermatologist tested.</div>
+    </div>
+    <div class="sp-about-val-card">
+      <span class="sp-about-val-icon">&#9825;</span>
+      <div class="sp-about-val-title">Every Body</div>
+      <div class="sp-about-val-sub">All tones. All shapes. All sizes. No exceptions. No asterisks.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Creator Studio CTA -->
+<section class="sp-about-cs">
+  <div class="sp-about-cs-pre">Creator Studio</div>
+  <h2 class="sp-about-cs-h">{{ section.settings.cs_h | default: 'Real Women Power This Brand' }}</h2>
+  <a href="/pages/creator-studio" class="sp-about-cs-btn">{{ section.settings.cs_btn | default: 'Join Creator Studio' }}</a>
+</section>
+
+{% schema %}
+{
+  "name": "SCULPS About",
+  "settings": [
+    {"type": "header", "content": "Hero"},
+    {"type": "text", "id": "hero_pre", "label": "Pre-heading", "default": "Since Day One"},
+    {"type": "text", "id": "hero_h", "label": "Heading", "default": "The Brand Built Different"},
+    {"type": "textarea", "id": "hero_p", "label": "Paragraph", "default": "We built SCULPS because every woman deserves to wear what she wants without worrying about what is underneath."},
+    {"type": "header", "content": "Story"},
+    {"type": "image_picker", "id": "story_image", "label": "Story image"},
+    {"type": "text", "id": "story_label", "label": "Label", "default": "Our Story"},
+    {"type": "text", "id": "story_h", "label": "Heading", "default": "One Question. One Brand."},
+    {"type": "textarea", "id": "story_p1", "label": "Paragraph 1", "default": "We started with one question: why does nobody make invisible support for every skin tone? The answer became SCULPS."},
+    {"type": "textarea", "id": "story_p2", "label": "Paragraph 2", "default": "We don't hire models. We work with real women."},
+    {"type": "header", "content": "Manifesto"},
+    {"type": "textarea", "id": "mani_h", "label": "Manifesto heading", "default": "We Don't Hire Models.\nWe Work With\nReal Women."},
+    {"type": "header", "content": "6 Tones"},
+    {"type": "text", "id": "tones_h", "label": "Heading", "default": "6 Shades. Finally."},
+    {"type": "text", "id": "tones_sub", "label": "Subheading", "default": "From Porcelain to Rich. Every woman. Every outfit."},
+    {"type": "header", "content": "Creator CTA"},
+    {"type": "text", "id": "cs_h", "label": "Heading", "default": "Real Women Power This Brand"},
+    {"type": "text", "id": "cs_btn", "label": "Button text", "default": "Join Creator Studio"}
+  ]
+}
+{% endschema %}

@@ -1,0 +1,68 @@
+<style>
+.sp-faq-page{max-width:760px;margin:0 auto;padding:80px 60px}
+.sp-faq-page-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,7vw,80px);letter-spacing:4px;margin-bottom:12px}
+.sp-faq-page-sub{font-size:14px;color:var(--grey);margin-bottom:56px;font-style:italic}
+.sp-faq-list{}
+.sp-faq-item{border-bottom:1px solid var(--border)}
+.sp-faq-q{width:100%;text-align:left;background:none;border:none;padding:22px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:var(--black);transition:color .2s;gap:16px}
+.sp-faq-q:hover{color:var(--gold)}
+.sp-faq-q-icon{font-size:20px;font-weight:300;flex-shrink:0;transition:transform .3s;color:var(--grey)}
+.sp-faq-item.open .sp-faq-q{color:var(--black)}
+.sp-faq-item.open .sp-faq-q-icon{transform:rotate(45deg);color:var(--gold)}
+.sp-faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.sp-faq-a-inner{padding:0 0 24px;font-size:14px;color:var(--grey);line-height:1.85}
+@media(max-width:900px){
+  .sp-faq-page{padding:52px 20px}
+  .sp-faq-q{font-size:14px;padding:18px 0}
+}
+</style>
+
+<div class="sp-faq-page">
+  <h1 class="sp-faq-page-h">{{ section.settings.heading | default: 'FREQUENTLY ASKED QUESTIONS' }}</h1>
+  <p class="sp-faq-page-sub">{{ section.settings.sub | default: 'Everything you need to know about SCULPS.' }}</p>
+
+  <div class="sp-faq-list">
+    {%- assign faq_count = 8 -%}
+    {%- for i in (1..faq_count) -%}
+      {%- assign q_key = 'q' | append: i -%}
+      {%- assign a_key = 'a' | append: i -%}
+      {%- if section.settings[q_key] != blank -%}
+        <div class="sp-faq-item">
+          <button class="sp-faq-q" aria-expanded="false" type="button">
+            {{ section.settings[q_key] }}
+            <span class="sp-faq-q-icon">+</span>
+          </button>
+          <div class="sp-faq-a" role="region">
+            <div class="sp-faq-a-inner">{{ section.settings[a_key] }}</div>
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "SCULPS FAQ",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Page heading", "default": "FREQUENTLY ASKED QUESTIONS"},
+    {"type": "text", "id": "sub", "label": "Subheading", "default": "Everything you need to know about SCULPS."},
+    {"type": "text", "id": "q1", "label": "Question 1", "default": "What are SCULPS Lift Inserts?"},
+    {"type": "textarea", "id": "a1", "label": "Answer 1", "default": "SCULPS Lift Inserts are medical grade silicone inserts that add up to 2 cup sizes of lift and shape invisibly under any outfit. No bra required."},
+    {"type": "text", "id": "q2", "label": "Question 2", "default": "How do I choose my skin tone?"},
+    {"type": "textarea", "id": "a2", "label": "Answer 2", "default": "We offer 6 skin tones numbered 1 to 6 from lightest to darkest. Choose the circle that best matches your natural skin tone. When in doubt, size up in tone for a more invisible finish."},
+    {"type": "text", "id": "q3", "label": "Question 3", "default": "How long do SCULPS products last?"},
+    {"type": "textarea", "id": "a3", "label": "Answer 3", "default": "With proper care our silicone products are reusable 30 to 40 times. Wash gently with mild soap and water after each use. Air dry completely before storing."},
+    {"type": "text", "id": "q4", "label": "Question 4", "default": "Are SCULPS products safe for sensitive skin?"},
+    {"type": "textarea", "id": "a4", "label": "Answer 4", "default": "Yes. All SCULPS products are made from medical grade body safe silicone. They are latex free and hypoallergenic."},
+    {"type": "text", "id": "q5", "label": "Question 5", "default": "What is your return policy?"},
+    {"type": "textarea", "id": "a5", "label": "Answer 5", "default": "We accept returns within 30 days of delivery. Products must be unworn and in original packaging. Contact hello@getsculps.com to start a return."},
+    {"type": "text", "id": "q6", "label": "Question 6", "default": "How does shipping work?"},
+    {"type": "textarea", "id": "a6", "label": "Answer 6", "default": "We offer free shipping on all orders over $75. Standard shipping takes 5 to 10 business days. Express options available at checkout."},
+    {"type": "text", "id": "q7", "label": "Question 7", "default": "How does the Confidence Kit work?"},
+    {"type": "textarea", "id": "a7", "label": "Answer 7", "default": "Choose your skin tone and size. We send you 5 products all perfectly matched to your tone: Lift Inserts, Invisibra, Nipple Covers, Invisible Thong, and Seamless Brief. Everything in one box."},
+    {"type": "text", "id": "q8", "label": "Question 8", "default": "How does the Girl Trip Kit work?"},
+    {"type": "textarea", "id": "a8", "label": "Answer 8", "default": "Choose your color and size. We send you 5 products all color matched: Summer Set, Seamless Brief, Scrunchie, Crew Socks, and Terry Pouch. Everything fits inside the Terry Pouch."}
+  ]
+}
+{% endschema %}

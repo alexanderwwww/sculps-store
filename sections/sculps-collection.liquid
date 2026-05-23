@@ -1,0 +1,175 @@
+<style>
+.sp-coll-banner{position:relative;height:360px;overflow:hidden;display:flex;align-items:flex-end;background:var(--black)}
+.sp-coll-banner-bg{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:.4}
+.sp-coll-banner-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,20,16,.9) 0%,rgba(26,20,16,.3) 100%)}
+.sp-coll-banner-content{position:relative;z-index:2;padding:0 60px 48px}
+.sp-coll-banner-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,8vw,88px);color:var(--white);letter-spacing:4px;line-height:.9;margin-bottom:10px}
+.sp-coll-banner-sub{font-size:13px;color:rgba(255,255,255,.5);font-style:italic}
+.sp-coll-filter{padding:20px 60px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:24px;flex-wrap:wrap;background:var(--white);position:sticky;top:64px;z-index:100}
+.sp-coll-filter-lbl{font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey);flex-shrink:0}
+.sp-coll-filter-sizes{display:flex;gap:6px}
+.sp-coll-filter-size{width:36px;height:36px;border:1.5px solid var(--border);background:var(--white);color:var(--black);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:'DM Sans',sans-serif}
+.sp-coll-filter-size:hover,.sp-coll-filter-size.active{background:var(--black);color:var(--white);border-color:var(--black)}
+.sp-coll-filter-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
+.sp-coll-filter-circles{display:flex;gap:8px}
+.sp-coll-filter-circle{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.sp-coll-filter-circle:hover,.sp-coll-filter-circle.active{border-color:var(--black);transform:scale(1.15)}
+.sp-coll-grid-wrap{padding:40px 60px}
+.sp-coll-count{font-size:10px;color:var(--grey);letter-spacing:1px;margin-bottom:24px;text-transform:uppercase}
+.sp-coll-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.sp-coll-card{display:block}
+.sp-coll-card.sp-hidden{display:none}
+.sp-coll-card-img{aspect-ratio:3/4;overflow:hidden;position:relative;background:var(--cream);margin-bottom:14px}
+.sp-coll-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+.sp-coll-card:hover .sp-coll-card-img img{transform:scale(1.04)}
+.sp-coll-card-tag{position:absolute;top:10px;left:10px;background:var(--black);color:var(--white);font-size:7px;font-weight:900;padding:4px 8px;letter-spacing:1px;text-transform:uppercase;z-index:2}
+.sp-coll-card-quick{position:absolute;inset:0;background:rgba(26,20,16,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s}
+.sp-coll-card:hover .sp-coll-card-quick{opacity:1}
+.sp-coll-card-quick span{background:var(--black);color:var(--white);font-size:8px;font-weight:900;padding:10px 18px;letter-spacing:2px;text-transform:uppercase}
+.sp-coll-card-brand{font-size:7px;font-weight:900;letter-spacing:2px;color:var(--grey);text-transform:uppercase;margin-bottom:3px}
+.sp-coll-card-name{font-size:13px;font-weight:600;margin-bottom:7px;line-height:1.3}
+.sp-coll-card-prices{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.sp-coll-card-price{font-size:15px;font-weight:900}
+.sp-coll-card-was{font-size:11px;color:var(--grey);text-decoration:line-through}
+.sp-coll-card-dots{display:flex;gap:5px;margin-bottom:10px}
+.sp-coll-card-dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+.sp-coll-card-btn{width:100%;padding:10px;background:var(--black);color:var(--white);font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s}
+.sp-coll-card-btn:hover{background:var(--grey)}
+.sp-load-more-wrap{text-align:center;padding:40px 60px}
+.sp-load-more{padding:14px 48px;background:var(--white);color:var(--black);border:1.5px solid var(--black);font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.sp-load-more:hover{background:var(--black);color:var(--white)}
+@media(max-width:900px){
+  .sp-coll-banner-content{padding:0 20px 36px}
+  .sp-coll-filter{padding:16px 20px;top:64px}
+  .sp-coll-grid-wrap{padding:28px 20px}
+  .sp-coll-grid{grid-template-columns:1fr 1fr;gap:16px}
+  .sp-load-more-wrap{padding:32px 20px}
+}
+@media(max-width:480px){
+  .sp-coll-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .sp-coll-banner{height:260px}
+}
+</style>
+
+{%- assign c = collection -%}
+
+<!-- Banner -->
+<div class="sp-coll-banner">
+  {%- if section.settings.banner_image -%}
+    <img class="sp-coll-banner-bg" src="{{ section.settings.banner_image | image_url: width: 1600 }}" alt="{{ c.title | escape }}" loading="eager">
+  {%- elsif c.image -%}
+    <img class="sp-coll-banner-bg" src="{{ c.image | image_url: width: 1600 }}" alt="{{ c.title | escape }}" loading="eager">
+  {%- else -%}
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,var(--black) 0%,#3D2314 100%)"></div>
+  {%- endif -%}
+  <div class="sp-coll-banner-grad"></div>
+  <div class="sp-coll-banner-content">
+    <div class="sp-coll-banner-h">{{ section.settings.banner_heading | default: c.title }}</div>
+    {%- if section.settings.banner_sub != blank or c.description != blank -%}
+      <div class="sp-coll-banner-sub">{{ section.settings.banner_sub | default: c.description | strip_html | truncate: 100 }}</div>
+    {%- endif -%}
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="sp-coll-filter" id="sp-filter-bar">
+  <span class="sp-coll-filter-lbl">Size:</span>
+  <div class="sp-coll-filter-sizes">
+    {%- for n in (1..5) -%}
+      <button class="sp-coll-filter-size" data-size="{{ n }}">{{ n }}</button>
+    {%- endfor -%}
+  </div>
+  <div class="sp-coll-filter-divider"></div>
+  <span class="sp-coll-filter-lbl">Shade:</span>
+  <div class="sp-coll-filter-circles">
+    {%- assign tone_cols = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
+    {%- for i in (1..6) -%}
+      <div class="sp-coll-filter-circle" style="background:{{ tone_cols[forloop.index0] }}" data-tone="{{ i }}"></div>
+    {%- endfor -%}
+  </div>
+  <div class="sp-coll-filter-divider"></div>
+  <span class="sp-coll-filter-lbl">Color:</span>
+  <div class="sp-coll-filter-circles">
+    <div class="sp-coll-filter-circle" style="background:var(--pink)" data-color="pink"></div>
+    <div class="sp-coll-filter-circle" style="background:var(--sage)" data-color="sage"></div>
+    <div class="sp-coll-filter-circle" style="background:var(--lav)" data-color="lav"></div>
+    <div class="sp-coll-filter-circle" style="background:var(--steel)" data-color="steel"></div>
+  </div>
+</div>
+
+<!-- Product Grid -->
+<div class="sp-coll-grid-wrap">
+  <div class="sp-coll-count">{{ c.products_count }} products</div>
+  <div class="sp-coll-grid" id="sp-coll-grid">
+    {%- assign batch = section.settings.products_per_page | default: 9 -%}
+    {%- for product in c.products -%}
+      {%- assign is_tone = false -%}
+      {%- assign is_color = false -%}
+      {%- for opt in product.options -%}
+        {%- if opt == 'Shade' or opt == 'Tone' or opt == 'Skin Tone' -%}{%- assign is_tone = true -%}{%- endif -%}
+        {%- if opt == 'Color' -%}{%- assign is_color = true -%}{%- endif -%}
+      {%- endfor -%}
+      <div class="sp-coll-card{% if forloop.index > batch %} sp-hidden{% endif %}"
+        data-sizes="1,2,3,4,5"
+        data-tones="1,2,3,4,5,6"
+        data-colors="pink,sage,lav,steel">
+        <a href="{{ product.url }}" class="sp-coll-card-img" style="display:block">
+          {%- if product.featured_image -%}
+            <img src="{{ product.featured_image | image_url: width: 600 }}" alt="{{ product.title | escape }}" loading="lazy">
+          {%- else -%}
+            <div style="width:100%;height:100%;background:var(--nude)"></div>
+          {%- endif -%}
+          {%- assign first_tag = product.tags | first -%}
+          {%- if first_tag -%}<div class="sp-coll-card-tag">{{ first_tag }}</div>{%- endif -%}
+          <div class="sp-coll-card-quick"><span>Quick Add</span></div>
+        </a>
+        <div class="sp-coll-card-brand">SCULPS</div>
+        <a href="{{ product.url }}" class="sp-coll-card-name" style="display:block;color:inherit;text-decoration:none">{{ product.title }}</a>
+        <div class="sp-coll-card-prices">
+          <span class="sp-coll-card-price">{{ product.price | money }}</span>
+          {%- if product.compare_at_price > product.price -%}
+            <span class="sp-coll-card-was">{{ product.compare_at_price | money }}</span>
+          {%- endif -%}
+        </div>
+        {%- if is_tone -%}
+          <div class="sp-coll-card-dots">
+            <div class="sp-coll-card-dot" style="background:var(--tone1)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--tone2)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--tone3)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--tone4)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--tone5)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--tone6)"></div>
+          </div>
+        {%- elsif is_color -%}
+          <div class="sp-coll-card-dots">
+            <div class="sp-coll-card-dot" style="background:var(--pink)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--sage)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--lav)"></div>
+            <div class="sp-coll-card-dot" style="background:var(--steel)"></div>
+          </div>
+        {%- endif -%}
+        <button class="sp-coll-card-btn sp-atc-btn"
+          data-variant-id="{{ product.first_available_variant.id }}"
+          type="button">Add to Bag</button>
+      </div>
+    {%- endfor -%}
+  </div>
+</div>
+
+{%- if c.products_count > batch -%}
+<div class="sp-load-more-wrap">
+  <button class="sp-load-more" id="sp-load-more" data-batch="{{ batch }}">Load More</button>
+</div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "SCULPS Collection",
+  "settings": [
+    {"type": "image_picker", "id": "banner_image", "label": "Banner image"},
+    {"type": "text", "id": "banner_heading", "label": "Banner heading (leave blank to use collection title)"},
+    {"type": "text", "id": "banner_sub", "label": "Banner subheading"},
+    {"type": "range", "id": "products_per_page", "label": "Products per page", "min": 6, "max": 24, "step": 3, "default": 9}
+  ]
+}
+{% endschema %}

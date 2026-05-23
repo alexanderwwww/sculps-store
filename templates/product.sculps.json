@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "main": {
+      "type": "sculps-product",
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}

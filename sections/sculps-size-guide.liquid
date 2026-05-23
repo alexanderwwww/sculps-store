@@ -1,0 +1,125 @@
+<style>
+.sp-sg-page{padding:80px 60px;max-width:860px;margin:0 auto}
+.sp-sg-page-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,7vw,80px);letter-spacing:4px;margin-bottom:12px}
+.sp-sg-page-intro{font-size:14px;color:var(--grey);margin-bottom:60px;line-height:1.7;max-width:540px}
+.sp-sg-section{margin-bottom:56px}
+.sp-sg-section-h{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;margin-bottom:6px;padding-bottom:14px;border-bottom:2px solid var(--gold)}
+.sp-sg-section-sub{font-size:11px;color:var(--grey);margin-bottom:20px;letter-spacing:.5px}
+.sp-sg-tbl{width:100%;border-collapse:collapse}
+.sp-sg-tbl th{font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey);padding:10px 16px;text-align:left;border-bottom:2px solid var(--border)}
+.sp-sg-tbl td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+.sp-sg-tbl tr:last-child td{border-bottom:none}
+.sp-sg-tbl tr:hover td{background:var(--cream)}
+.sp-sg-size-circle{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--black);color:var(--white);font-size:12px;font-weight:900;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif}
+.sp-sg-note{margin-top:32px;padding:20px 24px;background:var(--cream);font-size:13px;color:var(--grey);line-height:1.7;font-style:italic}
+@media(max-width:900px){
+  .sp-sg-page{padding:52px 20px}
+  .sp-sg-tbl td,.sp-sg-tbl th{padding:10px 12px}
+}
+</style>
+
+<div class="sp-sg-page">
+  <h1 class="sp-sg-page-h">{{ section.settings.heading | default: 'SIZE GUIDE' }}</h1>
+  <p class="sp-sg-page-intro">{{ section.settings.intro | default: 'Our sizes are numbered 1 to 5. No confusing letters. Just pick your number.' }}</p>
+
+  <!-- Chest Products -->
+  <div class="sp-sg-section">
+    <div class="sp-sg-section-h">{{ section.settings.chest_heading | default: 'Chest Products' }}</div>
+    <div class="sp-sg-section-sub">{{ section.settings.chest_sub | default: 'Lift Inserts · Invisibra · Nipple Covers' }}</div>
+    <table class="sp-sg-tbl">
+      <thead>
+        <tr>
+          <th>Size</th>
+          <th>Bust Measurement</th>
+          <th>Cup Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sp-sg-size-circle">1</span></td>
+          <td>30 &ndash; 34 inches</td>
+          <td>A / B</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">2</span></td>
+          <td>34 &ndash; 36 inches</td>
+          <td>C / D</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">3</span></td>
+          <td>36 &ndash; 38 inches</td>
+          <td>DD / E</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">4</span></td>
+          <td>38 &ndash; 40 inches</td>
+          <td>F / G</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">5</span></td>
+          <td>40+ inches</td>
+          <td>H+</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bottoms -->
+  <div class="sp-sg-section">
+    <div class="sp-sg-section-h">{{ section.settings.bottoms_heading | default: 'Bottoms' }}</div>
+    <div class="sp-sg-section-sub">{{ section.settings.bottoms_sub | default: 'Invisible Thong · Seamless Brief · Summer Set' }}</div>
+    <table class="sp-sg-tbl">
+      <thead>
+        <tr>
+          <th>Size</th>
+          <th>Waist</th>
+          <th>Hips</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sp-sg-size-circle">1</span></td>
+          <td>24 &ndash; 26 inches</td>
+          <td>34 &ndash; 36 inches</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">2</span></td>
+          <td>26 &ndash; 28 inches</td>
+          <td>36 &ndash; 38 inches</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">3</span></td>
+          <td>28 &ndash; 30 inches</td>
+          <td>38 &ndash; 40 inches</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">4</span></td>
+          <td>30 &ndash; 34 inches</td>
+          <td>40 &ndash; 44 inches</td>
+        </tr>
+        <tr>
+          <td><span class="sp-sg-size-circle">5</span></td>
+          <td>34 &ndash; 40 inches</td>
+          <td>44 &ndash; 50 inches</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sp-sg-note">{{ section.settings.note | default: 'Between sizes? Size up. All SCULPS products have natural stretch built in for all-day comfort.' }}</div>
+</div>
+
+{% schema %}
+{
+  "name": "SCULPS Size Guide",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Page heading", "default": "SIZE GUIDE"},
+    {"type": "textarea", "id": "intro", "label": "Intro text", "default": "Our sizes are numbered 1 to 5. No confusing letters. Just pick your number."},
+    {"type": "text", "id": "chest_heading", "label": "Chest section heading", "default": "Chest Products"},
+    {"type": "text", "id": "chest_sub", "label": "Chest section subtitle", "default": "Lift Inserts · Invisibra · Nipple Covers"},
+    {"type": "text", "id": "bottoms_heading", "label": "Bottoms section heading", "default": "Bottoms"},
+    {"type": "text", "id": "bottoms_sub", "label": "Bottoms section subtitle", "default": "Invisible Thong · Seamless Brief · Summer Set"},
+    {"type": "textarea", "id": "note", "label": "Note at bottom", "default": "Between sizes? Size up. All SCULPS products have natural stretch built in for all-day comfort."}
+  ]
+}
+{% endschema %}

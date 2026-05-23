@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ page_title }} — {{ shop.name }}</title>
+  <meta name="description" content="{{ page_description | escape }}">
+  <link rel="canonical" href="{{ canonical_url }}">
+  {% if settings.favicon %}
+    <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 64 }}">
+  {% endif %}
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,900;1,9..40,400&display=swap" rel="stylesheet">
+
+  {{ 'sculps.css' | asset_url | stylesheet_tag }}
+
+  <style>
+    /* Cart Drawer */
+    .sp-cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;opacity:0;pointer-events:none;transition:opacity .3s}
+    .sp-cart-overlay.open{opacity:1;pointer-events:all}
+    .sp-cart-drawer{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:100vw;background:var(--white);z-index:400;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+    .sp-cart-drawer.open{transform:translateX(0)}
+    .sp-cart-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .sp-cart-drawer-title{font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+    .sp-cart-drawer-close{font-size:20px;color:var(--grey);cursor:pointer;background:none;border:none;font-family:inherit;transition:color .2s;padding:4px}
+    .sp-cart-drawer-close:hover{color:var(--black)}
+    .sp-cart-drawer-body{flex:1;overflow-y:auto;padding:20px 24px}
+    .sp-cart-item{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--border)}
+    .sp-cart-item:last-child{border-bottom:none}
+    .sp-cart-item-img{width:72px;height:96px;object-fit:cover;flex-shrink:0;background:var(--cream)}
+    .sp-cart-item-info{flex:1;min-width:0}
+    .sp-cart-item-name{font-size:12px;font-weight:600;margin-bottom:4px;line-height:1.3}
+    .sp-cart-item-opts{font-size:10px;color:var(--grey);margin-bottom:8px;letter-spacing:.5px}
+    .sp-cart-item-price{font-size:14px;font-weight:900}
+    .sp-cart-item-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .sp-cart-item-qty{display:flex;align-items:center;gap:8px}
+    .sp-cart-qty-btn{width:24px;height:24px;border:1px solid var(--border);background:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .sp-cart-qty-btn:hover{background:var(--black);color:var(--white);border-color:var(--black)}
+    .sp-cart-qty-val{font-size:12px;font-weight:700;min-width:16px;text-align:center}
+    .sp-cart-item-remove{font-size:9px;color:var(--grey);cursor:pointer;letter-spacing:1px;text-transform:uppercase;border:none;background:none;font-family:inherit;transition:color .2s}
+    .sp-cart-item-remove:hover{color:var(--black)}
+    .sp-cart-empty{text-align:center;padding:60px 20px;color:var(--grey)}
+    .sp-cart-empty-h{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;margin-bottom:8px;color:var(--black)}
+    .sp-cart-drawer-foot{padding:20px 24px;border-top:1px solid var(--border);flex-shrink:0}
+    .sp-cart-subtotal{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:13px;font-weight:700}
+    .sp-cart-checkout-btn{display:block;width:100%;padding:15px;background:var(--black);color:var(--white);text-align:center;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transition:background .2s;margin-bottom:8px}
+    .sp-cart-checkout-btn:hover{background:var(--grey)}
+    .sp-cart-shipping-note{font-size:10px;color:var(--grey);text-align:center;letter-spacing:.5px}
+    /* Cart button in header */
+    .sp-cart-btn{position:relative;background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center}
+    .sp-cart-icon{width:22px;height:22px;color:var(--black)}
+    .sp-cart-count{position:absolute;top:-2px;right:-6px;width:16px;height:16px;border-radius:50%;background:var(--black);color:var(--white);font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;letter-spacing:0}
+  </style>
+
+  {{ content_for_header }}
+</head>
+
+<body class="sculps-page">
+
+  <!-- ========== MOBILE NAV OVERLAY ========== -->
+  <nav id="sculps-mobNav" class="sp-mob-nav" aria-label="Mobile navigation">
+    <button id="sculps-mobClose" class="sp-mob-close" aria-label="Close menu">&#x2715;</button>
+    <ul class="sp-mob-nav-links">
+      <li><a href="/collections/all">Shop</a></li>
+      <li><a href="/collections/kits">Kits</a></li>
+      <li><a href="/collections/sets">Sets</a></li>
+      <li><a href="/pages/creator-studio">Creator</a></li>
+    </ul>
+  </nav>
+
+  <!-- ========== CART DRAWER OVERLAY ========== -->
+  <div id="sculps-cartOverlay" class="sp-cart-overlay" aria-hidden="true"></div>
+
+  <!-- ========== CART DRAWER ========== -->
+  <aside id="sculps-cartDrawer" class="sp-cart-drawer" aria-label="Shopping cart" role="dialog" aria-modal="true">
+    <div class="sp-cart-drawer-head">
+      <span class="sp-cart-drawer-title">Your Bag</span>
+      <button id="sculps-cartClose" class="sp-cart-drawer-close" aria-label="Close cart">&#x2715;</button>
+    </div>
+    <div id="sculps-cartBody" class="sp-cart-drawer-body">
+      <!-- JS populates cart items here -->
+    </div>
+    <div id="sculps-cartFoot" class="sp-cart-drawer-foot">
+      <div class="sp-cart-subtotal">
+        <span>Subtotal</span>
+        <span id="sculps-cartSubtotal"></span>
+      </div>
+      <a href="/checkout" class="sp-cart-checkout-btn">Checkout</a>
+      <p class="sp-cart-shipping-note">Shipping &amp; taxes calculated at checkout</p>
+    </div>
+  </aside>
+
+  <!-- ========== ANNOUNCEMENT BAR ========== -->
+  <div class="sp-ann" aria-hidden="true">
+    <div class="sp-ann-track" style="animation-duration:{{ settings.ann_speed | default: 30 }}s">
+      {%- if settings.ann_msg_1 != blank %}<span>{{ settings.ann_msg_1 }}</span>{% endif -%}
+      {%- if settings.ann_msg_2 != blank %}<span>{{ settings.ann_msg_2 }}</span>{% endif -%}
+      {%- if settings.ann_msg_3 != blank %}<span>{{ settings.ann_msg_3 }}</span>{% endif -%}
+      {%- if settings.ann_msg_4 != blank %}<span>{{ settings.ann_msg_4 }}</span>{% endif -%}
+      {%- if settings.ann_msg_5 != blank %}<span>{{ settings.ann_msg_5 }}</span>{% endif -%}
+      {%- if settings.ann_msg_6 != blank %}<span>{{ settings.ann_msg_6 }}</span>{% endif -%}
+      {%- if settings.ann_msg_7 != blank %}<span>{{ settings.ann_msg_7 }}</span>{% endif -%}
+      <!-- Duplicate for seamless loop -->
+      {%- if settings.ann_msg_1 != blank %}<span>{{ settings.ann_msg_1 }}</span>{% endif -%}
+      {%- if settings.ann_msg_2 != blank %}<span>{{ settings.ann_msg_2 }}</span>{% endif -%}
+      {%- if settings.ann_msg_3 != blank %}<span>{{ settings.ann_msg_3 }}</span>{% endif -%}
+      {%- if settings.ann_msg_4 != blank %}<span>{{ settings.ann_msg_4 }}</span>{% endif -%}
+      {%- if settings.ann_msg_5 != blank %}<span>{{ settings.ann_msg_5 }}</span>{% endif -%}
+      {%- if settings.ann_msg_6 != blank %}<span>{{ settings.ann_msg_6 }}</span>{% endif -%}
+      {%- if settings.ann_msg_7 != blank %}<span>{{ settings.ann_msg_7 }}</span>{% endif -%}
+    </div>
+  </div>
+
+  <!-- ========== HEADER ========== -->
+  <header class="sp-header" id="sculps-header">
+    <!-- Hamburger (mobile) -->
+    <button id="sculps-hamBtn" class="sp-ham" aria-label="Open menu" aria-expanded="false" aria-controls="sculps-mobNav">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- Logo -->
+    <a href="/" class="sp-logo" aria-label="{{ shop.name }} home">
+      {% if settings.logo %}
+        <img
+          src="{{ settings.logo | image_url: width: 300 }}"
+          alt="{{ shop.name }}"
+          class="sp-logo-img"
+          style="height:{{ settings.logo_height | default: 28 }}px;width:auto"
+          loading="eager"
+          fetchpriority="high"
+        >
+      {% else %}
+        <svg viewBox="0 0 260 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <text
+            x="0"
+            y="38"
+            font-family="'Bebas Neue', sans-serif"
+            font-size="42"
+            letter-spacing="8"
+            fill="#1A1410"
+          >SCULPS</text>
+        </svg>
+      {% endif %}
+    </a>
+
+    <!-- Desktop nav -->
+    <nav class="sp-nav" aria-label="Main navigation">
+      <ul>
+        <li><a href="/collections/all">Shop</a></li>
+        <li><a href="/collections/kits">Kits</a></li>
+        <li><a href="/collections/sets">Sets</a></li>
+        <li><a href="/pages/creator-studio">Creator</a></li>
+      </ul>
+    </nav>
+
+    <!-- Right side actions -->
+    <div class="sp-hdr-right">
+      <button id="sculps-cartBtn" class="sp-cart-btn" aria-label="Open cart" aria-expanded="false" aria-controls="sculps-cartDrawer">
+        <svg class="sp-cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        <span class="sp-cart-count" id="sculps-cartCount"{% if cart.item_count == 0 %} style="display:none"{% endif %}>{{ cart.item_count }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main id="MainContent" role="main">
+    {{ content_for_layout }}
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="sp-footer">
+    <div class="sp-ft-grid">
+
+      <!-- Column 1: Brand -->
+      <div class="sp-ft-col sp-ft-col--brand">
+        {% if settings.footer_logo %}
+          <a href="/" class="sp-ft-logo-link" aria-label="{{ shop.name }} home">
+            <img
+              src="{{ settings.footer_logo | image_url: width: 240 }}"
+              alt="{{ shop.name }}"
+              class="sp-ft-logo-img"
+              loading="lazy"
+            >
+          </a>
+        {% else %}
+          <a href="/" class="sp-ft-logo" aria-label="{{ shop.name }} home">SCULPS</a>
+        {% endif %}
+
+        <div class="sp-ft-tag">{{ settings.footer_tagline | default: 'Invisible support. Visible confidence.' }}</div>
+
+        <form action="/contact#contact_form" method="post" class="sp-ft-form" accept-charset="UTF-8">
+          <input type="hidden" name="form_type" value="customer">
+          <input type="hidden" name="utf8" value="&#x2713;">
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          <div class="sp-ft-form-row">
+            <input
+              class="sp-ft-input"
+              type="email"
+              name="contact[email]"
+              placeholder="{{ settings.footer_email_placeholder | default: 'Your email address' }}"
+              autocomplete="email"
+              required
+            >
+            <button class="sp-ft-sub" type="submit">Sign Up</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Column 2: Shop -->
+      <div class="sp-ft-col">
+        <h3 class="sp-ft-heading">Shop</h3>
+        <ul class="sp-ft-links">
+          <li><a href="/products/sculps-lift-inserts">Lift Inserts</a></li>
+          <li><a href="/products/sculps-nipple-covers">Nipple Covers</a></li>
+          <li><a href="/products/sculps-invisible-thong">Invisible Thong</a></li>
+          <li><a href="/products/sculps-invisibra">Invisibra</a></li>
+          <li><a href="/products/sculps-seamless-brief">Seamless Brief</a></li>
+          <li><a href="/products/sculps-summer-set">Summer Set</a></li>
+          <li><a href="/collections/accessories">Accessories</a></li>
+          <li><a href="/collections/kits">Kits</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 3: About -->
+      <div class="sp-ft-col">
+        <h3 class="sp-ft-heading">About</h3>
+        <ul class="sp-ft-links">
+          <li><a href="/pages/about">Our Story</a></li>
+          <li><a href="/pages/creator-studio">Creator Studio</a></li>
+          <li><a href="/pages/faq">Reviews</a></li>
+          <li><a href="/pages/size-guide">Size Guide</a></li>
+          <li><a href="/pages/faq">FAQ</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 4: Legal -->
+      <div class="sp-ft-col">
+        <h3 class="sp-ft-heading">Legal</h3>
+        <ul class="sp-ft-links">
+          <li><a href="{{ shop.privacy_policy.url | default: '/policies/privacy-policy' }}">Privacy Policy</a></li>
+          <li><a href="{{ shop.terms_of_service.url | default: '/policies/terms-of-service' }}">Terms of Service</a></li>
+          <li><a href="{{ shop.shipping_policy.url | default: '/policies/shipping-policy' }}">Shipping</a></li>
+          <li><a href="{{ shop.refund_policy.url | default: '/policies/refund-policy' }}">Returns</a></li>
+        </ul>
+      </div>
+
+    </div><!-- /.sp-ft-grid -->
+
+    <div class="sp-ft-bottom">
+      <span>&copy; {{ 'now' | date: '%Y' }} SCULPS. All rights reserved.</span>
+      <span>Invisible Support. Visible Confidence.</span>
+    </div>
+  </footer>
+
+  <!-- ========== SCRIPTS ========== -->
+  <script src="{{ 'sculps.js' | asset_url }}" defer></script>
+
+</body>
+</html>

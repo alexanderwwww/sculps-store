@@ -1,87 +1,27 @@
-{%- comment -%}sculps-home.liquid — SCULPS Custom Homepage{%- endcomment -%}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
-{{ 'sculps.css' | asset_url | stylesheet_tag }}
-
-<div class="sculps-page">
-
-<!-- MOBILE NAV -->
-<nav class="sp-mob-nav" id="sculps-mobNav">
-  <button class="sp-mob-close" onclick="document.getElementById('sculps-mobNav').classList.remove('open')">✕</button>
-  <a href="/collections/all" onclick="document.getElementById('sculps-mobNav').classList.remove('open')">Shop</a>
-  <a href="/collections/kits" onclick="document.getElementById('sculps-mobNav').classList.remove('open')">Kits</a>
-  <a href="/collections/sets" onclick="document.getElementById('sculps-mobNav').classList.remove('open')">Sets</a>
-  <a href="/pages/creator-studio" onclick="document.getElementById('sculps-mobNav').classList.remove('open')">Creator</a>
-</nav>
-
-<!-- ANNOUNCEMENT BAR -->
-<div class="sp-ann">
-  <div class="sp-ann-track">
-    <span>Free Shipping On Orders Over $75</span>
-    <span>We Don't Hire Models. We Work With Real Women.</span>
-    <span>6 Skin Tones. Finally.</span>
-    <span>Invisible Support. Visible Confidence.</span>
-    <span>30 Day Returns. No Questions Asked.</span>
-    <span>Real Women. Real Results. Real Rewards.</span>
-    <span>Made For Every Body. Every Shade. Every Size.</span>
-    <span>Free Shipping On Orders Over $75</span>
-    <span>We Don't Hire Models. We Work With Real Women.</span>
-    <span>6 Skin Tones. Finally.</span>
-    <span>Invisible Support. Visible Confidence.</span>
-    <span>30 Day Returns. No Questions Asked.</span>
-    <span>Real Women. Real Results. Real Rewards.</span>
-    <span>Made For Every Body. Every Shade. Every Size.</span>
-  </div>
-</div>
-
-<!-- HEADER -->
-<header class="sp-header">
-  <button class="sp-ham" onclick="document.getElementById('sculps-mobNav').classList.add('open')">
-    <span></span><span></span><span></span>
-  </button>
-  <a href="/" class="sp-logo">
-    <svg class="sp-logo-svg" viewBox="0 0 260 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <text x="2" y="38" font-family="'Bebas Neue', sans-serif" font-size="42" fill="#1A1410" letter-spacing="8">SCULPS</text>
-    </svg>
-  </a>
-  <nav class="sp-nav">
-    <ul>
-      <li><a href="/collections/all">Shop</a></li>
-      <li><a href="/collections/kits">Kits</a></li>
-      <li><a href="/collections/sets">Sets</a></li>
-      <li><a href="/pages/creator-studio">Creator</a></li>
-    </ul>
-  </nav>
-  <div class="sp-hdr-right">
-    <a href="/cart" class="sp-bag-btn">
-      Bag ({{ cart.item_count }})
-    </a>
-  </div>
-</header>
+{%- comment -%}sculps-home.liquid — SCULPS Custom Homepage (content only, no layout chrome){%- endcomment -%}
 
 <!-- HERO -->
-<section class="sp-hero">
+<section class="sp-hero"{% if section.settings.hero_image %} style="background-image:url('{{ section.settings.hero_image | image_url: width: 2000 }}');background-size:cover;background-position:center;"{% endif %}>
   <div class="sp-hero-bg"></div>
   <div class="sp-hero-img-layer"></div>
   <div class="sp-hero-grad"></div>
   <div class="sp-hero-content">
-    <div class="sp-hero-pre">New Collection — SCULPS 2025</div>
-    <h1 class="sp-hero-h1">Invisible<br>Support.<br>Visible<br>Confidence.</h1>
-    <p class="sp-hero-sub">Seamless. Sculpted. You.</p>
+    <div class="sp-hero-pre">{{ section.settings.hero_pre | default: 'New Collection — SCULPS 2025' }}</div>
+    <h1 class="sp-hero-h1">{{ section.settings.hero_headline | default: 'Invisible<br>Support.<br>Visible<br>Confidence.' | newline_to_br }}</h1>
+    <p class="sp-hero-sub">{{ section.settings.hero_sub | default: 'Seamless. Sculpted. You.' }}</p>
     <div class="sp-hero-ctas">
-      <a href="/collections/all" class="sp-btn-w">Shop Now</a>
-      <a href="/collections/kits" class="sp-btn-o">View Kits</a>
+      <a href="{{ section.settings.hero_btn1_url | default: '/collections/all' }}" class="sp-btn-w">{{ section.settings.hero_btn1_label | default: 'Shop Now' }}</a>
+      <a href="{{ section.settings.hero_btn2_url | default: '/collections/kits' }}" class="sp-btn-o">{{ section.settings.hero_btn2_label | default: 'View Kits' }}</a>
     </div>
   </div>
   <div class="sp-hero-tones">
     <span class="sp-hero-tones-lbl">6 tones</span>
-    <div class="sp-htone" style="background:var(--tone1)" title="Porcelain"></div>
-    <div class="sp-htone" style="background:var(--tone2)" title="Light"></div>
-    <div class="sp-htone" style="background:var(--tone3)" title="Medium"></div>
-    <div class="sp-htone" style="background:var(--tone4)" title="Tan"></div>
-    <div class="sp-htone" style="background:var(--tone5)" title="Deep"></div>
-    <div class="sp-htone" style="background:var(--tone6)" title="Rich"></div>
+    <div class="sp-htone" style="background:var(--tone1)" title="Porcelain" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone2)" title="Light" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone3)" title="Medium" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone4)" title="Tan" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone5)" title="Deep" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone6)" title="Rich" data-href="/collections/intimates"></div>
   </div>
 </section>
 
@@ -92,52 +32,52 @@
     <a href="/collections/all">View All →</a>
   </div>
   <div class="sp-cat-grid">
-    <a href="/collections/intimates" class="sp-cat-card">
-      <div class="sp-cat-inner sp-c1"></div>
+    <a href="{{ section.settings.cat1_url | default: '/collections/intimates' }}" class="sp-cat-card">
+      {%- if section.settings.cat1_image %}<img src="{{ section.settings.cat1_image | image_url: width: 800 }}" alt="{{ section.settings.cat1_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c1"></div>{%- endif -%}
       <div class="sp-cat-grad"></div>
       <div class="sp-cat-info">
-        <div class="sp-cat-name">Invisible Bra Inserts</div>
-        <div class="sp-cat-sub">6 skin tones · Medical grade silicone</div>
+        <div class="sp-cat-name">{{ section.settings.cat1_title | default: 'Invisible Bra Inserts' }}</div>
+        <div class="sp-cat-sub">{{ section.settings.cat1_sub | default: '6 skin tones · Medical grade silicone' }}</div>
       </div>
     </a>
-    <a href="/collections/intimates" class="sp-cat-card">
-      <div class="sp-cat-inner sp-c2"></div>
+    <a href="{{ section.settings.cat2_url | default: '/collections/bottoms' }}" class="sp-cat-card">
+      {%- if section.settings.cat2_image %}<img src="{{ section.settings.cat2_image | image_url: width: 800 }}" alt="{{ section.settings.cat2_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c2"></div>{%- endif -%}
       <div class="sp-cat-grad"></div>
       <div class="sp-cat-info">
-        <div class="sp-cat-name">Seamless Intimates</div>
-        <div class="sp-cat-sub">Zero lines · All tones</div>
+        <div class="sp-cat-name">{{ section.settings.cat2_title | default: 'Seamless Intimates' }}</div>
+        <div class="sp-cat-sub">{{ section.settings.cat2_sub | default: 'Zero lines · All tones' }}</div>
       </div>
     </a>
-    <a href="/collections/sets" class="sp-cat-card">
-      <div class="sp-cat-inner sp-c3"></div>
+    <a href="{{ section.settings.cat3_url | default: '/collections/sets' }}" class="sp-cat-card">
+      {%- if section.settings.cat3_image %}<img src="{{ section.settings.cat3_image | image_url: width: 800 }}" alt="{{ section.settings.cat3_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c3"></div>{%- endif -%}
       <div class="sp-cat-grad"></div>
       <div class="sp-cat-info">
-        <div class="sp-cat-name">The Sets</div>
-        <div class="sp-cat-sub">4 colorways · Drop 1</div>
+        <div class="sp-cat-name">{{ section.settings.cat3_title | default: 'The Sets' }}</div>
+        <div class="sp-cat-sub">{{ section.settings.cat3_sub | default: '4 colorways · Drop 1' }}</div>
       </div>
     </a>
-    <a href="/collections/accessories" class="sp-cat-card">
-      <div class="sp-cat-inner sp-c4"></div>
+    <a href="{{ section.settings.cat4_url | default: '/collections/accessories' }}" class="sp-cat-card">
+      {%- if section.settings.cat4_image %}<img src="{{ section.settings.cat4_image | image_url: width: 800 }}" alt="{{ section.settings.cat4_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c4"></div>{%- endif -%}
       <div class="sp-cat-grad"></div>
       <div class="sp-cat-info">
-        <div class="sp-cat-name">Accessories</div>
-        <div class="sp-cat-sub">Pouch · Socks · Scrunchie</div>
+        <div class="sp-cat-name">{{ section.settings.cat4_title | default: 'Accessories' }}</div>
+        <div class="sp-cat-sub">{{ section.settings.cat4_sub | default: 'Pouch · Socks · Scrunchie' }}</div>
       </div>
     </a>
-    <a href="/products/sculps-confidence-kit" class="sp-cat-card">
-      <div class="sp-cat-inner sp-c5"></div>
+    <a href="{{ section.settings.cat5_url | default: '/collections/kits' }}" class="sp-cat-card">
+      {%- if section.settings.cat5_image %}<img src="{{ section.settings.cat5_image | image_url: width: 800 }}" alt="{{ section.settings.cat5_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c5"></div>{%- endif -%}
       <div class="sp-cat-grad"></div>
       <div class="sp-cat-info">
-        <div class="sp-cat-name">Confidence Kit</div>
-        <div class="sp-cat-sub">$120 · Save $35</div>
+        <div class="sp-cat-name">{{ section.settings.cat5_title | default: 'Confidence Kit' }}</div>
+        <div class="sp-cat-sub">{{ section.settings.cat5_sub | default: '$120 · Save $35' }}</div>
       </div>
     </a>
-    <a href="/products/sculps-girl-trip-kit" class="sp-cat-card">
-      <div class="sp-cat-inner sp-c6"></div>
+    <a href="{{ section.settings.cat6_url | default: '/collections/kits' }}" class="sp-cat-card">
+      {%- if section.settings.cat6_image %}<img src="{{ section.settings.cat6_image | image_url: width: 800 }}" alt="{{ section.settings.cat6_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c6"></div>{%- endif -%}
       <div class="sp-cat-grad"></div>
       <div class="sp-cat-info">
-        <div class="sp-cat-name">Girl Trip Kit</div>
-        <div class="sp-cat-sub">$120 · Save $31</div>
+        <div class="sp-cat-name">{{ section.settings.cat6_title | default: 'Girl Trip Kit' }}</div>
+        <div class="sp-cat-sub">{{ section.settings.cat6_sub | default: '$120 · Save $31' }}</div>
       </div>
     </a>
   </div>
@@ -146,110 +86,178 @@
 <!-- BEST SELLERS -->
 <section class="sp-s-sm">
   <div class="sp-s-title">
-    <span>Best Sellers</span>
+    <span>{{ section.settings.bs_title | default: 'Best Sellers' }}</span>
     <a href="/collections/all">View All →</a>
   </div>
   <div class="sp-bs-scroll">
-    {%- assign best_seller_handles = 'sculps-lift-inserts,sculps-nipple-covers,sculps-invisible-thong,sculps-seamless-brief,sculps-terry-pouch,sculps-summer-set' | split: ',' -%}
-    {%- assign bs_tags = 'Best Seller,6 Tones,No Lines,Waistband,Iconic,Drop Now' | split: ',' -%}
-    {%- assign bs_gradients = 'linear-gradient(160deg,#F5E6D8 0%,#C8956C 100%),linear-gradient(160deg,#E8C9A0 0%,#A0714F 100%),linear-gradient(160deg,#C8956C 0%,#7B4F3A 100%),linear-gradient(160deg,#F5B8C4 0%,#C9B8E8 100%),linear-gradient(160deg,#9BAF8A 0%,#7B9AB5 100%),linear-gradient(160deg,#C9B8E8 0%,#9BAF8A 100%)' | split: ',' -%}
-    {%- assign bs_was = '$75,$28,$24,$32,$45,$85' | split: ',' -%}
-    {%- for handle in best_seller_handles -%}
-      {%- assign product = all_products[handle] -%}
-      {%- assign grad = bs_gradients[forloop.index0] -%}
-      {%- assign tag = bs_tags[forloop.index0] -%}
-      {%- assign was = bs_was[forloop.index0] -%}
-      <div class="sp-pc">
-        <a href="{{ product.url }}" class="sp-pc-img" style="display:block">
-          {%- if product.featured_image -%}
-            <img src="{{ product.featured_image | image_url: width: 400 }}" alt="{{ product.title | escape }}" loading="lazy" style="width:100%;height:100%;object-fit:cover">
+    {%- if section.settings.bs_collection != blank -%}
+      {%- assign bs_col = collections[section.settings.bs_collection] -%}
+      {%- assign bs_limit = section.settings.bs_limit | default: 6 -%}
+      {%- for product in bs_col.products limit: bs_limit -%}
+        <div class="sp-pc">
+          <div class="sp-pc-img" style="display:block;aspect-ratio:3/4;position:relative;overflow:hidden;margin-bottom:14px">
+            {%- if product.featured_image -%}
+              <img src="{{ product.featured_image | image_url: width: 400 }}" alt="{{ product.title | escape }}" loading="lazy" style="width:100%;height:100%;object-fit:cover">
+            {%- else -%}
+              <div class="sp-pc-swatch" style="background:var(--cream)"></div>
+            {%- endif -%}
+            {%- assign first_tag = product.tags | first -%}
+            {%- if first_tag != blank -%}<div class="sp-pc-tag">{{ first_tag }}</div>{%- endif -%}
+            <div class="sp-pc-quick-add"><span>Quick Add</span></div>
+          </div>
+          <div class="sp-pc-brand">SCULPS</div>
+          <div class="sp-pc-name">{{ product.title }}</div>
+          <div class="sp-pc-prices">
+            <span class="sp-pc-price">{{ product.price | money }}</span>
+            {%- if product.compare_at_price > product.price -%}
+              <span class="sp-pc-was">{{ product.compare_at_price | money }}</span>
+            {%- endif -%}
+          </div>
+          {%- comment -%}Determine if skin-tone or color product{%- endcomment -%}
+          {%- assign is_tone = false -%}
+          {%- for opt in product.options -%}
+            {%- if opt == 'Shade' or opt == 'Tone' or opt == 'Skin Tone' -%}{%- assign is_tone = true -%}{%- endif -%}
+          {%- endfor -%}
+          {%- if is_tone -%}
+            <div class="sp-dots-row">
+              <div class="sp-dot" style="background:var(--tone1)" title="Porcelain"></div>
+              <div class="sp-dot" style="background:var(--tone2)" title="Light"></div>
+              <div class="sp-dot" style="background:var(--tone3)" title="Medium"></div>
+              <div class="sp-dot" style="background:var(--tone4)" title="Tan"></div>
+              <div class="sp-dot" style="background:var(--tone5)" title="Deep"></div>
+              <div class="sp-dot" style="background:var(--tone6)" title="Rich"></div>
+            </div>
           {%- else -%}
-            <div class="sp-pc-swatch" style="background:{{ grad }}"></div>
+            <div class="sp-dots-row">
+              <div class="sp-dot" style="background:var(--pink)" title="Baby Pink"></div>
+              <div class="sp-dot" style="background:var(--sage)" title="Sage Green"></div>
+              <div class="sp-dot" style="background:var(--lav)" title="Lavender"></div>
+              <div class="sp-dot" style="background:var(--steel)" title="Steel Blue"></div>
+            </div>
           {%- endif -%}
-          <div class="sp-pc-tag">{{ tag }}</div>
-        </a>
-        <div class="sp-pc-brand">SCULPS</div>
-        <div class="sp-pc-name">{{ product.title | remove: 'Sculps ' }}</div>
-        <div class="sp-pc-prices">
-          <span class="sp-pc-price">{{ product.price | money }}</span>
-          <span class="sp-pc-was">{{ was }}</span>
+          <button class="sp-pc-btn sp-atc-btn"
+            data-variant-id="{{ product.first_available_variant.id }}"
+            data-product-id="{{ product.id }}"
+            type="button">Add to Bag</button>
         </div>
-        {%- if forloop.index <= 3 -%}
-        <div class="sp-dots-row">
-          <div class="sp-dot" style="background:var(--tone1)" title="Porcelain"></div>
-          <div class="sp-dot" style="background:var(--tone2)" title="Light"></div>
-          <div class="sp-dot" style="background:var(--tone3)" title="Medium"></div>
-          <div class="sp-dot" style="background:var(--tone4)" title="Tan"></div>
-          <div class="sp-dot" style="background:var(--tone5)" title="Deep"></div>
-          <div class="sp-dot" style="background:var(--tone6)" title="Rich"></div>
+      {%- endfor -%}
+    {%- else -%}
+      {%- comment -%}Fallback static products when no collection selected{%- endcomment -%}
+      {%- assign best_seller_handles = 'sculps-lift-inserts,sculps-nipple-covers,sculps-invisible-thong,sculps-seamless-brief,sculps-terry-pouch,sculps-summer-set' | split: ',' -%}
+      {%- assign bs_tags = 'Best Seller,6 Tones,No Lines,Waistband,Iconic,Drop Now' | split: ',' -%}
+      {%- assign bs_gradients = 'linear-gradient(160deg,#F5E6D8 0%,#C8956C 100%),linear-gradient(160deg,#E8C9A0 0%,#A0714F 100%),linear-gradient(160deg,#C8956C 0%,#7B4F3A 100%),linear-gradient(160deg,#F5B8C4 0%,#C9B8E8 100%),linear-gradient(160deg,#9BAF8A 0%,#7B9AB5 100%),linear-gradient(160deg,#C9B8E8 0%,#9BAF8A 100%)' | split: ',' -%}
+      {%- assign bs_was = '$75,$28,$24,$32,$45,$85' | split: ',' -%}
+      {%- for handle in best_seller_handles -%}
+        {%- assign product = all_products[handle] -%}
+        {%- assign grad = bs_gradients[forloop.index0] -%}
+        {%- assign tag = bs_tags[forloop.index0] -%}
+        {%- assign was = bs_was[forloop.index0] -%}
+        <div class="sp-pc">
+          <a href="{{ product.url }}" class="sp-pc-img" style="display:block">
+            {%- if product.featured_image -%}
+              <img src="{{ product.featured_image | image_url: width: 400 }}" alt="{{ product.title | escape }}" loading="lazy" style="width:100%;height:100%;object-fit:cover">
+            {%- else -%}
+              <div class="sp-pc-swatch" style="background:{{ grad }}"></div>
+            {%- endif -%}
+            <div class="sp-pc-tag">{{ tag }}</div>
+          </a>
+          <div class="sp-pc-brand">SCULPS</div>
+          <div class="sp-pc-name">{{ product.title | remove: 'Sculps ' }}</div>
+          <div class="sp-pc-prices">
+            <span class="sp-pc-price">{{ product.price | money }}</span>
+            <span class="sp-pc-was">{{ was }}</span>
+          </div>
+          {%- if forloop.index <= 3 -%}
+          <div class="sp-dots-row">
+            <div class="sp-dot" style="background:var(--tone1)" title="Porcelain"></div>
+            <div class="sp-dot" style="background:var(--tone2)" title="Light"></div>
+            <div class="sp-dot" style="background:var(--tone3)" title="Medium"></div>
+            <div class="sp-dot" style="background:var(--tone4)" title="Tan"></div>
+            <div class="sp-dot" style="background:var(--tone5)" title="Deep"></div>
+            <div class="sp-dot" style="background:var(--tone6)" title="Rich"></div>
+          </div>
+          {%- else -%}
+          <div class="sp-dots-row">
+            <div class="sp-dot" style="background:var(--pink)" title="Baby Pink"></div>
+            <div class="sp-dot" style="background:var(--sage)" title="Sage Green"></div>
+            <div class="sp-dot" style="background:var(--lav)" title="Lavender"></div>
+            <div class="sp-dot" style="background:var(--steel)" title="Steel Blue"></div>
+          </div>
+          {%- endif -%}
+          <a href="{{ product.url }}" class="sp-pc-btn">Add to Bag</a>
         </div>
-        {%- else -%}
-        <div class="sp-dots-row">
-          <div class="sp-dot" style="background:var(--pink)" title="Baby Pink"></div>
-          <div class="sp-dot" style="background:var(--sage)" title="Sage Green"></div>
-          <div class="sp-dot" style="background:var(--lav)" title="Lavender"></div>
-          <div class="sp-dot" style="background:var(--steel)" title="Steel Blue"></div>
-        </div>
-        {%- endif -%}
-        <a href="{{ product.url }}" class="sp-pc-btn">Add to Bag</a>
-      </div>
-    {%- endfor -%}
+      {%- endfor -%}
+    {%- endif -%}
   </div>
 </section>
 
 <!-- FIND YOUR SHADE -->
 <section class="sp-shade-s">
-  <div class="sp-shade-big">FIND YOUR SHADE</div>
-  <p class="sp-shade-hint">Six tones. One will be yours.</p>
+  <div class="sp-shade-big">{{ section.settings.shade_heading | default: 'FIND YOUR SHADE' }}</div>
+  <p class="sp-shade-hint">{{ section.settings.shade_sub | default: 'Six tones. One will be yours.' }}</p>
   <div class="sp-shade-row">
-    <a href="/products/sculps-lift-inserts" class="sp-sh-circle" style="background:var(--tone1)" title="Porcelain"></a>
-    <a href="/products/sculps-lift-inserts" class="sp-sh-circle" style="background:var(--tone2)" title="Light"></a>
-    <a href="/products/sculps-lift-inserts" class="sp-sh-circle" style="background:var(--tone3)" title="Medium"></a>
-    <a href="/products/sculps-lift-inserts" class="sp-sh-circle" style="background:var(--tone4)" title="Tan"></a>
-    <a href="/products/sculps-lift-inserts" class="sp-sh-circle" style="background:var(--tone5)" title="Deep"></a>
-    <a href="/products/sculps-lift-inserts" class="sp-sh-circle" style="background:var(--tone6)" title="Rich"></a>
+    <a href="/collections/intimates" class="sp-sh-circle" style="background:var(--tone1)" title="Porcelain"></a>
+    <a href="/collections/intimates" class="sp-sh-circle" style="background:var(--tone2)" title="Light"></a>
+    <a href="/collections/intimates" class="sp-sh-circle" style="background:var(--tone3)" title="Medium"></a>
+    <a href="/collections/intimates" class="sp-sh-circle" style="background:var(--tone4)" title="Tan"></a>
+    <a href="/collections/intimates" class="sp-sh-circle" style="background:var(--tone5)" title="Deep"></a>
+    <a href="/collections/intimates" class="sp-sh-circle" style="background:var(--tone6)" title="Rich"></a>
   </div>
 </section>
 
 <!-- MANIFESTO -->
 <section class="sp-manifesto">
-  <div class="sp-mani-pre">The SCULPS Standard</div>
-  <h2 class="sp-mani-h">We Don't<br>Hire Models.<br>We Work With<br>Real Women.</h2>
-  <p class="sp-mani-p">Made for every body. Every shade. Every size. Invisible support so you can wear what you want, the way you want.</p>
-  <a href="/pages/our-story" class="sp-mani-btn">Our Story</a>
+  <div class="sp-mani-pre">{{ section.settings.mani_pre | default: 'The SCULPS Standard' }}</div>
+  <h2 class="sp-mani-h">{{ section.settings.mani_headline | default: 'We Don't Hire Models. We Work With Real Women.' | newline_to_br }}</h2>
+  <p class="sp-mani-p">{{ section.settings.mani_body | default: 'Made for every body. Every shade. Every size. Invisible support so you can wear what you want, the way you want.' }}</p>
+  <a href="{{ section.settings.mani_btn_url | default: '/pages/about' }}" class="sp-mani-btn">{{ section.settings.mani_btn_label | default: 'Our Story' }}</a>
 </section>
 
 <!-- THE KITS -->
 <section class="sp-s" id="kits">
   <div class="sp-s-title"><span>The Kits</span></div>
   <div class="sp-kits-wrap">
-    <a href="/products/sculps-confidence-kit" class="sp-kit-card">
-      <div class="sp-kit-bg" style="background:linear-gradient(145deg,#F5E6D8 0%,#C8956C 50%,#7B4F3A 100%)"></div>
+    <a href="{{ section.settings.kit1_url | default: '/products/sculps-confidence-kit' }}" class="sp-kit-card">
+      {%- if section.settings.kit1_image -%}
+        <img src="{{ section.settings.kit1_image | image_url: width: 800 }}" alt="{{ section.settings.kit1_name | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      {%- else -%}
+        <div class="sp-kit-bg" style="background:linear-gradient(145deg,#F5E6D8 0%,#C8956C 50%,#7B4F3A 100%)"></div>
+      {%- endif -%}
       <div class="sp-kit-fade"></div>
       <div class="sp-kit-body">
-        <div class="sp-kit-badge">Save $35</div>
-        <div class="sp-kit-name">SCULPS CONFIDENCE KIT</div>
-        <div class="sp-kit-items">Lift Inserts · Invisibra · Nipple Covers · Thong · Brief</div>
-        <div class="sp-kit-pr"><span class="sp-kit-p">$120</span><span class="sp-kit-cp">$155</span></div>
-        <div class="sp-kit-cta">Shop Confidence Kit</div>
+        <div class="sp-kit-badge">{{ section.settings.kit1_badge | default: 'Save $35' }}</div>
+        <div class="sp-kit-name">{{ section.settings.kit1_name | default: 'SCULPS CONFIDENCE KIT' }}</div>
+        <div class="sp-kit-items">{{ section.settings.kit1_items | default: 'Lift Inserts · Invisibra · Nipple Covers · Thong · Brief' }}</div>
+        <div class="sp-kit-pr">
+          <span class="sp-kit-p">{{ section.settings.kit1_price | default: '$120' }}</span>
+          <span class="sp-kit-cp">{{ section.settings.kit1_compare | default: '$155' }}</span>
+        </div>
+        <div class="sp-kit-cta">{{ section.settings.kit1_btn | default: 'Shop Confidence Kit' }}</div>
       </div>
     </a>
-    <a href="/products/sculps-girl-trip-kit" class="sp-kit-card">
-      <div class="sp-kit-bg" style="background:linear-gradient(145deg,#C9B8E8 0%,#9BAF8A 50%,#7B9AB5 100%)"></div>
+    <a href="{{ section.settings.kit2_url | default: '/products/sculps-girl-trip-kit' }}" class="sp-kit-card">
+      {%- if section.settings.kit2_image -%}
+        <img src="{{ section.settings.kit2_image | image_url: width: 800 }}" alt="{{ section.settings.kit2_name | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      {%- else -%}
+        <div class="sp-kit-bg" style="background:linear-gradient(145deg,#C9B8E8 0%,#9BAF8A 50%,#7B9AB5 100%)"></div>
+      {%- endif -%}
       <div class="sp-kit-fade"></div>
       <div class="sp-kit-body">
-        <div class="sp-kit-badge">Save $31</div>
-        <div class="sp-kit-name">SCULPS GIRL TRIP KIT</div>
-        <div class="sp-kit-items">Summer Set · Brief · Scrunchie · Socks · Terry Pouch</div>
-        <div class="sp-kit-pr"><span class="sp-kit-p">$120</span><span class="sp-kit-cp">$151</span></div>
-        <div class="sp-kit-cta">Shop Girl Trip Kit</div>
+        <div class="sp-kit-badge">{{ section.settings.kit2_badge | default: 'Save $31' }}</div>
+        <div class="sp-kit-name">{{ section.settings.kit2_name | default: 'SCULPS GIRL TRIP KIT' }}</div>
+        <div class="sp-kit-items">{{ section.settings.kit2_items | default: 'Summer Set · Brief · Scrunchie · Socks · Terry Pouch' }}</div>
+        <div class="sp-kit-pr">
+          <span class="sp-kit-p">{{ section.settings.kit2_price | default: '$120' }}</span>
+          <span class="sp-kit-cp">{{ section.settings.kit2_compare | default: '$151' }}</span>
+        </div>
+        <div class="sp-kit-cta">{{ section.settings.kit2_btn | default: 'Shop Girl Trip Kit' }}</div>
       </div>
     </a>
   </div>
-  <a href="/products/both-kits-bundle-save-30" class="sp-both-banner">
-    <span>Buy Both Kits</span>
-    <strong>Save 30%</strong>
-    <span>Only $204</span>
+  <a href="{{ section.settings.kits_banner_url | default: '/products/both-kits-bundle-save-30' }}" class="sp-both-banner">
+    <span>{{ section.settings.kits_banner_left | default: 'Buy Both Kits' }}</span>
+    <strong>{{ section.settings.kits_banner_save | default: 'Save 30%' }}</strong>
+    <span>{{ section.settings.kits_banner_right | default: 'Only $204' }}</span>
   </a>
 </section>
 
@@ -259,217 +267,316 @@
   <div class="sp-hiw">
     <div>
       <div class="sp-hiw-n">01</div>
-      <div class="sp-hiw-t">Choose Your Shade</div>
-      <div class="sp-hiw-d">Six skin tones numbered 1 to 6. Pick the circle that matches you. No labels. No guessing. No wrong answer.</div>
+      <div class="sp-hiw-t">{{ section.settings.hiw1_title | default: 'Choose Your Shade' }}</div>
+      <div class="sp-hiw-d">{{ section.settings.hiw1_desc | default: 'Six skin tones numbered 1 to 6. Pick the circle that matches you. No labels. No guessing. No wrong answer.' }}</div>
     </div>
     <div>
       <div class="sp-hiw-n">02</div>
-      <div class="sp-hiw-t">Apply In Seconds</div>
-      <div class="sp-hiw-d">Peel. Press. Done. Medical grade adhesive holds all day. Reusable 30 to 40 times with care.</div>
+      <div class="sp-hiw-t">{{ section.settings.hiw2_title | default: 'Apply In Seconds' }}</div>
+      <div class="sp-hiw-d">{{ section.settings.hiw2_desc | default: 'Peel. Press. Done. Medical grade adhesive holds all day. Reusable 30 to 40 times with care.' }}</div>
     </div>
     <div>
       <div class="sp-hiw-n">03</div>
-      <div class="sp-hiw-t">Feel Confident All Day</div>
-      <div class="sp-hiw-d">Invisible under anything. No lines. No straps. Just you and your outfit exactly how you want.</div>
+      <div class="sp-hiw-t">{{ section.settings.hiw3_title | default: 'Feel Confident All Day' }}</div>
+      <div class="sp-hiw-d">{{ section.settings.hiw3_desc | default: 'Invisible under anything. No lines. No straps. Just you and your outfit exactly how you want.' }}</div>
     </div>
   </div>
 </section>
 
 <!-- TIKTOK TESTIMONIALS -->
 <section class="sp-tt-s">
-  <div class="sp-tt-h">Real Women. Real Results.</div>
-  <div class="sp-tt-sub">Submit your video · Get rewarded</div>
+  <div class="sp-tt-h">{{ section.settings.tt_heading | default: 'Real Women. Real Results.' }}</div>
+  <div class="sp-tt-sub">{{ section.settings.tt_sub | default: 'Submit your video · Get rewarded' }}</div>
   <div class="sp-tt-row">
     <div class="sp-tt-card">
       <div class="sp-tt-inner" style="background:linear-gradient(170deg,#3D2314,#7B4F3A)"></div>
       <div class="sp-tt-overlay"></div>
       <div class="sp-tt-play">▶</div>
-      <div class="sp-tt-meta"><div class="sp-tt-handle">@jasmine.sculps</div><div class="sp-tt-likes">♥ 847K</div></div>
+      <div class="sp-tt-meta">
+        <div class="sp-tt-handle">{{ section.settings.tt1_handle | default: '@jasmine.sculps' }}</div>
+        <div class="sp-tt-likes">{{ section.settings.tt1_likes | default: '♥ 847K' }}</div>
+      </div>
     </div>
     <div class="sp-tt-card">
       <div class="sp-tt-inner" style="background:linear-gradient(170deg,#7B4F3A,#C8956C)"></div>
       <div class="sp-tt-overlay"></div>
       <div class="sp-tt-play">▶</div>
-      <div class="sp-tt-meta"><div class="sp-tt-handle">@brianna.real</div><div class="sp-tt-likes">♥ 523K</div></div>
+      <div class="sp-tt-meta">
+        <div class="sp-tt-handle">{{ section.settings.tt2_handle | default: '@brianna.real' }}</div>
+        <div class="sp-tt-likes">{{ section.settings.tt2_likes | default: '♥ 523K' }}</div>
+      </div>
     </div>
     <div class="sp-tt-card">
       <div class="sp-tt-inner" style="background:linear-gradient(170deg,#7B9AB5,#C9B8E8)"></div>
       <div class="sp-tt-overlay"></div>
       <div class="sp-tt-play">▶</div>
-      <div class="sp-tt-meta"><div class="sp-tt-handle">@kayla.fits</div><div class="sp-tt-likes">♥ 312K</div></div>
+      <div class="sp-tt-meta">
+        <div class="sp-tt-handle">{{ section.settings.tt3_handle | default: '@kayla.fits' }}</div>
+        <div class="sp-tt-likes">{{ section.settings.tt3_likes | default: '♥ 312K' }}</div>
+      </div>
     </div>
     <div class="sp-tt-card">
       <div class="sp-tt-inner" style="background:linear-gradient(170deg,#9BAF8A,#C9B8E8)"></div>
       <div class="sp-tt-overlay"></div>
       <div class="sp-tt-play">▶</div>
-      <div class="sp-tt-meta"><div class="sp-tt-handle">@destiny.w</div><div class="sp-tt-likes">♥ 289K</div></div>
+      <div class="sp-tt-meta">
+        <div class="sp-tt-handle">{{ section.settings.tt4_handle | default: '@destiny.w' }}</div>
+        <div class="sp-tt-likes">{{ section.settings.tt4_likes | default: '♥ 289K' }}</div>
+      </div>
     </div>
     <div class="sp-tt-card">
       <div class="sp-tt-inner" style="background:linear-gradient(170deg,#F5B8C4,#E8C9A0)"></div>
       <div class="sp-tt-overlay"></div>
       <div class="sp-tt-play">▶</div>
-      <div class="sp-tt-meta"><div class="sp-tt-handle">@maria.sculps</div><div class="sp-tt-likes">♥ 198K</div></div>
+      <div class="sp-tt-meta">
+        <div class="sp-tt-handle">{{ section.settings.tt5_handle | default: '@maria.sculps' }}</div>
+        <div class="sp-tt-likes">{{ section.settings.tt5_likes | default: '♥ 198K' }}</div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- REVIEWS -->
 <section class="sp-rev-s">
-  <div class="sp-rev-h">Real Reviews From Real Women</div>
+  <div class="sp-rev-h">{{ section.settings.rev_heading | default: 'Real Reviews From Real Women' }}</div>
   <div class="sp-rev-grid">
     <div class="sp-rev-card">
       <div class="sp-rev-stars">★★★★★</div>
-      <p class="sp-rev-text">"These inserts are a game changer. I feel so confident in everything I wear. I cannot go back to a regular bra."</p>
-      <div class="sp-rev-name">Jessica R. — Verified Buyer</div>
+      <p class="sp-rev-text">{{ section.settings.rev1_text | default: '"These inserts are a game changer. I feel so confident in everything I wear. I cannot go back to a regular bra."' }}</p>
+      <div class="sp-rev-name">{{ section.settings.rev1_name | default: 'Jessica R. — Verified Buyer' }}</div>
     </div>
     <div class="sp-rev-card">
       <div class="sp-rev-stars">★★★★★</div>
-      <p class="sp-rev-text">"Finally something that actually stays in place and feels like nothing. Wore these all day at a wedding. Perfect."</p>
-      <div class="sp-rev-name">Brianna K. — Verified Buyer</div>
+      <p class="sp-rev-text">{{ section.settings.rev2_text | default: '"Finally something that actually stays in place and feels like nothing. Wore these all day at a wedding. Perfect."' }}</p>
+      <div class="sp-rev-name">{{ section.settings.rev2_name | default: 'Brianna K. — Verified Buyer' }}</div>
     </div>
     <div class="sp-rev-card">
       <div class="sp-rev-stars">★★★★★</div>
-      <p class="sp-rev-text">"The best investment I have made for myself. Worth every single penny. I use every product in my kit weekly."</p>
-      <div class="sp-rev-name">Lauren M. — Verified Buyer</div>
+      <p class="sp-rev-text">{{ section.settings.rev3_text | default: '"The best investment I have made for myself. Worth every single penny. I use every product in my kit weekly."' }}</p>
+      <div class="sp-rev-name">{{ section.settings.rev3_name | default: 'Lauren M. — Verified Buyer' }}</div>
     </div>
+    {%- if section.settings.rev4_text != blank -%}
+    <div class="sp-rev-card">
+      <div class="sp-rev-stars">★★★★★</div>
+      <p class="sp-rev-text">{{ section.settings.rev4_text }}</p>
+      <div class="sp-rev-name">{{ section.settings.rev4_name }}</div>
+    </div>
+    {%- endif -%}
+    {%- if section.settings.rev5_text != blank -%}
+    <div class="sp-rev-card">
+      <div class="sp-rev-stars">★★★★★</div>
+      <p class="sp-rev-text">{{ section.settings.rev5_text }}</p>
+      <div class="sp-rev-name">{{ section.settings.rev5_name }}</div>
+    </div>
+    {%- endif -%}
+    {%- if section.settings.rev6_text != blank -%}
+    <div class="sp-rev-card">
+      <div class="sp-rev-stars">★★★★★</div>
+      <p class="sp-rev-text">{{ section.settings.rev6_text }}</p>
+      <div class="sp-rev-name">{{ section.settings.rev6_name }}</div>
+    </div>
+    {%- endif -%}
   </div>
 </section>
 
 <!-- CREATOR STUDIO -->
 <section class="sp-cs-s" id="creators">
-  <div class="sp-cs-pre">SCULPS Creator Studio</div>
-  <h2 class="sp-cs-h">We Don't Hire Models.<br>We Work With<br>Real Women.</h2>
-  <p class="sp-cs-p">Film your SCULPS moment in 9x16. Submit it. Get rewarded. Your confidence is worth something here.</p>
+  <div class="sp-cs-pre">{{ section.settings.cs_pre | default: 'SCULPS Creator Studio' }}</div>
+  <h2 class="sp-cs-h">{{ section.settings.cs_heading | default: 'We Don't Hire Models. We Work With Real Women.' | newline_to_br }}</h2>
+  <p class="sp-cs-p">{{ section.settings.cs_body | default: 'Film your SCULPS moment in 9x16. Submit it. Get rewarded. Your confidence is worth something here.' }}</p>
   <div class="sp-cs-tiers">
     <div class="sp-cs-tier">
-      <div class="sp-cs-tier-lbl">Quality Video</div>
-      <div class="sp-cs-tier-val">50% off your next order sitewide</div>
+      <div class="sp-cs-tier-lbl">{{ section.settings.cs_tier1_label | default: 'Quality Video' }}</div>
+      <div class="sp-cs-tier-val">{{ section.settings.cs_tier1_val | default: '50% off your next order sitewide' }}</div>
     </div>
     <div class="sp-cs-tier">
-      <div class="sp-cs-tier-lbl">Top Pick</div>
-      <div class="sp-cs-tier-val">Sponsored with our newest drop</div>
+      <div class="sp-cs-tier-lbl">{{ section.settings.cs_tier2_label | default: 'Top Pick' }}</div>
+      <div class="sp-cs-tier-val">{{ section.settings.cs_tier2_val | default: 'Sponsored with our newest drop' }}</div>
     </div>
     <div class="sp-cs-tier">
-      <div class="sp-cs-tier-lbl">Brand Partner</div>
-      <div class="sp-cs-tier-val">Monthly products + commission</div>
+      <div class="sp-cs-tier-lbl">{{ section.settings.cs_tier3_label | default: 'Brand Partner' }}</div>
+      <div class="sp-cs-tier-val">{{ section.settings.cs_tier3_val | default: 'Monthly products + commission' }}</div>
     </div>
   </div>
-  <a href="/pages/creator-studio" class="sp-cs-btn">Join Creator Studio</a>
+  <a href="{{ section.settings.cs_url | default: '/pages/creator-studio' }}" class="sp-cs-btn">{{ section.settings.cs_btn | default: 'Join Creator Studio' }}</a>
 </section>
 
 <!-- VALUES BAR -->
 <div class="sp-vals">
-  <div class="sp-val"><div class="sp-val-icon">◻</div><div class="sp-val-lbl">Invisible Design</div><div class="sp-val-sub">Seamless under anything</div></div>
-  <div class="sp-val"><div class="sp-val-icon">↺</div><div class="sp-val-lbl">Reusable</div><div class="sp-val-sub">40+ wears with care</div></div>
-  <div class="sp-val"><div class="sp-val-icon">◈</div><div class="sp-val-lbl">Medical Grade</div><div class="sp-val-sub">Body-safe materials</div></div>
-  <div class="sp-val"><div class="sp-val-icon">♡</div><div class="sp-val-lbl">Every Body</div><div class="sp-val-sub">All tones. All shapes.</div></div>
+  <div class="sp-val">
+    <div class="sp-val-icon">{{ section.settings.val1_icon | default: '◻' }}</div>
+    <div class="sp-val-lbl">{{ section.settings.val1_title | default: 'Invisible Design' }}</div>
+    <div class="sp-val-sub">{{ section.settings.val1_sub | default: 'Seamless under anything' }}</div>
+  </div>
+  <div class="sp-val">
+    <div class="sp-val-icon">{{ section.settings.val2_icon | default: '↺' }}</div>
+    <div class="sp-val-lbl">{{ section.settings.val2_title | default: 'Reusable' }}</div>
+    <div class="sp-val-sub">{{ section.settings.val2_sub | default: '40+ wears with care' }}</div>
+  </div>
+  <div class="sp-val">
+    <div class="sp-val-icon">{{ section.settings.val3_icon | default: '◈' }}</div>
+    <div class="sp-val-lbl">{{ section.settings.val3_title | default: 'Medical Grade' }}</div>
+    <div class="sp-val-sub">{{ section.settings.val3_sub | default: 'Body-safe materials' }}</div>
+  </div>
+  <div class="sp-val">
+    <div class="sp-val-icon">{{ section.settings.val4_icon | default: '♡' }}</div>
+    <div class="sp-val-lbl">{{ section.settings.val4_title | default: 'Every Body' }}</div>
+    <div class="sp-val-sub">{{ section.settings.val4_sub | default: 'All tones. All shapes.' }}</div>
+  </div>
 </div>
-
-<!-- FOOTER -->
-<footer class="sp-footer">
-  <div class="sp-ft-grid">
-    <div>
-      <div class="sp-ft-logo">SCULPS</div>
-      <div class="sp-ft-tag">Invisible support. Visible confidence.</div>
-      <div class="sp-ft-email-row">
-        <input class="sp-ft-input" type="email" placeholder="Your email address" id="sculps-email-input">
-        <button class="sp-ft-sub" onclick="sculpsEmailSignup()">Sign Up</button>
-      </div>
-    </div>
-    <div>
-      <div class="sp-ft-col-h">Shop</div>
-      <a class="sp-ft-lnk" href="/products/sculps-lift-inserts">Lift Inserts</a>
-      <a class="sp-ft-lnk" href="/products/sculps-nipple-covers">Nipple Covers</a>
-      <a class="sp-ft-lnk" href="/products/sculps-invisible-thong">Invisible Thong</a>
-      <a class="sp-ft-lnk" href="/products/sculps-invisibra">Invisibra</a>
-      <a class="sp-ft-lnk" href="/products/sculps-seamless-brief">Seamless Brief</a>
-      <a class="sp-ft-lnk" href="/products/sculps-summer-set">Summer Set</a>
-      <a class="sp-ft-lnk" href="/collections/accessories">Accessories</a>
-      <a class="sp-ft-lnk" href="/collections/kits">Kits</a>
-    </div>
-    <div>
-      <div class="sp-ft-col-h">About</div>
-      <a class="sp-ft-lnk" href="/pages/our-story">Our Story</a>
-      <a class="sp-ft-lnk" href="/pages/creator-studio">Creator Studio</a>
-      <a class="sp-ft-lnk" href="#reviews">Reviews</a>
-      <a class="sp-ft-lnk" href="/pages/size-guide">Size Guide</a>
-      <a class="sp-ft-lnk" href="/pages/faq">FAQ</a>
-    </div>
-    <div>
-      <div class="sp-ft-col-h">Legal</div>
-      <a class="sp-ft-lnk" href="/policies/privacy-policy">Privacy Policy</a>
-      <a class="sp-ft-lnk" href="/policies/terms-of-service">Terms of Service</a>
-      <a class="sp-ft-lnk" href="/policies/shipping-policy">Shipping</a>
-      <a class="sp-ft-lnk" href="/policies/refund-policy">Returns</a>
-    </div>
-  </div>
-  <div class="sp-ft-bottom">
-    <span>© 2025 SCULPS. All rights reserved.</span>
-    <span>Invisible Support. Visible Confidence.</span>
-  </div>
-</footer>
-
-</div><!-- /sculps-page -->
-
-<script>
-(function(){
-  // Email signup
-  window.sculpsEmailSignup = function() {
-    var input = document.getElementById('sculps-email-input');
-    if (!input) return;
-    var email = input.value.trim();
-    if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address.');
-      return;
-    }
-    // Shopify customer newsletter signup via contact form
-    fetch('/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'form_type=customer&utf8=%E2%9C%93&contact%5Bemail%5D=' + encodeURIComponent(email) + '&contact%5Btags%5D=newsletter'
-    }).then(function() {
-      input.value = '';
-      input.placeholder = 'Thanks for signing up!';
-      setTimeout(function(){ input.placeholder = 'Your email address'; }, 4000);
-    }).catch(function() {
-      input.placeholder = 'Thanks for signing up!';
-      input.value = '';
-    });
-  };
-
-  // Sticky header shadow on scroll
-  var hdr = document.querySelector('.sp-header');
-  if (hdr) {
-    window.addEventListener('scroll', function() {
-      if (window.scrollY > 10) {
-        hdr.style.boxShadow = '0 2px 24px rgba(26,20,16,.1)';
-      } else {
-        hdr.style.boxShadow = 'none';
-      }
-    }, { passive: true });
-  }
-
-  // Skin tone circles on hero — link to product
-  document.querySelectorAll('.sp-htone').forEach(function(el) {
-    el.addEventListener('click', function() {
-      window.location.href = '/products/sculps-lift-inserts';
-    });
-  });
-
-  // Shade circles — link to lift inserts
-  document.querySelectorAll('.sp-sh-circle').forEach(function(el) {
-    el.addEventListener('click', function() {
-      window.location.href = '/products/sculps-lift-inserts';
-    });
-  });
-})();
-</script>
 
 {% schema %}
 {
   "name": "SCULPS Home",
-  "tag": "div",
-  "class": "sculps-home-section",
-  "settings": []
+  "settings": [
+    {"type": "header", "content": "Announcement Bar"},
+    {"type": "text", "id": "ann_msg_1", "label": "Message 1", "default": "Free Shipping On Orders Over $75"},
+    {"type": "text", "id": "ann_msg_2", "label": "Message 2", "default": "We Don't Hire Models. We Work With Real Women."},
+    {"type": "text", "id": "ann_msg_3", "label": "Message 3", "default": "6 Skin Tones. Finally."},
+    {"type": "text", "id": "ann_msg_4", "label": "Message 4", "default": "Invisible Support. Visible Confidence."},
+    {"type": "text", "id": "ann_msg_5", "label": "Message 5", "default": "30 Day Returns. No Questions Asked."},
+    {"type": "text", "id": "ann_msg_6", "label": "Message 6", "default": "Real Women. Real Results. Real Rewards."},
+    {"type": "text", "id": "ann_msg_7", "label": "Message 7", "default": "Made For Every Body. Every Shade. Every Size."},
+    {"type": "range", "id": "ann_speed", "label": "Animation speed (seconds)", "min": 15, "max": 60, "step": 5, "default": 30},
+
+    {"type": "header", "content": "Hero"},
+    {"type": "image_picker", "id": "hero_image", "label": "Background image"},
+    {"type": "text", "id": "hero_pre", "label": "Pre-heading", "default": "New Collection — SCULPS 2025"},
+    {"type": "textarea", "id": "hero_headline", "label": "Headline", "default": "Invisible\nSupport.\nVisible\nConfidence."},
+    {"type": "text", "id": "hero_sub", "label": "Subheading", "default": "Seamless. Sculpted. You."},
+    {"type": "text", "id": "hero_btn1_label", "label": "Button 1 text", "default": "Shop Now"},
+    {"type": "url", "id": "hero_btn1_url", "label": "Button 1 URL"},
+    {"type": "text", "id": "hero_btn2_label", "label": "Button 2 text", "default": "View Kits"},
+    {"type": "url", "id": "hero_btn2_url", "label": "Button 2 URL"},
+    {"type": "range", "id": "hero_overlay", "label": "Overlay opacity", "min": 0, "max": 100, "step": 5, "default": 60},
+
+    {"type": "header", "content": "Category Grid"},
+    {"type": "text", "id": "cat1_title", "label": "Card 1 title", "default": "Invisible Bra Inserts"},
+    {"type": "text", "id": "cat1_sub", "label": "Card 1 subtitle", "default": "6 skin tones · Medical grade silicone"},
+    {"type": "url", "id": "cat1_url", "label": "Card 1 URL"},
+    {"type": "image_picker", "id": "cat1_image", "label": "Card 1 image"},
+    {"type": "text", "id": "cat2_title", "label": "Card 2 title", "default": "Seamless Intimates"},
+    {"type": "text", "id": "cat2_sub", "label": "Card 2 subtitle", "default": "Zero lines · All tones"},
+    {"type": "url", "id": "cat2_url", "label": "Card 2 URL"},
+    {"type": "image_picker", "id": "cat2_image", "label": "Card 2 image"},
+    {"type": "text", "id": "cat3_title", "label": "Card 3 title", "default": "The Sets"},
+    {"type": "text", "id": "cat3_sub", "label": "Card 3 subtitle", "default": "4 colorways · Drop 1"},
+    {"type": "url", "id": "cat3_url", "label": "Card 3 URL"},
+    {"type": "image_picker", "id": "cat3_image", "label": "Card 3 image"},
+    {"type": "text", "id": "cat4_title", "label": "Card 4 title", "default": "Accessories"},
+    {"type": "text", "id": "cat4_sub", "label": "Card 4 subtitle", "default": "Pouch · Socks · Scrunchie"},
+    {"type": "url", "id": "cat4_url", "label": "Card 4 URL"},
+    {"type": "image_picker", "id": "cat4_image", "label": "Card 4 image"},
+    {"type": "text", "id": "cat5_title", "label": "Card 5 title", "default": "Confidence Kit"},
+    {"type": "text", "id": "cat5_sub", "label": "Card 5 subtitle", "default": "$120 · Save $35"},
+    {"type": "url", "id": "cat5_url", "label": "Card 5 URL"},
+    {"type": "image_picker", "id": "cat5_image", "label": "Card 5 image"},
+    {"type": "text", "id": "cat6_title", "label": "Card 6 title", "default": "Girl Trip Kit"},
+    {"type": "text", "id": "cat6_sub", "label": "Card 6 subtitle", "default": "$120 · Save $31"},
+    {"type": "url", "id": "cat6_url", "label": "Card 6 URL"},
+    {"type": "image_picker", "id": "cat6_image", "label": "Card 6 image"},
+
+    {"type": "header", "content": "Best Sellers"},
+    {"type": "text", "id": "bs_title", "label": "Section title", "default": "Best Sellers"},
+    {"type": "collection", "id": "bs_collection", "label": "Collection"},
+    {"type": "range", "id": "bs_limit", "label": "Products to show", "min": 2, "max": 12, "step": 1, "default": 6},
+
+    {"type": "header", "content": "Find Your Shade"},
+    {"type": "text", "id": "shade_heading", "label": "Heading", "default": "FIND YOUR SHADE"},
+    {"type": "text", "id": "shade_sub", "label": "Subheading", "default": "Six tones. One will be yours."},
+
+    {"type": "header", "content": "Manifesto"},
+    {"type": "text", "id": "mani_pre", "label": "Pre-heading", "default": "The SCULPS Standard"},
+    {"type": "textarea", "id": "mani_headline", "label": "Headline", "default": "We Don't Hire Models. We Work With Real Women."},
+    {"type": "textarea", "id": "mani_body", "label": "Body text", "default": "Made for every body. Every shade. Every size. Invisible support so you can wear what you want, the way you want."},
+    {"type": "text", "id": "mani_btn_label", "label": "Button text", "default": "Our Story"},
+    {"type": "url", "id": "mani_btn_url", "label": "Button URL"},
+
+    {"type": "header", "content": "Kits Section"},
+    {"type": "image_picker", "id": "kit1_image", "label": "Kit 1 image"},
+    {"type": "text", "id": "kit1_name", "label": "Kit 1 name", "default": "SCULPS CONFIDENCE KIT"},
+    {"type": "text", "id": "kit1_badge", "label": "Kit 1 badge", "default": "Save $35"},
+    {"type": "text", "id": "kit1_items", "label": "Kit 1 items", "default": "Lift Inserts · Invisibra · Nipple Covers · Thong · Brief"},
+    {"type": "text", "id": "kit1_price", "label": "Kit 1 price", "default": "$120"},
+    {"type": "text", "id": "kit1_compare", "label": "Kit 1 compare at", "default": "$155"},
+    {"type": "text", "id": "kit1_btn", "label": "Kit 1 button", "default": "Shop Confidence Kit"},
+    {"type": "url", "id": "kit1_url", "label": "Kit 1 URL"},
+    {"type": "image_picker", "id": "kit2_image", "label": "Kit 2 image"},
+    {"type": "text", "id": "kit2_name", "label": "Kit 2 name", "default": "SCULPS GIRL TRIP KIT"},
+    {"type": "text", "id": "kit2_badge", "label": "Kit 2 badge", "default": "Save $31"},
+    {"type": "text", "id": "kit2_items", "label": "Kit 2 items", "default": "Summer Set · Brief · Scrunchie · Socks · Terry Pouch"},
+    {"type": "text", "id": "kit2_price", "label": "Kit 2 price", "default": "$120"},
+    {"type": "text", "id": "kit2_compare", "label": "Kit 2 compare at", "default": "$151"},
+    {"type": "text", "id": "kit2_btn", "label": "Kit 2 button", "default": "Shop Girl Trip Kit"},
+    {"type": "url", "id": "kit2_url", "label": "Kit 2 URL"},
+    {"type": "text", "id": "kits_banner_left", "label": "Banner left text", "default": "Buy Both Kits"},
+    {"type": "text", "id": "kits_banner_save", "label": "Banner save text", "default": "Save 30%"},
+    {"type": "text", "id": "kits_banner_right", "label": "Banner right text", "default": "Only $204"},
+    {"type": "url", "id": "kits_banner_url", "label": "Banner URL"},
+
+    {"type": "header", "content": "How It Works"},
+    {"type": "text", "id": "hiw1_title", "label": "Step 1 title", "default": "Choose Your Shade"},
+    {"type": "textarea", "id": "hiw1_desc", "label": "Step 1 description", "default": "Six skin tones numbered 1 to 6. Pick the circle that matches you. No labels. No guessing. No wrong answer."},
+    {"type": "text", "id": "hiw2_title", "label": "Step 2 title", "default": "Apply In Seconds"},
+    {"type": "textarea", "id": "hiw2_desc", "label": "Step 2 description", "default": "Peel. Press. Done. Medical grade adhesive holds all day. Reusable 30 to 40 times with care."},
+    {"type": "text", "id": "hiw3_title", "label": "Step 3 title", "default": "Feel Confident All Day"},
+    {"type": "textarea", "id": "hiw3_desc", "label": "Step 3 description", "default": "Invisible under anything. No lines. No straps. Just you and your outfit exactly how you want."},
+
+    {"type": "header", "content": "TikTok Testimonials"},
+    {"type": "text", "id": "tt_heading", "label": "Heading", "default": "Real Women. Real Results."},
+    {"type": "text", "id": "tt_sub", "label": "Subheading", "default": "Submit your video · Get rewarded"},
+    {"type": "text", "id": "tt1_handle", "label": "Card 1 handle", "default": "@jasmine.sculps"},
+    {"type": "text", "id": "tt1_likes", "label": "Card 1 likes", "default": "♥ 847K"},
+    {"type": "text", "id": "tt2_handle", "label": "Card 2 handle", "default": "@brianna.real"},
+    {"type": "text", "id": "tt2_likes", "label": "Card 2 likes", "default": "♥ 523K"},
+    {"type": "text", "id": "tt3_handle", "label": "Card 3 handle", "default": "@kayla.fits"},
+    {"type": "text", "id": "tt3_likes", "label": "Card 3 likes", "default": "♥ 312K"},
+    {"type": "text", "id": "tt4_handle", "label": "Card 4 handle", "default": "@destiny.w"},
+    {"type": "text", "id": "tt4_likes", "label": "Card 4 likes", "default": "♥ 289K"},
+    {"type": "text", "id": "tt5_handle", "label": "Card 5 handle", "default": "@maria.sculps"},
+    {"type": "text", "id": "tt5_likes", "label": "Card 5 likes", "default": "♥ 198K"},
+
+    {"type": "header", "content": "Reviews"},
+    {"type": "text", "id": "rev_heading", "label": "Heading", "default": "Real Reviews From Real Women"},
+    {"type": "text", "id": "rev1_text", "label": "Review 1", "default": "\"These inserts are a game changer. I feel so confident in everything I wear. I cannot go back to a regular bra.\""},
+    {"type": "text", "id": "rev1_name", "label": "Reviewer 1", "default": "Jessica R. — Verified Buyer"},
+    {"type": "text", "id": "rev2_text", "label": "Review 2", "default": "\"Finally something that actually stays in place and feels like nothing. Wore these all day at a wedding. Perfect.\""},
+    {"type": "text", "id": "rev2_name", "label": "Reviewer 2", "default": "Brianna K. — Verified Buyer"},
+    {"type": "text", "id": "rev3_text", "label": "Review 3", "default": "\"The best investment I have made for myself. Worth every single penny. I use every product in my kit weekly.\""},
+    {"type": "text", "id": "rev3_name", "label": "Reviewer 3", "default": "Lauren M. — Verified Buyer"},
+    {"type": "text", "id": "rev4_text", "label": "Review 4 (optional)", "default": ""},
+    {"type": "text", "id": "rev4_name", "label": "Reviewer 4 name", "default": ""},
+    {"type": "text", "id": "rev5_text", "label": "Review 5 (optional)", "default": ""},
+    {"type": "text", "id": "rev5_name", "label": "Reviewer 5 name", "default": ""},
+    {"type": "text", "id": "rev6_text", "label": "Review 6 (optional)", "default": ""},
+    {"type": "text", "id": "rev6_name", "label": "Reviewer 6 name", "default": ""},
+
+    {"type": "header", "content": "Creator Studio"},
+    {"type": "text", "id": "cs_pre", "label": "Pre-heading", "default": "SCULPS Creator Studio"},
+    {"type": "textarea", "id": "cs_heading", "label": "Heading", "default": "We Don't Hire Models. We Work With Real Women."},
+    {"type": "textarea", "id": "cs_body", "label": "Body text", "default": "Film your SCULPS moment in 9x16. Submit it. Get rewarded. Your confidence is worth something here."},
+    {"type": "text", "id": "cs_tier1_label", "label": "Tier 1 label", "default": "Quality Video"},
+    {"type": "text", "id": "cs_tier1_val", "label": "Tier 1 description", "default": "50% off your next order sitewide"},
+    {"type": "text", "id": "cs_tier2_label", "label": "Tier 2 label", "default": "Top Pick"},
+    {"type": "text", "id": "cs_tier2_val", "label": "Tier 2 description", "default": "Sponsored with our newest drop"},
+    {"type": "text", "id": "cs_tier3_label", "label": "Tier 3 label", "default": "Brand Partner"},
+    {"type": "text", "id": "cs_tier3_val", "label": "Tier 3 description", "default": "Monthly products + commission"},
+    {"type": "text", "id": "cs_btn", "label": "Button text", "default": "Join Creator Studio"},
+    {"type": "url", "id": "cs_url", "label": "Button URL"},
+
+    {"type": "header", "content": "Values Bar"},
+    {"type": "text", "id": "val1_icon", "label": "Value 1 icon", "default": "◻"},
+    {"type": "text", "id": "val1_title", "label": "Value 1 title", "default": "Invisible Design"},
+    {"type": "text", "id": "val1_sub", "label": "Value 1 subtitle", "default": "Seamless under anything"},
+    {"type": "text", "id": "val2_icon", "label": "Value 2 icon", "default": "↺"},
+    {"type": "text", "id": "val2_title", "label": "Value 2 title", "default": "Reusable"},
+    {"type": "text", "id": "val2_sub", "label": "Value 2 subtitle", "default": "40+ wears with care"},
+    {"type": "text", "id": "val3_icon", "label": "Value 3 icon", "default": "◈"},
+    {"type": "text", "id": "val3_title", "label": "Value 3 title", "default": "Medical Grade"},
+    {"type": "text", "id": "val3_sub", "label": "Value 3 subtitle", "default": "Body-safe materials"},
+    {"type": "text", "id": "val4_icon", "label": "Value 4 icon", "default": "♡"},
+    {"type": "text", "id": "val4_title", "label": "Value 4 title", "default": "Every Body"},
+    {"type": "text", "id": "val4_sub", "label": "Value 4 subtitle", "default": "All tones. All shapes."}
+  ]
 }
 {% endschema %}

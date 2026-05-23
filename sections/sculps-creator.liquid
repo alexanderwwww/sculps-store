@@ -1,0 +1,165 @@
+<style>
+.sp-cr-hero{background:var(--black);padding:100px 60px;text-align:center;position:relative;overflow:hidden}
+.sp-cr-hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1A1410,#3D2314,#7B4F3A);opacity:.7}
+.sp-cr-hero-content{position:relative;z-index:2}
+.sp-cr-hero-pre{font-size:9px;font-weight:700;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:24px}
+.sp-cr-hero-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,10vw,120px);color:var(--white);line-height:.9;letter-spacing:4px;margin-bottom:20px}
+.sp-cr-hero-mani{font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,4vw,44px);color:var(--gold);letter-spacing:3px;margin-bottom:20px}
+.sp-cr-hero-sub{font-size:14px;color:rgba(255,255,255,.5);font-style:italic;letter-spacing:.5px}
+.sp-cr-tiers{padding:80px 60px;background:var(--cream)}
+.sp-cr-tiers-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,56px);letter-spacing:3px;text-align:center;margin-bottom:48px}
+.sp-cr-tiers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:0}
+.sp-cr-tier-card{background:var(--white);padding:36px 28px;border-top:3px solid var(--gold)}
+.sp-cr-tier-label{font-size:9px;font-weight:900;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:16px}
+.sp-cr-tier-h{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;margin-bottom:14px}
+.sp-cr-tier-p{font-size:13px;color:var(--grey);line-height:1.8}
+.sp-cr-how{padding:80px 60px;text-align:center}
+.sp-cr-how-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,52px);letter-spacing:3px;margin-bottom:48px}
+.sp-cr-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;max-width:900px;margin:0 auto}
+.sp-cr-step-n{font-family:'Bebas Neue',sans-serif;font-size:72px;color:rgba(26,20,16,.06);line-height:1;margin-bottom:12px}
+.sp-cr-step-t{font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.sp-cr-step-p{font-size:13px;color:var(--grey);line-height:1.7}
+.sp-cr-form-s{background:var(--black);padding:80px 60px}
+.sp-cr-form-pre{font-size:9px;font-weight:700;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:20px;text-align:center}
+.sp-cr-form-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,72px);color:var(--white);letter-spacing:3px;text-align:center;margin-bottom:48px;line-height:.95}
+.sp-cr-form{max-width:560px;margin:0 auto}
+.sp-cr-input-wrap{margin-bottom:16px}
+.sp-cr-input{width:100%;padding:14px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--white);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box}
+.sp-cr-input::placeholder{color:rgba(255,255,255,.3)}
+.sp-cr-input:focus{border-color:var(--gold)}
+.sp-cr-upload{width:100%;padding:16px;border:1.5px dashed rgba(255,255,255,.2);background:rgba(255,255,255,.03);color:rgba(255,255,255,.5);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;margin-bottom:24px;display:block;box-sizing:border-box}
+.sp-cr-upload:hover{border-color:var(--gold);color:var(--gold)}
+.sp-cr-submit{width:100%;padding:17px;background:var(--white);color:var(--black);font-size:11px;font-weight:900;letter-spacing:4px;text-transform:uppercase;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;margin-bottom:20px}
+.sp-cr-submit:hover{background:var(--gold);color:var(--white)}
+.sp-cr-tagline{text-align:center;font-size:12px;color:rgba(255,255,255,.3);font-style:italic;letter-spacing:.5px}
+@media(max-width:900px){
+  .sp-cr-hero{padding:80px 20px}
+  .sp-cr-tiers{padding:60px 20px}
+  .sp-cr-tiers-grid{grid-template-columns:1fr;gap:16px}
+  .sp-cr-how{padding:60px 20px}
+  .sp-cr-steps{grid-template-columns:1fr;gap:32px}
+  .sp-cr-form-s{padding:60px 20px}
+}
+</style>
+
+<!-- Hero -->
+<section class="sp-cr-hero">
+  <div class="sp-cr-hero-bg"></div>
+  <div class="sp-cr-hero-content">
+    <div class="sp-cr-hero-pre">{{ section.settings.hero_pre | default: 'SCULPS Creator Studio' }}</div>
+    <h1 class="sp-cr-hero-h">{{ section.settings.hero_h | default: "Create.\nSubmit.\nGet Paid." | newline_to_br }}</h1>
+    <div class="sp-cr-hero-mani">{{ section.settings.hero_mani | default: "We Don't Hire Models. We Work With Real Women." }}</div>
+    <p class="sp-cr-hero-sub">{{ section.settings.hero_sub | default: 'Real women. Real results. Real rewards.' }}</p>
+  </div>
+</section>
+
+<!-- Reward Tiers -->
+<section class="sp-cr-tiers">
+  <h2 class="sp-cr-tiers-h">{{ section.settings.tiers_h | default: 'Three Ways To Get Rewarded' }}</h2>
+  <div class="sp-cr-tiers-grid">
+    <div class="sp-cr-tier-card">
+      <div class="sp-cr-tier-label">{{ section.settings.tier1_label | default: 'Quality Video' }}</div>
+      <div class="sp-cr-tier-h">50% Off</div>
+      <p class="sp-cr-tier-p">{{ section.settings.tier1_p | default: 'Film a 9x16 video wearing your SCULPS. If your video meets our quality standard you get 50% off your next order sitewide. No experience needed. Just confidence.' }}</p>
+    </div>
+    <div class="sp-cr-tier-card">
+      <div class="sp-cr-tier-label">{{ section.settings.tier2_label | default: 'Featured Creator' }}</div>
+      <div class="sp-cr-tier-h">Free Drop</div>
+      <p class="sp-cr-tier-p">{{ section.settings.tier2_p | default: 'Our top pick each month gets sponsored with our newest drop. Free product. Featured on our page. Your moment to shine.' }}</p>
+    </div>
+    <div class="sp-cr-tier-card">
+      <div class="sp-cr-tier-label">{{ section.settings.tier3_label | default: 'Brand Partner' }}</div>
+      <div class="sp-cr-tier-h">Commission</div>
+      <p class="sp-cr-tier-p">{{ section.settings.tier3_p | default: 'The highest engagement video becomes a SCULPS brand partner. Monthly free products. Commission on every sale you drive. This is how you get paid to be you.' }}</p>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="sp-cr-how">
+  <h2 class="sp-cr-how-h">How It Works</h2>
+  <div class="sp-cr-steps">
+    <div>
+      <div class="sp-cr-step-n">01</div>
+      <div class="sp-cr-step-t">Film Your Moment</div>
+      <p class="sp-cr-step-p">Wear your SCULPS. Film in 9x16 vertical format. Natural lighting. Real you. No studio required.</p>
+    </div>
+    <div>
+      <div class="sp-cr-step-n">02</div>
+      <div class="sp-cr-step-t">Submit Below</div>
+      <p class="sp-cr-step-p">Fill out the form. Upload your video. Add your handle so we can tag you. We review every submission.</p>
+    </div>
+    <div>
+      <div class="sp-cr-step-n">03</div>
+      <div class="sp-cr-step-t">Get Rewarded</div>
+      <p class="sp-cr-step-p">Quality videos get 50% off. Top picks get the new drop free. Brand partners get monthly products and commission.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Submission Form -->
+<section class="sp-cr-form-s">
+  <div class="sp-cr-form-pre">Submit Your Video</div>
+  <h2 class="sp-cr-form-h">{{ section.settings.form_h | default: "Your Confidence\nIs Worth\nSomething Here." | newline_to_br }}</h2>
+  <form class="sp-cr-form" action="/contact#creator_form" method="post" enctype="multipart/form-data" id="sp-creator-form">
+    <input type="hidden" name="form_type" value="contact">
+    <input type="hidden" name="utf8" value="&#x2713;">
+    <input type="hidden" name="contact[subject]" value="Creator Studio Submission">
+    <div class="sp-cr-input-wrap">
+      <input class="sp-cr-input" type="text" name="contact[name]" placeholder="{{ section.settings.field_name | default: 'Your name' }}" required>
+    </div>
+    <div class="sp-cr-input-wrap">
+      <input class="sp-cr-input" type="email" name="contact[email]" placeholder="{{ section.settings.field_email | default: 'Your email address' }}" required>
+    </div>
+    <div class="sp-cr-input-wrap">
+      <input class="sp-cr-input" type="text" name="contact[body]" placeholder="{{ section.settings.field_handle | default: 'Your TikTok or Instagram handle (@)' }}" required>
+    </div>
+    <label class="sp-cr-upload" id="sp-upload-label">
+      <input type="file" name="contact[video]" accept="video/*,image/*" style="display:none" id="sp-file-input">
+      Upload Your Video (MP4, MOV, or screenshot)
+    </label>
+    <button type="submit" class="sp-cr-submit">{{ section.settings.submit_label | default: 'Submit Your Video' }}</button>
+    <p class="sp-cr-tagline">{{ section.settings.tagline | default: 'Your confidence is worth something here.' }}</p>
+  </form>
+</section>
+
+<script>
+(function(){
+  var fileInput = document.getElementById('sp-file-input');
+  var uploadLabel = document.getElementById('sp-upload-label');
+  if(fileInput && uploadLabel){
+    fileInput.addEventListener('change', function(){
+      if(this.files && this.files[0]){
+        uploadLabel.textContent = '✓ ' + this.files[0].name;
+      } else {
+        uploadLabel.textContent = 'Upload Your Video (MP4, MOV, or screenshot)';
+      }
+    });
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "SCULPS Creator Studio",
+  "settings": [
+    {"type": "text", "id": "hero_pre", "label": "Pre-heading", "default": "SCULPS Creator Studio"},
+    {"type": "textarea", "id": "hero_h", "label": "Hero heading", "default": "Create.\nSubmit.\nGet Paid."},
+    {"type": "text", "id": "hero_mani", "label": "Manifesto line", "default": "We Don't Hire Models. We Work With Real Women."},
+    {"type": "text", "id": "hero_sub", "label": "Subheading", "default": "Real women. Real results. Real rewards."},
+    {"type": "text", "id": "tiers_h", "label": "Tiers heading", "default": "Three Ways To Get Rewarded"},
+    {"type": "text", "id": "tier1_label", "label": "Tier 1 label", "default": "Quality Video"},
+    {"type": "textarea", "id": "tier1_p", "label": "Tier 1 description", "default": "Film a 9x16 video wearing your SCULPS. If your video meets our quality standard you get 50% off your next order sitewide. No experience needed. Just confidence."},
+    {"type": "text", "id": "tier2_label", "label": "Tier 2 label", "default": "Featured Creator"},
+    {"type": "textarea", "id": "tier2_p", "label": "Tier 2 description", "default": "Our top pick each month gets sponsored with our newest drop. Free product. Featured on our page. Your moment to shine."},
+    {"type": "text", "id": "tier3_label", "label": "Tier 3 label", "default": "Brand Partner"},
+    {"type": "textarea", "id": "tier3_p", "label": "Tier 3 description", "default": "The highest engagement video becomes a SCULPS brand partner. Monthly free products. Commission on every sale you drive."},
+    {"type": "textarea", "id": "form_h", "label": "Form heading", "default": "Your Confidence\nIs Worth\nSomething Here."},
+    {"type": "text", "id": "field_name", "label": "Name field placeholder", "default": "Your name"},
+    {"type": "text", "id": "field_email", "label": "Email field placeholder", "default": "Your email address"},
+    {"type": "text", "id": "field_handle", "label": "Handle field placeholder", "default": "Your TikTok or Instagram handle (@)"},
+    {"type": "text", "id": "submit_label", "label": "Submit button text", "default": "Submit Your Video"},
+    {"type": "text", "id": "tagline", "label": "Tagline below button", "default": "Your confidence is worth something here."}
+  ]
+}
+{% endschema %}

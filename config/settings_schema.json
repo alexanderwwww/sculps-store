@@ -1,0 +1,129 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "SCULPS",
+    "theme_version": "1.0.0",
+    "theme_author": "SCULPS Brand",
+    "theme_documentation_url": "https://getsculps.com",
+    "theme_support_url": "https://getsculps.com"
+  },
+  {
+    "name": "Logo & Identity",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "logo",
+        "label": "Logo image"
+      },
+      {
+        "type": "range",
+        "id": "logo_height",
+        "label": "Logo height",
+        "min": 20,
+        "max": 80,
+        "step": 2,
+        "unit": "px",
+        "default": 28
+      },
+      {
+        "type": "image_picker",
+        "id": "favicon",
+        "label": "Favicon"
+      }
+    ]
+  },
+  {
+    "name": "Announcement Bar",
+    "settings": [
+      {
+        "type": "text",
+        "id": "ann_msg_1",
+        "label": "Message 1",
+        "default": "Free Shipping On Orders Over $75"
+      },
+      {
+        "type": "text",
+        "id": "ann_msg_2",
+        "label": "Message 2",
+        "default": "We Don't Hire Models. We Work With Real Women."
+      },
+      {
+        "type": "text",
+        "id": "ann_msg_3",
+        "label": "Message 3",
+        "default": "6 Skin Tones. Finally."
+      },
+      {
+        "type": "text",
+        "id": "ann_msg_4",
+        "label": "Message 4",
+        "default": "Invisible Support. Visible Confidence."
+      },
+      {
+        "type": "text",
+        "id": "ann_msg_5",
+        "label": "Message 5",
+        "default": "30 Day Returns. No Questions Asked."
+      },
+      {
+        "type": "text",
+        "id": "ann_msg_6",
+        "label": "Message 6",
+        "default": "Real Women. Real Results. Real Rewards."
+      },
+      {
+        "type": "text",
+        "id": "ann_msg_7",
+        "label": "Message 7",
+        "default": "Made For Every Body. Every Shade. Every Size."
+      },
+      {
+        "type": "range",
+        "id": "ann_speed",
+        "label": "Scroll speed (seconds)",
+        "min": 15,
+        "max": 60,
+        "step": 5,
+        "unit": "s",
+        "default": 30
+      }
+    ]
+  },
+  {
+    "name": "Footer",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "footer_logo",
+        "label": "Footer logo"
+      },
+      {
+        "type": "text",
+        "id": "footer_tagline",
+        "label": "Tagline",
+        "default": "Invisible support. Visible confidence."
+      },
+      {
+        "type": "text",
+        "id": "footer_email_placeholder",
+        "label": "Email placeholder",
+        "default": "Your email address"
+      },
+      {
+        "type": "url",
+        "id": "social_instagram",
+        "label": "Instagram URL"
+      },
+      {
+        "type": "url",
+        "id": "social_tiktok",
+        "label": "TikTok URL"
+      },
+      {
+        "type": "url",
+        "id": "social_youtube",
+        "label": "YouTube URL"
+      }
+    ]
+  }
+]

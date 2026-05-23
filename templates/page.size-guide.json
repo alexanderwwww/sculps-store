@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "main": {
+      "type": "sculps-size-guide",
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}

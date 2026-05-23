@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "main": {
+      "type": "sculps-creator",
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}
