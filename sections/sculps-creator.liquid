@@ -47,8 +47,8 @@
   <div class="sp-cr-hero-bg"></div>
   <div class="sp-cr-hero-content">
     <div class="sp-cr-hero-pre">{{ section.settings.hero_pre | default: 'SCULPS Creator Studio' }}</div>
-    <h1 class="sp-cr-hero-h">{{ section.settings.hero_h | default: "Create.\nSubmit.\nGet Paid." | newline_to_br }}</h1>
-    <div class="sp-cr-hero-mani">{{ section.settings.hero_mani | default: "We Don't Hire Models. We Work With Real Women." }}</div>
+    <h1 class="sp-cr-hero-h">{{ section.settings.hero_h | newline_to_br }}</h1>
+    <div class="sp-cr-hero-mani">{{ section.settings.hero_mani }}</div>
     <p class="sp-cr-hero-sub">{{ section.settings.hero_sub | default: 'Real women. Real results. Real rewards.' }}</p>
   </div>
 </section>
@@ -100,7 +100,7 @@
 <!-- Submission Form -->
 <section class="sp-cr-form-s">
   <div class="sp-cr-form-pre">Submit Your Video</div>
-  <h2 class="sp-cr-form-h">{{ section.settings.form_h | default: "Your Confidence\nIs Worth\nSomething Here." | newline_to_br }}</h2>
+  <h2 class="sp-cr-form-h">{{ section.settings.form_h | newline_to_br }}</h2>
   <form class="sp-cr-form" action="/contact#creator_form" method="post" enctype="multipart/form-data" id="sp-creator-form">
     <input type="hidden" name="form_type" value="contact">
     <input type="hidden" name="utf8" value="&#x2713;">

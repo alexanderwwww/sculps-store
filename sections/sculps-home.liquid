@@ -208,7 +208,7 @@
 <!-- MANIFESTO -->
 <section class="sp-manifesto">
   <div class="sp-mani-pre">{{ section.settings.mani_pre | default: 'The SCULPS Standard' }}</div>
-  <h2 class="sp-mani-h">{{ section.settings.mani_headline | default: 'We Don't Hire Models. We Work With Real Women.' | newline_to_br }}</h2>
+  <h2 class="sp-mani-h">{{ section.settings.mani_headline | newline_to_br }}</h2>
   <p class="sp-mani-p">{{ section.settings.mani_body | default: 'Made for every body. Every shade. Every size. Invisible support so you can wear what you want, the way you want.' }}</p>
   <a href="{{ section.settings.mani_btn_url | default: '/pages/about' }}" class="sp-mani-btn">{{ section.settings.mani_btn_label | default: 'Our Story' }}</a>
 </section>
@@ -382,7 +382,7 @@
 <!-- CREATOR STUDIO -->
 <section class="sp-cs-s" id="creators">
   <div class="sp-cs-pre">{{ section.settings.cs_pre | default: 'SCULPS Creator Studio' }}</div>
-  <h2 class="sp-cs-h">{{ section.settings.cs_heading | default: 'We Don't Hire Models. We Work With Real Women.' | newline_to_br }}</h2>
+  <h2 class="sp-cs-h">{{ section.settings.cs_heading | newline_to_br }}</h2>
   <p class="sp-cs-p">{{ section.settings.cs_body | default: 'Film your SCULPS moment in 9x16. Submit it. Get rewarded. Your confidence is worth something here.' }}</p>
   <div class="sp-cs-tiers">
     <div class="sp-cs-tier">
@@ -544,12 +544,12 @@
     {"type": "text", "id": "rev2_name", "label": "Reviewer 2", "default": "Brianna K. — Verified Buyer"},
     {"type": "text", "id": "rev3_text", "label": "Review 3", "default": "\"The best investment I have made for myself. Worth every single penny. I use every product in my kit weekly.\""},
     {"type": "text", "id": "rev3_name", "label": "Reviewer 3", "default": "Lauren M. — Verified Buyer"},
-    {"type": "text", "id": "rev4_text", "label": "Review 4 (optional)", "default": ""},
-    {"type": "text", "id": "rev4_name", "label": "Reviewer 4 name", "default": ""},
-    {"type": "text", "id": "rev5_text", "label": "Review 5 (optional)", "default": ""},
-    {"type": "text", "id": "rev5_name", "label": "Reviewer 5 name", "default": ""},
-    {"type": "text", "id": "rev6_text", "label": "Review 6 (optional)", "default": ""},
-    {"type": "text", "id": "rev6_name", "label": "Reviewer 6 name", "default": ""},
+    {"type": "text", "id": "rev4_text", "label": "Review 4 (optional)"},
+    {"type": "text", "id": "rev4_name", "label": "Reviewer 4 name"},
+    {"type": "text", "id": "rev5_text", "label": "Review 5 (optional)"},
+    {"type": "text", "id": "rev5_name", "label": "Reviewer 5 name"},
+    {"type": "text", "id": "rev6_text", "label": "Review 6 (optional)"},
+    {"type": "text", "id": "rev6_name", "label": "Reviewer 6 name"},
 
     {"type": "header", "content": "Creator Studio"},
     {"type": "text", "id": "cs_pre", "label": "Pre-heading", "default": "SCULPS Creator Studio"},
