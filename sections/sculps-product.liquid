@@ -410,13 +410,13 @@
 </section>
 
 <!-- RELATED PRODUCTS -->
-{%- if product.collection -%}
-  {%- assign related = product.collection.products -%}
+{%- if collection -%}
+  {%- assign related = collection.products -%}
   {%- if related.size > 1 -%}
     <section class="sp-pdp-related">
       <div class="sp-pdp-related-h">
         <span>You May Also Like</span>
-        <a href="{{ product.collection.url }}" style="font-size:9px;color:var(--grey);letter-spacing:1px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:2px">View All →</a>
+        <a href="{{ collection.url }}" style="font-size:9px;color:var(--grey);letter-spacing:1px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:2px">View All →</a>
       </div>
       <div class="sp-bs-scroll">
         {%- for rel in related limit: 6 -%}

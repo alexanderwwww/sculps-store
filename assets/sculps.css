@@ -446,8 +446,10 @@ x-section-footer { display: none !important; }
 }
 .sp-ft-sub:hover { background: var(--gold); color: var(--white); }
 .sp-ft-col-h  { font-size: 8px; font-weight: 900; color: var(--white); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
-.sp-ft-lnk    { display: block; font-size: 12px; color: rgba(255,255,255,.35); margin-bottom: 8px; transition: color .2s; }
-.sp-ft-lnk:hover { color: var(--white); }
+.sp-ft-lnk    { display: block; font-size: 12px; color: rgba(255,255,255,.15); margin-bottom: 8px; transition: color .2s; }
+.sp-ft-lnk:hover { color: #ffffff; }
+.sp-ft-links a { display: block; font-size: 12px; color: rgba(255,255,255,.15); margin-bottom: 8px; transition: color .2s; }
+.sp-ft-links a:hover { color: #ffffff; }
 .sp-ft-bottom { border-top: 1px solid rgba(255,255,255,.06); padding-top: 24px; display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,.25); }
 
 /* ─────────────────────────────────────────────────

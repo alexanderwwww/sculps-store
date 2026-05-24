@@ -64,6 +64,7 @@
   <nav id="sculps-mobNav" class="sp-mob-nav" aria-label="Mobile navigation">
     <button id="sculps-mobClose" class="sp-mob-close" aria-label="Close menu">&#x2715;</button>
     <ul class="sp-mob-nav-links">
+      <li><a href="/">Home</a></li>
       <li><a href="/collections/all">Shop</a></li>
       <li><a href="/collections/kits">Kits</a></li>
       <li><a href="/collections/sets">Sets</a></li>
@@ -126,25 +127,9 @@
     <!-- Logo -->
     <a href="/" class="sp-logo" aria-label="{{ shop.name }} home">
       {% if settings.logo %}
-        <img
-          src="{{ settings.logo | image_url: width: 300 }}"
-          alt="{{ shop.name }}"
-          class="sp-logo-img"
-          style="height:{{ settings.logo_height | default: 28 }}px;width:auto"
-          loading="eager"
-          fetchpriority="high"
-        >
+        {{ settings.logo | image_url: width: 200 | image_tag: alt: 'SCULPS' }}
       {% else %}
-        <svg viewBox="0 0 260 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-          <text
-            x="0"
-            y="38"
-            font-family="'Bebas Neue', sans-serif"
-            font-size="42"
-            letter-spacing="8"
-            fill="#1A1410"
-          >SCULPS</text>
-        </svg>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:4px;color:#1A1410;">SCULPS</span>
       {% endif %}
     </a>
 

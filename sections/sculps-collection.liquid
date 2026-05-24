@@ -64,9 +64,13 @@
   {%- endif -%}
   <div class="sp-coll-banner-grad"></div>
   <div class="sp-coll-banner-content">
-    <div class="sp-coll-banner-h">{{ section.settings.banner_heading | default: c.title }}</div>
-    {%- if section.settings.banner_sub != blank or c.description != blank -%}
-      <div class="sp-coll-banner-sub">{{ section.settings.banner_sub | default: c.description | strip_html | truncate: 100 }}</div>
+    {%- assign _bh = section.settings.banner_heading -%}
+    {%- if _bh == blank -%}{%- assign _bh = c.title -%}{%- endif -%}
+    <div class="sp-coll-banner-h">{{ _bh }}</div>
+    {%- assign _bs = section.settings.banner_sub -%}
+    {%- if _bs == blank -%}{%- assign _bs = c.description | strip_html | truncate: 100 -%}{%- endif -%}
+    {%- if _bs != blank -%}
+      <div class="sp-coll-banner-sub">{{ _bs }}</div>
     {%- endif -%}
   </div>
 </div>
