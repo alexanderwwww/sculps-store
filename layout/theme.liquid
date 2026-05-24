@@ -127,7 +127,8 @@
     <!-- Logo -->
     <a href="/" class="sp-logo" aria-label="{{ shop.name }} home" style="display:flex;align-items:center;">
       {% if settings.logo %}
-        {{ settings.logo | image_url: width: 200 | image_tag: alt: 'SCULPS' }}
+        {%- assign logo_h = settings.logo_height | default: 36 -%}
+        <img src="{{ settings.logo | image_url: width: 400 }}" alt="{{ shop.name }}" style="height:{{ logo_h }}px;width:auto;display:block;" loading="eager">
       {% else %}
         <span style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:4px;color:#1A1410;">SCULPS</span>
       {% endif %}

@@ -1,0 +1,13 @@
+{
+  "current": {
+    "colors_solid_button_labels": "#FFFFFF",
+    "colors_accent_1": "#1A1410",
+    "colors_accent_2": "#C9A96E",
+    "colors_text": "#1A1410",
+    "colors_outline_button_labels": "#1A1410",
+    "colors_background_1": "#FFFFFF",
+    "colors_background_2": "#FAF8F5",
+    "logo_height": 36
+  },
+  "presets": {}
+}
