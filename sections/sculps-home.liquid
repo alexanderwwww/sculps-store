@@ -32,7 +32,8 @@
     <a href="/collections/all">View All →</a>
   </div>
   <div class="sp-cat-grid">
-    <a href="{{ section.settings.cat1_url | default: '/collections/intimates' }}" class="sp-cat-card">
+    <!-- Card 1: tall left, full height -->
+    <a href="{{ section.settings.cat1_url | default: '/collections/intimates' }}" class="sp-cat-card sp-cat-main">
       {%- if section.settings.cat1_image %}<img src="{{ section.settings.cat1_image | image_url: width: 800 }}" alt="{{ section.settings.cat1_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c1"></div>{%- endif -%}
       <div class="sp-cat-grad"></div>
       <div class="sp-cat-info">
@@ -40,46 +41,53 @@
         <div class="sp-cat-sub">{{ section.settings.cat1_sub | default: '6 skin tones · Medical grade silicone' }}</div>
       </div>
     </a>
-    <a href="{{ section.settings.cat2_url | default: '/collections/bottoms' }}" class="sp-cat-card">
-      {%- if section.settings.cat2_image %}<img src="{{ section.settings.cat2_image | image_url: width: 800 }}" alt="{{ section.settings.cat2_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c2"></div>{%- endif -%}
-      <div class="sp-cat-grad"></div>
-      <div class="sp-cat-info">
-        <div class="sp-cat-name">{{ section.settings.cat2_title | default: 'Seamless Intimates' }}</div>
-        <div class="sp-cat-sub">{{ section.settings.cat2_sub | default: 'Zero lines · All tones' }}</div>
+    <!-- Right column: top row (2 cards) + bottom row (3 cards) -->
+    <div class="sp-cat-right">
+      <div class="sp-cat-row sp-cat-row-top">
+        <a href="{{ section.settings.cat2_url | default: '/collections/bottoms' }}" class="sp-cat-card">
+          {%- if section.settings.cat2_image %}<img src="{{ section.settings.cat2_image | image_url: width: 800 }}" alt="{{ section.settings.cat2_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c2"></div>{%- endif -%}
+          <div class="sp-cat-grad"></div>
+          <div class="sp-cat-info">
+            <div class="sp-cat-name">{{ section.settings.cat2_title | default: 'Seamless Intimates' }}</div>
+            <div class="sp-cat-sub">{{ section.settings.cat2_sub | default: 'Zero lines · All tones' }}</div>
+          </div>
+        </a>
+        <a href="{{ section.settings.cat3_url | default: '/collections/sets' }}" class="sp-cat-card">
+          {%- if section.settings.cat3_image %}<img src="{{ section.settings.cat3_image | image_url: width: 800 }}" alt="{{ section.settings.cat3_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c3"></div>{%- endif -%}
+          <div class="sp-cat-grad"></div>
+          <div class="sp-cat-info">
+            <div class="sp-cat-name">{{ section.settings.cat3_title | default: 'The Sets' }}</div>
+            <div class="sp-cat-sub">{{ section.settings.cat3_sub | default: '4 colorways · Drop 1' }}</div>
+          </div>
+        </a>
       </div>
-    </a>
-    <a href="{{ section.settings.cat3_url | default: '/collections/sets' }}" class="sp-cat-card">
-      {%- if section.settings.cat3_image %}<img src="{{ section.settings.cat3_image | image_url: width: 800 }}" alt="{{ section.settings.cat3_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c3"></div>{%- endif -%}
-      <div class="sp-cat-grad"></div>
-      <div class="sp-cat-info">
-        <div class="sp-cat-name">{{ section.settings.cat3_title | default: 'The Sets' }}</div>
-        <div class="sp-cat-sub">{{ section.settings.cat3_sub | default: '4 colorways · Drop 1' }}</div>
+      <div class="sp-cat-row sp-cat-row-bot">
+        <a href="{{ section.settings.cat4_url | default: '/collections/accessories' }}" class="sp-cat-card">
+          {%- if section.settings.cat4_image %}<img src="{{ section.settings.cat4_image | image_url: width: 800 }}" alt="{{ section.settings.cat4_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c4"></div>{%- endif -%}
+          <div class="sp-cat-grad"></div>
+          <div class="sp-cat-info">
+            <div class="sp-cat-name">{{ section.settings.cat4_title | default: 'Accessories' }}</div>
+            <div class="sp-cat-sub">{{ section.settings.cat4_sub | default: 'Pouch · Socks · Scrunchie' }}</div>
+          </div>
+        </a>
+        <a href="{{ section.settings.cat5_url | default: '/collections/kits' }}" class="sp-cat-card">
+          {%- if section.settings.cat5_image %}<img src="{{ section.settings.cat5_image | image_url: width: 800 }}" alt="{{ section.settings.cat5_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c5"></div>{%- endif -%}
+          <div class="sp-cat-grad"></div>
+          <div class="sp-cat-info">
+            <div class="sp-cat-name">{{ section.settings.cat5_title | default: 'Confidence Kit' }}</div>
+            <div class="sp-cat-sub">{{ section.settings.cat5_sub | default: '$120 · Save $35' }}</div>
+          </div>
+        </a>
+        <a href="{{ section.settings.cat6_url | default: '/collections/kits' }}" class="sp-cat-card">
+          {%- if section.settings.cat6_image %}<img src="{{ section.settings.cat6_image | image_url: width: 800 }}" alt="{{ section.settings.cat6_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c6"></div>{%- endif -%}
+          <div class="sp-cat-grad"></div>
+          <div class="sp-cat-info">
+            <div class="sp-cat-name">{{ section.settings.cat6_title | default: 'Girl Trip Kit' }}</div>
+            <div class="sp-cat-sub">{{ section.settings.cat6_sub | default: '$120 · Save $31' }}</div>
+          </div>
+        </a>
       </div>
-    </a>
-    <a href="{{ section.settings.cat4_url | default: '/collections/accessories' }}" class="sp-cat-card">
-      {%- if section.settings.cat4_image %}<img src="{{ section.settings.cat4_image | image_url: width: 800 }}" alt="{{ section.settings.cat4_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c4"></div>{%- endif -%}
-      <div class="sp-cat-grad"></div>
-      <div class="sp-cat-info">
-        <div class="sp-cat-name">{{ section.settings.cat4_title | default: 'Accessories' }}</div>
-        <div class="sp-cat-sub">{{ section.settings.cat4_sub | default: 'Pouch · Socks · Scrunchie' }}</div>
-      </div>
-    </a>
-    <a href="{{ section.settings.cat5_url | default: '/collections/kits' }}" class="sp-cat-card">
-      {%- if section.settings.cat5_image %}<img src="{{ section.settings.cat5_image | image_url: width: 800 }}" alt="{{ section.settings.cat5_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c5"></div>{%- endif -%}
-      <div class="sp-cat-grad"></div>
-      <div class="sp-cat-info">
-        <div class="sp-cat-name">{{ section.settings.cat5_title | default: 'Confidence Kit' }}</div>
-        <div class="sp-cat-sub">{{ section.settings.cat5_sub | default: '$120 · Save $35' }}</div>
-      </div>
-    </a>
-    <a href="{{ section.settings.cat6_url | default: '/collections/kits' }}" class="sp-cat-card">
-      {%- if section.settings.cat6_image %}<img src="{{ section.settings.cat6_image | image_url: width: 800 }}" alt="{{ section.settings.cat6_title | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{%- else -%}<div class="sp-cat-inner sp-c6"></div>{%- endif -%}
-      <div class="sp-cat-grad"></div>
-      <div class="sp-cat-info">
-        <div class="sp-cat-name">{{ section.settings.cat6_title | default: 'Girl Trip Kit' }}</div>
-        <div class="sp-cat-sub">{{ section.settings.cat6_sub | default: '$120 · Save $31' }}</div>
-      </div>
-    </a>
+    </div>
   </div>
 </section>
 
