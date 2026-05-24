@@ -125,7 +125,7 @@
     </button>
 
     <!-- Logo -->
-    <a href="/" class="sp-logo" aria-label="{{ shop.name }} home">
+    <a href="/" class="sp-logo" aria-label="{{ shop.name }} home" style="display:flex;align-items:center;">
       {% if settings.logo %}
         {{ settings.logo | image_url: width: 200 | image_tag: alt: 'SCULPS' }}
       {% else %}
