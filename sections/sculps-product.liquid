@@ -47,7 +47,7 @@
       <div class="sp-satc-price" id="sp-satc-price">{{ product.selected_or_first_available_variant.price | money }}</div>
     </div>
   </div>
-  <button class="sp-satc-btn sp-pdp-atc-trigger" type="button">ADD TO CART</button>
+  <button class="sp-satc-btn sp-pdp-atc-trigger sp-atc-btn" type="button">ADD TO CART</button>
 </div>
 
 <!-- ========== VARIANT DATA ========== -->
@@ -248,7 +248,7 @@ window.sculpsProduct = {
 
         {%- when 'add_to_cart' -%}
         <div class="sp-pdp-atc-wrap" {{ block.shopify_attributes }}>
-          <button class="sp-pdp-atc-btn sp-pdp-atc-trigger" id="sp-main-atc" type="button">
+          <button class="sp-pdp-atc-btn sp-pdp-atc-trigger sp-atc-btn" id="sp-main-atc" type="button">
             {%- if v0.available -%}
               ADD TO CART&nbsp;&nbsp;·&nbsp;&nbsp;{{ v0.price | money_without_trailing_zeros }}
             {%- else -%}

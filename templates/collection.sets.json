@@ -5,11 +5,34 @@
       "settings": {},
       "blocks": {
         "b-banner": {"type": "collection_banner", "settings": {"heading": "THE SETS", "subheading": "DROP 1 — 4 COLORWAYS"}},
-        "b-filter": {"type": "color_filter", "settings": {}},
-        "b-grid":   {"type": "product_grid",   "settings": {}},
-        "b-manif":  {"type": "manifesto_strip", "settings": {"heading": "WE DON'T HIRE MODELS. WE WORK WITH REAL WOMEN.", "button_label": "JOIN CREATOR STUDIO", "button_url": "/pages/creator-studio"}}
+        "b-filter": {"type": "color_filter",      "settings": {}},
+        "b-grid":   {"type": "product_grid",      "settings": {}},
+        "b-tiktok": {
+          "type": "tiktok_vid",
+          "settings": {
+            "heading": "AS SEEN ON TIKTOK",
+            "subheading": "REAL WOMEN. REAL RESULTS.",
+            "button_label": "FOLLOW @SCULPS"
+          }
+        },
+        "b-reviews": {
+          "type": "sets_reviews",
+          "settings": {
+            "heading": "WHAT THEY SAY",
+            "review_1_text": "I wore the Baby Pink set to Coachella and got so many compliments. Comfortable all day and looked incredible.",
+            "review_1_name": "Mia T.",
+            "review_1_stars": 5,
+            "review_2_text": "The Lavender colorway is stunning. I've ordered the Sage Green too — the quality is unlike anything I've found before.",
+            "review_2_name": "Camille R.",
+            "review_2_stars": 5,
+            "review_3_text": "Perfect set for summer. Fits true to size and the color stays vibrant after washing. Obsessed.",
+            "review_3_name": "Zoe K.",
+            "review_3_stars": 5
+          }
+        },
+        "b-manif":  {"type": "manifesto_strip",   "settings": {"heading": "WE DON'T HIRE MODELS. WE WORK WITH REAL WOMEN.", "button_label": "JOIN CREATOR STUDIO"}}
       },
-      "block_order": ["b-banner","b-filter","b-grid","b-manif"]
+      "block_order": ["b-banner","b-filter","b-grid","b-tiktok","b-reviews","b-manif"]
     }
   },
   "order": ["main"]

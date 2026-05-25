@@ -12,8 +12,8 @@
 .sp-sets-pill.active,.sp-sets-pill:hover{background:var(--black);color:var(--white)}
 
 /* Product grid */
-.sp-sets-grid-wrap{padding:40px 48px 60px}
-.sp-sets-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px}
+.sp-sets-grid-wrap{padding:32px 16px 60px}
+.sp-sets-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
 .sp-sets-card{display:flex;flex-direction:column}
 .sp-sets-card.sp-hidden{display:none}
 .sp-sets-card-img{aspect-ratio:3/4;overflow:hidden;background:var(--cream);margin-bottom:14px;display:block}
@@ -37,14 +37,41 @@
 /* Manifesto strip */
 .sp-sets-manifesto{background:var(--black);padding:72px 60px;text-align:center}
 .sp-sets-manifesto-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,64px);color:var(--white);letter-spacing:3px;line-height:1.1;margin-bottom:28px}
-.sp-sets-manifesto-btn{display:inline-block;border:2px solid var(--white);color:var(--white);font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;text-decoration:none;transition:all .2s}
-.sp-sets-manifesto-btn:hover{background:var(--white);color:var(--black)}
+.sp-sets-manifesto-btn{display:inline-block;border:2px solid var(--white);color:var(--white) !important;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;text-decoration:none !important;transition:all .2s}
+.sp-sets-manifesto-btn:hover{background:var(--white);color:var(--black) !important}
+
+/* TikTok video block */
+.sp-sets-tiktok{background:var(--black);padding:72px 40px;text-align:center}
+.sp-sets-tiktok-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,60px);color:var(--white);letter-spacing:3px;margin-bottom:8px}
+.sp-sets-tiktok-sub{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:40px}
+.sp-sets-tiktok-vid{position:relative;width:100%;max-width:320px;margin:0 auto;aspect-ratio:9/16;background:rgba(255,255,255,.06);overflow:hidden;border-radius:2px}
+.sp-sets-tiktok-vid iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+.sp-sets-tiktok-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.sp-sets-tiktok-placeholder span{color:rgba(255,255,255,.3);font-size:9px;letter-spacing:2px;font-weight:700;text-transform:uppercase}
+.sp-sets-tiktok-cta{margin-top:40px}
+.sp-sets-tiktok-btn{display:inline-block;border:1.5px solid var(--white);color:var(--white) !important;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:14px 36px;text-decoration:none !important;transition:all .2s}
+.sp-sets-tiktok-btn:hover{background:var(--white);color:var(--black) !important}
+
+/* Sets reviews block */
+.sp-sets-reviews{background:var(--cream);padding:72px 40px}
+.sp-sets-reviews-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,56px);letter-spacing:3px;text-align:center;margin-bottom:48px;color:var(--black)}
+.sp-sets-rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1200px;margin:0 auto}
+.sp-sets-rev-card{background:var(--white);padding:36px 28px 28px;position:relative;border-bottom:3px solid var(--black)}
+.sp-sets-rev-bigquote{font-family:'Bebas Neue',sans-serif;font-size:96px;line-height:.6;color:var(--black);opacity:.06;position:absolute;top:16px;left:20px;pointer-events:none;user-select:none;letter-spacing:-2px}
+.sp-sets-rev-stars{font-size:14px;color:#C9A96E;letter-spacing:2px;margin-bottom:16px}
+.sp-sets-rev-text{font-size:14px;line-height:1.75;color:var(--black);margin-bottom:24px;font-style:italic;position:relative;z-index:1}
+.sp-sets-rev-name{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--black)}
+.sp-sets-rev-tag{font-size:9px;color:var(--grey);letter-spacing:1px;margin-top:4px}
 
 @media(max-width:768px){
   .sp-sets-filter{padding:16px 20px}
-  .sp-sets-grid-wrap{padding:28px 20px 48px}
+  .sp-sets-grid-wrap{padding:24px 12px 40px}
+  .sp-sets-grid{grid-template-columns:repeat(2,1fr);gap:12px}
   .sp-sets-manifesto{padding:48px 24px}
   .sp-sets-banner{height:240px}
+  .sp-sets-tiktok{padding:48px 20px}
+  .sp-sets-reviews{padding:48px 20px}
+  .sp-sets-rev-grid{grid-template-columns:1fr}
 }
 </style>
 
@@ -144,7 +171,7 @@
                   {%- endfor -%}
                 </div>
               {%- endif -%}
-              <button class="sp-sets-atc-btn"
+              <button class="sp-sets-atc-btn sp-atc-btn"
                 data-product-id="{{ product.id }}"
                 data-variant-id="{{ product.first_available_variant.id }}"
                 type="button">ADD TO CART</button>
@@ -158,6 +185,52 @@
         <div class="sp-sets-manifesto-h">{{ block.settings.heading | default: "WE DON'T HIRE MODELS. WE WORK WITH REAL WOMEN." }}</div>
         <a href="{{ block.settings.button_url | default: '/pages/creator-studio' }}" class="sp-sets-manifesto-btn">{{ block.settings.button_label | default: 'JOIN CREATOR STUDIO' }}</a>
       </div>
+
+    {%- when 'tiktok_vid' -%}
+      <section class="sp-sets-tiktok" {{ block.shopify_attributes }}>
+        {%- if block.settings.heading != blank -%}
+          <div class="sp-sets-tiktok-h">{{ block.settings.heading }}</div>
+        {%- endif -%}
+        {%- if block.settings.subheading != blank -%}
+          <div class="sp-sets-tiktok-sub">{{ block.settings.subheading }}</div>
+        {%- endif -%}
+        <div class="sp-sets-tiktok-vid">
+          {%- if block.settings.video_url != blank -%}
+            <iframe src="{{ block.settings.video_url }}" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+          {%- else -%}
+            <div class="sp-sets-tiktok-placeholder"><span>Add video URL in editor</span></div>
+          {%- endif -%}
+        </div>
+        {%- if block.settings.button_label != blank -%}
+          <div class="sp-sets-tiktok-cta">
+            <a href="{{ block.settings.button_url }}" class="sp-sets-tiktok-btn">{{ block.settings.button_label }}</a>
+          </div>
+        {%- endif -%}
+      </section>
+
+    {%- when 'sets_reviews' -%}
+      <section class="sp-sets-reviews" {{ block.shopify_attributes }}>
+        <div class="sp-sets-reviews-h">{{ block.settings.heading | default: 'WHAT THEY SAY' }}</div>
+        <div class="sp-sets-rev-grid">
+          {%- for i in (1..3) -%}
+            {%- assign rt = 'review_' | append: i | append: '_text' -%}
+            {%- assign rn = 'review_' | append: i | append: '_name' -%}
+            {%- assign rs = 'review_' | append: i | append: '_stars' -%}
+            {%- if block.settings[rt] != blank -%}
+            <div class="sp-sets-rev-card">
+              <div class="sp-sets-rev-bigquote">&#8220;</div>
+              <div class="sp-sets-rev-stars">
+                {%- assign star_count = block.settings[rs] | default: 5 -%}
+                {%- for s in (1..star_count) -%}★{%- endfor -%}
+              </div>
+              <p class="sp-sets-rev-text">{{ block.settings[rt] }}</p>
+              <div class="sp-sets-rev-name">{{ block.settings[rn] }}</div>
+              <div class="sp-sets-rev-tag">✓ Verified Purchase</div>
+            </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      </section>
 
   {%- endcase -%}
 {%- endfor -%}
@@ -233,33 +306,6 @@
     }
   });
 
-  // ATC buttons
-  document.addEventListener('click', function(e){
-    var atcBtn = e.target.closest('.sp-sets-atc-btn');
-    if(atcBtn){
-      var variantId = atcBtn.getAttribute('data-variant-id');
-      if(!variantId) return;
-      atcBtn.textContent = 'ADDING...';
-      atcBtn.disabled = true;
-      fetch('/cart/add.js', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({id: variantId, quantity: 1})
-      }).then(function(r){ return r.json(); }).then(function(){
-        atcBtn.textContent = 'ADDED ✓';
-        setTimeout(function(){ atcBtn.textContent = 'ADD TO CART'; atcBtn.disabled = false; }, 2000);
-        // Update cart count
-        fetch('/cart.js').then(function(r){ return r.json(); }).then(function(cart){
-          var countEls = document.querySelectorAll('.sp-cart-count');
-          countEls.forEach(function(el){ el.textContent = cart.item_count; });
-          if(typeof window.sculpsCartRefresh === 'function') window.sculpsCartRefresh();
-        });
-      }).catch(function(){
-        atcBtn.textContent = 'ADD TO CART';
-        atcBtn.disabled = false;
-      });
-    }
-  });
 })();
 </script>
 
@@ -322,6 +368,33 @@
           "label": "Button URL"
         }
       ]
+    },
+    {
+      "type": "tiktok_vid",
+      "name": "TikTok Video",
+      "settings": [
+        {"type": "text",   "id": "heading",      "label": "Heading",    "default": "AS SEEN ON TIKTOK"},
+        {"type": "text",   "id": "subheading",   "label": "Subheading", "default": "REAL WOMEN. REAL RESULTS."},
+        {"type": "text",   "id": "video_url",    "label": "Video Embed URL (paste TikTok/Instagram embed src)"},
+        {"type": "text",   "id": "button_label", "label": "CTA Button Text"},
+        {"type": "url",    "id": "button_url",   "label": "CTA Button URL"}
+      ]
+    },
+    {
+      "type": "sets_reviews",
+      "name": "Sets Reviews",
+      "settings": [
+        {"type": "text",   "id": "heading",       "label": "Section Heading", "default": "WHAT THEY SAY"},
+        {"type": "textarea","id": "review_1_text","label": "Review 1 Text"},
+        {"type": "text",   "id": "review_1_name", "label": "Review 1 Name"},
+        {"type": "number", "id": "review_1_stars","label": "Review 1 Stars (1-5)", "default": 5},
+        {"type": "textarea","id": "review_2_text","label": "Review 2 Text"},
+        {"type": "text",   "id": "review_2_name", "label": "Review 2 Name"},
+        {"type": "number", "id": "review_2_stars","label": "Review 2 Stars (1-5)", "default": 5},
+        {"type": "textarea","id": "review_3_text","label": "Review 3 Text"},
+        {"type": "text",   "id": "review_3_name", "label": "Review 3 Name"},
+        {"type": "number", "id": "review_3_stars","label": "Review 3 Stars (1-5)", "default": 5}
+      ]
     }
   ],
   "presets": [
@@ -331,6 +404,8 @@
         {"type": "collection_banner"},
         {"type": "color_filter"},
         {"type": "product_grid"},
+        {"type": "tiktok_vid"},
+        {"type": "sets_reviews"},
         {"type": "manifesto_strip"}
       ]
     }
