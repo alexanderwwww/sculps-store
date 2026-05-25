@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "main": {
+      "type": "sculps-sets",
+      "settings": {},
+      "blocks": {
+        "b-banner": {"type": "collection_banner", "settings": {"heading": "THE SETS", "subheading": "DROP 1 — 4 COLORWAYS"}},
+        "b-filter": {"type": "color_filter", "settings": {}},
+        "b-grid":   {"type": "product_grid",   "settings": {}},
+        "b-manif":  {"type": "manifesto_strip", "settings": {"heading": "WE DON'T HIRE MODELS. WE WORK WITH REAL WOMEN.", "button_label": "JOIN CREATOR STUDIO", "button_url": "/pages/creator-studio"}}
+      },
+      "block_order": ["b-banner","b-filter","b-grid","b-manif"]
+    }
+  },
+  "order": ["main"]
+}
