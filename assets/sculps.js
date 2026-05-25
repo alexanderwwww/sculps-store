@@ -107,6 +107,12 @@
       cartSubtotal.textContent = formatPrice(cart.total_price);
     }
 
+    // Update checkout button total
+    var checkoutTotal = qs('#sculps-checkoutTotal');
+    if (checkoutTotal) {
+      checkoutTotal.textContent = formatPrice(cart.total_price);
+    }
+
     if (!cartBody) return;
 
     if (cart.items && cart.items.length > 0) {
