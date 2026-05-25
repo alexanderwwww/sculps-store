@@ -1,0 +1,57 @@
+<section class="sp-tt-s">
+  <div class="sp-tt-h">{{ section.settings.heading | default: 'Real Women. Real Results.' }}</div>
+  <div class="sp-tt-sub">{{ section.settings.subheading | default: 'Submit your video · Get rewarded' }}</div>
+  <div class="sp-tt-row">
+    {%- for i in (1..5) -%}
+      {%- assign handle_key = 'card' | append: i | append: '_handle' -%}
+      {%- assign likes_key  = 'card' | append: i | append: '_likes' -%}
+      {%- assign url_key    = 'card' | append: i | append: '_url' -%}
+      {%- assign grad_key   = 'card' | append: i | append: '_gradient' -%}
+      {%- assign handle_val = section.settings[handle_key] -%}
+      {%- assign likes_val  = section.settings[likes_key] -%}
+      {%- assign url_val    = section.settings[url_key] -%}
+      {%- assign grad_defaults = '#3D2314,#7B4F3A|#7B4F3A,#C8956C|#7B9AB5,#C9B8E8|#9BAF8A,#C9B8E8|#F5B8C4,#E8C9A0' | split: '|' -%}
+      {%- assign grad = grad_defaults[forloop.index0] | split: ',' -%}
+      {%- if url_val != blank -%}<a href="{{ url_val }}" class="sp-tt-card" target="_blank" rel="noopener">{%- else -%}<div class="sp-tt-card">{%- endif -%}
+        <div class="sp-tt-inner" style="background:linear-gradient(170deg,#{{ grad[0] }},#{{ grad[1] }})"></div>
+        <div class="sp-tt-overlay"></div>
+        <div class="sp-tt-play">▶</div>
+        <div class="sp-tt-meta">
+          <div class="sp-tt-handle">{{ handle_val | default: '@sculps' }}</div>
+          <div class="sp-tt-likes">{{ likes_val }}</div>
+        </div>
+      {%- if url_val != blank -%}</a>{%- else -%}</div>{%- endif -%}
+    {%- endfor -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "TikTok Testimonials",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Heading", "default": "Real Women. Real Results."},
+    {"type": "text", "id": "subheading", "label": "Subheading", "default": "Submit your video · Get rewarded"},
+    {"type": "header", "content": "Card 1"},
+    {"type": "text", "id": "card1_handle", "label": "TikTok handle", "default": "@jasmine.sculps"},
+    {"type": "text", "id": "card1_likes", "label": "Likes / stat", "default": "♥ 847K"},
+    {"type": "url", "id": "card1_url", "label": "Link (optional)"},
+    {"type": "header", "content": "Card 2"},
+    {"type": "text", "id": "card2_handle", "label": "TikTok handle", "default": "@brianna.real"},
+    {"type": "text", "id": "card2_likes", "label": "Likes / stat", "default": "♥ 523K"},
+    {"type": "url", "id": "card2_url", "label": "Link (optional)"},
+    {"type": "header", "content": "Card 3"},
+    {"type": "text", "id": "card3_handle", "label": "TikTok handle", "default": "@kayla.fits"},
+    {"type": "text", "id": "card3_likes", "label": "Likes / stat", "default": "♥ 312K"},
+    {"type": "url", "id": "card3_url", "label": "Link (optional)"},
+    {"type": "header", "content": "Card 4"},
+    {"type": "text", "id": "card4_handle", "label": "TikTok handle", "default": "@destiny.w"},
+    {"type": "text", "id": "card4_likes", "label": "Likes / stat", "default": "♥ 289K"},
+    {"type": "url", "id": "card4_url", "label": "Link (optional)"},
+    {"type": "header", "content": "Card 5"},
+    {"type": "text", "id": "card5_handle", "label": "TikTok handle", "default": "@maria.sculps"},
+    {"type": "text", "id": "card5_likes", "label": "Likes / stat", "default": "♥ 198K"},
+    {"type": "url", "id": "card5_url", "label": "Link (optional)"}
+  ],
+  "presets": [{"name": "TikTok Testimonials"}]
+}
+{% endschema %}

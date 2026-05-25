@@ -1,9 +1,79 @@
 {
   "sections": {
-    "sculps_home": {
-      "type": "sculps-home",
+    "sculps_hero": {
+      "type": "sculps-hero",
       "settings": {}
+    },
+    "sculps_cat_grid": {
+      "type": "sculps-category-grid",
+      "settings": {
+        "view_all_url": "/collections/all"
+      }
+    },
+    "sculps_find_shade": {
+      "type": "sculps-find-shade",
+      "settings": {
+        "shade_url": "/collections/intimates"
+      }
+    },
+    "sculps_manifesto": {
+      "type": "sculps-manifesto",
+      "settings": {}
+    },
+    "sculps_home_kits": {
+      "type": "sculps-home-kits",
+      "settings": {}
+    },
+    "sculps_how_it_works": {
+      "type": "sculps-how-it-works",
+      "settings": {}
+    },
+    "sculps_tiktok_grid": {
+      "type": "sculps-tiktok-grid",
+      "settings": {}
+    },
+    "sculps_home_reviews": {
+      "type": "sculps-home-reviews",
+      "settings": {},
+      "blocks": {
+        "rev1": {"type": "review", "settings": {"text": "\"These inserts are a game changer. I feel so confident in everything I wear. I cannot go back to a regular bra.\"", "name": "Jessica R. — Verified Buyer", "stars": 5}},
+        "rev2": {"type": "review", "settings": {"text": "\"Finally something that actually stays in place and feels like nothing. Wore these all day at a wedding. Perfect.\"", "name": "Brianna K. — Verified Buyer", "stars": 5}},
+        "rev3": {"type": "review", "settings": {"text": "\"The best investment I have made for myself. Worth every single penny. I use every product in my kit weekly.\"", "name": "Lauren M. — Verified Buyer", "stars": 5}}
+      },
+      "block_order": ["rev1", "rev2", "rev3"]
+    },
+    "sculps_home_creator": {
+      "type": "sculps-home-creator",
+      "settings": {},
+      "blocks": {
+        "tier1": {"type": "tier", "settings": {"label": "Quality Video", "description": "50% off your next order sitewide"}},
+        "tier2": {"type": "tier", "settings": {"label": "Top Pick", "description": "Sponsored with our newest drop"}},
+        "tier3": {"type": "tier", "settings": {"label": "Brand Partner", "description": "Monthly products + commission"}}
+      },
+      "block_order": ["tier1", "tier2", "tier3"]
+    },
+    "sculps_values": {
+      "type": "sculps-values",
+      "settings": {},
+      "blocks": {
+        "val1": {"type": "value", "settings": {"icon": "◻", "title": "Invisible Design", "subtitle": "Seamless under anything"}},
+        "val2": {"type": "value", "settings": {"icon": "↺", "title": "Reusable", "subtitle": "40+ wears with care"}},
+        "val3": {"type": "value", "settings": {"icon": "◈", "title": "Medical Grade", "subtitle": "Body-safe materials"}},
+        "val4": {"type": "value", "settings": {"icon": "♡", "title": "Every Body", "subtitle": "All tones. All shapes."}}
+      },
+      "block_order": ["val1", "val2", "val3", "val4"]
     }
   },
-  "order": ["sculps_home"]
+  "order": [
+    "sculps_hero",
+    "sculps_cat_grid",
+    "sculps_find_shade",
+    "sculps_manifesto",
+    "sculps_home_kits",
+    "sculps_how_it_works",
+    "sculps_tiktok_grid",
+    "sculps_home_reviews",
+    "sculps_home_creator",
+    "sculps_values"
+  ]
 }

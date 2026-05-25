@@ -1,0 +1,20 @@
+<section class="sp-manifesto">
+  <div class="sp-mani-pre">{{ section.settings.pre_heading | default: 'The SCULPS Standard' }}</div>
+  <h2 class="sp-mani-h">{{ section.settings.headline | default: 'We Don\'t Hire Models. We Work With Real Women.' | newline_to_br }}</h2>
+  <p class="sp-mani-p">{{ section.settings.body | default: 'Made for every body. Every shade. Every size. Invisible support so you can wear what you want, the way you want.' }}</p>
+  <a href="{{ section.settings.btn_url | default: '/pages/about' }}" class="sp-mani-btn">{{ section.settings.btn_label | default: 'Our Story' }}</a>
+</section>
+
+{% schema %}
+{
+  "name": "Manifesto",
+  "settings": [
+    {"type": "text", "id": "pre_heading", "label": "Pre-heading", "default": "The SCULPS Standard"},
+    {"type": "textarea", "id": "headline", "label": "Headline", "default": "We Don't Hire Models. We Work With Real Women."},
+    {"type": "textarea", "id": "body", "label": "Body text", "default": "Made for every body. Every shade. Every size. Invisible support so you can wear what you want, the way you want."},
+    {"type": "text", "id": "btn_label", "label": "Button text", "default": "Our Story"},
+    {"type": "url", "id": "btn_url", "label": "Button URL"}
+  ],
+  "presets": [{"name": "Manifesto"}]
+}
+{% endschema %}

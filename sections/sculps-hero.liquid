@@ -1,0 +1,56 @@
+{%- assign overlay = section.settings.hero_overlay | default: 60 | divided_by: 100.0 -%}
+
+<section class="sp-hero">
+  {%- if section.settings.hero_image -%}
+    <div class="sp-hero-bg" style="background-image:url('{{ section.settings.hero_image | image_url: width: 2000 }}');background-size:cover;background-position:{{ section.settings.hero_image_position | default: 'center' }}"></div>
+  {%- else -%}
+    <div class="sp-hero-bg"></div>
+    <div class="sp-hero-img-layer"></div>
+  {%- endif -%}
+  <div class="sp-hero-grad" style="opacity:{{ overlay }}"></div>
+  <div class="sp-hero-content">
+    <div class="sp-hero-pre">{{ section.settings.hero_pre | default: 'New Collection — SCULPS 2025' }}</div>
+    <h1 class="sp-hero-h1">{{ section.settings.hero_headline | default: 'Invisible<br>Support.<br>Visible<br>Confidence.' | newline_to_br }}</h1>
+    <p class="sp-hero-sub">{{ section.settings.hero_sub | default: 'Seamless. Sculpted. You.' }}</p>
+    <div class="sp-hero-ctas">
+      <a href="{{ section.settings.hero_btn1_url | default: '/collections/all' }}" class="sp-btn-w">{{ section.settings.hero_btn1_label | default: 'Shop Now' }}</a>
+      <a href="{{ section.settings.hero_btn2_url | default: '/collections/kits' }}" class="sp-btn-o">{{ section.settings.hero_btn2_label | default: 'View Kits' }}</a>
+    </div>
+  </div>
+  <div class="sp-hero-tones">
+    <span class="sp-hero-tones-lbl">6 tones</span>
+    <div class="sp-htone" style="background:var(--tone1)" title="Porcelain" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone2)" title="Light" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone3)" title="Medium" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone4)" title="Tan" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone5)" title="Deep" data-href="/collections/intimates"></div>
+    <div class="sp-htone" style="background:var(--tone6)" title="Rich" data-href="/collections/intimates"></div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Hero Banner",
+  "settings": [
+    {"type": "image_picker", "id": "hero_image", "label": "Background image"},
+    {"type": "select", "id": "hero_image_position", "label": "Image focal point", "options": [
+      {"value": "center", "label": "Center"},
+      {"value": "top center", "label": "Top"},
+      {"value": "bottom center", "label": "Bottom"},
+      {"value": "left center", "label": "Left"},
+      {"value": "right center", "label": "Right"}
+    ], "default": "center"},
+    {"type": "range", "id": "hero_overlay", "label": "Overlay darkness", "info": "How dark the gradient over the image is. 0 = none, 100 = full.", "min": 0, "max": 100, "step": 5, "default": 60},
+    {"type": "header", "content": "Text"},
+    {"type": "text", "id": "hero_pre", "label": "Pre-heading", "default": "New Collection — SCULPS 2025"},
+    {"type": "textarea", "id": "hero_headline", "label": "Headline", "info": "Each line becomes a new line of the headline.", "default": "Invisible\nSupport.\nVisible\nConfidence."},
+    {"type": "text", "id": "hero_sub", "label": "Subheading", "default": "Seamless. Sculpted. You."},
+    {"type": "header", "content": "Buttons"},
+    {"type": "text", "id": "hero_btn1_label", "label": "Button 1 text", "default": "Shop Now"},
+    {"type": "url", "id": "hero_btn1_url", "label": "Button 1 URL"},
+    {"type": "text", "id": "hero_btn2_label", "label": "Button 2 text", "default": "View Kits"},
+    {"type": "url", "id": "hero_btn2_url", "label": "Button 2 URL"}
+  ],
+  "presets": [{"name": "Hero Banner"}]
+}
+{% endschema %}

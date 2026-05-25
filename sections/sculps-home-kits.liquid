@@ -1,0 +1,81 @@
+<section class="sp-s" id="kits">
+  <div class="sp-s-title"><span>{{ section.settings.heading | default: 'The Kits' }}</span></div>
+  <div class="sp-kits-wrap">
+    <a href="{{ section.settings.kit1_url | default: '/products/sculps-confidence-kit' }}" class="sp-kit-card">
+      {%- if section.settings.kit1_image -%}
+        <img src="{{ section.settings.kit1_image | image_url: width: 800 }}" alt="{{ section.settings.kit1_name | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      {%- else -%}
+        <div class="sp-kit-bg" style="background:linear-gradient(145deg,#F5E6D8 0%,#C8956C 50%,#7B4F3A 100%)"></div>
+      {%- endif -%}
+      <div class="sp-kit-fade"></div>
+      <div class="sp-kit-body">
+        <div class="sp-kit-badge">{{ section.settings.kit1_badge | default: 'Save $35' }}</div>
+        <div class="sp-kit-name">{{ section.settings.kit1_name | default: 'SCULPS CONFIDENCE KIT' }}</div>
+        <div class="sp-kit-items">{{ section.settings.kit1_items | default: 'Lift Inserts · Invisibra · Nipple Covers · Thong · Brief' }}</div>
+        <div class="sp-kit-pr">
+          <span class="sp-kit-p">{{ section.settings.kit1_price | default: '$120' }}</span>
+          <span class="sp-kit-cp">{{ section.settings.kit1_compare | default: '$155' }}</span>
+        </div>
+        <div class="sp-kit-cta">{{ section.settings.kit1_btn | default: 'Shop Confidence Kit' }}</div>
+      </div>
+    </a>
+    <a href="{{ section.settings.kit2_url | default: '/products/sculps-girl-trip-kit' }}" class="sp-kit-card">
+      {%- if section.settings.kit2_image -%}
+        <img src="{{ section.settings.kit2_image | image_url: width: 800 }}" alt="{{ section.settings.kit2_name | escape }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      {%- else -%}
+        <div class="sp-kit-bg" style="background:linear-gradient(145deg,#C9B8E8 0%,#9BAF8A 50%,#7B9AB5 100%)"></div>
+      {%- endif -%}
+      <div class="sp-kit-fade"></div>
+      <div class="sp-kit-body">
+        <div class="sp-kit-badge">{{ section.settings.kit2_badge | default: 'Save $31' }}</div>
+        <div class="sp-kit-name">{{ section.settings.kit2_name | default: 'SCULPS GIRL TRIP KIT' }}</div>
+        <div class="sp-kit-items">{{ section.settings.kit2_items | default: 'Summer Set · Brief · Scrunchie · Socks · Terry Pouch' }}</div>
+        <div class="sp-kit-pr">
+          <span class="sp-kit-p">{{ section.settings.kit2_price | default: '$120' }}</span>
+          <span class="sp-kit-cp">{{ section.settings.kit2_compare | default: '$151' }}</span>
+        </div>
+        <div class="sp-kit-cta">{{ section.settings.kit2_btn | default: 'Shop Girl Trip Kit' }}</div>
+      </div>
+    </a>
+  </div>
+  {%- if section.settings.banner_left != blank -%}
+  <a href="{{ section.settings.banner_url | default: '/products/both-kits-bundle-save-30' }}" class="sp-both-banner">
+    <span>{{ section.settings.banner_left | default: 'Buy Both Kits' }}</span>
+    <strong>{{ section.settings.banner_save | default: 'Save 30%' }}</strong>
+    <span>{{ section.settings.banner_right | default: 'Only $204' }}</span>
+  </a>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "The Kits",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Section heading", "default": "The Kits"},
+    {"type": "header", "content": "Kit 1"},
+    {"type": "image_picker", "id": "kit1_image", "label": "Image"},
+    {"type": "text", "id": "kit1_name", "label": "Kit name", "default": "SCULPS CONFIDENCE KIT"},
+    {"type": "text", "id": "kit1_badge", "label": "Badge text", "default": "Save $35"},
+    {"type": "text", "id": "kit1_items", "label": "Items included", "default": "Lift Inserts · Invisibra · Nipple Covers · Thong · Brief"},
+    {"type": "text", "id": "kit1_price", "label": "Price", "default": "$120"},
+    {"type": "text", "id": "kit1_compare", "label": "Compare-at price", "default": "$155"},
+    {"type": "text", "id": "kit1_btn", "label": "Button text", "default": "Shop Confidence Kit"},
+    {"type": "url", "id": "kit1_url", "label": "URL"},
+    {"type": "header", "content": "Kit 2"},
+    {"type": "image_picker", "id": "kit2_image", "label": "Image"},
+    {"type": "text", "id": "kit2_name", "label": "Kit name", "default": "SCULPS GIRL TRIP KIT"},
+    {"type": "text", "id": "kit2_badge", "label": "Badge text", "default": "Save $31"},
+    {"type": "text", "id": "kit2_items", "label": "Items included", "default": "Summer Set · Brief · Scrunchie · Socks · Terry Pouch"},
+    {"type": "text", "id": "kit2_price", "label": "Price", "default": "$120"},
+    {"type": "text", "id": "kit2_compare", "label": "Compare-at price", "default": "$151"},
+    {"type": "text", "id": "kit2_btn", "label": "Button text", "default": "Shop Girl Trip Kit"},
+    {"type": "url", "id": "kit2_url", "label": "URL"},
+    {"type": "header", "content": "Both Kits Banner (optional)"},
+    {"type": "text", "id": "banner_left", "label": "Left text", "default": "Buy Both Kits"},
+    {"type": "text", "id": "banner_save", "label": "Center bold text", "default": "Save 30%"},
+    {"type": "text", "id": "banner_right", "label": "Right text", "default": "Only $204"},
+    {"type": "url", "id": "banner_url", "label": "Banner URL"}
+  ],
+  "presets": [{"name": "The Kits"}]
+}
+{% endschema %}

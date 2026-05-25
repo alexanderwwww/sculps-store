@@ -1,0 +1,49 @@
+<section class="sp-cs-s" id="creators">
+  <div class="sp-cs-pre">{{ section.settings.pre_heading | default: 'SCULPS Creator Studio' }}</div>
+  <h2 class="sp-cs-h">{{ section.settings.heading | default: 'We Don\'t Hire Models. We Work With Real Women.' | newline_to_br }}</h2>
+  <p class="sp-cs-p">{{ section.settings.body | default: 'Film your SCULPS moment in 9x16. Submit it. Get rewarded. Your confidence is worth something here.' }}</p>
+  <div class="sp-cs-tiers">
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'tier' -%}
+        <div class="sp-cs-tier" {{ block.shopify_attributes }}>
+          <div class="sp-cs-tier-lbl">{{ block.settings.label }}</div>
+          <div class="sp-cs-tier-val">{{ block.settings.description }}</div>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+  <a href="{{ section.settings.btn_url | default: '/pages/creator-studio' }}" class="sp-cs-btn">{{ section.settings.btn_label | default: 'Join Creator Studio' }}</a>
+</section>
+
+{% schema %}
+{
+  "name": "Creator Studio",
+  "settings": [
+    {"type": "text", "id": "pre_heading", "label": "Pre-heading", "default": "SCULPS Creator Studio"},
+    {"type": "textarea", "id": "heading", "label": "Heading", "default": "We Don't Hire Models. We Work With Real Women."},
+    {"type": "textarea", "id": "body", "label": "Body text", "default": "Film your SCULPS moment in 9x16. Submit it. Get rewarded. Your confidence is worth something here."},
+    {"type": "text", "id": "btn_label", "label": "Button text", "default": "Join Creator Studio"},
+    {"type": "url", "id": "btn_url", "label": "Button URL"}
+  ],
+  "blocks": [
+    {
+      "type": "tier",
+      "name": "Tier",
+      "settings": [
+        {"type": "text", "id": "label", "label": "Tier name", "default": "Quality Video"},
+        {"type": "text", "id": "description", "label": "Reward description", "default": "50% off your next order sitewide"}
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Creator Studio",
+      "blocks": [
+        {"type": "tier", "settings": {"label": "Quality Video", "description": "50% off your next order sitewide"}},
+        {"type": "tier", "settings": {"label": "Top Pick", "description": "Sponsored with our newest drop"}},
+        {"type": "tier", "settings": {"label": "Brand Partner", "description": "Monthly products + commission"}}
+      ]
+    }
+  ]
+}
+{% endschema %}

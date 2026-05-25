@@ -1,0 +1,42 @@
+<section class="sp-s">
+  <div class="sp-s-title"><span>{{ section.settings.heading | default: 'How It Works' }}</span></div>
+  <div class="sp-hiw">
+    <div>
+      <div class="sp-hiw-n">{{ section.settings.step1_num | default: '01' }}</div>
+      <div class="sp-hiw-t">{{ section.settings.step1_title | default: 'Choose Your Shade' }}</div>
+      <div class="sp-hiw-d">{{ section.settings.step1_desc | default: 'Six skin tones numbered 1 to 6. Pick the circle that matches you. No labels. No guessing. No wrong answer.' }}</div>
+    </div>
+    <div>
+      <div class="sp-hiw-n">{{ section.settings.step2_num | default: '02' }}</div>
+      <div class="sp-hiw-t">{{ section.settings.step2_title | default: 'Apply In Seconds' }}</div>
+      <div class="sp-hiw-d">{{ section.settings.step2_desc | default: 'Peel. Press. Done. Medical grade adhesive holds all day. Reusable 30 to 40 times with care.' }}</div>
+    </div>
+    <div>
+      <div class="sp-hiw-n">{{ section.settings.step3_num | default: '03' }}</div>
+      <div class="sp-hiw-t">{{ section.settings.step3_title | default: 'Feel Confident All Day' }}</div>
+      <div class="sp-hiw-d">{{ section.settings.step3_desc | default: 'Invisible under anything. No lines. No straps. Just you and your outfit exactly how you want.' }}</div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "How It Works",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Section heading", "default": "How It Works"},
+    {"type": "header", "content": "Step 1"},
+    {"type": "text", "id": "step1_num", "label": "Step number", "default": "01"},
+    {"type": "text", "id": "step1_title", "label": "Title", "default": "Choose Your Shade"},
+    {"type": "textarea", "id": "step1_desc", "label": "Description", "default": "Six skin tones numbered 1 to 6. Pick the circle that matches you. No labels. No guessing. No wrong answer."},
+    {"type": "header", "content": "Step 2"},
+    {"type": "text", "id": "step2_num", "label": "Step number", "default": "02"},
+    {"type": "text", "id": "step2_title", "label": "Title", "default": "Apply In Seconds"},
+    {"type": "textarea", "id": "step2_desc", "label": "Description", "default": "Peel. Press. Done. Medical grade adhesive holds all day. Reusable 30 to 40 times with care."},
+    {"type": "header", "content": "Step 3"},
+    {"type": "text", "id": "step3_num", "label": "Step number", "default": "03"},
+    {"type": "text", "id": "step3_title", "label": "Title", "default": "Feel Confident All Day"},
+    {"type": "textarea", "id": "step3_desc", "label": "Description", "default": "Invisible under anything. No lines. No straps. Just you and your outfit exactly how you want."}
+  ],
+  "presets": [{"name": "How It Works"}]
+}
+{% endschema %}

@@ -1,0 +1,31 @@
+<section class="sp-shade-s">
+  <div class="sp-shade-big">{{ section.settings.heading | default: 'FIND YOUR SHADE' }}</div>
+  <p class="sp-shade-hint">{{ section.settings.subheading | default: 'Six tones. One will be yours.' }}</p>
+  <div class="sp-shade-row">
+    <a href="{{ section.settings.shade_url | default: '/collections/intimates' }}" class="sp-sh-circle" style="background:var(--tone1)" title="{{ section.settings.tone1_name | default: 'Porcelain' }}"></a>
+    <a href="{{ section.settings.shade_url | default: '/collections/intimates' }}" class="sp-sh-circle" style="background:var(--tone2)" title="{{ section.settings.tone2_name | default: 'Light' }}"></a>
+    <a href="{{ section.settings.shade_url | default: '/collections/intimates' }}" class="sp-sh-circle" style="background:var(--tone3)" title="{{ section.settings.tone3_name | default: 'Medium' }}"></a>
+    <a href="{{ section.settings.shade_url | default: '/collections/intimates' }}" class="sp-sh-circle" style="background:var(--tone4)" title="{{ section.settings.tone4_name | default: 'Tan' }}"></a>
+    <a href="{{ section.settings.shade_url | default: '/collections/intimates' }}" class="sp-sh-circle" style="background:var(--tone5)" title="{{ section.settings.tone5_name | default: 'Deep' }}"></a>
+    <a href="{{ section.settings.shade_url | default: '/collections/intimates' }}" class="sp-sh-circle" style="background:var(--tone6)" title="{{ section.settings.tone6_name | default: 'Rich' }}"></a>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Find Your Shade",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Heading", "default": "FIND YOUR SHADE"},
+    {"type": "text", "id": "subheading", "label": "Subheading", "default": "Six tones. One will be yours."},
+    {"type": "url", "id": "shade_url", "label": "Shade circles link to"},
+    {"type": "header", "content": "Tone names (shown on hover)"},
+    {"type": "text", "id": "tone1_name", "label": "Tone 1 name", "default": "Porcelain"},
+    {"type": "text", "id": "tone2_name", "label": "Tone 2 name", "default": "Light"},
+    {"type": "text", "id": "tone3_name", "label": "Tone 3 name", "default": "Medium"},
+    {"type": "text", "id": "tone4_name", "label": "Tone 4 name", "default": "Tan"},
+    {"type": "text", "id": "tone5_name", "label": "Tone 5 name", "default": "Deep"},
+    {"type": "text", "id": "tone6_name", "label": "Tone 6 name", "default": "Rich"}
+  ],
+  "presets": [{"name": "Find Your Shade"}]
+}
+{% endschema %}

@@ -1,0 +1,39 @@
+<div class="sp-vals">
+  {%- for block in section.blocks -%}
+    {%- if block.type == 'value' -%}
+      <div class="sp-val" {{ block.shopify_attributes }}>
+        <div class="sp-val-icon">{{ block.settings.icon | default: '◻' }}</div>
+        <div class="sp-val-lbl">{{ block.settings.title }}</div>
+        <div class="sp-val-sub">{{ block.settings.subtitle }}</div>
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+</div>
+
+{% schema %}
+{
+  "name": "Values Bar",
+  "blocks": [
+    {
+      "type": "value",
+      "name": "Value",
+      "settings": [
+        {"type": "text", "id": "icon", "label": "Icon (emoji or symbol)", "default": "◻"},
+        {"type": "text", "id": "title", "label": "Title", "default": "Invisible Design"},
+        {"type": "text", "id": "subtitle", "label": "Subtitle", "default": "Seamless under anything"}
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Values Bar",
+      "blocks": [
+        {"type": "value", "settings": {"icon": "◻", "title": "Invisible Design", "subtitle": "Seamless under anything"}},
+        {"type": "value", "settings": {"icon": "↺", "title": "Reusable", "subtitle": "40+ wears with care"}},
+        {"type": "value", "settings": {"icon": "◈", "title": "Medical Grade", "subtitle": "Body-safe materials"}},
+        {"type": "value", "settings": {"icon": "♡", "title": "Every Body", "subtitle": "All tones. All shapes."}}
+      ]
+    }
+  ]
+}
+{% endschema %}
