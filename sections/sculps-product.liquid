@@ -1,20 +1,28 @@
-<!-- ========== SIZE GUIDE MODAL ========== -->
+
+{%- assign v0 = product.selected_or_first_available_variant -%}
+{%- assign tone_colors = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
+{%- assign tone_labels = 'Porcelain,Light,Medium,Tan,Deep,Rich' | split: ',' -%}
+{%- assign color_swatches = '#F5B8C4,#9BAF8A,#C9B8E8,#7B9AB5' | split: ',' -%}
+
+<!-- ============================================================
+     SIZE GUIDE MODAL
+============================================================ -->
 <div class="sp-sg-overlay" id="sp-sg-overlay" aria-hidden="true">
   <div class="sp-sg-modal" role="dialog" aria-modal="true" aria-label="Size Guide">
-    <button class="sp-sg-close" id="sp-sg-close" aria-label="Close">&#x2715;</button>
+    <button class="sp-sg-close" id="sp-sg-close" type="button" aria-label="Close">&#x2715;</button>
     <div class="sp-sg-h">SIZE GUIDE</div>
-    <div class="sp-sg-section-h">Chest — Lift Inserts, Invisibra</div>
+    <div class="sp-sg-sh">Bras &amp; Lift Inserts — Chest</div>
     <table class="sp-sg-table">
-      <thead><tr><th>Size</th><th>Cup / Bust</th></tr></thead>
+      <thead><tr><th>Size</th><th>Cup</th><th>Bust</th></tr></thead>
       <tbody>
-        <tr><td>1</td><td>A/B Cup — 30–34"</td></tr>
-        <tr><td>2</td><td>C/D Cup — 34–36"</td></tr>
-        <tr><td>3</td><td>DD/E Cup — 36–38"</td></tr>
-        <tr><td>4</td><td>F Cup — 38–40"</td></tr>
-        <tr><td>5</td><td>G+ Cup — 40+"</td></tr>
+        <tr><td>1</td><td>A/B Cup</td><td>30–34"</td></tr>
+        <tr><td>2</td><td>C/D Cup</td><td>34–36"</td></tr>
+        <tr><td>3</td><td>DD/E Cup</td><td>36–38"</td></tr>
+        <tr><td>4</td><td>F Cup</td><td>38–40"</td></tr>
+        <tr><td>5</td><td>G+ Cup</td><td>40+"</td></tr>
       </tbody>
     </table>
-    <div class="sp-sg-section-h" style="margin-top:20px">Bottoms — Thong, Brief, Summer Set</div>
+    <div class="sp-sg-sh" style="margin-top:20px">Bottoms — Thong, Brief, Sets</div>
     <table class="sp-sg-table">
       <thead><tr><th>Size</th><th>Waist</th><th>Hips</th></tr></thead>
       <tbody>
@@ -25,771 +33,815 @@
         <tr><td>5 (XL)</td><td>34–40"</td><td>44–50"</td></tr>
       </tbody>
     </table>
-    <p style="font-size:11px;color:var(--grey);font-style:italic;margin-top:14px">Between sizes? Size up.</p>
+    <p class="sp-sg-note">Between sizes? Size up.</p>
   </div>
 </div>
 
-<!-- ========== LIGHTBOX ========== -->
+<!-- ============================================================
+     LIGHTBOX
+============================================================ -->
 <div class="sp-lb-overlay" id="sp-lb-overlay" aria-hidden="true">
-  <button class="sp-lb-close" id="sp-lb-close" aria-label="Close">&#x2715;</button>
-  <button class="sp-lb-nav sp-lb-prev" id="sp-lb-prev" aria-label="Previous">&#8249;</button>
+  <button class="sp-lb-close" id="sp-lb-close" type="button" aria-label="Close">&#x2715;</button>
+  <button class="sp-lb-nav sp-lb-prev" id="sp-lb-prev" type="button" aria-label="Previous">&#8249;</button>
   <img class="sp-lb-img" id="sp-lb-img" src="" alt="">
-  <button class="sp-lb-nav sp-lb-next" id="sp-lb-next" aria-label="Next">&#8250;</button>
+  <button class="sp-lb-nav sp-lb-next" id="sp-lb-next" type="button" aria-label="Next">&#8250;</button>
 </div>
 
-<!-- ========== STICKY ATC ========== -->
-<div class="sp-satc" id="sp-satc">
+<!-- ============================================================
+     STICKY ATC (appears when main ATC scrolls out of view)
+============================================================ -->
+<div class="sp-satc" id="sp-satc" aria-hidden="true">
   <div class="sp-satc-info">
     {%- if product.featured_image -%}
-      <img class="sp-satc-thumb" src="{{ product.featured_image | image_url: width: 80 }}" alt="{{ product.title | escape }}">
+      <img class="sp-satc-thumb" src="{{ product.featured_image | image_url: width: 80 }}" alt="{{ product.title | escape }}" loading="lazy">
     {%- endif -%}
     <div>
       <div class="sp-satc-name">{{ product.title }}</div>
-      <div class="sp-satc-price" id="sp-satc-price">{{ product.selected_or_first_available_variant.price | money }}</div>
+      <div class="sp-satc-price" id="sp-satc-price">{{ v0.price | money }}</div>
     </div>
   </div>
-  <button
-    class="sp-satc-btn sp-pdp-atc-trigger sp-atc-btn"
-    data-variant-id="{{ product.selected_or_first_available_variant.id }}"
-    type="button">ADD TO CART</button>
+  <button class="sp-satc-btn" id="sp-satc-btn" type="button">ADD TO CART</button>
 </div>
 
-<!-- ========== VARIANT DATA ========== -->
-<script>
-window.sculpsProduct = {
-  variants: {{ product.variants | json }},
-  selectedOptions: {}
-};
-{%- for option in product.options_with_values -%}
-  window.sculpsProduct.selectedOptions[{{ option.position }}] = {{ option.values | first | json }};
-{%- endfor -%}
-</script>
+<!-- ============================================================
+     MAIN PRODUCT LAYOUT
+============================================================ -->
+<div class="sp-pdp">
 
-{%- assign v0 = product.selected_or_first_available_variant -%}
-{%- assign tone_colors = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
-{%- assign tone_labels = 'PORCELAIN,LIGHT,MEDIUM,TAN,DEEP,RICH' | split: ',' -%}
-{%- assign color_swatches = '#F5B8C4,#9BAF8A,#C9B8E8,#7B9AB5' | split: ',' -%}
-
-{%- assign tone_option  = nil -%}
-{%- assign size_option  = nil -%}
-{%- assign color_option = nil -%}
-{%- for opt in product.options_with_values -%}
-  {%- if opt.name == 'Skin Tone' or opt.name == 'Shade' or opt.name == 'Tone' -%}
-    {%- assign tone_option = opt -%}
-  {%- elsif opt.name == 'Size' -%}
-    {%- assign size_option = opt -%}
-  {%- elsif opt.name == 'Color' -%}
-    {%- assign color_option = opt -%}
-  {%- endif -%}
-{%- endfor -%}
-
-<!-- ========== MAIN PRODUCT LAYOUT ========== -->
-<div class="sp-pdp-page">
-
-  <!-- LEFT: Gallery -->
-  <div class="sp-pdp-col-left">
-    {%- for block in section.blocks -%}
-      {%- if block.type == 'image_gallery' -%}
-      <div class="sp-pdp-gallery" {{ block.shopify_attributes }}>
-        <div class="sp-pdp-main-wrap">
-          {%- if v0.compare_at_price > v0.price -%}
-            {%- assign save_amt = v0.compare_at_price | minus: v0.price -%}
-            <div class="sp-pdp-save-circle" id="sp-save-badge">
-              <span class="sp-pdp-save-top">SAVE</span>
-              <span class="sp-pdp-save-amt" id="sp-save-amt">{{ save_amt | money_without_trailing_zeros }}</span>
-            </div>
-          {%- endif -%}
-          {%- if product.featured_image -%}
-            <img class="sp-pdp-main-img" id="sp-main-img"
-              src="{{ product.featured_image | image_url: width: 1000 }}"
-              alt="{{ product.title | escape }}" loading="eager">
-          {%- else -%}
-            <div class="sp-pdp-img-empty"></div>
-          {%- endif -%}
-          <button class="sp-pdp-zoom-btn" id="sp-zoom-btn" aria-label="Zoom">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
-              <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
-            </svg>
-          </button>
-        </div>
-        {%- if product.images.size > 1 -%}
-          <div class="sp-pdp-thumbs" id="sp-pdp-thumbs">
-            {%- for img in product.images limit: 8 -%}
-              <button class="sp-pdp-thumb{%- if forloop.first %} active{%- endif -%}"
-                data-src="{{ img | image_url: width: 1000 }}"
-                style="background-image:url('{{ img | image_url: width: 120 }}')"
-                aria-label="Image {{ forloop.index }}"></button>
-            {%- endfor -%}
-          </div>
-          <div class="sp-pdp-dots-mob" id="sp-pdp-dots">
-            {%- for img in product.images limit: 8 -%}
-              <button class="sp-pdp-dot-mob{%- if forloop.first %} active{%- endif -%}"
-                data-src="{{ img | image_url: width: 1000 }}"
-                aria-label="Image {{ forloop.index }}"></button>
-            {%- endfor -%}
-          </div>
-        {%- endif -%}
-        <div id="sp-lb-sources" style="display:none">
-          {%- for img in product.images limit: 8 -%}
-            <span data-src="{{ img | image_url: width: 1800 }}"></span>
+  <!-- ──────────────────────────────────────────────────────────
+       LEFT — IMAGE GALLERY
+  ────────────────────────────────────────────────────────────── -->
+  <div class="sp-pdp-gallery">
+    {%- if product.images.size > 0 -%}
+      <!-- Main image -->
+      <div class="sp-pdp-main-wrap">
+        <img id="sp-main-img"
+          class="sp-pdp-main-img"
+          src="{{ product.images[0] | image_url: width: 900 }}"
+          alt="{{ product.images[0].alt | default: product.title | escape }}"
+          loading="eager"
+          width="900">
+        <button class="sp-pdp-zoom-btn" id="sp-zoom-btn" type="button"
+          data-zoom="{{ product.images[0] | image_url: width: 2000 }}"
+          aria-label="Zoom image">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </div>
+      <!-- Thumbnails -->
+      {%- if product.images.size > 1 -%}
+        <div class="sp-pdp-thumbs">
+          {%- for img in product.images -%}
+            <button class="sp-pdp-thumb{%- if forloop.first %} active{%- endif -%}"
+              type="button"
+              data-full="{{ img | image_url: width: 900 }}"
+              data-zoom="{{ img | image_url: width: 2000 }}"
+              aria-label="Image {{ forloop.index }}">
+              <img src="{{ img | image_url: width: 120 }}" alt="{{ img.alt | escape }}" loading="lazy" width="120">
+            </button>
           {%- endfor -%}
         </div>
-      </div>
       {%- endif -%}
-    {%- endfor -%}
+    {%- else -%}
+      <!-- Placeholder when no product images are uploaded -->
+      <div class="sp-pdp-no-img">
+        <svg width="48" height="48" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+        <p>Upload images in<br><strong>Shopify Admin → Products → {{ product.title }}</strong></p>
+      </div>
+    {%- endif -%}
   </div>
 
-  <!-- RIGHT: Info -->
-  <div class="sp-pdp-col-right" id="sp-atc-trigger">
-    <input type="hidden" id="sculps-selected-variant" value="{{ v0.id }}">
+  <!-- ──────────────────────────────────────────────────────────
+       RIGHT — PRODUCT INFO (BLOCKS)
+  ────────────────────────────────────────────────────────────── -->
+  <div class="sp-pdp-info">
 
     {%- for block in section.blocks -%}
       {%- case block.type -%}
 
+        <!-- ================================================== -->
         {%- when 'product_header' -%}
-        <div class="sp-pdp-header-block" {{ block.shopify_attributes }}>
-          <div class="sp-pdp-brand">SCULPS</div>
+        <!-- ================================================== -->
+        <div class="sp-pdp-header" {{ block.shopify_attributes }}>
+          <p class="sp-pdp-vendor">{{ product.vendor | upcase }}</p>
           <h1 class="sp-pdp-title">{{ product.title }}</h1>
-          {%- if block.settings.subtitle != blank -%}
-            <div class="sp-pdp-subtitle">{{ block.settings.subtitle }}</div>
-          {%- endif -%}
           <div class="sp-pdp-price-row">
             <span class="sp-pdp-price" id="sp-price">{{ v0.price | money }}</span>
             {%- if v0.compare_at_price > v0.price -%}
               <span class="sp-pdp-compare" id="sp-compare">{{ v0.compare_at_price | money }}</span>
-              {%- assign save_label = v0.compare_at_price | minus: v0.price | money_without_trailing_zeros -%}
-              <span class="sp-pdp-save-pill" id="sp-save-tag">SAVE {{ save_label }}</span>
+              <span class="sp-pdp-save" id="sp-save">SAVE {{ v0.compare_at_price | minus: v0.price | money }}</span>
             {%- endif -%}
           </div>
-          {%- if block.settings.tagline != blank -%}
-            <div class="sp-pdp-tagline">{{ block.settings.tagline }}</div>
-          {%- endif -%}
           {%- if block.settings.show_stars -%}
-          <div class="sp-pdp-stars">
-            ★★★★★
-            <span class="sp-pdp-stars-count">({{ block.settings.rating_count | default: 847 }} reviews)</span>
-          </div>
+            <div class="sp-pdp-stars">
+              <span class="sp-stars-row">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+              <span class="sp-pdp-rc">({{ block.settings.rating_count | default: 0 }} reviews)</span>
+            </div>
+          {%- endif -%}
+          {%- if block.settings.tagline != blank -%}
+            <p class="sp-pdp-tagline">{{ block.settings.tagline }}</p>
           {%- endif -%}
         </div>
 
+        <!-- ================================================== -->
         {%- when 'bullet_points' -%}
-        {%- assign has_bullets = false -%}
-        {%- for i in (1..6) -%}
-          {%- assign bk = 'bullet_' | append: i -%}
-          {%- if block.settings[bk] != blank -%}{%- assign has_bullets = true -%}{%- endif -%}
+        <!-- ================================================== -->
+        {%- assign has_b = false -%}
+        {%- for n in (1..6) -%}{%- assign bk = 'bullet_' | append: n -%}{%- if block.settings[bk] != blank -%}{%- assign has_b = true -%}{%- endif -%}{%- endfor -%}
+        {%- if has_b -%}
+          <ul class="sp-pdp-bullets" {{ block.shopify_attributes }}>
+            {%- for n in (1..6) -%}
+              {%- assign bk = 'bullet_' | append: n -%}
+              {%- if block.settings[bk] != blank -%}
+                <li>{{ block.settings[bk] }}</li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
+        {%- endif -%}
+
+        <!-- ================================================== -->
+        {%- when 'bundle_items' -%}
+        <!-- ================================================== -->
+        {%- if block.settings.bundle_label != blank -%}
+          <div class="sp-pdp-bundle" {{ block.shopify_attributes }}>
+            <div class="sp-pdp-bundle-label">{{ block.settings.bundle_label }}</div>
+            <div class="sp-pdp-bundle-grid">
+              {%- for n in (1..3) -%}
+                {%- assign pk = 'product_' | append: n -%}
+                {%- assign bp = block.settings[pk] -%}
+                {%- if bp != blank -%}
+                  {%- assign bp_img = bp.featured_image -%}
+                  <div class="sp-pdp-bundle-item">
+                    {%- if bp_img -%}
+                      <img src="{{ bp_img | image_url: width: 120 }}" alt="{{ bp.title | escape }}" loading="lazy" class="sp-pdp-bundle-img">
+                    {%- else -%}
+                      <div class="sp-pdp-bundle-img sp-pdp-bundle-placeholder"></div>
+                    {%- endif -%}
+                    <div class="sp-pdp-bundle-name">{{ bp.title }}</div>
+                    <div class="sp-pdp-bundle-price">{{ bp.price | money }}</div>
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
+        {%- endif -%}
+
+        <!-- ================================================== -->
+        {%- when 'skin_tone_selector' -%}
+        <!-- ================================================== -->
+        {%- assign tone_opt = nil -%}
+        {%- for opt in product.options_with_values -%}
+          {%- if opt.name == 'Skin Tone' or opt.name == 'Shade' or opt.name == 'Tone' or opt.name == 'Skin tone' -%}
+            {%- assign tone_opt = opt -%}
+          {%- endif -%}
         {%- endfor -%}
-        {%- if has_bullets -%}
-        <div class="sp-pdp-bullets" {{ block.shopify_attributes }}>
-          {%- for i in (1..6) -%}
-            {%- assign bk = 'bullet_' | append: i -%}
-            {%- if block.settings[bk] != blank -%}
-              <div class="sp-pdp-bullet">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                {{ block.settings[bk] }}
+        {%- if tone_opt -%}
+          <div class="sp-pdp-opt-group" {{ block.shopify_attributes }}>
+            <div class="sp-pdp-opt-label">CHOOSE YOUR SKIN TONE: <span class="sp-opt-val" id="sp-tone-val">{{ tone_opt.values | first }}</span></div>
+            <div class="sp-tone-btns">
+              {%- for val in tone_opt.values -%}
+                {%- assign ti = forloop.index0 -%}
+                {%- assign tc = tone_colors[ti] | default: '#ccc' -%}
+                {%- assign tl = tone_labels[ti] | default: val -%}
+                <button class="sp-tone-btn{%- if forloop.first %} active{%- endif -%}"
+                  type="button"
+                  data-opt-pos="{{ tone_opt.position }}"
+                  data-opt-val="{{ val | escape }}"
+                  style="background:{{ tc }}"
+                  title="{{ tl }}">
+                  <span class="sp-tone-lbl">{{ tl | upcase }}</span>
+                </button>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
+        {%- endif -%}
+
+        <!-- ================================================== -->
+        {%- when 'color_selector' -%}
+        <!-- ================================================== -->
+        {%- assign color_opt = nil -%}
+        {%- for opt in product.options_with_values -%}
+          {%- if opt.name == 'Color' or opt.name == 'Colour' -%}
+            {%- assign color_opt = opt -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if color_opt -%}
+          <div class="sp-pdp-opt-group" {{ block.shopify_attributes }}>
+            <div class="sp-pdp-opt-label">CHOOSE YOUR COLOR: <span class="sp-opt-val" id="sp-color-val">{{ color_opt.values | first }}</span></div>
+            <div class="sp-color-btns">
+              {%- for val in color_opt.values -%}
+                {%- assign ci = forloop.index0 -%}
+                {%- assign cc = color_swatches[ci] | default: '#eee' -%}
+                <button class="sp-color-btn{%- if forloop.first %} active{%- endif -%}"
+                  type="button"
+                  data-opt-pos="{{ color_opt.position }}"
+                  data-opt-val="{{ val | escape }}"
+                  style="background:{{ cc }}"
+                  title="{{ val | escape }}">
+                </button>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
+        {%- endif -%}
+
+        <!-- ================================================== -->
+        {%- when 'size_selector' -%}
+        <!-- ================================================== -->
+        {%- assign size_opt = nil -%}
+        {%- for opt in product.options_with_values -%}
+          {%- if opt.name == 'Size' -%}
+            {%- assign size_opt = opt -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if size_opt -%}
+          <div class="sp-pdp-opt-group" {{ block.shopify_attributes }}>
+            <div class="sp-pdp-opt-label-row">
+              <span class="sp-pdp-opt-label">CHOOSE YOUR SIZE</span>
+              <button class="sp-sg-trigger" type="button" id="sp-sg-open">SIZE GUIDE</button>
+            </div>
+            <div class="sp-size-btns">
+              {%- for val in size_opt.values -%}
+                <button class="sp-size-btn{%- if forloop.first %} active{%- endif -%}"
+                  type="button"
+                  data-opt-pos="{{ size_opt.position }}"
+                  data-opt-val="{{ val | escape }}">{{ val }}</button>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
+        {%- endif -%}
+
+        <!-- ================================================== -->
+        {%- when 'add_to_cart' -%}
+        <!-- ================================================== -->
+        <div class="sp-pdp-atc-wrap" {{ block.shopify_attributes }}>
+          {% form 'product', product, id: 'sp-product-form', novalidate: 'novalidate' %}
+            <input type="hidden" name="id" id="sp-variant-id" value="{{ v0.id }}">
+            <button type="submit" name="add"
+              class="sp-pdp-atc-btn"
+              id="sp-main-atc"
+              {%- unless v0.available %} disabled{%- endunless -%}>
+              <span id="sp-atc-label">
+                {%- if v0.available -%}{{ block.settings.btn_text | default: 'ADD TO CART' }}{%- else -%}SOLD OUT{%- endif -%}
+              </span>
+              <span id="sp-atc-price">&nbsp;·&nbsp;{{ v0.price | money }}</span>
+            </button>
+          {% endform %}
+          <p class="sp-pdp-ship">
+            {%- if block.settings.shipping_note != blank -%}
+              {{ block.settings.shipping_note }}
+            {%- else -%}
+              Free shipping over $75 &nbsp;·&nbsp; 30-day returns
+            {%- endif -%}
+          </p>
+        </div>
+
+        <!-- ================================================== -->
+        {%- when 'whats_included' -%}
+        <!-- ================================================== -->
+        {%- assign has_items = false -%}
+        {%- for n in (1..8) -%}{%- assign ik = 'item_' | append: n -%}{%- if block.settings[ik] != blank -%}{%- assign has_items = true -%}{%- endif -%}{%- endfor -%}
+        {%- if has_items -%}
+          <div class="sp-pdp-included" {{ block.shopify_attributes }}>
+            <div class="sp-pdp-included-h">{{ block.settings.heading | default: "WHAT'S INCLUDED" }}</div>
+            <ul class="sp-pdp-included-list">
+              {%- for n in (1..8) -%}
+                {%- assign ik = 'item_' | append: n -%}
+                {%- if block.settings[ik] != blank -%}
+                  <li><span class="sp-check">✓</span> {{ block.settings[ik] }}</li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
+        {%- endif -%}
+
+        <!-- ================================================== -->
+        {%- when 'trust_badges' -%}
+        <!-- ================================================== -->
+        <div class="sp-pdp-trust" {{ block.shopify_attributes }}>
+          {%- for n in (1..4) -%}
+            {%- assign lk = 'trust_' | append: n | append: '_label' -%}
+            {%- assign sk = 'trust_' | append: n | append: '_sub' -%}
+            {%- assign ik = 'trust_' | append: n | append: '_icon' -%}
+            {%- if block.settings[lk] != blank -%}
+              <div class="sp-trust-item">
+                <div class="sp-trust-icon">
+                  {%- case block.settings[ik] -%}
+                    {%- when 'shield' -%}<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    {%- when 'refresh' -%}<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    {%- when 'heart' -%}<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                    {%- else -%}<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  {%- endcase -%}
+                </div>
+                <div>
+                  <div class="sp-trust-label">{{ block.settings[lk] }}</div>
+                  {%- if block.settings[sk] != blank -%}
+                    <div class="sp-trust-sub">{{ block.settings[sk] }}</div>
+                  {%- endif -%}
+                </div>
               </div>
             {%- endif -%}
           {%- endfor -%}
         </div>
+
+        <!-- ================================================== -->
+        {%- when 'fbt' -%}
+        <!-- ================================================== -->
+        {%- assign fp1 = block.settings.fbt_1 -%}
+        {%- assign fp2 = block.settings.fbt_2 -%}
+        {%- if fp1 != blank or fp2 != blank -%}
+          <div class="sp-pdp-fbt" {{ block.shopify_attributes }}>
+            <div class="sp-pdp-fbt-h">{{ block.settings.fbt_heading | default: 'FREQUENTLY BOUGHT TOGETHER' }}</div>
+            <div class="sp-pdp-fbt-grid">
+              {%- for n in (1..2) -%}
+                {%- assign fpk = 'fbt_' | append: n -%}
+                {%- assign fp = block.settings[fpk] -%}
+                {%- if fp != blank -%}
+                  {%- assign fpv = fp.first_available_variant -%}
+                  <div class="sp-pdp-fbt-item">
+                    {%- if fp.featured_image -%}
+                      <a href="{{ fp.url }}"><img src="{{ fp.featured_image | image_url: width: 200 }}" alt="{{ fp.title | escape }}" class="sp-pdp-fbt-img" loading="lazy"></a>
+                    {%- else -%}
+                      <a href="{{ fp.url }}" class="sp-pdp-fbt-img sp-pdp-fbt-placeholder"></a>
+                    {%- endif -%}
+                    <div class="sp-pdp-fbt-name">{{ fp.title }}</div>
+                    <div class="sp-pdp-fbt-price">{{ fp.price | money }}</div>
+                    {%- if fpv -%}
+                      <button class="sp-pdp-fbt-btn sp-atc-btn" type="button"
+                        data-variant-id="{{ fpv.id }}">ADD TO CART</button>
+                    {%- else -%}
+                      <a href="{{ fp.url }}" class="sp-pdp-fbt-btn">VIEW PRODUCT</a>
+                    {%- endif -%}
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
         {%- endif -%}
 
-        {%- when 'bundle_items' -%}
-        {%- assign any_bundle = false -%}
-        {%- for i in (1..3) -%}
-          {%- assign bpk = 'bundle_product_' | append: i -%}
-          {%- if block.settings[bpk] != blank -%}{%- assign any_bundle = true -%}{%- endif -%}
-        {%- endfor -%}
-        {%- if any_bundle -%}
-        <div class="sp-pdp-bundle" {{ block.shopify_attributes }}>
-          {%- if block.settings.bundle_label != blank -%}
-            <div class="sp-pdp-bundle-label">{{ block.settings.bundle_label }}</div>
-          {%- endif -%}
-          <div class="sp-pdp-bundle-grid">
-            {%- for i in (1..3) -%}
-              {%- assign bpk = 'bundle_product_' | append: i -%}
-              {%- assign bp = block.settings[bpk] -%}
-              {%- if bp != blank -%}
-              <div class="sp-pdp-bundle-item">
-                <div class="sp-pdp-bundle-name">{{ bp.title | upcase }}</div>
-                <div class="sp-pdp-bundle-img">
-                  {%- if bp.featured_image -%}
-                    <img src="{{ bp.featured_image | image_url: width: 300 }}" alt="{{ bp.title | escape }}" loading="lazy">
-                  {%- else -%}
-                    <div style="width:100%;height:100%;background:var(--cream)"></div>
-                  {%- endif -%}
+        <!-- ================================================== -->
+        {%- when 'reviews' -%}
+        <!-- ================================================== -->
+        <div class="sp-pdp-reviews" {{ block.shopify_attributes }}>
+          <div class="sp-pdp-reviews-h">{{ block.settings.heading | default: 'WHAT CUSTOMERS SAY' }}</div>
+          <div class="sp-pdp-reviews-grid">
+            {%- for n in (1..6) -%}
+              {%- assign tk = 'review_' | append: n | append: '_text' -%}
+              {%- assign nk = 'review_' | append: n | append: '_name' -%}
+              {%- assign sk = 'review_' | append: n | append: '_stars' -%}
+              {%- assign vk = 'review_' | append: n | append: '_verified' -%}
+              {%- if block.settings[tk] != blank -%}
+                {%- assign rs = block.settings[sk] | default: 5 -%}
+                <div class="sp-review-card">
+                  <div class="sp-review-stars">
+                    {%- for i in (1..5) -%}<span style="color:{%- if i <= rs -%}#F5A623{%- else -%}#ddd{%- endif -%}">&#9733;</span>{%- endfor -%}
+                  </div>
+                  <p class="sp-review-text">"{{ block.settings[tk] }}"</p>
+                  <div class="sp-review-author">
+                    {{ block.settings[nk] | default: 'Anonymous' }}
+                    {%- if block.settings[vk] -%}<span class="sp-review-badge">✓ Verified</span>{%- endif -%}
+                  </div>
                 </div>
-              </div>
               {%- endif -%}
             {%- endfor -%}
           </div>
         </div>
-        {%- endif -%}
 
-        {%- when 'skin_tone_selector' -%}
-        {%- if tone_option -%}
-        <div class="sp-pdp-variant-group" {{ block.shopify_attributes }}>
-          <div class="sp-pdp-variant-label">CHOOSE YOUR SKIN TONE</div>
-          <div class="sp-tone-grid">
-            {%- for val in tone_option.values -%}
-              {%- assign tidx = forloop.index0 -%}
-              <div class="sp-tone-item">
-                <button class="sp-tone-circle{%- if forloop.first %} active{%- endif -%}"
-                  style="background:{{ tone_colors[tidx] }}"
-                  data-option="{{ tone_option.position }}"
-                  data-value="{{ val }}"
-                  type="button"
-                  aria-label="{{ val }}"></button>
-                <span class="sp-tone-label">{{ tone_labels[tidx] }}</span>
-              </div>
-            {%- endfor -%}
+        <!-- ================================================== -->
+        {%- when 'related_products' -%}
+        <!-- ================================================== -->
+        {%- if collection != blank and collection.products.size > 1 -%}
+          <div class="sp-pdp-related" {{ block.shopify_attributes }}>
+            <div class="sp-pdp-related-h">{{ block.settings.heading | default: 'YOU MAY ALSO LIKE' }}</div>
+            <div class="sp-pdp-related-grid">
+              {%- for rp in collection.products limit: 4 -%}
+                {%- unless rp.id == product.id -%}
+                  {%- assign rpv = rp.first_available_variant -%}
+                  <div class="sp-rp-card">
+                    <a href="{{ rp.url }}" class="sp-rp-img-link">
+                      {%- if rp.featured_image -%}
+                        <img src="{{ rp.featured_image | image_url: width: 400 }}" alt="{{ rp.title | escape }}" class="sp-rp-img" loading="lazy">
+                      {%- else -%}
+                        <div class="sp-rp-img sp-rp-placeholder"></div>
+                      {%- endif -%}
+                    </a>
+                    <div class="sp-rp-info">
+                      <a href="{{ rp.url }}" class="sp-rp-name">{{ rp.title }}</a>
+                      <div class="sp-rp-price">{{ rp.price | money }}</div>
+                    </div>
+                    {%- if rpv -%}
+                      <button class="sp-rp-atc sp-atc-btn" type="button"
+                        data-variant-id="{{ rpv.id }}">ADD TO CART</button>
+                    {%- endif -%}
+                  </div>
+                {%- endunless -%}
+              {%- endfor -%}
+            </div>
           </div>
-        </div>
-        {%- endif -%}
-
-        {%- when 'color_selector' -%}
-        {%- if color_option -%}
-        <div class="sp-pdp-variant-group" {{ block.shopify_attributes }}>
-          <div class="sp-pdp-variant-label">CHOOSE YOUR COLOR</div>
-          <div class="sp-color-btns">
-            {%- for val in color_option.values -%}
-              {%- assign cidx = forloop.index0 -%}
-              <button class="sp-color-btn{%- if forloop.first %} active{%- endif -%}"
-                style="background:{{ color_swatches[cidx] }}"
-                data-option="{{ color_option.position }}"
-                data-value="{{ val }}"
-                type="button"
-                title="{{ val }}"
-                aria-label="{{ val }}"></button>
-            {%- endfor -%}
-          </div>
-        </div>
-        {%- endif -%}
-
-        {%- when 'size_selector' -%}
-        {%- if size_option -%}
-        <div class="sp-pdp-variant-group" {{ block.shopify_attributes }}>
-          <div class="sp-pdp-variant-label">
-            CHOOSE YOUR SIZE
-            <button class="sp-pdp-size-guide-btn" id="sp-size-guide-link" type="button">Size Guide</button>
-          </div>
-          <div class="sp-size-btns">
-            {%- for val in size_option.values -%}
-              <button class="sp-size-btn{%- if forloop.first %} active{%- endif -%}"
-                data-option="{{ size_option.position }}"
-                data-value="{{ val }}"
-                type="button">{{ val }}</button>
-            {%- endfor -%}
-          </div>
-        </div>
-        {%- endif -%}
-
-        {%- when 'add_to_cart' -%}
-        <div class="sp-pdp-atc-wrap" {{ block.shopify_attributes }}>
-          <button
-            class="sp-pdp-atc-btn sp-pdp-atc-trigger sp-atc-btn"
-            id="sp-main-atc"
-            data-variant-id="{{ v0.id }}"
-            type="button"
-            {%- unless v0.available %} disabled{%- endunless -%}>
-            {%- if v0.available -%}
-              {{ block.settings.btn_text | default: 'ADD TO CART' }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;{{ v0.price | money }}
-            {%- else -%}
-              SOLD OUT
-            {%- endif -%}
-          </button>
-          <p class="sp-pdp-ship-note">{{ block.settings.shipping_note | default: 'Free shipping over $75 &nbsp;&middot;&nbsp; 30-day returns' }}</p>
-        </div>
-
-        {%- when 'whats_included' -%}
-        {%- assign has_items = false -%}
-        {%- for i in (1..8) -%}
-          {%- assign ik = 'include_' | append: i -%}
-          {%- if block.settings[ik] != blank -%}{%- assign has_items = true -%}{%- endif -%}
-        {%- endfor -%}
-        {%- if has_items -%}
-        <div class="sp-pdp-included" {{ block.shopify_attributes }}>
-          <div class="sp-pdp-included-h">WHAT'S INCLUDED</div>
-          {%- for i in (1..8) -%}
-            {%- assign ik = 'include_' | append: i -%}
-            {%- if block.settings[ik] != blank -%}
-              <div class="sp-pdp-included-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>{{ block.settings[ik] }}</span>
-              </div>
-            {%- endif -%}
-          {%- endfor -%}
-        </div>
+        {%- else -%}
+          <div {{ block.shopify_attributes }}></div>
         {%- endif -%}
 
       {%- endcase -%}
     {%- endfor -%}
-  </div>
-</div>
 
-<!-- ========== BELOW FOLD ========== -->
-{%- for block in section.blocks -%}
-  {%- case block.type -%}
+  </div><!-- /.sp-pdp-info -->
+</div><!-- /.sp-pdp -->
 
-    {%- when 'trust_badges' -%}
-    <div class="sp-pdp-trust" {{ block.shopify_attributes }}>
-      {%- for i in (1..4) -%}
-        {%- assign lk = 'trust_' | append: i | append: '_label' -%}
-        {%- assign sk = 'trust_' | append: i | append: '_sub' -%}
-        <div class="sp-pdp-trust-item">
-          {%- case i -%}
-            {%- when 1 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            {%- when 2 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            {%- when 3 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            {%- when 4 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-          {%- endcase -%}
-          <div class="sp-pdp-trust-lbl">{{ block.settings[lk] }}</div>
-          <div class="sp-pdp-trust-sub">{{ block.settings[sk] }}</div>
-        </div>
-      {%- endfor -%}
-    </div>
-
-    {%- when 'fbt' -%}
-    {%- if block.settings.fbt_1 != blank or block.settings.fbt_2 != blank -%}
-    <section class="sp-pdp-fbt" {{ block.shopify_attributes }}>
-      <div class="sp-pdp-fbt-h">FREQUENTLY BOUGHT TOGETHER</div>
-      <div class="sp-pdp-fbt-grid">
-        {%- for i in (1..2) -%}
-          {%- assign fpk = 'fbt_' | append: i -%}
-          {%- assign fp  = block.settings[fpk] -%}
-          {%- if fp != blank -%}
-          <div class="sp-pdp-fbt-card">
-            <a href="{{ fp.url }}" class="sp-pdp-fbt-img-wrap">
-              {%- if fp.featured_image -%}
-                <img src="{{ fp.featured_image | image_url: width: 600 }}" alt="{{ fp.title | escape }}" loading="lazy">
-              {%- else -%}
-                <div style="width:100%;height:100%;background:var(--cream)"></div>
-              {%- endif -%}
-            </a>
-            <div class="sp-pdp-fbt-name">{{ fp.title | upcase }}</div>
-            <div class="sp-pdp-fbt-price">{{ fp.price | money }}</div>
-            {%- if fp.first_available_variant != blank -%}
-              <button class="sp-pdp-fbt-btn sp-atc-btn"
-                data-variant-id="{{ fp.first_available_variant.id }}"
-                type="button">ADD TO CART</button>
-            {%- else -%}
-              <button class="sp-pdp-fbt-btn" disabled>SOLD OUT</button>
-            {%- endif -%}
-          </div>
-          {%- endif -%}
-        {%- endfor -%}
-      </div>
-    </section>
-    {%- endif -%}
-
-    {%- when 'reviews' -%}
-    {%- assign has_rev = false -%}
-    {%- for i in (1..6) -%}
-      {%- assign rk = 'review_' | append: i | append: '_text' -%}
-      {%- if block.settings[rk] != blank -%}{%- assign has_rev = true -%}{%- endif -%}
+<!-- ============================================================
+     VARIANT DATA (for JS)
+============================================================ -->
+<script>
+window.spPDP = {
+  productId: {{ product.id | json }},
+  variants: {{ product.variants | json }},
+  money_format: {{ shop.money_format | json }},
+  selected: {
+    {%- for opt in product.options_with_values -%}
+      {{ opt.position | json }}: {{ opt.values | first | json }}{%- unless forloop.last -%},{%- endunless -%}
     {%- endfor -%}
-    {%- if has_rev -%}
-    <section class="sp-rev-s" {{ block.shopify_attributes }}>
-      <div class="sp-rev-h">{{ block.settings.heading | default: 'REAL REVIEWS' }}</div>
-      <div class="sp-rev-grid">
-        {%- for i in (1..6) -%}
-          {%- assign rt = 'review_' | append: i | append: '_text' -%}
-          {%- assign rn = 'review_' | append: i | append: '_name' -%}
-          {%- assign rs = 'review_' | append: i | append: '_stars' -%}
-          {%- assign rv = 'review_' | append: i | append: '_verified' -%}
-          {%- if block.settings[rt] != blank -%}
-          <div class="sp-rev-card">
-            <div class="sp-rev-stars">{%- for s in (1..block.settings[rs]) -%}★{%- endfor -%}</div>
-            <p class="sp-rev-text">"{{ block.settings[rt] }}"</p>
-            <div class="sp-rev-name">— {{ block.settings[rn] }}</div>
-            {%- if block.settings[rv] -%}<div class="sp-rev-verified">✓ Verified Buyer</div>{%- endif -%}
-          </div>
-          {%- endif -%}
-        {%- endfor -%}
-      </div>
-    </section>
-    {%- endif -%}
+  }
+};
+</script>
 
-    {%- when 'related_products' -%}
-    {%- if collection -%}
-    <section class="sp-pdp-related" {{ block.shopify_attributes }}>
-      <div class="sp-pdp-related-h">{{ block.settings.heading | default: 'YOU MAY ALSO LIKE' }}</div>
-      <div class="sp-bs-scroll">
-        {%- for rp in collection.products limit: 6 -%}
-          {%- unless rp.handle == product.handle -%}
-          <div class="sp-pc">
-            <a href="{{ rp.url }}" class="sp-pc-img" style="display:block;aspect-ratio:3/4;overflow:hidden;margin-bottom:12px">
-              {%- if rp.featured_image -%}
-                <img src="{{ rp.featured_image | image_url: width: 400 }}" alt="{{ rp.title | escape }}" loading="lazy" style="width:100%;height:100%;object-fit:cover">
-              {%- else -%}
-                <div style="width:100%;height:100%;background:var(--cream)"></div>
-              {%- endif -%}
-            </a>
-            <div class="sp-pc-brand">SCULPS</div>
-            <a href="{{ rp.url }}" class="sp-pc-name" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;letter-spacing:.5px;text-decoration:none;color:var(--black)">{{ rp.title }}</a>
-            <div class="sp-pc-prices"><span class="sp-pc-price">{{ rp.price | money }}</span></div>
-            {%- if rp.first_available_variant != blank -%}
-              <button class="sp-pc-btn sp-atc-btn"
-                data-variant-id="{{ rp.first_available_variant.id }}"
-                type="button">Add to Bag</button>
-            {%- endif -%}
-          </div>
-          {%- endunless -%}
-        {%- endfor -%}
-      </div>
-    </section>
-    {%- endif -%}
-
-  {%- endcase -%}
-{%- endfor -%}
-
-<!-- ========== VARIANT JS ========== -->
+<!-- ============================================================
+     PRODUCT PAGE JAVASCRIPT
+============================================================ -->
 <script>
 (function () {
-  var prod = window.sculpsProduct || {};
-  var variants = prod.variants || [];
-  var sel = prod.selectedOptions || {};
+  'use strict';
+
+  var pdp = window.spPDP || {};
+  var variants = pdp.variants || [];
+  var selected = pdp.selected || {};
+
+  /* ── Helpers ───────────────────────────────────────────────── */
+  function formatMoney(cents) {
+    return '$' + (cents / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
 
   function findVariant() {
     return variants.find(function (v) {
-      return Object.keys(sel).every(function (pos) {
-        return v.options[parseInt(pos) - 1] === sel[pos];
+      return v.options.every(function (optVal, i) {
+        return selected[i + 1] === optVal;
       });
-    });
+    }) || variants[0];
   }
-  function money(cents) {
-    return '$' + (cents / 100).toFixed(2).replace(/\.00$/, '');
-  }
+
   function updateUI(v) {
     if (!v) return;
+
+    /* hidden form input */
+    var inp = document.getElementById('sp-variant-id');
+    if (inp) inp.value = v.id;
+
+    /* price */
     var priceEl   = document.getElementById('sp-price');
     var compareEl = document.getElementById('sp-compare');
-    var saveTagEl = document.getElementById('sp-save-tag');
-    var saveBadge = document.getElementById('sp-save-badge');
-    var saveAmt   = document.getElementById('sp-save-amt');
-    var atcBtn    = document.getElementById('sp-main-atc');
+    var saveEl    = document.getElementById('sp-save');
     var satcPrice = document.getElementById('sp-satc-price');
-    var varInput  = document.getElementById('sculps-selected-variant');
+    var atcPrice  = document.getElementById('sp-atc-price');
 
-    if (priceEl)   priceEl.textContent   = money(v.price);
-    if (satcPrice) satcPrice.textContent = money(v.price);
-    if (varInput)  varInput.value        = v.id;
+    if (priceEl)   priceEl.textContent   = formatMoney(v.price);
+    if (satcPrice) satcPrice.textContent = formatMoney(v.price);
+    if (atcPrice)  atcPrice.textContent  = ' · ' + formatMoney(v.price);
 
     if (v.compare_at_price && v.compare_at_price > v.price) {
-      var save = v.compare_at_price - v.price;
-      if (compareEl) { compareEl.textContent = money(v.compare_at_price); compareEl.style.display = ''; }
-      if (saveTagEl) { saveTagEl.textContent = 'SAVE ' + money(save); saveTagEl.style.display = ''; }
-      if (saveBadge) { saveBadge.style.display = ''; }
-      if (saveAmt)   { saveAmt.textContent = money(save); }
+      if (compareEl) { compareEl.textContent = formatMoney(v.compare_at_price); compareEl.style.display = ''; }
+      if (saveEl)    { saveEl.textContent = 'SAVE ' + formatMoney(v.compare_at_price - v.price); saveEl.style.display = ''; }
     } else {
       if (compareEl) compareEl.style.display = 'none';
-      if (saveTagEl) saveTagEl.style.display = 'none';
-      if (saveBadge) saveBadge.style.display = 'none';
+      if (saveEl)    saveEl.style.display    = 'none';
     }
 
-    document.querySelectorAll('.sp-pdp-atc-trigger,.sp-satc-btn').forEach(function (b) {
-      b.setAttribute('data-variant-id', v.id);
-    });
-
+    /* ATC button */
+    var atcBtn   = document.getElementById('sp-main-atc');
+    var atcLabel = document.getElementById('sp-atc-label');
+    var satcBtn  = document.getElementById('sp-satc-btn');
     if (atcBtn) {
-      if (v.available) {
-        atcBtn.textContent = 'ADD TO CART  ·  ' + money(v.price);
-        atcBtn.disabled = false;
-      } else {
-        atcBtn.textContent = 'SOLD OUT';
-        atcBtn.disabled = true;
+      atcBtn.disabled = !v.available;
+      if (atcLabel) atcLabel.textContent = v.available ? 'ADD TO CART' : 'SOLD OUT';
+    }
+    if (satcBtn) satcBtn.disabled = !v.available;
+
+    /* update image to variant image if available */
+    if (v.featured_image) {
+      var mainImg = document.getElementById('sp-main-img');
+      if (mainImg) {
+        var src = v.featured_image.src.replace(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i, '_900x.$1$2');
+        mainImg.src = src;
+        var zoomBtn = document.getElementById('sp-zoom-btn');
+        if (zoomBtn) zoomBtn.dataset.zoom = v.featured_image.src.replace(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i, '_2000x.$1$2');
       }
     }
+  }
 
-    if (v.featured_image) {
-      var mi = document.getElementById('sp-main-img');
-      if (mi) { mi.style.opacity = '0'; setTimeout(function () { mi.src = v.featured_image.src; mi.style.opacity = '1'; }, 150); }
+  /* ── Option button clicks ───────────────────────────────────── */
+  function handleOptClick(e) {
+    var btn = e.target.closest('[data-opt-pos]');
+    if (!btn) return;
+
+    var pos = parseInt(btn.dataset.optPos, 10);
+    var val = btn.dataset.optVal;
+    selected[pos] = val;
+
+    /* mark active within group */
+    var group = btn.closest('.sp-tone-btns, .sp-color-btns, .sp-size-btns');
+    if (group) {
+      group.querySelectorAll('[data-opt-pos]').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
     }
+
+    /* update label text */
+    if (btn.closest('.sp-tone-btns')) {
+      var lbl = document.getElementById('sp-tone-val');
+      if (lbl) lbl.textContent = val;
+    }
+    if (btn.closest('.sp-color-btns')) {
+      var clbl = document.getElementById('sp-color-val');
+      if (clbl) clbl.textContent = val;
+    }
+
+    updateUI(findVariant());
   }
 
-  function switchImage(src) {
-    var mi = document.getElementById('sp-main-img');
-    if (!mi || !src) return;
-    mi.style.opacity = '0';
-    setTimeout(function () { mi.src = src; mi.style.opacity = '1'; }, 100);
-    document.querySelectorAll('.sp-pdp-thumb,.sp-pdp-dot-mob').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-src') === src);
-    });
-  }
+  document.addEventListener('click', handleOptClick);
+
+  /* ── Thumbnail clicks ───────────────────────────────────────── */
+  document.addEventListener('click', function (e) {
+    var thumb = e.target.closest('.sp-pdp-thumb');
+    if (!thumb) return;
+    var mainImg = document.getElementById('sp-main-img');
+    var zoomBtn = document.getElementById('sp-zoom-btn');
+    if (mainImg && thumb.dataset.full) mainImg.src = thumb.dataset.full;
+    if (zoomBtn && thumb.dataset.zoom) zoomBtn.dataset.zoom = thumb.dataset.zoom;
+    document.querySelectorAll('.sp-pdp-thumb').forEach(function (t) { t.classList.remove('active'); });
+    thumb.classList.add('active');
+  });
+
+  /* ── Lightbox ───────────────────────────────────────────────── */
+  var lbOverlay = document.getElementById('sp-lb-overlay');
+  var lbImg     = document.getElementById('sp-lb-img');
 
   document.addEventListener('click', function (e) {
-    var t = e.target;
-    if (t.classList.contains('sp-tone-circle')) {
-      document.querySelectorAll('.sp-tone-circle').forEach(function (b) { b.classList.remove('active'); });
-      t.classList.add('active');
-      sel[t.getAttribute('data-option')] = t.getAttribute('data-value');
-      var v = findVariant(); if (v) updateUI(v);
+    var zBtn = e.target.closest('#sp-zoom-btn');
+    if (zBtn && lbOverlay && lbImg) {
+      lbImg.src = zBtn.dataset.zoom || '';
+      lbOverlay.setAttribute('aria-hidden', 'false');
+      lbOverlay.style.display = 'flex';
     }
-    if (t.classList.contains('sp-color-btn')) {
-      document.querySelectorAll('.sp-color-btn').forEach(function (b) { b.classList.remove('active'); });
-      t.classList.add('active');
-      sel[t.getAttribute('data-option')] = t.getAttribute('data-value');
-      var v = findVariant(); if (v) updateUI(v);
-    }
-    if (t.classList.contains('sp-size-btn')) {
-      document.querySelectorAll('.sp-size-btn').forEach(function (b) { b.classList.remove('active'); });
-      t.classList.add('active');
-      sel[t.getAttribute('data-option')] = t.getAttribute('data-value');
-      var v = findVariant(); if (v) updateUI(v);
-    }
-    if (t.classList.contains('sp-pdp-thumb') || t.classList.contains('sp-pdp-dot-mob')) {
-      switchImage(t.getAttribute('data-src'));
-    }
-    if (t.id === 'sp-zoom-btn') {
-      var sources = document.querySelectorAll('#sp-lb-sources span');
-      if (sources.length) {
-        window._lbIdx = 0;
-        var li = document.getElementById('sp-lb-img');
-        if (li) li.src = sources[0].getAttribute('data-src');
-        var lo = document.getElementById('sp-lb-overlay');
-        if (lo) { lo.style.display = 'flex'; lo.setAttribute('aria-hidden', 'false'); }
-      }
-    }
-    if (t.id === 'sp-lb-close' || t.id === 'sp-lb-overlay') {
-      var lo = document.getElementById('sp-lb-overlay');
-      if (lo) { lo.style.display = 'none'; lo.setAttribute('aria-hidden', 'true'); }
-    }
-    if (t.id === 'sp-lb-next' || t.id === 'sp-lb-prev') {
-      var sources = document.querySelectorAll('#sp-lb-sources span');
-      if (sources.length) {
-        var d = t.id === 'sp-lb-next' ? 1 : -1;
-        window._lbIdx = ((window._lbIdx || 0) + d + sources.length) % sources.length;
-        var li = document.getElementById('sp-lb-img');
-        if (li) li.src = sources[window._lbIdx].getAttribute('data-src');
-      }
-    }
-    if (t.id === 'sp-size-guide-link') {
-      var sg = document.getElementById('sp-sg-overlay');
-      if (sg) { sg.style.display = 'flex'; sg.setAttribute('aria-hidden', 'false'); }
-    }
-    if (t.id === 'sp-sg-close') {
-      var sg = document.getElementById('sp-sg-overlay');
-      if (sg) { sg.style.display = 'none'; sg.setAttribute('aria-hidden', 'true'); }
+    if (e.target.closest('#sp-lb-close') || e.target === lbOverlay) {
+      if (lbOverlay) { lbOverlay.setAttribute('aria-hidden', 'true'); lbOverlay.style.display = 'none'; }
     }
   });
 
-  var sgEl = document.getElementById('sp-sg-overlay');
-  if (sgEl) sgEl.addEventListener('click', function (e) { if (e.target === sgEl) { sgEl.style.display = 'none'; } });
+  /* ── Size guide ─────────────────────────────────────────────── */
+  var sgOverlay = document.getElementById('sp-sg-overlay');
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#sp-sg-open')) { sgOverlay.setAttribute('aria-hidden','false'); sgOverlay.style.display='flex'; }
+    if (e.target.closest('#sp-sg-close') || e.target === sgOverlay) { sgOverlay.setAttribute('aria-hidden','true'); sgOverlay.style.display='none'; }
+  });
+
+  /* ── Sticky ATC ─────────────────────────────────────────────── */
+  var satcBar  = document.getElementById('sp-satc');
+  var mainAtc  = document.getElementById('sp-main-atc');
+  var satcBtnEl = document.getElementById('sp-satc-btn');
+
+  if (satcBar && mainAtc) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        satcBar.classList.toggle('sp-satc--visible', !entry.isIntersecting);
+        satcBar.setAttribute('aria-hidden', entry.isIntersecting ? 'true' : 'false');
+      });
+    }, { threshold: 0 });
+    io.observe(mainAtc);
+  }
+
+  /* sticky ATC triggers the form */
+  if (satcBtnEl) {
+    satcBtnEl.addEventListener('click', function () {
+      var form = document.getElementById('sp-product-form');
+      if (form) form.requestSubmit ? form.requestSubmit() : form.submit();
+    });
+  }
+
+  /* ── ATC form: add loading state ───────────────────────────── */
+  var form = document.getElementById('sp-product-form');
+  if (form) {
+    form.addEventListener('submit', function () {
+      var btn = document.getElementById('sp-main-atc');
+      if (btn && !btn.disabled) {
+        btn.classList.add('sp-pdp-atc-btn--loading');
+        btn.disabled = true;
+        setTimeout(function () {
+          btn.classList.remove('sp-pdp-atc-btn--loading');
+          btn.disabled = false;
+        }, 2000);
+      }
+    });
+  }
+
+  /* ── Init ───────────────────────────────────────────────────── */
+  updateUI(findVariant());
+
 })();
 </script>
 
+<!-- ============================================================
+     STYLES
+============================================================ -->
 <style>
-/* ===== PRODUCT PAGE LAYOUT ===== */
-.sp-pdp-page{display:grid;grid-template-columns:1fr 1fr;gap:56px;max-width:1260px;margin:0 auto;padding:40px 48px 64px}
+/* ── Layout ─────────────────────────────────────────────────── */
+.sp-pdp{display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:1280px;margin:0 auto;padding:40px 24px 80px}
+@media(max-width:768px){.sp-pdp{grid-template-columns:1fr;gap:0;padding:0 0 60px}}
 
-/* Gallery */
-.sp-pdp-gallery{}
-.sp-pdp-main-wrap{position:relative;overflow:hidden;background:var(--cream);aspect-ratio:1/1}
-.sp-pdp-main-img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .2s}
-.sp-pdp-img-empty{width:100%;height:100%;background:var(--cream)}
-
-/* Save circle badge */
-.sp-pdp-save-circle{position:absolute;top:16px;left:16px;width:72px;height:72px;border-radius:50%;background:var(--black);color:var(--white);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;line-height:1.2;pointer-events:none}
-.sp-pdp-save-top{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
-.sp-pdp-save-amt{font-size:17px;font-weight:900;letter-spacing:0}
-
-/* Zoom */
-.sp-pdp-zoom-btn{position:absolute;bottom:14px;right:14px;width:36px;height:36px;background:rgba(255,255,255,.9);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--black);transition:background .2s;z-index:2}
-.sp-pdp-zoom-btn:hover{background:#fff}
-
-/* Thumbnails (desktop) */
+/* ── Gallery ────────────────────────────────────────────────── */
+.sp-pdp-gallery{position:sticky;top:80px;align-self:start}
+@media(max-width:768px){.sp-pdp-gallery{position:static}}
+.sp-pdp-main-wrap{position:relative;background:#f8f8f8;aspect-ratio:1/1;overflow:hidden}
+.sp-pdp-main-img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.sp-pdp-zoom-btn{position:absolute;bottom:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .sp-pdp-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.sp-pdp-thumb{width:66px;height:66px;border:2px solid transparent;cursor:pointer;background-size:cover;background-position:center;padding:0;transition:border-color .15s;flex-shrink:0}
-.sp-pdp-thumb.active{border-color:var(--black)}
+.sp-pdp-thumb{width:72px;height:72px;padding:2px;border:2px solid transparent;background:none;cursor:pointer;overflow:hidden}
+.sp-pdp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.sp-pdp-thumb.active{border-color:#1A1410}
+.sp-pdp-no-img{aspect-ratio:1/1;background:#f4f4f4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;color:#999;font-size:13px;line-height:1.5}
 
-/* Dots (mobile) */
-.sp-pdp-dots-mob{display:none;gap:8px;justify-content:center;margin-top:14px}
-.sp-pdp-dot-mob{width:10px;height:10px;border-radius:50%;border:none;background:rgba(0,0,0,.2);cursor:pointer;padding:0;transition:background .15s;flex-shrink:0}
-.sp-pdp-dot-mob.active{background:var(--black)}
+/* ── Info column ────────────────────────────────────────────── */
+.sp-pdp-info{display:flex;flex-direction:column;gap:28px;padding-top:8px}
+@media(max-width:768px){.sp-pdp-info{padding:20px 16px}}
 
-/* Info column */
-.sp-pdp-col-right{display:flex;flex-direction:column}
+/* ── Product header ─────────────────────────────────────────── */
+.sp-pdp-vendor{font-size:11px;letter-spacing:3px;color:#8B7355;margin:0 0 6px;font-weight:600}
+.sp-pdp-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4vw,52px);letter-spacing:2px;color:#1A1410;margin:0 0 14px;line-height:1}
+.sp-pdp-price-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.sp-pdp-price{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;color:#1A1410}
+.sp-pdp-compare{font-size:18px;color:#aaa;text-decoration:line-through}
+.sp-pdp-save{background:#1A1410;color:#fff;font-size:11px;font-weight:800;letter-spacing:2px;padding:4px 10px}
+.sp-pdp-stars{display:flex;align-items:center;gap:6px}
+.sp-stars-row{color:#F5A623;font-size:16px;letter-spacing:1px}
+.sp-pdp-rc{font-size:13px;color:#666}
+.sp-pdp-tagline{font-size:14px;color:#555;margin:6px 0 0;line-height:1.5}
 
-/* Header */
-.sp-pdp-header-block{margin-bottom:16px}
-.sp-pdp-brand{font-size:9px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--grey);margin-bottom:6px}
-.sp-pdp-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,3.5vw,52px);letter-spacing:2px;line-height:1.05;margin-bottom:10px}
-.sp-pdp-subtitle{font-size:14px;color:var(--grey);margin-bottom:14px;line-height:1.5}
-.sp-pdp-price-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
-.sp-pdp-price{font-size:34px;font-weight:900;letter-spacing:-1px}
-.sp-pdp-compare{font-size:20px;color:var(--grey);text-decoration:line-through;font-weight:400}
-.sp-pdp-save-pill{background:var(--black);color:var(--white);font-size:10px;font-weight:900;letter-spacing:1.5px;padding:5px 12px;text-transform:uppercase;line-height:1}
-.sp-pdp-tagline{font-size:13px;color:var(--grey);font-style:italic;margin-bottom:16px;line-height:1.5}
-.sp-pdp-stars{font-size:15px;color:#C9A96E;display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.sp-pdp-stars-count{font-size:11px;color:var(--grey);font-family:inherit}
+/* ── Bullets ────────────────────────────────────────────────── */
+.sp-pdp-bullets{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.sp-pdp-bullets li{display:flex;gap:10px;font-size:13px;color:#444;line-height:1.4;padding-left:0}
+.sp-pdp-bullets li::before{content:"✓";color:#1A1410;font-weight:900;flex-shrink:0}
 
-/* Bullet points */
-.sp-pdp-bullets{margin-bottom:16px}
-.sp-pdp-bullet{display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-bottom:7px;line-height:1.5;color:var(--black)}
-.sp-pdp-bullet svg{flex-shrink:0;margin-top:2px}
+/* ── Option groups ──────────────────────────────────────────── */
+.sp-pdp-opt-group{display:flex;flex-direction:column;gap:10px}
+.sp-pdp-opt-label{font-size:11px;font-weight:800;letter-spacing:2px;color:#1A1410}
+.sp-opt-val{font-weight:400;letter-spacing:0;color:#666}
+.sp-pdp-opt-label-row{display:flex;align-items:center;justify-content:space-between}
+.sp-sg-trigger{font-size:10px;font-weight:700;letter-spacing:1.5px;color:#8B7355;background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit;text-transform:uppercase}
 
-/* Bundle */
-.sp-pdp-bundle{margin:16px 0;padding:16px;border:1px solid var(--border)}
-.sp-pdp-bundle-label{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:12px;text-align:center}
-.sp-pdp-bundle-grid{display:grid;grid-template-columns:repeat(3,1fr)}
-.sp-pdp-bundle-item{padding:12px 8px;border-right:1px solid var(--border);text-align:center}
-.sp-pdp-bundle-item:last-child{border-right:none}
-.sp-pdp-bundle-name{font-size:8px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;line-height:1.4}
-.sp-pdp-bundle-img{aspect-ratio:1/1;overflow:hidden}
-.sp-pdp-bundle-img img{width:100%;height:100%;object-fit:cover}
+/* ── Skin tone buttons ──────────────────────────────────────── */
+.sp-tone-btns{display:flex;gap:10px;flex-wrap:wrap}
+.sp-tone-btn{width:44px;height:44px;border-radius:50%;border:3px solid transparent;cursor:pointer;position:relative;transition:transform .15s}
+.sp-tone-btn:hover{transform:scale(1.1)}
+.sp-tone-btn.active{border-color:#1A1410;outline:2px solid #fff;outline-offset:-4px}
+.sp-tone-lbl{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;letter-spacing:.5px;white-space:nowrap;color:#555}
 
-/* Variants */
-.sp-pdp-variant-group{margin:16px 0}
-.sp-pdp-variant-label{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
-.sp-pdp-size-guide-btn{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:none;border:none;cursor:pointer;color:var(--grey);text-decoration:underline;font-family:inherit;padding:0}
+/* ── Color buttons ──────────────────────────────────────────── */
+.sp-color-btns{display:flex;gap:8px;flex-wrap:wrap}
+.sp-color-btn{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform .15s}
+.sp-color-btn:hover{transform:scale(1.1)}
+.sp-color-btn.active{border-color:#1A1410;outline:2px solid #fff;outline-offset:-4px}
 
-/* Tone circles */
-.sp-tone-grid{display:flex;gap:12px;flex-wrap:wrap}
-.sp-tone-item{display:flex;flex-direction:column;align-items:center;gap:5px}
-.sp-tone-circle{width:48px;height:48px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .15s;padding:0;flex-shrink:0}
-.sp-tone-circle:hover{transform:scale(1.08)}
-.sp-tone-circle.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
-.sp-tone-label{font-size:7px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--grey)}
-
-/* Color swatches */
-.sp-color-btns{display:flex;gap:10px;flex-wrap:wrap}
-.sp-color-btn{width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .15s;padding:0;flex-shrink:0}
-.sp-color-btn.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
-
-/* Size buttons */
+/* ── Size buttons ───────────────────────────────────────────── */
 .sp-size-btns{display:flex;gap:8px;flex-wrap:wrap}
-.sp-size-btn{padding:11px 18px;border:1.5px solid var(--border);background:none;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:all .15s;text-align:center;white-space:nowrap;min-width:50px;line-height:1}
-.sp-size-btn:hover{border-color:var(--black)}
-.sp-size-btn.active{background:var(--black);color:var(--white);border-color:var(--black)}
+.sp-size-btn{min-width:50px;padding:12px 18px;border:2px solid #ddd;background:#fff;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:all .15s;white-space:nowrap;line-height:1;color:#1A1410}
+.sp-size-btn:hover{border-color:#1A1410}
+.sp-size-btn.active{background:#1A1410;color:#fff;border-color:#1A1410}
 
-/* ATC */
-.sp-pdp-atc-wrap{margin-top:20px}
-.sp-pdp-atc-btn{display:block;width:100%;padding:18px 24px;background:var(--black);color:var(--white);font-family:inherit;font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;border:none;cursor:pointer;transition:background .2s}
+/* ── ATC button ─────────────────────────────────────────────── */
+.sp-pdp-atc-wrap{display:flex;flex-direction:column;gap:10px}
+.sp-pdp-atc-btn{display:block;width:100%;padding:18px 24px;background:#1A1410;color:#fff;font-family:inherit;font-size:12px;font-weight:900;letter-spacing:3px;text-transform:uppercase;border:none;cursor:pointer;transition:background .2s;text-align:center}
 .sp-pdp-atc-btn:hover:not(:disabled){background:#333}
-.sp-pdp-atc-btn:disabled{opacity:.45;cursor:default}
-.sp-pdp-ship-note{font-size:11px;color:var(--grey);text-align:center;margin-top:10px;line-height:1.5}
+.sp-pdp-atc-btn:disabled{opacity:.5;cursor:default}
+.sp-pdp-atc-btn--loading{opacity:.7;pointer-events:none}
+.sp-pdp-ship{font-size:12px;color:#888;text-align:center;margin:0}
 
-/* What's included */
-.sp-pdp-included{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
-.sp-pdp-included-h{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
-.sp-pdp-included-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;margin-bottom:9px;line-height:1.5;color:var(--black)}
-.sp-pdp-included-item svg{flex-shrink:0;margin-top:2px}
+/* ── What's included ────────────────────────────────────────── */
+.sp-pdp-included{background:#f8f7f5;padding:24px}
+.sp-pdp-included-h{font-size:11px;font-weight:900;letter-spacing:3px;color:#1A1410;margin-bottom:14px}
+.sp-pdp-included-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.sp-pdp-included-list li{display:flex;gap:10px;font-size:14px;color:#444;align-items:baseline}
+.sp-check{color:#1A1410;font-weight:900}
 
-/* Trust badges */
-.sp-pdp-trust{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:40px}
-.sp-pdp-trust-item{display:flex;flex-direction:column;align-items:center;text-align:center;padding:28px 12px;border-right:1px solid var(--border)}
-.sp-pdp-trust-item:last-child{border-right:none}
-.sp-pdp-trust-icon{width:30px;height:30px;margin-bottom:12px;color:var(--black)}
-.sp-pdp-trust-lbl{font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
-.sp-pdp-trust-sub{font-size:10px;color:var(--grey);line-height:1.4}
+/* ── Trust badges ───────────────────────────────────────────── */
+.sp-pdp-trust{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sp-trust-item{display:flex;gap:12px;align-items:flex-start;padding:16px;border:1px solid #f0ede8}
+.sp-trust-icon{flex-shrink:0;color:#1A1410}
+.sp-trust-label{font-size:11px;font-weight:800;letter-spacing:1.5px;color:#1A1410;margin-bottom:4px}
+.sp-trust-sub{font-size:12px;color:#777;line-height:1.4}
+@media(max-width:480px){.sp-pdp-trust{grid-template-columns:1fr}}
 
-/* FBT */
-.sp-pdp-fbt{padding:48px;background:var(--cream)}
-.sp-pdp-fbt-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,40px);letter-spacing:3px;margin-bottom:28px;text-align:center}
-.sp-pdp-fbt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:720px;margin:0 auto}
-.sp-pdp-fbt-card{background:var(--white);padding:20px;display:flex;flex-direction:column}
-.sp-pdp-fbt-img-wrap{aspect-ratio:1/1;overflow:hidden;margin-bottom:14px;display:block}
-.sp-pdp-fbt-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
-.sp-pdp-fbt-card:hover .sp-pdp-fbt-img-wrap img{transform:scale(1.04)}
-.sp-pdp-fbt-name{font-size:11px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;line-height:1.4}
-.sp-pdp-fbt-price{font-size:18px;font-weight:900;margin-bottom:14px}
-.sp-pdp-fbt-btn{width:100%;padding:13px;background:var(--black);color:var(--white) !important;font-family:inherit;font-size:10px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;border:none;cursor:pointer;transition:background .2s;text-decoration:none !important;text-align:center;display:block;margin-top:auto}
-.sp-pdp-fbt-btn:hover:not(:disabled){background:#333}
+/* ── FBT ────────────────────────────────────────────────────── */
+.sp-pdp-fbt{padding:24px 0}
+.sp-pdp-fbt-h{font-size:11px;font-weight:900;letter-spacing:3px;color:#1A1410;margin-bottom:16px}
+.sp-pdp-fbt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sp-pdp-fbt-item{display:flex;flex-direction:column;gap:8px}
+.sp-pdp-fbt-img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+.sp-pdp-fbt-placeholder{aspect-ratio:1/1;background:#f4f4f4;display:block}
+.sp-pdp-fbt-name{font-size:13px;font-weight:600;color:#1A1410}
+.sp-pdp-fbt-price{font-size:13px;color:#555}
+.sp-pdp-fbt-btn{display:block;width:100%;padding:10px;background:#1A1410;color:#fff;font-size:10px;font-weight:800;letter-spacing:2px;border:none;cursor:pointer;text-align:center;text-decoration:none;font-family:inherit}
 
-/* Reviews */
-.sp-rev-s{padding:56px 48px;background:var(--white)}
-.sp-rev-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4vw,48px);letter-spacing:3px;text-align:center;margin-bottom:36px}
-.sp-rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto}
-.sp-rev-card{padding:28px;border-left:3px solid #C9A96E;background:var(--cream)}
-.sp-rev-stars{color:#C9A96E;font-size:16px;margin-bottom:12px;letter-spacing:2px}
-.sp-rev-text{font-size:13px;line-height:1.7;font-style:italic;margin-bottom:14px;color:var(--black)}
-.sp-rev-name{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey)}
-.sp-rev-verified{font-size:9px;color:#6A8A6A;font-weight:700;letter-spacing:1px;margin-top:6px}
+/* ── Reviews ────────────────────────────────────────────────── */
+.sp-pdp-reviews{padding:8px 0}
+.sp-pdp-reviews-h{font-size:11px;font-weight:900;letter-spacing:3px;color:#1A1410;margin-bottom:16px}
+.sp-pdp-reviews-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.sp-pdp-reviews-grid{grid-template-columns:1fr}}
+.sp-review-card{background:#f8f7f5;padding:20px;display:flex;flex-direction:column;gap:8px}
+.sp-review-stars{font-size:14px;letter-spacing:1px}
+.sp-review-text{font-size:13px;color:#444;line-height:1.6;margin:0;font-style:italic}
+.sp-review-author{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#1A1410;display:flex;align-items:center;gap:8px}
+.sp-review-badge{font-size:10px;color:#5a8a5a;font-weight:600;letter-spacing:0}
 
-/* Related products */
-.sp-pdp-related{padding:56px 48px;background:var(--cream)}
-.sp-pdp-related-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,40px);letter-spacing:3px;margin-bottom:28px;text-align:center}
+/* ── Related products ───────────────────────────────────────── */
+.sp-pdp-related{padding:8px 0}
+.sp-pdp-related-h{font-size:11px;font-weight:900;letter-spacing:3px;color:#1A1410;margin-bottom:16px}
+.sp-pdp-related-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(min-width:900px){.sp-pdp-related-grid{grid-template-columns:repeat(4,1fr)}}
+.sp-rp-card{display:flex;flex-direction:column;gap:8px}
+.sp-rp-img-link{display:block;aspect-ratio:1/1;overflow:hidden}
+.sp-rp-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.sp-rp-card:hover .sp-rp-img{transform:scale(1.04)}
+.sp-rp-placeholder{width:100%;height:100%;background:#f4f4f4}
+.sp-rp-info{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sp-rp-name{font-size:12px;font-weight:600;color:#1A1410;text-decoration:none}
+.sp-rp-price{font-size:12px;color:#666;white-space:nowrap}
+.sp-rp-atc{display:block;width:100%;padding:9px;background:#1A1410;color:#fff;font-size:9px;font-weight:800;letter-spacing:2px;border:none;cursor:pointer;text-align:center;font-family:inherit}
 
-/* Sticky ATC */
-.sp-satc{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 24px;z-index:300;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);gap:16px}
-.sp-satc.visible{transform:translateY(0)}
-.sp-satc-info{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
-.sp-satc-thumb{width:48px;height:48px;object-fit:cover;flex-shrink:0}
-.sp-satc-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-satc-price{font-size:11px;color:var(--grey)}
-.sp-satc-btn{background:var(--black);color:var(--white) !important;font-family:inherit;font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:14px 24px;border:none;cursor:pointer;flex-shrink:0;transition:background .2s;white-space:nowrap;text-decoration:none !important}
+/* ── Bundle ─────────────────────────────────────────────────── */
+.sp-pdp-bundle{background:#f8f7f5;padding:20px}
+.sp-pdp-bundle-label{font-size:11px;font-weight:900;letter-spacing:3px;color:#1A1410;margin-bottom:14px}
+.sp-pdp-bundle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.sp-pdp-bundle-item{display:flex;flex-direction:column;gap:6px;text-align:center}
+.sp-pdp-bundle-img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.sp-pdp-bundle-placeholder{aspect-ratio:1/1;background:#eee}
+.sp-pdp-bundle-name{font-size:11px;font-weight:600;color:#1A1410}
+.sp-pdp-bundle-price{font-size:11px;color:#666}
+
+/* ── Sticky ATC bar ─────────────────────────────────────────── */
+.sp-satc{position:fixed;top:0;left:0;right:0;z-index:200;background:#fff;border-bottom:1px solid #f0ede8;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;transform:translateY(-100%);transition:transform .3s;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.sp-satc--visible{transform:translateY(0)}
+.sp-satc-info{display:flex;align-items:center;gap:12px;overflow:hidden}
+.sp-satc-thumb{width:44px;height:44px;object-fit:cover;border-radius:2px;flex-shrink:0}
+.sp-satc-name{font-size:13px;font-weight:700;color:#1A1410;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-satc-price{font-size:13px;color:#555}
+.sp-satc-btn{flex-shrink:0;padding:10px 24px;background:#1A1410;color:#fff;font-size:11px;font-weight:800;letter-spacing:2px;border:none;cursor:pointer;font-family:inherit}
 .sp-satc-btn:hover{background:#333}
+.sp-satc-btn:disabled{opacity:.5;cursor:default}
 
-/* Size guide modal */
-.sp-sg-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center;padding:20px}
-.sp-sg-modal{background:var(--white);max-width:520px;width:100%;padding:32px;position:relative;max-height:90vh;overflow-y:auto}
-.sp-sg-close{position:absolute;top:16px;right:16px;font-size:20px;background:none;border:none;cursor:pointer;color:var(--grey);font-family:inherit}
-.sp-sg-h{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;margin-bottom:20px}
-.sp-sg-section-h{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-.sp-sg-table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:13px}
-.sp-sg-table th{background:var(--black);color:var(--white);padding:8px 12px;text-align:left;font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
-.sp-sg-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
-.sp-sg-table tr:last-child td{border-bottom:none}
+/* ── Size guide modal ───────────────────────────────────────── */
+.sp-sg-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center}
+.sp-sg-modal{background:#fff;width:90%;max-width:420px;padding:32px;max-height:90vh;overflow-y:auto;position:relative}
+.sp-sg-h{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;margin-bottom:20px;color:#1A1410}
+.sp-sg-sh{font-size:11px;font-weight:800;letter-spacing:2px;color:#1A1410;margin-bottom:10px}
+.sp-sg-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;line-height:1;color:#666}
+.sp-sg-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px}
+.sp-sg-table th{background:#1A1410;color:#fff;padding:8px 10px;text-align:left;font-size:10px;letter-spacing:1.5px;font-weight:700}
+.sp-sg-table td{padding:8px 10px;border-bottom:1px solid #f0ede8;color:#444}
+.sp-sg-note{font-size:11px;color:#888;font-style:italic;margin-top:12px}
 
-/* Lightbox */
-.sp-lb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:700;align-items:center;justify-content:center}
-.sp-lb-close{position:fixed;top:20px;right:24px;font-size:28px;background:none;border:none;cursor:pointer;color:#fff;font-family:inherit}
-.sp-lb-img{max-width:90vw;max-height:90vh;object-fit:contain;display:block}
-.sp-lb-nav{position:fixed;top:50%;transform:translateY(-50%);font-size:40px;background:none;border:none;cursor:pointer;color:#fff;padding:10px;font-family:inherit}
-.sp-lb-prev{left:16px}
-.sp-lb-next{right:16px}
-
-/* Mobile */
-@media(max-width:768px){
-  .sp-pdp-page{grid-template-columns:1fr;gap:0;padding:0 0 56px}
-  .sp-pdp-main-wrap{aspect-ratio:1/1}
-  .sp-pdp-thumbs{display:none}
-  .sp-pdp-dots-mob{display:flex}
-  .sp-pdp-col-right{padding:20px 16px 0}
-  .sp-pdp-title{font-size:28px}
-  .sp-pdp-save-circle{width:60px;height:60px}
-  .sp-pdp-save-amt{font-size:15px}
-  .sp-pdp-trust{grid-template-columns:repeat(2,1fr)}
-  .sp-pdp-trust-item:nth-child(2){border-right:none}
-  .sp-pdp-trust-item:nth-child(3),.sp-pdp-trust-item:nth-child(4){border-top:1px solid var(--border)}
-  .sp-pdp-trust-item:nth-child(4){border-right:none}
-  .sp-pdp-fbt{padding:32px 16px}
-  .sp-pdp-fbt-grid{grid-template-columns:1fr}
-  .sp-rev-s{padding:40px 16px}
-  .sp-rev-grid{grid-template-columns:1fr;gap:16px}
-  .sp-pdp-related{padding:40px 16px}
-  .sp-satc{padding:10px 16px}
-}
-@media(max-width:480px){
-  .sp-tone-circle{width:42px;height:42px}
-  .sp-tone-label{font-size:6px}
-  .sp-pdp-bundle-grid{grid-template-columns:repeat(3,1fr)}
-}
+/* ── Lightbox ───────────────────────────────────────────────── */
+.sp-lb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1100;align-items:center;justify-content:center}
+.sp-lb-img{max-width:90vw;max-height:90vh;object-fit:contain}
+.sp-lb-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;z-index:10}
+.sp-lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:48px;cursor:pointer;line-height:1;padding:0 16px;user-select:none}
+.sp-lb-prev{left:0}
+.sp-lb-next{right:0}
 </style>
 
 {% schema %}
 {
-  "name": "SCULPS Product",
+  "name": "Product Page",
+  "tag": "section",
+  "class": "sp-section-product",
+  "settings": [],
   "blocks": [
-    {
-      "type": "image_gallery",
-      "name": "Image Gallery",
-      "limit": 1,
-      "settings": [
-        {
-          "type": "paragraph",
-          "content": "📸 Images are managed in Shopify Admin → Products → select product → Images section. Upload and reorder them there — they appear here automatically."
-        }
-      ]
-    },
     {
       "type": "product_header",
       "name": "Product Header",
       "limit": 1,
       "settings": [
-        {"type": "text",     "id": "subtitle",      "label": "Subtitle (below title)"},
-        {"type": "text",     "id": "tagline",        "label": "Tagline (below price)"},
-        {"type": "checkbox", "id": "show_stars",     "label": "Show star rating",   "default": true},
-        {"type": "number",   "id": "rating_count",   "label": "Number of reviews",  "default": 847}
+        {"type": "checkbox", "id": "show_stars",    "label": "Show star rating",  "default": true},
+        {"type": "number",   "id": "rating_count",  "label": "Review count",      "default": 0},
+        {"type": "text",     "id": "tagline",        "label": "Tagline (optional)", "placeholder": "e.g. Free shipping on orders over $75"}
       ]
     },
     {
@@ -807,13 +859,13 @@ window.sculpsProduct = {
     },
     {
       "type": "bundle_items",
-      "name": "Bundle Items Grid",
+      "name": "Bundle Items",
       "limit": 1,
       "settings": [
-        {"type": "text",    "id": "bundle_label",     "label": "Label text",   "default": "Everything in this kit:"},
-        {"type": "product", "id": "bundle_product_1", "label": "Product 1"},
-        {"type": "product", "id": "bundle_product_2", "label": "Product 2"},
-        {"type": "product", "id": "bundle_product_3", "label": "Product 3"}
+        {"type": "text",    "id": "bundle_label", "label": "Bundle heading",  "default": "BUNDLE INCLUDES"},
+        {"type": "product", "id": "product_1",    "label": "Product 1"},
+        {"type": "product", "id": "product_2",    "label": "Product 2"},
+        {"type": "product", "id": "product_3",    "label": "Product 3"}
       ]
     },
     {
@@ -821,10 +873,7 @@ window.sculpsProduct = {
       "name": "Skin Tone Selector",
       "limit": 1,
       "settings": [
-        {
-          "type": "paragraph",
-          "content": "Tone options are read from the product variant option named 'Skin Tone', 'Shade', or 'Tone' in Shopify Admin → Products → Variants."
-        }
+        {"type": "paragraph", "content": "Skin tone circles are driven by the product variant option named 'Skin Tone' in Shopify Admin → Products → Variants. Values 1–6 map to Porcelain → Rich."}
       ]
     },
     {
@@ -832,10 +881,7 @@ window.sculpsProduct = {
       "name": "Color Selector",
       "limit": 1,
       "settings": [
-        {
-          "type": "paragraph",
-          "content": "Color swatches are read from the product variant option named 'Color' in Shopify Admin → Products → Variants."
-        }
+        {"type": "paragraph", "content": "Color swatches come from the variant option named 'Color' in Shopify Admin → Products → Variants."}
       ]
     },
     {
@@ -843,10 +889,7 @@ window.sculpsProduct = {
       "name": "Size Selector",
       "limit": 1,
       "settings": [
-        {
-          "type": "paragraph",
-          "content": "Sizes are read from the product variant option named 'Size' in Shopify Admin → Products → Variants. Use values like 1, 2, 3, 4, 5."
-        }
+        {"type": "paragraph", "content": "Size buttons come from the variant option named 'Size'. Use values 1, 2, 3, 4, 5. Customers can click the SIZE GUIDE link to see the measurement chart."}
       ]
     },
     {
@@ -854,8 +897,8 @@ window.sculpsProduct = {
       "name": "Add to Cart Button",
       "limit": 1,
       "settings": [
-        {"type": "text", "id": "btn_text",      "label": "Button text",    "default": "ADD TO CART"},
-        {"type": "text", "id": "shipping_note", "label": "Shipping note",  "default": "Free shipping over $75 · 30-day returns"}
+        {"type": "text",     "id": "btn_text",      "label": "Button text",    "default": "ADD TO CART"},
+        {"type": "text",     "id": "shipping_note", "label": "Shipping note",  "default": "Free shipping over $75 · 30-day returns"}
       ]
     },
     {
@@ -863,14 +906,15 @@ window.sculpsProduct = {
       "name": "What's Included",
       "limit": 1,
       "settings": [
-        {"type": "text", "id": "include_1", "label": "Item 1"},
-        {"type": "text", "id": "include_2", "label": "Item 2"},
-        {"type": "text", "id": "include_3", "label": "Item 3"},
-        {"type": "text", "id": "include_4", "label": "Item 4"},
-        {"type": "text", "id": "include_5", "label": "Item 5"},
-        {"type": "text", "id": "include_6", "label": "Item 6"},
-        {"type": "text", "id": "include_7", "label": "Item 7"},
-        {"type": "text", "id": "include_8", "label": "Item 8"}
+        {"type": "text", "id": "heading", "label": "Heading", "default": "WHAT'S INCLUDED"},
+        {"type": "text", "id": "item_1",  "label": "Item 1"},
+        {"type": "text", "id": "item_2",  "label": "Item 2"},
+        {"type": "text", "id": "item_3",  "label": "Item 3"},
+        {"type": "text", "id": "item_4",  "label": "Item 4"},
+        {"type": "text", "id": "item_5",  "label": "Item 5"},
+        {"type": "text", "id": "item_6",  "label": "Item 6"},
+        {"type": "text", "id": "item_7",  "label": "Item 7"},
+        {"type": "text", "id": "item_8",  "label": "Item 8"}
       ]
     },
     {
@@ -878,14 +922,18 @@ window.sculpsProduct = {
       "name": "Trust Badges",
       "limit": 1,
       "settings": [
-        {"type": "text", "id": "trust_1_label", "label": "Badge 1 label",   "default": "INVISIBLE DESIGN"},
-        {"type": "text", "id": "trust_1_sub",   "label": "Badge 1 subtext", "default": "Seamless under any outfit."},
-        {"type": "text", "id": "trust_2_label", "label": "Badge 2 label",   "default": "REUSABLE"},
-        {"type": "text", "id": "trust_2_sub",   "label": "Badge 2 subtext", "default": "40+ wears with care."},
-        {"type": "text", "id": "trust_3_label", "label": "Badge 3 label",   "default": "MEDICAL GRADE"},
-        {"type": "text", "id": "trust_3_sub",   "label": "Badge 3 subtext", "default": "Safe, skin-friendly silicone."},
-        {"type": "text", "id": "trust_4_label", "label": "Badge 4 label",   "default": "MADE FOR YOU"},
-        {"type": "text", "id": "trust_4_sub",   "label": "Badge 4 subtext", "default": "All body types. All skin tones."}
+        {"type": "select", "id": "trust_1_icon",  "label": "Badge 1 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Refresh"},{"value":"heart","label":"Heart"},{"value":"plus","label":"Plus"}], "default": "shield"},
+        {"type": "text",   "id": "trust_1_label", "label": "Badge 1 label",   "default": "INVISIBLE DESIGN"},
+        {"type": "text",   "id": "trust_1_sub",   "label": "Badge 1 subtext", "default": "Seamless under any outfit."},
+        {"type": "select", "id": "trust_2_icon",  "label": "Badge 2 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Refresh"},{"value":"heart","label":"Heart"},{"value":"plus","label":"Plus"}], "default": "refresh"},
+        {"type": "text",   "id": "trust_2_label", "label": "Badge 2 label",   "default": "REUSABLE"},
+        {"type": "text",   "id": "trust_2_sub",   "label": "Badge 2 subtext", "default": "40+ wears with care."},
+        {"type": "select", "id": "trust_3_icon",  "label": "Badge 3 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Refresh"},{"value":"heart","label":"Heart"},{"value":"plus","label":"Plus"}], "default": "plus"},
+        {"type": "text",   "id": "trust_3_label", "label": "Badge 3 label",   "default": "MEDICAL GRADE"},
+        {"type": "text",   "id": "trust_3_sub",   "label": "Badge 3 subtext", "default": "Safe, skin-friendly silicone."},
+        {"type": "select", "id": "trust_4_icon",  "label": "Badge 4 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Refresh"},{"value":"heart","label":"Heart"},{"value":"plus","label":"Plus"}], "default": "heart"},
+        {"type": "text",   "id": "trust_4_label", "label": "Badge 4 label",   "default": "MADE FOR YOU"},
+        {"type": "text",   "id": "trust_4_sub",   "label": "Badge 4 subtext", "default": "All body types. All skin tones."}
       ]
     },
     {
@@ -893,8 +941,9 @@ window.sculpsProduct = {
       "name": "Freq. Bought Together",
       "limit": 1,
       "settings": [
-        {"type": "product", "id": "fbt_1", "label": "Product 1"},
-        {"type": "product", "id": "fbt_2", "label": "Product 2"}
+        {"type": "text",    "id": "fbt_heading", "label": "Heading", "default": "FREQUENTLY BOUGHT TOGETHER"},
+        {"type": "product", "id": "fbt_1",       "label": "Product 1"},
+        {"type": "product", "id": "fbt_2",       "label": "Product 2"}
       ]
     },
     {
@@ -902,31 +951,31 @@ window.sculpsProduct = {
       "name": "Customer Reviews",
       "limit": 1,
       "settings": [
-        {"type": "text",     "id": "heading",         "label": "Heading",     "default": "REAL REVIEWS"},
-        {"type": "textarea", "id": "review_1_text",   "label": "Review 1"},
-        {"type": "text",     "id": "review_1_name",   "label": "Name 1"},
-        {"type": "range",    "id": "review_1_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_1_verified","label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_2_text",   "label": "Review 2"},
-        {"type": "text",     "id": "review_2_name",   "label": "Name 2"},
-        {"type": "range",    "id": "review_2_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_2_verified","label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_3_text",   "label": "Review 3"},
-        {"type": "text",     "id": "review_3_name",   "label": "Name 3"},
-        {"type": "range",    "id": "review_3_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_3_verified","label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_4_text",   "label": "Review 4"},
-        {"type": "text",     "id": "review_4_name",   "label": "Name 4"},
-        {"type": "range",    "id": "review_4_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_4_verified","label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_5_text",   "label": "Review 5"},
-        {"type": "text",     "id": "review_5_name",   "label": "Name 5"},
-        {"type": "range",    "id": "review_5_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_5_verified","label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_6_text",   "label": "Review 6"},
-        {"type": "text",     "id": "review_6_name",   "label": "Name 6"},
-        {"type": "range",    "id": "review_6_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_6_verified","label": "Verified buyer", "default": true}
+        {"type": "text",     "id": "heading",         "label": "Heading", "default": "REAL REVIEWS FROM REAL WOMEN"},
+        {"type": "textarea", "id": "review_1_text",   "label": "Review 1 text"},
+        {"type": "text",     "id": "review_1_name",   "label": "Review 1 name"},
+        {"type": "range",    "id": "review_1_stars",  "label": "Review 1 stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_1_verified","label": "Verified",      "default": true},
+        {"type": "textarea", "id": "review_2_text",   "label": "Review 2 text"},
+        {"type": "text",     "id": "review_2_name",   "label": "Review 2 name"},
+        {"type": "range",    "id": "review_2_stars",  "label": "Review 2 stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_2_verified","label": "Verified",      "default": true},
+        {"type": "textarea", "id": "review_3_text",   "label": "Review 3 text"},
+        {"type": "text",     "id": "review_3_name",   "label": "Review 3 name"},
+        {"type": "range",    "id": "review_3_stars",  "label": "Review 3 stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_3_verified","label": "Verified",      "default": true},
+        {"type": "textarea", "id": "review_4_text",   "label": "Review 4 text"},
+        {"type": "text",     "id": "review_4_name",   "label": "Review 4 name"},
+        {"type": "range",    "id": "review_4_stars",  "label": "Review 4 stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_4_verified","label": "Verified",      "default": true},
+        {"type": "textarea", "id": "review_5_text",   "label": "Review 5 text"},
+        {"type": "text",     "id": "review_5_name",   "label": "Review 5 name"},
+        {"type": "range",    "id": "review_5_stars",  "label": "Review 5 stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_5_verified","label": "Verified",      "default": true},
+        {"type": "textarea", "id": "review_6_text",   "label": "Review 6 text"},
+        {"type": "text",     "id": "review_6_name",   "label": "Review 6 name"},
+        {"type": "range",    "id": "review_6_stars",  "label": "Review 6 stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_6_verified","label": "Verified",      "default": true}
       ]
     },
     {
@@ -934,15 +983,15 @@ window.sculpsProduct = {
       "name": "Related Products",
       "limit": 1,
       "settings": [
-        {"type": "text", "id": "heading", "label": "Heading", "default": "YOU MAY ALSO LIKE"}
+        {"type": "text", "id": "heading", "label": "Heading", "default": "YOU MAY ALSO LIKE"},
+        {"type": "paragraph", "content": "Pulls automatically from the current collection. Products update when you change collection membership in Shopify Admin."}
       ]
     }
   ],
   "presets": [
     {
-      "name": "SCULPS Product",
+      "name": "Product Page",
       "blocks": [
-        {"type": "image_gallery"},
         {"type": "product_header"},
         {"type": "bullet_points"},
         {"type": "skin_tone_selector"},
@@ -951,7 +1000,6 @@ window.sculpsProduct = {
         {"type": "add_to_cart"},
         {"type": "whats_included"},
         {"type": "trust_badges"},
-        {"type": "fbt"},
         {"type": "reviews"},
         {"type": "related_products"}
       ]
