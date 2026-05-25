@@ -1,6 +1,6 @@
 <section class="sp-cs-s" id="creators">
   <div class="sp-cs-pre">{{ section.settings.pre_heading | default: 'SCULPS Creator Studio' }}</div>
-  <h2 class="sp-cs-h">{{ section.settings.heading | default: 'We Don\'t Hire Models. We Work With Real Women.' | newline_to_br }}</h2>
+  <h2 class="sp-cs-h">{{ section.settings.heading | newline_to_br }}</h2>
   <p class="sp-cs-p">{{ section.settings.body | default: 'Film your SCULPS moment in 9x16. Submit it. Get rewarded. Your confidence is worth something here.' }}</p>
   <div class="sp-cs-tiers">
     {%- for block in section.blocks -%}
