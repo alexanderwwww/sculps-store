@@ -1,0 +1,12 @@
+{
+  "sections": {
+    "main": {
+      "type": "sculps-collection",
+      "settings": {
+        "heading": "SHOP ALL",
+        "subheading": "Invisible support. Visible confidence."
+      }
+    }
+  },
+  "order": ["main"]
+}
