@@ -6,6 +6,28 @@
   <title>{{ page_title }} — {{ shop.name }}</title>
   <meta name="description" content="{{ page_description | escape }}">
   <link rel="canonical" href="{{ canonical_url }}">
+
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="{{ shop.name }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:title" content="{{ page_title }} — {{ shop.name }}">
+  <meta property="og:description" content="{{ page_description | escape }}">
+  <meta property="og:type" content="{% if request.page_type == 'product' %}product{% elsif request.page_type == 'article' %}article{% else %}website{% endif %}">
+  {%- if request.page_type == 'product' -%}
+    <meta property="product:price:amount" content="{{ product.price | money_without_currency | strip_html }}">
+    <meta property="product:price:currency" content="{{ cart.currency.iso_code }}">
+    {%- if product.featured_image -%}
+      <meta property="og:image" content="{{ product.featured_image | image_url: width: 1200 }}">
+      <meta property="og:image:width" content="1200">
+    {%- endif -%}
+  {%- elsif settings.og_image -%}
+    <meta property="og:image" content="{{ settings.og_image | image_url: width: 1200 }}">
+    <meta property="og:image:width" content="1200">
+  {%- endif -%}
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ page_title }}">
+  <meta name="twitter:description" content="{{ page_description | escape }}">
   {% if settings.favicon %}
     <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 64 }}">
   {% endif %}

@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "sculps_404": {
+      "type": "sculps-404",
+      "settings": {}
+    }
+  },
+  "order": ["sculps_404"]
+}

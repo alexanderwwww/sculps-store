@@ -13,8 +13,10 @@
 .sp-kit-prices{display:flex;align-items:baseline;gap:10px;margin-bottom:20px}
 .sp-kit-price{font-size:28px;font-weight:900}
 .sp-kit-compare{font-size:16px;color:var(--grey);text-decoration:line-through}
-.sp-kit-btn{display:inline-block;background:var(--black);color:var(--white);font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:14px 28px;text-decoration:none;transition:background .2s;width:fit-content}
+.sp-kit-btn{display:inline-block;background:var(--black);color:var(--white) !important;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:14px 28px;text-decoration:none !important;transition:background .2s;width:fit-content;border:none;cursor:pointer;font-family:inherit}
 .sp-kit-btn:hover{background:#333}
+.sp-kit-btn--outline{background:transparent !important;border:2px solid var(--black) !important;color:var(--black) !important;padding:12px 28px}
+.sp-kit-btn--outline:hover{background:var(--black) !important;color:var(--white) !important}
 
 .sp-kit-both{display:block;background:#C9A96E;padding:24px 40px;text-decoration:none;text-align:center;margin:0 0 16px}
 .sp-kit-both-inner{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
@@ -78,10 +80,14 @@
     {%- when 'kit_card' -%}
       {%- assign bg_style = '' -%}
       {%- if block.settings.background_image -%}
-        {%- assign bg_style = 'background-image:url(' | append: block.settings.background_image | image_url: width: 1600 | append: ');background-size:cover;background-position:center' -%}
+        {%- assign bg_img_url = block.settings.background_image | image_url: width: 1600 -%}
+        {%- assign bg_style = 'background-image:url(' | append: bg_img_url | append: ');background-size:cover;background-position:center' -%}
       {%- else -%}
-        {%- assign bg_style = 'background:linear-gradient(135deg,' | append: block.settings.gradient_start | default: '#F5E6D8' | append: ' 0%,' | append: block.settings.gradient_end | default: '#C8956C' | append: ' 100%)' -%}
+        {%- assign grad_s = block.settings.gradient_start | default: '#F5E6D8' -%}
+        {%- assign grad_e = block.settings.gradient_end | default: '#C8956C' -%}
+        {%- assign bg_style = 'background:linear-gradient(135deg,' | append: grad_s | append: ' 0%,' | append: grad_e | append: ' 100%)' -%}
       {%- endif -%}
+      {%- assign kit_product = block.settings.product -%}
       <div class="sp-kit-card" style="{{ bg_style }}" {{ block.shopify_attributes }}>
         <div class="sp-kit-card-left">
           {%- if block.settings.badge_text != blank -%}
@@ -97,7 +103,15 @@
               <span class="sp-kit-compare">{{ block.settings.compare_price }}</span>
             {%- endif -%}
           </div>
-          <a href="{{ block.settings.button_url | default: '#' }}" class="sp-kit-btn">{{ block.settings.button_label | default: 'SHOP KIT' }}</a>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            {%- if kit_product != blank and kit_product.first_available_variant != blank -%}
+              <button
+                class="sp-kit-btn sp-atc-btn"
+                data-variant-id="{{ kit_product.first_available_variant.id }}"
+                type="button">ADD TO CART</button>
+            {%- endif -%}
+            <a href="{{ block.settings.button_url | default: kit_product.url | default: '#' }}" class="sp-kit-btn sp-kit-btn--outline">{{ block.settings.button_label | default: 'VIEW KIT' }}</a>
+          </div>
         </div>
         <div class="sp-kit-card-right">
           {%- if block.settings.card_image -%}
@@ -199,6 +213,11 @@
       "type": "kit_card",
       "name": "Kit Card",
       "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Linked product (enables Add to Cart)"
+        },
         {
           "type": "text",
           "id": "badge_text",

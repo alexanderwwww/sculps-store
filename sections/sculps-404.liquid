@@ -1,0 +1,35 @@
+<style>
+.sp-404{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px}
+.sp-404-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(120px,20vw,200px);line-height:1;color:var(--cream);letter-spacing:8px;margin-bottom:-20px}
+.sp-404-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,5vw,48px);letter-spacing:4px;margin-bottom:14px}
+.sp-404-p{font-size:15px;color:var(--grey);margin-bottom:36px;max-width:440px;line-height:1.6}
+.sp-404-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.sp-404-btn-p{background:var(--black);color:var(--white) !important;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:15px 28px;text-decoration:none !important;transition:background .2s}
+.sp-404-btn-p:hover{background:#333}
+.sp-404-btn-s{border:2px solid var(--black);color:var(--black) !important;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:13px 28px;text-decoration:none !important;transition:all .2s}
+.sp-404-btn-s:hover{background:var(--black);color:var(--white) !important}
+</style>
+
+<div class="sp-404">
+  <div class="sp-404-num">404</div>
+  <h1 class="sp-404-h">{{ section.settings.heading | default: 'Page Not Found' }}</h1>
+  <p class="sp-404-p">{{ section.settings.body | default: 'The page you were looking for doesn't exist. It may have moved or been removed.' }}</p>
+  <div class="sp-404-btns">
+    <a href="{{ section.settings.btn1_url | default: '/collections/all' }}" class="sp-404-btn-p">{{ section.settings.btn1_label | default: 'Shop All' }}</a>
+    <a href="{{ section.settings.btn2_url | default: '/' }}" class="sp-404-btn-s">{{ section.settings.btn2_label | default: 'Go Home' }}</a>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "404 Page",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Heading", "default": "Page Not Found"},
+    {"type": "textarea", "id": "body", "label": "Body text", "default": "The page you were looking for doesn't exist. It may have moved or been removed."},
+    {"type": "text", "id": "btn1_label", "label": "Button 1 text", "default": "Shop All"},
+    {"type": "url", "id": "btn1_url", "label": "Button 1 URL"},
+    {"type": "text", "id": "btn2_label", "label": "Button 2 text", "default": "Go Home"},
+    {"type": "url", "id": "btn2_url", "label": "Button 2 URL"}
+  ]
+}
+{% endschema %}

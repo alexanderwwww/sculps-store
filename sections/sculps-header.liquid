@@ -61,6 +61,19 @@
 
   <!-- Right side actions -->
   <div class="sp-hdr-right">
+    <!-- Search -->
+    <button id="sculps-searchBtn" class="sp-hdr-icon-btn" aria-label="Search" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+      </svg>
+    </button>
+    <!-- Account -->
+    <a href="/account" class="sp-hdr-icon-btn" aria-label="Account">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+    </a>
+    <!-- Cart -->
     <button id="sculps-cartBtn" class="sp-cart-btn" aria-label="Open cart" aria-expanded="false" aria-controls="sculps-cartDrawer">
       <svg class="sp-cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -71,6 +84,63 @@
     </button>
   </div>
 </header>
+
+<!-- Search Overlay -->
+<div id="sculps-searchOverlay" class="sp-search-overlay" aria-hidden="true" role="dialog" aria-label="Search">
+  <div class="sp-search-inner">
+    <form action="/search" method="get" class="sp-search-form" role="search">
+      <input type="hidden" name="type" value="product">
+      <input
+        id="sculps-searchInput"
+        class="sp-search-input"
+        type="search"
+        name="q"
+        placeholder="Search products…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        aria-label="Search products"
+      >
+      <button type="submit" class="sp-search-submit" aria-label="Submit search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+        </svg>
+      </button>
+    </form>
+    <button id="sculps-searchClose" class="sp-search-close" aria-label="Close search">&#x2715;</button>
+  </div>
+</div>
+
+<style>
+.sp-hdr-icon-btn{background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;color:var(--black);text-decoration:none;transition:opacity .2s}
+.sp-hdr-icon-btn:hover{opacity:.6}
+.sp-hdr-right{display:flex;align-items:center;gap:4px}
+.sp-search-overlay{position:fixed;inset:0;background:rgba(255,255,255,.98);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding-top:120px;opacity:0;pointer-events:none;transition:opacity .25s}
+.sp-search-overlay.open{opacity:1;pointer-events:all}
+.sp-search-inner{width:100%;max-width:640px;padding:0 24px;position:relative}
+.sp-search-form{display:flex;align-items:center;border-bottom:2px solid var(--black);padding-bottom:8px}
+.sp-search-input{flex:1;font-family:inherit;font-size:clamp(24px,4vw,36px);font-weight:300;border:none;outline:none;background:transparent;color:var(--black)}
+.sp-search-input::placeholder{color:rgba(0,0,0,.25)}
+.sp-search-submit{background:none;border:none;cursor:pointer;padding:4px;color:var(--black)}
+.sp-search-close{position:fixed;top:24px;right:28px;font-size:22px;background:none;border:none;cursor:pointer;color:var(--grey);font-family:inherit;transition:color .2s}
+.sp-search-close:hover{color:var(--black)}
+</style>
+
+<script>
+(function(){
+  var btn    = document.getElementById('sculps-searchBtn');
+  var overlay= document.getElementById('sculps-searchOverlay');
+  var closeBtn = document.getElementById('sculps-searchClose');
+  var input  = document.getElementById('sculps-searchInput');
+  if(!btn || !overlay) return;
+  function open(){overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');btn.setAttribute('aria-expanded','true');if(input)setTimeout(function(){input.focus();},50);}
+  function close(){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');btn.setAttribute('aria-expanded','false');}
+  btn.addEventListener('click',open);
+  if(closeBtn) closeBtn.addEventListener('click',close);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay.classList.contains('open'))close();});
+})();
+</script>
 
 {% schema %}
 {
