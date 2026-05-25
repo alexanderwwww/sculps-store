@@ -1,0 +1,156 @@
+<!-- ========== MOBILE NAV OVERLAY ========== -->
+<nav id="sculps-mobNav" class="sp-mob-nav" aria-label="Mobile navigation">
+  <button id="sculps-mobClose" class="sp-mob-close" aria-label="Close menu">&#x2715;</button>
+  <ul class="sp-mob-nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/collections/all">Shop</a></li>
+    <li><a href="/collections/kits">Kits</a></li>
+    <li><a href="/collections/sets">Sets</a></li>
+    <li><a href="/pages/creator-studio">Creator</a></li>
+  </ul>
+</nav>
+
+<!-- ========== ANNOUNCEMENT BAR ========== -->
+<div class="sp-ann" aria-hidden="true">
+  <div class="sp-ann-track" style="animation-duration:{{ section.settings.ann_speed | default: 30 }}s">
+    {%- if section.settings.ann_msg_1 != blank %}<span>{{ section.settings.ann_msg_1 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_2 != blank %}<span>{{ section.settings.ann_msg_2 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_3 != blank %}<span>{{ section.settings.ann_msg_3 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_4 != blank %}<span>{{ section.settings.ann_msg_4 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_5 != blank %}<span>{{ section.settings.ann_msg_5 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_6 != blank %}<span>{{ section.settings.ann_msg_6 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_7 != blank %}<span>{{ section.settings.ann_msg_7 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_1 != blank %}<span>{{ section.settings.ann_msg_1 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_2 != blank %}<span>{{ section.settings.ann_msg_2 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_3 != blank %}<span>{{ section.settings.ann_msg_3 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_4 != blank %}<span>{{ section.settings.ann_msg_4 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_5 != blank %}<span>{{ section.settings.ann_msg_5 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_6 != blank %}<span>{{ section.settings.ann_msg_6 }}</span>{% endif -%}
+    {%- if section.settings.ann_msg_7 != blank %}<span>{{ section.settings.ann_msg_7 }}</span>{% endif -%}
+  </div>
+</div>
+
+<!-- ========== HEADER ========== -->
+<header class="sp-header" id="sculps-header">
+  <!-- Hamburger (mobile) -->
+  <button id="sculps-hamBtn" class="sp-ham" aria-label="Open menu" aria-expanded="false" aria-controls="sculps-mobNav">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Logo -->
+  <a href="/" class="sp-logo" aria-label="{{ shop.name }} home" style="display:flex;align-items:center;">
+    {% if section.settings.logo %}
+      {%- assign logo_h = section.settings.logo_height | default: 36 -%}
+      <img src="{{ section.settings.logo | image_url: width: 400 }}" alt="{{ shop.name }}" style="height:{{ logo_h }}px;width:auto;display:block;" loading="eager">
+    {% else %}
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:4px;color:#1A1410;">{{ shop.name }}</span>
+    {% endif %}
+  </a>
+
+  <!-- Desktop nav -->
+  <nav class="sp-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/collections/all">Shop</a></li>
+      <li><a href="/collections/kits">Kits</a></li>
+      <li><a href="/collections/sets">Sets</a></li>
+      <li><a href="/pages/creator-studio">Creator</a></li>
+    </ul>
+  </nav>
+
+  <!-- Right side actions -->
+  <div class="sp-hdr-right">
+    <button id="sculps-cartBtn" class="sp-cart-btn" aria-label="Open cart" aria-expanded="false" aria-controls="sculps-cartDrawer">
+      <svg class="sp-cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+      <span class="sp-cart-count" id="sculps-cartCount"{% if cart.item_count == 0 %} style="display:none"{% endif %}>{{ cart.item_count }}</span>
+    </button>
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Logo"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo image"
+    },
+    {
+      "type": "range",
+      "id": "logo_height",
+      "label": "Logo height",
+      "min": 20,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "default": 36
+    },
+    {
+      "type": "header",
+      "content": "Announcement Bar"
+    },
+    {
+      "type": "text",
+      "id": "ann_msg_1",
+      "label": "Message 1",
+      "default": "Free Shipping On Orders Over $75"
+    },
+    {
+      "type": "text",
+      "id": "ann_msg_2",
+      "label": "Message 2",
+      "default": "We Don’t Hire Models. We Work With Real Women."
+    },
+    {
+      "type": "text",
+      "id": "ann_msg_3",
+      "label": "Message 3",
+      "default": "6 Skin Tones. Finally."
+    },
+    {
+      "type": "text",
+      "id": "ann_msg_4",
+      "label": "Message 4",
+      "default": "Invisible Support. Visible Confidence."
+    },
+    {
+      "type": "text",
+      "id": "ann_msg_5",
+      "label": "Message 5",
+      "default": "30 Day Returns. No Questions Asked."
+    },
+    {
+      "type": "text",
+      "id": "ann_msg_6",
+      "label": "Message 6",
+      "default": "Real Women. Real Results. Real Rewards."
+    },
+    {
+      "type": "text",
+      "id": "ann_msg_7",
+      "label": "Message 7",
+      "default": "Made For Every Body. Every Shade. Every Size."
+    },
+    {
+      "type": "range",
+      "id": "ann_speed",
+      "label": "Scroll speed (seconds)",
+      "min": 15,
+      "max": 60,
+      "step": 5,
+      "unit": "s",
+      "default": 30
+    }
+  ]
+}
+{% endschema %}

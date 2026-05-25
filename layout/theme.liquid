@@ -60,18 +60,6 @@
 
 <body class="sculps-page">
 
-  <!-- ========== MOBILE NAV OVERLAY ========== -->
-  <nav id="sculps-mobNav" class="sp-mob-nav" aria-label="Mobile navigation">
-    <button id="sculps-mobClose" class="sp-mob-close" aria-label="Close menu">&#x2715;</button>
-    <ul class="sp-mob-nav-links">
-      <li><a href="/">Home</a></li>
-      <li><a href="/collections/all">Shop</a></li>
-      <li><a href="/collections/kits">Kits</a></li>
-      <li><a href="/collections/sets">Sets</a></li>
-      <li><a href="/pages/creator-studio">Creator</a></li>
-    </ul>
-  </nav>
-
   <!-- ========== CART DRAWER OVERLAY ========== -->
   <div id="sculps-cartOverlay" class="sp-cart-overlay" aria-hidden="true"></div>
 
@@ -94,68 +82,7 @@
     </div>
   </aside>
 
-  <!-- ========== ANNOUNCEMENT BAR ========== -->
-  <div class="sp-ann" aria-hidden="true">
-    <div class="sp-ann-track" style="animation-duration:{{ settings.ann_speed | default: 30 }}s">
-      {%- if settings.ann_msg_1 != blank %}<span>{{ settings.ann_msg_1 }}</span>{% endif -%}
-      {%- if settings.ann_msg_2 != blank %}<span>{{ settings.ann_msg_2 }}</span>{% endif -%}
-      {%- if settings.ann_msg_3 != blank %}<span>{{ settings.ann_msg_3 }}</span>{% endif -%}
-      {%- if settings.ann_msg_4 != blank %}<span>{{ settings.ann_msg_4 }}</span>{% endif -%}
-      {%- if settings.ann_msg_5 != blank %}<span>{{ settings.ann_msg_5 }}</span>{% endif -%}
-      {%- if settings.ann_msg_6 != blank %}<span>{{ settings.ann_msg_6 }}</span>{% endif -%}
-      {%- if settings.ann_msg_7 != blank %}<span>{{ settings.ann_msg_7 }}</span>{% endif -%}
-      <!-- Duplicate for seamless loop -->
-      {%- if settings.ann_msg_1 != blank %}<span>{{ settings.ann_msg_1 }}</span>{% endif -%}
-      {%- if settings.ann_msg_2 != blank %}<span>{{ settings.ann_msg_2 }}</span>{% endif -%}
-      {%- if settings.ann_msg_3 != blank %}<span>{{ settings.ann_msg_3 }}</span>{% endif -%}
-      {%- if settings.ann_msg_4 != blank %}<span>{{ settings.ann_msg_4 }}</span>{% endif -%}
-      {%- if settings.ann_msg_5 != blank %}<span>{{ settings.ann_msg_5 }}</span>{% endif -%}
-      {%- if settings.ann_msg_6 != blank %}<span>{{ settings.ann_msg_6 }}</span>{% endif -%}
-      {%- if settings.ann_msg_7 != blank %}<span>{{ settings.ann_msg_7 }}</span>{% endif -%}
-    </div>
-  </div>
-
-  <!-- ========== HEADER ========== -->
-  <header class="sp-header" id="sculps-header">
-    <!-- Hamburger (mobile) -->
-    <button id="sculps-hamBtn" class="sp-ham" aria-label="Open menu" aria-expanded="false" aria-controls="sculps-mobNav">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-
-    <!-- Logo -->
-    <a href="/" class="sp-logo" aria-label="{{ shop.name }} home" style="display:flex;align-items:center;">
-      {% if settings.logo %}
-        {%- assign logo_h = settings.logo_height | default: 36 -%}
-        <img src="{{ settings.logo | image_url: width: 400 }}" alt="{{ shop.name }}" style="height:{{ logo_h }}px;width:auto;display:block;" loading="eager">
-      {% else %}
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:4px;color:#1A1410;">SCULPS</span>
-      {% endif %}
-    </a>
-
-    <!-- Desktop nav -->
-    <nav class="sp-nav" aria-label="Main navigation">
-      <ul>
-        <li><a href="/collections/all">Shop</a></li>
-        <li><a href="/collections/kits">Kits</a></li>
-        <li><a href="/collections/sets">Sets</a></li>
-        <li><a href="/pages/creator-studio">Creator</a></li>
-      </ul>
-    </nav>
-
-    <!-- Right side actions -->
-    <div class="sp-hdr-right">
-      <button id="sculps-cartBtn" class="sp-cart-btn" aria-label="Open cart" aria-expanded="false" aria-controls="sculps-cartDrawer">
-        <svg class="sp-cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <path d="M16 10a4 4 0 0 1-8 0"/>
-        </svg>
-        <span class="sp-cart-count" id="sculps-cartCount"{% if cart.item_count == 0 %} style="display:none"{% endif %}>{{ cart.item_count }}</span>
-      </button>
-    </div>
-  </header>
+  {% section 'sculps-header' %}
 
   <!-- ========== MAIN CONTENT ========== -->
   <main id="MainContent" role="main">
