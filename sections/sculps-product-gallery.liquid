@@ -1,0 +1,100 @@
+<script>
+window.sculps = {
+  variants: {{ product.variants | json }},
+  sel: {
+    {%- for o in product.options_with_values -%}
+      {{ o.position }}: {{ o.values | first | json }}{%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  }
+};
+window.sculpsUpdate = function(){};
+</script>
+
+{%- if product.images.size > 0 -%}
+  <div class="spg-wrap">
+    <div class="spg-track" id="spg-track">
+      {%- for img in product.images -%}
+        <div class="spg-slide">
+          <img src="{{ img | image_url: width: 900 }}"
+            alt="{{ img.alt | default: product.title | escape }}"
+            loading="{%- if forloop.first -%}eager{%- else -%}lazy{%- endif -%}"
+            width="900">
+        </div>
+      {%- endfor -%}
+    </div>
+    {%- if product.images.size > 1 -%}
+      <div class="spg-dots" id="spg-dots">
+        {%- for img in product.images -%}
+          <button class="spg-dot{%- if forloop.first %} active{%- endif -%}"
+            type="button" data-idx="{{ forloop.index0 }}"
+            aria-label="Image {{ forloop.index }}"></button>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+{%- else -%}
+  <div class="spg-placeholder">
+    <p>Upload product images in<br><strong>Shopify Admin → Products → {{ product.title }}</strong></p>
+  </div>
+{%- endif -%}
+
+<script>
+(function(){
+  var track = document.getElementById('spg-track');
+  var dots  = document.querySelectorAll('.spg-dot');
+  if(!track) return;
+
+  if(dots.length){
+    dots.forEach(function(d){
+      d.addEventListener('click', function(){
+        var i = parseInt(d.dataset.idx, 10);
+        track.scrollTo({ left: track.offsetWidth * i, behavior: 'smooth' });
+        dots.forEach(function(x){ x.classList.remove('active'); });
+        d.classList.add('active');
+      });
+    });
+    track.addEventListener('scroll', function(){
+      var i = Math.round(track.scrollLeft / (track.offsetWidth || 1));
+      dots.forEach(function(d,j){ d.classList.toggle('active', j === i); });
+    }, { passive: true });
+  }
+
+  document.addEventListener('sculps:variantChanged', function(e){
+    var v = e.detail;
+    if(v && v.featured_image && track){
+      var src = v.featured_image.src.replace(/\.(jpe?g|png|gif|webp)(\?|$)/i, '_900x.$1$2');
+      var first = track.querySelector('img');
+      if(first){ first.src = src; }
+      track.scrollTo({ left: 0, behavior: 'smooth' });
+      dots.forEach(function(d,i){ d.classList.toggle('active', i===0); });
+    }
+  });
+})();
+</script>
+
+<style>
+.spg-wrap { position: relative; background: #faf8f5; }
+.spg-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.spg-track::-webkit-scrollbar { display: none; }
+.spg-slide { flex: 0 0 100%; scroll-snap-align: start; }
+.spg-slide img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+.spg-dots { display: flex; justify-content: center; gap: 6px; padding: 12px 0 8px; }
+.spg-dot { width: 8px; height: 8px; border-radius: 50%; border: none; background: #ccc; cursor: pointer; padding: 0; transition: background .2s; }
+.spg-dot.active { background: var(--black, #1A1410); }
+.spg-placeholder { aspect-ratio: 1/1; background: #f0ede8; display: flex; align-items: center; justify-content: center; text-align: center; padding: 32px; color: #999; font-size: 13px; line-height: 1.7; }
+</style>
+
+{% schema %}
+{
+  "name": "Product Gallery",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Images are managed in Shopify Admin → Products → select this product → Images section. Upload and reorder them there — they appear here automatically."
+    }
+  ]
+}
+{% endschema %}

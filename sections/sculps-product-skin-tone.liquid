@@ -1,0 +1,65 @@
+{%- assign tone_opt = nil -%}
+{%- for o in product.options_with_values -%}
+  {%- if o.name == 'Skin Tone' or o.name == 'Shade' or o.name == 'Tone' or o.name == 'Skin tone' -%}
+    {%- assign tone_opt = o -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- if tone_opt -%}
+  {%- assign tone_hex = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
+  <div class="spt-wrap">
+    <p class="spt-label">CHOOSE YOUR SKIN TONE</p>
+    <div class="spt-circles">
+      {%- for val in tone_opt.values -%}
+        {%- assign i = forloop.index0 -%}
+        <button class="spt-circle{%- if forloop.first %} active{%- endif -%}"
+          type="button"
+          data-pos="{{ tone_opt.position }}"
+          data-val="{{ val | escape }}"
+          style="background:{{ tone_hex[i] | default: '#ccc' }}"
+          aria-label="{{ val | escape }}">
+        </button>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
+
+<script>
+(function(){
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.spt-circle');
+    if(!btn) return;
+    var pos = parseInt(btn.dataset.pos, 10);
+    var val = btn.dataset.val;
+    if(!window.sculps) return;
+    window.sculps.sel[pos] = val;
+    btn.closest('.spt-circles').querySelectorAll('.spt-circle').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    window.sculpsUpdate();
+  });
+})();
+</script>
+
+<style>
+.spt-wrap { padding: 20px 20px 0; }
+.spt-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--black, #1A1410); margin: 0 0 12px; }
+.spt-circles { display: flex; gap: 10px; flex-wrap: wrap; }
+.spt-circle { width: 44px; height: 44px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; padding: 0; transition: transform .15s, border-color .15s; flex-shrink: 0; }
+.spt-circle:hover { transform: scale(1.1); }
+.spt-circle.active { border-color: var(--black, #1A1410); box-shadow: 0 0 0 2px #fff inset; }
+</style>
+
+{% schema %}
+{
+  "name": "Skin Tone Selector",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Circles are generated from the product variant option named 'Skin Tone'. Manage variant values in Shopify Admin → Products → Variants."
+    }
+  ]
+}
+{% endschema %}

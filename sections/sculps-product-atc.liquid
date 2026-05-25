@@ -1,0 +1,79 @@
+{%- assign v0 = product.selected_or_first_available_variant -%}
+
+<div class="spa-wrap">
+  {% form 'product', product, id: 'spa-form', novalidate: 'novalidate' %}
+    <input type="hidden" name="id" id="spa-vid" value="{{ v0.id }}">
+    <button type="submit" name="add" class="spa-btn" id="spa-btn"
+      {%- unless v0.available %} disabled{%- endunless -%}>
+      <span id="spa-label">
+        {%- if v0.available -%}{{ section.settings.btn_text | default: 'ADD TO CART' }}{%- else -%}SOLD OUT{%- endif -%}
+      </span>
+      <span id="spa-price"> &bull; {{ v0.price | money }}</span>
+    </button>
+  {% endform %}
+  {%- if section.settings.note != blank -%}
+    <p class="spa-note">{{ section.settings.note }}</p>
+  {%- endif -%}
+</div>
+
+<script>
+(function(){
+  function money(c){ return '$'+(c/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+
+  function findVariant(){
+    var variants = (window.sculps || {}).variants || [];
+    var sel      = (window.sculps || {}).sel || {};
+    return variants.find(function(v){
+      return v.options.every(function(val, i){ return sel[i+1] === val; });
+    }) || variants[0];
+  }
+
+  window.sculpsUpdate = function(){
+    var v = findVariant();
+    if(!v) return;
+
+    var vidEl   = document.getElementById('spa-vid');
+    var btnEl   = document.getElementById('spa-btn');
+    var lblEl   = document.getElementById('spa-label');
+    var prEl    = document.getElementById('spa-price');
+
+    if(vidEl) vidEl.value = v.id;
+    if(prEl)  prEl.textContent = ' • ' + money(v.price);
+    if(btnEl) btnEl.disabled = !v.available;
+    if(lblEl) lblEl.textContent = v.available ? '{{ section.settings.btn_text | default: "ADD TO CART" }}' : 'SOLD OUT';
+
+    document.dispatchEvent(new CustomEvent('sculps:variantChanged', { detail: v }));
+  };
+
+  /* form: add loading state */
+  var form = document.getElementById('spa-form');
+  if(form){
+    form.addEventListener('submit', function(){
+      var b = document.getElementById('spa-btn');
+      if(b && !b.disabled){ b.classList.add('spa-btn--loading'); }
+    });
+  }
+})();
+</script>
+
+<style>
+.spa-wrap { padding: 20px 20px 0; }
+.spa-btn { display: block; width: 100%; padding: 18px 24px; background: #1A1410; color: #fff; border: none; font-family: inherit; font-size: 13px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; text-align: center; transition: background .2s; }
+.spa-btn:hover:not(:disabled) { background: #2d2520; }
+.spa-btn:disabled { background: #aaa; cursor: default; }
+.spa-btn--loading { opacity: .7; pointer-events: none; }
+.spa-note { font-size: 12px; color: #888; text-align: center; margin: 10px 0 0; }
+</style>
+
+{% schema %}
+{
+  "name": "Add to Cart Button",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    { "type": "text", "id": "btn_text", "label": "Button text",   "default": "ADD TO CART" },
+    { "type": "text", "id": "note",     "label": "Shipping note", "default": "Free shipping over $75 · 30-day returns" }
+  ]
+}
+{% endschema %}

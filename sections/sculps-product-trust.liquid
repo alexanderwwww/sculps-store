@@ -1,0 +1,67 @@
+<div class="spx-wrap">
+  <div class="spx-grid">
+
+    {%- for n in (1..4) -%}
+      {%- assign lk = 'l' | append: n -%}
+      {%- assign sk = 's' | append: n -%}
+      {%- assign ik = 'i' | append: n -%}
+      {%- if section.settings[lk] != blank -%}
+        <div class="spx-item">
+          <div class="spx-icon">
+            {%- case section.settings[ik] -%}
+              {%- when 'shield' -%}
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              {%- when 'refresh' -%}
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              {%- when 'drop' -%}
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+              {%- when 'heart' -%}
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            {%- endcase -%}
+          </div>
+          <p class="spx-label">{{ section.settings[lk] }}</p>
+          {%- if section.settings[sk] != blank -%}
+            <p class="spx-sub">{{ section.settings[sk] }}</p>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+
+  </div>
+</div>
+
+<style>
+.spx-wrap { padding: 24px 20px 0; border-top: 1px solid var(--border, #f0ede8); margin-top: 4px; }
+.spx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+@media(max-width: 380px){ .spx-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+.spx-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+.spx-icon { color: var(--black, #1A1410); }
+.spx-label { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--black, #1A1410); margin: 0; line-height: 1.3; }
+.spx-sub { font-size: 9px; color: #888; margin: 0; line-height: 1.5; }
+</style>
+
+{% schema %}
+{
+  "name": "Trust Badges",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    { "type": "select", "id": "i1", "label": "Badge 1 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Circular arrows"},{"value":"drop","label":"Water drop"},{"value":"heart","label":"Heart"}], "default": "shield" },
+    { "type": "text",   "id": "l1", "label": "Badge 1 label",   "default": "INVISIBLE DESIGN" },
+    { "type": "text",   "id": "s1", "label": "Badge 1 subtext", "default": "Seamless under any outfit." },
+
+    { "type": "select", "id": "i2", "label": "Badge 2 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Circular arrows"},{"value":"drop","label":"Water drop"},{"value":"heart","label":"Heart"}], "default": "refresh" },
+    { "type": "text",   "id": "l2", "label": "Badge 2 label",   "default": "REUSABLE" },
+    { "type": "text",   "id": "s2", "label": "Badge 2 subtext", "default": "40+ wears with care." },
+
+    { "type": "select", "id": "i3", "label": "Badge 3 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Circular arrows"},{"value":"drop","label":"Water drop"},{"value":"heart","label":"Heart"}], "default": "drop" },
+    { "type": "text",   "id": "l3", "label": "Badge 3 label",   "default": "MEDICAL GRADE" },
+    { "type": "text",   "id": "s3", "label": "Badge 3 subtext", "default": "Safe, skin-friendly silicone." },
+
+    { "type": "select", "id": "i4", "label": "Badge 4 icon", "options": [{"value":"shield","label":"Shield"},{"value":"refresh","label":"Circular arrows"},{"value":"drop","label":"Water drop"},{"value":"heart","label":"Heart"}], "default": "heart" },
+    { "type": "text",   "id": "l4", "label": "Badge 4 label",   "default": "MADE FOR YOU" },
+    { "type": "text",   "id": "s4", "label": "Badge 4 subtext", "default": "All body types. All skin tones." }
+  ]
+}
+{% endschema %}

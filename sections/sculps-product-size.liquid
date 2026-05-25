@@ -1,0 +1,60 @@
+{%- assign size_opt = nil -%}
+{%- for o in product.options_with_values -%}
+  {%- if o.name == 'Size' -%}
+    {%- assign size_opt = o -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- if size_opt -%}
+  <div class="spz-wrap">
+    <p class="spz-label">CHOOSE YOUR SIZE</p>
+    <div class="spz-btns">
+      {%- for val in size_opt.values -%}
+        <button class="spz-btn{%- if forloop.first %} active{%- endif -%}"
+          type="button"
+          data-pos="{{ size_opt.position }}"
+          data-val="{{ val | escape }}">{{ val }}</button>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
+
+<script>
+(function(){
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.spz-btn');
+    if(!btn) return;
+    var pos = parseInt(btn.dataset.pos, 10);
+    var val = btn.dataset.val;
+    if(!window.sculps) return;
+    window.sculps.sel[pos] = val;
+    btn.closest('.spz-btns').querySelectorAll('.spz-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    window.sculpsUpdate();
+  });
+})();
+</script>
+
+<style>
+.spz-wrap { padding: 20px 20px 0; }
+.spz-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--black, #1A1410); margin: 0 0 12px; }
+.spz-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.spz-btn { padding: 12px 20px; border: 1.5px solid var(--black, #1A1410); background: #fff; color: var(--black, #1A1410); font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: .5px; cursor: pointer; transition: all .15s; white-space: nowrap; line-height: 1; min-width: 52px; text-align: center; }
+.spz-btn:hover { background: #f4f2ef; }
+.spz-btn.active { background: var(--black, #1A1410); color: #fff; border-color: var(--black, #1A1410); }
+</style>
+
+{% schema %}
+{
+  "name": "Size Selector",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Buttons come from the product variant option named 'Size'. Manage variant values (1, 2, 3, 4, 5) in Shopify Admin → Products → Variants."
+    }
+  ]
+}
+{% endschema %}

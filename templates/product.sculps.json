@@ -1,50 +1,28 @@
 {
   "sections": {
-    "main": {
-      "type": "sculps-product",
-      "settings": {},
-      "blocks": {
-        "b-images":   { "type": "images",       "settings": {} },
-        "b-title":    { "type": "title_price",   "settings": { "show_stars": true, "review_count": 847 } },
-        "b-bullets":  { "type": "bullet_points", "settings": {
-          "b1": "Medical grade silicone — safe for all skin types",
-          "b2": "Reusable 40+ wears with proper care",
-          "b3": "Invisible under any outfit",
-          "b4": "Available in 6 skin tones"
-        }},
-        "b-tone":     { "type": "skin_tone",     "settings": {} },
-        "b-size":     { "type": "size",          "settings": {} },
-        "b-atc":      { "type": "add_to_cart",   "settings": {
-          "btn_text": "ADD TO CART",
-          "note": "Free shipping over $75 · 30-day returns"
-        }},
-        "b-included": { "type": "whats_included","settings": {
-          "heading": "WHAT'S INCLUDED",
-          "i1": "1 Pair Lift Inserts",
-          "i2": "Carry Pouch",
-          "i3": "Care Instructions"
-        }},
-        "b-fbt":      { "type": "fbt",           "settings": { "heading": "FREQUENTLY BOUGHT TOGETHER" } },
-        "b-trust":    { "type": "trust",         "settings": {
-          "t1i": "shield", "t1l": "INVISIBLE DESIGN",  "t1s": "Seamless under any outfit.",
-          "t2i": "refresh","t2l": "REUSABLE",           "t2s": "40+ wears with care.",
-          "t3i": "drop",   "t3l": "MEDICAL GRADE",     "t3s": "Safe, skin-friendly silicone.",
-          "t4i": "heart",  "t4l": "MADE FOR YOU",      "t4s": "All body types. All skin tones."
-        }},
-        "b-reviews":  { "type": "reviews",       "settings": {
-          "heading": "REAL REVIEWS FROM REAL WOMEN",
-          "r1t": "Finally a product that actually stays on. I wore this at a wedding in 90° heat and it didn't budge once.",
-          "r1n": "Jasmine R.", "r1s": 5,
-          "r2t": "The skin tone match is absolutely perfect. You cannot see it at all under my white dress.",
-          "r2n": "Sofia M.",   "r2s": 5,
-          "r3t": "I've tried every brand and SCULPS is by far the best. Worth every penny.",
-          "r3n": "Amara K.",   "r3s": 5,
-          "r4t": "Ordered for my sister too. We're obsessed. The reusability is amazing.",
-          "r4n": "Priya S.",   "r4s": 5
-        }}
-      },
-      "block_order": ["b-images","b-title","b-bullets","b-tone","b-size","b-atc","b-included","b-fbt","b-trust","b-reviews"]
-    }
+    "gallery":   { "type": "sculps-product-gallery",   "settings": {} },
+    "header":    { "type": "sculps-product-header",    "settings": { "show_stars": true, "review_count": 847 } },
+    "bullets":   { "type": "sculps-product-bullets",   "settings": {
+      "b1": "Medical grade silicone — safe for all skin types",
+      "b2": "Reusable 40+ wears with proper care",
+      "b3": "Invisible under any outfit",
+      "b4": "Available in 6 skin tones"
+    }},
+    "skin-tone": { "type": "sculps-product-skin-tone", "settings": {} },
+    "size":      { "type": "sculps-product-size",      "settings": {} },
+    "atc":       { "type": "sculps-product-atc",       "settings": {
+      "btn_text": "ADD TO CART",
+      "note": "Free shipping over $75 · 30-day returns"
+    }},
+    "fbt":       { "type": "sculps-product-fbt",       "settings": {
+      "heading": "FREQUENTLY BOUGHT TOGETHER"
+    }},
+    "trust":     { "type": "sculps-product-trust",     "settings": {
+      "i1": "shield",  "l1": "INVISIBLE DESIGN",  "s1": "Seamless under any outfit.",
+      "i2": "refresh", "l2": "REUSABLE",           "s2": "40+ wears with care.",
+      "i3": "drop",    "l3": "MEDICAL GRADE",      "s3": "Safe, skin-friendly silicone.",
+      "i4": "heart",   "l4": "MADE FOR YOU",       "s4": "All body types. All skin tones."
+    }}
   },
-  "order": ["main"]
+  "order": ["gallery","header","bullets","skin-tone","size","atc","fbt","trust"]
 }

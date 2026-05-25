@@ -1,0 +1,39 @@
+{%- assign has = false -%}
+{%- for n in (1..6) -%}
+  {%- assign k = 'b' | append: n -%}
+  {%- if section.settings[k] != blank -%}{%- assign has = true -%}{%- endif -%}
+{%- endfor -%}
+
+{%- if has -%}
+<ul class="spb-list">
+  {%- for n in (1..6) -%}
+    {%- assign k = 'b' | append: n -%}
+    {%- if section.settings[k] != blank -%}
+      <li>{{ section.settings[k] }}</li>
+    {%- endif -%}
+  {%- endfor -%}
+</ul>
+{%- endif -%}
+
+<style>
+.spb-list { list-style: none; padding: 16px 20px 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.spb-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #333; line-height: 1.4; }
+.spb-list li::before { content: '✓'; color: var(--black, #1A1410); font-weight: 900; flex-shrink: 0; font-size: 13px; }
+</style>
+
+{% schema %}
+{
+  "name": "Bullet Points",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    { "type": "text", "id": "b1", "label": "Bullet 1" },
+    { "type": "text", "id": "b2", "label": "Bullet 2" },
+    { "type": "text", "id": "b3", "label": "Bullet 3" },
+    { "type": "text", "id": "b4", "label": "Bullet 4" },
+    { "type": "text", "id": "b5", "label": "Bullet 5" },
+    { "type": "text", "id": "b6", "label": "Bullet 6" }
+  ]
+}
+{% endschema %}

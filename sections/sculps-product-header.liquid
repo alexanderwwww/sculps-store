@@ -1,0 +1,68 @@
+{%- assign v0 = product.selected_or_first_available_variant -%}
+
+<div class="sph-wrap">
+  <h1 class="sph-title">{{ product.title }}</h1>
+
+  <div class="sph-prices">
+    <span class="sph-price" id="sph-price">{{ v0.price | money }}</span>
+    {%- if v0.compare_at_price > v0.price -%}
+      <span class="sph-compare" id="sph-compare">{{ v0.compare_at_price | money }}</span>
+      <span class="sph-save" id="sph-save">SAVE {{ v0.compare_at_price | minus: v0.price | money }}</span>
+    {%- else -%}
+      <span class="sph-compare" id="sph-compare" style="display:none"></span>
+      <span class="sph-save" id="sph-save" style="display:none"></span>
+    {%- endif -%}
+  </div>
+
+  {%- if section.settings.show_stars and section.settings.review_count > 0 -%}
+    <div class="sph-stars">
+      <span class="sph-star-ico">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      <span class="sph-star-count">({{ section.settings.review_count }} reviews)</span>
+    </div>
+  {%- endif -%}
+</div>
+
+<script>
+(function(){
+  function money(c){ return '$'+(c/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  document.addEventListener('sculps:variantChanged', function(e){
+    var v = e.detail; if(!v) return;
+    var pr = document.getElementById('sph-price');
+    var cp = document.getElementById('sph-compare');
+    var sv = document.getElementById('sph-save');
+    if(pr) pr.textContent = money(v.price);
+    if(v.compare_at_price && v.compare_at_price > v.price){
+      if(cp){ cp.textContent = money(v.compare_at_price); cp.style.display = ''; }
+      if(sv){ sv.textContent = 'SAVE ' + money(v.compare_at_price - v.price); sv.style.display = ''; }
+    } else {
+      if(cp) cp.style.display = 'none';
+      if(sv) sv.style.display = 'none';
+    }
+  });
+})();
+</script>
+
+<style>
+.sph-wrap { padding: 20px 20px 0; text-align: center; }
+.sph-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(30px, 8vw, 52px); letter-spacing: 2px; color: var(--black, #1A1410); margin: 0 0 14px; line-height: 1; }
+.sph-prices { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.sph-price { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 1px; color: var(--black, #1A1410); }
+.sph-compare { font-size: 20px; color: #aaa; text-decoration: line-through; }
+.sph-save { background: var(--black, #1A1410); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; padding: 5px 12px; white-space: nowrap; }
+.sph-stars { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; }
+.sph-star-ico { color: #F5A623; font-size: 16px; letter-spacing: 1px; }
+.sph-star-count { font-size: 13px; color: #888; }
+</style>
+
+{% schema %}
+{
+  "name": "Product Header",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    { "type": "checkbox", "id": "show_stars",    "label": "Show star rating",  "default": false },
+    { "type": "number",   "id": "review_count",  "label": "Review count",      "default": 0 }
+  ]
+}
+{% endschema %}

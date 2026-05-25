@@ -1,0 +1,84 @@
+{%- assign fp1 = section.settings.p1 -%}
+{%- assign fp2 = section.settings.p2 -%}
+
+{%- if fp1 != blank or fp2 != blank -%}
+<div class="spf-wrap">
+  <p class="spf-heading">{{ section.settings.heading | default: 'FREQUENTLY BOUGHT TOGETHER' }}</p>
+  <div class="spf-row">
+
+    {%- if fp1 != blank -%}
+      {%- assign fv1 = fp1.first_available_variant -%}
+      <div class="spf-item">
+        <a href="{{ fp1.url }}" class="spf-img-link">
+          {%- if fp1.featured_image -%}
+            <img src="{{ fp1.featured_image | image_url: width: 400 }}" alt="{{ fp1.title | escape }}" class="spf-img" loading="lazy">
+          {%- else -%}
+            <div class="spf-img spf-img-ph"></div>
+          {%- endif -%}
+        </a>
+        <p class="spf-name">{{ fp1.title | upcase }}</p>
+        <p class="spf-price">{{ fp1.price | money }}</p>
+        {%- if fv1 -%}
+          <button class="spf-btn sp-atc-btn" type="button" data-variant-id="{{ fv1.id }}">ADD TO CART</button>
+        {%- else -%}
+          <a href="{{ fp1.url }}" class="spf-btn">VIEW PRODUCT</a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if fp1 != blank and fp2 != blank -%}
+      <div class="spf-plus">+</div>
+    {%- endif -%}
+
+    {%- if fp2 != blank -%}
+      {%- assign fv2 = fp2.first_available_variant -%}
+      <div class="spf-item">
+        <a href="{{ fp2.url }}" class="spf-img-link">
+          {%- if fp2.featured_image -%}
+            <img src="{{ fp2.featured_image | image_url: width: 400 }}" alt="{{ fp2.title | escape }}" class="spf-img" loading="lazy">
+          {%- else -%}
+            <div class="spf-img spf-img-ph"></div>
+          {%- endif -%}
+        </a>
+        <p class="spf-name">{{ fp2.title | upcase }}</p>
+        <p class="spf-price">{{ fp2.price | money }}</p>
+        {%- if fv2 -%}
+          <button class="spf-btn sp-atc-btn" type="button" data-variant-id="{{ fv2.id }}">ADD TO CART</button>
+        {%- else -%}
+          <a href="{{ fp2.url }}" class="spf-btn">VIEW PRODUCT</a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+  </div>
+</div>
+{%- endif -%}
+
+<style>
+.spf-wrap { padding: 24px 20px 0; }
+.spf-heading { font-size: 11px; font-weight: 900; letter-spacing: 3px; color: var(--black, #1A1410); margin: 0 0 16px; }
+.spf-row { display: flex; align-items: flex-start; gap: 0; }
+.spf-item { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.spf-img-link { display: block; }
+.spf-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+.spf-img-ph { background: #f0ede8; }
+.spf-name { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--black, #1A1410); margin: 0; line-height: 1.4; }
+.spf-price { font-size: 14px; font-weight: 600; color: var(--black, #1A1410); margin: 0; }
+.spf-btn { display: block; width: 100%; padding: 10px 8px; border: 1.5px solid var(--black, #1A1410); background: #fff; color: var(--black, #1A1410); font-family: inherit; font-size: 9px; font-weight: 800; letter-spacing: 2px; text-align: center; cursor: pointer; text-decoration: none; transition: background .15s, color .15s; line-height: 1; }
+.spf-btn:hover { background: var(--black, #1A1410); color: #fff; }
+.spf-plus { display: flex; align-items: center; justify-content: center; width: 36px; flex-shrink: 0; font-size: 22px; font-weight: 300; color: var(--black, #1A1410); align-self: center; padding-bottom: 60px; }
+</style>
+
+{% schema %}
+{
+  "name": "Freq. Bought Together",
+  "tag": "section",
+  "class": "sp-pdp-sec",
+  "limit": 1,
+  "settings": [
+    { "type": "text",    "id": "heading", "label": "Heading", "default": "FREQUENTLY BOUGHT TOGETHER" },
+    { "type": "product", "id": "p1",      "label": "Product 1" },
+    { "type": "product", "id": "p2",      "label": "Product 2" }
+  ]
+}
+{% endschema %}
