@@ -1,44 +1,42 @@
 <!-- ========== SIZE GUIDE MODAL ========== -->
 <div class="sp-sg-overlay" id="sp-sg-overlay" aria-hidden="true">
   <div class="sp-sg-modal" role="dialog" aria-modal="true" aria-label="Size Guide">
-    <button class="sp-sg-close" id="sp-sg-close" aria-label="Close size guide">&#x2715;</button>
+    <button class="sp-sg-close" id="sp-sg-close" aria-label="Close">&#x2715;</button>
     <div class="sp-sg-h">SIZE GUIDE</div>
-    <p style="font-size:12px;color:var(--grey);margin-bottom:20px;line-height:1.6">Our sizes are numbered 1–5. No confusing letters.</p>
-    <div class="sp-sg-section-h">Chest Products — Lift Inserts, Invisibra</div>
+    <div class="sp-sg-section-h">Chest — Lift Inserts, Invisibra</div>
     <table class="sp-sg-table">
       <thead><tr><th>Size</th><th>Bust</th></tr></thead>
       <tbody>
-        <tr><td>1</td><td>30–34"</td></tr>
-        <tr><td>2</td><td>34–36"</td></tr>
-        <tr><td>3</td><td>36–38"</td></tr>
-        <tr><td>4</td><td>38–40"</td></tr>
-        <tr><td>5</td><td>40+"</td></tr>
+        <tr><td>A/B Cup</td><td>30–34"</td></tr>
+        <tr><td>C/D Cup</td><td>34–36"</td></tr>
+        <tr><td>DD/E Cup</td><td>36–38"</td></tr>
+        <tr><td>F+ Cup</td><td>38+"</td></tr>
       </tbody>
     </table>
-    <div class="sp-sg-section-h" style="margin-top:24px">Bottoms — Thong, Brief, Summer Set</div>
+    <div class="sp-sg-section-h" style="margin-top:20px">Bottoms — Thong, Brief, Summer Set</div>
     <table class="sp-sg-table">
       <thead><tr><th>Size</th><th>Waist</th><th>Hips</th></tr></thead>
       <tbody>
-        <tr><td>1</td><td>24–26"</td><td>34–36"</td></tr>
-        <tr><td>2</td><td>26–28"</td><td>36–38"</td></tr>
-        <tr><td>3</td><td>28–30"</td><td>38–40"</td></tr>
-        <tr><td>4</td><td>30–34"</td><td>40–44"</td></tr>
-        <tr><td>5</td><td>34–40"</td><td>44–50"</td></tr>
+        <tr><td>XS</td><td>24–26"</td><td>34–36"</td></tr>
+        <tr><td>S</td><td>26–28"</td><td>36–38"</td></tr>
+        <tr><td>M</td><td>28–30"</td><td>38–40"</td></tr>
+        <tr><td>L</td><td>30–34"</td><td>40–44"</td></tr>
+        <tr><td>XL</td><td>34–40"</td><td>44–50"</td></tr>
       </tbody>
     </table>
-    <p style="font-size:11px;color:var(--grey);font-style:italic;margin-top:16px">Between sizes? Size up. All products have natural stretch for comfort.</p>
+    <p style="font-size:11px;color:var(--grey);font-style:italic;margin-top:14px">Between sizes? Size up.</p>
   </div>
 </div>
 
 <!-- ========== LIGHTBOX ========== -->
 <div class="sp-lb-overlay" id="sp-lb-overlay" aria-hidden="true">
   <button class="sp-lb-close" id="sp-lb-close" aria-label="Close">&#x2715;</button>
-  <button class="sp-lb-nav sp-lb-prev" id="sp-lb-prev" aria-label="Previous image">&#8249;</button>
+  <button class="sp-lb-nav sp-lb-prev" id="sp-lb-prev" aria-label="Previous">&#8249;</button>
   <img class="sp-lb-img" id="sp-lb-img" src="" alt="{{ product.title | escape }}">
-  <button class="sp-lb-nav sp-lb-next" id="sp-lb-next" aria-label="Next image">&#8250;</button>
+  <button class="sp-lb-nav sp-lb-next" id="sp-lb-next" aria-label="Next">&#8250;</button>
 </div>
 
-<!-- ========== STICKY ADD TO CART BAR ========== -->
+<!-- ========== STICKY ATC ========== -->
 <div class="sp-satc" id="sp-satc">
   <div class="sp-satc-info">
     {%- if product.featured_image -%}
@@ -46,86 +44,92 @@
     {%- endif -%}
     <div>
       <div class="sp-satc-name">{{ product.title }}</div>
-      <div class="sp-satc-price" id="sp-satc-price">{{ product.price | money }}</div>
+      <div class="sp-satc-price" id="sp-satc-price">{{ product.selected_or_first_available_variant.price | money }}</div>
     </div>
   </div>
-  <button class="sp-satc-btn sp-atc-btn" id="sp-satc-atc"
-    data-variant-id="{{ product.first_available_variant.id }}"
-    type="button">ADD TO CART</button>
+  <button class="sp-satc-btn sp-pdp-atc-trigger" type="button">ADD TO CART</button>
 </div>
 
-<!-- ========== PRODUCT PAGE ========== -->
+<!-- ========== VARIANT DATA ========== -->
+<script>
+window.sculpsProduct = {
+  variants: {{ product.variants | json }},
+  selectedOptions: {}
+};
+// Pre-select first available option values
+{%- for option in product.options_with_values -%}
+  window.sculpsProduct.selectedOptions[{{ option.position }}] = {{ option.values | first | json }};
+{%- endfor -%}
+</script>
 
-{%- comment -%}Pre-calculate option flags once{%- endcomment -%}
-{%- assign has_skin_tone = false -%}
-{%- assign has_color     = false -%}
-{%- assign has_size      = false -%}
-{%- for option in product.options -%}
-  {%- if option == 'Shade' or option == 'Tone' or option == 'Skin Tone' -%}
-    {%- assign has_skin_tone = true -%}
-  {%- elsif option == 'Color' -%}
-    {%- assign has_color = true -%}
-  {%- elsif option == 'Size' -%}
-    {%- assign has_size = true -%}
+<!-- ========== PRODUCT PAGE ========== -->
+{%- assign v0 = product.selected_or_first_available_variant -%}
+{%- assign tone_colors = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
+{%- assign tone_labels = 'PORCELAIN,LIGHT,MEDIUM,TAN,DEEP,RICH' | split: ',' -%}
+{%- assign color_swatches = '#F5B8C4,#9BAF8A,#C9B8E8,#7B9AB5' | split: ',' -%}
+
+{%- comment -%}Find option positions{%- endcomment -%}
+{%- assign tone_option = null -%}
+{%- assign size_option = null -%}
+{%- assign color_option = null -%}
+{%- for opt in product.options_with_values -%}
+  {%- if opt.name == 'Skin Tone' or opt.name == 'Shade' or opt.name == 'Tone' -%}
+    {%- assign tone_option = opt -%}
+  {%- elsif opt.name == 'Size' -%}
+    {%- assign size_option = opt -%}
+  {%- elsif opt.name == 'Color' -%}
+    {%- assign color_option = opt -%}
   {%- endif -%}
 {%- endfor -%}
 
 <div class="sp-pdp-page">
 
-  <!-- LEFT COLUMN: image gallery block -->
+  <!-- LEFT: image gallery -->
   <div class="sp-pdp-col-left">
     {%- for block in section.blocks -%}
       {%- if block.type == 'image_gallery' -%}
-        <div class="sp-pdp-gallery" {{ block.shopify_attributes }}>
-
-          <!-- Main image + zoom -->
-          <div class="sp-pdp-main-wrap">
-            {%- if product.featured_image -%}
-              <img class="sp-pdp-main-img" id="sp-main-img"
-                src="{{ product.featured_image | image_url: width: 900 }}"
-                alt="{{ product.title | escape }}"
-                loading="eager">
-            {%- else -%}
-              <div style="width:100%;height:100%;background:var(--cream)"></div>
-            {%- endif -%}
-            <button class="sp-pdp-zoom-btn" id="sp-zoom-btn" aria-label="Zoom image">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
-                <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- Dot navigation -->
-          {%- if product.images.size > 1 -%}
-            <div class="sp-pdp-dots" id="sp-pdp-dots">
-              {%- for image in product.images limit: 8 -%}
-                <button class="sp-pdp-dot{%- if forloop.first %} active{%- endif -%}"
-                  data-index="{{ forloop.index0 }}"
-                  data-src="{{ image | image_url: width: 900 }}"
-                  data-lb-src="{{ image | image_url: width: 1400 }}"
-                  aria-label="Image {{ forloop.index }}"></button>
-              {%- endfor -%}
-            </div>
+      <div class="sp-pdp-gallery" {{ block.shopify_attributes }}>
+        <div class="sp-pdp-main-wrap">
+          {%- if v0.compare_at_price > v0.price -%}
+            {%- assign save_amt = v0.compare_at_price | minus: v0.price -%}
+            <div class="sp-pdp-save-badge" id="sp-save-badge">SAVE {{ save_amt | money_without_trailing_zeros }}</div>
           {%- endif -%}
-
-          <!-- Hidden full-res sources for lightbox -->
-          <div id="sp-lb-sources" style="display:none">
-            {%- for image in product.images limit: 8 -%}
-              <span data-src="{{ image | image_url: width: 1400 }}"></span>
+          {%- if product.featured_image -%}
+            <img class="sp-pdp-main-img" id="sp-main-img"
+              src="{{ product.featured_image | image_url: width: 900 }}"
+              alt="{{ product.title | escape }}" loading="eager">
+          {%- else -%}
+            <div style="width:100%;height:100%;background:var(--cream)"></div>
+          {%- endif -%}
+          <button class="sp-pdp-zoom-btn" id="sp-zoom-btn" aria-label="Zoom">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+              <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+        </div>
+        {%- if product.images.size > 1 -%}
+          <div class="sp-pdp-dots" id="sp-pdp-dots">
+            {%- for img in product.images limit: 8 -%}
+              <button class="sp-pdp-dot{%- if forloop.first %} active{%- endif -%}"
+                data-src="{{ img | image_url: width: 900 }}"
+                aria-label="Image {{ forloop.index }}"></button>
             {%- endfor -%}
           </div>
-
+        {%- endif -%}
+        <div id="sp-lb-sources" style="display:none">
+          {%- for img in product.images limit: 8 -%}
+            <span data-src="{{ img | image_url: width: 1600 }}"></span>
+          {%- endfor -%}
         </div>
+      </div>
       {%- endif -%}
     {%- endfor -%}
   </div>
 
-  <!-- RIGHT COLUMN: product info blocks -->
+  <!-- RIGHT: product info blocks -->
   <div class="sp-pdp-col-right" id="sp-atc-trigger">
-
-    <!-- Hidden selected variant -->
-    <input type="hidden" id="sculps-selected-variant" value="{{ product.first_available_variant.id }}">
+    <input type="hidden" id="sculps-selected-variant" value="{{ v0.id }}">
 
     {%- for block in section.blocks -%}
       {%- case block.type -%}
@@ -133,143 +137,185 @@
         {%- when 'product_header' -%}
         <div class="sp-pdp-header-block" {{ block.shopify_attributes }}>
           <div class="sp-pdp-brand">SCULPS</div>
-          <h1 class="sp-pdp-title">{{ product.title }}</h1>
-          <div class="sp-pdp-price-row" id="sp-price-row">
-            <span class="sp-pdp-price" id="sp-price">{{ product.selected_or_first_available_variant.price | money }}</span>
-            {%- if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price -%}
-              <span class="sp-pdp-compare" id="sp-compare">{{ product.selected_or_first_available_variant.compare_at_price | money }}</span>
-              {%- assign save_amt = product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price -%}
-              <span class="sp-pdp-save">SAVE {{ save_amt | money }}</span>
+          <h1 class="sp-pdp-title">{{ product.title | upcase }}</h1>
+          {%- if block.settings.subtitle != blank -%}
+            <div class="sp-pdp-subtitle">{{ block.settings.subtitle }}</div>
+          {%- endif -%}
+          <div class="sp-pdp-price-row">
+            <span class="sp-pdp-price" id="sp-price">{{ v0.price | money }}</span>
+            {%- if v0.compare_at_price > v0.price -%}
+              <span class="sp-pdp-compare" id="sp-compare">{{ v0.compare_at_price | money }}</span>
+              {%- assign save_label = v0.compare_at_price | minus: v0.price | money_without_trailing_zeros -%}
+              <span class="sp-pdp-save-tag" id="sp-save-tag">SAVE {{ save_label }}</span>
             {%- endif -%}
           </div>
+          {%- if block.settings.tagline != blank -%}
+            <div class="sp-pdp-tagline">{{ block.settings.tagline }}</div>
+          {%- endif -%}
           <div class="sp-pdp-stars">
-            <span class="sp-pdp-stars-icons">★★★★★</span>
-            <span class="sp-pdp-stars-count">({{ block.settings.rating_count | default: 847 }} reviews)</span>
+            ★★★★★ <span class="sp-pdp-stars-count">({{ block.settings.rating_count | default: 847 }} reviews)</span>
           </div>
         </div>
 
-        {%- when 'bullet_points' -%}
-        {%- assign any_bullet = false -%}
-        {%- for i in (1..4) -%}
-          {%- assign bk = 'bullet_' | append: i -%}
-          {%- if block.settings[bk] != blank -%}{%- assign any_bullet = true -%}{%- endif -%}
+        {%- when 'bundle_items' -%}
+        {%- assign any_bundle = false -%}
+        {%- for i in (1..3) -%}
+          {%- assign bpk = 'bundle_product_' | append: i -%}
+          {%- if block.settings[bpk] != blank -%}{%- assign any_bundle = true -%}{%- endif -%}
         {%- endfor -%}
-        <div class="sp-pdp-bullets" {{ block.shopify_attributes }}>
-          {%- for i in (1..4) -%}
-            {%- assign bk = 'bullet_' | append: i -%}
-            {%- if block.settings[bk] != blank -%}
-              <div class="sp-pdp-bullet">{{ block.settings[bk] }}</div>
-            {%- endif -%}
-          {%- endfor -%}
+        {%- if any_bundle -%}
+        <div class="sp-pdp-bundle" {{ block.shopify_attributes }}>
+          {%- if block.settings.bundle_label != blank -%}
+            <div class="sp-pdp-bundle-label">{{ block.settings.bundle_label }}</div>
+          {%- endif -%}
+          <div class="sp-pdp-bundle-grid">
+            {%- for i in (1..3) -%}
+              {%- assign bpk = 'bundle_product_' | append: i -%}
+              {%- assign bp = block.settings[bpk] -%}
+              {%- if bp != blank -%}
+              <div class="sp-pdp-bundle-item">
+                <div class="sp-pdp-bundle-name">{{ bp.title | upcase }}</div>
+                <div class="sp-pdp-bundle-img">
+                  {%- if bp.featured_image -%}
+                    <img src="{{ bp.featured_image | image_url: width: 300 }}" alt="{{ bp.title | escape }}" loading="lazy">
+                  {%- endif -%}
+                </div>
+              </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
         </div>
+        {%- endif -%}
 
         {%- when 'skin_tone_selector' -%}
-        <div {{ block.shopify_attributes }}>
-          {%- if has_skin_tone -%}
-            {%- assign tone_colors = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
-            <div class="sp-pdp-variant-group">
-              <div class="sp-pdp-variant-label"><span>SELECT YOUR SHADE</span></div>
-              <div class="sp-variant-circles">
-                {%- for variant in product.variants limit: 6 -%}
-                  {%- assign tidx = forloop.index0 -%}
-                  <div class="sp-variant-circle{%- if forloop.first %} active{%- endif -%}"
-                    style="background:{{ tone_colors[tidx] }}"
-                    data-variant-id="{{ variant.id }}"
-                    data-price="{{ variant.price }}"
-                    data-compare="{{ variant.compare_at_price }}"
-                    data-available="{{ variant.available }}"
-                    {%- if variant.featured_image -%}data-image="{{ variant.featured_image | image_url: width: 900 }}"{%- endif -%}>
-                    <span class="sp-pdp-tone-num">{{ forloop.index }}</span>
-                  </div>
-                {%- endfor -%}
+        {%- if tone_option -%}
+        <div class="sp-pdp-variant-group" {{ block.shopify_attributes }}>
+          <div class="sp-pdp-variant-label">CHOOSE YOUR SKIN TONE</div>
+          <div class="sp-tone-grid">
+            {%- for val in tone_option.values -%}
+              {%- assign tidx = forloop.index0 -%}
+              {%- assign label_idx = val | minus: 1 -%}
+              {%- if label_idx < 0 or label_idx > 5 -%}{%- assign label_idx = tidx -%}{%- endif -%}
+              <div class="sp-tone-item">
+                <button class="sp-tone-circle{%- if forloop.first %} active{%- endif -%}"
+                  style="background:{{ tone_colors[tidx] }}"
+                  data-option="{{ tone_option.position }}"
+                  data-value="{{ val }}"
+                  type="button"
+                  aria-label="{{ tone_labels[label_idx] }}"></button>
+                <span class="sp-tone-label">{{ tone_labels[label_idx] }}</span>
               </div>
-            </div>
-          {%- endif -%}
+            {%- endfor -%}
+          </div>
         </div>
+        {%- endif -%}
 
         {%- when 'color_selector' -%}
-        <div {{ block.shopify_attributes }}>
-          {%- if has_color -%}
-            {%- assign color_map = '#F5B8C4,#9BAF8A,#C9B8E8,#7B9AB5' | split: ',' -%}
-            <div class="sp-pdp-variant-group">
-              <div class="sp-pdp-variant-label"><span>SELECT YOUR COLOR</span></div>
-              <div class="sp-variant-circles">
-                {%- assign cidx = 0 -%}
-                {%- for variant in product.variants limit: 4 -%}
-                  <div class="sp-variant-circle{%- if forloop.first %} active{%- endif -%}"
-                    style="background:{{ color_map[cidx] }}"
-                    data-variant-id="{{ variant.id }}"
-                    data-price="{{ variant.price }}"
-                    {%- if variant.featured_image -%}data-image="{{ variant.featured_image | image_url: width: 900 }}"{%- endif -%}>
-                  </div>
-                  {%- assign cidx = cidx | plus: 1 -%}
-                {%- endfor -%}
-              </div>
-            </div>
-          {%- endif -%}
+        {%- if color_option -%}
+        <div class="sp-pdp-variant-group" {{ block.shopify_attributes }}>
+          <div class="sp-pdp-variant-label">CHOOSE YOUR COLOR</div>
+          <div class="sp-color-btns">
+            {%- for val in color_option.values -%}
+              {%- assign cidx = forloop.index0 -%}
+              <button class="sp-color-btn{%- if forloop.first %} active{%- endif -%}"
+                style="background:{{ color_swatches[cidx] }}"
+                data-option="{{ color_option.position }}"
+                data-value="{{ val }}"
+                type="button"
+                aria-label="{{ val }}"></button>
+            {%- endfor -%}
+          </div>
         </div>
+        {%- endif -%}
 
         {%- when 'size_selector' -%}
-        <div {{ block.shopify_attributes }}>
-          {%- if has_size -%}
-            <div class="sp-pdp-variant-group">
-              <div class="sp-pdp-variant-label">
-                <span>SELECT YOUR SIZE</span>
-                <button class="sp-pdp-size-guide sp-size-guide-link" data-open-sg>Size Guide</button>
-              </div>
-              <div class="sp-size-btns">
-                {%- for variant in product.variants -%}
-                  {%- if has_skin_tone == false and has_color == false -%}
-                    <button class="sp-size-btn{%- if forloop.first %} active{%- endif -%}{%- unless variant.available %} sold-out{%- endunless -%}"
-                      data-variant-id="{{ variant.id }}"
-                      data-price="{{ variant.price }}"
-                      {%- unless variant.available -%}disabled{%- endunless -%}
-                      type="button">{{ forloop.index }}</button>
-                  {%- endif -%}
-                {%- endfor -%}
-              </div>
-            </div>
-          {%- endif -%}
+        {%- if size_option -%}
+        <div class="sp-pdp-variant-group" {{ block.shopify_attributes }}>
+          <div class="sp-pdp-variant-label">
+            CHOOSE YOUR SIZE
+            <button class="sp-pdp-size-guide" id="sp-size-guide-link" type="button">Size Guide</button>
+          </div>
+          <div class="sp-size-btns">
+            {%- for val in size_option.values -%}
+              <button class="sp-size-btn{%- if forloop.first %} active{%- endif -%}"
+                data-option="{{ size_option.position }}"
+                data-value="{{ val }}"
+                type="button">{{ val | upcase }}</button>
+            {%- endfor -%}
+          </div>
         </div>
+        {%- endif -%}
 
         {%- when 'add_to_cart' -%}
         <div class="sp-pdp-atc-wrap" {{ block.shopify_attributes }}>
-          <button class="sp-pdp-atc-btn sp-atc-btn" id="sp-main-atc"
-            data-variant-id="{{ product.first_available_variant.id }}"
-            type="button">
-            {%- if product.first_available_variant.available -%}
-              ADD TO CART — {{ product.price | money_without_trailing_zeros }}
+          <button class="sp-pdp-atc-btn sp-pdp-atc-trigger" id="sp-main-atc" type="button">
+            {%- if v0.available -%}
+              ADD TO CART&nbsp;&nbsp;·&nbsp;&nbsp;{{ v0.price | money_without_trailing_zeros }}
             {%- else -%}
               SOLD OUT
             {%- endif -%}
           </button>
-          <p class="sp-pdp-ship-note">Free shipping on orders over $75&nbsp;&nbsp;·&nbsp;&nbsp;Returns within 30 days</p>
+          <p class="sp-pdp-ship-note">Free shipping over $75 &nbsp;·&nbsp; 30-day returns</p>
         </div>
 
-        {%- when 'trust_badges' -%}
-        <div class="sp-pdp-trust-inline" {{ block.shopify_attributes }}>
-          {%- assign trust_icons = '◻,↺,◈,♡' | split: ',' -%}
+        {%- when 'whats_included' -%}
+        {%- assign has_items = false -%}
+        {%- for i in (1..8) -%}
+          {%- assign ik = 'include_' | append: i -%}
+          {%- if block.settings[ik] != blank -%}{%- assign has_items = true -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if has_items -%}
+        <div class="sp-pdp-included-block" {{ block.shopify_attributes }}>
+          <div class="sp-pdp-included-h">WHAT'S INCLUDED</div>
+          {%- for i in (1..8) -%}
+            {%- assign ik = 'include_' | append: i -%}
+            {%- if block.settings[ik] != blank -%}
+              <div class="sp-pdp-included-item">
+                <span class="sp-pdp-included-check">✓</span>
+                <span>{{ block.settings[ik] }}</span>
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+        {%- endif -%}
+
+        {%- when 'bullet_points' -%}
+        <div class="sp-pdp-bullets" {{ block.shopify_attributes }}>
           {%- for i in (1..4) -%}
-            {%- assign lk = 'trust_' | append: i | append: '_label' -%}
-            {%- assign sk = 'trust_' | append: i | append: '_sub' -%}
-            {%- assign icon = trust_icons[forloop.index0] -%}
-            <div class="sp-pdp-trust-inline-badge">
-              <span class="sp-pdp-trust-inline-icon">{{ icon }}</span>
-              <div class="sp-pdp-trust-inline-label">{{ block.settings[lk] }}</div>
-              <div class="sp-pdp-trust-inline-sub">{{ block.settings[sk] }}</div>
-            </div>
+            {%- assign bk = 'bullet_' | append: i -%}
+            {%- if block.settings[bk] != blank -%}
+              <div class="sp-pdp-bullet">✓ {{ block.settings[bk] }}</div>
+            {%- endif -%}
           {%- endfor -%}
         </div>
 
       {%- endcase -%}
     {%- endfor -%}
-
   </div>
 </div>
 
-<!-- ========== BELOW FOLD BLOCKS ========== -->
+<!-- ========== BELOW FOLD ========== -->
 {%- for block in section.blocks -%}
   {%- case block.type -%}
+
+    {%- when 'trust_badges' -%}
+    <div class="sp-pdp-trust-row" {{ block.shopify_attributes }}>
+      {%- for i in (1..4) -%}
+        {%- assign lk = 'trust_' | append: i | append: '_label' -%}
+        {%- assign sk = 'trust_' | append: i | append: '_sub' -%}
+        {%- assign ik = 'trust_' | append: i | append: '_icon' -%}
+        <div class="sp-pdp-trust-item">
+          {%- case i -%}
+            {%- when 1 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            {%- when 2 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            {%- when 3 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            {%- when 4 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          {%- endcase -%}
+          <div class="sp-pdp-trust-lbl">{{ block.settings[lk] }}</div>
+          <div class="sp-pdp-trust-sub">{{ block.settings[sk] }}</div>
+        </div>
+      {%- endfor -%}
+    </div>
 
     {%- when 'fbt' -%}
     {%- if block.settings.fbt_1_title != blank or block.settings.fbt_2_title != blank -%}
@@ -287,43 +333,16 @@
               {%- if block.settings[ik] -%}
                 <img src="{{ block.settings[ik] | image_url: width: 500 }}" alt="{{ block.settings[tk] | escape }}" loading="lazy">
               {%- else -%}
-                <div style="width:100%;height:100%;background:var(--nude)"></div>
+                <div style="width:100%;height:100%;background:var(--cream)"></div>
               {%- endif -%}
             </a>
-            <div class="sp-pdp-fbt-info">
-              <div class="sp-pdp-fbt-name">{{ block.settings[tk] }}</div>
-              <div class="sp-pdp-fbt-price">{{ block.settings[pk] }}</div>
-              <a href="{{ block.settings[uk] | default: '#' }}" class="sp-pdp-fbt-btn">ADD TO CART</a>
-            </div>
+            <div class="sp-pdp-fbt-name">{{ block.settings[tk] }}</div>
+            <div class="sp-pdp-fbt-price">{{ block.settings[pk] }}</div>
+            <a href="{{ block.settings[uk] | default: '#' }}" class="sp-pdp-fbt-btn">ADD TO CART</a>
           </div>
           {%- endif -%}
         {%- endfor -%}
       </div>
-    </section>
-    {%- endif -%}
-
-    {%- when 'whats_included' -%}
-    {%- assign is_kit = false -%}
-    {%- if product.type == 'Kits' or product.tags contains 'kit' or product.tags contains 'Kit' -%}
-      {%- assign is_kit = true -%}
-    {%- endif -%}
-    {%- assign has_includes = false -%}
-    {%- for i in (1..6) -%}
-      {%- assign ik = 'include_' | append: i -%}
-      {%- if block.settings[ik] != blank -%}{%- assign has_includes = true -%}{%- endif -%}
-    {%- endfor -%}
-    {%- if is_kit and has_includes -%}
-    <section class="sp-pdp-included" {{ block.shopify_attributes }}>
-      <div class="sp-pdp-included-h">WHAT'S INCLUDED</div>
-      {%- for i in (1..6) -%}
-        {%- assign ik = 'include_' | append: i -%}
-        {%- if block.settings[ik] != blank -%}
-          <div class="sp-pdp-included-item">
-            <span class="sp-pdp-included-check">✓</span>
-            <span>{{ block.settings[ik] }}</span>
-          </div>
-        {%- endif -%}
-      {%- endfor -%}
     </section>
     {%- endif -%}
 
@@ -343,7 +362,6 @@
               <iframe class="sp-tt-inner" src="{{ block.settings[uk] }}" frameborder="0" allowfullscreen loading="lazy"></iframe>
             {%- else -%}
               <div class="sp-tt-inner" style="background:{{ tt_bg[gi] }}"></div>
-              <div class="sp-tt-play">▶</div>
             {%- endif -%}
             <div class="sp-tt-overlay"></div>
             <div class="sp-tt-meta">
@@ -363,7 +381,7 @@
     {%- endfor -%}
     {%- if has_rev -%}
     <section class="sp-rev-s" {{ block.shopify_attributes }}>
-      <div class="sp-rev-h">REAL REVIEWS FROM REAL WOMEN</div>
+      <div class="sp-rev-h">REAL REVIEWS</div>
       <div class="sp-rev-grid">
         {%- for i in (1..4) -%}
           {%- assign rt = 'review_' | append: i | append: '_text' -%}
@@ -372,15 +390,10 @@
           {%- assign rv = 'review_' | append: i | append: '_verified' -%}
           {%- if block.settings[rt] != blank -%}
           <div class="sp-rev-card">
-            <div class="sp-rev-stars">
-              {%- assign star_n = block.settings[rs] | default: 5 -%}
-              {%- for s in (1..star_n) -%}★{%- endfor -%}
-            </div>
+            <div class="sp-rev-stars">{%- for s in (1..block.settings[rs]) -%}★{%- endfor -%}</div>
             <p class="sp-rev-text">"{{ block.settings[rt] }}"</p>
             <div class="sp-rev-name">— {{ block.settings[rn] }}</div>
-            {%- if block.settings[rv] -%}
-              <div class="sp-rev-verified">✓ Verified Buyer</div>
-            {%- endif -%}
+            {%- if block.settings[rv] -%}<div class="sp-rev-verified">✓ Verified Buyer</div>{%- endif -%}
           </div>
           {%- endif -%}
         {%- endfor -%}
@@ -390,45 +403,227 @@
 
     {%- when 'related_products' -%}
     {%- if collection -%}
-      {%- assign rel_count = 0 -%}
-      {%- for rp in collection.products limit: 7 -%}
-        {%- unless rp.handle == product.handle -%}{%- assign rel_count = rel_count | plus: 1 -%}{%- endunless -%}
-      {%- endfor -%}
-      {%- if rel_count > 0 -%}
-      <section class="sp-pdp-related" {{ block.shopify_attributes }}>
-        <div class="sp-pdp-related-h">YOU MAY ALSO LIKE</div>
-        <div class="sp-bs-scroll">
-          {%- for rp in collection.products limit: 7 -%}
-            {%- unless rp.handle == product.handle -%}
-            <div class="sp-pc">
-              <a href="{{ rp.url }}" class="sp-pc-img" style="display:block;aspect-ratio:3/4;overflow:hidden;margin-bottom:14px">
-                {%- if rp.featured_image -%}
-                  <img src="{{ rp.featured_image | image_url: width: 400 }}" alt="{{ rp.title | escape }}" loading="lazy" style="width:100%;height:100%;object-fit:cover">
-                {%- else -%}
-                  <div style="width:100%;height:100%;background:var(--cream)"></div>
-                {%- endif -%}
-              </a>
-              <div class="sp-pc-brand">SCULPS</div>
-              <a href="{{ rp.url }}" class="sp-pc-name" style="display:block;font-size:13px;font-weight:600;margin-bottom:7px;line-height:1.3">{{ rp.title }}</a>
-              <div class="sp-pc-prices">
-                <span class="sp-pc-price">{{ rp.price | money }}</span>
-                {%- if rp.compare_at_price > rp.price -%}
-                  <span class="sp-pc-was">{{ rp.compare_at_price | money }}</span>
-                {%- endif -%}
-              </div>
-              <button class="sp-pc-btn sp-atc-btn"
-                data-variant-id="{{ rp.first_available_variant.id }}"
-                type="button">ADD TO BAG</button>
-            </div>
-            {%- endunless -%}
-          {%- endfor -%}
-        </div>
-      </section>
-      {%- endif -%}
+    <section class="sp-pdp-related" {{ block.shopify_attributes }}>
+      <div class="sp-pdp-related-h">YOU MAY ALSO LIKE</div>
+      <div class="sp-bs-scroll">
+        {%- for rp in collection.products limit: 6 -%}
+          {%- unless rp.handle == product.handle -%}
+          <div class="sp-pc">
+            <a href="{{ rp.url }}" class="sp-pc-img" style="display:block;aspect-ratio:3/4;overflow:hidden;margin-bottom:12px">
+              {%- if rp.featured_image -%}
+                <img src="{{ rp.featured_image | image_url: width: 400 }}" alt="{{ rp.title | escape }}" loading="lazy" style="width:100%;height:100%;object-fit:cover">
+              {%- else -%}
+                <div style="width:100%;height:100%;background:var(--cream)"></div>
+              {%- endif -%}
+            </a>
+            <div class="sp-pc-brand">SCULPS</div>
+            <a href="{{ rp.url }}" class="sp-pc-name" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;letter-spacing:.5px">{{ rp.title }}</a>
+            <div class="sp-pc-prices"><span class="sp-pc-price">{{ rp.price | money }}</span></div>
+          </div>
+          {%- endunless -%}
+        {%- endfor -%}
+      </div>
+    </section>
     {%- endif -%}
 
   {%- endcase -%}
 {%- endfor -%}
+
+<!-- ========== VARIANT SELECTION JS ========== -->
+<script>
+(function () {
+  var prod = window.sculpsProduct || {};
+  var variants = prod.variants || [];
+  var selectedOptions = prod.selectedOptions || {};
+
+  function findVariant() {
+    return variants.find(function (v) {
+      return Object.keys(selectedOptions).every(function (pos) {
+        return v.options[parseInt(pos) - 1] === selectedOptions[pos];
+      });
+    });
+  }
+
+  function money(cents) {
+    return '$' + (cents / 100).toFixed(2).replace(/\.00$/, '');
+  }
+
+  function updateUI(variant) {
+    if (!variant) return;
+    var priceEl = document.getElementById('sp-price');
+    var compareEl = document.getElementById('sp-compare');
+    var saveTagEl = document.getElementById('sp-save-tag');
+    var saveBadgeEl = document.getElementById('sp-save-badge');
+    var atcBtn = document.getElementById('sp-main-atc');
+    var satcPrice = document.getElementById('sp-satc-price');
+    var variantInput = document.getElementById('sculps-selected-variant');
+
+    if (priceEl) priceEl.textContent = money(variant.price);
+    if (satcPrice) satcPrice.textContent = money(variant.price);
+    if (variantInput) variantInput.value = variant.id;
+
+    if (variant.compare_at_price && variant.compare_at_price > variant.price) {
+      var save = variant.compare_at_price - variant.price;
+      if (compareEl) { compareEl.textContent = money(variant.compare_at_price); compareEl.style.display = ''; }
+      if (saveTagEl) { saveTagEl.textContent = 'SAVE ' + money(save); saveTagEl.style.display = ''; }
+      if (saveBadgeEl) { saveBadgeEl.textContent = 'SAVE ' + money(save); saveBadgeEl.style.display = ''; }
+    } else {
+      if (compareEl) compareEl.style.display = 'none';
+      if (saveTagEl) saveTagEl.style.display = 'none';
+      if (saveBadgeEl) saveBadgeEl.style.display = 'none';
+    }
+
+    if (atcBtn) {
+      if (variant.available) {
+        atcBtn.textContent = 'ADD TO CART  ·  ' + money(variant.price);
+        atcBtn.disabled = false;
+      } else {
+        atcBtn.textContent = 'SOLD OUT';
+        atcBtn.disabled = true;
+      }
+    }
+
+    // Update sticky ATC and main ATC data-variant-id
+    document.querySelectorAll('.sp-pdp-atc-trigger, .sp-satc-btn').forEach(function(btn) {
+      btn.setAttribute('data-variant-id', variant.id);
+    });
+
+    // Update main image if variant has an image
+    if (variant.featured_image) {
+      var mainImg = document.getElementById('sp-main-img');
+      if (mainImg) {
+        mainImg.style.opacity = '0';
+        setTimeout(function() {
+          mainImg.src = variant.featured_image.src;
+          mainImg.style.opacity = '1';
+        }, 150);
+      }
+    }
+  }
+
+  function handleOptionClick(btn, optionPosition, optionValue) {
+    // Deactivate siblings
+    var group = btn.closest('[data-option-group]') || btn.parentNode;
+    group.querySelectorAll('.sp-tone-circle, .sp-size-btn, .sp-color-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    selectedOptions[optionPosition] = optionValue;
+    var variant = findVariant();
+    if (variant) updateUI(variant);
+  }
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target;
+    // Tone circles
+    if (btn.classList.contains('sp-tone-circle') || btn.closest('.sp-tone-circle')) {
+      btn = btn.classList.contains('sp-tone-circle') ? btn : btn.closest('.sp-tone-circle');
+      var pos = btn.getAttribute('data-option');
+      var val = btn.getAttribute('data-value');
+      // Deactivate all tone circles
+      document.querySelectorAll('.sp-tone-circle').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedOptions[pos] = val;
+      var variant = findVariant();
+      if (variant) updateUI(variant);
+    }
+    // Size buttons
+    if (btn.classList.contains('sp-size-btn')) {
+      var pos = btn.getAttribute('data-option');
+      var val = btn.getAttribute('data-value');
+      document.querySelectorAll('.sp-size-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedOptions[pos] = val;
+      var variant = findVariant();
+      if (variant) updateUI(variant);
+    }
+    // Color buttons
+    if (btn.classList.contains('sp-color-btn')) {
+      var pos = btn.getAttribute('data-option');
+      var val = btn.getAttribute('data-value');
+      document.querySelectorAll('.sp-color-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedOptions[pos] = val;
+      var variant = findVariant();
+      if (variant) updateUI(variant);
+    }
+    // Size guide
+    if (btn.id === 'sp-size-guide-link') {
+      var sg = document.getElementById('sp-sg-overlay');
+      if (sg) { sg.style.display = 'flex'; sg.setAttribute('aria-hidden', 'false'); }
+    }
+    // Size guide close
+    if (btn.id === 'sp-sg-close') {
+      var sg = document.getElementById('sp-sg-overlay');
+      if (sg) { sg.style.display = 'none'; sg.setAttribute('aria-hidden', 'true'); }
+    }
+  });
+
+  // Size guide overlay click-outside
+  var sgOverlay = document.getElementById('sp-sg-overlay');
+  if (sgOverlay) {
+    sgOverlay.addEventListener('click', function(e) {
+      if (e.target === sgOverlay) { sgOverlay.style.display = 'none'; }
+    });
+  }
+})();
+</script>
+
+<style>
+/* Tone circles with labels */
+.sp-tone-grid{display:flex;gap:14px;flex-wrap:wrap}
+.sp-tone-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.sp-tone-circle{width:52px;height:52px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s;flex-shrink:0;padding:0}
+.sp-tone-circle:hover{transform:scale(1.08)}
+.sp-tone-circle.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
+.sp-tone-label{font-size:8px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);text-align:center;line-height:1.2}
+/* Color swatches */
+.sp-color-btns{display:flex;gap:10px;flex-wrap:wrap}
+.sp-color-btn{width:36px;height:36px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s;padding:0}
+.sp-color-btn.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
+/* Size buttons */
+.sp-size-btns{display:flex;gap:8px;flex-wrap:wrap}
+.sp-size-btn{padding:12px 18px;border:1.5px solid var(--border);background:none;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
+.sp-size-btn:hover{border-color:var(--black)}
+.sp-size-btn.active{background:var(--black);color:var(--white);border-color:var(--black)}
+/* Save badge on image */
+.sp-pdp-save-badge{position:absolute;top:14px;left:14px;background:var(--black);color:var(--white);font-size:10px;font-weight:900;letter-spacing:1px;padding:6px 12px;z-index:2;text-transform:uppercase}
+/* Header */
+.sp-pdp-subtitle{font-size:13px;color:var(--grey);margin-bottom:12px;line-height:1.5}
+.sp-pdp-tagline{font-size:12px;color:var(--grey);margin-top:6px;margin-bottom:14px;font-style:italic}
+.sp-pdp-save-tag{display:inline-block;background:var(--black);color:var(--white);font-size:9px;font-weight:900;letter-spacing:1px;padding:4px 10px;margin-left:6px}
+/* Bundle items */
+.sp-pdp-bundle{margin-bottom:20px}
+.sp-pdp-bundle-label{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:12px}
+.sp-pdp-bundle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border:1px solid var(--border)}
+.sp-pdp-bundle-item{padding:12px 8px;border-right:1px solid var(--border);text-align:center}
+.sp-pdp-bundle-item:last-child{border-right:none}
+.sp-pdp-bundle-name{font-size:8px;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;line-height:1.3}
+.sp-pdp-bundle-img{aspect-ratio:1/1;overflow:hidden}
+.sp-pdp-bundle-img img{width:100%;height:100%;object-fit:cover}
+/* What's included in right col */
+.sp-pdp-included-block{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+.sp-pdp-included-h{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.sp-pdp-included-item{display:flex;align-items:flex-start;gap:10px;font-size:12px;margin-bottom:8px;line-height:1.5}
+.sp-pdp-included-check{color:var(--black);font-size:13px;flex-shrink:0;margin-top:1px}
+/* Trust row at bottom */
+.sp-pdp-trust-row{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:40px}
+.sp-pdp-trust-item{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 12px;border-right:1px solid var(--border)}
+.sp-pdp-trust-item:last-child{border-right:none}
+.sp-pdp-trust-icon{width:28px;height:28px;margin-bottom:10px;color:var(--black)}
+.sp-pdp-trust-lbl{font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.sp-pdp-trust-sub{font-size:10px;color:var(--grey);line-height:1.4}
+/* Variant label row */
+.sp-pdp-variant-label{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.sp-pdp-size-guide{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:none;border:none;cursor:pointer;color:var(--grey);text-decoration:underline;font-family:inherit}
+@media(max-width:768px){
+  .sp-pdp-trust-row{grid-template-columns:repeat(2,1fr)}
+  .sp-pdp-trust-item:nth-child(2){border-right:none}
+  .sp-pdp-trust-item:nth-child(3),.sp-pdp-trust-item:nth-child(4){border-top:1px solid var(--border)}
+  .sp-pdp-trust-item:nth-child(4){border-right:none}
+  .sp-tone-circle{width:44px;height:44px}
+}
+</style>
 
 {% schema %}
 {
@@ -445,18 +640,20 @@
       "name": "Product Header",
       "limit": 1,
       "settings": [
-        {"type": "number", "id": "rating_count", "label": "Review count", "default": 847}
+        {"type": "text",   "id": "subtitle",      "label": "Subtitle"},
+        {"type": "text",   "id": "tagline",        "label": "Tagline (below price)"},
+        {"type": "number", "id": "rating_count",   "label": "Review count", "default": 847}
       ]
     },
     {
-      "type": "bullet_points",
-      "name": "Bullet Points",
+      "type": "bundle_items",
+      "name": "Bundle Items",
       "limit": 1,
       "settings": [
-        {"type": "text", "id": "bullet_1", "label": "Bullet 1"},
-        {"type": "text", "id": "bullet_2", "label": "Bullet 2"},
-        {"type": "text", "id": "bullet_3", "label": "Bullet 3"},
-        {"type": "text", "id": "bullet_4", "label": "Bullet 4"}
+        {"type": "text",    "id": "bundle_label",     "label": "Label", "default": "Three bestsellers. One confidence boost."},
+        {"type": "product", "id": "bundle_product_1", "label": "Item 1"},
+        {"type": "product", "id": "bundle_product_2", "label": "Item 2"},
+        {"type": "product", "id": "bundle_product_3", "label": "Item 3"}
       ]
     },
     {
@@ -484,18 +681,44 @@
       "settings": []
     },
     {
+      "type": "whats_included",
+      "name": "What's Included",
+      "limit": 1,
+      "settings": [
+        {"type": "text", "id": "include_1", "label": "Item 1"},
+        {"type": "text", "id": "include_2", "label": "Item 2"},
+        {"type": "text", "id": "include_3", "label": "Item 3"},
+        {"type": "text", "id": "include_4", "label": "Item 4"},
+        {"type": "text", "id": "include_5", "label": "Item 5"},
+        {"type": "text", "id": "include_6", "label": "Item 6"},
+        {"type": "text", "id": "include_7", "label": "Item 7"},
+        {"type": "text", "id": "include_8", "label": "Item 8"}
+      ]
+    },
+    {
+      "type": "bullet_points",
+      "name": "Bullet Points",
+      "limit": 1,
+      "settings": [
+        {"type": "text", "id": "bullet_1", "label": "Bullet 1"},
+        {"type": "text", "id": "bullet_2", "label": "Bullet 2"},
+        {"type": "text", "id": "bullet_3", "label": "Bullet 3"},
+        {"type": "text", "id": "bullet_4", "label": "Bullet 4"}
+      ]
+    },
+    {
       "type": "trust_badges",
       "name": "Trust Badges",
       "limit": 1,
       "settings": [
-        {"type": "text", "id": "trust_1_label", "label": "Badge 1 label", "default": "INVISIBLE DESIGN"},
-        {"type": "text", "id": "trust_1_sub",   "label": "Badge 1 subtext", "default": "Seamless under anything"},
-        {"type": "text", "id": "trust_2_label", "label": "Badge 2 label", "default": "REUSABLE"},
-        {"type": "text", "id": "trust_2_sub",   "label": "Badge 2 subtext", "default": "40+ wears with care"},
-        {"type": "text", "id": "trust_3_label", "label": "Badge 3 label", "default": "MEDICAL GRADE"},
-        {"type": "text", "id": "trust_3_sub",   "label": "Badge 3 subtext", "default": "Body-safe materials"},
-        {"type": "text", "id": "trust_4_label", "label": "Badge 4 label", "default": "EVERY BODY"},
-        {"type": "text", "id": "trust_4_sub",   "label": "Badge 4 subtext", "default": "All tones. All shapes."}
+        {"type": "text", "id": "trust_1_label", "label": "Badge 1 label",   "default": "INVISIBLE DESIGN"},
+        {"type": "text", "id": "trust_1_sub",   "label": "Badge 1 subtext", "default": "Seamless under any outfit."},
+        {"type": "text", "id": "trust_2_label", "label": "Badge 2 label",   "default": "REUSABLE"},
+        {"type": "text", "id": "trust_2_sub",   "label": "Badge 2 subtext", "default": "40+ wears with care."},
+        {"type": "text", "id": "trust_3_label", "label": "Badge 3 label",   "default": "MEDICAL GRADE"},
+        {"type": "text", "id": "trust_3_sub",   "label": "Badge 3 subtext", "default": "Safe, skin-friendly silicone."},
+        {"type": "text", "id": "trust_4_label", "label": "Badge 4 label",   "default": "MADE FOR YOU"},
+        {"type": "text", "id": "trust_4_sub",   "label": "Badge 4 subtext", "default": "All body types. All skin tones."}
       ]
     },
     {
@@ -511,19 +734,6 @@
         {"type": "text",         "id": "fbt_2_title", "label": "Product 2 title"},
         {"type": "text",         "id": "fbt_2_price", "label": "Product 2 price"},
         {"type": "url",          "id": "fbt_2_url",   "label": "Product 2 link"}
-      ]
-    },
-    {
-      "type": "whats_included",
-      "name": "What's Included",
-      "limit": 1,
-      "settings": [
-        {"type": "text", "id": "include_1", "label": "Item 1"},
-        {"type": "text", "id": "include_2", "label": "Item 2"},
-        {"type": "text", "id": "include_3", "label": "Item 3"},
-        {"type": "text", "id": "include_4", "label": "Item 4"},
-        {"type": "text", "id": "include_5", "label": "Item 5"},
-        {"type": "text", "id": "include_6", "label": "Item 6"}
       ]
     },
     {
@@ -578,14 +788,12 @@
       "blocks": [
         {"type": "image_gallery"},
         {"type": "product_header"},
-        {"type": "bullet_points"},
         {"type": "skin_tone_selector"},
         {"type": "color_selector"},
         {"type": "size_selector"},
         {"type": "add_to_cart"},
-        {"type": "trust_badges"},
-        {"type": "fbt"},
         {"type": "whats_included"},
+        {"type": "trust_badges"},
         {"type": "tiktok_testimonials"},
         {"type": "reviews"},
         {"type": "related_products"}

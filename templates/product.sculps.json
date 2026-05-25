@@ -4,34 +4,24 @@
       "type": "sculps-product",
       "settings": {},
       "blocks": {
-        "block-gallery":  {"type": "image_gallery",  "settings": {}},
-        "block-header":   {"type": "product_header", "settings": {"rating_count": 847}},
-        "block-bullets":  {
-          "type": "bullet_points",
-          "settings": {
-            "bullet_1": "Medical-grade adhesive — skin-safe",
-            "bullet_2": "Reusable 40+ wears with proper care",
-            "bullet_3": "Invisible under any clothing",
-            "bullet_4": "Available in 6 skin tones"
-          }
-        },
-        "block-skintone": {"type": "skin_tone_selector",       "settings": {}},
-        "block-color":    {"type": "color_selector",           "settings": {}},
-        "block-size":     {"type": "size_selector",            "settings": {}},
-        "block-atc":      {"type": "add_to_cart",              "settings": {}},
-        "block-trust":    {
+        "block-gallery":   {"type": "image_gallery",      "settings": {}},
+        "block-header":    {"type": "product_header",     "settings": {"rating_count": 847}},
+        "block-skintone":  {"type": "skin_tone_selector", "settings": {}},
+        "block-color":     {"type": "color_selector",     "settings": {}},
+        "block-size":      {"type": "size_selector",      "settings": {}},
+        "block-atc":       {"type": "add_to_cart",        "settings": {}},
+        "block-included":  {"type": "whats_included",     "settings": {}},
+        "block-trust":     {
           "type": "trust_badges",
           "settings": {
-            "trust_1_label": "INVISIBLE DESIGN", "trust_1_sub": "Seamless under anything",
-            "trust_2_label": "REUSABLE",          "trust_2_sub": "40+ wears with care",
-            "trust_3_label": "MEDICAL GRADE",     "trust_3_sub": "Body-safe materials",
-            "trust_4_label": "EVERY BODY",        "trust_4_sub": "All tones. All shapes."
+            "trust_1_label": "INVISIBLE DESIGN", "trust_1_sub": "Seamless under any outfit.",
+            "trust_2_label": "REUSABLE",          "trust_2_sub": "40+ wears with care.",
+            "trust_3_label": "MEDICAL GRADE",     "trust_3_sub": "Safe, skin-friendly silicone.",
+            "trust_4_label": "MADE FOR YOU",      "trust_4_sub": "All body types. All skin tones."
           }
         },
-        "block-fbt":      {"type": "fbt", "settings": {}},
-        "block-included": {"type": "whats_included",             "settings": {}},
-        "block-tiktok":   {"type": "tiktok_testimonials",        "settings": {}},
-        "block-reviews":  {
+        "block-tiktok":    {"type": "tiktok_testimonials", "settings": {}},
+        "block-reviews":   {
           "type": "reviews",
           "settings": {
             "review_1_text": "Finally a product that actually stays on. I wore this at a wedding in 90° heat and it didn't budge once.",
@@ -44,19 +34,17 @@
             "review_4_name": "Priya S.",   "review_4_stars": 5, "review_4_verified": true
           }
         },
-        "block-related":  {"type": "related_products", "settings": {}}
+        "block-related":   {"type": "related_products",   "settings": {}}
       },
       "block_order": [
         "block-gallery",
         "block-header",
-        "block-bullets",
         "block-skintone",
         "block-color",
         "block-size",
         "block-atc",
-        "block-trust",
-        "block-fbt",
         "block-included",
+        "block-trust",
         "block-tiktok",
         "block-reviews",
         "block-related"
