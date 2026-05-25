@@ -2,17 +2,13 @@
 .sp-sa-header{text-align:center;padding:48px 24px 24px;border-bottom:1px solid var(--border)}
 .sp-sa-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,8vw,80px);letter-spacing:5px;line-height:1;margin-bottom:8px}
 .sp-sa-sub{font-size:14px;color:var(--grey)}
-
 .sp-sa-toolbar{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;border-bottom:1px solid var(--border)}
 .sp-sa-tb-btn{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--black)}
-.sp-sa-tb-btn svg{flex-shrink:0}
 .sp-sa-count{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--black)}
-
 .sp-sa-grid-wrap{max-width:1200px;margin:0 auto;padding:40px 48px 60px}
 .sp-sa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
-
 .sp-sa-card{display:flex;flex-direction:column}
-.sp-sa-card-img-wrap{aspect-ratio:1/1;overflow:hidden;background:#F9F5F1;margin-bottom:14px;position:relative;display:block}
+.sp-sa-card-img-wrap{aspect-ratio:1/1;overflow:hidden;background:#F9F5F1;margin-bottom:14px;display:block;position:relative}
 .sp-sa-card-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
 .sp-sa-card:hover .sp-sa-card-img-wrap img{transform:scale(1.03)}
 .sp-sa-card-brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;line-height:1;margin-bottom:3px}
@@ -22,14 +18,14 @@
 .sp-sa-card-dot{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(0,0,0,.1);flex-shrink:0}
 .sp-sa-card-atc{width:100%;padding:14px;background:var(--black);color:var(--white);font-size:10px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;border:none;cursor:pointer;font-family:inherit;transition:background .2s;margin-top:auto}
 .sp-sa-card-atc:hover{background:#333}
-
+.sp-sa-card-empty .sp-sa-card-img-wrap{display:flex;align-items:center;justify-content:center;border:2px dashed var(--border)}
+.sp-sa-card-empty-label{font-size:10px;color:var(--grey);letter-spacing:1px;text-transform:uppercase;text-align:center}
 .sp-sa-trust{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
 .sp-sa-trust-item{display:flex;flex-direction:column;align-items:center;text-align:center;padding:28px 16px;border-right:1px solid var(--border)}
 .sp-sa-trust-item:last-child{border-right:none}
 .sp-sa-trust-icon{width:30px;height:30px;margin-bottom:12px;color:var(--black)}
 .sp-sa-trust-label{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
 .sp-sa-trust-sub{font-size:11px;color:var(--grey);line-height:1.4}
-
 @media(max-width:900px){
   .sp-sa-toolbar{padding:14px 20px}
   .sp-sa-grid-wrap{padding:28px 20px 48px}
@@ -46,21 +42,13 @@
 }
 </style>
 
-{%- assign c = collection -%}
 {%- assign tone_cols = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
+{%- assign card_blocks = section.blocks | where: 'type', 'product_card' -%}
 
 <!-- Header -->
 <div class="sp-sa-header">
-  <div class="sp-sa-title">{{ section.settings.heading | default: c.title | default: 'SHOP ALL' }}</div>
-  <div class="sp-sa-sub">
-    {%- if section.settings.subheading != blank -%}
-      {{ section.settings.subheading }}
-    {%- elsif c.description != blank -%}
-      {{ c.description | strip_html | truncate: 100 }}
-    {%- else -%}
-      Invisible support. Visible confidence.
-    {%- endif -%}
-  </div>
+  <div class="sp-sa-title">{{ section.settings.heading | default: 'SHOP ALL' }}</div>
+  <div class="sp-sa-sub">{{ section.settings.subheading | default: 'Invisible support. Visible confidence.' }}</div>
 </div>
 
 <!-- Toolbar -->
@@ -69,7 +57,7 @@
     FILTER
     <svg width="10" height="7" viewBox="0 0 10 7" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
-  <span class="sp-sa-count">{{ c.products_count }} Products</span>
+  <span class="sp-sa-count">{{ card_blocks.size }} Products</span>
   <button class="sp-sa-tb-btn" type="button">
     SORT
     <svg width="10" height="7" viewBox="0 0 10 7" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -79,52 +67,64 @@
 <!-- Product Grid -->
 <div class="sp-sa-grid-wrap">
   <div class="sp-sa-grid">
-    {%- for product in c.products -%}
-      {%- assign has_tone = false -%}
-      {%- assign has_color = false -%}
-      {%- for opt in product.options -%}
-        {%- if opt == 'Shade' or opt == 'Tone' or opt == 'Skin Tone' -%}{%- assign has_tone = true -%}{%- endif -%}
-        {%- if opt == 'Color' -%}{%- assign has_color = true -%}{%- endif -%}
-      {%- endfor -%}
-
-      <div class="sp-sa-card">
-        <a href="{{ product.url }}" class="sp-sa-card-img-wrap">
-          {%- if product.featured_image -%}
-            <img src="{{ product.featured_image | image_url: width: 700 }}" alt="{{ product.title | escape }}" loading="lazy">
-          {%- else -%}
-            <div style="width:100%;height:100%;background:#F9F5F1"></div>
-          {%- endif -%}
-        </a>
-
-        <div class="sp-sa-card-brand">SCULPS</div>
-        <div class="sp-sa-card-name">{{ product.title | upcase }}</div>
-        <div class="sp-sa-card-price">{{ product.price | money }}</div>
-
-        {%- if has_tone -%}
-          <div class="sp-sa-card-dots">
-            {%- for col in tone_cols -%}
-              <div class="sp-sa-card-dot" style="background:{{ col }}"></div>
-            {%- endfor -%}
-          </div>
-        {%- elsif has_color -%}
-          <div class="sp-sa-card-dots">
-            <div class="sp-sa-card-dot" style="background:var(--pink)"></div>
-            <div class="sp-sa-card-dot" style="background:var(--sage)"></div>
-            <div class="sp-sa-card-dot" style="background:var(--lav)"></div>
-            <div class="sp-sa-card-dot" style="background:var(--steel)"></div>
-          </div>
-        {%- else -%}
-          <div class="sp-sa-card-dots">
-            {%- for col in tone_cols -%}
-              <div class="sp-sa-card-dot" style="background:{{ col }}"></div>
-            {%- endfor -%}
-          </div>
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'product_card' -%}
+        {%- assign p = block.settings.product -%}
+        {%- assign has_tone = false -%}
+        {%- assign has_color = false -%}
+        {%- if p != blank -%}
+          {%- for opt in p.options -%}
+            {%- if opt == 'Shade' or opt == 'Tone' or opt == 'Skin Tone' -%}{%- assign has_tone = true -%}{%- endif -%}
+            {%- if opt == 'Color' -%}{%- assign has_color = true -%}{%- endif -%}
+          {%- endfor -%}
         {%- endif -%}
 
-        <button class="sp-sa-card-atc sp-atc-btn"
-          data-variant-id="{{ product.first_available_variant.id }}"
-          type="button">ADD TO CART</button>
-      </div>
+        <div class="sp-sa-card{% if p == blank %} sp-sa-card-empty{% endif %}" {{ block.shopify_attributes }}>
+          {%- if p != blank -%}
+            <a href="{{ p.url }}" class="sp-sa-card-img-wrap">
+              {%- if p.featured_image -%}
+                <img src="{{ p.featured_image | image_url: width: 700 }}" alt="{{ p.title | escape }}" loading="lazy">
+              {%- else -%}
+                <div style="width:100%;height:100%;background:#F9F5F1"></div>
+              {%- endif -%}
+            </a>
+            <div class="sp-sa-card-brand">SCULPS</div>
+            <div class="sp-sa-card-name">{{ p.title | upcase }}</div>
+            <div class="sp-sa-card-price">{{ p.price | money }}</div>
+            {%- if has_tone -%}
+              <div class="sp-sa-card-dots">
+                {%- for col in tone_cols -%}
+                  <div class="sp-sa-card-dot" style="background:{{ col }}"></div>
+                {%- endfor -%}
+              </div>
+            {%- elsif has_color -%}
+              <div class="sp-sa-card-dots">
+                <div class="sp-sa-card-dot" style="background:var(--pink)"></div>
+                <div class="sp-sa-card-dot" style="background:var(--sage)"></div>
+                <div class="sp-sa-card-dot" style="background:var(--lav)"></div>
+                <div class="sp-sa-card-dot" style="background:var(--steel)"></div>
+              </div>
+            {%- else -%}
+              <div class="sp-sa-card-dots">
+                {%- for col in tone_cols -%}
+                  <div class="sp-sa-card-dot" style="background:{{ col }}"></div>
+                {%- endfor -%}
+              </div>
+            {%- endif -%}
+            <button class="sp-sa-card-atc sp-atc-btn"
+              data-variant-id="{{ p.first_available_variant.id }}"
+              type="button">ADD TO CART</button>
+          {%- else -%}
+            <div class="sp-sa-card-img-wrap">
+              <span class="sp-sa-card-empty-label">Select a product</span>
+            </div>
+            <div class="sp-sa-card-brand" style="color:var(--border)">SCULPS</div>
+            <div class="sp-sa-card-name" style="color:var(--border)">PRODUCT NAME</div>
+            <div class="sp-sa-card-price" style="color:var(--border)">$0.00</div>
+            <button class="sp-sa-card-atc" disabled style="opacity:.3">ADD TO CART</button>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
     {%- endfor -%}
   </div>
 </div>
@@ -132,31 +132,22 @@
 <!-- Trust Badges -->
 <div class="sp-sa-trust">
   <div class="sp-sa-trust-item">
-    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-    </svg>
+    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
     <div class="sp-sa-trust-label">{{ section.settings.trust_1_label | default: 'INVISIBLE DESIGN' }}</div>
     <div class="sp-sa-trust-sub">{{ section.settings.trust_1_sub | default: 'Seamless under any outfit.' }}</div>
   </div>
   <div class="sp-sa-trust-item">
-    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
+    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     <div class="sp-sa-trust-label">{{ section.settings.trust_2_label | default: 'SECURE & COMFORTABLE' }}</div>
     <div class="sp-sa-trust-sub">{{ section.settings.trust_2_sub | default: 'All-day hold, no slipping.' }}</div>
   </div>
   <div class="sp-sa-trust-item">
-    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-      <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-    </svg>
+    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
     <div class="sp-sa-trust-label">{{ section.settings.trust_3_label | default: 'REUSABLE' }}</div>
     <div class="sp-sa-trust-sub">{{ section.settings.trust_3_sub | default: 'Sustainable & durable.' }}</div>
   </div>
   <div class="sp-sa-trust-item">
-    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-    </svg>
+    <svg class="sp-sa-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
     <div class="sp-sa-trust-label">{{ section.settings.trust_4_label | default: 'MADE FOR EVERY BODY' }}</div>
     <div class="sp-sa-trust-sub">{{ section.settings.trust_4_sub | default: 'All skin tones. All shapes.' }}</div>
   </div>
@@ -178,6 +169,27 @@
     {"type": "text", "id": "trust_4_label", "label": "Badge 4 label",   "default": "MADE FOR EVERY BODY"},
     {"type": "text", "id": "trust_4_sub",   "label": "Badge 4 subtext", "default": "All skin tones. All shapes."}
   ],
-  "presets": [{"name": "SCULPS Shop All"}]
+  "blocks": [
+    {
+      "type": "product_card",
+      "name": "Product Card",
+      "settings": [
+        {"type": "product", "id": "product", "label": "Product"}
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "SCULPS Shop All",
+      "blocks": [
+        {"type": "product_card"},
+        {"type": "product_card"},
+        {"type": "product_card"},
+        {"type": "product_card"},
+        {"type": "product_card"},
+        {"type": "product_card"}
+      ]
+    }
+  ]
 }
 {% endschema %}
