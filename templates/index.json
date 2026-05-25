@@ -30,7 +30,16 @@
     },
     "sculps_tiktok_grid": {
       "type": "sculps-tiktok-grid",
-      "settings": {}
+      "settings": {},
+      "blocks": {
+        "tt1": {"type": "video_card", "settings": {"handle": "@jasmine.sculps", "likes": "♥ 847K"}},
+        "tt2": {"type": "video_card", "settings": {"handle": "@brianna.real", "likes": "♥ 523K"}},
+        "tt3": {"type": "video_card", "settings": {"handle": "@kayla.fits", "likes": "♥ 312K"}},
+        "tt4": {"type": "video_card", "settings": {"handle": "@destiny.w", "likes": "♥ 289K"}},
+        "tt5": {"type": "video_card", "settings": {"handle": "@maria.sculps", "likes": "♥ 198K"}},
+        "tt6": {"type": "video_card", "settings": {"handle": "@sculps.official", "likes": "♥ 156K"}}
+      },
+      "block_order": ["tt1", "tt2", "tt3", "tt4", "tt5", "tt6"]
     },
     "sculps_home_reviews": {
       "type": "sculps-home-reviews",

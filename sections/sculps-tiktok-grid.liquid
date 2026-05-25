@@ -1,57 +1,90 @@
+<style>
+.sp-tt-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sp-tt-card--has-video .sp-tt-play{display:none}
+</style>
+
 <section class="sp-tt-s">
   <div class="sp-tt-h">{{ section.settings.heading | default: 'Real Women. Real Results.' }}</div>
   <div class="sp-tt-sub">{{ section.settings.subheading | default: 'Submit your video · Get rewarded' }}</div>
-  <div class="sp-tt-row">
-    {%- for i in (1..5) -%}
-      {%- assign handle_key = 'card' | append: i | append: '_handle' -%}
-      {%- assign likes_key  = 'card' | append: i | append: '_likes' -%}
-      {%- assign url_key    = 'card' | append: i | append: '_url' -%}
-      {%- assign grad_key   = 'card' | append: i | append: '_gradient' -%}
-      {%- assign handle_val = section.settings[handle_key] -%}
-      {%- assign likes_val  = section.settings[likes_key] -%}
-      {%- assign url_val    = section.settings[url_key] -%}
-      {%- assign grad_defaults = '#3D2314,#7B4F3A|#7B4F3A,#C8956C|#7B9AB5,#C9B8E8|#9BAF8A,#C9B8E8|#F5B8C4,#E8C9A0' | split: '|' -%}
-      {%- assign grad = grad_defaults[forloop.index0] | split: ',' -%}
-      {%- if url_val != blank -%}<a href="{{ url_val }}" class="sp-tt-card" target="_blank" rel="noopener">{%- else -%}<div class="sp-tt-card">{%- endif -%}
-        <div class="sp-tt-inner" style="background:linear-gradient(170deg,#{{ grad[0] }},#{{ grad[1] }})"></div>
-        <div class="sp-tt-overlay"></div>
-        <div class="sp-tt-play">▶</div>
-        <div class="sp-tt-meta">
-          <div class="sp-tt-handle">{{ handle_val | default: '@sculps' }}</div>
-          <div class="sp-tt-likes">{{ likes_val }}</div>
+  <div class="sp-tt-row" data-sp-shuffle>
+    {%- assign grad_list = '#3D2314,#7B4F3A|#7B4F3A,#C8956C|#7B9AB5,#C9B8E8|#9BAF8A,#C9B8E8|#F5B8C4,#E8C9A0|#C8956C,#F5E6D8' | split: '|' -%}
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'video_card' -%}
+        {%- assign grad = grad_list[forloop.index0 | modulo: 6] | split: ',' -%}
+        <div class="sp-tt-card{% if block.settings.video != blank %} sp-tt-card--has-video{% endif %}" {{ block.shopify_attributes }}>
+          {%- if block.settings.video != blank -%}
+            <video
+              class="sp-tt-video"
+              autoplay muted loop playsinline
+              {%- if block.settings.poster != blank %} poster="{{ block.settings.poster | image_url: width: 400 }}"{% endif %}>
+              {%- for source in block.settings.video.sources -%}
+                <source src="{{ source.url }}" type="{{ source.mime_type }}">
+              {%- endfor -%}
+            </video>
+          {%- elsif block.settings.poster != blank -%}
+            <img src="{{ block.settings.poster | image_url: width: 400 }}" alt="{{ block.settings.handle | escape }}" class="sp-tt-video">
+          {%- else -%}
+            <div class="sp-tt-inner" style="background:linear-gradient(170deg,{{ grad[0] }},{{ grad[1] }})"></div>
+          {%- endif -%}
+          <div class="sp-tt-overlay"></div>
+          {%- if block.settings.video == blank -%}<div class="sp-tt-play">&#9654;</div>{%- endif -%}
+          <div class="sp-tt-meta">
+            <div class="sp-tt-handle">{{ block.settings.handle | default: '@sculps' }}</div>
+            {%- if block.settings.likes != blank -%}
+              <div class="sp-tt-likes">{{ block.settings.likes }}</div>
+            {%- endif -%}
+          </div>
         </div>
-      {%- if url_val != blank -%}</a>{%- else -%}</div>{%- endif -%}
+      {%- endif -%}
     {%- endfor -%}
   </div>
 </section>
+
+<script>
+(function(){
+  var rows = document.querySelectorAll('[data-sp-shuffle]');
+  for(var r=0;r<rows.length;r++){
+    var kids=[].slice.call(rows[r].children);
+    for(var i=kids.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      rows[r].appendChild(kids[j]);
+      kids.splice(j,1);
+    }
+  }
+})();
+</script>
 
 {% schema %}
 {
   "name": "TikTok Testimonials",
   "settings": [
     {"type": "text", "id": "heading", "label": "Heading", "default": "Real Women. Real Results."},
-    {"type": "text", "id": "subheading", "label": "Subheading", "default": "Submit your video · Get rewarded"},
-    {"type": "header", "content": "Card 1"},
-    {"type": "text", "id": "card1_handle", "label": "TikTok handle", "default": "@jasmine.sculps"},
-    {"type": "text", "id": "card1_likes", "label": "Likes / stat", "default": "♥ 847K"},
-    {"type": "url", "id": "card1_url", "label": "Link (optional)"},
-    {"type": "header", "content": "Card 2"},
-    {"type": "text", "id": "card2_handle", "label": "TikTok handle", "default": "@brianna.real"},
-    {"type": "text", "id": "card2_likes", "label": "Likes / stat", "default": "♥ 523K"},
-    {"type": "url", "id": "card2_url", "label": "Link (optional)"},
-    {"type": "header", "content": "Card 3"},
-    {"type": "text", "id": "card3_handle", "label": "TikTok handle", "default": "@kayla.fits"},
-    {"type": "text", "id": "card3_likes", "label": "Likes / stat", "default": "♥ 312K"},
-    {"type": "url", "id": "card3_url", "label": "Link (optional)"},
-    {"type": "header", "content": "Card 4"},
-    {"type": "text", "id": "card4_handle", "label": "TikTok handle", "default": "@destiny.w"},
-    {"type": "text", "id": "card4_likes", "label": "Likes / stat", "default": "♥ 289K"},
-    {"type": "url", "id": "card4_url", "label": "Link (optional)"},
-    {"type": "header", "content": "Card 5"},
-    {"type": "text", "id": "card5_handle", "label": "TikTok handle", "default": "@maria.sculps"},
-    {"type": "text", "id": "card5_likes", "label": "Likes / stat", "default": "♥ 198K"},
-    {"type": "url", "id": "card5_url", "label": "Link (optional)"}
+    {"type": "text", "id": "subheading", "label": "Subheading", "default": "Submit your video · Get rewarded"}
   ],
-  "presets": [{"name": "TikTok Testimonials"}]
+  "blocks": [
+    {
+      "type": "video_card",
+      "name": "Video Card",
+      "settings": [
+        {"type": "video", "id": "video", "label": "Video", "info": "Upload a short vertical (9:16) video"},
+        {"type": "image_picker", "id": "poster", "label": "Thumbnail / poster image", "info": "Shown before the video plays or as fallback"},
+        {"type": "text", "id": "handle", "label": "TikTok handle", "default": "@sculps"},
+        {"type": "text", "id": "likes", "label": "Stat (e.g. ♥ 847K)"}
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "TikTok Testimonials",
+      "blocks": [
+        {"type": "video_card", "settings": {"handle": "@jasmine.sculps", "likes": "♥ 847K"}},
+        {"type": "video_card", "settings": {"handle": "@brianna.real", "likes": "♥ 523K"}},
+        {"type": "video_card", "settings": {"handle": "@kayla.fits", "likes": "♥ 312K"}},
+        {"type": "video_card", "settings": {"handle": "@destiny.w", "likes": "♥ 289K"}},
+        {"type": "video_card", "settings": {"handle": "@maria.sculps", "likes": "♥ 198K"}},
+        {"type": "video_card", "settings": {"handle": "@sculps.official", "likes": "♥ 156K"}}
+      ]
+    }
+  ]
 }
 {% endschema %}
