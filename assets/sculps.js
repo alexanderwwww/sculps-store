@@ -579,6 +579,14 @@
   function updatePriceDisplay(cents) {
     var priceEl = qs('.sp-pdp-price') || qs('.sp-price');
     if (priceEl) priceEl.textContent = formatPrice(cents);
+
+    var satcPrice = qs('#sp-satc-price');
+    if (satcPrice) satcPrice.textContent = formatPrice(cents);
+
+    var mainAtc = qs('#sp-main-atc');
+    if (mainAtc && !mainAtc.disabled) {
+      mainAtc.textContent = 'ADD TO CART — ' + formatPrice(cents);
+    }
   }
 
   /* =========================================================
@@ -739,6 +747,130 @@
   }
 
   /* =========================================================
+     11b. PDP Gallery Dots
+  ========================================================= */
+
+  function initPdpDots() {
+    var dotsContainer = qs('#sp-pdp-dots');
+    var mainImg = qs('#sp-main-img');
+    if (!dotsContainer || !mainImg) return;
+
+    var dots = qsa('.sp-pdp-dot', dotsContainer);
+
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        dots.forEach(function (d) { d.classList.remove('active'); });
+        dot.classList.add('active');
+
+        var newSrc = dot.getAttribute('data-src');
+        if (newSrc) {
+          mainImg.style.opacity = '0';
+          setTimeout(function () {
+            mainImg.src = newSrc;
+            mainImg.style.opacity = '1';
+          }, 150);
+        }
+      });
+    });
+  }
+
+  /* =========================================================
+     11c. Lightbox
+  ========================================================= */
+
+  function initLightbox() {
+    var overlay = qs('#sp-lb-overlay');
+    if (!overlay) return;
+
+    var lbImg   = qs('#sp-lb-img');
+    var lbClose = qs('#sp-lb-close');
+    var lbPrev  = qs('#sp-lb-prev');
+    var lbNext  = qs('#sp-lb-next');
+    var sources = qsa('#sp-lb-sources span');
+    var currentIndex = 0;
+
+    function openLightbox(index) {
+      currentIndex = index;
+      var src = sources[currentIndex] ? sources[currentIndex].getAttribute('data-src') : '';
+      if (lbImg) lbImg.src = src;
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      if (lbImg) lbImg.src = '';
+    }
+
+    function showPrev() {
+      if (!sources.length) return;
+      currentIndex = (currentIndex - 1 + sources.length) % sources.length;
+      if (lbImg) lbImg.src = sources[currentIndex].getAttribute('data-src');
+    }
+
+    function showNext() {
+      if (!sources.length) return;
+      currentIndex = (currentIndex + 1) % sources.length;
+      if (lbImg) lbImg.src = sources[currentIndex].getAttribute('data-src');
+    }
+
+    var zoomBtn = qs('#sp-zoom-btn');
+    if (zoomBtn) {
+      zoomBtn.addEventListener('click', function () {
+        var activeDot = qs('.sp-pdp-dot.active');
+        var idx = activeDot ? parseInt(activeDot.getAttribute('data-index') || '0', 10) : 0;
+        openLightbox(idx);
+      });
+    }
+
+    var mainImg = qs('#sp-main-img');
+    if (mainImg) {
+      mainImg.style.cursor = 'zoom-in';
+      mainImg.addEventListener('click', function () {
+        var activeDot = qs('.sp-pdp-dot.active');
+        var idx = activeDot ? parseInt(activeDot.getAttribute('data-index') || '0', 10) : 0;
+        openLightbox(idx);
+      });
+    }
+
+    if (lbClose) lbClose.addEventListener('click', closeLightbox);
+    if (lbPrev)  lbPrev.addEventListener('click', showPrev);
+    if (lbNext)  lbNext.addEventListener('click', showNext);
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeLightbox();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (!overlay.classList.contains('open')) return;
+      if (e.key === 'Escape')     closeLightbox();
+      if (e.key === 'ArrowLeft')  showPrev();
+      if (e.key === 'ArrowRight') showNext();
+    });
+  }
+
+  /* =========================================================
+     8b. PDP Sticky ATC (no data-trigger needed)
+  ========================================================= */
+
+  function initPdpStickyAtc() {
+    var satc    = qs('#sp-satc');
+    var trigger = qs('#sp-atc-trigger');
+    if (!satc || !trigger || !window.IntersectionObserver) return;
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        satc.classList.toggle('visible', !entry.isIntersecting);
+      });
+    }, { threshold: 0 });
+
+    observer.observe(trigger);
+  }
+
+  /* =========================================================
      Init
   ========================================================= */
 
@@ -751,9 +883,12 @@
     initCountdownTimers();
     initBeforeAfterSliders();
     initStickyAtcBar();
+    initPdpStickyAtc();
     initSizeGuide();
     initFaqAccordion();
     initProductGallery();
+    initPdpDots();
+    initLightbox();
     initVariantSelection();
     initCollectionFilter();
     initLoadMore();
