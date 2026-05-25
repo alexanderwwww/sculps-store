@@ -5,20 +5,28 @@
         "settings": {
           "background": "#FFFFFF",
           "text": "#1A1410",
-          "button": "#1A1410",
-          "button_label": "#FFFFFF",
-          "outline_button": "#1A1410",
-          "shadow": "#1A1410"
+          "links": "#1A1410",
+          "icons": "#1A1410",
+          "primary_button": "#1A1410",
+          "on_primary_button": "#FFFFFF",
+          "primary_button_border": "#1A1410",
+          "secondary_button": "#FFFFFF",
+          "on_secondary_button": "#1A1410",
+          "secondary_button_border": "#1A1410"
         }
       },
       "scheme-2": {
         "settings": {
           "background": "#FAF8F5",
           "text": "#1A1410",
-          "button": "#1A1410",
-          "button_label": "#FFFFFF",
-          "outline_button": "#1A1410",
-          "shadow": "#1A1410"
+          "links": "#1A1410",
+          "icons": "#1A1410",
+          "primary_button": "#1A1410",
+          "on_primary_button": "#FFFFFF",
+          "primary_button_border": "#1A1410",
+          "secondary_button": "#FAF8F5",
+          "on_secondary_button": "#1A1410",
+          "secondary_button_border": "#1A1410"
         }
       }
     },

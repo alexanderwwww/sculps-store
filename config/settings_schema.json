@@ -39,46 +39,28 @@
         "type": "color_scheme_group",
         "id": "color_schemes",
         "definition": [
-          {
-            "type": "color",
-            "id": "background",
-            "label": "Background"
-          },
-          {
-            "type": "color",
-            "id": "text",
-            "label": "Text"
-          },
-          {
-            "type": "color",
-            "id": "button",
-            "label": "Button background"
-          },
-          {
-            "type": "color",
-            "id": "button_label",
-            "label": "Button label"
-          },
-          {
-            "type": "color",
-            "id": "outline_button",
-            "label": "Outline button"
-          },
-          {
-            "type": "color",
-            "id": "shadow",
-            "label": "Shadow"
-          }
+          { "type": "color", "id": "background", "label": "Background" },
+          { "type": "color", "id": "text", "label": "Text" },
+          { "type": "color", "id": "links", "label": "Links" },
+          { "type": "color", "id": "icons", "label": "Icons" },
+          { "type": "color", "id": "primary_button", "label": "Primary button" },
+          { "type": "color", "id": "on_primary_button", "label": "Primary button text" },
+          { "type": "color", "id": "primary_button_border", "label": "Primary button border" },
+          { "type": "color", "id": "secondary_button", "label": "Secondary button" },
+          { "type": "color", "id": "on_secondary_button", "label": "Secondary button text" },
+          { "type": "color", "id": "secondary_button_border", "label": "Secondary button border" }
         ],
         "role": {
           "background": "background",
           "text": "text",
-          "primary_button": "button",
-          "primary_button_label": "button_label",
-          "outline_button": "outline_button",
-          "outline_button_label": "text",
-          "secondary_button": "button",
-          "secondary_button_label": "button_label"
+          "links": "links",
+          "icons": "icons",
+          "primary_button": "primary_button",
+          "on_primary_button": "on_primary_button",
+          "primary_button_border": "primary_button_border",
+          "secondary_button": "secondary_button",
+          "on_secondary_button": "on_secondary_button",
+          "secondary_button_border": "secondary_button_border"
         }
       }
     ]
