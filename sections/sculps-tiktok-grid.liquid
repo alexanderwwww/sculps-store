@@ -10,7 +10,8 @@
     {%- assign grad_list = '#3D2314,#7B4F3A|#7B4F3A,#C8956C|#7B9AB5,#C9B8E8|#9BAF8A,#C9B8E8|#F5B8C4,#E8C9A0|#C8956C,#F5E6D8' | split: '|' -%}
     {%- for block in section.blocks -%}
       {%- if block.type == 'video_card' -%}
-        {%- assign grad = grad_list[forloop.index0 | modulo: 6] | split: ',' -%}
+        {%- assign gi = forloop.index0 | modulo: 6 -%}
+        {%- assign grad = grad_list[gi] | split: ',' -%}
         <div class="sp-tt-card{% if block.settings.video != blank %} sp-tt-card--has-video{% endif %}" {{ block.shopify_attributes }}>
           {%- if block.settings.video != blank -%}
             <video
