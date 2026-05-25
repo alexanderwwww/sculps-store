@@ -1,0 +1,474 @@
+<style>
+.sp-kp-header{text-align:center;padding:56px 24px 32px;background:var(--white)}
+.sp-kp-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,12vw,100px);letter-spacing:4px;line-height:1;margin-bottom:10px}
+.sp-kp-sub{font-size:14px;color:var(--grey);font-style:italic}
+
+.sp-kit-card{display:grid;grid-template-columns:1fr 1fr;min-height:360px;overflow:hidden;margin:0 0 16px;position:relative}
+.sp-kit-card-left{display:flex;flex-direction:column;justify-content:center;padding:40px 40px 40px 60px;position:relative;z-index:2}
+.sp-kit-card-right{position:relative;overflow:hidden}
+.sp-kit-card-right img{width:100%;height:100%;object-fit:cover;object-position:center}
+.sp-kit-badge{display:inline-block;background:var(--black);color:var(--white);font-size:9px;font-weight:900;letter-spacing:2px;padding:5px 12px;text-transform:uppercase;margin-bottom:16px;width:fit-content}
+.sp-kit-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,56px);letter-spacing:2px;line-height:1;margin-bottom:10px}
+.sp-kit-items{font-size:12px;color:#555;margin-bottom:16px;line-height:1.8}
+.sp-kit-prices{display:flex;align-items:baseline;gap:10px;margin-bottom:20px}
+.sp-kit-price{font-size:28px;font-weight:900}
+.sp-kit-compare{font-size:16px;color:var(--grey);text-decoration:line-through}
+.sp-kit-btn{display:inline-block;background:var(--black);color:var(--white);font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:14px 28px;text-decoration:none;transition:background .2s;width:fit-content}
+.sp-kit-btn:hover{background:#333}
+
+.sp-kit-both{display:block;background:#C9A96E;padding:24px 40px;text-decoration:none;text-align:center;margin:0 0 16px}
+.sp-kit-both-inner{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.sp-kit-both-label{font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--white)}
+.sp-kit-both-save{font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--white);letter-spacing:2px;line-height:1}
+.sp-kit-both-price{font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--white)}
+
+.sp-kit-shade{background:#FAF8F5;padding:64px 24px;text-align:center}
+.sp-kit-shade-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);letter-spacing:4px;margin-bottom:8px}
+.sp-kit-shade-sub{font-size:13px;color:var(--grey);font-style:italic;margin-bottom:32px}
+.sp-kit-shade-circles{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.sp-kit-shade-circle{width:64px;height:64px;border-radius:50%;display:block;border:2px solid rgba(0,0,0,.08);transition:transform .2s}
+.sp-kit-shade-circle:hover{transform:scale(1.1)}
+
+.sp-kit-how{padding:64px 60px;background:var(--white)}
+.sp-kit-how-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4vw,48px);letter-spacing:3px;text-align:center;margin-bottom:48px}
+.sp-kit-how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.sp-kit-how-num{font-family:'Bebas Neue',sans-serif;font-size:80px;color:rgba(0,0,0,.07);line-height:1;margin-bottom:12px}
+.sp-kit-how-title{font-size:14px;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.sp-kit-how-text{font-size:13px;color:var(--grey);line-height:1.7}
+
+.sp-kit-rev{background:var(--cream);padding:64px 60px}
+.sp-kit-rev-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4vw,48px);letter-spacing:3px;text-align:center;margin-bottom:40px}
+.sp-kit-rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.sp-kit-rev-card{background:var(--white);padding:28px;border-left:3px solid #C9A96E}
+.sp-kit-rev-stars{color:#C9A96E;font-size:16px;margin-bottom:12px;letter-spacing:2px}
+.sp-kit-rev-text{font-size:13px;line-height:1.7;font-style:italic;margin-bottom:16px;color:var(--black)}
+.sp-kit-rev-name{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey)}
+
+.sp-kit-cta{background:var(--black);padding:72px 60px;text-align:center}
+.sp-kit-cta-tag{font-size:9px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#C9A96E;margin-bottom:20px}
+.sp-kit-cta-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,64px);color:var(--white);letter-spacing:3px;line-height:1.1;margin-bottom:20px}
+.sp-kit-cta-body{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:32px;line-height:1.7;max-width:480px;margin-left:auto;margin-right:auto}
+.sp-kit-cta-btn{display:inline-block;border:2px solid var(--white);color:var(--white);font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;text-decoration:none;transition:all .2s}
+.sp-kit-cta-btn:hover{background:var(--white);color:var(--black)}
+
+@media(max-width:768px){
+  .sp-kit-card{grid-template-columns:1fr;min-height:auto}
+  .sp-kit-card-left{padding:32px 24px}
+  .sp-kit-card-right{height:240px}
+  .sp-kit-how{padding:40px 24px}
+  .sp-kit-how-grid{grid-template-columns:1fr;gap:32px}
+  .sp-kit-rev{padding:40px 24px}
+  .sp-kit-rev-grid{grid-template-columns:1fr;gap:16px}
+  .sp-kit-cta{padding:48px 24px}
+  .sp-kit-both{padding:20px 24px}
+  .sp-kit-both-inner{gap:12px}
+  .sp-kit-both-save{font-size:32px}
+}
+</style>
+
+{%- for block in section.blocks -%}
+  {%- case block.type -%}
+
+    {%- when 'page_header' -%}
+      <div class="sp-kp-header" {{ block.shopify_attributes }}>
+        <div class="sp-kp-title">{{ block.settings.heading | default: 'THE KITS' }}</div>
+        <div class="sp-kp-sub">{{ block.settings.subheading | default: 'Everything you need. All in one box.' }}</div>
+      </div>
+
+    {%- when 'kit_card' -%}
+      {%- assign bg_style = '' -%}
+      {%- if block.settings.background_image -%}
+        {%- assign bg_style = 'background-image:url(' | append: block.settings.background_image | image_url: width: 1600 | append: ');background-size:cover;background-position:center' -%}
+      {%- else -%}
+        {%- assign bg_style = 'background:linear-gradient(135deg,' | append: block.settings.gradient_start | default: '#F5E6D8' | append: ' 0%,' | append: block.settings.gradient_end | default: '#C8956C' | append: ' 100%)' -%}
+      {%- endif -%}
+      <div class="sp-kit-card" style="{{ bg_style }}" {{ block.shopify_attributes }}>
+        <div class="sp-kit-card-left">
+          {%- if block.settings.badge_text != blank -%}
+            <div class="sp-kit-badge">{{ block.settings.badge_text }}</div>
+          {%- endif -%}
+          <div class="sp-kit-name">{{ block.settings.kit_name | default: 'SCULPS KIT' }}</div>
+          {%- if block.settings.items_text != blank -%}
+            <div class="sp-kit-items">{{ block.settings.items_text }}</div>
+          {%- endif -%}
+          <div class="sp-kit-prices">
+            <span class="sp-kit-price">{{ block.settings.price | default: '$120' }}</span>
+            {%- if block.settings.compare_price != blank -%}
+              <span class="sp-kit-compare">{{ block.settings.compare_price }}</span>
+            {%- endif -%}
+          </div>
+          <a href="{{ block.settings.button_url | default: '#' }}" class="sp-kit-btn">{{ block.settings.button_label | default: 'SHOP KIT' }}</a>
+        </div>
+        <div class="sp-kit-card-right">
+          {%- if block.settings.card_image -%}
+            <img src="{{ block.settings.card_image | image_url: width: 800 }}" alt="{{ block.settings.kit_name | escape }}" loading="lazy">
+          {%- endif -%}
+        </div>
+      </div>
+
+    {%- when 'both_kits_banner' -%}
+      <a href="{{ block.settings.link | default: '#' }}" class="sp-kit-both" {{ block.shopify_attributes }}>
+        <div class="sp-kit-both-inner">
+          <span class="sp-kit-both-label">{{ block.settings.label_left | default: 'BUY BOTH KITS' }}</span>
+          <span class="sp-kit-both-save">{{ block.settings.label_center | default: 'SAVE 30%' }}</span>
+          <span class="sp-kit-both-price">{{ block.settings.label_right | default: 'ONLY $204' }}</span>
+        </div>
+      </a>
+
+    {%- when 'find_shade' -%}
+      {%- assign tone_cols = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
+      <div class="sp-kit-shade" {{ block.shopify_attributes }}>
+        <div class="sp-kit-shade-h">{{ block.settings.heading | default: 'FIND YOUR SHADE' }}</div>
+        <div class="sp-kit-shade-sub">{{ block.settings.subheading | default: 'Six tones. One will be yours.' }}</div>
+        <div class="sp-kit-shade-circles">
+          {%- for col in tone_cols -%}
+            <a href="{{ block.settings.shade_link | default: '/collections/intimates' }}" class="sp-kit-shade-circle" style="background:{{ col }}" aria-label="Shade {{ forloop.index }}"></a>
+          {%- endfor -%}
+        </div>
+      </div>
+
+    {%- when 'how_it_works' -%}
+      <div class="sp-kit-how" {{ block.shopify_attributes }}>
+        <div class="sp-kit-how-h">{{ block.settings.heading | default: 'HOW IT WORKS' }}</div>
+        <div class="sp-kit-how-grid">
+          {%- for i in (1..3) -%}
+            {%- assign nk = 'step_' | append: i | append: '_num' -%}
+            {%- assign tk = 'step_' | append: i | append: '_title' -%}
+            {%- assign dk = 'step_' | append: i | append: '_text' -%}
+            <div class="sp-kit-how-col">
+              <div class="sp-kit-how-num">{{ block.settings[nk] | default: '0' | append: i }}</div>
+              <div class="sp-kit-how-title">{{ block.settings[tk] }}</div>
+              <div class="sp-kit-how-text">{{ block.settings[dk] }}</div>
+            </div>
+          {%- endfor -%}
+        </div>
+      </div>
+
+    {%- when 'kit_reviews' -%}
+      <div class="sp-kit-rev" {{ block.shopify_attributes }}>
+        <div class="sp-kit-rev-h">{{ block.settings.heading | default: 'REAL REVIEWS FROM REAL WOMEN' }}</div>
+        <div class="sp-kit-rev-grid">
+          {%- for i in (1..3) -%}
+            {%- assign rt = 'review_' | append: i | append: '_text' -%}
+            {%- assign rn = 'review_' | append: i | append: '_name' -%}
+            {%- if block.settings[rt] != blank -%}
+            <div class="sp-kit-rev-card">
+              <div class="sp-kit-rev-stars">★★★★★</div>
+              <p class="sp-kit-rev-text">"{{ block.settings[rt] }}"</p>
+              <div class="sp-kit-rev-name">{{ block.settings[rn] }}</div>
+            </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      </div>
+
+    {%- when 'creator_cta' -%}
+      <div class="sp-kit-cta" {{ block.shopify_attributes }}>
+        {%- if block.settings.tag != blank -%}<div class="sp-kit-cta-tag">{{ block.settings.tag }}</div>{%- endif -%}
+        <div class="sp-kit-cta-h">{{ block.settings.heading | default: "We Don't Hire Models. We Work With Real Women." }}</div>
+        {%- if block.settings.body != blank -%}<div class="sp-kit-cta-body">{{ block.settings.body }}</div>{%- endif -%}
+        <a href="{{ block.settings.button_url | default: '/pages/creator-studio' }}" class="sp-kit-cta-btn">{{ block.settings.button_label | default: 'JOIN CREATOR STUDIO' }}</a>
+      </div>
+
+  {%- endcase -%}
+{%- endfor -%}
+
+{% schema %}
+{
+  "name": "SCULPS Kits Page",
+  "blocks": [
+    {
+      "type": "page_header",
+      "name": "Page Header",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "THE KITS"
+        },
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": "Subheading",
+          "default": "Everything you need. All in one box."
+        }
+      ]
+    },
+    {
+      "type": "kit_card",
+      "name": "Kit Card",
+      "settings": [
+        {
+          "type": "text",
+          "id": "badge_text",
+          "label": "Badge Text"
+        },
+        {
+          "type": "text",
+          "id": "kit_name",
+          "label": "Kit Name"
+        },
+        {
+          "type": "text",
+          "id": "items_text",
+          "label": "Items Text"
+        },
+        {
+          "type": "text",
+          "id": "price",
+          "label": "Price"
+        },
+        {
+          "type": "text",
+          "id": "compare_price",
+          "label": "Compare Price"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button Label"
+        },
+        {
+          "type": "url",
+          "id": "button_url",
+          "label": "Button URL"
+        },
+        {
+          "type": "image_picker",
+          "id": "card_image",
+          "label": "Card Image"
+        },
+        {
+          "type": "image_picker",
+          "id": "background_image",
+          "label": "Background Image"
+        },
+        {
+          "type": "color",
+          "id": "gradient_start",
+          "label": "Gradient Start",
+          "default": "#F5E6D8"
+        },
+        {
+          "type": "color",
+          "id": "gradient_end",
+          "label": "Gradient End",
+          "default": "#C8956C"
+        }
+      ]
+    },
+    {
+      "type": "both_kits_banner",
+      "name": "Both Kits Banner",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label_left",
+          "label": "Left Label",
+          "default": "BUY BOTH KITS"
+        },
+        {
+          "type": "text",
+          "id": "label_center",
+          "label": "Center Label",
+          "default": "SAVE 30%"
+        },
+        {
+          "type": "text",
+          "id": "label_right",
+          "label": "Right Label",
+          "default": "ONLY $204"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        }
+      ]
+    },
+    {
+      "type": "find_shade",
+      "name": "Find Your Shade",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        },
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": "Subheading"
+        },
+        {
+          "type": "url",
+          "id": "shade_link",
+          "label": "Shade Link",
+          "default": "/collections/intimates"
+        }
+      ]
+    },
+    {
+      "type": "how_it_works",
+      "name": "How It Works",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        },
+        {
+          "type": "text",
+          "id": "step_1_num",
+          "label": "Step 1 Number"
+        },
+        {
+          "type": "text",
+          "id": "step_1_title",
+          "label": "Step 1 Title",
+          "default": "Choose Your Kit"
+        },
+        {
+          "type": "textarea",
+          "id": "step_1_text",
+          "label": "Step 1 Text",
+          "default": "Pick the Confidence Kit for invisible essentials or the Girl Trip Kit for your next adventure."
+        },
+        {
+          "type": "text",
+          "id": "step_2_num",
+          "label": "Step 2 Number"
+        },
+        {
+          "type": "text",
+          "id": "step_2_title",
+          "label": "Step 2 Title",
+          "default": "Choose Your Shade or Color"
+        },
+        {
+          "type": "textarea",
+          "id": "step_2_text",
+          "label": "Step 2 Text",
+          "default": "Skin tone matched or color matched. Everything inside perfectly coordinates."
+        },
+        {
+          "type": "text",
+          "id": "step_3_num",
+          "label": "Step 3 Number"
+        },
+        {
+          "type": "text",
+          "id": "step_3_title",
+          "label": "Step 3 Title",
+          "default": "Everything Arrives Together"
+        },
+        {
+          "type": "textarea",
+          "id": "step_3_text",
+          "label": "Step 3 Text",
+          "default": "One box. One vibe. Zero effort."
+        }
+      ]
+    },
+    {
+      "type": "kit_reviews",
+      "name": "Kit Reviews",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        },
+        {
+          "type": "textarea",
+          "id": "review_1_text",
+          "label": "Review 1 Text",
+          "default": "The Confidence Kit changed how I get dressed. Everything matches perfectly. I will never go back."
+        },
+        {
+          "type": "text",
+          "id": "review_1_name",
+          "label": "Review 1 Name",
+          "default": "Jessica R."
+        },
+        {
+          "type": "textarea",
+          "id": "review_2_text",
+          "label": "Review 2 Text",
+          "default": "I packed the Girl Trip Kit for my bachelorette and every girl wanted one."
+        },
+        {
+          "type": "text",
+          "id": "review_2_name",
+          "label": "Review 2 Name",
+          "default": "Brianna K."
+        },
+        {
+          "type": "textarea",
+          "id": "review_3_text",
+          "label": "Review 3 Text",
+          "default": "Both kits together is the best money I have ever spent on myself. Worth every penny."
+        },
+        {
+          "type": "text",
+          "id": "review_3_name",
+          "label": "Review 3 Name",
+          "default": "Lauren M."
+        }
+      ]
+    },
+    {
+      "type": "creator_cta",
+      "name": "Creator CTA",
+      "settings": [
+        {
+          "type": "text",
+          "id": "tag",
+          "label": "Tag",
+          "default": "SCULPS CREATOR STUDIO"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "We Don't Hire Models. We Work With Real Women."
+        },
+        {
+          "type": "textarea",
+          "id": "body",
+          "label": "Body",
+          "default": "Film your SCULPS moment. Submit it. Get rewarded."
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button Label",
+          "default": "JOIN CREATOR STUDIO"
+        },
+        {
+          "type": "url",
+          "id": "button_url",
+          "label": "Button URL",
+          "default": "/pages/creator-studio"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "SCULPS Kits",
+      "blocks": [
+        {"type": "page_header"},
+        {"type": "kit_card"},
+        {"type": "kit_card"},
+        {"type": "both_kits_banner"},
+        {"type": "find_shade"},
+        {"type": "how_it_works"},
+        {"type": "kit_reviews"},
+        {"type": "creator_cta"}
+      ]
+    }
+  ]
+}
+{% endschema %}

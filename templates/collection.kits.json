@@ -1,0 +1,68 @@
+{
+  "sections": {
+    "main": {
+      "type": "sculps-kits",
+      "settings": {},
+      "blocks": {
+        "b-header": {"type": "page_header", "settings": {"heading": "THE KITS", "subheading": "Everything you need. All in one box."}},
+        "b-kit-1": {"type": "kit_card", "settings": {
+          "badge_text": "SAVE $35",
+          "kit_name": "SCULPS CONFIDENCE KIT",
+          "items_text": "Lift Inserts · Invisibra · Nipple Covers · Thong · Brief",
+          "price": "$120",
+          "compare_price": "$155",
+          "button_label": "SHOP CONFIDENCE KIT",
+          "button_url": "/products/sculps-confidence-kit",
+          "gradient_start": "#F5E6D8",
+          "gradient_end": "#C8956C"
+        }},
+        "b-kit-2": {"type": "kit_card", "settings": {
+          "badge_text": "SAVE $31",
+          "kit_name": "SCULPS GIRL TRIP KIT",
+          "items_text": "Summer Set · Brief · Scrunchie · Socks · Terry Pouch",
+          "price": "$120",
+          "compare_price": "$151",
+          "button_label": "SHOP GIRL TRIP KIT",
+          "button_url": "/products/sculps-girl-trip-kit",
+          "gradient_start": "#C9B8E8",
+          "gradient_end": "#7B9AB5"
+        }},
+        "b-both": {"type": "both_kits_banner", "settings": {
+          "label_left": "BUY BOTH KITS",
+          "label_center": "SAVE 30%",
+          "label_right": "ONLY $204",
+          "link": "/products/both-kits-bundle-save-30"
+        }},
+        "b-shade": {"type": "find_shade", "settings": {
+          "heading": "FIND YOUR SHADE",
+          "subheading": "Six tones. One will be yours.",
+          "shade_link": "/collections/all"
+        }},
+        "b-how": {"type": "how_it_works", "settings": {
+          "heading": "HOW IT WORKS",
+          "step_1_num": "01", "step_1_title": "Choose Your Kit", "step_1_text": "Pick the Confidence Kit for invisible essentials or the Girl Trip Kit for your next adventure.",
+          "step_2_num": "02", "step_2_title": "Choose Your Shade or Color", "step_2_text": "Skin tone matched or color matched. Everything inside perfectly coordinates.",
+          "step_3_num": "03", "step_3_title": "Everything Arrives Together", "step_3_text": "One box. One vibe. Zero effort."
+        }},
+        "b-reviews": {"type": "kit_reviews", "settings": {
+          "heading": "REAL REVIEWS FROM REAL WOMEN",
+          "review_1_text": "The Confidence Kit changed how I get dressed. Everything matches perfectly. I will never go back.",
+          "review_1_name": "JESSICA R.",
+          "review_2_text": "I packed the Girl Trip Kit for my bachelorette and every girl wanted one.",
+          "review_2_name": "BRIANNA K.",
+          "review_3_text": "Both kits together is the best money I have ever spent on myself. Worth every penny.",
+          "review_3_name": "LAUREN M."
+        }},
+        "b-cta": {"type": "creator_cta", "settings": {
+          "tag": "SCULPS CREATOR STUDIO",
+          "heading": "We Don't Hire Models. We Work With Real Women.",
+          "body": "Film your SCULPS moment. Submit it. Get rewarded.",
+          "button_label": "JOIN CREATOR STUDIO",
+          "button_url": "/pages/creator-studio"
+        }}
+      },
+      "block_order": ["b-header","b-kit-1","b-kit-2","b-both","b-shade","b-how","b-reviews","b-cta"]
+    }
+  },
+  "order": ["main"]
+}
