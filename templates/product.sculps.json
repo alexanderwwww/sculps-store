@@ -28,7 +28,7 @@
             "trust_4_label": "EVERY BODY",        "trust_4_sub": "All tones. All shapes."
           }
         },
-        "block-fbt":      {"type": "frequently_bought_together", "settings": {}},
+        "block-fbt":      {"type": "fbt", "settings": {}},
         "block-included": {"type": "whats_included",             "settings": {}},
         "block-tiktok":   {"type": "tiktok_testimonials",        "settings": {}},
         "block-reviews":  {

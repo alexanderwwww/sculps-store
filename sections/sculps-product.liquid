@@ -271,7 +271,7 @@
 {%- for block in section.blocks -%}
   {%- case block.type -%}
 
-    {%- when 'frequently_bought_together' -%}
+    {%- when 'fbt' -%}
     {%- if block.settings.fbt_1_title != blank or block.settings.fbt_2_title != blank -%}
     <section class="sp-pdp-fbt" {{ block.shopify_attributes }}>
       <div class="sp-pdp-fbt-h">FREQUENTLY BOUGHT TOGETHER</div>
@@ -499,8 +499,8 @@
       ]
     },
     {
-      "type": "frequently_bought_together",
-      "name": "Frequently Bought Together",
+      "type": "fbt",
+      "name": "Bought Together",
       "limit": 1,
       "settings": [
         {"type": "image_picker", "id": "fbt_1_image", "label": "Product 1 image"},
@@ -584,7 +584,7 @@
         {"type": "size_selector"},
         {"type": "add_to_cart"},
         {"type": "trust_badges"},
-        {"type": "frequently_bought_together"},
+        {"type": "fbt"},
         {"type": "whats_included"},
         {"type": "tiktok_testimonials"},
         {"type": "reviews"},
