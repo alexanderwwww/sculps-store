@@ -1,12 +1,27 @@
 {
   "current": {
-    "colors_solid_button_labels": "#FFFFFF",
-    "colors_accent_1": "#1A1410",
-    "colors_accent_2": "#C9A96E",
-    "colors_text": "#1A1410",
-    "colors_outline_button_labels": "#1A1410",
-    "colors_background_1": "#FFFFFF",
-    "colors_background_2": "#FAF8F5",
+    "color_schemes": {
+      "scheme-1": {
+        "settings": {
+          "background": "#FFFFFF",
+          "text": "#1A1410",
+          "button": "#1A1410",
+          "button_label": "#FFFFFF",
+          "outline_button": "#1A1410",
+          "shadow": "#1A1410"
+        }
+      },
+      "scheme-2": {
+        "settings": {
+          "background": "#FAF8F5",
+          "text": "#1A1410",
+          "button": "#1A1410",
+          "button_label": "#FFFFFF",
+          "outline_button": "#1A1410",
+          "shadow": "#1A1410"
+        }
+      }
+    },
     "logo_height": 36
   },
   "presets": {}

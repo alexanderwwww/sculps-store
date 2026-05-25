@@ -23,12 +23,63 @@
         "max": 80,
         "step": 2,
         "unit": "px",
-        "default": 28
+        "default": 36
       },
       {
         "type": "image_picker",
         "id": "favicon",
         "label": "Favicon"
+      }
+    ]
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      {
+        "type": "color_scheme_group",
+        "id": "color_schemes",
+        "definition": [
+          {
+            "type": "color",
+            "id": "background",
+            "label": "Background"
+          },
+          {
+            "type": "color",
+            "id": "text",
+            "label": "Text"
+          },
+          {
+            "type": "color",
+            "id": "button",
+            "label": "Button background"
+          },
+          {
+            "type": "color",
+            "id": "button_label",
+            "label": "Button label"
+          },
+          {
+            "type": "color",
+            "id": "outline_button",
+            "label": "Outline button"
+          },
+          {
+            "type": "color",
+            "id": "shadow",
+            "label": "Shadow"
+          }
+        ],
+        "role": {
+          "background": "background",
+          "text": "text",
+          "primary_button": "button",
+          "primary_button_label": "button_label",
+          "outline_button": "outline_button",
+          "outline_button_label": "text",
+          "secondary_button": "button",
+          "secondary_button_label": "button_label"
+        }
       }
     ]
   },
