@@ -6,6 +6,7 @@
       "blocks": {
         "block-gallery":   {"type": "image_gallery",      "settings": {}},
         "block-header":    {"type": "product_header",     "settings": {"rating_count": 847}},
+        "block-bullets":   {"type": "bullet_points",      "settings": {}},
         "block-skintone":  {"type": "skin_tone_selector", "settings": {}},
         "block-color":     {"type": "color_selector",     "settings": {}},
         "block-size":      {"type": "size_selector",      "settings": {}},
@@ -39,6 +40,7 @@
       "block_order": [
         "block-gallery",
         "block-header",
+        "block-bullets",
         "block-skintone",
         "block-color",
         "block-size",

@@ -5,23 +5,24 @@
     <div class="sp-sg-h">SIZE GUIDE</div>
     <div class="sp-sg-section-h">Chest — Lift Inserts, Invisibra</div>
     <table class="sp-sg-table">
-      <thead><tr><th>Size</th><th>Bust</th></tr></thead>
+      <thead><tr><th>Size</th><th>Cup / Bust</th></tr></thead>
       <tbody>
-        <tr><td>A/B Cup</td><td>30–34"</td></tr>
-        <tr><td>C/D Cup</td><td>34–36"</td></tr>
-        <tr><td>DD/E Cup</td><td>36–38"</td></tr>
-        <tr><td>F+ Cup</td><td>38+"</td></tr>
+        <tr><td>1</td><td>A/B Cup — 30–34"</td></tr>
+        <tr><td>2</td><td>C/D Cup — 34–36"</td></tr>
+        <tr><td>3</td><td>DD/E Cup — 36–38"</td></tr>
+        <tr><td>4</td><td>F Cup — 38–40"</td></tr>
+        <tr><td>5</td><td>G+ Cup — 40+"</td></tr>
       </tbody>
     </table>
     <div class="sp-sg-section-h" style="margin-top:20px">Bottoms — Thong, Brief, Summer Set</div>
     <table class="sp-sg-table">
       <thead><tr><th>Size</th><th>Waist</th><th>Hips</th></tr></thead>
       <tbody>
-        <tr><td>XS</td><td>24–26"</td><td>34–36"</td></tr>
-        <tr><td>S</td><td>26–28"</td><td>36–38"</td></tr>
-        <tr><td>M</td><td>28–30"</td><td>38–40"</td></tr>
-        <tr><td>L</td><td>30–34"</td><td>40–44"</td></tr>
-        <tr><td>XL</td><td>34–40"</td><td>44–50"</td></tr>
+        <tr><td>1 (XS)</td><td>24–26"</td><td>34–36"</td></tr>
+        <tr><td>2 (S)</td><td>26–28"</td><td>36–38"</td></tr>
+        <tr><td>3 (M)</td><td>28–30"</td><td>38–40"</td></tr>
+        <tr><td>4 (L)</td><td>30–34"</td><td>40–44"</td></tr>
+        <tr><td>5 (XL)</td><td>34–40"</td><td>44–50"</td></tr>
       </tbody>
     </table>
     <p style="font-size:11px;color:var(--grey);font-style:italic;margin-top:14px">Between sizes? Size up.</p>
@@ -32,7 +33,7 @@
 <div class="sp-lb-overlay" id="sp-lb-overlay" aria-hidden="true">
   <button class="sp-lb-close" id="sp-lb-close" aria-label="Close">&#x2715;</button>
   <button class="sp-lb-nav sp-lb-prev" id="sp-lb-prev" aria-label="Previous">&#8249;</button>
-  <img class="sp-lb-img" id="sp-lb-img" src="" alt="{{ product.title | escape }}">
+  <img class="sp-lb-img" id="sp-lb-img" src="" alt="">
   <button class="sp-lb-nav sp-lb-next" id="sp-lb-next" aria-label="Next">&#8250;</button>
 </div>
 
@@ -47,7 +48,10 @@
       <div class="sp-satc-price" id="sp-satc-price">{{ product.selected_or_first_available_variant.price | money }}</div>
     </div>
   </div>
-  <button class="sp-satc-btn sp-pdp-atc-trigger sp-atc-btn" type="button">ADD TO CART</button>
+  <button
+    class="sp-satc-btn sp-pdp-atc-trigger sp-atc-btn"
+    data-variant-id="{{ product.selected_or_first_available_variant.id }}"
+    type="button">ADD TO CART</button>
 </div>
 
 <!-- ========== VARIANT DATA ========== -->
@@ -56,22 +60,19 @@ window.sculpsProduct = {
   variants: {{ product.variants | json }},
   selectedOptions: {}
 };
-// Pre-select first available option values
 {%- for option in product.options_with_values -%}
   window.sculpsProduct.selectedOptions[{{ option.position }}] = {{ option.values | first | json }};
 {%- endfor -%}
 </script>
 
-<!-- ========== PRODUCT PAGE ========== -->
 {%- assign v0 = product.selected_or_first_available_variant -%}
 {%- assign tone_colors = '#F5E6D8,#E8C9A0,#C8956C,#A0714F,#7B4F3A,#3D2314' | split: ',' -%}
 {%- assign tone_labels = 'PORCELAIN,LIGHT,MEDIUM,TAN,DEEP,RICH' | split: ',' -%}
 {%- assign color_swatches = '#F5B8C4,#9BAF8A,#C9B8E8,#7B9AB5' | split: ',' -%}
 
-{%- comment -%}Find option positions{%- endcomment -%}
-{%- assign tone_option = null -%}
-{%- assign size_option = null -%}
-{%- assign color_option = null -%}
+{%- assign tone_option  = nil -%}
+{%- assign size_option  = nil -%}
+{%- assign color_option = nil -%}
 {%- for opt in product.options_with_values -%}
   {%- if opt.name == 'Skin Tone' or opt.name == 'Shade' or opt.name == 'Tone' -%}
     {%- assign tone_option = opt -%}
@@ -82,9 +83,10 @@ window.sculpsProduct = {
   {%- endif -%}
 {%- endfor -%}
 
+<!-- ========== MAIN PRODUCT LAYOUT ========== -->
 <div class="sp-pdp-page">
 
-  <!-- LEFT: image gallery -->
+  <!-- LEFT: Gallery -->
   <div class="sp-pdp-col-left">
     {%- for block in section.blocks -%}
       {%- if block.type == 'image_gallery' -%}
@@ -92,14 +94,17 @@ window.sculpsProduct = {
         <div class="sp-pdp-main-wrap">
           {%- if v0.compare_at_price > v0.price -%}
             {%- assign save_amt = v0.compare_at_price | minus: v0.price -%}
-            <div class="sp-pdp-save-badge" id="sp-save-badge">SAVE {{ save_amt | money_without_trailing_zeros }}</div>
+            <div class="sp-pdp-save-circle" id="sp-save-badge">
+              <span class="sp-pdp-save-top">SAVE</span>
+              <span class="sp-pdp-save-amt" id="sp-save-amt">{{ save_amt | money_without_trailing_zeros }}</span>
+            </div>
           {%- endif -%}
           {%- if product.featured_image -%}
             <img class="sp-pdp-main-img" id="sp-main-img"
-              src="{{ product.featured_image | image_url: width: 900 }}"
+              src="{{ product.featured_image | image_url: width: 1000 }}"
               alt="{{ product.title | escape }}" loading="eager">
           {%- else -%}
-            <div style="width:100%;height:100%;background:var(--cream)"></div>
+            <div class="sp-pdp-img-empty"></div>
           {%- endif -%}
           <button class="sp-pdp-zoom-btn" id="sp-zoom-btn" aria-label="Zoom">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -109,17 +114,25 @@ window.sculpsProduct = {
           </button>
         </div>
         {%- if product.images.size > 1 -%}
-          <div class="sp-pdp-dots" id="sp-pdp-dots">
+          <div class="sp-pdp-thumbs" id="sp-pdp-thumbs">
             {%- for img in product.images limit: 8 -%}
-              <button class="sp-pdp-dot{%- if forloop.first %} active{%- endif -%}"
-                data-src="{{ img | image_url: width: 900 }}"
+              <button class="sp-pdp-thumb{%- if forloop.first %} active{%- endif -%}"
+                data-src="{{ img | image_url: width: 1000 }}"
+                style="background-image:url('{{ img | image_url: width: 120 }}')"
+                aria-label="Image {{ forloop.index }}"></button>
+            {%- endfor -%}
+          </div>
+          <div class="sp-pdp-dots-mob" id="sp-pdp-dots">
+            {%- for img in product.images limit: 8 -%}
+              <button class="sp-pdp-dot-mob{%- if forloop.first %} active{%- endif -%}"
+                data-src="{{ img | image_url: width: 1000 }}"
                 aria-label="Image {{ forloop.index }}"></button>
             {%- endfor -%}
           </div>
         {%- endif -%}
         <div id="sp-lb-sources" style="display:none">
           {%- for img in product.images limit: 8 -%}
-            <span data-src="{{ img | image_url: width: 1600 }}"></span>
+            <span data-src="{{ img | image_url: width: 1800 }}"></span>
           {%- endfor -%}
         </div>
       </div>
@@ -127,7 +140,7 @@ window.sculpsProduct = {
     {%- endfor -%}
   </div>
 
-  <!-- RIGHT: product info blocks -->
+  <!-- RIGHT: Info -->
   <div class="sp-pdp-col-right" id="sp-atc-trigger">
     <input type="hidden" id="sculps-selected-variant" value="{{ v0.id }}">
 
@@ -137,7 +150,7 @@ window.sculpsProduct = {
         {%- when 'product_header' -%}
         <div class="sp-pdp-header-block" {{ block.shopify_attributes }}>
           <div class="sp-pdp-brand">SCULPS</div>
-          <h1 class="sp-pdp-title">{{ product.title | upcase }}</h1>
+          <h1 class="sp-pdp-title">{{ product.title }}</h1>
           {%- if block.settings.subtitle != blank -%}
             <div class="sp-pdp-subtitle">{{ block.settings.subtitle }}</div>
           {%- endif -%}
@@ -146,16 +159,39 @@ window.sculpsProduct = {
             {%- if v0.compare_at_price > v0.price -%}
               <span class="sp-pdp-compare" id="sp-compare">{{ v0.compare_at_price | money }}</span>
               {%- assign save_label = v0.compare_at_price | minus: v0.price | money_without_trailing_zeros -%}
-              <span class="sp-pdp-save-tag" id="sp-save-tag">SAVE {{ save_label }}</span>
+              <span class="sp-pdp-save-pill" id="sp-save-tag">SAVE {{ save_label }}</span>
             {%- endif -%}
           </div>
           {%- if block.settings.tagline != blank -%}
             <div class="sp-pdp-tagline">{{ block.settings.tagline }}</div>
           {%- endif -%}
+          {%- if block.settings.show_stars -%}
           <div class="sp-pdp-stars">
-            ★★★★★ <span class="sp-pdp-stars-count">({{ block.settings.rating_count | default: 847 }} reviews)</span>
+            ★★★★★
+            <span class="sp-pdp-stars-count">({{ block.settings.rating_count | default: 847 }} reviews)</span>
           </div>
+          {%- endif -%}
         </div>
+
+        {%- when 'bullet_points' -%}
+        {%- assign has_bullets = false -%}
+        {%- for i in (1..6) -%}
+          {%- assign bk = 'bullet_' | append: i -%}
+          {%- if block.settings[bk] != blank -%}{%- assign has_bullets = true -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if has_bullets -%}
+        <div class="sp-pdp-bullets" {{ block.shopify_attributes }}>
+          {%- for i in (1..6) -%}
+            {%- assign bk = 'bullet_' | append: i -%}
+            {%- if block.settings[bk] != blank -%}
+              <div class="sp-pdp-bullet">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ block.settings[bk] }}
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+        {%- endif -%}
 
         {%- when 'bundle_items' -%}
         {%- assign any_bundle = false -%}
@@ -178,6 +214,8 @@ window.sculpsProduct = {
                 <div class="sp-pdp-bundle-img">
                   {%- if bp.featured_image -%}
                     <img src="{{ bp.featured_image | image_url: width: 300 }}" alt="{{ bp.title | escape }}" loading="lazy">
+                  {%- else -%}
+                    <div style="width:100%;height:100%;background:var(--cream)"></div>
                   {%- endif -%}
                 </div>
               </div>
@@ -194,16 +232,14 @@ window.sculpsProduct = {
           <div class="sp-tone-grid">
             {%- for val in tone_option.values -%}
               {%- assign tidx = forloop.index0 -%}
-              {%- assign label_idx = val | minus: 1 -%}
-              {%- if label_idx < 0 or label_idx > 5 -%}{%- assign label_idx = tidx -%}{%- endif -%}
               <div class="sp-tone-item">
                 <button class="sp-tone-circle{%- if forloop.first %} active{%- endif -%}"
                   style="background:{{ tone_colors[tidx] }}"
                   data-option="{{ tone_option.position }}"
                   data-value="{{ val }}"
                   type="button"
-                  aria-label="{{ tone_labels[label_idx] }}"></button>
-                <span class="sp-tone-label">{{ tone_labels[label_idx] }}</span>
+                  aria-label="{{ val }}"></button>
+                <span class="sp-tone-label">{{ tone_labels[tidx] }}</span>
               </div>
             {%- endfor -%}
           </div>
@@ -222,6 +258,7 @@ window.sculpsProduct = {
                 data-option="{{ color_option.position }}"
                 data-value="{{ val }}"
                 type="button"
+                title="{{ val }}"
                 aria-label="{{ val }}"></button>
             {%- endfor -%}
           </div>
@@ -233,14 +270,14 @@ window.sculpsProduct = {
         <div class="sp-pdp-variant-group" {{ block.shopify_attributes }}>
           <div class="sp-pdp-variant-label">
             CHOOSE YOUR SIZE
-            <button class="sp-pdp-size-guide" id="sp-size-guide-link" type="button">Size Guide</button>
+            <button class="sp-pdp-size-guide-btn" id="sp-size-guide-link" type="button">Size Guide</button>
           </div>
           <div class="sp-size-btns">
             {%- for val in size_option.values -%}
               <button class="sp-size-btn{%- if forloop.first %} active{%- endif -%}"
                 data-option="{{ size_option.position }}"
                 data-value="{{ val }}"
-                type="button">{{ val | upcase }}</button>
+                type="button">{{ val }}</button>
             {%- endfor -%}
           </div>
         </div>
@@ -248,14 +285,19 @@ window.sculpsProduct = {
 
         {%- when 'add_to_cart' -%}
         <div class="sp-pdp-atc-wrap" {{ block.shopify_attributes }}>
-          <button class="sp-pdp-atc-btn sp-pdp-atc-trigger sp-atc-btn" id="sp-main-atc" type="button">
+          <button
+            class="sp-pdp-atc-btn sp-pdp-atc-trigger sp-atc-btn"
+            id="sp-main-atc"
+            data-variant-id="{{ v0.id }}"
+            type="button"
+            {%- unless v0.available %} disabled{%- endunless -%}>
             {%- if v0.available -%}
-              ADD TO CART&nbsp;&nbsp;·&nbsp;&nbsp;{{ v0.price | money_without_trailing_zeros }}
+              {{ block.settings.btn_text | default: 'ADD TO CART' }}&nbsp;&nbsp;&middot;&nbsp;&nbsp;{{ v0.price | money }}
             {%- else -%}
               SOLD OUT
             {%- endif -%}
           </button>
-          <p class="sp-pdp-ship-note">Free shipping over $75 &nbsp;·&nbsp; 30-day returns</p>
+          <p class="sp-pdp-ship-note">{{ block.settings.shipping_note | default: 'Free shipping over $75 &nbsp;&middot;&nbsp; 30-day returns' }}</p>
         </div>
 
         {%- when 'whats_included' -%}
@@ -265,29 +307,19 @@ window.sculpsProduct = {
           {%- if block.settings[ik] != blank -%}{%- assign has_items = true -%}{%- endif -%}
         {%- endfor -%}
         {%- if has_items -%}
-        <div class="sp-pdp-included-block" {{ block.shopify_attributes }}>
+        <div class="sp-pdp-included" {{ block.shopify_attributes }}>
           <div class="sp-pdp-included-h">WHAT'S INCLUDED</div>
           {%- for i in (1..8) -%}
             {%- assign ik = 'include_' | append: i -%}
             {%- if block.settings[ik] != blank -%}
               <div class="sp-pdp-included-item">
-                <span class="sp-pdp-included-check">✓</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>{{ block.settings[ik] }}</span>
               </div>
             {%- endif -%}
           {%- endfor -%}
         </div>
         {%- endif -%}
-
-        {%- when 'bullet_points' -%}
-        <div class="sp-pdp-bullets" {{ block.shopify_attributes }}>
-          {%- for i in (1..4) -%}
-            {%- assign bk = 'bullet_' | append: i -%}
-            {%- if block.settings[bk] != blank -%}
-              <div class="sp-pdp-bullet">✓ {{ block.settings[bk] }}</div>
-            {%- endif -%}
-          {%- endfor -%}
-        </div>
 
       {%- endcase -%}
     {%- endfor -%}
@@ -299,16 +331,15 @@ window.sculpsProduct = {
   {%- case block.type -%}
 
     {%- when 'trust_badges' -%}
-    <div class="sp-pdp-trust-row" {{ block.shopify_attributes }}>
+    <div class="sp-pdp-trust" {{ block.shopify_attributes }}>
       {%- for i in (1..4) -%}
         {%- assign lk = 'trust_' | append: i | append: '_label' -%}
         {%- assign sk = 'trust_' | append: i | append: '_sub' -%}
-        {%- assign ik = 'trust_' | append: i | append: '_icon' -%}
         <div class="sp-pdp-trust-item">
           {%- case i -%}
-            {%- when 1 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            {%- when 1 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             {%- when 2 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            {%- when 3 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            {%- when 3 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             {%- when 4 -%}<svg class="sp-pdp-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
           {%- endcase -%}
           <div class="sp-pdp-trust-lbl">{{ block.settings[lk] }}</div>
@@ -318,27 +349,31 @@ window.sculpsProduct = {
     </div>
 
     {%- when 'fbt' -%}
-    {%- if block.settings.fbt_1_title != blank or block.settings.fbt_2_title != blank -%}
+    {%- if block.settings.fbt_1 != blank or block.settings.fbt_2 != blank -%}
     <section class="sp-pdp-fbt" {{ block.shopify_attributes }}>
       <div class="sp-pdp-fbt-h">FREQUENTLY BOUGHT TOGETHER</div>
       <div class="sp-pdp-fbt-grid">
         {%- for i in (1..2) -%}
-          {%- assign ik = 'fbt_' | append: i | append: '_image' -%}
-          {%- assign tk = 'fbt_' | append: i | append: '_title' -%}
-          {%- assign pk = 'fbt_' | append: i | append: '_price' -%}
-          {%- assign uk = 'fbt_' | append: i | append: '_url' -%}
-          {%- if block.settings[tk] != blank -%}
+          {%- assign fpk = 'fbt_' | append: i -%}
+          {%- assign fp  = block.settings[fpk] -%}
+          {%- if fp != blank -%}
           <div class="sp-pdp-fbt-card">
-            <a href="{{ block.settings[uk] | default: '#' }}" class="sp-pdp-fbt-img">
-              {%- if block.settings[ik] -%}
-                <img src="{{ block.settings[ik] | image_url: width: 500 }}" alt="{{ block.settings[tk] | escape }}" loading="lazy">
+            <a href="{{ fp.url }}" class="sp-pdp-fbt-img-wrap">
+              {%- if fp.featured_image -%}
+                <img src="{{ fp.featured_image | image_url: width: 600 }}" alt="{{ fp.title | escape }}" loading="lazy">
               {%- else -%}
                 <div style="width:100%;height:100%;background:var(--cream)"></div>
               {%- endif -%}
             </a>
-            <div class="sp-pdp-fbt-name">{{ block.settings[tk] }}</div>
-            <div class="sp-pdp-fbt-price">{{ block.settings[pk] }}</div>
-            <a href="{{ block.settings[uk] | default: '#' }}" class="sp-pdp-fbt-btn">ADD TO CART</a>
+            <div class="sp-pdp-fbt-name">{{ fp.title | upcase }}</div>
+            <div class="sp-pdp-fbt-price">{{ fp.price | money }}</div>
+            {%- if fp.first_available_variant != blank -%}
+              <button class="sp-pdp-fbt-btn sp-atc-btn"
+                data-variant-id="{{ fp.first_available_variant.id }}"
+                type="button">ADD TO CART</button>
+            {%- else -%}
+              <button class="sp-pdp-fbt-btn" disabled>SOLD OUT</button>
+            {%- endif -%}
           </div>
           {%- endif -%}
         {%- endfor -%}
@@ -346,44 +381,17 @@ window.sculpsProduct = {
     </section>
     {%- endif -%}
 
-    {%- when 'tiktok_testimonials' -%}
-    <section class="sp-tt-s" {{ block.shopify_attributes }}>
-      <div class="sp-tt-h">REAL WOMEN. REAL RESULTS.</div>
-      <div class="sp-tt-sub">Submit your video · Get rewarded</div>
-      <div class="sp-tt-row">
-        {%- assign tt_bg = '#3D2314,#7B4F3A,#7B9AB5' | split: ',' -%}
-        {%- for i in (1..3) -%}
-          {%- assign uk = 'tiktok_' | append: i | append: '_url' -%}
-          {%- assign hk = 'tiktok_' | append: i | append: '_handle' -%}
-          {%- assign lk = 'tiktok_' | append: i | append: '_likes' -%}
-          {%- assign gi = forloop.index0 -%}
-          <div class="sp-tt-card">
-            {%- if block.settings[uk] != blank -%}
-              <iframe class="sp-tt-inner" src="{{ block.settings[uk] }}" frameborder="0" allowfullscreen loading="lazy"></iframe>
-            {%- else -%}
-              <div class="sp-tt-inner" style="background:{{ tt_bg[gi] }}"></div>
-            {%- endif -%}
-            <div class="sp-tt-overlay"></div>
-            <div class="sp-tt-meta">
-              <div class="sp-tt-handle">{{ block.settings[hk] | default: '@sculps.official' }}</div>
-              <div class="sp-tt-likes">♥ {{ block.settings[lk] | default: '100K' }}</div>
-            </div>
-          </div>
-        {%- endfor -%}
-      </div>
-    </section>
-
     {%- when 'reviews' -%}
     {%- assign has_rev = false -%}
-    {%- for i in (1..4) -%}
+    {%- for i in (1..6) -%}
       {%- assign rk = 'review_' | append: i | append: '_text' -%}
       {%- if block.settings[rk] != blank -%}{%- assign has_rev = true -%}{%- endif -%}
     {%- endfor -%}
     {%- if has_rev -%}
     <section class="sp-rev-s" {{ block.shopify_attributes }}>
-      <div class="sp-rev-h">REAL REVIEWS</div>
+      <div class="sp-rev-h">{{ block.settings.heading | default: 'REAL REVIEWS' }}</div>
       <div class="sp-rev-grid">
-        {%- for i in (1..4) -%}
+        {%- for i in (1..6) -%}
           {%- assign rt = 'review_' | append: i | append: '_text' -%}
           {%- assign rn = 'review_' | append: i | append: '_name' -%}
           {%- assign rs = 'review_' | append: i | append: '_stars' -%}
@@ -404,7 +412,7 @@ window.sculpsProduct = {
     {%- when 'related_products' -%}
     {%- if collection -%}
     <section class="sp-pdp-related" {{ block.shopify_attributes }}>
-      <div class="sp-pdp-related-h">YOU MAY ALSO LIKE</div>
+      <div class="sp-pdp-related-h">{{ block.settings.heading | default: 'YOU MAY ALSO LIKE' }}</div>
       <div class="sp-bs-scroll">
         {%- for rp in collection.products limit: 6 -%}
           {%- unless rp.handle == product.handle -%}
@@ -417,8 +425,13 @@ window.sculpsProduct = {
               {%- endif -%}
             </a>
             <div class="sp-pc-brand">SCULPS</div>
-            <a href="{{ rp.url }}" class="sp-pc-name" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;letter-spacing:.5px">{{ rp.title }}</a>
+            <a href="{{ rp.url }}" class="sp-pc-name" style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;letter-spacing:.5px;text-decoration:none;color:var(--black)">{{ rp.title }}</a>
             <div class="sp-pc-prices"><span class="sp-pc-price">{{ rp.price | money }}</span></div>
+            {%- if rp.first_available_variant != blank -%}
+              <button class="sp-pc-btn sp-atc-btn"
+                data-variant-id="{{ rp.first_available_variant.id }}"
+                type="button">Add to Bag</button>
+            {%- endif -%}
           </div>
           {%- endunless -%}
         {%- endfor -%}
@@ -429,53 +442,57 @@ window.sculpsProduct = {
   {%- endcase -%}
 {%- endfor -%}
 
-<!-- ========== VARIANT SELECTION JS ========== -->
+<!-- ========== VARIANT JS ========== -->
 <script>
 (function () {
   var prod = window.sculpsProduct || {};
   var variants = prod.variants || [];
-  var selectedOptions = prod.selectedOptions || {};
+  var sel = prod.selectedOptions || {};
 
   function findVariant() {
     return variants.find(function (v) {
-      return Object.keys(selectedOptions).every(function (pos) {
-        return v.options[parseInt(pos) - 1] === selectedOptions[pos];
+      return Object.keys(sel).every(function (pos) {
+        return v.options[parseInt(pos) - 1] === sel[pos];
       });
     });
   }
-
   function money(cents) {
     return '$' + (cents / 100).toFixed(2).replace(/\.00$/, '');
   }
-
-  function updateUI(variant) {
-    if (!variant) return;
-    var priceEl = document.getElementById('sp-price');
+  function updateUI(v) {
+    if (!v) return;
+    var priceEl   = document.getElementById('sp-price');
     var compareEl = document.getElementById('sp-compare');
     var saveTagEl = document.getElementById('sp-save-tag');
-    var saveBadgeEl = document.getElementById('sp-save-badge');
-    var atcBtn = document.getElementById('sp-main-atc');
+    var saveBadge = document.getElementById('sp-save-badge');
+    var saveAmt   = document.getElementById('sp-save-amt');
+    var atcBtn    = document.getElementById('sp-main-atc');
     var satcPrice = document.getElementById('sp-satc-price');
-    var variantInput = document.getElementById('sculps-selected-variant');
+    var varInput  = document.getElementById('sculps-selected-variant');
 
-    if (priceEl) priceEl.textContent = money(variant.price);
-    if (satcPrice) satcPrice.textContent = money(variant.price);
-    if (variantInput) variantInput.value = variant.id;
+    if (priceEl)   priceEl.textContent   = money(v.price);
+    if (satcPrice) satcPrice.textContent = money(v.price);
+    if (varInput)  varInput.value        = v.id;
 
-    if (variant.compare_at_price && variant.compare_at_price > variant.price) {
-      var save = variant.compare_at_price - variant.price;
-      if (compareEl) { compareEl.textContent = money(variant.compare_at_price); compareEl.style.display = ''; }
+    if (v.compare_at_price && v.compare_at_price > v.price) {
+      var save = v.compare_at_price - v.price;
+      if (compareEl) { compareEl.textContent = money(v.compare_at_price); compareEl.style.display = ''; }
       if (saveTagEl) { saveTagEl.textContent = 'SAVE ' + money(save); saveTagEl.style.display = ''; }
-      if (saveBadgeEl) { saveBadgeEl.textContent = 'SAVE ' + money(save); saveBadgeEl.style.display = ''; }
+      if (saveBadge) { saveBadge.style.display = ''; }
+      if (saveAmt)   { saveAmt.textContent = money(save); }
     } else {
       if (compareEl) compareEl.style.display = 'none';
       if (saveTagEl) saveTagEl.style.display = 'none';
-      if (saveBadgeEl) saveBadgeEl.style.display = 'none';
+      if (saveBadge) saveBadge.style.display = 'none';
     }
 
+    document.querySelectorAll('.sp-pdp-atc-trigger,.sp-satc-btn').forEach(function (b) {
+      b.setAttribute('data-variant-id', v.id);
+    });
+
     if (atcBtn) {
-      if (variant.available) {
-        atcBtn.textContent = 'ADD TO CART  ·  ' + money(variant.price);
+      if (v.available) {
+        atcBtn.textContent = 'ADD TO CART  ·  ' + money(v.price);
         atcBtn.disabled = false;
       } else {
         atcBtn.textContent = 'SOLD OUT';
@@ -483,145 +500,269 @@ window.sculpsProduct = {
       }
     }
 
-    // Update sticky ATC and main ATC data-variant-id
-    document.querySelectorAll('.sp-pdp-atc-trigger, .sp-satc-btn').forEach(function(btn) {
-      btn.setAttribute('data-variant-id', variant.id);
-    });
+    if (v.featured_image) {
+      var mi = document.getElementById('sp-main-img');
+      if (mi) { mi.style.opacity = '0'; setTimeout(function () { mi.src = v.featured_image.src; mi.style.opacity = '1'; }, 150); }
+    }
+  }
 
-    // Update main image if variant has an image
-    if (variant.featured_image) {
-      var mainImg = document.getElementById('sp-main-img');
-      if (mainImg) {
-        mainImg.style.opacity = '0';
-        setTimeout(function() {
-          mainImg.src = variant.featured_image.src;
-          mainImg.style.opacity = '1';
-        }, 150);
+  function switchImage(src) {
+    var mi = document.getElementById('sp-main-img');
+    if (!mi || !src) return;
+    mi.style.opacity = '0';
+    setTimeout(function () { mi.src = src; mi.style.opacity = '1'; }, 100);
+    document.querySelectorAll('.sp-pdp-thumb,.sp-pdp-dot-mob').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-src') === src);
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.classList.contains('sp-tone-circle')) {
+      document.querySelectorAll('.sp-tone-circle').forEach(function (b) { b.classList.remove('active'); });
+      t.classList.add('active');
+      sel[t.getAttribute('data-option')] = t.getAttribute('data-value');
+      var v = findVariant(); if (v) updateUI(v);
+    }
+    if (t.classList.contains('sp-color-btn')) {
+      document.querySelectorAll('.sp-color-btn').forEach(function (b) { b.classList.remove('active'); });
+      t.classList.add('active');
+      sel[t.getAttribute('data-option')] = t.getAttribute('data-value');
+      var v = findVariant(); if (v) updateUI(v);
+    }
+    if (t.classList.contains('sp-size-btn')) {
+      document.querySelectorAll('.sp-size-btn').forEach(function (b) { b.classList.remove('active'); });
+      t.classList.add('active');
+      sel[t.getAttribute('data-option')] = t.getAttribute('data-value');
+      var v = findVariant(); if (v) updateUI(v);
+    }
+    if (t.classList.contains('sp-pdp-thumb') || t.classList.contains('sp-pdp-dot-mob')) {
+      switchImage(t.getAttribute('data-src'));
+    }
+    if (t.id === 'sp-zoom-btn') {
+      var sources = document.querySelectorAll('#sp-lb-sources span');
+      if (sources.length) {
+        window._lbIdx = 0;
+        var li = document.getElementById('sp-lb-img');
+        if (li) li.src = sources[0].getAttribute('data-src');
+        var lo = document.getElementById('sp-lb-overlay');
+        if (lo) { lo.style.display = 'flex'; lo.setAttribute('aria-hidden', 'false'); }
       }
     }
-  }
-
-  function handleOptionClick(btn, optionPosition, optionValue) {
-    // Deactivate siblings
-    var group = btn.closest('[data-option-group]') || btn.parentNode;
-    group.querySelectorAll('.sp-tone-circle, .sp-size-btn, .sp-color-btn').forEach(function(b) {
-      b.classList.remove('active');
-    });
-    btn.classList.add('active');
-    selectedOptions[optionPosition] = optionValue;
-    var variant = findVariant();
-    if (variant) updateUI(variant);
-  }
-
-  document.addEventListener('click', function(e) {
-    var btn = e.target;
-    // Tone circles
-    if (btn.classList.contains('sp-tone-circle') || btn.closest('.sp-tone-circle')) {
-      btn = btn.classList.contains('sp-tone-circle') ? btn : btn.closest('.sp-tone-circle');
-      var pos = btn.getAttribute('data-option');
-      var val = btn.getAttribute('data-value');
-      // Deactivate all tone circles
-      document.querySelectorAll('.sp-tone-circle').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      selectedOptions[pos] = val;
-      var variant = findVariant();
-      if (variant) updateUI(variant);
+    if (t.id === 'sp-lb-close' || t.id === 'sp-lb-overlay') {
+      var lo = document.getElementById('sp-lb-overlay');
+      if (lo) { lo.style.display = 'none'; lo.setAttribute('aria-hidden', 'true'); }
     }
-    // Size buttons
-    if (btn.classList.contains('sp-size-btn')) {
-      var pos = btn.getAttribute('data-option');
-      var val = btn.getAttribute('data-value');
-      document.querySelectorAll('.sp-size-btn').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      selectedOptions[pos] = val;
-      var variant = findVariant();
-      if (variant) updateUI(variant);
+    if (t.id === 'sp-lb-next' || t.id === 'sp-lb-prev') {
+      var sources = document.querySelectorAll('#sp-lb-sources span');
+      if (sources.length) {
+        var d = t.id === 'sp-lb-next' ? 1 : -1;
+        window._lbIdx = ((window._lbIdx || 0) + d + sources.length) % sources.length;
+        var li = document.getElementById('sp-lb-img');
+        if (li) li.src = sources[window._lbIdx].getAttribute('data-src');
+      }
     }
-    // Color buttons
-    if (btn.classList.contains('sp-color-btn')) {
-      var pos = btn.getAttribute('data-option');
-      var val = btn.getAttribute('data-value');
-      document.querySelectorAll('.sp-color-btn').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      selectedOptions[pos] = val;
-      var variant = findVariant();
-      if (variant) updateUI(variant);
-    }
-    // Size guide
-    if (btn.id === 'sp-size-guide-link') {
+    if (t.id === 'sp-size-guide-link') {
       var sg = document.getElementById('sp-sg-overlay');
       if (sg) { sg.style.display = 'flex'; sg.setAttribute('aria-hidden', 'false'); }
     }
-    // Size guide close
-    if (btn.id === 'sp-sg-close') {
+    if (t.id === 'sp-sg-close') {
       var sg = document.getElementById('sp-sg-overlay');
       if (sg) { sg.style.display = 'none'; sg.setAttribute('aria-hidden', 'true'); }
     }
   });
 
-  // Size guide overlay click-outside
-  var sgOverlay = document.getElementById('sp-sg-overlay');
-  if (sgOverlay) {
-    sgOverlay.addEventListener('click', function(e) {
-      if (e.target === sgOverlay) { sgOverlay.style.display = 'none'; }
-    });
-  }
+  var sgEl = document.getElementById('sp-sg-overlay');
+  if (sgEl) sgEl.addEventListener('click', function (e) { if (e.target === sgEl) { sgEl.style.display = 'none'; } });
 })();
 </script>
 
 <style>
-/* Tone circles with labels */
-.sp-tone-grid{display:flex;gap:14px;flex-wrap:wrap}
-.sp-tone-item{display:flex;flex-direction:column;align-items:center;gap:6px}
-.sp-tone-circle{width:52px;height:52px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s;flex-shrink:0;padding:0}
-.sp-tone-circle:hover{transform:scale(1.08)}
-.sp-tone-circle.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
-.sp-tone-label{font-size:8px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);text-align:center;line-height:1.2}
-/* Color swatches */
-.sp-color-btns{display:flex;gap:10px;flex-wrap:wrap}
-.sp-color-btn{width:36px;height:36px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s;padding:0}
-.sp-color-btn.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
-/* Size buttons */
-.sp-size-btns{display:flex;gap:8px;flex-wrap:wrap}
-.sp-size-btn{padding:12px 18px;border:1.5px solid var(--border);background:none;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
-.sp-size-btn:hover{border-color:var(--black)}
-.sp-size-btn.active{background:var(--black);color:var(--white);border-color:var(--black)}
-/* Save badge on image */
-.sp-pdp-save-badge{position:absolute;top:14px;left:14px;background:var(--black);color:var(--white);font-size:10px;font-weight:900;letter-spacing:1px;padding:6px 12px;z-index:2;text-transform:uppercase}
+/* ===== PRODUCT PAGE LAYOUT ===== */
+.sp-pdp-page{display:grid;grid-template-columns:1fr 1fr;gap:56px;max-width:1260px;margin:0 auto;padding:40px 48px 64px}
+
+/* Gallery */
+.sp-pdp-gallery{}
+.sp-pdp-main-wrap{position:relative;overflow:hidden;background:var(--cream);aspect-ratio:1/1}
+.sp-pdp-main-img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .2s}
+.sp-pdp-img-empty{width:100%;height:100%;background:var(--cream)}
+
+/* Save circle badge */
+.sp-pdp-save-circle{position:absolute;top:16px;left:16px;width:72px;height:72px;border-radius:50%;background:var(--black);color:var(--white);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;line-height:1.2;pointer-events:none}
+.sp-pdp-save-top{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.sp-pdp-save-amt{font-size:17px;font-weight:900;letter-spacing:0}
+
+/* Zoom */
+.sp-pdp-zoom-btn{position:absolute;bottom:14px;right:14px;width:36px;height:36px;background:rgba(255,255,255,.9);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--black);transition:background .2s;z-index:2}
+.sp-pdp-zoom-btn:hover{background:#fff}
+
+/* Thumbnails (desktop) */
+.sp-pdp-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.sp-pdp-thumb{width:66px;height:66px;border:2px solid transparent;cursor:pointer;background-size:cover;background-position:center;padding:0;transition:border-color .15s;flex-shrink:0}
+.sp-pdp-thumb.active{border-color:var(--black)}
+
+/* Dots (mobile) */
+.sp-pdp-dots-mob{display:none;gap:8px;justify-content:center;margin-top:14px}
+.sp-pdp-dot-mob{width:10px;height:10px;border-radius:50%;border:none;background:rgba(0,0,0,.2);cursor:pointer;padding:0;transition:background .15s;flex-shrink:0}
+.sp-pdp-dot-mob.active{background:var(--black)}
+
+/* Info column */
+.sp-pdp-col-right{display:flex;flex-direction:column}
+
 /* Header */
-.sp-pdp-subtitle{font-size:13px;color:var(--grey);margin-bottom:12px;line-height:1.5}
-.sp-pdp-tagline{font-size:12px;color:var(--grey);margin-top:6px;margin-bottom:14px;font-style:italic}
-.sp-pdp-save-tag{display:inline-block;background:var(--black);color:var(--white);font-size:9px;font-weight:900;letter-spacing:1px;padding:4px 10px;margin-left:6px}
-/* Bundle items */
-.sp-pdp-bundle{margin-bottom:20px}
-.sp-pdp-bundle-label{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:12px}
-.sp-pdp-bundle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border:1px solid var(--border)}
+.sp-pdp-header-block{margin-bottom:16px}
+.sp-pdp-brand{font-size:9px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--grey);margin-bottom:6px}
+.sp-pdp-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,3.5vw,52px);letter-spacing:2px;line-height:1.05;margin-bottom:10px}
+.sp-pdp-subtitle{font-size:14px;color:var(--grey);margin-bottom:14px;line-height:1.5}
+.sp-pdp-price-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.sp-pdp-price{font-size:34px;font-weight:900;letter-spacing:-1px}
+.sp-pdp-compare{font-size:20px;color:var(--grey);text-decoration:line-through;font-weight:400}
+.sp-pdp-save-pill{background:var(--black);color:var(--white);font-size:10px;font-weight:900;letter-spacing:1.5px;padding:5px 12px;text-transform:uppercase;line-height:1}
+.sp-pdp-tagline{font-size:13px;color:var(--grey);font-style:italic;margin-bottom:16px;line-height:1.5}
+.sp-pdp-stars{font-size:15px;color:#C9A96E;display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.sp-pdp-stars-count{font-size:11px;color:var(--grey);font-family:inherit}
+
+/* Bullet points */
+.sp-pdp-bullets{margin-bottom:16px}
+.sp-pdp-bullet{display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-bottom:7px;line-height:1.5;color:var(--black)}
+.sp-pdp-bullet svg{flex-shrink:0;margin-top:2px}
+
+/* Bundle */
+.sp-pdp-bundle{margin:16px 0;padding:16px;border:1px solid var(--border)}
+.sp-pdp-bundle-label{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:12px;text-align:center}
+.sp-pdp-bundle-grid{display:grid;grid-template-columns:repeat(3,1fr)}
 .sp-pdp-bundle-item{padding:12px 8px;border-right:1px solid var(--border);text-align:center}
 .sp-pdp-bundle-item:last-child{border-right:none}
-.sp-pdp-bundle-name{font-size:8px;font-weight:900;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;line-height:1.3}
+.sp-pdp-bundle-name{font-size:8px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;line-height:1.4}
 .sp-pdp-bundle-img{aspect-ratio:1/1;overflow:hidden}
 .sp-pdp-bundle-img img{width:100%;height:100%;object-fit:cover}
-/* What's included in right col */
-.sp-pdp-included-block{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
-.sp-pdp-included-h{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
-.sp-pdp-included-item{display:flex;align-items:flex-start;gap:10px;font-size:12px;margin-bottom:8px;line-height:1.5}
-.sp-pdp-included-check{color:var(--black);font-size:13px;flex-shrink:0;margin-top:1px}
-/* Trust row at bottom */
-.sp-pdp-trust-row{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:40px}
-.sp-pdp-trust-item{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 12px;border-right:1px solid var(--border)}
-.sp-pdp-trust-item:last-child{border-right:none}
-.sp-pdp-trust-icon{width:28px;height:28px;margin-bottom:10px;color:var(--black)}
-.sp-pdp-trust-lbl{font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
-.sp-pdp-trust-sub{font-size:10px;color:var(--grey);line-height:1.4}
-/* Variant label row */
+
+/* Variants */
+.sp-pdp-variant-group{margin:16px 0}
 .sp-pdp-variant-label{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
-.sp-pdp-size-guide{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:none;border:none;cursor:pointer;color:var(--grey);text-decoration:underline;font-family:inherit}
+.sp-pdp-size-guide-btn{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:none;border:none;cursor:pointer;color:var(--grey);text-decoration:underline;font-family:inherit;padding:0}
+
+/* Tone circles */
+.sp-tone-grid{display:flex;gap:12px;flex-wrap:wrap}
+.sp-tone-item{display:flex;flex-direction:column;align-items:center;gap:5px}
+.sp-tone-circle{width:48px;height:48px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .15s;padding:0;flex-shrink:0}
+.sp-tone-circle:hover{transform:scale(1.08)}
+.sp-tone-circle.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
+.sp-tone-label{font-size:7px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--grey)}
+
+/* Color swatches */
+.sp-color-btns{display:flex;gap:10px;flex-wrap:wrap}
+.sp-color-btn{width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .15s;padding:0;flex-shrink:0}
+.sp-color-btn.active{border-color:var(--black);outline:2px solid var(--black);outline-offset:2px}
+
+/* Size buttons */
+.sp-size-btns{display:flex;gap:8px;flex-wrap:wrap}
+.sp-size-btn{padding:11px 18px;border:1.5px solid var(--border);background:none;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:all .15s;text-align:center;white-space:nowrap;min-width:50px;line-height:1}
+.sp-size-btn:hover{border-color:var(--black)}
+.sp-size-btn.active{background:var(--black);color:var(--white);border-color:var(--black)}
+
+/* ATC */
+.sp-pdp-atc-wrap{margin-top:20px}
+.sp-pdp-atc-btn{display:block;width:100%;padding:18px 24px;background:var(--black);color:var(--white);font-family:inherit;font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;border:none;cursor:pointer;transition:background .2s}
+.sp-pdp-atc-btn:hover:not(:disabled){background:#333}
+.sp-pdp-atc-btn:disabled{opacity:.45;cursor:default}
+.sp-pdp-ship-note{font-size:11px;color:var(--grey);text-align:center;margin-top:10px;line-height:1.5}
+
+/* What's included */
+.sp-pdp-included{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+.sp-pdp-included-h{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.sp-pdp-included-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;margin-bottom:9px;line-height:1.5;color:var(--black)}
+.sp-pdp-included-item svg{flex-shrink:0;margin-top:2px}
+
+/* Trust badges */
+.sp-pdp-trust{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:40px}
+.sp-pdp-trust-item{display:flex;flex-direction:column;align-items:center;text-align:center;padding:28px 12px;border-right:1px solid var(--border)}
+.sp-pdp-trust-item:last-child{border-right:none}
+.sp-pdp-trust-icon{width:30px;height:30px;margin-bottom:12px;color:var(--black)}
+.sp-pdp-trust-lbl{font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+.sp-pdp-trust-sub{font-size:10px;color:var(--grey);line-height:1.4}
+
+/* FBT */
+.sp-pdp-fbt{padding:48px;background:var(--cream)}
+.sp-pdp-fbt-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,40px);letter-spacing:3px;margin-bottom:28px;text-align:center}
+.sp-pdp-fbt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:720px;margin:0 auto}
+.sp-pdp-fbt-card{background:var(--white);padding:20px;display:flex;flex-direction:column}
+.sp-pdp-fbt-img-wrap{aspect-ratio:1/1;overflow:hidden;margin-bottom:14px;display:block}
+.sp-pdp-fbt-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.sp-pdp-fbt-card:hover .sp-pdp-fbt-img-wrap img{transform:scale(1.04)}
+.sp-pdp-fbt-name{font-size:11px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;line-height:1.4}
+.sp-pdp-fbt-price{font-size:18px;font-weight:900;margin-bottom:14px}
+.sp-pdp-fbt-btn{width:100%;padding:13px;background:var(--black);color:var(--white) !important;font-family:inherit;font-size:10px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;border:none;cursor:pointer;transition:background .2s;text-decoration:none !important;text-align:center;display:block;margin-top:auto}
+.sp-pdp-fbt-btn:hover:not(:disabled){background:#333}
+
+/* Reviews */
+.sp-rev-s{padding:56px 48px;background:var(--white)}
+.sp-rev-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4vw,48px);letter-spacing:3px;text-align:center;margin-bottom:36px}
+.sp-rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto}
+.sp-rev-card{padding:28px;border-left:3px solid #C9A96E;background:var(--cream)}
+.sp-rev-stars{color:#C9A96E;font-size:16px;margin-bottom:12px;letter-spacing:2px}
+.sp-rev-text{font-size:13px;line-height:1.7;font-style:italic;margin-bottom:14px;color:var(--black)}
+.sp-rev-name{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--grey)}
+.sp-rev-verified{font-size:9px;color:#6A8A6A;font-weight:700;letter-spacing:1px;margin-top:6px}
+
+/* Related products */
+.sp-pdp-related{padding:56px 48px;background:var(--cream)}
+.sp-pdp-related-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,40px);letter-spacing:3px;margin-bottom:28px;text-align:center}
+
+/* Sticky ATC */
+.sp-satc{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 24px;z-index:300;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);gap:16px}
+.sp-satc.visible{transform:translateY(0)}
+.sp-satc-info{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.sp-satc-thumb{width:48px;height:48px;object-fit:cover;flex-shrink:0}
+.sp-satc-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-satc-price{font-size:11px;color:var(--grey)}
+.sp-satc-btn{background:var(--black);color:var(--white) !important;font-family:inherit;font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:14px 24px;border:none;cursor:pointer;flex-shrink:0;transition:background .2s;white-space:nowrap;text-decoration:none !important}
+.sp-satc-btn:hover{background:#333}
+
+/* Size guide modal */
+.sp-sg-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center;padding:20px}
+.sp-sg-modal{background:var(--white);max-width:520px;width:100%;padding:32px;position:relative;max-height:90vh;overflow-y:auto}
+.sp-sg-close{position:absolute;top:16px;right:16px;font-size:20px;background:none;border:none;cursor:pointer;color:var(--grey);font-family:inherit}
+.sp-sg-h{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;margin-bottom:20px}
+.sp-sg-section-h{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.sp-sg-table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:13px}
+.sp-sg-table th{background:var(--black);color:var(--white);padding:8px 12px;text-align:left;font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+.sp-sg-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.sp-sg-table tr:last-child td{border-bottom:none}
+
+/* Lightbox */
+.sp-lb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:700;align-items:center;justify-content:center}
+.sp-lb-close{position:fixed;top:20px;right:24px;font-size:28px;background:none;border:none;cursor:pointer;color:#fff;font-family:inherit}
+.sp-lb-img{max-width:90vw;max-height:90vh;object-fit:contain;display:block}
+.sp-lb-nav{position:fixed;top:50%;transform:translateY(-50%);font-size:40px;background:none;border:none;cursor:pointer;color:#fff;padding:10px;font-family:inherit}
+.sp-lb-prev{left:16px}
+.sp-lb-next{right:16px}
+
+/* Mobile */
 @media(max-width:768px){
-  .sp-pdp-trust-row{grid-template-columns:repeat(2,1fr)}
+  .sp-pdp-page{grid-template-columns:1fr;gap:0;padding:0 0 56px}
+  .sp-pdp-main-wrap{aspect-ratio:1/1}
+  .sp-pdp-thumbs{display:none}
+  .sp-pdp-dots-mob{display:flex}
+  .sp-pdp-col-right{padding:20px 16px 0}
+  .sp-pdp-title{font-size:28px}
+  .sp-pdp-save-circle{width:60px;height:60px}
+  .sp-pdp-save-amt{font-size:15px}
+  .sp-pdp-trust{grid-template-columns:repeat(2,1fr)}
   .sp-pdp-trust-item:nth-child(2){border-right:none}
   .sp-pdp-trust-item:nth-child(3),.sp-pdp-trust-item:nth-child(4){border-top:1px solid var(--border)}
   .sp-pdp-trust-item:nth-child(4){border-right:none}
-  .sp-tone-circle{width:44px;height:44px}
+  .sp-pdp-fbt{padding:32px 16px}
+  .sp-pdp-fbt-grid{grid-template-columns:1fr}
+  .sp-rev-s{padding:40px 16px}
+  .sp-rev-grid{grid-template-columns:1fr;gap:16px}
+  .sp-pdp-related{padding:40px 16px}
+  .sp-satc{padding:10px 16px}
+}
+@media(max-width:480px){
+  .sp-tone-circle{width:42px;height:42px}
+  .sp-tone-label{font-size:6px}
+  .sp-pdp-bundle-grid{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 
@@ -633,52 +774,89 @@ window.sculpsProduct = {
       "type": "image_gallery",
       "name": "Image Gallery",
       "limit": 1,
-      "settings": []
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "📸 Images are managed in Shopify Admin → Products → select product → Images section. Upload and reorder them there — they appear here automatically."
+        }
+      ]
     },
     {
       "type": "product_header",
       "name": "Product Header",
       "limit": 1,
       "settings": [
-        {"type": "text",   "id": "subtitle",      "label": "Subtitle"},
-        {"type": "text",   "id": "tagline",        "label": "Tagline (below price)"},
-        {"type": "number", "id": "rating_count",   "label": "Review count", "default": 847}
+        {"type": "text",     "id": "subtitle",      "label": "Subtitle (below title)"},
+        {"type": "text",     "id": "tagline",        "label": "Tagline (below price)"},
+        {"type": "checkbox", "id": "show_stars",     "label": "Show star rating",   "default": true},
+        {"type": "number",   "id": "rating_count",   "label": "Number of reviews",  "default": 847}
+      ]
+    },
+    {
+      "type": "bullet_points",
+      "name": "Bullet Points",
+      "limit": 1,
+      "settings": [
+        {"type": "text", "id": "bullet_1", "label": "Bullet 1"},
+        {"type": "text", "id": "bullet_2", "label": "Bullet 2"},
+        {"type": "text", "id": "bullet_3", "label": "Bullet 3"},
+        {"type": "text", "id": "bullet_4", "label": "Bullet 4"},
+        {"type": "text", "id": "bullet_5", "label": "Bullet 5"},
+        {"type": "text", "id": "bullet_6", "label": "Bullet 6"}
       ]
     },
     {
       "type": "bundle_items",
-      "name": "Bundle Items",
+      "name": "Bundle Items Grid",
       "limit": 1,
       "settings": [
-        {"type": "text",    "id": "bundle_label",     "label": "Label", "default": "Three bestsellers. One confidence boost."},
-        {"type": "product", "id": "bundle_product_1", "label": "Item 1"},
-        {"type": "product", "id": "bundle_product_2", "label": "Item 2"},
-        {"type": "product", "id": "bundle_product_3", "label": "Item 3"}
+        {"type": "text",    "id": "bundle_label",     "label": "Label text",   "default": "Everything in this kit:"},
+        {"type": "product", "id": "bundle_product_1", "label": "Product 1"},
+        {"type": "product", "id": "bundle_product_2", "label": "Product 2"},
+        {"type": "product", "id": "bundle_product_3", "label": "Product 3"}
       ]
     },
     {
       "type": "skin_tone_selector",
       "name": "Skin Tone Selector",
       "limit": 1,
-      "settings": []
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Tone options are read from the product variant option named 'Skin Tone', 'Shade', or 'Tone' in Shopify Admin → Products → Variants."
+        }
+      ]
     },
     {
       "type": "color_selector",
       "name": "Color Selector",
       "limit": 1,
-      "settings": []
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Color swatches are read from the product variant option named 'Color' in Shopify Admin → Products → Variants."
+        }
+      ]
     },
     {
       "type": "size_selector",
       "name": "Size Selector",
       "limit": 1,
-      "settings": []
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Sizes are read from the product variant option named 'Size' in Shopify Admin → Products → Variants. Use values like 1, 2, 3, 4, 5."
+        }
+      ]
     },
     {
       "type": "add_to_cart",
-      "name": "Add to Cart",
+      "name": "Add to Cart Button",
       "limit": 1,
-      "settings": []
+      "settings": [
+        {"type": "text", "id": "btn_text",      "label": "Button text",    "default": "ADD TO CART"},
+        {"type": "text", "id": "shipping_note", "label": "Shipping note",  "default": "Free shipping over $75 · 30-day returns"}
+      ]
     },
     {
       "type": "whats_included",
@@ -693,17 +871,6 @@ window.sculpsProduct = {
         {"type": "text", "id": "include_6", "label": "Item 6"},
         {"type": "text", "id": "include_7", "label": "Item 7"},
         {"type": "text", "id": "include_8", "label": "Item 8"}
-      ]
-    },
-    {
-      "type": "bullet_points",
-      "name": "Bullet Points",
-      "limit": 1,
-      "settings": [
-        {"type": "text", "id": "bullet_1", "label": "Bullet 1"},
-        {"type": "text", "id": "bullet_2", "label": "Bullet 2"},
-        {"type": "text", "id": "bullet_3", "label": "Bullet 3"},
-        {"type": "text", "id": "bullet_4", "label": "Bullet 4"}
       ]
     },
     {
@@ -723,63 +890,52 @@ window.sculpsProduct = {
     },
     {
       "type": "fbt",
-      "name": "Bought Together",
+      "name": "Frequently Bought Together",
       "limit": 1,
       "settings": [
-        {"type": "image_picker", "id": "fbt_1_image", "label": "Product 1 image"},
-        {"type": "text",         "id": "fbt_1_title", "label": "Product 1 title"},
-        {"type": "text",         "id": "fbt_1_price", "label": "Product 1 price"},
-        {"type": "url",          "id": "fbt_1_url",   "label": "Product 1 link"},
-        {"type": "image_picker", "id": "fbt_2_image", "label": "Product 2 image"},
-        {"type": "text",         "id": "fbt_2_title", "label": "Product 2 title"},
-        {"type": "text",         "id": "fbt_2_price", "label": "Product 2 price"},
-        {"type": "url",          "id": "fbt_2_url",   "label": "Product 2 link"}
-      ]
-    },
-    {
-      "type": "tiktok_testimonials",
-      "name": "TikTok Testimonials",
-      "limit": 1,
-      "settings": [
-        {"type": "text", "id": "tiktok_1_url",    "label": "Video 1 embed URL"},
-        {"type": "text", "id": "tiktok_1_handle", "label": "Video 1 handle", "default": "@sculps.official"},
-        {"type": "text", "id": "tiktok_1_likes",  "label": "Video 1 likes",  "default": "847K"},
-        {"type": "text", "id": "tiktok_2_url",    "label": "Video 2 embed URL"},
-        {"type": "text", "id": "tiktok_2_handle", "label": "Video 2 handle", "default": "@sculps.real"},
-        {"type": "text", "id": "tiktok_2_likes",  "label": "Video 2 likes",  "default": "523K"},
-        {"type": "text", "id": "tiktok_3_url",    "label": "Video 3 embed URL"},
-        {"type": "text", "id": "tiktok_3_handle", "label": "Video 3 handle", "default": "@sculps.fits"},
-        {"type": "text", "id": "tiktok_3_likes",  "label": "Video 3 likes",  "default": "312K"}
+        {"type": "product", "id": "fbt_1", "label": "Product 1"},
+        {"type": "product", "id": "fbt_2", "label": "Product 2"}
       ]
     },
     {
       "type": "reviews",
-      "name": "Reviews",
+      "name": "Customer Reviews",
       "limit": 1,
       "settings": [
-        {"type": "textarea", "id": "review_1_text",     "label": "Review 1 text"},
-        {"type": "text",     "id": "review_1_name",     "label": "Reviewer 1 name"},
-        {"type": "range",    "id": "review_1_stars",    "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_1_verified", "label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_2_text",     "label": "Review 2 text"},
-        {"type": "text",     "id": "review_2_name",     "label": "Reviewer 2 name"},
-        {"type": "range",    "id": "review_2_stars",    "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_2_verified", "label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_3_text",     "label": "Review 3 text"},
-        {"type": "text",     "id": "review_3_name",     "label": "Reviewer 3 name"},
-        {"type": "range",    "id": "review_3_stars",    "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_3_verified", "label": "Verified buyer", "default": true},
-        {"type": "textarea", "id": "review_4_text",     "label": "Review 4 text"},
-        {"type": "text",     "id": "review_4_name",     "label": "Reviewer 4 name"},
-        {"type": "range",    "id": "review_4_stars",    "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
-        {"type": "checkbox", "id": "review_4_verified", "label": "Verified buyer", "default": true}
+        {"type": "text",     "id": "heading",         "label": "Heading",     "default": "REAL REVIEWS"},
+        {"type": "textarea", "id": "review_1_text",   "label": "Review 1"},
+        {"type": "text",     "id": "review_1_name",   "label": "Name 1"},
+        {"type": "range",    "id": "review_1_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_1_verified","label": "Verified buyer", "default": true},
+        {"type": "textarea", "id": "review_2_text",   "label": "Review 2"},
+        {"type": "text",     "id": "review_2_name",   "label": "Name 2"},
+        {"type": "range",    "id": "review_2_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_2_verified","label": "Verified buyer", "default": true},
+        {"type": "textarea", "id": "review_3_text",   "label": "Review 3"},
+        {"type": "text",     "id": "review_3_name",   "label": "Name 3"},
+        {"type": "range",    "id": "review_3_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_3_verified","label": "Verified buyer", "default": true},
+        {"type": "textarea", "id": "review_4_text",   "label": "Review 4"},
+        {"type": "text",     "id": "review_4_name",   "label": "Name 4"},
+        {"type": "range",    "id": "review_4_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_4_verified","label": "Verified buyer", "default": true},
+        {"type": "textarea", "id": "review_5_text",   "label": "Review 5"},
+        {"type": "text",     "id": "review_5_name",   "label": "Name 5"},
+        {"type": "range",    "id": "review_5_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_5_verified","label": "Verified buyer", "default": true},
+        {"type": "textarea", "id": "review_6_text",   "label": "Review 6"},
+        {"type": "text",     "id": "review_6_name",   "label": "Name 6"},
+        {"type": "range",    "id": "review_6_stars",  "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5},
+        {"type": "checkbox", "id": "review_6_verified","label": "Verified buyer", "default": true}
       ]
     },
     {
       "type": "related_products",
       "name": "Related Products",
       "limit": 1,
-      "settings": []
+      "settings": [
+        {"type": "text", "id": "heading", "label": "Heading", "default": "YOU MAY ALSO LIKE"}
+      ]
     }
   ],
   "presets": [
@@ -788,13 +944,14 @@ window.sculpsProduct = {
       "blocks": [
         {"type": "image_gallery"},
         {"type": "product_header"},
+        {"type": "bullet_points"},
         {"type": "skin_tone_selector"},
         {"type": "color_selector"},
         {"type": "size_selector"},
         {"type": "add_to_cart"},
         {"type": "whats_included"},
         {"type": "trust_badges"},
-        {"type": "tiktok_testimonials"},
+        {"type": "fbt"},
         {"type": "reviews"},
         {"type": "related_products"}
       ]
