@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>ROAS Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a22;
+      --border: #2a2a38;
+      --accent: #6c5ce7;
+      --accent-light: #a29bfe;
+      --green: #00b894;
+      --red: #d63031;
+      --yellow: #fdcb6e;
+      --text: #f0f0f5;
+      --muted: #888899;
+      --radius: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+    }
+
+    header {
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .card + .card { margin-top: 12px; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field + .field { margin-top: 14px; }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-prefix {
+      position: absolute;
+      left: 14px;
+      font-size: 16px;
+      color: var(--muted);
+      pointer-events: none;
+      font-weight: 500;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 600;
+      padding: 13px 14px 13px 30px;
+      outline: none;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus {
+      border-color: var(--accent);
+    }
+
+    /* ROAS result card */
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 420px;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .roas-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .roas-value {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      transition: color 0.2s;
+    }
+
+    .roas-suffix {
+      font-size: 22px;
+      font-weight: 600;
+      opacity: 0.7;
+      margin-left: 2px;
+    }
+
+    .roas-status {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .status-empty  { color: var(--muted); background: transparent; }
+    .status-low    { color: var(--red);    background: rgba(214,48,49,.12); }
+    .status-ok     { color: var(--yellow); background: rgba(253,203,110,.12); }
+    .status-good   { color: var(--green);  background: rgba(0,184,148,.12); }
+
+    /* Breakdown row */
+    .breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .breakdown-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .breakdown-item .bi-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .breakdown-item .bi-value {
+      font-size: 17px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    /* Target ROAS */
+    .target-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .target-row input[type="number"] {
+      flex: 1;
+      padding-left: 14px;
+    }
+
+    .target-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-hit  { background: rgba(0,184,148,.15);  color: var(--green); }
+    .badge-miss { background: rgba(214,48,49,.15);   color: var(--red);   }
+    .badge-none { background: var(--border);          color: var(--muted); }
+
+    /* Reset */
+    .reset-btn {
+      margin-top: 18px;
+      width: 100%;
+      max-width: 420px;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .reset-btn:hover { border-color: var(--accent-light); color: var(--accent-light); }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    /* Quick-fill chips */
+    .chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 4px 11px;
+      cursor: pointer;
+      transition: border-color 0.12s, color 0.12s;
+      user-select: none;
+    }
+
+    .chip:active { border-color: var(--accent); color: var(--accent-light); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>ROAS Calculator</h1>
+    <p>Return on Ad Spend — instant results</p>
+  </header>
+
+  <!-- Inputs -->
+  <div class="card">
+    <div class="field">
+      <label>Revenue (from ads)</label>
+      <div class="input-wrap">
+        <span class="input-prefix">$</span>
+        <input id="revenue" type="number" inputmode="decimal" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="chips" id="revenue-chips">
+        <span class="chip" data-target="revenue" data-val="500">$500</span>
+        <span class="chip" data-target="revenue" data-val="1000">$1K</span>
+        <span class="chip" data-target="revenue" data-val="5000">$5K</span>
+        <span class="chip" data-target="revenue" data-val="10000">$10K</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>Ad Spend</label>
+      <div class="input-wrap">
+        <span class="input-prefix">$</span>
+        <input id="spend" type="number" inputmode="decimal" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="chips">
+        <span class="chip" data-target="spend" data-val="100">$100</span>
+        <span class="chip" data-target="spend" data-val="250">$250</span>
+        <span class="chip" data-target="spend" data-val="500">$500</span>
+        <span class="chip" data-target="spend" data-val="1000">$1K</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card">
+    <div class="roas-label">ROAS</div>
+    <div class="roas-value" id="roas-value">—</div>
+    <div class="roas-status status-empty" id="roas-status">Enter values above</div>
+
+    <div class="breakdown">
+      <div class="breakdown-item">
+        <div class="bi-label">Profit / Loss</div>
+        <div class="bi-value" id="profit">—</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="bi-label">Margin</div>
+        <div class="bi-value" id="margin">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Target ROAS -->
+  <div class="card">
+    <div class="field">
+      <label>Target ROAS (optional)</label>
+      <div class="target-row">
+        <input id="target" type="number" inputmode="decimal" placeholder="e.g. 3" min="0" step="0.1" style="padding-left:14px;" />
+        <span class="target-badge badge-none" id="target-badge">Set target</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="reset-btn" id="reset-btn">Clear all</button>
+
+  <script>
+    const revenueEl = document.getElementById('revenue');
+    const spendEl   = document.getElementById('spend');
+    const targetEl  = document.getElementById('target');
+
+    const roasValueEl  = document.getElementById('roas-value');
+    const roasStatusEl = document.getElementById('roas-status');
+    const profitEl     = document.getElementById('profit');
+    const marginEl     = document.getElementById('margin');
+    const targetBadge  = document.getElementById('target-badge');
+
+    function fmt(n) {
+      if (Math.abs(n) >= 1000) return '$' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+      return '$' + n.toFixed(2).replace(/\.00$/, '');
+    }
+
+    function calculate() {
+      const revenue = parseFloat(revenueEl.value) || 0;
+      const spend   = parseFloat(spendEl.value)   || 0;
+      const target  = parseFloat(targetEl.value)  || 0;
+
+      if (revenue === 0 || spend === 0) {
+        roasValueEl.textContent = '—';
+        roasValueEl.style.color = 'var(--text)';
+        roasStatusEl.className  = 'roas-status status-empty';
+        roasStatusEl.textContent = 'Enter values above';
+        profitEl.textContent = '—';
+        marginEl.textContent = '—';
+        updateTargetBadge(null, target);
+        return;
+      }
+
+      const roas   = revenue / spend;
+      const profit = revenue - spend;
+      const margin = (profit / revenue) * 100;
+
+      // Display ROAS
+      roasValueEl.innerHTML = roas.toFixed(2) + '<span class="roas-suffix">x</span>';
+
+      // Status
+      let statusClass, statusText;
+      if (roas < 1) {
+        statusClass = 'status-low'; statusText = 'Losing money';
+        roasValueEl.style.color = 'var(--red)';
+      } else if (roas < 2) {
+        statusClass = 'status-ok'; statusText = 'Breaking even';
+        roasValueEl.style.color = 'var(--yellow)';
+      } else if (roas < 4) {
+        statusClass = 'status-ok'; statusText = 'Profitable';
+        roasValueEl.style.color = 'var(--yellow)';
+      } else {
+        statusClass = 'status-good'; statusText = 'Crushing it!';
+        roasValueEl.style.color = 'var(--green)';
+      }
+
+      roasStatusEl.className  = 'roas-status ' + statusClass;
+      roasStatusEl.textContent = statusText;
+
+      // Breakdown
+      const sign = profit >= 0 ? '+' : '';
+      profitEl.textContent = sign + fmt(profit);
+      profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+      marginEl.textContent = margin.toFixed(1) + '%';
+      marginEl.style.color = margin >= 0 ? 'var(--green)' : 'var(--red)';
+
+      updateTargetBadge(roas, target);
+    }
+
+    function updateTargetBadge(roas, target) {
+      if (!target || target <= 0) {
+        targetBadge.className  = 'target-badge badge-none';
+        targetBadge.textContent = 'Set target';
+        return;
+      }
+      if (roas === null) {
+        targetBadge.className  = 'target-badge badge-none';
+        targetBadge.textContent = 'Target: ' + target + 'x';
+        return;
+      }
+      if (roas >= target) {
+        targetBadge.className  = 'target-badge badge-hit';
+        targetBadge.textContent = 'Goal hit! ✓';
+      } else {
+        const pct = ((roas / target) * 100).toFixed(0);
+        targetBadge.className  = 'target-badge badge-miss';
+        targetBadge.textContent = pct + '% of goal';
+      }
+    }
+
+    [revenueEl, spendEl, targetEl].forEach(el => el.addEventListener('input', calculate));
+
+    // Quick-fill chips
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const target = chip.dataset.target;
+        const val    = chip.dataset.val;
+        document.getElementById(target).value = val;
+        calculate();
+      });
+    });
+
+    // Reset
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      revenueEl.value = '';
+      spendEl.value   = '';
+      targetEl.value  = '';
+      calculate();
+    });
+  </script>
+</body>
+</html>
