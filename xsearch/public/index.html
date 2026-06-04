@@ -5,129 +5,279 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>XSEARCH</title>
 <style>
-  :root{--glass:rgba(18,20,38,.55);--glass2:rgba(255,255,255,.06);--stroke:rgba(255,255,255,.12);--txt:#eaf0ff;--mut:#9aa3c9;--cyan:#7fe3ff;}
+  :root{--txt:#eef1ff;--mut:#9aa3c9;--cyan:#7fe3ff;--pink:#ff6ec4;--purple:#7c5cff;
+    --stroke:rgba(255,255,255,.14);}
   *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;}
-  body{min-height:100vh;display:grid;place-items:center;padding:24px;color:var(--txt);overflow:hidden;
-    background:radial-gradient(1100px 520px at 60% -8%,#3a2a6e 0,transparent 55%),radial-gradient(820px 520px at 92% 30%,#1d6f8f 0,transparent 50%),
-      radial-gradient(700px 600px at 6% 80%,#15325c 0,transparent 55%),linear-gradient(160deg,#0a0a1c,#0c1130 55%,#070710);}
-  .stars,.stars:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;background-image:radial-gradient(1px 1px at 15% 25%,#fff,transparent),radial-gradient(1px 1px at 75% 55%,#cde,transparent),radial-gradient(1px 1px at 45% 78%,#fff,transparent),radial-gradient(1.3px 1.3px at 88% 18%,#fff,transparent);animation:tw 6s ease-in-out infinite alternate;}
+  body{min-height:100vh;display:grid;place-items:center;padding:22px;color:var(--txt);overflow:hidden;
+    background:radial-gradient(1200px 560px at 60% -10%,#3a2a6e 0,transparent 55%),
+      radial-gradient(860px 540px at 95% 28%,#1d6f8f 0,transparent 50%),
+      radial-gradient(720px 620px at 4% 82%,#15325c 0,transparent 55%),
+      linear-gradient(160deg,#090a1b,#0b1030 55%,#06060f);}
+  .stars,.stars:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+    background-image:radial-gradient(1px 1px at 15% 25%,#fff,transparent),radial-gradient(1px 1px at 75% 55%,#cde,transparent),
+      radial-gradient(1px 1px at 45% 78%,#fff,transparent),radial-gradient(1.3px 1.3px at 88% 18%,#fff,transparent),
+      radial-gradient(1px 1px at 60% 12%,#bcd,transparent);animation:tw 6s ease-in-out infinite alternate;}
   .stars:after{opacity:.22;transform:scale(1.5);animation-delay:-3s;}@keyframes tw{from{opacity:.25}to{opacity:.6}}
-  .win{width:min(1120px,96vw);height:min(720px,92vh);border-radius:18px;background:var(--glass);backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);border:1px solid var(--stroke);box-shadow:0 50px 130px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.07) inset;display:flex;flex-direction:column;overflow:hidden;}
-  .bar{height:58px;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01));}
-  .lights{display:flex;gap:8px}.dot{width:12px;height:12px;border-radius:50%}.r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
-  .brand{font-weight:700;letter-spacing:.04em;font-size:16px;margin-left:6px}
-  .tabs{display:flex;gap:6px;margin:0 auto;padding:5px;border-radius:14px;background:var(--glass2);border:1px solid var(--stroke);}
+
+  /* real liquid glass */
+  .glass{background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02));
+    backdrop-filter:blur(30px) saturate(165%);-webkit-backdrop-filter:blur(30px) saturate(165%);
+    border:1px solid var(--stroke);box-shadow:0 10px 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.20),inset 0 -1px 0 rgba(0,0,0,.15);}
+
+  .win{width:min(1200px,97vw);height:min(740px,93vh);border-radius:22px;display:flex;flex-direction:column;overflow:hidden;}
+  .bar{height:60px;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--stroke);}
+  .dots{display:flex;gap:9px}
+  .dots i{width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--pink),var(--purple));
+    box-shadow:0 0 10px rgba(180,110,255,.7);}
+  .brand{font-weight:800;letter-spacing:.06em;font-size:17px;margin-left:8px;
+    background:linear-gradient(90deg,#fff,#cdbcff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .tabs{display:flex;gap:6px;margin:0 auto;padding:5px;border-radius:14px;}
   .tab{padding:8px 16px;border-radius:10px;font-size:13px;color:var(--mut);font-weight:500}
-  .tab.on{color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18)}
-  .srch{padding:8px 12px;border-radius:11px;background:var(--glass2);border:1px solid var(--stroke);font-size:12.5px;color:var(--mut);min-width:200px}
-  .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6b7bff,#36d0ff)}
-  .main{flex:1;display:grid;grid-template-columns:340px 1fr;min-height:0;}
-  .chat{border-right:1px solid var(--stroke);display:flex;flex-direction:column;min-height:0;padding:18px 16px;}
-  .chat h3{font-size:11px;letter-spacing:.2em;color:var(--mut);margin-bottom:14px}
-  .thread{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
-  .msg{border:1px solid var(--stroke);border-radius:14px;padding:12px 13px;background:rgba(255,255,255,.03)}
-  .msg .h{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mut);margin-bottom:7px}
-  .msg .h .who{color:#cdd6ff;font-weight:600}.msg .h .t{margin-left:auto;opacity:.6}
-  .msg p{font-size:13px;line-height:1.55;color:#dde3ff;font-family:ui-monospace,Menlo,monospace}
-  .ic{width:18px;height:18px;border-radius:6px;background:linear-gradient(135deg,#6b7bff,#36d0ff);display:inline-block}.ic.u{background:rgba(255,255,255,.14)}
-  .live{border:1px solid var(--stroke);border-radius:14px;padding:14px;margin-top:12px;background:linear-gradient(180deg,rgba(120,140,255,.06),rgba(255,255,255,.01));}
-  .live .lab{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.14em;color:#7dffa6;margin-bottom:10px}
-  .live .lab .pulse{width:8px;height:8px;border-radius:50%;background:#28c840;animation:pulse 1.6s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(40,200,64,.5)}70%{box-shadow:0 0 0 9px rgba(40,200,64,0)}100%{box-shadow:0 0 0 0 rgba(40,200,64,0)}}
-  .live .mode{font-size:13px;margin-bottom:12px}.live .log div{font-size:12.5px;color:var(--mut);font-family:ui-monospace,monospace;margin-bottom:8px}
-  .composer{margin-top:14px;display:flex;align-items:center;gap:8px;border:1px solid var(--stroke);border-radius:14px;padding:6px 6px 6px 14px;background:rgba(255,255,255,.04)}
+  .tab.on{color:#fff;background:linear-gradient(135deg,rgba(255,110,196,.25),rgba(124,92,255,.25));border:1px solid rgba(255,255,255,.18)}
+  .srch{padding:8px 14px;border-radius:11px;font-size:12.5px;color:var(--mut);min-width:200px}
+  .av{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--pink),var(--purple))}
+
+  .main{flex:1;display:flex;min-height:0;gap:14px;padding:14px;}
+  .col{border-radius:18px;min-height:0;}
+  /* LEFT */
+  .left{width:312px;display:flex;flex-direction:column;padding:16px;}
+  .left h3{font-size:11px;letter-spacing:.2em;color:var(--mut);margin-bottom:12px}
+  .thread{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+  .thread::-webkit-scrollbar{width:5px}.thread::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+  .msg{border:1px solid var(--stroke);border-radius:13px;padding:11px 12px;background:rgba(255,255,255,.04)}
+  .msg .h{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--mut);margin-bottom:6px}
+  .msg .h b{color:#cdbcff}.msg .h .t{margin-left:auto;opacity:.6}
+  .msg p{font-size:12.5px;line-height:1.5;color:#e2e6ff;font-family:ui-monospace,Menlo,monospace}
+  .ic{width:17px;height:17px;border-radius:6px;background:radial-gradient(circle at 35% 30%,var(--pink),var(--purple))}.ic.u{background:rgba(255,255,255,.16)}
+  .live{border:1px solid var(--stroke);border-radius:13px;padding:13px;margin-top:10px;background:linear-gradient(180deg,rgba(124,92,255,.10),rgba(255,255,255,.01))}
+  .live .lab{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.14em;color:#7dffa6;margin-bottom:9px}
+  .live .pulse{width:8px;height:8px;border-radius:50%;background:#28c840;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(40,200,64,.5)}70%{box-shadow:0 0 0 8px rgba(40,200,64,0)}100%{box-shadow:0 0 0 0 rgba(40,200,64,0)}}
+  .live .mode{font-size:12.5px;margin-bottom:10px}.live .log div{font-size:12px;color:var(--mut);font-family:ui-monospace,monospace;margin-bottom:7px}
+  .composer{margin-top:10px;display:flex;gap:8px;align-items:center;border:1px solid var(--stroke);border-radius:13px;padding:5px 5px 5px 13px;background:rgba(255,255,255,.05)}
   .composer input{flex:1;background:transparent;border:0;outline:0;color:var(--txt);font-size:13px}.composer input::placeholder{color:var(--mut)}
-  .composer button{width:38px;height:38px;border-radius:11px;border:0;cursor:pointer;background:linear-gradient(135deg,#6b7bff,#5b46e0);color:#fff;font-size:16px}
-  .stage{display:grid;place-items:center;position:relative}
-  .phone{width:300px;height:620px;border-radius:46px;background:#000;border:9px solid #1c1f2b;box-shadow:0 40px 90px rgba(0,0,0,.6);position:relative;overflow:hidden}
-  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:18px;z-index:5}
-  .sbar{display:flex;justify-content:space-between;padding:14px 22px 4px;font-size:12px;color:#fff;font-weight:600}
-  .ptabs{display:flex;gap:18px;padding:6px 18px 8px;font-size:15px;color:#888;font-weight:600}.ptabs .a{color:#fff;border-bottom:2px solid #fff;padding-bottom:3px}
-  .feed{height:474px;overflow-y:auto;padding:4px 12px 12px}.feed::-webkit-scrollbar{width:0}
-  .card{display:flex;gap:11px;padding:11px 6px;border-bottom:1px solid rgba(255,255,255,.07);opacity:0;transform:translateY(14px);transition:opacity .45s,transform .45s}
-  .card.in{opacity:1;transform:none}
-  .thumb{position:relative;width:74px;height:74px;border-radius:13px;flex:none}
-  .score{position:absolute;top:5px;left:5px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:7px}
-  .info{flex:1;min-width:0}.info .nm{font-size:14px;font-weight:600;color:#fff}.info .cat{font-size:11.5px;color:#8a90a8;margin:1px 0 5px}
-  .info .pr{font-size:14px;color:#7fe3ff;font-weight:600}.info .src{font-size:11px;color:#8a90a8;margin-top:5px;display:flex;justify-content:space-between}.info .src b{color:#cdd6ff}
-  .meter{height:3px;border-radius:2px;background:rgba(255,255,255,.1);margin-top:7px;overflow:hidden}.meter span{display:block;height:100%;background:linear-gradient(90deg,#6b7bff,#36d0ff)}
-  .nav{position:absolute;bottom:0;left:0;right:0;height:58px;display:flex;justify-content:space-around;align-items:center;background:rgba(0,0,0,.6);border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#9aa}
+  .composer button{width:36px;height:36px;border-radius:10px;border:0;cursor:pointer;color:#fff;font-size:15px;background:linear-gradient(135deg,var(--pink),var(--purple))}
+  .xbtn{margin-top:10px;border:0;cursor:pointer;border-radius:13px;padding:14px;font-weight:700;font-size:14px;letter-spacing:.03em;color:#fff;
+    background:linear-gradient(135deg,var(--pink),var(--purple));box-shadow:0 10px 26px rgba(150,90,255,.4);display:flex;flex-direction:column;align-items:center;gap:2px}
+  .xbtn small{font-weight:500;opacity:.8;font-size:10.5px;letter-spacing:.08em}
+  .xbtn:active{transform:scale(.98)}.xbtn:disabled{opacity:.55;cursor:default}
+
+  /* CENTER PHONE */
+  .stage{width:330px;display:grid;place-items:center;position:relative}
+  .phone{width:296px;height:610px;border-radius:44px;background:#000;border:9px solid #14161f;position:relative;overflow:hidden;
+    box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 60px rgba(124,92,255,.15)}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:108px;height:28px;background:#000;border-radius:16px;z-index:9}
+  .sbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:14px 22px 0;font-size:12px;color:#fff;font-weight:600;z-index:8}
+  /* connect screen */
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px;transition:opacity .4s}
+  .ttlogo{width:74px;height:74px;border-radius:20px;background:#000;display:grid;place-items:center;font-size:40px;box-shadow:0 0 40px rgba(255,60,120,.5);position:relative}
+  .ttlogo b{color:#fff}
+  .screen h4{font-size:19px;font-weight:700}.screen p{font-size:12.5px;color:#9aa;max-width:200px;line-height:1.5}
+  .connect{border:0;cursor:pointer;border-radius:12px;padding:12px 22px;font-weight:700;font-size:14px;color:#fff;background:linear-gradient(135deg,#ff0050,#ff3b6b);box-shadow:0 8px 22px rgba(255,0,80,.4)}
+  .connect:active{transform:scale(.97)}
+  .ring{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--pink);animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* feed (doom scroll) */
+  .feed{position:absolute;inset:0;opacity:0;transition:opacity .4s}
+  .vid{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 0 70px;}
+  .vidbg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .5s,filter .5s}
+  .vidbg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.65))}
+  .scrolling .vidbg{animation:doom 1.2s ease-in-out infinite alternate}
+  @keyframes doom{from{transform:scale(1.02) translateY(0)}to{transform:scale(1.06) translateY(-8px)}}
+  .pfeedtop{position:absolute;top:42px;left:0;right:0;display:flex;gap:16px;justify-content:center;font-size:14px;color:#bbb;font-weight:600;z-index:6}
+  .pfeedtop .a{color:#fff;border-bottom:2px solid #fff;padding-bottom:3px}
+  .rail{position:absolute;right:10px;bottom:96px;display:flex;flex-direction:column;gap:16px;align-items:center;z-index:6;color:#fff;font-size:11px;text-align:center}
+  .rail .b{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:17px;margin-bottom:2px}
+  .cap{position:relative;z-index:6;padding:0 14px;color:#fff}
+  .cap .u{font-weight:700;font-size:14px}.cap .d{font-size:12px;margin-top:4px;opacity:.95;line-height:1.35}.cap .s{font-size:11px;margin-top:7px;opacity:.85}
+  .pnav{position:absolute;bottom:0;left:0;right:0;height:56px;display:flex;justify-content:space-around;align-items:center;background:rgba(0,0,0,.7);font-size:9.5px;color:#9aa;z-index:7;border-top:1px solid rgba(255,255,255,.08)}
+  /* connector */
+  .conn{width:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .conn .tt{width:46px;height:46px;border-radius:13px;background:#000;display:grid;place-items:center;font-size:24px;box-shadow:0 0 22px rgba(255,60,120,.4)}
+  .conn .st{font-size:9.5px;letter-spacing:.12em;color:#ff6b8b}
+  .conn.ok .st{color:#7dffa6}
+  .wire{flex:1;width:2px;background:linear-gradient(180deg,transparent,rgba(150,180,255,.4),transparent)}
+
+  /* RIGHT results */
+  .results{flex:1;padding:18px;display:flex;flex-direction:column;min-height:0}
+  .results .rh{display:flex;align-items:center;margin-bottom:14px}
+  .results .rh h2{font-size:14px;letter-spacing:.04em}.results .rh .src{margin-left:auto;font-size:11px;color:var(--mut)}
+  .thead{display:grid;grid-template-columns:1fr 64px 84px 96px;font-size:10.5px;letter-spacing:.06em;color:var(--mut);padding:0 6px 10px;border-bottom:1px solid var(--stroke)}
+  .thead .r{text-align:right}
+  .rows{flex:1;overflow-y:auto}.rows::-webkit-scrollbar{width:5px}.rows::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+  .row{display:grid;grid-template-columns:1fr 64px 84px 96px;align-items:center;padding:12px 6px;border-bottom:1px solid rgba(255,255,255,.06);opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s}
+  .row.in{opacity:1;transform:none}
+  .prod{display:flex;gap:11px;align-items:center;min-width:0}
+  .pt{width:46px;height:46px;border-radius:11px;flex:none}
+  .prod .nm{font-size:13.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.prod .ct{font-size:11px;color:#8a90a8}
+  .sc{justify-self:center;font-size:12.5px;font-weight:700;color:#cdbcff;border:1px solid rgba(180,150,255,.4);border-radius:8px;padding:3px 9px}
+  .rp{text-align:right;font-size:13px;color:var(--cyan);font-weight:600}
+  .co{text-align:right;font-size:12.5px;color:#fff}.co small{display:block;font-size:10.5px;color:#8a90a8}
+  .empty{flex:1;display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center;line-height:1.6}
+  .viewall{margin-top:10px;text-align:center;padding:12px;border:1px solid var(--stroke);border-radius:12px;color:#cdbcff;font-size:13px;font-weight:600;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="stars"></div>
-<div class="win">
+<div class="win glass">
   <div class="bar">
-    <div class="lights"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+    <div class="dots"><i></i><i></i><i></i></div>
     <div class="brand">XSEARCH</div>
-    <div class="tabs"><div class="tab on">Scanner</div><div class="tab">Trends</div><div class="tab">Analytics</div><div class="tab">Lists</div></div>
-    <div class="srch">Search products…  ⌘K</div><div class="av"></div>
+    <div class="tabs glass" style="border:1px solid var(--stroke)"><div class="tab on">Scanner</div><div class="tab">Trends</div><div class="tab">Analytics</div><div class="tab">Lists</div></div>
+    <div class="srch glass" style="border:1px solid var(--stroke)">Search…  ⌘K</div><div class="av"></div>
   </div>
   <div class="main">
-    <div class="chat">
+    <!-- LEFT -->
+    <div class="col left glass">
       <h3>AGENT CHAT</h3>
       <div class="thread" id="thread"></div>
       <div class="live">
         <div class="lab"><span class="pulse"></span>LIVE</div>
-        <div class="mode" id="mode">Idle</div>
-        <div class="log">
-          <div id="vids">watched 0 videos</div><div id="found">found 0 products</div><div id="srcstat">idle</div>
-        </div>
+        <div class="mode" id="mode">Standby — not connected</div>
+        <div class="log"><div id="vids">watched 0 videos</div><div id="found">found 0 products</div><div id="srcstat">idle</div></div>
       </div>
-      <div class="composer"><input id="q" placeholder="Tell the agent what to find…"/><button id="go">➤</button></div>
+      <div class="composer"><input id="q" placeholder="Tell the agent what to find…"/><button id="send">➤</button></div>
+      <button class="xbtn" id="xbtn">⚡ XSEARCH<small>LEARN THE MARKET</small></button>
     </div>
+
+    <!-- CENTER PHONE -->
     <div class="stage">
-      <div class="phone">
+      <div class="phone" id="phone">
         <div class="notch"></div>
         <div class="sbar"><span>9:41</span><span>5G ▮▮▮</span></div>
-        <div class="ptabs"><span class="a">For You</span><span>Following</span></div>
-        <div class="feed" id="feed"></div>
-        <div class="nav"><div>Home</div><div>Discover</div><div>+</div><div>Inbox</div><div>Profile</div></div>
+
+        <div class="screen" id="scrConnect">
+          <div class="ttlogo"><b>♪</b></div>
+          <h4>Connect to TikTok</h4>
+          <p>Link a TikTok session so the agent can scroll the For You feed and learn the market.</p>
+          <button class="connect" id="btnConnect">Connect to TikTok</button>
+        </div>
+
+        <div class="screen" id="scrConnecting" style="display:none">
+          <div class="ring"></div>
+          <h4>Connecting…</h4>
+          <p id="connecting-sub">Opening TikTok session</p>
+        </div>
+
+        <div class="feed" id="feed">
+          <div class="pfeedtop"><span>Following</span><span class="a">For You</span></div>
+          <div class="vid" id="vid">
+            <div class="vidbg" id="vidbg"></div>
+            <div class="rail">
+              <div><div class="b">＋</div></div>
+              <div><div class="b">♥</div><span id="r-like">0</span></div>
+              <div><div class="b">💬</div><span id="r-comment">0</span></div>
+              <div><div class="b">🔖</div><span id="r-save">0</span></div>
+              <div><div class="b">↪</div><span id="r-share">0</span></div>
+            </div>
+            <div class="cap"><div class="u" id="c-user">@discover</div><div class="d" id="c-desc">Tap XSEARCH to start scrolling…</div><div class="s">♪ original sound</div></div>
+          </div>
+          <div class="pnav"><div>Home</div><div>Friends</div><div>＋</div><div>Inbox</div><div>Profile</div></div>
+        </div>
       </div>
+    </div>
+
+    <!-- CONNECTOR -->
+    <div class="conn" id="conn"><div class="wire"></div><div class="tt">♪</div><div class="st" id="connSt">NOT CONNECTED</div><div class="wire"></div></div>
+
+    <!-- RIGHT -->
+    <div class="col results glass">
+      <div class="rh"><h2 id="rcount">PRODUCTS</h2><span class="src" id="rsrc"></span></div>
+      <div class="thead"><span>Product</span><span style="text-align:center">X Score</span><span class="r">Retail</span><span class="r">1688/CJ · Margin</span></div>
+      <div class="rows" id="rows"><div class="empty" id="empty">Connect TikTok and hit ⚡ XSEARCH<br/>to scan the market.</div></div>
+      <div class="viewall" id="viewall" style="display:none">View Full List →</div>
     </div>
   </div>
 </div>
+
 <script>
 const $=id=>document.getElementById(id);
 const G=[["#c9d2e0","#8a94a8"],["#7c6cff","#36d0ff"],["#ff9f6b","#ffd06b"],["#36d399","#1f8f6b"],["#ff6cc4","#ff8f6b"],["#5bc0ff","#7c6cff"],["#4be0c0","#36d399"],["#9aa3c9","#5b6480"],["#ffb14e","#ff7a45"],["#9b8cff","#6b7bff"]];
+const K=n=>n>=1000?(n/1000).toFixed(1)+"K":String(n||0);
+let connected=false,busy=false;
+
 function addMsg(who,text,me){const m=document.createElement("div");m.className="msg";
-  m.innerHTML=`<div class="h"><span class="ic ${me?'u':''}"></span><span class="who">${who}</span><span class="t">now</span></div><p>${text}</p>`;
+  m.innerHTML=`<div class="h"><span class="ic ${me?'u':''}"></span><b>${who}</b><span class="t">now</span></div><p>${text}</p>`;
   $("thread").appendChild(m);$("thread").scrollTop=1e9;}
-function card(p,i){const g=G[i%G.length];const views=p.engagement?.views||0;
-  const cost=p.cost!=null?`$${Number(p.cost).toFixed(2)}`:"—";const margin=p.margin!=null?`${p.margin}%`:"—";
-  const el=document.createElement("div");el.className="card";
-  el.innerHTML=`<div class="thumb" style="background:linear-gradient(140deg,${g[0]},${g[1]})"><span class="score">${p.xScore??""}</span></div>
-   <div class="info"><div class="nm">${p.title}</div><div class="cat">${p.category||""}</div>
-   <div class="pr">${p.retailPrice!=null?"$"+Number(p.retailPrice).toFixed(2):""}</div>
-   <div class="src"><span>1688 / CJ cost <b>${cost}</b></span><span><b>${margin}</b> margin</span></div>
-   <div class="meter"><span style="width:${Math.min(100,views/12000)}%"></span></div></div>`;
-  return el;}
-let busy=false;
+
+function setConn(state){ // 'no'|'connecting'|'ok'
+  $("scrConnect").style.display = state==='no'?'flex':'none';
+  $("scrConnecting").style.display = state==='connecting'?'flex':'none';
+  $("feed").style.opacity = state==='ok'?'1':'0';
+  $("conn").classList.toggle('ok',state==='ok');
+  $("connSt").textContent = state==='ok'?'CONNECTED':state==='connecting'?'CONNECTING…':'NOT CONNECTED';
+}
+
+function connect(){
+  if(connected)return Promise.resolve();
+  addMsg("You","Connect to TikTok.",true);
+  setConn('connecting');$("mode").textContent="Connecting to TikTok…";
+  const steps=["Opening TikTok session","Loading For You feed","Warming up the agent"];let i=0;
+  const iv=setInterval(()=>{$("connecting-sub").textContent=steps[i++%steps.length];},700);
+  return new Promise(res=>setTimeout(()=>{clearInterval(iv);connected=true;setConn('ok');
+    $("mode").textContent="Connected — ready to scan";addMsg("XSEARCH AI","Connected to TikTok ✅ (demo session). Give me a niche and I'll scroll the feed.");res();},2100));
+}
+
+function showVideo(p,i){
+  $("vidbg").style.background=`linear-gradient(140deg,${G[i%G.length][0]},${G[i%G.length][1]})`;
+  const e=p.engagement||{};
+  $("r-like").textContent=K(e.likes||Math.round((e.views||0)*0.08));
+  $("r-comment").textContent=K(e.comments||Math.round((e.views||0)*0.01));
+  $("r-save").textContent=K(Math.round((e.views||0)*0.012));
+  $("r-share").textContent=K(e.shares||Math.round((e.views||0)*0.02));
+  $("c-user").textContent="@"+(p.title||"creator").toLowerCase().replace(/[^a-z]/g,"").slice(0,12);
+  $("c-desc").textContent=p.title+" "+(p.category?("· "+p.category):"");
+}
+
+function demoCost(p){
+  if(p.cost!=null)return{cost:p.cost,margin:p.margin};
+  if(p.retailPrice==null)return{cost:null,margin:null};
+  const cost=+(p.retailPrice*0.30).toFixed(2);
+  return{cost,margin:Math.round((p.retailPrice-cost)/p.retailPrice*100)};
+}
+function row(p,i){
+  const g=G[i%G.length],{cost,margin}=demoCost(p);
+  const el=document.createElement("div");el.className="row";
+  el.innerHTML=`<div class="prod"><div class="pt" style="background:linear-gradient(140deg,${g[0]},${g[1]})"></div>
+    <div><div class="nm">${p.title}</div><div class="ct">${p.category||""}</div></div></div>
+    <div class="sc">${p.xScore??"—"}</div>
+    <div class="rp">${p.retailPrice!=null?"$"+(+p.retailPrice).toFixed(2):"—"}</div>
+    <div class="co">${cost!=null?"$"+cost.toFixed(2):"—"}<small>${margin!=null?margin+"% margin":""}</small></div>`;
+  return el;
+}
+
 async function scan(query){
-  if(busy)return;busy=true;$("feed").innerHTML="";
-  $("mode").textContent="Learning Market Mode — scanning";$("vids").textContent="watched 0 videos";$("found").textContent="found 0 products";$("srcstat").textContent="contacting backend…";
-  addMsg("XSEARCH AI",`Scanning for: <b style="color:#7fe3ff">${query}</b> …`);
+  if(busy)return;busy=true;
+  if(!connected){await connect();}
+  $("xbtn").disabled=true;$("empty")&&($("empty").style.display="none");$("rows").innerHTML="";$("viewall").style.display="none";
+  $("phone").classList.add("scrolling");$("mode").textContent="Learning Market Mode — scrolling TikTok";
+  $("vids").textContent="watched 0 videos";$("found").textContent="found 0 products";$("srcstat").textContent="scrolling…";
+  addMsg("XSEARCH AI",`Scrolling TikTok for <b style="color:#7fe3ff">${query}</b> …`);
   let data;
-  try{
-    const r=await fetch("/api/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query})});
-    data=await r.json();
-  }catch(e){addMsg("XSEARCH AI",`Backend error: ${e.message}`);busy=false;return;}
+  try{const r=await fetch("/api/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query})});data=await r.json();}
+  catch(e){addMsg("XSEARCH AI","Backend error: "+e.message);busy=false;$("xbtn").disabled=false;$("phone").classList.remove("scrolling");return;}
   const products=data.products||[];let vids=0;
+  $("rcount").textContent=`${products.length} PRODUCTS FOUND`;$("rsrc").textContent="source: "+data.source;
   for(let i=0;i<products.length;i++){
-    const el=card(products[i],i);$("feed").appendChild(el);
+    showVideo(products[i],i);
+    const el=row(products[i],i);$("rows").appendChild(el);
     requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
     vids+=Math.floor(6+Math.random()*22);
     $("vids").textContent=`watched ${vids} videos`;$("found").textContent=`found ${i+1} products`;
-    $("srcstat").textContent=i<products.length-1?"ranking…":"done";
-    await new Promise(r=>setTimeout(r,220));
+    $("srcstat").textContent=i<products.length-1?"sourcing prices…":"done";
+    await new Promise(r=>setTimeout(r,300));
   }
-  addMsg("XSEARCH AI",`Done — <b>${products.length} products</b> from source <b>${data.source}</b>. Top: <b style="color:#7fe3ff">${products[0]?.title||"—"}</b>.`);
-  $("mode").textContent="Idle";busy=false;
+  $("phone").classList.remove("scrolling");$("mode").textContent="Connected — scan complete";$("viewall").style.display="block";
+  addMsg("XSEARCH AI",`Done — <b>${products.length}</b> products. Top: <b style="color:#7fe3ff">${products[0]?.title||"—"}</b>. Type a new niche to scan again.`);
+  busy=false;$("xbtn").disabled=false;
 }
-$("go").onclick=()=>{const q=$("q").value.trim()||"winning products on tiktok";addMsg("You",q,true);$("q").value="";scan(q);};
-$("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click();});
-addMsg("You","Find winning products in home & kitchen.",true);
-scan("home & kitchen");
+
+$("btnConnect").onclick=()=>connect();
+$("xbtn").onclick=()=>scan($("q").value.trim()||"trending products");
+$("send").onclick=()=>{const q=$("q").value.trim();if(!q)return;scan(q);};
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("send").click();});
+addMsg("XSEARCH AI","Hey — I'm your market agent. Hit <b>Connect to TikTok</b>, tell me a niche, then press <b>⚡ XSEARCH</b> and I'll scroll the feed.");
+setConn('no');
 </script>
 </body>
 </html>
