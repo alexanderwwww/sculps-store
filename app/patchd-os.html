@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Patchd OS — Sleep Edition</title>
+<style>
+  :root{ --glass:rgba(20,22,40,.55); --stroke:rgba(255,255,255,.12); --txt:#eef0ff; --mut:#a7adcf; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
+    color:var(--txt); min-height:100vh; display:grid; place-items:center; padding:32px;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, #2a2150 0%, transparent 60%),
+      radial-gradient(900px 600px at 10% 110%, #163a5f 0%, transparent 55%),
+      linear-gradient(160deg,#0a0a1f 0%,#0d1230 55%,#070712 100%);
+    overflow:hidden;
+  }
+  /* stars */
+  .stars,.stars:after{ content:""; position:fixed; inset:0; pointer-events:none;
+    background-image:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 60%,#cdd,transparent),
+      radial-gradient(1px 1px at 40% 80%,#fff,transparent),radial-gradient(1.4px 1.4px at 85% 20%,#fff,transparent),
+      radial-gradient(1px 1px at 55% 15%,#bcd,transparent),radial-gradient(1px 1px at 30% 65%,#fff,transparent);
+    background-size:cover; opacity:.5; animation:tw 6s ease-in-out infinite alternate; }
+  .stars:after{ opacity:.25; transform:scale(1.4); animation-delay:-3s; }
+  @keyframes tw{ from{opacity:.25} to{opacity:.6} }
+
+  /* mac window */
+  .win{ width:min(920px,94vw); border-radius:18px; background:var(--glass); backdrop-filter:blur(26px) saturate(140%);
+    -webkit-backdrop-filter:blur(26px) saturate(140%); border:1px solid var(--stroke);
+    box-shadow:0 40px 120px rgba(0,0,0,.6),0 2px 0 rgba(255,255,255,.06) inset; overflow:hidden; }
+  .bar{ height:42px; display:flex; align-items:center; gap:8px; padding:0 14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02)); border-bottom:1px solid var(--stroke); }
+  .dot{ width:12px; height:12px; border-radius:50%; }
+  .r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+  .bar h1{ font-size:13px; font-weight:600; color:var(--mut); margin-left:8px; letter-spacing:.2px; }
+  .bar .reg{ margin-left:auto; font-size:11px; color:var(--mut); opacity:.7; }
+
+  .body{ display:grid; grid-template-columns:1.05fr .95fr; }
+  @media(max-width:720px){ .body{ grid-template-columns:1fr; } }
+
+  /* hero image */
+  .hero{ position:relative; min-height:380px; display:grid; place-items:center; padding:30px;
+    background:radial-gradient(420px 420px at 50% 40%, rgba(120,120,255,.18), transparent 70%); }
+  .glow{ position:absolute; width:300px; height:300px; border-radius:50%; filter:blur(60px); opacity:.55;
+    background:radial-gradient(circle,#7c6cff,#2bd0ff 60%,transparent 75%); animation:float 7s ease-in-out infinite alternate; }
+  @keyframes float{ from{transform:translateY(-10px)} to{transform:translateY(12px)} }
+  .hero img{ position:relative; width:78%; max-width:300px; border-radius:22px;
+    box-shadow:0 30px 60px rgba(0,0,0,.55); animation:float 7s ease-in-out infinite alternate; }
+
+  /* detail */
+  .detail{ padding:34px 34px 26px; border-left:1px solid var(--stroke); display:flex; flex-direction:column; }
+  .pill{ align-self:flex-start; font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:#bdb6ff;
+    border:1px solid rgba(160,150,255,.35); padding:5px 10px; border-radius:999px; margin-bottom:16px; }
+  .detail h2{ font-size:34px; font-weight:700; letter-spacing:-.02em; }
+  .detail .tag{ color:var(--mut); margin-top:6px; font-size:15px; line-height:1.5; }
+  .stars-row{ margin-top:14px; font-size:13px; color:#ffd479; display:flex; align-items:center; gap:8px; }
+  .stars-row .c{ color:var(--mut); }
+  .price{ margin-top:18px; font-size:26px; font-weight:700; }
+  .price s{ color:var(--mut); font-weight:400; font-size:16px; margin-left:8px; }
+  .ritual{ margin-top:18px; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:#8ce0ff; }
+  .actives{ margin-top:14px; font-size:13px; color:var(--mut); line-height:1.7; }
+  .cta{ margin-top:auto; display:flex; gap:10px; padding-top:24px; }
+  .btn{ flex:1; text-align:center; text-decoration:none; padding:13px 16px; border-radius:13px; font-weight:600; font-size:14px;
+    transition:transform .12s ease, filter .12s ease; }
+  .btn:active{ transform:scale(.97); }
+  .buy{ background:linear-gradient(180deg,#7c6cff,#5b46e0); color:#fff; box-shadow:0 10px 24px rgba(110,90,255,.4); }
+  .ghost{ background:rgba(255,255,255,.07); color:var(--txt); border:1px solid var(--stroke); }
+  .buy:hover{ filter:brightness(1.08); }
+
+  /* dock */
+  .dock{ margin-top:22px; display:flex; gap:12px; padding:12px 16px; align-items:flex-end; justify-content:center; flex-wrap:wrap;
+    background:var(--glass); backdrop-filter:blur(26px); border:1px solid var(--stroke); border-radius:20px; }
+  .dock img{ width:46px; height:46px; border-radius:12px; cursor:pointer; transition:transform .18s cubic-bezier(.2,.8,.3,1.4),box-shadow .18s; object-fit:cover;
+    box-shadow:0 6px 14px rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.1); }
+  .dock img:hover{ transform:translateY(-12px) scale(1.18); box-shadow:0 16px 30px rgba(0,0,0,.5); }
+  .dock img.active{ outline:2px solid #8ce0ff; outline-offset:2px; }
+  .foot{ margin-top:14px; font-size:11px; color:var(--mut); opacity:.6; text-align:center; }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<div style="display:flex;flex-direction:column;align-items:center;">
+  <div class="win">
+    <div class="bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <h1 id="winTitle">Patchd OS — sleep edition</h1>
+      <span class="reg">patchd.us · ®</span>
+    </div>
+    <div class="body">
+      <div class="hero"><div class="glow" id="glow"></div><img id="heroImg" src="" alt="" /></div>
+      <div class="detail">
+        <span class="pill">supplement patch · wear it, don't swallow</span>
+        <h2 id="pName"></h2>
+        <div class="tag" id="pTag"></div>
+        <div class="stars-row" id="pStars"></div>
+        <div class="price" id="pPrice"></div>
+        <div class="ritual">peel · place · go</div>
+        <div class="actives" id="pActives"></div>
+        <div class="cta">
+          <a class="btn buy" id="pBuy" target="_blank" rel="noopener">Open in store →</a>
+          <a class="btn ghost" id="pBundle" target="_blank" rel="noopener">Build a GLO-BOX</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock" id="dock"></div>
+  <div class="foot">a freestyle little showcase · real catalog, live images · ⌘+click a patch to switch</div>
+</div>
+
+<script>
+const CDN="https://cdn.shopify.com/s/files/1/0762/8711/5456/files/";
+const P=[
+ {n:"Sleep",h:"sleep",t:"Set your nights to airplane mode.",img:"322803d0-0415-4c07-9c3a-ce842899a7d3.png",price:"29.99",rating:"4.86",reviews:7,actives:"Melatonin · Magnesium · L-Theanine",glow:"#7c6cff"},
+ {n:"Energy",h:"energy",t:"Awake before the coffee is.",img:"b6523cc8-abb0-49c8-bc7c-33a990d13f43.png",price:"29.99",glow:"#ffb14e"},
+ {n:"Energy Extreme",h:"energy-extreme",t:"Turned all the way up.",img:"d57a940f-3cfa-431e-92ab-191bf15e9697.png",price:"29.99",glow:"#ff7a45"},
+ {n:"Focus",h:"focus",t:"Your attention, on tap.",img:"0786a889-48bc-4b92-8d4d-53a36bfb0ffe.png",price:"29.99",glow:"#36d399"},
+ {n:"Calm",h:"calm",t:"Turn the volume down.",img:"b462a646-3aeb-447d-864d-891ca7ccf5fd.png",price:"29.99",glow:"#5bc0ff"},
+ {n:"Multi",h:"multi",t:"Your daily foundation, in one step.",img:"90b1d2ce-ccf5-4bbd-ba8b-77a10176dd62.png",price:"29.99",glow:"#9b8cff"},
+ {n:"Vibe",h:"vibe",t:"Mood, leveled out.",img:"a3ebc694-b10a-4f26-a6a7-915540e71f88.png",price:"29.99",glow:"#ff6cc4"},
+ {n:"Detox",h:"detox",t:"Debloat. Reset. Repeat.",img:"9cdd633f-f4a6-41b8-b0bb-4c2453079ab3.png",price:"29.99",glow:"#4be0c0"},
+ {n:"Slim",h:"slim",t:"Flatter, lighter — by routine.",img:"28f5fa46-71f3-400d-a46d-8600386eeb4f.png",price:"29.99",glow:"#ff8fa3"},
+ {n:"Desire",h:"desire",t:"Slow-burn confidence.",img:"b141c362-6f56-475f-82fd-7387b3ef2809.png",price:"29.99",glow:"#ff5f8f"},
+ {n:"Alpha",h:"alpha",t:"Strength, dialed in.",img:"e50081c9-3341-4493-8d9c-3827e6c467fa.png",price:"29.99",glow:"#7aa0ff"},
+ {n:"Her",h:"her",t:"Balance, worn daily.",img:"322803d0-0415-4c07-9c3a-ce842899a7d3.png",price:"29.99",glow:"#d98cff"},
+];
+const $=id=>document.getElementById(id);
+function render(p){
+  $("heroImg").src=CDN+p.img; $("heroImg").alt=p.n;
+  $("glow").style.background=`radial-gradient(circle, ${p.glow}, #2bd0ff 60%, transparent 75%)`;
+  $("pName").textContent=p.n.toLowerCase();
+  $("winTitle").textContent="Patchd OS — "+p.n.toLowerCase()+" edition";
+  $("pTag").textContent=p.t;
+  $("pPrice").innerHTML=`$${p.price} <s>30-day supply</s>`;
+  $("pStars").innerHTML = p.rating ? `★★★★★ <span class="c">${p.rating} · ${p.reviews} reviews</span>` : `<span class="c">new drop · be the first</span>`;
+  $("pActives").textContent = p.actives ? "Key actives — "+p.actives : "";
+  $("pBuy").href="https://patchd.us/products/"+p.h;
+  $("pBundle").href="https://patchd.us/products/glo-box";
+  document.querySelectorAll(".dock img").forEach((el,i)=>el.classList.toggle("active",P[i]===p));
+}
+const dock=$("dock");
+P.forEach((p,i)=>{ const im=document.createElement("img"); im.src=CDN+p.img; im.title=p.n; im.onclick=()=>render(p); dock.appendChild(im); });
+render(P[0]);
+</script>
+</body>
+</html>
