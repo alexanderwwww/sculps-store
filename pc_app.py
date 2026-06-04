@@ -34,11 +34,19 @@ jobs = defaultdict(lambda: {"status": "pending", "log": [], "result": None})
 # Site profiles (how to read each site's board from the DOM)
 # ---------------------------------------------------------------------------
 
-NUM_CLASSES = {
-    "hd_type1": 1, "hd_type2": 2, "hd_type3": 3, "hd_type4": 4,
-    "hd_type5": 5, "hd_type6": 6, "hd_type7": 7, "hd_type8": 8,
-    "hd_opened": 0,
-}
+def ms_number(tokens):
+    """minesweeper.online uses hd_type0 (empty) .. hd_type8.
+    hd_type10/11 etc. = mine/exploded, which are NOT board numbers."""
+    for t in tokens:
+        if t.startswith("hd_type"):
+            try:
+                v = int(t[len("hd_type"):])
+            except ValueError:
+                continue
+            if 0 <= v <= 8:
+                return v
+    return None
+
 
 PROFILES = {
     "minesweeper.online": {
@@ -46,7 +54,7 @@ PROFILES = {
         "coord": ("data-x", "data-y"),
         "closed":   lambda c: "hd_closed" in c or "hd_question" in c,
         "flagged":  lambda c: "hd_flag" in c,
-        "number":   lambda c: next((v for k, v in NUM_CLASSES.items() if k in c), None),
+        "number":   ms_number,
         "win_sel":  "#top_area_face",
         "win_cls":  "face_win",
         "lose_cls": "face_lose",
@@ -227,7 +235,7 @@ def run_solver(job_id, url):
                 guess = solver.best_guess(unknown)
                 if guess:
                     guesses += 1
-                    log(f"Guess {guess} (no certain move)")
+                    log(f"Guess {guess} ({len(numbers)} clues read, none certain)")
                     click(*guess)
                     moves += 1
                 else:
