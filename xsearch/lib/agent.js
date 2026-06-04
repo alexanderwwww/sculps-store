@@ -50,14 +50,17 @@ export async function runCommand(page, client, text, send) {
   await exec(page, client, a, send);
 }
 
-// "Learn the Market" -> autonomous search + scroll loop
+// "Learn the Market" -> actually WATCH the For You feed: dwell on each video,
+// then swipe to the next. Real doom-scroll. (Judging the videos = the Claude step, next.)
 export async function runMarketScan(page, client, goal, send) {
-  const brain = getBrain();
-  const plan = await brain.marketPlan(goal);
-  send({ type: "agent", text: `learning the market: "${plan.niche}" (brain: ${brain.name})` });
-  for (const step of plan.steps) {
-    await exec(page, client, step, send);
-    await new Promise((r) => setTimeout(r, 1500)); // watch each step
+  send({ type: "agent", text: "opening the For You feed…" });
+  await page.goto("https://www.tiktok.com/foryou", { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 3500)); // let the first video load + play
+  for (let i = 1; i <= 10; i++) {
+    if (page.isClosed?.()) break;
+    send({ type: "agent", text: `watching video ${i}…` });
+    await new Promise((r) => setTimeout(r, 3000 + Math.random() * 2500)); // actually watch (human-like dwell)
+    await swipe(client, VPW / 2, VPH * 0.8, VPW / 2, VPH * 0.2); // swipe to next
   }
-  send({ type: "agent", text: "market scan complete" });
+  send({ type: "agent", text: "watched 10 videos. Next step is teaching me to judge them (the Claude eye) — but the watching is real now." });
 }

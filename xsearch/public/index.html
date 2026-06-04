@@ -291,10 +291,10 @@ async function scan(query){if(busy)return;busy=true;if(!connected){await connect
   addMsg("XSEARCH AI",`Done — <b>${products.length}</b> products. Top: <b style="color:#7fe3ff">${products[0]?.title||"—"}</b>. Type a new niche to scan again.`);
   busy=false;$("xbtn").disabled=false;}
 $("btnConnect").onclick=()=>connect();
-$("xbtn").onclick=()=>scan($("q").value.trim()||"trending products");
+$("xbtn").onclick=()=>{addMsg("You","Learn the market — watch the feed",true);sendLive({type:"learn",goal:$("q").value.trim()||"for you"});};
 $("send").onclick=()=>{const q=$("q").value.trim();if(!q)return;addMsg("You",q,true);sendLive({type:"command",text:q});$("q").value="";};
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("send").click();});
-addMsg("XSEARCH AI","Hey — I'm your market agent. Booting the live TikTok browser… then type a command (like \"search kitchen gadgets\" or \"scroll\") or press XSEARCH to learn the market on its own.");
+addMsg("XSEARCH AI","Booting the live TikTok browser. If the phone is blank/white, LOG IN to TikTok once in the window that opened — then press XSEARCH and I'll actually watch the feed (swipe + watch each video). Judging the videos comes next.");
 setConn('no');connect();
 </script>
 </body>
