@@ -1,296 +1,565 @@
 """
 Mine Solver — definitive edition.
 python pc_app.py   |   double-click start.bat
+
+Seed reader is built around a PERSISTENT capture session:
+  • opens a real Chrome window you can log into / navigate
+  • captures seeds from WebSocket frames, HTTP JSON, request bodies,
+    React / Vue / Angular state, localStorage, the DOM and raw page text
+  • every candidate is scored so the most trustworthy source wins
+  • hit GRAB any time to pull the latest — works on the hard sites too
 """
 
-import json, os, socket, threading, uuid, webbrowser
-from collections import defaultdict
+import collections
+import glob
+import json
+import os
+import queue
+import re
+import socket
+import threading
+import time
+import uuid
+import webbrowser
+
 from flask import Flask, jsonify, render_template, request
 from playwright.sync_api import sync_playwright
+
 from solver import MinesweeperSolver
 
-app   = Flask(__name__)
-jobs  = defaultdict(lambda: {"status":"pending","log":[],"result":None,"grid":None})
+app  = Flask(__name__)
+jobs = collections.defaultdict(lambda: {"status": "pending", "log": [], "result": None, "grid": None})
+
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SEED READER — comprehensive, multi-strategy
+# Validators + scored candidate pool helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-# JS injected into the page — scans everything: React fiber, window globals,
-# localStorage/sessionStorage, DOM inputs, hex-string harvest.
+_HEX = re.compile(r"^[0-9a-fA-F]+$")
+
+
+def _valid(field, v, trusted):
+    """Return a cleaned value if it's plausible for `field`, else None.
+    `trusted` (high score / exact key match) loosens the format rules."""
+    v = ("" if v is None else str(v)).strip()
+    if not v:
+        return None
+    if field == "serverHash":
+        return v if (_HEX.match(v) and len(v) == 64) else None
+    if field == "serverSeed":
+        if _HEX.match(v) and 16 <= len(v) <= 128:
+            return v
+        if trusted and re.match(r"^[A-Za-z0-9]{16,128}$", v):
+            return v
+        return None
+    if field == "clientSeed":
+        if trusted and 1 <= len(v) <= 80:
+            return v
+        if re.match(r"^[A-Za-z0-9_\-]{3,80}$", v):
+            return v
+        return None
+    if field == "nonce":
+        return v if (v.isdigit() and 1 <= len(v) <= 12) else None
+    return None
+
+
+# Flat JSON key spellings → field  (value is the seed/hash/nonce itself)
+_SERVER_K = {"serverseed", "server_seed"}
+_HASH_K   = {"serverseedhash", "server_seed_hash", "serverhash",
+             "hashedserverseed", "server_seed_hashed", "seedhash"}
+_CLIENT_K = {"clientseed", "client_seed"}
+_NONCE_K  = {"nonce", "betnumber", "bet_number", "gamenumber",
+             "game_number", "round", "roundid", "round_id"}
+
+# Container keys whose VALUE is an object holding the seed (Stake-style:
+#   serverSeed: { seed: "...", seedHash: "..." }
+#   previousServerSeed: { seed: "...", nonce: 99 }   ← the revealed/unhashed seed
+_SERVER_CONTAINER = {"serverseed", "server_seed", "activeserverseed", "active_server_seed",
+                     "previousserverseed", "previous_server_seed", "serverseedpair",
+                     "activeserverseedpair", "nextserverseed", "next_server_seed",
+                     "currentserverseed", "serverseeddetails"}
+_CLIENT_CONTAINER = {"clientseed", "client_seed", "activeclientseed",
+                     "active_client_seed", "clientseedpair", "clientseeddetails"}
+# Child keys found INSIDE a seed container object
+_CHILD_SEED = {"seed", "unhashed", "unhashedseed", "revealed", "revealedseed",
+               "value", "plain", "plainseed"}
+_CHILD_HASH = {"seedhash", "hash", "hashedseed", "hashed", "seedhashed", "hashedvalue"}
+
+
+def _norm(k):
+    return re.sub(r"[-\s]", "", str(k).lower())
+
+
+# Raw-text regexes (for WebSocket frames / request bodies / non-JSON blobs)
+_TEXT_PATTERNS = {
+    "serverHash": [re.compile(r"(?:server[_\s]?seed[_\s]?hash|hashed[_\s]?server[_\s]?seed)"
+                              r"\W{0,4}([0-9a-fA-F]{64})", re.I)],
+    "serverSeed": [re.compile(r"server[_\s]?seed(?!\W{0,4}hash)\W{0,4}([0-9A-Za-z]{16,128})", re.I)],
+    "clientSeed": [re.compile(r"client[_\s]?seed\W{0,4}([0-9A-Za-z_\-]{1,80})", re.I)],
+    "nonce":      [re.compile(r"nonce\W{0,4}(\d{1,12})", re.I),
+                   re.compile(r"bet\s*(?:id|number|no|#)\W{0,4}(\d{1,12})", re.I)],
+}
+
+
+def _short(url):
+    try:
+        u = re.sub(r"^https?://", "", url)
+        return (u[:46] + "…") if len(u) > 47 else u
+    except Exception:
+        return str(url)[:47]
+
+
+def _relevant(url):
+    u = (url or "").lower()
+    return any(t in u for t in ("seed", "fair", "bet", "game", "mine",
+                                "graphql", "play", "round", "provab", "verify", "casino"))
+
+
+def _chrome_path():
+    """On this Linux container Playwright's browser lives in /opt/pw-browsers.
+    On Windows return None so Playwright uses its own installed Chromium."""
+    for pat in ("/opt/pw-browsers/chromium-*/chrome-linux/chrome",
+                "/opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell"):
+        m = glob.glob(pat)
+        if m:
+            return m[0]
+    return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# In-page JS scanner — React/Vue/Angular state, window globals, storage, DOM, text
+# Returns {fields:[{field,value,score,src}, ...]} so Python can merge with scores.
+# ─────────────────────────────────────────────────────────────────────────────
+
 SEED_JS = r"""
 () => {
-  const R = {serverSeed:'',serverHash:'',clientSeed:'',nonce:'',found:false,sources:[]};
+  const out = [];
+  const isHex = s => /^[0-9a-fA-F]{16,128}$/.test(s);
+  const is64  = s => /^[0-9a-fA-F]{64}$/.test(s);
+  const isNon = s => /^\d{1,12}$/.test(s);
+  const push  = (field, value, score, src) => {
+    value = (value == null ? '' : String(value)).trim();
+    if (value) out.push({field, value, score, src});
+  };
+  const SK=['serverseed','server_seed'],
+        HK=['serverseedhash','server_seed_hash','serverhash','hashedserverseed','seedhash'],
+        CK=['clientseed','client_seed'],
+        NK=['nonce','betnumber','bet_number','gamenumber','game_number','round','roundid','round_id'],
+        SCON=['serverseed','server_seed','activeserverseed','previousserverseed','serverseedpair',
+              'activeserverseedpair','nextserverseed','currentserverseed','serverseeddetails'],
+        CCON=['clientseed','client_seed','activeclientseed','clientseedpair','clientseeddetails'],
+        CSEED=['seed','unhashed','unhashedseed','revealed','revealedseed','value','plain','plainseed'],
+        CHASH=['seedhash','hash','hashedseed','hashed','seedhashed','hashedvalue'];
+  const norm = k => String(k).toLowerCase().replace(/[-\s]/g,'');
 
-  const is64hex = s => /^[0-9a-f]{64}$/i.test((s||'').trim());
-  const isHex   = s => /^[0-9a-f]{16,}$/i.test((s||'').trim());
-  const isNonce = s => /^\d{1,10}$/.test((s||'').trim());
-
-  function put(field, val, src) {
-    val = (val||'').toString().trim();
-    if (!val || R[field]) return;
-    R[field] = val; R.found = true; R.sources.push(field+'@'+src);
-  }
-
-  // ── STRATEGY 1: window globals + deep nested scan ──
-  function digObject(obj, path, depth) {
-    if (depth > 5 || !obj || typeof obj !== 'object') return;
-    const serverK  = ['serverseed','server_seed'];
-    const hashK    = ['serverseedhash','server_seed_hash','serverhash','hashedserverseed'];
-    const clientK  = ['clientseed','client_seed'];
-    const nonceK   = ['nonce','betnumber','bet_number','gamenumber','game_number','roundnumber','round'];
-    for (const [k, v] of Object.entries(obj)) {
-      const lk = k.toLowerCase();
-      const sv = String(v||'');
-      if (serverK.some(x=>lk===x) && isHex(sv))    put('serverSeed', sv, path+'.'+k);
-      if (hashK.some(x=>lk===x)   && isHex(sv))    put('serverHash', sv, path+'.'+k);
-      if (clientK.some(x=>lk===x) && sv.length>3)  put('clientSeed', sv, path+'.'+k);
-      if (nonceK.some(x=>lk===x)  && isNonce(sv))  put('nonce', sv, path+'.'+k);
-      // Recurse
-      if (v && typeof v==='object') digObject(v, path+'.'+k, depth+1);
+  function dig(obj, src, score, depth, seen, ctx) {
+    if (depth > 7 || !obj || typeof obj !== 'object') return;
+    if (seen.has(obj)) return; seen.add(obj);
+    if (Array.isArray(obj)) { for (let i=0;i<Math.min(obj.length,50);i++) dig(obj[i],src,score,depth+1,seen,ctx); return; }
+    for (const k in obj) {
+      let v; try { v = obj[k]; } catch(e) { continue; }
+      const nk = norm(k), sv = (v==null?'':String(v));
+      if      (SK.includes(nk)) push('serverSeed', sv, score, src+'.'+k);
+      else if (HK.includes(nk)) push('serverHash', sv, score, src+'.'+k);
+      else if (CK.includes(nk)) push('clientSeed', sv, score, src+'.'+k);
+      else if (NK.includes(nk)) push('nonce',      sv, score, src+'.'+k);
+      if      (ctx==='server') { if (CSEED.includes(nk)) push('serverSeed',sv,score,src+'.'+k); else if (CHASH.includes(nk)) push('serverHash',sv,score,src+'.'+k); }
+      else if (ctx==='client') { if (CSEED.includes(nk)) push('clientSeed',sv,score,src+'.'+k); }
+      if (v && typeof v === 'object') {
+        let child = ctx;
+        if (SCON.includes(nk)) child='server'; else if (CCON.includes(nk)) child='client';
+        dig(v, src+'.'+k, score, depth+1, seen, child);
+      }
     }
   }
-  const SKIP = new Set(['window','self','document','frames','parent','top','chrome',
-    'webkit','CSS','performance','console','history','location','navigator','screen',
-    'indexedDB','crypto','Infinity','NaN','undefined']);
-  for (const key of Object.keys(window)) {
-    if (SKIP.has(key) || key.startsWith('__') || key.startsWith('webkit')) continue;
-    try { digObject(window[key], 'win.'+key, 0); } catch(e) {}
+
+  // ── window globals ──
+  const SKIP = new Set(['window','self','document','frames','parent','top','chrome','webkit',
+    'CSS','performance','console','history','location','navigator','screen','indexedDB','crypto',
+    'localStorage','sessionStorage','external','clientInformation','styleMedia','trustedTypes','visualViewport']);
+  for (const key in window) {
+    if (SKIP.has(key) || /^(webkit|on)/.test(key)) continue;
+    let v; try { v = window[key]; } catch(e) { continue; }
+    if (v && typeof v === 'object') { try { dig(v, 'win.'+key, 64, 0, new WeakSet()); } catch(e){} }
   }
 
-  // ── STRATEGY 2: React / Next.js fiber ──
-  function fiberScan(el, d) {
-    if (d>4||!el) return;
-    const fk = Object.keys(el).find(k=>k.startsWith('__reactFiber')||k.startsWith('__reactInternals'));
-    if (fk) try { fibDig(el[fk], 0); } catch(e) {}
-    for (const c of (el.children||[])) fiberScan(c, d+1);
-  }
-  function fibDig(f, d) {
-    if (d>25||!f) return;
-    try {
-      const mp = f.memoizedProps; const ms = f.memoizedState;
-      if (mp) digObject(mp, 'fiber.props', 0);
-      if (ms) {
-        if (ms.memoizedState) digObject(ms.memoizedState,'fiber.state',0);
-        if (ms.queue?.lastRenderedState) digObject(ms.queue.lastRenderedState,'fiber.qstate',0);
-      }
-    } catch(e){}
-    try { fibDig(f.child,d+1); } catch(e){}
-    try { fibDig(f.sibling,d+1); } catch(e){}
-  }
+  // ── React fiber / Vue / Angular component state ──
   try {
-    const targets = [
-      document.querySelector('[class*="fair"],[class*="seed"],[class*="provable"],[class*="game"]'),
-      document.querySelector('main'), document.body
-    ];
-    for (const t of targets) if (t) fiberScan(t, 0);
+    let n = 0;
+    for (const el of document.querySelectorAll('*')) {
+      if (n++ > 4000) break;
+      for (const k in el) {
+        if (k.startsWith('__reactFiber') || k.startsWith('__reactInternalInstance')) {
+          let f = el[k], hop = 0;
+          while (f && hop < 30) {
+            try { if (f.memoizedProps) dig(f.memoizedProps, 'react.props', 66, 0, new WeakSet()); } catch(e){}
+            try { if (f.memoizedState) dig(f.memoizedState, 'react.state', 66, 0, new WeakSet()); } catch(e){}
+            f = f.return; hop++;
+          }
+        } else if (k === '__vueParentComponent' || k === '__vue__') {
+          try {
+            const c = el[k];
+            dig(c.props || {}, 'vue.props', 66, 0, new WeakSet());
+            dig(c.setupState || c.data || c.ctx || {}, 'vue.state', 66, 0, new WeakSet());
+          } catch(e){}
+        } else if (k === '__ngContext__') {
+          try { dig(el[k], 'ng.ctx', 64, 0, new WeakSet()); } catch(e){}
+        }
+      }
+    }
   } catch(e){}
 
-  // ── STRATEGY 3: localStorage + sessionStorage ──
+  // ── localStorage / sessionStorage ──
   for (const st of [window.localStorage, window.sessionStorage]) {
     try {
-      for (let i=0; i<st.length; i++) {
-        const k=st.key(i), v=st.getItem(k)||'';
-        const lk=(k||'').toLowerCase();
-        try { digObject(JSON.parse(v), 'storage.'+k, 0); } catch(e){}
+      for (let i=0;i<st.length;i++) {
+        const k = st.key(i), v = st.getItem(k)||'', nk = norm(k);
+        try { dig(JSON.parse(v), 'storage.'+k, 52, 0, new WeakSet()); } catch(e){}
         if (isHex(v)) {
-          if (lk.includes('server')&&!lk.includes('hash')) put('serverSeed',v,'storage:'+k);
-          else if (lk.includes('hash')||is64hex(v))        put('serverHash',v,'storage:'+k);
-          else if (lk.includes('client'))                  put('clientSeed',v,'storage:'+k);
+          if (nk.includes('server') && nk.includes('hash')) push('serverHash', v, 50, 'ls:'+k);
+          else if (nk.includes('server'))                   push('serverSeed', v, 50, 'ls:'+k);
+          else if (nk.includes('client'))                   push('clientSeed', v, 50, 'ls:'+k);
         }
-        if (isNonce(v) && lk.includes('nonce')) put('nonce',v,'storage:'+k);
+        if (isNon(v) && nk.includes('nonce')) push('nonce', v, 50, 'ls:'+k);
       }
     } catch(e){}
   }
 
-  // ── STRATEGY 4: DOM inputs & labels ──
-  function nearLabel(el) {
-    for (const sel of ['label','[class*="label"]','[class*="title"]','[class*="field"]','[class*="row"]']) {
-      const p = el.closest(sel); if (p) return p.textContent.replace(el.value||'','').toLowerCase();
+  // ── DOM inputs + elements that mention seed/hash/nonce ──
+  function labelFor(el) {
+    let t = '';
+    try { if (el.id) { const l = document.querySelector('label[for="'+CSS.escape(el.id)+'"]'); if (l) t += ' '+l.textContent; } } catch(e){}
+    for (const sel of ['label','[class*="label"]','[class*="field"]','[class*="row"]','[class*="item"]','[class*="seed"]']) {
+      try { const p = el.closest(sel); if (p) { t += ' '+p.textContent; break; } } catch(e){}
     }
-    if (el.id) { const l=document.querySelector(`label[for="${el.id}"]`); if(l) return l.textContent.toLowerCase(); }
-    return (el.placeholder||el.name||el.id||'').toLowerCase();
+    t += ' '+(el.placeholder||'')+' '+(el.name||'')+' '+(el.id||'')+' '+((el.getAttribute&&el.getAttribute('aria-label'))||'');
+    return t.toLowerCase();
   }
-  for (const el of document.querySelectorAll('input,textarea,[readonly],[contenteditable]')) {
-    const val = (el.value||el.textContent||'').trim();
-    if (!val||val.length<4) continue;
-    const lbl = nearLabel(el);
-    if ((lbl.includes('server')&&!lbl.includes('hash'))&&isHex(val)) put('serverSeed',val,'input:server');
-    else if ((lbl.includes('hash')||lbl.includes('hashed'))&&isHex(val)) put('serverHash',val,'input:hash');
-    else if (lbl.includes('client')&&val.length>4) put('clientSeed',val,'input:client');
-    else if ((lbl.includes('nonce')||lbl.includes('bet'))&&isNonce(val)) put('nonce',val,'input:nonce');
+  const domSel = 'input,textarea,[contenteditable],code,[class*="seed" i],[class*="hash" i],[class*="nonce" i],[id*="seed" i]';
+  for (const el of document.querySelectorAll(domSel)) {
+    let val = (el.value || (el.getAttribute && el.getAttribute('value')) || el.textContent || '').trim();
+    if (!val || val.length < 3 || val.length > 200) continue;
+    const lbl = labelFor(el);
+    if      (lbl.includes('server') && lbl.includes('hash') && is64(val))            push('serverHash', val, 58, 'dom:hash');
+    else if (lbl.includes('server') && lbl.includes('seed') && isHex(val))           push('serverSeed', val, 58, 'dom:server');
+    else if (lbl.includes('client') && lbl.includes('seed') && val.length<=80)       push('clientSeed', val, 58, 'dom:client');
+    else if (lbl.includes('nonce') && isNon(val))                                    push('nonce',      val, 56, 'dom:nonce');
   }
 
-  // ── STRATEGY 5: Full-page text harvest ──
-  const bodyText = document.body.innerText;
-  // Named captures: "Server Seed: <value>" patterns
-  const patterns = [
-    {field:'serverSeed', re:/server\s*seed\s*[:\-\|]\s*([0-9a-f]{20,})/i},
-    {field:'serverHash', re:/(?:server\s*seed\s*)?hash\s*[:\-\|]\s*([0-9a-f]{64})/i},
-    {field:'clientSeed', re:/client\s*seed\s*[:\-\|]\s*([^\s,\n]{4,64})/i},
-    {field:'nonce',      re:/nonce\s*[:\-\|]\s*(\d{1,10})/i},
-    {field:'nonce',      re:/bet\s*(?:id|no|number|#)\s*[:\-\|]\s*(\d{1,10})/i},
+  // ── raw text patterns + last-resort harvest ──
+  const txt = ((document.body && document.body.innerText) || '').slice(0, 200000);
+  const tp = [
+    {f:'serverHash', re:/(?:server[_\s]?seed[_\s]?hash|hashed[_\s]?server[_\s]?seed)\W{0,4}([0-9a-fA-F]{64})/i, sc:42},
+    {f:'serverSeed', re:/server[_\s]?seed(?!\W{0,4}hash)\W{0,4}([0-9a-fA-F]{16,128})/i, sc:40},
+    {f:'clientSeed', re:/client[_\s]?seed\W{0,4}([0-9A-Za-z_\-]{3,80})/i, sc:40},
+    {f:'nonce',      re:/nonce\W{0,4}(\d{1,12})/i, sc:40},
   ];
-  for (const {field,re} of patterns) {
-    const m = bodyText.match(re);
-    if (m) put(field, m[1], 'text-pattern');
-  }
-  // Fallback: first 64-char hex in page = likely server hash
-  const m64 = bodyText.match(/\b[0-9a-f]{64}\b/i);
-  if (m64) put('serverHash', m64[0], 'hex-harvest-64');
-  // Any long hex = possible server seed
-  const mHex = bodyText.match(/\b[0-9a-f]{32,63}\b/i);
-  if (mHex) put('serverSeed', mHex[0], 'hex-harvest');
+  for (const {f,re,sc} of tp) { const m = txt.match(re); if (m) push(f, m[1], sc, 'text'); }
+  const h64 = txt.match(/\b[0-9a-f]{64}\b/i); if (h64) push('serverHash', h64[0], 12, 'harvest64');
 
-  return R;
+  return {fields: out};
 }
 """
 
-# Buttons to click to open fairness/seed modals (tried in order)
+
+# Buttons to click to open fairness / seed modals (tried in order)
 FAIRNESS_SELECTORS = [
-    # text-based
     "button:has-text('Fairness')", "button:has-text('Provably Fair')",
     "button:has-text('Verify')",   "button:has-text('Seeds')",
-    "a:has-text('Fairness')",      "a:has-text('Provably Fair')",
-    # aria / title
+    "button:has-text('Seed')",     "a:has-text('Fairness')",
+    "a:has-text('Provably Fair')", "a:has-text('Verify')",
     "[aria-label*='fair' i]",      "[title*='fair' i]",
     "[aria-label*='provable' i]",  "[title*='provable' i]",
     "[aria-label*='seed' i]",      "[title*='seed' i]",
-    # class fragments
-    "[class*='fairness']",  "[class*='Fairness']",
-    "[class*='provable']",  "[class*='Provably']",
-    "[class*='seed-btn']",  "[class*='verify']",
-    # common icon buttons (shield, lock)
-    "button svg[class*='shield']",  "button svg[class*='lock']",
-    "[data-testid*='fair']",        "[data-testid*='seed']",
+    "[class*='fairness']",         "[class*='provabl']",
+    "[class*='seed-btn']",         "[class*='verify']",
+    "[data-testid*='fair']",       "[data-testid*='seed']",
 ]
 
 
-def try_open_fairness_modal(page):
-    """Try every known pattern to open the fairness/seeds modal."""
-    for sel in FAIRNESS_SELECTORS:
-        try:
-            el = page.query_selector(sel)
-            if el and el.is_visible():
-                el.click()
-                page.wait_for_timeout(900)
-                return True
-        except Exception:
-            pass
-    return False
+# ─────────────────────────────────────────────────────────────────────────────
+# Persistent capture session (its own thread owns the Playwright browser)
+# ─────────────────────────────────────────────────────────────────────────────
 
+class CaptureSession(threading.Thread):
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.cmds   = queue.Queue()
+        self.pool   = {}                                # field -> (value, score, src)
+        self.events = collections.deque(maxlen=200)
+        self.url    = ""
+        self.alive  = False
+        self.ws_count = 0
+        self.req_count = 0
+        self._p = self._browser = self._ctx = self._page = None
+        self.start()
 
-def read_seeds_from_page(url: str) -> dict:
-    if not url.startswith("http"):
-        url = "https://" + url
+    # ── candidate recording ──
+    def record(self, field, value, score, src):
+        val = _valid(field, value, trusted=score >= 60)
+        if not val:
+            return
+        cur = self.pool.get(field)
+        if cur is None or score > cur[1]:
+            self.pool[field] = (val, score, src)
+            self.events.append(f"{field} ← {src} ({score})")
 
-    captured = {}  # seeds captured from network responses
-
-    def on_response(response):
-        try:
-            ct = response.headers.get("content-type", "")
-            if "json" not in ct:
-                return
-            body = response.json()
-            _dig_json_for_seeds(body, captured)
-        except Exception:
-            pass
-
-    def _dig_json_for_seeds(obj, out, depth=0):
-        if depth > 6 or not obj:
+    def dig(self, obj, src, score, depth=0, ctx=None):
+        if depth > 7 or obj is None:
             return
         if isinstance(obj, dict):
             for k, v in obj.items():
-                lk = k.lower()
-                sv = str(v or "")
-                if lk in ("serverseed","server_seed") and len(sv) > 16:
-                    if len(sv) == 64:
-                        out.setdefault("serverHash", sv)
-                    else:
-                        out.setdefault("serverSeed", sv)
-                elif lk in ("serverseedhash","server_seed_hash","serverhash") and len(sv) == 64:
-                    out.setdefault("serverHash", sv)
-                elif lk in ("clientseed","client_seed") and sv:
-                    out.setdefault("clientSeed", sv)
-                elif lk in ("nonce","betnumber","bet_number","gamenumber","game_number") and sv.isdigit():
-                    out.setdefault("nonce", sv)
+                nk = _norm(k)
+                # flat keys whose value is the seed itself
+                if   nk in _SERVER_K: self.record("serverSeed", v, score, f"{src}.{k}")
+                elif nk in _HASH_K:   self.record("serverHash", v, score, f"{src}.{k}")
+                elif nk in _CLIENT_K: self.record("clientSeed", v, score, f"{src}.{k}")
+                elif nk in _NONCE_K:  self.record("nonce",      v, score, f"{src}.{k}")
+                # generic child keys, only meaningful inside a seed container
+                if ctx == "server":
+                    if   nk in _CHILD_SEED: self.record("serverSeed", v, score, f"{src}.{k}")
+                    elif nk in _CHILD_HASH: self.record("serverHash", v, score, f"{src}.{k}")
+                elif ctx == "client":
+                    if nk in _CHILD_SEED:   self.record("clientSeed", v, score, f"{src}.{k}")
                 if isinstance(v, (dict, list)):
-                    _dig_json_for_seeds(v, out, depth + 1)
+                    child = ctx
+                    if   nk in _SERVER_CONTAINER: child = "server"
+                    elif nk in _CLIENT_CONTAINER: child = "client"
+                    self.dig(v, f"{src}.{k}", score, depth + 1, child)
         elif isinstance(obj, list):
-            for item in obj[:20]:
-                _dig_json_for_seeds(item, out, depth + 1)
+            for it in obj[:40]:
+                self.dig(it, src, score, depth + 1, ctx)
 
+    def _json_blobs(self, text):
+        blobs, dec, i, n = [], json.JSONDecoder(), 0, len(text)
+        while i < n and len(blobs) < 40:
+            if text[i] in "{[":
+                try:
+                    _, end = dec.raw_decode(text, i)
+                    blobs.append(text[i:end]); i = end; continue
+                except Exception:
+                    pass
+            i += 1
+        return blobs
+
+    def scan_text(self, text, src, score):
+        if not text:
+            return
+        if len(text) > 600000:
+            text = text[:600000]
+        for blob in self._json_blobs(text):
+            try:
+                self.dig(json.loads(blob), src, score)
+            except Exception:
+                pass
+        for field, pats in _TEXT_PATTERNS.items():
+            for pat in pats:
+                m = pat.search(text)
+                if m:
+                    self.record(field, m.group(1), max(score - 15, 20), src + ":re")
+
+    # ── Playwright event handlers (fire while the loop is pumped) ──
+    def _on_response(self, resp):
+        try:
+            ct = (resp.headers or {}).get("content-type", "")
+            url = resp.url
+            is_json = "json" in ct or "graphql" in url
+            if not (is_json or _relevant(url)):
+                return
+            rt = ""
+            try: rt = resp.request.resource_type
+            except Exception: pass
+            if not (is_json or rt in ("xhr", "fetch")):
+                return
+            if is_json:
+                try:
+                    self.dig(resp.json(), "http:" + _short(url), 90); return
+                except Exception:
+                    pass
+            self.scan_text(resp.text(), "http:" + _short(url), 86)
+        except Exception:
+            pass
+
+    def _on_request(self, req):
+        try:
+            if req.method == "POST" or req.resource_type in ("xhr", "fetch"):
+                pd = req.post_data
+                if pd:
+                    self.req_count += 1
+                    self.scan_text(pd, "req:" + _short(req.url), 85)
+        except Exception:
+            pass
+
+    def _frame(self, ws_url, frame):
+        try:
+            payload = getattr(frame, "payload", frame)
+            if isinstance(payload, (bytes, bytearray)):
+                payload = payload.decode("utf-8", "ignore")
+            if isinstance(payload, str) and payload:
+                self.scan_text(payload, "ws:" + _short(ws_url), 100)
+        except Exception:
+            pass
+
+    def _on_ws(self, ws):
+        self.ws_count += 1
+        self.events.append("ws ↔ " + _short(ws.url))
+        try:
+            ws.on("framereceived", lambda f: self._frame(ws.url, f))
+            ws.on("framesent",     lambda f: self._frame(ws.url, f))
+        except Exception:
+            pass
+
+    def _wire_page(self, page):
+        try:
+            page.on("websocket", self._on_ws)
+        except Exception:
+            pass
+
+    # ── command handling (runs on the worker thread) ──
+    def run(self):
+        try:
+            with sync_playwright() as p:
+                self._p = p
+                while True:
+                    try:
+                        cmd = self.cmds.get(timeout=0.2)
+                    except queue.Empty:
+                        cmd = None
+                    if cmd is not None:
+                        action, payload, rq = cmd
+                        try:
+                            res = self._handle(action, payload)
+                        except Exception as e:
+                            res = {"error": str(e)}
+                        if rq is not None:
+                            rq.put(res)
+                    # keep the event loop alive so WS / HTTP handlers keep firing
+                    if self.alive and self._page:
+                        try:
+                            self._page.wait_for_timeout(80)
+                        except Exception:
+                            self.alive = False
+        except Exception as e:
+            self.events.append("session crashed: " + str(e)[:120])
+
+    def _handle(self, action, payload):
+        if action == "open":  return self._open(payload)
+        if action == "grab":  return self._grab()
+        if action == "close":
+            self._teardown(); return {"ok": True}
+        return {"error": "unknown action"}
+
+    def _teardown(self):
+        for obj in (self._ctx, self._browser):
+            try:
+                if obj: obj.close()
+            except Exception:
+                pass
+        self._ctx = self._browser = self._page = None
+        self.alive = False
+
+    def _open(self, url):
+        if not url.startswith("http"):
+            url = "https://" + url
+        self._teardown()
+        self.pool = {}; self.events.clear()
+        self.ws_count = self.req_count = 0
+        self._browser = self._p.chromium.launch(
+            headless=False,
+            executable_path=_chrome_path(),
+            args=["--ignore-certificate-errors", "--start-maximized",
+                  "--disable-blink-features=AutomationControlled"],
+        )
+        self._ctx = self._browser.new_context(
+            no_viewport=True, ignore_https_errors=True, user_agent=UA)
+        # context-level network capture covers every page + popup
+        self._ctx.on("response", self._on_response)
+        self._ctx.on("request",  self._on_request)
+        self._ctx.on("page",     self._wire_page)
+        self._page = self._ctx.new_page()
+        self._wire_page(self._page)
+        self.url = url; self.alive = True
+        try:
+            self._page.goto(url, wait_until="domcontentloaded", timeout=45000)
+        except Exception as e:
+            self.events.append("load: " + str(e)[:90])
+        # let initial XHR / WebSocket traffic flow
+        try:
+            self._page.wait_for_timeout(2500)
+        except Exception:
+            pass
+        return self.snapshot()
+
+    def _try_modal(self):
+        if not self._page:
+            return
+        for sel in FAIRNESS_SELECTORS:
+            try:
+                el = self._page.query_selector(sel)
+                if el and el.is_visible():
+                    el.click(); self._page.wait_for_timeout(800); return True
+            except Exception:
+                pass
+        return False
+
+    def _grab(self):
+        if self.alive and self._ctx:
+            # if we still don't have the key pair, try to surface a fairness modal
+            if not (self.pool.get("serverSeed") or self.pool.get("serverHash")) \
+               or not self.pool.get("clientSeed"):
+                try: self._try_modal()
+                except Exception: pass
+            # scan every page + every frame (seeds often live in an iframe / popup)
+            for pg in list(self._ctx.pages):
+                for fr in pg.frames:
+                    try:
+                        res = fr.evaluate(SEED_JS)
+                        for c in (res or {}).get("fields", []):
+                            self.record(c["field"], c["value"], c["score"], "js:" + c["src"])
+                    except Exception:
+                        pass
+        return self.snapshot()
+
+    def snapshot(self):
+        out = {"found": False, "alive": self.alive, "url": self.url,
+               "serverSeed": "", "serverHash": "", "clientSeed": "", "nonce": "",
+               "sources": {}, "ws": self.ws_count, "reqs": self.req_count,
+               "events": list(self.events)[-30:]}
+        for f in ("serverSeed", "serverHash", "clientSeed", "nonce"):
+            cur = self.pool.get(f)
+            if cur:
+                out[f] = cur[0]
+                out["sources"][f] = {"src": cur[2], "score": cur[1]}
+                out["found"] = True
+        return out
+
+
+_SESSION = None
+_SLOCK = threading.Lock()
+
+
+def get_session():
+    global _SESSION
+    with _SLOCK:
+        if _SESSION is None:
+            _SESSION = CaptureSession()
+        return _SESSION
+
+
+def _send(action, payload, timeout):
+    rq = queue.Queue()
+    get_session().cmds.put((action, payload, rq))
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=False,
-                slow_mo=60,
-                args=["--ignore-certificate-errors", "--start-maximized",
-                      "--disable-blink-features=AutomationControlled"],
-            )
-            ctx = browser.new_context(
-                no_viewport=True,
-                ignore_https_errors=True,
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                ),
-            )
-            page = ctx.new_page()
-
-            # Intercept ALL JSON responses for seed data
-            page.on("response", on_response)
-
-            page.goto(url, wait_until="networkidle", timeout=30000)
-            page.wait_for_timeout(2000)
-
-            # First scan — maybe seeds are already visible
-            seeds = page.evaluate(SEED_JS)
-            _merge(seeds, captured)
-
-            # Try opening fairness/seed modal if we didn't get everything
-            if not _have_enough(seeds):
-                opened = try_open_fairness_modal(page)
-                if opened:
-                    page.wait_for_timeout(1200)
-                    seeds = page.evaluate(SEED_JS)
-                    _merge(seeds, captured)
-
-            # Still missing — scroll and re-scan (some sites lazy-load seed UI)
-            if not _have_enough(seeds):
-                page.mouse.wheel(0, 400)
-                page.wait_for_timeout(800)
-                seeds = page.evaluate(SEED_JS)
-                _merge(seeds, captured)
-
-            # Final merge: prefer network-captured values (most reliable)
-            for k, v in captured.items():
-                if v and not seeds.get(k):
-                    seeds[k] = v
-                    seeds["found"] = True
-                    seeds.setdefault("sources", []).append(k + "@network")
-
-            browser.close()
-            return seeds
-
-    except Exception as e:
-        return {"found": False, "error": str(e)}
-
-
-def _have_enough(s):
-    return bool(s.get("serverSeed") or s.get("serverHash")) and bool(s.get("clientSeed"))
-
-
-def _merge(seeds, network):
-    for k, v in network.items():
-        if v and not seeds.get(k):
-            seeds[k] = v
-            seeds["found"] = True
+        return rq.get(timeout=timeout)
+    except queue.Empty:
+        return {"error": f"{action} timed out"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UNIVERSAL BOARD SCANNER (unchanged from previous version)
+# UNIVERSAL BOARD SCANNER (for the SCAN URL / AUTO PLAY tabs)
 # ─────────────────────────────────────────────────────────────────────────────
 
 BOARD_JS = r"""
@@ -323,10 +592,6 @@ BOARD_JS = r"""
 """
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Board helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
 def build_grid(rows, cols, numbers, mine_set, flagged, unknown_set, safe_set=None):
     safe_set = safe_set or set()
     grid = []
@@ -334,12 +599,12 @@ def build_grid(rows, cols, numbers, mine_set, flagged, unknown_set, safe_set=Non
         row = []
         for c in range(cols):
             coord = (r, c)
-            if coord in mine_set:         row.append({"type":"mine"})
-            elif coord in flagged:        row.append({"type":"flag"})
-            elif coord in numbers:        row.append({"type":"number","value":numbers[coord]})
-            elif coord in safe_set:       row.append({"type":"safe"})
-            elif coord in unknown_set:    row.append({"type":"unknown"})
-            else:                         row.append({"type":"empty"})
+            if   coord in mine_set:    row.append({"type": "mine"})
+            elif coord in flagged:     row.append({"type": "flag"})
+            elif coord in numbers:     row.append({"type": "number", "value": numbers[coord]})
+            elif coord in safe_set:    row.append({"type": "safe"})
+            elif coord in unknown_set: row.append({"type": "unknown"})
+            else:                      row.append({"type": "empty"})
         grid.append(row)
     return grid
 
@@ -347,18 +612,14 @@ def build_grid(rows, cols, numbers, mine_set, flagged, unknown_set, safe_set=Non
 def cells_to_board(cell_list):
     numbers, unknown, mine_set, flagged = {}, [], set(), set()
     for cell in cell_list:
-        r, c, t = cell.get("row",0), cell.get("col",0), cell.get("type","unknown")
-        if   t == "mine":    mine_set.add((r,c))
-        elif t == "flag":    flagged.add((r,c))
-        elif t == "number":  numbers[(r,c)] = cell.get("value",0)
-        elif t == "empty":   numbers[(r,c)] = 0
-        else:                unknown.append((r,c))
+        r, c, t = cell.get("row", 0), cell.get("col", 0), cell.get("type", "unknown")
+        if   t == "mine":   mine_set.add((r, c))
+        elif t == "flag":   flagged.add((r, c))
+        elif t == "number": numbers[(r, c)] = cell.get("value", 0)
+        elif t == "empty":  numbers[(r, c)] = 0
+        else:               unknown.append((r, c))
     return numbers, unknown, mine_set, flagged
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Board scan + auto-solve job
-# ─────────────────────────────────────────────────────────────────────────────
 
 def run_job(job_id, url):
     def log(msg): jobs[job_id]["log"].append(msg)
@@ -367,7 +628,8 @@ def run_job(job_id, url):
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=False, slow_mo=100,
-                args=["--ignore-certificate-errors","--start-maximized"],
+                executable_path=_chrome_path(),
+                args=["--ignore-certificate-errors", "--start-maximized"],
             )
             ctx  = browser.new_context(no_viewport=True, ignore_https_errors=True)
             page = ctx.new_page()
@@ -377,112 +639,141 @@ def run_job(job_id, url):
 
             log("Scanning page for board data...")
             result = page.evaluate(BOARD_JS)
-
             if not result or not result.get("found"):
                 log(f"Board not detected: {(result or {}).get('reason','unknown')}")
                 jobs[job_id]["status"] = "error"; browser.close(); return
 
             log(f"Board detected ({result.get('source','')})")
-            rows = result.get("rows",0); cols = result.get("cols",0)
-            cell_list = result.get("cells",[])
-            if rows==0 and cell_list:
-                rows = max(c["row"] for c in cell_list)+1
-                cols = max(c["col"] for c in cell_list)+1
+            rows = result.get("rows", 0); cols = result.get("cols", 0)
+            cell_list = result.get("cells", [])
+            if rows == 0 and cell_list:
+                rows = max(c["row"] for c in cell_list) + 1
+                cols = max(c["col"] for c in cell_list) + 1
 
             numbers, unknown, mine_set, flagged = cells_to_board(cell_list)
             log(f"Board: {rows}×{cols} — {len(cell_list)} cells")
 
             if mine_set:
                 log(f"Mines visible: {len(mine_set)}")
-                jobs[job_id]["grid"] = build_grid(rows,cols,numbers,mine_set,flagged,set(unknown))
+                jobs[job_id]["grid"] = build_grid(rows, cols, numbers, mine_set, flagged, set(unknown))
                 jobs[job_id]["result"] = "scanned"; jobs[job_id]["status"] = "done"
                 page.wait_for_timeout(3000); browser.close(); return
 
             log(f"Using deduction solver ({len(unknown)} unknown cells)")
-            # Detect coord attrs for clicking
             xa, ya = "data-x", "data-y"
-            for a,b in [("data-x","data-y"),("data-col","data-row"),("data-column","data-row")]:
+            for a, b in [("data-x", "data-y"), ("data-col", "data-row"), ("data-column", "data-row")]:
                 if page.query_selector(f"[{a}]"):
                     xa, ya = a, b; break
 
-            def click(r,c):
+            def click(r, c):
                 el = page.query_selector(f"[{xa}='{c}'][{ya}='{r}']")
                 if el: el.click()
-            def flag(r,c):
+            def flag(r, c):
                 el = page.query_selector(f"[{xa}='{c}'][{ya}='{r}']")
                 if el: el.click(button="right")
 
             if not numbers and unknown:
-                start=(rows//2,cols//2); log(f"First click: {start}"); click(*start)
+                start = (rows // 2, cols // 2); log(f"First click: {start}"); click(*start)
                 page.wait_for_timeout(700)
 
-            solver=MinesweeperSolver(rows,cols); moves=guesses=stall=0
-            while stall<3:
-                r2=page.evaluate(BOARD_JS)
+            solver = MinesweeperSolver(rows, cols); moves = guesses = stall = 0
+            while stall < 3:
+                r2 = page.evaluate(BOARD_JS)
                 if not r2 or not r2.get("found"): break
-                rows=r2.get("rows",rows); cols=r2.get("cols",cols)
-                numbers,unknown,mine_set,flagged=cells_to_board(r2.get("cells",[]))
-                solver.update(numbers,flagged)
-                safe,dmines=solver.solve()
-                safe=[c for c in safe if c in unknown]
-                dmines=[c for c in dmines if c not in flagged]
-                jobs[job_id]["grid"]=build_grid(rows,cols,numbers,mine_set|set(dmines),flagged,set(unknown),set(safe))
-                if not unknown: log(f"Cleared! {moves} moves."); jobs[job_id]["result"]="win"; break
+                rows = r2.get("rows", rows); cols = r2.get("cols", cols)
+                numbers, unknown, mine_set, flagged = cells_to_board(r2.get("cells", []))
+                solver.update(numbers, flagged)
+                safe, dmines = solver.solve()
+                safe   = [c for c in safe   if c in unknown]
+                dmines = [c for c in dmines if c not in flagged]
+                jobs[job_id]["grid"] = build_grid(rows, cols, numbers, mine_set | set(dmines), flagged, set(unknown), set(safe))
+                if not unknown: log(f"Cleared! {moves} moves."); jobs[job_id]["result"] = "win"; break
                 if dmines:
-                    for coord in dmines: log(f"Flag {coord}"); flag(*coord); moves+=1
-                    stall=0; continue
+                    for coord in dmines: log(f"Flag {coord}"); flag(*coord); moves += 1
+                    stall = 0; continue
                 if safe:
-                    for coord in safe: log(f"Click safe {coord}"); click(*coord); moves+=1
-                    stall=0; continue
-                guess=solver.best_guess(unknown)
-                if guess: guesses+=1; log(f"Guess {guess}"); click(*guess); moves+=1; stall+=1
+                    for coord in safe: log(f"Click safe {coord}"); click(*coord); moves += 1
+                    stall = 0; continue
+                guess = solver.best_guess(unknown)
+                if guess: guesses += 1; log(f"Guess {guess}"); click(*guess); moves += 1; stall += 1
                 else: break
                 page.wait_for_timeout(100)
 
             log(f"Done — {moves} moves, {guesses} guesses")
-            jobs[job_id]["status"]="done"
-            if not jobs[job_id]["result"]: jobs[job_id]["result"]="done"
+            jobs[job_id]["status"] = "done"
+            if not jobs[job_id]["result"]: jobs[job_id]["result"] = "done"
             page.wait_for_timeout(3000); browser.close()
     except Exception as e:
-        jobs[job_id]["log"].append(f"ERROR: {e}"); jobs[job_id]["status"]="error"
+        jobs[job_id]["log"].append(f"ERROR: {e}"); jobs[job_id]["status"] = "error"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Flask
+# Flask routes
 # ─────────────────────────────────────────────────────────────────────────────
 
 @app.route("/")
-def index(): return render_template("pc.html")
+def index():
+    return render_template("pc.html")
 
-@app.route("/read-seeds", methods=["POST"])
+
+@app.route("/seeds/open", methods=["POST"])
+def seeds_open():
+    url = (request.json or {}).get("url", "").strip()
+    if not url:
+        return jsonify({"error": "No URL"}), 400
+    return jsonify(_send("open", url, timeout=75))
+
+
+@app.route("/seeds/grab", methods=["POST"])
+def seeds_grab():
+    return jsonify(_send("grab", None, timeout=45))
+
+
+@app.route("/seeds/close", methods=["POST"])
+def seeds_close():
+    return jsonify(_send("close", None, timeout=20))
+
+
+@app.route("/read-seeds", methods=["POST"])  # legacy one-shot: open + settle + grab
 def read_seeds_route():
-    url=(request.json or {}).get("url","").strip()
-    if not url: return jsonify({"error":"No URL"}), 400
-    return jsonify(read_seeds_from_page(url))
+    url = (request.json or {}).get("url", "").strip()
+    if not url:
+        return jsonify({"error": "No URL"}), 400
+    _send("open", url, timeout=75)
+    time.sleep(3)
+    return jsonify(_send("grab", None, timeout=45))
+
 
 @app.route("/scan", methods=["POST"])
 def scan():
-    url=(request.json or {}).get("url","").strip()
-    if not url: return jsonify({"error":"No URL"}), 400
-    job_id=str(uuid.uuid4())
-    jobs[job_id]={"status":"running","log":[],"result":None,"grid":None}
-    threading.Thread(target=run_job, args=(job_id,url), daemon=True).start()
-    return jsonify({"job_id":job_id})
+    url = (request.json or {}).get("url", "").strip()
+    if not url:
+        return jsonify({"error": "No URL"}), 400
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = {"status": "running", "log": [], "result": None, "grid": None}
+    threading.Thread(target=run_job, args=(job_id, url), daemon=True).start()
+    return jsonify({"job_id": job_id})
+
 
 @app.route("/status/<job_id>")
 def status(job_id):
-    job=jobs.get(job_id)
-    if not job: return jsonify({"error":"not found"}), 404
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "not found"}), 404
     return jsonify(job)
 
-if __name__=="__main__":
-    PORT=int(os.environ.get("PORT",5000))
-    s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    try: s.connect(("8.8.8.8",80)); ip=s.getsockname()[0]
-    except: ip="127.0.0.1"
-    finally: s.close()
+
+if __name__ == "__main__":
+    PORT = int(os.environ.get("PORT", 5000))
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80)); ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
     print(f"\n{'='*52}\n  💀  MINE SOLVER — definitive edition\n{'='*52}")
     print(f"  PC:    http://localhost:{PORT}")
     print(f"  Phone: http://{ip}:{PORT}\n{'='*52}\n")
-    threading.Timer(1.2,lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
-    app.run(host="0.0.0.0",port=PORT,debug=False)
+    threading.Timer(1.2, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
+    app.run(host="0.0.0.0", port=PORT, debug=False)
