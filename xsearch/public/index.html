@@ -235,7 +235,7 @@ function addMsg(who,text,me){const m=document.createElement("div");m.className="
 function setConn(s){$("scrConnect").style.display=s==='no'?'flex':'none';$("scrConnecting").style.display=s==='connecting'?'flex':'none';
   $("feed").style.opacity=s==='ok'?'1':'0';$("conn").classList.toggle('ok',s==='ok');
   $("connSt").textContent=s==='ok'?'CONNECTED':s==='connecting'?'CONNECTING':'NOT CONNECTED';}
-const VPW=360,VPH=760;let ws=null;
+const VPW=460,VPH=840;let ws=null;
 function sendLive(o){if(ws&&ws.readyState===1)ws.send(JSON.stringify(o));}
 function connect(){if(connected)return Promise.resolve();
   addMsg("You","Connect to TikTok.",true);setConn('connecting');$("mode").textContent="Launching live browser…";

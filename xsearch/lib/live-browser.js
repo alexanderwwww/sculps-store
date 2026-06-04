@@ -1,13 +1,13 @@
 // Live agent browser: a REAL Chromium (Playwright) mirrored into the phone.
-// Uses a PERSISTENT profile so you log into TikTok ONCE and it sticks — otherwise
-// TikTok shows a blank/white page to a guest and there's nothing to watch.
+// Uses DESKTOP TikTok (mobile web is crippled) + a PERSISTENT login profile, so the
+// agent has reliable "hands": arrow keys to move the feed, real search, real clicks.
 //
 // Runs on YOUR machine. Requires: npm i playwright ws && npx playwright install chromium
 
 import { WebSocketServer } from "ws";
 import { runCommand, runMarketScan } from "./agent.js";
 
-export const VPW = 360, VPH = 760;
+export const VPW = 460, VPH = 840;
 
 export function attachLiveBrowser(server) {
   const wss = new WebSocketServer({ server, path: "/live" });
@@ -23,8 +23,8 @@ export function attachLiveBrowser(server) {
       const profileDir = process.env.TT_PROFILE_DIR || "./.tt-profile";
       ctx = await chromium.launchPersistentContext(profileDir, {
         headless: false,
-        viewport: { width: VPW, height: VPH }, isMobile: true, hasTouch: true,
-        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+        viewport: { width: VPW, height: VPH },
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         args: ["--no-sandbox", "--disable-blink-features=AutomationControlled"],
       });
       page = ctx.pages()[0] || await ctx.newPage();
@@ -33,9 +33,8 @@ export function attachLiveBrowser(server) {
       send({ type: "status", text: "opening tiktok" });
       await page.goto("https://www.tiktok.com/foryou", { waitUntil: "domcontentloaded", timeout: 60000 })
         .catch((e) => send({ type: "status", text: "nav: " + e.message }));
-      send({ type: "agent", text: "If the screen is blank/white, LOG IN to TikTok in the browser window that opened — then I can actually watch the feed. Your login is saved for next time." });
+      send({ type: "agent", text: "If the screen is blank, LOG IN to TikTok in the window that opened — saved for next time. Then press XSEARCH or type a command." });
 
-      // smooth screencast (browser pushes frames, ack-throttled)
       client = await ctx.newCDPSession(page);
       client.on("Page.screencastFrame", async (f) => {
         if (closed) return;
@@ -52,13 +51,9 @@ export function attachLiveBrowser(server) {
       let m; try { m = JSON.parse(raw); } catch { return; }
       if (!page || closed) return;
       try {
-        if (m.type === "click") await page.touchscreen.tap(m.x, m.y);
-        else if (m.type === "swipe" && client) {
-          await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: m.x1, y: m.y1 }] });
-          for (let i = 1; i <= 6; i++) await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: m.x1 + (m.x2 - m.x1) * i / 6, y: m.y1 + (m.y2 - m.y1) * i / 6 }] });
-          await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-        }
-        else if (m.type === "scroll") await page.mouse.wheel(0, m.dy);
+        if (m.type === "click") await page.mouse.click(m.x, m.y);                                  // real click
+        else if (m.type === "swipe") await page.keyboard.press((m.y2 - m.y1) < 0 ? "ArrowDown" : "ArrowUp"); // swipe up = next video
+        else if (m.type === "scroll") await page.keyboard.press(m.dy > 0 ? "ArrowDown" : "ArrowUp");
         else if (m.type === "key") await page.keyboard.type(String(m.text || ""));
         else if (m.type === "goto" && m.url) await page.goto(m.url, { waitUntil: "domcontentloaded" }).catch(() => {});
         else if (m.type === "command") await runCommand(page, client, m.text, send);
