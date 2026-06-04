@@ -1,0 +1,10 @@
+# Render.com one-click deploy config
+# Render will detect this file and build from the Dockerfile automatically.
+services:
+  - type: web
+    name: mine-solver
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true

@@ -293,7 +293,8 @@ def get_lan_ip():
 
 
 if __name__ == "__main__":
-    PORT = 5000
+    import os
+    PORT = int(os.environ.get("PORT", 5000))
     local_ip = get_lan_ip()
     print("\n" + "=" * 50)
     print("  💣 Mine Solver is running!")
