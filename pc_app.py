@@ -734,6 +734,89 @@ def seeds_close():
     return jsonify(_send("close", None, timeout=20))
 
 
+@app.route("/parse-html", methods=["POST"])
+def parse_html_route():
+    """Extract seeds from raw HTML that the user pasted."""
+    html = (request.json or {}).get("html", "")
+    if not html:
+        return jsonify({"error": "No HTML provided"}), 400
+
+    # Strip tags to get visible text, preserving spaces
+    import re as _re
+    text = _re.sub(r"<[^>]+>", " ", html)
+    text = _re.sub(r"&nbsp;", " ", text)
+    text = _re.sub(r"&#x?[0-9a-fA-F]+;", " ", text)
+    text = _re.sub(r"\s+", " ", text)
+
+    pool = {}
+
+    def best(field, val, score, src):
+        v = _valid(field, val, trusted=score >= 60)
+        if not v:
+            return
+        cur = pool.get(field)
+        if cur is None or score > cur[1]:
+            pool[field] = (v, score, src)
+
+    # 1) look for JSON blobs embedded in the HTML (script tags / data attributes)
+    for blob in re.findall(r'\{[^<]{20,}\}', html)[:80]:
+        try:
+            obj = json.loads(blob)
+            # use a lightweight dig
+            def _dig(o, src, depth=0):
+                if depth > 5 or not isinstance(o, dict):
+                    return
+                for k, v in o.items():
+                    nk = _norm(k)
+                    sv = str(v or "")
+                    if   nk in _SERVER_K: best("serverSeed", sv, 90, src+"."+k)
+                    elif nk in _HASH_K:   best("serverHash", sv, 90, src+"."+k)
+                    elif nk in _CLIENT_K: best("clientSeed", sv, 90, src+"."+k)
+                    elif nk in _NONCE_K:  best("nonce",      sv, 90, src+"."+k)
+                    # nested seed containers
+                    if nk in _SERVER_CONTAINER and isinstance(v, dict):
+                        for ck, cv in v.items():
+                            cnk = _norm(ck)
+                            if cnk in _CHILD_SEED: best("serverSeed", str(cv), 85, src+"."+k+"."+ck)
+                            if cnk in _CHILD_HASH: best("serverHash", str(cv), 85, src+"."+k+"."+ck)
+                    if nk in _CLIENT_CONTAINER and isinstance(v, dict):
+                        for ck, cv in v.items():
+                            if _norm(ck) in _CHILD_SEED: best("clientSeed", str(cv), 85, src+"."+k+"."+ck)
+                    if isinstance(v, (dict, list)):
+                        _dig(v, src, depth+1)
+            _dig(obj, "json")
+        except Exception:
+            pass
+
+    # 2) named text patterns on the stripped text
+    named = [
+        ("serverHash", re.compile(r"(?:server[_\s]?seed[_\s]?hash|hashed[_\s]?server[_\s]?seed)\W{0,6}([0-9a-fA-F]{64})", re.I), 70),
+        ("serverSeed", re.compile(r"server[_\s]?seed(?!\W{0,6}hash)\W{0,6}([0-9a-fA-F]{16,128})", re.I), 68),
+        ("clientSeed", re.compile(r"client[_\s]?seed\W{0,6}([0-9A-Za-z_\-]{3,80})", re.I), 68),
+        ("nonce",      re.compile(r"nonce\W{0,6}(\d{1,12})", re.I), 64),
+        ("nonce",      re.compile(r"bet\s*(?:id|number|no|#)\W{0,6}(\d{1,12})", re.I), 60),
+    ]
+    for field, pat, score in named:
+        m = pat.search(text)
+        if m:
+            best(field, m.group(1), score, "text-pattern")
+
+    # 3) last resort — first 64-char hex block = likely hash
+    m64 = re.search(r'\b([0-9a-fA-F]{64})\b', text)
+    if m64:
+        best("serverHash", m64.group(1), 20, "harvest64")
+
+    if not pool:
+        return jsonify({"found": False})
+
+    out = {"found": True, "sources": {}}
+    for f in ("serverSeed", "serverHash", "clientSeed", "nonce"):
+        if f in pool:
+            out[f] = pool[f][0]
+            out["sources"][f] = {"src": pool[f][2], "score": pool[f][1]}
+    return jsonify(out)
+
+
 @app.route("/read-seeds", methods=["POST"])  # legacy one-shot: open + settle + grab
 def read_seeds_route():
     url = (request.json or {}).get("url", "").strip()

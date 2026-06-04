@@ -157,7 +157,7 @@ select option{background:#001a08;color:var(--g)}
     </div>
   </div>
 
-  <!-- ══ TAB 2: SEEDS ══ -->
+  // ── TAB 2: SEEDS ══ -->
   <div class="glass panel" id="panel-seeds">
 
     <!-- Auto-read seeds from a URL (persistent capture session) -->
@@ -176,9 +176,23 @@ select option{background:#001a08;color:var(--g)}
            display:none;background:rgba(0,0,0,.45);border:1px solid rgba(0,255,102,.18);
            border-radius:7px;padding:8px 10px;max-height:96px;overflow-y:auto;line-height:1.6"></div>
       <div style="font-size:.64rem;color:var(--gd);margin-top:8px;opacity:.8;line-height:1.5">
-        Tip: the live server seed is usually <b>hashed</b> until you rotate it. To reveal the unhashed
-        seed of a finished game, rotate/change your seed in the site's Fairness panel, then hit GRAB.
+        Tip: the live server seed is always <b>hashed</b> until you rotate it. To get the unhashed seed,
+        open the site's Fairness panel → rotate your seed → GRAB. The <i>previous</i> server seed is now revealed.
       </div>
+    </div>
+
+    <div style="border-top:1px solid rgba(0,255,102,.15);margin-bottom:14px"></div>
+
+    <!-- HTML paste fallback -->
+    <div style="margin-bottom:16px">
+      <label>📋 Paste HTML — if auto-read fails, copy the page source and paste here</label>
+      <textarea id="html-paste" spellcheck="false"
+        style="width:100%;height:80px;padding:10px 12px;background:rgba(0,0,0,.6);
+               border:1px solid rgba(0,255,102,.25);border-radius:8px;color:var(--g);
+               font-family:inherit;font-size:.75rem;resize:vertical;outline:none"
+        placeholder="Paste the full HTML or just the Fairness modal HTML here…"></textarea>
+      <button class="btn" id="parse-btn" style="margin-top:8px" onclick="parseHtml()">PARSE HTML FOR SEEDS</button>
+      <div id="parse-status" style="font-size:.72rem;color:var(--gd);margin-top:6px;min-height:14px"></div>
     </div>
 
     <div style="border-top:1px solid rgba(0,255,102,.15);margin-bottom:16px"></div>
@@ -192,21 +206,20 @@ select option{background:#001a08;color:var(--g)}
         </select>
       </div>
       <div>
-        <label>Game Seed / Nonce</label>
-        <input type="text" id="game-seed" placeholder="e.g. 1"/>
+        <label>Nonce / Bet # <span style="opacity:.55;font-size:.62rem">(starts at 0 after seed rotation)</span></label>
+        <input type="text" id="game-seed" placeholder="0"/>
       </div>
       <div class="full">
         <label>Client Seed</label>
         <input type="text" id="client-seed" placeholder="your client seed"/>
       </div>
       <div class="full">
-        <label>Server Seed (Unhashed)</label>
-        <input type="text" id="server-seed" placeholder="revealed server seed"/>
+        <label>Server Seed (Unhashed — revealed after rotation)</label>
+        <input type="text" id="server-seed" placeholder="revealed server seed — 64 hex chars"/>
       </div>
       <div class="full">
-        <label>Server Seed Hash (optional — for verification)</label>
-        <input type="text" id="server-hash" placeholder="hashed server seed shown before game" readonly
-               style="color:var(--gd);cursor:default"/>
+        <label>Server Seed Hash <span style="opacity:.55;font-size:.62rem">(optional — for verification)</span></label>
+        <input type="text" id="server-hash" placeholder="hashed server seed shown before the game"/>
       </div>
     </div>
     <button class="btn" onclick="calcSeeds()">REVEAL MINES</button>
@@ -427,6 +440,34 @@ async function grabSeeds(){
   }
 }
 
+// ── HTML paste parser ──
+async function parseHtml(){
+  const html=document.getElementById("html-paste").value.trim();
+  if(!html){document.getElementById("parse-status").textContent="Paste HTML first.";return}
+  const btn=document.getElementById("parse-btn");
+  const ps=document.getElementById("parse-status");
+  btn.disabled=true; btn.textContent="PARSING...";
+  ps.textContent="Scanning HTML for seeds..."; ps.style.color="var(--gd)";
+  try{
+    const res=await fetch("/parse-html",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({html})});
+    const data=await res.json();
+    if(data.error){ps.textContent="Error: "+data.error;ps.style.color="var(--r)";return}
+    let filled=0;
+    if(data.serverSeed){document.getElementById("server-seed").value=data.serverSeed;filled++}
+    if(data.clientSeed){document.getElementById("client-seed").value=data.clientSeed;filled++}
+    if(data.nonce)     {document.getElementById("game-seed").value=data.nonce;filled++}
+    if(data.serverHash){document.getElementById("server-hash").value=data.serverHash;filled++}
+    if(!filled){ps.textContent="No seeds found in that HTML. Try copying more of the page.";ps.style.color="var(--r)";return}
+    ps.innerHTML=`✅ Found ${filled} value${filled!==1?"s":""} — verify below and hit REVEAL MINES`;
+    ps.style.color="var(--g)";
+  }catch(e){
+    ps.textContent="Request failed: "+e.message;ps.style.color="var(--r)";
+  }finally{
+    btn.disabled=false;btn.textContent="PARSE HTML FOR SEEDS";
+  }
+}
+
 // SHA-256 hash (plain, not HMAC)
 async function sha256(str){
   const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(str));
@@ -453,16 +494,22 @@ async function calcSeeds(){
   const mc=parseInt(document.getElementById("mines-count").value);
   if(!srv||!cli||!nonce){alert("Fill Server Seed, Client Seed, and Nonce.");return}
 
-  // Calculate mine positions
+  // Generate 100 bytes (25 floats × 4 bytes each) via HMAC-SHA256 rounds
   const bytes=await getBytes(srv,cli,nonce,100);
-  const pos=Array.from({length:25},(_,i)=>i);
-  for(let i=0;i<25;i++){
-    const c=i*4;
+
+  // Stake provably fair — backward Knuth Fisher-Yates.
+  // Loop i = 24 → 1. float[24-i] selects j ∈ [0,i]. Swap deck[i] ↔ deck[j].
+  // First mc elements of the final deck are the mine tile indices (0–24).
+  const deck=Array.from({length:25},(_,i)=>i);
+  for(let i=24;i>0;i--){
+    const fi=24-i;          // float[0] for i=24, float[23] for i=1
+    const c=fi*4;
     const u=((bytes[c]<<24)|(bytes[c+1]<<16)|(bytes[c+2]<<8)|bytes[c+3])>>>0;
-    const j=Math.floor((u/0x100000000)*(i+1));
-    [pos[i],pos[j]]=[pos[j],pos[i]];
+    const j=Math.floor((u/0x100000000)*(i+1));  // j ∈ [0, i]
+    const tmp=deck[i]; deck[i]=deck[j]; deck[j]=tmp;
   }
-  const mines=new Set(pos.slice(0,mc));
+  const mines=new Set(deck.slice(0,mc));
+
   const grid=[];
   for(let r=0;r<5;r++){
     const row=[];
@@ -477,8 +524,8 @@ async function calcSeeds(){
   document.getElementById("seed-board-info").textContent=`// ${mc} mine${mc>1?"s":""} · ${25-mc} safe tiles`;
 
   // Compute hashes
-  const verifyHash = await sha256(srv);          // SHA-256(server_seed) = should match site's pre-game hash
-  const nextHash   = await sha256(verifyHash);   // SHA-256(SHA-256(server_seed)) = next game's server seed hash
+  const verifyHash = await sha256(srv);        // SHA-256(server_seed) = what the site showed before the game
+  const nextHash   = await sha256(verifyHash); // SHA-256(SHA-256(server_seed)) = next game's server seed hash
 
   document.getElementById("verify-hash").textContent = verifyHash;
   document.getElementById("next-hash").textContent   = nextHash;
