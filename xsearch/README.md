@@ -25,17 +25,29 @@ UI (public/)  →  POST /api/scan  →  pipeline.js
 implements the same contract in `lib/sources/types.js`, so we can swap the data
 provider without touching the UI or pipeline.
 
-| DATA_SOURCE | What | Status |
-|-------------|------|--------|
-| `mock` | fake data, zero keys | ✅ works now |
-| `unofficial` | open-source TikTok scraper (free, fragile) | ⬜ to build |
-| `apify` | scraper-as-a-service (robust, paid) | ⬜ to build |
-| `kalodata` | TikTok Shop analytics API (paid) | ⬜ to build |
+| DATA_SOURCE | What | Install / keys | Status |
+|-------------|------|----------------|--------|
+| `mock` | fake data, zero keys | none | ✅ works now |
+| `unofficial` | drawrowfly/tiktok-scraper — trending/hashtag VIDEOS (free, fragile) | `npm i tiktok-scraper` | ✅ wired (test locally) |
+| `apify` | Apify TikTok Shop actor — real products/price/sales (robust, paid) | `APIFY_TOKEN` + `APIFY_ACTOR` | ✅ wired (test locally) |
+| `browser` | Playwright "eyes+fingers" on a BURNER account (fragile) | `npm i playwright` + login | 🟡 scaffold (DOM selectors TODO) |
+
+> ⚠️ All real sources are unofficial/ToS-gray and must run on YOUR machine (this sandbox
+> blocks live scraping). `unofficial` gives trending *videos* (the Claude brain infers the
+> product); `apify` gives actual *products*. Use a burner account for `browser`.
+
+## Switch source
+```bash
+# .env
+DATA_SOURCE=unofficial      # then: npm i tiktok-scraper && npm run dev
+# or
+DATA_SOURCE=apify           # set APIFY_TOKEN + APIFY_ACTOR
+```
 
 ## Build order
-1. ✅ Backend + adapter contract + mock (this commit)
-2. ⬜ Wire the existing XSEARCH UI into `public/` (point its fetch at `/api/scan`)
-3. ⬜ Implement ONE real TikTok source adapter (pick from table above)
+1. ✅ Backend + adapter contract + mock
+2. ✅ Three real TikTok adapters wired (unofficial / apify / browser)
+3. ⬜ Wire the existing XSEARCH UI into `public/` (fetch `/api/scan`)
 4. ⬜ Sourcing adapter (CJ first) → real cost/margin
 5. ⬜ Claude brain → X Score, winning angle, compliance flag
 6. ⬜ Deploy + real Liquid Glass polish

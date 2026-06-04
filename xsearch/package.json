@@ -1,6 +1,6 @@
 {
   "name": "xsearch",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "XSEARCH — TikTok product-research agent. Pluggable data-source backend + UI.",
@@ -11,5 +11,10 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.19.2"
-  }
+  },
+  "optionalDependencies": {
+    "tiktok-scraper": "^1.4.40",
+    "playwright": "^1.44.0"
+  },
+  "comment": "tiktok-scraper + playwright are optional: install only the source(s) you'll use. apify needs no package (uses fetch + APIFY_TOKEN)."
 }
