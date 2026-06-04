@@ -191,6 +191,7 @@
         </div>
 
         <div class="feed" id="feed">
+          <img id="live" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:8;cursor:pointer;touch-action:none"/>
           <div class="pfeedtop"><span>Following</span><span class="a">For You</span></div>
           <div class="vidbg" id="vidbg"></div>
           <div class="rail">
@@ -237,12 +238,32 @@ function addMsg(who,text,me){const m=document.createElement("div");m.className="
 function setConn(s){$("scrConnect").style.display=s==='no'?'flex':'none';$("scrConnecting").style.display=s==='connecting'?'flex':'none';
   $("feed").style.opacity=s==='ok'?'1':'0';$("conn").classList.toggle('ok',s==='ok');
   $("connSt").textContent=s==='ok'?'CONNECTED':s==='connecting'?'CONNECTING':'NOT CONNECTED';}
+const VPW=360,VPH=760;let ws=null;
+function sendLive(o){if(ws&&ws.readyState===1)ws.send(JSON.stringify(o));}
 function connect(){if(connected)return Promise.resolve();
-  addMsg("You","Connect to TikTok.",true);setConn('connecting');$("mode").textContent="Connecting to TikTok…";
-  const steps=["Opening TikTok session","Loading For You feed","Warming up the agent"];let i=0;
-  const iv=setInterval(()=>{$("connecting-sub").textContent=steps[i++%steps.length];},700);
-  return new Promise(res=>setTimeout(()=>{clearInterval(iv);connected=true;setConn('ok');
-    $("mode").textContent="Connected — ready to scan";addMsg("XSEARCH AI","Connected to TikTok (demo session). Give me a niche and press XSEARCH.");res();},2100));}
+  addMsg("You","Connect to TikTok.",true);setConn('connecting');$("mode").textContent="Launching live browser…";
+  return new Promise(res=>{
+    let done=false;
+    try{ws=new WebSocket(`ws://${location.host}/live`);}catch(e){addMsg("XSEARCH AI","Cannot open live socket: "+e.message);setConn('no');return res();}
+    ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data);}catch{return;}
+      if(m.type==="frame"){const im=$("live");im.src="data:image/jpeg;base64,"+m.data;
+        if(!done){done=true;connected=true;setConn('ok');im.style.display="block";
+          ["pfeedtop","vidbg"].forEach(c=>document.querySelectorAll("."+c).forEach(e=>e.style.display="none"));
+          document.querySelector(".rail").style.display="none";document.querySelector(".cap").style.display="none";
+          $("mode").textContent="LIVE — controlling real TikTok";
+          addMsg("XSEARCH AI","Live TikTok browser is up. Tap and scroll the phone screen — you're driving a real browser. We'll solve captchas together right on screen.");res();}}
+      else if(m.type==="status"){$("connecting-sub").textContent=m.text;
+        if(m.text.startsWith("error")){addMsg("XSEARCH AI","Browser error: "+m.text);setConn('no');if(!done){done=true;res();}}}};
+    ws.onerror=()=>{if(!done){done=true;addMsg("XSEARCH AI","Live browser not available. On your machine run: <b>npm i playwright ws</b> then <b>npx playwright install chromium</b>, then restart.");setConn('no');res();}};
+    ws.onclose=()=>{connected=false;};
+  });}
+// tap + scroll forwarding to the real browser
+(function(){const im=$("live");
+  im.addEventListener("click",e=>{const r=im.getBoundingClientRect();sendLive({type:"click",x:(e.clientX-r.left)/r.width*VPW,y:(e.clientY-r.top)/r.height*VPH});});
+  im.addEventListener("wheel",e=>{e.preventDefault();sendLive({type:"scroll",dy:e.deltaY});},{passive:false});
+  let sy=0;im.addEventListener("pointerdown",e=>sy=e.clientY);
+  im.addEventListener("pointerup",e=>{const dy=sy-e.clientY;if(Math.abs(dy)>20)sendLive({type:"scroll",dy:dy*3});});
+})();
 function showVideo(p,i){$("vidbg").style.background=`linear-gradient(140deg,${G[i%G.length][0]},${G[i%G.length][1]})`;
   const e=p.engagement||{};$("r-like").textContent=K(e.likes||Math.round((e.views||0)*0.08));$("r-comment").textContent=K(e.comments||Math.round((e.views||0)*0.01));
   $("r-save").textContent=K(Math.round((e.views||0)*0.012));$("r-share").textContent=K(e.shares||Math.round((e.views||0)*0.02));
