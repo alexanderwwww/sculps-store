@@ -159,9 +159,24 @@ select option{background:#001a08;color:var(--g)}
 
   <!-- ══ TAB 2: SEEDS ══ -->
   <div class="glass panel" id="panel-seeds">
-    <div class="sub" style="margin-bottom:14px;text-align:left">
-      For provably fair games (Stake, Roobet etc.) — enter the 3 seeds manually
+
+    <!-- Auto-read seeds from a URL -->
+    <div style="margin-bottom:16px">
+      <label>🌐 Auto-read seeds from a site URL</label>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;position:relative">
+          <input id="seed-url" type="text" spellcheck="false" autocomplete="off"
+                 placeholder="paste the gambling site URL here"/>
+        </div>
+        <button class="btn" id="read-btn" style="width:auto;padding:11px 18px;letter-spacing:1px"
+                onclick="readSeeds()">READ SEEDS</button>
+      </div>
+      <div id="read-status" style="font-size:.72rem;color:var(--gd);margin-top:6px;min-height:16px"></div>
     </div>
+
+    <div style="border-top:1px solid rgba(0,255,102,.15);margin-bottom:16px"></div>
+
+    <!-- Manual seed entry -->
     <div class="fgrid">
       <div>
         <label>Mines Count</label>
@@ -181,12 +196,37 @@ select option{background:#001a08;color:var(--g)}
         <label>Server Seed (Unhashed)</label>
         <input type="text" id="server-seed" placeholder="revealed server seed"/>
       </div>
+      <div class="full">
+        <label>Server Seed Hash (optional — for verification)</label>
+        <input type="text" id="server-hash" placeholder="hashed server seed shown before game" readonly
+               style="color:var(--gd);cursor:default"/>
+      </div>
     </div>
     <button class="btn" onclick="calcSeeds()">REVEAL MINES</button>
+
     <div class="board-wrap" id="seed-board-wrap">
       <div class="board-info" id="seed-board-info"></div>
       <div class="board-outer"><div class="board" id="seed-board" style="grid-template-columns:repeat(5,1fr)"></div></div>
       <div class="stats" id="seed-stats"></div>
+
+      <!-- Hash results -->
+      <div id="hash-box" style="margin-top:16px;display:none">
+        <div style="border-top:1px solid rgba(0,255,102,.15);margin-bottom:14px"></div>
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--gd);margin-bottom:10px">
+          // Seed Verification &amp; Next Hash
+        </div>
+        <div style="margin-bottom:10px">
+          <label>SHA-256 of your Server Seed (verify this matches what the site showed before the game)</label>
+          <div id="verify-hash" style="font-size:.78rem;word-break:break-all;padding:10px 12px;
+               background:rgba(0,0,0,.5);border:1px solid rgba(0,255,102,.3);border-radius:8px;color:var(--g)"></div>
+          <div id="verify-result" style="font-size:.72rem;margin-top:5px"></div>
+        </div>
+        <div>
+          <label>Next Server Seed Hash (what the site will show before your NEXT game)</label>
+          <div id="next-hash" style="font-size:.78rem;word-break:break-all;padding:10px 12px;
+               background:rgba(0,204,255,.05);border:1px solid rgba(0,204,255,.3);border-radius:8px;color:var(--b)"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -302,7 +342,47 @@ function runScan(){
   });
 }
 
-/* ── TAB 2: Seed calculator ── */
+/* ── TAB 2: Seed reader + calculator ── */
+
+// Auto-read seeds from a URL
+async function readSeeds(){
+  const url=document.getElementById("seed-url").value.trim();
+  if(!url)return;
+  const btn=document.getElementById("read-btn");
+  const status=document.getElementById("read-status");
+  btn.disabled=true; btn.textContent="READING...";
+  status.textContent="Opening site and scanning for seeds...";
+  status.style.color="var(--gd)";
+
+  try {
+    const res=await fetch("/read-seeds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+    const data=await res.json();
+
+    if(data.error){status.textContent="Error: "+data.error;status.style.color="var(--r)";return}
+    if(!data.found){status.textContent="No seeds found on this page. Try opening the fairness/verify section manually first.";status.style.color="var(--r)";return}
+
+    let filled=0;
+    if(data.serverSeed){document.getElementById("server-seed").value=data.serverSeed;filled++}
+    if(data.clientSeed){document.getElementById("client-seed").value=data.clientSeed;filled++}
+    if(data.nonce)     {document.getElementById("game-seed").value=data.nonce;filled++}
+    if(data.serverHash){document.getElementById("server-hash").value=data.serverHash;filled++}
+
+    status.textContent=`✅ Found ${filled} value${filled!==1?"s":""} — check the fields below and hit REVEAL MINES`;
+    status.style.color="var(--g)";
+  } catch(e){
+    status.textContent="Request failed: "+e.message;status.style.color="var(--r)";
+  } finally {
+    btn.disabled=false;btn.textContent="READ SEEDS";
+  }
+}
+
+// SHA-256 hash (plain, not HMAC)
+async function sha256(str){
+  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+// HMAC-SHA256 for mine position derivation
 async function hmac(key,msg){
   const enc=new TextEncoder();
   const k=await crypto.subtle.importKey("raw",enc.encode(key),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
@@ -313,13 +393,16 @@ async function getBytes(srv,cli,nonce,need){
   while(all.length<need){all.push(...await hmac(srv,`${cli}:${nonce}:${round++}`));}
   return all;
 }
+
 async function calcSeeds(){
   const srv=document.getElementById("server-seed").value.trim();
   const cli=document.getElementById("client-seed").value.trim();
   const nonce=document.getElementById("game-seed").value.trim();
+  const knownHash=document.getElementById("server-hash").value.trim();
   const mc=parseInt(document.getElementById("mines-count").value);
-  if(!srv||!cli||!nonce){alert("Fill all three seeds.");return}
+  if(!srv||!cli||!nonce){alert("Fill Server Seed, Client Seed, and Nonce.");return}
 
+  // Calculate mine positions
   const bytes=await getBytes(srv,cli,nonce,100);
   const pos=Array.from({length:25},(_,i)=>i);
   for(let i=0;i<25;i++){
@@ -339,8 +422,28 @@ async function calcSeeds(){
     document.getElementById("seed-board"),
     document.getElementById("seed-board-info"),
     document.getElementById("seed-stats"),
-    document.getElementById("seed-board-wrap"), grid);
+    document.getElementById("seed-board-wrap"),grid);
   document.getElementById("seed-board-info").textContent=`// ${mc} mine${mc>1?"s":""} · ${25-mc} safe tiles`;
+
+  // Compute hashes
+  const verifyHash = await sha256(srv);          // SHA-256(server_seed) = should match site's pre-game hash
+  const nextHash   = await sha256(verifyHash);   // SHA-256(SHA-256(server_seed)) = next game's server seed hash
+
+  document.getElementById("verify-hash").textContent = verifyHash;
+  document.getElementById("next-hash").textContent   = nextHash;
+
+  // Check against known hash if provided
+  const vr = document.getElementById("verify-result");
+  if(knownHash){
+    if(knownHash.toLowerCase()===verifyHash.toLowerCase()){
+      vr.innerHTML='<span style="color:var(--g)">✅ VERIFIED — matches the hash the site showed before this game</span>';
+    } else {
+      vr.innerHTML='<span style="color:var(--r)">❌ MISMATCH — hash does not match. Double-check the server seed.</span>';
+    }
+  } else {
+    vr.innerHTML='<span style="color:var(--gd)">Paste the site\'s pre-game hash above to verify</span>';
+  }
+  document.getElementById("hash-box").style.display="block";
 }
 
 /* ── TAB 3: Auto play ── */

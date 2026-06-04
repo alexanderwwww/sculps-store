@@ -421,9 +421,137 @@ def run_job(job_id, url):
 # Flask routes
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Seed reader — scans any provably-fair gambling site for seed values
+# ---------------------------------------------------------------------------
+
+SEED_READER_JS = """
+() => {
+  const result = {serverSeed: '', clientSeed: '', nonce: '', serverHash: ''};
+
+  // ── Helper: scan an element and its nearby siblings/parents for a label ──
+  function getLabel(el) {
+    const parent = el.closest('label,div,li,tr,td,span,[class*="row"],[class*="field"],[class*="item"]');
+    return (parent ? parent.textContent : el.textContent).toLowerCase().replace(/\\s+/g,' ');
+  }
+
+  function classify(label, value) {
+    if (!value || value.length < 3) return;
+    const lc = label.toLowerCase();
+    // Server seed (unhashed) — long hex, labelled "server"
+    if (!result.serverSeed && lc.includes('server') && !lc.includes('hash') && !lc.includes('hashed') && value.length >= 20)
+      result.serverSeed = value.trim();
+    // Server hash — labelled "hash" or "hashed server"
+    else if (!result.serverHash && (lc.includes('hash') || (lc.includes('server') && value.length === 64)))
+      result.serverHash = value.trim();
+    // Client seed
+    else if (!result.clientSeed && lc.includes('client'))
+      result.clientSeed = value.trim();
+    // Nonce / game number
+    else if (!result.nonce && (lc.includes('nonce') || lc.includes('bet number') || lc.includes('game number') || lc.includes('round')))
+      result.nonce = value.trim();
+  }
+
+  // ── 1. Scan all visible text inputs and readonly fields ──
+  for (const el of document.querySelectorAll('input,textarea,[contenteditable="true"]')) {
+    const val = el.value || el.textContent || '';
+    if (val.length < 3) continue;
+    classify(getLabel(el), val);
+  }
+
+  // ── 2. Scan spans/divs that contain long hex-like strings (seeds are usually hex) ──
+  const hexRe = /[0-9a-f]{16,}/i;
+  for (const el of document.querySelectorAll('span,div,p,td,code,pre,li')) {
+    if (el.children.length > 5) continue;  // skip big containers
+    const text = el.textContent.trim();
+    if (!hexRe.test(text)) continue;
+    classify(getLabel(el), text);
+  }
+
+  // ── 3. Scan data-* attributes (some sites store seeds there) ──
+  for (const el of document.querySelectorAll('[data-server-seed],[data-client-seed],[data-nonce]')) {
+    if (el.dataset.serverSeed) result.serverSeed = result.serverSeed || el.dataset.serverSeed;
+    if (el.dataset.clientSeed) result.clientSeed = result.clientSeed || el.dataset.clientSeed;
+    if (el.dataset.nonce)      result.nonce      = result.nonce      || el.dataset.nonce;
+  }
+
+  // ── 4. Try window/global state objects ──
+  const stateKeys = ['game','gameState','state','session','fairness','provablyFair','pf'];
+  for (const key of stateKeys) {
+    try {
+      const obj = window[key];
+      if (!obj) continue;
+      if (obj.serverSeed || obj.server_seed)
+        result.serverSeed = result.serverSeed || obj.serverSeed || obj.server_seed;
+      if (obj.clientSeed || obj.client_seed)
+        result.clientSeed = result.clientSeed || obj.clientSeed || obj.client_seed;
+      if (obj.nonce || obj.betNumber || obj.gameNumber)
+        result.nonce = result.nonce || String(obj.nonce || obj.betNumber || obj.gameNumber);
+      if (obj.serverSeedHash || obj.server_seed_hash || obj.serverHash)
+        result.serverHash = result.serverHash || obj.serverSeedHash || obj.server_seed_hash || obj.serverHash;
+    } catch(e) {}
+  }
+
+  const found = !!(result.serverSeed || result.clientSeed || result.nonce || result.serverHash);
+  return {found, ...result};
+}
+"""
+
+
+def read_seeds_from_page(url: str) -> dict:
+    """Open a URL with Playwright, scan for provably-fair seed values, return them."""
+    if not url.startswith("http"):
+        url = "https://" + url
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=False,
+                slow_mo=80,
+                args=["--ignore-certificate-errors", "--start-maximized"],
+            )
+            ctx = browser.new_context(no_viewport=True, ignore_https_errors=True)
+            page = ctx.new_page()
+            page.goto(url, wait_until="networkidle", timeout=30000)
+            page.wait_for_timeout(2000)
+
+            seeds = page.evaluate(SEED_READER_JS)
+
+            # If seeds not visible yet, try clicking common "fairness" buttons
+            if not seeds.get("serverSeed") and not seeds.get("clientSeed"):
+                for selector in [
+                    '[class*="fair"]', '[class*="provable"]', '[class*="verify"]',
+                    '[title*="fair" i]', '[aria-label*="fair" i]',
+                    'button:has-text("Fair")', 'button:has-text("Verify")',
+                    '[class*="seed"]',
+                ]:
+                    try:
+                        btn = page.query_selector(selector)
+                        if btn:
+                            btn.click()
+                            page.wait_for_timeout(800)
+                            seeds = page.evaluate(SEED_READER_JS)
+                            if seeds.get("serverSeed") or seeds.get("clientSeed"):
+                                break
+                    except Exception:
+                        pass
+
+            browser.close()
+            return seeds
+    except Exception as e:
+        return {"found": False, "error": str(e)}
+
+
 @app.route("/")
 def index():
     return render_template("pc.html")
+
+@app.route("/read-seeds", methods=["POST"])
+def read_seeds():
+    url = (request.json or {}).get("url", "").strip()
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
+    result = read_seeds_from_page(url)
+    return jsonify(result)
 
 @app.route("/scan", methods=["POST"])
 def scan():
