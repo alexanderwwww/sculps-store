@@ -276,12 +276,31 @@ def status(job_id):
     return jsonify(job)
 
 
-if __name__ == "__main__":
+def get_lan_ip():
+    """Reliably find the LAN IP by opening a dummy UDP socket.
+    (socket.gethostbyname(hostname) often returns 127.0.0.1 — useless for phones.)"""
     import socket
-    hostname = socket.gethostname()
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        local_ip = socket.gethostbyname(hostname)
+        # Doesn't actually send packets; just picks the right outbound interface
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
     except Exception:
-        local_ip = "0.0.0.0"
-    print(f"\n  Open on your iPhone: http://{local_ip}:5000\n")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+
+if __name__ == "__main__":
+    PORT = 5000
+    local_ip = get_lan_ip()
+    print("\n" + "=" * 50)
+    print("  💣 Mine Solver is running!")
+    print("=" * 50)
+    print(f"\n  On THIS computer:   http://localhost:{PORT}")
+    print(f"  On your iPhone:     http://{local_ip}:{PORT}")
+    print("\n  (iPhone must be on the SAME WiFi network)")
+    print("  Make sure to include the ':5000' part!\n")
+    print("=" * 50 + "\n")
+    app.run(host="0.0.0.0", port=PORT, debug=False)
