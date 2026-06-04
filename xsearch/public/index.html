@@ -191,7 +191,7 @@
         </div>
 
         <div class="feed" id="feed">
-          <img id="live" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:8;cursor:pointer;touch-action:none"/>
+          <img id="live" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:30;cursor:grab;touch-action:none"/>
           <div class="pfeedtop"><span>Following</span><span class="a">For You</span></div>
           <div class="vidbg" id="vidbg"></div>
           <div class="rail">
@@ -248,8 +248,7 @@ function connect(){if(connected)return Promise.resolve();
     ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data);}catch{return;}
       if(m.type==="frame"){const im=$("live");im.src="data:image/jpeg;base64,"+m.data;
         if(!done){done=true;connected=true;setConn('ok');im.style.display="block";
-          ["pfeedtop","vidbg"].forEach(c=>document.querySelectorAll("."+c).forEach(e=>e.style.display="none"));
-          document.querySelector(".rail").style.display="none";document.querySelector(".cap").style.display="none";
+          [".pfeedtop",".vidbg",".rail",".cap",".pnav",".notch",".sbar"].forEach(s=>document.querySelectorAll(s).forEach(e=>e.style.display="none"));
           $("mode").textContent="LIVE — controlling real TikTok";
           addMsg("XSEARCH AI","Live TikTok browser is up. Tap and scroll the phone screen — you're driving a real browser. We'll solve captchas together right on screen.");res();}}
       else if(m.type==="status"){$("connecting-sub").textContent=m.text;
@@ -258,11 +257,13 @@ function connect(){if(connected)return Promise.resolve();
     ws.onclose=()=>{connected=false;};
   });}
 // tap + scroll forwarding to the real browser
-(function(){const im=$("live");
-  im.addEventListener("click",e=>{const r=im.getBoundingClientRect();sendLive({type:"click",x:(e.clientX-r.left)/r.width*VPW,y:(e.clientY-r.top)/r.height*VPH});});
+(function(){const im=$("live");const map=(e,r)=>({x:(e.clientX-r.left)/r.width*VPW,y:(e.clientY-r.top)/r.height*VPH});
+  let s=null;
+  im.addEventListener("pointerdown",e=>{try{im.setPointerCapture(e.pointerId);}catch{}const r=im.getBoundingClientRect();s={...map(e,r),t:Date.now()};});
+  im.addEventListener("pointerup",e=>{if(!s)return;const r=im.getBoundingClientRect();const p=map(e,r);const dx=p.x-s.x,dy=p.y-s.y,dt=Date.now()-s.t;
+    if(Math.abs(dx)<12&&Math.abs(dy)<12&&dt<450)sendLive({type:"click",x:p.x,y:p.y});
+    else sendLive({type:"swipe",x1:s.x,y1:s.y,x2:p.x,y2:p.y});s=null;});
   im.addEventListener("wheel",e=>{e.preventDefault();sendLive({type:"scroll",dy:e.deltaY});},{passive:false});
-  let sy=0;im.addEventListener("pointerdown",e=>sy=e.clientY);
-  im.addEventListener("pointerup",e=>{const dy=sy-e.clientY;if(Math.abs(dy)>20)sendLive({type:"scroll",dy:dy*3});});
 })();
 function showVideo(p,i){$("vidbg").style.background=`linear-gradient(140deg,${G[i%G.length][0]},${G[i%G.length][1]})`;
   const e=p.engagement||{};$("r-like").textContent=K(e.likes||Math.round((e.views||0)*0.08));$("r-comment").textContent=K(e.comments||Math.round((e.views||0)*0.01));

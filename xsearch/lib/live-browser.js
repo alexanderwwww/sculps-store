@@ -57,6 +57,11 @@ export function attachLiveBrowser(server) {
       if (!page || closed) return;
       try {
         if (m.type === "click") await page.touchscreen.tap(m.x, m.y);
+        else if (m.type === "swipe" && client) {
+          await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: m.x1, y: m.y1 }] });
+          for (let i = 1; i <= 6; i++) await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: m.x1 + (m.x2 - m.x1) * i / 6, y: m.y1 + (m.y2 - m.y1) * i / 6 }] });
+          await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        }
         else if (m.type === "scroll") await page.mouse.wheel(0, m.dy);
         else if (m.type === "key") await page.keyboard.type(String(m.text || ""));
         else if (m.type === "goto" && m.url) await page.goto(m.url, { waitUntil: "domcontentloaded" }).catch(() => {});
