@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>XSEARCH</title>
+<style>
+  :root{ --glass:rgba(18,20,38,.55); --glass2:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.12);
+    --txt:#eaf0ff; --mut:#9aa3c9; --cyan:#7fe3ff; --send:#6b7bff; }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;}
+  body{min-height:100vh;display:grid;place-items:center;padding:28px;color:var(--txt);overflow:hidden;
+    background:radial-gradient(1100px 520px at 60% -8%,#3a2a6e 0%,transparent 55%),
+      radial-gradient(820px 520px at 92% 30%,#1d6f8f 0%,transparent 50%),
+      radial-gradient(700px 600px at 6% 80%,#15325c 0%,transparent 55%),
+      linear-gradient(160deg,#0a0a1c,#0c1130 55%,#070710);}
+  .stars,.stars:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+    background-image:radial-gradient(1px 1px at 15% 25%,#fff,transparent),radial-gradient(1px 1px at 75% 55%,#cde,transparent),
+      radial-gradient(1px 1px at 45% 78%,#fff,transparent),radial-gradient(1.3px 1.3px at 88% 18%,#fff,transparent),
+      radial-gradient(1px 1px at 60% 12%,#bcd,transparent);animation:tw 6s ease-in-out infinite alternate;}
+  .stars:after{opacity:.22;transform:scale(1.5);animation-delay:-3s;}
+  @keyframes tw{from{opacity:.25}to{opacity:.6}}
+
+  .win{width:min(1120px,96vw);height:min(720px,92vh);border-radius:18px;background:var(--glass);
+    backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);
+    border:1px solid var(--stroke);box-shadow:0 50px 130px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.07) inset;
+    display:flex;flex-direction:column;overflow:hidden;}
+  /* top bar */
+  .bar{height:58px;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--stroke);
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01));}
+  .lights{display:flex;gap:8px}.dot{width:12px;height:12px;border-radius:50%}.r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+  .brand{font-weight:700;letter-spacing:.04em;font-size:16px;margin-left:6px}
+  .tabs{display:flex;gap:6px;margin:0 auto;padding:5px;border-radius:14px;background:var(--glass2);border:1px solid var(--stroke);
+    backdrop-filter:blur(10px);}
+  .tab{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:13px;color:var(--mut);cursor:pointer;font-weight:500;}
+  .tab.on{color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);box-shadow:0 4px 14px rgba(120,140,255,.18);}
+  .tab i{width:14px;height:14px;display:inline-block;opacity:.85}
+  .srch{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:11px;background:var(--glass2);border:1px solid var(--stroke);font-size:12.5px;color:var(--mut);min-width:230px}
+  .srch .k{margin-left:auto;opacity:.5}
+  .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6b7bff,#36d0ff);}
+
+  .main{flex:1;display:grid;grid-template-columns:340px 1fr;min-height:0;}
+  /* agent chat */
+  .chat{border-right:1px solid var(--stroke);display:flex;flex-direction:column;min-height:0;padding:18px 16px;}
+  .chat h3{font-size:11px;letter-spacing:.2em;color:var(--mut);margin-bottom:14px}
+  .thread{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
+  .thread::-webkit-scrollbar{width:6px}.thread::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+  .msg{border:1px solid var(--stroke);border-radius:14px;padding:12px 13px;background:rgba(255,255,255,.03)}
+  .msg .h{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mut);margin-bottom:7px}
+  .msg .h .who{color:#cdd6ff;font-weight:600}.msg .h .t{margin-left:auto;opacity:.6}
+  .msg p{font-size:13px;line-height:1.55;color:#dde3ff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .ic{width:18px;height:18px;border-radius:6px;background:linear-gradient(135deg,#6b7bff,#36d0ff);display:inline-block}
+  .ic.u{background:rgba(255,255,255,.14)}
+  .live{border:1px solid var(--stroke);border-radius:14px;padding:14px;margin-top:12px;background:
+    linear-gradient(180deg,rgba(120,140,255,.06),rgba(255,255,255,.01));position:relative;overflow:hidden}
+  .live .lab{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.14em;color:#7dffa6;margin-bottom:10px}
+  .live .lab .pulse{width:8px;height:8px;border-radius:50%;background:#28c840;box-shadow:0 0 0 0 rgba(40,200,64,.6);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(40,200,64,.5)}70%{box-shadow:0 0 0 9px rgba(40,200,64,0)}100%{box-shadow:0 0 0 0 rgba(40,200,64,0)}}
+  .live .mode{font-size:13px;color:#eaf0ff;font-weight:500;margin-bottom:12px}
+  .live .log{display:flex;flex-direction:column;gap:9px}
+  .live .log div{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--mut);font-family:ui-monospace,monospace}
+  .live svg{opacity:.7}
+  .wave{position:absolute;left:0;right:0;bottom:-2px;height:34px;opacity:.5}
+  .composer{margin-top:14px;display:flex;align-items:center;gap:8px;border:1px solid var(--stroke);border-radius:14px;padding:6px 6px 6px 14px;background:rgba(255,255,255,.04)}
+  .composer input{flex:1;background:transparent;border:0;outline:0;color:var(--txt);font-size:13px}
+  .composer input::placeholder{color:var(--mut)}
+  .composer button{width:38px;height:38px;border-radius:11px;border:0;cursor:pointer;background:linear-gradient(135deg,#6b7bff,#5b46e0);display:grid;place-items:center}
+  .composer button:active{transform:scale(.95)}
+
+  /* phone */
+  .stage{display:grid;place-items:center;position:relative}
+  .beam{position:absolute;width:520px;height:120px;background:radial-gradient(closest-side,rgba(150,200,255,.5),transparent);filter:blur(8px);opacity:.0;transition:opacity .4s}
+  .phone{width:300px;height:620px;border-radius:46px;background:#000;border:9px solid #1c1f2b;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);position:relative;overflow:hidden}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:18px;z-index:5}
+  .sbar{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 4px;font-size:12px;color:#fff;font-weight:600}
+  .ptabs{display:flex;gap:18px;align-items:center;padding:6px 18px 8px;font-size:15px;color:#888;font-weight:600}
+  .ptabs .a{color:#fff;border-bottom:2px solid #fff;padding-bottom:3px}
+  .ptabs .f{margin-left:auto;opacity:.7}
+  .feed{height:472px;overflow-y:auto;padding:4px 12px 12px}
+  .feed::-webkit-scrollbar{width:0}
+  .card{display:flex;gap:11px;padding:11px 6px;border-bottom:1px solid rgba(255,255,255,.07);opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .45s ease}
+  .card.in{opacity:1;transform:none}
+  .thumb{position:relative;width:74px;height:74px;border-radius:13px;flex:none;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+  .score{position:absolute;top:5px;left:5px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:7px;backdrop-filter:blur(4px)}
+  .info{flex:1;min-width:0}
+  .info .nm{font-size:14px;font-weight:600;color:#fff}
+  .info .cat{font-size:11.5px;color:#8a90a8;margin:1px 0 5px}
+  .info .pr{font-size:14px;color:#7fe3ff;font-weight:600}
+  .info .src{font-size:11px;color:#8a90a8;margin-top:5px;display:flex;justify-content:space-between}
+  .info .src b{color:#cdd6ff;font-weight:600}
+  .meter{height:3px;border-radius:2px;background:rgba(255,255,255,.1);margin-top:7px;overflow:hidden}
+  .meter span{display:block;height:100%;background:linear-gradient(90deg,#6b7bff,#36d0ff)}
+  .nav{position:absolute;bottom:0;left:0;right:0;height:62px;display:flex;justify-content:space-around;align-items:center;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#9aa}
+  .nav div{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .nav .plus{width:34px;height:24px;border-radius:7px;background:linear-gradient(135deg,#6b7bff,#36d0ff);display:grid;place-items:center;color:#fff;font-size:16px;font-weight:700}
+  .finger{position:absolute;right:-6px;bottom:130px;width:120px;height:120px;pointer-events:none;background:radial-gradient(closest-side,rgba(150,200,255,.45),transparent);filter:blur(2px);opacity:0;transition:opacity .4s}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="win">
+  <div class="bar">
+    <div class="lights"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+    <div class="brand">XSEARCH</div>
+    <div class="tabs">
+      <div class="tab on">▦ Scanner</div><div class="tab">◫ Trends</div><div class="tab">▥ Analytics</div><div class="tab">☰ Lists</div>
+    </div>
+    <div class="srch">⌕ Search products… <span class="k">⌘K</span></div>
+    <div class="av"></div>
+  </div>
+
+  <div class="main">
+    <!-- AGENT CHAT -->
+    <div class="chat">
+      <h3>AGENT CHAT</h3>
+      <div class="thread" id="thread">
+        <div class="msg">
+          <div class="h"><span class="ic u"></span><span class="who">You</span><span class="t">9:41 AM</span></div>
+          <p>Find winning products in the home &amp; kitchen niche on TikTok in the last 7 days.</p>
+        </div>
+        <div class="msg">
+          <div class="h"><span class="ic"></span><span class="who">XSEARCH AI</span><span class="t">9:41 AM</span></div>
+          <p>On it. Scanning TikTok for high-velocity products with strong engagement and sourcing advantages.</p>
+        </div>
+      </div>
+      <div class="live">
+        <div class="lab"><span class="pulse"></span>LIVE</div>
+        <div class="mode">Learning Market Mode — watching TikTok</div>
+        <div class="log">
+          <div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa3c9" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="vids">watched 0 videos</span></div>
+          <div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa3c9" stroke-width="2"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5" fill="#9aa3c9"/></svg><span id="found">found 0 products</span></div>
+          <div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa3c9" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg><span id="srcstat">idle</span></div>
+        </div>
+        <svg class="wave" viewBox="0 0 300 34" preserveAspectRatio="none"><path d="M0 24 Q40 6 80 20 T160 18 T240 22 T320 14" fill="none" stroke="rgba(150,180,255,.5)" stroke-width="2"/></svg>
+      </div>
+      <div class="composer">
+        <input id="q" placeholder="Tell the agent what to find…" />
+        <button id="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- PHONE -->
+    <div class="stage">
+      <div class="beam" id="beam"></div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="sbar"><span>9:41</span><span>५G ▮▮▮</span></div>
+        <div class="ptabs"><span class="a">For You</span><span>Following</span><span class="f">⟰</span></div>
+        <div class="feed" id="feed"></div>
+        <div class="nav">
+          <div>⌂<span>Home</span></div><div>⌕<span>Discover</span></div><div class="plus">+</div><div>✉<span>Inbox</span></div><div>◔<span>Profile</span></div>
+        </div>
+        <div class="finger" id="finger"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const POOL=[
+ {n:"Electric Spin Scrubber",c:"Home & Kitchen",p:39.99,cost:12.45,m:68,g:["#c9d2e0","#8a94a8"],eng:8700},
+ {n:"LED Smart Lights",c:"Home & Lighting",p:29.99,cost:9.15,m:69,g:["#7c6cff","#36d0ff"],eng:7300},
+ {n:"MagSafe Phone Stand",c:"Mobile Accessories",p:24.99,cost:6.19,m:66,g:["#d7dbe6","#9aa3c9"],eng:6100},
+ {n:"Portable Blender",c:"Kitchen Appliances",p:34.99,cost:11.33,m:68,g:["#ff9f6b","#ffd06b"],eng:5800},
+ {n:"Memory Foam Pillow",c:"Travel",p:19.99,cost:6.17,m:69,g:["#9aa3c9","#5b6480"],eng:5200},
+ {n:"Mini Massage Gun",c:"Wellness",p:44.99,cost:13.80,m:69,g:["#36d399","#1f8f6b"],eng:4900},
+ {n:"Sunset Projector Lamp",c:"Home & Lighting",p:27.99,cost:7.40,m:74,g:["#ff6cc4","#ff8f6b"],eng:4600},
+ {n:"Acupressure Mat",c:"Wellness",p:32.99,cost:8.90,m:73,g:["#7c6cff","#9b8cff"],eng:4300},
+ {n:"Heated Eye Massager",c:"Wellness",p:49.99,cost:15.20,m:70,g:["#5bc0ff","#7c6cff"],eng:4100},
+ {n:"Collapsible Water Bottle",c:"Outdoors",p:18.99,cost:4.70,m:75,g:["#4be0c0","#36d399"],eng:3900},
+ {n:"Magnetic Charging Cable",c:"Mobile Accessories",p:15.99,cost:3.10,m:81,g:["#c9d2e0","#8a94a8"],eng:3700},
+ {n:"Posture Corrector",c:"Wellness",p:25.99,cost:6.40,m:75,g:["#9aa3c9","#5b6480"],eng:3500},
+ {n:"Car Phone Mount",c:"Auto",p:21.99,cost:5.20,m:76,g:["#d7dbe6","#9aa3c9"],eng:3300},
+ {n:"Silk Sleep Mask",c:"Sleep",p:16.99,cost:3.80,m:78,g:["#7c6cff","#5b46e0"],eng:3100},
+ {n:"Pet Hair Remover",c:"Pets",p:22.99,cost:5.90,m:74,g:["#ffb14e","#ff7a45"],eng:2900},
+ {n:"Wireless Earbuds Case",c:"Mobile Accessories",p:19.99,cost:4.40,m:78,g:["#5bc0ff","#36d0ff"],eng:2700},
+ {n:"Foldable Laptop Stand",c:"Office",p:33.99,cost:9.60,m:72,g:["#c9d2e0","#8a94a8"],eng:2500},
+ {n:"Aroma Diffuser",c:"Home",p:28.99,cost:7.10,m:76,g:["#ff6cc4","#9b8cff"],eng:2300},
+ {n:"Resistance Bands Set",c:"Fitness",p:23.99,cost:5.30,m:78,g:["#36d399","#4be0c0"],eng:2100},
+ {n:"Cloud Slippers",c:"Apparel",p:17.99,cost:4.10,m:77,g:["#9aa3c9","#5b6480"],eng:1900},
+];
+const $=id=>document.getElementById(id);
+let scanning=false;
+function fmtK(n){return (n/1000).toFixed(1)+"K";}
+function card(p,score){
+  const el=document.createElement("div");el.className="card";
+  el.innerHTML=`<div class="thumb" style="background:linear-gradient(140deg,${p.g[0]},${p.g[1]})"><span class="score">${score}</span></div>
+   <div class="info"><div class="nm">${p.n}</div><div class="cat">${p.c}</div>
+   <div class="pr">$${p.p.toFixed(2)}</div>
+   <div class="src"><span>1688 / CJ cost <b>$${p.cost.toFixed(2)}</b></span><span><b>${p.m}%</b> margin</span></div>
+   <div class="meter"><span style="width:${Math.min(100,p.eng/100)}%"></span></div></div>`;
+  return el;
+}
+function addMsg(who,text,me){
+  const m=document.createElement("div");m.className="msg";
+  m.innerHTML=`<div class="h"><span class="ic ${me?'u':''}"></span><span class="who">${who}</span><span class="t">now</span></div><p>${text}</p>`;
+  $("thread").appendChild(m);$("thread").scrollTop=1e9;
+}
+async function scan(query){
+  if(scanning)return;scanning=true;
+  $("feed").innerHTML="";
+  $("found").textContent="found 0 products";$("vids").textContent="watched 0 videos";$("srcstat").textContent="scanning TikTok…";
+  $("beam").style.opacity=.9;$("finger").style.opacity=.9;
+  addMsg("XSEARCH AI",`Scanning TikTok for: <b style="color:#7fe3ff">${query}</b>. Watching feeds, scoring engagement, then pricing from 1688 / CJ…`);
+  const ranked=[...POOL].sort((a,b)=>b.eng-a.eng);
+  let vids=0;
+  for(let i=0;i<ranked.length;i++){
+    const score=96-i; // demo score
+    const el=card(ranked[i],score);$("feed").appendChild(el);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
+    vids+=Math.floor(6+Math.random()*22);
+    $("vids").textContent=`watched ${vids} videos`;
+    $("found").textContent=`found ${i+1} products`;
+    $("srcstat").textContent= i<ranked.length-1 ? "sourcing prices…" : "done";
+    await new Promise(r=>setTimeout(r,230));
+  }
+  $("beam").style.opacity=0;$("finger").style.opacity=.0;
+  addMsg("XSEARCH AI",`Done — <b>20 products</b> ranked by X Score. Top pick: <b style="color:#7fe3ff">${ranked[0].n}</b> (${ranked[0].m}% margin). Open a card for the angle + compliance check.`);
+  scanning=false;
+}
+$("go").onclick=()=>{const q=$("q").value.trim()||"winning products on TikTok";addMsg("You",q,true);$("q").value="";scan(q);};
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click();});
+// auto first scan
+setTimeout(()=>scan("home & kitchen, last 7 days"),500);
+</script>
+</body>
+</html>
