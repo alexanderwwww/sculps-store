@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mine Solver</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #555;
+    }
+
+    button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 16px;
+      background: #ff3b3b;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status-box {
+      margin-top: 24px;
+      display: none;
+    }
+
+    .status-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff3b3b;
+      animation: pulse 1s infinite;
+    }
+
+    .dot.done  { background: #30d158; animation: none; }
+    .dot.error { background: #ff453a; animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .log {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: "SF Mono", "Fira Mono", monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      max-height: 260px;
+      overflow-y: auto;
+      color: #ccc;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .log .line-flag   { color: #ff9f0a; }
+    .log .line-safe   { color: #30d158; }
+    .log .line-guess  { color: #0a84ff; }
+    .log .line-win    { color: #30d158; font-weight: bold; }
+    .log .line-mine   { color: #ff453a; font-weight: bold; }
+    .log .line-error  { color: #ff453a; }
+
+    .screenshot {
+      margin-top: 16px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+      display: none;
+    }
+
+    .screenshot img {
+      width: 100%;
+      display: block;
+    }
+
+    .result-badge {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-align: center;
+      display: none;
+    }
+
+    .result-badge.win  { background: #1a3a2a; color: #30d158; border: 1px solid #30d158; }
+    .result-badge.lose { background: #3a1a1a; color: #ff453a; border: 1px solid #ff453a; }
+
+    .sites {
+      margin-top: 20px;
+      font-size: 0.78rem;
+      color: #555;
+      text-align: center;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>💣 Mine Solver</h1>
+  <p class="subtitle">Paste any minesweeper URL and watch it get solved</p>
+
+  <div class="card">
+    <label>Minesweeper URL</label>
+    <input
+      id="url-input"
+      type="text"
+      placeholder="https://minesweeper.online/game/..."
+      autocorrect="off"
+      autocapitalize="none"
+      spellcheck="false"
+    />
+    <button id="solve-btn" onclick="startSolve()">Solve It</button>
+
+    <div class="status-box" id="status-box">
+      <div class="status-label">
+        <div class="dot" id="status-dot"></div>
+        <span id="status-text">Running...</span>
+      </div>
+      <div class="log" id="log"></div>
+      <div class="result-badge" id="result-badge"></div>
+      <div class="screenshot" id="screenshot-box">
+        <img id="screenshot-img" src="" alt="Board screenshot" />
+      </div>
+    </div>
+  </div>
+
+  <div class="sites">
+    Works with: minesweeper.online · cardgames.io · Google Minesweeper<br/>
+    + most other minesweeper sites
+  </div>
+
+  <script>
+    let pollInterval = null;
+
+    function startSolve() {
+      const url = document.getElementById("url-input").value.trim();
+      if (!url) return;
+
+      const btn = document.getElementById("solve-btn");
+      btn.disabled = true;
+      btn.textContent = "Solving...";
+
+      const log = document.getElementById("log");
+      const box = document.getElementById("status-box");
+      const dot = document.getElementById("status-dot");
+      const statusText = document.getElementById("status-text");
+      const badge = document.getElementById("result-badge");
+      const screenshotBox = document.getElementById("screenshot-box");
+      const screenshotImg = document.getElementById("screenshot-img");
+
+      log.innerHTML = "";
+      badge.style.display = "none";
+      badge.className = "result-badge";
+      screenshotBox.style.display = "none";
+      dot.className = "dot";
+      statusText.textContent = "Starting...";
+      box.style.display = "block";
+
+      let lastLogCount = 0;
+
+      fetch("/solve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      })
+        .then((r) => r.json())
+        .then(({ job_id, error }) => {
+          if (error) {
+            log.textContent = "Error: " + error;
+            btn.disabled = false;
+            btn.textContent = "Solve It";
+            return;
+          }
+
+          pollInterval = setInterval(() => {
+            fetch(`/status/${job_id}`)
+              .then((r) => r.json())
+              .then((data) => {
+                // Append new log lines
+                const lines = data.log || [];
+                for (let i = lastLogCount; i < lines.length; i++) {
+                  const line = lines[i];
+                  const span = document.createElement("div");
+                  if (line.startsWith("Flag"))  span.className = "line-flag";
+                  else if (line.startsWith("Click")) span.className = "line-safe";
+                  else if (line.startsWith("Guess")) span.className = "line-guess";
+                  else if (line.startsWith("WIN"))   span.className = "line-win";
+                  else if (line.startsWith("Hit"))   span.className = "line-mine";
+                  else if (line.startsWith("ERROR")) span.className = "line-error";
+                  span.textContent = line;
+                  log.appendChild(span);
+                }
+                lastLogCount = lines.length;
+                log.scrollTop = log.scrollHeight;
+
+                if (data.status === "done" || data.status === "error") {
+                  clearInterval(pollInterval);
+                  btn.disabled = false;
+                  btn.textContent = "Solve Again";
+                  dot.className = data.status === "done" ? "dot done" : "dot error";
+                  statusText.textContent = data.status === "done" ? "Done" : "Error";
+
+                  const lastLine = (data.log || []).slice(-1)[0] || "";
+                  if (lastLine.startsWith("WIN") || lastLine.includes("cleared")) {
+                    badge.textContent = "✅ WIN — Red flags avoided!";
+                    badge.className = "result-badge win";
+                    badge.style.display = "block";
+                  } else if (lastLine.startsWith("Hit")) {
+                    badge.textContent = "💥 Hit a mine (unlucky guess)";
+                    badge.className = "result-badge lose";
+                    badge.style.display = "block";
+                  }
+
+                  if (data.screenshot) {
+                    screenshotImg.src = "data:image/png;base64," + data.screenshot;
+                    screenshotBox.style.display = "block";
+                  }
+                }
+              });
+          }, 600);
+        });
+    }
+
+    document.getElementById("url-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") startSolve();
+    });
+  </script>
+</body>
+</html>
