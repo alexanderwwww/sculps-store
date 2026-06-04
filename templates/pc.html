@@ -510,10 +510,12 @@ async function calcSeeds(){
   }
   const mines=new Set(deck.slice(0,mc));
 
+  // Rainbet shows the grid with rows reversed: visual row 0 (top) = algo row 4.
+  // Visual position (r, c) → algo position (4-r)*5+c
   const grid=[];
   for(let r=0;r<5;r++){
     const row=[];
-    for(let c=0;c<5;c++) row.push(mines.has(r*5+c)?{type:"mine"}:{type:"unknown"});
+    for(let c=0;c<5;c++) row.push(mines.has((4-r)*5+c)?{type:"mine"}:{type:"unknown"});
     grid.push(row);
   }
   renderBoard(
