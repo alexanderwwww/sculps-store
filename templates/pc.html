@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MINESWEEPER // SOLVER</title>
+<title>💀 MINE SOLVER</title>
 <style>
   :root {
     --green: #00ff66;
     --green-dim: #00aa44;
     --green-glow: rgba(0, 255, 102, 0.6);
+    --red: #ff3344;
+    --red-glow: rgba(255, 51, 68, 0.6);
+    --gold: #ffcc00;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,264 +24,325 @@
     color: var(--green);
   }
 
-  /* Matrix rain canvas sits behind everything */
   #matrix {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    opacity: 0.5;
+    position: fixed; inset: 0; z-index: 0; opacity: 0.45;
   }
 
-  /* Vignette + scanline overlay for that CRT feel */
   .overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
     background:
-      radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%),
-      repeating-linear-gradient(
-        to bottom,
-        rgba(0,0,0,0) 0px,
-        rgba(0,0,0,0) 2px,
-        rgba(0,20,0,0.25) 3px,
-        rgba(0,0,0,0) 4px
-      );
+      radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.88) 100%),
+      repeating-linear-gradient(to bottom,
+        rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+        rgba(0,20,0,0.2) 3px, rgba(0,0,0,0) 4px);
   }
 
   .wrap {
-    position: relative;
-    z-index: 2;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    gap: 22px;
-  }
-
-  /* Liquid glass panel */
-  .glass {
-    width: min(720px, 94vw);
-    background: rgba(0, 25, 10, 0.25);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    border: 1px solid rgba(0, 255, 102, 0.35);
-    border-radius: 18px;
-    box-shadow:
-      0 0 40px rgba(0, 255, 102, 0.15),
-      inset 0 0 30px rgba(0, 255, 102, 0.05);
-    padding: 30px;
+    position: relative; z-index: 2;
+    height: 100%; overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px 40px;
+    gap: 16px;
   }
 
   .title {
-    font-size: clamp(1.6rem, 4vw, 2.6rem);
-    font-weight: 800;
-    letter-spacing: 4px;
-    text-align: center;
-    text-shadow: 0 0 12px var(--green-glow), 0 0 26px var(--green-glow);
-    animation: flicker 4s infinite;
+    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+    font-weight: 800; letter-spacing: 5px; text-align: center;
+    text-shadow: 0 0 12px var(--green-glow), 0 0 28px var(--green-glow);
+    animation: flicker 5s infinite;
+    padding-top: 8px;
   }
-  .title .skull { filter: drop-shadow(0 0 8px var(--green-glow)); }
-
   @keyframes flicker {
-    0%, 19%, 21%, 23%, 80%, 100% { opacity: 1; }
-    20%, 22%, 82% { opacity: 0.65; }
+    0%,19%,21%,23%,80%,100% { opacity:1 }
+    20%,22%,82% { opacity:0.6 }
   }
 
   .subtitle {
-    text-align: center;
-    color: var(--green-dim);
-    font-size: 0.82rem;
-    letter-spacing: 2px;
-    margin-top: 8px;
-    text-transform: uppercase;
+    text-align: center; color: var(--green-dim);
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
   }
 
-  .input-row {
-    margin-top: 26px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 0;
+    border: 1px solid rgba(0,255,102,0.3);
+    border-radius: 10px; overflow: hidden;
+    width: min(720px, 94vw);
   }
-
-  .prompt-wrap {
-    flex: 1;
-    min-width: 240px;
-    position: relative;
-    display: flex;
-    align-items: center;
+  .tab {
+    flex: 1; padding: 12px; text-align: center;
+    font-family: inherit; font-size: 0.85rem; font-weight: 700;
+    letter-spacing: 2px; cursor: pointer; border: none;
+    background: transparent; color: var(--green-dim);
+    transition: all 0.2s;
   }
-  .prompt-wrap::before {
-    content: ">";
-    position: absolute;
-    left: 14px;
+  .tab.active {
+    background: rgba(0,255,102,0.12);
     color: var(--green);
-    font-weight: 700;
     text-shadow: 0 0 8px var(--green-glow);
   }
 
-  input[type="text"] {
-    width: 100%;
-    padding: 15px 16px 15px 34px;
-    background: rgba(0, 0, 0, 0.55);
-    border: 1px solid rgba(0, 255, 102, 0.4);
-    border-radius: 10px;
-    color: var(--green);
-    font-family: inherit;
-    font-size: 0.95rem;
-    outline: none;
-    letter-spacing: 0.5px;
-    transition: box-shadow 0.2s, border-color 0.2s;
-  }
-  input[type="text"]::placeholder { color: rgba(0, 255, 102, 0.35); }
-  input[type="text"]:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 16px rgba(0, 255, 102, 0.4);
+  /* Glass card */
+  .glass {
+    width: min(720px, 94vw);
+    background: rgba(0,20,8,0.3);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(0,255,102,0.3);
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(0,255,102,0.1), inset 0 0 30px rgba(0,255,102,0.04);
+    padding: 26px;
   }
 
-  button {
-    padding: 15px 28px;
-    background: rgba(0, 255, 102, 0.1);
-    border: 1px solid var(--green);
-    border-radius: 10px;
-    color: var(--green);
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 3px;
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── SEED CALC PANEL ── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .field-grid .full { grid-column: 1 / -1; }
+
+  label {
+    display: block; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--green-dim); margin-bottom: 5px;
+  }
+
+  input[type="text"], input[type="number"], select {
+    width: 100%; padding: 12px 14px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(0,255,102,0.35);
+    border-radius: 8px; color: var(--green);
+    font-family: inherit; font-size: 0.88rem;
+    outline: none; transition: box-shadow 0.2s, border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 14px rgba(0,255,102,0.35);
+  }
+  select option { background: #001a08; color: var(--green); }
+
+  .btn {
+    width: 100%; padding: 14px;
+    background: rgba(0,255,102,0.08);
+    border: 1px solid var(--green); border-radius: 10px;
+    color: var(--green); font-family: inherit;
+    font-size: 1rem; font-weight: 700; letter-spacing: 3px;
     cursor: pointer;
     text-shadow: 0 0 8px var(--green-glow);
-    box-shadow: 0 0 14px rgba(0, 255, 102, 0.2);
+    box-shadow: 0 0 14px rgba(0,255,102,0.15);
     transition: all 0.18s;
   }
-  button:hover:not(:disabled) {
-    background: rgba(0, 255, 102, 0.22);
-    box-shadow: 0 0 26px rgba(0, 255, 102, 0.55);
+  .btn:hover:not(:disabled) {
+    background: rgba(0,255,102,0.2);
+    box-shadow: 0 0 28px rgba(0,255,102,0.5);
     transform: translateY(-1px);
   }
-  button:active:not(:disabled) { transform: translateY(0); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  /* Mine grid */
+  .grid-wrap {
+    margin-top: 22px; display: none;
+  }
+  .grid-label {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--green-dim); margin-bottom: 12px; text-align: center;
+  }
+
+  .mine-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .tile {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    border: 1px solid rgba(0,255,102,0.2);
+    background: rgba(0,0,0,0.5);
+    transition: all 0.3s;
+    animation: reveal 0.4s ease both;
+  }
+  .tile.safe {
+    border-color: var(--green);
+    background: rgba(0,255,102,0.08);
+    box-shadow: 0 0 12px rgba(0,255,102,0.3), inset 0 0 8px rgba(0,255,102,0.05);
+  }
+  .tile.mine {
+    border-color: var(--red);
+    background: rgba(255,51,68,0.1);
+    box-shadow: 0 0 14px rgba(255,51,68,0.4), inset 0 0 8px rgba(255,51,68,0.08);
+  }
+
+  @keyframes reveal {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  .stats {
+    margin-top: 14px;
+    display: flex; justify-content: center; gap: 28px;
+    font-size: 0.8rem; text-align: center;
+  }
+  .stat-val { font-size: 1.3rem; font-weight: 700; display: block; }
+  .stat-val.green { color: var(--green); text-shadow: 0 0 8px var(--green-glow); }
+  .stat-val.red   { color: var(--red);   text-shadow: 0 0 8px var(--red-glow); }
+
+  /* ── SOLVER PANEL ── */
+  .prompt-wrap {
+    position: relative; display: flex; align-items: center;
+    margin-bottom: 14px;
+  }
+  .prompt-wrap::before {
+    content: ">"; position: absolute; left: 14px;
+    color: var(--green); font-weight: 700;
+    text-shadow: 0 0 8px var(--green-glow);
+  }
+  .prompt-wrap input {
+    padding-left: 34px;
+  }
 
   .console {
-    margin-top: 22px;
-    height: 230px;
-    overflow-y: auto;
-    background: rgba(0, 0, 0, 0.55);
-    border: 1px solid rgba(0, 255, 102, 0.25);
-    border-radius: 10px;
-    padding: 14px 16px;
-    font-size: 0.82rem;
-    line-height: 1.7;
+    margin-top: 16px; height: 200px; overflow-y: auto;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(0,255,102,0.2);
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 0.8rem; line-height: 1.7;
     display: none;
   }
-  .console::-webkit-scrollbar { width: 8px; }
-  .console::-webkit-scrollbar-thumb {
-    background: rgba(0, 255, 102, 0.3);
-    border-radius: 4px;
-  }
+  .console::-webkit-scrollbar { width:6px; }
+  .console::-webkit-scrollbar-thumb { background:rgba(0,255,102,0.3); border-radius:3px; }
 
-  .console .l { white-space: pre-wrap; word-break: break-all; }
-  .l-safe  { color: #00ff66; }
-  .l-flag  { color: #ffcc00; text-shadow: 0 0 6px rgba(255,204,0,0.5); }
-  .l-guess { color: #00ccff; text-shadow: 0 0 6px rgba(0,204,255,0.5); }
-  .l-win   { color: #00ff66; font-weight: 700; text-shadow: 0 0 10px var(--green-glow); }
-  .l-lose  { color: #ff3344; font-weight: 700; text-shadow: 0 0 10px rgba(255,51,68,0.6); }
-  .l-err   { color: #ff3344; }
-  .l-sys   { color: var(--green-dim); }
-
-  .l::before { content: "» "; opacity: 0.5; }
+  .l { white-space:pre-wrap; word-break:break-all; }
+  .l::before { content:"» "; opacity:0.4; }
+  .l-safe  { color:#00ff66; }
+  .l-flag  { color:#ffcc00; }
+  .l-guess { color:#00ccff; }
+  .l-win   { color:#00ff66; font-weight:700; text-shadow:0 0 10px var(--green-glow); }
+  .l-lose  { color:#ff3344; font-weight:700; }
+  .l-err   { color:#ff3344; }
+  .l-sys   { color:var(--green-dim); }
 
   .status-line {
-    margin-top: 14px;
-    display: none;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.78rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--green-dim);
+    margin-top:12px; display:none;
+    align-items:center; gap:10px;
+    font-size:0.75rem; letter-spacing:2px;
+    text-transform:uppercase; color:var(--green-dim);
   }
   .blip {
-    width: 9px; height: 9px; border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 10px var(--green-glow);
-    animation: blink 1s infinite;
+    width:8px; height:8px; border-radius:50%;
+    background:var(--green); box-shadow:0 0 10px var(--green-glow);
+    animation:blink 1s infinite;
   }
-  .blip.done { background: var(--green); animation: none; }
-  .blip.err  { background: #ff3344; box-shadow: 0 0 10px rgba(255,51,68,0.6); animation: none; }
+  .blip.done { background:var(--green); animation:none; }
+  .blip.err  { background:#ff3344; box-shadow:0 0 10px var(--red-glow); animation:none; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
   .verdict {
-    margin-top: 16px;
-    display: none;
-    text-align: center;
-    padding: 14px;
-    border-radius: 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
+    margin-top:14px; display:none; text-align:center;
+    padding:12px; border-radius:10px;
+    font-weight:700; letter-spacing:2px;
   }
   .verdict.win {
-    color: var(--green);
-    border: 1px solid var(--green);
-    background: rgba(0,255,102,0.08);
-    text-shadow: 0 0 10px var(--green-glow);
+    color:var(--green); border:1px solid var(--green);
+    background:rgba(0,255,102,0.07);
+    text-shadow:0 0 10px var(--green-glow);
   }
   .verdict.lose {
-    color: #ff3344;
-    border: 1px solid #ff3344;
-    background: rgba(255,51,68,0.08);
-    text-shadow: 0 0 10px rgba(255,51,68,0.6);
+    color:#ff3344; border:1px solid #ff3344;
+    background:rgba(255,51,68,0.07);
   }
 
   .footer {
-    z-index: 2;
-    color: var(--green-dim);
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    opacity: 0.6;
-    text-align: center;
+    z-index:2; color:var(--green-dim);
+    font-size:0.65rem; letter-spacing:2px; opacity:0.5; text-align:center;
   }
 </style>
 </head>
 <body>
-  <canvas id="matrix"></canvas>
-  <div class="overlay"></div>
+<canvas id="matrix"></canvas>
+<div class="overlay"></div>
 
-  <div class="wrap">
-    <div class="glass">
-      <div class="title"><span class="skull">💀</span> MINE&nbsp;SOLVER <span class="skull">💀</span></div>
-      <div class="subtitle">// neural deduction engine · paste · execute · win</div>
+<div class="wrap">
+  <div class="title">💀 MINE SOLVER 💀</div>
+  <div class="subtitle">// neural deduction engine · seed calculator · provably fair</div>
 
-      <div class="input-row">
-        <div class="prompt-wrap">
-          <input id="url" type="text" spellcheck="false" autocomplete="off"
-                 placeholder="paste any minesweeper url and press ENTER" />
-        </div>
-        <button id="go" onclick="run()">SOLVE</button>
-      </div>
-
-      <div class="status-line" id="statusline">
-        <span class="blip" id="blip"></span>
-        <span id="statustext">initializing...</span>
-      </div>
-
-      <div class="console" id="console"></div>
-
-      <div class="verdict" id="verdict"></div>
-    </div>
-
-    <div class="footer">RUNS A REAL BROWSER ON THIS PC · WATCH IT PLAY LIVE</div>
+  <!-- Tab switcher -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('seed')">🔐 SEED CALCULATOR</button>
+    <button class="tab" onclick="switchTab('solver')">🤖 AUTO SOLVER</button>
   </div>
 
+  <!-- ══════════════ SEED CALCULATOR PANEL ══════════════ -->
+  <div class="glass panel active" id="panel-seed">
+
+    <div class="field-grid">
+      <div>
+        <label>Mines Count</label>
+        <select id="mines-count">
+          <script>for(let i=1;i<=24;i++) document.write(`<option value="${i}"${i===3?' selected':''}>${i}</option>`)</script>
+        </select>
+      </div>
+      <div>
+        <label>Game Seed (Nonce)</label>
+        <input type="text" id="game-seed" placeholder="e.g. 1" />
+      </div>
+      <div class="full">
+        <label>Client Seed</label>
+        <input type="text" id="client-seed" placeholder="your client seed" />
+      </div>
+      <div class="full">
+        <label>Server Seed (Unhashed)</label>
+        <input type="text" id="server-seed" placeholder="revealed server seed after game" />
+      </div>
+    </div>
+
+    <button class="btn" onclick="calcSeeds()">REVEAL MINES</button>
+
+    <div class="grid-wrap" id="grid-wrap">
+      <div class="grid-label" id="grid-label">// decrypting mine positions...</div>
+      <div class="mine-grid" id="mine-grid"></div>
+      <div class="stats" id="stats"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════ AUTO SOLVER PANEL ══════════════ -->
+  <div class="glass panel" id="panel-solver">
+    <div class="subtitle" style="margin-bottom:14px">Paste a minesweeper.online URL — bot opens Chrome and plays it live</div>
+
+    <div class="prompt-wrap">
+      <input id="url" type="text" spellcheck="false" autocomplete="off"
+             placeholder="https://minesweeper.online/game/..." />
+    </div>
+    <button class="btn" id="go" onclick="runSolver()">SOLVE</button>
+
+    <div class="status-line" id="statusline">
+      <span class="blip" id="blip"></span>
+      <span id="statustext">executing...</span>
+    </div>
+    <div class="console" id="console"></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <div class="footer">SEED CALC WORKS OFFLINE · AUTO SOLVER OPENS REAL CHROME</div>
+</div>
+
 <script>
-/* ---------- Matrix rain ---------- */
+/* ─── Matrix rain ─── */
 const canvas = document.getElementById("matrix");
 const ctx = canvas.getContext("2d");
+const glyphs = "アカサタナハマヤラワ0123456789ABCDEF$+*=<>ｦｧｨｩ".split("");
 let cols, drops;
-const glyphs = "アカサタナハマヤラワ0123456789ABCDEFｦｧｨｩ$+*=<>".split("");
-
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -287,42 +351,134 @@ function resize() {
 }
 resize();
 window.addEventListener("resize", resize);
-
-function draw() {
+setInterval(() => {
   ctx.fillStyle = "rgba(0,0,0,0.06)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#00ff66";
-  ctx.font = "15px monospace";
   for (let i = 0; i < drops.length; i++) {
     const ch = glyphs[Math.floor(Math.random() * glyphs.length)];
-    const x = i * 16, y = drops[i] * 16;
     ctx.fillStyle = Math.random() > 0.975 ? "#ccffcc" : "#00ff66";
-    ctx.fillText(ch, x, y);
-    if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    ctx.font = "15px monospace";
+    ctx.fillText(ch, i * 16, drops[i] * 16);
+    if (drops[i] * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
     drops[i]++;
   }
+}, 45);
+
+/* ─── Tabs ─── */
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((t,i) => {
+    t.classList.toggle("active", (name==="seed"&&i===0)||(name==="solver"&&i===1));
+  });
+  document.getElementById("panel-seed").classList.toggle("active", name==="seed");
+  document.getElementById("panel-solver").classList.toggle("active", name==="solver");
 }
-setInterval(draw, 45);
 
-/* ---------- Solver control ---------- */
+/* ─── Provably Fair Seed Calculator ─── */
+async function hmacSHA256(keyStr, msgStr) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(keyStr),
+    { name: "HMAC", hash: "SHA-256" },
+    false, ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(msgStr));
+  return new Uint8Array(sig);
+}
+
+async function generateBytes(serverSeed, clientSeed, nonce, needed) {
+  const all = [];
+  let round = 0;
+  while (all.length < needed) {
+    const msg = `${clientSeed}:${nonce}:${round}`;
+    const bytes = await hmacSHA256(serverSeed, msg);
+    all.push(...bytes);
+    round++;
+  }
+  return all;
+}
+
+async function getMinePositions(serverSeed, clientSeed, nonce, minesCount) {
+  // Need 25 * 4 bytes for the Fisher-Yates shuffle
+  const bytes = await generateBytes(serverSeed, clientSeed, nonce, 100);
+  const positions = Array.from({length: 25}, (_, i) => i);
+
+  for (let i = 0; i < 25; i++) {
+    const c = i * 4;
+    // Read 4 bytes as uint32, convert to float [0,1)
+    const uint32 = ((bytes[c] << 24) | (bytes[c+1] << 16) |
+                    (bytes[c+2] << 8) | bytes[c+3]) >>> 0;
+    const float = uint32 / 0x100000000;
+    const j = Math.floor(float * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+
+  return new Set(positions.slice(0, minesCount));
+}
+
+async function calcSeeds() {
+  const serverSeed = document.getElementById("server-seed").value.trim();
+  const clientSeed = document.getElementById("client-seed").value.trim();
+  const gameSeed   = document.getElementById("game-seed").value.trim();
+  const minesCount = parseInt(document.getElementById("mines-count").value);
+
+  if (!serverSeed || !clientSeed || !gameSeed) {
+    alert("Fill in all three seeds first.");
+    return;
+  }
+
+  const wrap  = document.getElementById("grid-wrap");
+  const grid  = document.getElementById("mine-grid");
+  const label = document.getElementById("grid-label");
+  const stats = document.getElementById("stats");
+
+  wrap.style.display = "block";
+  label.textContent = "// decrypting mine positions...";
+  grid.innerHTML = "";
+  stats.innerHTML = "";
+
+  const mines = await getMinePositions(serverSeed, clientSeed, gameSeed, minesCount);
+
+  label.textContent = `// ${minesCount} mine${minesCount>1?"s":""} revealed — ${25-minesCount} safe tiles`;
+
+  for (let i = 0; i < 25; i++) {
+    const tile = document.createElement("div");
+    const isMine = mines.has(i);
+    tile.className = "tile " + (isMine ? "mine" : "safe");
+    tile.textContent = isMine ? "💣" : "💎";
+    tile.style.animationDelay = (i * 0.04) + "s";
+    tile.title = `Tile ${i+1} (row ${Math.floor(i/5)+1}, col ${(i%5)+1}) — ${isMine ? "MINE" : "SAFE"}`;
+    grid.appendChild(tile);
+  }
+
+  stats.innerHTML = `
+    <div>
+      <span class="stat-val green">💎 ${25-minesCount}</span>
+      <span>safe tiles</span>
+    </div>
+    <div>
+      <span class="stat-val red">💣 ${minesCount}</span>
+      <span>mines</span>
+    </div>
+  `;
+}
+
+/* ─── Auto Solver ─── */
 let poll = null;
-
-function run() {
+function runSolver() {
   const url = document.getElementById("url").value.trim();
   if (!url) return;
 
-  const go = document.getElementById("go");
-  const cons = document.getElementById("console");
-  const sline = document.getElementById("statusline");
-  const blip = document.getElementById("blip");
-  const stext = document.getElementById("statustext");
-  const verdict = document.getElementById("verdict");
+  const go       = document.getElementById("go");
+  const cons     = document.getElementById("console");
+  const sline    = document.getElementById("statusline");
+  const blip     = document.getElementById("blip");
+  const stext    = document.getElementById("statustext");
+  const verdict  = document.getElementById("verdict");
 
   go.disabled = true; go.textContent = "RUNNING";
   cons.innerHTML = ""; cons.style.display = "block";
   sline.style.display = "flex";
-  blip.className = "blip";
-  stext.textContent = "executing...";
+  blip.className = "blip"; stext.textContent = "executing...";
   verdict.style.display = "none"; verdict.className = "verdict";
 
   let seen = 0;
@@ -332,60 +488,60 @@ function run() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url }),
   })
-    .then(r => r.json())
-    .then(({ job_id, error }) => {
-      if (error) {
-        addLine(cons, "ERROR: " + error, "l-err");
-        go.disabled = false; go.textContent = "SOLVE";
-        blip.className = "blip err"; stext.textContent = "error";
-        return;
-      }
-      poll = setInterval(() => {
-        fetch("/status/" + job_id).then(r => r.json()).then(data => {
-          const lines = data.log || [];
-          for (let i = seen; i < lines.length; i++) addLine(cons, lines[i], classify(lines[i]));
-          seen = lines.length;
+  .then(r => r.json())
+  .then(({ job_id, error }) => {
+    if (error) {
+      addLine(cons, "ERROR: " + error, "l-err");
+      go.disabled = false; go.textContent = "SOLVE";
+      return;
+    }
+    poll = setInterval(() => {
+      fetch("/status/" + job_id).then(r => r.json()).then(data => {
+        const lines = data.log || [];
+        for (let i = seen; i < lines.length; i++)
+          addLine(cons, lines[i], classify(lines[i]));
+        seen = lines.length;
 
-          if (data.status === "done" || data.status === "error") {
-            clearInterval(poll);
-            go.disabled = false; go.textContent = "SOLVE AGAIN";
-            blip.className = data.status === "done" ? "blip done" : "blip err";
-            stext.textContent = data.status === "done" ? "complete" : "error";
-
-            if (data.result === "win") {
-              verdict.textContent = "✅ CLEARED — NO MINES HIT";
-              verdict.className = "verdict win"; verdict.style.display = "block";
-            } else if (data.result === "lose") {
-              verdict.textContent = "💥 MINE DETONATED";
-              verdict.className = "verdict lose"; verdict.style.display = "block";
-            }
+        if (data.status === "done" || data.status === "error") {
+          clearInterval(poll);
+          go.disabled = false; go.textContent = "SOLVE AGAIN";
+          blip.className = data.status === "done" ? "blip done" : "blip err";
+          stext.textContent = data.status === "done" ? "complete" : "error";
+          if (data.result === "win") {
+            verdict.textContent = "✅ CLEARED — NO MINES HIT";
+            verdict.className = "verdict win"; verdict.style.display = "block";
+          } else if (data.result === "lose") {
+            verdict.textContent = "💥 MINE DETONATED";
+            verdict.className = "verdict lose"; verdict.style.display = "block";
           }
-        });
-      }, 500);
-    });
+        }
+      });
+    }, 500);
+  });
 }
 
 function classify(line) {
-  if (line.startsWith("Click")) return "l-safe";
-  if (line.startsWith("Flag"))  return "l-flag";
-  if (line.startsWith("Guess")) return "l-guess";
-  if (line.startsWith("WIN"))   return "l-win";
-  if (line.startsWith("Hit"))   return "l-lose";
-  if (line.startsWith("ERROR")) return "l-err";
-  if (line.includes("cleared"))  return "l-win";
+  if (line.startsWith("Click"))   return "l-safe";
+  if (line.startsWith("Flag"))    return "l-flag";
+  if (line.startsWith("Guess"))   return "l-guess";
+  if (line.startsWith("WIN") || line.includes("cleared")) return "l-win";
+  if (line.startsWith("Hit"))     return "l-lose";
+  if (line.startsWith("ERROR"))   return "l-err";
   return "l-sys";
 }
 
 function addLine(cons, text, cls) {
   const d = document.createElement("div");
-  d.className = "l " + cls;
-  d.textContent = text;
+  d.className = "l " + cls; d.textContent = text;
   cons.appendChild(d);
   cons.scrollTop = cons.scrollHeight;
 }
 
-document.getElementById("url").addEventListener("keydown", e => {
-  if (e.key === "Enter") run();
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    if (document.getElementById("panel-seed").classList.contains("active")) calcSeeds();
+    else runSolver();
+  }
 });
 </script>
 </body>
