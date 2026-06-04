@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MINESWEEPER // SOLVER</title>
+<style>
+  :root {
+    --green: #00ff66;
+    --green-dim: #00aa44;
+    --green-glow: rgba(0, 255, 102, 0.6);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
+    color: var(--green);
+  }
+
+  /* Matrix rain canvas sits behind everything */
+  #matrix {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  /* Vignette + scanline overlay for that CRT feel */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%),
+      repeating-linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,20,0,0.25) 3px,
+        rgba(0,0,0,0) 4px
+      );
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 22px;
+  }
+
+  /* Liquid glass panel */
+  .glass {
+    width: min(720px, 94vw);
+    background: rgba(0, 25, 10, 0.25);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(0, 255, 102, 0.35);
+    border-radius: 18px;
+    box-shadow:
+      0 0 40px rgba(0, 255, 102, 0.15),
+      inset 0 0 30px rgba(0, 255, 102, 0.05);
+    padding: 30px;
+  }
+
+  .title {
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: 4px;
+    text-align: center;
+    text-shadow: 0 0 12px var(--green-glow), 0 0 26px var(--green-glow);
+    animation: flicker 4s infinite;
+  }
+  .title .skull { filter: drop-shadow(0 0 8px var(--green-glow)); }
+
+  @keyframes flicker {
+    0%, 19%, 21%, 23%, 80%, 100% { opacity: 1; }
+    20%, 22%, 82% { opacity: 0.65; }
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--green-dim);
+    font-size: 0.82rem;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  .input-row {
+    margin-top: 26px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .prompt-wrap {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .prompt-wrap::before {
+    content: ">";
+    position: absolute;
+    left: 14px;
+    color: var(--green);
+    font-weight: 700;
+    text-shadow: 0 0 8px var(--green-glow);
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 15px 16px 15px 34px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(0, 255, 102, 0.4);
+    border-radius: 10px;
+    color: var(--green);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    letter-spacing: 0.5px;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  input[type="text"]::placeholder { color: rgba(0, 255, 102, 0.35); }
+  input[type="text"]:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 16px rgba(0, 255, 102, 0.4);
+  }
+
+  button {
+    padding: 15px 28px;
+    background: rgba(0, 255, 102, 0.1);
+    border: 1px solid var(--green);
+    border-radius: 10px;
+    color: var(--green);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    cursor: pointer;
+    text-shadow: 0 0 8px var(--green-glow);
+    box-shadow: 0 0 14px rgba(0, 255, 102, 0.2);
+    transition: all 0.18s;
+  }
+  button:hover:not(:disabled) {
+    background: rgba(0, 255, 102, 0.22);
+    box-shadow: 0 0 26px rgba(0, 255, 102, 0.55);
+    transform: translateY(-1px);
+  }
+  button:active:not(:disabled) { transform: translateY(0); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .console {
+    margin-top: 22px;
+    height: 230px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(0, 255, 102, 0.25);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    display: none;
+  }
+  .console::-webkit-scrollbar { width: 8px; }
+  .console::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 102, 0.3);
+    border-radius: 4px;
+  }
+
+  .console .l { white-space: pre-wrap; word-break: break-all; }
+  .l-safe  { color: #00ff66; }
+  .l-flag  { color: #ffcc00; text-shadow: 0 0 6px rgba(255,204,0,0.5); }
+  .l-guess { color: #00ccff; text-shadow: 0 0 6px rgba(0,204,255,0.5); }
+  .l-win   { color: #00ff66; font-weight: 700; text-shadow: 0 0 10px var(--green-glow); }
+  .l-lose  { color: #ff3344; font-weight: 700; text-shadow: 0 0 10px rgba(255,51,68,0.6); }
+  .l-err   { color: #ff3344; }
+  .l-sys   { color: var(--green-dim); }
+
+  .l::before { content: "» "; opacity: 0.5; }
+
+  .status-line {
+    margin-top: 14px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green-dim);
+  }
+  .blip {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green-glow);
+    animation: blink 1s infinite;
+  }
+  .blip.done { background: var(--green); animation: none; }
+  .blip.err  { background: #ff3344; box-shadow: 0 0 10px rgba(255,51,68,0.6); animation: none; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .verdict {
+    margin-top: 16px;
+    display: none;
+    text-align: center;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .verdict.win {
+    color: var(--green);
+    border: 1px solid var(--green);
+    background: rgba(0,255,102,0.08);
+    text-shadow: 0 0 10px var(--green-glow);
+  }
+  .verdict.lose {
+    color: #ff3344;
+    border: 1px solid #ff3344;
+    background: rgba(255,51,68,0.08);
+    text-shadow: 0 0 10px rgba(255,51,68,0.6);
+  }
+
+  .footer {
+    z-index: 2;
+    color: var(--green-dim);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    opacity: 0.6;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+  <div class="overlay"></div>
+
+  <div class="wrap">
+    <div class="glass">
+      <div class="title"><span class="skull">💀</span> MINE&nbsp;SOLVER <span class="skull">💀</span></div>
+      <div class="subtitle">// neural deduction engine · paste · execute · win</div>
+
+      <div class="input-row">
+        <div class="prompt-wrap">
+          <input id="url" type="text" spellcheck="false" autocomplete="off"
+                 placeholder="paste any minesweeper url and press ENTER" />
+        </div>
+        <button id="go" onclick="run()">SOLVE</button>
+      </div>
+
+      <div class="status-line" id="statusline">
+        <span class="blip" id="blip"></span>
+        <span id="statustext">initializing...</span>
+      </div>
+
+      <div class="console" id="console"></div>
+
+      <div class="verdict" id="verdict"></div>
+    </div>
+
+    <div class="footer">RUNS A REAL BROWSER ON THIS PC · WATCH IT PLAY LIVE</div>
+  </div>
+
+<script>
+/* ---------- Matrix rain ---------- */
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+let cols, drops;
+const glyphs = "アカサタナハマヤラワ0123456789ABCDEFｦｧｨｩ$+*=<>".split("");
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  cols = Math.floor(canvas.width / 16);
+  drops = Array(cols).fill(1);
+}
+resize();
+window.addEventListener("resize", resize);
+
+function draw() {
+  ctx.fillStyle = "rgba(0,0,0,0.06)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#00ff66";
+  ctx.font = "15px monospace";
+  for (let i = 0; i < drops.length; i++) {
+    const ch = glyphs[Math.floor(Math.random() * glyphs.length)];
+    const x = i * 16, y = drops[i] * 16;
+    ctx.fillStyle = Math.random() > 0.975 ? "#ccffcc" : "#00ff66";
+    ctx.fillText(ch, x, y);
+    if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+setInterval(draw, 45);
+
+/* ---------- Solver control ---------- */
+let poll = null;
+
+function run() {
+  const url = document.getElementById("url").value.trim();
+  if (!url) return;
+
+  const go = document.getElementById("go");
+  const cons = document.getElementById("console");
+  const sline = document.getElementById("statusline");
+  const blip = document.getElementById("blip");
+  const stext = document.getElementById("statustext");
+  const verdict = document.getElementById("verdict");
+
+  go.disabled = true; go.textContent = "RUNNING";
+  cons.innerHTML = ""; cons.style.display = "block";
+  sline.style.display = "flex";
+  blip.className = "blip";
+  stext.textContent = "executing...";
+  verdict.style.display = "none"; verdict.className = "verdict";
+
+  let seen = 0;
+
+  fetch("/solve", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  })
+    .then(r => r.json())
+    .then(({ job_id, error }) => {
+      if (error) {
+        addLine(cons, "ERROR: " + error, "l-err");
+        go.disabled = false; go.textContent = "SOLVE";
+        blip.className = "blip err"; stext.textContent = "error";
+        return;
+      }
+      poll = setInterval(() => {
+        fetch("/status/" + job_id).then(r => r.json()).then(data => {
+          const lines = data.log || [];
+          for (let i = seen; i < lines.length; i++) addLine(cons, lines[i], classify(lines[i]));
+          seen = lines.length;
+
+          if (data.status === "done" || data.status === "error") {
+            clearInterval(poll);
+            go.disabled = false; go.textContent = "SOLVE AGAIN";
+            blip.className = data.status === "done" ? "blip done" : "blip err";
+            stext.textContent = data.status === "done" ? "complete" : "error";
+
+            if (data.result === "win") {
+              verdict.textContent = "✅ CLEARED — NO MINES HIT";
+              verdict.className = "verdict win"; verdict.style.display = "block";
+            } else if (data.result === "lose") {
+              verdict.textContent = "💥 MINE DETONATED";
+              verdict.className = "verdict lose"; verdict.style.display = "block";
+            }
+          }
+        });
+      }, 500);
+    });
+}
+
+function classify(line) {
+  if (line.startsWith("Click")) return "l-safe";
+  if (line.startsWith("Flag"))  return "l-flag";
+  if (line.startsWith("Guess")) return "l-guess";
+  if (line.startsWith("WIN"))   return "l-win";
+  if (line.startsWith("Hit"))   return "l-lose";
+  if (line.startsWith("ERROR")) return "l-err";
+  if (line.includes("cleared"))  return "l-win";
+  return "l-sys";
+}
+
+function addLine(cons, text, cls) {
+  const d = document.createElement("div");
+  d.className = "l " + cls;
+  d.textContent = text;
+  cons.appendChild(d);
+  cons.scrollTop = cons.scrollHeight;
+}
+
+document.getElementById("url").addEventListener("keydown", e => {
+  if (e.key === "Enter") run();
+});
+</script>
+</body>
+</html>
