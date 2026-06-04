@@ -1,57 +1,122 @@
 """
-Minesweeper solver agent for minesweeper.online
+Universal Minesweeper solver agent.
 
-Usage:
-    pip install playwright && playwright install chromium
+Works on any minesweeper website by detecting the board from the DOM.
+Includes built-in profiles for popular sites + a fallback auto-detector.
 
-    # Play a new beginner game (visible browser, so your friends can watch)
-    python agent.py
+SETUP (run once):
+    pip install playwright
+    playwright install chromium
 
-    # Play the exact shared game link
-    python agent.py --url https://minesweeper.online/game/6130849347
-
-    # Expert difficulty, slow so it looks dramatic
-    python agent.py --difficulty expert --slow 300
+USAGE:
+    python agent.py --url "https://minesweeper.online/"
+    python agent.py --url "https://minesweeper.online/game/6130956827"
+    python agent.py --url "https://cardgames.io/minesweeper/"
+    python agent.py --url "https://www.google.com/search?q=minesweeper"
+    python agent.py --url "ANY_MINESWEEPER_URL"  --slow 300
 """
 
 import argparse
 import asyncio
+import glob
 import random
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Optional, Set, Tuple
 
-from playwright.async_api import async_playwright, Page
+from playwright.async_api import Page, async_playwright
+
 from solver import MinesweeperSolver
 
 Coord = Tuple[int, int]
 
-# minesweeper.online cell class → number value
-NUM_CLASSES = {
-    "hd_type1": 1, "hd_type2": 2, "hd_type3": 3, "hd_type4": 4,
-    "hd_type5": 5, "hd_type6": 6, "hd_type7": 7, "hd_type8": 8,
-    "hd_opened": 0,
+
+# ---------------------------------------------------------------------------
+# Site profiles — each defines how to read cells from a specific site's DOM
+# ---------------------------------------------------------------------------
+
+PROFILES = {
+    "minesweeper.online": {
+        "match": "minesweeper.online",
+        "cell_selector": ".cell",
+        "coord": ("data-x", "data-y"),   # (col_attr, row_attr)
+        "states": {
+            "closed":   lambda cls: "hd_closed" in cls or "hd_question" in cls,
+            "flagged":  lambda cls: "hd_flag" in cls,
+            "number":   lambda cls: next(
+                (i for i in range(9) if f"hd_type{i}" in cls or (i == 0 and "hd_opened" in cls)),
+                None
+            ),
+        },
+        "win_selector":  "#top_area_face",
+        "win_class":     "face_win",
+        "lose_class":    "face_lose",
+    },
+    "cardgames.io": {
+        "match": "cardgames.io",
+        "cell_selector": ".cell",
+        "coord": ("data-col", "data-row"),
+        "states": {
+            "closed":  lambda cls: "closed" in cls and "flag" not in cls,
+            "flagged": lambda cls: "flag" in cls,
+            "number":  lambda cls: next(
+                (i for i in range(9) if f"open{i}" in cls or f"num{i}" in cls),
+                None
+            ),
+        },
+        "win_selector":  ".status-bar",
+        "win_class":     "win",
+        "lose_class":    "lose",
+    },
+    "google": {
+        "match": "google.com",
+        "cell_selector": "[data-row][data-col]",
+        "coord": ("data-col", "data-row"),
+        "states": {
+            "closed":  lambda cls: "cell" in cls and "open" not in cls and "flag" not in cls,
+            "flagged": lambda cls: "flag" in cls,
+            "number":  lambda cls: next(
+                (i for i in range(9) if f"num_{i}" in cls or f"n{i}" in cls),
+                None
+            ),
+        },
+        "win_selector":  None,
+        "win_class":     "win",
+        "lose_class":    "lose",
+    },
 }
 
-DIFFICULTY_URLS = {
-    "beginner":     "https://minesweeper.online/",
-    "intermediate": "https://minesweeper.online/game/intermediate",
-    "expert":       "https://minesweeper.online/game/expert",
-}
+
+def get_profile(url: str) -> Optional[dict]:
+    for name, profile in PROFILES.items():
+        if profile["match"] in url:
+            return profile
+    return None
 
 
-async def read_board(page: Page):
-    """Read board state from DOM. Returns parsed board info."""
+# ---------------------------------------------------------------------------
+# Board reading
+# ---------------------------------------------------------------------------
 
-    cells = await page.query_selector_all(".cell")
+async def read_board(page: Page, profile: Optional[dict]):
+    """
+    Parse the current board state.
+    If no profile matches, tries multiple common selector patterns.
+    """
+    selector = profile["cell_selector"] if profile else ".cell, [class*='cell'], td"
+    cells = await page.query_selector_all(selector)
+
+    if not cells:
+        return 0, 0, {}, set(), [], False, False
 
     numbers: Dict[Coord, int] = {}
     flagged: Set[Coord] = set()
     unknown: List[Coord] = []
+    max_r = max_c = -1
 
-    max_r = max_c = 0
+    col_attr, row_attr = profile["coord"] if profile else ("data-x", "data-y")
 
     for cell in cells:
-        x = await cell.get_attribute("data-x")
-        y = await cell.get_attribute("data-y")
+        x = await cell.get_attribute(col_attr)
+        y = await cell.get_attribute(row_attr)
         if x is None or y is None:
             continue
 
@@ -59,149 +124,190 @@ async def read_board(page: Page):
         max_r = max(max_r, row)
         max_c = max(max_c, col)
 
-        classes = (await cell.get_attribute("class") or "").split()
+        class_attr = (await cell.get_attribute("class") or "").split()
 
-        if "hd_flag" in classes:
-            flagged.add((row, col))
-        elif "hd_closed" in classes or "hd_question" in classes:
-            unknown.append((row, col))
-        else:
-            for cls, num in NUM_CLASSES.items():
-                if cls in classes:
+        if profile:
+            states = profile["states"]
+            if states["flagged"](class_attr):
+                flagged.add((row, col))
+            else:
+                num = states["number"](class_attr)
+                if num is not None:
                     numbers[(row, col)] = num
-                    break
+                elif states["closed"](class_attr):
+                    unknown.append((row, col))
+        else:
+            # Generic fallback: guess from class names
+            cls_str = " ".join(class_attr)
+            if "flag" in cls_str:
+                flagged.add((row, col))
+            elif any(f"open{i}" in cls_str or f"type{i}" in cls_str or f"num{i}" in cls_str
+                     for i in range(9)):
+                for i in range(9):
+                    if f"open{i}" in cls_str or f"type{i}" in cls_str or f"num{i}" in cls_str:
+                        numbers[(row, col)] = i
+                        break
+            elif "closed" in cls_str or "hidden" in cls_str or "unrev" in cls_str:
+                unknown.append((row, col))
 
-    rows = max_r + 1 if max_r else 0
-    cols = max_c + 1 if max_c else 0
+    rows = max_r + 1 if max_r >= 0 else 0
+    cols = max_c + 1 if max_c >= 0 else 0
 
-    # Detect win / loss via the face button
-    face = await page.query_selector("#top_area_face")
+    # Game state
     game_over = won = False
-    if face:
-        face_class = await face.get_attribute("class") or ""
-        if "face_lose" in face_class:
-            game_over = True
-        elif "face_win" in face_class:
-            game_over = True
-            won = True
+    if profile and profile.get("win_selector"):
+        face = await page.query_selector(profile["win_selector"])
+        if face:
+            face_class = await face.get_attribute("class") or ""
+            if profile["lose_class"] in face_class:
+                game_over = True
+            elif profile["win_class"] in face_class:
+                game_over = True
+                won = True
 
     return rows, cols, numbers, flagged, unknown, game_over, won
 
 
-async def click_cell(page: Page, row: int, col: int):
-    cell = await page.query_selector(f"[data-x='{col}'][data-y='{row}']")
+async def click_cell(page: Page, row: int, col: int, col_attr: str, row_attr: str):
+    cell = await page.query_selector(f"[{col_attr}='{col}'][{row_attr}='{row}']")
     if cell:
         await cell.click()
 
 
-async def flag_cell(page: Page, row: int, col: int):
-    cell = await page.query_selector(f"[data-x='{col}'][data-y='{row}']")
+async def flag_cell(page: Page, row: int, col: int, col_attr: str, row_attr: str):
+    cell = await page.query_selector(f"[{col_attr}='{col}'][{row_attr}='{row}']")
     if cell:
         await cell.click(button="right")
 
 
-async def play_game(page: Page, slow_mo: int = 0):
+# ---------------------------------------------------------------------------
+# Game loop
+# ---------------------------------------------------------------------------
+
+async def play_game(page: Page, url: str, slow_ms: int = 150):
     await page.wait_for_load_state("networkidle")
     await asyncio.sleep(1.5)
 
-    rows, cols, numbers, flagged, unknown, game_over, won = await read_board(page)
+    profile = get_profile(url)
+    if profile:
+        print(f"Profile matched: {profile['match']}")
+    else:
+        print("No profile matched — using generic detector")
+
+    col_attr, row_attr = profile["coord"] if profile else ("data-x", "data-y")
+
+    rows, cols, numbers, flagged, unknown, game_over, won = await read_board(page, profile)
+
     if rows == 0:
-        print("ERROR: Could not read board. Dumping page HTML for debug:")
-        print(await page.content())
+        print("Could not read board. The site may use canvas rendering or load JS late.")
+        print("Try adding --wait 3 to give the page more time.")
         return
 
-    print(f"Board: {rows}x{cols} | Unknown: {len(unknown)}")
+    print(f"Board detected: {rows} rows x {cols} cols | {len(unknown)} unknown cells")
 
-    # First click: center cell (site guarantees no mine on first click)
-    if not numbers:
-        center_r, center_c = rows // 2, cols // 2
-        print(f"Opening center ({center_r}, {center_c}) to start")
-        await click_cell(page, center_r, center_c)
-        await asyncio.sleep(0.6)
+    # Open a cell near the center to start (sites guarantee no mine on first click)
+    if not numbers and unknown:
+        start = (rows // 2, cols // 2)
+        print(f"First click: {start}")
+        await click_cell(page, *start, col_attr, row_attr)
+        await asyncio.sleep(0.7)
 
     solver = MinesweeperSolver(rows, cols)
-    moves = 0
-    guesses = 0
+    moves = guesses = 0
 
     while True:
-        rows, cols, numbers, flagged, unknown, game_over, won = await read_board(page)
+        rows, cols, numbers, flagged, unknown, game_over, won = await read_board(page, profile)
 
         if game_over:
-            status = "WIN" if won else "BOOM (mine hit)"
-            print(f"{status} — {moves} moves, {guesses} guesses")
+            print(f"{'WIN!' if won else 'Hit a mine.'} ({moves} moves, {guesses} guesses)")
             return
 
         if not unknown:
-            print(f"Board cleared! {moves} moves, {guesses} guesses")
+            print(f"Board cleared! ({moves} moves, {guesses} guesses)")
             return
 
         solver.update(numbers, flagged)
         safe, mines = solver.solve()
 
-        # Filter to only still-unknown cells
         safe  = [c for c in safe  if c in unknown]
         mines = [c for c in mines if c not in flagged]
 
         if mines:
             for coord in mines:
-                print(f"  FLAG mine  {coord}")
-                await flag_cell(page, *coord)
+                print(f"  FLAG  {coord}")
+                await flag_cell(page, *coord, col_attr, row_attr)
                 moves += 1
-                if slow_mo:
-                    await asyncio.sleep(slow_mo / 1000)
+                if slow_ms:
+                    await asyncio.sleep(slow_ms / 1000)
             continue
 
         if safe:
             for coord in safe:
-                print(f"  CLICK safe {coord}")
-                await click_cell(page, *coord)
+                print(f"  SAFE  {coord}")
+                await click_cell(page, *coord, col_attr, row_attr)
                 moves += 1
-                if slow_mo:
-                    await asyncio.sleep(slow_mo / 1000)
+                if slow_ms:
+                    await asyncio.sleep(slow_ms / 1000)
             continue
 
-        # No deterministic move — probabilistic guess
+        # Probabilistic guess when logic is exhausted
         guess = solver.best_guess(unknown)
         if guess:
             guesses += 1
-            print(f"  GUESS      {guess}  (no safe deduction)")
-            await click_cell(page, *guess)
+            print(f"  GUESS {guess}")
+            await click_cell(page, *guess, col_attr, row_attr)
             moves += 1
-            if slow_mo:
-                await asyncio.sleep(slow_mo / 1000)
+            if slow_ms:
+                await asyncio.sleep(slow_ms / 1000)
         else:
-            print("No moves left — exiting")
+            print("No moves available — done.")
             break
 
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.1)
 
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 async def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--url", help="Specific game URL")
-    parser.add_argument("--difficulty", default="beginner",
-                        choices=["beginner", "intermediate", "expert"])
-    parser.add_argument("--headless", action="store_true")
+    parser = argparse.ArgumentParser(description="Universal Minesweeper solver")
+    parser.add_argument("--url", required=True, help="URL of the minesweeper game")
     parser.add_argument("--slow", type=int, default=150,
-                        help="Delay between moves in ms (default 150 — visible but fast)")
+                        help="Delay between moves in ms (default 150). Use 300+ for dramatic effect")
+    parser.add_argument("--wait", type=int, default=0,
+                        help="Extra seconds to wait for page to load before solving")
+    parser.add_argument("--headless", action="store_true",
+                        help="Run without visible browser window")
     args = parser.parse_args()
 
-    url = args.url or DIFFICULTY_URLS[args.difficulty]
+    # Find installed Chromium
+    candidates = glob.glob("/opt/pw-browsers/chromium-*/chrome-linux/chrome")
+    exe = candidates[0] if candidates else None
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=args.headless,
-            slow_mo=0,  # we handle our own delay per move
+            executable_path=exe,
+            args=["--ignore-certificate-errors", "--disable-web-security"],
         )
-        ctx = await browser.new_context(viewport={"width": 1280, "height": 800})
+        ctx = await browser.new_context(
+            viewport={"width": 1280, "height": 900},
+            ignore_https_errors=True,
+        )
         page = await ctx.new_page()
 
-        print(f"Opening: {url}")
-        await page.goto(url)
-        await play_game(page, slow_mo=args.slow)
+        print(f"Opening: {args.url}")
+        await page.goto(args.url, wait_until="networkidle",
+                        timeout=30000)
 
-        print("Press Enter to close browser...")
-        input()
+        if args.wait:
+            print(f"Waiting {args.wait}s for page to settle...")
+            await asyncio.sleep(args.wait)
+
+        await play_game(page, args.url, slow_ms=args.slow)
+
+        await asyncio.sleep(3)
         await browser.close()
 
 
