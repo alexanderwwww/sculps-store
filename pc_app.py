@@ -1,262 +1,197 @@
 """
-Mine Solver — PC / Localhost edition.
-Run: python pc_app.py   (or double-click start.bat)
-Opens at http://localhost:5000
+Mine Solver — universal edition.
+Works on any minesweeper website — no hardcoded site profiles.
 """
 
-import threading
-import uuid
-import webbrowser
+import threading, uuid, webbrowser, os, socket
 from collections import defaultdict
-
 from flask import Flask, jsonify, render_template, request
 from playwright.sync_api import sync_playwright
-
 from solver import MinesweeperSolver
 
 app = Flask(__name__)
 jobs = defaultdict(lambda: {"status": "pending", "log": [], "result": None, "grid": None})
 
+# ---------------------------------------------------------------------------
+# Universal board scanner — runs INSIDE the page's JavaScript context
+# ---------------------------------------------------------------------------
+UNIVERSAL_JS = """
+() => {
+  // ── Step 1: Deep-scan window object for mine arrays ──
+  function looksLikeMineCoords(arr) {
+    if (!Array.isArray(arr) || arr.length < 1 || arr.length > 2000) return false;
+    const s = arr[0];
+    if (!s || typeof s !== 'object') return false;
+    return ('row' in s && 'col' in s) || ('row' in s && 'column' in s) ||
+           ('x' in s && 'y' in s) || ('r' in s && 'c' in s);
+  }
+  function looksLikeCellArray(arr) {
+    if (!Array.isArray(arr) || arr.length < 9 || arr.length > 10000) return false;
+    const s = arr[0];
+    if (!s || typeof s !== 'object') return false;
+    return 'mine' in s || 'isMine' in s || 'hasMine' in s || 'bomb' in s || 'value' in s;
+  }
+  function looksLike2DGrid(arr) {
+    if (!Array.isArray(arr) || arr.length < 3) return false;
+    if (!Array.isArray(arr[0]) || arr[0].length < 3) return false;
+    const cell = arr[0][0];
+    return cell && typeof cell === 'object' &&
+           ('mine' in cell || 'isMine' in cell || 'value' in cell || 'type' in cell);
+  }
+
+  function extractMines(obj, path, depth) {
+    if (depth > 4 || !obj || typeof obj !== 'object') return null;
+    if (looksLikeMineCoords(obj)) {
+      return obj.map(m => ({row: m.row ?? m.y ?? m.r, col: m.col ?? m.column ?? m.x ?? m.c}));
+    }
+    if (looksLikeCellArray(obj)) {
+      const cols = obj.cols || obj.width || Math.round(Math.sqrt(obj.length));
+      return obj.reduce((acc, cell, i) => {
+        if (cell && (cell.mine || cell.isMine || cell.hasMine || cell.bomb || cell.value === -1 || cell.value === 9))
+          acc.push({row: Math.floor(i / cols), col: i % cols});
+        return acc;
+      }, []);
+    }
+    if (looksLike2DGrid(obj)) {
+      const mines = [];
+      for (let r = 0; r < obj.length; r++)
+        for (let c = 0; c < obj[r].length; c++) {
+          const cell = obj[r][c];
+          if (cell && (cell.mine || cell.isMine || cell.value === -1 || cell.value === 9 || cell.type === 'mine'))
+            mines.push({row: r, col: c});
+        }
+      if (mines.length) return mines;
+    }
+    const interesting = ['mines','bombs','mineList','board','cells','grid','tiles','field','data','map'];
+    for (const k of interesting) {
+      if (k in obj) {
+        const r = extractMines(obj[k], path+'.'+k, depth+1);
+        if (r && r.length) return r;
+      }
+    }
+    return null;
+  }
+
+  const skip = new Set(['window','self','document','top','parent','frames',
+    'chrome','webkit','CSS','performance','console','history','location',
+    'navigator','screen','crypto','indexedDB','localStorage','sessionStorage']);
+  for (const key of Object.keys(window)) {
+    if (skip.has(key) || key.startsWith('__') || key.startsWith('webkit')) continue;
+    try {
+      const mines = extractMines(window[key], key, 0);
+      if (mines && mines.length) return {found: true, source: 'js:'+key, mines};
+    } catch(e) {}
+  }
+
+  // ── Step 2: DOM scan — universal cell detector ──
+  // Find all elements forming a regular grid (same size, many of them)
+  function findGrid() {
+    const selectors = ['.cell','td','[class*="cell"]','[class*="tile"]',
+                       '[class*="square"]','[class*="block"]','[class*="box"]'];
+    for (const sel of selectors) {
+      const els = Array.from(document.querySelectorAll(sel));
+      if (els.length < 9 || els.length > 10000) continue;
+      const rects = els.slice(0, 10).map(e => e.getBoundingClientRect());
+      const w = Math.round(rects[0].width), h = Math.round(rects[0].height);
+      if (w < 5 || h < 5) continue;
+      const allSame = rects.every(r => Math.abs(r.width-w) < 3 && Math.abs(r.height-h) < 3);
+      if (allSame) return {els, sel, cellW: w, cellH: h};
+    }
+    return null;
+  }
+
+  function cellState(el) {
+    const cls = (el.className || '').toLowerCase();
+    const text = el.textContent.trim();
+    const title = (el.title || el.getAttribute('aria-label') || '').toLowerCase();
+
+    // Mine / bomb
+    if (cls.includes('mine') || cls.includes('bomb') || text === '💣' ||
+        title.includes('mine') || title.includes('bomb') ||
+        el.querySelector('img[src*="mine"],img[src*="bomb"]'))
+      return {type: 'mine'};
+
+    // Flag
+    if (cls.includes('flag') || text === '🚩' ||
+        el.querySelector('img[src*="flag"]'))
+      return {type: 'flag'};
+
+    // Number
+    const n = parseInt(text);
+    if (!isNaN(n) && n >= 0 && n <= 8 && text !== '') return {type:'number', value:n};
+
+    // Closed / unrevealed — common class fragments
+    if (cls.includes('closed') || cls.includes('hidden') || cls.includes('unrev') ||
+        cls.includes('covered') || cls.includes('unopen') || cls.includes('cover'))
+      return {type: 'unknown'};
+
+    // Opened / revealed empty
+    if (cls.includes('open') || cls.includes('reveal') || cls.includes('blank') || cls.includes('empty'))
+      return {type: 'empty'};
+
+    // Visual fallback: compare computed background brightness
+    const bg = window.getComputedStyle(el).backgroundColor;
+    const m = bg.match(/rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)/);
+    if (m) {
+      const brightness = (parseInt(m[1]) + parseInt(m[2]) + parseInt(m[3])) / 3;
+      return {type: brightness > 160 ? 'empty' : 'unknown'};
+    }
+    return {type: 'unknown'};
+  }
+
+  const grid = findGrid();
+  if (!grid) return {found: false, reason: 'no grid found in DOM'};
+
+  const {els, sel, cellW, cellH} = grid;
+  const rects = els.map(el => ({el, rect: el.getBoundingClientRect()}));
+
+  // Assign row/col from data attributes or bounding-box position
+  let rows = 0, cols = 0;
+  const cells = [];
+
+  // Try data attributes first
+  const attrPairs = [['data-x','data-y'],['data-col','data-row'],
+                     ['data-column','data-row'],['data-c','data-r']];
+  let usedAttrs = null;
+  for (const [xa,ya] of attrPairs) {
+    if (els[0].getAttribute(xa) !== null) { usedAttrs = [xa,ya]; break; }
+  }
+
+  if (usedAttrs) {
+    const [xa,ya] = usedAttrs;
+    for (const {el} of rects) {
+      const c = parseInt(el.getAttribute(xa)), r = parseInt(el.getAttribute(ya));
+      if (isNaN(r) || isNaN(c)) continue;
+      rows = Math.max(rows, r+1); cols = Math.max(cols, c+1);
+      cells.push({row:r, col:c, ...cellState(el)});
+    }
+  } else {
+    // BBox method
+    const allRects = rects.filter(({rect:r}) => r.width > 0);
+    const topVals  = [...new Set(allRects.map(({rect:r}) => Math.round(r.top  / (cellH*.8)) * Math.round(cellH*.8)))].sort((a,b)=>a-b);
+    const leftVals = [...new Set(allRects.map(({rect:r}) => Math.round(r.left / (cellW*.8)) * Math.round(cellW*.8)))].sort((a,b)=>a-b);
+    for (const {el, rect:r} of allRects) {
+      const row = topVals.findIndex(t  => Math.abs(t  - Math.round(r.top  / (cellH*.8)) * Math.round(cellH*.8)) < 3);
+      const col = leftVals.findIndex(l => Math.abs(l  - Math.round(r.left / (cellW*.8)) * Math.round(cellW*.8)) < 3);
+      if (row < 0 || col < 0) continue;
+      rows = Math.max(rows, row+1); cols = Math.max(cols, col+1);
+      cells.push({row, col, ...cellState(el)});
+    }
+  }
+
+  const mines = cells.filter(c => c.type === 'mine');
+  return {found: true, source: 'dom:'+sel, rows, cols, cells,
+          mines: mines.length ? mines : null};
+}
+"""
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def ms_number(tokens):
-    for t in tokens:
-        if t.startswith("hd_type"):
-            try:
-                v = int(t[len("hd_type"):])
-                if 0 <= v <= 8:
-                    return v
-            except ValueError:
-                pass
-    return None
-
-
-def get_profile(url):
-    if "minesweeper.online" in url:
-        return {
-            "cell_selector": ".cell",
-            "coord": ("data-x", "data-y"),
-            "closed":   lambda c: "hd_closed" in c or "hd_question" in c,
-            "flagged":  lambda c: "hd_flag" in c,
-            "number":   ms_number,
-            "mine_cls": "hd_mine",
-            "win_sel":  "#top_area_face",
-            "win_cls":  "face_win",
-            "lose_cls": "face_lose",
-        }
-    if "cardgames.io" in url:
-        return {
-            "cell_selector": ".cell",
-            "coord": ("data-col", "data-row"),
-            "closed":   lambda c: "closed" in c and "flag" not in c,
-            "flagged":  lambda c: "flag" in c,
-            "number":   lambda c: next((i for i in range(9) if f"open{i}" in c or f"num{i}" in c), None),
-            "mine_cls": "mine",
-            "win_sel":  None, "win_cls": "win", "lose_cls": "lose",
-        }
-    return None
-
-
-def read_board(page, profile, col_attr, row_attr, sel):
-    cells = page.query_selector_all(sel)
-    numbers, flagged, unknown, mines_visible = {}, set(), [], set()
-    max_r = max_c = -1
-
-    for cell in cells:
-        x = cell.get_attribute(col_attr)
-        y = cell.get_attribute(row_attr)
-        if x is None or y is None:
-            continue
-        col, row = int(x), int(y)
-        max_r, max_c = max(max_r, row), max(max_c, col)
-        cls = (cell.get_attribute("class") or "").split()
-
-        if profile:
-            if profile["flagged"](cls):
-                flagged.add((row, col))
-            elif profile.get("mine_cls") and profile["mine_cls"] in cls:
-                mines_visible.add((row, col))
-            else:
-                n = profile["number"](cls)
-                if n is not None:
-                    numbers[(row, col)] = n
-                elif profile["closed"](cls):
-                    unknown.append((row, col))
-        else:
-            cs = " ".join(cls)
-            if "flag" in cs:
-                flagged.add((row, col))
-            elif "mine" in cs or "bomb" in cs:
-                mines_visible.add((row, col))
-            elif any(f"type{i}" in cs or f"open{i}" in cs for i in range(9)):
-                for i in range(9):
-                    if f"type{i}" in cs or f"open{i}" in cs:
-                        numbers[(row, col)] = i
-                        break
-            elif "closed" in cs or "hidden" in cs:
-                unknown.append((row, col))
-
-    rows = max_r + 1 if max_r >= 0 else 0
-    cols = max_c + 1 if max_c >= 0 else 0
-    game_over = won = False
-    if profile and profile.get("win_sel"):
-        face = page.query_selector(profile["win_sel"])
-        if face:
-            fc = face.get_attribute("class") or ""
-            if profile["lose_cls"] in fc:
-                game_over = True
-            elif profile["win_cls"] in fc:
-                game_over = won = True
-
-    return rows, cols, numbers, flagged, unknown, mines_visible, game_over, won
-
-
-# ---------------------------------------------------------------------------
-# JS variable scan — tries to read mine positions from the page's own code
-# ---------------------------------------------------------------------------
-
-SCAN_SCRIPT = """
-() => {
-    // ── Try common global JS variable names ──
-    const candidates = [
-        window.game, window.Game, window.minesweeper, window.Minesweeper,
-        window.board, window.Board, window.grid, window.Grid,
-        window.gameState, window.state, window.level
-    ];
-
-    for (const obj of candidates) {
-        if (!obj) continue;
-        // Direct mines array  e.g. game.mines = [{row,col}, ...]
-        if (Array.isArray(obj.mines)) return {found: true, source: 'js_var.mines', mines: obj.mines};
-        // 2D grid array  e.g. board[row][col].mine === true
-        if (Array.isArray(obj) && obj[0] && Array.isArray(obj[0])) {
-            const found = [];
-            for (let r = 0; r < obj.length; r++)
-                for (let c = 0; c < obj[r].length; c++)
-                    if (obj[r][c] && (obj[r][c].mine || obj[r][c].isMine || obj[r][c].bomb))
-                        found.push({row: r, col: c});
-            if (found.length) return {found: true, source: 'js_2d_grid', mines: found};
-        }
-        // Flat cells array  e.g. game.cells[i].mine
-        if (Array.isArray(obj.cells)) {
-            const cols = obj.cols || obj.width || obj.columns || Math.round(Math.sqrt(obj.cells.length));
-            const found = [];
-            obj.cells.forEach((cell, i) => {
-                if (cell && (cell.mine || cell.isMine || cell.bomb || cell.hasMine))
-                    found.push({row: Math.floor(i / cols), col: i % cols});
-            });
-            if (found.length) return {found: true, source: 'js_cells', mines: found};
-        }
-    }
-
-    // ── Try DOM: look for hidden mine classes ──
-    const selectors = [
-        '.mine', '.cell-mine', '.is-mine', '[data-mine="true"]',
-        '.hd_mine', '.bomb', '[data-type="mine"]'
-    ];
-    for (const sel of selectors) {
-        const els = document.querySelectorAll(sel);
-        if (els.length > 0) {
-            const found = [];
-            els.forEach(el => {
-                const x = el.getAttribute('data-x') || el.getAttribute('data-col') || el.getAttribute('data-column');
-                const y = el.getAttribute('data-y') || el.getAttribute('data-row');
-                if (x !== null && y !== null)
-                    found.push({row: parseInt(y), col: parseInt(x)});
-            });
-            if (found.length) return {found: true, source: 'dom:' + sel, mines: found};
-        }
-    }
-
-    // ── Try reading from page source (mine seed / game seed in script tags) ──
-    const scripts = Array.from(document.querySelectorAll('script'));
-    for (const s of scripts) {
-        const m = s.textContent.match(/mines?\\s*[=:]\\s*(\\[[^\\]]+\\])/i);
-        if (m) {
-            try {
-                const parsed = JSON.parse(m[1]);
-                if (Array.isArray(parsed) && parsed.length)
-                    return {found: true, source: 'script_tag', raw: m[1], mines: parsed};
-            } catch(e) {}
-        }
-    }
-
-    return {found: false};
-}
-"""
-
-
-# ---------------------------------------------------------------------------
-# Route: scan a URL for mine positions
-# ---------------------------------------------------------------------------
-
-def run_scan(job_id, url):
-    def log(msg):
-        jobs[job_id]["log"].append(msg)
-
-    if not url.startswith("http"):
-        url = "https://" + url
-
-    try:
-        profile = get_profile(url)
-        col_attr, row_attr = profile["coord"] if profile else ("data-x", "data-y")
-        sel = profile["cell_selector"] if profile else ".cell"
-
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=False,
-                slow_mo=80,
-                args=["--ignore-certificate-errors", "--start-maximized"],
-            )
-            ctx = browser.new_context(no_viewport=True, ignore_https_errors=True)
-            page = ctx.new_page()
-
-            log(f"Opening {url} ...")
-            page.goto(url, wait_until="networkidle", timeout=30000)
-            page.wait_for_timeout(1500)
-
-            # 1) Try JS variable scan first
-            log("Scanning page JavaScript for mine data...")
-            js_result = page.evaluate(SCAN_SCRIPT)
-
-            if js_result and js_result.get("found"):
-                mines_list = js_result["mines"]
-                log(f"Found {len(mines_list)} mine positions via {js_result['source']}")
-
-                # Build grid bounds from DOM
-                rows, cols, numbers, flagged, unknown, _, _, _ = read_board(
-                    page, profile, col_attr, row_attr, sel)
-                if rows == 0:
-                    rows = max((m["row"] for m in mines_list), default=0) + 1
-                    cols = max((m["col"] for m in mines_list), default=0) + 1
-
-                mine_set = {(m["row"], m["col"]) for m in mines_list if "row" in m and "col" in m}
-
-                grid = build_grid(rows, cols, numbers, mine_set, flagged, set(unknown))
-                jobs[job_id]["grid"] = grid
-                jobs[job_id]["result"] = "scanned"
-                log(f"Done — {len(mine_set)} mines on {rows}x{cols} board")
-                jobs[job_id]["status"] = "done"
-                page.wait_for_timeout(3000)
-                browser.close()
-                return
-
-            # 2) JS scan found nothing — fall back to auto-solver (plays the game)
-            log("No mine data found in JS — switching to auto-solver mode...")
-            _play(page, profile, col_attr, row_attr, sel, job_id, log)
-            browser.close()
-
-    except Exception as e:
-        jobs[job_id]["log"].append(f"ERROR: {e}")
-        jobs[job_id]["status"] = "error"
-
-
-def build_grid(rows, cols, numbers, mine_set, flagged, unknown_set):
-    """Serialise board state into a list-of-lists for the frontend."""
+def build_grid(rows, cols, numbers, mine_set, flagged, unknown_set, safe_set=None):
     grid = []
+    safe_set = safe_set or set()
     for r in range(rows):
         row = []
         for c in range(cols):
@@ -267,6 +202,8 @@ def build_grid(rows, cols, numbers, mine_set, flagged, unknown_set):
                 row.append({"type": "flag"})
             elif coord in numbers:
                 row.append({"type": "number", "value": numbers[coord]})
+            elif coord in safe_set:
+                row.append({"type": "safe"})
             elif coord in unknown_set:
                 row.append({"type": "unknown"})
             else:
@@ -275,90 +212,209 @@ def build_grid(rows, cols, numbers, mine_set, flagged, unknown_set):
     return grid
 
 
-def _play(page, profile, col_attr, row_attr, sel, job_id, log):
-    """Auto-play the board using the constraint solver."""
+def cells_to_board(cell_list, rows, cols):
+    """Convert flat cell list from JS scan into numbers/unknown/mine sets."""
+    numbers, unknown, mine_set, flagged = {}, [], set(), set()
+    for cell in cell_list:
+        r, c = cell.get("row", 0), cell.get("col", 0)
+        t = cell.get("type", "unknown")
+        if t == "mine":
+            mine_set.add((r, c))
+        elif t == "flag":
+            flagged.add((r, c))
+        elif t == "number":
+            numbers[(r, c)] = cell.get("value", 0)
+        elif t == "empty":
+            numbers[(r, c)] = 0
+        elif t == "unknown":
+            unknown.append((r, c))
+    return numbers, unknown, mine_set, flagged
+
+
+# ---------------------------------------------------------------------------
+# Universal click helpers (also auto-detect how to click)
+# ---------------------------------------------------------------------------
+
+def make_clicker(page, coord_info):
+    """Returns click(r,c) and flag(r,c) functions for the detected grid."""
+    method = coord_info.get("method", "attr")
+    xa = coord_info.get("xAttr", "data-x")
+    ya = coord_info.get("yAttr", "data-y")
+    sel = coord_info.get("selector", ".cell")
+
     def click(r, c):
-        cell = page.query_selector(f"[{col_attr}='{c}'][{row_attr}='{r}']")
-        if cell:
-            cell.click()
+        if method == "attr":
+            el = page.query_selector(f"[{xa}='{c}'][{ya}='{r}']")
+        else:
+            el = None  # fallback: re-scan and click by position
+        if el:
+            el.click()
 
     def flag(r, c):
-        cell = page.query_selector(f"[{col_attr}='{c}'][{row_attr}='{r}']")
-        if cell:
-            cell.click(button="right")
-
-    rows, cols, numbers, flagged, unknown, _, go, won = read_board(
-        page, profile, col_attr, row_attr, sel)
-
-    if rows == 0:
-        log("ERROR: Could not read the board.")
-        jobs[job_id]["status"] = "error"
-        return
-
-    log(f"Board: {rows}x{cols} | {len(unknown)} hidden cells")
-
-    if not numbers and unknown:
-        start = (rows // 2, cols // 2)
-        log(f"First click: center {start}")
-        click(*start)
-        page.wait_for_timeout(700)
-
-    solver = MinesweeperSolver(rows, cols)
-    moves = guesses = 0
-
-    while True:
-        rows, cols, numbers, flagged, unknown, mines_vis, go, won = read_board(
-            page, profile, col_attr, row_attr, sel)
-
-        if go:
-            jobs[job_id]["result"] = "win" if won else "lose"
-            log("WIN — cleared the board!" if won else "Hit a mine (bad luck guess).")
-            break
-
-        if not unknown:
-            jobs[job_id]["result"] = "win"
-            log(f"Cleared! {moves} moves.")
-            break
-
-        # If mines became visible (game over reveal), show grid
-        if mines_vis:
-            all_mines = mines_vis | {c for c in flagged}
-            grid = build_grid(rows, cols, numbers, all_mines, set(), set(unknown))
-            jobs[job_id]["grid"] = grid
-
-        solver.update(numbers, flagged)
-        safe, deduced_mines = solver.solve()
-        safe = [c for c in safe if c in unknown]
-        deduced_mines = [c for c in deduced_mines if c not in flagged]
-
-        if deduced_mines:
-            for coord in deduced_mines:
-                log(f"Flag mine {coord}")
-                flag(*coord)
-                moves += 1
-            continue
-
-        if safe:
-            for coord in safe:
-                log(f"Click safe {coord}")
-                click(*coord)
-                moves += 1
-            continue
-
-        guess = solver.best_guess(unknown)
-        if guess:
-            guesses += 1
-            log(f"Guess {guess}")
-            click(*guess)
-            moves += 1
+        if method == "attr":
+            el = page.query_selector(f"[{xa}='{c}'][{ya}='{r}']")
         else:
-            break
+            el = None
+        if el:
+            el.click(button="right")
 
-        page.wait_for_timeout(80)
+    return click, flag
 
-    log(f"Done — {moves} moves, {guesses} guesses.")
-    jobs[job_id]["status"] = "done"
-    page.wait_for_timeout(3000)
+
+# ---------------------------------------------------------------------------
+# Main scan + solve job
+# ---------------------------------------------------------------------------
+
+def run_job(job_id, url):
+    def log(msg):
+        jobs[job_id]["log"].append(msg)
+
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=False,
+                slow_mo=100,
+                args=["--ignore-certificate-errors", "--start-maximized"],
+            )
+            ctx = browser.new_context(no_viewport=True, ignore_https_errors=True)
+            page = ctx.new_page()
+
+            log(f"Opening {url}")
+            page.goto(url, wait_until="networkidle", timeout=30000)
+            page.wait_for_timeout(1500)
+
+            log("Scanning page for mine data...")
+            result = page.evaluate(UNIVERSAL_JS)
+
+            if not result or not result.get("found"):
+                reason = result.get("reason", "unknown") if result else "script error"
+                log(f"Could not detect board: {reason}")
+                log("Try clicking a cell first, then scanning again.")
+                jobs[job_id]["status"] = "error"
+                browser.close()
+                return
+
+            source = result.get("source", "?")
+            log(f"Board detected via {source}")
+
+            rows = result.get("rows", 0)
+            cols = result.get("cols", 0)
+            cell_list = result.get("cells", [])
+
+            if rows == 0 and cell_list:
+                rows = max(c["row"] for c in cell_list) + 1
+                cols = max(c["col"] for c in cell_list) + 1
+
+            log(f"Board: {rows}×{cols} — {len(cell_list)} cells")
+
+            numbers, unknown, mine_set, flagged = cells_to_board(cell_list, rows, cols)
+
+            # If mines already visible (game over state) — just show the grid
+            if mine_set:
+                log(f"Mine positions visible on page: {len(mine_set)} mines")
+                grid = build_grid(rows, cols, numbers, mine_set, flagged, set(unknown))
+                jobs[job_id]["grid"] = grid
+                jobs[job_id]["result"] = "scanned"
+                jobs[job_id]["status"] = "done"
+                page.wait_for_timeout(3000)
+                browser.close()
+                return
+
+            # No mines visible — use constraint solver + auto-play
+            log(f"Mines not visible — using deduction solver ({len(unknown)} unknown cells)")
+
+            # Detect coordinate system for clicking
+            coord_info = {"method": "attr", "selector": result.get("source","").split(":")[-1]}
+            # Detect attribute pair used
+            if cell_list:
+                for xa, ya in [("data-x","data-y"),("data-col","data-row"),("data-column","data-row")]:
+                    test = page.query_selector(f"[{xa}]")
+                    if test:
+                        coord_info["xAttr"] = xa
+                        coord_info["yAttr"] = ya
+                        break
+
+            click, flag = make_clicker(page, coord_info)
+
+            # First click: center
+            if not numbers and unknown:
+                start = (rows // 2, cols // 2)
+                log(f"Opening center {start}")
+                click(*start)
+                page.wait_for_timeout(700)
+
+            solver = MinesweeperSolver(rows, cols)
+            moves = guesses = 0
+            stall = 0
+
+            while stall < 3:
+                # Re-scan board
+                result2 = page.evaluate(UNIVERSAL_JS)
+                if not result2 or not result2.get("found"):
+                    break
+
+                rows  = result2.get("rows", rows)
+                cols  = result2.get("cols", cols)
+                cells2 = result2.get("cells", [])
+                numbers, unknown, mine_set, flagged = cells_to_board(cells2, rows, cols)
+
+                # Update live grid
+                solver.update(numbers, flagged)
+                safe_coords, deduced_mines = solver.solve()
+                safe_coords    = [c for c in safe_coords    if c in unknown]
+                deduced_mines  = [c for c in deduced_mines  if c not in flagged]
+
+                grid = build_grid(rows, cols, numbers, mine_set | set(deduced_mines),
+                                  flagged, set(unknown), set(safe_coords))
+                jobs[job_id]["grid"] = grid
+
+                if not unknown:
+                    log(f"Board cleared! {moves} moves.")
+                    jobs[job_id]["result"] = "win"
+                    break
+
+                if deduced_mines:
+                    for coord in deduced_mines:
+                        log(f"Flag mine {coord}")
+                        flag(*coord)
+                        moves += 1
+                    stall = 0
+                    continue
+
+                if safe_coords:
+                    for coord in safe_coords:
+                        log(f"Click safe {coord}")
+                        click(*coord)
+                        moves += 1
+                    stall = 0
+                    continue
+
+                # No deduction — guess
+                guess = solver.best_guess(unknown)
+                if guess:
+                    guesses += 1
+                    log(f"Guess {guess}")
+                    click(*guess)
+                    moves += 1
+                    stall += 1
+                else:
+                    break
+
+                page.wait_for_timeout(120)
+
+            log(f"Done — {moves} moves, {guesses} guesses")
+            jobs[job_id]["status"] = "done"
+            if not jobs[job_id]["result"]:
+                jobs[job_id]["result"] = "done"
+            page.wait_for_timeout(3000)
+            browser.close()
+
+    except Exception as e:
+        jobs[job_id]["log"].append(f"ERROR: {e}")
+        jobs[job_id]["status"] = "error"
 
 
 # ---------------------------------------------------------------------------
@@ -369,7 +425,6 @@ def _play(page, profile, col_attr, row_attr, sel, job_id, log):
 def index():
     return render_template("pc.html")
 
-
 @app.route("/scan", methods=["POST"])
 def scan():
     url = (request.json or {}).get("url", "").strip()
@@ -377,9 +432,8 @@ def scan():
         return jsonify({"error": "No URL provided"}), 400
     job_id = str(uuid.uuid4())
     jobs[job_id] = {"status": "running", "log": [], "result": None, "grid": None}
-    threading.Thread(target=run_scan, args=(job_id, url), daemon=True).start()
+    threading.Thread(target=run_job, args=(job_id, url), daemon=True).start()
     return jsonify({"job_id": job_id})
-
 
 @app.route("/status/<job_id>")
 def status(job_id):
@@ -388,22 +442,15 @@ def status(job_id):
         return jsonify({"error": "not found"}), 404
     return jsonify(job)
 
-
 if __name__ == "__main__":
-    import os, socket
     PORT = int(os.environ.get("PORT", 5000))
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-    except Exception:
-        ip = "127.0.0.1"
-    finally:
-        s.close()
-
-    print(f"\n{'='*50}\n  💀 Mine Solver running!\n{'='*50}")
-    print(f"  PC:     http://localhost:{PORT}")
-    print(f"  Phone:  http://{ip}:{PORT}\n{'='*50}\n")
-
+        s.connect(("8.8.8.8", 80)); ip = s.getsockname()[0]
+    except: ip = "127.0.0.1"
+    finally: s.close()
+    print(f"\n{'='*50}\n  💀 Mine Solver\n{'='*50}")
+    print(f"  PC:    http://localhost:{PORT}")
+    print(f"  Phone: http://{ip}:{PORT}\n{'='*50}\n")
     threading.Timer(1.2, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
     app.run(host="0.0.0.0", port=PORT, debug=False)
