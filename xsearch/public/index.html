@@ -235,7 +235,25 @@ function addMsg(who,text,me){const m=document.createElement("div");m.className="
 function setConn(s){$("scrConnect").style.display=s==='no'?'flex':'none';$("scrConnecting").style.display=s==='connecting'?'flex':'none';
   $("feed").style.opacity=s==='ok'?'1':'0';$("conn").classList.toggle('ok',s==='ok');
   $("connSt").textContent=s==='ok'?'CONNECTED':s==='connecting'?'CONNECTING':'NOT CONNECTED';}
-const VPW=460,VPH=840;let ws=null;
+const VPW=460,VPH=840;let ws=null;let pfound=0;
+function addProduct(p){
+  if(!p||p.isProduct===false)return;
+  if($("empty"))$("empty").style.display="none";
+  const i=pfound++,g=G[i%G.length];
+  const price=p.estPrice||p.retailPrice||0;
+  const cost=price?+(price*0.30).toFixed(2):null;
+  const margin=price?Math.round((price-cost)/price*100):null;
+  const rc=p.risk==="High"?"#ff6b8b":p.risk==="Medium"?"#ffc46b":"#7dffa6";
+  const el=document.createElement("div");el.className="row";
+  el.innerHTML=`<div class="prod"><div class="pt" style="background:linear-gradient(140deg,${g[0]},${g[1]})"></div>
+    <div><div class="nm">${p.title||"Product"}</div><div class="ct">${p.category||""}</div></div></div>
+    <div style="justify-self:center;text-align:center"><div class="sc" style="border-color:${rc}55;color:${rc}">${p.xScore??"—"}</div>
+    <div style="font-size:9px;color:${rc};margin-top:3px;text-transform:uppercase;letter-spacing:.06em">${p.verdict||""}</div></div>
+    <div class="rp">${price?"$"+(+price).toFixed(2):"—"}</div>
+    <div class="co">${cost!=null?"$"+cost.toFixed(2):"—"}<small>${margin!=null?margin+"% · "+(p.risk||"")+" risk":""}</small></div>`;
+  $("rows").appendChild(el);requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
+  $("rcount").textContent=`${pfound} PRODUCTS FOUND`;$("found").textContent=`found ${pfound} products`;
+}
 function sendLive(o){if(ws&&ws.readyState===1)ws.send(JSON.stringify(o));}
 function connect(){if(connected)return Promise.resolve();
   addMsg("You","Connect to TikTok.",true);setConn('connecting');$("mode").textContent="Launching live browser…";
@@ -249,6 +267,7 @@ function connect(){if(connected)return Promise.resolve();
           $("mode").textContent="LIVE — controlling real TikTok";
           addMsg("XSEARCH AI","Live TikTok browser is up. Tap and scroll the phone screen — you're driving a real browser. We'll solve captchas together right on screen.");res();}}
       else if(m.type==="agent"){addMsg("XSEARCH AI",m.text);}
+      else if(m.type==="product"){addProduct(m.product);}
       else if(m.type==="status"){$("connecting-sub").textContent=m.text;
         if(m.text.startsWith("error")){addMsg("XSEARCH AI","Browser error: "+m.text);setConn('no');if(!done){done=true;res();}}}};
     ws.onerror=()=>{if(!done){done=true;addMsg("XSEARCH AI","Live browser not available. On your machine run: <b>npm i playwright ws</b> then <b>npx playwright install chromium</b>, then restart.");setConn('no');res();}};
@@ -291,7 +310,7 @@ async function scan(query){if(busy)return;busy=true;if(!connected){await connect
   addMsg("XSEARCH AI",`Done — <b>${products.length}</b> products. Top: <b style="color:#7fe3ff">${products[0]?.title||"—"}</b>. Type a new niche to scan again.`);
   busy=false;$("xbtn").disabled=false;}
 $("btnConnect").onclick=()=>connect();
-$("xbtn").onclick=()=>{addMsg("You","Learn the market — watch the feed",true);sendLive({type:"learn",goal:$("q").value.trim()||"for you"});};
+$("xbtn").onclick=()=>{addMsg("You","Learn the market — watch & judge",true);pfound=0;$("rows").innerHTML="";$("rcount").textContent="PRODUCTS";$("found").textContent="found 0 products";sendLive({type:"learn",goal:$("q").value.trim()||"for you"});};
 $("send").onclick=()=>{const q=$("q").value.trim();if(!q)return;addMsg("You",q,true);sendLive({type:"command",text:q});$("q").value="";};
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("send").click();});
 addMsg("XSEARCH AI","Booting the live TikTok browser. If the phone is blank/white, LOG IN to TikTok once in the window that opened — then press XSEARCH and I'll actually watch the feed (swipe + watch each video). Judging the videos comes next.");
