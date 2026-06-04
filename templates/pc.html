@@ -1,547 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>💀 MINE SOLVER</title>
 <style>
-  :root {
-    --green: #00ff66;
-    --green-dim: #00aa44;
-    --green-glow: rgba(0, 255, 102, 0.6);
-    --red: #ff3344;
-    --red-glow: rgba(255, 51, 68, 0.6);
-    --gold: #ffcc00;
-  }
+:root {
+  --g: #00ff66; --gd: #00aa44; --gg: rgba(0,255,102,.6);
+  --r: #ff3344; --rg: rgba(255,51,68,.6);
+  --b: #00ccff; --bg: rgba(0,204,255,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#000;overflow:hidden;
+  font-family:"SF Mono","Cascadia Code","Fira Code",Consolas,monospace;color:var(--g)}
+#matrix{position:fixed;inset:0;z-index:0;opacity:.4}
+.overlay{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 25%,rgba(0,0,0,.9) 100%),
+  repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,20,0,.2) 3px,rgba(0,0,0,0) 4px)}
+.wrap{position:relative;z-index:2;height:100%;overflow-y:auto;
+  display:flex;flex-direction:column;align-items:center;padding:16px;gap:14px}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+.title{font-size:clamp(1.3rem,3vw,2rem);font-weight:800;letter-spacing:5px;text-align:center;
+  text-shadow:0 0 14px var(--gg),0 0 30px var(--gg);animation:flicker 5s infinite;padding-top:4px}
+@keyframes flicker{0%,19%,21%,23%,80%,100%{opacity:1}20%,22%,82%{opacity:.6}}
+.sub{text-align:center;color:var(--gd);font-size:.72rem;letter-spacing:2px;text-transform:uppercase}
 
-  html, body {
-    height: 100%;
-    background: #000;
-    overflow: hidden;
-    font-family: "SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
-    color: var(--green);
-  }
+/* tabs */
+.tabs{display:flex;width:min(700px,94vw);
+  border:1px solid rgba(0,255,102,.3);border-radius:10px;overflow:hidden}
+.tab{flex:1;padding:11px;text-align:center;font-family:inherit;font-size:.78rem;
+  font-weight:700;letter-spacing:1.5px;cursor:pointer;border:none;
+  background:transparent;color:var(--gd);transition:all .2s}
+.tab.active{background:rgba(0,255,102,.12);color:var(--g);text-shadow:0 0 8px var(--gg)}
+.tab+.tab{border-left:1px solid rgba(0,255,102,.2)}
 
-  #matrix {
-    position: fixed; inset: 0; z-index: 0; opacity: 0.45;
-  }
+/* glass */
+.glass{width:min(700px,94vw);background:rgba(0,20,8,.3);
+  backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid rgba(0,255,102,.28);border-radius:14px;
+  box-shadow:0 0 40px rgba(0,255,102,.08),inset 0 0 30px rgba(0,255,102,.03);padding:22px}
+.panel{display:none}.panel.active{display:block}
 
-  .overlay {
-    position: fixed; inset: 0; z-index: 1; pointer-events: none;
-    background:
-      radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.88) 100%),
-      repeating-linear-gradient(to bottom,
-        rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
-        rgba(0,20,0,0.2) 3px, rgba(0,0,0,0) 4px);
-  }
+/* fields */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.fgrid .full{grid-column:1/-1}
+label{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--gd);margin-bottom:4px}
+input[type=text],select{width:100%;padding:11px 13px;background:rgba(0,0,0,.6);
+  border:1px solid rgba(0,255,102,.35);border-radius:8px;color:var(--g);
+  font-family:inherit;font-size:.85rem;outline:none;transition:box-shadow .2s,border-color .2s;
+  -webkit-appearance:none}
+input:focus,select:focus{border-color:var(--g);box-shadow:0 0 14px rgba(0,255,102,.3)}
+select option{background:#001a08;color:var(--g)}
+.prompt-row{position:relative;margin-bottom:12px}
+.prompt-row::before{content:">";position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  color:var(--g);font-weight:700;text-shadow:0 0 8px var(--gg)}
+.prompt-row input{padding-left:30px}
 
-  .wrap {
-    position: relative; z-index: 2;
-    height: 100%; overflow-y: auto;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 20px 16px 40px;
-    gap: 16px;
-  }
+/* buttons */
+.btn{width:100%;padding:13px;background:rgba(0,255,102,.08);border:1px solid var(--g);
+  border-radius:9px;color:var(--g);font-family:inherit;font-size:.95rem;font-weight:700;
+  letter-spacing:3px;cursor:pointer;text-shadow:0 0 8px var(--gg);
+  box-shadow:0 0 12px rgba(0,255,102,.12);transition:all .18s}
+.btn:hover:not(:disabled){background:rgba(0,255,102,.2);box-shadow:0 0 26px rgba(0,255,102,.45);transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 
-  .title {
-    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
-    font-weight: 800; letter-spacing: 5px; text-align: center;
-    text-shadow: 0 0 12px var(--green-glow), 0 0 28px var(--green-glow);
-    animation: flicker 5s infinite;
-    padding-top: 8px;
-  }
-  @keyframes flicker {
-    0%,19%,21%,23%,80%,100% { opacity:1 }
-    20%,22%,82% { opacity:0.6 }
-  }
+/* board grid */
+.board-wrap{margin-top:18px;display:none}
+.board-info{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--gd);margin-bottom:10px;text-align:center}
+.board{display:inline-grid;gap:4px;margin:0 auto;padding:2px}
+.board-outer{text-align:center;overflow-x:auto}
+.cell{width:30px;height:30px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-size:1.1rem;border:1px solid rgba(0,255,102,.15);
+  background:rgba(0,0,0,.4);animation:pop .3s ease both;cursor:default}
+.cell.mine{background:rgba(255,51,68,.12);border-color:var(--r);
+  box-shadow:0 0 10px rgba(255,51,68,.35)}
+.cell.safe{background:rgba(0,255,102,.07);border-color:rgba(0,255,102,.4);
+  box-shadow:0 0 8px rgba(0,255,102,.2)}
+.cell.unknown{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1)}
+.cell.flag{background:rgba(255,204,0,.08);border-color:rgba(255,204,0,.4)}
+.cell.empty{background:rgba(0,255,102,.03);border-color:rgba(0,255,102,.08)}
+.cell.n1{color:#00ccff}.cell.n2{color:#00ff66}.cell.n3{color:#ff9900}
+.cell.n4{color:#cc44ff}.cell.n5{color:#ff3344}.cell.n6{color:#00ffff}
+.cell.n7{color:#ffffff}.cell.n8{color:#888888}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 
-  .subtitle {
-    text-align: center; color: var(--green-dim);
-    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
-  }
+.stats{display:flex;justify-content:center;gap:24px;margin-top:12px;font-size:.78rem;text-align:center}
+.sv{font-size:1.2rem;font-weight:700;display:block}
+.sv.g{color:var(--g);text-shadow:0 0 8px var(--gg)}
+.sv.r{color:var(--r);text-shadow:0 0 8px var(--rg)}
+.sv.b{color:var(--b);text-shadow:0 0 8px var(--bg)}
 
-  /* Tabs */
-  .tabs {
-    display: flex; gap: 0;
-    border: 1px solid rgba(0,255,102,0.3);
-    border-radius: 10px; overflow: hidden;
-    width: min(720px, 94vw);
-  }
-  .tab {
-    flex: 1; padding: 12px; text-align: center;
-    font-family: inherit; font-size: 0.85rem; font-weight: 700;
-    letter-spacing: 2px; cursor: pointer; border: none;
-    background: transparent; color: var(--green-dim);
-    transition: all 0.2s;
-  }
-  .tab.active {
-    background: rgba(0,255,102,0.12);
-    color: var(--green);
-    text-shadow: 0 0 8px var(--green-glow);
-  }
+/* console */
+.console{margin-top:14px;height:160px;overflow-y:auto;background:rgba(0,0,0,.55);
+  border:1px solid rgba(0,255,102,.18);border-radius:8px;padding:10px 12px;
+  font-size:.78rem;line-height:1.7;display:none}
+.console::-webkit-scrollbar{width:5px}
+.console::-webkit-scrollbar-thumb{background:rgba(0,255,102,.25);border-radius:3px}
+.l{white-space:pre-wrap;word-break:break-all}
+.l::before{content:"» ";opacity:.35}
+.l-safe{color:#00ff66}.l-flag{color:#ffcc00}.l-guess{color:#00ccff}
+.l-win{color:#00ff66;font-weight:700;text-shadow:0 0 10px var(--gg)}
+.l-lose{color:#ff3344;font-weight:700}.l-err{color:#ff3344}.l-sys{color:var(--gd)}
 
-  /* Glass card */
-  .glass {
-    width: min(720px, 94vw);
-    background: rgba(0,20,8,0.3);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid rgba(0,255,102,0.3);
-    border-radius: 16px;
-    box-shadow: 0 0 40px rgba(0,255,102,0.1), inset 0 0 30px rgba(0,255,102,0.04);
-    padding: 26px;
-  }
+.sline{margin-top:10px;display:none;align-items:center;gap:9px;
+  font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--gd)}
+.blip{width:8px;height:8px;border-radius:50%;background:var(--g);
+  box-shadow:0 0 10px var(--gg);animation:blink 1s infinite}
+.blip.done{background:var(--g);animation:none}
+.blip.err{background:var(--r);box-shadow:0 0 10px var(--rg);animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
-  .panel { display: none; }
-  .panel.active { display: block; }
+.verdict{margin-top:12px;display:none;text-align:center;padding:11px;
+  border-radius:9px;font-weight:700;letter-spacing:2px}
+.verdict.win{color:var(--g);border:1px solid var(--g);background:rgba(0,255,102,.07);text-shadow:0 0 10px var(--gg)}
+.verdict.lose{color:var(--r);border:1px solid var(--r);background:rgba(255,51,68,.07)}
 
-  /* ── SEED CALC PANEL ── */
-  .field-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  .field-grid .full { grid-column: 1 / -1; }
-
-  label {
-    display: block; font-size: 0.72rem;
-    text-transform: uppercase; letter-spacing: 1.5px;
-    color: var(--green-dim); margin-bottom: 5px;
-  }
-
-  input[type="text"], input[type="number"], select {
-    width: 100%; padding: 12px 14px;
-    background: rgba(0,0,0,0.6);
-    border: 1px solid rgba(0,255,102,0.35);
-    border-radius: 8px; color: var(--green);
-    font-family: inherit; font-size: 0.88rem;
-    outline: none; transition: box-shadow 0.2s, border-color 0.2s;
-    -webkit-appearance: none;
-  }
-  input:focus, select:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 14px rgba(0,255,102,0.35);
-  }
-  select option { background: #001a08; color: var(--green); }
-
-  .btn {
-    width: 100%; padding: 14px;
-    background: rgba(0,255,102,0.08);
-    border: 1px solid var(--green); border-radius: 10px;
-    color: var(--green); font-family: inherit;
-    font-size: 1rem; font-weight: 700; letter-spacing: 3px;
-    cursor: pointer;
-    text-shadow: 0 0 8px var(--green-glow);
-    box-shadow: 0 0 14px rgba(0,255,102,0.15);
-    transition: all 0.18s;
-  }
-  .btn:hover:not(:disabled) {
-    background: rgba(0,255,102,0.2);
-    box-shadow: 0 0 28px rgba(0,255,102,0.5);
-    transform: translateY(-1px);
-  }
-  .btn:disabled { opacity:0.4; cursor:not-allowed; }
-
-  /* Mine grid */
-  .grid-wrap {
-    margin-top: 22px; display: none;
-  }
-  .grid-label {
-    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px;
-    color: var(--green-dim); margin-bottom: 12px; text-align: center;
-  }
-
-  .mine-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    max-width: 360px;
-    margin: 0 auto;
-  }
-
-  .tile {
-    aspect-ratio: 1;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.6rem;
-    border: 1px solid rgba(0,255,102,0.2);
-    background: rgba(0,0,0,0.5);
-    transition: all 0.3s;
-    animation: reveal 0.4s ease both;
-  }
-  .tile.safe {
-    border-color: var(--green);
-    background: rgba(0,255,102,0.08);
-    box-shadow: 0 0 12px rgba(0,255,102,0.3), inset 0 0 8px rgba(0,255,102,0.05);
-  }
-  .tile.mine {
-    border-color: var(--red);
-    background: rgba(255,51,68,0.1);
-    box-shadow: 0 0 14px rgba(255,51,68,0.4), inset 0 0 8px rgba(255,51,68,0.08);
-  }
-
-  @keyframes reveal {
-    from { transform: scale(0.5); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
-  }
-
-  .stats {
-    margin-top: 14px;
-    display: flex; justify-content: center; gap: 28px;
-    font-size: 0.8rem; text-align: center;
-  }
-  .stat-val { font-size: 1.3rem; font-weight: 700; display: block; }
-  .stat-val.green { color: var(--green); text-shadow: 0 0 8px var(--green-glow); }
-  .stat-val.red   { color: var(--red);   text-shadow: 0 0 8px var(--red-glow); }
-
-  /* ── SOLVER PANEL ── */
-  .prompt-wrap {
-    position: relative; display: flex; align-items: center;
-    margin-bottom: 14px;
-  }
-  .prompt-wrap::before {
-    content: ">"; position: absolute; left: 14px;
-    color: var(--green); font-weight: 700;
-    text-shadow: 0 0 8px var(--green-glow);
-  }
-  .prompt-wrap input {
-    padding-left: 34px;
-  }
-
-  .console {
-    margin-top: 16px; height: 200px; overflow-y: auto;
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(0,255,102,0.2);
-    border-radius: 10px; padding: 12px 14px;
-    font-size: 0.8rem; line-height: 1.7;
-    display: none;
-  }
-  .console::-webkit-scrollbar { width:6px; }
-  .console::-webkit-scrollbar-thumb { background:rgba(0,255,102,0.3); border-radius:3px; }
-
-  .l { white-space:pre-wrap; word-break:break-all; }
-  .l::before { content:"» "; opacity:0.4; }
-  .l-safe  { color:#00ff66; }
-  .l-flag  { color:#ffcc00; }
-  .l-guess { color:#00ccff; }
-  .l-win   { color:#00ff66; font-weight:700; text-shadow:0 0 10px var(--green-glow); }
-  .l-lose  { color:#ff3344; font-weight:700; }
-  .l-err   { color:#ff3344; }
-  .l-sys   { color:var(--green-dim); }
-
-  .status-line {
-    margin-top:12px; display:none;
-    align-items:center; gap:10px;
-    font-size:0.75rem; letter-spacing:2px;
-    text-transform:uppercase; color:var(--green-dim);
-  }
-  .blip {
-    width:8px; height:8px; border-radius:50%;
-    background:var(--green); box-shadow:0 0 10px var(--green-glow);
-    animation:blink 1s infinite;
-  }
-  .blip.done { background:var(--green); animation:none; }
-  .blip.err  { background:#ff3344; box-shadow:0 0 10px var(--red-glow); animation:none; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-
-  .verdict {
-    margin-top:14px; display:none; text-align:center;
-    padding:12px; border-radius:10px;
-    font-weight:700; letter-spacing:2px;
-  }
-  .verdict.win {
-    color:var(--green); border:1px solid var(--green);
-    background:rgba(0,255,102,0.07);
-    text-shadow:0 0 10px var(--green-glow);
-  }
-  .verdict.lose {
-    color:#ff3344; border:1px solid #ff3344;
-    background:rgba(255,51,68,0.07);
-  }
-
-  .footer {
-    z-index:2; color:var(--green-dim);
-    font-size:0.65rem; letter-spacing:2px; opacity:0.5; text-align:center;
-  }
+.footer{z-index:2;color:var(--gd);font-size:.62rem;letter-spacing:2px;opacity:.45;text-align:center;padding-bottom:4px}
 </style>
 </head>
 <body>
 <canvas id="matrix"></canvas>
 <div class="overlay"></div>
-
 <div class="wrap">
-  <div class="title">💀 MINE SOLVER 💀</div>
-  <div class="subtitle">// neural deduction engine · seed calculator · provably fair</div>
 
-  <!-- Tab switcher -->
+  <div class="title">💀 MINE SOLVER 💀</div>
+  <div class="sub">// scan url · enter seeds · auto play</div>
+
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('seed')">🔐 SEED CALCULATOR</button>
-    <button class="tab" onclick="switchTab('solver')">🤖 AUTO SOLVER</button>
+    <button class="tab active" onclick="switchTab('url')">🌐 SCAN URL</button>
+    <button class="tab" onclick="switchTab('seeds')">🔐 SEEDS</button>
+    <button class="tab" onclick="switchTab('play')">🤖 AUTO PLAY</button>
   </div>
 
-  <!-- ══════════════ SEED CALCULATOR PANEL ══════════════ -->
-  <div class="glass panel active" id="panel-seed">
+  <!-- ══ TAB 1: SCAN URL ══ -->
+  <div class="glass panel active" id="panel-url">
+    <div class="sub" style="margin-bottom:14px;text-align:left">
+      Paste any minesweeper URL → app opens it, reads the page code, finds mine positions
+    </div>
+    <div class="prompt-row">
+      <input id="scan-url" type="text" spellcheck="false" autocomplete="off"
+             placeholder="https://minesweeronline.com  or any minesweeper site"/>
+    </div>
+    <button class="btn" id="scan-btn" onclick="runScan()">SCAN &amp; REVEAL</button>
 
-    <div class="field-grid">
+    <div class="sline" id="scan-sline">
+      <span class="blip" id="scan-blip"></span>
+      <span id="scan-stext">scanning...</span>
+    </div>
+    <div class="console" id="scan-console"></div>
+    <div class="board-wrap" id="scan-board-wrap">
+      <div class="board-info" id="scan-board-info"></div>
+      <div class="board-outer"><div class="board" id="scan-board"></div></div>
+      <div class="stats" id="scan-stats"></div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 2: SEEDS ══ -->
+  <div class="glass panel" id="panel-seeds">
+    <div class="sub" style="margin-bottom:14px;text-align:left">
+      For provably fair games (Stake, Roobet etc.) — enter the 3 seeds manually
+    </div>
+    <div class="fgrid">
       <div>
         <label>Mines Count</label>
         <select id="mines-count">
-          <script>for(let i=1;i<=24;i++) document.write(`<option value="${i}"${i===3?' selected':''}>${i}</option>`)</script>
+          <script>for(let i=1;i<=24;i++)document.write(`<option value="${i}"${i===3?' selected':''}>${i}</option>`)</script>
         </select>
       </div>
       <div>
-        <label>Game Seed (Nonce)</label>
-        <input type="text" id="game-seed" placeholder="e.g. 1" />
+        <label>Game Seed / Nonce</label>
+        <input type="text" id="game-seed" placeholder="e.g. 1"/>
       </div>
       <div class="full">
         <label>Client Seed</label>
-        <input type="text" id="client-seed" placeholder="your client seed" />
+        <input type="text" id="client-seed" placeholder="your client seed"/>
       </div>
       <div class="full">
         <label>Server Seed (Unhashed)</label>
-        <input type="text" id="server-seed" placeholder="revealed server seed after game" />
+        <input type="text" id="server-seed" placeholder="revealed server seed"/>
       </div>
     </div>
-
     <button class="btn" onclick="calcSeeds()">REVEAL MINES</button>
-
-    <div class="grid-wrap" id="grid-wrap">
-      <div class="grid-label" id="grid-label">// decrypting mine positions...</div>
-      <div class="mine-grid" id="mine-grid"></div>
-      <div class="stats" id="stats"></div>
+    <div class="board-wrap" id="seed-board-wrap">
+      <div class="board-info" id="seed-board-info"></div>
+      <div class="board-outer"><div class="board" id="seed-board" style="grid-template-columns:repeat(5,1fr)"></div></div>
+      <div class="stats" id="seed-stats"></div>
     </div>
-
   </div>
 
-  <!-- ══════════════ AUTO SOLVER PANEL ══════════════ -->
-  <div class="glass panel" id="panel-solver">
-    <div class="subtitle" style="margin-bottom:14px">Paste a minesweeper.online URL — bot opens Chrome and plays it live</div>
-
-    <div class="prompt-wrap">
-      <input id="url" type="text" spellcheck="false" autocomplete="off"
-             placeholder="https://minesweeper.online/game/..." />
+  <!-- ══ TAB 3: AUTO PLAY ══ -->
+  <div class="glass panel" id="panel-play">
+    <div class="sub" style="margin-bottom:14px;text-align:left">
+      Bot opens a real Chrome window and plays the game automatically
     </div>
-    <button class="btn" id="go" onclick="runSolver()">SOLVE</button>
-
-    <div class="status-line" id="statusline">
-      <span class="blip" id="blip"></span>
-      <span id="statustext">executing...</span>
+    <div class="prompt-row">
+      <input id="play-url" type="text" spellcheck="false" autocomplete="off"
+             placeholder="https://minesweeper.online/game/..."/>
     </div>
-    <div class="console" id="console"></div>
-    <div class="verdict" id="verdict"></div>
+    <button class="btn" id="play-btn" onclick="runPlay()">AUTO PLAY</button>
+    <div class="sline" id="play-sline">
+      <span class="blip" id="play-blip"></span>
+      <span id="play-stext">running...</span>
+    </div>
+    <div class="console" id="play-console"></div>
+    <div class="verdict" id="play-verdict"></div>
   </div>
 
-  <div class="footer">SEED CALC WORKS OFFLINE · AUTO SOLVER OPENS REAL CHROME</div>
+  <div class="footer">SCAN URL READS PAGE CODE · SEEDS FOR PROVABLY FAIR · AUTO PLAY CLICKS FOR YOU</div>
 </div>
 
 <script>
-/* ─── Matrix rain ─── */
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
-const glyphs = "アカサタナハマヤラワ0123456789ABCDEF$+*=<>ｦｧｨｩ".split("");
-let cols, drops;
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  cols = Math.floor(canvas.width / 16);
-  drops = Array(cols).fill(1);
-}
-resize();
-window.addEventListener("resize", resize);
-setInterval(() => {
-  ctx.fillStyle = "rgba(0,0,0,0.06)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < drops.length; i++) {
-    const ch = glyphs[Math.floor(Math.random() * glyphs.length)];
-    ctx.fillStyle = Math.random() > 0.975 ? "#ccffcc" : "#00ff66";
-    ctx.font = "15px monospace";
-    ctx.fillText(ch, i * 16, drops[i] * 16);
-    if (drops[i] * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
-    drops[i]++;
-  }
-}, 45);
+/* ── Matrix rain ── */
+const cv=document.getElementById("matrix"),cx=cv.getContext("2d");
+const gl="アカサタナハマヤ0123456789ABCDEF$+*=<>ｦｧｨ".split("");
+let cols,dr;
+function resize(){cv.width=innerWidth;cv.height=innerHeight;cols=Math.floor(cv.width/16);dr=Array(cols).fill(1)}
+resize();addEventListener("resize",resize);
+setInterval(()=>{cx.fillStyle="rgba(0,0,0,0.06)";cx.fillRect(0,0,cv.width,cv.height);
+  for(let i=0;i<dr.length;i++){cx.fillStyle=Math.random()>.975?"#ccffcc":"#00ff66";
+  cx.font="15px monospace";cx.fillText(gl[Math.floor(Math.random()*gl.length)],i*16,dr[i]*16);
+  if(dr[i]*16>cv.height&&Math.random()>.975)dr[i]=0;dr[i]++}},45);
 
-/* ─── Tabs ─── */
-function switchTab(name) {
-  document.querySelectorAll(".tab").forEach((t,i) => {
-    t.classList.toggle("active", (name==="seed"&&i===0)||(name==="solver"&&i===1));
+/* ── Tabs ── */
+function switchTab(n){
+  ["url","seeds","play"].forEach((t,i)=>{
+    document.getElementById("panel-"+t).classList.toggle("active",t===n);
+    document.querySelectorAll(".tab")[i].classList.toggle("active",t===n);
   });
-  document.getElementById("panel-seed").classList.toggle("active", name==="seed");
-  document.getElementById("panel-solver").classList.toggle("active", name==="solver");
 }
 
-/* ─── Provably Fair Seed Calculator ─── */
-async function hmacSHA256(keyStr, msgStr) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw", enc.encode(keyStr),
-    { name: "HMAC", hash: "SHA-256" },
-    false, ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(msgStr));
-  return new Uint8Array(sig);
-}
-
-async function generateBytes(serverSeed, clientSeed, nonce, needed) {
-  const all = [];
-  let round = 0;
-  while (all.length < needed) {
-    const msg = `${clientSeed}:${nonce}:${round}`;
-    const bytes = await hmacSHA256(serverSeed, msg);
-    all.push(...bytes);
-    round++;
-  }
-  return all;
-}
-
-async function getMinePositions(serverSeed, clientSeed, nonce, minesCount) {
-  // Need 25 * 4 bytes for the Fisher-Yates shuffle
-  const bytes = await generateBytes(serverSeed, clientSeed, nonce, 100);
-  const positions = Array.from({length: 25}, (_, i) => i);
-
-  for (let i = 0; i < 25; i++) {
-    const c = i * 4;
-    // Read 4 bytes as uint32, convert to float [0,1)
-    const uint32 = ((bytes[c] << 24) | (bytes[c+1] << 16) |
-                    (bytes[c+2] << 8) | bytes[c+3]) >>> 0;
-    const float = uint32 / 0x100000000;
-    const j = Math.floor(float * (i + 1));
-    [positions[i], positions[j]] = [positions[j], positions[i]];
-  }
-
-  return new Set(positions.slice(0, minesCount));
-}
-
-async function calcSeeds() {
-  const serverSeed = document.getElementById("server-seed").value.trim();
-  const clientSeed = document.getElementById("client-seed").value.trim();
-  const gameSeed   = document.getElementById("game-seed").value.trim();
-  const minesCount = parseInt(document.getElementById("mines-count").value);
-
-  if (!serverSeed || !clientSeed || !gameSeed) {
-    alert("Fill in all three seeds first.");
-    return;
-  }
-
-  const wrap  = document.getElementById("grid-wrap");
-  const grid  = document.getElementById("mine-grid");
-  const label = document.getElementById("grid-label");
-  const stats = document.getElementById("stats");
-
-  wrap.style.display = "block";
-  label.textContent = "// decrypting mine positions...";
-  grid.innerHTML = "";
-  stats.innerHTML = "";
-
-  const mines = await getMinePositions(serverSeed, clientSeed, gameSeed, minesCount);
-
-  label.textContent = `// ${minesCount} mine${minesCount>1?"s":""} revealed — ${25-minesCount} safe tiles`;
-
-  for (let i = 0; i < 25; i++) {
-    const tile = document.createElement("div");
-    const isMine = mines.has(i);
-    tile.className = "tile " + (isMine ? "mine" : "safe");
-    tile.textContent = isMine ? "💣" : "💎";
-    tile.style.animationDelay = (i * 0.04) + "s";
-    tile.title = `Tile ${i+1} (row ${Math.floor(i/5)+1}, col ${(i%5)+1}) — ${isMine ? "MINE" : "SAFE"}`;
-    grid.appendChild(tile);
-  }
-
-  stats.innerHTML = `
-    <div>
-      <span class="stat-val green">💎 ${25-minesCount}</span>
-      <span>safe tiles</span>
-    </div>
-    <div>
-      <span class="stat-val red">💣 ${minesCount}</span>
-      <span>mines</span>
-    </div>
-  `;
-}
-
-/* ─── Auto Solver ─── */
-let poll = null;
-function runSolver() {
-  const url = document.getElementById("url").value.trim();
-  if (!url) return;
-
-  const go       = document.getElementById("go");
-  const cons     = document.getElementById("console");
-  const sline    = document.getElementById("statusline");
-  const blip     = document.getElementById("blip");
-  const stext    = document.getElementById("statustext");
-  const verdict  = document.getElementById("verdict");
-
-  go.disabled = true; go.textContent = "RUNNING";
-  cons.innerHTML = ""; cons.style.display = "block";
-  sline.style.display = "flex";
-  blip.className = "blip"; stext.textContent = "executing...";
-  verdict.style.display = "none"; verdict.className = "verdict";
-
-  let seen = 0;
-
-  fetch("/solve", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
-  })
-  .then(r => r.json())
-  .then(({ job_id, error }) => {
-    if (error) {
-      addLine(cons, "ERROR: " + error, "l-err");
-      go.disabled = false; go.textContent = "SOLVE";
-      return;
+/* ── Build board grid from data ── */
+function renderBoard(boardEl, infoEl, statsEl, wrapEl, grid) {
+  if (!grid || !grid.length) return;
+  const rows = grid.length, cols = grid[0].length;
+  boardEl.style.gridTemplateColumns = `repeat(${cols},30px)`;
+  boardEl.innerHTML = "";
+  let mineCount=0, safeCount=0, unknownCount=0;
+  const NUM_COLORS=["","n1","n2","n3","n4","n5","n6","n7","n8"];
+  grid.forEach((row,r)=>row.forEach((cell,c)=>{
+    const d=document.createElement("div");
+    const delay=(r*cols+c)*0.012;
+    d.style.animationDelay=delay+"s";
+    if(cell.type==="mine"){d.className="cell mine";d.textContent="💣";mineCount++}
+    else if(cell.type==="flag"){d.className="cell flag";d.textContent="🚩"}
+    else if(cell.type==="number"){
+      d.className="cell empty "+(NUM_COLORS[cell.value]||"");
+      d.textContent=cell.value||"";
     }
-    poll = setInterval(() => {
-      fetch("/status/" + job_id).then(r => r.json()).then(data => {
-        const lines = data.log || [];
-        for (let i = seen; i < lines.length; i++)
-          addLine(cons, lines[i], classify(lines[i]));
-        seen = lines.length;
+    else if(cell.type==="empty"){d.className="cell empty";d.textContent=""}
+    else{d.className="cell unknown";d.textContent="";unknownCount++;safeCount++}
+    d.title=`Row ${r+1}, Col ${c+1} — ${cell.type}`;
+    boardEl.appendChild(d);
+  }));
+  if(infoEl) infoEl.textContent=`// ${rows}×${cols} board — ${mineCount} mines revealed`;
+  if(statsEl) statsEl.innerHTML=`
+    <div><span class="sv r">💣 ${mineCount}</span><span>mines</span></div>
+    <div><span class="sv g">💎 ${rows*cols-mineCount}</span><span>safe</span></div>
+    <div><span class="sv b">? ${unknownCount}</span><span>unknown</span></div>`;
+  wrapEl.style.display="block";
+}
 
-        if (data.status === "done" || data.status === "error") {
-          clearInterval(poll);
-          go.disabled = false; go.textContent = "SOLVE AGAIN";
-          blip.className = data.status === "done" ? "blip done" : "blip err";
-          stext.textContent = data.status === "done" ? "complete" : "error";
-          if (data.result === "win") {
-            verdict.textContent = "✅ CLEARED — NO MINES HIT";
-            verdict.className = "verdict win"; verdict.style.display = "block";
-          } else if (data.result === "lose") {
-            verdict.textContent = "💥 MINE DETONATED";
-            verdict.className = "verdict lose"; verdict.style.display = "block";
-          }
+/* ── TAB 1: Scan URL ── */
+function runScan(){
+  const url=document.getElementById("scan-url").value.trim();
+  if(!url)return;
+  const btn=document.getElementById("scan-btn");
+  const cons=document.getElementById("scan-console");
+  const sline=document.getElementById("scan-sline");
+  const blip=document.getElementById("scan-blip");
+  const stext=document.getElementById("scan-stext");
+  const wrap=document.getElementById("scan-board-wrap");
+
+  btn.disabled=true;btn.textContent="SCANNING...";
+  cons.innerHTML="";cons.style.display="block";
+  sline.style.display="flex";blip.className="blip";stext.textContent="scanning page code...";
+  wrap.style.display="none";
+
+  let seen=0;
+  fetch("/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})})
+  .then(r=>r.json()).then(({job_id,error})=>{
+    if(error){addLine(cons,error,"l-err");btn.disabled=false;btn.textContent="SCAN & REVEAL";return}
+    const iv=setInterval(()=>{
+      fetch("/status/"+job_id).then(r=>r.json()).then(data=>{
+        (data.log||[]).slice(seen).forEach(l=>addLine(cons,l,cls(l)));
+        seen=(data.log||[]).length;
+        if(data.grid) renderBoard(
+          document.getElementById("scan-board"),
+          document.getElementById("scan-board-info"),
+          document.getElementById("scan-stats"),
+          wrap, data.grid);
+        if(data.status==="done"||data.status==="error"){
+          clearInterval(iv);
+          btn.disabled=false;btn.textContent="SCAN AGAIN";
+          blip.className=data.status==="done"?"blip done":"blip err";
+          stext.textContent=data.status==="done"?"complete":"error";
         }
       });
-    }, 500);
+    },600);
   });
 }
 
-function classify(line) {
-  if (line.startsWith("Click"))   return "l-safe";
-  if (line.startsWith("Flag"))    return "l-flag";
-  if (line.startsWith("Guess"))   return "l-guess";
-  if (line.startsWith("WIN") || line.includes("cleared")) return "l-win";
-  if (line.startsWith("Hit"))     return "l-lose";
-  if (line.startsWith("ERROR"))   return "l-err";
-  return "l-sys";
+/* ── TAB 2: Seed calculator ── */
+async function hmac(key,msg){
+  const enc=new TextEncoder();
+  const k=await crypto.subtle.importKey("raw",enc.encode(key),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC",k,enc.encode(msg)));
 }
-
-function addLine(cons, text, cls) {
-  const d = document.createElement("div");
-  d.className = "l " + cls; d.textContent = text;
-  cons.appendChild(d);
-  cons.scrollTop = cons.scrollHeight;
+async function getBytes(srv,cli,nonce,need){
+  const all=[];let round=0;
+  while(all.length<need){all.push(...await hmac(srv,`${cli}:${nonce}:${round++}`));}
+  return all;
 }
+async function calcSeeds(){
+  const srv=document.getElementById("server-seed").value.trim();
+  const cli=document.getElementById("client-seed").value.trim();
+  const nonce=document.getElementById("game-seed").value.trim();
+  const mc=parseInt(document.getElementById("mines-count").value);
+  if(!srv||!cli||!nonce){alert("Fill all three seeds.");return}
 
-document.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    if (document.getElementById("panel-seed").classList.contains("active")) calcSeeds();
-    else runSolver();
+  const bytes=await getBytes(srv,cli,nonce,100);
+  const pos=Array.from({length:25},(_,i)=>i);
+  for(let i=0;i<25;i++){
+    const c=i*4;
+    const u=((bytes[c]<<24)|(bytes[c+1]<<16)|(bytes[c+2]<<8)|bytes[c+3])>>>0;
+    const j=Math.floor((u/0x100000000)*(i+1));
+    [pos[i],pos[j]]=[pos[j],pos[i]];
   }
+  const mines=new Set(pos.slice(0,mc));
+  const grid=[];
+  for(let r=0;r<5;r++){
+    const row=[];
+    for(let c=0;c<5;c++) row.push(mines.has(r*5+c)?{type:"mine"}:{type:"unknown"});
+    grid.push(row);
+  }
+  renderBoard(
+    document.getElementById("seed-board"),
+    document.getElementById("seed-board-info"),
+    document.getElementById("seed-stats"),
+    document.getElementById("seed-board-wrap"), grid);
+  document.getElementById("seed-board-info").textContent=`// ${mc} mine${mc>1?"s":""} · ${25-mc} safe tiles`;
+}
+
+/* ── TAB 3: Auto play ── */
+function runPlay(){
+  const url=document.getElementById("play-url").value.trim();
+  if(!url)return;
+  const btn=document.getElementById("play-btn");
+  const cons=document.getElementById("play-console");
+  const sline=document.getElementById("play-sline");
+  const blip=document.getElementById("play-blip");
+  const stext=document.getElementById("play-stext");
+  const verdict=document.getElementById("play-verdict");
+
+  btn.disabled=true;btn.textContent="RUNNING";
+  cons.innerHTML="";cons.style.display="block";
+  sline.style.display="flex";blip.className="blip";stext.textContent="executing...";
+  verdict.style.display="none";verdict.className="verdict";
+
+  let seen=0;
+  fetch("/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})})
+  .then(r=>r.json()).then(({job_id,error})=>{
+    if(error){addLine(cons,error,"l-err");btn.disabled=false;btn.textContent="AUTO PLAY";return}
+    const iv=setInterval(()=>{
+      fetch("/status/"+job_id).then(r=>r.json()).then(data=>{
+        (data.log||[]).slice(seen).forEach(l=>addLine(cons,l,cls(l)));
+        seen=(data.log||[]).length;
+        if(data.status==="done"||data.status==="error"){
+          clearInterval(iv);
+          btn.disabled=false;btn.textContent="PLAY AGAIN";
+          blip.className=data.status==="done"?"blip done":"blip err";
+          stext.textContent=data.status==="done"?"complete":"error";
+          if(data.result==="win"){verdict.textContent="✅ WIN — RED FLAGS AVOIDED";verdict.className="verdict win";verdict.style.display="block"}
+          else if(data.result==="lose"){verdict.textContent="💥 MINE HIT";verdict.className="verdict lose";verdict.style.display="block"}
+        }
+      });
+    },600);
+  });
+}
+
+function cls(l){
+  if(l.startsWith("Click"))return"l-safe";if(l.startsWith("Flag"))return"l-flag";
+  if(l.startsWith("Guess"))return"l-guess";if(l.startsWith("WIN")||l.includes("cleared"))return"l-win";
+  if(l.startsWith("Hit"))return"l-lose";if(l.startsWith("ERROR"))return"l-err";return"l-sys";
+}
+function addLine(cons,text,c){
+  const d=document.createElement("div");d.className="l "+c;d.textContent=text;
+  cons.appendChild(d);cons.scrollTop=cons.scrollHeight;
+}
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  const active=document.querySelector(".panel.active").id;
+  if(active==="panel-url")runScan();
+  else if(active==="panel-seeds")calcSeeds();
+  else runPlay();
 });
 </script>
 </body>
