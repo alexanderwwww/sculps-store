@@ -8,10 +8,7 @@
   :root{--txt:#eef1ff;--mut:#9aa3c9;--cyan:#7fe3ff;--pink:#ff6ec4;--purple:#7c5cff;--stroke:rgba(255,255,255,.16);}
   *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;}
   body{min-height:100vh;display:grid;place-items:center;padding:22px;color:var(--txt);overflow:hidden;
-    background:radial-gradient(1200px 560px at 60% -10%,#3a2a6e 0,transparent 55%),
-      radial-gradient(860px 540px at 95% 28%,#1d6f8f 0,transparent 50%),
-      radial-gradient(720px 620px at 4% 82%,#15325c 0,transparent 55%),
-      linear-gradient(160deg,#090a1b,#0b1030 55%,#06060f);}
+    background:#06060f url('/bg.jpg') center/cover no-repeat fixed;}
   .stars,.stars:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
     background-image:radial-gradient(1px 1px at 15% 25%,#fff,transparent),radial-gradient(1px 1px at 75% 55%,#cde,transparent),
       radial-gradient(1px 1px at 45% 78%,#fff,transparent),radial-gradient(1.3px 1.3px at 88% 18%,#fff,transparent),
@@ -251,6 +248,7 @@ function connect(){if(connected)return Promise.resolve();
           [".pfeedtop",".vidbg",".rail",".cap",".pnav",".notch",".sbar"].forEach(s=>document.querySelectorAll(s).forEach(e=>e.style.display="none"));
           $("mode").textContent="LIVE — controlling real TikTok";
           addMsg("XSEARCH AI","Live TikTok browser is up. Tap and scroll the phone screen — you're driving a real browser. We'll solve captchas together right on screen.");res();}}
+      else if(m.type==="agent"){addMsg("XSEARCH AI",m.text);}
       else if(m.type==="status"){$("connecting-sub").textContent=m.text;
         if(m.text.startsWith("error")){addMsg("XSEARCH AI","Browser error: "+m.text);setConn('no');if(!done){done=true;res();}}}};
     ws.onerror=()=>{if(!done){done=true;addMsg("XSEARCH AI","Live browser not available. On your machine run: <b>npm i playwright ws</b> then <b>npx playwright install chromium</b>, then restart.");setConn('no');res();}};
@@ -277,7 +275,7 @@ function row(p,i){const g=G[i%G.length],{cost,margin}=demoCost(p);const el=docum
     <div class="sc">${p.xScore??"—"}</div><div class="rp">${p.retailPrice!=null?"$"+(+p.retailPrice).toFixed(2):"—"}</div>
     <div class="co">${cost!=null?"$"+cost.toFixed(2):"—"}<small>${margin!=null?margin+"% margin":""}</small></div>`;return el;}
 async function scan(query){if(busy)return;busy=true;if(!connected){await connect();}
-  sendLive({type:"goto",url:"https://www.tiktok.com/search?q="+encodeURIComponent(query)});
+  sendLive({type:"learn",goal:query});
   $("xbtn").disabled=true;if($("empty"))$("empty").style.display="none";$("rows").innerHTML="";$("viewall").style.display="none";
   $("phone").classList.add("scrolling");$("mode").textContent="Learning Market Mode — scrolling TikTok";
   $("vids").textContent="watched 0 videos";$("found").textContent="found 0 products";$("srcstat").textContent="scrolling…";
@@ -294,10 +292,10 @@ async function scan(query){if(busy)return;busy=true;if(!connected){await connect
   busy=false;$("xbtn").disabled=false;}
 $("btnConnect").onclick=()=>connect();
 $("xbtn").onclick=()=>scan($("q").value.trim()||"trending products");
-$("send").onclick=()=>{const q=$("q").value.trim();if(q)scan(q);};
+$("send").onclick=()=>{const q=$("q").value.trim();if(!q)return;addMsg("You",q,true);sendLive({type:"command",text:q});$("q").value="";};
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("send").click();});
-addMsg("XSEARCH AI","Hey — I'm your market agent. Press <b>Connect to TikTok</b>, tell me a niche, then press <b>XSEARCH</b> and I'll scroll the feed.");
-setConn('no');
+addMsg("XSEARCH AI","Hey — I'm your market agent. Booting the live TikTok browser… then type a command (like \"search kitchen gadgets\" or \"scroll\") or press XSEARCH to learn the market on its own.");
+setConn('no');connect();
 </script>
 </body>
 </html>

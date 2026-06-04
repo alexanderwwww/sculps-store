@@ -7,6 +7,7 @@
 // Runs on YOUR machine. Requires: npm i playwright ws && npx playwright install chromium
 
 import { WebSocketServer } from "ws";
+import { runCommand, runMarketScan } from "./agent.js";
 
 export const VPW = 360, VPH = 760;
 
@@ -65,6 +66,8 @@ export function attachLiveBrowser(server) {
         else if (m.type === "scroll") await page.mouse.wheel(0, m.dy);
         else if (m.type === "key") await page.keyboard.type(String(m.text || ""));
         else if (m.type === "goto" && m.url) await page.goto(m.url, { waitUntil: "domcontentloaded" }).catch(() => {});
+        else if (m.type === "command") await runCommand(page, client, m.text, send);   // agent: do what I say
+        else if (m.type === "learn") await runMarketScan(page, client, m.goal, send);   // agent: search alone
       } catch {}
     });
 
