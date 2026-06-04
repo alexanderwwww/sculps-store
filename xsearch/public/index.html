@@ -277,13 +277,14 @@ function row(p,i){const g=G[i%G.length],{cost,margin}=demoCost(p);const el=docum
     <div class="sc">${p.xScore??"—"}</div><div class="rp">${p.retailPrice!=null?"$"+(+p.retailPrice).toFixed(2):"—"}</div>
     <div class="co">${cost!=null?"$"+cost.toFixed(2):"—"}<small>${margin!=null?margin+"% margin":""}</small></div>`;return el;}
 async function scan(query){if(busy)return;busy=true;if(!connected){await connect();}
+  sendLive({type:"goto",url:"https://www.tiktok.com/search?q="+encodeURIComponent(query)});
   $("xbtn").disabled=true;if($("empty"))$("empty").style.display="none";$("rows").innerHTML="";$("viewall").style.display="none";
   $("phone").classList.add("scrolling");$("mode").textContent="Learning Market Mode — scrolling TikTok";
   $("vids").textContent="watched 0 videos";$("found").textContent="found 0 products";$("srcstat").textContent="scrolling…";
   addMsg("XSEARCH AI",`Scrolling TikTok for <b style="color:#7fe3ff">${query}</b> …`);
   let data;try{const r=await fetch("/api/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query})});data=await r.json();}
   catch(e){addMsg("XSEARCH AI","Backend error: "+e.message);busy=false;$("xbtn").disabled=false;$("phone").classList.remove("scrolling");return;}
-  const products=data.products||[];let vids=0;$("rcount").textContent=`${products.length} PRODUCTS FOUND`;$("rsrc").textContent="source: "+data.source;
+  const products=data.products||[];let vids=0;$("rcount").textContent=`${products.length} PRODUCTS FOUND`;$("rsrc").textContent="source: "+(data.source||"mock");
   for(let i=0;i<products.length;i++){showVideo(products[i],i);const el=row(products[i],i);$("rows").appendChild(el);
     requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
     vids+=Math.floor(6+Math.random()*22);$("vids").textContent=`watched ${vids} videos`;$("found").textContent=`found ${i+1} products`;
