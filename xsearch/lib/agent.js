@@ -1,67 +1,75 @@
-// The AGENT — body + fingers, driven by the brain (heuristic or Claude).
-// With Claude active, it understands commands AND judges each video (vision).
+// The AGENT — autonomous body + fingers, driven by the brain.
+// Press XSEARCH -> it plans queries, opens the feed, MOVES (ArrowDown), screenshots
+// each video, has Claude judge it, and streams real products (with the real frame as
+// the thumbnail) to the UI. No babysitting.
 
 import { getBrain } from "./brain.js";
 
 async function exec(page, a, send) {
   try {
     switch (a.action) {
-      case "search":
-        send({ type: "agent", text: `searching TikTok for "${a.q}"` });
-        await page.goto("https://www.tiktok.com/search?q=" + encodeURIComponent(a.q), { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
-        await new Promise((r) => setTimeout(r, 2500));
-        break;
+      case "search": send({ type: "agent", text: `searching "${a.q}"` }); await page.goto("https://www.tiktok.com/search?q=" + encodeURIComponent(a.q), { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {}); await new Promise((r) => setTimeout(r, 2500)); break;
       case "next": case "scroll": send({ type: "agent", text: "next video" }); await page.keyboard.press("ArrowDown"); break;
-      case "prev": case "scrollUp": await page.keyboard.press("ArrowUp"); break;
+      case "prev": await page.keyboard.press("ArrowUp"); break;
       case "like": send({ type: "agent", text: "liking it" }); await page.keyboard.press("l"); break;
       case "back": await page.goBack().catch(() => {}); break;
     }
   } catch {}
 }
 
-async function judgeCurrent(page, brain, send) {
-  if (!brain.judge) { send({ type: "agent", text: "no brain to judge — add ANTHROPIC_API_KEY" }); return null; }
+// screenshot the current video, judge it, and attach the frame as the product image
+async function judgeShot(page, brain) {
   const buf = await page.screenshot({ type: "jpeg", quality: 55 });
-  const j = await brain.judge(buf.toString("base64"));
-  if (j && j._err) send({ type: "agent", text: "brain error: " + j._err });
+  const b64 = buf.toString("base64");
+  const j = await brain.judge(b64);
+  if (j && j.isProduct) j.image = "data:image/jpeg;base64," + b64;
   return j;
 }
 
-// one typed command
-export async function runCommand(page, _client, text, send) {
+export async function runCommand(page, _c, text, send) {
   const brain = getBrain();
   const a = await brain.interpret(text);
   send({ type: "agent", text: `"${text}" -> ${a.action}` });
-  if (a._err) send({ type: "agent", text: "brain error: " + a._err });
+  if (a._err) send({ type: "agent", text: "brain err: " + a._err });
   if (a.action === "analyze") {
-    const j = await judgeCurrent(page, brain, send);
-    if (j && j.isProduct) { send({ type: "product", product: j }); send({ type: "agent", text: `${j.title}: ${j.verdict} (X${j.xScore}) — ${j.why || ""}` }); }
-    else if (j) send({ type: "agent", text: "that's not really a product video." });
+    if (!brain.judge) { send({ type: "agent", text: "add ANTHROPIC_API_KEY so I can judge" }); return; }
+    const j = await judgeShot(page, brain);
+    if (j && j.isProduct) { send({ type: "product", product: j }); send({ type: "agent", text: `${j.title}: ${(j.verdict || "").toUpperCase()} (X${j.xScore}) — ${j.why || ""}` }); }
+    else send({ type: "agent", text: "not a product." });
     return;
   }
-  if (a.action === "learn") return runMarketScan(page, _client, a.q, send);
+  if (a.action === "learn") return runMarketScan(page, _c, a.q, send);
   await exec(page, a, send);
 }
 
-// "Learn the Market" -> watch the feed AND judge each video with the brain
-export async function runMarketScan(page, _client, goal, send) {
+// AUTONOMOUS hunt: plan -> open feed -> move + judge each video -> stream products
+export async function runMarketScan(page, _c, goal, send) {
   const brain = getBrain();
-  const url = goal && goal !== "for you" ? "https://www.tiktok.com/search?q=" + encodeURIComponent(goal) : "https://www.tiktok.com/foryou";
-  send({ type: "agent", text: `opening ${goal && goal !== "for you" ? `search "${goal}"` : "For You feed"}…` });
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
+  let niche = goal || "";
+  if (brain.plan) { try { const pl = await brain.plan(goal); if (pl) { niche = pl.niche || niche; send({ type: "trends", niche: pl.niche, queries: pl.queries || [] }); } } catch {} }
+  send({ type: "agent", text: `hunting ${niche ? `"${niche}"` : "the For You feed"} — going in.` });
+
+  await page.goto("https://www.tiktok.com/foryou", { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
   await new Promise((r) => setTimeout(r, 3500));
 
+  if (!brain.judge) { // free fallback — just scroll
+    for (let i = 1; i <= 10; i++) { if (page.isClosed?.()) break; send({ type: "agent", text: `watching video ${i}…` }); await new Promise((r) => setTimeout(r, 2500)); await page.keyboard.press("ArrowDown"); }
+    send({ type: "agent", text: "watched 10 (add ANTHROPIC_API_KEY to judge)." });
+    return;
+  }
+
   let found = 0;
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 12; i++) {
     if (page.isClosed?.()) break;
     send({ type: "agent", text: `watching video ${i}…` });
-    await new Promise((r) => setTimeout(r, 2500 + Math.random() * 1500)); // human-like dwell
-    if (brain.judge) {
-      const j = await judgeCurrent(page, brain, send);
-      if (j && j.isProduct) { found++; send({ type: "product", product: j }); send({ type: "agent", text: `found: ${j.title} — ${j.verdict} (X${j.xScore})` }); }
-      else if (j) send({ type: "agent", text: "not a product — scrolling" });
-    }
-    await page.keyboard.press("ArrowDown"); // next video
+    await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1200)); // human dwell
+    try {
+      const j = await judgeShot(page, brain);
+      if (j && j._err) send({ type: "agent", text: "brain err: " + j._err });
+      else if (j && j.isProduct) { found++; send({ type: "product", product: j }); send({ type: "agent", text: `found: ${j.title} — ${(j.verdict || "").toUpperCase()} (X${j.xScore})` }); }
+      else send({ type: "agent", text: "skip — not a product" });
+    } catch (e) { send({ type: "agent", text: "err: " + e.message }); }
+    await page.keyboard.press("ArrowDown"); // MOVE to next video
   }
-  send({ type: "agent", text: brain.judge ? `done — found ${found} products in 10 videos.` : "watched 10 videos (add ANTHROPIC_API_KEY so I can judge them)." });
+  send({ type: "agent", text: `hunt done — ${found} products found.` });
 }

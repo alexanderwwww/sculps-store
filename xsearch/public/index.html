@@ -9,35 +9,22 @@
   *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;}
   body{min-height:100vh;display:grid;place-items:center;padding:22px;color:var(--txt);overflow:hidden;
     background:#06060f url('/bg.jpg') center/cover no-repeat fixed;}
-  .stars,.stars:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
-    background-image:radial-gradient(1px 1px at 15% 25%,#fff,transparent),radial-gradient(1px 1px at 75% 55%,#cde,transparent),
-      radial-gradient(1px 1px at 45% 78%,#fff,transparent),radial-gradient(1.3px 1.3px at 88% 18%,#fff,transparent),
-      radial-gradient(1px 1px at 60% 12%,#bcd,transparent);animation:tw 6s ease-in-out infinite alternate;}
-  .stars:after{opacity:.22;transform:scale(1.5);animation-delay:-3s;}@keyframes tw{from{opacity:.25}to{opacity:.6}}
-
-  /* real liquid glass */
   .glass{position:relative;background:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.035));
-    backdrop-filter:blur(34px) saturate(180%);-webkit-backdrop-filter:blur(34px) saturate(180%);
-    border:1px solid var(--stroke);
+    backdrop-filter:blur(34px) saturate(180%);-webkit-backdrop-filter:blur(34px) saturate(180%);border:1px solid var(--stroke);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 30px rgba(255,255,255,.04),0 14px 50px rgba(0,0,0,.45);}
-
   .win{width:min(1200px,97vw);height:min(742px,93vh);border-radius:24px;display:flex;flex-direction:column;overflow:hidden;}
   .bar{height:60px;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--stroke);}
   .dots{display:flex;gap:9px}
-  .dots i{width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 34% 30%,var(--pink),var(--purple));
-    box-shadow:0 0 12px rgba(180,110,255,.75),inset 0 1px 1px rgba(255,255,255,.5);}
-  .brand{font-weight:800;letter-spacing:.07em;font-size:17px;margin-left:8px;
-    background:linear-gradient(90deg,#fff,#cdbcff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .dots i{width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 34% 30%,var(--pink),var(--purple));box-shadow:0 0 12px rgba(180,110,255,.75),inset 0 1px 1px rgba(255,255,255,.5);}
+  .brand{font-weight:800;letter-spacing:.07em;font-size:17px;margin-left:8px;background:linear-gradient(90deg,#fff,#cdbcff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   .tabs{display:flex;gap:6px;margin:0 auto;padding:5px;border-radius:14px;}
-  .tab{padding:8px 16px;border-radius:10px;font-size:13px;color:var(--mut);font-weight:500}
+  .tab{padding:8px 16px;border-radius:10px;font-size:13px;color:var(--mut);font-weight:500;cursor:pointer}
   .tab.on{color:#fff;background:linear-gradient(135deg,rgba(255,110,196,.28),rgba(124,92,255,.28));border:1px solid rgba(255,255,255,.2)}
   .srch{padding:8px 14px;border-radius:11px;font-size:12.5px;color:var(--mut);min-width:200px}
   .av{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 34% 30%,var(--pink),var(--purple))}
   svg{display:block}
-
   .main{flex:1;display:flex;min-height:0;gap:14px;padding:14px;}
   .col{border-radius:20px;min-height:0;}
-  /* LEFT */
   .left{width:314px;display:flex;flex-direction:column;padding:16px;}
   .left h3{font-size:11px;letter-spacing:.2em;color:var(--mut);margin-bottom:12px}
   .thread{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
@@ -62,11 +49,8 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 26px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;gap:3px}
   .xbtn small{font-weight:500;opacity:.82;font-size:10px;letter-spacing:.14em}
   .xbtn:active{transform:scale(.98)}.xbtn:disabled{opacity:.55;cursor:default}
-
-  /* PHONE */
   .stage{width:330px;display:grid;place-items:center;position:relative}
-  .phone{width:296px;height:612px;border-radius:46px;background:#000;border:9px solid #14161f;position:relative;overflow:hidden;
-    box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 60px rgba(124,92,255,.18)}
+  .phone{width:296px;height:612px;border-radius:46px;background:#000;border:9px solid #14161f;position:relative;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 60px rgba(124,92,255,.18)}
   .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:104px;height:27px;background:#000;border-radius:16px;z-index:9}
   .sbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:14px 22px 0;font-size:12px;color:#fff;font-weight:600;z-index:8}
   .sbar .ri{display:flex;gap:6px;align-items:center}
@@ -74,67 +58,43 @@
   .ttlogo{width:78px;height:78px;border-radius:22px;background:#0a0a0a;display:grid;place-items:center;box-shadow:0 0 42px rgba(255,60,120,.45)}
   .screen h4{font-size:19px;font-weight:700}.screen p{font-size:12.5px;color:#9aa;max-width:210px;line-height:1.5}
   .connect{border:0;cursor:pointer;border-radius:13px;padding:12px 22px;font-weight:700;font-size:14px;color:#fff;background:linear-gradient(135deg,#ff0050,#ff3b6b);box-shadow:0 8px 22px rgba(255,0,80,.4)}
-  .connect:active{transform:scale(.97)}
-  /* connecting: small glass window that pops */
   .popcard{padding:24px 26px;border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:14px;animation:pop .45s cubic-bezier(.2,.9,.3,1.4)}
   @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
   .ring{width:64px;height:64px;border-radius:50%;border:3px solid rgba(255,255,255,.16);border-top-color:var(--pink);border-right-color:var(--purple);animation:spin .9s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .feed{position:absolute;inset:0;opacity:0;transition:opacity .4s}
-  .vidbg{position:absolute;inset:0;background-size:cover;background-position:center}
-  .vidbg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.66))}
-  .scrolling .vidbg{animation:doom 1.2s ease-in-out infinite alternate}
-  @keyframes doom{from{transform:scale(1.03) translateY(0)}to{transform:scale(1.07) translateY(-10px)}}
-  .pfeedtop{position:absolute;top:42px;left:0;right:0;display:flex;gap:18px;justify-content:center;font-size:14px;color:#bbb;font-weight:600;z-index:6}
-  .pfeedtop .a{color:#fff;border-bottom:2px solid #fff;padding-bottom:3px}
-  .rail{position:absolute;right:11px;bottom:100px;display:flex;flex-direction:column;gap:17px;align-items:center;z-index:6;color:#fff;font-size:11px;text-align:center}
-  .rail .b{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);display:grid;place-items:center;margin-bottom:3px}
-  .cap{position:absolute;left:0;right:54px;bottom:78px;z-index:6;padding:0 14px;color:#fff}
-  .cap .u{font-weight:700;font-size:14px}.cap .d{font-size:12px;margin-top:4px;opacity:.95;line-height:1.35}.cap .s{display:flex;gap:6px;align-items:center;font-size:11px;margin-top:7px;opacity:.85}
-  .pnav{position:absolute;bottom:0;left:0;right:0;height:54px;display:flex;justify-content:space-around;align-items:center;background:rgba(0,0,0,.72);z-index:7;border-top:1px solid rgba(255,255,255,.08)}
-  .pnav .b{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;color:#9aa}
-
-  /* CONNECTOR */
   .conn{width:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
   .conn .tt{width:48px;height:48px;border-radius:14px;background:#0a0a0a;display:grid;place-items:center;box-shadow:0 0 22px rgba(255,60,120,.4)}
   .conn .st{font-size:9px;letter-spacing:.12em;color:#ff6b8b;text-align:center}
   .conn.ok .st{color:#7dffa6}.conn.ok .tt{box-shadow:0 0 24px rgba(80,255,140,.4)}
   .wire{flex:1;width:2px;background:linear-gradient(180deg,transparent,rgba(150,180,255,.4),transparent)}
-
-  /* RIGHT */
   .results{flex:1;padding:18px;display:flex;flex-direction:column;min-height:0}
   .results .rh{display:flex;align-items:center;margin-bottom:14px}
   .results .rh h2{font-size:14px;letter-spacing:.05em}.results .rh .src{margin-left:auto;font-size:11px;color:var(--mut)}
-  .thead{display:grid;grid-template-columns:1fr 64px 84px 100px;font-size:10.5px;letter-spacing:.06em;color:var(--mut);padding:0 6px 10px;border-bottom:1px solid var(--stroke)}
+  .panel{flex:1;overflow-y:auto}.panel::-webkit-scrollbar{width:5px}.panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:3px}
+  .thead{display:grid;grid-template-columns:1fr 70px 78px 104px;font-size:10.5px;letter-spacing:.06em;color:var(--mut);padding:0 6px 10px;border-bottom:1px solid var(--stroke);position:sticky;top:0}
   .thead .r{text-align:right}.thead .c{text-align:center}
-  .rows{flex:1;overflow-y:auto}.rows::-webkit-scrollbar{width:5px}.rows::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:3px}
-  .row{display:grid;grid-template-columns:1fr 64px 84px 100px;align-items:center;padding:12px 6px;border-bottom:1px solid rgba(255,255,255,.06);opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s}
+  .row{display:grid;grid-template-columns:1fr 70px 78px 104px;align-items:center;padding:12px 6px;border-bottom:1px solid rgba(255,255,255,.06);opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s}
   .row.in{opacity:1;transform:none}
   .prod{display:flex;gap:11px;align-items:center;min-width:0}
-  .pt{width:46px;height:46px;border-radius:12px;flex:none}
-  .prod .nm{font-size:13.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.prod .ct{font-size:11px;color:#8a90a8}
-  .sc{justify-self:center;font-size:12.5px;font-weight:700;color:#cdbcff;border:1px solid rgba(180,150,255,.4);border-radius:8px;padding:3px 9px}
+  .pt{width:46px;height:46px;border-radius:12px;flex:none;background-size:cover;background-position:center}
+  .prod .nm{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.prod .ct{font-size:11px;color:#8a90a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sccell{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .sc{font-size:12.5px;font-weight:700;border:1px solid;border-radius:8px;padding:2px 8px}
+  .vd{font-size:8px;font-weight:800;letter-spacing:.1em}
   .rp{text-align:right;font-size:13px;color:var(--cyan);font-weight:600}
-  .co{text-align:right;font-size:12.5px;color:#fff}.co small{display:block;font-size:10.5px;color:#8a90a8}
-  .empty{flex:1;display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center;line-height:1.6}
-  .viewall{margin-top:10px;text-align:center;padding:12px;border:1px solid var(--stroke);border-radius:12px;color:#cdbcff;font-size:13px;font-weight:600;cursor:pointer}
+  .co{text-align:right;font-size:12px;color:#fff}.co small{display:block;font-size:10px;color:#8a90a8}
+  .empty{height:100%;display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center;line-height:1.6;padding:24px}
+  .stat{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:2px}
+  .card{border:1px solid var(--stroke);border-radius:13px;padding:13px;background:rgba(255,255,255,.04)}
+  .card b{display:block;font-size:23px;line-height:1}.card span{font-size:10px;color:var(--mut);letter-spacing:.06em}
+  .chip{display:inline-block;border:1px solid var(--stroke);border-radius:999px;padding:6px 12px;margin:0 6px 8px 0;font-size:12px;color:#cdbcff;background:rgba(124,92,255,.14)}
+  .lbl{font-size:10.5px;color:var(--mut);letter-spacing:.12em;margin:14px 0 8px}
 </style>
 </head>
 <body>
-<div class="stars"></div>
-
-<!-- reusable svg icons -->
 <svg width="0" height="0" style="position:absolute"><defs>
   <g id="i-tt"><path d="M16.5 5.4c-1-.6-1.7-1.6-1.9-2.9h-2.8v11.4a2.6 2.6 0 1 1-2.6-2.6c.27 0 .53.04.78.12V8.5a5.6 5.6 0 0 0-.78-.06A5.46 5.46 0 1 0 14.6 13.9V8.2c1.05.75 2.32 1.2 3.7 1.2V6.6c-.66 0-1.28-.13-1.8-.4z"/></g>
-  <g id="i-heart" fill="none" stroke="#fff" stroke-width="2"><path d="M20.8 5.6a5.4 5.4 0 0 0-7.7 0L12 6.7l-1.1-1.1a5.4 5.4 0 1 0-7.7 7.7L12 22l8.8-8.7a5.4 5.4 0 0 0 0-7.7z"/></g>
-  <g id="i-comment" fill="none" stroke="#fff" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 20.5l1.4-5.7A8.5 8.5 0 1 1 21 11.5z"/></g>
-  <g id="i-save" fill="none" stroke="#fff" stroke-width="2"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></g>
-  <g id="i-share" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v14"/></g>
-  <g id="i-plus" fill="none" stroke="#fff" stroke-width="2"><path d="M12 5v14M5 12h14"/></g>
-  <g id="i-home" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></g>
-  <g id="i-search" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></g>
-  <g id="i-inbox" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 13V5h14v8"/></g>
-  <g id="i-user" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></g>
   <g id="i-send" fill="#fff"><path d="M3 21l19-9L3 3v7l13 2-13 2z"/></g>
   <g id="i-eye" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></g>
   <g id="i-tag" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/></g>
@@ -145,17 +105,21 @@
   <div class="bar">
     <div class="dots"><i></i><i></i><i></i></div>
     <div class="brand">XSEARCH</div>
-    <div class="tabs glass" style="border:1px solid var(--stroke)"><div class="tab on">Scanner</div><div class="tab">Trends</div><div class="tab">Analytics</div><div class="tab">Lists</div></div>
+    <div class="tabs glass" style="border:1px solid var(--stroke)">
+      <div class="tab on" data-tab="scanner">Scanner</div>
+      <div class="tab" data-tab="trends">Trends</div>
+      <div class="tab" data-tab="analytics">Analytics</div>
+      <div class="tab" data-tab="lists">Lists</div>
+    </div>
     <div class="srch glass" style="border:1px solid var(--stroke)">Search&nbsp;&nbsp;⌘K</div><div class="av"></div>
   </div>
   <div class="main">
-    <!-- LEFT -->
     <div class="col left glass">
       <h3>AGENT CHAT</h3>
       <div class="thread" id="thread"></div>
       <div class="live">
         <div class="lab"><span class="pulse"></span>LIVE</div>
-        <div class="mode" id="mode">Standby — not connected</div>
+        <div class="mode" id="mode">Standby</div>
         <div class="log">
           <div><svg width="14" height="14" viewBox="0 0 24 24"><use href="#i-eye"/></svg><span id="vids">watched 0 videos</span></div>
           <div><svg width="14" height="14" viewBox="0 0 24 24"><use href="#i-tag"/></svg><span id="found">found 0 products</span></div>
@@ -166,155 +130,138 @@
       <button class="xbtn" id="xbtn">XSEARCH<small>LEARN THE MARKET</small></button>
     </div>
 
-    <!-- PHONE -->
     <div class="stage">
       <div class="phone" id="phone">
         <div class="notch"></div>
-        <div class="sbar"><span>9:41</span><span class="ri">5G&nbsp;<svg width="22" height="11" viewBox="0 0 26 12" fill="#fff"><rect x="0" y="7" width="4" height="5" rx="1"/><rect x="6" y="4" width="4" height="8" rx="1"/><rect x="12" y="1" width="4" height="11" rx="1"/><rect x="19" y="2" width="7" height="10" rx="2" fill="none" stroke="#fff" stroke-width="1.4"/><rect x="20.5" y="3.5" width="4" height="7" rx="1"/></svg></span></div>
-
+        <div class="sbar"><span>9:41</span><span class="ri">5G</span></div>
         <div class="screen" id="scrConnect">
           <div class="ttlogo"><svg width="40" height="40" viewBox="0 0 24 24" fill="#fff"><use href="#i-tt"/></svg></div>
           <h4>Connect to TikTok</h4>
-          <p>Link a TikTok session so the agent can scroll the For You feed and learn the market.</p>
+          <p>Linking a live TikTok session so the agent can hunt the feed on its own.</p>
           <button class="connect" id="btnConnect">Connect to TikTok</button>
         </div>
-
         <div class="screen" id="scrConnecting" style="display:none">
-          <div class="popcard glass">
-            <div class="ring"></div>
-            <h4 style="font-size:16px">Connecting…</h4>
-            <p id="connecting-sub" style="font-size:11.5px">Opening TikTok session</p>
-          </div>
+          <div class="popcard glass"><div class="ring"></div><h4 style="font-size:16px">Connecting…</h4><p id="connecting-sub" style="font-size:11.5px">Opening TikTok</p></div>
         </div>
-
         <div class="feed" id="feed">
-          <img id="live" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:30;cursor:grab;touch-action:none"/>
-          <div class="pfeedtop"><span>Following</span><span class="a">For You</span></div>
-          <div class="vidbg" id="vidbg"></div>
-          <div class="rail">
-            <div><div class="b"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-plus"/></svg></div></div>
-            <div><div class="b"><svg width="19" height="19" viewBox="0 0 24 24"><use href="#i-heart"/></svg></div><span id="r-like">0</span></div>
-            <div><div class="b"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-comment"/></svg></div><span id="r-comment">0</span></div>
-            <div><div class="b"><svg width="17" height="17" viewBox="0 0 24 24"><use href="#i-save"/></svg></div><span id="r-save">0</span></div>
-            <div><div class="b"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-share"/></svg></div><span id="r-share">0</span></div>
-          </div>
-          <div class="cap"><div class="u" id="c-user">@discover</div><div class="d" id="c-desc">Hit XSEARCH to start scrolling…</div><div class="s"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><use href="#i-tt"/></svg> original sound</div></div>
-          <div class="pnav">
-            <div class="b" style="color:#fff"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-home"/></svg>Home</div>
-            <div class="b"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-search"/></svg>Discover</div>
-            <div class="b"><svg width="20" height="20" viewBox="0 0 24 24"><use href="#i-plus"/></svg></div>
-            <div class="b"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-inbox"/></svg>Inbox</div>
-            <div class="b"><svg width="18" height="18" viewBox="0 0 24 24"><use href="#i-user"/></svg>Profile</div>
-          </div>
+          <img id="live" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:30;cursor:grab;touch-action:none"/>
         </div>
       </div>
     </div>
 
-    <!-- CONNECTOR -->
     <div class="conn" id="conn"><div class="wire"></div><div class="tt"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><use href="#i-tt"/></svg></div><div class="st" id="connSt">NOT CONNECTED</div><div class="wire"></div></div>
 
-    <!-- RIGHT -->
     <div class="col results glass">
-      <div class="rh"><h2 id="rcount">PRODUCTS</h2><span class="src" id="rsrc"></span></div>
-      <div class="thead"><span>Product</span><span class="c">X Score</span><span class="r">Retail</span><span class="r">1688/CJ · Margin</span></div>
-      <div class="rows" id="rows"><div class="empty" id="empty">Connect TikTok and press XSEARCH<br/>to scan the market.</div></div>
-      <div class="viewall" id="viewall" style="display:none">View Full List</div>
+      <div class="rh"><h2 id="rtitle">PRODUCTS</h2><span class="src" id="rsrc"></span></div>
+      <div class="panel" id="panel"><div class="empty">Press <b style="color:#cdbcff">&nbsp;XSEARCH&nbsp;</b> — the agent hunts, watches & judges on its own.</div></div>
     </div>
   </div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-const G=[["#c9d2e0","#8a94a8"],["#7c6cff","#36d0ff"],["#ff9f6b","#ffd06b"],["#36d399","#1f8f6b"],["#ff6cc4","#ff8f6b"],["#5bc0ff","#7c6cff"],["#4be0c0","#36d399"],["#9aa3c9","#5b6480"],["#ffb14e","#ff7a45"],["#9b8cff","#6b7bff"]];
-const K=n=>n>=1000?(n/1000).toFixed(1)+"K":String(n||0);
-let connected=false,busy=false;
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const G=[["#c9d2e0","#8a94a8"],["#7c6cff","#36d0ff"],["#ff9f6b","#ffd06b"],["#36d399","#1f8f6b"],["#ff6cc4","#ff8f6b"],["#5bc0ff","#7c6cff"],["#4be0c0","#36d399"],["#9aa3c9","#5b6480"]];
+let connected=false,ws=null,PRODUCTS=[],TREND={niche:"",queries:[]},videosWatched=0,curTab="scanner";
+const VPW=460,VPH=840;
 
 function addMsg(who,text,me){const m=document.createElement("div");m.className="msg";
-  m.innerHTML=`<div class="h"><span class="ic ${me?'u':''}"></span><b>${who}</b><span class="t">now</span></div><p>${text}</p>`;
+  m.innerHTML=`<div class="h"><span class="ic ${me?'u':''}"></span><b>${esc(who)}</b><span class="t">now</span></div><p>${text}</p>`;
   $("thread").appendChild(m);$("thread").scrollTop=1e9;}
 function setConn(s){$("scrConnect").style.display=s==='no'?'flex':'none';$("scrConnecting").style.display=s==='connecting'?'flex':'none';
   $("feed").style.opacity=s==='ok'?'1':'0';$("conn").classList.toggle('ok',s==='ok');
   $("connSt").textContent=s==='ok'?'CONNECTED':s==='connecting'?'CONNECTING':'NOT CONNECTED';}
-const VPW=460,VPH=840;let ws=null;let pfound=0;
-function addProduct(p){
-  if(!p||p.isProduct===false)return;
-  if($("empty"))$("empty").style.display="none";
-  const i=pfound++,g=G[i%G.length];
-  const price=p.estPrice||p.retailPrice||0;
-  const cost=price?+(price*0.30).toFixed(2):null;
-  const margin=price?Math.round((price-cost)/price*100):null;
-  const rc=p.risk==="High"?"#ff6b8b":p.risk==="Medium"?"#ffc46b":"#7dffa6";
-  const el=document.createElement("div");el.className="row";
-  el.innerHTML=`<div class="prod"><div class="pt" style="background:linear-gradient(140deg,${g[0]},${g[1]})"></div>
-    <div><div class="nm">${p.title||"Product"}</div><div class="ct">${p.category||""}</div></div></div>
-    <div style="justify-self:center;text-align:center"><div class="sc" style="border-color:${rc}55;color:${rc}">${p.xScore??"—"}</div>
-    <div style="font-size:9px;color:${rc};margin-top:3px;text-transform:uppercase;letter-spacing:.06em">${p.verdict||""}</div></div>
-    <div class="rp">${price?"$"+(+price).toFixed(2):"—"}</div>
-    <div class="co">${cost!=null?"$"+cost.toFixed(2):"—"}<small>${margin!=null?margin+"% · "+(p.risk||"")+" risk":""}</small></div>`;
-  $("rows").appendChild(el);requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
-  $("rcount").textContent=`${pfound} PRODUCTS FOUND`;$("found").textContent=`found ${pfound} products`;
-}
 function sendLive(o){if(ws&&ws.readyState===1)ws.send(JSON.stringify(o));}
+
+const riskColor=r=>r==="High"?"#ff6b8b":r==="Medium"?"#ffc46b":"#7dffa6";
+function rowHTML(p,i){
+  const price=+(p.estPrice||p.retailPrice||0);
+  const cost=p.estCost!=null?+p.estCost:(price?+(price*0.32).toFixed(2):null);
+  const margin=(price&&cost!=null)?Math.round((price-cost)/price*100):null;
+  const rc=riskColor(p.risk),g=G[i%G.length];
+  const thumb=p.image?`background:url('${p.image}') center/cover`:`background:linear-gradient(140deg,${g[0]},${g[1]})`;
+  return `<div class="row in">
+    <div class="prod"><div class="pt" style="${thumb}"></div><div style="min-width:0"><div class="nm">${esc(p.title||"Product")}</div><div class="ct">${esc(p.category||"")}</div></div></div>
+    <div class="sccell"><div class="sc" style="border-color:${rc}66;color:${rc}">${p.xScore??"—"}</div><div class="vd" style="color:${rc}">${esc((p.verdict||"").toUpperCase())}</div></div>
+    <div class="rp">${price?"$"+price.toFixed(2):"—"}</div>
+    <div class="co">${cost!=null?"$"+cost.toFixed(2):"—"}<small>${margin!=null?margin+"% · "+esc(p.risk||""):"est."}</small></div></div>`;
+}
+const thead=`<div class="thead"><span>Product</span><span class="c">X Score</span><span class="r">Retail</span><span class="r">Cost · Margin</span></div>`;
+const sortP=a=>[...a].sort((x,y)=>(y.xScore||0)-(x.xScore||0));
+
+function renderRight(tab){
+  curTab=tab||curTab;
+  document.querySelectorAll(".tab").forEach(el=>el.classList.toggle("on",el.dataset.tab===curTab));
+  const panel=$("panel");
+  if(curTab==="scanner"){
+    const ps=sortP(PRODUCTS);$("rtitle").textContent=ps.length?`${ps.length} PRODUCTS FOUND`:"PRODUCTS";
+    panel.innerHTML=ps.length?thead+ps.map(rowHTML).join(""):`<div class="empty">Press <b style="color:#cdbcff">&nbsp;XSEARCH&nbsp;</b> — the agent hunts & judges on its own.</div>`;
+  } else if(curTab==="lists"){
+    const ps=sortP(PRODUCTS.filter(p=>["chase","watch"].includes((p.verdict||"").toLowerCase())));$("rtitle").textContent="WATCHLIST";
+    panel.innerHTML=ps.length?thead+ps.map(rowHTML).join(""):`<div class="empty">Your CHASE & WATCH picks land here.</div>`;
+  } else if(curTab==="analytics"){
+    $("rtitle").textContent="ANALYTICS";const n=PRODUCTS.length,by=v=>PRODUCTS.filter(p=>(p.verdict||"").toLowerCase()===v).length;
+    const avg=n?Math.round(PRODUCTS.reduce((s,p)=>s+(p.xScore||0),0)/n):0,high=PRODUCTS.filter(p=>p.risk==="High").length;
+    const cats={};PRODUCTS.forEach(p=>{const c=p.category||"?";cats[c]=(cats[c]||0)+1;});const top=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+    panel.innerHTML=`<div class="stat">
+      <div class="card"><b>${videosWatched}</b><span>VIDEOS WATCHED</span></div>
+      <div class="card"><b>${n}</b><span>PRODUCTS FOUND</span></div>
+      <div class="card"><b style="color:#7dffa6">${by("chase")}</b><span>CHASE</span></div>
+      <div class="card"><b style="color:#ffc46b">${by("watch")}</b><span>WATCH</span></div>
+      <div class="card"><b>${avg}</b><span>AVG X SCORE</span></div>
+      <div class="card"><b style="color:#ff6b8b">${high}</b><span>HIGH RISK</span></div>
+      <div class="card" style="grid-column:1/3"><b style="font-size:16px">${top?esc(top[0]):"—"}</b><span>TOP CATEGORY${top?" ("+top[1]+")":""}</span></div></div>`;
+  } else if(curTab==="trends"){
+    $("rtitle").textContent="TRENDS";const cats={};PRODUCTS.forEach(p=>{const c=p.category||"?";cats[c]=(cats[c]||0)+1;});
+    const catChips=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<span class="chip">${esc(c)} · ${n}</span>`).join("")||'<span class="ct">no data yet</span>';
+    panel.innerHTML=`<div style="padding:2px">
+      <div class="lbl">HUNTING NICHE</div><div style="font-size:17px;font-weight:700">${TREND.niche?esc(TREND.niche):"—"}</div>
+      <div class="lbl">SEARCHES THE AGENT RAN</div><div>${(TREND.queries||[]).map(q=>`<span class="chip">#${esc(q)}</span>`).join("")||'<span class="ct">press XSEARCH</span>'}</div>
+      <div class="lbl">CATEGORIES SPOTTED</div><div>${catChips}</div></div>`;
+  }
+}
+function addProduct(p){if(!p||p.isProduct===false)return;PRODUCTS.push(p);
+  $("found").textContent=`found ${PRODUCTS.length} products`;
+  if(curTab==="scanner"||curTab==="lists")renderRight();}
+
 function connect(){if(connected)return Promise.resolve();
-  addMsg("You","Connect to TikTok.",true);setConn('connecting');$("mode").textContent="Launching live browser…";
-  return new Promise(res=>{
-    let done=false;
-    try{ws=new WebSocket(`ws://${location.host}/live`);}catch(e){addMsg("XSEARCH AI","Cannot open live socket: "+e.message);setConn('no');return res();}
+  setConn('connecting');$("mode").textContent="Launching live browser…";
+  return new Promise(res=>{let done=false;
+    try{ws=new WebSocket(`ws://${location.host}/live`);}catch(e){addMsg("XSEARCH AI","Socket error: "+e.message);setConn('no');return res();}
     ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data);}catch{return;}
       if(m.type==="frame"){const im=$("live");im.src="data:image/jpeg;base64,"+m.data;
-        if(!done){done=true;connected=true;setConn('ok');im.style.display="block";
-          [".pfeedtop",".vidbg",".rail",".cap",".pnav",".notch",".sbar"].forEach(s=>document.querySelectorAll(s).forEach(e=>e.style.display="none"));
-          $("mode").textContent="LIVE — controlling real TikTok";
-          addMsg("XSEARCH AI","Live TikTok browser is up. Tap and scroll the phone screen — you're driving a real browser. We'll solve captchas together right on screen.");res();}}
-      else if(m.type==="agent"){addMsg("XSEARCH AI",m.text);}
+        if(!done){done=true;connected=true;setConn('ok');im.style.display="block";$("mode").textContent="LIVE — real TikTok";
+          addMsg("XSEARCH AI","Live. If the phone is blank, log into TikTok in the window once. Then hit XSEARCH and I hunt on my own.");res();}}
+      else if(m.type==="agent"){addMsg("XSEARCH AI",esc(m.text));
+        const mm=String(m.text).match(/watching video (\d+)/);if(mm){videosWatched=Math.max(videosWatched,+mm[1]);$("vids").textContent=`watched ${videosWatched} videos`;}
+        if(/hunt done|scan complete/i.test(m.text)){$("srcstat").textContent="done";$("xbtn").disabled=false;}}
       else if(m.type==="product"){addProduct(m.product);}
-      else if(m.type==="status"){$("connecting-sub").textContent=m.text;
-        if(m.text.startsWith("error")){addMsg("XSEARCH AI","Browser error: "+m.text);setConn('no');if(!done){done=true;res();}}}};
-    ws.onerror=()=>{if(!done){done=true;addMsg("XSEARCH AI","Live browser not available. On your machine run: <b>npm i playwright ws</b> then <b>npx playwright install chromium</b>, then restart.");setConn('no');res();}};
+      else if(m.type==="trends"){TREND={niche:m.niche||"",queries:m.queries||[]};if(curTab==="trends")renderRight();}
+      else if(m.type==="status"){$("connecting-sub").textContent=esc(m.text);
+        if(m.text.startsWith("error")){addMsg("XSEARCH AI","Browser error: "+esc(m.text));setConn('no');if(!done){done=true;res();}}}};
+    ws.onerror=()=>{if(!done){done=true;addMsg("XSEARCH AI","Live browser not available. Run: npm i playwright ws &amp;&amp; npx playwright install chromium, then restart.");setConn('no');res();}};
     ws.onclose=()=>{connected=false;};
   });}
-// tap + scroll forwarding to the real browser
-(function(){const im=$("live");const map=(e,r)=>({x:(e.clientX-r.left)/r.width*VPW,y:(e.clientY-r.top)/r.height*VPH});
-  let s=null;
+
+// drive the phone by hand too (swipe up = next, tap = click)
+(function(){const im=$("live");const map=(e,r)=>({x:(e.clientX-r.left)/r.width*VPW,y:(e.clientY-r.top)/r.height*VPH});let s=null;
   im.addEventListener("pointerdown",e=>{try{im.setPointerCapture(e.pointerId);}catch{}const r=im.getBoundingClientRect();s={...map(e,r),t:Date.now()};});
   im.addEventListener("pointerup",e=>{if(!s)return;const r=im.getBoundingClientRect();const p=map(e,r);const dx=p.x-s.x,dy=p.y-s.y,dt=Date.now()-s.t;
-    if(Math.abs(dx)<12&&Math.abs(dy)<12&&dt<450)sendLive({type:"click",x:p.x,y:p.y});
-    else sendLive({type:"swipe",x1:s.x,y1:s.y,x2:p.x,y2:p.y});s=null;});
-  im.addEventListener("wheel",e=>{e.preventDefault();sendLive({type:"scroll",dy:e.deltaY});},{passive:false});
-})();
-function showVideo(p,i){$("vidbg").style.background=`linear-gradient(140deg,${G[i%G.length][0]},${G[i%G.length][1]})`;
-  const e=p.engagement||{};$("r-like").textContent=K(e.likes||Math.round((e.views||0)*0.08));$("r-comment").textContent=K(e.comments||Math.round((e.views||0)*0.01));
-  $("r-save").textContent=K(Math.round((e.views||0)*0.012));$("r-share").textContent=K(e.shares||Math.round((e.views||0)*0.02));
-  $("c-user").textContent="@"+(p.title||"creator").toLowerCase().replace(/[^a-z]/g,"").slice(0,12);$("c-desc").textContent=p.title+(p.category?(" · "+p.category):"");}
-function demoCost(p){if(p.cost!=null)return{cost:p.cost,margin:p.margin};if(p.retailPrice==null)return{cost:null,margin:null};
-  const cost=+(p.retailPrice*0.30).toFixed(2);return{cost,margin:Math.round((p.retailPrice-cost)/p.retailPrice*100)};}
-function row(p,i){const g=G[i%G.length],{cost,margin}=demoCost(p);const el=document.createElement("div");el.className="row";
-  el.innerHTML=`<div class="prod"><div class="pt" style="background:linear-gradient(140deg,${g[0]},${g[1]})"></div>
-    <div><div class="nm">${p.title}</div><div class="ct">${p.category||""}</div></div></div>
-    <div class="sc">${p.xScore??"—"}</div><div class="rp">${p.retailPrice!=null?"$"+(+p.retailPrice).toFixed(2):"—"}</div>
-    <div class="co">${cost!=null?"$"+cost.toFixed(2):"—"}<small>${margin!=null?margin+"% margin":""}</small></div>`;return el;}
-async function scan(query){if(busy)return;busy=true;if(!connected){await connect();}
-  sendLive({type:"learn",goal:query});
-  $("xbtn").disabled=true;if($("empty"))$("empty").style.display="none";$("rows").innerHTML="";$("viewall").style.display="none";
-  $("phone").classList.add("scrolling");$("mode").textContent="Learning Market Mode — scrolling TikTok";
-  $("vids").textContent="watched 0 videos";$("found").textContent="found 0 products";$("srcstat").textContent="scrolling…";
-  addMsg("XSEARCH AI",`Scrolling TikTok for <b style="color:#7fe3ff">${query}</b> …`);
-  let data;try{const r=await fetch("/api/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query})});data=await r.json();}
-  catch(e){addMsg("XSEARCH AI","Backend error: "+e.message);busy=false;$("xbtn").disabled=false;$("phone").classList.remove("scrolling");return;}
-  const products=data.products||[];let vids=0;$("rcount").textContent=`${products.length} PRODUCTS FOUND`;$("rsrc").textContent="source: "+(data.source||"mock");
-  for(let i=0;i<products.length;i++){showVideo(products[i],i);const el=row(products[i],i);$("rows").appendChild(el);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
-    vids+=Math.floor(6+Math.random()*22);$("vids").textContent=`watched ${vids} videos`;$("found").textContent=`found ${i+1} products`;
-    $("srcstat").textContent=i<products.length-1?"sourcing prices…":"done";await new Promise(r=>setTimeout(r,300));}
-  $("phone").classList.remove("scrolling");$("mode").textContent="Connected — scan complete";$("viewall").style.display="block";
-  addMsg("XSEARCH AI",`Done — <b>${products.length}</b> products. Top: <b style="color:#7fe3ff">${products[0]?.title||"—"}</b>. Type a new niche to scan again.`);
-  busy=false;$("xbtn").disabled=false;}
+    if(Math.abs(dx)<12&&Math.abs(dy)<12&&dt<450)sendLive({type:"click",x:p.x,y:p.y});else sendLive({type:"swipe",x1:s.x,y1:s.y,x2:p.x,y2:p.y});s=null;});
+  im.addEventListener("wheel",e=>{e.preventDefault();sendLive({type:"scroll",dy:e.deltaY});},{passive:false});})();
+
+document.querySelectorAll(".tab").forEach(el=>el.onclick=()=>renderRight(el.dataset.tab));
 $("btnConnect").onclick=()=>connect();
-$("xbtn").onclick=()=>{addMsg("You","Learn the market — watch & judge",true);pfound=0;$("rows").innerHTML="";$("rcount").textContent="PRODUCTS";$("found").textContent="found 0 products";sendLive({type:"learn",goal:$("q").value.trim()||"for you"});};
-$("send").onclick=()=>{const q=$("q").value.trim();if(!q)return;addMsg("You",q,true);sendLive({type:"command",text:q});$("q").value="";};
+$("xbtn").onclick=async()=>{await connect();const goal=$("q").value.trim();
+  addMsg("You","XSEARCH — hunt the market"+(goal?` for "${esc(goal)}"`:""),true);
+  PRODUCTS=[];videosWatched=0;TREND={niche:goal,queries:[]};$("found").textContent="found 0 products";$("vids").textContent="watched 0 videos";
+  $("srcstat").textContent="hunting…";$("xbtn").disabled=true;renderRight("scanner");
+  sendLive({type:"learn",goal:goal||""});};
+$("send").onclick=async()=>{const q=$("q").value.trim();if(!q)return;await connect();addMsg("You",esc(q),true);sendLive({type:"command",text:q});$("q").value="";};
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")$("send").click();});
-addMsg("XSEARCH AI","Booting the live TikTok browser. If the phone is blank/white, LOG IN to TikTok once in the window that opened — then press XSEARCH and I'll actually watch the feed (swipe + watch each video). Judging the videos comes next.");
-setConn('no');connect();
+
+addMsg("XSEARCH AI","Booting live TikTok. Log in once if the phone is blank, then press XSEARCH — I'll pick what to hunt, watch videos, and judge each one myself.");
+renderRight("scanner");setConn('no');connect();
 </script>
 </body>
 </html>
