@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mine Predictor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 20% 50%, #0d1b3e 0%, #050a1a 50%, #0a0d1f 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 10%, rgba(59,130,246,0.1) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 860px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Glass card */
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 20px;
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.12),
+      inset 0 -1px 0 rgba(0,0,0,0.2);
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a78bfa, #60a5fa, #a78bfa);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s infinite;
+    letter-spacing: -0.5px;
+  }
+  .header p {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.85rem;
+    margin-top: 6px;
+  }
+  @keyframes shimmer {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 640px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  /* Input panel */
+  .panel {
+    padding: 24px;
+  }
+
+  .panel-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 18px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .field input:focus, .field select:focus {
+    border-color: rgba(167,139,250,0.5);
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 0 0 3px rgba(167,139,250,0.1);
+  }
+  .field select option { background: #0d1b3e; color: #fff; }
+
+  .mine-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 13px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: #fff;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    border-radius: inherit;
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px rgba(124,58,237,0.5);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Board panel */
+  .board-panel {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .tile {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .tile::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+  }
+
+  .tile.safe {
+    background: rgba(16,185,129,0.15);
+    border-color: rgba(16,185,129,0.35);
+    box-shadow: 0 0 16px rgba(16,185,129,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .tile.mine {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.35);
+    box-shadow: 0 0 16px rgba(239,68,68,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .tile.empty { opacity: 0.3; }
+
+  @keyframes popIn {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Stagger tile animation */
+  .tile:nth-child(1)  { animation-delay: 0.02s; }
+  .tile:nth-child(2)  { animation-delay: 0.04s; }
+  .tile:nth-child(3)  { animation-delay: 0.06s; }
+  .tile:nth-child(4)  { animation-delay: 0.08s; }
+  .tile:nth-child(5)  { animation-delay: 0.10s; }
+  .tile:nth-child(6)  { animation-delay: 0.12s; }
+  .tile:nth-child(7)  { animation-delay: 0.14s; }
+  .tile:nth-child(8)  { animation-delay: 0.16s; }
+  .tile:nth-child(9)  { animation-delay: 0.18s; }
+  .tile:nth-child(10) { animation-delay: 0.20s; }
+  .tile:nth-child(11) { animation-delay: 0.22s; }
+  .tile:nth-child(12) { animation-delay: 0.24s; }
+  .tile:nth-child(13) { animation-delay: 0.26s; }
+  .tile:nth-child(14) { animation-delay: 0.28s; }
+  .tile:nth-child(15) { animation-delay: 0.30s; }
+  .tile:nth-child(16) { animation-delay: 0.32s; }
+  .tile:nth-child(17) { animation-delay: 0.34s; }
+  .tile:nth-child(18) { animation-delay: 0.36s; }
+  .tile:nth-child(19) { animation-delay: 0.38s; }
+  .tile:nth-child(20) { animation-delay: 0.40s; }
+  .tile:nth-child(21) { animation-delay: 0.42s; }
+  .tile:nth-child(22) { animation-delay: 0.44s; }
+  .tile:nth-child(23) { animation-delay: 0.46s; }
+  .tile:nth-child(24) { animation-delay: 0.48s; }
+  .tile:nth-child(25) { animation-delay: 0.50s; }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-safe { background: #10b981; }
+  .dot-mine { background: #ef4444; }
+
+  /* Results bar */
+  .results {
+    margin-top: 16px;
+    padding: 20px 24px;
+  }
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .result-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .result-box .label {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 8px;
+  }
+  .result-box .tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'SF Mono', monospace;
+  }
+  .badge-safe { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+  .badge-mine { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+  /* Error */
+  .error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: #f87171;
+    margin-top: 12px;
+    display: none;
+  }
+
+  /* Hash verify */
+  .hash-check {
+    margin-top: 10px;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.3);
+    word-break: break-all;
+    line-height: 1.5;
+  }
+  .hash-check span { color: rgba(167,139,250,0.7); }
+
+  /* Placeholder board text */
+  .board-placeholder {
+    text-align: center;
+    color: rgba(255,255,255,0.2);
+    font-size: 0.82rem;
+    padding: 40px 0;
+  }
+  .board-placeholder .icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.4; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>⛏ Mine Predictor</h1>
+    <p>Provably fair verification — paste revealed server seed to reconstruct any board</p>
+  </div>
+
+  <div class="layout">
+
+    <!-- Input Panel -->
+    <div class="glass panel">
+      <div class="panel-title">Seed Inputs</div>
+
+      <div class="field">
+        <label>Server Seed <em style="color:rgba(239,68,68,0.7)">(revealed after rotation)</em></label>
+        <input type="text" id="serverSeed" placeholder="Paste real server seed here..." />
+      </div>
+
+      <div class="field">
+        <label>Client Seed</label>
+        <input type="text" id="clientSeed" placeholder="e.g. WYs9DtxAC3lydQGk" value="WYs9DtxAC3lydQGk" />
+      </div>
+
+      <div class="mine-row">
+        <div class="field">
+          <label>Nonce</label>
+          <input type="number" id="nonce" placeholder="e.g. 37" value="37" min="1" />
+        </div>
+        <div class="field">
+          <label>Mine Count</label>
+          <select id="mineCount">
+            <option value="1">1 mine</option>
+            <option value="2">2 mines</option>
+            <option value="3" selected>3 mines</option>
+            <option value="4">4 mines</option>
+            <option value="5">5 mines</option>
+            <option value="6">6 mines</option>
+            <option value="8">8 mines</option>
+            <option value="10">10 mines</option>
+            <option value="15">15 mines</option>
+            <option value="20">20 mines</option>
+            <option value="24">24 mines</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="error" id="error"></div>
+
+      <button class="btn" id="generateBtn" onclick="generate()">
+        Generate Board
+      </button>
+
+      <div class="hash-check" id="hashCheck"></div>
+    </div>
+
+    <!-- Board Panel -->
+    <div class="glass board-panel">
+      <div class="board" id="board">
+        <div class="board-placeholder" style="grid-column:1/-1">
+          <div class="icon">🎯</div>
+          Enter your seeds and click<br>Generate Board
+        </div>
+      </div>
+      <div class="legend" id="legend" style="display:none">
+        <span><div class="dot dot-safe"></div> Safe</span>
+        <span><div class="dot dot-mine"></div> Mine</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Results -->
+  <div class="glass results" id="results" style="display:none; margin-top:16px">
+    <div class="results-grid">
+      <div class="result-box">
+        <div class="label">💎 Safe Tiles</div>
+        <div class="tiles" id="safeTiles"></div>
+      </div>
+      <div class="result-box">
+        <div class="label">💣 Mine Tiles</div>
+        <div class="tiles" id="mineTiles"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Provably Fair Algorithm (WebCrypto — same math as Node.js) ──────────────
+
+async function hmacSHA256(key, message) {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw', enc.encode(key),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(message));
+  return new Uint8Array(sig);
+}
+
+async function sha256(text) {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function* floatStream(serverSeed, clientSeed, nonce) {
+  let cursor = 0;
+  while (true) {
+    const bytes = await hmacSHA256(serverSeed, `${clientSeed}:${nonce}:${cursor}`);
+    for (let i = 0; i + 3 < bytes.length; i += 4) {
+      const uint32 = ((bytes[i] << 24) | (bytes[i+1] << 16) | (bytes[i+2] << 8) | bytes[i+3]) >>> 0;
+      yield uint32 / 0x100000000;
+    }
+    cursor++;
+  }
+}
+
+async function generateMinePositions(serverSeed, clientSeed, nonce, mineCount) {
+  const positions = Array.from({ length: 25 }, (_, i) => i);
+  const stream = floatStream(serverSeed, clientSeed, nonce);
+  for (let i = 24; i > 0; i--) {
+    const { value: f } = await stream.next();
+    const j = Math.floor(f * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+  return {
+    mines: positions.slice(0, mineCount).sort((a, b) => a - b),
+    safe:  positions.slice(mineCount).sort((a, b) => a - b)
+  };
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+
+async function generate() {
+  const serverSeed  = document.getElementById('serverSeed').value.trim();
+  const clientSeed  = document.getElementById('clientSeed').value.trim();
+  const nonce       = parseInt(document.getElementById('nonce').value);
+  const mineCount   = parseInt(document.getElementById('mineCount').value);
+  const errEl       = document.getElementById('error');
+  const btn         = document.getElementById('generateBtn');
+
+  errEl.style.display = 'none';
+
+  if (!serverSeed) {
+    errEl.textContent = 'Paste the real server seed first. It is revealed on Rainbet after you rotate seeds.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!clientSeed || !nonce || nonce < 1) {
+    errEl.textContent = 'Fill in all fields correctly.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Computing...';
+
+  try {
+    // Show hash of the provided server seed so user can verify it matches
+    const hash = await sha256(serverSeed);
+    document.getElementById('hashCheck').innerHTML =
+      `SHA256 of your seed:<br><span>${hash}</span><br>
+       <span style="color:rgba(255,255,255,0.25)">Compare this to the hash shown in Rainbet's Fair Play panel before rotation</span>`;
+
+    const { mines, safe } = await generateMinePositions(serverSeed, clientSeed, nonce, mineCount);
+
+    renderBoard(mines, safe);
+
+    // Render result badges
+    document.getElementById('safeTiles').innerHTML = safe.map(t =>
+      `<span class="badge badge-safe">${t}</span>`
+    ).join('');
+    document.getElementById('mineTiles').innerHTML = mines.map(t =>
+      `<span class="badge badge-mine">${t}</span>`
+    ).join('');
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('legend').style.display = 'flex';
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Generate Board';
+}
+
+function renderBoard(mines, safe) {
+  const mineSet = new Set(mines);
+  const board   = document.getElementById('board');
+  board.innerHTML = '';
+
+  for (let i = 0; i < 25; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'tile ' + (mineSet.has(i) ? 'mine' : 'safe');
+    tile.style.animationDelay = (i * 0.02) + 's';
+    tile.textContent = mineSet.has(i) ? '💣' : '💎';
+    tile.title = 'Tile ' + i + (mineSet.has(i) ? ' — MINE' : ' — SAFE');
+    board.appendChild(tile);
+  }
+}
+
+// Allow Enter key to trigger generate
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
