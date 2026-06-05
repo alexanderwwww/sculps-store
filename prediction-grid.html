@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Rainbet Mine Prediction Grid</title>
+<style>
+  body { background: #0e0e2a; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: Arial, sans-serif; color: white; }
+  h2 { margin-bottom: 6px; font-size: 18px; color: #aaa; }
+  .legend { display: flex; gap: 16px; margin-bottom: 16px; font-size: 13px; }
+  .leg { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 16px; height: 16px; border-radius: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 90px); gap: 8px; }
+  .cell {
+    width: 90px; height: 90px;
+    border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: bold;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .pos { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+
+  /* Gold = all 3 agree safe */
+  .safe-all {
+    background: linear-gradient(135deg, #c8960c, #ffd700, #c8960c);
+    border-color: #ffe066;
+    box-shadow: 0 0 18px #ffd70088;
+    color: #3a2200;
+  }
+
+  /* Danger = at least 1 says mine */
+  .danger {
+    background: linear-gradient(135deg, #1a0a0a, #2d0f0f);
+    border-color: #6b1414;
+    color: #c0392b;
+  }
+  .danger::after {
+    content: '💣';
+    font-size: 24px;
+  }
+
+  /* Already revealed safe */
+  .revealed {
+    background: linear-gradient(135deg, #0d2a4a, #1a4a8a);
+    border-color: #4fc3f7;
+    box-shadow: 0 0 18px #4fc3f788;
+    color: white;
+  }
+  .revealed::after {
+    content: '💎';
+    font-size: 28px;
+  }
+
+  /* Partial - only some agree mine */
+  .partial {
+    background: linear-gradient(135deg, #2a1a00, #3d2800);
+    border-color: #8a5c00;
+    color: #ffab00;
+  }
+  .partial::after {
+    content: '⚠️';
+    font-size: 22px;
+  }
+
+  .algs { font-size: 10px; margin-top: 3px; opacity: 0.7; }
+  .caption {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    max-width: 480px;
+    line-height: 1.5;
+  }
+  .warning { color: #ff9800; margin-top: 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+<h2>Mine Prediction Map — nonce 1, 5 mines, clientSeed: a1wejAPUvPX9xp4V</h2>
+<div class="legend">
+  <div class="leg"><div class="dot" style="background:#ffd700"></div> All 3 agree SAFE (click!)</div>
+  <div class="leg"><div class="dot" style="background:#2d0f0f;border:1px solid #c0392b"></div> Likely MINE (avoid)</div>
+  <div class="leg"><div class="dot" style="background:#3d2800;border:1px solid #8a5c00"></div> Partial risk</div>
+  <div class="leg"><div class="dot" style="background:#1a4a8a"></div> Revealed 💎</div>
+</div>
+<div class="grid" id="grid"></div>
+<div class="caption">
+  Algorithms:<br>
+  ALG1 (SHA512+u8+nonce:cs) mines: 1, 5, 7, 9, 15<br>
+  ALG2 (SHA256+u32be+cs:n:cursor) mines: 0, 1, 5, 16, 22<br>
+  ALG3 (SHA512+u32be+cs:n:cursor) mines: 3, 12, 16, 19, 23
+  <div class="warning">⚠️ Predictions based on hash commitment — accuracy may be limited until real server seed is revealed</div>
+</div>
+
+<script>
+const ALG1 = new Set([1, 5, 7, 9, 15]);
+const ALG2 = new Set([0, 1, 5, 16, 22]);
+const ALG3 = new Set([3, 12, 16, 19, 23]);
+const REVEALED = new Set([2, 10, 14]);
+
+const grid = document.getElementById('grid');
+
+for (let i = 0; i < 25; i++) {
+  const cell = document.createElement('div');
+  cell.classList.add('cell');
+
+  const in1 = ALG1.has(i), in2 = ALG2.has(i), in3 = ALG3.has(i);
+  const mineCount = [in1, in2, in3].filter(Boolean).length;
+
+  if (REVEALED.has(i)) {
+    cell.classList.add('revealed');
+    const pos = document.createElement('div');
+    pos.className = 'pos';
+    pos.textContent = `pos ${i}`;
+    cell.appendChild(pos);
+  } else if (mineCount === 0) {
+    // All 3 agree safe
+    cell.classList.add('safe-all');
+    cell.innerHTML = '⭐';
+    const pos = document.createElement('div');
+    pos.className = 'pos';
+    pos.textContent = `pos ${i}`;
+    cell.appendChild(pos);
+  } else if (mineCount === 3) {
+    // All 3 agree mine
+    cell.classList.add('danger');
+    const pos = document.createElement('div');
+    pos.className = 'pos';
+    pos.textContent = `pos ${i}`;
+    const algs = document.createElement('div');
+    algs.className = 'algs';
+    algs.textContent = 'A1+A2+A3';
+    cell.appendChild(pos);
+    cell.appendChild(algs);
+  } else {
+    // Partial
+    cell.classList.add('partial');
+    const pos = document.createElement('div');
+    pos.className = 'pos';
+    pos.textContent = `pos ${i}`;
+    const algs = document.createElement('div');
+    algs.className = 'algs';
+    const which = [in1?'A1':'', in2?'A2':'', in3?'A3':''].filter(Boolean).join('+');
+    algs.textContent = which + ' says mine';
+    cell.appendChild(pos);
+    cell.appendChild(algs);
+  }
+
+  grid.appendChild(cell);
+}
+</script>
+</body>
+</html>
