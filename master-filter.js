@@ -102,5 +102,36 @@ console.log("Game B passes own filter:", matchesCriteria(
   "190574716e0c77ef705e879f789737bc00d20716083582cf1bcba9b9bd6e8844", gameB
 ) ? "✅" : "❌");
 
+// ── GAME D CRITERIA (nonce=4, 15 mines, clientSeed=EXHWNc8M90T9sDt4) ────
+// committedHash: fb1d86be95ecd809634c64cdebd893de0df7614ca681d271ee53bda00ecbf318
+// TIER 1 [structural]: 917 anywhere in digit sequence
+// TIER 2 [flexible]:   digitCount~42 | digitSum~192 | letterCount~22
+// TIER 3 [sequences]:  digit: 917 325 1422 852 216 2162
+//                      full:  b52 2708 271e 5277c
+// PROOF:  SHA256(seed) = committedHash
+// GEMS:   pos 6 safe, pos 12 safe
+function scoreGameD(candidate) {
+  const ds = candidate.split('').filter(c=>c>='0'&&c<='9').join('');
+  const dc = ds.length, lc = 64-dc;
+  const dsum = ds.split('').reduce((a,b)=>a+parseInt(b),0);
+  const hits = [];
+  if(ds.includes('917'))           hits.push('917');
+  if(dc>=40&&dc<=44)               hits.push('dc~42');
+  if(dsum>=182&&dsum<=200)         hits.push('ds~192');
+  if(lc>=20&&lc<=23)               hits.push('lc~22');
+  if(ds.includes('325'))           hits.push('325');
+  if(ds.includes('1422'))          hits.push('1422');
+  if(ds.includes('852'))           hits.push('852');
+  if(ds.includes('216'))           hits.push('216');
+  if(ds.includes('2162'))          hits.push('2162');
+  if(candidate.includes('b52'))    hits.push('b52');
+  if(candidate.includes('2708'))   hits.push('2708');
+  if(candidate.includes('271e'))   hits.push('271e');
+  if(candidate.includes('5277c'))  hits.push('5277c');
+  const proof = crypto.createHash('sha256').update(candidate).digest('hex') ===
+    'fb1d86be95ecd809634c64cdebd893de0df7614ca681d271ee53bda00ecbf318';
+  return { hits, score: hits.length + (proof?1000:0), proof, dc, dsum, lc };
+}
+
 // ── Export for use in search scripts ─────────────────────────────
-module.exports = { extract, matchesCriteria, search, formulaSeven };
+module.exports = { extract, matchesCriteria, search, formulaSeven, scoreGameD };
