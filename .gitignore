@@ -8,3 +8,4 @@ sun_profile.png
 *.png
 build_onepager.py
 *.py
+*.html
