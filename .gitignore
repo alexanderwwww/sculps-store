@@ -6,3 +6,5 @@ build_resume.py
 make_sun.py
 sun_profile.png
 *.png
+build_onepager.py
+*.py
