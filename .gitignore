@@ -9,3 +9,6 @@ sun_profile.png
 build_onepager.py
 *.py
 *.html
+fonts/
+*.ttf
+*.ttc
