@@ -3,3 +3,6 @@
 Alexandros_Bougiouklis_Resume.pdf
 build_resume.py
 *.pdf
+make_sun.py
+sun_profile.png
+*.png
