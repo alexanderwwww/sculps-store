@@ -12,3 +12,10 @@ build_onepager.py
 fonts/
 *.ttf
 *.ttc
+atelier_zip/
+*.json
+*.jpg
+*.jpeg
+*.webp
+*.svg
+*.zip
