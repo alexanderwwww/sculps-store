@@ -1,0 +1,954 @@
+{% raw %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#EFF6FA;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .85s cubic-bezier(.16,.84,.3,1),transform .85s cubic-bezier(.16,.84,.3,1);}
+  [data-noscroll]{scrollbar-width:none;-ms-overflow-style:none;}
+  [data-noscroll]::-webkit-scrollbar{display:none;width:0;height:0;}
+  details>summary{list-style:none;}
+  details>summary::-webkit-details-marker{display:none;}
+  #helios a{text-decoration:none;}
+  @keyframes heliosmq{to{transform:translateX(-50%);}}
+  @keyframes heliosdrift{0%{transform:translate(0,0) scale(1);}50%{transform:translate(34px,-26px) scale(1.18);}100%{transform:translate(0,0) scale(1);}}
+  @keyframes heliosfloat{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-18px) rotate(2deg);}}
+  @keyframes heliospulse{0%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.55);}100%{opacity:1;transform:scale(1);}}
+  @keyframes heliossheen{0%{transform:translateX(-120%) skewX(-18deg);}60%,100%{transform:translateX(260%) skewX(-18deg);}}
+  @keyframes heliosbob{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+  @keyframes heliossnow{0%{transform:translateY(-30px) translateX(0);opacity:0;}8%{opacity:.85;}90%{opacity:.7;}100%{transform:translateY(760px) translateX(28px);opacity:0;}}
+  @keyframes heliosspin{to{transform:rotate(360deg);}}
+  @keyframes heliosspinrev{to{transform:rotate(-360deg);}}
+  /* responsive — breakpoints can't be inline */
+  @media(min-width:880px){
+    [data-prodgrid]{grid-template-columns:1fr 1fr !important;gap:46px !important;align-items:start !important;}
+    [data-prodgrid] [data-galcol]{position:sticky;top:92px;}
+    [data-explgrid]{grid-template-columns:1fr 1fr !important;gap:44px !important;}
+    [data-nycgrid]{grid-template-columns:1.05fr .95fr !important;}
+  }
+  @media(max-width:760px){
+    [data-grid3]{grid-template-columns:1fr 1fr !important;}
+    [data-grid4]{grid-template-columns:1fr 1fr !important;}
+    [data-navlinks]{display:none !important;}
+    [data-hud]{display:none !important;}
+  }
+  @media(max-width:480px){
+    [data-grid3]{grid-template-columns:1fr !important;}
+    [data-grid4]{grid-template-columns:1fr 1fr !important;}
+    [data-heroprod]{opacity:.5 !important;width:200px !important;height:240px !important;}
+  }
+</style>
+<div id="helios" style="--ink:#0C1A24;--ink2:#0A1219;--mut:#56636E;--line:rgba(255,255,255,.6);--lins:rgba(12,26,36,.08);--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--teal:#2FC1D6;--ocean1:#062F49;--ocean2:#0E6FA8;--ocean3:#2FB6D6;--g-bg:rgba(255,255,255,.55);--g-bg2:rgba(255,255,255,.4);--g-bd:1px solid rgba(255,255,255,.65);--g-bd2:1px solid rgba(255,255,255,.45);--g-blur:blur(20px) saturate(165%);--g-sh:0 10px 34px rgba(6,47,73,.13),inset 0 1px 0 rgba(255,255,255,.75);--g-shlg:0 26px 60px -18px rgba(6,47,73,.3),inset 0 1px 0 rgba(255,255,255,.75);font-family:'Inter',system-ui,sans-serif;color:var(--ink);line-height:1.55;overflow-x:hidden;position:relative;padding-bottom:92px;background:radial-gradient(60% 50% at 12% 6%,rgba(108,196,232,.26),transparent 60%),radial-gradient(55% 45% at 90% 3%,rgba(64,206,222,.2),transparent 60%),radial-gradient(52% 42% at 80% 86%,rgba(108,196,232,.18),transparent 60%),linear-gradient(180deg,#E6F2F8,#EEF6FA);background-attachment:fixed;background-repeat:no-repeat;">
+
+  <!-- ANNOUNCEMENT — liquid glass -->
+  <div style="position:relative;height:42px;background:rgba(8,40,62,.62);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border-bottom:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.18);color:#EAF6FB;overflow:hidden;z-index:61;">
+    <div data-ann="" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;letter-spacing:.04em;opacity:1;transition:opacity .55s;">Summer Sale — up to 40% OFF + free worldwide shipping</div>
+    <div data-ann="" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;letter-spacing:.04em;opacity:0;transition:opacity .55s;">Hands-free personal AC — stay cool literally anywhere</div>
+    <div data-ann="" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;letter-spacing:.04em;opacity:0;transition:opacity .55s;">Free shipping · 30-day money-back guarantee</div>
+    <div data-ann="" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;letter-spacing:.04em;opacity:0;transition:opacity .55s;">Selling fast — limited summer stock left</div>
+  </div>
+
+  <!-- HEADER — liquid glass -->
+  <header style="position:sticky;top:0;z-index:60;background:rgba(255,255,255,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border-bottom:1px solid rgba(255,255,255,.5);box-shadow:0 6px 24px rgba(6,47,73,.07),inset 0 1px 0 rgba(255,255,255,.7);">
+    <div style="display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:13px 22px;">
+      <nav style="display:flex;gap:28px;font-size:13.5px;font-weight:600;flex:1;" data-navlinks="">
+        <a href="#product" style="color:var(--mut);transition:color .2s;">Shop</a>
+        <a href="#why" style="color:var(--mut);transition:color .2s;">Why HELIOS</a>
+        <a href="#tt" style="color:var(--mut);transition:color .2s;">Reviews</a>
+      </nav>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:9px;">
+        <span style="font-family:'Archivo';font-weight:900;font-size:25px;letter-spacing:.14em;color:var(--ink2);">HELIOS</span>
+      </div>
+      <div style="flex:1;display:flex;justify-content:flex-end;gap:18px;align-items:center;">
+        <a href="#product" data-mag="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;background:rgba(12,26,36,.82);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:#fff;padding:10px 18px;border-radius:13px;font-family:'Archivo';font-weight:800;font-size:13px;border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);transition:transform .2s;">Cart · <span id="cartCount">0</span></a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section style="padding:18px 16px 0;max-width:1280px;margin:0 auto;">
+    <div style="position:relative;border-radius:28px;overflow:hidden;min-height:clamp(540px,82vh,760px);background:linear-gradient(135deg,var(--ocean1) 0%,var(--ocean2) 55%,var(--ocean3) 100%);box-shadow:0 40px 90px -30px rgba(6,47,73,.6);">
+      <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="position:absolute;inset:-6%;width:112%;height:112%;z-index:0;;object-fit:cover;width:100%;height:100%;">
+      <!-- hero video: dry-ice scene only (trimmed in JS), zoomed to crop the low watermark -->
+      <video id="hero-video" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/hero2.mp4" data-media-video="" muted="" loop="" autoplay="" playsinline="" poster="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/hero-poster.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;transform:none;z-index:1;pointer-events:none;"></video>
+      <div style="position:absolute;top:-30%;right:-10%;width:70%;height:90%;background:radial-gradient(circle at 60% 40%,rgba(150,230,250,.55),rgba(150,230,250,0) 60%);pointer-events:none;mix-blend-mode:screen;z-index:2;"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(105deg,rgba(6,30,46,.66) 0%,rgba(6,30,46,.25) 42%,rgba(6,30,46,0) 70%);pointer-events:none;z-index:2;"></div>
+      <div data-mist="" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;">
+        <span style="position:absolute;left:8%;bottom:-12%;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.5),rgba(255,255,255,0) 68%);filter:blur(14px);animation:heliosdrift 16s ease-in-out infinite;"></span>
+        <span style="position:absolute;left:46%;bottom:-20%;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(200,240,252,.42),rgba(200,240,252,0) 68%);filter:blur(18px);animation:heliosdrift 22s ease-in-out infinite 2s;"></span>
+        <span style="position:absolute;left:72%;bottom:-10%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.4),rgba(255,255,255,0) 68%);filter:blur(13px);animation:heliosdrift 19s ease-in-out infinite 1s;"></span>
+      </div>
+      <div style="position:absolute;right:clamp(-40px,2vw,60px);bottom:6%;z-index:2;animation:heliosfloat 7s ease-in-out infinite;">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="display:block;width:clamp(220px,34vw,440px);height:clamp(280px,42vw,540px);filter:drop-shadow(0 50px 60px rgba(0,20,40,.5));;object-fit:contain;width:100%;height:100%;">
+      </div>
+      <!-- glass shipping popup — appears over the watermark window -->
+      <div id="shipPop" style="position:absolute;top:clamp(38px,7vw,82px);left:clamp(50px,10.6vw,144px);z-index:3;pointer-events:none;opacity:0;transform:translateY(-10px) scale(.96);transition:opacity .5s cubic-bezier(.2,.8,.2,1),transform .5s cubic-bezier(.2,.8,.2,1);">
+        <div style="position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;padding:20px 28px 20px 22px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,.08));backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.55);box-shadow:0 24px 56px rgba(0,25,45,.3),inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(255,255,255,.25);">
+          <span style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,.45),transparent);pointer-events:none;"></span>
+          <span style="position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:skewX(-18deg);animation:heliossheen 4.5s ease-in-out infinite;pointer-events:none;"></span>
+          <span style="position:relative;flex-shrink:0;width:58px;height:58px;border-radius:17px;background:linear-gradient(135deg,rgba(255,255,255,.4),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.6);display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7"></path><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+          </span>
+          <div style="position:relative;line-height:1.18;color:#fff;text-shadow:0 1px 4px rgba(0,20,40,.45);">
+            <div style="font-family:'Archivo';font-weight:800;font-size:23px;letter-spacing:.01em;">FREE USA SHIPPING</div>
+            <div style="font-size:14.5px;font-weight:600;color:rgba(255,255,255,.88);">On every order — no minimum</div>
+          </div>
+        </div>
+      </div>
+      <div style="position:relative;z-index:3;display:flex;flex-direction:column;justify-content:flex-end;min-height:inherit;padding:clamp(34px,5vw,64px);color:#fff;max-width:760px;">
+        <div data-reveal="" style="font-size:12px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.9);">Summer, handled</div>
+        <h1 data-reveal="" style="font-family:'Archivo';font-weight:900;font-size:clamp(72px,15vw,200px);line-height:.82;letter-spacing:-.01em;margin:10px 0 14px;text-shadow:0 8px 40px rgba(0,15,30,.4);">HELIOS</h1>
+        <p data-reveal="" style="font-size:clamp(16px,2.2vw,22px);font-weight:500;max-width:440px;color:rgba(255,255,255,.94);margin:0;">The hands-free personal cooler that follows you everywhere. Ice-cold air, in your pocket.</p>
+        <div data-reveal="" style="display:flex;gap:13px;flex-wrap:wrap;margin-top:26px;align-items:center;">
+          <a href="#product" data-mag="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.85);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:var(--accd);border-radius:15px;padding:17px 30px;font-family:'Archivo';font-weight:800;font-size:16px;border:1px solid rgba(255,255,255,.7);box-shadow:0 18px 40px rgba(0,20,40,.28),inset 0 1px 0 rgba(255,255,255,.9);transition:transform .2s;"><span style="position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.5),transparent 48%);pointer-events:none;"></span><span style="position:relative;">Shop the fan →</span></a>
+          <a href="#why" data-mag="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border-radius:15px;padding:16px 28px;font-family:'Archivo';font-weight:800;font-size:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);transition:transform .2s;"><span style="position:relative;">How it works</span></a>
+        </div>
+        <div data-reveal="" style="display:inline-flex;align-self:flex-start;align-items:center;gap:9px;margin-top:20px;font-size:13.5px;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.32);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);padding:9px 15px;border-radius:30px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);">
+          <span style="color:rgba(255,255,255,.95);letter-spacing:1px;">★★★★★</span> <b style="font-family:'Archivo';font-weight:800;">4.8</b> · <span data-count="3900" data-suffix="+">3,900+</span> happy summers
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE — glass -->
+  <div style="overflow:hidden;margin-top:34px;background:rgba(255,255,255,.45);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border-block:1px solid rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);">
+    <div id="mqt" style="display:inline-flex;white-space:nowrap;align-items:center;gap:44px;padding:15px 0;font-family:'Archivo';font-weight:700;font-size:14.5px;letter-spacing:.04em;color:var(--mut);animation:heliosmq 28s linear infinite;">
+      <span>ICE-COOLING&nbsp;&nbsp;·&nbsp;&nbsp;199 SPEEDS&nbsp;&nbsp;·&nbsp;&nbsp;USB-C&nbsp;&nbsp;·&nbsp;&nbsp;HANDS-FREE&nbsp;&nbsp;·&nbsp;&nbsp;4.8 RATED&nbsp;&nbsp;·&nbsp;&nbsp;FREE SHIPPING&nbsp;&nbsp;·&nbsp;&nbsp;</span>
+    </div>
+  </div>
+
+  <!-- FEATURED IN -->
+  <section style="max-width:1100px;margin:0 auto;padding:38px 22px 8px;text-align:center;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin-bottom:20px;">As featured in</div>
+    <div style="display:flex;flex-wrap:wrap;gap:clamp(26px,5vw,64px);align-items:center;justify-content:center;color:var(--mut);opacity:.62;">
+      <span style="font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:600;font-size:23px;letter-spacing:.01em;">Lumière</span>
+      <span style="font-family:'Archivo';font-weight:900;font-size:18px;letter-spacing:.02em;text-transform:uppercase;">CoolList</span>
+      <span style="font-family:'Archivo';font-weight:600;font-size:16px;letter-spacing:.38em;text-transform:uppercase;">Verve</span>
+      <span style="font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;letter-spacing:.03em;">The Atlas</span>
+      <span style="font-family:'Archivo';font-weight:800;font-style:italic;font-size:19px;letter-spacing:-.01em;">Northside</span>
+    </div>
+  </section>
+
+  <!-- PRODUCT -->
+  <section id="product" style="background:rgba(255,255,255,.42);border-block:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);">
+    <div style="max-width:1200px;margin:0 auto;padding:clamp(48px,7vw,88px) 22px;">
+      <div style="display:grid;grid-template-columns:1fr;gap:40px;" data-prodgrid="">
+        <!-- GALLERY -->
+        <div data-galcol="">
+          <div data-galmain-wrap style="position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--g-bd);box-shadow:var(--g-sh);aspect-ratio:1/1;cursor:zoom-in;">
+            <img id="galMain" data-zoom src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS Mini Cooling Fan" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:transform .5s cubic-bezier(.2,.8,.2,1);">
+            <video id="galVideo" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/hero.mp4" muted loop autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;display:none;"></video>
+            <div style="position:absolute;top:14px;left:14px;display:flex;gap:7px;z-index:3;pointer-events:none;">
+              <span style="background:rgba(12,26,36,.6);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.05em;padding:6px 11px;border-radius:30px;border:1px solid rgba(255,255,255,.2);">TAP TO ZOOM</span>
+            </div>
+            <div style="position:absolute;bottom:14px;right:14px;z-index:3;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.7);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);display:grid;place-items:center;color:var(--accd);border:1px solid rgba(255,255,255,.7);box-shadow:0 6px 18px rgba(0,30,50,.16);pointer-events:none;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3-3M11 8v6M8 11h6"></path></svg></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:11px;">
+            <button data-thumb data-src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" data-fit="cover" style="display:block;padding:0;width:100%;aspect-ratio:1/1;border:2px solid var(--acc);border-radius:14px;overflow:hidden;cursor:pointer;background:#fff;box-shadow:0 6px 16px rgba(14,124,196,.2);transition:.2s;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="Ice studio" style="width:100%;height:100%;object-fit:cover;"></button>
+            <button data-thumb data-src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" data-fit="contain" data-pad="10%" style="display:block;padding:0;width:100%;aspect-ratio:1/1;border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);transition:.2s;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="Front" style="width:100%;height:100%;object-fit:contain;padding:10%;"></button>
+            <button data-thumb data-src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/exploded.webp" data-fit="cover" style="display:block;padding:0;width:100%;aspect-ratio:1/1;border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;background:#fff;transition:.2s;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/exploded.webp" alt="Frost detail" style="width:100%;height:100%;object-fit:cover;"></button>
+            <button data-thumb data-src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/exploded.webp" data-fit="contain" data-pad="4%" style="display:block;padding:0;width:100%;aspect-ratio:1/1;border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;background:linear-gradient(160deg,#F1F8FC,#E1EEF6);transition:.2s;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/exploded.webp" alt="Exploded view" style="width:100%;height:100%;object-fit:contain;padding:4%;"></button>
+            <button data-thumb data-video="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/hero.mp4" style="position:relative;display:block;padding:0;width:100%;aspect-ratio:1/1;border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;background:#0A1219;transition:.2s;"><video src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/hero.mp4" muted loop autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video><span style="position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;"><span style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.82);display:grid;place-items:center;color:var(--accd);"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg></span></span></button>
+          </div>
+        </div>
+        <!-- BUY -->
+        <div data-buycol="">
+          <span style="display:inline-flex;align-items:center;gap:7px;background:rgba(12,26,36,.78);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:#fff;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:30px;margin-bottom:14px;border:1px solid rgba(255,255,255,.18);"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg> As seen on <b style="color:#25f4ee;">TikTok</b></span>
+          <h1 style="font-family:'Archivo';font-weight:800;font-size:clamp(26px,4vw,36px);line-height:1.06;letter-spacing:-.02em;">HELIOS Mini Cooling Fan</h1>
+          <div style="display:flex;align-items:center;gap:8px;margin:10px 0 18px;font-size:13px;color:var(--mut);"><span style="color:var(--accd);letter-spacing:1px;">★★★★★</span> <b style="color:var(--ink);">4.8</b> · <span>3,914 reviews</span></div>
+          <ul style="list-style:none;margin:0 0 22px;padding:0;display:flex;flex-direction:column;gap:6px;">
+            <li style="display:flex;gap:13px;align-items:center;font-size:14.5px;font-weight:500;"><span style="flex-shrink:0;width:36px;height:36px;border-radius:11px;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);box-shadow:var(--g-sh);display:grid;place-items:center;color:var(--accd);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4 7l16 10M20 7L4 17"></path></svg></span><span>Ice-cooling plate — instant cold air on your neck &amp; face</span></li>
+            <li style="display:flex;gap:13px;align-items:center;font-size:14.5px;font-weight:500;"><span style="flex-shrink:0;width:36px;height:36px;border-radius:11px;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);box-shadow:var(--g-sh);display:grid;place-items:center;color:var(--accd);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 16h7a3 3 0 1 1-3 3M3 12h15"></path></svg></span><span>Up to 199 speeds — gentle breeze to full blast</span></li>
+            <li style="display:flex;gap:13px;align-items:center;font-size:14.5px;font-weight:500;"><span style="flex-shrink:0;width:36px;height:36px;border-radius:11px;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);box-shadow:var(--g-sh);display:grid;place-items:center;color:var(--accd);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v8a6 6 0 0 0 12 0V3M12 17v4"></path></svg></span><span>Hands-free &amp; pocket-size — clip it, hold it, wear it</span></li>
+            <li style="display:flex;gap:13px;align-items:center;font-size:14.5px;font-weight:500;"><span style="flex-shrink:0;width:36px;height:36px;border-radius:11px;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);box-shadow:var(--g-sh);display:grid;place-items:center;color:var(--accd);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="16" height="8" rx="2.5"></rect><path d="M21 11v2M6 12h6"></path></svg></span><span>USB-C rechargeable — all-day cooling, charges anywhere</span></li>
+          </ul>
+          <div style="display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accd);background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);padding:8px 13px;border-radius:10px;margin-bottom:14px;box-shadow:var(--g-sh);">Flash Sale — ends tonight</div>
+
+          <div id="stack" style="display:flex;flex-direction:column;gap:11px;">
+            <div data-opt="" data-price="49.99" data-old="59" data-label="1 × HELIOS Fan" style="display:flex;align-items:center;gap:14px;border:2px solid rgba(255,255,255,.5);border-radius:18px;padding:16px 17px;cursor:pointer;position:relative;background:var(--g-bg2);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);transition:border-color .2s,background .2s,box-shadow .2s;">
+              <span data-rad="" style="width:22px;height:22px;border-radius:50%;border:2px solid #B6C6D2;flex-shrink:0;transition:.2s;"></span>
+              <div style="flex:1;"><b style="font-family:'Archivo';font-weight:700;font-size:16px;">1 Fan</b><span style="display:block;font-size:12.5px;color:var(--mut);">Stay cool anywhere</span></div>
+              <div style="text-align:right;"><b style="font-family:'Archivo';font-weight:800;font-size:18px;">$49.99</b><s style="display:block;font-size:12px;color:var(--mut);">$59</s></div>
+            </div>
+            <div data-opt="" data-on="" data-price="69.99" data-old="118" data-label="2 × HELIOS Fan" style="display:flex;align-items:center;gap:14px;border:2px solid var(--acc);border-radius:18px;padding:16px 17px;cursor:pointer;position:relative;background:rgba(224,243,251,.7);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:0 12px 30px rgba(14,124,196,.18),inset 0 1px 0 rgba(255,255,255,.8);transition:border-color .2s,background .2s,box-shadow .2s;">
+              <span style="position:absolute;top:-11px;right:16px;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:var(--acc);padding:4px 10px;border-radius:20px;box-shadow:0 4px 12px rgba(14,124,196,.4);">Most popular</span>
+              <span data-rad="" style="width:22px;height:22px;border-radius:50%;border:6px solid var(--acc);flex-shrink:0;transition:.2s;"></span>
+              <div style="flex:1;"><b style="font-family:'Archivo';font-weight:700;font-size:16px;">2 Fans</b><span style="display:block;font-size:12.5px;color:var(--mut);">One for you, one to gift</span></div>
+              <div style="text-align:right;"><b style="font-family:'Archivo';font-weight:800;font-size:18px;">$69.99</b><s style="display:block;font-size:12px;color:var(--mut);">$118</s></div>
+            </div>
+            <div data-opt="" data-price="79.99" data-old="177" data-label="3 × HELIOS Fan" style="display:flex;align-items:center;gap:14px;border:2px solid rgba(255,255,255,.5);border-radius:18px;padding:16px 17px;cursor:pointer;position:relative;background:var(--g-bg2);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);transition:border-color .2s,background .2s,box-shadow .2s;">
+              <span style="position:absolute;top:-11px;right:16px;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:var(--teal);padding:4px 10px;border-radius:20px;box-shadow:0 4px 12px rgba(47,193,214,.4);">Best value</span>
+              <span data-rad="" style="width:22px;height:22px;border-radius:50%;border:2px solid #B6C6D2;flex-shrink:0;transition:.2s;"></span>
+              <div style="flex:1;"><b style="font-family:'Archivo';font-weight:700;font-size:16px;">3 Fans</b><span style="display:block;font-size:12.5px;color:var(--mut);">The whole family, chilled</span></div>
+              <div style="text-align:right;"><b style="font-family:'Archivo';font-weight:800;font-size:18px;">$79.99</b><s style="display:block;font-size:12px;color:var(--mut);">$177</s></div>
+            </div>
+          </div>
+
+          <div style="margin:18px 0 16px;">
+            <div style="font-family:'Archivo';font-weight:700;font-size:13.5px;margin-bottom:9px;">Complete your Summer Kit &amp; save:</div>
+            <div data-add="16" data-addold="29" style="display:flex;align-items:center;gap:12px;border:var(--g-bd2);border-radius:14px;padding:11px 14px;margin-bottom:9px;cursor:pointer;background:var(--g-bg2);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);transition:.2s;">
+              <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="width:42px;height:42px;flex-shrink:0;border:var(--g-bd2);;object-fit:cover;width:100%;height:100%;border-radius:10px;">
+              <div style="flex:1;font-size:13.5px;font-weight:600;">Mosquito Repellent Bracelet <span style="display:block;font-weight:400;color:var(--mut);font-size:12px;">Chemical-free, USB</span></div>
+              <div style="font-weight:800;font-size:13.5px;"><s style="color:var(--mut);font-weight:400;margin-right:5px;">$29</s>+$16</div>
+              <span data-cb="" style="width:22px;height:22px;border-radius:7px;border:2px solid #AEBECA;flex-shrink:0;display:grid;place-items:center;font-size:13px;color:#fff;transition:.2s;"></span>
+            </div>
+            <div data-add="19" data-addold="39" style="display:flex;align-items:center;gap:12px;border:var(--g-bd2);border-radius:14px;padding:11px 14px;cursor:pointer;background:var(--g-bg2);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);transition:.2s;">
+              <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="width:42px;height:42px;flex-shrink:0;border:var(--g-bd2);;object-fit:cover;width:100%;height:100%;border-radius:10px;">
+              <div style="flex:1;font-size:13.5px;font-weight:600;">UV Cooling Umbrella <span style="display:block;font-weight:400;color:var(--mut);font-size:12px;">SPF50+, ultralight</span></div>
+              <div style="font-weight:800;font-size:13.5px;"><s style="color:var(--mut);font-weight:400;margin-right:5px;">$39</s>+$19</div>
+              <span data-cb="" style="width:22px;height:22px;border-radius:7px;border:2px solid #AEBECA;flex-shrink:0;display:grid;place-items:center;font-size:13px;color:#fff;transition:.2s;"></span>
+            </div>
+          </div>
+
+          <button id="atc" data-mag="" style="position:relative;overflow:hidden;display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:linear-gradient(135deg,rgba(14,124,196,.94),rgba(22,166,214,.9));backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:16px;padding:18px;font-family:'Archivo';font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 16px 36px rgba(14,124,196,.36),inset 0 1px 0 rgba(255,255,255,.5);transition:transform .2s;">
+            <span style="position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 46%);pointer-events:none;z-index:1;"></span>
+            <span style="position:relative;z-index:2;">Add to Cart · <span id="buyTotal">$69.99</span> →</span>
+            <span style="position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:heliossheen 4.5s ease-in-out infinite;z-index:1;"></span>
+          </button>
+
+          <div style="text-align:center;margin-top:14px;font-size:12.5px;color:var(--mut);">30-Day Money-Back · Free Shipping · Secure Checkout</div>
+          <div style="display:flex;gap:7px;justify-content:center;margin-top:12px;opacity:.7;flex-wrap:wrap;">
+            <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);">VISA</span>
+            <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);">MASTERCARD</span>
+            <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);">AMEX</span>
+            <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);">PAYPAL</span>
+            <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);">APPLE PAY</span>
+            <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);">G PAY</span>
+          </div>
+          <div style="margin-top:15px;background:rgba(224,243,251,.55);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:1px solid rgba(255,255,255,.6);border-radius:14px;padding:12px 14px;font-size:12.5px;color:var(--accd);font-weight:600;box-shadow:var(--g-sh);">
+            Summer demand is high — only <b id="stockLeft">24</b> left at this price.
+            <div style="height:6px;background:rgba(14,124,196,.18);border-radius:6px;margin-top:9px;overflow:hidden;"><i style="display:block;height:100%;width:82%;background:linear-gradient(90deg,var(--acc),var(--teal));border-radius:6px;"></i></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:12px;font-size:12px;color:var(--mut);">
+            <span style="width:8px;height:8px;border-radius:50%;background:#19a3c6;animation:heliospulse 1.6s ease-in-out infinite;"></span>
+            <b id="liveViewers" style="color:var(--ink);">38</b> people viewing · <b id="soldToday" style="color:var(--ink);">217</b> sold today
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 360 SPIN -->
+  <section style="position:relative;overflow:hidden;background:radial-gradient(120% 80% at 50% 0%,#FFFFFF 0%,#F1F8FC 100%);border-block:1px solid rgba(255,255,255,.6);color:var(--ink);">
+    <div style="position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:clamp(64px,9vw,128px) 22px;">
+      <div style="text-align:center;max-width:720px;margin:0 auto;">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--accd);">360° look</div>
+        <h2 style="font-family:'Archivo';font-weight:900;font-size:clamp(34px,5.4vw,68px);letter-spacing:-.02em;line-height:1;margin:14px 0 0;">Every angle. Engineered.</h2>
+        <p style="font-size:clamp(15px,1.9vw,19px);color:var(--mut);margin:16px auto 0;max-width:500px;">Aircraft-grade finish, ice-plate core, pocket-ready frame — spinning so you see all of it.</p>
+      </div>
+
+      <div data-spinstage="" style="position:relative;margin-top:8px;height:clamp(500px,70vw,800px);display:flex;align-items:center;justify-content:center;">
+        <!-- rotating rings -->
+        <div style="position:absolute;width:clamp(380px,58vw,680px);height:clamp(380px,58vw,680px);border-radius:50%;border:1px solid rgba(14,124,196,.14);"></div>
+        <div style="position:absolute;width:clamp(310px,48vw,560px);height:clamp(310px,48vw,560px);border-radius:50%;border:1px dashed rgba(47,193,214,.34);animation:heliosspin 28s linear infinite;"></div>
+        <div style="position:absolute;width:clamp(350px,53vw,620px);height:clamp(350px,53vw,620px);border-radius:50%;background:conic-gradient(from 0deg,rgba(47,193,214,0) 0deg,rgba(47,193,214,.26) 60deg,rgba(47,193,214,0) 140deg);animation:heliosspin 9s linear infinite;opacity:.7;filter:blur(2px);"></div>
+        <!-- floor glow -->
+        <div style="position:absolute;bottom:clamp(54px,10vw,120px);width:clamp(260px,44vw,500px);height:70px;border-radius:50%;background:radial-gradient(ellipse,rgba(47,150,200,.28),transparent 70%);filter:blur(12px);"></div>
+        <!-- spinner -->
+        <div data-spin="" style="position:relative;z-index:3;width:clamp(230px,38vw,440px);aspect-ratio:429/545;-webkit-box-reflect:below 2px linear-gradient(transparent 60%,rgba(80,120,150,.18));">
+          <img data-spinframe="" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS front" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:1;transition:opacity .26s ease;filter:drop-shadow(0 34px 44px rgba(20,60,90,.22));">
+          <img data-spinframe="" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .26s ease;filter:drop-shadow(0 34px 44px rgba(20,60,90,.22));">
+          <img data-spinframe="" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .26s ease;filter:drop-shadow(0 34px 44px rgba(20,60,90,.22));">
+          <img data-spinframe="" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .26s ease;filter:drop-shadow(0 34px 44px rgba(20,60,90,.22));">
+          <img data-spinframe="" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .26s ease;filter:drop-shadow(0 34px 44px rgba(20,60,90,.22));">
+          <img data-spinframe="" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .26s ease;filter:drop-shadow(0 34px 44px rgba(20,60,90,.22));">
+        </div>
+        <!-- HUD callouts -->
+        <div data-hud="" style="position:absolute;left:4%;top:15%;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);box-shadow:var(--g-sh);border-radius:15px;padding:12px 15px;max-width:200px;">
+          <div style="font-family:'Archivo';font-weight:800;font-size:14px;color:var(--ink);">Semiconductor ice plate</div>
+          <div style="font-size:11.5px;color:var(--mut);margin-top:2px;">Instant cold contact</div>
+        </div>
+        <div data-hud="" style="position:absolute;right:4%;top:30%;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);box-shadow:var(--g-sh);border-radius:15px;padding:12px 15px;max-width:200px;text-align:right;">
+          <div style="font-family:'Archivo';font-weight:800;font-size:14px;color:var(--ink);">199 wind speeds</div>
+          <div style="font-size:11.5px;color:var(--mut);margin-top:2px;">Breeze to full blast</div>
+        </div>
+        <div data-hud="" style="position:absolute;left:5%;bottom:18%;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);box-shadow:var(--g-sh);border-radius:15px;padding:12px 15px;max-width:200px;">
+          <div style="font-family:'Archivo';font-weight:800;font-size:14px;color:var(--ink);">USB-C fast charge</div>
+          <div style="font-size:11.5px;color:var(--mut);margin-top:2px;">All-day runtime</div>
+        </div>
+        <div data-hud="" style="position:absolute;right:5%;bottom:22%;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);box-shadow:var(--g-sh);border-radius:15px;padding:12px 15px;max-width:200px;text-align:right;">
+          <div style="font-family:'Archivo';font-weight:800;font-size:14px;color:var(--ink);">Soft cooling LED</div>
+          <div style="font-size:11.5px;color:var(--mut);margin-top:2px;">Glow you can feel</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section style="max-width:1200px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+    <div style="text-align:center;max-width:660px;margin:0 auto 44px;">
+      <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">4.8 average</div>
+      <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;">3,900+ five-star summers.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;" data-grid3="">
+      <div data-reveal="" style="background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:24px;overflow:hidden;box-shadow:var(--g-sh);">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="display:block;width:100%;aspect-ratio:4/3;;object-fit:cover;width:100%;height:100%;">
+        <div style="padding:20px;">
+          <div style="color:var(--accd);font-size:13px;margin-bottom:9px;letter-spacing:1px;">★★★★★</div>
+          <p style="font-size:14px;margin:0 0 13px;">"Lives in my bag now. The cooling plate on my neck on a hot commute is unreal. Bought 2 more."</p>
+          <div style="display:flex;align-items:center;gap:9px;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="width:32px;height:32px;flex-shrink:0;;object-fit:cover;width:100%;height:100%;border-radius:50%;"><div><div style="font-size:12.5px;font-weight:700;">Jamie L.</div><div style="font-size:11px;color:#0a8a86;font-weight:600;">✓ Verified buyer</div></div></div>
+        </div>
+      </div>
+      <div data-reveal="" style="background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:24px;overflow:hidden;box-shadow:var(--g-sh);">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="display:block;width:100%;aspect-ratio:4/3;;object-fit:cover;width:100%;height:100%;">
+        <div style="padding:20px;">
+          <div style="color:var(--accd);font-size:13px;margin-bottom:9px;letter-spacing:1px;">★★★★★</div>
+          <p style="font-size:14px;margin:0 0 13px;">"Charged off my power bank all day at the festival. Everyone asked where I got it."</p>
+          <div style="display:flex;align-items:center;gap:9px;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="width:32px;height:32px;flex-shrink:0;;object-fit:cover;width:100%;height:100%;border-radius:50%;"><div><div style="font-size:12.5px;font-weight:700;">Priya S.</div><div style="font-size:11px;color:#0a8a86;font-weight:600;">✓ Verified buyer</div></div></div>
+        </div>
+      </div>
+      <div data-reveal="" style="background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:24px;overflow:hidden;box-shadow:var(--g-sh);">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="display:block;width:100%;aspect-ratio:4/3;;object-fit:cover;width:100%;height:100%;">
+        <div style="padding:20px;">
+          <div style="color:var(--accd);font-size:13px;margin-bottom:9px;letter-spacing:1px;">★★★★★</div>
+          <p style="font-size:14px;margin:0 0 13px;">"Way stronger than I expected for the size. The 199 speeds is real. Worth it."</p>
+          <div style="display:flex;align-items:center;gap:9px;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="width:32px;height:32px;flex-shrink:0;;object-fit:cover;width:100%;height:100%;border-radius:50%;"><div><div style="font-size:12.5px;font-weight:700;">Marco D.</div><div style="font-size:11px;color:#0a8a86;font-weight:600;">✓ Verified buyer</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIKTOK -->
+  <section id="tt" style="background:rgba(255,255,255,.42);border-block:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);">
+    <div style="max-width:1280px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+      <div style="text-align:center;max-width:660px;margin:0 auto 40px;">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">Loved on TikTok</div>
+        <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;">Don't take our word for it.</h2>
+        <p style="color:var(--mut);font-size:16px;margin-top:13px;">Real people. Real summer.</p>
+      </div>
+      <div style="position:relative;">
+        <div data-snow="" style="position:absolute;inset:-30px 0 0;overflow:hidden;pointer-events:none;z-index:1;"></div>
+        <div id="ttrow" data-noscroll="" style="position:relative;z-index:2;display:flex;gap:clamp(16px,3vw,34px);width:max-content;max-width:100%;margin:0 auto;overflow-x:auto;padding:18px 2px 24px;-webkit-overflow-scrolling:touch;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NYC CAMPAIGN -->
+  <section style="position:relative;overflow:hidden;background:radial-gradient(120% 90% at 80% 10%,#0E456B 0%,#072F49 45%,#04141f 100%);color:#fff;">
+    <div data-mist="" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+      <span style="position:absolute;left:-8%;top:14%;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(47,193,214,.16),transparent 68%);filter:blur(26px);animation:heliosdrift 24s ease-in-out infinite;"></span>
+      <span style="position:absolute;right:6%;bottom:-8%;width:460px;height:460px;border-radius:50%;background:radial-gradient(circle,rgba(120,210,235,.14),transparent 68%);filter:blur(24px);animation:heliosdrift 29s ease-in-out infinite 3s;"></span>
+    </div>
+    <div style="position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:clamp(56px,8vw,104px) 22px;display:grid;grid-template-columns:1fr;gap:clamp(36px,5vw,64px);align-items:center;" data-nycgrid="">
+      <div data-reveal="">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:#fff;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:7px 14px;border-radius:30px;">Made for the city</div>
+        <h2 style="font-family:'Archivo';font-weight:900;font-size:clamp(34px,5.6vw,66px);line-height:.96;letter-spacing:-.02em;margin:18px 0 0;">Tired of the<br>swamp-air subway?</h2>
+        <p style="font-size:clamp(16px,2vw,20px);color:rgba(220,236,246,.86);margin:18px 0 0;max-width:460px;">The smell. The sweat. The guy breathing on your neck at rush hour. You can't fix New York — but you can <b style="color:#fff;">carry winter</b> straight through it.</p>
+        <div style="display:flex;flex-direction:column;gap:12px;margin:26px 0 0;max-width:440px;">
+          <div style="display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 16px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2.4" stroke-linecap="round" style="flex-shrink:0;"><path d="M18 6 6 18M6 6l12 12"></path></svg><span style="font-size:14.5px;font-weight:600;">Tired of the 100° platform wait?</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 16px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2.4" stroke-linecap="round" style="flex-shrink:0;"><path d="M18 6 6 18M6 6l12 12"></path></svg><span style="font-size:14.5px;font-weight:600;">Tired of arriving drenched before 9am?</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:13px 16px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2.4" stroke-linecap="round" style="flex-shrink:0;"><path d="M18 6 6 18M6 6l12 12"></path></svg><span style="font-size:14.5px;font-weight:600;">Tired of breathing everyone else's air?</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;margin-top:30px;flex-wrap:wrap;">
+          <a href="#product" data-mag="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:9px;background:#fff;color:var(--accd);border-radius:15px;padding:17px 32px;font-family:'Archivo';font-weight:800;font-size:16px;box-shadow:0 18px 40px rgba(0,20,40,.32);transition:transform .2s;"><span style="position:relative;">Carry Winter →</span></a>
+          <div style="font-family:'Archivo';font-weight:900;font-size:clamp(17px,2.2vw,22px);letter-spacing:.02em;color:rgba(255,255,255,.92);max-width:240px;line-height:1.1;">Be the coolest person in the car.</div>
+        </div>
+      </div>
+      <div data-reveal="" style="position:relative;justify-self:center;width:100%;max-width:430px;">
+        <div style="position:relative;border-radius:24px;overflow:hidden;box-shadow:0 50px 100px -34px rgba(0,12,24,.8),inset 0 0 0 1px rgba(255,255,255,.12);transform:rotate(-1.4deg);">
+          <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/gal-t4.webp" alt="The coolest person in New York — HELIOS, Carry Winter." style="display:block;width:100%;height:auto;">
+        </div>
+        <div style="position:absolute;top:-15px;right:-8px;background:#fff;color:var(--accd);font-family:'Archivo';font-weight:900;font-size:12px;letter-spacing:.06em;padding:9px 14px;border-radius:12px;box-shadow:0 14px 30px rgba(0,20,40,.4);transform:rotate(4deg);">AS SEEN UNDERGROUND</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WOW -->
+  <section data-wow="" style="position:relative;overflow:hidden;background:linear-gradient(135deg,var(--ocean1),var(--ocean2) 60%,var(--ocean3));color:#fff;">
+    <div data-mist="" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+      <span style="position:absolute;left:-10%;top:30%;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.32),rgba(255,255,255,0) 68%);filter:blur(20px);animation:heliosdrift 20s ease-in-out infinite;"></span>
+      <span style="position:absolute;left:55%;top:-10%;width:540px;height:540px;border-radius:50%;background:radial-gradient(circle,rgba(200,240,252,.3),rgba(200,240,252,0) 68%);filter:blur(22px);animation:heliosdrift 26s ease-in-out infinite 3s;"></span>
+    </div>
+    <div data-wowsweep="" style="position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(90deg,rgba(150,230,250,0),rgba(150,230,250,.42) 60%,rgba(150,230,250,0));transform:translateX(-120%);pointer-events:none;mix-blend-mode:screen;"></div>
+    <div style="position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:clamp(70px,11vw,140px) 22px;text-align:center;">
+      <div data-reveal="" style="font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.85);">Feel the difference</div>
+      <h2 data-reveal="" style="font-family:'Archivo';font-weight:900;font-size:clamp(34px,6vw,72px);letter-spacing:-.02em;line-height:1;margin:14px auto 0;max-width:14ch;">A wave of cold air, on demand.</h2>
+      <p data-reveal="" style="font-size:clamp(16px,2vw,20px);color:rgba(255,255,255,.9);max-width:520px;margin:18px auto 0;">The ice-cooling plate drops the air temperature the moment you switch it on. Scroll and feel it sweep.</p>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="why" style="background:rgba(255,255,255,.42);border-block:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);">
+    <div style="max-width:1200px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+      <div style="text-align:center;max-width:660px;margin:0 auto 46px;">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">How it works</div>
+        <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;">Cool in 3 seconds flat.</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;" data-grid3="">
+        <div data-reveal="" style="background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:24px;padding:32px;text-align:center;box-shadow:var(--g-sh);">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--ink2);color:#fff;font-family:'Archivo';font-weight:800;display:grid;place-items:center;margin:0 auto 16px;">1</div>
+          <h3 style="font-family:'Archivo';font-weight:800;font-size:19px;margin-bottom:7px;">Charge it</h3>
+          <p style="font-size:13.5px;color:var(--mut);">USB-C — tops up on the same cable as your phone.</p>
+        </div>
+        <div data-reveal="" style="background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:24px;padding:32px;text-align:center;box-shadow:var(--g-sh);">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--ink2);color:#fff;font-family:'Archivo';font-weight:800;display:grid;place-items:center;margin:0 auto 16px;">2</div>
+          <h3 style="font-family:'Archivo';font-weight:800;font-size:19px;margin-bottom:7px;">Wear or clip it</h3>
+          <p style="font-size:13.5px;color:var(--mut);">Around your neck, on your bag, or hold it — hands-free.</p>
+        </div>
+        <div data-reveal="" style="background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:24px;padding:32px;text-align:center;box-shadow:var(--g-sh);">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--ink2);color:#fff;font-family:'Archivo';font-weight:800;display:grid;place-items:center;margin:0 auto 16px;">3</div>
+          <h3 style="font-family:'Archivo';font-weight:800;font-size:19px;margin-bottom:7px;">Stay cool anywhere</h3>
+          <p style="font-size:13.5px;color:var(--mut);">Ice-cooling plate + 199 speeds = instant relief, all day.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST COUNTERS -->
+  <section style="max-width:1200px;margin:0 auto;padding:clamp(40px,6vw,64px) 22px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" data-grid4="">
+      <div data-reveal="" style="text-align:center;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:22px;padding:28px 14px;box-shadow:var(--g-sh);">
+        <b style="display:block;font-family:'Archivo';font-weight:800;font-size:26px;color:var(--accd);"><span data-count="3914" data-suffix="">3,914</span></b><span style="font-size:12px;color:var(--mut);margin-top:6px;display:block;">Five-star reviews</span>
+      </div>
+      <div data-reveal="" style="text-align:center;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:22px;padding:28px 14px;box-shadow:var(--g-sh);">
+        <b style="display:block;font-family:'Archivo';font-weight:800;font-size:26px;color:var(--accd);">199</b><span style="font-size:12px;color:var(--mut);margin-top:6px;display:block;">Speed levels</span>
+      </div>
+      <div data-reveal="" style="text-align:center;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:22px;padding:28px 14px;box-shadow:var(--g-sh);">
+        <b style="display:block;font-family:'Archivo';font-weight:800;font-size:26px;color:var(--accd);"><span data-count="187000" data-suffix="+">187K+</span></b><span style="font-size:12px;color:var(--mut);margin-top:6px;display:block;">Summers cooled</span>
+      </div>
+      <div data-reveal="" style="text-align:center;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd);border-radius:22px;padding:28px 14px;box-shadow:var(--g-sh);">
+        <b style="display:block;font-family:'Archivo';font-weight:800;font-size:26px;color:var(--accd);">30-Day</b><span style="font-size:12px;color:var(--mut);margin-top:6px;display:block;">Money-back</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPLODED TECH -->
+  <section style="max-width:1200px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+    <div style="display:grid;grid-template-columns:1fr;gap:36px;align-items:center;" data-explgrid="">
+      <div data-reveal="">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">Inside the cold</div>
+        <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(28px,4vw,46px);letter-spacing:-.02em;line-height:1.05;margin:12px 0 22px;">Engineered to feel like ice.</h2>
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="flex-shrink:0;width:36px;height:36px;border-radius:11px;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);color:var(--accd);display:grid;place-items:center;font-weight:800;font-family:'Archivo';box-shadow:var(--g-sh);">01</span><div><b style="font-family:'Archivo';font-size:16px;">Ice-cooling plate</b><p style="color:var(--mut);font-size:14px;margin:3px 0 0;">A semiconductor cold plate chills the air across your neck and face on contact.</p></div></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="flex-shrink:0;width:36px;height:36px;border-radius:11px;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);color:var(--accd);display:grid;place-items:center;font-weight:800;font-family:'Archivo';box-shadow:var(--g-sh);">02</span><div><b style="font-family:'Archivo';font-size:16px;">Brushless turbo motor</b><p style="color:var(--mut);font-size:14px;margin:3px 0 0;">High-static-pressure airflow with 199 fine-grained speed levels — silent to full blast.</p></div></div>
+          <div style="display:flex;gap:14px;align-items:flex-start;"><span style="flex-shrink:0;width:36px;height:36px;border-radius:11px;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:var(--g-bd2);color:var(--accd);display:grid;place-items:center;font-weight:800;font-family:'Archivo';box-shadow:var(--g-sh);">03</span><div><b style="font-family:'Archivo';font-size:16px;">All-day USB-C cell</b><p style="color:var(--mut);font-size:14px;margin:3px 0 0;">Recharges on your phone cable; runs off any power bank for endless cooling.</p></div></div>
+        </div>
+      </div>
+      <div data-reveal="" style="position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--g-bd);box-shadow:var(--g-sh);aspect-ratio:4/3;">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="position:absolute;inset:0;width:100%;height:100%;;object-fit:contain;width:100%;height:100%;">
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section style="max-width:980px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+    <div style="text-align:center;max-width:660px;margin:0 auto 40px;">
+      <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">The difference</div>
+      <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;">HELIOS vs ordinary fans.</h2>
+    </div>
+    <div data-reveal="" style="border:var(--g-bd);border-radius:24px;overflow:hidden;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-shlg);">
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;background:rgba(255,255,255,.4);border-bottom:1px solid rgba(255,255,255,.5);">
+        <div style="padding:18px 20px;font-size:13px;font-weight:700;color:var(--mut);">Feature</div>
+        <div style="padding:18px 14px;text-align:center;font-family:'Archivo';font-weight:900;font-size:16px;color:var(--accd);background:rgba(224,243,251,.5);">HELIOS</div>
+        <div style="padding:18px 14px;text-align:center;font-size:13px;font-weight:700;color:var(--mut);">Ordinary fan</div>
+      </div>
+      <div data-cmprows=""></div>
+    </div>
+  </section>
+
+  <!-- DAY IN THE LIFE -->
+  <section style="background:rgba(255,255,255,.42);border-block:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);">
+    <div style="max-width:1280px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+      <div style="text-align:center;max-width:680px;margin:0 auto 46px;">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">Built for real summer</div>
+        <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;">Wherever the heat hits hardest.</h2>
+        <p style="color:var(--mut);font-size:16px;margin-top:13px;">Four everyday moments that go from unbearable to ice-cold.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;" data-grid4="">
+
+        <div data-reveal="" data-life="" style="position:relative;border-radius:22px;overflow:hidden;aspect-ratio:3/4.4;box-shadow:0 24px 50px -22px rgba(6,30,46,.4);cursor:default;">
+          <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/life-festival.webp" alt="On the train" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;transition:transform .7s cubic-bezier(.2,.8,.2,1);">
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 32%,rgba(5,24,38,.5) 60%,rgba(4,17,29,.93));pointer-events:none;"></div>
+          <div style="position:absolute;top:14px;left:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(8,28,44,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:1px solid rgba(255,255,255,.28);color:#fff;font-size:10px;font-weight:800;letter-spacing:.12em;padding:6px 11px;border-radius:30px;z-index:2;">01 · TRANSIT</div>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 17px;color:#fff;z-index:2;">
+            <div style="font-family:'Archivo';font-weight:800;font-size:21px;line-height:1.05;">On the train</div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:11px;font-size:12.5px;color:rgba(255,255,255,.82);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M18 6 6 18M6 6l12 12"></path></svg><span>Packed car, zero airflow, sweat rising.</span></div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:7px;font-size:12.5px;font-weight:600;color:#fff;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M20 6 9 17l-5-5"></path></svg><span>Cold neck air, hands-free — instantly.</span></div>
+          </div>
+        </div>
+
+        <div data-reveal="" data-life="" style="position:relative;border-radius:22px;overflow:hidden;aspect-ratio:3/4.4;box-shadow:0 24px 50px -22px rgba(6,30,46,.4);cursor:default;">
+          <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/life-beach.webp" alt="At the beach" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;transition:transform .7s cubic-bezier(.2,.8,.2,1);">
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 32%,rgba(5,24,38,.5) 60%,rgba(4,17,29,.93));pointer-events:none;"></div>
+          <div style="position:absolute;top:14px;left:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(8,28,44,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:1px solid rgba(255,255,255,.28);color:#fff;font-size:10px;font-weight:800;letter-spacing:.12em;padding:6px 11px;border-radius:30px;z-index:2;">02 · BEACH</div>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 17px;color:#fff;z-index:2;">
+            <div style="font-family:'Archivo';font-weight:800;font-size:21px;line-height:1.05;">At the beach</div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:11px;font-size:12.5px;color:rgba(255,255,255,.82);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M18 6 6 18M6 6l12 12"></path></svg><span>Relentless sun, not a breath of wind.</span></div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:7px;font-size:12.5px;font-weight:600;color:#fff;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M20 6 9 17l-5-5"></path></svg><span>199 speeds of breeze on demand.</span></div>
+          </div>
+        </div>
+
+        <div data-reveal="" data-life="" style="position:relative;border-radius:22px;overflow:hidden;aspect-ratio:3/4.4;box-shadow:0 24px 50px -22px rgba(6,30,46,.4);cursor:default;">
+          <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/life-festival.webp" alt="At the office" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 28%;transition:transform .7s cubic-bezier(.2,.8,.2,1);">
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 32%,rgba(5,24,38,.5) 60%,rgba(4,17,29,.93));pointer-events:none;"></div>
+          <div style="position:absolute;top:14px;left:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(8,28,44,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:1px solid rgba(255,255,255,.28);color:#fff;font-size:10px;font-weight:800;letter-spacing:.12em;padding:6px 11px;border-radius:30px;z-index:2;">03 · OFFICE</div>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 17px;color:#fff;z-index:2;">
+            <div style="font-family:'Archivo';font-weight:800;font-size:21px;line-height:1.05;">At the office</div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:11px;font-size:12.5px;color:rgba(255,255,255,.82);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M18 6 6 18M6 6l12 12"></path></svg><span>Thermostat wars and broken AC.</span></div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:7px;font-size:12.5px;font-weight:600;color:#fff;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M20 6 9 17l-5-5"></path></svg><span>Your own personal AC at your desk.</span></div>
+          </div>
+        </div>
+
+        <div data-reveal="" data-life="" style="position:relative;border-radius:22px;overflow:hidden;aspect-ratio:3/4.4;box-shadow:0 24px 50px -22px rgba(6,30,46,.4);cursor:default;">
+          <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/life-beach.webp" alt="At the gym" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 26%;transition:transform .7s cubic-bezier(.2,.8,.2,1);">
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 32%,rgba(5,24,38,.5) 60%,rgba(4,17,29,.93));pointer-events:none;"></div>
+          <div style="position:absolute;top:14px;left:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(8,28,44,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border:1px solid rgba(255,255,255,.28);color:#fff;font-size:10px;font-weight:800;letter-spacing:.12em;padding:6px 11px;border-radius:30px;z-index:2;">04 · GYM</div>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 17px;color:#fff;z-index:2;">
+            <div style="font-family:'Archivo';font-weight:800;font-size:21px;line-height:1.05;">At the gym</div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:11px;font-size:12.5px;color:rgba(255,255,255,.82);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff9d9d" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M18 6 6 18M6 6l12 12"></path></svg><span>Overheating mid-set, dripping sweat.</span></div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-top:7px;font-size:12.5px;font-weight:600;color:#fff;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M20 6 9 17l-5-5"></path></svg><span>Ice-plate cooldown between every set.</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- LINEUP -->
+  <section style="max-width:1200px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+    <div style="text-align:center;max-width:660px;margin:0 auto 48px;">
+      <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">The Lineup</div>
+      <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;line-height:1.02;margin:12px 0 0;">Beat summer from every angle.</h2>
+      <p style="color:var(--mut);font-size:16px;margin-top:14px;">Your hero cooler — plus the kit that completes it.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;" data-grid3="">
+      <a href="#product" data-reveal="" data-tilt="" style="position:relative;display:block;border-radius:24px;overflow:hidden;aspect-ratio:4/5;box-shadow:var(--g-sh);transition:transform .35s,box-shadow .35s;">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="position:absolute;inset:0;width:100%;height:100%;;object-fit:cover;width:100%;height:100%;">
+        <div style="position:absolute;inset:0;background:linear-gradient(transparent 38%,rgba(6,30,46,.28) 60%,rgba(6,30,46,.82));pointer-events:none;"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:22px;color:#fff;">
+          <h3 style="font-family:'Archivo';font-weight:800;font-size:21px;">Mini Cooling Fan</h3>
+          <p style="font-size:13.5px;opacity:.9;margin:4px 0 12px;">Hands-free personal AC</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-family:'Archivo';font-weight:800;font-size:19px;">$49.99</span><span style="font-size:13px;font-weight:700;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);padding:7px 13px;border-radius:30px;">Shop →</span></div>
+        </div>
+      </a>
+      <a href="#product" data-reveal="" data-tilt="" style="position:relative;display:block;border-radius:24px;overflow:hidden;aspect-ratio:4/5;box-shadow:var(--g-sh);transition:transform .35s,box-shadow .35s;">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="position:absolute;inset:0;width:100%;height:100%;;object-fit:cover;width:100%;height:100%;">
+        <div style="position:absolute;inset:0;background:linear-gradient(transparent 38%,rgba(6,30,46,.28) 60%,rgba(6,30,46,.82));pointer-events:none;"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:22px;color:#fff;">
+          <h3 style="font-family:'Archivo';font-weight:800;font-size:21px;">Mosquito Bracelet</h3>
+          <p style="font-size:13.5px;opacity:.9;margin:4px 0 12px;">Chemical-free protection</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-family:'Archivo';font-weight:800;font-size:19px;">$16</span><span style="font-size:13px;font-weight:700;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);padding:7px 13px;border-radius:30px;">Add →</span></div>
+        </div>
+      </a>
+      <a href="#product" data-reveal="" data-tilt="" style="position:relative;display:block;border-radius:24px;overflow:hidden;aspect-ratio:4/5;box-shadow:var(--g-sh);transition:transform .35s,box-shadow .35s;">
+        <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="position:absolute;inset:0;width:100%;height:100%;;object-fit:cover;width:100%;height:100%;">
+        <div style="position:absolute;inset:0;background:linear-gradient(transparent 38%,rgba(6,30,46,.28) 60%,rgba(6,30,46,.82));pointer-events:none;"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:22px;color:#fff;">
+          <h3 style="font-family:'Archivo';font-weight:800;font-size:21px;">UV Cooling Umbrella</h3>
+          <p style="font-size:13.5px;opacity:.9;margin:4px 0 12px;">SPF50+ ultralight shade</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-family:'Archivo';font-weight:800;font-size:19px;">$19</span><span style="font-size:13px;font-weight:700;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);padding:7px 13px;border-radius:30px;">Add →</span></div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- GUARANTEE -->
+  <section style="max-width:1200px;margin:0 auto;padding:0 22px clamp(56px,8vw,96px);">
+    <div data-reveal="" style="position:relative;overflow:hidden;background:linear-gradient(135deg,var(--ocean1),var(--ocean2) 70%);color:#fff;border-radius:28px;padding:clamp(48px,7vw,80px) 30px;text-align:center;box-shadow:0 30px 70px -24px rgba(6,47,73,.5);">
+      <div data-mist="" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;"><span style="position:absolute;left:60%;top:-30%;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(200,240,252,.32),rgba(200,240,252,0) 68%);filter:blur(20px);animation:heliosdrift 22s ease-in-out infinite;"></span></div>
+      <div style="position:relative;z-index:2;">
+        <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(26px,3.6vw,40px);letter-spacing:-.02em;">30-Day Cool-or-Refund Guarantee</h2>
+        <p style="opacity:.92;font-size:16px;margin:14px auto 0;max-width:480px;">Try HELIOS for 30 days. If you're not noticeably cooler, send it back for a full refund. The risk is entirely ours.</p>
+        <a href="#product" data-mag="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:9px;margin-top:26px;background:rgba(255,255,255,.9);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:var(--accd);border-radius:15px;padding:16px 32px;font-family:'Archivo';font-weight:800;font-size:16px;border:1px solid rgba(255,255,255,.7);box-shadow:0 16px 34px rgba(0,20,40,.26),inset 0 1px 0 rgba(255,255,255,.9);transition:transform .2s;"><span style="position:relative;">Get yours →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section style="background:rgba(255,255,255,.42);border-block:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.6);">
+    <div style="max-width:760px;margin:0 auto;padding:clamp(56px,8vw,96px) 22px;">
+      <div style="text-align:center;margin:0 auto 36px;">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">FAQ</div>
+        <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;">Good to know.</h2>
+      </div>
+      <details open="" style="border-bottom:1px solid rgba(12,26,36,.1);padding:18px 0;">
+        <summary style="font-family:'Archivo';font-weight:700;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center;">How long does the battery last?<span style="color:var(--accd);font-size:22px;font-weight:400;">+</span></summary>
+        <p style="font-size:14px;color:var(--mut);margin:12px 0 0;">Several hours per charge depending on speed, and it tops up fast over USB-C — run it off a power bank for all-day cooling.</p>
+      </details>
+      <details style="border-bottom:1px solid rgba(12,26,36,.1);padding:18px 0;">
+        <summary style="font-family:'Archivo';font-weight:700;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center;">Is it actually strong enough?<span style="color:var(--accd);font-size:22px;font-weight:400;">+</span></summary>
+        <p style="font-size:14px;color:var(--mut);margin:12px 0 0;">Yes — a brushless motor pushes real airflow, and the ice-cooling plate adds a genuine cold feel on your skin. 199 levels from gentle to full blast.</p>
+      </details>
+      <details style="border-bottom:1px solid rgba(12,26,36,.1);padding:18px 0;">
+        <summary style="font-family:'Archivo';font-weight:700;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center;">Can I wear it hands-free?<span style="color:var(--accd);font-size:22px;font-weight:400;">+</span></summary>
+        <p style="font-size:14px;color:var(--mut);margin:12px 0 0;">Yes — around your neck, clipped to your bag or collar, or on a desk. Totally hands-free.</p>
+      </details>
+      <details style="border-bottom:1px solid rgba(12,26,36,.1);padding:18px 0;">
+        <summary style="font-family:'Archivo';font-weight:700;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center;">Shipping &amp; returns?<span style="color:var(--accd);font-size:22px;font-weight:400;">+</span></summary>
+        <p style="font-size:14px;color:var(--mut);margin:12px 0 0;">Free worldwide shipping and a 30-day money-back guarantee. Not cooler? You're refunded.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section style="text-align:center;padding:clamp(64px,9vw,100px) 22px;">
+    <h2 style="font-family:'Archivo';font-weight:800;font-size:clamp(28px,3.6vw,44px);letter-spacing:-.02em;">Join the HELIOS club.</h2>
+    <p style="color:var(--mut);font-size:16px;margin:14px 0 24px;">Get 10% off your first order + early access to summer drops.</p>
+    <form data-news="" style="display:flex;max-width:460px;margin:0 auto;border:var(--g-bd);border-radius:15px;overflow:hidden;background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);">
+      <input type="email" required="" placeholder="Email address" style="flex:1;border:none;background:none;padding:16px 18px;font-family:'Inter';font-size:14.5px;outline:none;color:var(--ink);">
+      <button type="submit" style="border:none;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;padding:0 26px;font-family:'Archivo';font-weight:800;cursor:pointer;font-size:14px;">Get 10% off</button>
+    </form>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="border-top:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);padding:56px 0 32px;">
+    <div style="max-width:1200px;margin:0 auto;padding:0 22px;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:36px;">
+        <div style="max-width:260px;">
+          <div style="display:flex;align-items:center;gap:9px;"><span style="font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:var(--ink2);">HELIOS</span></div>
+          <p style="color:var(--mut);font-size:13.5px;margin-top:12px;">The hands-free personal cooler for everywhere summer takes you.</p>
+        </div>
+        <div><h5 style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 12px;color:var(--mut);">Shop</h5><ul style="list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.1;color:var(--mut);"><li>Cooling Fan</li><li>Summer Kit</li><li>Best Sellers</li></ul></div>
+        <div><h5 style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 12px;color:var(--mut);">Help</h5><ul style="list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.1;color:var(--mut);"><li>Track Order</li><li>Shipping</li><li>Returns</li><li>Contact</li></ul></div>
+        <div><h5 style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 12px;color:var(--mut);">Company</h5><ul style="list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.1;color:var(--mut);"><li>Our Story</li><li>Reviews</li><li>Guarantee</li></ul></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:34px;flex-wrap:wrap;">
+        <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);">VISA</span>
+        <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);">MASTERCARD</span>
+        <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);">AMEX</span>
+        <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);">PAYPAL</span>
+        <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);">APPLE PAY</span>
+        <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);">G PAY</span>
+        <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);">SHOP PAY</span>
+      </div>
+      <div style="margin-top:18px;font-size:11.5px;color:var(--mut);">© 2026 HELIOS — concept demo store · designed &amp; built by Alexandros B.</div>
+    </div>
+  </footer>
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox" style="display:none;position:fixed;inset:0;z-index:120;background:rgba(8,28,44,.7);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);align-items:center;justify-content:center;padding:24px;cursor:zoom-out;">
+    <img id="lightboxImg" alt="HELIOS" style="max-width:92%;max-height:88%;object-fit:contain;border-radius:18px;filter:drop-shadow(0 30px 60px rgba(0,20,40,.5));">
+    <video id="lightboxVid" muted loop playsinline style="display:none;max-width:92%;max-height:88%;object-fit:contain;border-radius:18px;filter:drop-shadow(0 30px 60px rgba(0,20,40,.5));"></video>
+    <div style="position:absolute;top:20px;right:24px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:grid;place-items:center;color:#fff;font-size:22px;font-family:'Archivo';">×</div>
+  </div>
+
+  <!-- STICKY CART — liquid glass -->
+  <div id="sticky" style="position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(255,255,255,.62);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border-top:1px solid rgba(255,255,255,.6);box-shadow:0 -10px 30px rgba(6,47,73,.14),inset 0 1px 0 rgba(255,255,255,.8);padding:11px 16px;display:flex;align-items:center;gap:14px;transform:translateY(115%);transition:transform .4s cubic-bezier(.2,.8,.2,1);">
+    <div style="display:flex;align-items:center;gap:11px;flex:1;min-width:0;">
+      <img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/product-blue.webp" alt="HELIOS" style="width:42px;height:42px;flex-shrink:0;border:var(--g-bd2);;object-fit:cover;width:100%;height:100%;border-radius:11px;">
+      <div style="min-width:0;"><div style="font-family:'Archivo';font-weight:800;font-size:14px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">HELIOS Fan</div><div style="font-size:12.5px;"><b id="sbprice" style="font-family:'Archivo';font-weight:800;color:var(--ink);">$69.99</b> <s id="sbold" style="color:var(--mut);margin-left:5px;">$118</s></div></div>
+    </div>
+    <button id="atc2" data-mag="" style="flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(14,124,196,.95),rgba(22,166,214,.92));backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:14px;padding:14px 24px;font-family:'Archivo';font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 12px 26px rgba(14,124,196,.32),inset 0 1px 0 rgba(255,255,255,.45);"><span style="position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 46%);pointer-events:none;"></span><span style="position:relative;">Add to Cart →</span></button>
+  </div>
+
+  
+</div>
+<script>
+(function(){function run(){
+
+    
+    const root = document.getElementById('helios');
+    if (!root) return;
+    const $ = (s, c) => (c || root).querySelector(s);
+    const $$ = (s, c) => Array.from((c || root).querySelectorAll(s));
+
+    // ---- props / theming ----
+    const p = {};
+    if (p.accent === 'Glacier teal') {
+      root.style.setProperty('--acc', '#1FA6BE');
+      root.style.setProperty('--acc2', '#34C9DE');
+      root.style.setProperty('--accd', '#15808F');
+    }
+    if (p.stockLeft != null) { const el = $('#stockLeft'); if (el) el.textContent = p.stockLeft; }
+
+    // ---- hero video: force-mute + loop a clean window (skips on-screen logo + end comparison) ----
+    const hv = $('#hero-video');
+    if (hv) {
+      hv.muted = true; hv.defaultMuted = true; hv.volume = 0; hv.loop = true; hv.removeAttribute('controls');
+      hv.setAttribute('loop', '');
+      const kick = () => { hv.muted = true; const pr = hv.play(); if (pr && pr.catch) pr.catch(() => {}); };
+      // bulletproof infinite loop: restart on end + whenever paused
+      hv.addEventListener('ended', () => { try { hv.currentTime = 0; } catch (e) {} kick(); });
+      hv.addEventListener('pause', () => { if (!hv.ended && document.visibilityState === 'visible') kick(); });
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') kick(); });
+      kick(); hv.addEventListener('canplay', kick); hv.addEventListener('loadeddata', kick);
+
+      // ---- glass "Free USA shipping" popup over the watermark window (~5.3s–9.6s) ----
+      const shipPop = $('#shipPop');
+      const A = 3.0, B = 11.2;
+      if (shipPop) {
+        let shown = false;
+        hv.addEventListener('timeupdate', () => {
+          const t = hv.currentTime;
+          const inWin = t >= A && t <= B;
+          if (inWin && !shown) { shown = true; shipPop.style.opacity = '1'; shipPop.style.transform = 'translateY(0) scale(1)'; }
+          else if (!inWin && shown) { shown = false; shipPop.style.opacity = '0'; shipPop.style.transform = 'translateY(-10px) scale(.96)'; }
+        });
+      }
+    }
+
+    // ---- announcement rotation ----
+    const anns = $$('[data-ann]'); let ai = 0;
+    if (anns.length) setInterval(() => {
+      anns[ai].style.opacity = '0';
+      ai = (ai + 1) % anns.length;
+      anns[ai].style.opacity = '1';
+    }, 3600);
+
+    // ---- marquee duplicate ----
+    const mqt = $('#mqt'); if (mqt) mqt.innerHTML += mqt.innerHTML;
+
+    // ---- nav hover ----
+    $$('[data-navlinks] a').forEach(a => {
+      a.addEventListener('mouseenter', () => a.style.color = 'var(--ink)');
+      a.addEventListener('mouseleave', () => a.style.color = 'var(--mut)');
+    });
+
+    // ---- comparison rows ----
+    const cmp = $('[data-cmprows]');
+    if (cmp) {
+      const rows = [
+        ['Ice-cooling plate', true, false],
+        ['199 speed levels', true, false],
+        ['Truly hands-free', true, false],
+        ['Pocket-size & portable', true, false],
+        ['USB-C / power-bank ready', true, false],
+        ['Whisper-quiet motor', true, false],
+      ];
+      cmp.innerHTML = rows.map((r, i) => `
+        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;${i < rows.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,.5);' : ''}">
+          <div style="padding:16px 20px;font-size:14px;font-weight:600;">${r[0]}</div>
+          <div style="padding:16px 14px;text-align:center;background:rgba(224,243,251,.5);color:var(--accd);font-size:18px;font-weight:800;">${r[1] ? '✓' : '—'}</div>
+          <div style="padding:16px 14px;text-align:center;color:#aeb9c2;font-size:18px;font-weight:700;">${r[2] ? '✓' : '✕'}</div>
+        </div>`).join('');
+    }
+
+    // ---- tiktok phones (screen only) ----
+    const play = '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>';
+    const ttrow = $('#ttrow');
+    if (ttrow) {
+      const ttSrc = ['https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/hero2.mp4', 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/hero.mp4', 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/claude/admiring-allen-VD2Zb/helios_assets/tt3.mp4'];
+      ttrow.innerHTML = [0, 1, 2].map((i) => `
+        <div style="flex:0 0 clamp(220px,26vw,270px);animation:heliosbob ${(6.6 + i * 0.8).toFixed(1)}s ease-in-out infinite ${(i * 0.55).toFixed(2)}s;">
+          <div style="position:relative;background:#0A1219;border-radius:44px;padding:9px;box-shadow:0 38px 72px -22px rgba(6,30,46,.55),inset 0 0 0 1px rgba(255,255,255,.08);">
+            <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:100px;height:26px;background:#0A1219;border-radius:0 0 18px 18px;z-index:4;"></div>
+            <div style="position:relative;border-radius:36px;overflow:hidden;aspect-ratio:9/19.3;background:#0e1c26;">
+              <video data-ttvid src="${ttSrc[i]}" muted loop autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+            </div>
+          </div>
+        </div>`).join('');
+      $$('[data-ttvid]').forEach(v => { v.muted = true; v.defaultMuted = true; v.setAttribute('muted', ''); v.loop = true; v.setAttribute('loop', ''); v.addEventListener('ended', () => { try { v.currentTime = 0; } catch (e) {} const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); }); const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); });
+    }
+
+    // ---- 360 auto-rotate turntable ----
+    const spinFrames = $$('[data-spinframe]');
+    const spinStage = $('[data-spinstage]');
+    if (spinFrames.length) {
+      let si = 0, paused = false, baseMs = 620;
+      const showFrame = (n) => spinFrames.forEach((f, k) => { f.style.opacity = k === n ? '1' : '0'; });
+      showFrame(0);
+      setInterval(() => { if (paused) return; si = (si + 1) % spinFrames.length; showFrame(si); }, baseMs);
+      if (spinStage) {
+        spinStage.addEventListener('mouseenter', () => paused = true);
+        spinStage.addEventListener('mouseleave', () => paused = false);
+      }
+    }
+
+    // ---- snow / ice particles in tiktok section ----
+    const snow = $('[data-snow]');
+    if (snow) {
+      let s = '';
+      for (let i = 0; i < 36; i++) {
+        const sz = 2 + Math.random() * 5, left = Math.random() * 100, dur = 7 + Math.random() * 9, delay = -Math.random() * 16, op = (0.4 + Math.random() * 0.5).toFixed(2);
+        s += `<span style="position:absolute;top:0;left:${left.toFixed(1)}%;width:${sz.toFixed(1)}px;height:${sz.toFixed(1)}px;border-radius:50%;background:rgba(176,214,234,${op});box-shadow:0 0 6px rgba(120,180,210,.5);animation:heliossnow ${dur.toFixed(1)}s linear infinite ${delay.toFixed(1)}s;"></span>`;
+      }
+      snow.innerHTML = s;
+    }
+
+    // ---- bundle + addons ----
+    const opts = $$('[data-opt]');
+    let base = 69.99, old = 118, label = '2 × HELIOS Fan';
+    const addons = {};
+    $$('[data-add]').forEach((el, i) => addons[i] = false);
+    const addSum = () => $$('[data-add]').reduce((s, el, i) => s + (addons[i] ? +el.dataset.add : 0), 0);
+    const addOldSum = () => $$('[data-add]').reduce((s, el, i) => s + (addons[i] ? +el.dataset.addold : 0), 0);
+    const fmt = n => '$' + n.toFixed(2);
+    const paint = () => {
+      const t = base + addSum(), o = old + addOldSum();
+      const sbp = $('#sbprice'), sbo = $('#sbold'), bt = $('#buyTotal');
+      if (sbp) sbp.textContent = fmt(t);
+      if (sbo) sbo.textContent = '$' + o;
+      if (bt) bt.textContent = fmt(t);
+    };
+    opts.forEach(o => o.addEventListener('click', () => {
+      opts.forEach(x => {
+        const on = x === o;
+        x.style.borderColor = on ? 'var(--acc)' : 'rgba(255,255,255,.5)';
+        x.style.background = on ? 'rgba(224,243,251,.7)' : 'var(--g-bg2)';
+        x.style.boxShadow = on ? '0 12px 30px rgba(14,124,196,.18),inset 0 1px 0 rgba(255,255,255,.8)' : 'var(--g-sh)';
+        const rad = x.querySelector('[data-rad]');
+        if (rad) rad.style.border = on ? '6px solid var(--acc)' : '2px solid #B6C6D2';
+      });
+      base = +o.dataset.price; old = +o.dataset.old; label = o.dataset.label;
+      paint();
+    }));
+    $$('[data-add]').forEach((el, i) => el.addEventListener('click', () => {
+      addons[i] = !addons[i];
+      const cb = el.querySelector('[data-cb]');
+      el.style.borderColor = addons[i] ? 'var(--acc)' : 'rgba(255,255,255,.45)';
+      el.style.background = addons[i] ? 'rgba(224,243,251,.7)' : 'var(--g-bg2)';
+      if (cb) { cb.style.background = addons[i] ? 'var(--acc)' : 'transparent'; cb.style.borderColor = addons[i] ? 'var(--acc)' : '#AEBECA'; cb.textContent = addons[i] ? '✓' : ''; }
+      paint();
+    }));
+    paint();
+
+    // ---- checkout ----
+    const VAR = {'1 × HELIOS Fan':47931250737317,'2 × HELIOS Fan':47931250770085,'3 × HELIOS Fan':47931250802853};
+    const checkout = (e) => { if (e) e.preventDefault(); const id = VAR[label] || 47931250770085;
+      fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{id:id,quantity:1}]})}).then(r=>r.json()).then(()=>{window.location.href='/checkout';}).catch(()=>{window.location.href='/cart';}); };
+    const atc = $('#atc'), atc2 = $('#atc2');
+    if (atc) atc.onclick = checkout;
+    if (atc2) atc2.onclick = checkout;
+
+    // ---- newsletter ----
+    const nf = $('[data-news]');
+    if (nf) nf.addEventListener('submit', (e) => { e.preventDefault(); alert('You\'re in — check your inbox for 10% off.'); nf.reset(); });
+
+    // ---- reveal ----
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'none'; io.unobserve(e.target); }
+    }), { threshold: 0.12 });
+    $$('[data-reveal]').forEach(el => io.observe(el));
+
+    // ---- count-up ----
+    const fmtNum = (n, suffix) => {
+      if (suffix === '+' && n >= 1000) return (n >= 100000 ? Math.round(n / 1000) + 'K' : (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K') + '+';
+      return n.toLocaleString() + (suffix || '');
+    };
+    const cio = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target; cio.unobserve(el);
+      const target = +el.dataset.count, suffix = el.dataset.suffix || '', t0 = performance.now(), dur = 1400;
+      const tick = (now) => {
+        const k = Math.min(1, (now - t0) / dur);
+        el.textContent = fmtNum(Math.round(target * (1 - Math.pow(1 - k, 3))), suffix);
+        if (k < 1) requestAnimationFrame(tick); else el.textContent = fmtNum(target, suffix);
+      };
+      requestAnimationFrame(tick);
+    }), { threshold: 0.5 });
+    $$('[data-count]').forEach(el => cio.observe(el));
+
+    // ---- magnetic buttons ----
+    $$('[data-mag]').forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.transform = `translate(${((e.clientX - r.left) / r.width - .5) * 7}px, ${((e.clientY - r.top) / r.height - .5) * 7}px)`;
+      });
+      el.addEventListener('mouseleave', () => { el.style.transform = 'translate(0,0)'; });
+    });
+
+    // ---- card lift ----
+    $$('[data-tilt]').forEach(el => {
+      el.addEventListener('mouseenter', () => { el.style.transform = 'translateY(-6px)'; el.style.boxShadow = '0 30px 56px rgba(6,47,73,.18),inset 0 1px 0 rgba(255,255,255,.8)'; });
+      el.addEventListener('mouseleave', () => { el.style.transform = 'none'; el.style.boxShadow = 'var(--g-sh)'; });
+    });
+
+    // ---- lifestyle cards: zoom image on hover ----
+    $$('[data-life]').forEach(el => {
+      const img = el.querySelector('img');
+      if (!img) return;
+      el.addEventListener('mouseenter', () => { img.style.transform = 'scale(1.07)'; });
+      el.addEventListener('mouseleave', () => { img.style.transform = 'scale(1)'; });
+    });
+
+    // ---- product gallery: press thumbs to swap main (image OR video) + tap to zoom ----
+    const galMain = $('#galMain');
+    const galVideo = $('#galVideo');
+    const thumbs = $$('[data-thumb]');
+    let mainIsVideo = false, currentSrc = galMain ? galMain.src : '';
+    const setActiveThumb = (t) => {
+      thumbs.forEach(x => { x.style.borderColor = 'var(--line)'; x.style.boxShadow = 'none'; });
+      t.style.borderColor = 'var(--acc)';
+      t.style.boxShadow = '0 6px 16px rgba(14,124,196,.2)';
+    };
+    thumbs.forEach(t => t.addEventListener('click', () => {
+      setActiveThumb(t);
+      if (t.dataset.video) {
+        mainIsVideo = true; currentSrc = t.dataset.video;
+        if (galMain) galMain.style.display = 'none';
+        if (galVideo) { galVideo.style.display = 'block'; galVideo.muted = true; const pr = galVideo.play(); if (pr && pr.catch) pr.catch(() => {}); }
+      } else {
+        mainIsVideo = false; currentSrc = t.dataset.src;
+        if (galVideo) galVideo.style.display = 'none';
+        if (galMain) { galMain.src = t.dataset.src; galMain.style.objectFit = t.dataset.fit || 'cover'; galMain.style.padding = t.dataset.pad || '0'; galMain.style.display = 'block'; }
+      }
+    }));
+    // force-mute + force-loop every gallery video so they autoplay continuously
+    // (the `muted`/`loop` HTML attrs don't reflect to the IDL props in DC-rendered markup)
+    const forceLoopPlay = (v) => {
+      if (!v) return;
+      v.muted = true; v.defaultMuted = true; v.setAttribute('muted', '');
+      v.loop = true; v.setAttribute('loop', '');
+      v.addEventListener('ended', () => { try { v.currentTime = 0; } catch (e) {} const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); });
+      const pr = v.play(); if (pr && pr.catch) pr.catch(() => {});
+    };
+    if (galVideo) forceLoopPlay(galVideo);
+    $$('[data-thumb][data-video] video').forEach(forceLoopPlay);
+    const lbVidEl = $('#lightboxVid'); if (lbVidEl) { lbVidEl.loop = true; lbVidEl.setAttribute('loop', ''); lbVidEl.muted = true; lbVidEl.addEventListener('ended', () => { try { lbVidEl.currentTime = 0; lbVidEl.play(); } catch (e) {} }); }
+
+    const lb = $('#lightbox'), lbImg = $('#lightboxImg'), lbVid = $('#lightboxVid'), galWrap = $('[data-galmain-wrap]');
+    if (lb && galWrap) {
+      galWrap.addEventListener('click', () => {
+        if (mainIsVideo && lbVid) {
+          lbImg.style.display = 'none';
+          lbVid.style.display = 'block'; lbVid.src = currentSrc; lbVid.muted = true;
+          const pr = lbVid.play(); if (pr && pr.catch) pr.catch(() => {});
+        } else if (lbImg) {
+          if (lbVid) lbVid.style.display = 'none';
+          lbImg.style.display = 'block'; lbImg.src = currentSrc || (galMain && galMain.src);
+        }
+        lb.style.display = 'flex'; document.body.style.overflow = 'hidden';
+      });
+      lb.addEventListener('click', () => { lb.style.display = 'none'; document.body.style.overflow = ''; if (lbVid) lbVid.pause(); });
+    }
+
+    // ---- hover zoom ----
+    const zoom = $('[data-zoom]');
+    if (zoom) {
+      const wrap = zoom.parentElement;
+      wrap.addEventListener('mousemove', (e) => {
+        const r = wrap.getBoundingClientRect();
+        zoom.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+        zoom.style.transform = 'scale(1.7)';
+      });
+      wrap.addEventListener('mouseleave', () => { zoom.style.transform = 'scale(1)'; });
+    }
+
+    // ---- scroll: parallax + sticky + wow sweep ----
+    const sticky = $('#sticky'), wow = $('[data-wow]'), sweep = $('[data-wowsweep]'), para = $$('[data-parallax]');
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return; ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY || window.pageYOffset;
+        para.forEach(el => { el.style.transform = `translateY(${y * (+el.dataset.speed || 0)}px)`; });
+        if (sticky) sticky.style.transform = y > 720 ? 'translateY(0)' : 'translateY(115%)';
+        if (wow && sweep) {
+          const r = wow.getBoundingClientRect(), vh = window.innerHeight;
+          const prog = Math.max(0, Math.min(1, (vh - r.top) / (vh + r.height)));
+          sweep.style.transform = `translateX(${-120 + prog * 320}%)`;
+        }
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // ---- live nudges ----
+    const lv = $('#liveViewers'), sd = $('#soldToday');
+    let viewers = (p.liveBase != null ? p.liveBase : 38), sold = 217;
+    setInterval(() => {
+      viewers = Math.max(22, viewers + (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 3)));
+      if (lv) lv.textContent = viewers;
+      if (Math.random() < 0.4) { sold += 1; if (sd) sd.textContent = sold; }
+    }, 3200);
+  
+}
+if(document.readyState!='loading')run();else document.addEventListener('DOMContentLoaded',run);})();
+</script>
+{% endraw %}
+{% schema %}
+{"name":"HELIOS Store","settings":[],"presets":[{"name":"HELIOS Store"}]}
+{% endschema %}
