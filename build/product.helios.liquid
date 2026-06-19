@@ -1,0 +1,50 @@
+{% layout 'helios' %}{% assign v = product.selected_or_first_available_variant %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;} html,body{margin:0;}
+  .hp{font-family:'Inter',system-ui,sans-serif;color:#0C1A24;min-height:100vh;background:radial-gradient(60% 50% at 12% 6%,rgba(108,196,232,.26),transparent 60%),radial-gradient(55% 45% at 90% 3%,rgba(64,206,222,.2),transparent 60%),linear-gradient(180deg,#E6F2F8,#EEF6FA);padding:0 0 60px;}
+  .hp-bar{display:flex;align-items:center;justify-content:space-between;max-width:1080px;margin:0 auto;padding:18px 22px;}
+  .hp-bar a{font-family:'Archivo';font-weight:800;font-size:13px;color:#0A5E97;text-decoration:none;}
+  .hp-bar .lg{font-family:'Archivo';font-weight:900;letter-spacing:.14em;font-size:20px;color:#0A1219;}
+  .hp-grid{max-width:1080px;margin:0 auto;padding:8px 22px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
+  .hp-media{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:1px solid rgba(255,255,255,.65);box-shadow:0 10px 34px rgba(6,47,73,.13);aspect-ratio:1/1;}
+  .hp-media img{width:100%;height:100%;object-fit:cover;}
+  .hp-buy h1{font-family:'Archivo';font-weight:800;font-size:clamp(26px,4vw,38px);line-height:1.05;letter-spacing:-.02em;margin:6px 0 8px;}
+  .hp-rate{color:#0A5E97;font-size:13px;margin-bottom:14px;letter-spacing:1px;}
+  .hp-price{font-family:'Archivo';font-weight:800;font-size:26px;margin-bottom:18px;}
+  .hp-price s{color:#8a99a5;font-weight:500;font-size:18px;margin-left:8px;}
+  .hp-desc{font-size:15px;color:#46535e;line-height:1.6;margin-bottom:20px;}
+  .hp-feats{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:9px;}
+  .hp-feats li{display:flex;gap:10px;align-items:center;font-size:14.5px;font-weight:500;}
+  .hp-feats li b{color:#0E7CC4;}
+  .hp-cta{width:100%;border:none;cursor:pointer;background:linear-gradient(135deg,#0E7CC4,#16A6D6);color:#fff;font-family:'Archivo';font-weight:800;font-size:17px;padding:18px;border-radius:16px;box-shadow:0 16px 36px rgba(14,124,196,.36);}
+  .hp-guar{text-align:center;font-size:12.5px;color:#5a6b78;margin-top:14px;}
+  @media(max-width:760px){.hp-grid{grid-template-columns:1fr;gap:22px;}}
+</style>
+<div class="hp">
+  <div class="hp-bar"><a href="/">← Back to HELIOS</a><span class="lg">HELIOS</span><span style="width:80px"></span></div>
+  <div class="hp-grid">
+    <div class="hp-media"><img src="{{ v.image | default: product.featured_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}"></div>
+    <div class="hp-buy">
+      <h1>{{ product.title }}</h1>
+      <div class="hp-rate">★★★★★ &nbsp;4.8 · 1,200+ happy summers</div>
+      <div class="hp-price">{{ v.price | money }}{% if v.compare_at_price > v.price %}<s>{{ v.compare_at_price | money }}</s>{% endif %}</div>
+      <div class="hp-desc">{{ product.description }}</div>
+      <ul class="hp-feats">
+        <li><b>❄️</b> Instant cooling — feel it the second it's on</li>
+        <li><b>🔋</b> USB-C rechargeable — all-day runtime</li>
+        <li><b>🤫</b> Whisper-quiet — use it anywhere</li>
+        <li><b>🚚</b> Free shipping · 30-day money-back</li>
+      </ul>
+      <button class="hp-cta" id="hpAdd" data-id="{{ v.id }}">Add to Cart · {{ v.price | money }} →</button>
+      <div class="hp-guar">🛡 30-Day Money-Back · 🚚 Free Shipping · 🔒 Secure Checkout</div>
+    </div>
+  </div>
+</div>
+<script>
+document.getElementById('hpAdd').addEventListener('click',function(){
+  var id=this.getAttribute('data-id');this.textContent='Adding…';
+  fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{id:parseInt(id,10),quantity:1}]})}).then(function(r){return r.json();}).then(function(){window.location.href='/checkout';}).catch(function(){window.location.href='/cart';});
+});
+</script>
