@@ -3,48 +3,114 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;} html,body{margin:0;}
-  .hp{font-family:'Inter',system-ui,sans-serif;color:#0C1A24;min-height:100vh;background:radial-gradient(60% 50% at 12% 6%,rgba(108,196,232,.26),transparent 60%),radial-gradient(55% 45% at 90% 3%,rgba(64,206,222,.2),transparent 60%),linear-gradient(180deg,#E6F2F8,#EEF6FA);padding:0 0 60px;}
-  .hp-bar{display:flex;align-items:center;justify-content:space-between;max-width:1080px;margin:0 auto;padding:18px 22px;}
-  .hp-bar a{font-family:'Archivo';font-weight:800;font-size:13px;color:#0A5E97;text-decoration:none;}
-  .hp-bar .lg{font-family:'Archivo';font-weight:900;letter-spacing:.14em;font-size:20px;color:#0A1219;}
-  .hp-grid{max-width:1080px;margin:0 auto;padding:8px 22px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
-  .hp-media{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:1px solid rgba(255,255,255,.65);box-shadow:0 10px 34px rgba(6,47,73,.13);aspect-ratio:1/1;}
-  .hp-media img{width:100%;height:100%;object-fit:cover;}
-  .hp-buy h1{font-family:'Archivo';font-weight:800;font-size:clamp(26px,4vw,38px);line-height:1.05;letter-spacing:-.02em;margin:6px 0 8px;}
-  .hp-rate{color:#0A5E97;font-size:13px;margin-bottom:14px;letter-spacing:1px;}
-  .hp-price{font-family:'Archivo';font-weight:800;font-size:26px;margin-bottom:18px;}
-  .hp-price s{color:#8a99a5;font-weight:500;font-size:18px;margin-left:8px;}
-  .hp-desc{font-size:15px;color:#46535e;line-height:1.6;margin-bottom:20px;}
-  .hp-feats{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:9px;}
-  .hp-feats li{display:flex;gap:10px;align-items:center;font-size:14.5px;font-weight:500;}
-  .hp-feats li b{color:#0E7CC4;}
-  .hp-cta{width:100%;border:none;cursor:pointer;background:linear-gradient(135deg,#0E7CC4,#16A6D6);color:#fff;font-family:'Archivo';font-weight:800;font-size:17px;padding:18px;border-radius:16px;box-shadow:0 16px 36px rgba(14,124,196,.36);}
-  .hp-guar{text-align:center;font-size:12.5px;color:#5a6b78;margin-top:14px;}
-  @media(max-width:760px){.hp-grid{grid-template-columns:1fr;gap:22px;}}
+  #hp{--ink:#0C1A24;--mut:#56636E;--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--teal:#2FC1D6;
+    --g-bg:rgba(255,255,255,.55);--g-bg2:rgba(255,255,255,.4);--g-bd:1px solid rgba(255,255,255,.65);
+    --g-sh:0 10px 34px rgba(6,47,73,.13),inset 0 1px 0 rgba(255,255,255,.75);--g-blur:blur(20px) saturate(165%);
+    font-family:'Inter',system-ui,sans-serif;color:var(--ink);line-height:1.55;overflow-x:hidden;padding-bottom:84px;
+    background:radial-gradient(60% 50% at 12% 6%,rgba(108,196,232,.26),transparent 60%),radial-gradient(55% 45% at 90% 3%,rgba(64,206,222,.2),transparent 60%),linear-gradient(180deg,#E6F2F8,#EEF6FA);}
+  #hp a{text-decoration:none;color:inherit;}
+  #hp .wrap{max-width:1080px;margin:0 auto;padding:0 22px;}
+  #hp .bar{display:flex;align-items:center;justify-content:space-between;max-width:1080px;margin:0 auto;padding:16px 22px;position:sticky;top:0;z-index:20;background:rgba(255,255,255,.5);backdrop-filter:var(--g-blur);border-bottom:1px solid rgba(255,255,255,.5);}
+  #hp .bar .bk{font-family:'Archivo';font-weight:800;font-size:13px;color:var(--accd);}
+  #hp .bar .lg{font-family:'Archivo';font-weight:900;letter-spacing:.14em;font-size:20px;}
+  #hp .bar .ct{font-family:'Archivo';font-weight:800;font-size:13px;background:rgba(12,26,36,.82);color:#fff;padding:9px 15px;border-radius:12px;}
+  #hp .top{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;padding:28px 0 8px;}
+  #hp .media{position:sticky;top:80px;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--g-bd);box-shadow:var(--g-sh);aspect-ratio:1/1;}
+  #hp .media img{width:100%;height:100%;object-fit:cover;}
+  #hp h1{font-family:'Archivo';font-weight:800;font-size:clamp(28px,4vw,40px);line-height:1.04;letter-spacing:-.02em;margin:4px 0 8px;}
+  #hp .tag{display:inline-flex;align-items:center;gap:7px;background:rgba(12,26,36,.78);color:#fff;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:30px;margin-bottom:14px;}
+  #hp .rate{color:var(--accd);font-size:13px;margin-bottom:14px;letter-spacing:1px;}
+  #hp .price{font-family:'Archivo';font-weight:800;font-size:28px;margin-bottom:16px;}
+  #hp .price s{color:#8a99a5;font-weight:500;font-size:18px;margin-left:8px;}
+  #hp .desc{font-size:15px;color:#46535e;line-height:1.6;margin-bottom:20px;}
+  #hp .feats{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:10px;}
+  #hp .feats li{display:flex;gap:12px;align-items:center;font-size:14.5px;font-weight:500;background:var(--g-bg);border:var(--g-bd);border-radius:13px;padding:12px 14px;box-shadow:var(--g-sh);}
+  #hp .cta{width:100%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-family:'Archivo';font-weight:800;font-size:17px;padding:18px;border-radius:16px;box-shadow:0 16px 36px rgba(14,124,196,.36);transition:transform .15s;}
+  #hp .cta:active{transform:scale(.99);}
+  #hp .guar{text-align:center;font-size:12.5px;color:var(--mut);margin-top:14px;}
+  #hp .pays{display:flex;gap:7px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+  #hp .pays span{font-size:10px;font-weight:700;border:var(--g-bd);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);}
+  #hp .sec{padding:56px 0;}
+  #hp .sh{text-align:center;max-width:620px;margin:0 auto 34px;}
+  #hp .sh .ey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);}
+  #hp .sh h2{font-family:'Archivo';font-weight:800;font-size:clamp(26px,4vw,40px);letter-spacing:-.02em;margin:10px 0 0;}
+  #hp .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  #hp .card{background:var(--g-bg);border:var(--g-bd);border-radius:22px;padding:26px;box-shadow:var(--g-sh);}
+  #hp .card .ic{font-size:26px;margin-bottom:12px;}
+  #hp .card h3{font-family:'Archivo';font-weight:800;font-size:17px;margin:0 0 6px;}
+  #hp .card p{font-size:13.5px;color:var(--mut);margin:0;}
+  #hp .rev .st{color:var(--accd);font-size:13px;margin-bottom:9px;letter-spacing:1px;}
+  #hp .rev p{font-size:14px;margin:0 0 11px;} #hp .rev .who{font-size:12.5px;font-weight:700;}
+  #hp .band{position:relative;overflow:hidden;background:linear-gradient(135deg,#062F49,#0E6FA8 70%);color:#fff;border-radius:26px;padding:clamp(40px,6vw,64px) 30px;text-align:center;box-shadow:0 30px 70px -24px rgba(6,47,73,.5);}
+  #hp .band h2{font-family:'Archivo';font-weight:800;font-size:clamp(24px,3.4vw,36px);margin:0;}
+  #hp .band p{opacity:.92;font-size:15.5px;margin:13px auto 0;max-width:480px;}
+  #hp .band a{display:inline-flex;margin-top:22px;background:#fff;color:var(--accd);border-radius:14px;padding:15px 30px;font-family:'Archivo';font-weight:800;font-size:15px;}
+  #hp details{border-bottom:1px solid rgba(12,26,36,.1);padding:17px 0;}
+  #hp summary{font-family:'Archivo';font-weight:700;font-size:15.5px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:14px;}
+  #hp summary::-webkit-details-marker{display:none;} #hp summary:after{content:'+';color:var(--accd);font-size:20px;}
+  #hp details[open] summary:after{content:'–';} #hp details p{font-size:14px;color:var(--mut);margin:11px 0 0;}
+  #hp .foot{text-align:center;padding:40px 22px;color:var(--mut);font-size:12px;}
+  #hp .sticky{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,255,255,.62);backdrop-filter:var(--g-blur);border-top:1px solid rgba(255,255,255,.6);box-shadow:0 -10px 30px rgba(6,47,73,.14);padding:11px 16px;display:flex;align-items:center;gap:12px;}
+  #hp .sticky .si{flex:1;min-width:0;} #hp .sticky .si b{font-family:'Archivo';font-weight:800;} #hp .sticky .si s{color:var(--mut);font-size:12px;margin-left:5px;}
+  #hp .sticky .sb{flex-shrink:0;border:none;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-family:'Archivo';font-weight:800;font-size:15px;padding:14px 24px;border-radius:13px;cursor:pointer;}
+  @media(max-width:760px){#hp .top{grid-template-columns:1fr;gap:22px;}#hp .media{position:static;}#hp .grid3{grid-template-columns:1fr;}}
 </style>
-<div class="hp">
-  <div class="hp-bar"><a href="/">← Back to HELIOS</a><span class="lg">HELIOS</span><span style="width:80px"></span></div>
-  <div class="hp-grid">
-    <div class="hp-media"><img src="{{ v.image | default: product.featured_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}"></div>
-    <div class="hp-buy">
-      <h1>{{ product.title }}</h1>
-      <div class="hp-rate">★★★★★ &nbsp;4.8 · 1,200+ happy summers</div>
-      <div class="hp-price">{{ v.price | money }}{% if v.compare_at_price > v.price %}<s>{{ v.compare_at_price | money }}</s>{% endif %}</div>
-      <div class="hp-desc">{{ product.description }}</div>
-      <ul class="hp-feats">
-        <li><b>❄️</b> Instant cooling — feel it the second it's on</li>
-        <li><b>🔋</b> USB-C rechargeable — all-day runtime</li>
-        <li><b>🤫</b> Whisper-quiet — use it anywhere</li>
-        <li><b>🚚</b> Free shipping · 30-day money-back</li>
-      </ul>
-      <button class="hp-cta" id="hpAdd" data-id="{{ v.id }}">Add to Cart · {{ v.price | money }} →</button>
-      <div class="hp-guar">🛡 30-Day Money-Back · 🚚 Free Shipping · 🔒 Secure Checkout</div>
+<div id="hp">
+  <div class="bar"><a class="bk" href="/">← HELIOS</a><span class="lg">HELIOS</span><a class="ct" href="/cart">Cart</a></div>
+  <div class="wrap">
+    <div class="top">
+      <div class="media"><img src="{{ v.image | default: product.featured_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}"></div>
+      <div class="buy">
+        <span class="tag">❄️ HELIOS Summer Kit</span>
+        <h1>{{ product.title }}</h1>
+        <div class="rate">★★★★★ &nbsp;4.8 · 1,200+ happy summers</div>
+        <div class="price">{{ v.price | money }}{% if v.compare_at_price > v.price %}<s>{{ v.compare_at_price | money }}</s>{% endif %}</div>
+        <div class="desc">{{ product.description }}</div>
+        <ul class="feats">
+          <li><b>❄️</b> Instant cooling — feel it the second it's on</li>
+          <li><b>🔋</b> USB-C rechargeable — all-day runtime</li>
+          <li><b>🤫</b> Whisper-quiet — use it anywhere</li>
+          <li><b>🚚</b> Free shipping · 30-day money-back</li>
+        </ul>
+        <button class="cta" id="hpAdd" data-id="{{ v.id }}">Add to Cart · {{ v.price | money }} →</button>
+        <div class="guar">🛡 30-Day Money-Back · 🚚 Free Shipping · 🔒 Secure Checkout</div>
+        <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>G PAY</span></div>
+      </div>
     </div>
+
+    <div class="sec"><div class="sh"><div class="ey">Why you'll love it</div><h2>Built to keep you cool.</h2></div>
+      <div class="grid3">
+        <div class="card"><div class="ic">❄️</div><h3>Real cold air</h3><p>Strong, steady cooling the moment you switch it on — no warm-up.</p></div>
+        <div class="card"><div class="ic">🔋</div><h3>All-day battery</h3><p>USB-C rechargeable; runs off any power bank so it never quits on you.</p></div>
+        <div class="card"><div class="ic">🪶</div><h3>Light & portable</h3><p>Goes wherever the heat does — desk, commute, outdoors.</p></div>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sh"><div class="ey">★ 4.8 average</div><h2>People are obsessed.</h2></div>
+      <div class="grid3">
+        <div class="card rev"><div class="st">★★★★★</div><p>"Genuinely cools me down fast. Don't know how I survived summer without it."</p><div class="who">— Alex M.</div></div>
+        <div class="card rev"><div class="st">★★★★★</div><p>"Quiet, light, and the battery actually lasts. Bought a second one."</p><div class="who">— Priya S.</div></div>
+        <div class="card rev"><div class="st">★★★★★</div><p>"Pairs perfectly with my HELIOS fan. The whole kit is a game changer."</p><div class="who">— Marco D.</div></div>
+      </div>
+    </div>
+
+    <div class="sec"><div class="band"><h2>30-Day Cool-or-Refund Guarantee</h2><p>Try it for 30 days. Not noticeably cooler? Send it back for a full refund — the risk is ours.</p><a href="#" onclick="document.getElementById('hpAdd').click();return false;">Get yours →</a></div></div>
+
+    <div class="sec" style="max-width:720px;margin:0 auto;"><div class="sh"><div class="ey">FAQ</div><h2>Good to know.</h2></div>
+      <details open><summary>How long does the battery last?<span></span></summary><p>Several hours per charge depending on the setting, and it tops up fast over USB-C.</p></details>
+      <details><summary>Is it actually cold?<span></span></summary><p>Yes — you feel the cooling immediately. It's built for real summer heat, not a gentle breeze.</p></details>
+      <details><summary>Shipping & returns?<span></span></summary><p>Free shipping and a 30-day money-back guarantee. Not happy? You're refunded.</p></details>
+    </div>
+
+    <div class="foot">© HELIOS — Carry Winter. · <a href="/" style="color:var(--accd);font-weight:600;">Back to store</a></div>
   </div>
+  <div class="sticky"><div class="si"><b>{{ product.title }}</b> · <b>{{ v.price | money }}</b>{% if v.compare_at_price > v.price %}<s>{{ v.compare_at_price | money }}</s>{% endif %}</div><button class="sb" id="hpAdd2">Add to Cart →</button></div>
 </div>
 <script>
-document.getElementById('hpAdd').addEventListener('click',function(){
-  var id=this.getAttribute('data-id');this.textContent='Adding…';
-  fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{id:parseInt(id,10),quantity:1}]})}).then(function(r){return r.json();}).then(function(){window.location.href='/checkout';}).catch(function(){window.location.href='/cart';});
-});
+(function(){
+  function add(btn){ var id=document.getElementById('hpAdd').getAttribute('data-id'); if(btn)btn.textContent='Adding…';
+    fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{id:parseInt(id,10),quantity:1}]})}).then(function(r){return r.json();}).then(function(){window.location.href='/checkout';}).catch(function(){window.location.href='/cart';}); }
+  document.getElementById('hpAdd').addEventListener('click',function(){add(this);});
+  var s=document.getElementById('hpAdd2'); if(s)s.addEventListener('click',function(){add(this);});
+})();
 </script>

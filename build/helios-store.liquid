@@ -41,7 +41,7 @@
   }
 </style>
 
-<style>@media(max-width:760px){#helios [data-heroprod]{display:none !important;}#helios [data-fanband] img{width:58vw !important;}}@media(min-width:761px){#helios [data-fanband]{display:none !important;}}</style>
+<style>@media(max-width:760px){#helios [data-heroprod]{display:none !important;}#helios [data-fanband] img{width:58vw !important;}#helios [data-burger]{display:flex !important;}}@media(min-width:761px){#helios [data-fanband]{display:none !important;}#helios [data-burger]{display:none !important;}}</style>
 <div id="helios" style="--ink:#0C1A24;--ink2:#0A1219;--mut:#56636E;--line:rgba(255,255,255,.6);--lins:rgba(12,26,36,.08);--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--teal:#2FC1D6;--ocean1:#062F49;--ocean2:#0E6FA8;--ocean3:#2FB6D6;--g-bg:rgba(255,255,255,.55);--g-bg2:rgba(255,255,255,.4);--g-bd:1px solid rgba(255,255,255,.65);--g-bd2:1px solid rgba(255,255,255,.45);--g-blur:blur(20px) saturate(165%);--g-sh:0 10px 34px rgba(6,47,73,.13),inset 0 1px 0 rgba(255,255,255,.75);--g-shlg:0 26px 60px -18px rgba(6,47,73,.3),inset 0 1px 0 rgba(255,255,255,.75);font-family:'Inter',system-ui,sans-serif;color:var(--ink);line-height:1.55;overflow-x:hidden;position:relative;padding-bottom:92px;background:radial-gradient(60% 50% at 12% 6%,rgba(108,196,232,.26),transparent 60%),radial-gradient(55% 45% at 90% 3%,rgba(64,206,222,.2),transparent 60%),radial-gradient(52% 42% at 80% 86%,rgba(108,196,232,.18),transparent 60%),linear-gradient(180deg,#E6F2F8,#EEF6FA);background-attachment:fixed;background-repeat:no-repeat;">
 
   <!-- ANNOUNCEMENT — liquid glass -->
@@ -55,10 +55,10 @@
   <!-- HEADER — liquid glass -->
   <header style="position:sticky;top:0;z-index:60;background:rgba(255,255,255,.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);border-bottom:1px solid rgba(255,255,255,.5);box-shadow:0 6px 24px rgba(6,47,73,.07),inset 0 1px 0 rgba(255,255,255,.7);">
     <div style="display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:13px 22px;">
-      <nav style="display:flex;gap:28px;font-size:13.5px;font-weight:600;flex:1;" data-navlinks="">
+      <button data-burger="" aria-label="Menu" style="display:none;align-items:center;background:none;border:none;cursor:pointer;padding:6px 10px 6px 0;flex:1;"><span style="display:block;width:22px;height:2px;background:var(--ink);box-shadow:0 7px 0 var(--ink),0 -7px 0 var(--ink);border-radius:2px;"></span></button><nav style="display:flex;gap:22px;font-size:13.5px;font-weight:600;flex:1;" data-navlinks="">
         <a href="#product" style="color:var(--mut);transition:color .2s;">Shop</a>
         <a href="#why" style="color:var(--mut);transition:color .2s;">Why HELIOS</a>
-        <a href="#tt" style="color:var(--mut);transition:color .2s;">Reviews</a>
+        <a href="#tt" style="color:var(--mut);transition:color .2s;">Reviews</a><a href="/products/portable-mini-ac" style="color:var(--mut);transition:color .2s;">Mini AC</a><a href="/products/bladeless-neck-fan" style="color:var(--mut);transition:color .2s;">Neck Fan</a>
       </nav>
       <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:9px;">
         <span style="font-family:'Archivo';font-weight:900;font-size:25px;letter-spacing:.14em;color:var(--ink2);">HELIOS</span>
@@ -68,6 +68,7 @@
       </div>
     </div>
   </header>
+  <div data-drawer="" style="position:fixed;inset:0;z-index:90;background:rgba(8,28,44,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;"><div style="position:absolute;top:0;left:0;bottom:0;width:80%;max-width:330px;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:22px 20px;display:flex;flex-direction:column;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><span style="font-family:'Archivo';font-weight:900;letter-spacing:.14em;font-size:20px;">HELIOS</span><button data-drawerclose="" aria-label="Close" style="background:none;border:none;font-size:26px;line-height:1;cursor:pointer;color:var(--ink);">&times;</button></div><a href="/" style="padding:15px 4px;font-family:'Archivo';font-weight:700;font-size:16px;border-bottom:1px solid rgba(12,26,36,.08);color:var(--ink);">Home</a><a href="#product" data-dl="" style="padding:15px 4px;font-family:'Archivo';font-weight:700;font-size:16px;border-bottom:1px solid rgba(12,26,36,.08);color:var(--ink);">Shop the Fan</a><a href="/products/portable-mini-ac" style="padding:15px 4px;font-family:'Archivo';font-weight:700;font-size:16px;border-bottom:1px solid rgba(12,26,36,.08);color:var(--ink);">Portable Mini AC</a><a href="/products/bladeless-neck-fan" style="padding:15px 4px;font-family:'Archivo';font-weight:700;font-size:16px;border-bottom:1px solid rgba(12,26,36,.08);color:var(--ink);">Bladeless Neck Fan</a><a href="#why" data-dl="" style="padding:15px 4px;font-family:'Archivo';font-weight:700;font-size:16px;border-bottom:1px solid rgba(12,26,36,.08);color:var(--ink);">Why HELIOS</a><a href="#tt" data-dl="" style="padding:15px 4px;font-family:'Archivo';font-weight:700;font-size:16px;color:var(--ink);">Reviews</a></div></div>
 
   <!-- HERO -->
   <section style="padding:18px 16px 0;max-width:1280px;margin:0 auto;">
@@ -955,6 +956,10 @@
       if (Math.random() < 0.4) { sold += 1; if (sd) sd.textContent = sold; }
     }, 3200);
   
+    var _bg=document.querySelector('#helios [data-burger]'),_dw=document.querySelector('#helios [data-drawer]');
+    if(_bg&&_dw){_bg.addEventListener('click',function(){_dw.style.display='block';document.body.style.overflow='hidden';});
+    _dw.addEventListener('click',function(e){if(e.target===_dw||e.target.closest('[data-drawerclose]')||e.target.hasAttribute('data-dl')){_dw.style.display='none';document.body.style.overflow='';}});}
+
 }
 if(document.readyState!='loading')run();else document.addEventListener('DOMContentLoaded',run);})();
 </script>
