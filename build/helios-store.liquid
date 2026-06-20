@@ -182,7 +182,7 @@
               <div style="text-align:right;"><b style="font-family:'Archivo';font-weight:800;font-size:18px;">$39.99</b><s style="display:block;font-size:12px;color:var(--mut);">$59</s></div>
             </div>
             <div data-opt="" data-on="" data-price="69.99" data-old="118" data-label="2 × HELIOS Fan" style="display:flex;align-items:center;gap:14px;border:2px solid var(--acc);border-radius:18px;padding:16px 17px;cursor:pointer;position:relative;background:rgba(224,243,251,.7);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:0 12px 30px rgba(14,124,196,.18),inset 0 1px 0 rgba(255,255,255,.8);transition:border-color .2s,background .2s,box-shadow .2s;">
-              <span style="position:absolute;top:-11px;right:16px;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:var(--acc);padding:4px 10px;border-radius:20px;box-shadow:0 4px 12px rgba(14,124,196,.4);">Most popular</span>
+              <span style="position:absolute;top:-11px;right:16px;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:var(--acc);padding:4px 10px;border-radius:20px;box-shadow:0 4px 12px rgba(14,124,196,.4);">Buy 1 Get 1</span>
               <span data-rad="" style="width:22px;height:22px;border-radius:50%;border:6px solid var(--acc);flex-shrink:0;transition:.2s;"></span>
               <div style="flex:1;"><b style="font-family:'Archivo';font-weight:700;font-size:16px;">2 Fans</b><span style="display:block;font-size:12.5px;color:var(--mut);">One for you, one to gift</span></div>
               <div style="text-align:right;"><b style="font-family:'Archivo';font-weight:800;font-size:18px;">$69.99</b><s style="display:block;font-size:12px;color:var(--mut);">$118</s></div>
@@ -259,7 +259,7 @@
       </div>
       <div style="position:relative;">
         <div data-snow="" style="position:absolute;inset:-30px 0 0;overflow:hidden;pointer-events:none;z-index:1;"></div>
-        <div id="ttrow" data-noscroll="" style="position:relative;z-index:2;display:flex;gap:clamp(16px,3vw,34px);width:max-content;max-width:100%;margin:0 auto;overflow-x:auto;padding:18px 2px 24px;-webkit-overflow-scrolling:touch;"></div>
+        <div id="ttrow" data-noscroll="" style="position:relative;z-index:2;display:flex;gap:clamp(16px,3vw,34px);width:max-content;max-width:100%;margin:0 auto;overflow-x:auto;padding:18px 2px 24px;-webkit-overflow-scrolling:touch;"></div><div style="display:flex;gap:12px;justify-content:center;margin-top:12px;position:relative;z-index:3;"><button data-ttprev="" aria-label="Previous" style="width:44px;height:44px;border-radius:50%;border:var(--g-bd);background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);cursor:pointer;font-size:22px;line-height:1;color:var(--accd);">‹</button><button data-ttnext="" aria-label="Next" style="width:44px;height:44px;border-radius:50%;border:var(--g-bd);background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-sh);cursor:pointer;font-size:22px;line-height:1;color:var(--accd);">›</button></div>
       </div>
     </div>
   </section>
@@ -983,6 +983,9 @@
       if(e.isIntersecting&&e.intersectionRatio>=0.7&&ready){vids.forEach(function(x){if(x!==v){x.muted=true;}});fade(v);}
       else{v.muted=true;}});},{threshold:[0,0.7,1]});
     vids.forEach(function(v){ao.observe(v);});})();
+
+    var _tp=document.querySelector('#helios [data-ttprev]'),_tn=document.querySelector('#helios [data-ttnext]'),_tr=document.getElementById('ttrow');
+    if(_tp&&_tn&&_tr){var _td=function(){return Math.min(320,(_tr.clientWidth||300)*0.85);};_tp.addEventListener('click',function(){_tr.scrollBy({left:-_td(),behavior:'smooth'});});_tn.addEventListener('click',function(){_tr.scrollBy({left:_td(),behavior:'smooth'});});}
 
 }
 if(document.readyState!='loading')run();else document.addEventListener('DOMContentLoaded',run);})();
