@@ -1,0 +1,55 @@
+{%- assign sid = section.id -%}
+<div class="helios" id="hd-{{ sid }}" style="--ocean1:#062F49;--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--ink:#0C1A24;--ink2:#0A1219;--mut:#56636E;font-family:'Inter',system-ui,sans-serif;">
+<style>
+  #hd-{{ sid }} .hd-bar{position:sticky;top:0;z-index:60;background:rgba(238,246,250,.78);backdrop-filter:blur(20px) saturate(165%);-webkit-backdrop-filter:blur(20px) saturate(165%);border-bottom:1px solid rgba(255,255,255,.55);box-shadow:0 1px 0 rgba(6,47,73,.04);}
+  #hd-{{ sid }} .hd-in{display:flex;align-items:center;gap:14px;max-width:1200px;margin:0 auto;padding:13px 20px;}
+  #hd-{{ sid }} .hd-nav{display:flex;gap:26px;font-size:13.5px;font-weight:600;flex:1;}
+  #hd-{{ sid }} .hd-nav a{color:var(--mut);text-decoration:none;transition:color .2s;}
+  #hd-{{ sid }} .hd-nav a:hover{color:var(--ink);}
+  #hd-{{ sid }} .hd-logo{flex:1;text-align:center;font-family:'Archivo',sans-serif;font-weight:900;letter-spacing:.14em;font-size:23px;color:var(--ink2);text-decoration:none;}
+  #hd-{{ sid }} .hd-right{flex:1;display:flex;justify-content:flex-end;}
+  #hd-{{ sid }} .hd-cart{display:inline-flex;align-items:center;gap:8px;background:var(--ink2);color:#fff;padding:10px 16px;border-radius:12px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;text-decoration:none;}
+  #hd-{{ sid }} .hd-burger{display:none;flex-direction:column;gap:4.5px;width:26px;background:none;border:none;cursor:pointer;padding:4px;}
+  #hd-{{ sid }} .hd-burger span{display:block;height:2.5px;width:100%;background:var(--ink);border-radius:2px;}
+  #hd-{{ sid }} .hd-drawer{position:fixed;inset:0;z-index:90;background:rgba(8,28,44,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;}
+  #hd-{{ sid }} .hd-drawer.open{display:block;}
+  #hd-{{ sid }} .hd-panel{position:absolute;top:0;left:0;bottom:0;width:80%;max-width:330px;background:rgba(255,255,255,.98);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:22px 20px;display:flex;flex-direction:column;}
+  #hd-{{ sid }} .hd-panel a{padding:15px 4px;font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;border-bottom:1px solid rgba(12,26,36,.08);}
+  #hd-{{ sid }} .hd-x{background:none;border:none;font-size:28px;line-height:1;cursor:pointer;color:var(--ink);align-self:flex-end;margin-bottom:8px;}
+  @media(max-width:760px){#hd-{{ sid }} .hd-nav{display:none;}#hd-{{ sid }} .hd-burger{display:flex;}#hd-{{ sid }} .hd-logo{text-align:left;}}
+</style>
+<header class="hd-bar">
+  <div class="hd-in">
+    <button class="hd-burger" data-hdburger aria-label="Menu"><span></span><span></span><span></span></button>
+    <nav class="hd-nav">
+      <a href="{{ section.settings.l1_url | default: '#buy' }}">{{ section.settings.l1 | default: 'Shop' }}</a>
+      <a href="{{ section.settings.l2_url | default: '#reviews' }}">{{ section.settings.l2 | default: 'Reviews' }}</a>
+      <a href="{{ section.settings.l3_url | default: '#faq' }}">{{ section.settings.l3 | default: 'FAQ' }}</a>
+      <a href="{{ section.settings.l4_url | default: '/pages/contact' }}">{{ section.settings.l4 | default: 'Contact' }}</a>
+    </nav>
+    <a href="/" class="hd-logo">{{ section.settings.logo_text | default: 'HELIOS' }}</a>
+    <div class="hd-right"><a href="/cart" class="hd-cart">Cart · {{ cart.item_count }}</a></div>
+  </div>
+</header>
+<div class="hd-drawer" data-hddrawer>
+  <div class="hd-panel">
+    <button class="hd-x" data-hdclose aria-label="Close">&times;</button>
+    <a href="/">Home</a>
+    <a href="{{ section.settings.l1_url | default: '#buy' }}">{{ section.settings.l1 | default: 'Shop' }}</a>
+    <a href="{{ section.settings.l2_url | default: '#reviews' }}">{{ section.settings.l2 | default: 'Reviews' }}</a>
+    <a href="{{ section.settings.l3_url | default: '#faq' }}">{{ section.settings.l3 | default: 'FAQ' }}</a>
+    <a href="{{ section.settings.l4_url | default: '/pages/contact' }}">{{ section.settings.l4 | default: 'Contact' }}</a>
+    <a href="/cart">Cart ({{ cart.item_count }})</a>
+  </div>
+</div>
+<script>
+(function(){var r=document.getElementById('hd-{{ sid }}');if(!r||r.dataset.i)return;r.dataset.i='1';
+var b=r.querySelector('[data-hdburger]'),d=r.querySelector('[data-hddrawer]');
+if(b&&d){b.addEventListener('click',function(){d.classList.add('open');document.body.style.overflow='hidden';});
+d.addEventListener('click',function(e){if(e.target===d||e.target.closest('[data-hdclose]')||e.target.tagName==='A'){d.classList.remove('open');document.body.style.overflow='';}});}
+})();
+</script>
+</div>
+{% schema %}
+{"name":"HELIOS Header","tag":"section","settings":[{"type":"text","id":"logo_text","label":"Logo text","default":"HELIOS"},{"type":"text","id":"l1","label":"Link 1","default":"Shop"},{"type":"text","id":"l1_url","label":"Link 1 URL","default":"#buy"},{"type":"text","id":"l2","label":"Link 2","default":"Reviews"},{"type":"text","id":"l2_url","label":"Link 2 URL","default":"#reviews"},{"type":"text","id":"l3","label":"Link 3","default":"FAQ"},{"type":"text","id":"l3_url","label":"Link 3 URL","default":"#faq"},{"type":"text","id":"l4","label":"Link 4","default":"Contact"},{"type":"text","id":"l4_url","label":"Link 4 URL","default":"/pages/contact"}],"presets":[{"name":"HELIOS Header"}]}
+{% endschema %}
