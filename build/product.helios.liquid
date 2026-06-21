@@ -73,6 +73,10 @@
           <li><b>🚚</b> Free shipping · 30-day money-back</li>
         </ul>
         <button class="cta" id="hpAdd" data-id="{{ v.id }}">Add to Cart · {{ v.price | money }} →</button>
+        <div class="promo" style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-top:12px;background:linear-gradient(135deg,rgba(14,124,196,.10),rgba(22,166,214,.08));border:1.5px dashed rgba(14,124,196,.55);border-radius:14px;padding:11px 13px;">
+          <div style="text-align:left;line-height:1.25;min-width:0;"><div style="font-family:'Archivo';font-weight:800;font-size:13.5px;color:var(--accd);">🎟 16% OFF — today only</div><div style="font-size:11.5px;color:var(--mut);">Code <b style="letter-spacing:.06em;color:var(--ink);">COLDFAN</b> · paste at checkout</div></div>
+          <button type="button" data-copycode="COLDFAN" style="flex-shrink:0;border:none;cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-family:'Archivo';font-weight:800;font-size:12.5px;padding:10px 14px;border-radius:11px;box-shadow:0 8px 18px rgba(14,124,196,.3);white-space:nowrap;">Copy code</button>
+        </div>
         <div class="guar">🛡 30-Day Money-Back · 🚚 Free Shipping · 🔒 Secure Checkout</div>
         <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>G PAY</span></div>
       </div>
@@ -112,5 +116,6 @@
     fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{id:parseInt(id,10),quantity:1}]})}).then(function(r){return r.json();}).then(function(){window.location.href='/checkout';}).catch(function(){window.location.href='/cart';}); }
   document.getElementById('hpAdd').addEventListener('click',function(){add(this);});
   var s=document.getElementById('hpAdd2'); if(s)s.addEventListener('click',function(){add(this);});
+  [].slice.call(document.querySelectorAll('#hp [data-copycode]')).forEach(function(b){b.addEventListener('click',function(){var code=b.getAttribute('data-copycode');var done=function(){var t=b.getAttribute('data-lbl')||b.textContent;b.setAttribute('data-lbl',t);b.textContent='Copied ✓';setTimeout(function(){b.textContent=t;},1800);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done).catch(done);}else{var ta=document.createElement('textarea');ta.value=code;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);done();}});});
 })();
 </script>

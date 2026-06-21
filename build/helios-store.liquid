@@ -218,6 +218,7 @@
             <span style="position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:heliossheen 4.5s ease-in-out infinite;z-index:1;"></span>
           </button>
 
+          <div data-promo="" style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-top:12px;background:linear-gradient(135deg,rgba(14,124,196,.10),rgba(22,166,214,.08));border:1.5px dashed rgba(14,124,196,.55);border-radius:14px;padding:11px 13px;"><div style="text-align:left;line-height:1.25;min-width:0;"><div style="font-family:'Archivo';font-weight:800;font-size:13.5px;color:var(--accd);">🎟 16% OFF — today only</div><div style="font-size:11.5px;color:var(--mut);">Code <b style="letter-spacing:.06em;color:var(--ink);">COLDFAN</b> · paste at checkout</div></div><button type="button" data-copycode="COLDFAN" style="flex-shrink:0;border:none;cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-family:'Archivo';font-weight:800;font-size:12.5px;padding:10px 14px;border-radius:11px;box-shadow:0 8px 18px rgba(14,124,196,.3);white-space:nowrap;">Copy code</button></div>
           <div style="text-align:center;margin-top:14px;font-size:12.5px;color:var(--mut);">30-Day Money-Back · Free Shipping · Secure Checkout</div>
           <div style="display:flex;gap:7px;justify-content:center;margin-top:12px;opacity:.7;flex-wrap:wrap;">
             <span style="font-size:10px;font-weight:700;border:var(--g-bd2);border-radius:6px;padding:4px 8px;color:var(--mut);background:var(--g-bg2);">VISA</span>
@@ -966,6 +967,7 @@
     _dw.addEventListener('click',function(e){if(e.target===_dw||e.target.closest('[data-drawerclose]')||e.target.hasAttribute('data-dl')){_dw.style.display='none';document.body.style.overflow='';}});}
     var _rc=document.querySelector('#helios [data-revcar]'),_rp=document.querySelector('#helios [data-revprev]'),_rn=document.querySelector('#helios [data-revnext]');
     if(_rc&&_rp&&_rn){var _rd=function(){return Math.min(346,_rc.clientWidth*0.85);};_rp.addEventListener('click',function(){_rc.scrollBy({left:-_rd(),behavior:'smooth'});});_rn.addEventListener('click',function(){_rc.scrollBy({left:_rd(),behavior:'smooth'});});}
+    [].slice.call(document.querySelectorAll('#helios [data-copycode]')).forEach(function(b){b.addEventListener('click',function(){var code=b.getAttribute('data-copycode');var done=function(){var t=b.getAttribute('data-lbl')||b.textContent;b.setAttribute('data-lbl',t);b.textContent='Copied \u2713';setTimeout(function(){b.textContent=t;},1800);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done).catch(done);}else{var ta=document.createElement('textarea');ta.value=code;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);done();}});});
 
     (function(){
       var vids=[].slice.call(document.querySelectorAll('#helios [data-ttv]'));
