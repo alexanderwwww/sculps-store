@@ -31,7 +31,8 @@
   }
   #hb-{{ sid }} .hb-stage{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:4/3;}
   #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-  #hb-{{ sid }} .hb-thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:12px;}
+  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{transition:opacity .25s ease;}
+  #hb-{{ sid }} .hb-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px;margin-top:13px;}
   #hb-{{ sid }} .hb-thumb{position:relative;padding:0;width:100%;aspect-ratio:1/1;border:1.5px solid rgba(12,26,36,.10);border-radius:13px;overflow:hidden;cursor:pointer;background:linear-gradient(160deg,#F4FAFD,#E6F1F8);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
   #hb-{{ sid }} .hb-thumb:hover{transform:translateY(-2px);border-color:rgba(14,124,196,.5);box-shadow:0 8px 18px rgba(14,124,196,.18);}
   #hb-{{ sid }} .hb-thumb.sel{border:2px solid var(--helios-acc,#0E7CC4);box-shadow:0 0 0 3px rgba(14,124,196,.15),0 8px 18px rgba(14,124,196,.22);}
@@ -84,13 +85,14 @@
     {%- comment -%} ---------- GALLERY ---------- {%- endcomment -%}
     <div class="hb-gallery">
       <div class="hb-stage" id="hb-stage-{{ sid }}">
-        {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank -%}
-          {{ section.settings.lead_video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, preload: 'metadata', image_size: '1100x' }}
-        {%- elsif section.settings.lead_image != blank -%}
-          <img src="{{ section.settings.lead_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}" loading="eager" width="1100" height="825">
-        {%- elsif product != blank and product.featured_image != blank -%}
-          {{ product.featured_image | image_url: width: 1100 | image_tag: loading: 'eager' }}
-        {%- else -%}
+        {%- assign mainimg = product.featured_image | default: section.settings.lead_image -%}
+        {%- if mainimg != blank -%}
+          <img id="hb-stageimg-{{ sid }}" src="{{ mainimg | image_url: width: 1200 }}" alt="{{ product.title | escape }}" loading="eager">
+        {%- endif -%}
+        {%- if section.settings.lead_video != blank -%}
+          <video id="hb-stagevid-{{ sid }}" muted loop playsinline preload="metadata"{% if mainimg != blank %} style="display:none;"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>
+        {%- endif -%}
+        {%- if mainimg == blank and section.settings.lead_video == blank -%}
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--helios-mut,#56636E);padding:24px;">
             <span style="width:58px;height:58px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-4.5-4.5L7 21"/></svg></span>
             <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add your demo video or photos</div>
@@ -99,22 +101,22 @@
         {%- endif -%}
       </div>
       <div class="hb-thumbs">
-        {%- comment -%} slot 1 = demo video {%- endcomment -%}
-        <button type="button" class="hb-thumb sel" data-video="1">
-          {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank and section.settings.lead_video.preview_image != blank -%}<img src="{{ section.settings.lead_video.preview_image | image_url: width: 200 }}" alt="demo">{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video</span></span>{%- endif -%}
-        </button>
-        {%- comment -%} image slots: fill from product media (Product → Media), min 4 placeholder slots {%- endcomment -%}
+        {%- comment -%} product images first (Product → Media), min 4 slots {%- endcomment -%}
         {%- assign nimg = product.images.size -%}
         {%- if nimg < 4 -%}{%- assign slotcount = 4 -%}{%- else -%}{%- assign slotcount = nimg -%}{%- endif -%}
         {%- for n in (1..slotcount) -%}
           {%- assign idx = n | minus: 1 -%}
           {%- assign img = product.images[idx] -%}
           {%- if img != blank -%}
-            <button type="button" class="hb-thumb{% if forloop.first and section.settings.lead_video == blank and section.settings.lead_image == blank %} sel{% endif %}" data-stagesrc="{{ img | image_url: width: 1100 }}"><img src="{{ img | image_url: width: 200 }}" alt="{{ product.title | escape }}"></button>
+            <button type="button" class="hb-thumb{% if forloop.first %} sel{% endif %}" data-stagesrc="{{ img | image_url: width: 1200 }}"><img src="{{ img | image_url: width: 220 }}" alt="{{ product.title | escape }}"></button>
           {%- else -%}
             <button type="button" class="hb-thumb" aria-hidden="true"><span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-mut,#56636E);font-size:11px;gap:3px;opacity:.7;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>img</span></button>
           {%- endif -%}
         {%- endfor -%}
+        {%- comment -%} demo video LAST {%- endcomment -%}
+        <button type="button" class="hb-thumb" data-video="1">
+          {%- if section.settings.lead_video != blank and section.settings.lead_video.preview_image != blank -%}<img src="{{ section.settings.lead_video.preview_image | image_url: width: 220 }}" alt="demo"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video</span></span>{%- endif -%}
+        </button>
       </div>
     </div>
 
@@ -250,13 +252,20 @@
   if(pre) selectTier(pre);
 
   /* ---- gallery thumbs ---- */
-  var stage = document.getElementById('hb-stage-{{ sid }}');
-  var stageImg = stage && (stage.querySelector('img'));
+  var stageImg = document.getElementById('hb-stageimg-{{ sid }}');
+  var stageVid = document.getElementById('hb-stagevid-{{ sid }}');
+  function swap(src){ if(!stageImg) return; stageImg.style.opacity='0'; setTimeout(function(){ stageImg.removeAttribute('srcset'); stageImg.src=src; stageImg.style.opacity='1'; },120); }
   root.querySelectorAll('.hb-thumb').forEach(function(th){
     th.addEventListener('click', function(){
       root.querySelectorAll('.hb-thumb').forEach(function(x){ x.classList.remove('sel'); });
       th.classList.add('sel');
-      if(th.dataset.stagesrc && stageImg){ var v=stage.querySelector('video'); if(v) v.style.display='none'; stageImg.style.display=''; stageImg.src = th.dataset.stagesrc; }
+      if(th.dataset.video){
+        if(stageImg) stageImg.style.display='none';
+        if(stageVid){ stageVid.style.display=''; var p=stageVid.play(); if(p&&p.catch)p.catch(function(){}); }
+      } else if(th.dataset.stagesrc){
+        if(stageVid){ try{stageVid.pause();}catch(e){} stageVid.style.display='none'; }
+        if(stageImg){ stageImg.style.display=''; swap(th.dataset.stagesrc); }
+      }
     });
   });
 
