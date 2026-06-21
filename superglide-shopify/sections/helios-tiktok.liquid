@@ -1,122 +1,81 @@
-{%- comment -%}
-  HELIOS — TikTok testimonials.
-  • Desktop: 3 phones grid. Mobile: swipeable carousel + dots.
-  • Autoplay muted loop playsinline; sound on HOVER (desktop) / TAP (mobile).
-  • Each clip = a block (video + poster + handle + caption).
-  sections/helios-tiktok.liquid
-{%- endcomment -%}
+{%- comment -%} HELIOS — TikTok testimonials (3 phones desktop / swipe carousel mobile) {%- endcomment -%}
 {%- assign sid = section.id -%}
-<section class="helios" id="ht-{{ sid }}">
+<div class="helios" id="ht-{{ sid }}" style="--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--ink:#0C1A24;--mut:#56636E;font-family:'Inter',system-ui,sans-serif;">
 <style>
-  #ht-{{ sid }} .wrap{max-width:1280px;margin:0 auto;padding:clamp(40px,7vw,88px) 22px;}
-  #ht-{{ sid }} .head{text-align:center;max-width:640px;margin:0 auto 38px;}
-  #ht-{{ sid }} .ey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);}
-  #ht-{{ sid }} h2{font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;}
-  #ht-{{ sid }} .note{color:var(--helios-mut,#56636E);font-size:14px;margin-top:10px;}
-  #ht-{{ sid }} .phone{position:relative;background:#0A1219;border-radius:38px;padding:8px;box-shadow:0 30px 60px -20px rgba(6,30,46,.5);}
-  #ht-{{ sid }} .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:90px;height:22px;background:#0A1219;border-radius:0 0 15px 15px;z-index:4;}
-  #ht-{{ sid }} .screen{position:relative;border-radius:31px;overflow:hidden;aspect-ratio:9/19;background:#11202b;}
-  #ht-{{ sid }} .screen img,#ht-{{ sid }} .screen video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-  #ht-{{ sid }} .screen video{z-index:1;display:none;}
-  #ht-{{ sid }} .mute{position:absolute;bottom:12px;right:12px;z-index:3;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);display:grid;place-items:center;color:#fff;font-size:14px;pointer-events:none;}
-  #ht-{{ sid }} .desk{display:none;grid-template-columns:repeat(3,1fr);gap:22px;max-width:880px;margin:0 auto;}
-  #ht-{{ sid }} .mob{display:block;}
-  #ht-{{ sid }} .mscroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:4px 16vw 6px;}
-  #ht-{{ sid }} .mscroll .phone{flex:0 0 68vw;scroll-snap-align:center;}
-  #ht-{{ sid }} .dots{display:flex;gap:7px;justify-content:center;margin-top:16px;}
-  #ht-{{ sid }} .dots button{width:8px;height:8px;padding:0;border:none;border-radius:50%;background:rgba(12,26,36,.2);cursor:pointer;transition:.25s;}
-  #ht-{{ sid }} .dots button.on{background:var(--helios-acc,#0E7CC4);transform:scale(1.3);}
-  @media(min-width:880px){ #ht-{{ sid }} .desk{display:grid;} #ht-{{ sid }} .mob{display:none;} }
+  #ht-{{ sid }} .ht-wrap{max-width:1040px;margin:0 auto;padding:clamp(46px,7vw,90px) 22px;}
+  #ht-{{ sid }} .ht-head{text-align:center;max-width:640px;margin:0 auto 32px;}
+  #ht-{{ sid }} .ht-ey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);}
+  #ht-{{ sid }} .ht-h{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(28px,4.5vw,48px);letter-spacing:-.02em;margin:10px 0 0;color:var(--ink);}
+  #ht-{{ sid }} .ht-sub{color:var(--mut);font-size:13.5px;margin-top:10px;}
+  #ht-{{ sid }} .ht-grid{display:flex;gap:18px;justify-content:center;align-items:flex-start;}
+  #ht-{{ sid }} .ht-phone{position:relative;flex:0 0 230px;width:230px;background:#0A1219;border-radius:30px;padding:7px;box-shadow:0 24px 50px -18px rgba(6,30,46,.5);}
+  #ht-{{ sid }} .ht-notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:80px;height:18px;background:#0A1219;border-radius:0 0 13px 13px;z-index:5;}
+  #ht-{{ sid }} .ht-screen{position:relative;border-radius:24px;overflow:hidden;aspect-ratio:9/18;background:#11202b;}
+  #ht-{{ sid }} .ht-screen video,#ht-{{ sid }} .ht-screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #ht-{{ sid }} .ht-cap{position:absolute;left:11px;right:11px;bottom:11px;z-index:3;color:#fff;font-size:12px;line-height:1.3;text-shadow:0 1px 8px rgba(0,0,0,.8);pointer-events:none;}
+  #ht-{{ sid }} .ht-cap b{font-weight:800;}
+  #ht-{{ sid }} .ht-sound{position:absolute;top:11px;right:11px;z-index:6;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;color:#fff;font-size:14px;cursor:pointer;border:none;}
+  #ht-{{ sid }} .ht-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#9fb6c4;font-size:12px;}
+  #ht-{{ sid }} .ht-dots{display:none;gap:7px;justify-content:center;margin-top:18px;}
+  #ht-{{ sid }} .ht-dots button{width:8px;height:8px;border-radius:50%;border:none;background:rgba(12,26,36,.2);padding:0;cursor:pointer;transition:.25s;}
+  #ht-{{ sid }} .ht-dots button.on{background:var(--acc);transform:scale(1.3);}
+  @media(max-width:760px){
+    #ht-{{ sid }} .ht-grid{overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;padding:2px 16vw;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+    #ht-{{ sid }} .ht-grid::-webkit-scrollbar{display:none;}
+    #ht-{{ sid }} .ht-phone{flex:0 0 68vw;width:68vw;scroll-snap-align:center;}
+    #ht-{{ sid }} .ht-dots{display:flex;}
+  }
 </style>
-<div class="wrap">
-  <div class="head">
-    {%- if section.settings.eyebrow != blank -%}<div class="ey">{{ section.settings.eyebrow }}</div>{%- endif -%}
-    <h2>{{ section.settings.heading }}</h2>
-    <p class="note">Hover to unmute on desktop · tap on mobile</p>
+<div class="ht-wrap">
+  <div class="ht-head">
+    <div class="ht-ey">{{ section.settings.eyebrow | default: 'Loved on TikTok' }}</div>
+    <h2 class="ht-h">{{ section.settings.heading | default: "It's a whole vibe." }}</h2>
+    <p class="ht-sub">Sound on hover (desktop) · tap a clip (mobile)</p>
   </div>
-
-  {%- comment -%} DESKTOP: 3 phones {%- endcomment -%}
-  <div class="desk">
-    {%- for block in section.blocks limit: 3 -%}
-      <div class="phone" data-ttphone {{ block.shopify_attributes }}>
-        <div class="notch"></div>
-        <div class="screen">
-          {%- if block.settings.poster != blank -%}<img src="{{ block.settings.poster | image_url: width: 500 }}" alt="{{ block.settings.handle | escape }}">{%- endif -%}
-          {%- if block.settings.video != blank -%}{{ block.settings.video | video_tag: loop: true, muted: true, controls: false, playsinline: true, preload: 'none', data-ttvideo: '' }}{%- endif -%}
-          <div class="mute" data-ttmute>🔇</div>
+  <div class="ht-grid" id="ht-grid-{{ sid }}">
+    {%- for block in section.blocks -%}
+      <div class="ht-phone" {{ block.shopify_attributes }}>
+        <div class="ht-notch"></div>
+        <div class="ht-screen">
+          {%- if block.settings.video != blank -%}
+            <video data-htv muted loop autoplay playsinline preload="metadata"{% if block.settings.poster != blank %} poster="{{ block.settings.poster | image_url: width: 600 }}"{% endif %}>{%- for s in block.settings.video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>
+            <button class="ht-sound" data-htsound aria-label="Toggle sound">🔇</button>
+          {%- elsif block.settings.poster != blank -%}
+            <img src="{{ block.settings.poster | image_url: width: 600 }}" alt="{{ block.settings.handle | escape }}">
+          {%- else -%}
+            <div class="ht-ph"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="5 3 19 12 5 21 5 3"/></svg>add a clip</div>
+          {%- endif -%}
+          {%- if block.settings.handle != blank -%}<div class="ht-cap"><b>{{ block.settings.handle }}</b><br>{{ block.settings.caption }}</div>{%- endif -%}
         </div>
       </div>
     {%- endfor -%}
   </div>
-
-  {%- comment -%} MOBILE: swipe carousel {%- endcomment -%}
-  <div class="mob">
-    <div class="mscroll helios-noscroll" id="ht-scroll-{{ sid }}">
-      {%- for block in section.blocks -%}
-        <div class="phone" data-ttphone {{ block.shopify_attributes }}>
-          <div class="notch"></div>
-          <div class="screen">
-            {%- if block.settings.poster != blank -%}<img src="{{ block.settings.poster | image_url: width: 500 }}" alt="{{ block.settings.handle | escape }}">{%- endif -%}
-            {%- if block.settings.video != blank -%}{{ block.settings.video | video_tag: loop: true, muted: true, controls: false, playsinline: true, preload: 'none', data-ttvideo: '' }}{%- endif -%}
-            <div class="mute" data-ttmute>🔇</div>
-          </div>
-        </div>
-      {%- endfor -%}
-    </div>
-    <div class="dots" id="ht-dots-{{ sid }}"></div>
-    <div style="text-align:center;margin-top:10px;font-size:11.5px;color:var(--helios-mut,#56636E);">Swipe · tap a clip for sound</div>
-  </div>
+  <div class="ht-dots" id="ht-dots-{{ sid }}"></div>
 </div>
 <script>
 (function(){
-  var root=document.getElementById('ht-{{ sid }}'); if(!root||root.dataset.init) return; root.dataset.init='1';
-  var touch=matchMedia('(hover: none)').matches;
-  root.querySelectorAll('[data-ttphone]').forEach(function(ph){
-    var v=ph.querySelector('[data-ttvideo]'), mute=ph.querySelector('[data-ttmute]');
-    if(!v) return;
-    function play(){ var p=v.play(); if(p&&p.catch)p.catch(function(){}); v.style.display='block'; }
-    if(!touch){
-      ph.addEventListener('mouseenter',function(){ v.muted=false; if(mute)mute.textContent='🔊'; play(); });
-      ph.addEventListener('mouseleave',function(){ v.muted=true; if(mute)mute.textContent='🔇'; });
-    } else {
-      ph.addEventListener('click',function(){ v.muted=!v.muted; if(mute)mute.textContent=v.muted?'🔇':'🔊'; play(); });
-    }
+  var r=document.getElementById('ht-{{ sid }}'); if(!r||r.dataset.i)return; r.dataset.i='1';
+  var grid=document.getElementById('ht-grid-{{ sid }}');
+  var phones=[].slice.call(r.querySelectorAll('.ht-phone'));
+  var vids=[].slice.call(r.querySelectorAll('[data-htv]'));
+  var touch=!!(window.matchMedia&&window.matchMedia('(hover:none)').matches);
+  function icon(v,on){var b=v.parentElement.querySelector('[data-htsound]');if(b)b.textContent=on?'🔊':'🔇';}
+  function muteAll(except){vids.forEach(function(v){if(v!==except){v.muted=true;icon(v,false);}});}
+  vids.forEach(function(v){v.muted=true;var p=v.play();if(p&&p.catch)p.catch(function(){});
+    var ph=v.closest('.ht-phone');
+    if(!touch&&ph){ph.addEventListener('mouseenter',function(){muteAll(v);v.muted=false;v.volume=1;icon(v,true);var q=v.play();if(q&&q.catch)q.catch(function(){});});ph.addEventListener('mouseleave',function(){v.muted=true;icon(v,false);});}
+    var b=v.parentElement.querySelector('[data-htsound]');
+    if(b)b.addEventListener('click',function(e){e.stopPropagation();if(v.muted){muteAll(v);v.muted=false;v.volume=1;var q=v.play();if(q&&q.catch)q.catch(function(){});icon(v,true);}else{v.muted=true;icon(v,false);}});
   });
-  /* mobile dots */
-  var sc=document.getElementById('ht-scroll-{{ sid }}'), dots=document.getElementById('ht-dots-{{ sid }}');
-  if(sc&&dots){
-    var cards=[].slice.call(sc.children);
-    dots.innerHTML=cards.map(function(_,i){return '<button'+(i===0?' class="on"':'')+'></button>';}).join('');
+  // mobile dots
+  var dots=document.getElementById('ht-dots-{{ sid }}');
+  if(dots&&phones.length){dots.innerHTML=phones.map(function(_,i){return '<button'+(i===0?' class="on"':'')+'></button>';}).join('');
     var ds=[].slice.call(dots.children);
-    ds.forEach(function(d,i){ d.addEventListener('click',function(){ var c=cards[i]; sc.scrollTo({left:c.offsetLeft-(sc.clientWidth-c.clientWidth)/2,behavior:'smooth'}); }); });
-    var t; sc.addEventListener('scroll',function(){ clearTimeout(t); t=setTimeout(function(){ var ctr=sc.scrollLeft+sc.clientWidth/2,best=0,bd=1e9; cards.forEach(function(c,i){ var cc=c.offsetLeft+c.clientWidth/2,dd=Math.abs(cc-ctr); if(dd<bd){bd=dd;best=i;} }); ds.forEach(function(d,k){ d.className=k===best?'on':''; }); },60); },{passive:true});
-  }
+    ds.forEach(function(d,i){d.addEventListener('click',function(){var p=phones[i];grid.scrollTo({left:p.offsetLeft-(grid.clientWidth-p.clientWidth)/2,behavior:'smooth'});});});
+    var t;grid.addEventListener('scroll',function(){clearTimeout(t);t=setTimeout(function(){var c=grid.scrollLeft+grid.clientWidth/2,best=0,bd=1e9;phones.forEach(function(p,i){var cc=p.offsetLeft+p.clientWidth/2,dd=Math.abs(cc-c);if(dd<bd){bd=dd;best=i;}});ds.forEach(function(d,i){d.className=i===best?'on':'';});},60);},{passive:true});}
 })();
 </script>
+</div>
 {% schema %}
-{
-  "name": "HELIOS TikTok",
-  "tag": "section",
-  "settings": [
-    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Loved on TikTok" },
-    { "type": "text", "id": "heading", "label": "Heading", "default": "It's a whole vibe." }
-  ],
-  "blocks": [
-    { "type": "clip", "name": "UGC clip", "settings": [
-      { "type": "video", "id": "video", "label": "Vertical video" },
-      { "type": "image_picker", "id": "poster", "label": "Poster image" },
-      { "type": "text", "id": "handle", "label": "Handle", "default": "@lakedays" },
-      { "type": "text", "id": "caption", "label": "Caption", "default": "we raced till the batteries died 🌊" }
-    ]}
-  ],
-  "presets": [{
-    "name": "HELIOS TikTok",
-    "blocks": [
-      { "type": "clip", "settings": { "handle": "@lakedays", "caption": "we raced till the batteries died 🌊" } },
-      { "type": "clip", "settings": { "handle": "@poolboy", "caption": "best $200 I've spent all summer 🔥" } },
-      { "type": "clip", "settings": { "handle": "@summercrew", "caption": "whole family wants one now 😂" } },
-      { "type": "clip", "settings": { "handle": "@beachdays", "caption": "obsessed, taking it everywhere ☀️" } }
-    ]
-  }]
-}
+{"name":"HELIOS TikTok","tag":"section","settings":[{"type":"text","id":"eyebrow","label":"Eyebrow","default":"Loved on TikTok"},{"type":"text","id":"heading","label":"Heading","default":"It's a whole vibe."}],"blocks":[{"type":"clip","name":"UGC clip","settings":[{"type":"video","id":"video","label":"Vertical video"},{"type":"image_picker","id":"poster","label":"Poster image (optional)"},{"type":"text","id":"handle","label":"Handle","default":"@lakedays"},{"type":"text","id":"caption","label":"Caption","default":"we raced till the batteries died 🌊"}]}],"max_blocks":6,"presets":[{"name":"HELIOS TikTok","blocks":[{"type":"clip","settings":{"handle":"@lakedays","caption":"we raced till the batteries died 🌊"}},{"type":"clip","settings":{"handle":"@poolboy","caption":"best $200 I've spent all summer 🔥"}},{"type":"clip","settings":{"handle":"@summercrew","caption":"whole family wants one now 😂"}}]}]}
 {% endschema %}
