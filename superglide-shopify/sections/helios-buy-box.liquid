@@ -87,17 +87,21 @@
           {{ section.settings.lead_video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, preload: 'metadata', image_size: '1100x' }}
         {%- elsif section.settings.lead_image != blank -%}
           <img src="{{ section.settings.lead_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}" loading="eager" width="1100" height="825">
-        {%- else -%}
+        {%- elsif product != blank and product.featured_image != blank -%}
           {{ product.featured_image | image_url: width: 1100 | image_tag: loading: 'eager' }}
+        {%- else -%}
+          <div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--helios-mut,#56636E);font-size:13px;padding:20px;">▶ Main media — add your demo video or image</div>
         {%- endif -%}
       </div>
       <div class="hb-thumbs">
         {%- comment -%} first thumb = lead media {%- endcomment -%}
-        <button type="button" class="hb-thumb sel" data-stagesrc="{{ section.settings.lead_image | image_url: width: 300 }}">
-          {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank -%}
+        <button type="button" class="hb-thumb sel"{% if section.settings.lead_image != blank %} data-stagesrc="{{ section.settings.lead_image | image_url: width: 300 }}"{% endif %}>
+          {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank and section.settings.lead_video.preview_image != blank -%}
             <img src="{{ section.settings.lead_video.preview_image | image_url: width: 200 }}" alt="demo">
-          {%- else -%}
+          {%- elsif section.settings.lead_image != blank -%}
             <img src="{{ section.settings.lead_image | image_url: width: 200 }}" alt="">
+          {%- else -%}
+            <span style="display:grid;place-items:center;width:100%;height:100%;color:var(--helios-mut,#56636E);font-size:18px;">▶</span>
           {%- endif -%}
         </button>
         {%- for block in section.blocks -%}
