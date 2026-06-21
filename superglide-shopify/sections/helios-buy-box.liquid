@@ -94,16 +94,20 @@
         {%- endif -%}
       </div>
       <div class="hb-thumbs">
-        {%- comment -%} first thumb = lead media {%- endcomment -%}
-        <button type="button" class="hb-thumb sel"{% if section.settings.lead_image != blank %} data-stagesrc="{{ section.settings.lead_image | image_url: width: 300 }}"{% endif %}>
-          {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank and section.settings.lead_video.preview_image != blank -%}
-            <img src="{{ section.settings.lead_video.preview_image | image_url: width: 200 }}" alt="demo">
-          {%- elsif section.settings.lead_image != blank -%}
-            <img src="{{ section.settings.lead_image | image_url: width: 200 }}" alt="">
-          {%- else -%}
-            <span style="display:grid;place-items:center;width:100%;height:100%;color:var(--helios-mut,#56636E);font-size:18px;">▶</span>
-          {%- endif -%}
-        </button>
+        {%- comment -%} video thumb (if a demo video is set) {%- endcomment -%}
+        {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank -%}
+          <button type="button" class="hb-thumb sel" data-video="1">
+            {%- if section.settings.lead_video.preview_image != blank -%}<img src="{{ section.settings.lead_video.preview_image | image_url: width: 200 }}" alt="demo">{%- else -%}<span style="display:grid;place-items:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:16px;">▶</span>{%- endif -%}
+          </button>
+        {%- elsif section.settings.lead_image != blank -%}
+          <button type="button" class="hb-thumb sel" data-stagesrc="{{ section.settings.lead_image | image_url: width: 1100 }}"><img src="{{ section.settings.lead_image | image_url: width: 200 }}" alt=""></button>
+        {%- endif -%}
+        {%- comment -%} product images become clickable thumbnails automatically {%- endcomment -%}
+        {%- for img in product.images limit: 8 -%}
+          <button type="button" class="hb-thumb{% if forloop.first and section.settings.lead_video == blank and section.settings.lead_image == blank %} sel{% endif %}" data-stagesrc="{{ img | image_url: width: 1100 }}">
+            <img src="{{ img | image_url: width: 200 }}" alt="{{ product.title | escape }}">
+          </button>
+        {%- endfor -%}
         {%- for block in section.blocks -%}
           {%- if block.type == 'thumb' and block.settings.image != blank -%}
             <button type="button" class="hb-thumb" data-stagesrc="{{ block.settings.image | image_url: width: 1100 }}" {{ block.shopify_attributes }}>
