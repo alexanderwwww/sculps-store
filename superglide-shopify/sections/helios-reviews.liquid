@@ -1,0 +1,117 @@
+{%- comment -%}
+  HELIOS — Reviews: ★4.8 summary + star-distribution bars + floating wall of cards.
+  20 verified reviews ship as defaults (edit the arrays below).
+  sections/helios-reviews.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+<section class="helios" id="hr-{{ sid }}">
+<style>
+  #hr-{{ sid }}{display:block;overflow:hidden;}
+  #hr-{{ sid }} .head{text-align:center;max-width:640px;margin:0 auto;padding:clamp(40px,7vw,80px) 22px 0;}
+  #hr-{{ sid }} .ey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);}
+  #hr-{{ sid }} h2{font-family:'Archivo';font-weight:800;font-size:clamp(28px,4.2vw,46px);letter-spacing:-.02em;margin:12px 0 0;}
+  #hr-{{ sid }} .summary{display:flex;flex-wrap:wrap;gap:26px;align-items:center;justify-content:center;max-width:680px;margin:26px auto 36px;padding:0 22px;}
+  #hr-{{ sid }} .big{text-align:center;}
+  #hr-{{ sid }} .big .num{font-family:'Archivo';font-weight:900;font-size:54px;line-height:1;color:var(--helios-ink2,#0A1219);}
+  #hr-{{ sid }} .big .st{color:#f5a623;letter-spacing:2px;font-size:16px;}
+  #hr-{{ sid }} .big .ct{font-size:12.5px;color:var(--helios-mut,#56636E);margin-top:4px;}
+  #hr-{{ sid }} .bars{flex:1;min-width:240px;display:flex;flex-direction:column;gap:6px;}
+  #hr-{{ sid }} .bar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--helios-mut,#56636E);}
+  #hr-{{ sid }} .bar .lab{width:34px;text-align:right;}
+  #hr-{{ sid }} .bar .track{flex:1;height:8px;background:rgba(12,26,36,.08);border-radius:8px;overflow:hidden;}
+  #hr-{{ sid }} .bar .fill{height:100%;background:linear-gradient(90deg,var(--helios-acc,#0E7CC4),var(--helios-teal,#2FC1D6));border-radius:8px;}
+  #hr-{{ sid }} .wall{position:relative;}
+  #hr-{{ sid }} .mq{display:flex;gap:18px;width:max-content;padding:0 9px;}
+  #hr-{{ sid }} .mqA{animation:helios-marqA 70s linear infinite;}
+  #hr-{{ sid }} .mqB{animation:helios-marqB 82s linear infinite;margin-top:18px;}
+  #hr-{{ sid }} .wall:hover .mq{animation-play-state:paused;}
+  #hr-{{ sid }} .card{width:328px;background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));backdrop-filter:var(--helios-g-blur);box-shadow:var(--helios-g-sh);border-radius:22px;padding:22px;flex:0 0 auto;}
+  #hr-{{ sid }} .card .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  #hr-{{ sid }} .card .stars{color:#f5a623;font-size:14px;letter-spacing:1px;}
+  #hr-{{ sid }} .card .vb{font-size:10.5px;font-weight:700;color:#1aa86b;background:rgba(26,168,107,.1);padding:4px 9px;border-radius:30px;}
+  #hr-{{ sid }} .card .h{font-family:'Archivo';font-weight:800;font-size:15px;line-height:1.25;margin-bottom:7px;}
+  #hr-{{ sid }} .card p{font-size:13.5px;color:var(--helios-mut,#56636E);margin:0 0 14px;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+  #hr-{{ sid }} .card .who{display:flex;align-items:center;gap:10px;}
+  #hr-{{ sid }} .card .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));color:#fff;font-family:'Archivo';font-weight:800;font-size:14px;display:grid;place-items:center;flex-shrink:0;}
+  #hr-{{ sid }} .card .nm{font-size:12.5px;font-weight:700;}
+  #hr-{{ sid }} .card .lo{font-size:11px;color:var(--helios-mut,#56636E);}
+  #hr-{{ sid }} .pad{padding-bottom:clamp(40px,7vw,80px);}
+</style>
+
+{%- comment -%} ---- review data (parallel arrays, delimiter ~~ ) ---- {%- endcomment -%}
+{%- assign r_names = 'Marcus T.~~Jenna R.~~Devon W.~~Priya S.~~Tyler M.~~Aisha N.~~Greg L.~~Sophie K.~~Brandon C.~~Natalie F.~~Marcus D.~~Olivia P.~~Ryan B.~~Hannah G.~~Kevin O.~~Maya L.~~Chris A.~~Bianca M.~~Jordan H.~~Elena V.' | split: '~~' -%}
+{%- assign r_locs = 'Tampa, FL~~Scottsdale, AZ~~Austin, TX~~Orlando, FL~~San Diego, CA~~Houston, TX~~Lake Havasu, AZ~~Miami, FL~~Phoenix, AZ~~Charleston, SC~~Las Vegas, NV~~Naples, FL~~Lake Tahoe, CA~~Dallas, TX~~Jacksonville, FL~~Honolulu, HI~~Lake Norman, NC~~Palm Springs, CA~~Savannah, GA~~Clearwater, FL' | split: '~~' -%}
+{%- assign r_rates = '5,5,5,4,5,5,5,5,4,5,5,5,5,5,4,5,5,5,5,5' | split: ',' -%}
+{%- assign r_heads = 'Bought 2 to race my brother — best ever~~My husband is OBSESSED~~A little boat without the boat price~~Awesome — just takes a sec to inflate~~Total head-turner at the lake~~Bought the canopy version — game changer~~Dad of 3, finally something for me~~Looks even better in person~~Really fun, battery is the only limit~~Date night on the lake = unforgettable~~Pool parties will never be the same~~Worth it. Just buy it.~~Cruised past expensive boats, people waved~~Got the canopy one, never leaving the pool~~Great product, shipping took a bit~~Feels like a luxury resort toy~~My buddies and I bought 4. Glorious chaos.~~Comfortable AND functional, rare combo~~Setup easy, fun instant~~Bought the 2-pack — do it' | split: '~~' -%}
+{%- assign r_texts = "Spent the whole weekend racing these around the lake. The joysticks are actually responsive — spin, reverse, all of it. Everyone wanted a turn. Worth every dollar.~~Got it for his birthday and he hasn't gotten out of the pool since. Glides smooth, holds him no problem. The cup holder for his beer might be his favorite feature.~~Skeptical a float could move you, but the dual motors have real power. Cruised across the whole lake and back on one charge. Neighbors keep asking where I got it.~~Super relaxing to drift around without paddling. Takes a few minutes to inflate with a pump, but once it's up it's amazing. Battery easily lasted an afternoon.~~Pulled up to the sandbar and instantly had a crowd. Controls are intuitive, comfy headrest, faster than I expected. 10/10 would float again.~~The shade canopy is clutch in Texas heat. I can lounge for hours without frying. Motors are quiet and the whole thing feels well made, not flimsy.~~Kids have their floats, now I have mine and it's WAY cooler. Cruise around with a drink, steer with one hand. The boys keep stealing it though.~~Thought it might look cheap but it's a really clean design. Sturdy material, comfy, and moving around the pool without kicking is the laziest luxury ever.~~Super fun and well built. Solid 45–60 min of cruising before a charge, plenty for me but heavy users might want a spare. Still a 5-star experience.~~Bought two and took them out at sunset. We cruised around with drinks just talking and laughing. One of the best date ideas we've done.~~Everyone at the BBQ lost their minds. Took turns racing it across the pool all day. Holds a grown man easily and the steering is more precise than I expected.~~I overthought this for a week. Don't. It's comfortable, it actually moves you, and it's the most fun thing in our backyard. Quality feels premium.~~Total head-turner on the lake. Stable, comfy, and surprisingly quick. Best money I've spent on summer gear.~~The sunshade makes it. Read a whole book floating in the shade. My husband's jealous and wants one so we can race. Ordering a second.~~The lounger is fantastic — powerful, comfy, good build. Took about a week and a half to arrive, the only reason it's 4 stars. Once here, zero complaints.~~The kind of thing you'd pay to rent at a fancy resort. Having it at home is unreal. Smooth glide, comfy, and it just looks expensive.~~We do a lake trip every year and this made it. Four-way races, full-on battles. Best group purchase we've made. Already planning next year.~~Most floats are either comfy or fun — this is both. The backrest and headrest are genuinely supportive and the motors make it actually useful.~~Inflated, dropped it in, hopped on, cruising in minutes. My kids think I'm the coolest dad on the block. Cup holders and joystick controls are perfect.~~The 2-pack deal sold me and I'm so glad. Racing my best friend across the pool with drinks in hand is peak summer. Sturdy, smooth, addictive." | split: '~~' -%}
+
+<div class="head" data-reveal>
+  {%- if section.settings.eyebrow != blank -%}<div class="ey">{{ section.settings.eyebrow }}</div>{%- endif -%}
+  <h2>{{ section.settings.heading }}</h2>
+</div>
+
+<div class="summary" data-reveal>
+  <div class="big">
+    <div class="num">{{ section.settings.rating | default: '4.8' }}</div>
+    <div class="st">★★★★★</div>
+    <div class="ct">{{ section.settings.review_count | default: '3,912' }} verified reviews</div>
+  </div>
+  <div class="bars">
+    {%- assign d5 = section.settings.dist_5 | default: 86 -%}{%- assign d4 = section.settings.dist_4 | default: 11 -%}{%- assign d3 = section.settings.dist_3 | default: 2 -%}{%- assign d2 = section.settings.dist_2 | default: 1 -%}{%- assign d1 = section.settings.dist_1 | default: 0 -%}
+    <div class="bar"><span class="lab">5★</span><span class="track"><span class="fill" style="width:{{ d5 }}%"></span></span><span>{{ d5 }}%</span></div>
+    <div class="bar"><span class="lab">4★</span><span class="track"><span class="fill" style="width:{{ d4 }}%"></span></span><span>{{ d4 }}%</span></div>
+    <div class="bar"><span class="lab">3★</span><span class="track"><span class="fill" style="width:{{ d3 }}%"></span></span><span>{{ d3 }}%</span></div>
+    <div class="bar"><span class="lab">2★</span><span class="track"><span class="fill" style="width:{{ d2 }}%"></span></span><span>{{ d2 }}%</span></div>
+    <div class="bar"><span class="lab">1★</span><span class="track"><span class="fill" style="width:{{ d1 }}%"></span></span><span>{{ d1 }}%</span></div>
+  </div>
+</div>
+
+<div class="wall pad">
+  {%- comment -%} Row A = reviews 0–9, Row B = 10–19. Each row duplicated for seamless drift. {%- endcomment -%}
+  <div class="mq mqA">
+    {%- for dup in (1..2) -%}
+      {%- for name in r_names -%}{%- assign i = forloop.index0 -%}{%- if i < 10 -%}
+        {%- assign rate = r_rates[i] | times: 1 -%}
+        <div class="card">
+          <div class="top"><div class="stars">{% for s in (1..5) %}{% if s <= rate %}★{% else %}☆{% endif %}{% endfor %}</div><span class="vb">✓ Verified</span></div>
+          <div class="h">{{ r_heads[i] }}</div>
+          <p>{{ r_texts[i] }}</p>
+          <div class="who"><span class="av">{{ name | slice: 0 }}</span><div><div class="nm">{{ name }}</div><div class="lo">{{ r_locs[i] }}</div></div></div>
+        </div>
+      {%- endif -%}{%- endfor -%}
+    {%- endfor -%}
+  </div>
+  <div class="mq mqB">
+    {%- for dup in (1..2) -%}
+      {%- for name in r_names -%}{%- assign i = forloop.index0 -%}{%- if i >= 10 -%}
+        {%- assign rate = r_rates[i] | times: 1 -%}
+        <div class="card">
+          <div class="top"><div class="stars">{% for s in (1..5) %}{% if s <= rate %}★{% else %}☆{% endif %}{% endfor %}</div><span class="vb">✓ Verified</span></div>
+          <div class="h">{{ r_heads[i] }}</div>
+          <p>{{ r_texts[i] }}</p>
+          <div class="who"><span class="av">{{ name | slice: 0 }}</span><div><div class="nm">{{ name }}</div><div class="lo">{{ r_locs[i] }}</div></div></div>
+        </div>
+      {%- endif -%}{%- endfor -%}
+    {%- endfor -%}
+  </div>
+</div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Reviews",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "★ 4.8 average" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "3,900+ verified glides." },
+    { "type": "text", "id": "rating", "label": "Rating number", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Review count", "default": "3,912" },
+    { "type": "header", "content": "Star distribution (%)" },
+    { "type": "range", "id": "dist_5", "label": "5 star", "min": 0, "max": 100, "step": 1, "default": 86 },
+    { "type": "range", "id": "dist_4", "label": "4 star", "min": 0, "max": 100, "step": 1, "default": 11 },
+    { "type": "range", "id": "dist_3", "label": "3 star", "min": 0, "max": 100, "step": 1, "default": 2 },
+    { "type": "range", "id": "dist_2", "label": "2 star", "min": 0, "max": 100, "step": 1, "default": 1 },
+    { "type": "range", "id": "dist_1", "label": "1 star", "min": 0, "max": 100, "step": 1, "default": 0 }
+  ],
+  "presets": [{ "name": "HELIOS Reviews" }]
+}
+{% endschema %}

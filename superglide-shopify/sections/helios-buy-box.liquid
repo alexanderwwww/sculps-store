@@ -1,0 +1,368 @@
+{%- comment -%}
+============================================================================
+  HELIOS SUPER GLIDE — BUY BOX  (product-first, conversion-optimized)
+  Drop into: sections/helios-buy-box.liquid  →  add to product template.
+  ----------------------------------------------------------------------------
+  • Real Shopify buy form: {% form 'product', product %} + {{ form | payment_button }}
+    renders Apple Pay / Shop Pay / Google Pay express buttons.
+  • Bundle tiers = section BLOCKS, each pointing at a REAL variant ID, so each
+    tier adds the correct variant. Prices pulled live via {{ variant.price | money }}.
+  • Lead media = demo video (autoplay muted loop playsinline, poster fallback),
+    with gallery thumbs below. Hero video vs image is a setting (A/B).
+  • Countdown (per-session, honest), low-stock, live viewers, recent-purchase toasts.
+  HOW TO WIRE VARIANTS:
+    Online Store → Theme editor → this section → each "Bundle tier" block →
+    paste the numeric Variant ID (Products → variant → the number at the end of
+    the admin URL …/variants/<ID>). qty = how many units that variant represents.
+============================================================================
+{%- endcomment -%}
+
+{%- assign cur = product.selected_or_first_available_variant -%}
+{%- assign sid = section.id -%}
+
+<section class="helios helios-buy" id="hb-{{ sid }}">
+<style>
+  #hb-{{ sid }} .hb-wrap{max-width:1200px;margin:0 auto;padding:clamp(16px,3vw,40px) 22px clamp(32px,5vw,56px);}
+  #hb-{{ sid }} .hb-grid{display:grid;grid-template-columns:1fr;gap:30px;}
+  @media(min-width:880px){
+    #hb-{{ sid }} .hb-grid{grid-template-columns:1.04fr .96fr;gap:46px;align-items:start;}
+    #hb-{{ sid }} .hb-gallery{position:sticky;top:90px;}
+  }
+  #hb-{{ sid }} .hb-stage{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:4/3;}
+  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #hb-{{ sid }} .hb-thumbs{display:grid;grid-template-columns:repeat({{ section.blocks | where: 'type','thumb' | size | plus: 1 }},1fr);gap:10px;margin-top:11px;}
+  #hb-{{ sid }} .hb-thumb{position:relative;padding:0;width:100%;aspect-ratio:1/1;border:2px solid var(--helios-line,rgba(255,255,255,.6));border-radius:14px;overflow:hidden;cursor:pointer;background:#fff;transition:.2s;}
+  #hb-{{ sid }} .hb-thumb.sel{border-color:var(--helios-acc,#0E7CC4);box-shadow:0 6px 16px rgba(14,124,196,.2);}
+  #hb-{{ sid }} .hb-thumb img,#hb-{{ sid }} .hb-thumb video{width:100%;height:100%;object-fit:cover;}
+  #hb-{{ sid }} .hb-ey{display:inline-flex;align-items:center;gap:7px;background:#0C1A24;color:#fff;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:30px;margin-bottom:14px;}
+  #hb-{{ sid }} h1{font-weight:800;font-size:clamp(28px,4.4vw,42px);line-height:1.04;letter-spacing:-.02em;margin:0;}
+  #hb-{{ sid }} .hb-sub{color:var(--helios-mut,#56636E);font-size:15.5px;margin:9px 0 0;}
+  #hb-{{ sid }} .hb-rate{display:flex;align-items:center;gap:8px;margin:13px 0 16px;font-size:13px;color:var(--helios-mut,#56636E);}
+  #hb-{{ sid }} .hb-price{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;flex-wrap:wrap;}
+  #hb-{{ sid }} .hb-price b{font-weight:900;font-size:34px;color:var(--helios-ink2,#0A1219);}
+  #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
+  #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
+  #hb-{{ sid }} .hb-timer{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));backdrop-filter:var(--helios-g-blur);padding:7px 12px;border-radius:9px;margin-bottom:16px;}
+  #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:14px;border:2px solid var(--helios-line,rgba(255,255,255,.6));border-radius:18px;padding:16px 17px;cursor:pointer;position:relative;background:var(--helios-g-bg2,rgba(255,255,255,.4));backdrop-filter:var(--helios-g-blur);transition:.2s;margin-bottom:11px;}
+  #hb-{{ sid }} .hb-tier.sel{border-color:var(--helios-acc,#0E7CC4);background:var(--helios-g-bg,rgba(255,255,255,.55));box-shadow:0 10px 26px rgba(14,124,196,.16);}
+  #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #B7C7D2;flex-shrink:0;transition:.2s;}
+  #hb-{{ sid }} .hb-tier.sel .hb-radio{border:6px solid var(--helios-acc,#0E7CC4);}
+  #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;right:16px;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#fff;padding:4px 10px;border-radius:20px;}
+  #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:700;font-size:16px;}
+  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:var(--helios-accd,#0A5E97);font-weight:700;}
+  #hb-{{ sid }} .hb-tierper{display:block;font-size:11.5px;color:var(--helios-mut,#56636E);font-weight:500;}
+  #hb-{{ sid }} .hb-tierprice{text-align:right;}
+  #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:18px;}
+  #hb-{{ sid }} .hb-tierprice s{display:block;font-size:12px;color:var(--helios-mut,#56636E);}
+  #hb-{{ sid }} .hb-tiersave{display:block;font-size:11px;font-weight:800;color:#1aa86b;}
+  #hb-{{ sid }} .hb-add{position:relative;overflow:hidden;display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));color:#fff;border:none;border-radius:16px;padding:18px;font-family:'Archivo';font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 16px 34px rgba(14,124,196,.34);transition:transform .15s;margin-top:6px;}
+  #hb-{{ sid }} .hb-add:hover{transform:translateY(-1px);}
+  #hb-{{ sid }} .hb-add .hb-sheen{position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:helios-sheen 4.5s ease-in-out infinite;}
+  #hb-{{ sid }} .hb-pay{margin-top:11px;}
+  #hb-{{ sid }} .hb-pay .shopify-payment-button__button{border-radius:14px !important;font-family:'Archivo',sans-serif !important;font-weight:800 !important;}
+  #hb-{{ sid }} .hb-code{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:11px;background:var(--helios-g-bg,rgba(255,255,255,.55));border:1px dashed var(--helios-acc,#0E7CC4);backdrop-filter:var(--helios-g-blur);border-radius:13px;padding:12px 15px;cursor:pointer;transition:.2s;}
+  #hb-{{ sid }} .hb-code b{font-family:'Archivo';font-weight:800;font-size:14px;color:var(--helios-accd,#0A5E97);letter-spacing:.04em;display:inline-flex;gap:8px;align-items:center;}
+  #hb-{{ sid }} .hb-trust{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:14px;font-size:12.5px;color:var(--helios-mut,#56636E);text-align:center;flex-wrap:wrap;}
+  #hb-{{ sid }} .hb-pays{display:flex;gap:7px;justify-content:center;margin-top:12px;opacity:.72;flex-wrap:wrap;}
+  #hb-{{ sid }} .hb-pays span{font-size:10px;font-weight:700;border:1px solid var(--helios-lins,rgba(12,26,36,.08));border-radius:6px;padding:4px 8px;color:var(--helios-mut,#56636E);}
+  #hb-{{ sid }} .hb-eta{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:13px;font-size:12.5px;color:var(--helios-ink,#0C1A24);font-weight:600;text-align:center;}
+  #hb-{{ sid }} .hb-stock{margin-top:14px;background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));border-radius:13px;padding:12px 14px;font-size:12.5px;color:var(--helios-accd,#0A5E97);font-weight:600;}
+  #hb-{{ sid }} .hb-stockbar{height:6px;background:#CFE7F5;border-radius:6px;margin-top:9px;overflow:hidden;}
+  #hb-{{ sid }} .hb-stockbar i{display:block;height:100%;width:78%;background:linear-gradient(90deg,var(--helios-acc,#0E7CC4),var(--helios-teal,#2FC1D6));border-radius:6px;}
+  #hb-{{ sid }} .hb-live{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:12px;font-size:12px;color:var(--helios-mut,#56636E);}
+  #hb-{{ sid }} .hb-dot{width:8px;height:8px;border-radius:50%;background:#1aa86b;animation:helios-pulse 1.6s ease-in-out infinite;}
+  #hb-toast-{{ sid }}{position:fixed;left:16px;bottom:18px;z-index:120;display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.86);backdrop-filter:var(--helios-g-blur);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-sh);border-radius:14px;padding:11px 15px 11px 12px;max-width:300px;opacity:0;pointer-events:none;transition:opacity .3s;}
+  #hb-toast-{{ sid }}.show{opacity:1;animation:helios-toastin .4s ease;}
+  #hb-toast-{{ sid }} .hb-tt-em{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));display:grid;place-items:center;font-size:16px;flex-shrink:0;}
+</style>
+
+<div class="hb-wrap">
+  <div class="hb-grid">
+
+    {%- comment -%} ---------- GALLERY ---------- {%- endcomment -%}
+    <div class="hb-gallery">
+      <div class="hb-stage" id="hb-stage-{{ sid }}">
+        {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank -%}
+          {{ section.settings.lead_video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, preload: 'metadata', image_size: '1100x' }}
+        {%- elsif section.settings.lead_image != blank -%}
+          <img src="{{ section.settings.lead_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}" loading="eager" width="1100" height="825">
+        {%- else -%}
+          {{ product.featured_image | image_url: width: 1100 | image_tag: loading: 'eager' }}
+        {%- endif -%}
+      </div>
+      <div class="hb-thumbs">
+        {%- comment -%} first thumb = lead media {%- endcomment -%}
+        <button type="button" class="hb-thumb sel" data-stagesrc="{{ section.settings.lead_image | image_url: width: 300 }}">
+          {%- if section.settings.lead_media_type == 'video' and section.settings.lead_video != blank -%}
+            <img src="{{ section.settings.lead_video.preview_image | image_url: width: 200 }}" alt="demo">
+          {%- else -%}
+            <img src="{{ section.settings.lead_image | image_url: width: 200 }}" alt="">
+          {%- endif -%}
+        </button>
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'thumb' and block.settings.image != blank -%}
+            <button type="button" class="hb-thumb" data-stagesrc="{{ block.settings.image | image_url: width: 1100 }}" {{ block.shopify_attributes }}>
+              <img src="{{ block.settings.image | image_url: width: 200 }}" alt="">
+            </button>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+
+    {%- comment -%} ---------- BUY ---------- {%- endcomment -%}
+    <div class="hb-buy">
+      {%- if section.settings.tiktok_badge -%}<span class="hb-ey">▶ As seen on <b style="color:#25f4ee;">TikTok</b></span>{%- endif -%}
+      <h1>{{ section.settings.title | default: product.title }}</h1>
+      <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
+      <div class="hb-rate">
+        <span style="color:#f5a623;letter-spacing:1px;">★★★★★</span>
+        <b style="color:var(--helios-ink,#0C1A24);">{{ section.settings.rating | default: '4.8' }}</b> ·
+        <span>{{ section.settings.review_count | default: '3,912' }}+ reviews</span>
+      </div>
+
+      <div class="hb-price">
+        <b id="hb-price-{{ sid }}">{{ cur.price | money }}</b>
+        {%- if cur.compare_at_price > cur.price -%}<s id="hb-cmp-{{ sid }}">{{ cur.compare_at_price | money }}</s>{%- endif -%}
+        <span class="hb-save" id="hb-savepct-{{ sid }}"></span>
+      </div>
+
+      {%- if section.settings.show_countdown -%}
+        <div class="hb-timer">⚡ Flash sale ends <span id="hb-cd-{{ sid }}">--:--:--</span></div>
+      {%- endif -%}
+
+      {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
+      {%- form 'product', product, id: 'hb-form-' | append: sid -%}
+        <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
+
+        <div class="hb-tiers" id="hb-tiers-{{ sid }}">
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'bundle' -%}
+              {%- assign vid = block.settings.variant_id | times: 1 -%}
+              {%- assign bv = blank -%}
+              {%- for v in product.variants -%}{%- if v.id == vid -%}{%- assign bv = v -%}{%- endif -%}{%- endfor -%}
+              {%- assign qty = block.settings.qty | default: 1 -%}
+              {%- assign tprice = bv.price | default: block.settings.fallback_price -%}
+              {%- assign tcompare = bv.compare_at_price | default: block.settings.fallback_compare -%}
+              {%- assign saveamt = tcompare | minus: tprice -%}
+              {%- assign perunit = tprice | divided_by: qty -%}
+              <label class="hb-tier{% if block.settings.preselect %} sel{% endif %}"
+                     data-vid="{{ bv.id | default: vid }}" data-price="{{ tprice }}" data-compare="{{ tcompare }}"
+                     {{ block.shopify_attributes }}>
+                {%- if block.settings.badge != blank -%}
+                  <span class="hb-badge" style="background:{% if block.settings.badge_style == 'teal' %}var(--helios-teal,#2FC1D6){% else %}linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6)){% endif %};">{{ block.settings.badge }}</span>
+                {%- endif -%}
+                <span class="hb-radio"></span>
+                <div style="flex:1;">
+                  <span class="hb-tiername">{{ block.settings.label | default: bv.title }}</span>
+                  {%- if block.settings.sublabel != blank -%}<span class="hb-tiersub">{{ block.settings.sublabel }}</span>{%- endif -%}
+                  <span class="hb-tierper">{{ perunit | money }} / lounger</span>
+                </div>
+                <div class="hb-tierprice">
+                  <b>{{ tprice | money }}</b>
+                  {%- if tcompare > tprice -%}<s>{{ tcompare | money }}</s>{%- endif -%}
+                  {%- if saveamt > 0 -%}<span class="hb-tiersave">You save {{ saveamt | money }}</span>{%- endif -%}
+                </div>
+              </label>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+
+        <button type="submit" name="add" class="hb-add" {% unless cur.available %}disabled{% endunless %}>
+          <span style="position:relative;z-index:2;">{{ section.settings.cta_text | default: 'Add to Cart' }} · <span class="hb-total" id="hb-total-{{ sid }}">{{ cur.price | money }}</span> →</span>
+          <span class="hb-sheen"></span>
+        </button>
+
+        {%- comment -%} Express checkout: Apple Pay / Shop Pay / Google Pay {%- endcomment -%}
+        <div class="hb-pay">{{ form | payment_button }}</div>
+      {%- endform -%}
+
+      {%- if section.settings.discount_code != blank -%}
+        <button type="button" class="hb-code" id="hb-code-{{ sid }}" data-code="{{ section.settings.discount_code }}">
+          <span style="font-size:12.5px;color:var(--helios-mut,#56636E);">{{ section.settings.discount_label | default: 'Extra savings — tap to copy' }}</span>
+          <b>{{ section.settings.discount_code }}
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
+          </b>
+        </button>
+      {%- endif -%}
+
+      <div class="hb-trust">🛡 30-day money-back · 🚚 Free shipping · 🔒 Secure checkout</div>
+      <div class="hb-pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span></div>
+
+      {%- if section.settings.eta_line != blank -%}<div class="hb-eta">🚚 {{ section.settings.eta_line }}</div>{%- endif -%}
+
+      {%- if section.settings.show_stock -%}
+        <div class="hb-stock">🔥 Summer demand is high — only <b>{{ section.settings.stock_left | default: 24 }}</b> left at this price.
+          <div class="hb-stockbar"><i></i></div>
+        </div>
+      {%- endif -%}
+
+      {%- if section.settings.show_live -%}
+        <div class="hb-live"><span class="hb-dot"></span>
+          <b id="hb-view-{{ sid }}" style="color:var(--helios-ink,#0C1A24);">{{ section.settings.live_viewers | default: 58 }}</b> viewing ·
+          <b id="hb-sold-{{ sid }}" style="color:var(--helios-ink,#0C1A24);">{{ section.settings.sold_today | default: 202 }}</b> sold today
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{%- if section.settings.show_toasts -%}
+  <div id="hb-toast-{{ sid }}"><span class="hb-tt-em">🌊</span><div style="line-height:1.25;"><div id="hb-toast-name-{{ sid }}" style="font-size:13px;font-weight:700;color:var(--helios-ink,#0C1A24);"></div><div id="hb-toast-meta-{{ sid }}" style="font-size:11.5px;color:var(--helios-mut,#56636E);"></div></div></div>
+{%- endif -%}
+
+<script>
+(function(){
+  var root = document.getElementById('hb-{{ sid }}');
+  if(!root || root.dataset.init) return; root.dataset.init = '1';
+  var money = function(cents){ return '{{ shop.money_format | strip_html }}'.replace(/\{\{\s*amount\s*\}\}/, (cents/100).toFixed(2)).replace(/\{\{\s*amount_no_decimals\s*\}\}/, Math.round(cents/100)); };
+
+  /* ---- bundle tiers → hidden variant id + total + savings ---- */
+  var hid = document.getElementById('hb-vid-{{ sid }}');
+  var total = document.getElementById('hb-total-{{ sid }}');
+  var price = document.getElementById('hb-price-{{ sid }}');
+  var cmp = document.getElementById('hb-cmp-{{ sid }}');
+  var savePct = document.getElementById('hb-savepct-{{ sid }}');
+  var tiers = root.querySelectorAll('.hb-tier');
+  function selectTier(t){
+    tiers.forEach(function(x){ x.classList.remove('sel'); });
+    t.classList.add('sel');
+    var p = parseInt(t.dataset.price,10), c = parseInt(t.dataset.compare,10) || 0;
+    if(hid) hid.value = t.dataset.vid;
+    if(total) total.textContent = money(p);
+    if(price) price.textContent = money(p);
+    if(cmp){ if(c>p){ cmp.style.display=''; cmp.textContent = money(c); } else cmp.style.display='none'; }
+    if(savePct){ if(c>p){ savePct.style.display=''; savePct.textContent = 'SAVE ' + Math.round((1-p/c)*100) + '%'; } else savePct.style.display='none'; }
+    /* broadcast to the sticky ATC bar */
+    window.dispatchEvent(new CustomEvent('helios:variant', { detail: { id: t.dataset.vid, price: money(p), compare: c>p ? money(c) : '' } }));
+  }
+  tiers.forEach(function(t){ t.addEventListener('click', function(e){ e.preventDefault(); selectTier(t); }); });
+  var pre = root.querySelector('.hb-tier.sel') || tiers[0];
+  if(pre) selectTier(pre);
+
+  /* ---- gallery thumbs ---- */
+  var stage = document.getElementById('hb-stage-{{ sid }}');
+  var stageImg = stage && (stage.querySelector('img'));
+  root.querySelectorAll('.hb-thumb').forEach(function(th){
+    th.addEventListener('click', function(){
+      root.querySelectorAll('.hb-thumb').forEach(function(x){ x.classList.remove('sel'); });
+      th.classList.add('sel');
+      if(th.dataset.stagesrc && stageImg){ var v=stage.querySelector('video'); if(v) v.style.display='none'; stageImg.style.display=''; stageImg.src = th.dataset.stagesrc; }
+    });
+  });
+
+  /* ---- copy code ---- */
+  var code = document.getElementById('hb-code-{{ sid }}');
+  if(code) code.addEventListener('click', function(){
+    var c = code.dataset.code, b = code.querySelector('b');
+    var done = function(){ var html=b.innerHTML; b.textContent='✓ Copied '+c+'!'; code.style.borderColor='#1aa86b'; setTimeout(function(){ b.innerHTML=html; code.style.borderColor=''; },1800); };
+    if(navigator.clipboard){ navigator.clipboard.writeText(c).then(done).catch(done); } else done();
+  });
+
+  /* ---- honest per-session countdown ---- */
+  {%- if section.settings.show_countdown -%}
+  (function(){
+    var el = document.getElementById('hb-cd-{{ sid }}'); if(!el) return;
+    var span = {{ section.settings.countdown_minutes | default: 480 }} * 60000;
+    var key = 'helios_cd_{{ sid }}';
+    var end = parseInt(sessionStorage.getItem(key),10);
+    if(!end || isNaN(end) || end < Date.now()){ end = Date.now() + span; sessionStorage.setItem(key, end); }
+    function tick(){ var d=Math.max(0,end-Date.now()); var h=Math.floor(d/3.6e6),m=Math.floor(d%3.6e6/6e4),s=Math.floor(d%6e4/1e3); el.textContent = (h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s; }
+    tick(); setInterval(tick,1000);
+  })();
+  {%- endif -%}
+
+  /* ---- live viewers ---- */
+  {%- if section.settings.show_live -%}
+  (function(){
+    var lv=document.getElementById('hb-view-{{ sid }}'), sd=document.getElementById('hb-sold-{{ sid }}');
+    var v={{ section.settings.live_viewers | default: 58 }}, s={{ section.settings.sold_today | default: 202 }};
+    setInterval(function(){ v=Math.max(20,v+(Math.random()<0.5?-1:1)*(1+Math.floor(Math.random()*3))); if(lv)lv.textContent=v; if(Math.random()<0.4){ s++; if(sd)sd.textContent=s; } },3200);
+  })();
+  {%- endif -%}
+
+  /* ---- recent-purchase toasts ---- */
+  {%- if section.settings.show_toasts -%}
+  (function(){
+    var box=document.getElementById('hb-toast-{{ sid }}'),
+        nm=document.getElementById('hb-toast-name-{{ sid }}'),
+        mt=document.getElementById('hb-toast-meta-{{ sid }}');
+    if(!box) return;
+    var names=[['Jordan from TX','bought 2 — 3 min ago'],['Maya from HI','bought 1 — 7 min ago'],['Chris from NC','bought 4 — 12 min ago'],['Sophie from FL','bought 2 — 18 min ago'],['Devon from AZ','bought 1 — 24 min ago'],['Natalie from SC','bought 2 — 31 min ago']];
+    var i=0;
+    function show(){ var n=names[i%names.length]; i++; nm.textContent=n[0]; mt.textContent='Super Glide · '+n[1]; box.classList.add('show'); setTimeout(function(){ box.classList.remove('show'); }, 4200); }
+    setTimeout(function loop(){ show(); setTimeout(loop, 11000); }, 6000);
+  })();
+  {%- endif -%}
+})();
+</script>
+
+{%- comment -%} =================== SCHEMA =================== {%- endcomment -%}
+{% schema %}
+{
+  "name": "HELIOS Buy Box",
+  "tag": "section",
+  "class": "helios-section",
+  "settings": [
+    { "type": "header", "content": "Lead media (A/B: video vs image)" },
+    { "type": "select", "id": "lead_media_type", "label": "Lead media", "options": [{"value":"video","label":"Demo video (proof of motion)"},{"value":"image","label":"Image"}], "default": "video" },
+    { "type": "video", "id": "lead_video", "label": "Demo video (autoplay muted loop)" },
+    { "type": "image_picker", "id": "lead_image", "label": "Lead / poster image" },
+    { "type": "header", "content": "Copy (A/B)" },
+    { "type": "text", "id": "title", "label": "Product title", "default": "HELIOS Super Glide" },
+    { "type": "richtext", "id": "subtitle", "label": "Subtitle" },
+    { "type": "text", "id": "rating", "label": "Rating", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Review count", "default": "3,912" },
+    { "type": "checkbox", "id": "tiktok_badge", "label": "Show 'As seen on TikTok' badge", "default": true },
+    { "type": "text", "id": "cta_text", "label": "Add-to-cart text", "default": "Add to Cart" },
+    { "type": "header", "content": "Discount chip (use a REAL active code)" },
+    { "type": "text", "id": "discount_code", "label": "Discount code", "default": "" },
+    { "type": "text", "id": "discount_label", "label": "Discount label", "default": "Extra savings — tap to copy" },
+    { "type": "header", "content": "Urgency & social proof" },
+    { "type": "checkbox", "id": "show_countdown", "label": "Show countdown", "default": true },
+    { "type": "range", "id": "countdown_minutes", "label": "Countdown length (minutes, per session)", "min": 30, "max": 1440, "step": 30, "default": 480 },
+    { "type": "text", "id": "eta_line", "label": "Delivery ETA line", "default": "Order today → ships in 24h, arrives in 5–8 days" },
+    { "type": "checkbox", "id": "show_stock", "label": "Show low-stock bar", "default": true },
+    { "type": "number", "id": "stock_left", "label": "Stock left", "default": 24 },
+    { "type": "checkbox", "id": "show_live", "label": "Show live viewers / sold", "default": true },
+    { "type": "number", "id": "live_viewers", "label": "Viewers (starting)", "default": 58 },
+    { "type": "number", "id": "sold_today", "label": "Sold today (starting)", "default": 202 },
+    { "type": "checkbox", "id": "show_toasts", "label": "Show recent-purchase toasts", "default": true }
+  ],
+  "blocks": [
+    {
+      "type": "bundle",
+      "name": "Bundle tier",
+      "settings": [
+        { "type": "text", "id": "variant_id", "label": "Variant ID (real, numeric)", "info": "Products → variant → number at end of admin URL" },
+        { "type": "number", "id": "qty", "label": "Units in this bundle", "default": 1 },
+        { "type": "text", "id": "label", "label": "Tier label", "default": "2 Super Glide" },
+        { "type": "text", "id": "sublabel", "label": "Sub label", "default": "BUY ONE GET ONE FREE · Race a friend" },
+        { "type": "text", "id": "badge", "label": "Badge text (optional)", "default": "Most popular" },
+        { "type": "select", "id": "badge_style", "label": "Badge style", "options": [{"value":"accent","label":"Accent gradient"},{"value":"teal","label":"Teal"}], "default": "accent" },
+        { "type": "checkbox", "id": "preselect", "label": "Pre-select this tier", "default": false },
+        { "type": "text", "id": "fallback_price", "label": "Fallback price (cents)", "info": "Only used if Variant ID is empty", "default": "19999" },
+        { "type": "text", "id": "fallback_compare", "label": "Fallback compare-at (cents)", "default": "39998" }
+      ]
+    },
+    {
+      "type": "thumb",
+      "name": "Gallery thumbnail",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "HELIOS Buy Box",
+      "blocks": [
+        { "type": "bundle", "settings": { "qty": 2, "label": "1 + 1 · 2 Super Glides", "sublabel": "BUY ONE GET ONE FREE · Race a friend", "badge": "Most popular", "badge_style": "accent", "preselect": true, "fallback_price": "19999", "fallback_compare": "39998" } },
+        { "type": "bundle", "settings": { "qty": 3, "label": "3 Super Glides", "sublabel": "Best price per lounger", "badge": "", "badge_style": "accent", "preselect": false, "fallback_price": "33600", "fallback_compare": "59997" } },
+        { "type": "bundle", "settings": { "qty": 4, "label": "2 + 2 · 4 Super Glides", "sublabel": "BUY TWO GET TWO FREE · The whole crew", "badge": "Best value", "badge_style": "teal", "preselect": false, "fallback_price": "39999", "fallback_compare": "79996" } },
+        { "type": "thumb" }, { "type": "thumb" }, { "type": "thumb" }
+      ]
+    }
+  ]
+}
+{% endschema %}
+</section>

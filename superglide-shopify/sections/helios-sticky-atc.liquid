@@ -1,0 +1,62 @@
+{%- comment -%}
+  HELIOS — Sticky Add-to-Cart bar (appears on scroll). Real product form + variant.
+  Reads the bundle chosen in the Buy Box if present (window.heliosSelected), else first variant.
+  sections/helios-sticky-atc.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign cur = product.selected_or_first_available_variant -%}
+<div class="helios" id="hs-{{ sid }}">
+<style>
+  #hs-{{ sid }} .bar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(255,255,255,.72);backdrop-filter:var(--helios-g-blur,blur(20px) saturate(165%));-webkit-backdrop-filter:var(--helios-g-blur,blur(20px) saturate(165%));border-top:1px solid rgba(255,255,255,.6);box-shadow:0 -8px 26px rgba(6,30,46,.12);padding:11px 16px;display:flex;align-items:center;gap:14px;transform:translateY(125%);transition:transform .4s cubic-bezier(.2,.8,.2,1);}
+  #hs-{{ sid }} .bar.show{transform:translateY(0);}
+  #hs-{{ sid }} .info{display:flex;align-items:center;gap:11px;flex:1;min-width:0;}
+  #hs-{{ sid }} .thumb{width:42px;height:42px;flex-shrink:0;border-radius:11px;object-fit:cover;border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));}
+  #hs-{{ sid }} .name{font-family:'Archivo';font-weight:800;font-size:14px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #hs-{{ sid }} .price b{font-family:'Archivo';font-weight:800;color:var(--helios-ink,#0C1A24);}
+  #hs-{{ sid }} .price s{color:var(--helios-mut,#56636E);margin-left:5px;}
+  #hs-{{ sid }} .add{flex-shrink:0;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));color:#fff;border:none;border-radius:13px;padding:14px 24px;font-family:'Archivo';font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 12px 26px rgba(14,124,196,.3);}
+</style>
+  {%- form 'product', product, id: 'hs-form-' | append: sid -%}
+    <input type="hidden" name="id" id="hs-vid-{{ sid }}" value="{{ cur.id }}">
+    <div class="bar" id="hs-bar-{{ sid }}">
+      <div class="info">
+        {%- if product.featured_image -%}<img class="thumb" src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}
+        <div style="min-width:0;">
+          <div class="name">{{ section.settings.label | default: product.title }}</div>
+          <div class="price"><b id="hs-price-{{ sid }}">{{ cur.price | money }}</b>{% if cur.compare_at_price > cur.price %}<s id="hs-old-{{ sid }}">{{ cur.compare_at_price | money }}</s>{% endif %}</div>
+        </div>
+      </div>
+      <button type="submit" name="add" class="add">{{ section.settings.cta_text | default: 'Add to Cart' }} →</button>
+    </div>
+  {%- endform -%}
+<script>
+(function(){
+  var wrap=document.getElementById('hs-{{ sid }}'); if(!wrap||wrap.dataset.init) return; wrap.dataset.init='1';
+  var bar=document.getElementById('hs-bar-{{ sid }}');
+  var threshold={{ section.settings.scroll_trigger | default: 640 }};
+  var ticking=false;
+  function onScroll(){ if(ticking)return; ticking=true; requestAnimationFrame(function(){ var y=window.scrollY||window.pageYOffset; bar.classList.toggle('show', y>threshold); ticking=false; }); }
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  /* sync with Buy Box selection if it broadcasts one */
+  var hid=document.getElementById('hs-vid-{{ sid }}'), pr=document.getElementById('hs-price-{{ sid }}'), ol=document.getElementById('hs-old-{{ sid }}');
+  window.addEventListener('helios:variant', function(e){
+    if(!e.detail) return;
+    if(hid && e.detail.id) hid.value=e.detail.id;
+    if(pr && e.detail.price) pr.textContent=e.detail.price;
+    if(ol && e.detail.compare) ol.textContent=e.detail.compare;
+  });
+})();
+</script>
+</div>
+{% schema %}
+{
+  "name": "HELIOS Sticky ATC",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "label", "label": "Product label", "default": "Super Glide" },
+    { "type": "text", "id": "cta_text", "label": "Button text", "default": "Add to Cart" },
+    { "type": "range", "id": "scroll_trigger", "label": "Show after scrolling (px)", "min": 200, "max": 1600, "step": 20, "default": 640 }
+  ],
+  "presets": [{ "name": "HELIOS Sticky ATC" }]
+}
+{% endschema %}

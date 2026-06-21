@@ -1,0 +1,83 @@
+{%- comment -%}
+  HELIOS — Feature map infographic (callouts + glow ring).
+  sections/helios-feature-map.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+<section class="helios" id="hfm-{{ sid }}">
+<style>
+  #hfm-{{ sid }} .wrap{max-width:1200px;margin:0 auto;padding:clamp(40px,7vw,88px) 22px;}
+  #hfm-{{ sid }} .head{text-align:center;max-width:640px;margin:0 auto 48px;}
+  #hfm-{{ sid }} .ey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);}
+  #hfm-{{ sid }} h2{font-family:'Archivo';font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;margin:12px 0 0;}
+  #hfm-{{ sid }} .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:center;}
+  #hfm-{{ sid }} .side{display:flex;flex-direction:column;gap:40px;}
+  #hfm-{{ sid }} .side.l{align-items:flex-end;}
+  #hfm-{{ sid }} .side.r{align-items:flex-start;}
+  #hfm-{{ sid }} .co{display:flex;align-items:center;}
+  #hfm-{{ sid }} .pill{background:#fff;border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-sh);border-radius:14px;padding:12px 15px;max-width:230px;}
+  #hfm-{{ sid }} .side.l .pill{text-align:right;}
+  #hfm-{{ sid }} .pt{font-family:'Archivo';font-weight:800;font-size:15px;color:var(--helios-ink,#0C1A24);}
+  #hfm-{{ sid }} .ps{font-size:12px;color:var(--helios-mut,#56636E);margin-top:2px;}
+  #hfm-{{ sid }} .line{display:flex;align-items:center;flex-shrink:0;}
+  #hfm-{{ sid }} .line .seg{width:46px;height:2px;background:var(--helios-acc,#0E7CC4);}
+  #hfm-{{ sid }} .line .dot{width:9px;height:9px;border-radius:50%;background:var(--helios-acc,#0E7CC4);box-shadow:0 0 0 4px rgba(14,124,196,.16);}
+  #hfm-{{ sid }} .stage{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg);aspect-ratio:1/1;}
+  #hfm-{{ sid }} .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #hfm-{{ sid }} .ring{position:absolute;top:30%;left:50%;width:54%;aspect-ratio:1/1;border-radius:50%;border:2px solid rgba(47,193,214,.6);box-shadow:0 0 40px rgba(47,193,214,.4),inset 0 0 30px rgba(190,235,250,.35);transform:translate(-50%,-50%);animation:hfm-ring 4s ease-in-out infinite;pointer-events:none;}
+  @keyframes hfm-ring{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(1);}50%{opacity:.85;transform:translate(-50%,-50%) scale(1.05);}}
+  @media(max-width:760px){
+    #hfm-{{ sid }} .grid{grid-template-columns:1fr;gap:18px;}
+    #hfm-{{ sid }} .side{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+    #hfm-{{ sid }} .side.l,#hfm-{{ sid }} .side.r{align-items:flex-start;}
+    #hfm-{{ sid }} .line{display:none;}
+    #hfm-{{ sid }} .side.l .pill{text-align:left;}
+  }
+</style>
+<div class="wrap">
+  <div class="head">
+    {%- if section.settings.eyebrow != blank -%}<div class="ey">{{ section.settings.eyebrow }}</div>{%- endif -%}
+    <h2>{{ section.settings.heading }}</h2>
+  </div>
+  <div class="grid" data-reveal>
+    <div class="side l">
+      <div class="co"><div class="pill"><div class="pt">{{ section.settings.c1_title }}</div><div class="ps">{{ section.settings.c1_text }}</div></div><div class="line"><span class="seg"></span><span class="dot"></span></div></div>
+      <div class="co"><div class="pill"><div class="pt">{{ section.settings.c2_title }}</div><div class="ps">{{ section.settings.c2_text }}</div></div><div class="line"><span class="seg"></span><span class="dot"></span></div></div>
+    </div>
+    <div class="stage">
+      {%- if section.settings.image != blank -%}
+        <img src="{{ section.settings.image | image_url: width: 900 }}" alt="{{ section.settings.heading | escape }}" loading="lazy">
+      {%- endif -%}
+      {%- if section.settings.show_ring -%}<div class="ring"></div>{%- endif -%}
+    </div>
+    <div class="side r">
+      <div class="co"><div class="line"><span class="dot"></span><span class="seg"></span></div><div class="pill"><div class="pt">{{ section.settings.c3_title }}</div><div class="ps">{{ section.settings.c3_text }}</div></div></div>
+      <div class="co"><div class="line"><span class="dot"></span><span class="seg"></span></div><div class="pill"><div class="pt">{{ section.settings.c4_title }}</div><div class="ps">{{ section.settings.c4_text }}</div></div></div>
+    </div>
+  </div>
+</div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Feature Map",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Feature map" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "The anatomy of an easy summer." },
+    { "type": "image_picker", "id": "image", "label": "Center product image" },
+    { "type": "checkbox", "id": "show_ring", "label": "Show glow ring (shade cue)", "default": true },
+    { "type": "header", "content": "Callout — top left" },
+    { "type": "text", "id": "c1_title", "label": "Title", "default": "⚡ Dual Electric Motors" },
+    { "type": "text", "id": "c1_text", "label": "Text", "default": "Cruise totally hands-free" },
+    { "type": "header", "content": "Callout — bottom left" },
+    { "type": "text", "id": "c2_title", "label": "Title", "default": "🎮 Twin Joystick Control" },
+    { "type": "text", "id": "c2_text", "label": "Text", "default": "Steer & spin a full 360°" },
+    { "type": "header", "content": "Callout — top right" },
+    { "type": "text", "id": "c3_title", "label": "Title", "default": "☂️ Pop-Up Canopy" },
+    { "type": "text", "id": "c3_text", "label": "Text", "default": "UPF50+ sun shade (canopy version)" },
+    { "type": "header", "content": "Callout — bottom right" },
+    { "type": "text", "id": "c4_title", "label": "Title", "default": "🔋 Rechargeable" },
+    { "type": "text", "id": "c4_text", "label": "Text", "default": "Up to 60 min per charge" }
+  ],
+  "presets": [{ "name": "HELIOS Feature Map" }]
+}
+{% endschema %}

@@ -1,0 +1,33 @@
+{%- comment -%}
+  HELIOS — Risk-reversal guarantee band. sections/helios-guarantee.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+<section class="helios" id="hg-{{ sid }}">
+<style>
+  #hg-{{ sid }} .wrap{max-width:1200px;margin:0 auto;padding:clamp(20px,3vw,40px) 22px clamp(40px,7vw,80px);}
+  #hg-{{ sid }} .band{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--helios-ocean1,#062F49),var(--helios-ocean2,#0E6FA8) 70%);color:#fff;border-radius:28px;padding:clamp(44px,7vw,80px) 30px;text-align:center;box-shadow:var(--helios-g-shlg);}
+  #hg-{{ sid }} h2{font-family:'Archivo';font-weight:800;font-size:clamp(26px,3.6vw,40px);letter-spacing:-.02em;margin:0;}
+  #hg-{{ sid }} p{opacity:.92;font-size:16px;margin:14px auto 0;max-width:480px;}
+  #hg-{{ sid }} a{display:inline-flex;align-items:center;gap:9px;margin-top:26px;background:#fff;color:var(--helios-accd,#0A5E97);border-radius:14px;padding:16px 32px;font-family:'Archivo';font-weight:800;font-size:16px;box-shadow:0 16px 34px rgba(0,20,40,.28);}
+</style>
+<div class="wrap">
+  <div class="band" data-reveal>
+    <h2>{{ section.settings.heading }}</h2>
+    <p>{{ section.settings.text }}</p>
+    {%- if section.settings.cta_text != blank -%}<a href="{{ section.settings.cta_link | default: '#' }}">{{ section.settings.cta_text }} →</a>{%- endif -%}
+  </div>
+</div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Guarantee",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "🛡 30-Day Cool-or-Refund Guarantee" },
+    { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Take it out for 30 days. If the Super Glide doesn't make summer better, send it back for a full refund. The risk is entirely ours.</p>" },
+    { "type": "text", "id": "cta_text", "label": "Button text", "default": "Get yours" },
+    { "type": "url", "id": "cta_link", "label": "Button link" }
+  ],
+  "presets": [{ "name": "HELIOS Guarantee" }]
+}
+{% endschema %}

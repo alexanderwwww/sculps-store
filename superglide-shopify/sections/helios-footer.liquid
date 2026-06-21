@@ -1,0 +1,68 @@
+{%- comment -%}
+  HELIOS — Footer. sections/helios-footer.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+<section class="helios" id="hft-{{ sid }}">
+<style>
+  #hft-{{ sid }} footer{border-top:1px solid var(--helios-line,rgba(255,255,255,.6));background:var(--helios-g-bg2,rgba(255,255,255,.4));backdrop-filter:var(--helios-g-blur);padding:54px 0 32px;}
+  #hft-{{ sid }} .wrap{max-width:1200px;margin:0 auto;padding:0 22px;}
+  #hft-{{ sid }} .top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:36px;}
+  #hft-{{ sid }} .brand{max-width:260px;}
+  #hft-{{ sid }} .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:var(--helios-ink2,#0A1219);}
+  #hft-{{ sid }} .brand p{color:var(--helios-mut,#56636E);font-size:13.5px;margin-top:12px;}
+  #hft-{{ sid }} h5{font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 12px;color:var(--helios-mut,#56636E);}
+  #hft-{{ sid }} ul{list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.1;}
+  #hft-{{ sid }} ul a{color:var(--helios-mut,#56636E);}
+  #hft-{{ sid }} .pays{display:flex;gap:8px;margin-top:34px;flex-wrap:wrap;}
+  #hft-{{ sid }} .pays span{font-size:10px;font-weight:700;border:1px solid var(--helios-lins,rgba(12,26,36,.08));border-radius:6px;padding:4px 8px;color:var(--helios-mut,#56636E);}
+  #hft-{{ sid }} .copy{margin-top:18px;font-size:11.5px;color:var(--helios-mut,#56636E);}
+</style>
+<footer>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <span class="logo">{{ section.settings.brand | default: 'HELIOS' }}</span>
+        <p>{{ section.settings.tagline }}</p>
+      </div>
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'menu' -%}
+          <div {{ block.shopify_attributes }}>
+            <h5>{{ block.settings.heading }}</h5>
+            <ul>
+              {%- assign items = block.settings.links | newline_to_br | split: '<br />' -%}
+              {%- for it in items -%}{%- assign t = it | strip -%}{%- if t != blank -%}<li><a href="#">{{ t }}</a></li>{%- endif -%}{%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+    <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span><span>G PAY</span></div>
+    <div class="copy">{{ section.settings.copyright }}</div>
+  </div>
+</footer>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Footer",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "brand", "label": "Brand", "default": "HELIOS" },
+    { "type": "richtext", "id": "tagline", "label": "Tagline", "default": "<p>Summer, handled. Premium gear that makes the heat a non-issue.</p>" },
+    { "type": "text", "id": "copyright", "label": "Copyright", "default": "© 2026 HELIOS — concept demo store." }
+  ],
+  "blocks": [
+    { "type": "menu", "name": "Menu column", "settings": [
+      { "type": "text", "id": "heading", "label": "Heading", "default": "Shop" },
+      { "type": "textarea", "id": "links", "label": "Links (one per line)", "default": "Super Glide\nCooling Fan\nSummer Kit" }
+    ]}
+  ],
+  "presets": [{
+    "name": "HELIOS Footer",
+    "blocks": [
+      { "type": "menu", "settings": { "heading": "Shop", "links": "Super Glide\nCooling Fan\nSummer Kit" } },
+      { "type": "menu", "settings": { "heading": "Help", "links": "Track Order\nShipping\nReturns\nContact" } },
+      { "type": "menu", "settings": { "heading": "Company", "links": "Our Story\nReviews\nGuarantee" } }
+    ]
+  }]
+}
+{% endschema %}

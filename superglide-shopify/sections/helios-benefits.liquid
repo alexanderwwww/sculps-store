@@ -1,0 +1,54 @@
+{%- comment -%}
+  HELIOS — Benefit bullets (3 icons). sections/helios-benefits.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+<section class="helios" id="hbf-{{ sid }}">
+<style>
+  #hbf-{{ sid }} .wrap{max-width:1100px;margin:0 auto;padding:clamp(36px,6vw,72px) 22px;}
+  #hbf-{{ sid }} .grid{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:760px){ #hbf-{{ sid }} .grid{grid-template-columns:repeat(3,1fr);} }
+  #hbf-{{ sid }} .card{background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));backdrop-filter:var(--helios-g-blur);box-shadow:var(--helios-g-sh);border-radius:22px;padding:28px;text-align:center;}
+  #hbf-{{ sid }} .ic{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));display:grid;place-items:center;margin:0 auto 16px;color:#fff;}
+  #hbf-{{ sid }} h3{font-family:'Archivo';font-weight:800;font-size:19px;margin:0 0 7px;}
+  #hbf-{{ sid }} p{font-size:14px;color:var(--helios-mut,#56636E);margin:0;}
+</style>
+<div class="wrap">
+  <div class="grid">
+    {%- for block in section.blocks -%}
+      <div class="card" data-reveal {{ block.shopify_attributes }}>
+        <div class="ic">
+          {%- case block.settings.icon -%}
+            {%- when 'motor' -%}<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M5 8l3 3M19 8l-3 3"/><circle cx="12" cy="15" r="6"/></svg>
+            {%- when 'battery' -%}<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 10v4M6 11v2"/></svg>
+            {%- when 'crew' -%}<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19a6 6 0 0 1 12 0"/><circle cx="12" cy="7" r="4"/></svg>
+            {%- else -%}<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
+          {%- endcase -%}
+        </div>
+        <h3>{{ block.settings.title }}</h3>
+        <p>{{ block.settings.text }}</p>
+      </div>
+    {%- endfor -%}
+  </div>
+</div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Benefits",
+  "tag": "section",
+  "blocks": [
+    { "type": "benefit", "name": "Benefit", "settings": [
+      { "type": "select", "id": "icon", "label": "Icon", "options": [{"value":"motor","label":"Motor"},{"value":"battery","label":"Battery"},{"value":"crew","label":"Crew"},{"value":"check","label":"Check"}], "default": "motor" },
+      { "type": "text", "id": "title", "label": "Title", "default": "Cruise hands-free" },
+      { "type": "text", "id": "text", "label": "Text", "default": "Dual thrusters do the work — no paddling, just steer and go." }
+    ]}
+  ],
+  "presets": [{
+    "name": "HELIOS Benefits",
+    "blocks": [
+      { "type": "benefit", "settings": { "icon": "motor", "title": "Cruise hands-free", "text": "Dual thrusters do the work — no paddling, just steer and go." } },
+      { "type": "benefit", "settings": { "icon": "battery", "title": "All-day battery", "text": "Up to ~60 min of cruising per charge, recharges between sessions." } },
+      { "type": "benefit", "settings": { "icon": "crew", "title": "Holds the whole crew", "text": "Supports up to 300 lb on reinforced chambers — ride big, ride stable." } }
+    ]
+  }]
+}
+{% endschema %}
