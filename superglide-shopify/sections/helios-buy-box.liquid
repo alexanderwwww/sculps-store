@@ -131,7 +131,8 @@
       {%- endif -%}
 
       {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
-      {%- form 'product', product, id: 'hb-form-' | append: sid -%}
+      {%- assign hb_form_id = 'hb-form-' | append: sid -%}
+      {%- form 'product', product, id: hb_form_id -%}
         <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
 
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
