@@ -17,7 +17,8 @@
   #hs-{{ sid }} .price s{color:var(--helios-mut,#56636E);margin-left:5px;}
   #hs-{{ sid }} .add{flex-shrink:0;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));color:#fff;border:none;border-radius:13px;padding:14px 24px;font-family:'Archivo';font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 12px 26px rgba(14,124,196,.3);}
 </style>
-  {%- form 'product', product, id: 'hs-form-' | append: sid -%}
+  {%- assign hs_form_id = 'hs-form-' | append: sid -%}
+  {%- form 'product', product, id: hs_form_id -%}
     <input type="hidden" name="id" id="hs-vid-{{ sid }}" value="{{ cur.id }}">
     <div class="bar" id="hs-bar-{{ sid }}">
       <div class="info">
