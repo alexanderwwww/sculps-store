@@ -17,6 +17,7 @@
 ============================================================================
 {%- endcomment -%}
 
+{%- unless product -%}{%- assign product = section.settings.featured_product -%}{%- endunless -%}
 {%- assign cur = product.selected_or_first_available_variant -%}
 {%- assign sid = section.id -%}
 
@@ -304,6 +305,7 @@
   "tag": "section",
   "class": "helios-section",
   "settings": [
+    { "type": "product", "id": "featured_product", "label": "Product (for homepage / non-product templates)" },
     { "type": "header", "content": "Lead media (A/B: video vs image)" },
     { "type": "select", "id": "lead_media_type", "label": "Lead media", "options": [{"value":"video","label":"Demo video (proof of motion)"},{"value":"image","label":"Image"}], "default": "video" },
     { "type": "video", "id": "lead_video", "label": "Demo video (autoplay muted loop)" },

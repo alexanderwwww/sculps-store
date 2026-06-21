@@ -4,6 +4,7 @@
   sections/helios-sticky-atc.liquid
 {%- endcomment -%}
 {%- assign sid = section.id -%}
+{%- unless product -%}{%- assign product = section.settings.featured_product -%}{%- endunless -%}
 {%- assign cur = product.selected_or_first_available_variant -%}
 <div class="helios" id="hs-{{ sid }}">
 <style>
@@ -53,6 +54,7 @@
   "name": "HELIOS Sticky ATC",
   "tag": "section",
   "settings": [
+    { "type": "product", "id": "featured_product", "label": "Product (for homepage / non-product templates)" },
     { "type": "text", "id": "label", "label": "Product label", "default": "Super Glide" },
     { "type": "text", "id": "cta_text", "label": "Button text", "default": "Add to Cart" },
     { "type": "range", "id": "scroll_trigger", "label": "Show after scrolling (px)", "min": 200, "max": 1600, "step": 20, "default": 640 }
