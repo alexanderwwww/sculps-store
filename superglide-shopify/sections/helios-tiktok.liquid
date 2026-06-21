@@ -20,9 +20,9 @@
   #ht-{{ sid }} .ht-dots button{width:8px;height:8px;border-radius:50%;border:none;background:rgba(12,26,36,.2);padding:0;cursor:pointer;transition:.25s;}
   #ht-{{ sid }} .ht-dots button.on{background:var(--acc);transform:scale(1.3);}
   @media(max-width:760px){
-    #ht-{{ sid }} .ht-grid{overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;padding:2px 16vw;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+    #ht-{{ sid }} .ht-grid{overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;padding:2px 14px;scroll-padding-left:14px;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:flex-start;}
     #ht-{{ sid }} .ht-grid::-webkit-scrollbar{display:none;}
-    #ht-{{ sid }} .ht-phone{flex:0 0 68vw;width:68vw;scroll-snap-align:center;}
+    #ht-{{ sid }} .ht-phone{flex:0 0 80vw;width:80vw;scroll-snap-align:start;}
     #ht-{{ sid }} .ht-dots{display:flex;}
   }
 </style>
@@ -56,6 +56,7 @@
 (function(){
   var r=document.getElementById('ht-{{ sid }}'); if(!r||r.dataset.i)return; r.dataset.i='1';
   var grid=document.getElementById('ht-grid-{{ sid }}');
+  if(grid){requestAnimationFrame(function(){try{grid.scrollLeft=0;}catch(e){}});}
   var phones=[].slice.call(r.querySelectorAll('.ht-phone'));
   var vids=[].slice.call(r.querySelectorAll('[data-htv]'));
   var touch=!!(window.matchMedia&&window.matchMedia('(hover:none)').matches);
