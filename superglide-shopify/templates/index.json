@@ -1,17 +1,153 @@
 {
   "sections": {
-    "announcement": { "type": "helios-announcement", "settings": {} },
-    "hero": { "type": "helios-hero", "settings": {} },
-    "buybox": { "type": "helios-buy-box", "blocks": { "b1": { "type": "bundle", "settings": { "variant_id": "47935890817189", "qty": 2, "label": "1 + 1 · 2 Super Glides", "sublabel": "BUY ONE GET ONE FREE · Race a friend", "badge": "Most popular", "badge_style": "accent", "preselect": true, "fallback_price": "19999", "fallback_compare": "39998" } }, "b2": { "type": "bundle", "settings": { "variant_id": "47935890849957", "qty": 3, "label": "3 Super Glides", "sublabel": "Best price per lounger", "badge": "", "badge_style": "accent", "preselect": false, "fallback_price": "33600", "fallback_compare": "59997" } }, "b3": { "type": "bundle", "settings": { "variant_id": "47935890882725", "qty": 4, "label": "2 + 2 · 4 Super Glides", "sublabel": "BUY TWO GET TWO FREE · The whole crew", "badge": "Best value", "badge_style": "teal", "preselect": false, "fallback_price": "39999", "fallback_compare": "79996" } } }, "block_order": ["b1", "b2", "b3"], "settings": { "featured_product": "helios-super-glide-motorized-water-lounger", "discount_code": "SUPERGLIDEIT", "lead_media_type": "video" } },
-    "tiktok": { "type": "helios-tiktok", "settings": {} },
-    "reviews": { "type": "helios-reviews", "settings": {} },
-    "speed": { "type": "helios-speed", "settings": {} },
-    "howitworks": { "type": "helios-howitworks", "settings": {} },
-    "family": { "type": "helios-family", "settings": {} },
-    "guarantee": { "type": "helios-guarantee", "settings": {} },
-    "faq": { "type": "helios-faq", "settings": {} },
-    "footer": { "type": "helios-footer", "settings": {} },
-    "sticky": { "type": "helios-sticky-atc", "settings": { "featured_product": "helios-super-glide-motorized-water-lounger" } }
+    "announcement": {
+      "type": "helios-announcement",
+      "settings": {}
+    },
+    "header": {
+      "type": "helios-header",
+      "settings": {}
+    },
+    "hero": {
+      "type": "helios-hero",
+      "settings": {}
+    },
+    "buybox": {
+      "type": "helios-buy-box",
+      "blocks": {
+        "b1": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "47935890817189",
+            "qty": 2,
+            "label": "1 + 1 · 2 Super Glides",
+            "sublabel": "BUY ONE GET ONE FREE · Race a friend",
+            "badge": "Most popular",
+            "badge_style": "accent",
+            "preselect": true,
+            "fallback_price": "19999",
+            "fallback_compare": "39998"
+          }
+        },
+        "b2": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "47935890849957",
+            "qty": 3,
+            "label": "3 Super Glides",
+            "sublabel": "Best price per lounger",
+            "badge": "",
+            "badge_style": "accent",
+            "preselect": false,
+            "fallback_price": "33600",
+            "fallback_compare": "59997"
+          }
+        },
+        "b3": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "47935890882725",
+            "qty": 4,
+            "label": "2 + 2 · 4 Super Glides",
+            "sublabel": "BUY TWO GET TWO FREE · The whole crew",
+            "badge": "Best value",
+            "badge_style": "teal",
+            "preselect": false,
+            "fallback_price": "39999",
+            "fallback_compare": "79996"
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
+      "settings": {
+        "discount_code": "SUPERGLIDEIT",
+        "lead_media_type": "video",
+        "featured_product": "helios-super-glide-motorized-water-lounger"
+      }
+    },
+    "tiktok": {
+      "type": "helios-tiktok",
+      "blocks": {
+        "c1": {
+          "type": "clip",
+          "settings": {
+            "handle": "@lakedays",
+            "caption": "we raced till the batteries died 🌊"
+          }
+        },
+        "c2": {
+          "type": "clip",
+          "settings": {
+            "handle": "@poolboy",
+            "caption": "best $200 I've spent all summer 🔥"
+          }
+        },
+        "c3": {
+          "type": "clip",
+          "settings": {
+            "handle": "@summercrew",
+            "caption": "whole family wants one now 😂"
+          }
+        }
+      },
+      "block_order": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    },
+    "reviews": {
+      "type": "helios-reviews",
+      "settings": {}
+    },
+    "speed": {
+      "type": "helios-speed",
+      "settings": {}
+    },
+    "howitworks": {
+      "type": "helios-howitworks",
+      "settings": {}
+    },
+    "family": {
+      "type": "helios-family",
+      "settings": {}
+    },
+    "guarantee": {
+      "type": "helios-guarantee",
+      "settings": {}
+    },
+    "faq": {
+      "type": "helios-faq",
+      "settings": {}
+    },
+    "footer": {
+      "type": "helios-footer",
+      "settings": {}
+    },
+    "sticky": {
+      "type": "helios-sticky-atc",
+      "settings": {
+        "featured_product": "helios-super-glide-motorized-water-lounger"
+      }
+    }
   },
-  "order": ["announcement", "hero", "buybox", "tiktok", "reviews", "speed", "howitworks", "family", "guarantee", "faq", "footer", "sticky"]
+  "order": [
+    "announcement",
+    "header",
+    "hero",
+    "buybox",
+    "tiktok",
+    "reviews",
+    "speed",
+    "howitworks",
+    "family",
+    "guarantee",
+    "faq",
+    "footer",
+    "sticky"
+  ]
 }
