@@ -20,12 +20,23 @@
     {%- if section.settings.eyebrow != blank -%}<div class="ey">{{ section.settings.eyebrow }}</div>{%- endif -%}
     <h2>{{ section.settings.heading }}</h2>
   </div>
-  {%- for block in section.blocks -%}
-    <details {% if forloop.first %}open{% endif %} {{ block.shopify_attributes }}>
-      <summary>{{ block.settings.q }}<span class="pm">+</span></summary>
-      <div class="ans">{{ block.settings.a }}</div>
-    </details>
-  {%- endfor -%}
+  {%- if section.blocks.size > 0 -%}
+    {%- for block in section.blocks -%}
+      <details {% if forloop.first %}open{% endif %} {{ block.shopify_attributes }}>
+        <summary>{{ block.settings.q }}<span class="pm">+</span></summary>
+        <div class="ans">{{ block.settings.a }}</div>
+      </details>
+    {%- endfor -%}
+  {%- else -%}
+    {%- assign qs = "How long does the battery last?~Around 60 minutes of continuous cruising per charge, then it recharges between sessions.|How does it charge?~The removable battery pack recharges via the included charger — top it up between outings.|What's the weight limit?~Up to 300 lb. Reinforced chambers keep adults riding high and stable.|How fast does shipping take?~Order today and it ships within 24h, arriving in about 5–8 days with free shipping.|Is there a warranty?~Yes — plus a 30-day money-back guarantee. Not for you? Send it back for a full refund.|Pool or lake?~Both — any calm water: pools, lakes and gentle rivers. It packs down to travel anywhere." | split: "|" -%}
+    {%- for qa in qs -%}
+      {%- assign parts = qa | split: "~" -%}
+      <details {% if forloop.first %}open{% endif %}>
+        <summary>{{ parts[0] }}<span class="pm">+</span></summary>
+        <div class="ans">{{ parts[1] }}</div>
+      </details>
+    {%- endfor -%}
+  {%- endif -%}
 </div>
 </section>
 {% schema %}

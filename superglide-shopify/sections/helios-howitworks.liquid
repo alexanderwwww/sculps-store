@@ -5,7 +5,7 @@
     <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">{{ section.settings.eyebrow }}</div>
     <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(28px,4.2vw,46px);letter-spacing:-.02em;margin:12px 0 0;color:var(--ink);">{{ section.settings.heading }}</h2>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
     {%- assign steps = '1,2,3' | split: ',' -%}
     {%- for s in steps -%}
       {%- assign t = 'step' | append: s | append: '_title' -%}{%- assign d = 'step' | append: s | append: '_text' -%}
