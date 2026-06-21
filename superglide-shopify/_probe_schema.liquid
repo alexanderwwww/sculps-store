@@ -1,0 +1,69 @@
+<section>{{ product.title }}</section>
+{% schema %}
+{
+  "name": "HELIOS Buy Box",
+  "tag": "section",
+  "class": "helios-section",
+  "settings": [
+    { "type": "header", "content": "Lead media (A/B: video vs image)" },
+    { "type": "select", "id": "lead_media_type", "label": "Lead media", "options": [{"value":"video","label":"Demo video (proof of motion)"},{"value":"image","label":"Image"}], "default": "video" },
+    { "type": "video", "id": "lead_video", "label": "Demo video (autoplay muted loop)" },
+    { "type": "image_picker", "id": "lead_image", "label": "Lead / poster image" },
+    { "type": "header", "content": "Copy (A/B)" },
+    { "type": "text", "id": "title", "label": "Product title", "default": "HELIOS Super Glide" },
+    { "type": "richtext", "id": "subtitle", "label": "Subtitle" },
+    { "type": "text", "id": "rating", "label": "Rating", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Review count", "default": "3,912" },
+    { "type": "checkbox", "id": "tiktok_badge", "label": "Show 'As seen on TikTok' badge", "default": true },
+    { "type": "text", "id": "cta_text", "label": "Add-to-cart text", "default": "Add to Cart" },
+    { "type": "header", "content": "Discount chip (use a REAL active code)" },
+    { "type": "text", "id": "discount_code", "label": "Discount code", "default": "" },
+    { "type": "text", "id": "discount_label", "label": "Discount label", "default": "Extra savings — tap to copy" },
+    { "type": "header", "content": "Urgency & social proof" },
+    { "type": "checkbox", "id": "show_countdown", "label": "Show countdown", "default": true },
+    { "type": "range", "id": "countdown_minutes", "label": "Countdown length (minutes, per session)", "min": 30, "max": 1440, "step": 30, "default": 480 },
+    { "type": "text", "id": "eta_line", "label": "Delivery ETA line", "default": "Order today → ships in 24h, arrives in 5–8 days" },
+    { "type": "checkbox", "id": "show_stock", "label": "Show low-stock bar", "default": true },
+    { "type": "number", "id": "stock_left", "label": "Stock left", "default": 24 },
+    { "type": "checkbox", "id": "show_live", "label": "Show live viewers / sold", "default": true },
+    { "type": "number", "id": "live_viewers", "label": "Viewers (starting)", "default": 58 },
+    { "type": "number", "id": "sold_today", "label": "Sold today (starting)", "default": 202 },
+    { "type": "checkbox", "id": "show_toasts", "label": "Show recent-purchase toasts", "default": true }
+  ],
+  "blocks": [
+    {
+      "type": "bundle",
+      "name": "Bundle tier",
+      "settings": [
+        { "type": "text", "id": "variant_id", "label": "Variant ID (real, numeric)", "info": "Products → variant → number at end of admin URL" },
+        { "type": "number", "id": "qty", "label": "Units in this bundle", "default": 1 },
+        { "type": "text", "id": "label", "label": "Tier label", "default": "2 Super Glide" },
+        { "type": "text", "id": "sublabel", "label": "Sub label", "default": "BUY ONE GET ONE FREE · Race a friend" },
+        { "type": "text", "id": "badge", "label": "Badge text (optional)", "default": "Most popular" },
+        { "type": "select", "id": "badge_style", "label": "Badge style", "options": [{"value":"accent","label":"Accent gradient"},{"value":"teal","label":"Teal"}], "default": "accent" },
+        { "type": "checkbox", "id": "preselect", "label": "Pre-select this tier", "default": false },
+        { "type": "text", "id": "fallback_price", "label": "Fallback price (cents)", "info": "Only used if Variant ID is empty", "default": "19999" },
+        { "type": "text", "id": "fallback_compare", "label": "Fallback compare-at (cents)", "default": "39998" }
+      ]
+    },
+    {
+      "type": "thumb",
+      "name": "Gallery thumbnail",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "HELIOS Buy Box",
+      "blocks": [
+        { "type": "bundle", "settings": { "qty": 2, "label": "1 + 1 · 2 Super Glides", "sublabel": "BUY ONE GET ONE FREE · Race a friend", "badge": "Most popular", "badge_style": "accent", "preselect": true, "fallback_price": "19999", "fallback_compare": "39998" } },
+        { "type": "bundle", "settings": { "qty": 3, "label": "3 Super Glides", "sublabel": "Best price per lounger", "badge": "", "badge_style": "accent", "preselect": false, "fallback_price": "33600", "fallback_compare": "59997" } },
+        { "type": "bundle", "settings": { "qty": 4, "label": "2 + 2 · 4 Super Glides", "sublabel": "BUY TWO GET TWO FREE · The whole crew", "badge": "Best value", "badge_style": "teal", "preselect": false, "fallback_price": "39999", "fallback_compare": "79996" } },
+        { "type": "thumb" }, { "type": "thumb" }, { "type": "thumb" }
+      ]
+    }
+  ]
+}
+{% endschema %}
