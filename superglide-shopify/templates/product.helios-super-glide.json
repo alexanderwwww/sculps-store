@@ -121,6 +121,58 @@
     },
     "faq": {
       "type": "helios-faq",
+      "blocks": {
+        "f1": {
+          "type": "qa",
+          "settings": {
+            "q": "How long does the battery last?",
+            "a": "<p>Around 60 minutes of continuous cruising per charge, then recharge between sessions.</p>"
+          }
+        },
+        "f2": {
+          "type": "qa",
+          "settings": {
+            "q": "How does it charge?",
+            "a": "<p>The removable battery pack recharges via the included charger — top it up between outings.</p>"
+          }
+        },
+        "f3": {
+          "type": "qa",
+          "settings": {
+            "q": "What's the weight limit?",
+            "a": "<p>Up to 300 lb. Reinforced chambers keep adults riding high and stable.</p>"
+          }
+        },
+        "f4": {
+          "type": "qa",
+          "settings": {
+            "q": "How fast does shipping take?",
+            "a": "<p>Order today and it ships within 24h, arriving in about 5–8 days with free shipping.</p>"
+          }
+        },
+        "f5": {
+          "type": "qa",
+          "settings": {
+            "q": "Is there a warranty?",
+            "a": "<p>Yes — plus a 30-day money-back guarantee. Not for you? Send it back for a full refund.</p>"
+          }
+        },
+        "f6": {
+          "type": "qa",
+          "settings": {
+            "q": "Pool or lake?",
+            "a": "<p>Both — any calm water. Pools, lakes and gentle rivers. It packs down to travel anywhere.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "f1",
+        "f2",
+        "f3",
+        "f4",
+        "f5",
+        "f6"
+      ],
       "settings": {}
     },
     "footer": {
