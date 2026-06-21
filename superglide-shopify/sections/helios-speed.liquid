@@ -1,21 +1,39 @@
 {%- assign sid = section.id -%}
 <div class="helios" id="hsp-{{ sid }}" style="--ocean1:#062F49;--ocean2:#0E6FA8;--ocean3:#2FB6D6;--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--teal:#2FC1D6;--ink:#0C1A24;--mut:#56636E;font-family:'Inter',system-ui,sans-serif;">
-<style>@keyframes hspwake{0%{transform:translateX(-30%) scaleX(.6);opacity:0;}40%{opacity:.5;}100%{transform:translateX(120%) scaleX(1.2);opacity:0;}}</style>
+<style>
+  @keyframes hspwake{0%{transform:translateX(-30%) scaleX(.6);opacity:0;}40%{opacity:.5;}100%{transform:translateX(120%) scaleX(1.2);opacity:0;}}
+  #hsp-{{ sid }} .hsp-band{position:relative;border-radius:28px;overflow:hidden;min-height:clamp(420px,56vw,600px);background:linear-gradient(120deg,var(--ocean1),var(--ocean2) 62%,var(--ocean3));box-shadow:0 26px 60px -18px rgba(6,47,73,.3);}
+  #hsp-{{ sid }} .hsp-inner{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:center;padding:clamp(28px,5vw,64px);color:#fff;max-width:620px;}
+  #hsp-{{ sid }} .hsp-h{font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(34px,6vw,72px);line-height:.94;letter-spacing:-.02em;margin:16px 0 0;text-shadow:0 8px 40px rgba(0,15,30,.4);}
+  #hsp-{{ sid }} .hsp-p{font-size:clamp(15px,2vw,20px);color:rgba(230,242,250,.92);margin:16px 0 0;max-width:440px;}
+  #hsp-{{ sid }} .hsp-stat{font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(30px,5vw,52px);line-height:1;letter-spacing:-.02em;}
+  @media(max-width:760px){
+    #hsp-{{ sid }} .hsp-band{min-height:0;}
+    #hsp-{{ sid }} .hsp-inner{position:relative;padding:26px 22px 30px;}
+    #hsp-{{ sid }} .hsp-h{font-size:30px;}
+    #hsp-{{ sid }} .hsp-p{font-size:15px;}
+    #hsp-{{ sid }} .hsp-stat{font-size:30px;}
+  }
+</style>
 <section style="max-width:1280px;margin:0 auto;padding:clamp(28px,5vw,56px) 16px 0;">
-  <div style="position:relative;border-radius:28px;overflow:hidden;min-height:clamp(420px,56vw,600px);background:linear-gradient(120deg,var(--ocean1),var(--ocean2) 62%,var(--ocean3));box-shadow:0 26px 60px -18px rgba(6,47,73,.3);">
-    {%- if section.settings.image != blank -%}<img src="{{ section.settings.image | image_url: width: 1600 }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">{%- endif -%}
+  <div class="hsp-band">
+    {%- if section.settings.video != blank -%}
+      {{ section.settings.video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, image_size: '1600x', style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;' }}
+    {%- elsif section.settings.image != blank -%}
+      <img src="{{ section.settings.image | image_url: width: 1600 }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+    {%- endif -%}
     <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,30,46,.82),rgba(6,30,46,.32) 55%,rgba(6,30,46,.08));z-index:2;"></div>
     <div style="position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none;">
       <span style="position:absolute;top:34%;left:0;width:38%;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,rgba(190,235,250,.85),transparent);animation:hspwake 2.4s linear infinite;"></span>
       <span style="position:absolute;top:52%;left:0;width:46%;height:4px;border-radius:3px;background:linear-gradient(90deg,transparent,rgba(190,235,250,.7),transparent);animation:hspwake 3.1s linear infinite .4s;"></span>
       <span style="position:absolute;top:68%;left:0;width:32%;height:2px;border-radius:3px;background:linear-gradient(90deg,transparent,rgba(190,235,250,.75),transparent);animation:hspwake 2s linear infinite .9s;"></span>
     </div>
-    <div style="position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:center;padding:clamp(28px,5vw,64px);color:#fff;max-width:620px;">
+    <div class="hsp-inner">
       <div style="display:inline-flex;align-items:center;gap:8px;align-self:flex-start;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);padding:7px 14px;border-radius:30px;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;">⚡ Full throttle</div>
-      <h2 style="font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(34px,6vw,72px);line-height:.94;letter-spacing:-.02em;margin:16px 0 0;text-shadow:0 8px 40px rgba(0,15,30,.4);">{{ section.settings.heading }}</h2>
-      <p style="font-size:clamp(15px,2vw,20px);color:rgba(230,242,250,.92);margin:16px 0 0;max-width:440px;">{{ section.settings.body }}</p>
+      <h2 class="hsp-h">{{ section.settings.heading }}</h2>
+      <p class="hsp-p">{{ section.settings.body }}</p>
       <div style="display:flex;align-items:center;gap:22px;margin-top:26px;flex-wrap:wrap;">
-        <div style="display:flex;flex-direction:column;"><span style="font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(30px,5vw,52px);line-height:1;letter-spacing:-.02em;">{{ section.settings.stat }}</span><span style="font-size:12px;color:rgba(230,242,250,.75);margin-top:5px;letter-spacing:.04em;">{{ section.settings.stat_note }}</span></div>
+        <div style="display:flex;flex-direction:column;"><span class="hsp-stat">{{ section.settings.stat }}</span><span style="font-size:12px;color:rgba(230,242,250,.75);margin-top:5px;letter-spacing:.04em;">{{ section.settings.stat_note }}</span></div>
         <a href="{{ section.settings.cta_link | default: '#buy' }}" style="display:inline-flex;align-items:center;gap:9px;background:#fff;color:var(--accd);border-radius:14px;padding:15px 28px;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;box-shadow:0 16px 34px rgba(0,20,40,.3);text-decoration:none;">{{ section.settings.cta_text }} →</a>
       </div>
     </div>
@@ -23,5 +41,5 @@
 </section>
 </div>
 {% schema %}
-{"name":"HELIOS Speed","tag":"section","settings":[{"type":"image_picker","id":"image","label":"Action shot (lounger moving fast)"},{"type":"text","id":"heading","label":"Heading","default":"Faster than it has any right to be."},{"type":"textarea","id":"body","label":"Body","default":"Dual thrusters push the Super Glide to a genuinely fair clip — quick enough to race a friend, smooth enough to keep your drink steady. When the water's calm and you hit full throttle, it really moves."},{"type":"text","id":"stat","label":"Stat","default":"A fair clip"},{"type":"text","id":"stat_note","label":"Stat note","default":"Top speed varies with water & load"},{"type":"text","id":"cta_text","label":"Button text","default":"Take the throttle"},{"type":"url","id":"cta_link","label":"Button link"}],"presets":[{"name":"HELIOS Speed"}]}
+{"name":"HELIOS Speed","tag":"section","settings":[{"type":"video","id":"video","label":"Background video (clip)"},{"type":"image_picker","id":"image","label":"Background image (fallback)"},{"type":"text","id":"heading","label":"Heading","default":"Faster than it has any right to be."},{"type":"textarea","id":"body","label":"Body","default":"Dual thrusters push the Super Glide to a genuinely fair clip — quick enough to race a friend, smooth enough to keep your drink steady. When the water's calm and you hit full throttle, it really moves."},{"type":"text","id":"stat","label":"Stat","default":"A fair clip"},{"type":"text","id":"stat_note","label":"Stat note","default":"Top speed varies with water & load"},{"type":"text","id":"cta_text","label":"Button text","default":"Take the throttle"},{"type":"url","id":"cta_link","label":"Button link"}],"presets":[{"name":"HELIOS Speed"}]}
 {% endschema %}
