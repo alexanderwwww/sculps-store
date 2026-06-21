@@ -1,0 +1,30 @@
+{
+  "sections": {
+    "announcement": { "type": "helios-announcement", "settings": {} },
+    "buybox":       { "type": "helios-buy-box" },
+    "video":        { "type": "helios-video-banner" },
+    "benefits":     { "type": "helios-benefits" },
+    "comparison":   { "type": "helios-comparison" },
+    "featuremap":   { "type": "helios-feature-map" },
+    "tiktok":       { "type": "helios-tiktok" },
+    "reviews":      { "type": "helios-reviews" },
+    "guarantee":    { "type": "helios-guarantee" },
+    "faq":          { "type": "helios-faq" },
+    "footer":       { "type": "helios-footer" },
+    "sticky":       { "type": "helios-sticky-atc" }
+  },
+  "order": [
+    "announcement",
+    "buybox",
+    "video",
+    "benefits",
+    "comparison",
+    "featuremap",
+    "tiktok",
+    "reviews",
+    "guarantee",
+    "faq",
+    "footer",
+    "sticky"
+  ]
+}
