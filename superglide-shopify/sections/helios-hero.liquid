@@ -1,0 +1,25 @@
+{%- assign sid = section.id -%}
+<div class="helios" id="hh-{{ sid }}" style="--ocean1:#062F49;--ocean2:#0E6FA8;--ocean3:#2FB6D6;--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--teal:#2FC1D6;--ink:#0C1A24;--mut:#56636E;font-family:'Inter',system-ui,sans-serif;">
+<section style="max-width:1280px;margin:0 auto;padding:16px 16px 0;">
+  <div style="position:relative;border-radius:28px;overflow:hidden;min-height:clamp(420px,62vw,640px);background:linear-gradient(135deg,var(--ocean1),var(--ocean2) 58%,var(--ocean3));box-shadow:0 26px 60px -18px rgba(6,47,73,.3);">
+    {%- if section.settings.video != blank -%}
+      {{ section.settings.video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, image_size: '1600x', style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;' }}
+    {%- elsif section.settings.image != blank -%}
+      <img src="{{ section.settings.image | image_url: width: 1600 }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+    {%- endif -%}
+    <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,30,46,.72),rgba(6,30,46,.1) 50%,rgba(6,30,46,.28));z-index:2;"></div>
+    <div style="position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(28px,5vw,60px);color:#fff;">
+      <div style="font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.9);">{{ section.settings.eyebrow }}</div>
+      <h1 style="font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(40px,8vw,104px);line-height:.86;letter-spacing:-.02em;margin:10px 0 0;text-shadow:0 8px 40px rgba(0,15,30,.4);">{{ section.settings.heading }}</h1>
+      <p style="font-size:clamp(15px,2vw,21px);font-weight:500;max-width:440px;margin:14px 0 0;color:rgba(255,255,255,.94);">{{ section.settings.subtitle }}</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;align-items:center;">
+        <a href="{{ section.settings.cta_link | default: '#buy' }}" style="display:inline-flex;align-items:center;gap:9px;background:#fff;color:var(--accd);border-radius:14px;padding:16px 30px;font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;box-shadow:0 18px 40px rgba(0,20,40,.3);text-decoration:none;">{{ section.settings.cta_text }} →</a>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:rgba(255,255,255,.92);"><span style="color:#ffd27a;letter-spacing:1px;">★★★★★</span> <b style="font-family:'Archivo',sans-serif;font-weight:800;">4.8</b> · 3,912+ riders</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+{% schema %}
+{"name":"HELIOS Hero","tag":"section","settings":[{"type":"video","id":"video","label":"Background video"},{"type":"image_picker","id":"image","label":"Background image / poster"},{"type":"text","id":"eyebrow","label":"Eyebrow","default":"The motorized water lounger"},{"type":"text","id":"heading","label":"Heading","default":"SUPER GLIDE"},{"type":"textarea","id":"subtitle","label":"Subtitle","default":"Kick back, grab the joysticks, and glide across the water. No paddling — just cruise."},{"type":"text","id":"cta_text","label":"Button text","default":"Shop now"},{"type":"url","id":"cta_link","label":"Button link"}],"presets":[{"name":"HELIOS Hero"}]}
+{% endschema %}

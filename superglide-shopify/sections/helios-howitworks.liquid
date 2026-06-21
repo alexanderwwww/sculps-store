@@ -1,0 +1,23 @@
+{%- assign sid = section.id -%}
+<div class="helios" id="hw-{{ sid }}" style="--ocean1:#062F49;--ocean2:#0E6FA8;--ocean3:#2FB6D6;--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--teal:#2FC1D6;--ink:#0C1A24;--mut:#56636E;font-family:'Inter',system-ui,sans-serif; background:radial-gradient(60% 60% at 50% 0%,rgba(108,196,232,.18),transparent 70%);">
+<section style="max-width:1000px;margin:0 auto;padding:clamp(40px,6vw,80px) 22px;">
+  <div style="text-align:center;margin:0 auto 36px;max-width:600px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accd);">{{ section.settings.eyebrow }}</div>
+    <h2 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(28px,4.2vw,46px);letter-spacing:-.02em;margin:12px 0 0;color:var(--ink);">{{ section.settings.heading }}</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+    {%- assign steps = '1,2,3' | split: ',' -%}
+    {%- for s in steps -%}
+      {%- assign t = 'step' | append: s | append: '_title' -%}{%- assign d = 'step' | append: s | append: '_text' -%}
+      <div style="background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);box-shadow:0 10px 34px rgba(6,47,73,.13);border-radius:22px;padding:28px 24px;text-align:center;">
+        <div style="width:46px;height:46px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;display:grid;place-items:center;">{{ s }}</div>
+        <h3 style="font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;margin:0 0 7px;color:var(--ink);">{{ section.settings[t] }}</h3>
+        <p style="font-size:14px;color:var(--mut);margin:0;line-height:1.55;">{{ section.settings[d] }}</p>
+      </div>
+    {%- endfor -%}
+  </div>
+</section>
+</div>
+{% schema %}
+{"name":"HELIOS How It Works","tag":"section","settings":[{"type":"text","id":"eyebrow","label":"Eyebrow","default":"Up and running in minutes"},{"type":"text","id":"heading","label":"Heading","default":"Three steps to glide."},{"type":"text","id":"step1_title","label":"Step 1 title","default":"Inflate it"},{"type":"textarea","id":"step1_text","label":"Step 1 text","default":"Pump it up in a few minutes with the included nozzle."},{"type":"text","id":"step2_title","label":"Step 2 title","default":"Drop it in"},{"type":"textarea","id":"step2_text","label":"Step 2 text","default":"Set it on the water and hop on — pool, lake or river."},{"type":"text","id":"step3_title","label":"Step 3 title","default":"Grab the joysticks"},{"type":"textarea","id":"step3_text","label":"Step 3 text","default":"Twin motors do the work. Steer, spin, and cruise hands-free."}],"presets":[{"name":"HELIOS How It Works"}]}
+{% endschema %}

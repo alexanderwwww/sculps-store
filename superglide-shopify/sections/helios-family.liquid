@@ -1,0 +1,25 @@
+{%- assign sid = section.id -%}
+<div class="helios" id="hf-{{ sid }}" style="--ocean1:#062F49;--ocean2:#0E6FA8;--ocean3:#2FB6D6;--acc:#0E7CC4;--acc2:#16A6D6;--accd:#0A5E97;--teal:#2FC1D6;--ink:#0C1A24;--mut:#56636E;font-family:'Inter',system-ui,sans-serif;">
+<style>@media(min-width:760px){#hf-{{ sid }} .hf-grid{grid-template-columns:.92fr 1.08fr !important;}}</style>
+<section style="max-width:1200px;margin:0 auto;padding:clamp(20px,3vw,40px) 22px clamp(40px,7vw,80px);">
+  <div class="hf-grid" style="display:grid;grid-template-columns:1fr;gap:0;border-radius:28px;overflow:hidden;box-shadow:0 26px 60px -18px rgba(6,47,73,.3);background:linear-gradient(135deg,var(--ocean1),var(--ocean2) 72%,var(--ocean3));">
+    <div style="position:relative;min-height:clamp(340px,70vw,560px);">
+      {%- if section.settings.image != blank -%}<img src="{{ section.settings.image | image_url: width: 1200 }}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">{%- endif -%}
+      <div style="position:absolute;top:18px;left:18px;display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);border-radius:30px;padding:9px 15px;color:#fff;"><span style="color:#ffd27a;letter-spacing:1px;font-size:13px;">★★★★★</span><span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;">{{ section.settings.badge }}</span></div>
+    </div>
+    <div style="position:relative;color:#fff;padding:clamp(30px,5vw,60px);display:flex;flex-direction:column;justify-content:center;">
+      <div style="font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(190,225,245,.9);">{{ section.settings.eyebrow }}</div>
+      <h2 style="font-family:'Archivo',sans-serif;font-weight:900;font-size:clamp(30px,4.6vw,56px);line-height:.98;letter-spacing:-.02em;margin:14px 0 0;text-shadow:0 8px 40px rgba(0,15,30,.35);">{{ section.settings.heading }}</h2>
+      <p style="font-size:clamp(15px,1.8vw,19px);color:rgba(230,242,250,.92);margin:16px 0 0;max-width:42ch;">{{ section.settings.body }}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;">
+        <span style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.32);border-radius:30px;padding:9px 15px;font-size:13px;font-weight:700;">{{ section.settings.tag1 }}</span>
+        <span style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.32);border-radius:30px;padding:9px 15px;font-size:13px;font-weight:700;">{{ section.settings.tag2 }}</span>
+      </div>
+      <a href="{{ section.settings.cta_link | default: '#buy' }}" style="align-self:flex-start;display:inline-flex;align-items:center;gap:9px;margin-top:28px;background:#fff;color:var(--accd);border-radius:14px;padding:15px 30px;font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;box-shadow:0 16px 34px rgba(0,20,40,.3);text-decoration:none;">{{ section.settings.cta_text }} →</a>
+    </div>
+  </div>
+</section>
+</div>
+{% schema %}
+{"name":"HELIOS Family","tag":"section","settings":[{"type":"image_picker","id":"image","label":"Photo (dad/kids on the lounger)"},{"type":"text","id":"badge","label":"Badge","default":"Family approved"},{"type":"text","id":"eyebrow","label":"Eyebrow","default":"Dad's throne"},{"type":"text","id":"heading","label":"Heading","default":"The whole family's favorite seat."},{"type":"textarea","id":"body","label":"Body","default":"Big enough for you and the kids, steady enough for snacks and drinks, comfy enough to stay out all afternoon. One float, the entire crew — no fighting over who gets the good spot."},{"type":"text","id":"tag1","label":"Tag 1","default":"🧊 Cup holders for everyone"},{"type":"text","id":"tag2","label":"Tag 2","default":"💪 Holds up to 300 lb"},{"type":"text","id":"cta_text","label":"Button text","default":"Make it yours"},{"type":"url","id":"cta_link","label":"Button link"}],"presets":[{"name":"HELIOS Family"}]}
+{% endschema %}
