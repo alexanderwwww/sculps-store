@@ -148,6 +148,24 @@
         <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
 
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
+          {%- comment -%} auto Mini tier (single-seat variant) {%- endcomment -%}
+          {%- for v in product.variants -%}
+            {%- if v.title contains 'Mini' -%}
+              <label class="hb-tier" data-vid="{{ v.id }}" data-price="{{ v.price }}" data-compare="{{ v.compare_at_price }}">
+                <span class="hb-radio"></span>
+                <div style="flex:1;">
+                  <span class="hb-tiername">1 × Super Glide Mini</span>
+                  <span class="hb-tiersub">Single seat · most affordable</span>
+                  <span class="hb-tierper">{{ v.price | money }} · just you</span>
+                </div>
+                <div class="hb-tierprice">
+                  <b>{{ v.price | money }}</b>
+                  {%- if v.compare_at_price > v.price -%}<s>{{ v.compare_at_price | money }}</s>{%- endif -%}
+                  {%- if v.compare_at_price > v.price -%}{%- assign sv = v.compare_at_price | minus: v.price -%}<span class="hb-tiersave">You save {{ sv | money }}</span>{%- endif -%}
+                </div>
+              </label>
+            {%- endif -%}
+          {%- endfor -%}
           {%- for block in section.blocks -%}
             {%- if block.type == 'bundle' -%}
               {%- assign vid = block.settings.variant_id | times: 1 -%}
