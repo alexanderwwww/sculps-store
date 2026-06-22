@@ -29,9 +29,14 @@
     #hb-{{ sid }} .hb-grid{grid-template-columns:1.04fr .96fr;gap:46px;align-items:start;}
     #hb-{{ sid }} .hb-gallery{position:sticky;top:90px;}
   }
-  #hb-{{ sid }} .hb-stage{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:4/5;}
-  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{transition:opacity .25s ease;}
+  #hb-{{ sid }} .hb-stage{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:1/1;}
+  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s ease;}
+  #hb-{{ sid }} .hb-pk{flex:1;text-align:left;cursor:pointer;border:2px solid rgba(12,26,36,.14);background:#fff;border-radius:14px;padding:12px 15px;transition:.18s;}
+  #hb-{{ sid }} .hb-pk b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:var(--helios-ink,#0C1A24);}
+  #hb-{{ sid }} .hb-pk span{font-size:11.5px;color:var(--helios-mut,#56636E);}
+  #hb-{{ sid }} .hb-pk.on{background:#0A1219;border-color:#0A1219;box-shadow:0 12px 26px rgba(6,30,46,.30);}
+  #hb-{{ sid }} .hb-pk.on b{color:#fff;}
+  #hb-{{ sid }} .hb-pk.on span{color:rgba(255,255,255,.72);}
   #hb-{{ sid }} .hb-thumbs{display:flex;gap:11px;overflow-x:auto;margin-top:14px;padding-bottom:6px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   #hb-{{ sid }} .hb-thumbs::-webkit-scrollbar{display:none;}
   #hb-{{ sid }} .hb-thumb{position:relative;padding:0;flex:0 0 clamp(100px,30%,150px);aspect-ratio:1/1;border:1.5px solid rgba(12,26,36,.10);border-radius:15px;overflow:hidden;cursor:pointer;background:linear-gradient(160deg,#F4FAFD,#E6F1F8);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
@@ -82,11 +87,11 @@
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
   <div class="hb-picker" style="display:flex;gap:10px;margin-bottom:18px;">
-    <button type="button" data-pick="double" class="hb-pk" style="flex:1;text-align:left;cursor:pointer;border:2px solid var(--helios-acc,#0E7CC4);background:var(--helios-g-bg,rgba(255,255,255,.6));border-radius:14px;padding:11px 15px;transition:.2s;">
-      <b style="display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:var(--helios-ink,#0C1A24);">Super Glide</b><span style="font-size:11.5px;color:var(--helios-mut,#56636E);">Double · 2 seats · from $199.99</span>
+    <button type="button" data-pick="double" class="hb-pk on">
+      <b>Super Glide</b><span>Double · 2 seats · from $199.99</span>
     </button>
-    <button type="button" data-pick="mini" class="hb-pk" style="flex:1;text-align:left;cursor:pointer;border:2px solid rgba(12,26,36,.12);background:var(--helios-g-bg2,rgba(255,255,255,.4));border-radius:14px;padding:11px 15px;transition:.2s;">
-      <b style="display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:var(--helios-ink,#0C1A24);">Mini Glide</b><span style="font-size:11.5px;color:var(--helios-mut,#56636E);">Single · 1 seat · from $129.99</span>
+    <button type="button" data-pick="mini" class="hb-pk">
+      <b>Mini Glide</b><span>Single · 1 seat · from $129.99</span>
     </button>
   </div>
   <div class="hb-grid">
@@ -328,7 +333,7 @@
   /* ---- variant picker (Double / Mini) + Meta ad deep-link ---- */
   var picks = root.querySelectorAll('[data-pick]');
   function setMode(m){
-    picks.forEach(function(p){ var on=p.dataset.pick===m; p.style.borderColor=on?'var(--helios-acc,#0E7CC4)':'rgba(12,26,36,.12)'; p.style.background=on?'var(--helios-g-bg,rgba(255,255,255,.6))':'var(--helios-g-bg2,rgba(255,255,255,.4))'; });
+    picks.forEach(function(p){ p.classList.toggle('on', p.dataset.pick===m); });
     root.querySelectorAll('[data-gal]').forEach(function(g){ g.style.display=g.dataset.gal===m?'':'none'; });
     root.querySelectorAll('[data-tier]').forEach(function(t){ t.style.display=t.dataset.tier===m?'':'none'; });
     var ttl=document.getElementById('hb-title-{{ sid }}'); if(ttl){ var nm=(m==='mini')?ttl.getAttribute('data-mini'):ttl.getAttribute('data-double'); if(nm) ttl.textContent=nm; }
