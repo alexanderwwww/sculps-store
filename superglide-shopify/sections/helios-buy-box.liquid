@@ -29,10 +29,13 @@
     #hb-{{ sid }} .hb-grid{grid-template-columns:1.04fr .96fr;gap:46px;align-items:start;}
     #hb-{{ sid }} .hb-gallery{position:sticky;top:90px;}
   }
-  #hb-{{ sid }} .hb-stage{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:1/1;}
-  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
-  #hb-{{ sid }} .hb-stage > .hb-slide{opacity:0;transition:opacity .12s ease;pointer-events:none;}
-  #hb-{{ sid }} .hb-stage > .hb-slide.on{opacity:1;pointer-events:auto;}
+  #hb-{{ sid }} .hb-stage{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:24px;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:1/1;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+  #hb-{{ sid }} .hb-stage::-webkit-scrollbar{display:none;}
+  #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;}
+  #hb-{{ sid }} .hb-cell > img,#hb-{{ sid }} .hb-cell > video{width:100%;height:100%;object-fit:contain;display:block;}
+  #hb-{{ sid }} .hb-dots{display:flex;gap:6px;justify-content:center;margin-top:11px;min-height:7px;}
+  #hb-{{ sid }} .hb-dot{width:7px;height:7px;border-radius:50%;background:rgba(12,26,36,.18);transition:.2s;}
+  #hb-{{ sid }} .hb-dot.on{background:var(--helios-acc,#0E7CC4);width:20px;border-radius:4px;}
   #hb-{{ sid }} .hb-pk{flex:1;display:flex;align-items:center;gap:11px;text-align:left;cursor:pointer;border:2px solid rgba(12,26,36,.14);background:#fff;border-radius:14px;padding:10px 13px;transition:.18s;}
   #hb-{{ sid }} .hb-pk .hb-pkimg{flex:0 0 46px;width:46px;height:46px;border-radius:10px;object-fit:cover;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);}
   #hb-{{ sid }} .hb-pk .hb-pktx{display:flex;flex-direction:column;min-width:0;}
@@ -94,27 +97,24 @@
 
     {%- comment -%} ---------- GALLERY (double) ---------- {%- endcomment -%}
     <div class="hb-gallery" data-gal="double">
-      <div class="hb-stage" id="hb-stage-{{ sid }}">
+      <div class="hb-stage" id="hb-stage-{{ sid }}" data-track>
         {%- assign mainimg = product.featured_image | default: section.settings.lead_image -%}
         {%- assign nimg = product.images.size -%}
         {%- if nimg > 0 -%}
           {%- for img in product.images -%}
-            <img class="hb-slide{% if forloop.first %} on{% endif %}" data-slide="{{ forloop.index0 }}" src="{{ img | image_url: width: 1100 }}" alt="{{ product.title | escape }}" loading="eager" decoding="async" fetchpriority="{% if forloop.first %}high{% else %}low{% endif %}">
+            <div class="hb-cell" data-slide="{{ forloop.index0 }}"><img src="{{ img | image_url: width: 700 }}" srcset="{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 700 }} 700w, {{ img | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="{{ product.title | escape }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async"{% if forloop.first %} fetchpriority="high"{% endif %}></div>
           {%- endfor -%}
         {%- elsif mainimg != blank -%}
-          <img class="hb-slide on" data-slide="0" src="{{ mainimg | image_url: width: 1100 }}" alt="{{ product.title | escape }}" loading="eager">
+          <div class="hb-cell" data-slide="0"><img src="{{ mainimg | image_url: width: 700 }}" srcset="{{ mainimg | image_url: width: 400 }} 400w, {{ mainimg | image_url: width: 700 }} 700w, {{ mainimg | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="{{ product.title | escape }}" loading="eager" fetchpriority="high"></div>
         {%- endif -%}
         {%- if section.settings.lead_video != blank -%}
-          <video class="hb-slide{% if nimg == 0 and mainimg == blank %} on{% endif %}" data-slide="vid" muted loop playsinline preload="metadata">{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>
+          <div class="hb-cell" data-slide="vid"><video muted loop playsinline preload="none"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>
         {%- endif -%}
         {%- if nimg == 0 and mainimg == blank and section.settings.lead_video == blank -%}
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--helios-mut,#56636E);padding:24px;">
-            <span style="width:58px;height:58px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-4.5-4.5L7 21"/></svg></span>
-            <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add your demo video or photos</div>
-            <div style="font-size:12px;opacity:.75;">Product → Media · the first one shows here</div>
-          </div>
+          <div class="hb-cell" data-slide="0"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--helios-mut,#56636E);padding:24px;"><span style="width:58px;height:58px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-4.5-4.5L7 21"/></svg></span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add your demo video or photos</div><div style="font-size:12px;opacity:.75;">Product → Media · the first one shows here</div></div></div>
         {%- endif -%}
       </div>
+      <div class="hb-dots" data-dots></div>
       <div class="hb-thumbs">
         {%- comment -%} product images first (Product → Media), min 4 slots {%- endcomment -%}
         {%- assign nimg = product.images.size -%}
@@ -139,16 +139,17 @@
 
     {%- comment -%} ---------- GALLERY (mini) ---------- {%- endcomment -%}
     <div class="hb-gallery" data-gal="mini" style="display:none;">
-      <div class="hb-stage">
+      <div class="hb-stage" data-track>
         {%- assign mhas = false -%}
         {%- for i in (1..4) -%}
           {%- case i -%}{%- when 1 -%}{%- assign mi = section.settings.mini_image_1 -%}{%- when 2 -%}{%- assign mi = section.settings.mini_image_2 -%}{%- when 3 -%}{%- assign mi = section.settings.mini_image_3 -%}{%- when 4 -%}{%- assign mi = section.settings.mini_image_4 -%}{%- endcase -%}
-          {%- if mi != blank -%}<img class="hb-slide{% unless mhas %} on{% endunless %}" data-slide="{{ i }}" src="{{ mi | image_url: width: 1100 }}" alt="Super Glide Mini" loading="eager" decoding="async">{%- assign mhas = true -%}{%- endif -%}
+          {%- if mi != blank -%}<div class="hb-cell" data-slide="{{ i }}"><img src="{{ mi | image_url: width: 700 }}" srcset="{{ mi | image_url: width: 400 }} 400w, {{ mi | image_url: width: 700 }} 700w, {{ mi | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="Super Glide Mini" loading="{% unless mhas %}eager{% else %}lazy{% endunless %}" decoding="async"></div>{%- assign mhas = true -%}{%- endif -%}
         {%- endfor -%}
-        {%- if section.settings.mini_video_1 != blank -%}<video class="hb-slide{% unless mhas %} on{% endunless %}" data-slide="v1" muted loop playsinline preload="metadata">{%- for s in section.settings.mini_video_1.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>{%- assign mhas = true -%}{%- endif -%}
-        {%- if section.settings.mini_video_2 != blank -%}<video class="hb-slide" data-slide="v2" muted loop playsinline preload="metadata">{%- for s in section.settings.mini_video_2.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>{%- endif -%}
-        {%- unless mhas -%}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--helios-mut,#56636E);padding:24px;text-align:center;"><span style="width:52px;height:52px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);">🌀</span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add Mini media</div><div style="font-size:12px;opacity:.75;">Customize → Mini media (2 videos + images)</div></div>{%- endunless -%}
+        {%- if section.settings.mini_video_1 != blank -%}<div class="hb-cell" data-slide="v1"><video muted loop playsinline preload="none"{% if section.settings.mini_video_1.preview_image != blank %} poster="{{ section.settings.mini_video_1.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.mini_video_1.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>{%- assign mhas = true -%}{%- endif -%}
+        {%- if section.settings.mini_video_2 != blank -%}<div class="hb-cell" data-slide="v2"><video muted loop playsinline preload="none"{% if section.settings.mini_video_2.preview_image != blank %} poster="{{ section.settings.mini_video_2.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.mini_video_2.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>{%- endif -%}
+        {%- unless mhas -%}<div class="hb-cell" data-slide="1"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--helios-mut,#56636E);padding:24px;text-align:center;"><span style="width:52px;height:52px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);">🌀</span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add Mini media</div><div style="font-size:12px;opacity:.75;">Customize → Mini media (2 videos + images)</div></div></div>{%- endunless -%}
       </div>
+      <div class="hb-dots" data-dots></div>
       <div class="hb-thumbs">
         {%- for i in (1..4) -%}
           {%- case i -%}{%- when 1 -%}{%- assign mi = section.settings.mini_image_1 -%}{%- when 2 -%}{%- assign mi = section.settings.mini_image_2 -%}{%- when 3 -%}{%- assign mi = section.settings.mini_image_3 -%}{%- when 4 -%}{%- assign mi = section.settings.mini_image_4 -%}{%- endcase -%}
@@ -331,17 +332,29 @@
 
   /* ---- gallery thumbs (generic for double + mini) ---- */
   function bindGallery(gal){
-    var slides = gal.querySelectorAll('.hb-slide');
-    gal.querySelectorAll('.hb-thumb').forEach(function(th){
-      var key = th.getAttribute('data-goto'); if(key===null) return;
-      th.addEventListener('click', function(){
-        gal.querySelectorAll('.hb-thumb').forEach(function(x){ x.classList.remove('sel'); });
-        th.classList.add('sel');
-        slides.forEach(function(s){
-          var on = (s.getAttribute('data-slide')===key);
-          s.classList.toggle('on', on);
-          if(s.tagName==='VIDEO'){ if(on){ var p=s.play(); if(p&&p.catch)p.catch(function(){}); } else { try{ s.pause(); }catch(e){} } }
-        });
+    var track = gal.querySelector('[data-track]'); if(!track) return;
+    var cells = Array.prototype.slice.call(track.querySelectorAll('.hb-cell'));
+    var thumbs = Array.prototype.slice.call(gal.querySelectorAll('.hb-thumb[data-goto]'));
+    var dotsWrap = gal.querySelector('[data-dots]');
+    if(!cells.length) return;
+    if(dotsWrap){ dotsWrap.innerHTML=''; cells.forEach(function(c,i){ var d=document.createElement('span'); d.className='hb-dot'+(i===0?' on':''); dotsWrap.appendChild(d); }); }
+    var dots = dotsWrap ? Array.prototype.slice.call(dotsWrap.children) : [];
+    function setActive(i){
+      dots.forEach(function(d,j){ d.classList.toggle('on', j===i); });
+      var key = cells[i].getAttribute('data-slide');
+      thumbs.forEach(function(t){ t.classList.toggle('sel', t.getAttribute('data-goto')===key); });
+      cells.forEach(function(c,j){ var v=c.querySelector('video'); if(v){ if(j===i){ var p=v.play(); if(p&&p.catch)p.catch(function(){}); } else { try{ v.pause(); }catch(e){} } } });
+    }
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(ents){
+        ents.forEach(function(en){ if(en.isIntersecting && en.intersectionRatio>=0.55){ var i=cells.indexOf(en.target); if(i>=0) setActive(i); } });
+      },{root:track,threshold:[0.55,0.8]});
+      cells.forEach(function(c){ io.observe(c); });
+    }
+    thumbs.forEach(function(t){
+      t.addEventListener('click', function(){
+        var key=t.getAttribute('data-goto');
+        for(var i=0;i<cells.length;i++){ if(cells[i].getAttribute('data-slide')===key){ track.scrollTo({left:cells[i].offsetLeft,behavior:'smooth'}); setActive(i); break; } }
       });
     });
   }
