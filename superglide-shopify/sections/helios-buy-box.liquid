@@ -30,7 +30,9 @@
     #hb-{{ sid }} .hb-gallery{position:sticky;top:90px;}
   }
   #hb-{{ sid }} .hb-stage{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:1/1;}
-  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s ease;}
+  #hb-{{ sid }} .hb-stage > img,#hb-{{ sid }} .hb-stage > video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  #hb-{{ sid }} .hb-stage > .hb-slide{opacity:0;transition:opacity .12s ease;pointer-events:none;}
+  #hb-{{ sid }} .hb-stage > .hb-slide.on{opacity:1;pointer-events:auto;}
   #hb-{{ sid }} .hb-pk{flex:1;display:flex;align-items:center;gap:11px;text-align:left;cursor:pointer;border:2px solid rgba(12,26,36,.14);background:#fff;border-radius:14px;padding:10px 13px;transition:.18s;}
   #hb-{{ sid }} .hb-pk .hb-pkimg{flex:0 0 46px;width:46px;height:46px;border-radius:10px;object-fit:cover;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);}
   #hb-{{ sid }} .hb-pk .hb-pktx{display:flex;flex-direction:column;min-width:0;}
@@ -94,13 +96,18 @@
     <div class="hb-gallery" data-gal="double">
       <div class="hb-stage" id="hb-stage-{{ sid }}">
         {%- assign mainimg = product.featured_image | default: section.settings.lead_image -%}
-        {%- if mainimg != blank -%}
-          <img data-gimg id="hb-stageimg-{{ sid }}" src="{{ mainimg | image_url: width: 1200 }}" alt="{{ product.title | escape }}" loading="eager">
+        {%- assign nimg = product.images.size -%}
+        {%- if nimg > 0 -%}
+          {%- for img in product.images -%}
+            <img class="hb-slide{% if forloop.first %} on{% endif %}" data-slide="{{ forloop.index0 }}" src="{{ img | image_url: width: 1100 }}" alt="{{ product.title | escape }}" loading="eager" decoding="async" fetchpriority="{% if forloop.first %}high{% else %}low{% endif %}">
+          {%- endfor -%}
+        {%- elsif mainimg != blank -%}
+          <img class="hb-slide on" data-slide="0" src="{{ mainimg | image_url: width: 1100 }}" alt="{{ product.title | escape }}" loading="eager">
         {%- endif -%}
         {%- if section.settings.lead_video != blank -%}
-          <video data-gvid id="hb-stagevid-{{ sid }}" muted loop playsinline preload="metadata"{% if mainimg != blank %} style="display:none;"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>
+          <video class="hb-slide{% if nimg == 0 and mainimg == blank %} on{% endif %}" data-slide="vid" muted loop playsinline preload="metadata">{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>
         {%- endif -%}
-        {%- if mainimg == blank and section.settings.lead_video == blank -%}
+        {%- if nimg == 0 and mainimg == blank and section.settings.lead_video == blank -%}
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--helios-mut,#56636E);padding:24px;">
             <span style="width:58px;height:58px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-4.5-4.5L7 21"/></svg></span>
             <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add your demo video or photos</div>
@@ -116,14 +123,14 @@
           {%- assign idx = n | minus: 1 -%}
           {%- assign img = product.images[idx] -%}
           {%- if img != blank -%}
-            <button type="button" class="hb-thumb{% if forloop.first %} sel{% endif %}" data-stagesrc="{{ img | image_url: width: 1200 }}"><img src="{{ img | image_url: width: 220 }}" alt="{{ product.title | escape }}"></button>
+            <button type="button" class="hb-thumb{% if forloop.first %} sel{% endif %}" data-goto="{{ idx }}"><img src="{{ img | image_url: width: 220 }}" alt="{{ product.title | escape }}" loading="lazy"></button>
           {%- else -%}
             <button type="button" class="hb-thumb" aria-hidden="true"><span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-mut,#56636E);font-size:11px;gap:3px;opacity:.7;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>img</span></button>
           {%- endif -%}
         {%- endfor -%}
         {%- comment -%} demo video LAST {%- endcomment -%}
         {%- if section.settings.lead_video != blank -%}
-        <button type="button" class="hb-thumb" data-vidsrc="{{ section.settings.lead_video.sources[0].url }}">
+        <button type="button" class="hb-thumb" data-goto="vid">
           {%- if section.settings.lead_video.preview_image != blank -%}<img src="{{ section.settings.lead_video.preview_image | image_url: width: 220 }}" alt="demo"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video</span></span>{%- endif -%}
         </button>
         {%- endif -%}
@@ -133,22 +140,26 @@
     {%- comment -%} ---------- GALLERY (mini) ---------- {%- endcomment -%}
     <div class="hb-gallery" data-gal="mini" style="display:none;">
       <div class="hb-stage">
-        {%- assign mini1 = section.settings.mini_image_1 -%}
-        {%- if mini1 != blank -%}<img data-gimg src="{{ mini1 | image_url: width: 1200 }}" alt="Super Glide Mini">{%- endif -%}
-        {%- if section.settings.mini_video_1 != blank -%}<video data-gvid muted loop playsinline preload="metadata"{% if mini1 != blank %} style="display:none;"{% endif %}>{%- for s in section.settings.mini_video_1.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>{%- endif -%}
-        {%- if mini1 == blank and section.settings.mini_video_1 == blank -%}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--helios-mut,#56636E);padding:24px;text-align:center;"><span style="width:52px;height:52px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);">🌀</span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add Mini media</div><div style="font-size:12px;opacity:.75;">Customize → Mini media (2 videos + images)</div></div>{%- endif -%}
+        {%- assign mhas = false -%}
+        {%- for i in (1..4) -%}
+          {%- case i -%}{%- when 1 -%}{%- assign mi = section.settings.mini_image_1 -%}{%- when 2 -%}{%- assign mi = section.settings.mini_image_2 -%}{%- when 3 -%}{%- assign mi = section.settings.mini_image_3 -%}{%- when 4 -%}{%- assign mi = section.settings.mini_image_4 -%}{%- endcase -%}
+          {%- if mi != blank -%}<img class="hb-slide{% unless mhas %} on{% endunless %}" data-slide="{{ i }}" src="{{ mi | image_url: width: 1100 }}" alt="Super Glide Mini" loading="eager" decoding="async">{%- assign mhas = true -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if section.settings.mini_video_1 != blank -%}<video class="hb-slide{% unless mhas %} on{% endunless %}" data-slide="v1" muted loop playsinline preload="metadata">{%- for s in section.settings.mini_video_1.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>{%- assign mhas = true -%}{%- endif -%}
+        {%- if section.settings.mini_video_2 != blank -%}<video class="hb-slide" data-slide="v2" muted loop playsinline preload="metadata">{%- for s in section.settings.mini_video_2.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>{%- endif -%}
+        {%- unless mhas -%}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--helios-mut,#56636E);padding:24px;text-align:center;"><span style="width:52px;height:52px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);">🌀</span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add Mini media</div><div style="font-size:12px;opacity:.75;">Customize → Mini media (2 videos + images)</div></div>{%- endunless -%}
       </div>
       <div class="hb-thumbs">
         {%- for i in (1..4) -%}
           {%- case i -%}{%- when 1 -%}{%- assign mi = section.settings.mini_image_1 -%}{%- when 2 -%}{%- assign mi = section.settings.mini_image_2 -%}{%- when 3 -%}{%- assign mi = section.settings.mini_image_3 -%}{%- when 4 -%}{%- assign mi = section.settings.mini_image_4 -%}{%- endcase -%}
           {%- if mi != blank -%}
-            <button type="button" class="hb-thumb{% if forloop.first %} sel{% endif %}" data-stagesrc="{{ mi | image_url: width: 1200 }}"><img src="{{ mi | image_url: width: 220 }}" alt="Super Glide Mini"></button>
+            <button type="button" class="hb-thumb{% if forloop.first %} sel{% endif %}" data-goto="{{ i }}"><img src="{{ mi | image_url: width: 220 }}" alt="Super Glide Mini" loading="lazy"></button>
           {%- else -%}
             <button type="button" class="hb-thumb" aria-hidden="true"><span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-mut,#56636E);font-size:11px;gap:3px;opacity:.7;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>img</span></button>
           {%- endif -%}
         {%- endfor -%}
-        {%- if section.settings.mini_video_1 != blank -%}<button type="button" class="hb-thumb" data-vidsrc="{{ section.settings.mini_video_1.sources[0].url }}">{%- if section.settings.mini_video_1.preview_image != blank -%}<img src="{{ section.settings.mini_video_1.preview_image | image_url: width: 220 }}" alt="video"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video</span></span>{%- endif -%}</button>{%- endif -%}
-        {%- if section.settings.mini_video_2 != blank -%}<button type="button" class="hb-thumb" data-vidsrc="{{ section.settings.mini_video_2.sources[0].url }}">{%- if section.settings.mini_video_2.preview_image != blank -%}<img src="{{ section.settings.mini_video_2.preview_image | image_url: width: 220 }}" alt="video 2"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video 2</span></span>{%- endif -%}</button>{%- endif -%}
+        {%- if section.settings.mini_video_1 != blank -%}<button type="button" class="hb-thumb" data-goto="v1">{%- if section.settings.mini_video_1.preview_image != blank -%}<img src="{{ section.settings.mini_video_1.preview_image | image_url: width: 220 }}" alt="video"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video</span></span>{%- endif -%}</button>{%- endif -%}
+        {%- if section.settings.mini_video_2 != blank -%}<button type="button" class="hb-thumb" data-goto="v2">{%- if section.settings.mini_video_2.preview_image != blank -%}<img src="{{ section.settings.mini_video_2.preview_image | image_url: width: 220 }}" alt="video 2"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video 2</span></span>{%- endif -%}</button>{%- endif -%}
       </div>
     </div>
 
@@ -320,26 +331,21 @@
 
   /* ---- gallery thumbs (generic for double + mini) ---- */
   function bindGallery(gal){
-    var img=gal.querySelector('[data-gimg]'), vid=gal.querySelector('[data-gvid]');
+    var slides = gal.querySelectorAll('.hb-slide');
     gal.querySelectorAll('.hb-thumb').forEach(function(th){
+      var key = th.getAttribute('data-goto'); if(key===null) return;
       th.addEventListener('click', function(){
         gal.querySelectorAll('.hb-thumb').forEach(function(x){ x.classList.remove('sel'); });
         th.classList.add('sel');
-        if(th.dataset.vidsrc && vid){
-          if(img) img.style.display='none';
-          if(vid.getAttribute('src')!==th.dataset.vidsrc){ vid.setAttribute('src', th.dataset.vidsrc); }
-          vid.style.display=''; var p=vid.play(); if(p&&p.catch)p.catch(function(){});
-        } else if(th.dataset.stagesrc && img){
-          if(vid){ try{vid.pause();}catch(e){} vid.style.display='none'; }
-          img.style.display=''; img.style.opacity='0'; img.removeAttribute('srcset'); img.src=th.dataset.stagesrc; setTimeout(function(){ img.style.opacity='1'; },60);
-        }
+        slides.forEach(function(s){
+          var on = (s.getAttribute('data-slide')===key);
+          s.classList.toggle('on', on);
+          if(s.tagName==='VIDEO'){ if(on){ var p=s.play(); if(p&&p.catch)p.catch(function(){}); } else { try{ s.pause(); }catch(e){} } }
+        });
       });
     });
   }
   root.querySelectorAll('[data-gal]').forEach(bindGallery);
-
-  /* preload full-size stage images up front so thumbnail taps swap INSTANTLY (kills the lag) */
-  root.querySelectorAll('.hb-thumb[data-stagesrc]').forEach(function(th){ var im=new Image(); im.decoding='async'; im.src=th.dataset.stagesrc; });
 
   /* ---- variant picker (Double / Mini) + Meta ad deep-link ---- */
   var picks = root.querySelectorAll('[data-pick]');
