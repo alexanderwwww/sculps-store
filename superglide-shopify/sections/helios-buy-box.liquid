@@ -32,6 +32,7 @@
   #hb-{{ sid }} .hb-stage{position:relative;display:flex;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:24px;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:1/1;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
   #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;height:100%;overflow:hidden;}
   #hb-{{ sid }} .hb-stage::-webkit-scrollbar{display:none;}
+  @media(max-width:879px){ #hb-{{ sid }} .hb-stage{aspect-ratio:4/3;} }
   #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;}
   #hb-{{ sid }} .hb-cell > img,#hb-{{ sid }} .hb-cell > video{width:100%;height:100%;object-fit:contain;display:block;}
   #hb-{{ sid }} .hb-dots{display:flex;gap:6px;justify-content:center;margin-top:11px;min-height:7px;}
