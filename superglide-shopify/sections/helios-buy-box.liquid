@@ -196,6 +196,7 @@
         <div class="hb-timer">⚡ Flash sale ends <span id="hb-cd-{{ sid }}">--:--:--</span></div>
       {%- endif -%}
 
+      {%- if section.settings.show_picker -%}
       {%- comment -%} variant picker (Super Glide / Mini) — sits right above the pack options {%- endcomment -%}
       <div class="hb-picker" style="display:flex;gap:9px;margin:8px 0 14px;">
         {%- assign pk_dbl = product.featured_image | default: section.settings.lead_image -%}
@@ -209,6 +210,7 @@
           <span class="hb-pktx"><b>Mini Glide</b><span>Single · 1 seat</span></span>
         </button>
       </div>
+      {%- endif -%}
 
       {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
       {%- assign hb_form_id = 'hb-form-' | append: sid -%}
@@ -216,6 +218,7 @@
         <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
 
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
+          {%- if section.settings.show_picker -%}
           {%- comment -%} auto Mini tier (single-seat variant) {%- endcomment -%}
           {%- for v in product.variants -%}
             {%- if v.title contains 'Mini' -%}
@@ -239,6 +242,7 @@
               </label>
             {%- endif -%}
           {%- endfor -%}
+          {%- endif -%}
           {%- for block in section.blocks -%}
             {%- if block.type == 'bundle' -%}
               {%- assign vid = block.settings.variant_id | times: 1 -%}
@@ -460,6 +464,7 @@
     { "type": "text", "id": "rating", "label": "Rating", "default": "4.8" },
     { "type": "text", "id": "review_count", "label": "Review count", "default": "3,912" },
     { "type": "checkbox", "id": "tiktok_badge", "label": "Show 'As seen on TikTok' badge", "default": true },
+    { "type": "checkbox", "id": "show_picker", "label": "Show Super/Mini variant picker", "default": true },
     { "type": "text", "id": "cta_text", "label": "Add-to-cart text", "default": "Add to Cart" },
     { "type": "header", "content": "Discount chip (use a REAL active code)" },
     { "type": "text", "id": "discount_code", "label": "Discount code", "default": "SUPERGLIDEIT" },
