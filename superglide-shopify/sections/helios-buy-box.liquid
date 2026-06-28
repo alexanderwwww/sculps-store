@@ -60,6 +60,8 @@
   #hb-{{ sid }} .hb-price b{font-weight:900;font-size:34px;color:var(--helios-ink2,#0A1219);}
   #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
   #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
+  #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
+  #hb-{{ sid }} .hb-chip{font-size:11.5px;font-weight:700;color:var(--helios-ink,#0C1A24);background:rgba(14,124,196,.08);border:1px solid rgba(14,124,196,.16);border-radius:30px;padding:5px 10px;white-space:nowrap;}
   #hb-{{ sid }} .hb-timer{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));backdrop-filter:var(--helios-g-blur);padding:7px 12px;border-radius:9px;margin-bottom:16px;}
   #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:14px;border:2px solid var(--helios-line,rgba(255,255,255,.6));border-radius:18px;padding:16px 17px;cursor:pointer;position:relative;background:var(--helios-g-bg2,rgba(255,255,255,.4));backdrop-filter:var(--helios-g-blur);transition:.2s;margin-bottom:11px;}
   #hb-{{ sid }} .hb-tier.sel{border-color:var(--helios-acc,#0E7CC4);background:var(--helios-g-bg,rgba(255,255,255,.55));box-shadow:0 10px 26px rgba(14,124,196,.16);}
@@ -181,6 +183,14 @@
         <b id="hb-price-{{ sid }}">{{ cur.price | money }}</b>
         {%- if cur.compare_at_price > cur.price -%}<s id="hb-cmp-{{ sid }}">{{ cur.compare_at_price | money }}</s>{%- endif -%}
         <span class="hb-save" id="hb-savepct-{{ sid }}"></span>
+      </div>
+
+      <div class="hb-chips">
+        <span class="hb-chip">★ {{ section.settings.review_count | default: '3,912' }} reviews</span>
+        <span class="hb-chip">🛟 Glides hands-free</span>
+        <span class="hb-chip">👨‍👩‍👧 Fits the whole family</span>
+        <span class="hb-chip">🚚 Free shipping</span>
+        <span class="hb-chip">🛡 30-day returns</span>
       </div>
 
       {%- if section.settings.show_countdown -%}
