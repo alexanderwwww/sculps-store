@@ -7,17 +7,21 @@
 {%- endcomment -%}
 {%- assign sid = section.id -%}
 {%- if section.settings.enabled -%}
+{%- assign vpos = section.settings.vpos | default: 'bottom' -%}
+{%- assign off = section.settings.offset | default: 120 -%}
+{%- assign off_d = section.settings.offset_desktop | default: 100 -%}
+{%- if vpos == 'top' -%}{%- assign hide_tf = 'translateY(-220%)' -%}{%- else -%}{%- assign hide_tf = 'translateY(220%)' -%}{%- endif -%}
 <div class="helios" id="pt-{{ sid }}">
 <style>
-  #pt-{{ sid }}-toast{position:fixed;left:50%;bottom:120px;
-    transform:translateX(-50%) translateY(220%);z-index:78;
+  #pt-{{ sid }}-toast{position:fixed;left:50%;{{ vpos }}:{{ off }}px;
+    transform:translateX(-50%) {{ hide_tf }};z-index:78;
     width:min(92vw,372px);cursor:pointer;opacity:0;
     transition:transform .72s cubic-bezier(.22,.61,.36,1),opacity .55s ease;
     -webkit-tap-highlight-color:transparent;}
   #pt-{{ sid }}-toast.in{transform:translateX(-50%) translateY(0);opacity:1;}
   @media(min-width:760px){
-    #pt-{{ sid }}-toast{left:auto;right:20px;bottom:100px;
-      transform:translateX(0) translateY(220%);}
+    #pt-{{ sid }}-toast{left:auto;right:20px;{{ vpos }}:{{ off_d }}px;
+      transform:translateX(0) {{ hide_tf }};}
     #pt-{{ sid }}-toast.in{transform:translateX(0) translateY(0);}
   }
   /* the glass — clear, no colour in the body */
@@ -83,6 +87,11 @@
   "tag": "section",
   "settings": [
     { "type": "checkbox", "id": "enabled", "label": "Show promo toast", "default": true },
+    { "type": "header", "content": "Position — drag to place it" },
+    { "type": "select", "id": "vpos", "label": "Anchor", "options": [ { "value": "top", "label": "From the top" }, { "value": "bottom", "label": "From the bottom" } ], "default": "bottom" },
+    { "type": "range", "id": "offset", "label": "Distance from edge — mobile", "min": 8, "max": 600, "step": 4, "unit": "px", "default": 200 },
+    { "type": "range", "id": "offset_desktop", "label": "Distance from edge — desktop", "min": 8, "max": 600, "step": 4, "unit": "px", "default": 120 },
+    { "type": "header", "content": "Content" },
     { "type": "text", "id": "headline", "label": "Headline", "default": "🎉 4th of July — $20 OFF" },
     { "type": "text", "id": "subtext", "label": "Subtext", "default": "Tap to copy your code" },
     { "type": "text", "id": "code", "label": "Discount code", "default": "4OFJULY" },
