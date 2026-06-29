@@ -67,7 +67,9 @@
         {%- if brate < 1 -%}{%- assign brate = 5 -%}{%- endif -%}
         {%- assign btext = parts[2] | strip -%}
         {%- assign bloc = parts[3] | strip -%}
+        {%- assign bimg = parts[4] | strip -%}
         <div class="card">
+          {%- if bimg != blank -%}<img class="ph" src="{{ bimg }}" alt="{{ bn | escape }}" loading="lazy">{%- endif -%}
           <div class="top"><div class="stars">{% for s in (1..5) %}{% if s <= brate %}★{% else %}☆{% endif %}{% endfor %}</div><span class="vb">✓ Verified</span></div>
           <div class="rtext">{{ btext }}</div>
           <div class="who"><span class="av">{{ bn | slice: 0 }}</span><div><div class="nm">{{ bn }}</div>{%- if bloc != blank -%}<div class="lo">{{ bloc }}</div>{%- endif -%}</div></div>
@@ -102,7 +104,7 @@
     { "type": "text", "id": "rating", "label": "Summary rating (optional)", "default": "4.8" },
     { "type": "text", "id": "review_count", "label": "Summary count", "default": "3,912" },
     { "type": "header", "content": "Bulk reviews — paste from Excel" },
-    { "type": "textarea", "id": "bulk_reviews", "label": "One review per line", "info": "Format:  Name | Rating(1-5) | Review text | Location   — in Excel, combine your columns with | then paste here.", "default": "Marcus T. | 5 | Cruised the whole lake on one charge. Everyone wanted a turn. | Tampa, FL\nJenna R. | 5 | Got it for my husband — he hasn't gotten out of the pool since. | Scottsdale, AZ\nDevon W. | 4 | So much fun. Takes a few minutes to inflate but worth it. | Austin, TX\nTyler M. | 5 | Pulled up to the sandbar and instantly had a crowd. | San Diego, CA" }
+    { "type": "textarea", "id": "bulk_reviews", "label": "One review per line", "info": "Format:  Name | Rating(1-5) | Review text | Location | Image URL (optional)  — paste an image URL from Content → Files to show a photo. Combine your Excel columns with | then paste here.", "default": "Marcus T. | 5 | Cruised the whole lake on one charge. Everyone wanted a turn. | Tampa, FL | \nJenna R. | 5 | Got it for my husband — he hasn't gotten out of the pool since. | Scottsdale, AZ | \nDevon W. | 4 | So much fun. Takes a few minutes to inflate but worth it. | Austin, TX | \nTyler M. | 5 | Pulled up to the sandbar and instantly had a crowd. | San Diego, CA | " }
   ],
   "blocks": [
     { "type": "review", "name": "Review (with photo)", "settings": [
