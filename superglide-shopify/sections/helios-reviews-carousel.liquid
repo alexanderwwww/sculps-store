@@ -1,0 +1,119 @@
+{%- comment -%}
+  HELIOS — Review Carousel (liquid glass, swipeable). Reusable on any product page.
+  Two ways to add reviews:
+   1) Blocks  → reviews WITH a photo (image_picker per block)
+   2) Bulk    → paste from Excel into the textarea: Name | Rating | Text | Location  (one per line)
+  sections/helios-reviews-carousel.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+<section class="helios" id="rc-{{ sid }}">
+<style>
+  #rc-{{ sid }} .wrap{max-width:1200px;margin:0 auto;padding:clamp(34px,6vw,72px) 16px;position:relative;}
+  #rc-{{ sid }} .head{text-align:center;max-width:640px;margin:0 auto 26px;}
+  #rc-{{ sid }} .ey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);}
+  #rc-{{ sid }} h2{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(26px,4vw,44px);letter-spacing:-.02em;margin:10px 0 0;}
+  #rc-{{ sid }} .summary{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-size:13.5px;color:var(--helios-mut,#56636E);}
+  #rc-{{ sid }} .summary .st{color:#f5a623;letter-spacing:1px;}
+  #rc-{{ sid }} .track{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:6px 4px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  #rc-{{ sid }} .track::-webkit-scrollbar{display:none;}
+  #rc-{{ sid }} .card{scroll-snap-align:center;flex:0 0 84%;display:flex;flex-direction:column;gap:12px;
+     background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));
+     backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
+     box-shadow:0 18px 44px -18px rgba(6,47,73,.32);border-radius:22px;padding:18px;}
+  @media(min-width:560px){ #rc-{{ sid }} .card{flex:0 0 48%;} }
+  @media(min-width:880px){ #rc-{{ sid }} .card{flex:0 0 calc(33.333% - 11px);} }
+  #rc-{{ sid }} .ph{width:100%;aspect-ratio:4/3;border-radius:14px;object-fit:cover;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);}
+  #rc-{{ sid }} .top{display:flex;align-items:center;justify-content:space-between;}
+  #rc-{{ sid }} .stars{color:#f5a623;font-size:15px;letter-spacing:1px;}
+  #rc-{{ sid }} .vb{font-size:10.5px;font-weight:700;color:#1aa86b;background:rgba(26,168,107,.1);padding:4px 9px;border-radius:30px;}
+  #rc-{{ sid }} .rtext{font-size:14px;line-height:1.55;color:var(--helios-ink,#0C1A24);}
+  #rc-{{ sid }} .who{display:flex;align-items:center;gap:10px;margin-top:auto;}
+  #rc-{{ sid }} .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));color:#fff;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;display:grid;place-items:center;flex-shrink:0;overflow:hidden;}
+  #rc-{{ sid }} .av img{width:100%;height:100%;object-fit:cover;}
+  #rc-{{ sid }} .nm{font-size:13px;font-weight:700;color:var(--helios-ink,#0C1A24);}
+  #rc-{{ sid }} .lo{font-size:11.5px;color:var(--helios-mut,#56636E);}
+  #rc-{{ sid }} .dots{display:flex;gap:6px;justify-content:center;margin-top:18px;flex-wrap:wrap;max-width:280px;margin-left:auto;margin-right:auto;}
+  #rc-{{ sid }} .dot{width:7px;height:7px;border-radius:50%;background:rgba(12,26,36,.18);transition:.2s;cursor:pointer;}
+  #rc-{{ sid }} .dot.on{background:var(--helios-acc,#0E7CC4);width:20px;border-radius:4px;}
+</style>
+<div class="wrap">
+  <div class="head">
+    {%- if section.settings.eyebrow != blank -%}<div class="ey">{{ section.settings.eyebrow }}</div>{%- endif -%}
+    <h2>{{ section.settings.heading }}</h2>
+    {%- if section.settings.rating != blank -%}<div class="summary"><span class="st">★★★★★</span> <b>{{ section.settings.rating }}</b> · {{ section.settings.review_count }} reviews</div>{%- endif -%}
+  </div>
+  <div class="track" data-track>
+    {%- comment -%} 1) reviews WITH photos (blocks) {%- endcomment -%}
+    {%- for block in section.blocks -%}
+      {%- assign rt = block.settings.rating | default: 5 | times: 1 -%}
+      <div class="card" {{ block.shopify_attributes }}>
+        {%- if block.settings.image != blank -%}<img class="ph" src="{{ block.settings.image | image_url: width: 640 }}" alt="{{ block.settings.name | escape }}" loading="lazy">{%- endif -%}
+        <div class="top"><div class="stars">{% for s in (1..5) %}{% if s <= rt %}★{% else %}☆{% endif %}{% endfor %}</div><span class="vb">✓ Verified</span></div>
+        <div class="rtext">{{ block.settings.text }}</div>
+        <div class="who">
+          <span class="av">{% if block.settings.avatar != blank %}<img src="{{ block.settings.avatar | image_url: width: 80 }}" alt="">{% else %}{{ block.settings.name | slice: 0 }}{% endif %}</span>
+          <div><div class="nm">{{ block.settings.name }}</div>{%- if block.settings.location != blank -%}<div class="lo">{{ block.settings.location }}</div>{%- endif -%}</div>
+        </div>
+      </div>
+    {%- endfor -%}
+    {%- comment -%} 2) bulk reviews pasted from Excel: Name | Rating | Text | Location {%- endcomment -%}
+    {%- assign rows = section.settings.bulk_reviews | newline_to_br | split: '<br />' -%}
+    {%- for row in rows -%}
+      {%- assign line = row | strip -%}
+      {%- if line contains '|' -%}
+        {%- assign parts = line | split: '|' -%}
+        {%- assign bn = parts[0] | strip -%}
+        {%- assign brate = parts[1] | strip | times: 1 -%}
+        {%- if brate < 1 -%}{%- assign brate = 5 -%}{%- endif -%}
+        {%- assign btext = parts[2] | strip -%}
+        {%- assign bloc = parts[3] | strip -%}
+        <div class="card">
+          <div class="top"><div class="stars">{% for s in (1..5) %}{% if s <= brate %}★{% else %}☆{% endif %}{% endfor %}</div><span class="vb">✓ Verified</span></div>
+          <div class="rtext">{{ btext }}</div>
+          <div class="who"><span class="av">{{ bn | slice: 0 }}</span><div><div class="nm">{{ bn }}</div>{%- if bloc != blank -%}<div class="lo">{{ bloc }}</div>{%- endif -%}</div></div>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+  <div class="dots" data-dots></div>
+</div>
+<script>
+(function(){
+  var root=document.getElementById('rc-{{ sid }}'); if(!root||root.dataset.init)return; root.dataset.init='1';
+  var track=root.querySelector('[data-track]'), dotsWrap=root.querySelector('[data-dots]');
+  var cards=Array.prototype.slice.call(track.querySelectorAll('.card')); if(!cards.length)return;
+  dotsWrap.innerHTML=''; cards.forEach(function(c,i){var d=document.createElement('span');d.className='dot'+(i===0?' on':'');dotsWrap.appendChild(d);});
+  var dots=Array.prototype.slice.call(dotsWrap.children);
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.intersectionRatio>=0.6){var i=cards.indexOf(e.target);dots.forEach(function(d,j){d.classList.toggle('on',j===i);});}});},{root:track,threshold:[0.6]});
+    cards.forEach(function(c){io.observe(c);});
+  }
+  dots.forEach(function(d,i){d.addEventListener('click',function(){track.scrollTo({left:cards[i].offsetLeft,behavior:'smooth'});});});
+})();
+</script>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Review Carousel",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "★★★★★ Real reviews" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "What buyers are saying." },
+    { "type": "text", "id": "rating", "label": "Summary rating (optional)", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Summary count", "default": "3,912" },
+    { "type": "header", "content": "Bulk reviews — paste from Excel" },
+    { "type": "textarea", "id": "bulk_reviews", "label": "One review per line", "info": "Format:  Name | Rating(1-5) | Review text | Location   — in Excel, combine your columns with | then paste here.", "default": "Marcus T. | 5 | Cruised the whole lake on one charge. Everyone wanted a turn. | Tampa, FL\nJenna R. | 5 | Got it for my husband — he hasn't gotten out of the pool since. | Scottsdale, AZ\nDevon W. | 4 | So much fun. Takes a few minutes to inflate but worth it. | Austin, TX\nTyler M. | 5 | Pulled up to the sandbar and instantly had a crowd. | San Diego, CA" }
+  ],
+  "blocks": [
+    { "type": "review", "name": "Review (with photo)", "settings": [
+      { "type": "image_picker", "id": "image", "label": "Review photo" },
+      { "type": "text", "id": "name", "label": "Name", "default": "Happy Customer" },
+      { "type": "text", "id": "location", "label": "Location" },
+      { "type": "range", "id": "rating", "label": "Rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+      { "type": "textarea", "id": "text", "label": "Review text", "default": "Best summer purchase I've made. Absolutely love it!" },
+      { "type": "image_picker", "id": "avatar", "label": "Customer avatar (optional)" }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS Review Carousel", "blocks": [ { "type": "review" }, { "type": "review" } ] }]
+}
+{% endschema %}

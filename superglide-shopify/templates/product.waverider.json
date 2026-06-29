@@ -32,6 +32,10 @@
         "show_toasts": false
       }
     },
+    "reviewcarousel": {
+      "type": "helios-reviews-carousel",
+      "settings": { "eyebrow": "★★★★★ Real reviews", "heading": "Riders are obsessed.", "rating": "4.8", "review_count": "1,200" }
+    },
     "reviews": {
       "type": "helios-reviews",
       "settings": { "eyebrow": "★ 4.8 average", "heading": "Riders love it.", "rating": "4.8", "review_count": "1,200", "dist_5": 85, "dist_4": 12, "dist_3": 2, "dist_2": 1, "dist_1": 0 }
@@ -56,5 +60,5 @@
     "footer": { "type": "helios-footer", "settings": { "brand": "HELIOS", "tagline": "<p>Summer, handled.</p>", "copyright": "© 2026 HELIOS" } },
     "sticky": { "type": "helios-sticky-atc", "settings": { "label": "Floatie Jetski Pro", "cta_text": "Add to Cart", "scroll_trigger": 380 } }
   },
-  "order": ["announcement", "header", "buybox", "reviews", "tiktok", "howitworks", "guarantee", "faq", "footer", "sticky"]
+  "order": ["announcement", "header", "buybox", "reviewcarousel", "reviews", "tiktok", "howitworks", "guarantee", "faq", "footer", "sticky"]
 }
