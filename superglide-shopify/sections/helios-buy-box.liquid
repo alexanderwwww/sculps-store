@@ -249,8 +249,8 @@
               {%- assign bv = blank -%}
               {%- for v in product.variants -%}{%- if v.id == vid -%}{%- assign bv = v -%}{%- endif -%}{%- endfor -%}
               {%- assign qty = block.settings.qty | default: 1 -%}
-              {%- assign tprice = bv.price | default: block.settings.fallback_price -%}
-              {%- assign tcompare = bv.compare_at_price | default: block.settings.fallback_compare -%}
+              {%- assign tprice = bv.price | default: block.settings.fallback_price | plus: 0 -%}
+              {%- assign tcompare = bv.compare_at_price | default: block.settings.fallback_compare | plus: 0 -%}
               {%- assign saveamt = tcompare | minus: tprice -%}
               {%- assign perunit = tprice | divided_by: qty -%}
               <label class="hb-tier{% if block.settings.preselect %} sel{% endif %}" data-tier="double"
@@ -263,7 +263,7 @@
                 <div style="flex:1;">
                   <span class="hb-tiername">{{ block.settings.label | default: bv.title }}</span>
                   {%- if block.settings.sublabel != blank -%}<span class="hb-tiersub">{{ block.settings.sublabel }}</span>{%- endif -%}
-                  <span class="hb-tierper">{{ perunit | money }} / lounger</span>
+                  <span class="hb-tierper">{{ perunit | money }} each</span>
                 </div>
                 <div class="hb-tierprice">
                   <b>{{ tprice | money }}</b>
