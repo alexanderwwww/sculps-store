@@ -1,0 +1,90 @@
+{%- comment -%}
+  HELIOS — iPhone-notification-style discount toast (liquid glass).
+  Slides in from the top, tap-to-copy the code, auto-dismiss, once per session.
+  Floats (position:fixed) so it never blocks the funnel. Drop on any template.
+  sections/helios-promo-toast.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- if section.settings.enabled -%}
+<div class="helios" id="pt-{{ sid }}">
+<style>
+  #pt-{{ sid }}-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-160%);z-index:140;
+    width:min(92vw,380px);cursor:pointer;opacity:0;transition:transform .55s cubic-bezier(.18,.9,.24,1),opacity .4s ease;
+    -webkit-tap-highlight-color:transparent;}
+  #pt-{{ sid }}-toast.in{transform:translateX(-50%) translateY(0);opacity:1;}
+  @media(min-width:760px){
+    #pt-{{ sid }}-toast{left:auto;right:18px;transform:translateX(0) translateY(-160%);}
+    #pt-{{ sid }}-toast.in{transform:translateX(0) translateY(0);}
+  }
+  /* the glass */
+  #pt-{{ sid }} .g{position:relative;display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:20px;overflow:hidden;
+    background:rgba(255,255,255,.14);
+    backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(255,255,255,.45);
+    box-shadow:0 18px 50px -12px rgba(8,20,35,.5), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(255,255,255,.15);}
+  /* blue glow — top-left edge only */
+  #pt-{{ sid }} .g::before{content:"";position:absolute;top:-2px;left:-2px;width:55%;height:60%;pointer-events:none;
+    background:radial-gradient(120% 120% at 0% 0%, rgba(90,170,255,.85), rgba(90,170,255,0) 60%);
+    filter:blur(2px);border-top-left-radius:20px;}
+  /* amber glow — bottom-right edge only */
+  #pt-{{ sid }} .g::after{content:"";position:absolute;bottom:-2px;right:-2px;width:55%;height:60%;pointer-events:none;
+    background:radial-gradient(120% 120% at 100% 100%, rgba(255,196,90,.85), rgba(255,196,90,0) 60%);
+    filter:blur(2px);border-bottom-right-radius:20px;}
+  /* diagonal shine sweeping the side */
+  #pt-{{ sid }} .shine{position:absolute;inset:0;pointer-events:none;border-radius:20px;
+    background:linear-gradient(115deg,rgba(255,255,255,.5) 0%,rgba(255,255,255,0) 22%);}
+  #pt-{{ sid }} .ic{position:relative;z-index:2;width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:grid;place-items:center;font-size:20px;
+    background:linear-gradient(135deg,#0E7CC4,#16A6D6);box-shadow:0 6px 16px rgba(14,124,196,.4);}
+  #pt-{{ sid }} .tx{position:relative;z-index:2;flex:1;min-width:0;color:#0C1A24;}
+  #pt-{{ sid }} .tx .h{font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;line-height:1.15;}
+  #pt-{{ sid }} .tx .s{font-size:12px;color:#33424d;margin-top:2px;}
+  #pt-{{ sid }} .tx .code{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;letter-spacing:.06em;color:#0A5E97;background:rgba(255,255,255,.55);border:1px dashed rgba(14,124,196,.5);border-radius:9px;padding:4px 9px;}
+  #pt-{{ sid }} .x{position:relative;z-index:2;flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#33424d;background:rgba(255,255,255,.4);font-size:14px;border:none;cursor:pointer;}
+</style>
+  <div id="pt-{{ sid }}-toast" role="button" aria-label="Copy discount code">
+    <div class="g">
+      <span class="shine"></span>
+      <div class="ic">🎉</div>
+      <div class="tx">
+        <div class="h">{{ section.settings.headline }}</div>
+        <div class="s">{{ section.settings.subtext }}</div>
+        <span class="code" data-code>{{ section.settings.code }} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg></span>
+      </div>
+      <button class="x" data-x aria-label="Dismiss">✕</button>
+    </div>
+  </div>
+<script>
+(function(){
+  var root=document.getElementById('pt-{{ sid }}'); if(!root||root.dataset.init)return; root.dataset.init='1';
+  var toast=document.getElementById('pt-{{ sid }}-toast');
+  var code={{ section.settings.code | json }};
+  var key='helios_pt_{{ sid }}';
+  try{ if(sessionStorage.getItem(key)==='1') return; }catch(e){}
+  var hideT;
+  function show(){ toast.classList.add('in'); hideT=setTimeout(hide,{{ section.settings.auto_hide | default: 9 | times: 1000 }}); }
+  function hide(){ toast.classList.remove('in'); try{sessionStorage.setItem(key,'1');}catch(e){} }
+  setTimeout(show,{{ section.settings.delay | default: 1500 }});
+  toast.querySelector('[data-x]').addEventListener('click',function(e){ e.stopPropagation(); clearTimeout(hideT); hide(); });
+  toast.addEventListener('click',function(){
+    var done=function(){ var c=toast.querySelector('[data-code]'); var html=c.innerHTML; c.textContent='✓ Copied '+code+'!'; clearTimeout(hideT); setTimeout(function(){ c.innerHTML=html; },1600); setTimeout(hide,2200); };
+    if(navigator.clipboard){ navigator.clipboard.writeText(code).then(done).catch(done); } else done();
+  });
+})();
+</script>
+</div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS Promo Toast",
+  "tag": "section",
+  "settings": [
+    { "type": "checkbox", "id": "enabled", "label": "Show promo toast", "default": true },
+    { "type": "text", "id": "headline", "label": "Headline", "default": "🎉 4th of July — $20 OFF" },
+    { "type": "text", "id": "subtext", "label": "Subtext", "default": "Tap to copy your code" },
+    { "type": "text", "id": "code", "label": "Discount code", "default": "4OFJULY" },
+    { "type": "range", "id": "delay", "label": "Delay before showing (ms)", "min": 0, "max": 6000, "step": 250, "default": 1500 },
+    { "type": "range", "id": "auto_hide", "label": "Auto-hide after (seconds)", "min": 4, "max": 20, "step": 1, "default": 9 }
+  ],
+  "presets": [{ "name": "HELIOS Promo Toast" }]
+}
+{% endschema %}

@@ -1,9 +1,29 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
+    "promotoast": {
+      "type": "helios-promo-toast",
+      "settings": {
+        "enabled": true,
+        "headline": "🎉 4th of July — $20 OFF",
+        "subtext": "Tap to copy your code",
+        "code": "4OFJULY",
+        "delay": 1500,
+        "auto_hide": 9
+      }
+    },
     "announcement": {
       "type": "helios-announcement",
       "settings": {
-        "message": "<h3><strong> 12% OFF SITE-WIDE — code SUPERGLIDEIT FOR 12% · FREE SHIPPING · 🛡 30-DAY MONEY-BACK ·  BUY 1 GET 1 FREE</strong></h3>"
+        "message": "<h3><strong> 12% OFF SITE-WIDE — code SUPERGLIDEIT FOR 12% · FREE SHIPPING ·  30-DAY MONEY-BACK ·  BUY 1 GET 1 FREE</strong></h3>"
       }
     },
     "header": {
@@ -18,17 +38,6 @@
         "l3_url": "/#reviews",
         "l4": "FAQ",
         "l4_url": "/#faq"
-      }
-    },
-    "hero": {
-      "type": "helios-hero",
-      "settings": {
-        "video": "shopify://files/videos/202606250540 (1).mp4",
-        "eyebrow": "The motorized water lounger",
-        "heading": "SUPER GLIDE",
-        "subtitle": "Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.",
-        "cta_text": "Shop now",
-        "cta_link": ""
       }
     },
     "buybox": {
@@ -97,6 +106,7 @@
         "rating": "4.8",
         "review_count": "3,912",
         "tiktok_badge": true,
+        "show_picker": true,
         "cta_text": "Add to Cart",
         "discount_code": "SUPERGLIDEIT",
         "discount_label": "Extra savings — tap to copy",
@@ -113,7 +123,13 @@
     },
     "reviewcarousel": {
       "type": "helios-reviews-carousel",
-      "settings": { "eyebrow": "★★★★★ Real reviews", "heading": "3,900+ glides and counting.", "rating": "4.9", "review_count": "3,912", "bulk_reviews": "Sarah K. | 5 | My son will NOT get off this thing. Holds him easy and the motors actually move him around — he feels like he's driving a real boat. | July 5, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_kid.jpg?v=1782725725\nMike R. | 5 | Got it for the kids and now they fight over who steers 😂 Easily holds both of them. Best backyard buy this summer. | July 1, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids.jpg?v=1782725725\nDana W. | 5 | Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Looks premium. | June 27, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_hero.jpg?v=1782725725\nChris T. | 5 | This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol. | June 22, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_side.jpg?v=1782725725\nAmanda L. | 5 | Arrived in 4 days, packaged really well. Everything was in the box, nothing missing. | June 18, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_box.jpg?v=1782725725\nJordan P. | 5 | Setup was stupid easy — pump it up, drop it in, grab the joysticks. Motors have real power. 10/10. | June 12, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup.jpg?v=1782725725" }
+      "settings": {
+        "eyebrow": "★★★★★ Real reviews",
+        "heading": "3,900+ glides and counting.",
+        "rating": "4.8",
+        "review_count": "3,912",
+        "bulk_reviews": "Marcus T. | 5 | Cruised the whole lake on one charge. Everyone wanted a turn. | Tampa, FL | \nJenna R. | 5 | Got it for my husband — he hasn't gotten out of the pool since. | Scottsdale, AZ | \nDevon W. | 4 | So much fun. Takes a few minutes to inflate but worth it. | Austin, TX | \nTyler M. | 5 | Pulled up to the sandbar and instantly had a crowd. | San Diego, CA |"
+      }
     },
     "tiktok": {
       "type": "helios-tiktok",
@@ -121,7 +137,7 @@
         "c1": {
           "type": "clip",
           "settings": {
-            "video": "shopify://files/videos/202606250540 (1).mp4",
+            "video": "shopify://files/videos/DownReels_20260627_044813.mp4",
             "handle": "",
             "caption": ""
           }
@@ -129,7 +145,7 @@
         "c2": {
           "type": "clip",
           "settings": {
-            "video": "shopify://files/videos/generated_video.mp4",
+            "video": "shopify://files/videos/download (2).mp4",
             "handle": "",
             "caption": ""
           }
@@ -137,7 +153,7 @@
         "c3": {
           "type": "clip",
           "settings": {
-            "video": "shopify://files/videos/Ad Library (6).mp4",
+            "video": "shopify://files/videos/snaptik_7262851685104536875_v3.mp4",
             "handle": "",
             "caption": ""
           }
@@ -153,6 +169,31 @@
         "heading": "It's a whole vibe."
       }
     },
+    "reviews": {
+      "type": "helios-reviews",
+      "settings": {
+        "eyebrow": "★ 4.8 average",
+        "heading": "3,900+ verified glides.",
+        "rating": "4.8",
+        "review_count": "3,912",
+        "dist_5": 86,
+        "dist_4": 11,
+        "dist_3": 2,
+        "dist_2": 1,
+        "dist_1": 0
+      }
+    },
+    "hero": {
+      "type": "helios-hero",
+      "settings": {
+        "video": "shopify://files/videos/202606282109 (2).mp4",
+        "eyebrow": "The motorized water lounger",
+        "heading": "SUPER GLIDE",
+        "subtitle": "Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.",
+        "cta_text": "Shop now",
+        "cta_link": ""
+      }
+    },
     "minifeature": {
       "type": "helios-mini-feature",
       "settings": {
@@ -166,20 +207,6 @@
         "compare": "$149.99",
         "cta_text": "Shop the Mini Glide",
         "cta_link": "#buy"
-      }
-    },
-    "reviews": {
-      "type": "helios-reviews",
-      "settings": {
-        "eyebrow": "★ 4.8 average",
-        "heading": "3,900+ verified glides.",
-        "rating": "4.8",
-        "review_count": "3,912",
-        "dist_5": 86,
-        "dist_4": 11,
-        "dist_3": 2,
-        "dist_2": 1,
-        "dist_1": 0
       }
     },
     "speed": {
@@ -256,12 +283,13 @@
     }
   },
   "order": [
+    "promotoast",
     "announcement",
     "header",
     "buybox",
     "reviewcarousel",
-    "reviews",
     "tiktok",
+    "reviews",
     "hero",
     "minifeature",
     "speed",

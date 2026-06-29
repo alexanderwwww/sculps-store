@@ -1,64 +1,222 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
+    "promotoast": {
+      "type": "helios-promo-toast",
+      "settings": {
+        "enabled": true,
+        "headline": "🎉 4th of July — $20 OFF",
+        "subtext": "Tap to copy your code",
+        "code": "4OFJULY",
+        "delay": 1500,
+        "auto_hide": 9
+      }
+    },
     "announcement": {
       "type": "helios-announcement",
-      "settings": { "message": "<h3><strong> FREE SHIPPING · 🛡 30-DAY MONEY-BACK · SUMMER SALE</strong></h3>" }
+      "settings": {
+        "message": "<h3><strong> FREE SHIPPING · 30-DAY MONEY-BACK · SUMMER SALE</strong></h3>"
+      }
     },
     "header": {
       "type": "helios-header",
-      "settings": { "logo_text": "HELIOS", "l1": "Super Glide", "l1_url": "/", "l2": "Jet Ski", "l2_url": "/products/helios-wave-rider", "l3": "Reviews", "l3_url": "/#reviews", "l4": "FAQ", "l4_url": "/#faq" }
+      "settings": {
+        "logo_text": "HELIOS",
+        "l1": "Super Glide",
+        "l1_url": "/",
+        "l2": "Jet Ski",
+        "l2_url": "/products/helios-wave-rider",
+        "l3": "Reviews",
+        "l3_url": "/#reviews",
+        "l4": "FAQ",
+        "l4_url": "/#faq"
+      }
     },
     "buybox": {
       "type": "helios-buy-box",
       "blocks": {
-        "b1": { "type": "bundle", "settings": { "variant_id": "47951634923685", "qty": 1, "label": "1 Jet Ski", "sublabel": "Just me — try it out", "badge": "", "badge_style": "accent", "preselect": true, "fallback_price": "19999", "fallback_compare": "29999" } },
-        "b2": { "type": "bundle", "settings": { "variant_id": "47951634956453", "qty": 2, "label": "2 Jet Skis", "sublabel": "Save more — race a friend", "badge": "Most popular", "badge_style": "accent", "preselect": false, "fallback_price": "34999", "fallback_compare": "59998" } },
-        "b3": { "type": "bundle", "settings": { "variant_id": "47951634989221", "qty": 3, "label": "3 Jet Skis", "sublabel": "The whole crew", "badge": "Best value", "badge_style": "teal", "preselect": false, "fallback_price": "47999", "fallback_compare": "89997" } }
+        "b1": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "47951634923685",
+            "qty": 1,
+            "label": "1 Jet Ski",
+            "sublabel": "Just me — try it out",
+            "badge": "",
+            "badge_style": "accent",
+            "preselect": true,
+            "fallback_price": "19999",
+            "fallback_compare": "29999"
+          }
+        },
+        "b2": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "47951634956453",
+            "qty": 2,
+            "label": "2 Jet Skis",
+            "sublabel": "Save more — race a friend",
+            "badge": "Most popular",
+            "badge_style": "accent",
+            "preselect": false,
+            "fallback_price": "34999",
+            "fallback_compare": "59998"
+          }
+        },
+        "b3": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "47951634989221",
+            "qty": 3,
+            "label": "3 Jet Skis",
+            "sublabel": "The whole crew",
+            "badge": "Best value",
+            "badge_style": "teal",
+            "preselect": false,
+            "fallback_price": "47999",
+            "fallback_compare": "89997"
+          }
+        }
       },
-      "block_order": ["b1", "b2", "b3"],
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
       "settings": {
+        "featured_product": "",
+        "lead_media_type": "video",
         "title": "HELIOS-Floatie Jetski Pro",
-        "subtitle": "<p>Grab the handlebars and rip across the water. Pure summer thrill.</p>",
+        "subtitle": "<p>Feel the rush as you grip the handlebars and glide across the water. Pure summer freedom.<strong><br/><br/>2 HOURS </strong>battery<strong><br/>25km/18 </strong>mph max speed</p>",
         "rating": "4.8",
         "review_count": "1,200",
         "tiktok_badge": true,
-        "cta_text": "Add to Cart",
         "show_picker": false,
+        "cta_text": "Add to Cart",
         "discount_code": "",
+        "discount_label": "Extra savings — tap to copy",
         "show_countdown": false,
+        "countdown_minutes": 480,
         "eta_line": "Order today → ships in 24h, arrives in 5–8 days",
         "show_stock": false,
+        "stock_left": 24,
         "show_live": false,
+        "live_viewers": 58,
+        "sold_today": 202,
         "show_toasts": false
       }
     },
     "reviewcarousel": {
       "type": "helios-reviews-carousel",
-      "settings": { "eyebrow": "★★★★★ Real reviews", "heading": "Riders are obsessed.", "rating": "4.9", "review_count": "1,240", "bulk_reviews": "Ryan C. | 5 | This thing is INSANE 😂 Had the whole lake asking where I got it — and the battery lasted way longer than I expected. | July 8, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ryan.jpg?v=1782724571\nJessica M. | 5 | Bought it for my husband and son and they were out there almost 2 hours straight. Best summer purchase, hands down. | July 3, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/jessica.jpg?v=1782724571\nMatt D. | 5 | My stress level instantly dropped 😅 just cruising the lake with a drink in hand. 10/10. | June 29, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/matt.jpg?v=1782724571\nTyler P. | 5 | Thought it'd be a gimmick. Nope — ridiculously fun, haven't stopped smiling. 😂 | June 25, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/tyler.jpg?v=1782724571\nNicole A. | 5 | Ended up ordering a SECOND one because everyone kept fighting over it 😂 Super easy to use and feels really well made. | June 20, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/nicole.jpg?v=1782724570\nBrandon H. | 5 | My kids kept yelling 'one more lap!' — battery easily lasted our whole afternoon at the lake. Worth every penny. | June 14, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/brandon.jpg?v=1782724570" }
-    },
-    "reviews": {
-      "type": "helios-reviews",
-      "settings": { "eyebrow": "★ 4.8 average", "heading": "Riders love it.", "rating": "4.8", "review_count": "1,200", "dist_5": 85, "dist_4": 12, "dist_3": 2, "dist_2": 1, "dist_1": 0 }
+      "settings": {
+        "eyebrow": "★★★★★ Real reviews",
+        "heading": "Riders are obsessed.",
+        "rating": "4.9",
+        "review_count": "1,240",
+        "bulk_reviews": "Ryan C. | 5 | This thing is INSANE 😂 Had the whole lake asking where I got it — and the battery lasted way longer than I expected. | July 8, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ryan.jpg?v=1782724571\nJessica M. | 5 | Bought it for my husband and son and they were out there almost 2 hours straight. Best summer purchase, hands down. | July 3, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/jessica.jpg?v=1782724571\nMatt D. | 5 | My stress level instantly dropped 😅 just cruising the lake with a drink in hand. 10/10. | June 29, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/matt.jpg?v=1782724571\nTyler P. | 5 | Thought it'd be a gimmick. Nope — ridiculously fun, haven't stopped smiling. 😂 | June 25, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/tyler.jpg?v=1782724571\nNicole A. | 5 | Ended up ordering a SECOND one because everyone kept fighting over it 😂 Super easy to use and feels really well made. | June 20, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/nicole.jpg?v=1782724570\nBrandon H. | 5 | My kids kept yelling 'one more lap!' — battery easily lasted our whole afternoon at the lake. Worth every penny. | June 14, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/brandon.jpg?v=1782724570"
+      }
     },
     "tiktok": {
       "type": "helios-tiktok",
       "blocks": {
-        "c1": { "type": "clip", "settings": { "video": "", "handle": "", "caption": "" } }
+        "c1": {
+          "type": "clip",
+          "settings": {
+            "video": "shopify://files/videos/202606290841 (1).mp4",
+            "handle": "",
+            "caption": ""
+          }
+        }
       },
-      "block_order": ["c1"],
-      "settings": { "eyebrow": "Loved on TikTok", "heading": "It's a whole vibe." }
+      "block_order": [
+        "c1"
+      ],
+      "settings": {
+        "eyebrow": "Loved on TikTok",
+        "heading": "It's a whole vibe."
+      }
+    },
+    "reviews": {
+      "type": "helios-reviews",
+      "settings": {
+        "eyebrow": "★ 4.8 average",
+        "heading": "Riders love it.",
+        "rating": "4.8",
+        "review_count": "1,200",
+        "dist_5": 85,
+        "dist_4": 12,
+        "dist_3": 2,
+        "dist_2": 1,
+        "dist_1": 0
+      }
     },
     "howitworks": {
       "type": "helios-howitworks",
-      "settings": { "eyebrow": "Up and running in minutes", "heading": "Three steps to ride.", "step1_title": "Inflate it", "step1_text": "Pump it up in a few minutes with the included nozzle.", "step2_title": "Drop it in", "step2_text": "Set it on the water and hop on.", "step3_title": "Hit the throttle", "step3_text": "The motor does the work — rip across the water." }
+      "settings": {
+        "eyebrow": "Up and running in minutes",
+        "heading": "Three steps to ride.",
+        "step1_title": "Inflate it",
+        "step1_text": "Pump it up in a few minutes with the included nozzle.",
+        "step2_title": "Drop it in",
+        "step2_text": "Set it on the water and hop on.",
+        "step3_title": "Hit the throttle",
+        "step3_text": "The motor does the work — rip across the water."
+      }
     },
     "guarantee": {
       "type": "helios-guarantee",
-      "settings": { "heading": "🛡 30-Day Money-Back Guarantee", "text": "<p>Take it out for 30 days. If it doesn't make summer better, send it back for a full refund. The risk is ours.</p>", "cta_text": "Get yours", "cta_link": "" }
+      "settings": {
+        "heading": "🛡 30-Day Money-Back Guarantee",
+        "text": "<p>Take it out for 30 days. If it doesn't make summer better, send it back for a full refund. The risk is ours.</p>",
+        "cta_text": "Get yours",
+        "cta_link": ""
+      }
     },
-    "faq": { "type": "helios-faq", "settings": { "eyebrow": "FAQ", "heading": "Good to know." } },
-    "footer": { "type": "helios-footer", "settings": { "brand": "HELIOS", "tagline": "<p>Summer, handled.</p>", "copyright": "© 2026 HELIOS" } },
-    "sticky": { "type": "helios-sticky-atc", "settings": { "label": "Floatie Jetski Pro", "cta_text": "Add to Cart", "scroll_trigger": 380 } }
+    "faq": {
+      "type": "helios-faq",
+      "settings": {
+        "eyebrow": "FAQ",
+        "heading": "Good to know."
+      }
+    },
+    "footer": {
+      "type": "helios-footer",
+      "settings": {
+        "brand": "HELIOS",
+        "tagline": "<p>Summer, handled.</p>",
+        "copyright": "© 2026 HELIOS"
+      }
+    },
+    "sticky": {
+      "type": "helios-sticky-atc",
+      "settings": {
+        "featured_product": "",
+        "label": "Floatie Jetski Pro",
+        "cta_text": "Add to Cart",
+        "scroll_trigger": 380
+      }
+    }
   },
-  "order": ["announcement", "header", "buybox", "reviewcarousel", "reviews", "tiktok", "howitworks", "guarantee", "faq", "footer", "sticky"]
+  "order": [
+    "promotoast",
+    "announcement",
+    "header",
+    "buybox",
+    "reviewcarousel",
+    "tiktok",
+    "reviews",
+    "howitworks",
+    "guarantee",
+    "faq",
+    "footer",
+    "sticky"
+  ]
 }
