@@ -9,15 +9,15 @@
 {%- if section.settings.enabled -%}
 <div class="helios" id="pt-{{ sid }}">
 <style>
-  #pt-{{ sid }}-toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));
-    transform:translateX(-50%) translateY(170%);z-index:75;
+  #pt-{{ sid }}-toast{position:fixed;left:50%;bottom:120px;
+    transform:translateX(-50%) translateY(220%);z-index:78;
     width:min(92vw,372px);cursor:pointer;opacity:0;
     transition:transform .72s cubic-bezier(.22,.61,.36,1),opacity .55s ease;
     -webkit-tap-highlight-color:transparent;}
   #pt-{{ sid }}-toast.in{transform:translateX(-50%) translateY(0);opacity:1;}
   @media(min-width:760px){
-    #pt-{{ sid }}-toast{left:auto;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));
-      transform:translateX(0) translateY(170%);}
+    #pt-{{ sid }}-toast{left:auto;right:20px;bottom:100px;
+      transform:translateX(0) translateY(220%);}
     #pt-{{ sid }}-toast.in{transform:translateX(0) translateY(0);}
   }
   /* the glass — clear, no colour in the body */
