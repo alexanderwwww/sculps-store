@@ -6,7 +6,7 @@
     },
     "header": {
       "type": "helios-header",
-      "settings": { "logo_text": "HELIOS", "l1": "Super Glide", "l1_url": "/", "l2": "Jet Ski", "l2_url": "/products/helios-wave-rider", "l3": "Mini Boat", "l3_url": "/products/helios-mini-cruiser", "l4": "Reviews", "l4_url": "/#reviews" }
+      "settings": { "logo_text": "HELIOS", "l1": "Super Glide", "l1_url": "/", "l2": "Jet Ski", "l2_url": "/products/helios-wave-rider", "l3": "Reviews", "l3_url": "/#reviews", "l4": "FAQ", "l4_url": "/#faq" }
     },
     "buybox": {
       "type": "helios-buy-box",
@@ -36,6 +36,14 @@
       "type": "helios-reviews",
       "settings": { "eyebrow": "★ 4.8 average", "heading": "Riders love it.", "rating": "4.8", "review_count": "1,200", "dist_5": 85, "dist_4": 12, "dist_3": 2, "dist_2": 1, "dist_1": 0 }
     },
+    "tiktok": {
+      "type": "helios-tiktok",
+      "blocks": {
+        "c1": { "type": "clip", "settings": { "video": "", "handle": "", "caption": "" } }
+      },
+      "block_order": ["c1"],
+      "settings": { "eyebrow": "Loved on TikTok", "heading": "It's a whole vibe." }
+    },
     "howitworks": {
       "type": "helios-howitworks",
       "settings": { "eyebrow": "Up and running in minutes", "heading": "Three steps to ride.", "step1_title": "Inflate it", "step1_text": "Pump it up in a few minutes with the included nozzle.", "step2_title": "Drop it in", "step2_text": "Set it on the water and hop on.", "step3_title": "Hit the throttle", "step3_text": "The motor does the work — rip across the water." }
@@ -48,5 +56,5 @@
     "footer": { "type": "helios-footer", "settings": { "brand": "HELIOS", "tagline": "<p>Summer, handled.</p>", "copyright": "© 2026 HELIOS" } },
     "sticky": { "type": "helios-sticky-atc", "settings": { "label": "Floatie Jetski Pro", "cta_text": "Add to Cart", "scroll_trigger": 380 } }
   },
-  "order": ["announcement", "header", "buybox", "reviews", "howitworks", "guarantee", "faq", "footer", "sticky"]
+  "order": ["announcement", "header", "buybox", "reviews", "tiktok", "howitworks", "guarantee", "faq", "footer", "sticky"]
 }

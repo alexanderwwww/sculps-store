@@ -14,10 +14,10 @@
         "l1_url": "/",
         "l2": "Jet Ski",
         "l2_url": "/products/helios-wave-rider",
-        "l3": "Mini Boat",
-        "l3_url": "/products/helios-mini-cruiser",
-        "l4": "Reviews",
-        "l4_url": "/#reviews"
+        "l3": "Reviews",
+        "l3_url": "/#reviews",
+        "l4": "FAQ",
+        "l4_url": "/#faq"
       }
     },
     "hero": {
