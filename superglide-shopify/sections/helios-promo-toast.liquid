@@ -1,45 +1,49 @@
 {%- comment -%}
   HELIOS — iPhone-notification-style discount toast (liquid glass).
-  Slides in from the top, tap-to-copy the code, auto-dismiss, once per session.
-  Floats (position:fixed) so it never blocks the funnel. Drop on any template.
+  Pops up GENTLY from the bottom (above the sticky Add-to-Cart bar), tap-to-copy,
+  auto-dismiss, once per session. Floats (position:fixed) so it never blocks the funnel.
+  Clear glass — color lives only on the edges (blue top-left → amber bottom-right).
   sections/helios-promo-toast.liquid
 {%- endcomment -%}
 {%- assign sid = section.id -%}
 {%- if section.settings.enabled -%}
 <div class="helios" id="pt-{{ sid }}">
 <style>
-  #pt-{{ sid }}-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-160%);z-index:140;
-    width:min(92vw,380px);cursor:pointer;opacity:0;transition:transform .55s cubic-bezier(.18,.9,.24,1),opacity .4s ease;
+  #pt-{{ sid }}-toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));
+    transform:translateX(-50%) translateY(170%);z-index:75;
+    width:min(92vw,372px);cursor:pointer;opacity:0;
+    transition:transform .72s cubic-bezier(.22,.61,.36,1),opacity .55s ease;
     -webkit-tap-highlight-color:transparent;}
   #pt-{{ sid }}-toast.in{transform:translateX(-50%) translateY(0);opacity:1;}
   @media(min-width:760px){
-    #pt-{{ sid }}-toast{left:auto;right:18px;transform:translateX(0) translateY(-160%);}
+    #pt-{{ sid }}-toast{left:auto;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));
+      transform:translateX(0) translateY(170%);}
     #pt-{{ sid }}-toast.in{transform:translateX(0) translateY(0);}
   }
-  /* the glass */
-  #pt-{{ sid }} .g{position:relative;display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:20px;overflow:hidden;
-    background:rgba(255,255,255,.14);
-    backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
-    border:1px solid rgba(255,255,255,.45);
-    box-shadow:0 18px 50px -12px rgba(8,20,35,.5), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(255,255,255,.15);}
-  /* blue glow — top-left edge only */
-  #pt-{{ sid }} .g::before{content:"";position:absolute;top:-2px;left:-2px;width:55%;height:60%;pointer-events:none;
-    background:radial-gradient(120% 120% at 0% 0%, rgba(90,170,255,.85), rgba(90,170,255,0) 60%);
-    filter:blur(2px);border-top-left-radius:20px;}
-  /* amber glow — bottom-right edge only */
-  #pt-{{ sid }} .g::after{content:"";position:absolute;bottom:-2px;right:-2px;width:55%;height:60%;pointer-events:none;
-    background:radial-gradient(120% 120% at 100% 100%, rgba(255,196,90,.85), rgba(255,196,90,0) 60%);
-    filter:blur(2px);border-bottom-right-radius:20px;}
-  /* diagonal shine sweeping the side */
-  #pt-{{ sid }} .shine{position:absolute;inset:0;pointer-events:none;border-radius:20px;
-    background:linear-gradient(115deg,rgba(255,255,255,.5) 0%,rgba(255,255,255,0) 22%);}
+  /* the glass — clear, no colour in the body */
+  #pt-{{ sid }} .g{position:relative;display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:22px;overflow:hidden;
+    background:rgba(255,255,255,.10);
+    backdrop-filter:blur(30px) saturate(200%) brightness(1.06);-webkit-backdrop-filter:blur(30px) saturate(200%) brightness(1.06);
+    box-shadow:0 22px 60px -16px rgba(8,20,35,.55), inset 0 1px 0 rgba(255,255,255,.7), inset 0 -1px 0 rgba(255,255,255,.18);}
+  /* colour ONLY on the edge: a 1.5px gradient ring, blue at top-left → clear → amber at bottom-right */
+  #pt-{{ sid }} .g::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;
+    background:linear-gradient(135deg,
+      rgba(96,176,255,.95) 0%, rgba(96,176,255,.35) 16%,
+      rgba(255,255,255,.45) 42%, rgba(255,255,255,.45) 58%,
+      rgba(255,193,92,.35) 84%, rgba(255,193,92,.95) 100%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;}
+  /* faint diagonal sheen sweeping the top-left, fades fast */
+  #pt-{{ sid }} .shine{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+    background:linear-gradient(118deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 20%);}
   #pt-{{ sid }} .ic{position:relative;z-index:2;width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:grid;place-items:center;font-size:20px;
-    background:linear-gradient(135deg,#0E7CC4,#16A6D6);box-shadow:0 6px 16px rgba(14,124,196,.4);}
-  #pt-{{ sid }} .tx{position:relative;z-index:2;flex:1;min-width:0;color:#0C1A24;}
-  #pt-{{ sid }} .tx .h{font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;line-height:1.15;}
-  #pt-{{ sid }} .tx .s{font-size:12px;color:#33424d;margin-top:2px;}
-  #pt-{{ sid }} .tx .code{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;letter-spacing:.06em;color:#0A5E97;background:rgba(255,255,255,.55);border:1px dashed rgba(14,124,196,.5);border-radius:9px;padding:4px 9px;}
-  #pt-{{ sid }} .x{position:relative;z-index:2;flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#33424d;background:rgba(255,255,255,.4);font-size:14px;border:none;cursor:pointer;}
+    background:linear-gradient(135deg,#0E7CC4,#16A6D6);box-shadow:0 6px 16px rgba(14,124,196,.42), inset 0 1px 0 rgba(255,255,255,.4);}
+  #pt-{{ sid }} .tx{position:relative;z-index:2;flex:1;min-width:0;color:#0B1722;}
+  #pt-{{ sid }} .tx .h{font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;line-height:1.15;text-shadow:0 1px 0 rgba(255,255,255,.4);}
+  #pt-{{ sid }} .tx .s{font-size:12px;color:#2c3a45;margin-top:2px;}
+  #pt-{{ sid }} .tx .code{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;letter-spacing:.06em;color:#0A5E97;background:rgba(255,255,255,.5);border:1px dashed rgba(14,124,196,.55);border-radius:9px;padding:4px 9px;}
+  #pt-{{ sid }} .x{position:relative;z-index:2;flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#2c3a45;background:rgba(255,255,255,.42);font-size:13px;border:none;cursor:pointer;}
+  @media(prefers-reduced-motion:reduce){ #pt-{{ sid }}-toast{transition:opacity .4s ease;} }
 </style>
   <div id="pt-{{ sid }}-toast" role="button" aria-label="Copy discount code">
     <div class="g">
