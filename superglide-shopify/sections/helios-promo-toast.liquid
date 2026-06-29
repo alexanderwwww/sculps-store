@@ -64,6 +64,9 @@
 <script>
 (function(){
   var root=document.getElementById('pt-{{ sid }}'); if(!root||root.dataset.init)return; root.dataset.init='1';
+  // Escape any transformed/contained ancestor (modern themes use transforms for view transitions,
+  // which would trap position:fixed inside a tiny wrapper). Re-home the whole widget on <body>.
+  if(root.parentNode!==document.body){ document.body.appendChild(root); }
   var toast=document.getElementById('pt-{{ sid }}-toast');
   var code={{ section.settings.code | json }};
   var key='helios_pt_{{ sid }}';
