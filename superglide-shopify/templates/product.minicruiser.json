@@ -6,7 +6,7 @@
     },
     "header": {
       "type": "helios-header",
-      "settings": { "logo_text": "HELIOS", "l1": "Shop", "l1_url": "#buy", "l2": "Reviews", "l2_url": "#reviews", "l3": "FAQ", "l3_url": "#faq", "l4": "Contact", "l4_url": "/pages/contact" }
+      "settings": { "logo_text": "HELIOS", "l1": "Super Glide", "l1_url": "/", "l2": "Jet Ski", "l2_url": "/products/helios-wave-rider", "l3": "Mini Boat", "l3_url": "/products/helios-mini-cruiser", "l4": "Reviews", "l4_url": "/#reviews" }
     },
     "buybox": {
       "type": "helios-buy-box",

@@ -6,7 +6,7 @@
     },
     "header": {
       "type": "helios-header",
-      "settings": { "logo_text": "HELIOS", "l1": "Shop", "l1_url": "#buy", "l2": "Reviews", "l2_url": "#reviews", "l3": "FAQ", "l3_url": "#faq", "l4": "Contact", "l4_url": "/pages/contact" }
+      "settings": { "logo_text": "HELIOS", "l1": "Super Glide", "l1_url": "/", "l2": "Jet Ski", "l2_url": "/products/helios-wave-rider", "l3": "Mini Boat", "l3_url": "/products/helios-mini-cruiser", "l4": "Reviews", "l4_url": "/#reviews" }
     },
     "buybox": {
       "type": "helios-buy-box",
@@ -17,8 +17,8 @@
       },
       "block_order": ["b1", "b2", "b3"],
       "settings": {
-        "title": "HELIOS Wave Rider",
-        "subtitle": "<p>Grab the throttle and rip across the water. Pure adrenaline, zero effort.</p>",
+        "title": "HELIOS-Floatie Jetski Pro",
+        "subtitle": "<p>Grab the handlebars and rip across the water. Pure summer thrill.</p>",
         "rating": "4.8",
         "review_count": "1,200",
         "tiktok_badge": true,
@@ -46,7 +46,7 @@
     },
     "faq": { "type": "helios-faq", "settings": { "eyebrow": "FAQ", "heading": "Good to know." } },
     "footer": { "type": "helios-footer", "settings": { "brand": "HELIOS", "tagline": "<p>Summer, handled.</p>", "copyright": "© 2026 HELIOS" } },
-    "sticky": { "type": "helios-sticky-atc", "settings": { "label": "Wave Rider", "cta_text": "Add to Cart", "scroll_trigger": 380 } }
+    "sticky": { "type": "helios-sticky-atc", "settings": { "label": "Floatie Jetski Pro", "cta_text": "Add to Cart", "scroll_trigger": 380 } }
   },
   "order": ["announcement", "header", "buybox", "reviews", "howitworks", "guarantee", "faq", "footer", "sticky"]
 }
