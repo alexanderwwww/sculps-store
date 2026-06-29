@@ -113,7 +113,7 @@
     },
     "reviewcarousel": {
       "type": "helios-reviews-carousel",
-      "settings": { "eyebrow": "★★★★★ Real reviews", "heading": "3,900+ glides and counting.", "rating": "4.8", "review_count": "3,912" }
+      "settings": { "eyebrow": "★★★★★ Real reviews", "heading": "3,900+ glides and counting.", "rating": "4.9", "review_count": "3,912", "bulk_reviews": "Sarah K. | 5 | My son will NOT get off this thing. Holds him easy and the motors actually move him around — he feels like he's driving a real boat. | July 5, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_kid.jpg?v=1782725725\nMike R. | 5 | Got it for the kids and now they fight over who steers 😂 Easily holds both of them. Best backyard buy this summer. | July 1, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids.jpg?v=1782725725\nDana W. | 5 | Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Looks premium. | June 27, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_hero.jpg?v=1782725725\nChris T. | 5 | This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol. | June 22, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_side.jpg?v=1782725725\nAmanda L. | 5 | Arrived in 4 days, packaged really well. Everything was in the box, nothing missing. | June 18, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_box.jpg?v=1782725725\nJordan P. | 5 | Setup was stupid easy — pump it up, drop it in, grab the joysticks. Motors have real power. 10/10. | June 12, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup.jpg?v=1782725725" }
     },
     "tiktok": {
       "type": "helios-tiktok",
