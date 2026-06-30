@@ -5,7 +5,7 @@
 {%- endcomment -%}
 {%- assign target = section.settings.url | default: '/' -%}
 {%- unless request.design_mode -%}
-<script>window.location.replace({{ target | json }});</script>
+<script>(function(){var t={{ target | json }};try{var s=window.location.search;if(s){t+=(t.indexOf('?')>-1?'&':'?')+s.slice(1);}}catch(e){}window.location.replace(t);})();</script>
 <noscript><meta http-equiv="refresh" content="0;url={{ target }}"></noscript>
 {%- endunless -%}
 <div style="min-height:60vh;display:grid;place-items:center;font-family:'Archivo',sans-serif;color:#0C1A24;text-align:center;padding:40px 16px;">
