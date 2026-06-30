@@ -1,0 +1,126 @@
+{% layout none %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HELIOS — Rider's Offer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{ --cyan:#34D0F2; --cyan2:#0E7CC4; --gold:#FFCB5C; --ink:#050D16; --mut:#9DB1C2; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Archivo',system-ui,sans-serif;color:#fff;background:#050D16;
+    background:radial-gradient(130% 80% at 50% -15%, #16374F 0%, #0A1B2A 45%, #050D16 100%);
+    overflow:hidden;}
+  .oto{min-height:100svh;min-height:100dvh;display:flex;flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 12px) 18px calc(env(safe-area-inset-bottom) + 14px);}
+  /* top line: confirmed + one-time clarity */
+  .top{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;}
+  .conf{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;color:#7fe6b4;letter-spacing:.03em;}
+  .conf .k{width:16px;height:16px;border-radius:50%;background:#1fb877;color:#04121c;display:grid;place-items:center;font-size:9px;font-weight:900;}
+  .once{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+  /* headline */
+  .head{text-align:center;flex:0 0 auto;margin-top:10px;}
+  h1{font-weight:900;font-size:clamp(28px,8.5vw,40px);line-height:.96;letter-spacing:-.03em;}
+  h1 .g{background:linear-gradient(180deg,#cdeeff,#34D0F2 75%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{font-size:12.5px;color:var(--mut);margin-top:8px;line-height:1.4;max-width:330px;margin-left:auto;margin-right:auto;font-weight:600;}
+  /* the screen (video) — covers a good part, not all */
+  .media{flex:1 1 auto;min-height:0;display:flex;justify-content:center;margin:13px 0;}
+  .frame{position:relative;height:100%;aspect-ratio:9/16;border-radius:22px;overflow:hidden;
+    box-shadow:0 26px 60px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(52,208,242,.4) inset, 0 0 70px -26px rgba(52,208,242,.7);}
+  .frame video{width:100%;height:100%;object-fit:cover;display:block;background:#000;}
+  .live{position:absolute;top:11px;left:11px;display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;
+    background:rgba(5,13,22,.5);backdrop-filter:blur(8px);padding:5px 9px;border-radius:20px;}
+  .live .d{width:6px;height:6px;border-radius:50%;background:#ff4d6d;animation:p 1.5s infinite;}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(255,77,109,.6)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  .mute{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(5,13,22,.5);backdrop-filter:blur(8px);color:#fff;font-size:14px;}
+  /* offer block */
+  .offer{flex:0 0 auto;}
+  .name{text-align:center;font-size:13px;font-weight:700;color:var(--mut);margin-bottom:8px;}
+  .pr{display:flex;align-items:center;justify-content:center;gap:12px;}
+  .pr .now{font-weight:900;font-size:clamp(36px,11vw,52px);line-height:1;letter-spacing:-.03em;}
+  .pr .now sup{font-size:.42em;top:-1.05em;position:relative;font-weight:800;}
+  .pr .col{display:flex;flex-direction:column;gap:3px;}
+  .pr .was{font-size:16px;color:var(--mut);text-decoration:line-through;font-weight:700;}
+  .pr .badge{background:var(--gold);color:#3a2600;font-weight:900;font-size:12px;padding:3px 9px;border-radius:7px;letter-spacing:.02em;}
+  /* cta */
+  .buy{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:none;cursor:pointer;
+    background:linear-gradient(180deg,#41D8F7,#0E7CC4);color:#04131e;font-family:'Archivo';font-weight:900;
+    font-size:18px;letter-spacing:-.01em;padding:18px;border-radius:15px;margin-top:14px;
+    box-shadow:0 18px 40px -12px rgba(52,208,242,.65), inset 0 1px 0 rgba(255,255,255,.55);transition:transform .12s;}
+  .buy:active{transform:scale(.985);}
+  .micro{text-align:center;font-size:11px;color:var(--mut);margin-top:9px;font-weight:600;}
+  .decline{display:block;width:100%;text-align:center;background:none;border:none;cursor:pointer;color:#67798c;
+    font-family:'Archivo';font-weight:700;font-size:12.5px;margin-top:10px;text-decoration:underline;text-underline-offset:3px;}
+
+  /* ---------------- DESKTOP ---------------- */
+  @media(min-width:860px){
+    body{overflow:auto;}
+    .oto{justify-content:center;padding:40px;}
+    .top{position:absolute;top:26px;left:0;right:0;}
+    .head,.media,.offer{}
+    .inner{width:100%;max-width:1000px;margin:0 auto;display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:54px;align-items:center;
+      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.10);border-radius:30px;padding:40px;
+      box-shadow:0 40px 100px -30px rgba(0,0,0,.7);}
+    .media{margin:0;height:auto;}
+    .frame{height:auto;width:100%;max-width:380px;margin:0 auto;}
+    .head{text-align:left;margin:0 0 6px;}
+    h1{font-size:48px;}
+    .sub{margin:12px 0 0;max-width:none;font-size:14.5px;text-align:left;}
+    .offer{margin-top:22px;}
+    .name{text-align:left;}
+    .pr{justify-content:flex-start;}
+    .pr .now{font-size:60px;}
+    .buy{font-size:19px;padding:19px 28px;max-width:420px;}
+    .micro,.decline{text-align:left;}
+    .conf,.once{}
+  }
+</style>
+</head>
+<body>
+<div class="oto">
+  <div class="top">
+    <div class="conf"><span class="k">✓</span> ORDER CONFIRMED</div>
+    <div class="once">★ One time only — you'll never see this again</div>
+  </div>
+
+  <div class="inner">
+    <div class="media">
+      <div class="frame">
+        <div class="live"><span class="d"></span> AS SEEN ON TIKTOK</div>
+        <button class="mute" id="mute" aria-label="Sound">🔇</button>
+        <video id="vid" autoplay muted loop playsinline preload="auto">
+          <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.HD-720p-4.5Mbps-87645145.mp4" type="video/mp4">
+          <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.SD-480p-1.5Mbps-87645145.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="head">
+        <h1>The Jet Ski.<br><span class="g">Now half price.</span></h1>
+        <p class="sub">You just unlocked rider's pricing — <b style="color:#fff">$100 off a real motorized jet ski.</b> This screen is the only place it exists.</p>
+      </div>
+      <div class="offer">
+        <div class="name">HELIOS Jet Ski Pro · 25 km/h · 2-hour battery</div>
+        <div class="pr">
+          <span class="now">$99<sup>99</sup></span>
+          <span class="col"><span class="was">$199.99</span><span class="badge">−50% · SAVE $100</span></span>
+        </div>
+        <button class="buy">Add it to my order →</button>
+        <div class="micro">🔒 One tap · charged to the card you just used · free shipping</div>
+        <button class="decline">No thanks — I'll pass and it's gone for good</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  var v=document.getElementById('vid'), m=document.getElementById('mute');
+  m.onclick=function(){v.muted=!v.muted;m.textContent=v.muted?'🔇':'🔊';if(!v.muted)v.play();};
+</script>
+</body>
+</html>
