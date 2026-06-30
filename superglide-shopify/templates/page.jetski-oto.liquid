@@ -13,33 +13,41 @@
   body{font-family:'Archivo',system-ui,sans-serif;color:var(--ink);
     background:radial-gradient(120% 90% at 50% 0%,#F2F8FC,#E7F0F7);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px 16px;}
   .stage{display:flex;align-items:center;gap:54px;max-width:1040px;width:100%;justify-content:center;}
-  /* ===== iPhone ===== */
-  .phone{position:relative;flex:0 0 auto;width:312px;aspect-ratio:9/19.3;background:#0a0e13;border-radius:50px;padding:12px;
+  /* ===== iPhone (video only) ===== */
+  .phone{position:relative;flex:0 0 auto;order:1;width:312px;aspect-ratio:9/19.3;background:#0a0e13;border-radius:50px;padding:12px;
     box-shadow:0 60px 100px -34px rgba(10,30,50,.55), inset 0 0 0 2px #2b333b;}
   .phone::before,.phone::after{content:"";position:absolute;left:-3px;width:3px;border-radius:3px 0 0 3px;background:#1b2228;}
   .phone::before{top:120px;height:54px;} .phone::after{top:188px;height:54px;}
   .pwr{position:absolute;right:-3px;top:150px;width:3px;height:76px;border-radius:0 3px 3px 0;background:#1b2228;}
   .screen{position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;background:#000;}
   .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:96px;height:27px;background:#000;border-radius:18px;z-index:6;}
-  .track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;height:100%;}
-  .track::-webkit-scrollbar{display:none;}
-  .slide{flex:0 0 100%;scroll-snap-align:center;height:100%;position:relative;}
-  .slide video,.slide img{width:100%;height:100%;object-fit:cover;display:block;}
-  .tk{position:absolute;top:46px;left:14px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:#fff;background:rgba(10,18,25,.5);backdrop-filter:blur(6px);padding:5px 9px;border-radius:20px;z-index:4;}
-  .tk .d{width:6px;height:6px;border-radius:50%;background:#ff4d6d;}
-  .sound{position:absolute;left:14px;bottom:34px;display:flex;align-items:center;gap:6px;cursor:pointer;z-index:4;background:rgba(10,18,25,.62);backdrop-filter:blur(8px);color:#fff;font-weight:800;font-size:12px;border:none;padding:8px 12px;border-radius:30px;}
-  .dots{position:absolute;left:0;right:0;bottom:16px;display:flex;gap:6px;justify-content:center;z-index:4;}
-  .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.5);transition:.2s;}
-  .dots i.on{background:#fff;width:18px;border-radius:4px;}
-  /* ===== offer card ===== */
-  .offer{flex:0 1 480px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px 28px 24px;
+  .screen video{width:100%;height:100%;object-fit:cover;display:block;}
+  .otitle{position:absolute;top:0;left:0;right:0;z-index:4;text-align:center;padding:48px 14px 26px;
+    background:linear-gradient(180deg,rgba(0,0,0,.6),rgba(0,0,0,0));
+    font-weight:900;font-size:21px;letter-spacing:.04em;color:#fff;text-transform:uppercase;line-height:1.05;text-shadow:0 2px 12px rgba(0,0,0,.5);}
+  .othanks{position:absolute;bottom:0;left:0;right:0;z-index:4;text-align:center;padding:30px 14px 22px;
+    background:linear-gradient(0deg,rgba(0,0,0,.62),rgba(0,0,0,0));font-weight:800;font-size:13px;color:#fff;letter-spacing:.02em;}
+  .sound{position:absolute;left:50%;transform:translateX(-50%);bottom:54px;display:flex;align-items:center;gap:6px;cursor:pointer;z-index:5;
+    background:rgba(255,255,255,.16);backdrop-filter:blur(8px);color:#fff;font-weight:800;font-size:12px;border:1px solid rgba(255,255,255,.3);padding:8px 13px;border-radius:30px;}
+  /* ===== offer ===== */
+  .offer{flex:0 1 480px;order:2;background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px 28px 24px;
     box-shadow:0 40px 90px -40px rgba(10,40,66,.4);}
-  .conf{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--grn);margin-bottom:11px;}
+  .mtitle{display:none;}
+  .conf{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--grn);margin-bottom:10px;}
   .conf .k{width:16px;height:16px;border-radius:50%;background:var(--grn);color:#fff;display:grid;place-items:center;font-size:9px;}
   .ey{font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--accd);}
-  h1{font-weight:900;font-size:clamp(26px,3.2vw,33px);line-height:1.02;letter-spacing:-.025em;margin:6px 0 8px;}
-  .rate{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut);font-weight:600;margin-bottom:16px;}
+  h1{font-weight:900;font-size:clamp(25px,3.1vw,32px);line-height:1.02;letter-spacing:-.025em;margin:6px 0 7px;}
+  .rate{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut);font-weight:600;margin-bottom:14px;}
   .rate .st{color:#f5a623;letter-spacing:1px;}
+  /* product gallery (above bundles) */
+  .pg{margin-bottom:16px;}
+  .pmain{width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#eef4f8;border:1px solid var(--line);}
+  .pmain img{width:100%;height:100%;object-fit:cover;display:block;}
+  .pthumbs{display:flex;gap:8px;margin-top:8px;}
+  .pthumbs button{flex:1;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid var(--line);background:#eef4f8;cursor:pointer;padding:0;}
+  .pthumbs button.on{border-color:var(--acc);}
+  .pthumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+  /* tiers */
   .tiers{display:flex;flex-direction:column;gap:9px;}
   .tier{display:flex;align-items:center;gap:12px;padding:13px 14px;border:2px solid var(--line);border-radius:14px;cursor:pointer;position:relative;transition:.15s;}
   .tier.sel{border-color:var(--acc);background:#F2FAFF;}
@@ -54,7 +62,6 @@
   .tp .off{font-size:9.5px;font-weight:900;color:#fff;background:var(--red);padding:2px 7px;border-radius:20px;}
   .pop{position:absolute;top:-9px;right:12px;background:var(--acc);color:#fff;font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:20px;}
   .applied{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;font-weight:900;font-size:12.5px;color:#7a4d00;background:linear-gradient(90deg,#FFE7B5,#FFD37A);padding:9px;border-radius:11px;}
-  /* BIG obvious price button */
   .buy{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;border:none;cursor:pointer;background:var(--black);color:#fff;font-family:'Archivo';padding:16px;border-radius:16px;margin-top:9px;box-shadow:0 18px 36px -14px rgba(10,18,25,.6);transition:transform .12s;}
   .buy:active{transform:scale(.99);}
   .buy .l1{font-weight:900;font-size:16px;letter-spacing:-.01em;}
@@ -66,15 +73,18 @@
   .trust span{font-size:11px;color:var(--mut);font-weight:700;}
   .once{text-align:center;font-size:11px;color:var(--accd);font-weight:800;margin-top:13px;}
   .decline{display:block;width:100%;text-align:center;background:none;border:none;cursor:pointer;color:#90a1ae;font-family:'Archivo';font-weight:700;font-size:12.5px;margin-top:8px;text-decoration:underline;text-underline-offset:3px;}
-  /* ===== mobile: real phone is the frame, so drop the mockup ===== */
+  /* ===== MOBILE: title → pictures → bundles → phone ===== */
   @media(max-width:860px){
     body{padding:0;background:#fff;align-items:flex-start;}
-    .stage{flex-direction:column;gap:0;}
-    .phone{width:100%;max-width:560px;aspect-ratio:1/1;border-radius:0;padding:0;box-shadow:none;background:#eef4f8;}
-    .phone::before,.phone::after,.pwr,.island{display:none;}
-    .screen{border-radius:0;}
-    .tk{top:14px;} .sound{bottom:14px;} .dots{bottom:12px;}
-    .offer{flex:none;width:100%;max-width:560px;border:0;border-radius:0;box-shadow:none;padding:22px 18px 30px;}
+    .stage{flex-direction:column;gap:0;max-width:560px;}
+    .offer{order:1;flex:none;width:100%;border:0;border-radius:0;box-shadow:none;padding:22px 18px 26px;}
+    .mtitle{display:block;text-align:center;margin-bottom:14px;}
+    .mtitle .mt{font-weight:900;font-size:32px;line-height:.98;letter-spacing:-.03em;text-transform:uppercase;}
+    .mtitle .mt .g{color:var(--accd);}
+    .mtitle .ms{font-size:13px;font-weight:700;color:var(--mut);margin-top:6px;}
+    .ey{display:none;}
+    .phone{order:2;width:270px;margin:6px auto 30px;}
+    .phone::before,.phone::after,.pwr{display:none;}
   }
 </style>
 </head>
@@ -84,30 +94,37 @@
     <div class="pwr"></div>
     <div class="screen">
       <div class="island"></div>
-      <div class="track" id="track">
-        <div class="slide">
-          <div class="tk"><span class="d"></span> AS SEEN ON TIKTOK</div>
-          <video id="vid" autoplay muted loop playsinline preload="auto">
-            <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.HD-720p-4.5Mbps-87645145.mp4" type="video/mp4">
-            <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.SD-480p-1.5Mbps-87645145.mp4" type="video/mp4">
-          </video>
-          <button class="sound" id="sound">🔊 Tap for sound</button>
-        </div>
-        <div class="slide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a7b05a36-528c-44ca-8a1a-7a9add23058b.png?v=1782714655" alt="Jet Ski"></div>
-        <div class="slide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/47dc11ca-3353-4ed4-8275-40acf8fa5523.png?v=1782714656" alt="Jet Ski"></div>
-        <div class="slide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/cd2aeedb-4378-48c1-bcab-5b7a5aa6b319.png?v=1782715284" alt="Jet Ski"></div>
-        <div class="slide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/bf3d9cd7-1cd6-43a1-b5ec-aca96cc17d42.png?v=1782715284" alt="Jet Ski"></div>
-        <div class="slide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1f5c6e20-e5ac-4087-9a79-afe9d999db05.png?v=1782715856" alt="Jet Ski"></div>
-      </div>
-      <div class="dots" id="dots"></div>
+      <video id="vid" autoplay muted loop playsinline preload="auto">
+        <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.HD-720p-4.5Mbps-87645145.mp4" type="video/mp4">
+        <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.SD-480p-1.5Mbps-87645145.mp4" type="video/mp4">
+      </video>
+      <div class="otitle">One time<br>offer only</div>
+      <button class="sound" id="sound">🔊 Tap for sound</button>
+      <div class="othanks">Thanks for choosing HELIOS 🌊</div>
     </div>
   </div>
 
   <div class="offer">
+    <div class="mtitle">
+      <div class="mt">One-time<br><span class="g">offer only</span></div>
+      <div class="ms">50% off the HELIOS Jet Ski — only on this order</div>
+    </div>
+
     <div class="conf"><span class="k">✓</span> ORDER CONFIRMED — payment complete</div>
     <div class="ey">One-time rider's offer</div>
     <h1>HELIOS Jet Ski Pro</h1>
     <div class="rate"><span class="st">★★★★★</span> <b style="color:var(--ink)">4.8</b> · 1,240 riders · 25 km/h · 2-hr battery</div>
+
+    <div class="pg">
+      <div class="pmain"><img id="pmain" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a7b05a36-528c-44ca-8a1a-7a9add23058b.png?v=1782714655" alt="HELIOS Jet Ski"></div>
+      <div class="pthumbs" id="pthumbs">
+        <button class="on"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a7b05a36-528c-44ca-8a1a-7a9add23058b.png?v=1782714655" alt=""></button>
+        <button><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/47dc11ca-3353-4ed4-8275-40acf8fa5523.png?v=1782714656" alt=""></button>
+        <button><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/cd2aeedb-4378-48c1-bcab-5b7a5aa6b319.png?v=1782715284" alt=""></button>
+        <button><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/bf3d9cd7-1cd6-43a1-b5ec-aca96cc17d42.png?v=1782715284" alt=""></button>
+        <button><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1f5c6e20-e5ac-4087-9a79-afe9d999db05.png?v=1782715856" alt=""></button>
+      </div>
+    </div>
 
     <div class="tiers" id="tiers">
       <div class="tier sel" data-was="199.99" data-now="99.99">
@@ -141,13 +158,13 @@
   </div>
 </div>
 <script>
-  var track=document.getElementById('track'), slides=track.querySelectorAll('.slide'), dots=document.getElementById('dots');
-  slides.forEach(function(_,i){var d=document.createElement('i');if(i===0)d.className='on';dots.appendChild(d);});
-  var di=dots.querySelectorAll('i');
-  track.addEventListener('scroll',function(){var i=Math.round(track.scrollLeft/track.clientWidth);di.forEach(function(d,j){d.classList.toggle('on',j===i);});});
   var v=document.getElementById('vid'), s=document.getElementById('sound');
   function unmute(){v.muted=false;v.play();s.style.display='none';}
   s.onclick=function(e){e.stopPropagation();unmute();}; v.addEventListener('click',function(){if(v.muted)unmute();});
+  // product gallery thumbs
+  var pmain=document.getElementById('pmain'), thumbs=document.querySelectorAll('#pthumbs button');
+  thumbs.forEach(function(b){b.addEventListener('click',function(){thumbs.forEach(function(x){x.classList.remove('on');});b.classList.add('on');pmain.src=b.querySelector('img').src;});});
+  // tiers
   var tiers=document.querySelectorAll('.tier'), bw=document.getElementById('bw'), bn=document.getElementById('bn'), bs=document.getElementById('bs');
   tiers.forEach(function(t){t.addEventListener('click',function(){
     tiers.forEach(function(x){x.classList.remove('sel');}); t.classList.add('sel');
