@@ -9,17 +9,6 @@
  */
 {
   "sections": {
-    "promotoast": {
-      "type": "helios-promo-toast",
-      "settings": {
-        "enabled": true,
-        "headline": "🎉 4th of July — $20 OFF",
-        "subtext": "Tap to copy your code",
-        "code": "4OFJULY",
-        "delay": 1500,
-        "auto_hide": 9
-      }
-    },
     "announcement": {
       "type": "helios-announcement",
       "settings": {
@@ -206,7 +195,6 @@
     }
   },
   "order": [
-    "promotoast",
     "announcement",
     "header",
     "buybox",
