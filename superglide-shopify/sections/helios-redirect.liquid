@@ -4,17 +4,22 @@
   sections/helios-redirect.liquid
 {%- endcomment -%}
 {%- assign target = section.settings.url | default: '/' -%}
-{%- unless request.design_mode -%}
-<script>(function(){var t={{ target | json }};try{var s=window.location.search;if(s){t+=(t.indexOf('?')>-1?'&':'?')+s.slice(1);}}catch(e){}window.location.replace(t);})();</script>
-<noscript><meta http-equiv="refresh" content="0;url={{ target }}"></noscript>
-{%- endunless -%}
-<div style="min-height:60vh;display:grid;place-items:center;font-family:'Archivo',sans-serif;color:#0C1A24;text-align:center;padding:40px 16px;">
-  <div>
-    <div style="font-size:15px;opacity:.7;">Taking you to the right page…</div>
-    <p style="margin-top:14px;"><a href="{{ target }}" style="color:#0E7CC4;font-weight:800;text-decoration:underline;">Continue →</a></p>
-    {%- if request.design_mode -%}<p style="margin-top:18px;font-size:12px;opacity:.6;">Theme editor preview — on the live store this redirects to <b>{{ target }}</b>.</p>{%- endif -%}
+{%- if request.design_mode -%}
+  {%- comment -%} Editor only: don't navigate away, just explain. {%- endcomment -%}
+  <div style="min-height:50vh;display:grid;place-items:center;font-family:'Archivo',sans-serif;color:#0C1A24;text-align:center;padding:40px 16px;">
+    <div style="max-width:420px;">
+      <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;">↪ Old funnel retired</div>
+      <p style="margin-top:10px;font-size:13.5px;opacity:.75;">On the live store this page instantly redirects to <b>{{ target }}</b>. This message only shows here in the editor so you can still work on it.</p>
+    </div>
   </div>
-</div>
+{%- else -%}
+  {%- comment -%} Live: fire immediately, no visible flash. {%- endcomment -%}
+  <script>(function(){var t={{ target | json }};try{var s=window.location.search;if(s){t+=(t.indexOf('?')>-1?'&':'?')+s.slice(1);}}catch(e){}window.location.replace(t);})();</script>
+  <noscript><meta http-equiv="refresh" content="0;url={{ target }}"></noscript>
+  <div style="min-height:60vh;display:grid;place-items:center;">
+    <a href="{{ target }}" style="font-family:'Archivo',sans-serif;color:#0E7CC4;font-weight:800;text-decoration:none;opacity:.0;">Continue →</a>
+  </div>
+{%- endif -%}
 {% schema %}
 {
   "name": "HELIOS Redirect",
