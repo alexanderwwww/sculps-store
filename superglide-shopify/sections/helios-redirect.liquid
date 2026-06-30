@@ -1,0 +1,27 @@
+{%- comment -%}
+  HELIOS — hard redirect. Used to retire the old product funnels: any product page
+  assigned this template is sent straight to the legit funnel (Home / a product page).
+  sections/helios-redirect.liquid
+{%- endcomment -%}
+{%- assign target = section.settings.url | default: '/' -%}
+{%- unless request.design_mode -%}
+<script>window.location.replace({{ target | json }});</script>
+<noscript><meta http-equiv="refresh" content="0;url={{ target }}"></noscript>
+{%- endunless -%}
+<div style="min-height:60vh;display:grid;place-items:center;font-family:'Archivo',sans-serif;color:#0C1A24;text-align:center;padding:40px 16px;">
+  <div>
+    <div style="font-size:15px;opacity:.7;">Taking you to the right page…</div>
+    <p style="margin-top:14px;"><a href="{{ target }}" style="color:#0E7CC4;font-weight:800;text-decoration:underline;">Continue →</a></p>
+    {%- if request.design_mode -%}<p style="margin-top:18px;font-size:12px;opacity:.6;">Theme editor preview — on the live store this redirects to <b>{{ target }}</b>.</p>{%- endif -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "HELIOS Redirect",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "url", "label": "Redirect to", "default": "/", "info": "Where this old product page should send visitors (e.g. / for Home)." }
+  ],
+  "presets": [{ "name": "HELIOS Redirect" }]
+}
+{% endschema %}
