@@ -13,8 +13,14 @@
   body{font-family:'Archivo',system-ui,sans-serif;color:var(--ink);
     background:radial-gradient(120% 90% at 50% 0%,#F2F8FC,#E7F0F7);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px 16px;}
   .stage{display:flex;align-items:center;gap:54px;max-width:1040px;width:100%;justify-content:center;}
+  /* ===== phone column = title on top of phone ===== */
+  .phonecol{order:1;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:20px;}
+  .bigtitle{text-align:center;text-transform:uppercase;font-weight:900;line-height:.92;letter-spacing:-.02em;}
+  .bigtitle .l{font-size:clamp(30px,3.4vw,42px);}
+  .bigtitle .g{color:var(--accd);}
+  .bigtitle .s{display:block;margin-top:9px;font-size:13px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--mut);}
   /* ===== iPhone (video only) ===== */
-  .phone{position:relative;flex:0 0 auto;order:1;width:312px;aspect-ratio:9/19.3;background:#0a0e13;border-radius:50px;padding:12px;
+  .phone{position:relative;flex:0 0 auto;width:312px;aspect-ratio:9/19.3;background:#0a0e13;border-radius:50px;padding:12px;
     box-shadow:0 60px 100px -34px rgba(10,30,50,.55), inset 0 0 0 2px #2b333b;}
   .phone::before,.phone::after{content:"";position:absolute;left:-3px;width:3px;border-radius:3px 0 0 3px;background:#1b2228;}
   .phone::before{top:120px;height:54px;} .phone::after{top:188px;height:54px;}
@@ -73,43 +79,39 @@
   .trust span{font-size:11px;color:var(--mut);font-weight:700;}
   .once{text-align:center;font-size:11px;color:var(--accd);font-weight:800;margin-top:13px;}
   .decline{display:block;width:100%;text-align:center;background:none;border:none;cursor:pointer;color:#90a1ae;font-family:'Archivo';font-weight:700;font-size:12.5px;margin-top:8px;text-decoration:underline;text-underline-offset:3px;}
-  /* ===== MOBILE: title → pictures → bundles → phone ===== */
+  /* ===== MOBILE: [title + phone] on top, then product, then bundles ===== */
   @media(max-width:860px){
     body{padding:0;background:#fff;align-items:flex-start;}
     .stage{flex-direction:column;gap:0;max-width:560px;}
-    .offer{order:1;flex:none;width:100%;border:0;border-radius:0;box-shadow:none;padding:22px 18px 26px;}
-    .mtitle{display:block;text-align:center;margin-bottom:14px;}
-    .mtitle .mt{font-weight:900;font-size:32px;line-height:.98;letter-spacing:-.03em;text-transform:uppercase;}
-    .mtitle .mt .g{color:var(--accd);}
-    .mtitle .ms{font-size:13px;font-weight:700;color:var(--mut);margin-top:6px;}
-    .ey{display:none;}
-    .phone{order:2;width:270px;margin:6px auto 30px;}
+    .phonecol{order:1;width:100%;gap:14px;padding:26px 18px 4px;}
+    .bigtitle .l{font-size:33px;}
+    .phone{width:248px;}
     .phone::before,.phone::after,.pwr{display:none;}
+    .offer{order:2;flex:none;width:100%;border:0;border-radius:0;box-shadow:none;padding:18px 18px 30px;}
+    .ey{display:none;}
+    .conf{margin-top:4px;}
   }
 </style>
 </head>
 <body>
 <div class="stage">
-  <div class="phone">
-    <div class="pwr"></div>
-    <div class="screen">
-      <div class="island"></div>
-      <video id="vid" autoplay muted loop playsinline preload="auto">
-        <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.HD-720p-4.5Mbps-87645145.mp4" type="video/mp4">
-        <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.SD-480p-1.5Mbps-87645145.mp4" type="video/mp4">
-      </video>
-      <div class="otitle">One time<br>offer only</div>
-      <button class="sound" id="sound">🔊 Tap for sound</button>
-      <div class="othanks">Thanks for choosing HELIOS 🌊</div>
+  <div class="phonecol">
+    <div class="bigtitle"><span class="l">One-time<br><span class="g">offer only</span></span><span class="s">50% off the HELIOS Jet Ski — only on this order</span></div>
+    <div class="phone">
+      <div class="pwr"></div>
+      <div class="screen">
+        <div class="island"></div>
+        <video id="vid" autoplay muted loop playsinline preload="auto">
+          <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.HD-720p-4.5Mbps-87645145.mp4" type="video/mp4">
+          <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.SD-480p-1.5Mbps-87645145.mp4" type="video/mp4">
+        </video>
+        <button class="sound" id="sound">🔊 Tap for sound</button>
+        <div class="othanks">Thanks for choosing HELIOS 🌊</div>
+      </div>
     </div>
   </div>
 
   <div class="offer">
-    <div class="mtitle">
-      <div class="mt">One-time<br><span class="g">offer only</span></div>
-      <div class="ms">50% off the HELIOS Jet Ski — only on this order</div>
-    </div>
-
     <div class="conf"><span class="k">✓</span> ORDER CONFIRMED — payment complete</div>
     <div class="ey">One-time rider's offer</div>
     <h1>HELIOS Jet Ski Pro</h1>
