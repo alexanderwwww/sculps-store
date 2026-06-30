@@ -129,18 +129,18 @@
     </div>
 
     <div class="tiers" id="tiers">
-      <div class="tier sel" data-was="199.99" data-now="99.99">
+      <div class="tier sel" data-was="199.99" data-now="99.99" data-variant="47951634923685">
         <span class="radio"></span>
         <div class="tl"><div class="t">1 Jet Ski</div><div class="s">Just me — try it out</div></div>
         <div class="tp"><div class="n">$199.99</div><span class="off">50% OFF</span></div>
       </div>
-      <div class="tier" data-was="349.99" data-now="174.99">
+      <div class="tier" data-was="349.99" data-now="174.99" data-variant="47951634956453">
         <span class="pop">Most popular</span>
         <span class="radio"></span>
         <div class="tl"><div class="t">2 Jet Skis</div><div class="s">Race a friend</div></div>
         <div class="tp"><div class="n">$349.99</div><span class="off">50% OFF</span></div>
       </div>
-      <div class="tier" data-was="479.99" data-now="239.99">
+      <div class="tier" data-was="479.99" data-now="239.99" data-variant="47951634989221">
         <span class="pop" style="background:#138a5e">Best value</span>
         <span class="radio"></span>
         <div class="tl"><div class="t">3 Jet Skis</div><div class="s">The whole crew</div></div>
@@ -168,11 +168,17 @@
   thumbs.forEach(function(b){b.addEventListener('click',function(){thumbs.forEach(function(x){x.classList.remove('on');});b.classList.add('on');pmain.src=b.querySelector('img').src;});});
   // tiers
   var tiers=document.querySelectorAll('.tier'), bw=document.getElementById('bw'), bn=document.getElementById('bn'), bs=document.getElementById('bs');
+  var variant='47951634923685';
   tiers.forEach(function(t){t.addEventListener('click',function(){
     tiers.forEach(function(x){x.classList.remove('sel');}); t.classList.add('sel');
-    var was=parseFloat(t.dataset.was), now=parseFloat(t.dataset.now);
+    var was=parseFloat(t.dataset.was), now=parseFloat(t.dataset.now); variant=t.dataset.variant;
     bw.textContent='$'+was.toFixed(2); bn.textContent='$'+now.toFixed(2); bs.textContent='$'+Math.round(was-now);
   });});
+  // functional buy → add jet ski to cart with the 50% discount, go to checkout
+  document.getElementById('buy').addEventListener('click',function(){
+    window.location.href='/cart/'+variant+':1?discount=RIDER50';
+  });
+  document.querySelector('.decline').addEventListener('click',function(){ window.location.href='/'; });
 </script>
 </body>
 </html>
