@@ -188,7 +188,7 @@
       function mark(){ try{sessionStorage.setItem(key,'1');}catch(e){} }
       function close(){ ov.classList.remove('in'); mark(); }
       function open(){ ov.classList.add('in'); }
-      if(!seen()){ setTimeout(open, 1200); }
+      if(!seen()){ setTimeout(open, 16000); }
       root.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click',close); });
       ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
       root.querySelector('[data-apply]').addEventListener('click',function(){
