@@ -140,7 +140,63 @@
 
     {% comment %} HELIOS — one-time 50% Jet Ski popup (skip the funnel page, the jet ski PDP, and cart) {% endcomment %}
     {% unless template.suffix == 'jetski-oto' or template.suffix == 'waverider' or template.name == 'cart' %}
-      {% section 'helios-oto-popup' %}
+    <div id="helios-otopop">
+    <style>
+      #helios-otopop .ov{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:18px;background:rgba(6,16,26,.6);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .3s ease;}
+      #helios-otopop .ov.in{opacity:1;pointer-events:auto;}
+      #helios-otopop .pop{width:100%;max-width:392px;background:#fff;border-radius:24px;overflow:hidden;position:relative;box-shadow:0 40px 90px -24px rgba(6,30,52,.6);transform:translateY(26px) scale(.96);transition:transform .5s cubic-bezier(.2,.9,.3,1.2);font-family:'Archivo',system-ui,sans-serif;color:#0C1A24;}
+      #helios-otopop .ov.in .pop{transform:none;}
+      #helios-otopop .x{position:absolute;top:12px;right:12px;z-index:3;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.85);cursor:pointer;font-size:15px;color:#33424d;}
+      #helios-otopop .vid{width:100%;aspect-ratio:16/11;object-fit:cover;display:block;background:#000;}
+      #helios-otopop .bd{padding:20px 22px 22px;text-align:center;}
+      #helios-otopop .ey{font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#0A5E97;}
+      #helios-otopop h2{font-family:'Archivo';font-weight:900;font-size:26px;line-height:1.02;letter-spacing:-.02em;margin:7px 0 6px;}
+      #helios-otopop h2 .g{color:#0A5E97;}
+      #helios-otopop .sub{font-size:13px;color:#5A6B79;font-weight:600;line-height:1.4;margin-bottom:14px;}
+      #helios-otopop .code{display:flex;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(14,124,196,.45);background:#F2FAFF;border-radius:12px;padding:11px;margin-bottom:14px;}
+      #helios-otopop .code .lab{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#5A6B79;}
+      #helios-otopop .code .val{font-family:'Archivo';font-weight:900;font-size:19px;letter-spacing:.08em;color:#0C1A24;}
+      #helios-otopop .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;cursor:pointer;background:#0A1219;color:#fff;font-family:'Archivo';font-weight:900;font-size:16px;padding:16px;border-radius:13px;box-shadow:0 14px 28px -12px rgba(10,18,25,.6);}
+      #helios-otopop .btn .p{color:#10C97E;}
+      #helios-otopop .later{display:block;width:100%;background:none;border:none;cursor:pointer;color:#90a1ae;font-family:'Archivo';font-weight:700;font-size:12px;margin-top:11px;text-decoration:underline;}
+      #helios-otopop .fine{font-size:10.5px;color:#9aa8b4;margin-top:11px;font-weight:600;}
+    </style>
+      <div class="ov" id="helios-otopop-ov">
+        <div class="pop">
+          <button class="x" data-close aria-label="Close">✕</button>
+          <video class="vid" autoplay muted loop playsinline preload="auto">
+            <source src="https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.HD-720p-4.5Mbps-87645145.mp4" type="video/mp4">
+          </video>
+          <div class="bd">
+            <div class="ey">🎁 One-time offer · just for you</div>
+            <h2><span class="g">50% OFF</span> the HELIOS Jet Ski</h2>
+            <div class="sub">We generated a personal code for this session — it won't come back once you leave.</div>
+            <div class="code"><span class="lab">Your code</span><span class="val" data-code>RIDER-••••</span></div>
+            <button class="btn" data-apply>Apply my code &amp; grab it <span class="p">→ 50% OFF</span></button>
+            <button class="later" data-close>No thanks, maybe later</button>
+            <div class="fine">Applies automatically at checkout · one-time · expires when you leave</div>
+          </div>
+        </div>
+      </div>
+    <script>
+    (function(){
+      var root=document.getElementById('helios-otopop'); if(!root||root.dataset.init)return; root.dataset.init='1';
+      if(root.parentNode!==document.body){ document.body.appendChild(root); }
+      var ov=document.getElementById('helios-otopop-ov'), key='helios_otopop';
+      try{ if(sessionStorage.getItem(key)==='1'){ return; } }catch(e){}
+      var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789',c='';for(var i=0;i<4;i++)c+=chars[Math.floor(Math.random()*chars.length)];
+      var cv=root.querySelector('[data-code]'); if(cv) cv.textContent='RIDER-'+c;
+      function close(){ ov.classList.remove('in'); try{sessionStorage.setItem(key,'1');}catch(e){} }
+      setTimeout(function(){ ov.classList.add('in'); }, 2500);
+      root.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click',close); });
+      ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+      root.querySelector('[data-apply]').addEventListener('click',function(){
+        try{sessionStorage.setItem(key,'1');}catch(e){}
+        window.location.href='/discount/RIDER50?redirect='+encodeURIComponent('/pages/jetski-oto');
+      });
+    })();
+    </script>
+    </div>
     {% endunless %}
   </body>
 </html>
