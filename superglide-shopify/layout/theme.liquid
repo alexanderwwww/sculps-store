@@ -181,14 +181,26 @@
     <script>
     (function(){
       var root=document.getElementById('helios-otopop'); if(!root||root.dataset.init)return; root.dataset.init='1';
-      var ov=document.getElementById('helios-otopop-ov'), key='helios_otopop3';
+      var ov=document.getElementById('helios-otopop-ov'), key='helios_otopop5';
+      var JETSKI=['47951634923685','47951634956453','47951634989221'];
       var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789',c='';for(var i=0;i<4;i++)c+=chars[Math.floor(Math.random()*chars.length)];
       var cv=root.querySelector('[data-code]'); if(cv) cv.textContent='RIDER-'+c;
       function seen(){ try{return sessionStorage.getItem(key)==='1';}catch(e){return false;} }
       function mark(){ try{sessionStorage.setItem(key,'1');}catch(e){} }
       function close(){ ov.classList.remove('in'); mark(); }
-      function open(){ ov.classList.add('in'); }
-      if(!seen()){ setTimeout(open, 16000); }
+      function open(){ if(seen())return; mark(); ov.classList.add('in'); }
+      // Trigger 1 — 30s on the website
+      if(!seen()){ setTimeout(open, 30000); }
+      // Trigger 2 — added something that ISN'T the jet ski to cart -> pop 4s later
+      function hasJetski(b){ if(!b)return false; var s; try{ s=(typeof b==='string')?b:JSON.stringify(b); }catch(e){ s=''+b; } for(var i=0;i<JETSKI.length;i++){ if(s.indexOf(JETSKI[i])>-1) return true; } return false; }
+      function onAdd(b){ if(seen())return; if(hasJetski(b))return; setTimeout(open, 4000); }
+      try{
+        var _f=window.fetch;
+        if(_f){ window.fetch=function(u,o){ try{ var url=(typeof u==='string')?u:((u&&u.url)||''); if(url.indexOf('/cart/add')>-1) onAdd(o&&o.body); }catch(e){} return _f.apply(this,arguments); }; }
+        var _xo=XMLHttpRequest.prototype.open, _xs=XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open=function(m,u){ this.__hu=u; return _xo.apply(this,arguments); };
+        XMLHttpRequest.prototype.send=function(b){ try{ if(this.__hu&&((''+this.__hu).indexOf('/cart/add')>-1)) onAdd(b); }catch(e){} return _xs.apply(this,arguments); };
+      }catch(e){}
       root.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click',close); });
       ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
       root.querySelector('[data-apply]').addEventListener('click',function(){
