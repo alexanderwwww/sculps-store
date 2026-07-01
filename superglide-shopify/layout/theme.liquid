@@ -181,17 +181,18 @@
     <script>
     (function(){
       var root=document.getElementById('helios-otopop'); if(!root||root.dataset.init)return; root.dataset.init='1';
-      if(root.parentNode!==document.body){ document.body.appendChild(root); }
-      var ov=document.getElementById('helios-otopop-ov'), key='helios_otopop';
-      try{ if(sessionStorage.getItem(key)==='1'){ return; } }catch(e){}
+      var ov=document.getElementById('helios-otopop-ov'), key='helios_otopop3';
       var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789',c='';for(var i=0;i<4;i++)c+=chars[Math.floor(Math.random()*chars.length)];
       var cv=root.querySelector('[data-code]'); if(cv) cv.textContent='RIDER-'+c;
-      function close(){ ov.classList.remove('in'); try{sessionStorage.setItem(key,'1');}catch(e){} }
-      setTimeout(function(){ ov.classList.add('in'); }, 2500);
+      function seen(){ try{return sessionStorage.getItem(key)==='1';}catch(e){return false;} }
+      function mark(){ try{sessionStorage.setItem(key,'1');}catch(e){} }
+      function close(){ ov.classList.remove('in'); mark(); }
+      function open(){ ov.classList.add('in'); }
+      if(!seen()){ setTimeout(open, 1200); }
       root.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click',close); });
       ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
       root.querySelector('[data-apply]').addEventListener('click',function(){
-        try{sessionStorage.setItem(key,'1');}catch(e){}
+        mark();
         window.location.href='/discount/RIDER50?redirect='+encodeURIComponent('/pages/jetski-oto');
       });
     })();
