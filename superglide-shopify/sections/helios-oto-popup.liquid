@@ -1,0 +1,102 @@
+{%- comment -%}
+  HELIOS — one-time 50% Jet Ski popup (once per session).
+  Video + personal-looking code → applies the real discount code and sends the
+  visitor to the jet-ski funnel with 50% off active. Self-contained; re-homes on
+  <body> so position:fixed can't be trapped by a transformed section wrapper.
+  sections/helios-oto-popup.liquid
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- if section.settings.enabled -%}
+{%- assign code = section.settings.discount_code | default: 'RIDER50' -%}
+{%- assign redirect = section.settings.redirect_url | default: '/pages/jetski-oto' -%}
+{%- assign vurl = section.settings.video | default: 'https://cdn.shopify.com/videos/c/vp/6e6519ea877d4866ba801895c0765bfc/6e6519ea877d4866ba801895c0765bfc.HD-720p-4.5Mbps-87645145.mp4' -%}
+<div class="helios" id="op-{{ sid }}">
+<style>
+  #op-{{ sid }} .ov{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:18px;
+    background:rgba(6,16,26,.6);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .3s ease;}
+  #op-{{ sid }} .ov.in{opacity:1;pointer-events:auto;}
+  #op-{{ sid }} .pop{width:100%;max-width:392px;background:#fff;border-radius:24px;overflow:hidden;position:relative;
+    box-shadow:0 40px 90px -24px rgba(6,30,52,.6);transform:translateY(26px) scale(.96);transition:transform .5s cubic-bezier(.2,.9,.3,1.2);font-family:'Archivo',system-ui,sans-serif;color:#0C1A24;}
+  #op-{{ sid }} .ov.in .pop{transform:none;}
+  #op-{{ sid }} .x{position:absolute;top:12px;right:12px;z-index:3;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.85);cursor:pointer;font-size:15px;color:#33424d;}
+  #op-{{ sid }} .vid{width:100%;aspect-ratio:16/11;object-fit:cover;display:block;background:#000;}
+  #op-{{ sid }} .bd{padding:20px 22px 22px;text-align:center;}
+  #op-{{ sid }} .ey{font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#0A5E97;}
+  #op-{{ sid }} h2{font-family:'Archivo';font-weight:900;font-size:26px;line-height:1.02;letter-spacing:-.02em;margin:7px 0 6px;}
+  #op-{{ sid }} h2 .g{color:#0A5E97;}
+  #op-{{ sid }} .sub{font-size:13px;color:#5A6B79;font-weight:600;line-height:1.4;margin-bottom:14px;}
+  #op-{{ sid }} .code{display:flex;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(14,124,196,.45);background:#F2FAFF;border-radius:12px;padding:11px;margin-bottom:14px;}
+  #op-{{ sid }} .code .lab{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#5A6B79;}
+  #op-{{ sid }} .code .val{font-family:'Archivo';font-weight:900;font-size:19px;letter-spacing:.08em;color:#0C1A24;}
+  #op-{{ sid }} .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;cursor:pointer;background:#0A1219;color:#fff;font-family:'Archivo';font-weight:900;font-size:16px;padding:16px;border-radius:13px;box-shadow:0 14px 28px -12px rgba(10,18,25,.6);transition:transform .12s;}
+  #op-{{ sid }} .btn:active{transform:scale(.99);}
+  #op-{{ sid }} .btn .p{color:#10C97E;}
+  #op-{{ sid }} .later{display:block;width:100%;background:none;border:none;cursor:pointer;color:#90a1ae;font-family:'Archivo';font-weight:700;font-size:12px;margin-top:11px;text-decoration:underline;text-underline-offset:2px;}
+  #op-{{ sid }} .fine{font-size:10.5px;color:#9aa8b4;margin-top:11px;font-weight:600;}
+</style>
+  <div class="ov" id="op-{{ sid }}-ov">
+    <div class="pop">
+      <button class="x" data-close aria-label="Close">✕</button>
+      {%- if section.settings.image != blank -%}
+      <img class="vid" src="{{ section.settings.image | image_url: width: 760 }}" alt="HELIOS Jet Ski">
+      {%- else -%}
+      <video class="vid" autoplay muted loop playsinline preload="auto">
+        <source src="{{ vurl }}" type="video/mp4">
+      </video>
+      {%- endif -%}
+      <div class="bd">
+        <div class="ey">{{ section.settings.eyebrow }}</div>
+        <h2>{{ section.settings.headline }}</h2>
+        <div class="sub">{{ section.settings.subtext }}</div>
+        <div class="code"><span class="lab">Your code</span><span class="val" data-code>RIDER-••••</span></div>
+        <button class="btn" data-apply>{{ section.settings.button_text }} <span class="p">→ 50% OFF</span></button>
+        <button class="later" data-close>{{ section.settings.decline_text }}</button>
+        <div class="fine">{{ section.settings.fine_print }}</div>
+      </div>
+    </div>
+  </div>
+<script>
+(function(){
+  var root=document.getElementById('op-{{ sid }}'); if(!root||root.dataset.init)return; root.dataset.init='1';
+  if(root.parentNode!==document.body){ document.body.appendChild(root); }
+  var ov=document.getElementById('op-{{ sid }}-ov');
+  var key='helios_op_{{ sid }}';
+  try{ if(sessionStorage.getItem(key)==='1'){ return; } }catch(e){}
+  // personal-looking code (cosmetic) — real discount is applied on click
+  var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789',c='';for(var i=0;i<4;i++)c+=chars[Math.floor(Math.random()*chars.length)];
+  var cv=root.querySelector('[data-code]'); if(cv) cv.textContent='RIDER-'+c;
+  function show(){ ov.classList.add('in'); }
+  function close(){ ov.classList.remove('in'); try{sessionStorage.setItem(key,'1');}catch(e){} }
+  setTimeout(show, {{ section.settings.delay | default: 2500 }});
+  root.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click',close); });
+  ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+  root.querySelector('[data-apply]').addEventListener('click',function(){
+    try{sessionStorage.setItem(key,'1');}catch(e){}
+    window.location.href='/discount/'+{{ code | json }}+'?redirect='+encodeURIComponent({{ redirect | json }});
+  });
+})();
+</script>
+</div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS Jet Ski Popup",
+  "tag": "section",
+  "settings": [
+    { "type": "checkbox", "id": "enabled", "label": "Enable popup", "default": true },
+    { "type": "video_url", "id": "video", "label": "Jet ski video (mp4)", "accept": ["mp4"] },
+    { "type": "image_picker", "id": "image", "label": "Fallback image (if no video)" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "🎁 One-time offer · just for you" },
+    { "type": "text", "id": "headline", "label": "Headline", "default": "50% OFF the HELIOS Jet Ski" },
+    { "type": "text", "id": "subtext", "label": "Subtext", "default": "We generated a personal code for this session — it won't come back once you leave." },
+    { "type": "text", "id": "button_text", "label": "Button text", "default": "Apply my code & grab it" },
+    { "type": "text", "id": "decline_text", "label": "Decline text", "default": "No thanks, maybe later" },
+    { "type": "text", "id": "fine_print", "label": "Fine print", "default": "Applies automatically at checkout · one-time · expires when you leave" },
+    { "type": "header", "content": "Behaviour" },
+    { "type": "text", "id": "discount_code", "label": "Real discount code to apply", "default": "RIDER50" },
+    { "type": "text", "id": "redirect_url", "label": "Send to (funnel URL)", "default": "/pages/jetski-oto" },
+    { "type": "range", "id": "delay", "label": "Delay before showing (ms)", "min": 0, "max": 10000, "step": 500, "default": 2500 }
+  ],
+  "presets": [{ "name": "HELIOS Jet Ski Popup" }]
+}
+{% endschema %}

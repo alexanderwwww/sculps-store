@@ -137,5 +137,10 @@
 
     {% comment %} HELIOS — global 4OFJULY promo toast: renders on every page (incl. cart), editor-proof {% endcomment %}
     {% section 'helios-promo-toast' %}
+
+    {% comment %} HELIOS — one-time 50% Jet Ski popup (skip the funnel page, the jet ski PDP, and cart) {% endcomment %}
+    {% unless template.suffix == 'jetski-oto' or template.suffix == 'waverider' or template.name == 'cart' %}
+      {% section 'helios-oto-popup' %}
+    {% endunless %}
   </body>
 </html>
