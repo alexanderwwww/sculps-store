@@ -1,0 +1,43 @@
+{%- liquid
+  assign p_url = '/products/glo-ipl-device'
+-%}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  .gk-hd, .gk-hd * { box-sizing:border-box; }
+  .gk-hd a { text-decoration:none; }
+  .gk-annc { background:#111315; color:#F4F6F8; text-align:center; padding:9px 12px; font-size:12.5px; letter-spacing:0.02em; font-family:'Inter',sans-serif; }
+  .gk-nav { position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px clamp(20px,4vw,56px); background:rgba(255,255,255,0.86); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid rgba(17,19,21,0.10); font-family:'Inter',sans-serif; }
+  .gk-wordmark { font-family:'General Sans',sans-serif; font-weight:700; font-size:22px; text-transform:lowercase; letter-spacing:-0.03em; color:#111315; }
+  .gk-links { display:flex; gap:clamp(16px,3vw,32px); align-items:center; }
+  .gk-links a { color:#111315; font-size:14px; font-weight:500; }
+  .gk-bag { background:#111315; color:#fff; border:none; border-radius:100px; padding:10px 20px; font-size:13px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; display:inline-block; }
+  @media (max-width: 749px){
+    .gk-links { display:none; }
+  }
+</style>
+
+<div class="gk-hd">
+  <div class="gk-annc">free shipping on glo, always &middot; 30-night home trial</div>
+  <div class="gk-nav">
+    <a href="/" class="gk-wordmark">gloskin</a>
+    <div class="gk-links">
+      <a href="{{ p_url }}#gallery">shop glo</a>
+      <a href="{{ p_url }}#how-to-use">how it works</a>
+      <a href="{{ p_url }}#reviews">reviews</a>
+      <a href="{{ p_url }}#faq">faq</a>
+    </div>
+    <a href="/cart" class="gk-bag">bag{% if cart.item_count > 0 %} &middot; {{ cart.item_count }}{% endif %}</a>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "GK Header",
+  "settings": [],
+  "enabled_on": { "groups": ["header"] }
+}
+{% endschema %}

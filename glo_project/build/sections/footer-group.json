@@ -1,0 +1,11 @@
+{
+  "type": "footer",
+  "name": "Footer",
+  "sections": {
+    "gk_footer": {
+      "type": "gk-footer",
+      "settings": {}
+    }
+  },
+  "order": ["gk_footer"]
+}

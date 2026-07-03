@@ -1,0 +1,11 @@
+{
+  "type": "header",
+  "name": "Header",
+  "sections": {
+    "gk_header": {
+      "type": "gk-header",
+      "settings": {}
+    }
+  },
+  "order": ["gk_header"]
+}

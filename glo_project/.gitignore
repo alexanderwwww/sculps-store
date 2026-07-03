@@ -1,0 +1,8 @@
+# Heavy uploaded assets & references — not tracked
+premium/
+theme_ref/
+uploads/
+_b64.json
+*.zip
+*.mp4
+Gloskin Product Page (standalone).html

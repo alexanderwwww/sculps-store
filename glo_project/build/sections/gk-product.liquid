@@ -1,0 +1,326 @@
+{%- liquid
+  assign img_hero = 'https://upload.higgsfield.ai/user_30e5Px1Beo3KHEO5fyJQlA1MBHa/4dd0935f-30c8-4433-b29f-73c5d392670a.png'
+  assign img_before = 'https://upload.higgsfield.ai/user_30e5Px1Beo3KHEO5fyJQlA1MBHa/b162f8e4-2133-425e-9bcb-45b23c03766b.png'
+  assign img_inuse = 'https://upload.higgsfield.ai/user_30e5Px1Beo3KHEO5fyJQlA1MBHa/fa19aade-36a3-4865-8b30-1a66cd655a76.png'
+  assign img_after = 'https://upload.higgsfield.ai/user_30e5Px1Beo3KHEO5fyJQlA1MBHa/cd87879a-90e7-40ce-9c0b-aa9b3475cea8.png'
+  assign img_tech = 'https://upload.higgsfield.ai/user_30e5Px1Beo3KHEO5fyJQlA1MBHa/30783f13-a2e0-4b13-8c3c-f04c30156d2e.png'
+  if product.featured_image
+    assign img_hero = product.featured_image | image_url: width: 1200
+  endif
+  assign variant_count = product.variants.size
+  if variant_count > 1
+    assign default_variant = product.variants[1]
+  else
+    assign default_variant = product.selected_or_first_available_variant
+  endif
+-%}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  .gk-pd, .gk-pd * { box-sizing:border-box; }
+  .gk-pd { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:#111315; background:#FFFFFF; width:100%; overflow-x:clip; }
+  .gk-pd h1,.gk-pd h2 { margin:0; }
+  .gk-eyebrow { font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#3E5568; }
+  .gk-h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.8rem,3.4vw,2.8rem); }
+  .gk-hero { display:grid; grid-template-columns:repeat(auto-fit, minmax(360px,1fr)); align-items:center; gap:clamp(24px,4vw,64px); padding:clamp(32px,6vw,72px) clamp(20px,4vw,56px) clamp(48px,6vw,80px); max-width:1440px; margin:0 auto; }
+  .gk-hero img.hero { width:100%; height:auto; display:block; border-radius:18px; }
+  .gk-hero__info { display:flex; flex-direction:column; gap:20px; min-width:320px; }
+  .gk-hero h1 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(2.6rem,5.2vw,4.6rem); line-height:0.98; }
+  .gk-hero p.lede { font-size:clamp(17px,1.6vw,20px); color:#5B6470; line-height:1.5; max-width:480px; margin:0; }
+  .gk-rating { display:flex; align-items:center; gap:8px; text-decoration:none; color:#111315; }
+  .gk-price { font-family:'General Sans',sans-serif; font-weight:700; font-size:30px; letter-spacing:-0.03em; }
+  .gk-bundles { display:flex; flex-direction:column; gap:10px; margin-top:2px; }
+  .gk-bundle { position:relative; display:flex; align-items:center; gap:14px; border:1.5px solid rgba(17,19,21,0.14); background:transparent; border-radius:14px; padding:13px 16px; cursor:pointer; }
+  .gk-bundle.is-selected { border-color:#3E5568; background:#fff; }
+  .gk-bundle input { position:absolute; opacity:0; pointer-events:none; }
+  .gk-bundle .badge { position:absolute; top:-10px; left:16px; background:#3E5568; color:#fff; font-size:10px; font-weight:600; letter-spacing:0.02em; padding:3px 10px; border-radius:100px; }
+  .gk-bundle .dot { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(17,19,21,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .gk-bundle.is-selected .dot { border-color:#3E5568; }
+  .gk-bundle .dot i { width:9px; height:9px; border-radius:50%; background:#3E5568; display:none; }
+  .gk-bundle.is-selected .dot i { display:block; }
+  .gk-bundle .meta { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .gk-bundle .meta .t { font-weight:600; font-size:14px; }
+  .gk-bundle .meta .s { font-size:12px; color:#5B6470; }
+  .gk-bundle .pr { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .gk-bundle .pr .was { font-size:12px; color:#5B6470; text-decoration:line-through; }
+  .gk-bundle .pr .now { font-family:'General Sans',sans-serif; font-weight:700; font-size:16px; letter-spacing:-0.02em; }
+  .gk-atc { margin-top:4px; background:#111315; color:#fff; border:none; border-radius:100px; padding:19px 34px; font-size:15px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; width:100%; }
+  .gk-atc[disabled]{ opacity:0.4; cursor:not-allowed; }
+  .gk-scarcity { font-size:12px; color:#5B6470; text-align:center; margin-top:-8px; }
+  .gk-trust { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:6px; padding-top:20px; border-top:1px solid rgba(17,19,21,0.10); }
+  .gk-trust div { display:flex; align-items:center; gap:7px; font-size:12.5px; color:#5B6470; }
+  .gk-trust div span { color:#3E5568; }
+  .gk-band { background:#F4F6F8; padding:clamp(48px,6vw,72px) clamp(20px,4vw,56px); }
+  .gk-band--white { background:#fff; padding:clamp(56px,7vw,96px) clamp(20px,4vw,56px); }
+  .gk-wrap { max-width:1200px; margin:0 auto; }
+  .gk-hl { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(10px,2vw,22px); }
+  .gk-hl .card { display:flex; flex-direction:column; gap:clamp(10px,1.4vw,14px); background:#fff; border-radius:clamp(16px,2.4vw,24px); padding:clamp(10px,1.6vw,16px); box-shadow:0 1px 2px rgba(17,19,21,0.04),0 8px 24px rgba(17,19,21,0.05); }
+  .gk-hl .card .imgwrap { width:100%; aspect-ratio:1/1; border-radius:16px; overflow:hidden; }
+  .gk-hl .card img { width:100%; height:100%; object-fit:cover; display:block; }
+  .gk-hl .card .lbl { text-align:center; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:clamp(13px,1.6vw,15px); }
+  .gk-steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:clamp(28px,4vw,48px); }
+  .gk-step { display:flex; flex-direction:column; gap:14px; }
+  .gk-step .n { font-family:'General Sans',sans-serif; font-weight:700; font-size:15px; color:#3E5568; letter-spacing:-0.01em; }
+  .gk-step .t { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:22px; }
+  .gk-step .d { font-size:15px; color:#5B6470; line-height:1.55; }
+  .gk-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:clamp(28px,4vw,40px); text-align:center; }
+  .gk-stat { display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .gk-stat .v { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(3rem,6vw,4.5rem); color:#3E5568; line-height:1; }
+  .gk-stat .l { font-size:15px; color:#111315; max-width:220px; line-height:1.4; }
+  .gk-note { text-align:center; font-size:12px; color:#5B6470; max-width:640px; margin:clamp(32px,4vw,48px) auto 0; line-height:1.6; }
+  .gk-rev-summary { display:flex; flex-wrap:wrap; gap:clamp(28px,5vw,64px); align-items:center; background:#fff; border:1px solid rgba(17,19,21,0.10); border-radius:20px; padding:clamp(24px,3vw,40px); margin-bottom:clamp(32px,4vw,48px); }
+  .gk-rev-summary .avg { font-family:'General Sans',sans-serif; font-weight:700; letter-spacing:-0.03em; font-size:44px; }
+  .gk-rev-bars { flex:1; min-width:220px; display:flex; flex-direction:column; gap:6px; }
+  .gk-rev-bar { display:flex; align-items:center; gap:10px; }
+  .gk-rev-bar .lab { font-size:12px; color:#5B6470; width:40px; }
+  .gk-rev-bar .track { flex:1; height:6px; border-radius:100px; background:rgba(17,19,21,0.08); overflow:hidden; }
+  .gk-rev-bar .fill { height:100%; border-radius:100px; background:#3E5568; }
+  .gk-rev-bar .pct { font-size:12px; color:#5B6470; width:32px; text-align:right; }
+  .gk-rev-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:clamp(18px,2.5vw,26px); }
+  .gk-rev-card { background:#fff; border:1px solid rgba(17,19,21,0.10); border-radius:18px; padding:clamp(20px,2.5vw,28px); display:flex; flex-direction:column; gap:14px; }
+  .gk-rev-card .head { display:flex; align-items:center; gap:12px; }
+  .gk-rev-card .who .nm { font-size:13px; font-weight:600; }
+  .gk-rev-card .who .dt { font-size:11.5px; color:#5B6470; }
+  .gk-rev-card .stars { margin-left:auto; color:#3E5568; font-size:15px; letter-spacing:1px; }
+  .gk-rev-card .body { font-size:15px; line-height:1.6; color:#111315; }
+  .gk-rev-card .verified { font-size:11px; color:#5B6470; display:flex; align-items:center; gap:4px; }
+  .gk-rev-card .verified span { color:#3E5568; }
+  .gk-rev-card .tags { display:flex; flex-wrap:wrap; gap:8px; }
+  .gk-rev-card .tags .tag { font-size:11px; color:#5B6470; background:#F4F6F8; border-radius:100px; padding:5px 12px; }
+  .gk-tech { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(360px,1fr)); background:#111315; border-radius:28px; overflow:hidden; }
+  .gk-tech img { width:100%; height:100%; min-height:380px; object-fit:cover; display:block; }
+  .gk-tech .txt { display:flex; flex-direction:column; justify-content:center; gap:20px; padding:clamp(40px,6vw,72px); color:#F4F6F8; }
+  .gk-tech .txt .stmt { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.8rem,3.4vw,2.8rem); line-height:1.05; }
+  .gk-tech .txt p { font-size:15.5px; color:#9AA2AC; line-height:1.6; max-width:420px; margin:0; }
+  .gk-faq { max-width:800px; margin:0 auto; }
+  .gk-faq .rows { display:flex; flex-direction:column; border-bottom:1px solid rgba(17,19,21,0.10); }
+  .gk-faq details { border-top:1px solid rgba(17,19,21,0.10); padding:20px 0; }
+  .gk-faq summary { cursor:pointer; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; font-size:16px; list-style:none; }
+  .gk-faq summary::-webkit-details-marker { display:none; }
+  .gk-faq p { font-size:14.5px; color:#5B6470; line-height:1.6; margin-top:12px; }
+  .gk-sticky { position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(255,255,255,0.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid rgba(17,19,21,0.10); padding:12px clamp(16px,4vw,56px); display:flex; align-items:center; gap:16px; justify-content:space-between; transform:translateY(110%); transition:transform 0.25s ease; }
+  .gk-sticky.show { transform:translateY(0); }
+  .gk-sticky .l { display:flex; align-items:center; gap:12px; min-width:0; }
+  .gk-sticky img { width:40px; height:40px; border-radius:8px; object-fit:cover; flex-shrink:0; }
+  .gk-sticky .nm { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:14px; }
+  .gk-sticky .pr { font-size:12px; color:#5B6470; }
+  .gk-sticky button { background:#111315; color:#fff; border:none; border-radius:100px; padding:13px 28px; font-size:14px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; flex-shrink:0; }
+</style>
+
+<div class="gk-pd" id="gk-pd">
+
+  {% form 'product', product, id: 'gk-buy-form' %}
+  <!-- HERO -->
+  <div id="gallery" class="gk-hero">
+    <div style="order:1; min-width:320px;">
+      <img class="hero" src="{{ img_hero }}" alt="{{ product.title | escape }} with box and accessories">
+    </div>
+    <div class="gk-hero__info" style="order:2;">
+      <div class="gk-eyebrow">at-home ipl</div>
+      <h1>glo</h1>
+      <p class="lede">salon-grade hair removal, redesigned for your bathroom counter. quiet, cordless, and built to notice a difference in four weeks.</p>
+      <a href="#reviews" class="gk-rating">
+        <span style="color:#3E5568; font-size:14px; letter-spacing:1px;">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+        <span style="font-size:13px; color:#5B6470;">4.8 &middot; 1,240 reviews</span>
+      </a>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="gk-price" data-gk-price>{{ default_variant.price | money }}</div>
+        <div style="font-size:13px; color:#5B6470;">one device. every zone.</div>
+      </div>
+
+      <div class="gk-bundles" data-gk-bundles>
+        {%- assign subs = 'for you|one for you, one to gift|share with the whole house' | split: '|' -%}
+        {%- assign badges = '|most popular|best savings' | split: '|' -%}
+        {%- for variant in product.variants -%}
+          {%- assign sub = subs[forloop.index0] | default: 'add to your routine' -%}
+          {%- assign badge = badges[forloop.index0] -%}
+          <label class="gk-bundle{% if variant.id == default_variant.id %} is-selected{% endif %}" data-gk-bundle>
+            <input type="radio" name="id" value="{{ variant.id }}"{% if variant.id == default_variant.id %} checked{% endif %}
+                   data-price="{{ variant.price | money }}"
+                   {% unless variant.available %}disabled{% endunless %}>
+            {%- if badge != blank -%}<span class="badge">{{ badge }}</span>{%- endif -%}
+            <span class="dot"><i></i></span>
+            <span class="meta">
+              <span class="t">{{ variant.title }}</span>
+              <span class="s">{{ sub }}</span>
+            </span>
+            <span class="pr">
+              {%- if variant.compare_at_price > variant.price -%}<span class="was">{{ variant.compare_at_price | money }}</span>{%- endif -%}
+              <span class="now">{{ variant.price | money }}</span>
+            </span>
+          </label>
+        {%- endfor -%}
+      </div>
+
+      <button type="submit" name="add" class="gk-atc" data-gk-atc {% unless product.available %}disabled{% endunless %}>
+        {% if product.available %}add to bag &mdash; <span data-gk-atc-price>{{ default_variant.price | money }}</span>{% else %}sold out{% endif %}
+      </button>
+      <div class="gk-scarcity">only 6 left at this price &middot; ships within 24 hours</div>
+
+      <div class="gk-trust">
+        <div><span>&#10003;</span> free shipping</div>
+        <div><span>&#10003;</span> 30-night home trial</div>
+        <div><span>&#10003;</span> fda-cleared</div>
+        <div><span>&#10003;</span> 2-year warranty</div>
+      </div>
+    </div>
+  </div>
+  {% endform %}
+
+  <!-- HIGHLIGHTS -->
+  <div class="gk-band">
+    <div class="gk-wrap">
+      <h2 class="gk-h2" style="text-align:center; margin-bottom:clamp(24px,3vw,32px);">real routines, real results</h2>
+      <div class="gk-hl">
+        <div class="card"><div class="imgwrap"><img src="{{ img_before }}" alt="before"></div><div class="lbl">before</div></div>
+        <div class="card"><div class="imgwrap"><img src="{{ img_inuse }}" alt="in use"></div><div class="lbl">in use</div></div>
+        <div class="card"><div class="imgwrap"><img src="{{ img_after }}" alt="after"></div><div class="lbl">after</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION -->
+  <div id="how-to-use" class="gk-band">
+    <div class="gk-wrap">
+      <h2 class="gk-h2" style="margin-bottom:clamp(32px,4vw,52px);">application</h2>
+      <div class="gk-steps">
+        <div class="gk-step"><div class="n">01</div><div class="t">prep</div><div class="d">shave the area and wipe it dry. no lotions, no oils &mdash; just clean, bare skin.</div></div>
+        <div class="gk-step"><div class="n">02</div><div class="t">glide &amp; flash</div><div class="d">glide the device slowly over skin, letting it auto-flash as it senses contact. cover each zone in overlapping passes.</div></div>
+        <div class="gk-step"><div class="n">03</div><div class="t">repeat weekly</div><div class="d">use once a week for the first 4 weeks, then drop to once a month for maintenance.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="gk-band--white">
+    <div class="gk-wrap">
+      <div class="gk-stats">
+        <div class="gk-stat"><div class="v">94%</div><div class="l">saw a visible reduction in regrowth after 4 weeks*</div></div>
+        <div class="gk-stat"><div class="v">91%</div><div class="l">said skin felt noticeably smoother between sessions*</div></div>
+        <div class="gk-stat"><div class="v">89%</div><div class="l">found it easier than their salon routine*</div></div>
+      </div>
+      <div class="gk-note">*results from an 8-week independent consumer-use study of 132 participants using glo at home, 2 sessions per week. self-reported via post-study survey. individual results vary based on hair color, skin tone, and treatment area.</div>
+    </div>
+  </div>
+
+  <!-- REVIEWS -->
+  <div id="reviews" class="gk-band">
+    <div class="gk-wrap">
+      <h2 class="gk-h2" style="margin-bottom:clamp(28px,4vw,40px);">reviews</h2>
+      <div class="gk-rev-summary">
+        <div style="display:flex; flex-direction:column; gap:6px; min-width:140px;">
+          <div class="avg">4.8</div>
+          <div style="font-size:13px; color:#5B6470;">based on 1,240 reviews</div>
+        </div>
+        <div class="gk-rev-bars">
+          <div class="gk-rev-bar"><div class="lab">5 &#9733;</div><div class="track"><div class="fill" style="width:82%;"></div></div><div class="pct">82%</div></div>
+          <div class="gk-rev-bar"><div class="lab">4 &#9733;</div><div class="track"><div class="fill" style="width:11%;"></div></div><div class="pct">11%</div></div>
+          <div class="gk-rev-bar"><div class="lab">3 &#9733;</div><div class="track"><div class="fill" style="width:4%;"></div></div><div class="pct">4%</div></div>
+          <div class="gk-rev-bar"><div class="lab">2 &#9733;</div><div class="track"><div class="fill" style="width:2%;"></div></div><div class="pct">2%</div></div>
+          <div class="gk-rev-bar"><div class="lab">1 &#9733;</div><div class="track"><div class="fill" style="width:1%;"></div></div><div class="pct">1%</div></div>
+        </div>
+      </div>
+      <div class="gk-rev-cards">
+        <div class="gk-rev-card">
+          <div class="head"><div class="who"><div class="nm">jenna r.</div><div class="dt">2 weeks ago</div></div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div>
+          <div class="body">was skeptical about an at-home device but this genuinely works. quiet, fast, and i actually stick with it because it doesn&rsquo;t hurt.</div>
+          <div class="verified"><span>&#10003;</span> verified buyer</div>
+          <div class="tags"><div class="tag">skin tone: fair</div><div class="tag">area: legs</div></div>
+        </div>
+        <div class="gk-rev-card">
+          <div class="head"><div class="who"><div class="nm">monique t.</div><div class="dt">1 month ago</div></div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div>
+          <div class="body">four weeks in and my underarms are basically maintenance-only now. the flash sensor makes it foolproof.</div>
+          <div class="verified"><span>&#10003;</span> verified buyer</div>
+          <div class="tags"><div class="tag">skin tone: deep</div><div class="tag">area: underarms</div></div>
+        </div>
+        <div class="gk-rev-card">
+          <div class="head"><div class="who"><div class="nm">ava l.</div><div class="dt">3 weeks ago</div></div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</div></div>
+          <div class="body">good results on my legs, took a bit longer on coarser hair on my bikini line. worth the patience.</div>
+          <div class="verified"><span>&#10003;</span> verified buyer</div>
+          <div class="tags"><div class="tag">skin tone: medium</div><div class="tag">area: bikini</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENGINEERED -->
+  <div class="gk-band">
+    <div class="gk-tech">
+      <img src="{{ img_tech }}" alt="glo flash window close-up">
+      <div class="txt">
+        <div class="gk-eyebrow">the technology</div>
+        <div class="stmt">engineered like a beauty tool. tested like a medical device.</div>
+        <p>a contact + contrast sensor reads your skin before every flash, so glo only fires when it&rsquo;s safe to. fda-cleared, dermatologist-tested, and quiet enough for a sunday morning.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div id="faq" class="gk-band">
+    <div class="gk-faq">
+      <h2 class="gk-h2" style="margin-bottom:clamp(28px,4vw,40px);">faq</h2>
+      <div class="rows">
+        <details open><summary>is glo safe for all skin tones?</summary><p>glo is calibrated for light-to-medium skin tones with light-to-dark hair. a built-in sensor checks contrast before every flash and won&rsquo;t fire on unsuitable combinations &mdash; it&rsquo;s a safety feature, not a flaw.</p></details>
+        <details><summary>how many sessions until i see results?</summary><p>most people notice reduced regrowth by week 4 with weekly use. full results build over 8&ndash;12 weeks, then a monthly touch-up maintains them.</p></details>
+        <details><summary>does it hurt?</summary><p>most users describe it as a light snap of warmth, far gentler than waxing or salon ipl. sensitivity varies by area &mdash; sensitive zones may feel more.</p></details>
+        <details><summary>is glo fda cleared?</summary><p>yes. glo is fda-cleared for at-home ipl hair removal use.</p></details>
+        <details><summary>how long does the battery last?</summary><p>a full charge runs roughly 40 minutes of continuous flashing &mdash; enough for a full-body session. it charges fully in about 2 hours.</p></details>
+      </div>
+    </div>
+  </div>
+
+  <!-- STICKY BUY BAR -->
+  {% if product.available %}
+  <div class="gk-sticky" data-gk-sticky>
+    <div class="l">
+      <img src="{{ img_hero }}" alt="glo">
+      <div>
+        <div class="nm">glo</div>
+        <div class="pr" data-gk-sticky-price>{{ default_variant.price | money }}</div>
+      </div>
+    </div>
+    <button type="submit" form="gk-buy-form" name="add">add to bag</button>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  (function(){
+    var root = document.getElementById('gk-pd');
+    if(!root) return;
+    var bundles = root.querySelectorAll('[data-gk-bundle]');
+    var atcPrice = root.querySelector('[data-gk-atc-price]');
+    var heroPrice = root.querySelector('[data-gk-price]');
+    var stickyPrice = root.querySelector('[data-gk-sticky-price]');
+    function select(label){
+      var input = label.querySelector('input');
+      if(!input || input.disabled) return;
+      input.checked = true;
+      bundles.forEach(function(l){ l.classList.toggle('is-selected', l===label); });
+      var p = input.getAttribute('data-price');
+      if(atcPrice) atcPrice.textContent = p;
+      if(heroPrice) heroPrice.textContent = p;
+      if(stickyPrice) stickyPrice.textContent = p;
+    }
+    bundles.forEach(function(label){
+      label.addEventListener('click', function(){ select(label); });
+    });
+    var sticky = root.querySelector('[data-gk-sticky]');
+    if(sticky){
+      window.addEventListener('scroll', function(){
+        if(window.scrollY > 640){ sticky.classList.add('show'); } else { sticky.classList.remove('show'); }
+      }, { passive:true });
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "GK Product",
+  "settings": [],
+  "presets": [{ "name": "GK Product" }]
+}
+{% endschema %}

@@ -1,0 +1,82 @@
+{%- liquid
+  assign p_url = '/products/glo-ipl-device'
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  .gk-ft, .gk-ft * { box-sizing:border-box; }
+  .gk-ft { background:#111315; color:#F4F6F8; padding:clamp(48px,6vw,72px) clamp(20px,4vw,56px) clamp(28px,4vw,36px); font-family:'Inter',sans-serif; }
+  .gk-ft__inner { max-width:1200px; margin:0 auto; }
+  .gk-ft__top { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:clamp(28px,4vw,48px); padding-bottom:clamp(40px,5vw,64px); border-bottom:1px solid rgba(244,246,248,0.14); }
+  .gk-ft__brand { display:flex; flex-direction:column; gap:14px; max-width:340px; }
+  .gk-ft__brand h3 { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:15px; margin:0; }
+  .gk-ft__brand p { font-size:13px; color:#9AA2AC; line-height:1.5; margin:0; }
+  .gk-news { display:flex; gap:8px; margin-top:4px; }
+  .gk-news input { flex:1; min-width:0; background:transparent; border:1px solid rgba(244,246,248,0.24); border-radius:100px; padding:12px 18px; color:#F4F6F8; font-size:13px; font-family:inherit; }
+  .gk-news button { background:#F4F6F8; color:#111315; border:none; border-radius:100px; padding:12px 22px; font-size:13px; font-weight:600; text-transform:lowercase; cursor:pointer; font-family:inherit; flex-shrink:0; }
+  .gk-ft__col { display:flex; flex-direction:column; gap:12px; }
+  .gk-ft__col .h { font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#9AA2AC; }
+  .gk-ft__col a { font-size:14px; color:#F4F6F8; text-decoration:none; opacity:0.85; }
+  .gk-ft__col a:hover { opacity:1; }
+  .gk-ft__wordmark { text-align:center; padding:clamp(24px,4vw,40px) 0 8px; }
+  .gk-ft__wordmark span { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.045em; font-size:clamp(4.5rem,17vw,13rem); line-height:0.85; color:#3E5568; word-break:break-all; }
+  .gk-ft__legal { display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; font-size:12px; color:#6B7280; padding-top:16px; }
+  .gk-ft__legal a { color:#6B7280; text-decoration:none; }
+</style>
+
+<div class="gk-ft">
+  <div class="gk-ft__inner">
+    <div class="gk-ft__top">
+      <div class="gk-ft__brand">
+        <h3>stay in the glo</h3>
+        <p>first access to restocks, routine tips, and quiet discounts. no spam.</p>
+        {% form 'customer' %}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          <div class="gk-news">
+            <input type="email" name="contact[email]" placeholder="email address" required>
+            <button type="submit">join</button>
+          </div>
+        {% endform %}
+      </div>
+      <div class="gk-ft__col">
+        <div class="h">shop</div>
+        <a href="{{ p_url }}">glo device</a>
+        <a href="{{ p_url }}#gallery">bundles</a>
+        <a href="{{ p_url }}#how-to-use">how it works</a>
+        <a href="{{ p_url }}#reviews">reviews</a>
+      </div>
+      <div class="gk-ft__col">
+        <div class="h">company</div>
+        <a href="/">home</a>
+        <a href="{{ p_url }}">about glo</a>
+        <a href="/cart">bag</a>
+        <a href="{{ p_url }}#faq">contact</a>
+      </div>
+      <div class="gk-ft__col">
+        <div class="h">help</div>
+        <a href="{{ p_url }}#faq">faq</a>
+        <a href="{{ p_url }}#faq">shipping</a>
+        <a href="{{ p_url }}#faq">returns</a>
+        <a href="{{ p_url }}#faq">warranty</a>
+      </div>
+    </div>
+    <div class="gk-ft__wordmark"><span>gloskin</span></div>
+    <div class="gk-ft__legal">
+      <div>&copy; {{ 'now' | date: '%Y' }} gloskin. all rights reserved.</div>
+      <div style="display:flex; gap:18px;">
+        <a href="/policies/privacy-policy">privacy</a>
+        <a href="/policies/terms-of-service">terms</a>
+        <a href="{{ p_url }}#faq">accessibility</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "GK Footer",
+  "settings": [],
+  "enabled_on": { "groups": ["footer"] }
+}
+{% endschema %}
