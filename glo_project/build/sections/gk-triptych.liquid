@@ -5,16 +5,16 @@
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
-  #{{ section.id }} .wrap { max-width:1200px; margin:0 auto; }
-  #{{ section.id }} .head { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:clamp(20px,3vw,32px); }
-  #{{ section.id }} .head h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); margin:0; }
-  #{{ section.id }} .head a { font-size:14px; font-weight:600; color:#111315; border-bottom:1px solid #111315; text-decoration:none; }
-  #{{ section.id }} .g { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(10px,2vw,22px); }
-  @media (max-width:640px){ #{{ section.id }} .g { grid-template-columns:1fr; } }
-  #{{ section.id }} .card { background:#F4F6F8; border-radius:20px; overflow:hidden; }
-  #{{ section.id }} .card .im { aspect-ratio:1/1; } #{{ section.id }} .card img { width:100%; height:100%; object-fit:cover; display:block; }
-  #{{ section.id }} .card .cap { padding:16px 18px; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:16px; }
+  #shopify-section-{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #shopify-section-{{ section.id }} .wrap { max-width:1200px; margin:0 auto; }
+  #shopify-section-{{ section.id }} .head { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:clamp(20px,3vw,32px); }
+  #shopify-section-{{ section.id }} .head h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); margin:0; }
+  #shopify-section-{{ section.id }} .head a { font-size:14px; font-weight:600; color:#111315; border-bottom:1px solid #111315; text-decoration:none; }
+  #shopify-section-{{ section.id }} .g { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(10px,2vw,22px); }
+  @media (max-width:640px){ #shopify-section-{{ section.id }} .g { grid-template-columns:1fr; } }
+  #shopify-section-{{ section.id }} .card { background:#F4F6F8; border-radius:20px; overflow:hidden; }
+  #shopify-section-{{ section.id }} .card .im { aspect-ratio:1/1; } #shopify-section-{{ section.id }} .card img { width:100%; height:100%; object-fit:cover; display:block; }
+  #shopify-section-{{ section.id }} .card .cap { padding:16px 18px; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:16px; }
 </style>
 <div class="s">
   <div class="wrap">

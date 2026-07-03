@@ -1,19 +1,19 @@
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) 0; overflow:hidden; }
-  #{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); margin:0; padding:0 clamp(16px,3vw,44px); color:#111315; }
-  #{{ section.id }} .marquee { overflow:hidden; margin-top:clamp(20px,3vw,34px); -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent); mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent); }
-  #{{ section.id }} .track { display:flex; gap:16px; width:max-content; padding:0 8px; animation:gk-marq-{{ section.id }} {{ section.settings.speed }}s linear infinite; }
-  #{{ section.id }} .marquee:hover .track { animation-play-state:paused; }
-  #{{ section.id }} .card { flex:0 0 auto; width:300px; background:{{ section.settings.card_bg }}; border-radius:18px; padding:22px; display:flex; flex-direction:column; gap:12px; }
-  #{{ section.id }} .card .toprow { display:flex; align-items:center; justify-content:space-between; }
-  #{{ section.id }} .card .stars { color:#3E5568; font-size:15px; letter-spacing:1px; }
-  #{{ section.id }} .card .vf { font-size:11px; font-weight:600; color:#1F7A55; }
-  #{{ section.id }} .card .body { font-size:14.5px; line-height:1.55; color:#111315; }
-  #{{ section.id }} .card .who { font-size:12.5px; font-weight:600; color:#5B6470; margin-top:auto; }
+  #shopify-section-{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) 0; overflow:hidden; }
+  #shopify-section-{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); margin:0; padding:0 clamp(16px,3vw,44px); color:#111315; }
+  #shopify-section-{{ section.id }} .marquee { overflow:hidden; margin-top:clamp(20px,3vw,34px); -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent); mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent); }
+  #shopify-section-{{ section.id }} .track { display:flex; gap:16px; width:max-content; padding:0 8px; animation:gk-marq-{{ section.id }} {{ section.settings.speed }}s linear infinite; }
+  #shopify-section-{{ section.id }} .marquee:hover .track { animation-play-state:paused; }
+  #shopify-section-{{ section.id }} .card { flex:0 0 auto; width:300px; background:{{ section.settings.card_bg }}; border-radius:18px; padding:22px; display:flex; flex-direction:column; gap:12px; }
+  #shopify-section-{{ section.id }} .card .toprow { display:flex; align-items:center; justify-content:space-between; }
+  #shopify-section-{{ section.id }} .card .stars { color:#3E5568; font-size:15px; letter-spacing:1px; }
+  #shopify-section-{{ section.id }} .card .vf { font-size:11px; font-weight:600; color:#1F7A55; }
+  #shopify-section-{{ section.id }} .card .body { font-size:14.5px; line-height:1.55; color:#111315; }
+  #shopify-section-{{ section.id }} .card .who { font-size:12.5px; font-weight:600; color:#5B6470; margin-top:auto; }
   @keyframes gk-marq-{{ section.id }} { from{transform:translateX(0);} to{transform:translateX(-50%);} }
-  @media (prefers-reduced-motion: reduce){ #{{ section.id }} .track { animation:none; flex-wrap:wrap; width:auto; justify-content:center; } }
+  @media (prefers-reduced-motion: reduce){ #shopify-section-{{ section.id }} .track { animation:none; flex-wrap:wrap; width:auto; justify-content:center; } }
 </style>
 <div class="s">
   <h2>{{ section.settings.heading }}</h2>

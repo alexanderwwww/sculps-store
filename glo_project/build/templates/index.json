@@ -14,34 +14,6 @@
     },
     "results": {
       "type": "gk-results",
-      "blocks": {
-        "b1": {
-          "type": "stage",
-          "settings": {
-            "label": "before",
-            "desc": "visible hair, enlarged pores and uneven texture."
-          }
-        },
-        "b2": {
-          "type": "stage",
-          "settings": {
-            "label": "one week in",
-            "desc": "pores look smaller, skin feels smoother and more even."
-          }
-        },
-        "b3": {
-          "type": "stage",
-          "settings": {
-            "label": "after",
-            "desc": "smoother, clearer skin with visible long-term results."
-          }
-        }
-      },
-      "block_order": [
-        "b1",
-        "b2",
-        "b3"
-      ],
       "settings": {}
     },
     "editorial": {
