@@ -19,19 +19,19 @@
   .gk-pd { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:#111315; background:#FFFFFF; width:100%; overflow-x:clip; }
   .gk-pd h1,.gk-pd h2 { margin:0; }
   .gk-eyebrow { font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#3E5568; }
-  .gk-h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.8rem,3.4vw,2.8rem); }
-  .gk-hero { display:grid; grid-template-columns:1.1fr 0.9fr; align-items:start; gap:clamp(24px,4vw,56px); padding:clamp(24px,5vw,56px) clamp(20px,4vw,56px) clamp(48px,6vw,80px); max-width:1440px; margin:0 auto; }
+  .gk-h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); }
+  .gk-hero { display:grid; grid-template-columns:1.1fr 0.9fr; align-items:start; gap:clamp(24px,4vw,56px); padding:clamp(24px,5vw,56px) clamp(16px,3vw,44px) clamp(28px,4vw,52px); max-width:1440px; margin:0 auto; }
   @media (max-width:900px){ .gk-hero { grid-template-columns:1fr; } }
   .gk-gallery { display:flex; flex-direction:column; gap:clamp(8px,1.2vw,14px); }
   .gk-main { border-radius:20px; overflow:hidden; background:#F4F6F8; aspect-ratio:1/1; }
   .gk-main img { width:100%; height:100%; object-fit:cover; display:block; }
-  .gk-thumbs { display:grid; grid-template-columns:repeat(5,1fr); gap:clamp(6px,0.8vw,10px); }
-  .gk-thumb { border:1.5px solid transparent; border-radius:11px; overflow:hidden; background:#F4F6F8; aspect-ratio:1/1; cursor:pointer; padding:0; }
+  .gk-thumbs { display:flex; flex-wrap:wrap; gap:8px; }
+  .gk-thumb { flex:0 0 auto; width:clamp(44px,7vw,56px); height:clamp(44px,7vw,56px); border:1.5px solid transparent; border-radius:10px; overflow:hidden; background:#F4F6F8; cursor:pointer; padding:0; }
   .gk-thumb.is-active { border-color:#3E5568; }
   .gk-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
   .gk-hero__info { display:flex; flex-direction:column; gap:20px; position:sticky; top:96px; }
   @media (max-width:900px){ .gk-hero__info { position:static; } }
-  .gk-hero h1 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(2.6rem,5.2vw,4.6rem); line-height:0.98; }
+  .gk-hero h1 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(1.9rem,3.6vw,3rem); line-height:0.98; }
   .gk-hero p.lede { font-size:clamp(16px,1.6vw,19px); color:#5B6470; line-height:1.5; max-width:480px; margin:0; }
   .gk-rating { display:flex; align-items:center; gap:8px; text-decoration:none; color:#111315; }
   .gk-price { font-family:'General Sans',sans-serif; font-weight:700; font-size:30px; letter-spacing:-0.03em; }
@@ -47,29 +47,34 @@
   .gk-bundle .meta { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
   .gk-bundle .meta .t { font-weight:600; font-size:14px; }
   .gk-bundle .meta .s { font-size:12px; color:#5B6470; }
-  .gk-bundle .pr { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .gk-bundle .pr { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
+  .gk-bundle .prtop { display:flex; align-items:center; gap:8px; }
   .gk-bundle .pr .was { font-size:12px; color:#5B6470; text-decoration:line-through; }
   .gk-bundle .pr .now { font-family:'General Sans',sans-serif; font-weight:700; font-size:16px; letter-spacing:-0.02em; }
+  .gk-bundle .pr .save { font-size:11px; font-weight:600; color:#1F7A55; }
+  .gk-bundle .meta .u { font-size:11px; color:#8A93A0; }
   .gk-atc { margin-top:4px; background:#111315; color:#fff; border:none; border-radius:100px; padding:19px 34px; font-size:15px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; width:100%; }
   .gk-atc[disabled]{ opacity:0.4; cursor:not-allowed; }
+  .gk-buynow { margin-top:2px; }
+  .gk-buynow .shopify-payment-button__button { border-radius:100px !important; }
   .gk-scarcity { font-size:12px; color:#5B6470; text-align:center; margin-top:-8px; }
   .gk-trust { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:6px; padding-top:20px; border-top:1px solid rgba(17,19,21,0.10); }
   .gk-trust div { display:flex; align-items:center; gap:7px; font-size:12.5px; color:#5B6470; }
   .gk-trust div span { color:#3E5568; }
-  .gk-band { background:#F4F6F8; padding:clamp(48px,6vw,72px) clamp(20px,4vw,56px); }
-  .gk-band--white { background:#fff; padding:clamp(56px,7vw,96px) clamp(20px,4vw,56px); }
+  .gk-band { background:#F4F6F8; padding:clamp(28px,4vw,47px) clamp(16px,3vw,44px); }
+  .gk-band--white { background:#fff; padding:clamp(32px,4.2vw,58px) clamp(16px,3vw,44px); }
   .gk-wrap { max-width:1200px; margin:0 auto; }
-  .gk-steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:clamp(28px,4vw,48px); }
+  .gk-steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:clamp(20px,3vw,36px); }
   .gk-step { display:flex; flex-direction:column; gap:14px; }
   .gk-step .n { font-family:'General Sans',sans-serif; font-weight:700; font-size:15px; color:#3E5568; letter-spacing:-0.01em; }
   .gk-step .t { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:22px; }
   .gk-step .d { font-size:15px; color:#5B6470; line-height:1.55; }
-  .gk-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:clamp(28px,4vw,40px); text-align:center; }
+  .gk-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:clamp(20px,3vw,32px); text-align:center; }
   .gk-stat { display:flex; flex-direction:column; gap:10px; align-items:center; }
-  .gk-stat .v { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(3rem,6vw,4.5rem); color:#3E5568; line-height:1; }
+  .gk-stat .v { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(2rem,3.6vw,2.9rem); color:#3E5568; line-height:1; }
   .gk-stat .l { font-size:15px; color:#111315; max-width:220px; line-height:1.4; }
   .gk-note { text-align:center; font-size:12px; color:#5B6470; max-width:640px; margin:clamp(32px,4vw,48px) auto 0; line-height:1.6; }
-  .gk-rev-summary { display:flex; flex-wrap:wrap; gap:clamp(28px,5vw,64px); align-items:center; background:#fff; border:1px solid rgba(17,19,21,0.10); border-radius:20px; padding:clamp(24px,3vw,40px); margin-bottom:clamp(32px,4vw,48px); }
+  .gk-rev-summary { display:flex; flex-wrap:wrap; gap:clamp(20px,3vw,44px); align-items:center; background:#fff; border:1px solid rgba(17,19,21,0.10); border-radius:20px; padding:clamp(24px,3vw,40px); margin-bottom:clamp(32px,4vw,48px); }
   .gk-rev-summary .avg { font-family:'General Sans',sans-serif; font-weight:700; letter-spacing:-0.03em; font-size:44px; }
   .gk-rev-bars { flex:1; min-width:220px; display:flex; flex-direction:column; gap:6px; }
   .gk-rev-bar { display:flex; align-items:center; gap:10px; }
@@ -90,8 +95,8 @@
   .gk-rev-card .tags .tag { font-size:11px; color:#5B6470; background:#F4F6F8; border-radius:100px; padding:5px 12px; }
   .gk-tech { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(360px,1fr)); background:#111315; border-radius:28px; overflow:hidden; }
   .gk-tech img { width:100%; height:100%; min-height:380px; object-fit:cover; display:block; }
-  .gk-tech .txt { display:flex; flex-direction:column; justify-content:center; gap:20px; padding:clamp(40px,6vw,72px); color:#F4F6F8; }
-  .gk-tech .txt .stmt { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.8rem,3.4vw,2.8rem); line-height:1.05; }
+  .gk-tech .txt { display:flex; flex-direction:column; justify-content:center; gap:20px; padding:clamp(26px,4vw,46px); color:#F4F6F8; }
+  .gk-tech .txt .stmt { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); line-height:1.05; }
   .gk-tech .txt p { font-size:15.5px; color:#9AA2AC; line-height:1.6; max-width:420px; margin:0; }
   .gk-faq { max-width:800px; margin:0 auto; }
   .gk-faq .rows { display:flex; flex-direction:column; border-bottom:1px solid rgba(17,19,21,0.10); }
@@ -99,7 +104,7 @@
   .gk-faq summary { cursor:pointer; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; font-size:16px; list-style:none; }
   .gk-faq summary::-webkit-details-marker { display:none; }
   .gk-faq p { font-size:14.5px; color:#5B6470; line-height:1.6; margin-top:12px; }
-  .gk-sticky { position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(255,255,255,0.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid rgba(17,19,21,0.10); padding:12px clamp(16px,4vw,56px); display:flex; align-items:center; gap:16px; justify-content:space-between; transform:translateY(110%); transition:transform 0.25s ease; }
+  .gk-sticky { position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(255,255,255,0.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid rgba(17,19,21,0.10); padding:12px clamp(12px,3vw,40px); display:flex; align-items:center; gap:16px; justify-content:space-between; transform:translateY(110%); transition:transform 0.25s ease; }
   .gk-sticky.show { transform:translateY(0); }
   .gk-sticky .l { display:flex; align-items:center; gap:12px; min-width:0; }
   .gk-sticky img { width:40px; height:40px; border-radius:8px; object-fit:cover; flex-shrink:0; }
@@ -152,10 +157,14 @@
             <span class="meta">
               <span class="t">{{ variant.title }}</span>
               <span class="s">{{ sub }}</span>
+              <span class="u">{{ variant.price | divided_by: forloop.index | money }} each</span>
             </span>
             <span class="pr">
-              {%- if variant.compare_at_price > variant.price -%}<span class="was">{{ variant.compare_at_price | money }}</span>{%- endif -%}
-              <span class="now">{{ variant.price | money }}</span>
+              <span class="prtop">
+                {%- if variant.compare_at_price > variant.price -%}<span class="was">{{ variant.compare_at_price | money }}</span>{%- endif -%}
+                <span class="now">{{ variant.price | money }}</span>
+              </span>
+              {%- if variant.compare_at_price > variant.price -%}<span class="save">save {{ variant.compare_at_price | minus: variant.price | money }}</span>{%- endif -%}
             </span>
           </label>
         {%- endfor -%}
@@ -164,6 +173,7 @@
       <button type="submit" name="add" class="gk-atc" data-gk-atc {% unless product.available %}disabled{% endunless %}>
         {% if product.available %}add to bag &mdash; <span data-gk-atc-price>{{ default_variant.price | money }}</span>{% else %}sold out{% endif %}
       </button>
+      {% if product.available and additional_checkout_buttons %}<div class="gk-buynow">{{ form | payment_button }}</div>{% endif %}
       <div class="gk-scarcity">only 6 left at this price &middot; ships within 24 hours</div>
 
       <div class="gk-trust">
@@ -203,7 +213,7 @@
   <!-- REVIEWS -->
   <div id="reviews" class="gk-band">
     <div class="gk-wrap">
-      <h2 class="gk-h2" style="margin-bottom:clamp(28px,4vw,40px);">reviews</h2>
+      <h2 class="gk-h2" style="margin-bottom:clamp(20px,3vw,32px);">reviews</h2>
       <div class="gk-rev-summary">
         <div style="display:flex; flex-direction:column; gap:6px; min-width:140px;">
           <div class="avg">4.8</div>
@@ -255,7 +265,7 @@
   <!-- FAQ -->
   <div id="faq" class="gk-band">
     <div class="gk-faq">
-      <h2 class="gk-h2" style="margin-bottom:clamp(28px,4vw,40px);">faq</h2>
+      <h2 class="gk-h2" style="margin-bottom:clamp(20px,3vw,32px);">faq</h2>
       <div class="rows">
         <details open><summary>is glo safe for all skin tones?</summary><p>glo is calibrated for light-to-medium skin tones with light-to-dark hair. a built-in sensor checks contrast before every flash and won&rsquo;t fire on unsuitable combinations &mdash; it&rsquo;s a safety feature, not a flaw.</p></details>
         <details><summary>how many sessions until i see results?</summary><p>most people notice reduced regrowth by week 4 with weekly use. full results build over 8&ndash;12 weeks, then a monthly touch-up maintains them.</p></details>
