@@ -305,6 +305,17 @@
         <div class="hb-pay">{{ form | payment_button }}</div>
       {%- endform -%}
 
+      {%- comment -%} App blocks (e.g. SPD Split Payment) — add via Theme editor → this section → Add block {%- endcomment -%}
+      {%- if section.blocks.size > 0 -%}
+        <div class="hb-apps" style="margin-top:11px;">
+          {%- for block in section.blocks -%}
+            {%- if block.type == '@app' -%}
+              <div class="hb-appblock" {{ block.shopify_attributes }}>{%- render block -%}</div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+
       {%- if section.settings.discount_code != blank -%}
         <button type="button" class="hb-code" id="hb-code-{{ sid }}" data-code="{{ section.settings.discount_code }}">
           <span style="font-size:12.5px;color:var(--helios-mut,#56636E);">{{ section.settings.discount_label | default: 'Extra savings — tap to copy' }}</span>
@@ -530,7 +541,8 @@
       "settings": [
         { "type": "image_picker", "id": "image", "label": "Image" }
       ]
-    }
+    },
+    { "type": "@app" }
   ],
   "presets": [
     {
