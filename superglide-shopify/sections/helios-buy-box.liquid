@@ -59,6 +59,14 @@
   #hb-{{ sid }} .hb-price b{font-weight:900;font-size:34px;color:var(--helios-ink2,#0A1219);}
   #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
   #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
+  #hb-{{ sid }} .hb-1seller{margin:4px 0 15px;border-radius:16px;padding:13px 15px;background:linear-gradient(135deg,#FFFAEE,#FFF1CF);border:1px solid rgba(197,150,45,.30);box-shadow:0 8px 22px rgba(197,150,45,.13);}
+  #hb-{{ sid }} .hb-1seller-top{display:flex;align-items:center;gap:9px;margin-bottom:7px;flex-wrap:wrap;}
+  #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;letter-spacing:.055em;text-transform:uppercase;color:#7a5808;background:linear-gradient(135deg,#FCDD7C,#F0B429);padding:6px 12px;border-radius:30px;box-shadow:0 3px 9px rgba(197,150,45,.32);}
+  #hb-{{ sid }} .hb-1seller-vf{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#1aa86b;}
+  #hb-{{ sid }} .hb-1seller-tx b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#0C1A24;margin-bottom:2px;letter-spacing:-.01em;}
+  #hb-{{ sid }} .hb-1seller-tx p{margin:0;font-size:13px;color:#6b5522;line-height:1.42;}
+  #hb-{{ sid }} .hb-1seller-tx s{color:#a8863f;font-weight:700;}
+  #hb-{{ sid }} .hb-1seller-tx em{font-style:normal;font-weight:800;color:#0C1A24;}
   #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
   #hb-{{ sid }} .hb-chip{font-size:11.5px;font-weight:700;color:var(--helios-ink,#0C1A24);background:rgba(14,124,196,.08);border:1px solid rgba(14,124,196,.16);border-radius:30px;padding:5px 10px;white-space:nowrap;}
   #hb-{{ sid }} .hb-timer{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));backdrop-filter:var(--helios-g-blur);padding:7px 12px;border-radius:9px;margin-bottom:16px;}
@@ -216,6 +224,19 @@
       {%- assign hb_form_id = 'hb-form-' | append: sid -%}
       {%- form 'product', product, id: hb_form_id -%}
         <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
+
+        {%- if section.settings.show_bestprice -%}
+        <div class="hb-1seller">
+          <div class="hb-1seller-top">
+            <span class="hb-1seller-pill">🏆 {{ section.settings.bestprice_pill | default: '#1 Seller in the U.S.' }}</span>
+            <span class="hb-1seller-vf">🔒 {{ section.settings.bestprice_tag | default: 'Lowest price, guaranteed' }}</span>
+          </div>
+          <div class="hb-1seller-tx">
+            <b>{{ section.settings.bestprice_head | default: 'The best price in the country.' }}</b>
+            <p>Everyone else charges <s>{{ section.settings.competitor_price | default: '$250' }} each</s> for a single lounger. Get our <em>2-pack for just {{ section.settings.our_price | default: '$299' }}</em> — two loungers for barely more than one of theirs.</p>
+          </div>
+        </div>
+        {%- endif -%}
 
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
           {%- if section.settings.show_picker -%}
@@ -469,6 +490,13 @@
     { "type": "header", "content": "Discount chip (use a REAL active code)" },
     { "type": "text", "id": "discount_code", "label": "Discount code", "default": "SUPERGLIDEIT" },
     { "type": "text", "id": "discount_label", "label": "Discount label", "default": "Extra savings — tap to copy" },
+    { "type": "header", "content": "#1 seller / best-price banner (above bundles)" },
+    { "type": "checkbox", "id": "show_bestprice", "label": "Show '#1 seller · best price' banner", "default": true },
+    { "type": "text", "id": "bestprice_pill", "label": "Gold pill text", "default": "#1 Seller in the U.S." },
+    { "type": "text", "id": "bestprice_tag", "label": "Secondary tag", "default": "Lowest price, guaranteed" },
+    { "type": "text", "id": "bestprice_head", "label": "Headline", "default": "The best price in the country." },
+    { "type": "text", "id": "competitor_price", "label": "Competitor price (each)", "default": "$250" },
+    { "type": "text", "id": "our_price", "label": "Our 2-pack price", "default": "$299" },
     { "type": "header", "content": "Urgency & social proof" },
     { "type": "checkbox", "id": "show_countdown", "label": "Show countdown", "default": true },
     { "type": "range", "id": "countdown_minutes", "label": "Countdown length (minutes, per session)", "min": 30, "max": 1440, "step": 30, "default": 480 },
