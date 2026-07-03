@@ -305,7 +305,15 @@
         <div class="hb-pay">{{ form | payment_button }}</div>
       {%- endform -%}
 
-      {%- comment -%} App blocks (e.g. SPD Split Payment) — add via Theme editor → this section → Add block {%- endcomment -%}
+      {%- comment -%}
+        SPD Split Payment anchor — the app is embed-only (no theme block), so it needs
+        a target element. In the SPD app settings set the widget/button placement
+        (custom CSS selector) to  #spd-split-payment  and it renders right here,
+        directly under the buy buttons. Kept as its own div so nothing else moves.
+      {%- endcomment -%}
+      <div id="spd-split-payment" class="spd-split-payment" data-spd-anchor style="margin-top:11px;"></div>
+
+      {%- comment -%} App blocks (any app that DOES expose a theme block) {%- endcomment -%}
       {%- if section.blocks.size > 0 -%}
         <div class="hb-apps" style="margin-top:11px;">
           {%- for block in section.blocks -%}
