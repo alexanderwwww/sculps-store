@@ -1,0 +1,59 @@
+{%- liquid
+  assign img = 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/1c672ae0a8a29459960bd5fd15e0aa7e94293c45/glo_project/build/assets'
+  assign photo = img | append: '/glo-detail-3.png'
+  if section.settings.image != blank
+    assign photo = section.settings.image | image_url: width: 900
+  endif
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #{{ section.id }} .grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:clamp(20px,3vw,40px); align-items:center; }
+  #{{ section.id }} .media { border-radius:22px; overflow:hidden; aspect-ratio:4/5; }
+  #{{ section.id }} .media img { width:100%; height:100%; object-fit:cover; display:block; }
+  #{{ section.id }} .statement { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.03em; font-size:clamp(1.35rem,2.4vw,1.85rem); line-height:1.1; margin:0 0 20px; color:#111315; }
+  #{{ section.id }} details { border-top:1px solid rgba(17,19,21,0.12); padding:16px 0; }
+  #{{ section.id }} summary { cursor:pointer; list-style:none; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; font-size:18px; color:#111315; }
+  #{{ section.id }} summary::-webkit-details-marker{ display:none; }
+  #{{ section.id }} details p { font-size:14.5px; color:#5B6470; line-height:1.6; margin:12px 0 0; }
+  #{{ section.id }} .pill-outline { display:inline-block; margin-top:22px; background:transparent; color:#111315; border:1.5px solid #111315; border-radius:100px; padding:13px 26px; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; text-decoration:none; }
+</style>
+<div class="s">
+  <div class="grid">
+    <div class="media"><img src="{{ photo }}" alt="glo"></div>
+    <div>
+      {%- if section.settings.statement != blank -%}<p class="statement">{{ section.settings.statement }}</p>{%- endif -%}
+      {%- for block in section.blocks -%}
+        <details {% if forloop.first %}open{% endif %} {{ block.shopify_attributes }}>
+          <summary>{{ block.settings.title }}</summary>
+          <p>{{ block.settings.body }}</p>
+        </details>
+      {%- endfor -%}
+      {%- if section.settings.button_label != blank -%}<a href="{{ section.settings.button_link | default: '/products/glo-ipl-device' }}" class="pill-outline">{{ section.settings.button_label }}</a>{%- endif -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK Values",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "textarea", "id": "statement", "label": "Statement", "default": "we help you restore, protect, and reveal smoother skin — on your own schedule, at home." },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "learn more" },
+    { "type": "url", "id": "button_link", "label": "Button link" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#F4F6F8" }
+  ],
+  "blocks": [
+    { "type": "row", "name": "Accordion row", "settings": [
+      { "type": "text", "id": "title", "label": "Title", "default": "our mission" },
+      { "type": "textarea", "id": "body", "label": "Body", "default": "make professional-grade hair removal something you actually own — quiet, gentle, and simple enough to keep up with for good." }
+    ] }
+  ],
+  "presets": [{ "name": "GK Values", "blocks": [
+    { "type": "row", "settings": { "title": "our mission", "body": "make professional-grade hair removal something you actually own — quiet, gentle, and simple enough to keep up with for good." } },
+    { "type": "row", "settings": { "title": "how it works", "body": "intense pulsed light targets the pigment in the hair, gradually reducing regrowth session after session. glo's sensor keeps every flash safe and even." } },
+    { "type": "row", "settings": { "title": "our guarantee", "body": "30-night home trial and a 2-year warranty. if glo isn't for you, send it back — no drama." } }
+  ] }]
+}
+{% endschema %}

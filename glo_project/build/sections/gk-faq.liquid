@@ -1,0 +1,47 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #{{ section.id }} .wrap { max-width:800px; margin:0 auto; }
+  #{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); margin:0 0 clamp(20px,3vw,36px); color:#111315; }
+  #{{ section.id }} .rows { display:flex; flex-direction:column; border-bottom:1px solid rgba(17,19,21,0.10); }
+  #{{ section.id }} details { border-top:1px solid rgba(17,19,21,0.10); padding:20px 0; }
+  #{{ section.id }} summary { cursor:pointer; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; font-size:16px; list-style:none; color:#111315; }
+  #{{ section.id }} summary::-webkit-details-marker { display:none; }
+  #{{ section.id }} details p { font-size:14.5px; color:#5B6470; line-height:1.6; margin-top:12px; }
+</style>
+<div class="s">
+  <div class="wrap">
+    <h2>{{ section.settings.heading }}</h2>
+    <div class="rows">
+      {%- for block in section.blocks -%}
+        <details {% if forloop.first %}open{% endif %} {{ block.shopify_attributes }}>
+          <summary>{{ block.settings.q }}</summary>
+          <p>{{ block.settings.a }}</p>
+        </details>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK FAQ",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "faq" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#F4F6F8" }
+  ],
+  "blocks": [
+    { "type": "qa", "name": "Question", "settings": [
+      { "type": "text", "id": "q", "label": "Question", "default": "is glo safe for all skin tones?" },
+      { "type": "textarea", "id": "a", "label": "Answer", "default": "glo is calibrated for light-to-medium skin tones with light-to-dark hair. a built-in sensor checks contrast before every flash and won't fire on unsuitable combinations." }
+    ] }
+  ],
+  "presets": [{ "name": "GK FAQ", "blocks": [
+    { "type": "qa", "settings": { "q": "is glo safe for all skin tones?", "a": "glo is calibrated for light-to-medium skin tones with light-to-dark hair. a built-in sensor checks contrast before every flash and won't fire on unsuitable combinations — it's a safety feature, not a flaw." } },
+    { "type": "qa", "settings": { "q": "how many sessions until i see results?", "a": "most people notice reduced regrowth by week 4 with weekly use. full results build over 8–12 weeks, then a monthly touch-up maintains them." } },
+    { "type": "qa", "settings": { "q": "does it hurt?", "a": "most users describe it as a light snap of warmth, far gentler than waxing or salon ipl. finish with a cooling aloe gel to keep skin calm." } },
+    { "type": "qa", "settings": { "q": "is glo fda cleared?", "a": "yes. glo is fda-cleared for at-home ipl hair removal use." } },
+    { "type": "qa", "settings": { "q": "how long does the battery last?", "a": "a full charge runs roughly 40 minutes of continuous flashing — enough for a full-body session. it charges fully in about 2 hours." } }
+  ] }]
+}
+{% endschema %}

@@ -41,10 +41,10 @@
 </style>
 
 <div class="gk-hd">
-  <div class="gk-annc">free shipping on glo, always &middot; 30-night home trial</div>
+  <div class="gk-annc">{{ section.settings.announcement | default: 'free shipping on glo, always · 30-night home trial' }}</div>
   <div class="gk-nav">
     <button class="gk-burger" type="button" aria-label="Open menu" data-gk-open><span class="bars"><i></i><i></i><i></i></span><span class="word">menu</span></button>
-    <a href="/" class="gk-wordmark">gloskin</a>
+    <a href="/" class="gk-wordmark">{% if section.settings.logo != blank %}<img src="{{ section.settings.logo | image_url: width: 400 }}" alt="{{ shop.name | escape }}" style="height:{{ section.settings.logo_height | default: 26 }}px;width:auto;display:block;">{% else %}{{ section.settings.logo_text | default: 'gloskin' }}{% endif %}</a>
     <div class="gk-navright">
       <a href="/cart" class="gk-bag">bag{% if cart.item_count > 0 %} &middot; {{ cart.item_count }}{% endif %}</a>
     </div>
@@ -96,7 +96,12 @@
 {% schema %}
 {
   "name": "GK Header",
-  "settings": [],
+  "settings": [
+    { "type": "image_picker", "id": "logo", "label": "Logo image (upload yours)" },
+    { "type": "range", "id": "logo_height", "label": "Logo height", "min": 16, "max": 48, "step": 2, "unit": "px", "default": 26 },
+    { "type": "text", "id": "logo_text", "label": "Logo text (if no image)", "default": "gloskin" },
+    { "type": "text", "id": "announcement", "label": "Announcement bar text", "default": "free shipping on glo, always · 30-night home trial" }
+  ],
   "enabled_on": { "groups": ["header"] }
 }
 {% endschema %}

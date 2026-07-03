@@ -1,0 +1,58 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) 0; overflow:hidden; }
+  #{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); margin:0; padding:0 clamp(16px,3vw,44px); color:#111315; }
+  #{{ section.id }} .marquee { overflow:hidden; margin-top:clamp(20px,3vw,34px); -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent); mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent); }
+  #{{ section.id }} .track { display:flex; gap:16px; width:max-content; padding:0 8px; animation:gk-marq-{{ section.id }} {{ section.settings.speed }}s linear infinite; }
+  #{{ section.id }} .marquee:hover .track { animation-play-state:paused; }
+  #{{ section.id }} .card { flex:0 0 auto; width:300px; background:{{ section.settings.card_bg }}; border-radius:18px; padding:22px; display:flex; flex-direction:column; gap:12px; }
+  #{{ section.id }} .card .toprow { display:flex; align-items:center; justify-content:space-between; }
+  #{{ section.id }} .card .stars { color:#3E5568; font-size:15px; letter-spacing:1px; }
+  #{{ section.id }} .card .vf { font-size:11px; font-weight:600; color:#1F7A55; }
+  #{{ section.id }} .card .body { font-size:14.5px; line-height:1.55; color:#111315; }
+  #{{ section.id }} .card .who { font-size:12.5px; font-weight:600; color:#5B6470; margin-top:auto; }
+  @keyframes gk-marq-{{ section.id }} { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+  @media (prefers-reduced-motion: reduce){ #{{ section.id }} .track { animation:none; flex-wrap:wrap; width:auto; justify-content:center; } }
+</style>
+<div class="s">
+  <h2>{{ section.settings.heading }}</h2>
+  {%- capture cards -%}
+    {%- for block in section.blocks -%}
+      {%- assign r = block.settings.stars | plus: 0 -%}
+      <div class="card" {{ block.shopify_attributes }}>
+        <div class="toprow"><div class="stars">{% for i in (1..5) %}{% if i <= r %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</div>{% if block.settings.verified %}<div class="vf">&#10003; verified</div>{% endif %}</div>
+        <div class="body">{{ block.settings.text }}</div>
+        <div class="who">{{ block.settings.author }}</div>
+      </div>
+    {%- endfor -%}
+  {%- endcapture -%}
+  <div class="marquee"><div class="track">{{ cards }}{{ cards }}</div></div>
+</div>
+{% schema %}
+{
+  "name": "GK Reviews (moving)",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "what people are saying" },
+    { "type": "range", "id": "speed", "label": "Scroll seconds (higher = slower)", "min": 20, "max": 90, "step": 2, "default": 46 },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" },
+    { "type": "color", "id": "card_bg", "label": "Card background", "default": "#F4F6F8" }
+  ],
+  "blocks": [
+    { "type": "review", "name": "Review", "settings": [
+      { "type": "range", "id": "stars", "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5 },
+      { "type": "checkbox", "id": "verified", "label": "Verified badge", "default": true },
+      { "type": "textarea", "id": "text", "label": "Review text", "default": "genuinely works. quiet, fast, and i actually stick with it because it doesn't hurt." },
+      { "type": "text", "id": "author", "label": "Author", "default": "jenna r. · austin, tx" }
+    ] }
+  ],
+  "presets": [{ "name": "GK Reviews (moving)", "blocks": [
+    { "type": "review", "settings": { "stars": 5, "text": "genuinely works. quiet, fast, and i actually stick with it because it doesn't hurt.", "author": "jenna r. · austin, tx" } },
+    { "type": "review", "settings": { "stars": 5, "text": "four weeks in and my underarms are basically maintenance-only now. the flash sensor makes it foolproof.", "author": "monique t. · atlanta, ga" } },
+    { "type": "review", "settings": { "stars": 4, "text": "good results on my legs — took a bit longer on coarser hair, but worth the patience.", "author": "ava l. · denver, co" } },
+    { "type": "review", "settings": { "stars": 5, "text": "so much quieter than i expected, and i do my whole body while watching tv. cancelled my salon appointments.", "author": "priya n. · seattle, wa" } },
+    { "type": "review", "settings": { "stars": 5, "text": "followed the schedule exactly and the difference by week 4 was unreal. soothing gel after and zero irritation.", "author": "daniela r. · phoenix, az" } },
+    { "type": "review", "settings": { "stars": 5, "text": "face, underarms, legs — one device does it all. paid for itself in two months.", "author": "sophie k. · miami, fl" } }
+  ] }]
+}
+{% endschema %}

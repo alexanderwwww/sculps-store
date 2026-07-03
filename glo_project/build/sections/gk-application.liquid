@@ -1,0 +1,47 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #{{ section.id }} .wrap { max-width:1200px; margin:0 auto; }
+  #{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); margin:0 0 clamp(20px,3vw,40px); color:#111315; }
+  #{{ section.id }} .g { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:clamp(20px,3vw,36px); }
+  #{{ section.id }} .step { display:flex; flex-direction:column; gap:12px; }
+  #{{ section.id }} .step .n { font-family:'General Sans',sans-serif; font-weight:700; font-size:15px; color:#3E5568; }
+  #{{ section.id }} .step .t { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:22px; color:#111315; }
+  #{{ section.id }} .step .d { font-size:15px; color:#5B6470; line-height:1.55; }
+</style>
+<div class="s">
+  <div class="wrap">
+    <h2>{{ section.settings.heading }}</h2>
+    <div class="g">
+      {%- for block in section.blocks -%}
+        <div class="step" {{ block.shopify_attributes }}>
+          <div class="n">{{ block.settings.num }}</div>
+          <div class="t">{{ block.settings.title }}</div>
+          <div class="d">{{ block.settings.desc }}</div>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK Application steps",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "application" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#F4F6F8" }
+  ],
+  "blocks": [
+    { "type": "step", "name": "Step", "settings": [
+      { "type": "text", "id": "num", "label": "Number", "default": "01" },
+      { "type": "text", "id": "title", "label": "Title", "default": "prep" },
+      { "type": "textarea", "id": "desc", "label": "Description", "default": "shave the area and wipe it dry. no lotions, no oils — just clean, bare skin." }
+    ] }
+  ],
+  "presets": [{ "name": "GK Application steps", "blocks": [
+    { "type": "step", "settings": { "num": "01", "title": "prep", "desc": "shave the area and wipe it dry. no lotions, no oils — just clean, bare skin." } },
+    { "type": "step", "settings": { "num": "02", "title": "glide & flash", "desc": "glide the device slowly over skin, letting it auto-flash as it senses contact. cover each zone in overlapping passes." } },
+    { "type": "step", "settings": { "num": "03", "title": "soothe", "desc": "finish with a cooling aloe gel to calm the skin. repeat weekly for the first 4 weeks, then monthly to maintain." } }
+  ] }]
+}
+{% endschema %}

@@ -3,7 +3,301 @@
     "main": {
       "type": "gk-product",
       "settings": {}
+    },
+    "videos": {
+      "type": "gk-video-testimonials",
+      "blocks": {
+        "b1": {
+          "type": "screen",
+          "settings": {
+            "fallback": "testimonial-1.mp4",
+            "caption": "tap for sound"
+          }
+        },
+        "b2": {
+          "type": "screen",
+          "settings": {
+            "fallback": "testimonial-2.mp4",
+            "caption": "tap for sound"
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2"
+      ],
+      "settings": {
+        "heading": "how they use glo"
+      }
+    },
+    "results": {
+      "type": "gk-results",
+      "blocks": {
+        "b1": {
+          "type": "stage",
+          "settings": {
+            "label": "before",
+            "desc": "visible hair, enlarged pores and uneven texture."
+          }
+        },
+        "b2": {
+          "type": "stage",
+          "settings": {
+            "label": "one week in",
+            "desc": "pores look smaller, skin feels smoother and more even."
+          }
+        },
+        "b3": {
+          "type": "stage",
+          "settings": {
+            "label": "after",
+            "desc": "smoother, clearer skin with visible long-term results."
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
+      "settings": {}
+    },
+    "application": {
+      "type": "gk-application",
+      "blocks": {
+        "b1": {
+          "type": "step",
+          "settings": {
+            "num": "01",
+            "title": "prep",
+            "desc": "shave the area and wipe it dry. no lotions, no oils — just clean, bare skin."
+          }
+        },
+        "b2": {
+          "type": "step",
+          "settings": {
+            "num": "02",
+            "title": "glide & flash",
+            "desc": "glide the device slowly over skin, letting it auto-flash as it senses contact. cover each zone in overlapping passes."
+          }
+        },
+        "b3": {
+          "type": "step",
+          "settings": {
+            "num": "03",
+            "title": "soothe",
+            "desc": "finish with a cooling aloe gel to calm the skin. repeat weekly for the first 4 weeks, then monthly to maintain."
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
+      "settings": {}
+    },
+    "stats": {
+      "type": "gk-stats",
+      "blocks": {
+        "b1": {
+          "type": "stat",
+          "settings": {
+            "value": "94%",
+            "label": "saw a visible reduction in regrowth after 4 weeks*"
+          }
+        },
+        "b2": {
+          "type": "stat",
+          "settings": {
+            "value": "91%",
+            "label": "said skin felt noticeably smoother between sessions*"
+          }
+        },
+        "b3": {
+          "type": "stat",
+          "settings": {
+            "value": "89%",
+            "label": "found it easier than their salon routine*"
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
+      "settings": {
+        "bg": "#FFFFFF"
+      }
+    },
+    "schedule": {
+      "type": "gk-schedule",
+      "blocks": {
+        "b1": {
+          "type": "line",
+          "settings": {
+            "phase": "weeks 1–4",
+            "cadence": "once a week",
+            "detail": "start low, build up each session"
+          }
+        },
+        "b2": {
+          "type": "line",
+          "settings": {
+            "phase": "weeks 5–8",
+            "cadence": "every 2 weeks",
+            "detail": "hair grows back finer & slower"
+          }
+        },
+        "b3": {
+          "type": "line",
+          "settings": {
+            "phase": "week 9+",
+            "cadence": "once a month",
+            "detail": "quick touch-ups to stay smooth"
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
+      "settings": {}
+    },
+    "editorial": {
+      "type": "gk-editorial",
+      "settings": {
+        "layout": "split"
+      }
+    },
+    "reviews": {
+      "type": "gk-reviews",
+      "blocks": {
+        "b1": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "genuinely works. quiet, fast, and i actually stick with it because it doesn't hurt.",
+            "author": "jenna r. · austin, tx"
+          }
+        },
+        "b2": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "four weeks in and my underarms are basically maintenance-only now. the flash sensor makes it foolproof.",
+            "author": "monique t. · atlanta, ga"
+          }
+        },
+        "b3": {
+          "type": "review",
+          "settings": {
+            "stars": 4,
+            "verified": true,
+            "text": "good results on my legs — took a bit longer on coarser hair, but worth the patience.",
+            "author": "ava l. · denver, co"
+          }
+        },
+        "b4": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "so much quieter than i expected, and i do my whole body while watching tv. cancelled my salon appointments.",
+            "author": "priya n. · seattle, wa"
+          }
+        },
+        "b5": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "followed the schedule exactly and the difference by week 4 was unreal. soothing gel after and zero irritation.",
+            "author": "daniela r. · phoenix, az"
+          }
+        },
+        "b6": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "face, underarms, legs — one device does it all. paid for itself in two months.",
+            "author": "sophie k. · miami, fl"
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5",
+        "b6"
+      ],
+      "settings": {}
+    },
+    "faq": {
+      "type": "gk-faq",
+      "blocks": {
+        "b1": {
+          "type": "qa",
+          "settings": {
+            "q": "is glo safe for all skin tones?",
+            "a": "glo is calibrated for light-to-medium skin tones with light-to-dark hair. a built-in sensor checks contrast before every flash and won't fire on unsuitable combinations — it's a safety feature, not a flaw."
+          }
+        },
+        "b2": {
+          "type": "qa",
+          "settings": {
+            "q": "how many sessions until i see results?",
+            "a": "most people notice reduced regrowth by week 4 with weekly use. full results build over 8–12 weeks, then a monthly touch-up maintains them."
+          }
+        },
+        "b3": {
+          "type": "qa",
+          "settings": {
+            "q": "does it hurt?",
+            "a": "most users describe it as a light snap of warmth, far gentler than waxing or salon ipl. finish with a cooling aloe gel to keep skin calm."
+          }
+        },
+        "b4": {
+          "type": "qa",
+          "settings": {
+            "q": "is glo fda cleared?",
+            "a": "yes. glo is fda-cleared for at-home ipl hair removal use."
+          }
+        },
+        "b5": {
+          "type": "qa",
+          "settings": {
+            "q": "how long does the battery last?",
+            "a": "a full charge runs roughly 40 minutes of continuous flashing — enough for a full-body session. it charges fully in about 2 hours."
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ],
+      "settings": {}
     }
   },
-  "order": ["main"]
+  "order": [
+    "main",
+    "videos",
+    "results",
+    "application",
+    "stats",
+    "schedule",
+    "editorial",
+    "reviews",
+    "faq"
+  ]
 }

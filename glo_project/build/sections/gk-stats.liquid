@@ -1,0 +1,43 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #{{ section.id }} .wrap { max-width:1200px; margin:0 auto; }
+  #{{ section.id }} .g { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:clamp(20px,3vw,32px); text-align:center; }
+  #{{ section.id }} .stat .v { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(2rem,3.6vw,2.9rem); color:#3E5568; line-height:1; }
+  #{{ section.id }} .stat .l { font-size:15px; color:#111315; max-width:220px; line-height:1.4; margin:10px auto 0; }
+  #{{ section.id }} .note { text-align:center; font-size:12px; color:#5B6470; max-width:640px; margin:clamp(20px,3vw,34px) auto 0; line-height:1.6; }
+</style>
+<div class="s">
+  <div class="wrap">
+    <div class="g">
+      {%- for block in section.blocks -%}
+        <div class="stat" {{ block.shopify_attributes }}>
+          <div class="v">{{ block.settings.value }}</div>
+          <div class="l">{{ block.settings.label }}</div>
+        </div>
+      {%- endfor -%}
+    </div>
+    {%- if section.settings.note != blank -%}<div class="note">{{ section.settings.note }}</div>{%- endif -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK Stats",
+  "settings": [
+    { "type": "textarea", "id": "note", "label": "Footnote", "default": "*results from an 8-week independent consumer-use study of 132 participants using glo at home, 2 sessions per week. individual results vary." },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#F4F6F8" }
+  ],
+  "blocks": [
+    { "type": "stat", "name": "Stat", "settings": [
+      { "type": "text", "id": "value", "label": "Value", "default": "94%" },
+      { "type": "text", "id": "label", "label": "Label", "default": "saw a visible reduction in regrowth after 4 weeks*" }
+    ] }
+  ],
+  "presets": [{ "name": "GK Stats", "blocks": [
+    { "type": "stat", "settings": { "value": "94%", "label": "saw a visible reduction in regrowth after 4 weeks*" } },
+    { "type": "stat", "settings": { "value": "91%", "label": "said skin felt noticeably smoother between sessions*" } },
+    { "type": "stat", "settings": { "value": "89%", "label": "found it easier than their salon routine*" } }
+  ] }]
+}
+{% endschema %}

@@ -1,0 +1,16 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .gk-label { text-align:center; padding:clamp(20px,3vw,34px) 20px; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; font-size:clamp(15px,2vw,20px); color:{{ section.settings.color }}; background:{{ section.settings.bg }}; }
+</style>
+<div class="gk-label">{{ section.settings.text }}</div>
+{% schema %}
+{
+  "name": "GK Label divider",
+  "settings": [
+    { "type": "text", "id": "text", "label": "Text", "default": "quiet · cordless · clinically proven" },
+    { "type": "color", "id": "color", "label": "Text color", "default": "#5B6470" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "GK Label divider" }]
+}
+{% endschema %}

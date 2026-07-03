@@ -1,0 +1,71 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(34px,4.6vw,64px) clamp(16px,3vw,44px); }
+  #{{ section.id }} .wrap { max-width:1240px; margin:0 auto; }
+  #{{ section.id }} .eyebrow { text-align:center; font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#5B6470; }
+  #{{ section.id }} h2 { text-align:center; font-family:'General Sans',sans-serif; font-weight:700; text-transform:none; letter-spacing:-0.02em; font-size:clamp(1.9rem,4.6vw,3.4rem); line-height:1.02; margin:8px 0 clamp(22px,3vw,38px); color:#2B2F33; }
+  #{{ section.id }} .g { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(14px,2vw,28px); }
+  @media (max-width:820px){ #{{ section.id }} .g { grid-template-columns:1fr; max-width:460px; margin:0 auto; } }
+  #{{ section.id }} .card .im { position:relative; border-radius:22px; overflow:hidden; background:#F2F4F6; aspect-ratio:3/3.4; }
+  #{{ section.id }} .card .im img { width:100%; height:100%; object-fit:cover; display:block; }
+  #{{ section.id }} .card .im .ph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'General Sans',sans-serif; font-weight:600; color:#B8C1CA; font-size:14px; }
+  #{{ section.id }} .card .im .lbl { position:absolute; top:16px; left:18px; font-family:'General Sans',sans-serif; font-weight:700; letter-spacing:0.02em; text-transform:uppercase; font-size:15px; color:#3A3F45; }
+  #{{ section.id }} .foot { display:flex; align-items:flex-start; gap:14px; padding:16px 6px 0; }
+  #{{ section.id }} .foot .icon { flex:0 0 auto; width:44px; height:44px; border-radius:50%; border:1.5px solid #CBD8E2; display:flex; align-items:center; justify-content:center; }
+  #{{ section.id }} .foot .icon svg { width:22px; height:22px; }
+  #{{ section.id }} .foot .txt .t { font-family:'General Sans',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; font-size:15px; color:#3A3F45; }
+  #{{ section.id }} .foot .txt .d { font-size:14px; color:#5B6470; line-height:1.45; margin-top:3px; }
+</style>
+<div class="s">
+  <div class="wrap">
+    {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+    <h2>{{ section.settings.heading }}</h2>
+    <div class="g">
+      {%- for block in section.blocks -%}
+        <div class="card" {{ block.shopify_attributes }}>
+          <div class="im">
+            {%- if block.settings.image != blank -%}
+              <img src="{{ block.settings.image | image_url: width: 800 }}" alt="{{ block.settings.label | escape }}">
+            {%- else -%}
+              <div class="ph">{{ block.settings.label | downcase }} photo</div>
+            {%- endif -%}
+            <div class="lbl">{{ block.settings.label }}</div>
+          </div>
+          <div class="foot">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#5E86A6" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><line x1="12" y1="1.5" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22.5" y2="12"/><circle cx="12" cy="12" r="1.6" fill="#5E86A6" stroke="none"/></svg>
+            </div>
+            <div class="txt">
+              <div class="t">{{ block.settings.label }}</div>
+              <div class="d">{{ block.settings.desc }}</div>
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK Before / after",
+  "max_blocks": 4,
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "clinic results. home comfort." },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Visible results in as little as 1 week." },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "blocks": [
+    { "type": "stage", "name": "Stage", "settings": [
+      { "type": "image_picker", "id": "image", "label": "Image" },
+      { "type": "text", "id": "label", "label": "Label", "default": "before" },
+      { "type": "textarea", "id": "desc", "label": "Description", "default": "visible hair, enlarged pores and uneven texture." }
+    ] }
+  ],
+  "presets": [{ "name": "GK Before / after", "blocks": [
+    { "type": "stage", "settings": { "label": "before", "desc": "visible hair, enlarged pores and uneven texture." } },
+    { "type": "stage", "settings": { "label": "one week in", "desc": "pores look smaller, skin feels smoother and more even." } },
+    { "type": "stage", "settings": { "label": "after", "desc": "smoother, clearer skin with visible long-term results." } }
+  ] }]
+}
+{% endschema %}

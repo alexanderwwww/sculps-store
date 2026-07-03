@@ -1,0 +1,104 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  #{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #{{ section.id }} .wrap { max-width:900px; margin:0 auto; text-align:center; }
+  #{{ section.id }} .eyebrow { font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#5E86A6; }
+  #{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.03em; font-size:clamp(1.6rem,3.6vw,2.6rem); line-height:1.05; margin:8px 0 6px; color:#111315; }
+  #{{ section.id }} .sub { font-size:14.5px; color:#5B6470; margin:0 auto clamp(20px,3vw,30px); max-width:52ch; }
+  #{{ section.id }} .note { position:relative; text-align:left; background:linear-gradient(#FBFDFE,#FBFDFE) padding-box, #EAF1F6; border:1px solid #DCE6EC; border-radius:20px; padding:clamp(22px,3vw,40px) clamp(20px,3vw,44px); box-shadow:0 10px 40px rgba(46,74,104,0.10); overflow:hidden; }
+  #{{ section.id }} .note::before { content:""; position:absolute; inset:0; background-image:repeating-linear-gradient(#EAF1F6 0 31px, #CFE0EC 31px 32px); opacity:0.5; pointer-events:none; }
+  #{{ section.id }} .note::after { content:""; position:absolute; top:0; bottom:0; left:clamp(40px,7vw,74px); width:1.5px; background:#F2C7D8; opacity:0.7; }
+  #{{ section.id }} .note .inner { position:relative; }
+  #{{ section.id }} .note .title { font-family:'Caveat',cursive; font-weight:700; font-size:clamp(30px,5vw,44px); color:#3E5568; line-height:1; margin-bottom:6px; }
+  #{{ section.id }} .note .areas { font-family:'Caveat',cursive; font-weight:600; font-size:clamp(19px,3vw,24px); color:#6E7A86; margin-bottom:14px; }
+  #{{ section.id }} .row { display:flex; align-items:baseline; gap:12px; font-family:'Caveat',cursive; padding:5px 0; }
+  #{{ section.id }} .row .ph { font-weight:700; font-size:clamp(24px,3.6vw,32px); color:#2E4A68; min-width:clamp(120px,26vw,190px); }
+  #{{ section.id }} .row .cad { font-weight:700; font-size:clamp(24px,3.6vw,32px); color:#C86A93; }
+  #{{ section.id }} .row .det { font-weight:500; font-size:clamp(17px,2.6vw,22px); color:#6E7A86; margin-left:auto; text-align:right; }
+  @media (max-width:600px){ #{{ section.id }} .row { flex-wrap:wrap; } #{{ section.id }} .row .det { margin-left:0; text-align:left; width:100%; } }
+  #{{ section.id }} .save { margin-top:22px; display:inline-flex; align-items:center; gap:10px; background:#111315; color:#fff; border:none; border-radius:100px; padding:14px 24px; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+  #{{ section.id }} .save svg { width:18px; height:18px; }
+  #{{ section.id }} .toast { margin-top:12px; font-size:13px; color:#1F7A55; min-height:18px; }
+</style>
+<div class="s">
+  <div class="wrap">
+    {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+    <h2>{{ section.settings.heading }}</h2>
+    {%- if section.settings.subtext != blank -%}<p class="sub">{{ section.settings.subtext }}</p>{%- endif -%}
+
+    {%- capture plain -%}glo — treatment schedule for best results
+{{ section.settings.areas }}
+{% for block in section.blocks %}{{ block.settings.phase }}: {{ block.settings.cadence }} — {{ block.settings.detail }}
+{% endfor %}tip: shave & wipe dry before each session, finish with cooling aloe gel.{%- endcapture -%}
+
+    <div class="note" data-gk-note>
+      <div class="inner">
+        <div class="title">{{ section.settings.note_title }}</div>
+        {%- if section.settings.areas != blank -%}<div class="areas">{{ section.settings.areas }}</div>{%- endif -%}
+        {%- for block in section.blocks -%}
+          <div class="row" {{ block.shopify_attributes }}>
+            <span class="ph">{{ block.settings.phase }}</span>
+            <span class="cad">{{ block.settings.cadence }}</span>
+            <span class="det">{{ block.settings.detail }}</span>
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+
+    <button class="save" type="button" data-gk-save data-text="{{ plain | escape }}" data-file="{{ section.settings.file_name | default: 'glo-schedule' }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="2.5"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+      {{ section.settings.button_label | default: 'save schedule to notes' }}
+    </button>
+    <div class="toast" data-gk-toast></div>
+  </div>
+</div>
+<script>
+  (function(){
+    var btn = document.currentScript.parentElement.querySelector('[data-gk-save]');
+    if(!btn) return;
+    var toast = document.currentScript.parentElement.querySelector('[data-gk-toast]');
+    btn.addEventListener('click', async function(){
+      var text = btn.getAttribute('data-text');
+      var name = (btn.getAttribute('data-file') || 'glo-schedule') + '.txt';
+      var file = new File([text], name, { type:'text/plain' });
+      // On phones this opens the share sheet → tap Notes to save it there.
+      if (navigator.canShare && navigator.canShare({ files:[file] })) {
+        try { await navigator.share({ files:[file], title:'glo schedule' }); return; } catch(e){}
+      }
+      try { await navigator.clipboard.writeText(text); if(toast) toast.textContent = 'copied — open Notes and paste ✓'; } catch(e){}
+      var url = URL.createObjectURL(new Blob([text], { type:'text/plain' }));
+      var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      if(toast && !toast.textContent) toast.textContent = 'downloaded ✓';
+    });
+  })();
+</script>
+{% schema %}
+{
+  "name": "GK Schedule",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "the glo protocol" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "for best results, follow exactly this schedule" },
+    { "type": "textarea", "id": "subtext", "label": "Subtext", "default": "consistency is everything with ipl. here's the exact cadence our best results followed — save it straight to your notes." },
+    { "type": "text", "id": "note_title", "label": "Note title", "default": "glo schedule ✨" },
+    { "type": "text", "id": "areas", "label": "Areas line", "default": "face · underarms · arms · legs · bikini" },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "save schedule to notes" },
+    { "type": "text", "id": "file_name", "label": "Download file name", "default": "glo-schedule" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "blocks": [
+    { "type": "line", "name": "Schedule line", "settings": [
+      { "type": "text", "id": "phase", "label": "Phase", "default": "weeks 1–4" },
+      { "type": "text", "id": "cadence", "label": "Cadence", "default": "once a week" },
+      { "type": "text", "id": "detail", "label": "Detail", "default": "start at a comfortable level, build up each session" }
+    ] }
+  ],
+  "presets": [{ "name": "GK Schedule", "blocks": [
+    { "type": "line", "settings": { "phase": "weeks 1–4", "cadence": "once a week", "detail": "start low, build up each session" } },
+    { "type": "line", "settings": { "phase": "weeks 5–8", "cadence": "every 2 weeks", "detail": "hair grows back finer & slower" } },
+    { "type": "line", "settings": { "phase": "week 9+", "cadence": "once a month", "detail": "quick touch-ups to stay smooth" } }
+  ] }]
+}
+{% endschema %}
