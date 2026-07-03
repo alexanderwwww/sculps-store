@@ -6,3 +6,6 @@ _b64.json
 *.zip
 *.mp4
 Gloskin Product Page (standalone).html
+
+# transcode marker
+*.done
