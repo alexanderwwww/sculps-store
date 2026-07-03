@@ -292,7 +292,7 @@
         <div class="hb-pay">{{ form | payment_button }}</div>
       {%- endform -%}
 
-      {%- comment -%} #1 seller / best-price banner — sits right under the buy buttons {%- endcomment -%}
+      {%- comment -%} #1 seller / best-price banner — right under the buy buttons {%- endcomment -%}
       {%- if section.settings.show_bestprice -%}
       <div class="hb-1seller">
         <div class="hb-1seller-top">
@@ -491,7 +491,7 @@
     { "type": "header", "content": "Discount chip (use a REAL active code)" },
     { "type": "text", "id": "discount_code", "label": "Discount code", "default": "SUPERGLIDEIT" },
     { "type": "text", "id": "discount_label", "label": "Discount label", "default": "Extra savings — tap to copy" },
-    { "type": "header", "content": "#1 seller / best-price banner (above bundles)" },
+    { "type": "header", "content": "#1 seller / best-price banner (under buy buttons)" },
     { "type": "checkbox", "id": "show_bestprice", "label": "Show '#1 seller · best price' banner", "default": true },
     { "type": "text", "id": "bestprice_pill", "label": "Gold pill text", "default": "#1 Seller in the U.S." },
     { "type": "text", "id": "bestprice_tag", "label": "Secondary tag", "default": "Lowest price, guaranteed" },
