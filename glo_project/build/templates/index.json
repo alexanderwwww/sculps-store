@@ -1,0 +1,13 @@
+{
+  "sections": {
+    "hero": {
+      "type": "gk-home-hero",
+      "settings": {}
+    },
+    "body": {
+      "type": "gk-home-body",
+      "settings": {}
+    }
+  },
+  "order": ["hero", "body"]
+}
