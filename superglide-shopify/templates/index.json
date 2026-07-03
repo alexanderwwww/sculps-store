@@ -11,6 +11,7 @@
   "sections": {
     "announcement": {
       "type": "helios-announcement",
+      "disabled": true,
       "settings": {
         "message": "<h3><strong> 12% OFF SITE-WIDE — code SUPERGLIDEIT FOR 12% · FREE SHIPPING ·  30-DAY MONEY-BACK ·  BUY 1 GET 1 FREE</strong></h3>"
       }
@@ -41,7 +42,7 @@
             "sublabel": "Just me — try it out",
             "badge": "",
             "badge_style": "accent",
-            "preselect": true,
+            "preselect": false,
             "fallback_price": "14999",
             "fallback_compare": "19999"
           }
@@ -52,12 +53,26 @@
             "variant_id": "47935890817189",
             "qty": 2,
             "label": "2 Super Glides",
-            "sublabel": "Save $60 — race a friend",
+            "sublabel": "1 + 1 FREE",
             "badge": "Most popular",
             "badge_style": "accent",
+            "preselect": true,
+            "fallback_price": "29999",
+            "fallback_compare": "30000"
+          }
+        },
+        "b4": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "47935890849957",
+            "qty": 3,
+            "label": "3 Super Glides",
+            "sublabel": "Save $401 · for the whole crew",
+            "badge": "",
+            "badge_style": "accent",
             "preselect": false,
-            "fallback_price": "19999",
-            "fallback_compare": "29999"
+            "fallback_price": "49900",
+            "fallback_compare": "89997"
           }
         },
         "b3": {
@@ -66,26 +81,26 @@
             "variant_id": "47935890882725",
             "qty": 4,
             "label": "4 Super Glides",
-            "sublabel": "The whole crew — best value",
+            "sublabel": "The whole Family — best value",
             "badge": "Best value",
             "badge_style": "teal",
             "preselect": false,
-            "fallback_price": "35699",
-            "fallback_compare": "59900"
+            "fallback_price": "59999",
+            "fallback_compare": "27997"
           }
         }
       },
       "block_order": [
         "b1",
         "b2",
+        "b4",
         "b3"
       ],
       "settings": {
         "featured_product": "helios-super-glide-motorized-water-lounger",
         "lead_media_type": "video",
-        "lead_video": "shopify://files/videos/superglide_demo_trimmed.mp4",
-        "mini_video_1": "shopify://files/videos/Ad Library (5).mp4",
-        "mini_video_2": "shopify://files/videos/Ad Library (6).mp4",
+        "lead_video": "shopify://files/videos/202606282109 (2).mp4",
+        "mini_video_2": "shopify://files/videos/download (3).mp4",
         "mini_image_1": "shopify://shop_images/5bbd06e1-0d08-4751-adba-4df78915c768.png",
         "mini_image_2": "shopify://shop_images/9cfbc993-fa02-4c85-845e-6a9fa32ea69f.png",
         "mini_image_3": "shopify://shop_images/c8d06404-24c2-44cb-ba24-85a276df6cb4.png",
@@ -93,7 +108,7 @@
         "title": "HELIOS Super Glide",
         "subtitle": "",
         "rating": "4.8",
-        "review_count": "3,912",
+        "review_count": "3,960",
         "tiktok_badge": true,
         "show_picker": true,
         "cta_text": "Add to Cart",
@@ -113,11 +128,11 @@
     "reviewcarousel": {
       "type": "helios-reviews-carousel",
       "settings": {
-        "eyebrow": "★★★★★ Real reviews",
-        "heading": "3,900+ glides and counting.",
+        "eyebrow": "see what our beloved customers have to say for us",
+        "heading": "4032+ glides and counting.",
         "rating": "4.8",
-        "review_count": "3,912",
-        "bulk_reviews": "Sarah K. | 5 | My son will NOT get off this thing. Holds him easy and the motors actually move him around — he feels like he's driving a real boat. | July 5, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_kid_2583f893-2e8d-451f-9dc2-752d57b1d017.jpg?v=1782766100\nMike R. | 5 | Got it for the kids and now they fight over who steers 😂 Easily holds both of them. Best backyard buy this summer. | July 1, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099\nDana W. | 5 | Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Looks premium. | June 27, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_hero_15adc6f4-8a7f-44b8-9a8f-177e7eaadbd0.jpg?v=1782766099\nChris T. | 5 | This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol. | June 22, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_side_58a8782a-79b9-433e-9d4f-777d333ef9aa.jpg?v=1782766100\nAmanda L. | 5 | Arrived well packaged and everything was in the box — nothing missing. Took a few minutes to set up. | June 18, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_box_6f3cadfc-12bc-4faa-a31f-cb645b3efa99.jpg?v=1782766100\nJordan P. | 5 | Setup was stupid easy — pump it up, drop it in, grab the joysticks. Motors have real power. 10/10. | June 12, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup_6c508243-62c3-4e30-a179-7689e4937344.jpg?v=1782766099"
+        "review_count": "4,228",
+        "bulk_reviews": "elena d. | 5 | My son will NOT get off this thing. literally he refuses :'). | June 23, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529\njenna.r. | 5 | this is what i come home to everyday... get it guys worth everything , you build happy memories after all worth the money 10000%(the dogs name is rollie). | June 3, 2025 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492\nDea W. | 5 | Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Looks super good and guys for real it works perfect is fun affffffff. | June 27, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed800814-8280-4515-ab36-29f15996c019.png?v=1782882243\nChris Tes. | 5 | This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol. | June 22, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243\nmike L. | 5 | Arrived well packaged and everything was in the box super super fun. | June 18, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/359ded2c-3def-48f5-90fe-7b69429864fb.png?v=1782882243\npablo P. | 5 | Setup was stupid easy — pump it up, drop it in, grab the joysticks. Motors have real power. 10/10. | June 12, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup_6c508243-62c3-4e30-a179-7689e4937344.jpg?v=1782766099"
       }
     },
     "tiktok": {
@@ -183,6 +198,20 @@
         "cta_link": ""
       }
     },
+    "family": {
+      "type": "helios-family",
+      "settings": {
+        "image": "shopify://shop_images/c6e27d47-a213-45d6-ae65-78508e6a8c30.png",
+        "badge": "Family approved",
+        "eyebrow": "Dad's throne",
+        "heading": "The whole family's favorite seat.",
+        "body": "Big enough for you and the kids, steady enough for snacks and drinks, comfy enough to stay out all afternoon. One float, the entire crew — no fighting over who gets the good spot.",
+        "tag1": "🧊 Cup holders for everyone",
+        "tag2": "💪 Holds up to 300 lb",
+        "cta_text": "Make it yours",
+        "cta_link": ""
+      }
+    },
     "minifeature": {
       "type": "helios-mini-feature",
       "settings": {
@@ -192,22 +221,10 @@
         "eyebrow": "Going solo?",
         "heading": "Meet the Mini Glide.",
         "body": "Same dual-motor, joystick-steer magic — built for one. Lighter, packs smaller, and glides you around the pool hands-free. The easiest way to get on the water.",
-        "price": "$89.99",
-        "compare": "$149.99",
+        "price": "$129.00",
+        "compare": "",
         "cta_text": "Shop the Mini Glide",
         "cta_link": "#buy"
-      }
-    },
-    "speed": {
-      "type": "helios-speed",
-      "settings": {
-        "video": "shopify://files/videos/generated_video (1).mp4",
-        "heading": "Faster than it has any right to be.",
-        "body": "Dual thrusters push the Super Glide to a genuinely fair clip — quick enough to race a friend, smooth enough to keep your drink steady. When the water's calm and you hit full throttle, it really moves.",
-        "stat": "A fair clip",
-        "stat_note": "Top speed varies with water & load",
-        "cta_text": "Take the throttle",
-        "cta_link": ""
       }
     },
     "howitworks": {
@@ -221,20 +238,6 @@
         "step2_text": "Set it on the water and hop on — pool, lake or river.",
         "step3_title": "Grab the joysticks",
         "step3_text": "Twin motors do the work. Steer, spin, and cruise hands-free."
-      }
-    },
-    "family": {
-      "type": "helios-family",
-      "settings": {
-        "image": "shopify://shop_images/c6e27d47-a213-45d6-ae65-78508e6a8c30.png",
-        "badge": "Family approved",
-        "eyebrow": "Dad's throne",
-        "heading": "The whole family's favorite seat.",
-        "body": "Big enough for you and the kids, steady enough for snacks and drinks, comfy enough to stay out all afternoon. One float, the entire crew — no fighting over who gets the good spot.",
-        "tag1": "🧊 Cup holders for everyone",
-        "tag2": "💪 Holds up to 300 lb",
-        "cta_text": "Make it yours",
-        "cta_link": ""
       }
     },
     "guarantee": {
@@ -253,21 +256,25 @@
         "heading": "Good to know."
       }
     },
+    "helios_announcement_HDc3pV": {
+      "type": "helios-announcement",
+      "name": "HELIOS Announcement",
+      "settings": {
+        "message": "<h5><strong>12% OFF SITE-WIDE — code SUPERGLIDEIT · FREE SHIPPING ·  30-DAY MONEY-BACK</strong> ·</h5>"
+      }
+    },
     "footer": {
       "type": "helios-footer",
       "settings": {
         "brand": "HELIOS",
-        "tagline": "<p>Summer, handled. Premium gear that makes the heat a non-issue.</p>",
-        "copyright": "© 2026 HELIOS — concept demo store."
-      }
-    },
-    "sticky": {
-      "type": "helios-sticky-atc",
-      "settings": {
-        "featured_product": "helios-super-glide-motorized-water-lounger",
-        "label": "Super Glide",
-        "cta_text": "Add to Cart",
-        "scroll_trigger": 380
+        "tagline": "<p>Trusted by thousands. Award-winning No.1 merchant in the country.<br/><br/>Premium quality that sets the standard. We deliver excellence every single time.</p>",
+        "positioning": "The #1 name in motorized water gear.",
+        "rank_text": "THE #1-RATED MOTORIZED WATER LOUNGER",
+        "rating_text": "4.8 from 3,912 verified riders",
+        "nl_heading": "Get up to 15% off your first order",
+        "nl_sub": "Enter your email for 10% off — add your phone and get 15%. Riders-only drops and deals.",
+        "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
+        "copyright": "© 2026 HELIOS"
       }
     }
   },
@@ -279,13 +286,12 @@
     "tiktok",
     "reviews",
     "hero",
-    "minifeature",
-    "speed",
-    "howitworks",
     "family",
+    "minifeature",
+    "howitworks",
     "guarantee",
     "faq",
-    "footer",
-    "sticky"
+    "helios_announcement_HDc3pV",
+    "footer"
   ]
 }
