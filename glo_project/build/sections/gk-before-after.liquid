@@ -1,0 +1,40 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #shopify-section-{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #shopify-section-{{ section.id }} .wrap { max-width:{{ section.settings.max_width }}px; margin:0 auto; text-align:center; }
+  #shopify-section-{{ section.id }} .eyebrow { font-size:12.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#5B6470; }
+  #shopify-section-{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; letter-spacing:-0.02em; font-size:clamp(1.6rem,3.6vw,2.6rem); line-height:1.05; margin:8px 0 clamp(18px,2.6vw,28px); color:#111315; }
+  #shopify-section-{{ section.id }} .frame { border-radius:clamp(16px,2vw,26px); overflow:hidden; display:block; }
+  #shopify-section-{{ section.id }} .frame img { width:100%; height:auto; display:block; }
+  #shopify-section-{{ section.id }} .ph { border-radius:clamp(16px,2vw,26px); background:#EAF1F6; border:1px dashed #C6D5E1; aspect-ratio:{{ section.settings.placeholder_ratio }}; display:flex; align-items:center; justify-content:center; font-family:'General Sans',sans-serif; font-weight:600; color:#9AACBB; font-size:14px; }
+  #shopify-section-{{ section.id }} .sub { font-size:14px; color:#5B6470; margin:clamp(14px,2vw,20px) auto 0; max-width:60ch; }
+</style>
+<div class="s">
+  <div class="wrap">
+    {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+    {%- if section.settings.heading != blank -%}<h2>{{ section.settings.heading }}</h2>{%- endif -%}
+    {%- if section.settings.image != blank -%}
+      <span class="frame"><img src="{{ section.settings.image | image_url: width: 2000 }}" alt="{{ section.settings.heading | escape }}" loading="lazy"></span>
+    {%- else -%}
+      <div class="ph">upload your before / after image here</div>
+    {%- endif -%}
+    {%- if section.settings.subtext != blank -%}<p class="sub">{{ section.settings.subtext }}</p>{%- endif -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK Before / after",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "clinic results. home comfort." },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "visible results in as little as 1 week." },
+    { "type": "image_picker", "id": "image", "label": "Before / after image (rounded)" },
+    { "type": "textarea", "id": "subtext", "label": "Caption under image", "default": "" },
+    { "type": "range", "id": "max_width", "label": "Max width", "min": 800, "max": 1400, "step": 20, "unit": "px", "default": 1200 },
+    { "type": "select", "id": "placeholder_ratio", "label": "Placeholder shape", "options": [ { "value": "16/9", "label": "Wide 16:9" }, { "value": "2/1", "label": "Banner 2:1" }, { "value": "4/3", "label": "4:3" } ], "default": "16/9" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "GK Before / after" }]
+}
+{% endschema %}
+
