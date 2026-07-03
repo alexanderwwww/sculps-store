@@ -192,38 +192,30 @@
         <span class="hb-save" id="hb-savepct-{{ sid }}"></span>
       </div>
 
-      <div class="hb-chips">
-        <span class="hb-chip">★ {{ section.settings.review_count | default: '3,912' }} reviews</span>
-        <span class="hb-chip">🛟 Glides hands-free</span>
-        <span class="hb-chip">👨‍👩‍👧 Fits the whole family</span>
-        <span class="hb-chip">🚚 Free shipping</span>
-        <span class="hb-chip">🛡 30-day returns</span>
-      </div>
-
       {%- if section.settings.show_countdown -%}
         <div class="hb-timer">⚡ Flash sale ends <span id="hb-cd-{{ sid }}">--:--:--</span></div>
-      {%- endif -%}
-
-      {%- if section.settings.show_picker -%}
-      {%- comment -%} variant picker (Super Glide / Mini) — sits right above the pack options {%- endcomment -%}
-      <div class="hb-picker" style="display:flex;gap:9px;margin:8px 0 14px;">
-        {%- assign pk_dbl = product.featured_image | default: section.settings.lead_image -%}
-        <button type="button" data-pick="double" class="hb-pk on">
-          {%- if pk_dbl != blank -%}<img class="hb-pkimg" src="{{ pk_dbl | image_url: width: 120 }}" alt="Super Glide">{%- endif -%}
-          <span class="hb-pktx"><b>Super Glide</b><span>Double · 2 seats</span></span>
-        </button>
-        {%- assign pk_mini = section.settings.mini_image_1 -%}
-        <button type="button" data-pick="mini" class="hb-pk">
-          {%- if pk_mini != blank -%}<img class="hb-pkimg" src="{{ pk_mini | image_url: width: 120 }}" alt="Mini Glide">{%- endif -%}
-          <span class="hb-pktx"><b>Mini Glide</b><span>Single · 1 seat</span></span>
-        </button>
-      </div>
       {%- endif -%}
 
       {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
       {%- assign hb_form_id = 'hb-form-' | append: sid -%}
       {%- form 'product', product, id: hb_form_id -%}
         <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
+
+        {%- if section.settings.show_picker -%}
+        {%- comment -%} variant picker (Super Glide / Mini) — right above the bundles {%- endcomment -%}
+        <div class="hb-picker" style="display:flex;gap:9px;margin:0 0 14px;">
+          {%- assign pk_dbl = product.featured_image | default: section.settings.lead_image -%}
+          <button type="button" data-pick="double" class="hb-pk on">
+            {%- if pk_dbl != blank -%}<img class="hb-pkimg" src="{{ pk_dbl | image_url: width: 120 }}" alt="Super Glide">{%- endif -%}
+            <span class="hb-pktx"><b>Super Glide</b><span>Double · 2 seats</span></span>
+          </button>
+          {%- assign pk_mini = section.settings.mini_image_1 -%}
+          <button type="button" data-pick="mini" class="hb-pk">
+            {%- if pk_mini != blank -%}<img class="hb-pkimg" src="{{ pk_mini | image_url: width: 120 }}" alt="Mini Glide">{%- endif -%}
+            <span class="hb-pktx"><b>Mini Glide</b><span>Single · 1 seat</span></span>
+          </button>
+        </div>
+        {%- endif -%}
 
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
           {%- if section.settings.show_picker -%}
