@@ -59,7 +59,7 @@
   #hb-{{ sid }} .hb-price b{font-weight:900;font-size:34px;color:var(--helios-ink2,#0A1219);}
   #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
   #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
-  #hb-{{ sid }} .hb-1seller{margin:2px 0 11px;border-radius:12px;padding:9px 12px;background:rgba(24,28,34,.05);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border:1px solid rgba(18,22,28,.11);box-shadow:0 5px 15px rgba(12,18,26,.06);}
+  #hb-{{ sid }} .hb-1seller{margin:12px 0 2px;border-radius:12px;padding:9px 12px;background:rgba(24,28,34,.05);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border:1px solid rgba(18,22,28,.11);box-shadow:0 5px 15px rgba(12,18,26,.06);}
   #hb-{{ sid }} .hb-1seller-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;}
   #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:5px;font-family:'Archivo',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#2A2F36,#0A0D11);padding:4px 9px;border-radius:30px;box-shadow:0 2px 7px rgba(10,13,17,.28);}
   #hb-{{ sid }} .hb-1seller-vf{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#4a535d;}
@@ -225,19 +225,6 @@
       {%- form 'product', product, id: hb_form_id -%}
         <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
 
-        {%- if section.settings.show_bestprice -%}
-        <div class="hb-1seller">
-          <div class="hb-1seller-top">
-            <span class="hb-1seller-pill">🏆 {{ section.settings.bestprice_pill | default: '#1 Seller in the U.S.' }}</span>
-            <span class="hb-1seller-vf">🔒 {{ section.settings.bestprice_tag | default: 'Lowest price, guaranteed' }}</span>
-          </div>
-          <div class="hb-1seller-tx">
-            <b>{{ section.settings.bestprice_head | default: 'The best price in the country.' }}</b>
-            <p>Everyone else charges <s>{{ section.settings.competitor_price | default: '$250' }} each</s> for a single lounger. Get our <em>2-pack for just {{ section.settings.our_price | default: '$299' }}</em> — two loungers for barely more than one of theirs.</p>
-          </div>
-        </div>
-        {%- endif -%}
-
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
           {%- if section.settings.show_picker -%}
           {%- comment -%} auto Mini tier (single-seat variant) {%- endcomment -%}
@@ -304,6 +291,20 @@
         {%- comment -%} Express checkout: Apple Pay / Shop Pay / Google Pay {%- endcomment -%}
         <div class="hb-pay">{{ form | payment_button }}</div>
       {%- endform -%}
+
+      {%- comment -%} #1 seller / best-price banner — sits right under the buy buttons {%- endcomment -%}
+      {%- if section.settings.show_bestprice -%}
+      <div class="hb-1seller">
+        <div class="hb-1seller-top">
+          <span class="hb-1seller-pill">🏆 {{ section.settings.bestprice_pill | default: '#1 Seller in the U.S.' }}</span>
+          <span class="hb-1seller-vf">🔒 {{ section.settings.bestprice_tag | default: 'Lowest price, guaranteed' }}</span>
+        </div>
+        <div class="hb-1seller-tx">
+          <b>{{ section.settings.bestprice_head | default: 'The best price in the country.' }}</b>
+          <p>Everyone else charges <s>{{ section.settings.competitor_price | default: '$250' }} each</s> for a single lounger. Get our <em>2-pack for just {{ section.settings.our_price | default: '$299' }}</em> — two loungers for barely more than one of theirs.</p>
+        </div>
+      </div>
+      {%- endif -%}
 
       {%- comment -%}
         SPD Split Payment anchor — the app is embed-only (no theme block), so it needs
