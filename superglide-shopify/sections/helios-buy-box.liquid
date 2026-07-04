@@ -61,28 +61,24 @@
   #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
   #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
   #hb-{{ sid }} .hb-1seller{margin:0 0 14px;border-radius:14px;padding:12px 13px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 8px 20px -12px rgba(10,20,30,.12);}
-  #hb-{{ sid }} .hb-promo4{position:relative;overflow:hidden;display:flex;align-items:center;gap:10px;margin:2px 0 12px;border-radius:14px;padding:9px 12px;background:linear-gradient(180deg,#ffffff,#f7f9fb);border:1px solid rgba(20,26,32,.08);box-shadow:0 8px 20px -10px rgba(10,20,30,.14),inset 0 1px 0 rgba(255,255,255,.6);}
-  #hb-{{ sid }} .hb-promo4::before{content:'';position:absolute;top:0;left:0;width:55%;height:100%;background:linear-gradient(115deg,rgba(255,255,255,.55),rgba(255,255,255,0) 55%);pointer-events:none;}
-  #hb-{{ sid }} .hb-promo4-tag{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.02em;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:6px 10px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.3),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;}
-  #hb-{{ sid }} .hb-promo4-amt{flex:1 1 auto;min-width:0;}
+  #hb-{{ sid }} .hb-promo4{display:flex;align-items:center;gap:12px;margin:2px 0 12px;border-radius:14px;padding:11px 13px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 6px 16px -8px rgba(10,20,30,.12);}
+  #hb-{{ sid }} .hb-promo4-left{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+  #hb-{{ sid }} .hb-promo4-tag{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:6px 10px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.3),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;}
+  #hb-{{ sid }} .hb-promo4-off{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(20px,5.4vw,26px);line-height:1;letter-spacing:-.01em;color:#E11D2A;white-space:nowrap;}
   #hb-{{ sid }} .hb-flag{height:1.15em;width:auto;border-radius:1.5px;flex:0 0 auto;display:block;box-shadow:0 0 0 .5px rgba(255,255,255,.25);}
-  #hb-{{ sid }} .hb-promo4-amt b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(17px,4.8vw,21px);line-height:1.02;letter-spacing:-.01em;color:#0A0D11;margin-bottom:1px;}
-  #hb-{{ sid }} .hb-promo4-amt span{display:block;font-size:10px;line-height:1.32;color:#6b7480;}
-  #hb-{{ sid }} .hb-promo4-div{flex:0 0 auto;width:1px;align-self:stretch;background:rgba(20,26,32,.10);}
-  #hb-{{ sid }} .hb-promo4-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;}
-  #hb-{{ sid }} .hb-promo4-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);border:none;padding:8px 12px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.3),inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;white-space:nowrap;transition:transform .12s ease;}
-  #hb-{{ sid }} .hb-promo4-btn:hover{transform:translateY(-1px);}
-  #hb-{{ sid }} .hb-promo4-btn.applied{background:linear-gradient(180deg,#1e9f5c,#127a44);cursor:default;}
-  #hb-{{ sid }} .hb-promo4-ends{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;color:#8a929c;white-space:nowrap;}
-  @media(max-width:600px){
-    #hb-{{ sid }} .hb-promo4{flex-direction:column;align-items:stretch;gap:9px;padding:13px 14px;}
-    #hb-{{ sid }} .hb-promo4-tag{align-self:flex-start;font-size:11px;padding:7px 12px;}
-    #hb-{{ sid }} .hb-promo4-div{display:none;}
-    #hb-{{ sid }} .hb-promo4-amt b{font-size:27px;margin-bottom:3px;}
-    #hb-{{ sid }} .hb-promo4-amt span{font-size:12px;line-height:1.4;}
-    #hb-{{ sid }} .hb-promo4-right{flex-direction:row;width:100%;align-items:center;justify-content:space-between;gap:10px;}
-    #hb-{{ sid }} .hb-promo4-btn{font-size:13px;padding:11px 20px;}
-    #hb-{{ sid }} .hb-promo4-ends{font-size:11px;}
+  #hb-{{ sid }} .hb-promo4-mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px;}
+  #hb-{{ sid }} .hb-promo4-applied{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:#0f8a4d;background:#e8f7ef;padding:5px 9px;border-radius:20px;}
+  #hb-{{ sid }} .hb-promo4-sub{font-size:11.5px;line-height:1.35;color:#6b7480;}
+  #hb-{{ sid }} .hb-promo4-div{flex:0 0 auto;width:1px;align-self:stretch;background:rgba(20,26,32,.12);}
+  #hb-{{ sid }} .hb-promo4-ends{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:#3b444d;white-space:nowrap;}
+  #hb-{{ sid }} .hb-promo4-ends b{display:block;font-weight:800;color:#0A0D11;}
+  #hb-{{ sid }} .hb-promo4-ends svg{color:#8a929c;flex:0 0 auto;}
+  @media(max-width:430px){
+    #hb-{{ sid }} .hb-promo4{gap:9px;padding:10px 11px;}
+    #hb-{{ sid }} .hb-promo4-off{font-size:21px;}
+    #hb-{{ sid }} .hb-promo4-applied{font-size:9px;padding:4px 8px;}
+    #hb-{{ sid }} .hb-promo4-sub{font-size:10.5px;}
+    #hb-{{ sid }} .hb-promo4-ends{font-size:10.5px;gap:5px;}
   }
   #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:6px 11px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.28),inset 0 1px 0 rgba(255,255,255,.12);}
   #hb-{{ sid }} .hb-1seller-vf{display:flex;align-items:center;gap:5px;margin-top:9px;font-size:11px;font-weight:600;color:#6b7480;}
@@ -100,18 +96,20 @@
   #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
   #hb-{{ sid }} .hb-chip{font-size:11.5px;font-weight:700;color:var(--helios-ink,#0C1A24);background:rgba(14,124,196,.08);border:1px solid rgba(14,124,196,.16);border-radius:30px;padding:5px 10px;white-space:nowrap;}
   #hb-{{ sid }} .hb-timer{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));backdrop-filter:var(--helios-g-blur);padding:7px 12px;border-radius:9px;margin-bottom:16px;}
-  #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:14px;border:2px solid var(--helios-line,rgba(255,255,255,.6));border-radius:18px;padding:16px 17px;cursor:pointer;position:relative;background:var(--helios-g-bg2,rgba(255,255,255,.4));backdrop-filter:var(--helios-g-blur);transition:.2s;margin-bottom:11px;}
-  #hb-{{ sid }} .hb-tier.sel{border-color:var(--helios-acc,#0E7CC4);background:var(--helios-g-bg,rgba(255,255,255,.55));box-shadow:0 10px 26px rgba(14,124,196,.16);}
-  #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #B7C7D2;flex-shrink:0;transition:.2s;}
-  #hb-{{ sid }} .hb-tier.sel .hb-radio{border:6px solid var(--helios-acc,#0E7CC4);}
-  #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;right:16px;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#fff;padding:4px 10px;border-radius:20px;}
-  #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:700;font-size:16px;}
-  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:var(--helios-accd,#0A5E97);font-weight:700;}
-  #hb-{{ sid }} .hb-tierper{display:block;font-size:11.5px;color:var(--helios-mut,#56636E);font-weight:500;}
+  #hb-{{ sid }} .hb-tiers{background:#fff;border:1px solid rgba(20,26,32,.12);border-radius:16px;padding:5px;box-shadow:0 6px 16px -8px rgba(10,20,30,.10);}
+  #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:13px;border:2px solid transparent;border-radius:13px;padding:13px 12px;cursor:pointer;position:relative;background:transparent;transition:.16s;margin:0;box-shadow:inset 0 -1px 0 rgba(20,26,32,.09);}
+  #hb-{{ sid }} .hb-tier:last-child{box-shadow:none;}
+  #hb-{{ sid }} .hb-tier.sel{border-color:#0A0D11;background:#fff;box-shadow:none;}
+  #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #cbd3da;flex-shrink:0;transition:.2s;}
+  #hb-{{ sid }} .hb-tier.sel .hb-radio{border:7px solid #0A0D11;}
+  #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;right:14px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;padding:5px 11px;border-radius:20px;background:linear-gradient(180deg,#2b2f36,#0a0d11)!important;box-shadow:0 4px 10px rgba(10,13,17,.3);}
+  #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:800;font-size:16px;color:#0A0D11;}
+  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:#5b6470;font-weight:600;margin-top:1px;}
+  #hb-{{ sid }} .hb-tierper{display:block;font-size:11.5px;color:#9aa2ab;font-weight:500;margin-top:2px;}
   #hb-{{ sid }} .hb-tierprice{text-align:right;}
-  #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:18px;}
-  #hb-{{ sid }} .hb-tierprice s{display:block;font-size:12px;color:var(--helios-mut,#56636E);}
-  #hb-{{ sid }} .hb-tiersave{display:block;font-size:11px;font-weight:800;color:#1aa86b;}
+  #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:19px;color:#0A0D11;}
+  #hb-{{ sid }} .hb-tierprice s{display:block;font-size:12.5px;color:#9aa2ab;margin-top:1px;}
+  #hb-{{ sid }} .hb-tiersave{display:block;font-size:12px;font-weight:800;color:#16a34a;margin-top:2px;}
   #hb-{{ sid }} .hb-add{position:relative;overflow:hidden;display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:#0A1219;color:#fff;border:none;border-radius:16px;padding:18px;font-family:'Archivo';font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 16px 34px rgba(10,18,25,.30);transition:transform .15s;margin-top:6px;}
   #hb-{{ sid }} .hb-add:hover{transform:translateY(-1px);}
   #hb-{{ sid }} .hb-add .hb-sheen{position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:helios-sheen 4.5s ease-in-out infinite;}
@@ -321,19 +319,16 @@
         {%- comment -%} 4th of July auto-coupon advert — right above the buy buttons {%- endcomment -%}
         {%- if section.settings.show_promo4 -%}
         <div class="hb-promo4">
-          <span class="hb-promo4-tag">{{ hb_flag }}{{ section.settings.promo4_tag | default: '4TH OF JULY' | upcase }}</span>
-          <div class="hb-promo4-amt">
-            <b>{{ section.settings.promo4_amount | default: '$21.99' }} OFF</b>
-            <span>Automatically applied at checkout.<br>No code required.</span>
+          <div class="hb-promo4-left">
+            <span class="hb-promo4-tag">{{ hb_flag }}{{ section.settings.promo4_tag | default: '4TH OF JULY' | upcase }}</span>
+            <b class="hb-promo4-off">{{ section.settings.promo4_amount | default: '$21.99' }} OFF</b>
+          </div>
+          <div class="hb-promo4-mid">
+            <span class="hb-promo4-applied"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Auto discount applied</span>
+            <span class="hb-promo4-sub">Automatically applied at checkout.<br>No code required.</span>
           </div>
           <div class="hb-promo4-div"></div>
-          <div class="hb-promo4-right">
-            <button type="button" class="hb-promo4-btn" id="hb-promo4-btn-{{ sid }}">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.82A2 2 0 0 0 9.59 3.2H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .62 1.41l9.59 9.59a2 2 0 0 0 2.82 0l4.56-4.56a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>
-              <span class="hb-promo4-btn-label">Apply coupon</span>
-            </button>
-            <span class="hb-promo4-ends">🕐 Ends in {{ section.settings.promo4_days | default: 3 }} days</span>
-          </div>
+          <div class="hb-promo4-ends"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg><span>Ends in<br><b>{{ section.settings.promo4_days | default: 3 }} days</b></span></div>
         </div>
         {%- endif -%}
 
@@ -488,14 +483,6 @@
     if(navigator.clipboard){ navigator.clipboard.writeText(c).then(done).catch(done); } else done();
   });
 
-  /* ---- 4th of July coupon: cosmetic "Apply" confirmation (discount is already auto-applied at checkout) ---- */
-  var promoBtn = document.getElementById('hb-promo4-btn-{{ sid }}');
-  if(promoBtn) promoBtn.addEventListener('click', function(){
-    if(promoBtn.classList.contains('applied')) return;
-    promoBtn.classList.add('applied');
-    var lbl = promoBtn.querySelector('.hb-promo4-btn-label');
-    if(lbl) lbl.textContent = 'Coupon applied ✓';
-  });
 
   /* ---- honest per-session countdown ---- */
   {%- if section.settings.show_countdown -%}
