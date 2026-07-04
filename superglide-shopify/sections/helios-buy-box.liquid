@@ -20,6 +20,7 @@
 {%- unless product -%}{%- assign product = section.settings.featured_product -%}{%- endunless -%}
 {%- assign cur = product.selected_or_first_available_variant -%}
 {%- assign sid = section.id -%}
+{%- capture hb_flag -%}<svg class="hb-flag" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#B22234"/><rect y="2" width="20" height="2" fill="#fff"/><rect y="6" width="20" height="2" fill="#fff"/><rect y="10" width="20" height="2" fill="#fff"/><rect width="9" height="8" fill="#3C3B6E"/><g fill="#fff"><circle cx="2" cy="2" r=".7"/><circle cx="4.5" cy="2" r=".7"/><circle cx="7" cy="2" r=".7"/><circle cx="3.25" cy="4" r=".7"/><circle cx="5.75" cy="4" r=".7"/><circle cx="2" cy="6" r=".7"/><circle cx="4.5" cy="6" r=".7"/><circle cx="7" cy="6" r=".7"/></g></svg>{%- endcapture -%}
 
 <section class="helios helios-buy" id="hb-{{ sid }}">
 <style>
@@ -64,7 +65,8 @@
   #hb-{{ sid }} .hb-promo4::before{content:'';position:absolute;top:0;left:0;width:55%;height:100%;background:linear-gradient(115deg,rgba(255,255,255,.55),rgba(255,255,255,0) 55%);pointer-events:none;}
   #hb-{{ sid }} .hb-promo4-tag{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:.02em;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:11px 16px;border-radius:30px;box-shadow:0 6px 14px rgba(10,13,17,.35),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;}
   #hb-{{ sid }} .hb-promo4-amt{flex:1 1 auto;min-width:0;}
-  #hb-{{ sid }} .hb-promo4-amt b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em;color:#0A0D11;margin-bottom:2px;}
+  #hb-{{ sid }} .hb-flag{height:1.1em;width:auto;border-radius:2px;flex:0 0 auto;display:block;box-shadow:0 0 0 .5px rgba(255,255,255,.25);}
+  #hb-{{ sid }} .hb-promo4-amt b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(25px,7vw,33px);line-height:1.05;letter-spacing:-.01em;color:#0A0D11;margin-bottom:3px;}
   #hb-{{ sid }} .hb-promo4-amt span{display:block;font-size:12px;line-height:1.4;color:#6b7480;}
   #hb-{{ sid }} .hb-promo4-div{flex:0 0 auto;width:1px;align-self:stretch;background:rgba(20,26,32,.10);}
   #hb-{{ sid }} .hb-promo4-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;}
@@ -198,7 +200,7 @@
       {%- comment -%} #1 seller / best-price card — right after 'As seen on TikTok', before the price {%- endcomment -%}
       {%- if section.settings.show_bestprice -%}
       <div class="hb-1seller">
-        <span class="hb-1seller-pill">🇺🇸 #1 Seller in the U.S.</span>
+        <span class="hb-1seller-pill">{{ hb_flag }}#1 Seller in the U.S.</span>
         <div class="hb-1seller-vf">🔒 Lowest price, guaranteed</div>
         <div class="hb-1seller-tx">
           <b>The best price in the country.</b>
@@ -307,7 +309,7 @@
         {%- comment -%} 4th of July auto-coupon advert — right above the buy buttons {%- endcomment -%}
         {%- if section.settings.show_promo4 -%}
         <div class="hb-promo4">
-          <span class="hb-promo4-tag">🇺🇸 {{ section.settings.promo4_tag | default: '4TH OF JULY' | upcase }}</span>
+          <span class="hb-promo4-tag">{{ hb_flag }}{{ section.settings.promo4_tag | default: '4TH OF JULY' | upcase }}</span>
           <div class="hb-promo4-amt">
             <b>{{ section.settings.promo4_amount | default: '$21.99' }} OFF</b>
             <span>Automatically applied at checkout.<br>No code required.</span>
