@@ -59,7 +59,7 @@
   #hb-{{ sid }} .hb-price b{font-weight:900;font-size:34px;color:var(--helios-ink2,#0A1219);}
   #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
   #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
-  #hb-{{ sid }} .hb-1seller{margin:0 0 16px;border-radius:16px;padding:15px 16px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 10px 26px -12px rgba(10,20,30,.14),inset 0 1px 0 rgba(255,255,255,.6);}
+  #hb-{{ sid }} .hb-1seller{margin:0 0 14px;border-radius:14px;padding:12px 13px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 8px 20px -12px rgba(10,20,30,.12);}
   #hb-{{ sid }} .hb-promo4{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;margin:2px 0 14px;border-radius:18px;padding:16px 18px;background:linear-gradient(180deg,#ffffff,#f7f9fb);border:1px solid rgba(20,26,32,.08);box-shadow:0 10px 26px -10px rgba(10,20,30,.16),inset 0 1px 0 rgba(255,255,255,.6);}
   #hb-{{ sid }} .hb-promo4::before{content:'';position:absolute;top:0;left:0;width:55%;height:100%;background:linear-gradient(115deg,rgba(255,255,255,.55),rgba(255,255,255,0) 55%);pointer-events:none;}
   #hb-{{ sid }} .hb-promo4-tag{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:.02em;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:11px 16px;border-radius:30px;box-shadow:0 6px 14px rgba(10,13,17,.35),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;}
@@ -77,10 +77,10 @@
     #hb-{{ sid }} .hb-promo4-div{display:none;}
     #hb-{{ sid }} .hb-promo4-right{flex-direction:row;width:100%;justify-content:space-between;margin-top:2px;}
   }
-  #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:9px 14px;border-radius:30px;box-shadow:0 6px 14px rgba(10,13,17,.32),inset 0 1px 0 rgba(255,255,255,.12);}
-  #hb-{{ sid }} .hb-1seller-vf{display:flex;align-items:center;gap:6px;margin-top:11px;font-size:12px;font-weight:600;color:#6b7480;}
-  #hb-{{ sid }} .hb-1seller-tx b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;color:#0A0D11;margin:9px 0 5px;letter-spacing:-.01em;}
-  #hb-{{ sid }} .hb-1seller-tx p{margin:0;font-size:13px;color:#6b7480;line-height:1.5;}
+  #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:6px 11px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.28),inset 0 1px 0 rgba(255,255,255,.12);}
+  #hb-{{ sid }} .hb-1seller-vf{display:flex;align-items:center;gap:5px;margin-top:9px;font-size:11px;font-weight:600;color:#6b7480;}
+  #hb-{{ sid }} .hb-1seller-tx b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14.5px;color:#0A0D11;margin:8px 0 4px;letter-spacing:-.01em;}
+  #hb-{{ sid }} .hb-1seller-tx p{margin:0;font-size:12px;color:#6b7480;line-height:1.45;}
   #hb-{{ sid }} .hb-1seller-tx s{color:#e23b3b;font-weight:700;}
   #hb-{{ sid }} .hb-1seller-tx em{font-style:normal;font-weight:800;color:#0A0D11;}
   #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
@@ -198,11 +198,11 @@
       {%- comment -%} #1 seller / best-price card — right after 'As seen on TikTok', before the price {%- endcomment -%}
       {%- if section.settings.show_bestprice -%}
       <div class="hb-1seller">
-        <span class="hb-1seller-pill">🇺🇸 {{ section.settings.bestprice_pill | default: '#1 Seller in the U.S.' }}</span>
-        <div class="hb-1seller-vf">🔒 {{ section.settings.bestprice_tag | default: 'Lowest price, guaranteed' }}</div>
+        <span class="hb-1seller-pill">🇺🇸 #1 Seller in the U.S.</span>
+        <div class="hb-1seller-vf">🔒 Lowest price, guaranteed</div>
         <div class="hb-1seller-tx">
-          <b>{{ section.settings.bestprice_head | default: 'The best price in the country.' }}</b>
-          <p>Everyone else charges <s>{{ section.settings.competitor_price | default: '$350' }} each</s> for a single lounger. Get our <em>2-pack for just {{ section.settings.our_price | default: '$299' }}</em> — two loungers for less than one of theirs.</p>
+          <b>The best price in the country.</b>
+          <p>Everyone else charges <s>$350 each</s> for a single lounger. Get our <em>2-pack for just $299</em> — two loungers for less than one of theirs.</p>
         </div>
       </div>
       {%- endif -%}
