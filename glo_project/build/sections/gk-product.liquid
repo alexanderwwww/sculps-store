@@ -23,9 +23,14 @@
   #shopify-section-{{ section.id }} .gk-viewport::-webkit-scrollbar { display:none; }
   #shopify-section-{{ section.id }} .gk-slide { flex:0 0 100%; scroll-snap-align:center; aspect-ratio:1/1; background:#F4F6F8; }
   #shopify-section-{{ section.id }} .gk-slide img { width:100%; height:100%; object-fit:cover; display:block; }
-  #shopify-section-{{ section.id }} .gk-thumbs { position:absolute; left:12px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px; z-index:3; }
-  #shopify-section-{{ section.id }} .gk-thumb { width:clamp(38px,4vw,48px); height:clamp(38px,4vw,48px); border-radius:11px; overflow:hidden; border:1.5px solid rgba(255,255,255,0.65); background:rgba(255,255,255,0.28); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); cursor:pointer; padding:0; opacity:0.9; transition:opacity .2s; }
-  #shopify-section-{{ section.id }} .gk-thumb.is-active { border-color:#fff; opacity:1; box-shadow:0 2px 10px rgba(0,0,0,0.15); }
+  #shopify-section-{{ section.id }} .gk-thumbs { position:absolute; left:12px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px; z-index:3; max-height:88%; overflow-y:auto; scrollbar-width:none; padding:2px; }
+  #shopify-section-{{ section.id }} .gk-thumbs::-webkit-scrollbar { display:none; }
+  #shopify-section-{{ section.id }} .gk-thumb { flex:0 0 auto; width:clamp(40px,4.2vw,50px); height:clamp(40px,4.2vw,50px); border-radius:11px; overflow:hidden; border:1.5px solid rgba(255,255,255,0.65); background:rgba(255,255,255,0.3); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); cursor:pointer; padding:0; opacity:0.85; transition:opacity .22s ease, transform .22s ease, box-shadow .22s ease; }
+  #shopify-section-{{ section.id }} .gk-thumb img { transition:transform .3s ease; }
+  #shopify-section-{{ section.id }} .gk-thumb:hover { opacity:1; transform:translateX(4px) scale(1.09); box-shadow:0 6px 18px rgba(17,19,21,0.18); }
+  #shopify-section-{{ section.id }} .gk-thumb:hover img { transform:scale(1.12); }
+  #shopify-section-{{ section.id }} .gk-thumb.is-active { border-color:#fff; opacity:1; box-shadow:0 2px 12px rgba(0,0,0,0.18); }
+  @media (max-width:600px){ #shopify-section-{{ section.id }} .gk-thumbs { left:8px; gap:6px; max-height:82%; } #shopify-section-{{ section.id }} .gk-thumb { width:34px; height:34px; border-radius:9px; } }
   #shopify-section-{{ section.id }} .gk-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
 
   #shopify-section-{{ section.id }} .gk-info { display:flex; flex-direction:column; gap:16px; }
@@ -87,16 +92,28 @@
   <div class="gk-hero">
     <!-- GALLERY: swipe + left transparent thumbs -->
     <div class="gk-gallery">
-      {%- assign alts = 'the full glo kit|glo device, front|glo device, side|flash window|flash caps|quiet vent|precision razor|eyewear|packaging' | split: '|' -%}
+      {%- assign gimages = product.images -%}
       <div class="gk-viewport" data-gk-viewport>
-        {%- for i in (1..9) -%}
-          <div class="gk-slide" data-gk-slide><img src="{{ img }}/glo-detail-{{ i }}.png" alt="{{ alts[forloop.index0] }}" loading="{% if forloop.index0 < 2 %}eager{% else %}lazy{% endif %}"></div>
-        {%- endfor -%}
+        {%- if gimages.size > 0 -%}
+          {%- for image in gimages -%}
+            <div class="gk-slide" data-gk-slide><img src="{{ image | image_url: width: 1200 }}" alt="{{ image.alt | default: product.title | escape }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"></div>
+          {%- endfor -%}
+        {%- else -%}
+          {%- for i in (1..9) -%}
+            <div class="gk-slide" data-gk-slide><img src="{{ img }}/glo-detail-{{ i }}.png" alt="{{ product.title | escape }}" loading="{% if forloop.index0 < 2 %}eager{% else %}lazy{% endif %}"></div>
+          {%- endfor -%}
+        {%- endif -%}
       </div>
       <div class="gk-thumbs" data-gk-thumbs>
-        {%- for i in (1..9) -%}
-          <button type="button" class="gk-thumb{% if forloop.first %} is-active{% endif %}" data-gk-thumb data-i="{{ forloop.index0 }}" aria-label="{{ alts[forloop.index0] }}"><img src="{{ img }}/glo-detail-{{ i }}.png" alt=""></button>
-        {%- endfor -%}
+        {%- if gimages.size > 0 -%}
+          {%- for image in gimages -%}
+            <button type="button" class="gk-thumb{% if forloop.first %} is-active{% endif %}" data-gk-thumb data-i="{{ forloop.index0 }}" aria-label="view image {{ forloop.index }}"><img src="{{ image | image_url: width: 140 }}" alt=""></button>
+          {%- endfor -%}
+        {%- else -%}
+          {%- for i in (1..9) -%}
+            <button type="button" class="gk-thumb{% if forloop.first %} is-active{% endif %}" data-gk-thumb data-i="{{ forloop.index0 }}" aria-label="view image {{ forloop.index }}"><img src="{{ img }}/glo-detail-{{ i }}.png" alt=""></button>
+          {%- endfor -%}
+        {%- endif -%}
       </div>
     </div>
 
@@ -144,7 +161,7 @@
         </button>
         {% if product.available %}<button type="button" class="gk-buynow" data-gk-buynow>buy now</button>{% endif %}
       </div>
-      <div class="gk-scarcity">only 6 left at this price &middot; ships within 24 hours</div>
+      <div class="gk-scarcity">only 6 left at this price &middot; ships fast, arrives in 5&ndash;7 days</div>
 
       <div class="gk-trust">
         <div><span>&#10003;</span> free shipping</div>
@@ -170,7 +187,7 @@
   {% if product.available %}
   <div class="gk-sticky" data-gk-sticky>
     <div class="l">
-      <img src="{{ thumb }}" alt="glo">
+      <img src="{% if product.featured_image %}{{ product.featured_image | image_url: width: 120 }}{% else %}{{ thumb }}{% endif %}" alt="glo">
       <div>
         <div class="nm">glo</div>
         <div class="pr" data-gk-sticky-price>{{ default_variant.price | money }}</div>

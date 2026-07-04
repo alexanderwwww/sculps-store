@@ -1,89 +1,108 @@
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  #shopify-section-{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) 0; overflow:hidden; }
-  #shopify-section-{{ section.id }} .head { max-width:1200px; margin:0 auto clamp(18px,2.4vw,28px); padding:0 clamp(16px,3vw,44px); display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-  #shopify-section-{{ section.id }} .eyebrow { font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#5E86A6; }
-  #shopify-section-{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.03em; font-size:clamp(1.5rem,3.2vw,2.3rem); margin:8px 0 0; color:#111315; }
-  #shopify-section-{{ section.id }} .nav { display:flex; gap:8px; }
-  #shopify-section-{{ section.id }} .nav button { width:40px; height:40px; border-radius:50%; border:1px solid rgba(17,19,21,0.12); background:rgba(255,255,255,0.6); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  #shopify-section-{{ section.id }} .nav svg { width:18px; height:18px; stroke:#111315; }
-  #shopify-section-{{ section.id }} .track { display:flex; gap:clamp(12px,1.6vw,20px); overflow-x:auto; scroll-snap-type:x mandatory; padding:6px clamp(16px,3vw,44px) 10px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  #shopify-section-{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(34px,4.6vw,64px) 0 clamp(26px,3.4vw,44px); overflow:hidden; }
+  #shopify-section-{{ section.id }} .head { max-width:900px; margin:0 auto clamp(20px,2.6vw,32px); padding:0 clamp(16px,3vw,44px); text-align:center; }
+  #shopify-section-{{ section.id }} .eyebrow { font-size:12.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#5E86A6; }
+  #shopify-section-{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; letter-spacing:-0.02em; font-size:clamp(1.7rem,4.2vw,2.9rem); line-height:1.03; margin:10px 0 10px; color:#111315; }
+  #shopify-section-{{ section.id }} .rate { display:inline-flex; align-items:center; gap:8px; font-size:14px; color:#5B6470; }
+  #shopify-section-{{ section.id }} .rate .stars { color:#F5A623; font-size:16px; letter-spacing:1px; }
+  #shopify-section-{{ section.id }} .rate b { color:#111315; }
+  #shopify-section-{{ section.id }} .track { display:flex; gap:clamp(12px,1.6vw,20px); overflow-x:auto; scroll-snap-type:x mandatory; padding:8px clamp(16px,3vw,44px) 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   #shopify-section-{{ section.id }} .track::-webkit-scrollbar { display:none; }
-  #shopify-section-{{ section.id }} .card { scroll-snap-align:start; flex:0 0 clamp(280px,80vw,360px); background:linear-gradient(160deg, rgba(255,255,255,0.85), rgba(234,241,246,0.65)); border:1px solid rgba(255,255,255,0.9); box-shadow:0 2px 6px rgba(46,74,104,0.05), 0 22px 50px rgba(46,74,104,0.10); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%); border-radius:24px; padding:22px; display:flex; flex-direction:column; gap:14px; }
-  #shopify-section-{{ section.id }} .card .top { display:flex; align-items:center; gap:12px; }
-  #shopify-section-{{ section.id }} .card .av { width:46px; height:46px; border-radius:50%; object-fit:cover; background:#DCE6EC; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-family:'General Sans',sans-serif; font-weight:700; color:#5E86A6; }
-  #shopify-section-{{ section.id }} .card .who { display:flex; flex-direction:column; }
-  #shopify-section-{{ section.id }} .card .nm { font-size:14px; font-weight:700; color:#111315; }
+  #shopify-section-{{ section.id }} .card { scroll-snap-align:center; flex:0 0 clamp(268px,82vw,340px); background:linear-gradient(165deg, rgba(255,255,255,0.9), rgba(234,241,246,0.7)); border:1px solid rgba(255,255,255,0.9); box-shadow:0 2px 6px rgba(46,74,104,0.05), 0 26px 56px rgba(46,74,104,0.12); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); border-radius:26px; overflow:hidden; display:flex; flex-direction:column; }
+  #shopify-section-{{ section.id }} .card .photo { width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:#DCE6EC; }
+  #shopify-section-{{ section.id }} .card .body { padding:18px; display:flex; flex-direction:column; gap:12px; }
+  #shopify-section-{{ section.id }} .card .r1 { display:flex; align-items:center; justify-content:space-between; }
+  #shopify-section-{{ section.id }} .card .stars { color:#F5A623; font-size:16px; letter-spacing:2px; }
+  #shopify-section-{{ section.id }} .card .vf { font-size:12px; font-weight:600; color:#1F7A55; background:rgba(31,122,85,0.10); border-radius:100px; padding:4px 10px; }
+  #shopify-section-{{ section.id }} .card .tx { font-size:15px; line-height:1.5; color:#111315; }
+  #shopify-section-{{ section.id }} .card .who { display:flex; align-items:center; gap:11px; }
+  #shopify-section-{{ section.id }} .card .av { width:40px; height:40px; border-radius:50%; object-fit:cover; background:#5E86A6; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'General Sans',sans-serif; font-weight:700; flex:0 0 auto; }
+  #shopify-section-{{ section.id }} .card .nm { font-size:13.5px; font-weight:700; color:#111315; }
   #shopify-section-{{ section.id }} .card .dt { font-size:12px; color:#5B6470; }
-  #shopify-section-{{ section.id }} .card .vf { margin-left:auto; font-size:11px; font-weight:600; color:#1F7A55; }
-  #shopify-section-{{ section.id }} .card .stars { color:#3E5568; font-size:16px; letter-spacing:2px; }
-  #shopify-section-{{ section.id }} .card .body { font-size:15px; line-height:1.55; color:#111315; }
-  #shopify-section-{{ section.id }} .card .photo { border-radius:14px; width:100%; aspect-ratio:4/3; object-fit:cover; }
+  #shopify-section-{{ section.id }} .dots { display:flex; gap:7px; justify-content:center; margin-top:clamp(16px,2vw,22px); }
+  #shopify-section-{{ section.id }} .dots button { width:8px; height:8px; border-radius:100px; border:none; background:#C6D2DC; cursor:pointer; padding:0; transition:width .25s, background .25s; }
+  #shopify-section-{{ section.id }} .dots button.on { width:22px; background:#3E5568; }
+  #shopify-section-{{ section.id }} .foot { text-align:center; margin-top:clamp(16px,2vw,22px); font-size:12.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#5E86A6; }
 </style>
 <div class="s">
   <div class="head">
-    <div>
-      {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
-      <h2>{{ section.settings.heading }}</h2>
-    </div>
-    <div class="nav">
-      <button type="button" data-gk-prev aria-label="previous"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button type="button" data-gk-next aria-label="next"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg></button>
-    </div>
+    {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+    <h2>{{ section.settings.heading }}</h2>
+    {%- if section.settings.rating_text != blank -%}<div class="rate"><span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span> <span>{{ section.settings.rating_text }}</span></div>{%- endif -%}
   </div>
   <div class="track" data-gk-track>
     {%- for block in section.blocks -%}
       {%- assign r = block.settings.stars | plus: 0 -%}
       {%- assign initial = block.settings.name | strip | slice: 0 -%}
-      <div class="card" {{ block.shopify_attributes }}>
-        <div class="top">
-          {%- if block.settings.avatar != blank -%}<img class="av" src="{{ block.settings.avatar | image_url: width: 120 }}" alt="">{%- else -%}<span class="av">{{ initial | upcase }}</span>{%- endif -%}
-          <div class="who"><span class="nm">{{ block.settings.name }}</span><span class="dt">{{ block.settings.date }}</span></div>
-          {%- if block.settings.verified -%}<span class="vf">✓ verified</span>{%- endif -%}
-        </div>
-        <div class="stars">{% for i in (1..5) %}{% if i <= r %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</div>
-        <div class="body">{{ block.settings.text }}</div>
+      <div class="card" data-gk-card {{ block.shopify_attributes }}>
         {%- if block.settings.photo != blank -%}<img class="photo" src="{{ block.settings.photo | image_url: width: 700 }}" alt="">{%- endif -%}
+        <div class="body">
+          <div class="r1">
+            <span class="stars">{% for i in (1..5) %}{% if i <= r %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</span>
+            {%- if block.settings.verified -%}<span class="vf">&#10003; Verified</span>{%- endif -%}
+          </div>
+          <div class="tx">{{ block.settings.text }}</div>
+          <div class="who">
+            {%- if block.settings.avatar != blank -%}<img class="av" src="{{ block.settings.avatar | image_url: width: 100 }}" alt="">{%- else -%}<span class="av">{{ initial | upcase }}</span>{%- endif -%}
+            <div><div class="nm">{{ block.settings.name }}</div><div class="dt">{{ block.settings.date }}</div></div>
+          </div>
+        </div>
       </div>
     {%- endfor -%}
   </div>
+  <div class="dots" data-gk-dots></div>
+  {%- if section.settings.footer_text != blank -%}<div class="foot">{{ section.settings.footer_text }}</div>{%- endif -%}
 </div>
 <script>
   (function(){
     var root = document.getElementById('shopify-section-{{ section.id }}');
     var track = root.querySelector('[data-gk-track]');
-    function step(){ var card = track.querySelector('.card'); return card ? card.offsetWidth + 20 : 320; }
-    root.querySelector('[data-gk-prev]').addEventListener('click', function(){ track.scrollBy({ left:-step(), behavior:'smooth' }); });
-    root.querySelector('[data-gk-next]').addEventListener('click', function(){ track.scrollBy({ left:step(), behavior:'smooth' }); });
+    var cards = root.querySelectorAll('[data-gk-card]');
+    var dotsWrap = root.querySelector('[data-gk-dots]');
+    if(!track || !cards.length) return;
+    cards.forEach(function(_,i){
+      var b=document.createElement('button'); b.type='button'; if(i===0) b.className='on';
+      b.addEventListener('click', function(){ track.scrollTo({ left: cards[i].offsetLeft - track.offsetLeft, behavior:'smooth' }); });
+      dotsWrap.appendChild(b);
+    });
+    var dots = dotsWrap.querySelectorAll('button');
+    track.addEventListener('scroll', function(){
+      var mid = track.scrollLeft + track.clientWidth/2, best=0, bd=1e9;
+      cards.forEach(function(c,i){ var cc=c.offsetLeft - track.offsetLeft + c.offsetWidth/2; var d=Math.abs(cc-mid); if(d<bd){bd=d;best=i;} });
+      dots.forEach(function(d,i){ d.classList.toggle('on', i===best); });
+    }, { passive:true });
   })();
 </script>
 {% schema %}
 {
   "name": "GK Review carousel",
   "settings": [
-    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "loved by thousands" },
-    { "type": "text", "id": "heading", "label": "Heading", "default": "4.8 stars · 1,240 reviews" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "see what our customers say" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "loved by thousands of women" },
+    { "type": "text", "id": "rating_text", "label": "Rating text", "default": "4.8 · 1,240 reviews" },
+    { "type": "text", "id": "footer_text", "label": "Footer text", "default": "loved on tiktok" },
     { "type": "color", "id": "bg", "label": "Background", "default": "#F4F6F8" }
   ],
   "blocks": [
     { "type": "review", "name": "Review", "settings": [
-      { "type": "image_picker", "id": "avatar", "label": "Avatar (optional)" },
-      { "type": "text", "id": "name", "label": "Name", "default": "jenna r." },
-      { "type": "text", "id": "date", "label": "Date", "default": "2 weeks ago" },
+      { "type": "image_picker", "id": "photo", "label": "Photo (top of card)" },
       { "type": "range", "id": "stars", "label": "Stars", "min": 1, "max": 5, "step": 1, "default": 5 },
       { "type": "checkbox", "id": "verified", "label": "Verified", "default": true },
-      { "type": "textarea", "id": "text", "label": "Review", "default": "genuinely works. quiet, fast, and it doesn't hurt." },
-      { "type": "image_picker", "id": "photo", "label": "Photo (optional)" }
+      { "type": "textarea", "id": "text", "label": "Review", "default": "arrived so fast and it genuinely works. i'm obsessed." },
+      { "type": "image_picker", "id": "avatar", "label": "Avatar (optional)" },
+      { "type": "text", "id": "name", "label": "Name", "default": "jenna r." },
+      { "type": "text", "id": "date", "label": "Date", "default": "june 23, 2026" }
     ] }
   ],
   "presets": [{ "name": "GK Review carousel", "blocks": [
-    { "type": "review", "settings": { "name": "jenna r.", "date": "2 weeks ago", "stars": 5, "text": "shipped in 2 days and it genuinely works. quiet, fast, and i actually keep up with it because it doesn't hurt at all." } },
-    { "type": "review", "settings": { "name": "monique t.", "date": "1 month ago", "stars": 5, "text": "four weeks in and my underarms are basically maintenance-only now. the flash sensor makes it foolproof." } },
-    { "type": "review", "settings": { "name": "ava l.", "date": "3 weeks ago", "stars": 4, "text": "arrived fast, didn't hurt, good results on my legs. coarser hair took a little longer but so worth it." } },
-    { "type": "review", "settings": { "name": "priya n.", "date": "2 months ago", "stars": 5, "text": "i do my whole body while watching tv. cancelled my salon appointments and it already paid for itself." } },
-    { "type": "review", "settings": { "name": "daniela r.", "date": "5 weeks ago", "stars": 5, "text": "followed the schedule exactly and by week 4 the difference was unreal. soothing gel after and zero irritation." } },
-    { "type": "review", "settings": { "name": "sophie k.", "date": "3 days ago", "stars": 5, "text": "face, underarms, legs — one device does it all, and it looks so premium on my counter." } }
+    { "type": "review", "settings": { "stars": 5, "text": "shipped in 5 days and it genuinely works. doesn't hurt at all — i actually keep up with it.", "name": "jenna r.", "date": "june 23, 2026" } },
+    { "type": "review", "settings": { "stars": 5, "text": "four weeks in and my underarms are basically maintenance-only now. the flash sensor is foolproof.", "name": "monique t.", "date": "june 10, 2026" } },
+    { "type": "review", "settings": { "stars": 5, "text": "cancelled my salon appointments. i do my whole body while watching tv and it paid for itself.", "name": "priya n.", "date": "may 28, 2026" } },
+    { "type": "review", "settings": { "stars": 4, "text": "arrived fast, didn't hurt, great on my legs. coarser hair took a little longer but so worth it.", "name": "ava l.", "date": "may 19, 2026" } },
+    { "type": "review", "settings": { "stars": 5, "text": "followed the schedule exactly and by week 4 the difference was unreal. zero irritation with the gel after.", "name": "daniela r.", "date": "may 5, 2026" } },
+    { "type": "review", "settings": { "stars": 5, "text": "face, underarms, legs — one device does it all and looks so premium on my counter.", "name": "sophie k.", "date": "april 30, 2026" } }
   ] }]
 }
 {% endschema %}
