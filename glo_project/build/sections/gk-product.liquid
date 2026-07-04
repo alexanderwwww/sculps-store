@@ -1,7 +1,6 @@
 {%- liquid
   assign img = 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/1c672ae0a8a29459960bd5fd15e0aa7e94293c45/glo_project/build/assets'
   assign thumb = img | append: '/glo-detail-2.png'
-  assign img_tech = img | append: '/glo-detail-4.png'
   assign variant_count = product.variants.size
   if variant_count > 1
     assign default_variant = product.variants[1]
@@ -10,129 +9,109 @@
   endif
 -%}
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
-  .gk-pd, .gk-pd * { box-sizing:border-box; }
-  .gk-pd { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:#111315; background:#FFFFFF; width:100%; overflow-x:clip; }
-  .gk-pd h1,.gk-pd h2 { margin:0; }
-  .gk-eyebrow { font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#3E5568; }
-  .gk-h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); }
-  .gk-hero { display:grid; grid-template-columns:1.1fr 0.9fr; align-items:start; gap:clamp(24px,4vw,56px); padding:clamp(24px,5vw,56px) clamp(16px,3vw,44px) clamp(28px,4vw,52px); max-width:1440px; margin:0 auto; }
-  @media (max-width:900px){ .gk-hero { grid-template-columns:1fr; } }
-  .gk-gallery { display:flex; flex-direction:column; gap:clamp(8px,1.2vw,14px); }
-  .gk-main { border-radius:20px; overflow:hidden; background:#F4F6F8; aspect-ratio:1/1; }
-  .gk-main img { width:100%; height:100%; object-fit:cover; display:block; }
-  .gk-thumbs { display:flex; flex-wrap:wrap; gap:8px; }
-  .gk-thumb { flex:0 0 auto; width:clamp(44px,7vw,56px); height:clamp(44px,7vw,56px); border:1.5px solid transparent; border-radius:10px; overflow:hidden; background:#F4F6F8; cursor:pointer; padding:0; }
-  .gk-thumb.is-active { border-color:#3E5568; }
-  .gk-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-  .gk-hero__info { display:flex; flex-direction:column; gap:20px; position:sticky; top:96px; }
-  @media (max-width:900px){ .gk-hero__info { position:static; } }
-  .gk-hero h1 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(1.9rem,3.6vw,3rem); line-height:0.98; }
-  .gk-hero p.lede { font-size:clamp(16px,1.6vw,19px); color:#5B6470; line-height:1.5; max-width:480px; margin:0; }
-  .gk-rating { display:flex; align-items:center; gap:8px; text-decoration:none; color:#111315; }
-  .gk-price { font-family:'General Sans',sans-serif; font-weight:700; font-size:30px; letter-spacing:-0.03em; }
-  .gk-bundles { display:flex; flex-direction:column; gap:10px; margin-top:2px; }
-  .gk-bundle { position:relative; display:flex; align-items:center; gap:14px; border:1.5px solid rgba(17,19,21,0.14); background:transparent; border-radius:14px; padding:13px 16px; cursor:pointer; }
-  .gk-bundle.is-selected { border-color:#3E5568; background:#fff; }
-  .gk-bundle input { position:absolute; opacity:0; pointer-events:none; }
-  .gk-bundle .badge { position:absolute; top:-10px; left:16px; background:#3E5568; color:#fff; font-size:10px; font-weight:600; letter-spacing:0.02em; padding:3px 10px; border-radius:100px; }
-  .gk-bundle .dot { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(17,19,21,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .gk-bundle.is-selected .dot { border-color:#3E5568; }
-  .gk-bundle .dot i { width:9px; height:9px; border-radius:50%; background:#3E5568; display:none; }
-  .gk-bundle.is-selected .dot i { display:block; }
-  .gk-bundle .meta { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
-  .gk-bundle .meta .t { font-weight:600; font-size:14px; }
-  .gk-bundle .meta .s { font-size:12px; color:#5B6470; }
-  .gk-bundle .pr { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
-  .gk-bundle .prtop { display:flex; align-items:center; gap:8px; }
-  .gk-bundle .pr .was { font-size:12px; color:#5B6470; text-decoration:line-through; }
-  .gk-bundle .pr .now { font-family:'General Sans',sans-serif; font-weight:700; font-size:16px; letter-spacing:-0.02em; }
-  .gk-bundle .pr .save { font-size:11px; font-weight:600; color:#1F7A55; }
-  .gk-bundle .meta .u { font-size:11px; color:#8A93A0; }
-  .gk-atc { margin-top:4px; background:#111315; color:#fff; border:none; border-radius:100px; padding:19px 34px; font-size:15px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; width:100%; }
-  .gk-atc[disabled]{ opacity:0.4; cursor:not-allowed; }
-  .gk-buynow { margin-top:2px; }
-  .gk-buynow .shopify-payment-button__button { border-radius:100px !important; }
-  .gk-scarcity { font-size:12px; color:#5B6470; text-align:center; margin-top:-8px; }
-  .gk-trust { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:6px; padding-top:20px; border-top:1px solid rgba(17,19,21,0.10); }
-  .gk-trust div { display:flex; align-items:center; gap:7px; font-size:12.5px; color:#5B6470; }
-  .gk-trust div span { color:#3E5568; }
-  .gk-band { background:#F4F6F8; padding:clamp(28px,4vw,47px) clamp(16px,3vw,44px); }
-  .gk-band--white { background:#fff; padding:clamp(32px,4.2vw,58px) clamp(16px,3vw,44px); }
-  .gk-wrap { max-width:1200px; margin:0 auto; }
-  .gk-steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:clamp(20px,3vw,36px); }
-  .gk-step { display:flex; flex-direction:column; gap:14px; }
-  .gk-step .n { font-family:'General Sans',sans-serif; font-weight:700; font-size:15px; color:#3E5568; letter-spacing:-0.01em; }
-  .gk-step .t { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:22px; }
-  .gk-step .d { font-size:15px; color:#5B6470; line-height:1.55; }
-  .gk-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:clamp(20px,3vw,32px); text-align:center; }
-  .gk-stat { display:flex; flex-direction:column; gap:10px; align-items:center; }
-  .gk-stat .v { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(2rem,3.6vw,2.9rem); color:#3E5568; line-height:1; }
-  .gk-stat .l { font-size:15px; color:#111315; max-width:220px; line-height:1.4; }
-  .gk-note { text-align:center; font-size:12px; color:#5B6470; max-width:640px; margin:clamp(32px,4vw,48px) auto 0; line-height:1.6; }
-  .gk-rev-summary { display:flex; flex-wrap:wrap; gap:clamp(20px,3vw,44px); align-items:center; background:#fff; border:1px solid rgba(17,19,21,0.10); border-radius:20px; padding:clamp(24px,3vw,40px); margin-bottom:clamp(32px,4vw,48px); }
-  .gk-rev-summary .avg { font-family:'General Sans',sans-serif; font-weight:700; letter-spacing:-0.03em; font-size:44px; }
-  .gk-rev-bars { flex:1; min-width:220px; display:flex; flex-direction:column; gap:6px; }
-  .gk-rev-bar { display:flex; align-items:center; gap:10px; }
-  .gk-rev-bar .lab { font-size:12px; color:#5B6470; width:40px; }
-  .gk-rev-bar .track { flex:1; height:6px; border-radius:100px; background:rgba(17,19,21,0.08); overflow:hidden; }
-  .gk-rev-bar .fill { height:100%; border-radius:100px; background:#3E5568; }
-  .gk-rev-bar .pct { font-size:12px; color:#5B6470; width:32px; text-align:right; }
-  .gk-rev-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:clamp(18px,2.5vw,26px); }
-  .gk-rev-card { background:#fff; border:1px solid rgba(17,19,21,0.10); border-radius:18px; padding:clamp(20px,2.5vw,28px); display:flex; flex-direction:column; gap:14px; }
-  .gk-rev-card .head { display:flex; align-items:center; gap:12px; }
-  .gk-rev-card .who .nm { font-size:13px; font-weight:600; }
-  .gk-rev-card .who .dt { font-size:11.5px; color:#5B6470; }
-  .gk-rev-card .stars { margin-left:auto; color:#3E5568; font-size:15px; letter-spacing:1px; }
-  .gk-rev-card .body { font-size:15px; line-height:1.6; color:#111315; }
-  .gk-rev-card .verified { font-size:11px; color:#5B6470; display:flex; align-items:center; gap:4px; }
-  .gk-rev-card .verified span { color:#3E5568; }
-  .gk-rev-card .tags { display:flex; flex-wrap:wrap; gap:8px; }
-  .gk-rev-card .tags .tag { font-size:11px; color:#5B6470; background:#F4F6F8; border-radius:100px; padding:5px 12px; }
-  .gk-tech { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(360px,1fr)); background:#111315; border-radius:28px; overflow:hidden; }
-  .gk-tech img { width:100%; height:100%; min-height:380px; object-fit:cover; display:block; }
-  .gk-tech .txt { display:flex; flex-direction:column; justify-content:center; gap:20px; padding:clamp(26px,4vw,46px); color:#F4F6F8; }
-  .gk-tech .txt .stmt { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.35rem,2.3vw,1.95rem); line-height:1.05; }
-  .gk-tech .txt p { font-size:15.5px; color:#9AA2AC; line-height:1.6; max-width:420px; margin:0; }
-  .gk-faq { max-width:800px; margin:0 auto; }
-  .gk-faq .rows { display:flex; flex-direction:column; border-bottom:1px solid rgba(17,19,21,0.10); }
-  .gk-faq details { border-top:1px solid rgba(17,19,21,0.10); padding:20px 0; }
-  .gk-faq summary { cursor:pointer; font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; font-size:16px; list-style:none; }
-  .gk-faq summary::-webkit-details-marker { display:none; }
-  .gk-faq p { font-size:14.5px; color:#5B6470; line-height:1.6; margin-top:12px; }
-  .gk-sticky { position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(255,255,255,0.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid rgba(17,19,21,0.10); padding:12px clamp(12px,3vw,40px); display:flex; align-items:center; gap:16px; justify-content:space-between; transform:translateY(110%); transition:transform 0.25s ease; }
-  .gk-sticky.show { transform:translateY(0); }
-  .gk-sticky .l { display:flex; align-items:center; gap:12px; min-width:0; }
-  .gk-sticky img { width:40px; height:40px; border-radius:8px; object-fit:cover; flex-shrink:0; }
-  .gk-sticky .nm { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:14px; }
-  .gk-sticky .pr { font-size:12px; color:#5B6470; }
-  .gk-sticky button { background:#111315; color:#fff; border:none; border-radius:100px; padding:13px 28px; font-size:14px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; flex-shrink:0; }
+  #shopify-section-{{ section.id }} .gk-pd, #shopify-section-{{ section.id }} .gk-pd * { box-sizing:border-box; }
+  #shopify-section-{{ section.id }} .gk-pd { font-family:'Inter',sans-serif; color:#111315; background:#fff; width:100%; overflow-x:clip; }
+  #shopify-section-{{ section.id }} .gk-hero { display:grid; grid-template-columns:1.05fr 0.95fr; align-items:start; gap:clamp(20px,3.5vw,52px); padding:clamp(14px,2.5vw,30px) clamp(14px,3vw,44px) clamp(90px,10vw,110px); max-width:1440px; margin:0 auto; }
+  @media (max-width:900px){ #shopify-section-{{ section.id }} .gk-hero { grid-template-columns:1fr; } }
+
+  /* full-bleed swipe gallery + left transparent thumbnails */
+  #shopify-section-{{ section.id }} .gk-gallery { position:relative; }
+  #shopify-section-{{ section.id }} .gk-viewport { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; border-radius:22px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  #shopify-section-{{ section.id }} .gk-viewport::-webkit-scrollbar { display:none; }
+  #shopify-section-{{ section.id }} .gk-slide { flex:0 0 100%; scroll-snap-align:center; aspect-ratio:1/1; background:#F4F6F8; }
+  #shopify-section-{{ section.id }} .gk-slide img { width:100%; height:100%; object-fit:cover; display:block; }
+  #shopify-section-{{ section.id }} .gk-thumbs { position:absolute; left:12px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px; z-index:3; }
+  #shopify-section-{{ section.id }} .gk-thumb { width:clamp(38px,4vw,48px); height:clamp(38px,4vw,48px); border-radius:11px; overflow:hidden; border:1.5px solid rgba(255,255,255,0.65); background:rgba(255,255,255,0.28); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); cursor:pointer; padding:0; opacity:0.9; transition:opacity .2s; }
+  #shopify-section-{{ section.id }} .gk-thumb.is-active { border-color:#fff; opacity:1; box-shadow:0 2px 10px rgba(0,0,0,0.15); }
+  #shopify-section-{{ section.id }} .gk-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+
+  #shopify-section-{{ section.id }} .gk-info { display:flex; flex-direction:column; gap:16px; }
+  #shopify-section-{{ section.id }} .gk-eyebrow { font-size:13px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#3E5568; }
+  #shopify-section-{{ section.id }} .gk-hero h1 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(2rem,4vw,3.2rem); line-height:0.98; margin:0; }
+  #shopify-section-{{ section.id }} .gk-lede { font-size:clamp(15px,1.5vw,18px); color:#5B6470; line-height:1.5; max-width:480px; margin:0; }
+  #shopify-section-{{ section.id }} .gk-pills { display:flex; flex-wrap:wrap; gap:8px; }
+  #shopify-section-{{ section.id }} .gk-pill { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:#1F6B4A; background:rgba(74,190,140,0.14); border:1px solid rgba(74,190,140,0.38); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:100px; padding:8px 14px; }
+  #shopify-section-{{ section.id }} .gk-pill::before { content:"✓"; font-size:11px; }
+  #shopify-section-{{ section.id }} .gk-rating { display:flex; align-items:center; gap:8px; text-decoration:none; color:#111315; }
+  #shopify-section-{{ section.id }} .gk-price { font-family:'General Sans',sans-serif; font-weight:700; font-size:30px; letter-spacing:-0.03em; }
+  #shopify-section-{{ section.id }} .gk-bundles { display:flex; flex-direction:column; gap:10px; margin-top:2px; }
+  #shopify-section-{{ section.id }} .gk-bundle { position:relative; display:flex; align-items:center; gap:14px; border:1.5px solid rgba(17,19,21,0.14); background:transparent; border-radius:14px; padding:13px 16px; cursor:pointer; }
+  #shopify-section-{{ section.id }} .gk-bundle.is-selected { border-color:#3E5568; background:#fff; }
+  #shopify-section-{{ section.id }} .gk-bundle input { position:absolute; opacity:0; pointer-events:none; }
+  #shopify-section-{{ section.id }} .gk-bundle .badge { position:absolute; top:-10px; left:16px; background:#3E5568; color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:100px; }
+  #shopify-section-{{ section.id }} .gk-bundle .dot { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(17,19,21,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  #shopify-section-{{ section.id }} .gk-bundle.is-selected .dot { border-color:#3E5568; }
+  #shopify-section-{{ section.id }} .gk-bundle .dot i { width:9px; height:9px; border-radius:50%; background:#3E5568; display:none; }
+  #shopify-section-{{ section.id }} .gk-bundle.is-selected .dot i { display:block; }
+  #shopify-section-{{ section.id }} .gk-bundle .meta { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  #shopify-section-{{ section.id }} .gk-bundle .meta .t { font-weight:600; font-size:14px; }
+  #shopify-section-{{ section.id }} .gk-bundle .meta .s { font-size:12px; color:#5B6470; }
+  #shopify-section-{{ section.id }} .gk-bundle .meta .u { font-size:11px; color:#8A93A0; }
+  #shopify-section-{{ section.id }} .gk-bundle .pr { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
+  #shopify-section-{{ section.id }} .gk-bundle .prtop { display:flex; align-items:center; gap:8px; }
+  #shopify-section-{{ section.id }} .gk-bundle .pr .was { font-size:12px; color:#5B6470; text-decoration:line-through; }
+  #shopify-section-{{ section.id }} .gk-bundle .pr .now { font-family:'General Sans',sans-serif; font-weight:700; font-size:16px; }
+  #shopify-section-{{ section.id }} .gk-bundle .pr .save { font-size:11px; font-weight:600; color:#1F7A55; }
+  #shopify-section-{{ section.id }} .gk-cta { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+  #shopify-section-{{ section.id }} .gk-atc { background:#EDEFF2; color:#111315; border:1px solid rgba(17,19,21,0.10); border-radius:100px; padding:17px 30px; font-size:15px; font-weight:700; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; width:100%; display:inline-flex; align-items:center; justify-content:center; gap:9px; }
+  #shopify-section-{{ section.id }} .gk-atc:hover { background:#E4E7EB; }
+  #shopify-section-{{ section.id }} .gk-atc svg { width:18px; height:18px; }
+  #shopify-section-{{ section.id }} .gk-buynow { background:#111315; color:#fff; border:none; border-radius:100px; padding:18px 30px; font-size:15px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; width:100%; }
+  #shopify-section-{{ section.id }} .gk-scarcity { font-size:12px; color:#5B6470; text-align:center; }
+  #shopify-section-{{ section.id }} .gk-trust { display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:4px; padding-top:16px; border-top:1px solid rgba(17,19,21,0.10); }
+  #shopify-section-{{ section.id }} .gk-trust div { display:flex; align-items:center; gap:7px; font-size:12.5px; color:#5B6470; }
+  #shopify-section-{{ section.id }} .gk-trust div span { color:#3E5568; }
+
+  /* inline image reviews */
+  #shopify-section-{{ section.id }} .gk-ireviews { display:flex; flex-direction:column; gap:12px; margin-top:14px; }
+  #shopify-section-{{ section.id }} .gk-irev { display:flex; gap:14px; align-items:center; background:#F4F6F8; border-radius:16px; padding:12px; }
+  #shopify-section-{{ section.id }} .gk-irev .ph { flex:0 0 auto; width:64px; height:64px; border-radius:12px; object-fit:cover; background:#E4E9EE; }
+  #shopify-section-{{ section.id }} .gk-irev .st { color:#3E5568; font-size:13px; letter-spacing:1px; }
+  #shopify-section-{{ section.id }} .gk-irev .tx { font-size:13.5px; line-height:1.45; color:#111315; margin:3px 0; }
+  #shopify-section-{{ section.id }} .gk-irev .nm { font-size:11.5px; font-weight:600; color:#5B6470; }
+
+  /* liquid-glass sticky bar (always visible) */
+  #shopify-section-{{ section.id }} .gk-sticky { position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(255,255,255,0.55); backdrop-filter:blur(18px) saturate(180%); -webkit-backdrop-filter:blur(18px) saturate(180%); border-top:1px solid rgba(255,255,255,0.6); box-shadow:0 -8px 30px rgba(46,74,104,0.10); padding:10px clamp(14px,4vw,44px); display:flex; align-items:center; gap:14px; justify-content:space-between; }
+  #shopify-section-{{ section.id }} .gk-sticky .l { display:flex; align-items:center; gap:12px; min-width:0; }
+  #shopify-section-{{ section.id }} .gk-sticky img { width:42px; height:42px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+  #shopify-section-{{ section.id }} .gk-sticky .nm { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; font-size:14px; }
+  #shopify-section-{{ section.id }} .gk-sticky .pr { font-size:13px; color:#111315; font-weight:600; }
+  #shopify-section-{{ section.id }} .gk-sticky button { background:#111315; color:#fff; border:none; border-radius:100px; padding:12px 26px; font-size:14px; font-weight:600; text-transform:lowercase; cursor:pointer; font-family:inherit; flex-shrink:0; }
 </style>
 
-<div class="gk-pd" id="gk-pd">
-
+<div class="gk-pd" id="gk-pd-{{ section.id }}">
   {% form 'product', product, id: 'gk-buy-form' %}
-  <!-- HERO -->
-  <div id="gallery" class="gk-hero">
+  <div class="gk-hero">
+    <!-- GALLERY: swipe + left transparent thumbs -->
     <div class="gk-gallery">
-      {%- assign alts = 'the full glo kit|glo device, front angle|glo device, side angle|flash window close-up|rose-gold flash caps|quiet-motor vent|precision razor|protective eyewear|glo packaging' | split: '|' -%}
-      <div class="gk-main"><img id="gk-main-img" src="{{ img }}/glo-detail-1.png" alt="{{ alts[0] }}"></div>
+      {%- assign alts = 'the full glo kit|glo device, front|glo device, side|flash window|flash caps|quiet vent|precision razor|eyewear|packaging' | split: '|' -%}
+      <div class="gk-viewport" data-gk-viewport>
+        {%- for i in (1..9) -%}
+          <div class="gk-slide" data-gk-slide><img src="{{ img }}/glo-detail-{{ i }}.png" alt="{{ alts[forloop.index0] }}" loading="{% if forloop.index0 < 2 %}eager{% else %}lazy{% endif %}"></div>
+        {%- endfor -%}
+      </div>
       <div class="gk-thumbs" data-gk-thumbs>
         {%- for i in (1..9) -%}
-          <button type="button" class="gk-thumb{% if forloop.first %} is-active{% endif %}" data-gk-thumb data-src="{{ img }}/glo-detail-{{ i }}.png" aria-label="{{ alts[forloop.index0] }}">
-            <img src="{{ img }}/glo-detail-{{ i }}.png" alt="{{ alts[forloop.index0] }}" loading="lazy">
-          </button>
+          <button type="button" class="gk-thumb{% if forloop.first %} is-active{% endif %}" data-gk-thumb data-i="{{ forloop.index0 }}" aria-label="{{ alts[forloop.index0] }}"><img src="{{ img }}/glo-detail-{{ i }}.png" alt=""></button>
         {%- endfor -%}
       </div>
     </div>
-    <div class="gk-hero__info">
-      <div class="gk-eyebrow">at-home ipl</div>
-      <h1>glo</h1>
-      <p class="lede">salon-grade hair removal, redesigned for your bathroom counter. quiet, cordless, and built to notice a difference in four weeks.</p>
+
+    <!-- INFO -->
+    <div class="gk-info">
+      <div class="gk-eyebrow">{{ section.settings.eyebrow }}</div>
+      <h1>{{ section.settings.title_display }}</h1>
+      <p class="gk-lede">{{ section.settings.lede }}</p>
+
+      <div class="gk-pills">
+        <span class="gk-pill">{{ section.settings.pill_1 }}</span>
+        <span class="gk-pill">{{ section.settings.pill_2 }}</span>
+        <span class="gk-pill">{{ section.settings.pill_3 }}</span>
+      </div>
+
       <a href="#reviews" class="gk-rating">
         <span style="color:#3E5568; font-size:14px; letter-spacing:1px;">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
         <span style="font-size:13px; color:#5B6470;">4.8 &middot; 1,240 reviews</span>
@@ -149,31 +128,22 @@
           {%- assign sub = subs[forloop.index0] | default: 'add to your routine' -%}
           {%- assign badge = badges[forloop.index0] -%}
           <label class="gk-bundle{% if variant.id == default_variant.id %} is-selected{% endif %}" data-gk-bundle>
-            <input type="radio" name="id" value="{{ variant.id }}"{% if variant.id == default_variant.id %} checked{% endif %}
-                   data-price="{{ variant.price | money }}"
-                   {% unless variant.available %}disabled{% endunless %}>
+            <input type="radio" name="id" value="{{ variant.id }}"{% if variant.id == default_variant.id %} checked{% endif %} data-price="{{ variant.price | money }}"{% unless variant.available %} disabled{% endunless %}>
             {%- if badge != blank -%}<span class="badge">{{ badge }}</span>{%- endif -%}
             <span class="dot"><i></i></span>
-            <span class="meta">
-              <span class="t">{{ variant.title }}</span>
-              <span class="s">{{ sub }}</span>
-              <span class="u">{{ variant.price | divided_by: forloop.index | money }} each</span>
-            </span>
-            <span class="pr">
-              <span class="prtop">
-                {%- if variant.compare_at_price > variant.price -%}<span class="was">{{ variant.compare_at_price | money }}</span>{%- endif -%}
-                <span class="now">{{ variant.price | money }}</span>
-              </span>
-              {%- if variant.compare_at_price > variant.price -%}<span class="save">save {{ variant.compare_at_price | minus: variant.price | money }}</span>{%- endif -%}
-            </span>
+            <span class="meta"><span class="t">{{ variant.title }}</span><span class="s">{{ sub }}</span><span class="u">{{ variant.price | divided_by: forloop.index | money }} each</span></span>
+            <span class="pr"><span class="prtop">{%- if variant.compare_at_price > variant.price -%}<span class="was">{{ variant.compare_at_price | money }}</span>{%- endif -%}<span class="now">{{ variant.price | money }}</span></span>{%- if variant.compare_at_price > variant.price -%}<span class="save">save {{ variant.compare_at_price | minus: variant.price | money }}</span>{%- endif -%}</span>
           </label>
         {%- endfor -%}
       </div>
 
-      <button type="submit" name="add" class="gk-atc" data-gk-atc {% unless product.available %}disabled{% endunless %}>
-        {% if product.available %}add to bag &mdash; <span data-gk-atc-price>{{ default_variant.price | money }}</span>{% else %}sold out{% endif %}
-      </button>
-      {% if product.available and additional_checkout_buttons %}<div class="gk-buynow">{{ form | payment_button }}</div>{% endif %}
+      <div class="gk-cta">
+        <button type="submit" name="add" class="gk-atc" {% unless product.available %}disabled{% endunless %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.3 12.2a1.5 1.5 0 001.5 1.2h8.6a1.5 1.5 0 001.5-1.2L21 7H6"/></svg>
+          {% if product.available %}add to cart{% else %}sold out{% endif %}
+        </button>
+        {% if product.available %}<button type="button" class="gk-buynow" data-gk-buynow>buy now</button>{% endif %}
+      </div>
       <div class="gk-scarcity">only 6 left at this price &middot; ships within 24 hours</div>
 
       <div class="gk-trust">
@@ -182,11 +152,21 @@
         <div><span>&#10003;</span> fda-cleared</div>
         <div><span>&#10003;</span> 2-year warranty</div>
       </div>
+
+      <!-- inline image reviews -->
+      <div class="gk-ireviews">
+        <div class="gk-irev">
+          {%- if section.settings.irev1_image != blank -%}<img class="ph" src="{{ section.settings.irev1_image | image_url: width: 160 }}" alt="">{%- else -%}<span class="ph"></span>{%- endif -%}
+          <div><div class="st">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="tx">{{ section.settings.irev1_text }}</div><div class="nm">{{ section.settings.irev1_name }}</div></div>
+        </div>
+        <div class="gk-irev">
+          {%- if section.settings.irev2_image != blank -%}<img class="ph" src="{{ section.settings.irev2_image | image_url: width: 160 }}" alt="">{%- else -%}<span class="ph"></span>{%- endif -%}
+          <div><div class="st">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="tx">{{ section.settings.irev2_text }}</div><div class="nm">{{ section.settings.irev2_name }}</div></div>
+        </div>
+      </div>
     </div>
   </div>
-  {% endform %}
 
-  <!-- STICKY BUY BAR -->
   {% if product.available %}
   <div class="gk-sticky" data-gk-sticky>
     <div class="l">
@@ -196,47 +176,57 @@
         <div class="pr" data-gk-sticky-price>{{ default_variant.price | money }}</div>
       </div>
     </div>
-    <button type="submit" form="gk-buy-form" name="add">add to bag</button>
+    <button type="submit" form="gk-buy-form" name="add">add to cart</button>
   </div>
   {% endif %}
+  {% endform %}
 </div>
 
 <script>
   (function(){
-    var root = document.getElementById('gk-pd');
+    var root = document.getElementById('gk-pd-{{ section.id }}');
     if(!root) return;
+    var form = root.querySelector('#gk-buy-form');
+    // bundles
     var bundles = root.querySelectorAll('[data-gk-bundle]');
-    var atcPrice = root.querySelector('[data-gk-atc-price]');
     var heroPrice = root.querySelector('[data-gk-price]');
     var stickyPrice = root.querySelector('[data-gk-sticky-price]');
-    function select(label){
-      var input = label.querySelector('input');
-      if(!input || input.disabled) return;
-      input.checked = true;
-      bundles.forEach(function(l){ l.classList.toggle('is-selected', l===label); });
-      var p = input.getAttribute('data-price');
-      if(atcPrice) atcPrice.textContent = p;
-      if(heroPrice) heroPrice.textContent = p;
-      if(stickyPrice) stickyPrice.textContent = p;
-    }
-    bundles.forEach(function(label){ label.addEventListener('click', function(){ select(label); }); });
-
-    var mainImg = root.querySelector('#gk-main-img');
+    bundles.forEach(function(label){
+      label.addEventListener('click', function(){
+        var input = label.querySelector('input'); if(!input || input.disabled) return;
+        input.checked = true;
+        bundles.forEach(function(l){ l.classList.toggle('is-selected', l===label); });
+        var p = input.getAttribute('data-price');
+        if(heroPrice) heroPrice.textContent = p;
+        if(stickyPrice) stickyPrice.textContent = p;
+      });
+    });
+    // gallery swipe <-> thumbs
+    var vp = root.querySelector('[data-gk-viewport]');
+    var slides = root.querySelectorAll('[data-gk-slide]');
     var thumbs = root.querySelectorAll('[data-gk-thumb]');
     thumbs.forEach(function(t){
       t.addEventListener('click', function(){
-        if(mainImg) mainImg.src = t.getAttribute('data-src');
-        thumbs.forEach(function(x){ x.classList.toggle('is-active', x===t); });
+        var i = parseInt(t.getAttribute('data-i'),10);
+        if(slides[i]) vp.scrollTo({ left: slides[i].offsetLeft, behavior:'smooth' });
       });
-      var im = t.querySelector('img');
-      if(im){ t.addEventListener('mouseenter', function(){ if(mainImg) mainImg.src = t.getAttribute('data-src'); thumbs.forEach(function(x){ x.classList.toggle('is-active', x===t); }); }); }
     });
-
-    var sticky = root.querySelector('[data-gk-sticky]');
-    if(sticky){
-      window.addEventListener('scroll', function(){
-        if(window.scrollY > 640){ sticky.classList.add('show'); } else { sticky.classList.remove('show'); }
+    if(vp){
+      vp.addEventListener('scroll', function(){
+        var idx = Math.round(vp.scrollLeft / vp.clientWidth);
+        thumbs.forEach(function(t,j){ t.classList.toggle('is-active', j===idx); });
       }, { passive:true });
+    }
+    // buy now -> add then checkout
+    var bn = root.querySelector('[data-gk-buynow]');
+    if(bn){
+      bn.addEventListener('click', function(){
+        var checked = form.querySelector('input[name=id]:checked');
+        if(!checked){ form.requestSubmit ? form.requestSubmit() : form.submit(); return; }
+        fetch('/cart/add.js', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: checked.value, quantity: 1 }) })
+          .then(function(){ window.location.href='/checkout'; })
+          .catch(function(){ form.submit(); });
+      });
     }
   })();
 </script>
@@ -244,7 +234,21 @@
 {% schema %}
 {
   "name": "GK Product",
-  "settings": [],
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "at-home ipl" },
+    { "type": "text", "id": "title_display", "label": "Big title", "default": "glo" },
+    { "type": "textarea", "id": "lede", "label": "Lede", "default": "salon-grade hair removal, redesigned for your bathroom counter. quiet, cordless, and built to notice a difference in four weeks." },
+    { "type": "text", "id": "pill_1", "label": "Feature pill 1", "default": "at-home ipl laser" },
+    { "type": "text", "id": "pill_2", "label": "Feature pill 2", "default": "cordless & portable" },
+    { "type": "text", "id": "pill_3", "label": "Feature pill 3", "default": "full body on one charge" },
+    { "type": "header", "content": "Inline image reviews" },
+    { "type": "image_picker", "id": "irev1_image", "label": "Review 1 image" },
+    { "type": "textarea", "id": "irev1_text", "label": "Review 1 text", "default": "shipped in 2 days and it genuinely works, girls 😭 four weeks in and my legs are basically smooth. doesn't hurt at all." },
+    { "type": "text", "id": "irev1_name", "label": "Review 1 name", "default": "kayla m. · verified buyer" },
+    { "type": "image_picker", "id": "irev2_image", "label": "Review 2 image" },
+    { "type": "textarea", "id": "irev2_text", "label": "Review 2 text", "default": "arrived so fast, didn't hurt like i feared, and i can already see less regrowth. obsessed is an understatement." },
+    { "type": "text", "id": "irev2_name", "label": "Review 2 name", "default": "bianca r. · verified buyer" }
+  ],
   "presets": [{ "name": "GK Product" }]
 }
 {% endschema %}

@@ -1,0 +1,69 @@
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #shopify-section-{{ section.id }} .s { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; padding:clamp(30px,4.2vw,58px) clamp(16px,3vw,44px); }
+  #shopify-section-{{ section.id }} .wrap { max-width:1200px; margin:0 auto; }
+  #shopify-section-{{ section.id }} .head { text-align:center; margin-bottom:clamp(22px,3vw,38px); }
+  #shopify-section-{{ section.id }} .eyebrow { font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#5E86A6; }
+  #shopify-section-{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.03em; font-size:clamp(1.6rem,3.6vw,2.6rem); margin:8px 0 0; color:#111315; }
+  #shopify-section-{{ section.id }} .g { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(12px,1.8vw,22px); }
+  @media (max-width:760px){ #shopify-section-{{ section.id }} .g { grid-template-columns:1fr; max-width:460px; margin:0 auto; } }
+  #shopify-section-{{ section.id }} .card { background:#fff; border:1px solid rgba(17,19,21,0.06); border-radius:26px; overflow:hidden; box-shadow:0 2px 4px rgba(46,74,104,0.04), 0 16px 40px rgba(46,74,104,0.07); display:flex; flex-direction:column; }
+  #shopify-section-{{ section.id }} .card .im { position:relative; aspect-ratio:4/5; background:#EAF1F6; }
+  #shopify-section-{{ section.id }} .card .im img { width:100%; height:100%; object-fit:cover; display:block; }
+  #shopify-section-{{ section.id }} .card .im .ph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'General Sans',sans-serif; font-weight:600; color:#9AACBB; font-size:14px; }
+  #shopify-section-{{ section.id }} .card .im .step { position:absolute; top:14px; left:14px; background:rgba(255,255,255,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.7); color:#2E4A68; font-family:'General Sans',sans-serif; font-weight:700; font-size:13px; padding:6px 13px; border-radius:100px; }
+  #shopify-section-{{ section.id }} .card .tx { padding:clamp(16px,2vw,22px); }
+  #shopify-section-{{ section.id }} .card .tx .t { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.02em; font-size:19px; color:#111315; }
+  #shopify-section-{{ section.id }} .card .tx .d { font-size:14.5px; color:#5B6470; line-height:1.5; margin-top:6px; }
+</style>
+<div class="s">
+  <div class="wrap">
+    <div class="head">
+      {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+      <h2>{{ section.settings.heading }}</h2>
+    </div>
+    <div class="g">
+      {%- for block in section.blocks -%}
+        <div class="card" {{ block.shopify_attributes }}>
+          <div class="im">
+            {%- if block.settings.image != blank -%}
+              <img src="{{ block.settings.image | image_url: width: 800 }}" alt="{{ block.settings.title | escape }}">
+            {%- else -%}
+              <div class="ph">add your image</div>
+            {%- endif -%}
+            <div class="step">{{ block.settings.step }}</div>
+          </div>
+          <div class="tx">
+            <div class="t">{{ block.settings.title }}</div>
+            <div class="d">{{ block.settings.text }}</div>
+          </div>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK How it works",
+  "max_blocks": 4,
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "how it works" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "smooth skin in three steps" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#F4F6F8" }
+  ],
+  "blocks": [
+    { "type": "step", "name": "Step", "settings": [
+      { "type": "image_picker", "id": "image", "label": "Image" },
+      { "type": "text", "id": "step", "label": "Step label", "default": "step 1" },
+      { "type": "text", "id": "title", "label": "Title", "default": "prep" },
+      { "type": "textarea", "id": "text", "label": "Text", "default": "shave the area and wipe it dry, then pick your level. clean, bare skin lets the light reach the root of every hair." }
+    ] }
+  ],
+  "presets": [{ "name": "GK How it works", "blocks": [
+    { "type": "step", "settings": { "step": "step 1", "title": "prep your skin", "text": "shave the area and wipe it dry, then pick your level. clean, bare skin lets the light reach the root of every hair." } },
+    { "type": "step", "settings": { "step": "step 2", "title": "glide & flash", "text": "glide glo across your skin — it auto-flashes, sending gentle pulses of light into each follicle to switch off regrowth at the source." } },
+    { "type": "step", "settings": { "step": "step 3", "title": "reveal smooth skin", "text": "repeat weekly and watch hair grow back finer and slower — until your skin stays smooth on its own, no salon required." } }
+  ] }]
+}
+{% endschema %}
