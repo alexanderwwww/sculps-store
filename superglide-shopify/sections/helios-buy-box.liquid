@@ -59,17 +59,29 @@
   #hb-{{ sid }} .hb-price b{font-weight:900;font-size:34px;color:var(--helios-ink2,#0A1219);}
   #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
   #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
-  #hb-{{ sid }} .hb-1seller{margin:12px 0 2px;border-radius:12px;padding:9px 12px;background:rgba(24,28,34,.05);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border:1px solid rgba(18,22,28,.11);box-shadow:0 5px 15px rgba(12,18,26,.06);}
-  #hb-{{ sid }} .hb-promo4{display:flex;align-items:center;gap:11px;margin:2px 0 12px;border-radius:12px;padding:10px 13px;background:linear-gradient(135deg,#FFF4F4,#FFF7EE);border:1px solid rgba(196,52,52,.22);box-shadow:0 5px 15px rgba(176,36,36,.09);}
-  #hb-{{ sid }} .hb-promo4-tag{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font-family:'Archivo',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#E23B3B,#B01E1E);padding:6px 10px;border-radius:9px;box-shadow:0 2px 7px rgba(176,30,30,.32);white-space:nowrap;}
-  #hb-{{ sid }} .hb-promo4-tx b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;color:#0A0D11;margin-bottom:1px;letter-spacing:-.01em;}
-  #hb-{{ sid }} .hb-promo4-tx span{font-size:11px;color:#8a5a5a;line-height:1.35;}
-  #hb-{{ sid }} .hb-1seller-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;}
-  #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:5px;font-family:'Archivo',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#2A2F36,#0A0D11);padding:4px 9px;border-radius:30px;box-shadow:0 2px 7px rgba(10,13,17,.28);}
-  #hb-{{ sid }} .hb-1seller-vf{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#4a535d;}
-  #hb-{{ sid }} .hb-1seller-tx b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;color:#0A0D11;margin-bottom:1px;letter-spacing:-.01em;}
-  #hb-{{ sid }} .hb-1seller-tx p{margin:0;font-size:11.5px;color:#5b636c;line-height:1.38;}
-  #hb-{{ sid }} .hb-1seller-tx s{color:#98a0a8;font-weight:700;}
+  #hb-{{ sid }} .hb-1seller{margin:0 0 16px;border-radius:16px;padding:15px 16px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 10px 26px -12px rgba(10,20,30,.14),inset 0 1px 0 rgba(255,255,255,.6);}
+  #hb-{{ sid }} .hb-promo4{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;margin:2px 0 14px;border-radius:18px;padding:16px 18px;background:linear-gradient(180deg,#ffffff,#f7f9fb);border:1px solid rgba(20,26,32,.08);box-shadow:0 10px 26px -10px rgba(10,20,30,.16),inset 0 1px 0 rgba(255,255,255,.6);}
+  #hb-{{ sid }} .hb-promo4::before{content:'';position:absolute;top:0;left:0;width:55%;height:100%;background:linear-gradient(115deg,rgba(255,255,255,.55),rgba(255,255,255,0) 55%);pointer-events:none;}
+  #hb-{{ sid }} .hb-promo4-tag{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;font-family:'Archivo',sans-serif;font-weight:800;font-size:12.5px;letter-spacing:.02em;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:11px 16px;border-radius:30px;box-shadow:0 6px 14px rgba(10,13,17,.35),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;}
+  #hb-{{ sid }} .hb-promo4-amt{flex:1 1 auto;min-width:0;}
+  #hb-{{ sid }} .hb-promo4-amt b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em;color:#0A0D11;margin-bottom:2px;}
+  #hb-{{ sid }} .hb-promo4-amt span{display:block;font-size:12px;line-height:1.4;color:#6b7480;}
+  #hb-{{ sid }} .hb-promo4-div{flex:0 0 auto;width:1px;align-self:stretch;background:rgba(20,26,32,.10);}
+  #hb-{{ sid }} .hb-promo4-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  #hb-{{ sid }} .hb-promo4-btn{display:inline-flex;align-items:center;gap:8px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);border:none;padding:11px 17px;border-radius:30px;box-shadow:0 6px 14px rgba(10,13,17,.35),inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer;white-space:nowrap;transition:transform .12s ease,box-shadow .12s ease;}
+  #hb-{{ sid }} .hb-promo4-btn:hover{transform:translateY(-1px);}
+  #hb-{{ sid }} .hb-promo4-btn.applied{background:linear-gradient(180deg,#1e9f5c,#127a44);cursor:default;}
+  #hb-{{ sid }} .hb-promo4-ends{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8a929c;white-space:nowrap;}
+  @media(max-width:420px){
+    #hb-{{ sid }} .hb-promo4{flex-wrap:wrap;}
+    #hb-{{ sid }} .hb-promo4-div{display:none;}
+    #hb-{{ sid }} .hb-promo4-right{flex-direction:row;width:100%;justify-content:space-between;margin-top:2px;}
+  }
+  #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:9px 14px;border-radius:30px;box-shadow:0 6px 14px rgba(10,13,17,.32),inset 0 1px 0 rgba(255,255,255,.12);}
+  #hb-{{ sid }} .hb-1seller-vf{display:flex;align-items:center;gap:6px;margin-top:11px;font-size:12px;font-weight:600;color:#6b7480;}
+  #hb-{{ sid }} .hb-1seller-tx b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;color:#0A0D11;margin:9px 0 5px;letter-spacing:-.01em;}
+  #hb-{{ sid }} .hb-1seller-tx p{margin:0;font-size:13px;color:#6b7480;line-height:1.5;}
+  #hb-{{ sid }} .hb-1seller-tx s{color:#e23b3b;font-weight:700;}
   #hb-{{ sid }} .hb-1seller-tx em{font-style:normal;font-weight:800;color:#0A0D11;}
   #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
   #hb-{{ sid }} .hb-chip{font-size:11.5px;font-weight:700;color:var(--helios-ink,#0C1A24);background:rgba(14,124,196,.08);border:1px solid rgba(14,124,196,.16);border-radius:30px;padding:5px 10px;white-space:nowrap;}
@@ -182,6 +194,19 @@
     {%- comment -%} ---------- BUY ---------- {%- endcomment -%}
     <div class="hb-buy">
       {%- if section.settings.tiktok_badge -%}<span class="hb-ey">▶ As seen on <b style="color:#25f4ee;">TikTok</b></span>{%- endif -%}
+
+      {%- comment -%} #1 seller / best-price card — right after 'As seen on TikTok', before the price {%- endcomment -%}
+      {%- if section.settings.show_bestprice -%}
+      <div class="hb-1seller">
+        <span class="hb-1seller-pill">🇺🇸 {{ section.settings.bestprice_pill | default: '#1 Seller in the U.S.' }}</span>
+        <div class="hb-1seller-vf">🔒 {{ section.settings.bestprice_tag | default: 'Lowest price, guaranteed' }}</div>
+        <div class="hb-1seller-tx">
+          <b>{{ section.settings.bestprice_head | default: 'The best price in the country.' }}</b>
+          <p>Everyone else charges <s>{{ section.settings.competitor_price | default: '$350' }} each</s> for a single lounger. Get our <em>2-pack for just {{ section.settings.our_price | default: '$299' }}</em> — two loungers for less than one of theirs.</p>
+        </div>
+      </div>
+      {%- endif -%}
+
       <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
       <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
       <div class="hb-rate">
@@ -282,10 +307,18 @@
         {%- comment -%} 4th of July auto-coupon advert — right above the buy buttons {%- endcomment -%}
         {%- if section.settings.show_promo4 -%}
         <div class="hb-promo4">
-          <span class="hb-promo4-tag">🎆 {{ section.settings.promo4_tag | default: '4th of July' }}</span>
-          <div class="hb-promo4-tx">
-            <b>{{ section.settings.promo4_amount | default: '$21.99' }} OFF — auto-applied at checkout</b>
-            <span>{{ section.settings.promo4_sub | default: 'On all orders · no code needed · ends in 3 days' }}</span>
+          <span class="hb-promo4-tag">🇺🇸 {{ section.settings.promo4_tag | default: '4TH OF JULY' | upcase }}</span>
+          <div class="hb-promo4-amt">
+            <b>{{ section.settings.promo4_amount | default: '$21.99' }} OFF</b>
+            <span>Automatically applied at checkout.<br>No code required.</span>
+          </div>
+          <div class="hb-promo4-div"></div>
+          <div class="hb-promo4-right">
+            <button type="button" class="hb-promo4-btn" id="hb-promo4-btn-{{ sid }}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.82A2 2 0 0 0 9.59 3.2H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .62 1.41l9.59 9.59a2 2 0 0 0 2.82 0l4.56-4.56a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+              <span class="hb-promo4-btn-label">Apply coupon</span>
+            </button>
+            <span class="hb-promo4-ends">🕐 Ends in {{ section.settings.promo4_days | default: 3 }} days</span>
           </div>
         </div>
         {%- endif -%}
@@ -298,20 +331,6 @@
         {%- comment -%} Express checkout: Apple Pay / Shop Pay / Google Pay {%- endcomment -%}
         <div class="hb-pay">{{ form | payment_button }}</div>
       {%- endform -%}
-
-      {%- comment -%} #1 seller / best-price banner — below the buy buttons {%- endcomment -%}
-      {%- if section.settings.show_bestprice -%}
-      <div class="hb-1seller">
-        <div class="hb-1seller-top">
-          <span class="hb-1seller-pill">🏆 {{ section.settings.bestprice_pill | default: '#1 Seller in the U.S.' }}</span>
-          <span class="hb-1seller-vf">🔒 {{ section.settings.bestprice_tag | default: 'Lowest price, guaranteed' }}</span>
-        </div>
-        <div class="hb-1seller-tx">
-          <b>{{ section.settings.bestprice_head | default: 'The best price in the country.' }}</b>
-          <p>Everyone else charges <s>{{ section.settings.competitor_price | default: '$350' }} each</s> for a single lounger. Get our <em>2-pack for just {{ section.settings.our_price | default: '$299' }}</em> — two loungers for less than one of theirs.</p>
-        </div>
-      </div>
-      {%- endif -%}
 
       {%- if section.settings.discount_code != blank -%}
         <button type="button" class="hb-code" id="hb-code-{{ sid }}" data-code="{{ section.settings.discount_code }}">
@@ -430,6 +449,15 @@
     if(navigator.clipboard){ navigator.clipboard.writeText(c).then(done).catch(done); } else done();
   });
 
+  /* ---- 4th of July coupon: cosmetic "Apply" confirmation (discount is already auto-applied at checkout) ---- */
+  var promoBtn = document.getElementById('hb-promo4-btn-{{ sid }}');
+  if(promoBtn) promoBtn.addEventListener('click', function(){
+    if(promoBtn.classList.contains('applied')) return;
+    promoBtn.classList.add('applied');
+    var lbl = promoBtn.querySelector('.hb-promo4-btn-label');
+    if(lbl) lbl.textContent = 'Coupon applied ✓';
+  });
+
   /* ---- honest per-session countdown ---- */
   {%- if section.settings.show_countdown -%}
   (function(){
@@ -509,7 +537,7 @@
     { "type": "checkbox", "id": "show_promo4", "label": "Show auto-coupon advert", "default": true },
     { "type": "text", "id": "promo4_tag", "label": "Tag", "default": "4th of July" },
     { "type": "text", "id": "promo4_amount", "label": "Discount amount", "default": "$21.99" },
-    { "type": "text", "id": "promo4_sub", "label": "Sub line", "default": "On all orders · no code needed · ends in 3 days" },
+    { "type": "number", "id": "promo4_days", "label": "Days remaining", "default": 3 },
     { "type": "header", "content": "Urgency & social proof" },
     { "type": "checkbox", "id": "show_countdown", "label": "Show countdown", "default": true },
     { "type": "range", "id": "countdown_minutes", "label": "Countdown length (minutes, per session)", "min": 30, "max": 1440, "step": 30, "default": 480 },
