@@ -63,7 +63,7 @@
   #hb-{{ sid }} .hb-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0;}
   #hb-{{ sid }} .hb-price b{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(33px,8.6vw,44px);line-height:1;letter-spacing:-.02em;color:#E11D2A;}
   #hb-{{ sid }} .hb-price s{font-size:clamp(17px,4.4vw,21px);color:#9aa2ab;font-weight:600;}
-  #hb-{{ sid }} .hb-bundlepill{display:inline-flex;align-items:center;gap:6px;margin-top:11px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:8px 13px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.28);}
+  #hb-{{ sid }} .hb-bundlepill{display:inline-flex;align-items:center;gap:6px;margin-top:11px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:8px 13px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.28);white-space:nowrap;max-width:100%;}
   #hb-{{ sid }} .hb-autodisc{display:flex;align-items:flex-start;gap:8px;margin-top:11px;}
   #hb-{{ sid }} .hb-autodisc-ck{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:#16a34a;display:grid;place-items:center;margin-top:1px;}
   #hb-{{ sid }} .hb-autodisc-ck svg{width:12px;height:12px;stroke:#fff;}
@@ -125,7 +125,7 @@
   #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:800;font-size:16px;color:#0A0D11;}
   #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:#1f6feb;font-weight:700;margin-top:1px;}
   #hb-{{ sid }} .hb-tierper{display:block;font-size:11.5px;color:#9aa2ab;font-weight:500;margin-top:2px;}
-  #hb-{{ sid }} .hb-tierpill{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:'Archivo',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.02em;text-transform:uppercase;color:#dc2626;background:#fdeaea;padding:5px 9px;border-radius:20px;}
+  #hb-{{ sid }} .hb-tierpill{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:'Archivo',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.02em;text-transform:uppercase;color:#dc2626;background:#fdeaea;padding:5px 9px;border-radius:20px;white-space:nowrap;max-width:100%;}
   #hb-{{ sid }} .hb-tierpill svg{flex:0 0 auto;}
   #hb-{{ sid }} .hb-tierprice{text-align:right;}
   #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:19px;color:#0A0D11;}
@@ -151,6 +151,39 @@
   #hb-toast-{{ sid }}{position:fixed;left:16px;bottom:18px;z-index:120;display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.86);backdrop-filter:var(--helios-g-blur);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-sh);border-radius:14px;padding:11px 15px 11px 12px;max-width:300px;opacity:0;pointer-events:none;transition:opacity .3s;}
   #hb-toast-{{ sid }}.show{opacity:1;animation:helios-toastin .4s ease;}
   #hb-toast-{{ sid }} .hb-tt-em{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));display:grid;place-items:center;font-size:16px;flex-shrink:0;}
+  {%- comment -%} ===== MOBILE-FIRST (≤430px): tighter cards, one-line pills, balanced hierarchy ===== {%- endcomment -%}
+  @media(max-width:430px){
+    #hb-{{ sid }} .hb-top{gap:9px;margin:2px 0 11px;}
+    #hb-{{ sid }} .hb-price{gap:8px;}
+    #hb-{{ sid }} .hb-price b{font-size:32px;}
+    #hb-{{ sid }} .hb-price s{font-size:16px;}
+    #hb-{{ sid }} .hb-bundlepill{font-size:9px;padding:6px 9px;margin-top:8px;gap:5px;}
+    #hb-{{ sid }} .hb-autodisc{margin-top:8px;gap:7px;}
+    #hb-{{ sid }} .hb-autodisc-ck{width:18px;height:18px;}
+    #hb-{{ sid }} .hb-autodisc b{font-size:12.5px;}
+    #hb-{{ sid }} .hb-autodisc span{font-size:11px;}
+    #hb-{{ sid }} .hb-top-right{gap:5px;padding-top:2px;}
+    #hb-{{ sid }} .hb-savebox{font-size:16px;padding:10px 13px;border-radius:12px;}
+    #hb-{{ sid }} .hb-savesub{font-size:11.5px;}
+    #hb-{{ sid }} .hb-shipbox{gap:9px;padding:10px 12px;margin-bottom:12px;}
+    #hb-{{ sid }} .hb-shipcol{gap:8px;}
+    #hb-{{ sid }} .hb-shipcol svg{width:22px;height:22px;}
+    #hb-{{ sid }} .hb-shipcol b{font-size:12.5px;}
+    #hb-{{ sid }} .hb-shipcol span{font-size:10.5px;}
+    #hb-{{ sid }} .hb-tiers{padding:4px;}
+    #hb-{{ sid }} .hb-tier{padding:10px 10px;gap:10px;}
+    #hb-{{ sid }} .hb-tiername{font-size:15px;}
+    #hb-{{ sid }} .hb-tiersub{font-size:12px;}
+    #hb-{{ sid }} .hb-tierper{font-size:10.5px;margin-top:1px;}
+    #hb-{{ sid }} .hb-tierpill{font-size:8px;padding:4px 7px;gap:3px;margin-top:6px;letter-spacing:.01em;}
+    #hb-{{ sid }} .hb-tierpill svg{width:9px;height:9px;}
+    #hb-{{ sid }} .hb-tierprice b{font-size:17px;}
+    #hb-{{ sid }} .hb-tierprice s{font-size:12px;}
+    #hb-{{ sid }} .hb-tiersave{font-size:11px;}
+    #hb-{{ sid }} .hb-badge{font-size:8.5px;padding:4px 9px;top:-10px;right:10px;}
+    #hb-{{ sid }} .hb-radio{width:20px;height:20px;}
+    #hb-{{ sid }} .hb-tier.sel .hb-radio{border-width:6px;}
+  }
 </style>
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
