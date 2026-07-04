@@ -56,18 +56,37 @@
   #hb-{{ sid }} h1{font-weight:800;font-size:clamp(28px,4.4vw,42px);line-height:1.04;letter-spacing:-.02em;margin:0;}
   #hb-{{ sid }} .hb-sub{color:var(--helios-mut,#56636E);font-size:15.5px;margin:9px 0 0;}
   #hb-{{ sid }} .hb-rate{display:flex;align-items:center;gap:8px;margin:13px 0 16px;font-size:13px;color:var(--helios-mut,#56636E);}
-  #hb-{{ sid }} .hb-price{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;flex-wrap:wrap;}
-  #hb-{{ sid }} .hb-price b{font-weight:900;font-size:34px;color:var(--helios-ink2,#0A1219);}
-  #hb-{{ sid }} .hb-price s{font-size:18px;color:var(--helios-mut,#56636E);}
-  #hb-{{ sid }} .hb-save{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:#fff;background:#1aa86b;padding:5px 10px;border-radius:30px;}
+  #hb-{{ sid }} .hb-top{display:flex;align-items:flex-start;gap:14px;margin:2px 0 13px;}
+  #hb-{{ sid }} .hb-top-left{flex:1 1 auto;min-width:0;}
+  #hb-{{ sid }} .hb-top-div{flex:0 0 auto;align-self:stretch;width:1px;background:rgba(20,26,32,.12);margin:4px 0;}
+  #hb-{{ sid }} .hb-top-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:7px;padding-top:4px;}
+  #hb-{{ sid }} .hb-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0;}
+  #hb-{{ sid }} .hb-price b{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(33px,8.6vw,44px);line-height:1;letter-spacing:-.02em;color:#E11D2A;}
+  #hb-{{ sid }} .hb-price s{font-size:clamp(17px,4.4vw,21px);color:#9aa2ab;font-weight:600;}
+  #hb-{{ sid }} .hb-bundlepill{display:inline-flex;align-items:center;gap:6px;margin-top:11px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:8px 13px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.28);}
+  #hb-{{ sid }} .hb-autodisc{display:flex;align-items:flex-start;gap:8px;margin-top:11px;}
+  #hb-{{ sid }} .hb-autodisc-ck{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:#16a34a;display:grid;place-items:center;margin-top:1px;}
+  #hb-{{ sid }} .hb-autodisc-ck svg{width:12px;height:12px;stroke:#fff;}
+  #hb-{{ sid }} .hb-autodisc b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#15803d;line-height:1.25;}
+  #hb-{{ sid }} .hb-autodisc span{display:block;font-size:12.5px;color:#8a929c;}
+  #hb-{{ sid }} .hb-savebox{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(18px,5vw,22px);color:#15803d;background:#daf3e3;padding:13px 18px;border-radius:14px;white-space:nowrap;text-align:center;letter-spacing:-.01em;}
+  #hb-{{ sid }} .hb-savesub{font-size:13px;font-weight:800;color:#16a34a;white-space:nowrap;}
+  #hb-{{ sid }} .hb-shipbox{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:13px 15px;background:#fff;border:1px solid rgba(20,26,32,.12);border-radius:14px;box-shadow:0 6px 16px -8px rgba(10,20,30,.10);}
+  #hb-{{ sid }} .hb-shipcol{flex:1 1 0;display:flex;align-items:center;gap:10px;min-width:0;}
+  #hb-{{ sid }} .hb-shipcol svg{flex:0 0 auto;color:#0A0D11;}
+  #hb-{{ sid }} .hb-shipcol.ok svg{color:#16a34a;}
+  #hb-{{ sid }} .hb-shipdiv{flex:0 0 auto;width:1px;align-self:stretch;background:rgba(20,26,32,.12);margin:2px 0;}
+  #hb-{{ sid }} .hb-shipcol b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;line-height:1.2;}
+  #hb-{{ sid }} .hb-shipcol.ok b{color:#16a34a;}
+  #hb-{{ sid }} .hb-shipcol span{display:block;font-size:12px;color:#8a929c;}
   #hb-{{ sid }} .hb-1seller{margin:0 0 14px;border-radius:14px;padding:12px 13px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 8px 20px -12px rgba(10,20,30,.12);}
   #hb-{{ sid }} .hb-promo4{display:flex;align-items:center;gap:12px;margin:2px 0 12px;border-radius:14px;padding:11px 13px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 6px 16px -8px rgba(10,20,30,.12);}
-  #hb-{{ sid }} .hb-promo4-left{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+  #hb-{{ sid }} .hb-promo4-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px;}
+  #hb-{{ sid }} .hb-promo4-row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   #hb-{{ sid }} .hb-promo4-tag{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:6px 10px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.3),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;}
   #hb-{{ sid }} .hb-promo4-off{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(20px,5.4vw,26px);line-height:1;letter-spacing:-.01em;color:#E11D2A;white-space:nowrap;}
   #hb-{{ sid }} .hb-flag{height:1.15em;width:auto;border-radius:1.5px;flex:0 0 auto;display:block;box-shadow:0 0 0 .5px rgba(255,255,255,.25);}
-  #hb-{{ sid }} .hb-promo4-mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px;}
-  #hb-{{ sid }} .hb-promo4-applied{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:#0f8a4d;background:#e8f7ef;padding:5px 9px;border-radius:20px;}
+  #hb-{{ sid }} .hb-promo4-applied{display:inline-flex;align-items:center;gap:5px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:#0f8a4d;background:#e8f7ef;padding:5px 9px;border-radius:20px;white-space:nowrap;}
   #hb-{{ sid }} .hb-promo4-sub{font-size:11.5px;line-height:1.35;color:#6b7480;}
   #hb-{{ sid }} .hb-promo4-div{flex:0 0 auto;width:1px;align-self:stretch;background:rgba(20,26,32,.12);}
   #hb-{{ sid }} .hb-promo4-ends{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:#3b444d;white-space:nowrap;}
@@ -99,15 +118,18 @@
   #hb-{{ sid }} .hb-tiers{background:#fff;border:1px solid rgba(20,26,32,.12);border-radius:16px;padding:5px;box-shadow:0 6px 16px -8px rgba(10,20,30,.10);}
   #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:13px;border:2px solid transparent;border-radius:13px;padding:13px 12px;cursor:pointer;position:relative;background:transparent;transition:.16s;margin:0;box-shadow:inset 0 -1px 0 rgba(20,26,32,.09);}
   #hb-{{ sid }} .hb-tier:last-child{box-shadow:none;}
-  #hb-{{ sid }} .hb-tier.sel{border-color:#0A0D11;background:#fff;box-shadow:none;}
+  #hb-{{ sid }} .hb-tier.sel{border-color:#1f6feb;background:#fff;box-shadow:none;}
   #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #cbd3da;flex-shrink:0;transition:.2s;}
-  #hb-{{ sid }} .hb-tier.sel .hb-radio{border:7px solid #0A0D11;}
+  #hb-{{ sid }} .hb-tier.sel .hb-radio{border:7px solid #1f6feb;}
   #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;right:14px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;padding:5px 11px;border-radius:20px;background:linear-gradient(180deg,#2b2f36,#0a0d11)!important;box-shadow:0 4px 10px rgba(10,13,17,.3);}
   #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:800;font-size:16px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:#5b6470;font-weight:600;margin-top:1px;}
+  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:#1f6feb;font-weight:700;margin-top:1px;}
   #hb-{{ sid }} .hb-tierper{display:block;font-size:11.5px;color:#9aa2ab;font-weight:500;margin-top:2px;}
+  #hb-{{ sid }} .hb-tierpill{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:'Archivo',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.02em;text-transform:uppercase;color:#dc2626;background:#fdeaea;padding:5px 9px;border-radius:20px;}
+  #hb-{{ sid }} .hb-tierpill svg{flex:0 0 auto;}
   #hb-{{ sid }} .hb-tierprice{text-align:right;}
   #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:19px;color:#0A0D11;}
+  #hb-{{ sid }} .hb-tier.sel .hb-tierprice b{color:#E11D2A;}
   #hb-{{ sid }} .hb-tierprice s{display:block;font-size:12.5px;color:#9aa2ab;margin-top:1px;}
   #hb-{{ sid }} .hb-tiersave{display:block;font-size:12px;font-weight:800;color:#16a34a;margin-top:2px;}
   #hb-{{ sid }} .hb-add{position:relative;overflow:hidden;display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:#0A1219;color:#fff;border:none;border-radius:16px;padding:18px;font-family:'Archivo';font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 16px 34px rgba(10,18,25,.30);transition:transform .15s;margin-top:6px;}
@@ -207,7 +229,7 @@
     <div class="hb-buy">
       {%- if section.settings.tiktok_badge -%}<span class="hb-ey">▶ As seen on <b style="color:#25f4ee;">TikTok</b></span>{%- endif -%}
 
-      {%- comment -%} #1 seller / best-price card — right after 'As seen on TikTok', before the price {%- endcomment -%}
+      {%- comment -%} #1 seller / best-price card — FINAL, do not restyle {%- endcomment -%}
       {%- if section.settings.show_bestprice -%}
       <div class="hb-1seller">
         <span class="hb-1seller-pill">{{ hb_flag }}#1 Seller in the U.S.</span>
@@ -219,18 +241,39 @@
       </div>
       {%- endif -%}
 
-      <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
-      <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
-      <div class="hb-rate">
-        <span style="color:#f5a623;letter-spacing:1px;">★★★★★</span>
-        <b style="color:var(--helios-ink,#0C1A24);">{{ section.settings.rating | default: '4.8' }}</b> ·
-        <span>{{ section.settings.review_count | default: '3,912' }}+ reviews</span>
+      <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
+
+      {%- comment -%} price + SAVE badge + bundle pill + auto-discount {%- endcomment -%}
+      <div class="hb-top">
+        <div class="hb-top-left">
+          <div class="hb-price">
+            <b id="hb-price-{{ sid }}">{{ cur.price | money }}</b>
+            <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
+          </div>
+          <span class="hb-bundlepill" id="hb-bundlepill-{{ sid }}">📦 FOR 2 SUPER GLIDES (2-PACK)</span>
+          <div class="hb-autodisc">
+            <span class="hb-autodisc-ck"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div><b>Auto discount already applied</b><span>No code required</span></div>
+          </div>
+        </div>
+        <div class="hb-top-div"></div>
+        <div class="hb-top-right">
+          <div class="hb-savebox" id="hb-savebox-{{ sid }}">SAVE 50%</div>
+          <span class="hb-savesub" id="hb-savesub-{{ sid }}">You save $299.99</span>
+        </div>
       </div>
 
-      <div class="hb-price">
-        <b id="hb-price-{{ sid }}">{{ cur.price | money }}</b>
-        {%- if cur.compare_at_price > cur.price -%}<s id="hb-cmp-{{ sid }}">{{ cur.compare_at_price | money }}</s>{%- endif -%}
-        <span class="hb-save" id="hb-savepct-{{ sid }}"></span>
+      {%- comment -%} free shipping / in stock {%- endcomment -%}
+      <div class="hb-shipbox">
+        <div class="hb-shipcol">
+          <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4.5h12v10H1z"/><path d="M13 8h4l4 4v2.5h-8"/><circle cx="5.5" cy="17.5" r="1.9"/><circle cx="17" cy="17.5" r="1.9"/></svg>
+          <div><b>Free shipping</b><span>Dispatched in 24–48 hours</span></div>
+        </div>
+        <div class="hb-shipdiv"></div>
+        <div class="hb-shipcol ok">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <div><b>In stock</b><span>Ready to ship</span></div>
+        </div>
       </div>
 
       {%- if section.settings.show_countdown -%}
@@ -294,8 +337,11 @@
               {%- assign tcompare = bv.compare_at_price | default: block.settings.fallback_compare | plus: 0 -%}
               {%- assign saveamt = tcompare | minus: tprice -%}
               {%- assign perunit = tprice | divided_by: qty -%}
+              {%- assign pilltxt = 'FOR ' | append: block.settings.label | upcase -%}
+              {%- if qty == 2 -%}{%- assign pilltxt = pilltxt | append: ' (2-PACK)' -%}{%- endif -%}
+              {%- if qty == 4 -%}{%- assign pilltxt = pilltxt | append: ' (2+2)' -%}{%- endif -%}
               <label class="hb-tier{% if block.settings.preselect %} sel{% endif %}" data-tier="double"
-                     data-vid="{{ bv.id | default: vid }}" data-price="{{ tprice }}" data-compare="{{ tcompare }}"
+                     data-vid="{{ bv.id | default: vid }}" data-price="{{ tprice }}" data-compare="{{ tcompare }}" data-pill="{{ pilltxt }}"
                      {{ block.shopify_attributes }}>
                 {%- if block.settings.badge != blank -%}
                   <span class="hb-badge" style="background:{% if block.settings.badge_style == 'teal' %}var(--helios-teal,#2FC1D6){% else %}linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6)){% endif %};">{{ block.settings.badge }}</span>
@@ -305,6 +351,7 @@
                   <span class="hb-tiername">{{ block.settings.label | default: bv.title }}</span>
                   {%- if block.settings.sublabel != blank -%}<span class="hb-tiersub">{{ block.settings.sublabel }}</span>{%- endif -%}
                   <span class="hb-tierper">{{ perunit | money }} each</span>
+                  {%- if qty == 2 or qty == 4 -%}<span class="hb-tierpill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.6 13.4-7.2 7.2a2 2 0 0 1-2.8 0L3 12.9V4h8.9l8.7 8.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.6" cy="7.6" r="1.3" fill="currentColor" stroke="none"/></svg>{{ pilltxt }}</span>{%- endif -%}
                 </div>
                 <div class="hb-tierprice">
                   <b>{{ tprice | money }}</b>
@@ -319,12 +366,12 @@
         {%- comment -%} 4th of July auto-coupon advert — right above the buy buttons {%- endcomment -%}
         {%- if section.settings.show_promo4 -%}
         <div class="hb-promo4">
-          <div class="hb-promo4-left">
-            <span class="hb-promo4-tag">{{ hb_flag }}{{ section.settings.promo4_tag | default: '4TH OF JULY' | upcase }}</span>
+          <div class="hb-promo4-main">
+            <div class="hb-promo4-row1">
+              <span class="hb-promo4-tag">{{ hb_flag }}{{ section.settings.promo4_tag | default: '4TH OF JULY' | upcase }}</span>
+              <span class="hb-promo4-applied"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Auto discount applied</span>
+            </div>
             <b class="hb-promo4-off">{{ section.settings.promo4_amount | default: '$21.99' }} OFF</b>
-          </div>
-          <div class="hb-promo4-mid">
-            <span class="hb-promo4-applied"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Auto discount applied</span>
             <span class="hb-promo4-sub">Automatically applied at checkout.<br>No code required.</span>
           </div>
           <div class="hb-promo4-div"></div>
@@ -411,7 +458,9 @@
   var total = document.getElementById('hb-total-{{ sid }}');
   var price = document.getElementById('hb-price-{{ sid }}');
   var cmp = document.getElementById('hb-cmp-{{ sid }}');
-  var savePct = document.getElementById('hb-savepct-{{ sid }}');
+  var savebox = document.getElementById('hb-savebox-{{ sid }}');
+  var savesub = document.getElementById('hb-savesub-{{ sid }}');
+  var bundlepill = document.getElementById('hb-bundlepill-{{ sid }}');
   var tiers = root.querySelectorAll('.hb-tier');
   function selectTier(t){
     tiers.forEach(function(x){ x.classList.remove('sel'); });
@@ -421,7 +470,10 @@
     if(total) total.textContent = money(p);
     if(price) price.textContent = money(p);
     if(cmp){ if(c>p){ cmp.style.display=''; cmp.textContent = money(c); } else cmp.style.display='none'; }
-    if(savePct){ if(c>p){ savePct.style.display=''; savePct.textContent = 'SAVE ' + Math.round((1-p/c)*100) + '%'; } else savePct.style.display='none'; }
+    var pct = c>p ? Math.round((1-p/c)*100) : 0;
+    if(savebox){ if(pct>0){ savebox.style.display=''; savebox.textContent = 'SAVE ' + pct + '%'; } else savebox.style.display='none'; }
+    if(savesub){ if(c>p){ savesub.style.display=''; savesub.textContent = 'You save ' + money(c-p); } else savesub.style.display='none'; }
+    if(bundlepill && t.dataset.pill){ bundlepill.textContent = '📦 ' + t.dataset.pill; }
     try{ var u=new URL(window.location); u.searchParams.set('variant', t.dataset.vid); history.replaceState({}, '', u); }catch(e){}
     window.dispatchEvent(new CustomEvent('helios:variant', { detail: { id: t.dataset.vid, price: money(p), compare: c>p ? money(c) : '' } }));
   }
