@@ -69,7 +69,7 @@
     "gk_home_hero_ePQRCg": {
       "type": "gk-home-hero",
       "settings": {
-        "hero_video": "shopify://files/videos/snaptik_7632078520100850974_v3.mp4",
+        "hero_video": "",
         "hero_video_url": "",
         "eyebrow": "introducing glo",
         "heading": "smooth skin, on your schedule",
@@ -106,7 +106,7 @@
       "type": "gk-editorial",
       "settings": {
         "layout": "split",
-        "image": "shopify://shop_images/b9f3efd7-7342-4939-a354-03da9aca7ed5.png",
+        "image": "",
         "eyebrow": "the technology",
         "heading": "engineered like a beauty tool. tested like a medical device.",
         "body": "a contact + contrast sensor reads your skin before every flash, so glo only fires when it's safe to. fda-cleared, dermatologist-tested, and quiet enough for a sunday morning.",
