@@ -154,7 +154,17 @@
   #hb-{{ sid }} .hb-byo{margin:0 0 12px;border:1px dashed rgba(20,26,32,.24);border-radius:14px;overflow:hidden;background:#fbfcfd;}
   #hb-{{ sid }} .hb-byo-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:none;padding:12px 14px;cursor:pointer;text-align:left;}
   #hb-{{ sid }} .hb-byo-tt b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
+  #hb-{{ sid }} .hb-byo-tt{flex:1;min-width:0;}
   #hb-{{ sid }} .hb-byo-tt em{display:block;font-style:normal;font-size:11.5px;color:#6b7480;margin-top:1px;}
+  #hb-{{ sid }} .hb-byo-tt em strong{color:#15803d;font-weight:800;}
+  #hb-{{ sid }} .hb-byo-badge{flex:0 0 auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;color:#fff;background:linear-gradient(180deg,#1e9f5c,#127a44);padding:5px 9px;border-radius:20px;white-space:nowrap;box-shadow:0 3px 8px rgba(18,122,68,.3);}
+  #hb-{{ sid }} .hb-byo-banner{margin:2px 0 8px;padding:9px 11px;background:#eafaf0;border:1px solid rgba(22,163,74,.25);border-radius:10px;font-size:12px;color:#15803d;line-height:1.35;}
+  #hb-{{ sid }} .hb-byo-banner b{font-weight:800;}
+  #hb-{{ sid }} .hb-byo-price{font-weight:600;}
+  #hb-{{ sid }} .hb-byo-sum{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:11px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
+  #hb-{{ sid }} .hb-byo-sum s{color:#9aa2ab;font-weight:600;}
+  #hb-{{ sid }} .hb-byo-sum b{color:#E11D2A;}
+  #hb-{{ sid }} .hb-byo-savepill{font-size:10px;font-weight:800;color:#15803d;background:#daf3e3;padding:4px 8px;border-radius:20px;letter-spacing:.02em;}
   #hb-{{ sid }} .hb-byo-chev{color:#6b7480;flex:0 0 auto;transition:transform .2s;}
   #hb-{{ sid }} .hb-byo.open .hb-byo-chev{transform:rotate(180deg);}
   #hb-{{ sid }} .hb-byo-body{padding:0 12px 12px;}
@@ -420,25 +430,28 @@
         {%- assign byo_jet = all_products['helios-wave-rider'] -%}
         <div class="hb-byo" id="hb-byo-{{ sid }}">
           <button type="button" class="hb-byo-toggle" id="hb-byo-toggle-{{ sid }}" aria-expanded="false">
-            <span class="hb-byo-tt"><b>🎨 Build your own bundle</b><em>Mix Super Glide, Mini &amp; Jet Ski — any combo</em></span>
+            <span class="hb-byo-tt"><b>🎨 Build your own bundle</b><em>Mix &amp; match — <strong>50% OFF</strong> the whole combo</em></span>
+            <span class="hb-byo-badge">50% OFF</span>
             <svg class="hb-byo-chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
           </button>
           <div class="hb-byo-body" id="hb-byo-body-{{ sid }}" hidden>
-            <div class="hb-byo-row" data-vid="47945658269861" data-price="25999">
+            <div class="hb-byo-banner">🎉 Pick any combo below — you pay just <b>50% of the total</b>. Discount auto-applies at checkout.</div>
+            <div class="hb-byo-row" data-vids="47945658269861,47935890817189,47935890849957,47935890882725" data-prices="25999,29999,49900,59999">
               {%- if byo_sg.featured_image != blank -%}<img class="hb-byo-img" src="{{ byo_sg.featured_image | image_url: width: 120 }}" alt="Super Glide">{%- endif -%}
-              <div class="hb-byo-info"><b>Super Glide</b><span>$259.99</span></div>
+              <div class="hb-byo-info"><b>Super Glide</b><span class="hb-byo-price">$259.99</span></div>
               <div class="hb-byo-step"><button type="button" data-dec aria-label="Remove one">&minus;</button><span data-qty>0</span><button type="button" data-inc aria-label="Add one">+</button></div>
             </div>
-            <div class="hb-byo-row" data-vid="47950354743461" data-price="12999">
+            <div class="hb-byo-row" data-vids="47950354743461,47950354776229,47950354808997" data-prices="12999,16999,21699">
               {%- if byo_mini.featured_image != blank -%}<img class="hb-byo-img" src="{{ byo_mini.featured_image | image_url: width: 120 }}" alt="Mini Glide">{%- endif -%}
-              <div class="hb-byo-info"><b>Mini Glide</b><span>$129.99</span></div>
+              <div class="hb-byo-info"><b>Mini Glide</b><span class="hb-byo-price">$129.99</span></div>
               <div class="hb-byo-step"><button type="button" data-dec aria-label="Remove one">&minus;</button><span data-qty>0</span><button type="button" data-inc aria-label="Add one">+</button></div>
             </div>
-            <div class="hb-byo-row" data-vid="47951634923685" data-price="24999">
+            <div class="hb-byo-row" data-vids="47951634923685,47951634956453,47951634989221" data-prices="24999,45999,68999">
               {%- if byo_jet.featured_image != blank -%}<img class="hb-byo-img" src="{{ byo_jet.featured_image | image_url: width: 120 }}" alt="HELIOS Jet Ski">{%- endif -%}
-              <div class="hb-byo-info"><b>HELIOS Jet Ski</b><span>$249.99</span></div>
+              <div class="hb-byo-info"><b>HELIOS Jet Ski</b><span class="hb-byo-price">$249.99</span></div>
               <div class="hb-byo-step"><button type="button" data-dec aria-label="Remove one">&minus;</button><span data-qty>0</span><button type="button" data-inc aria-label="Add one">+</button></div>
             </div>
+            <div class="hb-byo-sum" id="hb-byo-sum-{{ sid }}" hidden>Bundle total: <s id="hb-byo-reg-{{ sid }}"></s> <b id="hb-byo-disc-{{ sid }}"></b> <span class="hb-byo-savepill">50% OFF</span></div>
             <button type="button" class="hb-byo-add" id="hb-byo-add-{{ sid }}" disabled>Add my bundle · <span id="hb-byo-total-{{ sid }}">$0.00</span></button>
           </div>
         </div>
@@ -533,13 +546,16 @@
   })();
   var money = function(cents){ return '{{ shop.money_format | strip_html }}'.replace(/\{\{\s*amount\s*\}\}/, (cents/100).toFixed(2)).replace(/\{\{\s*amount_no_decimals\s*\}\}/, Math.round(cents/100)); };
 
-  /* ---- build-your-own bundle: steppers + live total + AJAX multi-add ---- */
+  /* ---- build-your-own bundle: qty→bundle-variant, 50% total, apply MIXBUNDLE50 ---- */
   (function(){
     var byo = document.getElementById('hb-byo-{{ sid }}'); if(!byo) return;
     var toggle = document.getElementById('hb-byo-toggle-{{ sid }}');
     var body = document.getElementById('hb-byo-body-{{ sid }}');
     var addBtn = document.getElementById('hb-byo-add-{{ sid }}');
     var totalEl = document.getElementById('hb-byo-total-{{ sid }}');
+    var sumEl = document.getElementById('hb-byo-sum-{{ sid }}');
+    var regEl = document.getElementById('hb-byo-reg-{{ sid }}');
+    var discEl = document.getElementById('hb-byo-disc-{{ sid }}');
     var rows = Array.prototype.slice.call(byo.querySelectorAll('.hb-byo-row'));
     if(toggle) toggle.addEventListener('click', function(){
       var open = byo.classList.toggle('open');
@@ -547,26 +563,35 @@
       if(body) body.hidden = !open;
     });
     function recalc(){
-      var total = 0, count = 0;
-      rows.forEach(function(r){ var q = parseInt(r.querySelector('[data-qty]').textContent,10)||0; total += q*(parseInt(r.dataset.price,10)||0); count += q; });
-      if(totalEl) totalEl.textContent = money(total);
-      if(addBtn) addBtn.disabled = count === 0;
+      var reg = 0, count = 0;
+      rows.forEach(function(r){
+        var q = parseInt(r.querySelector('[data-qty]').textContent,10)||0;
+        var prices = r.dataset.prices.split(',');
+        var priceEl = r.querySelector('.hb-byo-price');
+        if(q>0){ reg += parseInt(prices[q-1],10)||0; count++; if(priceEl){ priceEl.textContent = money(parseInt(prices[q-1],10)||0); priceEl.style.opacity='1'; } }
+        else if(priceEl){ priceEl.textContent = money(parseInt(prices[0],10)||0); priceEl.style.opacity='.5'; }
+      });
+      var disc = Math.round(reg/2);
+      if(totalEl) totalEl.textContent = money(disc);
+      if(regEl) regEl.textContent = money(reg);
+      if(discEl) discEl.textContent = money(disc);
+      if(sumEl) sumEl.hidden = count===0;
+      if(addBtn) addBtn.disabled = count===0;
     }
     rows.forEach(function(r){
       var qEl = r.querySelector('[data-qty]');
-      r.querySelector('[data-inc]').addEventListener('click', function(){ qEl.textContent = (parseInt(qEl.textContent,10)||0)+1; recalc(); });
+      var max = r.dataset.vids.split(',').length;
+      r.querySelector('[data-inc]').addEventListener('click', function(){ var v=(parseInt(qEl.textContent,10)||0); if(v<max){ qEl.textContent=v+1; recalc(); } });
       r.querySelector('[data-dec]').addEventListener('click', function(){ var v=(parseInt(qEl.textContent,10)||0); if(v>0){ qEl.textContent=v-1; recalc(); } });
     });
     if(addBtn) addBtn.addEventListener('click', function(){
-      var items = [];
-      rows.forEach(function(r){ var q = parseInt(r.querySelector('[data-qty]').textContent,10)||0; if(q>0) items.push({ id: parseInt(r.dataset.vid,10), quantity: q }); });
-      if(!items.length) return;
+      var parts = [];
+      rows.forEach(function(r){ var q = parseInt(r.querySelector('[data-qty]').textContent,10)||0; if(q>0){ var vids=r.dataset.vids.split(','); parts.push(vids[q-1]+':1'); } });
+      if(!parts.length) return;
       addBtn.disabled = true; addBtn.textContent = 'Adding…';
-      fetch('/cart/add.js', { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({ items: items }) })
-        .then(function(res){ return res.json(); })
-        .then(function(){ window.location.href = '/cart'; })
-        .catch(function(){ addBtn.disabled = false; addBtn.textContent = 'Try again'; });
+      window.location.href = '/cart/' + parts.join(',') + '?discount=MIXBUNDLE50';
     });
+    recalc();
   })();
 
   /* ---- bundle tiers → hidden variant id + total + savings ---- */
