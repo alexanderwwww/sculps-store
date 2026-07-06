@@ -54,8 +54,16 @@
   #hb-{{ sid }} .hb-thumb img,#hb-{{ sid }} .hb-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
   #hb-{{ sid }} .hb-ey{display:inline-flex;align-items:center;gap:7px;background:#0C1A24;color:#fff;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:30px;margin-bottom:14px;}
   #hb-{{ sid }} h1{font-weight:800;font-size:clamp(28px,4.4vw,42px);line-height:1.04;letter-spacing:-.02em;margin:0;}
-  #hb-{{ sid }} .hb-sub{color:var(--helios-mut,#56636E);font-size:15.5px;margin:9px 0 0;}
-  #hb-{{ sid }} .hb-rate{display:flex;align-items:center;gap:8px;margin:13px 0 16px;font-size:13px;color:var(--helios-mut,#56636E);}
+  #hb-{{ sid }} .hb-sub{color:#5B6470;font-size:15px;line-height:1.5;margin:8px 0 0;max-width:480px;}
+  #hb-{{ sid }} .hb-eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#3E5568;margin-bottom:5px;}
+  #hb-{{ sid }} .hb-pills{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;}
+  #hb-{{ sid }} .hb-pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#1F6B4A;background:rgba(74,190,140,.14);border:1px solid rgba(74,190,140,.38);border-radius:100px;padding:7px 13px;}
+  #hb-{{ sid }} .hb-pill::before{content:"✓";font-size:11px;}
+  #hb-{{ sid }} .hb-rate{display:flex;align-items:center;gap:6px;margin:14px 0 16px;font-size:13px;color:#5B6470;text-decoration:none;}
+  #hb-{{ sid }} .hb-priceline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 18px;}
+  #hb-{{ sid }} .hb-price-main{font-family:'Archivo',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.02em;color:#0A0D11;}
+  #hb-{{ sid }} .hb-priceline s{font-size:18px;color:#9aa2ab;font-weight:600;}
+  #hb-{{ sid }} .hb-savesub{font-size:12.5px;font-weight:700;color:#16a34a;}
   #hb-{{ sid }} .hb-top{display:flex;align-items:flex-start;gap:13px;margin:2px 0 9px;}
   #hb-{{ sid }} .hb-top-left{flex:1 1 auto;min-width:0;}
   #hb-{{ sid }} .hb-top-div{flex:0 0 auto;align-self:stretch;width:1px;background:rgba(20,26,32,.12);margin:4px 0;}
@@ -288,58 +296,28 @@
 
     {%- comment -%} ---------- BUY ---------- {%- endcomment -%}
     <div class="hb-buy">
-      {%- if section.settings.tiktok_badge -%}<span class="hb-ey">▶ As seen on <b style="color:#25f4ee;">TikTok</b></span>{%- endif -%}
-
-      {%- comment -%} product title / rating / subtitle — visible, above the #1 seller card {%- endcomment -%}
+      {%- comment -%} clean, Glo-style header {%- endcomment -%}
+      <div class="hb-eyebrow">{{ section.settings.eyebrow | default: 'The motorized water lounger' }}</div>
       <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
-      <div class="hb-rate">
-        <span style="color:#f5a623;letter-spacing:1px;">★★★★★</span>
-        <b style="color:var(--helios-ink,#0C1A24);">{{ section.settings.rating | default: '4.8' }}</b> ·
-        <span>{{ section.settings.review_count | default: '3,912' }}+ reviews</span>
-      </div>
       <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
 
-      {%- comment -%} #1 seller / best-price card — FINAL, do not restyle {%- endcomment -%}
-      {%- if section.settings.show_bestprice -%}
-      <div class="hb-1seller">
-        <span class="hb-1seller-pill">{{ hb_flag }}#1 Seller in the U.S.</span>
-        <div class="hb-1seller-vf">🔒 Lowest price, guaranteed</div>
-        <div class="hb-1seller-tx">
-          <b>The best price in the country.</b>
-          <p>Everyone else charges <s>$350 each</s> for a single lounger. Get our <em>2-pack for just $299</em> — two loungers for less than one of theirs.</p>
-        </div>
-      </div>
-      {%- endif -%}
-
-      {%- comment -%} price + SAVE badge + bundle pill + auto-discount {%- endcomment -%}
-      <div class="hb-top">
-        <div class="hb-top-left">
-          <div class="hb-price">
-            <b id="hb-price-{{ sid }}">{{ cur.price | money }}</b>
-            <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
-          </div>
-          <span class="hb-bundlepill" id="hb-bundlepill-{{ sid }}">📦 FOR 2 SUPER GLIDES (2-PACK)</span>
-          <div class="hb-autodisc">
-            <span class="hb-autodisc-ck"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-            <div><b>Auto discount already applied</b><span>No code required</span></div>
-          </div>
-        </div>
-        <div class="hb-top-div"></div>
-        <div class="hb-top-right">
-          <div class="hb-savebox" id="hb-savebox-{{ sid }}">SAVE 50%</div>
-          <span class="hb-savesub" id="hb-savesub-{{ sid }}">You save $299.99</span>
-        </div>
+      <div class="hb-pills">
+        <span class="hb-pill">{{ section.settings.pill_1 | default: 'Hands-free thrusters' }}</span>
+        <span class="hb-pill">{{ section.settings.pill_2 | default: 'Fits the whole family' }}</span>
+        <span class="hb-pill">{{ section.settings.pill_3 | default: 'Inflates in ~5 min' }}</span>
       </div>
 
-      {%- comment -%} ONE slim shipping / stock pill {%- endcomment -%}
-      <div class="hb-shipbox">
-        <span class="hb-shipcol"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5.5h11v9H1z"/><path d="M12 8.5h4l4 4v2h-8"/><circle cx="5" cy="16.5" r="1.7"/><circle cx="16.5" cy="16.5" r="1.7"/></svg><b>Free shipping</b><i>· dispatched in 24–48 hrs</i></span>
-        <span class="hb-shipcol ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><b>In stock</b><i>· ready to ship</i></span>
-      </div>
+      <a href="#reviews" class="hb-rate">
+        <span style="color:#f5a623;letter-spacing:1px;">★★★★★</span>
+        <b style="color:var(--helios-ink,#0C1A24);">{{ section.settings.rating | default: '4.8' }}</b>
+        <span>· {{ section.settings.review_count | default: '3,912' }}+ reviews</span>
+      </a>
 
-      {%- if section.settings.show_countdown -%}
-        <div class="hb-timer">⚡ Flash sale ends <span id="hb-cd-{{ sid }}">--:--:--</span></div>
-      {%- endif -%}
+      <div class="hb-priceline">
+        <b class="hb-price-main" id="hb-price-{{ sid }}">{{ cur.price | money }}</b>
+        <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
+        <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
+      </div>
 
       {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
       {%- assign hb_form_id = 'hb-form-' | append: sid -%}
