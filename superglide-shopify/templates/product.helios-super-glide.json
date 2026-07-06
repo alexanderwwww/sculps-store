@@ -11,6 +11,7 @@
   "sections": {
     "announcement": {
       "type": "helios-announcement",
+      "disabled": true,
       "settings": {
         "message": "<h3><strong> 12% OFF SITE-WIDE — code SUPERGLIDEIT FOR 12% · FREE SHIPPING ·  30-DAY MONEY-BACK ·  BUY 1 GET 1 FREE</strong></h3>"
       }
@@ -108,6 +109,13 @@
         "live_viewers": 58,
         "sold_today": 202,
         "show_toasts": false
+      }
+    },
+    "bundlebuilder": {
+      "type": "helios-bundle-builder",
+      "settings": {
+        "heading": "Frequently bought together",
+        "subheading": "Build your set — add the crew’s favorites and check out in one tap."
       }
     },
     "reviewcarousel": {
@@ -275,6 +283,7 @@
     "announcement",
     "header",
     "buybox",
+    "bundlebuilder",
     "reviewcarousel",
     "tiktok",
     "reviews",
