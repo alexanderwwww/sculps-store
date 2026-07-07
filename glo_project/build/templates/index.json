@@ -2,24 +2,62 @@
   "sections": {
     "hero": {
       "type": "gk-home-hero",
-      "settings": {}
+      "settings": {
+        "hero_video": "shopify://files/videos/snaptik_7632078520100850974_v3.mp4",
+        "hero_video_url": "",
+        "poster": "shopify://shop_images/bbe22dcb-06f6-449f-8b21-d8f4ab06ee68.png",
+        "eyebrow": "introducing glo",
+        "heading": "smooth skin, on your schedule",
+        "subtext": "salon-grade ipl hair removal, redesigned for home. quiet, cordless, and clinically shown to reduce regrowth in 4 weeks.",
+        "button_label": "shop glo — $129.99",
+        "button_link": "",
+        "rating_text": "4.8 · 1,240 reviews"
+      }
     },
     "label": {
       "type": "gk-label",
-      "settings": {}
+      "settings": {
+        "text": "quiet · cordless · clinically proven",
+        "color": "#5b6470",
+        "bg": "#ffffff"
+      }
     },
     "featured": {
       "type": "gk-featured",
-      "settings": {}
+      "settings": {
+        "image": "shopify://shop_images/afffe9f7-f547-4d11-a2f9-682d622e694d.png",
+        "eyebrow": "the device",
+        "heading": "glo",
+        "body": "a flash-sensing ipl handset with a rose-gold flash head, quiet motor, and a 40-minute battery — enough for a full-body session on one charge. one device, every zone, week after week.",
+        "highlights": "flash-sensing head, auto-fires on contact\n40-minute battery, full body on one charge\ncontact + contrast safety sensor, fda-cleared\nincludes precision razor & protective eyewear",
+        "price": "$129.99",
+        "button_label": "shop glo",
+        "button_link": "",
+        "bg": "#ffffff"
+      }
     },
     "results": {
       "type": "gk-before-after",
-      "settings": {}
+      "settings": {
+        "eyebrow": "clinic results. home comfort.",
+        "heading": "visible results in as little as 1 week.",
+        "image": "shopify://shop_images/84c36cae-1350-43fa-86ac-7a4fca7b7e59_1.png",
+        "subtext": "",
+        "max_width": 1200,
+        "placeholder_ratio": "16/9",
+        "bg": "#ffffff"
+      }
     },
     "editorial": {
       "type": "gk-editorial",
       "settings": {
-        "layout": "overlay"
+        "layout": "overlay",
+        "image": "shopify://shop_images/824487bd-483b-408b-9248-fab7674734f2.png",
+        "eyebrow": "the technology",
+        "heading": "engineered like a beauty tool. tested like a medical device.",
+        "body": "a contact + contrast sensor reads your skin before every flash, so glo only fires when it's safe to. fda-cleared, dermatologist-tested, and quiet enough for a sunday morning.",
+        "button_label": "shop glo",
+        "button_link": ""
       }
     },
     "schedule": {
@@ -55,7 +93,17 @@
         "b2",
         "b3"
       ],
-      "settings": {}
+      "settings": {
+        "eyebrow": "the glo protocol",
+        "heading": "for best results, follow exactly this schedule",
+        "subtext": "consistency is everything with ipl. here's the exact cadence our best results followed — save it straight to your notes.",
+        "note_title": "glo schedule ✨",
+        "areas": "face · underarms · arms · legs · bikini",
+        "dl_label": "download image",
+        "button_label": "save to your notes",
+        "file_name": "glo-schedule",
+        "bg": "#ffffff"
+      }
     },
     "stats": {
       "type": "gk-stats",
@@ -87,7 +135,10 @@
         "b2",
         "b3"
       ],
-      "settings": {}
+      "settings": {
+        "note": "*results from an 8-week independent consumer-use study of 132 participants using glo at home, 2 sessions per week. individual results vary.",
+        "bg": "#f4f6f8"
+      }
     },
     "videos": {
       "type": "gk-video-testimonials",
@@ -95,6 +146,8 @@
         "b1": {
           "type": "screen",
           "settings": {
+            "video": "shopify://files/videos/216.mp4",
+            "video_url": "",
             "fallback": "testimonial-1.mp4",
             "caption": "tap for sound"
           }
@@ -102,6 +155,7 @@
         "b2": {
           "type": "screen",
           "settings": {
+            "video_url": "",
             "fallback": "testimonial-2.mp4",
             "caption": "tap for sound"
           }
@@ -111,7 +165,12 @@
         "b1",
         "b2"
       ],
-      "settings": {}
+      "settings": {
+        "eyebrow": "real people, real glo",
+        "heading": "watch them try it",
+        "logo_text": "glo",
+        "bg": "#f4f6f8"
+      }
     },
     "triptych": {
       "type": "gk-triptych",
@@ -119,28 +178,28 @@
         "b1": {
           "type": "item",
           "settings": {
+            "image": "shopify://shop_images/b9f3efd7-7342-4939-a354-03da9aca7ed5_1.png",
             "caption": "the full kit"
-          }
-        },
-        "b2": {
-          "type": "item",
-          "settings": {
-            "caption": "flash caps"
           }
         },
         "b3": {
           "type": "item",
           "settings": {
+            "image": "shopify://shop_images/56e9fced-57e0-4b25-86af-1c0134630dd3.png",
             "caption": "the unboxing"
           }
         }
       },
       "block_order": [
         "b1",
-        "b2",
         "b3"
       ],
-      "settings": {}
+      "settings": {
+        "heading": "everything in the box",
+        "link_label": "see all photos",
+        "link_url": "",
+        "bg": "#ffffff"
+      }
     },
     "values": {
       "type": "gk-values",
@@ -172,7 +231,13 @@
         "b2",
         "b3"
       ],
-      "settings": {}
+      "settings": {
+        "image": "shopify://shop_images/aac3d526-7512-464f-b03e-65f7224065c9.png",
+        "statement": "we help you restore, protect, and reveal smoother skin — on your own schedule, at home.",
+        "button_label": "learn more",
+        "button_link": "",
+        "bg": "#f4f6f8"
+      }
     },
     "reviews": {
       "type": "gk-reviews",
@@ -240,7 +305,12 @@
         "b5",
         "b6"
       ],
-      "settings": {}
+      "settings": {
+        "heading": "what people are saying",
+        "speed": 46,
+        "bg": "#ffffff",
+        "card_bg": "#f4f6f8"
+      }
     }
   },
   "order": [
