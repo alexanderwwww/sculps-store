@@ -265,15 +265,17 @@
       <div class="hb-stage" id="hb-stage-{{ sid }}" data-track>
         {%- assign mainimg = product.featured_image | default: section.settings.lead_image -%}
         {%- assign nimg = product.images.size -%}
+        {%- capture hb_vidcell -%}<div class="hb-cell" data-slide="vid"><video muted loop playsinline preload="none"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>{%- endcapture -%}
         {%- if nimg > 0 -%}
           {%- for img in product.images -%}
             <div class="hb-cell" data-slide="{{ forloop.index0 }}"><img src="{{ img | image_url: width: 700 }}" srcset="{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 700 }} 700w, {{ img | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="{{ product.title | escape }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async"{% if forloop.first %} fetchpriority="high"{% endif %}></div>
+            {%- if forloop.first and section.settings.lead_video != blank -%}{{ hb_vidcell }}{%- endif -%}
           {%- endfor -%}
         {%- elsif mainimg != blank -%}
           <div class="hb-cell" data-slide="0"><img src="{{ mainimg | image_url: width: 700 }}" srcset="{{ mainimg | image_url: width: 400 }} 400w, {{ mainimg | image_url: width: 700 }} 700w, {{ mainimg | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="{{ product.title | escape }}" loading="eager" fetchpriority="high"></div>
-        {%- endif -%}
-        {%- if section.settings.lead_video != blank -%}
-          <div class="hb-cell" data-slide="vid"><video muted loop playsinline preload="none"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>
+          {%- if section.settings.lead_video != blank -%}{{ hb_vidcell }}{%- endif -%}
+        {%- elsif section.settings.lead_video != blank -%}
+          {{ hb_vidcell }}
         {%- endif -%}
         {%- if nimg == 0 and mainimg == blank and section.settings.lead_video == blank -%}
           <div class="hb-cell" data-slide="0"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--helios-mut,#56636E);padding:24px;"><span style="width:58px;height:58px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-4.5-4.5L7 21"/></svg></span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add your demo video or photos</div><div style="font-size:12px;opacity:.75;">Product → Media · the first one shows here</div></div></div>
