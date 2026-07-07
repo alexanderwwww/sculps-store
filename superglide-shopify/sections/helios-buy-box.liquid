@@ -59,7 +59,9 @@
   #hb-{{ sid }} .hb-pills{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;}
   #hb-{{ sid }} .hb-pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#1F6B4A;background:rgba(74,190,140,.14);border:1px solid rgba(74,190,140,.38);border-radius:100px;padding:7px 13px;}
   #hb-{{ sid }} .hb-pill::before{content:"✓";font-size:11px;}
-  #hb-{{ sid }} .hb-rate{display:flex;align-items:center;gap:6px;margin:14px 0 16px;font-size:13px;color:#5B6470;text-decoration:none;}
+  #hb-{{ sid }} .hb-rate{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;margin:12px 0 18px;font-size:13.5px;color:#5B6470;text-decoration:none;}
+  #hb-{{ sid }} .hb-rate .hb-metadot{color:#c5ccd4;}
+  #hb-{{ sid }} .hb-rate .hb-metaspec{color:#5B6470;font-weight:500;}
   #hb-{{ sid }} .hb-priceline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 18px;}
   #hb-{{ sid }} .hb-price-main{font-family:'Archivo',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.02em;color:#0A0D11;}
   #hb-{{ sid }} .hb-priceline s{font-size:18px;color:#9aa2ab;font-weight:600;}
@@ -122,31 +124,29 @@
   #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
   #hb-{{ sid }} .hb-chip{font-size:11.5px;font-weight:700;color:var(--helios-ink,#0C1A24);background:rgba(14,124,196,.08);border:1px solid rgba(14,124,196,.16);border-radius:30px;padding:5px 10px;white-space:nowrap;}
   #hb-{{ sid }} .hb-timer{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));backdrop-filter:var(--helios-g-blur);padding:7px 12px;border-radius:9px;margin-bottom:16px;}
-  #hb-{{ sid }} .hb-tiers{background:#fff;border:1px solid rgba(20,26,32,.12);border-radius:16px;padding:5px;box-shadow:0 6px 16px -8px rgba(10,20,30,.10);}
-  #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:13px;border:2px solid transparent;border-radius:13px;padding:13px 12px;cursor:pointer;position:relative;background:transparent;transition:.16s;margin:0;box-shadow:inset 0 -1px 0 rgba(20,26,32,.09);}
-  #hb-{{ sid }} .hb-tier:last-child{box-shadow:none;}
-  #hb-{{ sid }} .hb-tier.sel{border-color:#1f6feb;background:#fff;box-shadow:none;}
-  #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #cbd3da;flex-shrink:0;transition:.2s;}
+  #hb-{{ sid }} .hb-tiers{display:flex;flex-direction:column;gap:11px;background:transparent;border:none;padding:0;box-shadow:none;}
+  #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:13px;border:1.6px solid rgba(20,26,32,.14);border-radius:15px;padding:15px 15px;cursor:pointer;position:relative;background:#fff;transition:.16s;margin:0;box-shadow:0 4px 14px -10px rgba(10,20,30,.16);}
+  #hb-{{ sid }} .hb-tier.sel{border-color:#1f6feb;border-width:2px;background:#F2F7FF;box-shadow:0 0 0 3px rgba(31,111,235,.12);}
+  #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #cbd3da;flex-shrink:0;transition:.2s;background:#fff;}
   #hb-{{ sid }} .hb-tier.sel .hb-radio{border:7px solid #1f6feb;}
-  #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;right:14px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;padding:5px 11px;border-radius:20px;background:linear-gradient(180deg,#2b2f36,#0a0d11)!important;box-shadow:0 4px 10px rgba(10,13,17,.3);}
+  #hb-{{ sid }} .hb-badge{position:absolute;top:-10px;right:14px;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#fff;padding:5px 11px;border-radius:20px;background:#1f6feb;box-shadow:0 5px 12px rgba(31,111,235,.35);}
+  #hb-{{ sid }} .hb-badge.teal{background:#16a34a;box-shadow:0 5px 12px rgba(22,163,74,.35);}
   #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:800;font-size:16px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:#1f6feb;font-weight:700;margin-top:1px;}
+  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:#5B6470;font-weight:500;margin-top:2px;}
   #hb-{{ sid }} .hb-tierper{display:block;font-size:11.5px;color:#9aa2ab;font-weight:500;margin-top:2px;}
-  #hb-{{ sid }} .hb-tierpill{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:'Archivo',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.02em;text-transform:uppercase;color:#dc2626;background:#fdeaea;padding:5px 9px;border-radius:20px;white-space:nowrap;max-width:100%;}
-  #hb-{{ sid }} .hb-tierpill svg{flex:0 0 auto;}
-  #hb-{{ sid }} .hb-tierprice{text-align:right;}
-  #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:19px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-tier.sel .hb-tierprice b{color:#E11D2A;}
-  #hb-{{ sid }} .hb-tierprice s{display:block;font-size:12.5px;color:#9aa2ab;margin-top:1px;}
-  #hb-{{ sid }} .hb-tiersave{display:block;font-size:12px;font-weight:800;color:#16a34a;margin-top:2px;}
-  #hb-{{ sid }} .hb-add{position:relative;overflow:hidden;display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:#0A1219;color:#fff;border:none;border-radius:16px;padding:18px;font-family:'Archivo';font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 16px 34px rgba(10,18,25,.30);transition:transform .15s;margin-top:6px;}
+  #hb-{{ sid }} .hb-tierprice{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+  #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:20px;color:#0A0D11;letter-spacing:-.01em;}
+  #hb-{{ sid }} .hb-tierprice s{font-size:12.5px;color:#9aa2ab;}
+  #hb-{{ sid }} .hb-tierpill{display:inline-flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.02em;color:#fff;background:#E11D2A;padding:3px 8px;border-radius:6px;white-space:nowrap;}
+  #hb-{{ sid }} .hb-add{position:relative;overflow:hidden;display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:#0A1219;color:#fff;border:none;border-radius:16px;padding:18px;font-family:'Archivo';font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 16px 34px rgba(10,18,25,.30);transition:transform .15s;margin-top:14px;}
   #hb-{{ sid }} .hb-add:hover{transform:translateY(-1px);}
   #hb-{{ sid }} .hb-add .hb-sheen{position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:helios-sheen 4.5s ease-in-out infinite;}
   #hb-{{ sid }} .hb-pay{margin-top:11px;}
   #hb-{{ sid }} .hb-pay .shopify-payment-button__button{border-radius:14px !important;font-family:'Archivo',sans-serif !important;font-weight:800 !important;}
   #hb-{{ sid }} .hb-code{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:11px;background:var(--helios-g-bg,rgba(255,255,255,.55));border:1px dashed var(--helios-acc,#0E7CC4);backdrop-filter:var(--helios-g-blur);border-radius:13px;padding:12px 15px;cursor:pointer;transition:.2s;}
   #hb-{{ sid }} .hb-code b{font-family:'Archivo';font-weight:800;font-size:14px;color:var(--helios-accd,#0A5E97);letter-spacing:.04em;display:inline-flex;gap:8px;align-items:center;}
-  #hb-{{ sid }} .hb-trust{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:14px;font-size:12.5px;color:var(--helios-mut,#56636E);text-align:center;flex-wrap:wrap;}
+  #hb-{{ sid }} .hb-trust{display:flex;align-items:center;gap:6px 4px;justify-content:space-between;margin-top:16px;font-size:12px;color:var(--helios-mut,#56636E);text-align:center;flex-wrap:wrap;}
+  #hb-{{ sid }} .hb-trust span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:1;justify-content:center;min-width:88px;}
   #hb-{{ sid }} .hb-pays{display:flex;gap:7px;justify-content:center;margin-top:12px;opacity:.72;flex-wrap:wrap;}
   #hb-{{ sid }} .hb-pays span{font-size:10px;font-weight:700;border:1px solid var(--helios-lins,rgba(12,26,36,.08));border-radius:6px;padding:4px 8px;color:var(--helios-mut,#56636E);}
   #hb-{{ sid }} .hb-eta{display:none;}
@@ -310,7 +310,9 @@
       <a href="#reviews" class="hb-rate">
         <span style="color:#f5a623;letter-spacing:1px;">★★★★★</span>
         <b style="color:var(--helios-ink,#0C1A24);">{{ section.settings.rating | default: '4.8' }}</b>
-        <span>· {{ section.settings.review_count | default: '3,912' }}+ reviews</span>
+        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.review_count | default: '3,912' }} reviews</span>
+        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.meta_1 | default: 'dual thrusters' }}</span>
+        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.meta_2 | default: 'holds 300 lb' }}</span>
       </a>
 
       <div class="hb-priceline">
@@ -350,7 +352,7 @@
               {%- if v.title contains '3' -%}{%- assign mqty = 3 -%}{%- assign msub = 'Best value · the whole crew' -%}{%- assign mbadge = 'Best value' -%}{%- endif -%}
               {%- assign mper = v.price | divided_by: mqty -%}
               <label class="hb-tier{{ msel }}" data-tier="mini" style="display:none;" data-vid="{{ v.id }}" data-price="{{ v.price }}" data-compare="{{ v.compare_at_price }}">
-                {%- if mbadge != blank -%}<span class="hb-badge" style="background:{% if mbadge == 'Best value' %}var(--helios-teal,#2FC1D6){% else %}linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6)){% endif %};">{{ mbadge }}</span>{%- endif -%}
+                {%- if mbadge != blank -%}<span class="hb-badge{% if mbadge == 'Best value' %} teal{% endif %}">{{ mbadge }}</span>{%- endif -%}
                 <span class="hb-radio"></span>
                 <div style="flex:1;">
                   <span class="hb-tiername">{{ mqty }} × Mini Glide</span>
@@ -359,8 +361,7 @@
                 </div>
                 <div class="hb-tierprice">
                   <b>{{ v.price | money }}</b>
-                  {%- if v.compare_at_price > v.price -%}<s>{{ v.compare_at_price | money }}</s>{%- endif -%}
-                  {%- if v.compare_at_price > v.price -%}{%- assign msv = v.compare_at_price | minus: v.price -%}<span class="hb-tiersave">You save {{ msv | money }}</span>{%- endif -%}
+                  {%- if v.compare_at_price > v.price -%}<s>{{ v.compare_at_price | money }}</s>{%- assign mpct = v.price | times: 100 | divided_by: v.compare_at_price | minus: 100 | times: -1 -%}<span class="hb-tierpill">{{ mpct }}% OFF</span>{%- endif -%}
                 </div>
               </label>
             {%- endif -%}
@@ -383,19 +384,17 @@
                      data-vid="{{ bv.id | default: vid }}" data-price="{{ tprice }}" data-compare="{{ tcompare }}" data-pill="{{ pilltxt }}"
                      {{ block.shopify_attributes }}>
                 {%- if block.settings.badge != blank -%}
-                  <span class="hb-badge" style="background:{% if block.settings.badge_style == 'teal' %}var(--helios-teal,#2FC1D6){% else %}linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6)){% endif %};">{{ block.settings.badge }}</span>
+                  <span class="hb-badge{% if block.settings.badge_style == 'teal' %} teal{% endif %}">{{ block.settings.badge }}</span>
                 {%- endif -%}
                 <span class="hb-radio"></span>
                 <div style="flex:1;">
                   <span class="hb-tiername">{{ block.settings.label | default: bv.title }}</span>
                   {%- if block.settings.sublabel != blank -%}<span class="hb-tiersub">{{ block.settings.sublabel }}</span>{%- endif -%}
                   <span class="hb-tierper">{{ perunit | money }} each</span>
-                  {%- if qty == 2 or qty == 4 -%}<span class="hb-tierpill"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.6 13.4-7.2 7.2a2 2 0 0 1-2.8 0L3 12.9V4h8.9l8.7 8.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.6" cy="7.6" r="1.3" fill="currentColor" stroke="none"/></svg>{{ pilltxt }}</span>{%- endif -%}
                 </div>
                 <div class="hb-tierprice">
                   <b>{{ tprice | money }}</b>
-                  {%- if tcompare > tprice -%}<s>{{ tcompare | money }}</s>{%- endif -%}
-                  {%- if saveamt > 0 -%}<span class="hb-tiersave">You save {{ saveamt | money }}</span>{%- endif -%}
+                  {%- if tcompare > tprice -%}<s>{{ tcompare | money }}</s>{%- assign tpct = tprice | times: 100 | divided_by: tcompare | minus: 100 | times: -1 -%}<span class="hb-tierpill">{{ tpct }}% OFF</span>{%- endif -%}
                 </div>
               </label>
             {%- endif -%}
@@ -420,7 +419,7 @@
         </button>
       {%- endif -%}
 
-      <div class="hb-trust">🛡 30-day money-back · 🚚 Free shipping · 🔒 Secure checkout</div>
+      <div class="hb-trust"><span>⚡ One-tap checkout</span><span>🚚 Free shipping</span><span>🛡 30-day refund</span><span>📦 Ships together</span></div>
       <div class="hb-pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span></div>
 
       {%- if section.settings.eta_line != blank -%}<div class="hb-eta">🚚 {{ section.settings.eta_line }}</div>{%- endif -%}
