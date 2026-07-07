@@ -113,6 +113,7 @@
     },
     "bundlebuilder": {
       "type": "helios-bundle-builder",
+      "disabled": true,
       "settings": {
         "eyebrow": "Build your set",
         "heading": "Create your own bundle",
