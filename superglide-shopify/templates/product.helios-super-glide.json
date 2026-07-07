@@ -9,27 +9,6 @@
  */
 {
   "sections": {
-    "announcement": {
-      "type": "helios-announcement",
-      "disabled": true,
-      "settings": {
-        "message": "<h3><strong> 12% OFF SITE-WIDE — code SUPERGLIDEIT FOR 12% · FREE SHIPPING ·  30-DAY MONEY-BACK ·  BUY 1 GET 1 FREE</strong></h3>"
-      }
-    },
-    "header": {
-      "type": "helios-header",
-      "settings": {
-        "logo_text": "HELIOS",
-        "l1": "Super Glide",
-        "l1_url": "/",
-        "l2": "Jet Ski",
-        "l2_url": "/products/helios-wave-rider",
-        "l3": "Reviews",
-        "l3_url": "/#reviews",
-        "l4": "FAQ",
-        "l4_url": "/#faq"
-      }
-    },
     "buybox": {
       "type": "helios-buy-box",
       "blocks": {
@@ -282,8 +261,6 @@
     }
   },
   "order": [
-    "announcement",
-    "header",
     "buybox",
     "bundlebuilder",
     "reviewcarousel",

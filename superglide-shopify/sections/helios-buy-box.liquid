@@ -50,17 +50,17 @@
   #hb-{{ sid }} .hb-dots{display:none;}
   #hb-{{ sid }} .hb-thumbs{position:absolute;left:0;right:0;bottom:12px;z-index:4;display:flex;gap:7px;justify-content:center;align-items:center;padding:0 12px;margin:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   #hb-{{ sid }} .hb-thumbs::-webkit-scrollbar{display:none;}
-  #hb-{{ sid }} .hb-thumb{position:relative;padding:0;flex:0 0 auto;width:clamp(36px,9.5%,46px);aspect-ratio:1/1;border:1.5px solid rgba(255,255,255,.75);border-radius:11px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,.22);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);box-shadow:0 4px 12px rgba(6,30,46,.20);opacity:.72;transition:opacity .2s ease,width .2s ease,box-shadow .2s ease,border-color .2s ease;}
-  #hb-{{ sid }} .hb-thumb:hover{opacity:1;}
-  #hb-{{ sid }} .hb-thumb.sel{opacity:1;width:clamp(50px,13%,62px);border:2px solid #fff;box-shadow:0 8px 22px rgba(6,30,46,.4);}
+  #hb-{{ sid }} .hb-thumb{position:relative;padding:0;flex:0 0 auto;width:clamp(30px,8%,40px);aspect-ratio:1/1;border:1px solid rgba(255,255,255,.7);border-radius:10px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,.18);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);box-shadow:0 3px 10px rgba(6,30,46,.18);opacity:.6;transition:opacity .25s ease,width .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s ease,border-color .25s ease;}
+  #hb-{{ sid }} .hb-thumb:hover{opacity:.85;}
+  #hb-{{ sid }} .hb-thumb.sel{opacity:1;width:clamp(52px,14%,66px);border:2px solid #fff;box-shadow:0 8px 24px rgba(6,30,46,.45);}
   #hb-{{ sid }} .hb-thumb img,#hb-{{ sid }} .hb-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
   #hb-{{ sid }} .hb-ey{display:inline-flex;align-items:center;gap:7px;background:#0C1A24;color:#fff;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:30px;margin-bottom:14px;}
   #hb-{{ sid }} h1{font-weight:800;font-size:clamp(28px,4.4vw,42px);line-height:1.04;letter-spacing:-.02em;margin:0;}
   #hb-{{ sid }} .hb-sub{color:#5B6470;font-size:15px;line-height:1.5;margin:8px 0 0;max-width:480px;}
   #hb-{{ sid }} .hb-eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#3E5568;margin-bottom:5px;}
-  #hb-{{ sid }} .hb-pills{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;}
-  #hb-{{ sid }} .hb-pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#1F6B4A;background:rgba(74,190,140,.14);border:1px solid rgba(74,190,140,.38);border-radius:100px;padding:7px 13px;}
-  #hb-{{ sid }} .hb-pill::before{content:"✓";font-size:11px;}
+  #hb-{{ sid }} .hb-pills{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 0;}
+  #hb-{{ sid }} .hb-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#1F6B4A;background:rgba(74,190,140,.14);border:1px solid rgba(74,190,140,.38);border-radius:100px;padding:4px 10px;}
+  #hb-{{ sid }} .hb-pill::before{content:"✓";font-size:10px;}
   #hb-{{ sid }} .hb-rate{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;margin:12px 0 18px;font-size:13.5px;color:#5B6470;text-decoration:none;}
   #hb-{{ sid }} .hb-rate .hb-metadot{color:#c5ccd4;}
   #hb-{{ sid }} .hb-rate .hb-metaspec{color:#5B6470;font-weight:500;}
@@ -293,8 +293,8 @@
         {%- endfor -%}
         {%- comment -%} demo video LAST {%- endcomment -%}
         {%- if section.settings.lead_video != blank -%}
-        <button type="button" class="hb-thumb" data-goto="vid">
-          {%- if section.settings.lead_video.preview_image != blank -%}<img src="{{ section.settings.lead_video.preview_image | image_url: width: 220 }}" alt="demo"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video</span></span>{%- endif -%}
+        <button type="button" class="hb-thumb hb-thumb-vid" data-goto="vid">
+          <video muted loop playsinline autoplay preload="metadata"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 220 }}"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>
         </button>
         {%- endif -%}
       </div>
