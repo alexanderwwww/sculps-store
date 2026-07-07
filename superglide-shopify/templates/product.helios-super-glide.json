@@ -114,8 +114,9 @@
     "bundlebuilder": {
       "type": "helios-bundle-builder",
       "settings": {
-        "heading": "Frequently bought together",
-        "subheading": "Build your set — add the crew’s favorites and check out in one tap."
+        "eyebrow": "Build your set",
+        "heading": "Create your own bundle",
+        "subheading": "Mix any 2 for 30% off — or any 3 for 50% off. Discount applies automatically at checkout."
       }
     },
     "reviewcarousel": {

@@ -1,6 +1,6 @@
 {%- comment -%}
-  HELIOS — Frequently bought together / build-your-bundle (clean, Glo-style).
-  Replaces the AfterSell FBT block. Self-contained: pick items → AJAX add selected → cart.
+  HELIOS — Create your own bundle (Glo-style). Pick any mix of Super Glide / Mini Glide / Jet Ski.
+  Any 2 → 30% off (code MIX30) · any 3 → 50% off (code MIX50). Discount applied via cart permalink.
 {%- endcomment -%}
 {%- assign bp_sg   = all_products['helios-super-glide-motorized-water-lounger'] -%}
 {%- assign bp_mini = all_products['helios-super-glide-copy'] -%}
@@ -9,61 +9,83 @@
 {%- assign v_mini = bp_mini.variants.first -%}
 {%- assign v_jet  = bp_jet.variants.first -%}
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <section class="hbb" id="hbb-{{ section.id }}">
 <style>
   #hbb-{{ section.id }}, #hbb-{{ section.id }} *{box-sizing:border-box;}
-  #hbb-{{ section.id }}{font-family:'Inter',sans-serif;max-width:1200px;margin:0 auto;padding:clamp(18px,4vw,40px) 22px;}
-  #hbb-{{ section.id }} .hbb-card{background:#fff;border:1px solid rgba(17,19,21,.10);border-radius:20px;padding:clamp(16px,3.4vw,26px);box-shadow:0 14px 40px -24px rgba(17,19,21,.28);max-width:560px;margin:0 auto;}
-  #hbb-{{ section.id }} .hbb-h{font-weight:700;font-size:clamp(18px,2.4vw,21px);letter-spacing:-.02em;color:#111315;margin:0 0 3px;}
-  #hbb-{{ section.id }} .hbb-sub{font-size:13px;color:#5B6470;line-height:1.45;margin:0 0 14px;}
-  #hbb-{{ section.id }} .hbb-row{display:flex;align-items:center;gap:13px;padding:12px 0;border-top:1px solid rgba(17,19,21,.08);}
+  #hbb-{{ section.id }}{font-family:'Inter',sans-serif;max-width:1200px;margin:0 auto;padding:clamp(10px,2.5vw,26px) 22px clamp(24px,4vw,44px);}
+  #hbb-{{ section.id }} .hbb-card{background:#fff;border:1px solid rgba(17,19,21,.10);border-radius:20px;padding:clamp(18px,3.4vw,26px);box-shadow:0 14px 40px -24px rgba(17,19,21,.28);max-width:560px;margin:0 auto;}
+  #hbb-{{ section.id }} .hbb-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#3E5568;margin:0 0 5px;}
+  #hbb-{{ section.id }} .hbb-h{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(20px,2.6vw,24px);letter-spacing:-.02em;color:#0A0D11;margin:0 0 4px;}
+  #hbb-{{ section.id }} .hbb-sub{font-size:13px;color:#5B6470;line-height:1.45;margin:0 0 16px;}
+
+  #hbb-{{ section.id }} .hbb-tiers{display:flex;gap:9px;margin:0 0 16px;}
+  #hbb-{{ section.id }} .hbb-tp{flex:1;text-align:center;border:1.5px solid #E4E8EC;border-radius:12px;padding:9px 6px;transition:.16s;}
+  #hbb-{{ section.id }} .hbb-tp b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#0A0D11;}
+  #hbb-{{ section.id }} .hbb-tp span{font-size:11px;color:#8A93A0;font-weight:500;}
+  #hbb-{{ section.id }} .hbb-tp.on{border-color:#3E5568;background:#F2F5F8;}
+  #hbb-{{ section.id }} .hbb-tp.on span{color:#3E5568;font-weight:700;}
+
+  #hbb-{{ section.id }} .hbb-row{display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid rgba(17,19,21,.08);cursor:pointer;}
   #hbb-{{ section.id }} .hbb-row:first-of-type{border-top:none;}
-  #hbb-{{ section.id }} .hbb-check{flex:0 0 auto;width:22px;height:22px;border:1.6px solid rgba(17,19,21,.22);border-radius:7px;display:grid;place-items:center;cursor:pointer;transition:.15s;background:#fff;}
-  #hbb-{{ section.id }} .hbb-check.on{background:#1F6B4A;border-color:#1F6B4A;}
-  #hbb-{{ section.id }} .hbb-check svg{width:13px;height:13px;stroke:#fff;opacity:0;transition:.15s;}
+  #hbb-{{ section.id }} .hbb-check{flex:0 0 auto;width:24px;height:24px;border:2px solid #C7CED6;border-radius:8px;display:grid;place-items:center;transition:.15s;background:#fff;}
+  #hbb-{{ section.id }} .hbb-check.on{background:#3E5568;border-color:#3E5568;}
+  #hbb-{{ section.id }} .hbb-check svg{width:14px;height:14px;stroke:#fff;opacity:0;transition:.15s;}
   #hbb-{{ section.id }} .hbb-check.on svg{opacity:1;}
-  #hbb-{{ section.id }} .hbb-img{width:56px;height:56px;border-radius:12px;object-fit:cover;flex:0 0 auto;background:#F4F6F8;}
+  #hbb-{{ section.id }} .hbb-img{width:54px;height:54px;border-radius:12px;object-fit:cover;flex:0 0 auto;background:#F4F6F8;}
   #hbb-{{ section.id }} .hbb-info{flex:1;min-width:0;}
-  #hbb-{{ section.id }} .hbb-info .t{font-weight:600;font-size:14px;color:#111315;}
-  #hbb-{{ section.id }} .hbb-info .tag{font-size:11.5px;color:#8A93A0;font-weight:400;}
-  #hbb-{{ section.id }} .hbb-p{flex:0 0 auto;font-weight:700;font-size:15px;color:#111315;letter-spacing:-.01em;}
+  #hbb-{{ section.id }} .hbb-info .t{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#0A0D11;}
+  #hbb-{{ section.id }} .hbb-info .tag{font-size:12px;color:#8A93A0;font-weight:500;}
+  #hbb-{{ section.id }} .hbb-p{flex:0 0 auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#0A0D11;letter-spacing:-.01em;}
+
   #hbb-{{ section.id }} .hbb-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(17,19,21,.08);flex-wrap:wrap;}
   #hbb-{{ section.id }} .hbb-total{font-size:12.5px;color:#5B6470;}
-  #hbb-{{ section.id }} .hbb-total b{display:block;font-weight:700;font-size:22px;color:#111315;letter-spacing:-.02em;margin-top:1px;}
-  #hbb-{{ section.id }} .hbb-add{background:#111315;color:#fff;border:none;border-radius:100px;padding:15px 28px;font-weight:700;font-size:14px;cursor:pointer;transition:opacity .15s,transform .12s;}
+  #hbb-{{ section.id }} .hbb-total .amt{display:flex;align-items:baseline;gap:8px;margin-top:2px;}
+  #hbb-{{ section.id }} .hbb-total .amt b{font-family:'Archivo',sans-serif;font-weight:800;font-size:24px;color:#0A0D11;letter-spacing:-.02em;}
+  #hbb-{{ section.id }} .hbb-total .amt s{font-size:14px;color:#b3bac2;font-weight:600;}
+  #hbb-{{ section.id }} .hbb-save{display:inline-block;margin-top:5px;font-size:11px;font-weight:800;color:#1F6B4A;background:rgba(74,190,140,.15);padding:3px 9px;border-radius:20px;}
+  #hbb-{{ section.id }} .hbb-add{background:#0A0D11;color:#fff;border:none;border-radius:100px;padding:15px 28px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:opacity .15s,transform .12s;}
   #hbb-{{ section.id }} .hbb-add:hover{transform:translateY(-1px);}
   #hbb-{{ section.id }} .hbb-add:disabled{opacity:.35;cursor:not-allowed;transform:none;}
-  @media(max-width:520px){ #hbb-{{ section.id }} .hbb-foot{justify-content:center;text-align:center;} #hbb-{{ section.id }} .hbb-add{width:100%;} }
+  @media(max-width:520px){ #hbb-{{ section.id }} .hbb-foot{justify-content:center;text-align:center;} #hbb-{{ section.id }} .hbb-add{width:100%;} #hbb-{{ section.id }} .hbb-total .amt{justify-content:center;} }
 </style>
   <div class="hbb-card">
-    <h2 class="hbb-h">{{ section.settings.heading | default: 'Frequently bought together' }}</h2>
-    <p class="hbb-sub">{{ section.settings.subheading | default: 'Build your set — add the crew’s favorites and check out in one tap.' }}</p>
+    <p class="hbb-eyebrow">{{ section.settings.eyebrow | default: 'Build your set' }}</p>
+    <h2 class="hbb-h">{{ section.settings.heading | default: 'Create your own bundle' }}</h2>
+    <p class="hbb-sub">{{ section.settings.subheading | default: 'Mix any 2 for 30% off — or any 3 for 50% off. Discount applies automatically at checkout.' }}</p>
+
+    <div class="hbb-tiers">
+      <div class="hbb-tp" data-tp="2"><b>2 items</b><span>30% off</span></div>
+      <div class="hbb-tp" data-tp="3"><b>3 items</b><span>50% off</span></div>
+    </div>
 
     <div class="hbb-row" data-vid="{{ v_sg.id }}" data-price="{{ v_sg.price }}">
-      <span class="hbb-check on" data-check role="checkbox" aria-checked="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="hbb-check on" data-check role="checkbox" aria-checked="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
       {%- if bp_sg.featured_image -%}<img class="hbb-img" src="{{ bp_sg.featured_image | image_url: width: 160 }}" alt="Super Glide">{%- endif -%}
-      <div class="hbb-info"><span class="t">Super Glide</span> <span class="tag">· this item</span></div>
+      <div class="hbb-info"><span class="t">Super Glide</span><span class="tag">Double · 2 seats</span></div>
       <span class="hbb-p">{{ v_sg.price | money }}</span>
     </div>
 
     <div class="hbb-row" data-vid="{{ v_mini.id }}" data-price="{{ v_mini.price }}">
-      <span class="hbb-check on" data-check role="checkbox" aria-checked="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="hbb-check on" data-check role="checkbox" aria-checked="true"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
       {%- if bp_mini.featured_image -%}<img class="hbb-img" src="{{ bp_mini.featured_image | image_url: width: 160 }}" alt="Mini Glide">{%- endif -%}
-      <div class="hbb-info"><span class="t">Mini Glide</span> <span class="tag">· single seat</span></div>
+      <div class="hbb-info"><span class="t">Mini Glide</span><span class="tag">Single seat</span></div>
       <span class="hbb-p">{{ v_mini.price | money }}</span>
     </div>
 
     <div class="hbb-row" data-vid="{{ v_jet.id }}" data-price="{{ v_jet.price }}">
-      <span class="hbb-check" data-check role="checkbox" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="hbb-check" data-check role="checkbox" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
       {%- if bp_jet.featured_image -%}<img class="hbb-img" src="{{ bp_jet.featured_image | image_url: width: 160 }}" alt="HELIOS Jet Ski">{%- endif -%}
-      <div class="hbb-info"><span class="t">HELIOS Jet Ski</span> <span class="tag">· ride alongside</span></div>
+      <div class="hbb-info"><span class="t">Jet Ski</span><span class="tag">Ride alongside</span></div>
       <span class="hbb-p">{{ v_jet.price | money }}</span>
     </div>
 
     <div class="hbb-foot">
-      <div class="hbb-total">Buy together<b id="hbb-total-{{ section.id }}">$0.00</b></div>
-      <button type="button" class="hbb-add" id="hbb-add-{{ section.id }}">Add selected to cart</button>
+      <div class="hbb-total">Bundle total
+        <span class="amt"><b id="hbb-final-{{ section.id }}">$0.00</b><s id="hbb-was-{{ section.id }}" style="display:none;"></s></span>
+        <span class="hbb-save" id="hbb-save-{{ section.id }}" style="display:none;"></span>
+      </div>
+      <button type="button" class="hbb-add" id="hbb-add-{{ section.id }}">Add bundle</button>
     </div>
   </div>
 </section>
@@ -72,26 +94,39 @@
   var root = document.getElementById('hbb-{{ section.id }}'); if(!root || root.dataset.init) return; root.dataset.init='1';
   var money = function(c){ return '{{ shop.money_format | strip_html }}'.replace(/\{\{\s*amount\s*\}\}/, (c/100).toFixed(2)).replace(/\{\{\s*amount_no_decimals\s*\}\}/, Math.round(c/100)); };
   var rows = Array.prototype.slice.call(root.querySelectorAll('.hbb-row'));
-  var totalEl = document.getElementById('hbb-total-{{ section.id }}');
+  var finalEl = document.getElementById('hbb-final-{{ section.id }}');
+  var wasEl = document.getElementById('hbb-was-{{ section.id }}');
+  var saveEl = document.getElementById('hbb-save-{{ section.id }}');
   var addBtn = document.getElementById('hbb-add-{{ section.id }}');
+  var tps = Array.prototype.slice.call(root.querySelectorAll('.hbb-tp'));
+
+  function state(){
+    var sum=0, count=0, ids=[];
+    rows.forEach(function(r){ if(r.querySelector('[data-check]').classList.contains('on')){ sum += parseInt(r.dataset.price,10)||0; count++; ids.push(r.dataset.vid); } });
+    var disc = count>=3 ? 0.5 : (count===2 ? 0.3 : 0);
+    return { sum:sum, count:count, ids:ids, disc:disc, code: disc===0.5?'MIX50':(disc===0.3?'MIX30':'') };
+  }
   function recalc(){
-    var total = 0, count = 0;
-    rows.forEach(function(r){ var chk = r.querySelector('[data-check]'); if(chk.classList.contains('on')){ total += parseInt(r.dataset.price,10)||0; count++; } });
-    if(totalEl) totalEl.textContent = money(total);
-    if(addBtn){ addBtn.disabled = count===0; addBtn.textContent = count>1 ? ('Add ' + count + ' to cart') : 'Add to cart'; }
+    var s = state();
+    var final = Math.round(s.sum * (1 - s.disc));
+    finalEl.textContent = money(final);
+    tps.forEach(function(t){ t.classList.toggle('on', (t.dataset.tp==='3' && s.count>=3) || (t.dataset.tp==='2' && s.count===2)); });
+    if(s.disc>0){
+      wasEl.style.display=''; wasEl.textContent = money(s.sum);
+      saveEl.style.display=''; saveEl.textContent = 'You save ' + money(s.sum-final) + ' · ' + Math.round(s.disc*100) + '% off';
+    } else { wasEl.style.display='none'; saveEl.style.display='none'; }
+    if(s.count < 2){ addBtn.disabled=true; addBtn.textContent = 'Pick 2+ to unlock discount'; }
+    else { addBtn.disabled=false; addBtn.textContent = 'Add bundle → ' + money(final); }
   }
   rows.forEach(function(r){
-    var chk = r.querySelector('[data-check]');
-    chk.addEventListener('click', function(){ chk.classList.toggle('on'); chk.setAttribute('aria-checked', chk.classList.contains('on')?'true':'false'); recalc(); });
+    r.addEventListener('click', function(){ var chk=r.querySelector('[data-check]'); chk.classList.toggle('on'); chk.setAttribute('aria-checked', chk.classList.contains('on')?'true':'false'); recalc(); });
   });
-  if(addBtn) addBtn.addEventListener('click', function(){
-    var items = [];
-    rows.forEach(function(r){ if(r.querySelector('[data-check]').classList.contains('on')){ items.push({ id: parseInt(r.dataset.vid,10), quantity: 1 }); } });
-    if(!items.length) return;
-    addBtn.disabled = true; addBtn.textContent = 'Adding…';
-    fetch('/cart/add.js', { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({ items: items }) })
-      .then(function(res){ return res.json(); }).then(function(){ window.location.href='/cart'; })
-      .catch(function(){ addBtn.disabled = false; addBtn.textContent = 'Try again'; });
+  addBtn.addEventListener('click', function(){
+    var s = state(); if(s.count < 2) return;
+    var path = s.ids.map(function(id){ return id + ':1'; }).join(',');
+    var url = '/cart/' + path + (s.code ? ('?discount=' + s.code) : '');
+    addBtn.disabled=true; addBtn.textContent='Adding…';
+    window.location.href = url;
   });
   recalc();
 })();
@@ -101,8 +136,9 @@
   "name": "HELIOS Bundle Builder",
   "tag": "section",
   "settings": [
-    { "type": "text", "id": "heading", "label": "Heading", "default": "Frequently bought together" },
-    { "type": "text", "id": "subheading", "label": "Subheading", "default": "Build your set — add the crew’s favorites and check out in one tap." }
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Build your set" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Create your own bundle" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "Mix any 2 for 30% off — or any 3 for 50% off. Discount applies automatically at checkout." }
   ],
   "presets": [{ "name": "HELIOS Bundle Builder" }]
 }
