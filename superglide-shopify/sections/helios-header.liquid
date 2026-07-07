@@ -11,6 +11,7 @@
   #hd-{{ sid }} .hd-cart{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(255,255,255,.7);border:1px solid rgba(6,47,73,.10);border-radius:14px;color:var(--ink2);text-decoration:none;transition:transform .18s,background .18s;box-shadow:0 2px 8px rgba(6,47,73,.06);}
   #hd-{{ sid }} .hd-cart:hover{background:#fff;transform:translateY(-1px);}
   #hd-{{ sid }} .hd-cart svg{width:20px;height:20px;}
+  #hd-{{ sid }} .hd-cart svg:not(.hd-cart-ico){display:none!important;}
   #hd-{{ sid }} .hd-cart-ct{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;background:#0A2A4A;color:#fff;font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;line-height:1;border-radius:20px;border:2px solid rgba(238,246,250,.95);}
   #hd-{{ sid }} .hd-burger{display:none;flex-direction:column;gap:4.5px;width:26px;background:none;border:none;cursor:pointer;padding:4px;}
   #hd-{{ sid }} .hd-burger span{display:block;height:2.5px;width:100%;background:var(--ink);border-radius:2px;}
@@ -31,7 +32,7 @@
       <a href="{{ section.settings.l4_url | default: '/pages/contact' }}">{{ section.settings.l4 | default: 'Contact' }}</a>
     </nav>
     <a href="/" class="hd-logo">{{ section.settings.logo_text | default: 'HELIOS' }}</a>
-    <div class="hd-right"><a href="/cart" class="hd-cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>{% if cart.item_count > 0 %}<span class="hd-cart-ct">{{ cart.item_count }}</span>{% endif %}</a></div>
+    <div class="hd-right"><a href="/cart" class="hd-cart" aria-label="Cart"><svg class="hd-cart-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>{% if cart.item_count > 0 %}<span class="hd-cart-ct">{{ cart.item_count }}</span>{% endif %}</a></div>
   </div>
 </header>
 <div class="hd-drawer" data-hddrawer>
@@ -50,6 +51,8 @@
 var b=r.querySelector('[data-hdburger]'),d=r.querySelector('[data-hddrawer]');
 if(b&&d){b.addEventListener('click',function(){d.classList.add('open');document.body.style.overflow='hidden';});
 d.addEventListener('click',function(e){if(e.target===d||e.target.closest('[data-hdclose]')||e.target.tagName==='A'){d.classList.remove('open');document.body.style.overflow='';}});}
+var cart=r.querySelector('.hd-cart');
+if(cart){var clean=function(){var x=cart.querySelectorAll('svg:not(.hd-cart-ico)');for(var i=0;i<x.length;i++){if(x[i].parentNode)x[i].parentNode.removeChild(x[i]);}};clean();try{new MutationObserver(clean).observe(cart,{childList:true,subtree:true});}catch(e){}}
 })();
 </script>
 </div>
