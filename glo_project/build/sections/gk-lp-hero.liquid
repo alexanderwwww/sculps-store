@@ -1,0 +1,97 @@
+{%- liquid
+  assign ph = 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/1c672ae0a8a29459960bd5fd15e0aa7e94293c45/glo_project/build/assets/glo-detail-1.png'
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #shopify-section-{{ section.id }} .lp, #shopify-section-{{ section.id }} .lp * { box-sizing:border-box; }
+  #shopify-section-{{ section.id }} .lp { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; color:#111315; padding:clamp(20px,4vw,54px) clamp(16px,3vw,44px) clamp(26px,4vw,48px); }
+  #shopify-section-{{ section.id }} .wrap { max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1.02fr 0.98fr; gap:clamp(22px,4vw,56px); align-items:center; }
+  @media (max-width:880px){ #shopify-section-{{ section.id }} .wrap { grid-template-columns:1fr; gap:clamp(20px,5vw,30px); } }
+  #shopify-section-{{ section.id }} .eyebrow { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#5E86A6; }
+  #shopify-section-{{ section.id }} h1 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(2.1rem,5.4vw,3.6rem); line-height:1.0; margin:14px 0 0; }
+  #shopify-section-{{ section.id }} .hope { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:clamp(1.05rem,2.1vw,1.4rem); color:#3E5568; margin:12px 0 0; }
+  #shopify-section-{{ section.id }} .body { font-size:clamp(14.5px,1.5vw,16.5px); color:#5B6470; line-height:1.58; max-width:520px; margin:14px 0 0; }
+  #shopify-section-{{ section.id }} .rating { display:inline-flex; align-items:center; gap:8px; margin-top:16px; font-size:13.5px; color:#5B6470; }
+  #shopify-section-{{ section.id }} .rating .st { color:#F5A623; font-size:15px; letter-spacing:1px; }
+  #shopify-section-{{ section.id }} .cta { display:inline-flex; align-items:center; justify-content:center; gap:9px; margin-top:22px; background:#111315; color:#fff; border-radius:100px; padding:17px 34px; font-size:15px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; text-decoration:none; }
+  #shopify-section-{{ section.id }} .cta:hover { background:#23262b; }
+  #shopify-section-{{ section.id }} .sub { margin-top:11px; font-size:12.5px; color:#8A93A0; }
+  #shopify-section-{{ section.id }} .media { position:relative; }
+  #shopify-section-{{ section.id }} .media .img { width:100%; aspect-ratio:{{ section.settings.image_ratio | default: '4/5' }}; object-fit:cover; border-radius:26px; display:block; background:#DCE6EC; box-shadow:0 30px 60px rgba(46,74,104,0.16); }
+  #shopify-section-{{ section.id }} .media .ph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#7C8B99; font-family:'General Sans',sans-serif; font-weight:600; font-size:14px; }
+  #shopify-section-{{ section.id }} .compare { margin-top:clamp(24px,4vw,40px); max-width:1180px; margin-left:auto; margin-right:auto; display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2vw,20px); }
+  @media (max-width:620px){ #shopify-section-{{ section.id }} .compare { grid-template-columns:1fr; } }
+  #shopify-section-{{ section.id }} .col { border-radius:22px; padding:clamp(18px,2.4vw,26px); }
+  #shopify-section-{{ section.id }} .col.bad { background:#fff; border:1px solid rgba(17,19,21,0.08); }
+  #shopify-section-{{ section.id }} .col.good { background:linear-gradient(165deg, rgba(255,255,255,0.9), rgba(224,236,244,0.85)); border:1px solid rgba(94,134,166,0.28); box-shadow:0 18px 44px rgba(46,74,104,0.12); }
+  #shopify-section-{{ section.id }} .col .h { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.02em; font-size:16px; margin-bottom:12px; }
+  #shopify-section-{{ section.id }} .col.bad .h { color:#9AA2AC; }
+  #shopify-section-{{ section.id }} .col.good .h { color:#2E4A68; }
+  #shopify-section-{{ section.id }} .col ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+  #shopify-section-{{ section.id }} .col li { display:flex; gap:9px; font-size:13.5px; line-height:1.4; color:#5B6470; }
+  #shopify-section-{{ section.id }} .col li::before { flex:0 0 auto; width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+  #shopify-section-{{ section.id }} .col.bad li::before { content:"✕"; background:rgba(17,19,21,0.06); color:#B0B7C0; }
+  #shopify-section-{{ section.id }} .col.good li::before { content:"✓"; background:rgba(74,190,140,0.16); color:#1F7A55; }
+  #shopify-section-{{ section.id }} .col.good li { color:#111315; }
+</style>
+<div class="lp">
+  <div class="wrap">
+    <div class="text">
+      {%- if section.settings.eyebrow != blank -%}<span class="eyebrow">{{ section.settings.eyebrow }}</span>{%- endif -%}
+      <h1>{{ section.settings.headline }}</h1>
+      {%- if section.settings.hope != blank -%}<div class="hope">{{ section.settings.hope }}</div>{%- endif -%}
+      {%- if section.settings.body != blank -%}<p class="body">{{ section.settings.body }}</p>{%- endif -%}
+      {%- if section.settings.rating_text != blank -%}
+        <div class="rating"><span class="st">&#9733;&#9733;&#9733;&#9733;&#9733;</span> <span>{{ section.settings.rating_text }}</span></div>
+      {%- endif -%}
+      <div>
+        <a class="cta" href="{{ section.settings.cta_link | default: '#offer' }}">{{ section.settings.cta_label }}</a>
+        {%- if section.settings.sub != blank -%}<div class="sub">{{ section.settings.sub }}</div>{%- endif -%}
+      </div>
+    </div>
+    <div class="media">
+      {%- if section.settings.image != blank -%}
+        <img class="img" src="{{ section.settings.image | image_url: width: 1200 }}" alt="{{ section.settings.headline | escape }}">
+      {%- else -%}
+        <img class="img" src="{{ ph }}" alt="glo"><div class="ph">add your image</div>
+      {%- endif -%}
+    </div>
+  </div>
+  {%- if section.settings.bad_list != blank or section.settings.good_list != blank -%}
+  <div class="compare">
+    <div class="col bad">
+      <div class="h">{{ section.settings.bad_title }}</div>
+      <ul>{%- assign bad = section.settings.bad_list | newline_to_br | split: '<br />' -%}{%- for l in bad -%}{%- assign l = l | strip -%}{%- if l != blank -%}<li>{{ l }}</li>{%- endif -%}{%- endfor -%}</ul>
+    </div>
+    <div class="col good">
+      <div class="h">{{ section.settings.good_title }}</div>
+      <ul>{%- assign good = section.settings.good_list | newline_to_br | split: '<br />' -%}{%- for l in good -%}{%- assign l = l | strip -%}{%- if l != blank -%}<li>{{ l }}</li>{%- endif -%}{%- endfor -%}</ul>
+    </div>
+  </div>
+  {%- endif -%}
+</div>
+{% schema %}
+{
+  "name": "GK LP Hero",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "at-home ipl for smooth skin" },
+    { "type": "textarea", "id": "headline", "label": "Headline (the pain)", "default": "spent thousands on laser — and it still grows back?" },
+    { "type": "text", "id": "hope", "label": "Hope line", "default": "you were sold sessions. we made you the device." },
+    { "type": "textarea", "id": "body", "label": "Body", "default": "in-spa laser means appointment after appointment, upsell after upsell — and a few months later the stubble is back. glo is the salon in your bathroom: one device you actually own, gentle enough for weekly use, ready for a touch-up any time it tries to come back. no memberships. no waiting rooms. no endless bill." },
+    { "type": "text", "id": "rating_text", "label": "Rating text", "default": "4.8 · loved by 1,240 women" },
+    { "type": "text", "id": "cta_label", "label": "Button label", "default": "get glo — $129.99" },
+    { "type": "text", "id": "cta_link", "label": "Button link (anchor)", "default": "#offer" },
+    { "type": "text", "id": "sub", "label": "Under-button note", "default": "one-time payment · free shipping · 30-night home trial" },
+    { "type": "image_picker", "id": "image", "label": "Hero image" },
+    { "type": "text", "id": "image_ratio", "label": "Image ratio", "default": "4/5" },
+    { "type": "header", "content": "The cycle vs. the fix" },
+    { "type": "text", "id": "bad_title", "label": "Left title", "default": "the spa treadmill" },
+    { "type": "textarea", "id": "bad_list", "label": "Left list (one per line)", "default": "6–10 sessions before you see much\nrebooking, driving, waiting rooms\n\"just a few more sessions…\" every time\nmonths later, the hair finds its way back\na fresh bill for every touch-up" },
+    { "type": "text", "id": "good_title", "label": "Right title", "default": "the glo way" },
+    { "type": "textarea", "id": "good_list", "label": "Right list (one per line)", "default": "your own device, one time\ndo it at home in your robe\nweekly at first, then whenever\ntouch-ups the second it dares come back\nnever pay per session again" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#F4F6F8" }
+  ],
+  "presets": [{ "name": "GK LP Hero" }]
+}
+{% endschema %}

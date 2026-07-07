@@ -1,0 +1,62 @@
+{%- liquid
+  assign img = 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/1c672ae0a8a29459960bd5fd15e0aa7e94293c45/glo_project/build/assets/glo-detail-2.png'
+  assign handle = section.settings.product_handle | default: 'glo-ipl-device'
+  assign lp = all_products[handle]
+  assign vcount = lp.variants.size
+  if vcount > 1
+    assign dvar = lp.variants[1]
+  else
+    assign dvar = lp.selected_or_first_available_variant
+  endif
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  #shopify-section-{{ section.id }} .bar { position:fixed; left:0; right:0; bottom:0; z-index:70; background:rgba(255,255,255,0.6); backdrop-filter:blur(18px) saturate(180%); -webkit-backdrop-filter:blur(18px) saturate(180%); border-top:1px solid rgba(255,255,255,0.6); box-shadow:0 -8px 30px rgba(46,74,104,0.12); padding:9px clamp(14px,4vw,44px); display:flex; align-items:center; justify-content:space-between; gap:14px; font-family:'Inter',sans-serif; }
+  #shopify-section-{{ section.id }} .l { display:flex; align-items:center; gap:12px; min-width:0; }
+  #shopify-section-{{ section.id }} .l img { width:42px; height:42px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+  #shopify-section-{{ section.id }} .nm { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; font-size:14px; color:#111315; }
+  #shopify-section-{{ section.id }} .pr { font-size:13px; color:#111315; font-weight:600; }
+  #shopify-section-{{ section.id }} button { background:#111315; color:#fff; border:none; border-radius:100px; padding:13px 30px; font-size:14px; font-weight:600; text-transform:lowercase; cursor:pointer; font-family:inherit; flex-shrink:0; }
+</style>
+{%- if lp != blank and lp.available -%}
+<div id="lp-sticky-{{ section.id }}">
+  {% form 'product', lp, id: 'lp-sticky-form' %}
+    <input type="hidden" name="id" value="{{ dvar.id }}" data-lp-sticky-id>
+    <div class="bar">
+      <div class="l">
+        <img src="{% if lp.featured_image %}{{ lp.featured_image | image_url: width: 120 }}{% else %}{{ img }}{% endif %}" alt="glo">
+        <div>
+          <div class="nm">{{ section.settings.label | default: 'glo' }}</div>
+          <div class="pr" data-lp-sticky-price>{{ dvar.price | money }}</div>
+        </div>
+      </div>
+      <button type="submit" name="add">{{ section.settings.button_label | default: 'add to cart' }}</button>
+    </div>
+  {% endform %}
+</div>
+<script>
+  (function(){
+    var root = document.getElementById('lp-sticky-{{ section.id }}');
+    if(!root) return;
+    var idInput = root.querySelector('[data-lp-sticky-id]');
+    var price = root.querySelector('[data-lp-sticky-price]');
+    window.addEventListener('lp:variant', function(e){
+      if(!e.detail) return;
+      if(idInput && e.detail.id) idInput.value = e.detail.id;
+      if(price && e.detail.price) price.textContent = e.detail.price;
+    });
+  })();
+</script>
+{%- endif -%}
+{% schema %}
+{
+  "name": "GK LP Sticky bar",
+  "settings": [
+    { "type": "text", "id": "product_handle", "label": "Product handle", "default": "glo-ipl-device" },
+    { "type": "text", "id": "label", "label": "Product label", "default": "glo" },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "add to cart" }
+  ],
+  "presets": [{ "name": "GK LP Sticky bar" }]
+}
+{% endschema %}

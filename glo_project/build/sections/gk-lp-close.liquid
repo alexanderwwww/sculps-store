@@ -1,0 +1,47 @@
+{%- liquid
+  assign ph = 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/1c672ae0a8a29459960bd5fd15e0aa7e94293c45/glo_project/build/assets/glo-detail-5.png'
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #shopify-section-{{ section.id }} .cl { position:relative; font-family:'Inter',sans-serif; min-height:clamp(360px,52vw,560px); display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden; padding:clamp(40px,7vw,90px) clamp(18px,4vw,44px); }
+  #shopify-section-{{ section.id }} .bgimg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+  #shopify-section-{{ section.id }} .ov { position:absolute; inset:0; z-index:1; background:linear-gradient(180deg, rgba(17,19,21,0.28), rgba(17,19,21,0.5)); }
+  #shopify-section-{{ section.id }} .inner { position:relative; z-index:2; max-width:660px; color:#fff; }
+  #shopify-section-{{ section.id }} .eyebrow { font-size:12.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.85); }
+  #shopify-section-{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(2rem,5vw,3.4rem); line-height:1.0; margin:12px 0 14px; }
+  #shopify-section-{{ section.id }} p { font-size:clamp(15px,1.7vw,18px); line-height:1.55; color:rgba(255,255,255,0.9); margin:0 auto 26px; max-width:520px; }
+  #shopify-section-{{ section.id }} a.btn { display:inline-flex; align-items:center; justify-content:center; background:#fff; color:#111315; border-radius:100px; padding:17px 40px; font-size:15px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; text-decoration:none; }
+  #shopify-section-{{ section.id }} a.btn:hover { background:#EDEFF2; }
+  #shopify-section-{{ section.id }} .sub { margin-top:12px; font-size:12.5px; color:rgba(255,255,255,0.8); }
+</style>
+<div class="cl">
+  {%- if section.settings.image != blank -%}
+    <img class="bgimg" src="{{ section.settings.image | image_url: width: 1800 }}" alt="">
+  {%- else -%}
+    <img class="bgimg" src="{{ ph }}" alt="">
+  {%- endif -%}
+  <div class="ov"></div>
+  <div class="inner">
+    {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+    <h2>{{ section.settings.heading }}</h2>
+    {%- if section.settings.body != blank -%}<p>{{ section.settings.body }}</p>{%- endif -%}
+    <a class="btn" href="{{ section.settings.cta_link | default: '#offer' }}">{{ section.settings.cta_label }}</a>
+    {%- if section.settings.sub != blank -%}<div class="sub">{{ section.settings.sub }}</div>{%- endif -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "GK LP Close",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "your last razor era" },
+    { "type": "textarea", "id": "heading", "label": "Heading", "default": "smooth skin, on your schedule — for good." },
+    { "type": "textarea", "id": "body", "label": "Body", "default": "no more standing appointments, no more upsells, no more stubble by noon. just you, your glo, and skin that finally stays soft — on your own time." },
+    { "type": "text", "id": "cta_label", "label": "Button label", "default": "get glo — $129.99" },
+    { "type": "text", "id": "cta_link", "label": "Button link (anchor)", "default": "#offer" },
+    { "type": "text", "id": "sub", "label": "Under-button note", "default": "one-time payment · 30-night home trial · free worldwide shipping" },
+    { "type": "image_picker", "id": "image", "label": "Background image" }
+  ],
+  "presets": [{ "name": "GK LP Close" }]
+}
+{% endschema %}

@@ -1,0 +1,156 @@
+{%- liquid
+  assign img = 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/1c672ae0a8a29459960bd5fd15e0aa7e94293c45/glo_project/build/assets'
+  assign handle = section.settings.product_handle | default: 'glo-ipl-device'
+  assign lp = all_products[handle]
+  assign vcount = lp.variants.size
+  if vcount > 1
+    assign dvar = lp.variants[1]
+  else
+    assign dvar = lp.selected_or_first_available_variant
+  endif
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #shopify-section-{{ section.id }} .of, #shopify-section-{{ section.id }} .of * { box-sizing:border-box; }
+  #shopify-section-{{ section.id }} .of { font-family:'Inter',sans-serif; background:{{ section.settings.bg }}; color:#111315; padding:clamp(30px,5vw,64px) clamp(16px,3vw,44px); }
+  #shopify-section-{{ section.id }} .wrap { max-width:1080px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:clamp(22px,4vw,52px); align-items:center; }
+  @media (max-width:860px){ #shopify-section-{{ section.id }} .wrap { grid-template-columns:1fr; } }
+  #shopify-section-{{ section.id }} .media img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:24px; display:block; background:#E4E9EE; box-shadow:0 24px 54px rgba(46,74,104,0.14); }
+  #shopify-section-{{ section.id }} .media .ph { position:relative; }
+  #shopify-section-{{ section.id }} .media .ph span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#7C8B99; font-family:'General Sans',sans-serif; font-weight:600; font-size:14px; }
+  #shopify-section-{{ section.id }} .eyebrow { font-size:12.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#5E86A6; }
+  #shopify-section-{{ section.id }} h2 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.03em; font-size:clamp(1.7rem,3.6vw,2.6rem); line-height:1.02; margin:8px 0 10px; }
+  #shopify-section-{{ section.id }} .lede { font-size:15px; color:#5B6470; line-height:1.55; margin:0 0 6px; }
+  #shopify-section-{{ section.id }} .pills { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
+  #shopify-section-{{ section.id }} .pill { font-size:12.5px; font-weight:600; color:#1F6B4A; background:rgba(74,190,140,0.14); border:1px solid rgba(74,190,140,0.38); border-radius:100px; padding:8px 14px; }
+  #shopify-section-{{ section.id }} .pill::before { content:"✓ "; }
+  #shopify-section-{{ section.id }} .price { font-family:'General Sans',sans-serif; font-weight:700; font-size:30px; letter-spacing:-0.03em; margin:6px 0; }
+  #shopify-section-{{ section.id }} .price small { font-family:'Inter',sans-serif; font-weight:500; font-size:13px; color:#5B6470; margin-left:8px; }
+  #shopify-section-{{ section.id }} .bundles { display:flex; flex-direction:column; gap:10px; margin:8px 0 4px; }
+  #shopify-section-{{ section.id }} .bundle { position:relative; display:flex; align-items:center; gap:14px; border:1.5px solid rgba(17,19,21,0.14); border-radius:14px; padding:13px 16px; cursor:pointer; }
+  #shopify-section-{{ section.id }} .bundle.is-selected { border-color:#3E5568; background:#fff; }
+  #shopify-section-{{ section.id }} .bundle input { position:absolute; opacity:0; pointer-events:none; }
+  #shopify-section-{{ section.id }} .bundle .badge { position:absolute; top:-10px; left:16px; background:#3E5568; color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:100px; }
+  #shopify-section-{{ section.id }} .bundle .dot { width:18px; height:18px; border-radius:50%; border:1.5px solid rgba(17,19,21,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  #shopify-section-{{ section.id }} .bundle.is-selected .dot { border-color:#3E5568; }
+  #shopify-section-{{ section.id }} .bundle .dot i { width:9px; height:9px; border-radius:50%; background:#3E5568; display:none; }
+  #shopify-section-{{ section.id }} .bundle.is-selected .dot i { display:block; }
+  #shopify-section-{{ section.id }} .bundle .meta { flex:1; min-width:0; }
+  #shopify-section-{{ section.id }} .bundle .meta .t { font-weight:600; font-size:14px; }
+  #shopify-section-{{ section.id }} .bundle .meta .s { font-size:12px; color:#5B6470; }
+  #shopify-section-{{ section.id }} .bundle .pr { display:flex; flex-direction:column; align-items:flex-end; }
+  #shopify-section-{{ section.id }} .bundle .pr .was { font-size:12px; color:#5B6470; text-decoration:line-through; }
+  #shopify-section-{{ section.id }} .bundle .pr .now { font-family:'General Sans',sans-serif; font-weight:700; font-size:16px; }
+  #shopify-section-{{ section.id }} .bundle .pr .save { font-size:11px; font-weight:600; color:#1F7A55; }
+  #shopify-section-{{ section.id }} .atc { background:#EDEFF2; color:#111315; border:1px solid rgba(17,19,21,0.10); border-radius:100px; padding:17px 30px; font-size:15px; font-weight:700; text-transform:lowercase; cursor:pointer; font-family:inherit; width:100%; display:flex; align-items:center; justify-content:center; gap:9px; margin-top:6px; }
+  #shopify-section-{{ section.id }} .atc svg { width:18px; height:18px; }
+  #shopify-section-{{ section.id }} .buynow { background:#111315; color:#fff; border:none; border-radius:100px; padding:18px 30px; font-size:15px; font-weight:600; text-transform:lowercase; cursor:pointer; font-family:inherit; width:100%; margin-top:10px; }
+  #shopify-section-{{ section.id }} .note { font-size:12px; color:#5B6470; text-align:center; margin-top:10px; }
+  #shopify-section-{{ section.id }} .trust { display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:14px; padding-top:14px; border-top:1px solid rgba(17,19,21,0.10); }
+  #shopify-section-{{ section.id }} .trust div { display:flex; align-items:center; gap:7px; font-size:12.5px; color:#5B6470; }
+  #shopify-section-{{ section.id }} .trust span { color:#3E5568; }
+</style>
+<div class="of" id="lp-of-{{ section.id }}">
+  <div class="wrap">
+    <div class="media">
+      <div class="ph">
+        {%- if section.settings.image != blank -%}
+          <img src="{{ section.settings.image | image_url: width: 1000 }}" alt="glo">
+        {%- elsif lp.featured_image -%}
+          <img src="{{ lp.featured_image | image_url: width: 1000 }}" alt="glo">
+        {%- else -%}
+          <img src="{{ img }}/glo-detail-1.png" alt="glo"><span>add your image</span>
+        {%- endif -%}
+      </div>
+    </div>
+    <div class="info">
+      {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+      <h2>{{ section.settings.heading }}</h2>
+      {%- if section.settings.lede != blank -%}<p class="lede">{{ section.settings.lede }}</p>{%- endif -%}
+      <div class="pills">
+        {%- if section.settings.pill_1 != blank -%}<span class="pill">{{ section.settings.pill_1 }}</span>{%- endif -%}
+        {%- if section.settings.pill_2 != blank -%}<span class="pill">{{ section.settings.pill_2 }}</span>{%- endif -%}
+        {%- if section.settings.pill_3 != blank -%}<span class="pill">{{ section.settings.pill_3 }}</span>{%- endif -%}
+      </div>
+      {%- if lp != blank -%}
+      {% form 'product', lp, id: 'lp-buy-form' %}
+        <div class="price" data-lp-price>{{ dvar.price | money }} <small>one device. every zone. yours for good.</small></div>
+        <div class="bundles">
+          {%- assign subs = 'for you|one for you, one to gift|share with the house' | split: '|' -%}
+          {%- assign badges = '|most popular|best value' | split: '|' -%}
+          {%- for variant in lp.variants -%}
+            <label class="bundle{% if variant.id == dvar.id %} is-selected{% endif %}" data-lp-bundle>
+              <input type="radio" name="id" value="{{ variant.id }}"{% if variant.id == dvar.id %} checked{% endif %} data-price="{{ variant.price | money }}"{% unless variant.available %} disabled{% endunless %}>
+              {%- assign badge = badges[forloop.index0] -%}{%- if badge != blank -%}<span class="badge">{{ badge }}</span>{%- endif -%}
+              <span class="dot"><i></i></span>
+              <span class="meta"><span class="t">{{ variant.title }}</span><span class="s">{{ subs[forloop.index0] | default: 'add to your routine' }}</span></span>
+              <span class="pr">{%- if variant.compare_at_price > variant.price -%}<span class="was">{{ variant.compare_at_price | money }}</span>{%- endif -%}<span class="now">{{ variant.price | money }}</span>{%- if variant.compare_at_price > variant.price -%}<span class="save">save {{ variant.compare_at_price | minus: variant.price | money }}</span>{%- endif -%}</span>
+            </label>
+          {%- endfor -%}
+        </div>
+        <button type="submit" name="add" class="atc"{% unless lp.available %} disabled{% endunless %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.3 12.2a1.5 1.5 0 001.5 1.2h8.6a1.5 1.5 0 001.5-1.2L21 7H6"/></svg>
+          {% if lp.available %}add to cart{% else %}sold out{% endif %}
+        </button>
+        {% if lp.available %}<button type="button" class="buynow" data-lp-buynow>buy now</button>{% endif %}
+        <div class="note">{{ section.settings.note }}</div>
+      {% endform %}
+      {%- else -%}
+        <p class="lede">Product not found — set the product handle in this section's settings.</p>
+      {%- endif -%}
+      <div class="trust">
+        <div><span>&#10003;</span> free shipping</div>
+        <div><span>&#10003;</span> 30-night home trial</div>
+        <div><span>&#10003;</span> fda-cleared</div>
+        <div><span>&#10003;</span> 2-year warranty</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function(){
+    var root = document.getElementById('lp-of-{{ section.id }}');
+    if(!root) return;
+    var form = root.querySelector('#lp-buy-form');
+    var bundles = root.querySelectorAll('[data-lp-bundle]');
+    var price = root.querySelector('[data-lp-price]');
+    bundles.forEach(function(label){
+      label.addEventListener('click', function(){
+        var input = label.querySelector('input'); if(!input || input.disabled) return;
+        input.checked = true;
+        bundles.forEach(function(l){ l.classList.toggle('is-selected', l===label); });
+        if(price){ price.childNodes[0].nodeValue = input.getAttribute('data-price') + ' '; }
+        window.dispatchEvent(new CustomEvent('lp:variant', { detail:{ id: input.value, price: input.getAttribute('data-price') } }));
+      });
+    });
+    var bn = root.querySelector('[data-lp-buynow]');
+    if(bn && form){
+      bn.addEventListener('click', function(){
+        var checked = form.querySelector('input[name=id]:checked');
+        if(!checked){ form.requestSubmit ? form.requestSubmit() : form.submit(); return; }
+        fetch('/cart/add.js', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: checked.value, quantity: 1 }) })
+          .then(function(){ window.location.href='/checkout'; })
+          .catch(function(){ form.submit(); });
+      });
+    }
+  })();
+</script>
+{% schema %}
+{
+  "name": "GK LP Offer",
+  "settings": [
+    { "type": "text", "id": "product_handle", "label": "Product handle", "default": "glo-ipl-device" },
+    { "type": "image_picker", "id": "image", "label": "Product image (optional)" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "the one-time fix" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "salon results. bathroom counter. paid once." },
+    { "type": "textarea", "id": "lede", "label": "Lede", "default": "the same ipl the spa uses — in a device you keep forever. flash-sensing, cordless, gentle enough to keep up with." },
+    { "type": "text", "id": "pill_1", "label": "Pill 1", "default": "at-home ipl laser" },
+    { "type": "text", "id": "pill_2", "label": "Pill 2", "default": "full body on one charge" },
+    { "type": "text", "id": "pill_3", "label": "Pill 3", "default": "touch-ups free, forever" },
+    { "type": "text", "id": "note", "label": "Under-button note", "default": "ships fast, arrives in 5–7 days · worldwide shipping" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "GK LP Offer" }]
+}
+{% endschema %}

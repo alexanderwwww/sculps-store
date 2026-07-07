@@ -1,0 +1,100 @@
+{
+  "sections": {
+    "lp_hero": {
+      "type": "gk-lp-hero",
+      "settings": {}
+    },
+    "videos": {
+      "type": "gk-video-testimonials",
+      "blocks": {
+        "b1": { "type": "screen", "settings": { "video": "shopify://files/videos/216.mp4", "video_url": "", "fallback": "testimonial-1.mp4", "caption": "tap for sound" } },
+        "b2": { "type": "screen", "settings": { "video_url": "", "fallback": "testimonial-2.mp4", "caption": "tap for sound" } }
+      },
+      "block_order": ["b1", "b2"],
+      "settings": {
+        "eyebrow": "real girls, real glo",
+        "heading": "watch them ditch the salon",
+        "logo_text": "glo",
+        "bg": "#f4f6f8"
+      }
+    },
+    "offer": {
+      "type": "gk-lp-offer",
+      "settings": {}
+    },
+    "review_carousel": {
+      "type": "gk-review-carousel",
+      "blocks": {
+        "b1": { "type": "review", "settings": { "photo": "shopify://shop_images/aac3d526-7512-464f-b03e-65f7224065c9.png", "stars": 5, "verified": true, "text": "shipped in 5 days and it genuinely works. doesn't hurt at all", "name": "jenna r.", "date": "june 23, 2026" } },
+        "b2": { "type": "review", "settings": { "photo": "shopify://shop_images/a4c7db83-065d-4257-9e0d-0bc9a081d744.png", "stars": 5, "verified": true, "text": "four weeks in and my underarms are basically baby underarms rn", "name": "monique t.", "date": "june 10, 2026" } },
+        "b3": { "type": "review", "settings": { "photo": "shopify://shop_images/330fa10e-ddcc-42b2-a1a0-ff5351bbd182.png", "stars": 5, "verified": true, "text": "cancelled my salon appointments. i do my whole body while watching tv and it paid for itself.", "name": "priya n.", "date": "may 28, 2026" } },
+        "b4": { "type": "review", "settings": { "photo": "shopify://shop_images/800cf2f1-85f9-4053-b08d-93c3078f726c_a351f04c-f020-4cf0-839f-ab5944d55488.png", "stars": 4, "verified": true, "text": "arrived fast, didn't hurt, great on my legs. coarser hair took a little longer but so worth it.", "name": "ava l.", "date": "may 19, 2026" } },
+        "b5": { "type": "review", "settings": { "photo": "shopify://shop_images/e70afa3d-de4d-4938-b40d-dd893e9c0f68.png", "stars": 5, "verified": true, "text": "followed the schedule exactly and by week 4 the difference was unreal. zero irritation with the gel after.", "name": "daniela r.", "date": "may 5, 2026" } },
+        "b6": { "type": "review", "settings": { "photo": "shopify://shop_images/01bb5014-e092-4fb9-ad22-28f2d6e3d347.png", "stars": 5, "verified": true, "text": "face, underarms, legs — one device does it all and looks so premium on my counter.", "name": "sophie k.", "date": "april 30, 2026" } }
+      },
+      "block_order": ["b1", "b2", "b3", "b4", "b5", "b6"],
+      "settings": {
+        "eyebrow": "girls like you, obsessed",
+        "heading": "loved by thousands of women",
+        "rating_text": "4.8 · 1,240 reviews",
+        "footer_text": "loved on tiktok",
+        "bg": "#ffffff"
+      }
+    },
+    "comments": {
+      "type": "gk-reviews",
+      "blocks": {
+        "b1": { "type": "review", "settings": { "stars": 5, "verified": true, "text": "cancelled my laser membership after two months of glo. wish i'd found it before spending $1,400 at the spa.", "author": "renee f. · dallas, tx" } },
+        "b2": { "type": "review", "settings": { "stars": 5, "verified": true, "text": "i do a 10-min touch-up whenever i see anything come back. that's it. no booking, no driving, no bill.", "author": "harper l. · san diego, ca" } },
+        "b3": { "type": "review", "settings": { "stars": 5, "verified": true, "text": "the spa kept selling me 'just a few more sessions.' glo actually let me maintain it myself at home.", "author": "tanya m. · chicago, il" } },
+        "b4": { "type": "review", "settings": { "stars": 4, "verified": true, "text": "coarse hair took patience but the results are real and it paid for itself vs one spa package.", "author": "grace o. · atlanta, ga" } },
+        "b5": { "type": "review", "settings": { "stars": 5, "verified": true, "text": "smoother than i ever got from waxing, and i'll never sit in a waiting room for this again.", "author": "mia s. · phoenix, az" } }
+      },
+      "block_order": ["b1", "b2", "b3", "b4", "b5"],
+      "settings": { "heading": "what women are saying", "speed": 46, "bg": "#f4f6f8", "card_bg": "#ffffff" }
+    },
+    "schedule": {
+      "type": "gk-schedule",
+      "blocks": {
+        "b1": { "type": "line", "settings": { "phase": "weeks 1–4", "cadence": "once a week", "detail": "start low, build up each session" } },
+        "b2": { "type": "line", "settings": { "phase": "weeks 5–8", "cadence": "every 2 weeks", "detail": "hair grows back finer & slower" } },
+        "b3": { "type": "line", "settings": { "phase": "week 9+", "cadence": "once a month", "detail": "quick touch-ups to stay smooth" } }
+      },
+      "block_order": ["b1", "b2", "b3"],
+      "settings": {
+        "eyebrow": "your at-home plan",
+        "heading": "the exact routine that gets results",
+        "subtext": "no guessing, no salon. here's the simple cadence our best results followed — save it straight to your notes.",
+        "note_title": "glo schedule ✨",
+        "areas": "face · underarms · arms · legs · bikini",
+        "dl_label": "download image",
+        "button_label": "save to your notes",
+        "file_name": "glo-schedule",
+        "bg": "#ffffff"
+      }
+    },
+    "guarantee": {
+      "type": "gk-guarantee",
+      "settings": {}
+    },
+    "close": {
+      "type": "gk-lp-close",
+      "settings": {}
+    },
+    "sticky": {
+      "type": "gk-lp-sticky",
+      "settings": {}
+    }
+  },
+  "order": [
+    "lp_hero",
+    "videos",
+    "offer",
+    "review_carousel",
+    "comments",
+    "schedule",
+    "guarantee",
+    "close",
+    "sticky"
+  ]
+}
