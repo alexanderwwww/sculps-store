@@ -1,0 +1,108 @@
+{%- comment -%} HELIOS — Super Glide presell landing (full-bleed, desktop + mobile). {%- endcomment -%}
+<style>
+#sgp{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#0A0E12;font-size:17px;line-height:1.6;background:#FBF6EC;overflow:hidden}
+#sgp *{box-sizing:border-box}
+#sgp img{max-width:100%;display:block}
+#sgp a{text-decoration:none}
+#sgp .bk{font-family:'Archivo Black','Arial Black',sans-serif;font-weight:900;letter-spacing:-.02em;line-height:1.04}
+#sgp .sf{font-family:Georgia,serif}
+#sgp .s{padding:46px 22px}
+#sgp .nar{max-width:640px;margin:0 auto}
+#sgp .tint{background:linear-gradient(180deg,#EAF3F1,#F4F0E6)}
+#sgp .ce{text-align:center}
+#sgp .ey{font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#12759E}
+#sgp h1{font-size:clamp(32px,3.6vw,52px);margin:10px auto 0;max-width:15ch}
+#sgp .u{background:linear-gradient(180deg,transparent 60%,rgba(240,163,44,.5) 60%)}
+#sgp h2{font-family:'Archivo Black',sans-serif;font-weight:900;letter-spacing:-.02em;font-size:clamp(25px,3.4vw,40px);line-height:1.08;margin:6px 0}
+#sgp .lede{font-size:clamp(18px,2.1vw,22px);color:#0C3A52;font-style:italic;margin:16px auto 0;max-width:34ch}
+#sgp .rate{display:inline-flex;align-items:center;gap:8px;margin:16px 0 0;font-size:14px;color:#5C6B72}
+#sgp .st{color:#F5A623;letter-spacing:2px}
+#sgp .cta{display:block;text-align:center;background:#0A1219;border-radius:16px;padding:17px;box-shadow:0 18px 40px -14px rgba(10,18,25,.55);transition:transform .15s;max-width:420px;margin:22px auto 0}
+#sgp .cta:hover{transform:translateY(-2px)}
+#sgp .cta b{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:18px;color:#fff;display:block}
+#sgp .cta .g{color:#10C97E}
+#sgp .cta em{font-style:normal;font-size:12.5px;color:rgba(255,255,255,.6)}
+#sgp .tr{display:flex;gap:6px 16px;justify-content:center;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:#5C6B72;font-weight:600}
+#sgp .top,#sgp .med{position:relative;max-width:1040px;margin:0 auto}
+#sgp .top:before{content:'';position:absolute;top:-120px;left:14%;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(240,163,44,.24),transparent 66%);pointer-events:none}
+#sgp .top>*,#sgp .med>*{position:relative}
+#sgp .ph{position:relative;width:min(300px,74vw);margin:22px auto 0;aspect-ratio:9/19;background:#0A0E12;border-radius:40px;padding:9px;box-shadow:0 44px 84px -30px rgba(6,30,46,.6),0 0 0 2px rgba(0,0,0,.12)}
+#sgp .ph video,#sgp .ph .scr{width:100%;height:100%;border-radius:31px;object-fit:cover;object-position:center;background:#000;display:block}
+#sgp .ph .notch{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:90px;height:22px;background:#0A0E12;border-radius:20px;z-index:3}
+#sgp .ph .snd{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.22);color:#fff;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.3);z-index:3;cursor:pointer}
+#sgp .bb{background:#fff;border:1px solid #E7E0D2;border-radius:22px;padding:22px;box-shadow:0 24px 60px -30px rgba(6,30,46,.42)}
+#sgp .bb h3{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:25px;margin:4px 0 0}
+#sgp .br{display:flex;align-items:center;gap:7px;margin:6px 0 15px;font-size:13px;color:#5C6B72}
+#sgp .ti{display:flex;align-items:center;gap:12px;border:1.5px solid #E7E0D2;border-radius:15px;padding:15px;margin-bottom:10px;position:relative}
+#sgp .ti.on{border-color:#0A1219;border-width:2px;background:#FAFBFC}
+#sgp .ti .r{width:22px;height:22px;border-radius:50%;border:2px solid #C7CED6;flex:0 0 auto}
+#sgp .ti.on .r{border:6.5px solid #0A1219}
+#sgp .ti .d b{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:15px;display:block}
+#sgp .ti .d span{font-size:12.5px;color:#5C6B72}
+#sgp .ti .p{margin-left:auto;text-align:right}
+#sgp .ti .p b{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:16px}
+#sgp .ti .p s{display:block;font-size:12px;color:#b3bac2}
+#sgp .ti .g{position:absolute;top:-10px;left:14px;font-size:9.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:#0A1219;background:#10C97E;padding:4px 10px;border-radius:100px}
+#sgp .ob{background:#0A1219;border-radius:18px;padding:17px;text-align:center;margin-top:4px}
+#sgp .ob .hh{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:15px;color:#fff}
+#sgp .ob .pl{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-top:6px}
+#sgp .ob .pl s{font-size:19px;color:rgba(255,255,255,.42);font-weight:700}
+#sgp .ob .pl b{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:35px;color:#10C97E;line-height:1}
+#sgp .ob .sv{display:inline-block;margin-top:9px;font-family:'Archivo Black',sans-serif;font-size:12px;color:#0A1219;background:#10C97E;padding:5px 13px;border-radius:100px}
+#sgp .cp{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;font-size:12.5px;color:#1F6B4A;font-weight:700;text-align:center}
+#sgp .buy{display:block;text-align:center;margin-top:12px;background:#10C97E;color:#0A1219;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:17px;padding:17px;border-radius:100px;transition:transform .15s}
+#sgp .buy:hover{transform:translateY(-2px)}
+#sgp .buy2{display:block;text-align:center;margin-top:10px;color:#0A0E12;font-weight:800;font-size:14px}
+#sgp .car{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);max-width:1100px;margin:0 auto}
+#sgp .car .row{display:flex;gap:14px;width:max-content;padding:6px 4px}
+#sgp .rc .row{animation:sgrc 56s linear infinite}
+#sgp .rc:hover .row{animation-play-state:paused}
+#sgp .rcd{flex:0 0 auto;width:min(80vw,300px);background:#fff;border:1px solid #E7E0D2;border-radius:18px;overflow:hidden;box-shadow:0 16px 38px -22px rgba(6,30,46,.42)}
+#sgp .rcd>img{width:100%;aspect-ratio:1/1;object-fit:cover}
+#sgp .rcd .bd{padding:14px 16px}
+#sgp .rcd p{font-size:14px;margin:6px 0 0;line-height:1.44;color:#2b3640}
+#sgp .rcd .ft{display:flex;align-items:center;gap:9px;margin-top:12px}
+#sgp .rcd .ft .av{width:34px;height:34px;border-radius:50%;background:#12759E;color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:0 0 auto}
+#sgp .rcd .ft .nn{font-weight:700;font-size:13px;line-height:1.15}
+#sgp .rcd .ft .nn span{display:block;color:#8A93A0;font-weight:500;font-size:11px}
+#sgp .rcd .ft .vf{margin-left:auto;font-size:11px;font-weight:700;color:#1F6B4A;background:#E9F7EF;padding:3px 9px;border-radius:100px}
+@keyframes sgrc{to{transform:translateX(-50%)}}
+#sgp .pc .row{animation:sgpc 36s linear infinite}
+#sgp .pc img{width:min(58vw,220px);aspect-ratio:4/5;object-fit:cover;flex:0 0 auto;border-radius:16px;box-shadow:0 16px 36px -22px rgba(6,30,46,.4)}
+@keyframes sgpc{to{transform:translateX(-50%)}}
+#sgp .cmar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+#sgp .cmar .row{display:flex;gap:10px;width:max-content;padding:5px 4px;animation:sgcm 60s linear infinite}
+#sgp .cmar .rb{animation:sgcm2 52s linear infinite}
+#sgp .cmar:hover .row{animation-play-state:paused}
+#sgp .cb{flex:0 0 auto;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #ECE7DC;border-radius:100px;padding:6px 16px 6px 6px;box-shadow:0 8px 22px -14px rgba(6,30,46,.35)}
+#sgp .cb .av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px}
+#sgp .cb .tx{font-size:13.5px;white-space:nowrap}
+#sgp .cb .tx b{font-weight:800}
+@keyframes sgcm{to{transform:translateX(-50%)}}
+@keyframes sgcm2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+#sgp .gu{background:#fff;border:1.5px dashed rgba(16,201,126,.55);border-radius:22px;padding:26px;text-align:center;max-width:600px;margin:0 auto}
+#sgp .gu h3{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:22px;margin:8px 0 6px}
+#sgs{position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;max-width:600px;margin:0 auto;background:#0A1219;border-radius:100px;padding:8px 8px 8px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 20px 44px -14px rgba(10,18,25,.6);transform:translateY(160%);transition:transform .4s}
+#sgs.show{transform:none}
+#sgs .l b{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:14px;color:#fff;display:block;line-height:1.1}
+#sgs .l span{font-size:11.5px;color:rgba(255,255,255,.6)}
+#sgs a{margin-left:auto;background:#10C97E;color:#0A1219;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:14px;padding:13px 20px;border-radius:100px}
+@media(min-width:840px){#sgp .s{padding:70px 26px}#sgp .top{display:grid;grid-template-columns:1.08fr .92fr;gap:50px;align-items:center;text-align:left}#sgp .top .hero{text-align:left}#sgp .top h1{margin:10px 0 0;max-width:none;font-size:clamp(40px,3.6vw,54px)}#sgp .top .lede{margin-left:0}#sgp .top .cta,#sgp .top .tr{margin-left:0;justify-content:flex-start}#sgp .top .ph,#sgp .med .ph{margin:0 auto}#sgp .med{display:grid;grid-template-columns:.85fr 1.15fr;gap:50px;align-items:center}#sgp .rcd{width:310px}#sgp .pc img{width:230px}}
+</style>
+<div id="sgp">
+<section class="s"><div class="top"><div class="hero ce"><div class="ey">The motorized water lounger</div><h1 class="bk">Do you miss the old days — when life felt like <span class="u">a dream</span>, and summer felt <span class="u">stress-free?</span></h1><p class="lede sf">You can feel that again. This is the summer you stop watching from the shore.</p><div class="rate"><span class="st">★★★★★</span> <b>4.8</b> · loved by 3,900+ families</div><a class="cta" href="#offer"><b>Feel like summer again <span class="g">→</span></b><em>2 for the price of 1 · coupon applies itself</em></a></div><div class="phwrap"><div class="ph"><div class="notch"></div><img class="scr" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Family on the Super Glide"></div></div></div></section>
+<section class="s tint" id="offer"><div class="ce nar" style="margin-bottom:26px"><div class="ey">Meet the Super Glide</div><h2 class="bk">Get 2 for the price of 1. The 2nd is on us.</h2></div><div class="med"><div class="phwrap"><div class="ph"><div class="notch"></div><video id="sgv" src="https://cdn.shopify.com/videos/c/o/v/b2c69b012cd1408bad6931149ee976f0.mp4" poster="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" muted loop playsinline autoplay preload="metadata"></video><div class="snd" id="sgn">🔊 Tap for sound</div></div></div><div class="bb"><h3>HELIOS Super Glide</h3><div class="br"><span class="st">★★★★★</span> 4.8 · 3,912 reviews · holds 300 lb</div><div class="ti on"><span class="g">🎁 2nd one FREE</span><span class="r"></span><div class="d"><b>2 Super Glides</b><span>One for you, one for the family</span></div><div class="p"><b>$259.99</b><s>$599.98</s></div></div><div class="ti"><span class="r"></span><div class="d"><b>1 Super Glide</b><span>Just me — try it out</span></div><div class="p"><b>$259.99</b></div></div><div class="ob"><div class="hh">Add to my order →</div><div class="pl"><s>$599.98</s><b>$259.99</b></div><span class="sv">YOU SAVE $340 — 2 for the price of 1</span></div><div class="cp">✅ 12% SUPERGLIDEIT coupon applies itself — no code to type.</div><a class="buy" href="/cart/47935890817189:1">Get it 1 + 1 now →</a><a class="buy2" href="/products/helios-super-glide-motorized-water-lounger">or see the full product →</a><div class="tr" style="margin-top:14px"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day refund</span></div></div></div></section>
+<section class="s"><div class="ce nar" style="margin-bottom:22px"><div class="ey">See what our customers say</div><h2 class="bk">Real families. Real photos.</h2><div class="rate"><span class="st">★★★★★</span> <b>4.8</b> · 3,912 reviews</div></div><div class="car rc"><div class="row" id="rrow"><div class="rcd"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_kid_2583f893-2e8d-451f-9dc2-752d57b1d017.jpg?v=1782766100" alt="Customer photo"><div class="bd"><span class="st">★★★★★</span><p>My son will NOT get off this thing. literally he refuses :')</p><div class="ft"><span class="av">e</span><span class="nn">elena d.<span>June 23, 2026</span></span><span class="vf">✓ Verified</span></div></div></div><div class="rcd"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_side_58a8782a-79b9-433e-9d4f-777d333ef9aa.jpg?v=1782766100" alt="Customer photo"><div class="bd"><span class="st">★★★★★</span><p>this is what i come home to everyday... get it guys, worth everything. you build happy memories, worth the money 10000% (the dog's name is rollie).</p><div class="ft"><span class="av">j</span><span class="nn">jenna.r<span>June 3, 2025</span></span><span class="vf">✓ Verified</span></div></div></div><div class="rcd"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_hero_15adc6f4-8a7f-44b8-9a8f-177e7eaadbd0.jpg?v=1782766099" alt="Customer photo"><div class="bd"><span class="st">★★★★★</span><p>Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Looks super good and it works perfect, is fun affffffff.</p><div class="ft"><span class="av">D</span><span class="nn">Dea W.<span>June 27, 2026</span></span><span class="vf">✓ Verified</span></div></div></div><div class="rcd"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Customer photo"><div class="bd"><span class="st">★★★★★</span><p>Got it for the kids and now they fight over who steers 😂 Easily holds both of them. Best backyard buy this summer.</p><div class="ft"><span class="av">M</span><span class="nn">Mike R.<span>July 1, 2026</span></span><span class="vf">✓ Verified</span></div></div></div></div></div></section>
+<section class="s tint"><div class="ce nar" style="margin-bottom:16px"><div class="ey">Out on the water</div></div><div class="car pc"><div class="row" id="prow"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/image0_1.jpg?v=1783204946" alt="Super Glide"></div></div></section>
+<section class="s"><div class="ce nar" style="margin-bottom:14px"><div class="ey" style="color:#1877F2">💬 From the comments</div></div><div class="cmar"><div class="row" id="crow"><div class="cb"><span class="av" style="background:#E4573E">L</span><span class="tx"><b>Linda M.</b> now I'M the one who won't get off it 😂</span></div><div class="cb"><span class="av" style="background:#7A5AA6">D</span><span class="tx"><b>Debbie K.</b> sat on the lake and just breathed. Worth every penny.</span></div><div class="cb"><span class="av" style="background:#3B7D4F">S</span><span class="tx"><b>Susan R.</b> ordered a 2nd one. Cup holders 🙌</span></div><div class="cb"><span class="av" style="background:#4A6DA7">G</span><span class="tx"><b>Gary P.</b> first float that actually MOVES. 10/10.</span></div></div><div class="row rb" id="crow2"><div class="cb"><span class="av" style="background:#2E7D8F">R</span><span class="tx"><b>Robert &amp; Carol</b> grandkids think we're cool now ❤️</span></div><div class="cb"><span class="av" style="background:#C9822B">F</span><span class="tx"><b>Frank T.</b> thought it'd be cheap. It is NOT. Holds me + 2 grandkids.</span></div><div class="cb"><span class="av" style="background:#B0553E">P</span><span class="tx"><b>Patty &amp; Jim</b> whole family out on the lake every weekend now ❤️</span></div><div class="cb"><span class="av" style="background:#586b8c">T</span><span class="tx"><b>Tom D.</b> kids won't get out of the water anymore 😄</span></div></div></div></section>
+<section class="s tint"><div class="gu"><div style="font-size:34px">🛡️</div><h3>30-Day Cool-or-Refund Promise</h3><p style="color:#5C6B72;margin:0">Take it out for 30 days. If it doesn't make your summer better, send it back for a full refund. The risk is entirely ours.</p></div></section>
+<section class="s ce"><h2 class="bk">You only get so many summers.</h2><p class="lede sf">Make this the one they talk about for years. The water's waiting.</p><a class="cta" href="#offer"><b>Get it 1 + 1 now <span class="g">→</span></b><em>2 for the price of 1 · Free shipping · 30-day guarantee</em></a></section>
+<div style="height:88px"></div>
+</div>
+<div id="sgs"><div class="l"><b>Super Glide — 2nd one FREE</b><span>$599.98 $259.99 · 2 for price of 1</span></div><a href="/cart/47935890817189:1">Get it now →</a></div>
+<script>
+(function(){['rrow','prow','crow','crow2'].forEach(function(i){var e=document.getElementById(i);if(e){e.innerHTML+=e.innerHTML;}});var s=document.getElementById('sgs');if(s){window.addEventListener('scroll',function(){s.classList.toggle('show',window.scrollY>700);},{passive:true});}var v=document.getElementById('sgv'),n=document.getElementById('sgn');if(v){var u=function(){v.muted=!v.muted;if(n){n.textContent=v.muted?'🔊 Tap for sound':'🔇 Tap to mute';}var p=v.play();if(p&&p.catch){p.catch(function(){});}};v.addEventListener('click',u);if(n){n.addEventListener('click',u);}}})();
+</script>
+{% schema %}
+{ "name": "SG Landing", "settings": [], "presets": [{ "name": "SG Landing" }] }
+{% endschema %}
