@@ -63,11 +63,19 @@
 #sgp .buy{display:block;text-align:center;margin-top:12px;background:#10C97E;color:#0A1219;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:17px;padding:17px;border-radius:100px;transition:transform .15s;cursor:pointer}
 #sgp .buy:hover{transform:translateY(-2px)}
 #sgp .buy2{display:block;text-align:center;margin-top:10px;color:#0A0E12;font-weight:800;font-size:14px}
-/* mobile-only reorder wrapper (buy box → UGC → FAQ on phone) */
+/* mobile-only reorder: dad photo → buy box → video → reviews → FAQ (desktop untouched) */
 #sgp .mobswap{display:flex;flex-direction:column}
 #sgp .faqsec{order:1}
 #sgp .ugcsec{order:2}
-@media(max-width:839px){#sgp .ugcsec{order:1}#sgp .faqsec{order:2}}
+#sgp .revsec{order:3}
+@media(max-width:839px){
+  #sgp .med{display:flex;flex-direction:column}
+  #sgp #offer .bb{order:1}
+  #sgp #offer .phwrap{order:2}
+  #sgp .ugcsec{order:1}
+  #sgp .revsec{order:2}
+  #sgp .faqsec{order:3}
+}
 /* embedded review carousel (matches homepage helios-reviews-carousel) */
 #sgrev .rvwrap{max-width:1200px;margin:0 auto;padding:0 4px;position:relative}
 #sgrev .rvhead{text-align:center;max-width:640px;margin:0 auto 26px}
@@ -161,9 +169,8 @@
   <details class="faq"><summary>Does the 2nd one really come free?<span class="pm">+</span></summary><div class="an">Yep — the Buy 1, Get 1 deal gives you two Super Glides for the price of one, and the 12% SUPERGLIDEIT coupon applies itself at checkout so you pay even less. Free shipping, backed by our 30-day money-back guarantee.</div></details>
 </div></section>
 <section class="s tint ugcsec"><div class="ce nar" style="margin-bottom:22px"><div class="ey">Straight from real summers</div><h2 class="bk">See it in the wild.</h2></div><div class="med" style="grid-template-columns:1fr;max-width:340px"><div class="phwrap"><div class="ph"><div class="notch"></div><video id="sgv2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><div class="snd" id="sgn2">🔊 Tap for sound</div></div></div></div></section>
-</div>
 <!-- 5) REVIEWS (real homepage carousel) -->
-<section class="s"><div id="sgrev"><div class="rvwrap">
+<section class="s revsec"><div id="sgrev"><div class="rvwrap">
   <div class="rvhead"><div class="rvey">see what our beloved customers have to say for us</div><div class="rvh2">21,600+ glides and counting.</div><div class="summary"><span class="st">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
   <div class="track" id="sgrevtrack">
     <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="elena d." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">My son will NOT get off this thing. literally he refuses :').</div><div class="who"><span class="av">e</span><div><div class="nm">elena d.</div><div class="lo">June 23, 2026</div></div></div></div>
@@ -175,6 +182,7 @@
   </div>
   <div class="dots" id="sgrevdots"></div>
 </div></div></section>
+</div>
 <!-- 6) PRODUCT MARQUEE -->
 <section class="s tint"><div class="ce nar" style="margin-bottom:16px"><div class="ey">Out on the water</div></div><div class="car pc"><div class="row" id="prow"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/image0_1.jpg?v=1783204946" alt="Super Glide"></div></div></section>
 <!-- 7) COMMENTS -->
