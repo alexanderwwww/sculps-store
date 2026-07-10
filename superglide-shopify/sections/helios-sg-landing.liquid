@@ -63,9 +63,35 @@
 #sgp .buy{display:block;text-align:center;margin-top:12px;background:#10C97E;color:#0A1219;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:17px;padding:17px;border-radius:100px;transition:transform .15s;cursor:pointer}
 #sgp .buy:hover{transform:translateY(-2px)}
 #sgp .buy2{display:block;text-align:center;margin-top:10px;color:#0A0E12;font-weight:800;font-size:14px}
-/* reviews screenshots */
-#sgp .revshots{max-width:1040px;margin:0 auto;display:grid;gap:24px}
-#sgp .revshots img{width:100%;border-radius:16px;box-shadow:0 18px 44px -26px rgba(6,30,46,.4)}
+/* mobile-only reorder wrapper (buy box → UGC → FAQ on phone) */
+#sgp .mobswap{display:flex;flex-direction:column}
+#sgp .faqsec{order:1}
+#sgp .ugcsec{order:2}
+@media(max-width:839px){#sgp .ugcsec{order:1}#sgp .faqsec{order:2}}
+/* embedded review carousel (matches homepage helios-reviews-carousel) */
+#sgrev .rvwrap{max-width:1200px;margin:0 auto;padding:0 4px;position:relative}
+#sgrev .rvhead{text-align:center;max-width:640px;margin:0 auto 26px}
+#sgrev .rvey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#0A5E97}
+#sgrev .rvh2{font-family:'Archivo Black','Archivo',sans-serif;font-weight:800;font-size:clamp(26px,4vw,44px);letter-spacing:-.02em;margin:10px 0 0;color:#0C1A24;line-height:1.04}
+#sgrev .summary{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-size:13.5px;color:#56636E}
+#sgrev .summary .st{color:#f5a623;letter-spacing:1px}
+#sgrev .track{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:6px 4px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#sgrev .track::-webkit-scrollbar{display:none}
+#sgrev .rvcard{scroll-snap-align:center;flex:0 0 84%;display:flex;flex-direction:column;gap:12px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);box-shadow:0 18px 44px -18px rgba(6,47,73,.32);border-radius:22px;padding:18px}
+@media(min-width:560px){#sgrev .rvcard{flex:0 0 48%}}
+@media(min-width:880px){#sgrev .rvcard{flex:0 0 calc(33.333% - 11px)}}
+#sgrev .rvph{width:100%;aspect-ratio:4/3;border-radius:14px;object-fit:cover;background:linear-gradient(160deg,#EAF6FB,#D6ECF5)}
+#sgrev .rvtop{display:flex;align-items:center;justify-content:space-between}
+#sgrev .stars{color:#f5a623;font-size:15px;letter-spacing:1px}
+#sgrev .vb{font-size:10.5px;font-weight:700;color:#1aa86b;background:rgba(26,168,107,.1);padding:4px 9px;border-radius:30px}
+#sgrev .rtext{font-size:14px;line-height:1.55;color:#0C1A24}
+#sgrev .who{display:flex;align-items:center;gap:10px;margin-top:auto}
+#sgrev .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0E7CC4,#16A6D6);color:#fff;font-family:'Archivo Black','Archivo',sans-serif;font-weight:800;font-size:15px;display:grid;place-items:center;flex-shrink:0;overflow:hidden}
+#sgrev .nm{font-size:13px;font-weight:700;color:#0C1A24}
+#sgrev .lo{font-size:11.5px;color:#56636E}
+#sgrev .dots{display:flex;gap:6px;justify-content:center;margin-top:18px;flex-wrap:wrap;max-width:280px;margin:18px auto 0}
+#sgrev .dot{width:7px;height:7px;border-radius:50%;background:rgba(12,26,36,.18);transition:.2s;cursor:pointer}
+#sgrev .dot.on{background:#0E7CC4;width:20px;border-radius:4px}
 /* product marquee */
 #sgp .car{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);max-width:1100px;margin:0 auto}
 #sgp .car .row{display:flex;gap:14px;width:max-content;padding:6px 4px}
@@ -125,18 +151,30 @@
   <a class="buy2" href="/products/helios-super-glide-motorized-water-lounger">or see the full product →</a>
   <div class="tr" style="margin-top:14px"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day refund</span></div>
 </div></div></section>
-<!-- 3) FAQ -->
-<section class="s"><div class="ce nar" style="margin-bottom:6px"><div class="ey">Good to know</div><h2 class="bk">Your questions, answered.</h2></div><div class="faqs">
+<!-- 3+4) FAQ + UGC (mobile shows UGC first, then FAQ) -->
+<div class="mobswap">
+<section class="s faqsec"><div class="ce nar" style="margin-bottom:6px"><div class="ey">Good to know</div><h2 class="bk">Your questions, answered.</h2></div><div class="faqs">
   <details class="faq" open><summary>Will it really hold an adult + the kids?<span class="pm">+</span></summary><div class="an">Yes. It's rated to hold up to 300 lb — plenty of room for a parent and two kids, with a padded headrest, backrest and dual cup holders so everyone's comfortable.</div></details>
   <details class="faq"><summary>Is it durable, or will it pop?<span class="pm">+</span></summary><div class="an">It's built from heavy-duty, marine-grade reinforced PVC — thick, tough material made to take a full summer of kids, docks and dragging in and out of the water. This isn't a flimsy pool toy; it's built to last season after season and simply isn't meant to break.</div></details>
   <details class="faq"><summary>Is it hard to set up?<span class="pm">+</span></summary><div class="an">Not at all. Inflate it in about 5 minutes with the included nozzle, drop it in the water, grab the twin joysticks and go. No tools, no hassle.</div></details>
   <details class="faq"><summary>How long does the battery last?<span class="pm">+</span></summary><div class="an">Around 60 minutes of continuous cruising per charge — plenty for an afternoon on the water — and it recharges between sessions.</div></details>
   <details class="faq"><summary>Does the 2nd one really come free?<span class="pm">+</span></summary><div class="an">Yep — the Buy 1, Get 1 deal gives you two Super Glides for the price of one, and the 12% SUPERGLIDEIT coupon applies itself at checkout so you pay even less. Free shipping, backed by our 30-day money-back guarantee.</div></details>
 </div></section>
-<!-- 4) UGC VIDEO -->
-<section class="s tint"><div class="ce nar" style="margin-bottom:22px"><div class="ey">Straight from real summers</div><h2 class="bk">See it in the wild.</h2></div><div class="med" style="grid-template-columns:1fr;max-width:340px"><div class="phwrap"><div class="ph"><div class="notch"></div><video id="sgv2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><div class="snd" id="sgn2">🔊 Tap for sound</div></div></div></div></section>
-<!-- 5) REVIEWS (your screenshots) -->
-<section class="s"><div class="revshots"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/sg_reviews_1.png?v=1783663109" alt="Super Glide customer reviews"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/sg_reviews_2.png?v=1783663109" alt="Super Glide customer reviews"></div></section>
+<section class="s tint ugcsec"><div class="ce nar" style="margin-bottom:22px"><div class="ey">Straight from real summers</div><h2 class="bk">See it in the wild.</h2></div><div class="med" style="grid-template-columns:1fr;max-width:340px"><div class="phwrap"><div class="ph"><div class="notch"></div><video id="sgv2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><div class="snd" id="sgn2">🔊 Tap for sound</div></div></div></div></section>
+</div>
+<!-- 5) REVIEWS (real homepage carousel) -->
+<section class="s"><div id="sgrev"><div class="rvwrap">
+  <div class="rvhead"><div class="rvey">see what our beloved customers have to say for us</div><div class="rvh2">21,600+ glides and counting.</div><div class="summary"><span class="st">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
+  <div class="track" id="sgrevtrack">
+    <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="elena d." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">My son will NOT get off this thing. literally he refuses :').</div><div class="who"><span class="av">e</span><div><div class="nm">elena d.</div><div class="lo">June 23, 2026</div></div></div></div>
+    <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492" alt="jenna.r." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">this is what i come home to everyday... get it guys worth everything , you build happy memories after all worth the money 10000%(the dogs name is rollie).</div><div class="who"><span class="av">j</span><div><div class="nm">jenna.r.</div><div class="lo">June 3, 2025</div></div></div></div>
+    <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed800814-8280-4515-ab36-29f15996c019.png?v=1782882243" alt="Dea W." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Looks super good and guys for real it works perfect is fun affffffff.</div><div class="who"><span class="av">D</span><div><div class="nm">Dea W.</div><div class="lo">June 27, 2026</div></div></div></div>
+    <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243" alt="Chris Tes." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol.</div><div class="who"><span class="av">C</span><div><div class="nm">Chris Tes.</div><div class="lo">June 22, 2026</div></div></div></div>
+    <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/359ded2c-3def-48f5-90fe-7b69429864fb.png?v=1782882243" alt="mike L." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">Arrived well packaged and everything was in the box super super fun.</div><div class="who"><span class="av">m</span><div><div class="nm">mike L.</div><div class="lo">June 18, 2026</div></div></div></div>
+    <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup_6c508243-62c3-4e30-a179-7689e4937344.jpg?v=1782766099" alt="pablo P." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">Setup was stupid easy — pump it up, drop it in, grab the joysticks. Motors have real power. 10/10.</div><div class="who"><span class="av">p</span><div><div class="nm">pablo P.</div><div class="lo">June 12, 2026</div></div></div></div>
+  </div>
+  <div class="dots" id="sgrevdots"></div>
+</div></div></section>
 <!-- 6) PRODUCT MARQUEE -->
 <section class="s tint"><div class="ce nar" style="margin-bottom:16px"><div class="ey">Out on the water</div></div><div class="car pc"><div class="row" id="prow"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="Super Glide"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/image0_1.jpg?v=1783204946" alt="Super Glide"></div></div></section>
 <!-- 7) COMMENTS -->
@@ -185,6 +223,18 @@
   document.getElementById('sgob').addEventListener('click',checkout);
   if(buy)buy.addEventListener('click',function(e){e.preventDefault();checkout();});
   if(sa)sa.addEventListener('click',function(e){e.preventDefault();checkout();});
+  // review carousel dots + sync
+  var rtrack=document.getElementById('sgrevtrack'), rdots=document.getElementById('sgrevdots');
+  if(rtrack&&rdots){
+    var rcards=[].slice.call(rtrack.querySelectorAll('.rvcard'));
+    rdots.innerHTML=''; rcards.forEach(function(c,i){var d=document.createElement('span');d.className='dot'+(i===0?' on':'');rdots.appendChild(d);});
+    var dts=[].slice.call(rdots.children);
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.intersectionRatio>=0.6){var i=rcards.indexOf(e.target);dts.forEach(function(d,j){d.classList.toggle('on',j===i);});}});},{root:rtrack,threshold:[0.6]});
+      rcards.forEach(function(c){io.observe(c);});
+    }
+    dts.forEach(function(d,i){d.addEventListener('click',function(){rtrack.scrollTo({left:rcards[i].offsetLeft,behavior:'smooth'});});});
+  }
 })();
 </script>
 {% schema %}
