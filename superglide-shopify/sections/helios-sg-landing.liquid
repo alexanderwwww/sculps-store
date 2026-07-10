@@ -1,10 +1,5 @@
-{%- comment -%} HELIOS — Super Glide landing BODY (after real header + buy box). Order: see-full link → FAQ → dad → reviews → UGC(education)+bundles → guarantee. Footer added via template. {%- endcomment -%}
+{%- comment -%} HELIOS — Super Glide landing (after real header). Self-contained buy box (no broken media, no CYOB). Order: buy box → FAQ → dad → reviews → UGC(education)+bundles → guarantee. Footer via template. {%- endcomment -%}
 <style>
-/* recolor the REAL buy box CTA green — page-scoped (this section only renders on this page) */
-.hb-atc{background:#10C97E!important;color:#0A1219!important;box-shadow:0 16px 32px -12px rgba(16,201,126,.5)!important;text-transform:none!important}
-.hb-atc:hover{background:#0FBE75!important}
-.hb-atc svg{stroke:#0A1219!important;color:#0A1219!important}
-.hb-sk-add{background:#10C97E!important;color:#0A1219!important}
 #sgp{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#0A0E12;font-size:17px;line-height:1.6;background:#FBF6EC;overflow:hidden}
 #sgp *{box-sizing:border-box}
 #sgp img{max-width:100%;display:block}
@@ -22,22 +17,31 @@
 #sgp .lede{font-size:clamp(18px,2.1vw,22px);color:#0C3A52;font-style:italic;margin:16px auto 0;max-width:34ch}
 #sgp .rate{display:inline-flex;align-items:center;gap:8px;margin:16px 0 0;font-size:14px;color:#5C6B72}
 #sgp .st{color:#F5A623;letter-spacing:2px}
-#sgp .seefull{display:block;max-width:420px;margin:0 auto;text-align:center;background:#fff;border:1.6px solid #0A1219;color:#0A1219;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:15px;padding:15px;border-radius:100px;transition:transform .15s,background .15s}
-#sgp .seefull:hover{transform:translateY(-2px);background:#f4f5f6}
 #sgp .cta{display:block;text-align:center;background:#10C97E;border-radius:100px;padding:17px;box-shadow:0 16px 34px -14px rgba(16,201,126,.55);transition:transform .15s;max-width:420px;margin:22px auto 0;cursor:pointer}
 #sgp .cta:hover{transform:translateY(-2px)}
 #sgp .cta b{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:18px;color:#0A1219;display:block}
 #sgp .cta em{font-style:normal;font-size:12.5px;color:rgba(10,18,25,.6)}
+#sgp .tr{display:flex;gap:6px 16px;justify-content:center;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:#5C6B72;font-weight:600}
 #sgp .top,#sgp .med{position:relative;max-width:1040px;margin:0 auto}
-#sgp .top:before{content:'';position:absolute;top:-120px;left:14%;width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(240,163,44,.24),transparent 66%);pointer-events:none}
 #sgp .top>*,#sgp .med>*{position:relative}
 #sgp .ph{position:relative;width:min(300px,74vw);margin:22px auto 0;aspect-ratio:9/19;background:#0A0E12;border-radius:40px;padding:9px;box-shadow:0 44px 84px -30px rgba(6,30,46,.6),0 0 0 2px rgba(0,0,0,.12)}
 #sgp .ph video,#sgp .ph .scr{width:100%;height:100%;border-radius:31px;object-fit:cover;object-position:center;background:#000;display:block}
 #sgp .ph .notch{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:90px;height:22px;background:#0A0E12;border-radius:20px;z-index:3}
 #sgp .ph .snd{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.22);color:#fff;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.3);z-index:3;cursor:pointer}
+/* product gallery */
+#sgp .gal{position:relative}
+#sgp .pcmain{border-radius:16px;overflow:hidden;border:1px solid #E7E0D2;background:#fff;aspect-ratio:1/1}
+#sgp .pcmain img{width:100%;height:100%;object-fit:cover}
+#sgp .pcth{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+#sgp .pct{flex:0 0 auto;width:64px;aspect-ratio:1/1;border:2px solid #E7E0D2;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff}
+#sgp .pct.on{border-color:#0A1219}
+#sgp .pct img{width:100%;height:100%;object-fit:cover}
+/* buy card */
 #sgp .bb{background:#fff;border:1px solid #E7E0D2;border-radius:22px;padding:22px;box-shadow:0 24px 60px -30px rgba(6,30,46,.42)}
 #sgp .bb h3{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:25px;margin:4px 0 0}
-#sgp .br{display:flex;align-items:center;gap:7px;margin:6px 0 15px;font-size:13px;color:#5C6B72}
+#sgp .br{display:flex;align-items:center;gap:7px;margin:6px 0 12px;font-size:13px;color:#5C6B72;flex-wrap:wrap}
+#sgp .pills{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 15px}
+#sgp .pills span{font-size:11.5px;font-weight:700;color:#1F6B4A;background:rgba(74,190,140,.15);border:1px solid rgba(74,190,140,.35);padding:5px 10px;border-radius:100px}
 #sgp .ti{display:flex;align-items:center;gap:12px;border:1.5px solid #E7E0D2;border-radius:15px;padding:15px;margin-bottom:10px;position:relative;cursor:pointer;transition:border-color .15s,background .15s}
 #sgp .ti.on{border-color:#0A1219;border-width:2px;background:#FAFBFC}
 #sgp .ti .r{width:22px;height:22px;border-radius:50%;border:2px solid #C7CED6;flex:0 0 auto}
@@ -60,7 +64,7 @@
 #sgp .buy{display:block;text-align:center;margin-top:12px;background:#10C97E;color:#0A1219;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:17px;padding:17px;border-radius:100px;transition:transform .15s;cursor:pointer}
 #sgp .buy:hover{transform:translateY(-2px)}
 #sgp .buy2{display:block;text-align:center;margin-top:10px;color:#0A0E12;font-weight:800;font-size:14px}
-/* review carousel (matches homepage helios-reviews-carousel) */
+/* review carousel */
 #sgrev .rvwrap{max-width:1200px;margin:0 auto;padding:0 4px;position:relative}
 #sgrev .rvhead{text-align:center;max-width:640px;margin:0 auto 26px}
 #sgrev .rvey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#0A5E97}
@@ -94,13 +98,38 @@
 #sgp .faq .an{padding:0 18px 16px;color:#5C6B72;font-size:14.5px}
 #sgp .gu{background:#fff;border:1.5px dashed rgba(16,201,126,.55);border-radius:22px;padding:26px;text-align:center;max-width:600px;margin:0 auto}
 #sgp .gu h3{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:22px;margin:8px 0 6px}
-@media(min-width:840px){#sgp .s{padding:70px 26px}#sgp .top{display:grid;grid-template-columns:1.08fr .92fr;gap:50px;align-items:center;text-align:left}#sgp .top .hero{text-align:left}#sgp .top h1{margin:10px 0 0;max-width:none;font-size:clamp(40px,3.6vw,54px)}#sgp .top .lede{margin-left:0}#sgp .top .cta,#sgp .top .tr{margin-left:0;justify-content:flex-start}#sgp .top .ph,#sgp .med .ph{margin:0 auto}#sgp .med{display:grid;grid-template-columns:.85fr 1.15fr;gap:50px;align-items:start}}
+@media(min-width:840px){#sgp .s{padding:64px 26px}#sgp .top{display:grid;grid-template-columns:1.08fr .92fr;gap:50px;align-items:center;text-align:left}#sgp .top .hero{text-align:left}#sgp .top h1{margin:10px 0 0;max-width:none;font-size:clamp(40px,3.6vw,54px)}#sgp .top .lede{margin-left:0}#sgp .top .cta,#sgp .top .tr{margin-left:0;justify-content:flex-start}#sgp .top .ph,#sgp .med .ph{margin:0 auto}#sgp .med{display:grid;grid-template-columns:.9fr 1.1fr;gap:44px;align-items:start}#sgp .gal{position:sticky;top:14px}}
 </style>
 <div id="sgp">
-<!-- SEE FULL PRODUCT (directly under the real buy box) -->
-<section class="s" style="padding:20px 22px 0"><div class="nar"><a class="seefull" href="/products/helios-super-glide-motorized-water-lounger">See the full product details →</a></div></section>
+<!-- BUY BOX (self-contained, clean) -->
+<section class="s" id="offer" style="padding-top:28px"><div class="med">
+  <div class="gal">
+    <div class="pcmain" id="pcmain"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="HELIOS Super Glide"></div>
+    <div class="pcth" id="pcth">
+      <div class="pct on" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""></div>
+      <div class="pct" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt=""></div>
+      <div class="pct" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt=""></div>
+      <div class="pct" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt=""></div>
+      <div class="pct" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/image0_1.jpg?v=1783204946"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/image0_1.jpg?v=1783204946" alt=""></div>
+    </div>
+  </div>
+  <div class="bb sgbundle" data-def="47935890817189">
+    <h3>HELIOS Super Glide</h3><div class="br"><span class="st">★★★★★</span> 4.8 · 4,228 reviews · holds 300 lb</div>
+    <div class="pills"><span>✓ Hands-free thrusters</span><span>✓ Fits the whole family</span><span>✓ Inflates in ~5 min</span></div>
+    <div class="tiers">
+      <div class="ti" data-vid="47935890882725" data-c="$1,199.96" data-p="$499.99" data-sv="YOU SAVE $700 — buy 2, get 2 free"><span class="g">🎁 2 FREE</span><span class="r"></span><div class="d"><b>Buy 2, Get 2 Free</b><span>4 Super Glides · the whole crew</span></div><div class="p"><b>$499.99</b><s>$1,199.96</s></div></div>
+      <div class="ti on" data-vid="47935890817189" data-c="$599.98" data-p="$299.99" data-sv="YOU SAVE $300 — 2 for the price of 1"><span class="g">★ Most Popular · 2nd one FREE</span><span class="r"></span><div class="d"><b>Buy 1, Get 1 Free</b><span>One for you, one for the family</span></div><div class="p"><b>$299.99</b><s>$599.98</s></div></div>
+      <div class="ti" data-vid="47945658269861" data-c="$299.99" data-p="$259.99" data-sv="Just you — try it out"><span class="r"></span><div class="d"><b>Buy One</b><span>1 Super Glide · just me</span></div><div class="p"><b>$259.99</b><s>$299.99</s></div></div>
+    </div>
+    <div class="ob"><div class="hh">Add to my order →</div><div class="pl"><s class="obc">$599.98</s><b class="obp">$299.99</b></div><span class="sv obs">YOU SAVE $300 — 2 for the price of 1</span></div>
+    <div class="cp">✅ 12% SUPERGLIDEIT coupon applies itself — no code to type.</div>
+    <a class="buy" href="/cart/47935890817189:1">Get it 1 + 1 now →</a>
+    <a class="buy2" href="/products/helios-super-glide-motorized-water-lounger">or see the full product →</a>
+    <div class="tr" style="margin-top:14px"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day refund</span></div>
+  </div>
+</div></section>
 <!-- FAQ -->
-<section class="s"><div class="ce nar" style="margin-bottom:6px"><div class="ey">Good to know</div><h2 class="bk">Your questions, answered.</h2></div><div class="faqs">
+<section class="s tint"><div class="ce nar" style="margin-bottom:6px"><div class="ey">Good to know</div><h2 class="bk">Your questions, answered.</h2></div><div class="faqs">
   <details class="faq" open><summary>Will it really hold an adult + the kids?<span class="pm">+</span></summary><div class="an">Yes. It's rated to hold up to 300 lb — plenty of room for a parent and two kids, with a padded headrest, backrest and dual cup holders so everyone's comfortable.</div></details>
   <details class="faq"><summary>Is it durable, or will it pop?<span class="pm">+</span></summary><div class="an">It's built from heavy-duty, marine-grade reinforced PVC — thick, tough material made to take a full summer of kids, docks and dragging in and out of the water. This isn't a flimsy pool toy; it's built to last season after season and simply isn't meant to break.</div></details>
   <details class="faq"><summary>Is it hard to set up?<span class="pm">+</span></summary><div class="an">Not at all. Inflate it in about 5 minutes with the included nozzle, drop it in the water, grab the twin joysticks and go. No tools, no hassle.</div></details>
@@ -108,9 +137,9 @@
   <details class="faq"><summary>Does the 2nd one really come free?<span class="pm">+</span></summary><div class="an">Yep — the Buy 1, Get 1 deal gives you two Super Glides for the price of one, and the 12% SUPERGLIDEIT coupon applies itself at checkout so you pay even less. Free shipping, backed by our 30-day money-back guarantee.</div></details>
 </div></section>
 <!-- PICTURE WITH DAD -->
-<section class="s tint"><div class="top"><div class="hero ce"><div class="ey">The motorized water lounger</div><h1 class="bk">Do you miss the old days — when life felt like <span class="u">a dream</span>, and summer felt <span class="u">stress-free?</span></h1><p class="lede sf">You can feel that again. This is the summer you stop watching from the shore.</p><div class="rate"><span class="st">★★★★★</span> <b>4.8</b> · loved by 3,900+ families</div><a class="cta tocart" href="#top"><b>Feel like summer again <span class="g">→</span></b><em>2 for the price of 1 · coupon applies itself</em></a></div><div class="phwrap"><div class="ph"><div class="notch"></div><img class="scr" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Family on the Super Glide"></div></div></div></section>
-<!-- REVIEWS (real homepage carousel) -->
-<section class="s"><div id="sgrev"><div class="rvwrap">
+<section class="s"><div class="top"><div class="hero ce"><div class="ey">The motorized water lounger</div><h1 class="bk">Do you miss the old days — when life felt like <span class="u">a dream</span>, and summer felt <span class="u">stress-free?</span></h1><p class="lede sf">You can feel that again. This is the summer you stop watching from the shore.</p><div class="rate"><span class="st">★★★★★</span> <b>4.8</b> · loved by 3,900+ families</div><a class="cta tocart" href="#offer"><b>Feel like summer again <span class="g">→</span></b><em>2 for the price of 1 · coupon applies itself</em></a></div><div class="phwrap"><div class="ph"><div class="notch"></div><img class="scr" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Family on the Super Glide"></div></div></div></section>
+<!-- REVIEWS -->
+<section class="s tint"><div id="sgrev"><div class="rvwrap">
   <div class="rvhead"><div class="rvey">see what our beloved customers have to say for us</div><div class="rvh2">21,600+ glides and counting.</div><div class="summary"><span class="st">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
   <div class="track" id="sgrevtrack">
     <div class="rvcard"><img class="rvph" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="elena d." loading="lazy"><div class="rvtop"><div class="stars">★★★★★</div><span class="vb">✓ Verified</span></div><div class="rtext">My son will NOT get off this thing. literally he refuses :').</div><div class="who"><span class="av">e</span><div><div class="nm">elena d.</div><div class="lo">June 23, 2026</div></div></div></div>
@@ -123,66 +152,52 @@
   <div class="dots" id="sgrevdots"></div>
 </div></div></section>
 <!-- UGC VIDEO AS EDUCATION + BUNDLES -->
-<section class="s tint"><div class="ce nar" style="margin-bottom:26px"><div class="ey">See exactly how it works</div><h2 class="bk">Watch it glide — then grab yours.</h2></div><div class="med"><div class="phwrap"><div class="ph"><div class="notch"></div><video id="sgv2" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><div class="snd" id="sgn2">🔊 Tap for sound</div></div></div><div class="bb">
+<section class="s"><div class="ce nar" style="margin-bottom:26px"><div class="ey">See exactly how it works</div><h2 class="bk">Watch it glide — then grab yours.</h2></div><div class="med"><div class="phwrap"><div class="ph"><div class="notch"></div><video id="sgv2" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><div class="snd" id="sgn2">🔊 Tap for sound</div></div></div><div class="bb sgbundle" data-def="47935890817189">
   <h3>HELIOS Super Glide</h3><div class="br"><span class="st">★★★★★</span> 4.8 · 4,228 reviews · holds 300 lb</div>
-  <div id="sgtiers">
-    <div class="ti" data-vid="47935890882725" data-c="$1,199.96" data-p="$499.99" data-sv="YOU SAVE $700 — buy 2, get 2 free" data-sk="4 for $499.99"><span class="g">🎁 2 FREE</span><span class="r"></span><div class="d"><b>Buy 2, Get 2 Free</b><span>4 Super Glides · the whole crew</span></div><div class="p"><b>$499.99</b><s>$1,199.96</s></div></div>
-    <div class="ti on" data-vid="47935890817189" data-c="$599.98" data-p="$299.99" data-sv="YOU SAVE $300 — 2 for the price of 1" data-sk="2 for $299.99"><span class="g">★ Most Popular · 2nd one FREE</span><span class="r"></span><div class="d"><b>Buy 1, Get 1 Free</b><span>One for you, one for the family</span></div><div class="p"><b>$299.99</b><s>$599.98</s></div></div>
-    <div class="ti" data-vid="47945658269861" data-c="$299.99" data-p="$259.99" data-sv="Just you — try it out" data-sk="1 for $259.99"><span class="r"></span><div class="d"><b>Buy One</b><span>1 Super Glide · just me</span></div><div class="p"><b>$259.99</b><s>$299.99</s></div></div>
+  <div class="tiers">
+    <div class="ti" data-vid="47935890882725" data-c="$1,199.96" data-p="$499.99" data-sv="YOU SAVE $700 — buy 2, get 2 free"><span class="g">🎁 2 FREE</span><span class="r"></span><div class="d"><b>Buy 2, Get 2 Free</b><span>4 Super Glides · the whole crew</span></div><div class="p"><b>$499.99</b><s>$1,199.96</s></div></div>
+    <div class="ti on" data-vid="47935890817189" data-c="$599.98" data-p="$299.99" data-sv="YOU SAVE $300 — 2 for the price of 1"><span class="g">★ Most Popular · 2nd one FREE</span><span class="r"></span><div class="d"><b>Buy 1, Get 1 Free</b><span>One for you, one for the family</span></div><div class="p"><b>$299.99</b><s>$599.98</s></div></div>
+    <div class="ti" data-vid="47945658269861" data-c="$299.99" data-p="$259.99" data-sv="Just you — try it out"><span class="r"></span><div class="d"><b>Buy One</b><span>1 Super Glide · just me</span></div><div class="p"><b>$259.99</b><s>$299.99</s></div></div>
   </div>
-  <div class="ob" id="sgob"><div class="hh">Add to my order →</div><div class="pl"><s id="sgobc">$599.98</s><b id="sgobp">$299.99</b></div><span class="sv" id="sgobs">YOU SAVE $300 — 2 for the price of 1</span></div>
+  <div class="ob"><div class="hh">Add to my order →</div><div class="pl"><s class="obc">$599.98</s><b class="obp">$299.99</b></div><span class="sv obs">YOU SAVE $300 — 2 for the price of 1</span></div>
   <div class="cp">✅ 12% SUPERGLIDEIT coupon applies itself — no code to type.</div>
-  <a class="buy" id="sgbuy" href="/cart/47935890817189:1">Get it 1 + 1 now →</a>
+  <a class="buy" href="/cart/47935890817189:1">Get it 1 + 1 now →</a>
   <a class="buy2" href="/products/helios-super-glide-motorized-water-lounger">or see the full product →</a>
-  <div class="tr" style="margin-top:14px"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day refund</span></div>
 </div></div></section>
 <!-- GUARANTEE -->
-<section class="s"><div class="gu"><div style="font-size:34px">🛡️</div><h3>30-Day Cool-or-Refund Promise</h3><p style="color:#5C6B72;margin:0">Take it out for 30 days. If it doesn't make your summer better, send it back for a full refund. The risk is entirely ours.</p></div></section>
+<section class="s tint"><div class="gu"><div style="font-size:34px">🛡️</div><h3>30-Day Cool-or-Refund Promise</h3><p style="color:#5C6B72;margin:0">Take it out for 30 days. If it doesn't make your summer better, send it back for a full refund. The risk is entirely ours.</p></div></section>
 <div style="height:20px"></div>
 </div>
 <script>
 (function(){
   var root=document.getElementById('sgp'); if(!root||root.dataset.i)return; root.dataset.i='1';
-  // UGC video sound toggle
+  var DISC='SUPERGLIDEIT';
+  // UGC sound
   var v=document.getElementById('sgv2'),n=document.getElementById('sgn2');
-  if(v){var u=function(){v.muted=!v.muted;if(n){n.textContent=v.muted?'🔊 Tap for sound':'🔇 Tap to mute';}var p=v.play();if(p&&p.catch){p.catch(function(){});}};v.addEventListener('click',u);if(n){n.addEventListener('click',u);}}
-  // scroll-to-top CTAs (back to the buy box)
-  [].slice.call(document.querySelectorAll('#sgp .tocart')).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});});});
-  // bundle tiers + functional checkout
-  var tiers=[].slice.call(document.querySelectorAll('#sgtiers .ti'));
-  var buy=document.getElementById('sgbuy');
-  var obc=document.getElementById('sgobc'), obp=document.getElementById('sgobp'), obs=document.getElementById('sgobs');
-  var selVid='47935890817189', DISC='SUPERGLIDEIT', busy=false;
-  function checkout(){
-    if(busy)return; busy=true;
-    var back='/cart/'+selVid+':1?discount='+DISC;
-    try{
-      fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:[{id:parseInt(selVid,10),quantity:1}]})})
-        .then(function(r){ if(!r.ok)throw 0; window.location.href='/discount/'+DISC+'?redirect=%2Fcheckout'; })
-        .catch(function(){ busy=false; window.location.href=back; });
-    }catch(e){ busy=false; window.location.href=back; }
-  }
-  tiers.forEach(function(ti){ti.addEventListener('click',function(){
-    tiers.forEach(function(x){x.classList.remove('on');}); ti.classList.add('on');
-    selVid=ti.getAttribute('data-vid');
-    var c=ti.getAttribute('data-c');
-    if(obc){ if(c){obc.textContent=c;obc.style.display='';}else{obc.style.display='none';} }
-    if(obp)obp.textContent=ti.getAttribute('data-p');
-    if(obs)obs.textContent=ti.getAttribute('data-sv');
-    if(buy)buy.href='/cart/'+selVid+':1';
-  });});
-  var ob=document.getElementById('sgob'); if(ob)ob.addEventListener('click',checkout);
-  if(buy)buy.addEventListener('click',function(e){e.preventDefault();checkout();});
-  // review carousel dots + sync
-  var rtrack=document.getElementById('sgrevtrack'), rdots=document.getElementById('sgrevdots');
+  if(v){var u=function(){v.muted=!v.muted;if(n)n.textContent=v.muted?'🔊 Tap for sound':'🔇 Tap to mute';var p=v.play();if(p&&p.catch)p.catch(function(){});};v.addEventListener('click',u);if(n)n.addEventListener('click',u);}
+  // product gallery
+  var pcmain=document.getElementById('pcmain');
+  if(pcmain){var pcts=[].slice.call(document.querySelectorAll('#pcth .pct'));pcts.forEach(function(t){t.addEventListener('click',function(){pcts.forEach(function(x){x.classList.remove('on');});t.classList.add('on');pcmain.innerHTML='<img src="'+t.getAttribute('data-src')+'" alt="HELIOS Super Glide">';});});}
+  // scroll to buy box
+  [].slice.call(document.querySelectorAll('#sgp .tocart')).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var o=document.getElementById('offer');if(o){o.scrollIntoView({behavior:'smooth'});}else{window.scrollTo({top:0,behavior:'smooth'});}});});
+  // bundle boxes (works for any number, no id collisions)
+  [].slice.call(document.querySelectorAll('#sgp .sgbundle')).forEach(function(box){
+    var tiers=[].slice.call(box.querySelectorAll('.ti'));
+    var buy=box.querySelector('.buy'), ob=box.querySelector('.ob');
+    var obc=box.querySelector('.obc'),obp=box.querySelector('.obp'),obs=box.querySelector('.obs');
+    var sel=box.getAttribute('data-def')||'47935890817189',busy=false;
+    function checkout(){if(busy)return;busy=true;var back='/cart/'+sel+':1?discount='+DISC;try{fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:[{id:parseInt(sel,10),quantity:1}]})}).then(function(r){if(!r.ok)throw 0;window.location.href='/discount/'+DISC+'?redirect=%2Fcheckout';}).catch(function(){busy=false;window.location.href=back;});}catch(e){busy=false;window.location.href=back;}}
+    tiers.forEach(function(ti){ti.addEventListener('click',function(){tiers.forEach(function(x){x.classList.remove('on');});ti.classList.add('on');sel=ti.getAttribute('data-vid');var c=ti.getAttribute('data-c');if(obc){if(c){obc.textContent=c;obc.style.display='';}else{obc.style.display='none';}}if(obp)obp.textContent=ti.getAttribute('data-p');if(obs)obs.textContent=ti.getAttribute('data-sv');if(buy)buy.href='/cart/'+sel+':1';});});
+    if(ob)ob.addEventListener('click',checkout);
+    if(buy)buy.addEventListener('click',function(e){e.preventDefault();checkout();});
+  });
+  // review dots
+  var rtrack=document.getElementById('sgrevtrack'),rdots=document.getElementById('sgrevdots');
   if(rtrack&&rdots){
     var rcards=[].slice.call(rtrack.querySelectorAll('.rvcard'));
-    rdots.innerHTML=''; rcards.forEach(function(c,i){var d=document.createElement('span');d.className='dot'+(i===0?' on':'');rdots.appendChild(d);});
+    rdots.innerHTML='';rcards.forEach(function(c,i){var d=document.createElement('span');d.className='dot'+(i===0?' on':'');rdots.appendChild(d);});
     var dts=[].slice.call(rdots.children);
-    if('IntersectionObserver' in window){
-      var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.intersectionRatio>=0.6){var i=rcards.indexOf(e.target);dts.forEach(function(d,j){d.classList.toggle('on',j===i);});}});},{root:rtrack,threshold:[0.6]});
-      rcards.forEach(function(c){io.observe(c);});
-    }
+    if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.intersectionRatio>=0.6){var i=rcards.indexOf(e.target);dts.forEach(function(d,j){d.classList.toggle('on',j===i);});}});},{root:rtrack,threshold:[0.6]});rcards.forEach(function(c){io.observe(c);});}
     dts.forEach(function(d,i){d.addEventListener('click',function(){rtrack.scrollTo({left:rcards[i].offsetLeft,behavior:'smooth'});});});
   }
 })();

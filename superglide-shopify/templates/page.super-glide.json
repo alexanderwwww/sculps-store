@@ -20,106 +20,6 @@
         "l4_url": "/#faq"
       }
     },
-    "buybox": {
-      "type": "helios-buy-box",
-      "blocks": {
-        "b1": {
-          "type": "bundle",
-          "settings": {
-            "variant_id": "47945658269861",
-            "qty": 1,
-            "label": "1 Super Glide",
-            "sublabel": "Just me — try it out",
-            "badge": "",
-            "badge_style": "accent",
-            "preselect": false,
-            "fallback_price": "14999",
-            "fallback_compare": "19999"
-          }
-        },
-        "b2": {
-          "type": "bundle",
-          "settings": {
-            "variant_id": "47935890817189",
-            "qty": 2,
-            "label": "2 Super Glides",
-            "sublabel": "1 + 1 FREE",
-            "badge": "1+1 FREE",
-            "badge_style": "accent",
-            "preselect": true,
-            "fallback_price": "29999",
-            "fallback_compare": "30000"
-          }
-        },
-        "b4": {
-          "type": "bundle",
-          "settings": {
-            "variant_id": "47935890849957",
-            "qty": 3,
-            "label": "3 Super Glides",
-            "sublabel": "Save $401 · for the whole crew",
-            "badge": "",
-            "badge_style": "accent",
-            "preselect": false,
-            "fallback_price": "49900",
-            "fallback_compare": "89997"
-          }
-        },
-        "b3": {
-          "type": "bundle",
-          "settings": {
-            "variant_id": "47935890882725",
-            "qty": 4,
-            "label": "4 Super Glides",
-            "sublabel": "2+2 FREE",
-            "badge": "2+2 FREE",
-            "badge_style": "teal",
-            "preselect": false,
-            "fallback_price": "59999",
-            "fallback_compare": "27997"
-          }
-        }
-      },
-      "block_order": ["b1", "b2", "b4", "b3"],
-      "settings": {
-        "featured_product": "helios-super-glide-motorized-water-lounger",
-        "lead_media_type": "video",
-        "lead_video": "shopify://files/videos/202606282109 (2).mp4",
-        "mini_video_2": "shopify://files/videos/download (3).mp4",
-        "mini_image_1": "shopify://shop_images/5bbd06e1-0d08-4751-adba-4df78915c768.png",
-        "mini_image_2": "shopify://shop_images/9cfbc993-fa02-4c85-845e-6a9fa32ea69f.png",
-        "mini_image_3": "shopify://shop_images/c8d06404-24c2-44cb-ba24-85a276df6cb4.png",
-        "mini_image_4": "shopify://shop_images/f697753e-6153-4fbc-a0a1-bfece0f77338.png",
-        "title": "HELIOS Super Glide",
-        "subtitle": "",
-        "rating": "4.8",
-        "review_count": "3,960",
-        "tiktok_badge": false,
-        "show_picker": true,
-        "cta_text": "Add to Cart",
-        "discount_code": "SUPERGLIDEIT",
-        "discount_label": "Extra savings — tap to copy.",
-        "show_bestprice": true,
-        "bestprice_pill": "#1 Seller in the U.S.",
-        "bestprice_tag": "Lowest price, guaranteed",
-        "bestprice_head": "The best price in the country.",
-        "competitor_price": "$250",
-        "our_price": "$299",
-        "show_promo4": false,
-        "promo4_tag": "Summer Deal",
-        "promo4_amount": "$21.99",
-        "promo4_days": 3,
-        "show_countdown": false,
-        "countdown_minutes": 480,
-        "eta_line": "Order today → ships in 24h, arrives in 5–8 days",
-        "show_stock": false,
-        "stock_left": 24,
-        "show_live": false,
-        "live_viewers": 58,
-        "sold_today": 202,
-        "show_toasts": false
-      }
-    },
     "main": {
       "type": "helios-sg-landing"
     },
@@ -138,5 +38,5 @@
       }
     }
   },
-  "order": ["announcement", "header", "buybox", "main", "footer"]
+  "order": ["announcement", "header", "main", "footer"]
 }
