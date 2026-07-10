@@ -122,7 +122,21 @@
     },
     "main": {
       "type": "helios-sg-landing"
+    },
+    "footer": {
+      "type": "helios-footer",
+      "settings": {
+        "brand": "HELIOS",
+        "tagline": "<p>Trusted by thousands. Award-winning No.1 merchant in the country.<br/><br/>Premium quality that sets the standard. We deliver excellence every single time.</p>",
+        "positioning": "The #1 name in motorized water gear.",
+        "rank_text": "THE #1-RATED MOTORIZED WATER LOUNGER",
+        "rating_text": "4.8 from 3,912 verified riders",
+        "nl_heading": "Get up to 15% off your first order",
+        "nl_sub": "Enter your email for 10% off — add your phone and get 15%. Riders-only drops and deals.",
+        "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
+        "copyright": "© 2026 HELIOS"
+      }
     }
   },
-  "order": ["announcement", "header", "buybox", "main"]
+  "order": ["announcement", "header", "buybox", "main", "footer"]
 }
