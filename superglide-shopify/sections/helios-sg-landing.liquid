@@ -50,7 +50,9 @@
 #sgp .tier .pr b{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:17px}
 #sgp .tier .tag{position:absolute;top:-9px;left:16px;background:#F5A623;color:#3a2a00;font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;padding:3px 9px;border-radius:100px}
 /* green "add to my order" box (kept from winning version) */
-#sgp .sum{background:#0A1219;border-radius:16px;padding:16px;text-align:center;margin-top:6px}
+#sgp .sum{background:#0A1219;border-radius:16px;padding:16px;text-align:center;margin-top:6px;cursor:pointer;transition:transform .12s,box-shadow .2s}
+#sgp .sum:hover{transform:translateY(-2px);box-shadow:0 16px 34px -16px rgba(10,18,25,.55)}
+#sgp .sum:active{transform:translateY(0)}
 #sgp .sum .h{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:15px;color:#fff}
 #sgp .sum .pl{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-top:5px}
 #sgp .sum .pl s{font-size:18px;color:rgba(255,255,255,.42);font-weight:700}
@@ -158,7 +160,7 @@
         <div class="pr"><span class="off">SAVE $40</span><s>$299.99</s><b>$259.99</b></div>
       </div>
     </div>
-    <div class="sum"><div class="h">Add to my order →</div><div class="pl"><s id="sgsc">$599.98</s><b id="sgsp">$259.99</b></div><span class="sv" id="sgsv">YOU SAVE $340 — 2 for the price of 1</span></div>
+    <div class="sum" id="sgsumbtn" role="button" tabindex="0" aria-label="Add to my order and checkout"><div class="h">Add to my order →</div><div class="pl"><s id="sgsc">$599.98</s><b id="sgsp">$259.99</b></div><span class="sv" id="sgsv">YOU SAVE $340 — 2 for the price of 1</span></div>
     <div class="cpn">✅ 12% code SUPERGLIDEIT auto-applies at checkout — you pay even less</div>
     <a class="cta" id="sgcta" href="/cart/47935890817189:1">Get it 1 + 1 now →</a>
     <div class="risk">🛡 30-Day Cool-or-Refund · 🚚 Free shipping · 🔒 Secure checkout</div>
@@ -214,13 +216,24 @@
     if(t.getAttribute('data-type')==='video'){ main.innerHTML='<video src="'+t.getAttribute('data-src')+'" autoplay muted loop playsinline controls></video>'; }
     else { main.innerHTML='<img src="'+t.getAttribute('data-src')+'" alt="HELIOS Super Glide">'; }
   })});
-  var tiers=[].slice.call(document.querySelectorAll('#sgoffer .tier')), cta=document.getElementById('sgcta'), sa=document.getElementById('sgsa'), sp=document.getElementById('sgsprice');
+  var tiers=[].slice.call(document.querySelectorAll('#sgoffer .tier')), cta=document.getElementById('sgcta'), sa=document.getElementById('sgsa'), sp=document.getElementById('sgsprice'), sumbtn=document.getElementById('sgsumbtn');
   var sc=document.getElementById('sgsc'), spr=document.getElementById('sgsp'), sv=document.getElementById('sgsv');
+  var selVid='47935890817189', DISC='SUPERGLIDEIT', busy=false;
+  function buy(){
+    if(busy)return; busy=true;
+    var back='/cart/'+selVid+':1?discount='+DISC;
+    fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:parseInt(selVid,10),quantity:1})})
+      .then(function(r){ if(!r.ok)throw 0; window.location.href='/discount/'+DISC+'?redirect=/checkout'; })
+      .catch(function(){ window.location.href=back; });
+  }
   tiers.forEach(function(ti){ti.addEventListener('click',function(){
     tiers.forEach(function(x){x.classList.remove('on')}); ti.classList.add('on');
-    var v=ti.getAttribute('data-vid'); cta.href='/cart/'+v+':1'; sa.href='/cart/'+v+':1';
+    selVid=ti.getAttribute('data-vid'); cta.href='/cart/'+selVid+':1'; sa.href='/cart/'+selVid+':1';
     if(sc)sc.textContent=ti.getAttribute('data-c'); if(spr)spr.textContent=ti.getAttribute('data-p'); if(sv)sv.textContent=ti.getAttribute('data-sv'); if(sp)sp.textContent=ti.getAttribute('data-sk');
   })});
+  if(sumbtn){sumbtn.addEventListener('click',buy);sumbtn.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();buy();}});}
+  if(cta)cta.addEventListener('click',function(e){e.preventDefault();buy();});
+  if(sa)sa.addEventListener('click',function(e){e.preventDefault();buy();});
   document.querySelectorAll('#sgp .uph .snd').forEach(function(b){b.addEventListener('click',function(){var v=document.getElementById(b.getAttribute('data-v'));if(v){v.muted=!v.muted;b.textContent=v.muted?'🔊 Tap for sound':'🔇 Tap to mute';var p=v.play();if(p&&p.catch)p.catch(function(){});}})});
   var s=document.getElementById('sgs'); if(s)window.addEventListener('scroll',function(){s.classList.toggle('show',window.scrollY>720);},{passive:true});
 })();
