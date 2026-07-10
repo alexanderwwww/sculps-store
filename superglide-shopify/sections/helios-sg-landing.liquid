@@ -28,9 +28,10 @@
 #sgp .sub{font-size:clamp(15.5px,1.5vw,18px);color:#5C6B72;margin:12px 0 0;max-width:48ch}
 #sgp .sub b{color:#0A0E12}
 #sgp .rev{display:inline-flex;align-items:center;gap:8px;margin:14px 0 0;font-size:14px;color:#5C6B72}
-#sgp .fam{position:relative;margin:16px 0 0;border-radius:16px;overflow:hidden;border:1px solid #E7E0D2;box-shadow:0 18px 42px -26px rgba(6,30,46,.45)}
-#sgp .fam img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
-#sgp .fam .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 16px 12px;background:linear-gradient(180deg,transparent,rgba(6,20,30,.72));color:#fff;font-family:'Archivo Black',sans-serif;font-weight:900;font-size:14px;letter-spacing:-.01em}
+#sgp .famband{max-width:640px;margin:0 auto}
+#sgp .famband .ph{border-radius:22px;overflow:hidden;border:1px solid #E7E0D2;box-shadow:0 30px 66px -32px rgba(6,30,46,.5);background:#EAF6FB}
+#sgp .famband .ph img{width:100%;display:block}
+#sgp .famband .cp{font-family:Georgia,serif;font-style:italic;font-size:clamp(17px,2vw,21px);color:#0C3A52;text-align:center;margin:18px auto 0;max-width:32ch}
 #sgp .bul{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:9px}
 #sgp .bul li{display:flex;gap:10px;font-size:15px}
 #sgp .bul .ck{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:rgba(74,190,140,.18);color:#16A34A;display:grid;place-items:center;font-size:12px;font-weight:900}
@@ -136,7 +137,6 @@
     <h1>Do you miss the old days — <span class="hl">when summer felt stress-free?</span></h1>
     <p class="sub"><b>Kick back, grab the twin joysticks, and glide the whole family around the water</b> — hands-free. No paddling, no gas, no motorboat. Sets up in about 5 minutes.</p>
     <div class="rev"><span class="st">★★★★★</span> <b style="color:#0A0E12">4.8</b> · loved by 3,900+ families</div>
-    <div class="fam"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids gliding together on the Super Glide"><div class="cap">The whole family, out on the water together again ☀</div></div>
     <ul class="bul">
       <li><span class="ck">✓</span><span>Kick back with the kids while the motors do all the work — you just steer and relax.</span></li>
       <li><span class="ck">✓</span><span>Your pool or lake becomes the spot everyone wants to be all summer.</span></li>
@@ -187,6 +187,11 @@
   </div>
 </div></div>
 
+<!-- FAMILY moment (the dad + kids photo, big & clear) -->
+<div class="s"><div class="nar" style="text-align:center"><div class="ey">This is what it's really about</div><div class="h2" style="margin-bottom:22px">The whole family, back on the water.</div>
+  <div class="famband"><div class="ph"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids gliding together on the Super Glide"></div><p class="cp">The old days — when summer felt easy — one afternoon away.</p></div>
+</div></div>
+
 <!-- UGC video (your creative) -->
 <div class="s"><div class="nar" style="text-align:center"><div class="ey">See it in the wild</div><div class="h2">Straight from real summers.</div>
   <div class="uphones">
@@ -226,9 +231,11 @@
   function buy(){
     if(busy)return; busy=true;
     var back='/cart/'+selVid+':1?discount='+DISC;
-    fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:parseInt(selVid,10),quantity:1})})
-      .then(function(r){ if(!r.ok)throw 0; window.location.href='/discount/'+DISC+'?redirect=/checkout'; })
-      .catch(function(){ window.location.href=back; });
+    try{
+      fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:[{id:parseInt(selVid,10),quantity:1}]})})
+        .then(function(r){ if(!r.ok)throw 0; window.location.href='/discount/'+DISC+'?redirect=%2Fcheckout'; })
+        .catch(function(){ busy=false; window.location.href=back; });
+    }catch(e){ busy=false; window.location.href=back; }
   }
   tiers.forEach(function(ti){ti.addEventListener('click',function(){
     tiers.forEach(function(x){x.classList.remove('on')}); ti.classList.add('on');
