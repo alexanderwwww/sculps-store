@@ -12,9 +12,9 @@
 #mk .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
 #mk .stars{color:var(--star);letter-spacing:1.5px}
 /* PAGE TITLE (emotional hero) */
-#mk .ptitle{text-align:center;padding:26px 20px 2px;max-width:720px;margin:0 auto}
-#mk .ptitle h1{font-size:clamp(19px,2.3vw,29px);line-height:1.16}
-#mk .ptitle .hl{color:var(--acc)}
+#mk .ptitle{text-align:center;padding:30px 20px 2px;max-width:800px;margin:0 auto}
+#mk .ptitle h1{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(24px,3.1vw,39px);line-height:1.12;letter-spacing:-.008em}
+#mk .ptitle .hl{color:var(--acc);font-style:italic}
 /* ABOVE THE FOLD */
 #mk .fold{display:grid;grid-template-columns:1fr;gap:26px;padding:22px 0 8px}
 @media(min-width:940px){#mk .fold{grid-template-columns:1.02fr .98fr;gap:40px;padding:26px 0 16px;align-items:start}}
@@ -58,8 +58,8 @@
 #mk .opt .pr b{font-size:15.5px;font-weight:800}
 #mk .opt .pr s{display:block;font-size:12px;color:#9AA6B2}
 #mk .opt .tag{position:absolute;top:-9px;left:14px;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--acc);padding:3px 9px;border-radius:20px}
-#mk .cta{display:block;width:100%;text-align:center;margin-top:14px;background:var(--buy);color:#08221A;font-size:17px;font-weight:800;padding:17px;border:none;border-radius:100px;cursor:pointer;transition:background .15s,transform .15s;box-shadow:0 14px 30px -12px rgba(16,201,126,.55)}
-#mk .cta:hover{background:var(--buyd);transform:translateY(-1px)}
+#mk .cta{display:block;width:100%;text-align:center;margin-top:14px;background:#0A0E12;color:#fff;font-size:17px;font-weight:800;padding:17px;border:none;border-radius:100px;cursor:pointer;transition:background .15s,transform .15s;box-shadow:0 16px 32px -12px rgba(10,14,18,.55)}
+#mk .cta:hover{background:#1b2230;transform:translateY(-1px)}
 #mk .cta small{display:block;font-weight:600;font-size:12px;opacity:.8;margin-top:3px}
 #mk .coupon{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;font-size:12.5px;color:var(--ok);font-weight:700;text-align:center}
 #mk .risk{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--alt);font-size:13.5px;color:var(--mut)}
@@ -125,8 +125,8 @@
 #mk .spec b{color:var(--ok);flex:0 0 auto;font-weight:800}
 /* final cta */
 #mk .final{text-align:center;padding:56px 0}
-#mk .final .btn{display:inline-block;margin-top:20px;background:var(--buy);color:#08221A;font-size:17px;font-weight:800;padding:16px 34px;border-radius:100px;box-shadow:0 14px 30px -12px rgba(16,201,126,.55);cursor:pointer}
-#mk .final .btn:hover{background:var(--buyd)}
+#mk .final .btn{display:inline-block;margin-top:20px;background:#0A0E12;color:#fff;font-size:17px;font-weight:800;padding:16px 34px;border-radius:100px;box-shadow:0 16px 32px -12px rgba(10,14,18,.55);cursor:pointer}
+#mk .final .btn:hover{background:#1b2230}
 </style>
 <div id="mk">
 <!-- PAGE TITLE -->
@@ -176,21 +176,25 @@
         <div class="opt on" data-vid="47935890817189" data-p="$299.99" data-sv="Most popular — save $300"><span class="tag">Most popular · 1+1 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>2 Super Glides</b><span>One for you, one for the family</span></div><div class="pr"><b>$299.99</b><s>$599.98</s></div></div>
         <div class="opt" data-vid="47945658269861" data-p="$259.99" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><b>$259.99</b><s>$299.99</s></div></div>
       </div>
-      <button class="cta" id="cta">Get it 1 + 1 now — <span id="ctap">$299.99</span><small id="ctasv">Most popular — save $300 · 12% code applies at checkout</small></button>
+      <button class="cta" id="cta">Add to Cart — <span id="ctap">$299.99</span><small id="ctasv">Get it 1+1 now · save $300 · 12% code applies at checkout</small></button>
       <div class="coupon">✅ 12% SUPERGLIDEIT coupon applies itself — no code to type.</div>
       <div class="risk"><span class="ic">🛡️</span><span><b>30-day money-back guarantee.</b> Free shipping. If it doesn't make your summer better, send it back for a full refund — the risk is entirely ours.</span></div>
-    </div>
-    <!-- FAQ -->
-    <div class="faq">
-      <details class="q" open><summary>Will it really hold an adult + the kids?<span class="pm">+</span></summary><div class="a">Yes — rated up to 300 lb. Room for a parent and two kids, with a padded headrest, backrest and dual cup holders.</div></details>
-      <details class="q"><summary>Is it durable, or will it pop?<span class="pm">+</span></summary><div class="a">It's heavy-duty, marine-grade reinforced PVC — thick, tough material made to take a full summer of kids, docks and dragging. Built to last season after season, not a flimsy pool toy.</div></details>
-      <details class="q"><summary>Is it hard to set up?<span class="pm">+</span></summary><div class="a">No. Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go.</div></details>
-      <details class="q"><summary>How long does the battery last?<span class="pm">+</span></summary><div class="a">Around 60 minutes of continuous cruising per charge — plenty for an afternoon — and it recharges between sessions.</div></details>
-      <details class="q"><summary>What if I don't love it?<span class="pm">+</span></summary><div class="a">You're covered by our 30-day money-back guarantee. Return it for a full refund, no hassle.</div></details>
     </div>
   </div>
 </div>
 </div>
+
+<!-- FAQ (own section) -->
+<div class="sec" id="faq"><div class="wrap" style="max-width:760px">
+  <div class="head"><div class="eyebrow">Good to know</div><h2>Your questions, answered.</h2></div>
+  <div class="faq">
+    <details class="q" open><summary>Will it really hold an adult + the kids?<span class="pm">+</span></summary><div class="a">Yes — rated up to 300 lb. Room for a parent and two kids, with a padded headrest, backrest and dual cup holders.</div></details>
+    <details class="q"><summary>Is it durable, or will it pop?<span class="pm">+</span></summary><div class="a">It's heavy-duty, marine-grade reinforced PVC — thick, tough material made to take a full summer of kids, docks and dragging. Built to last season after season, not a flimsy pool toy.</div></details>
+    <details class="q"><summary>Is it hard to set up?<span class="pm">+</span></summary><div class="a">No. Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go.</div></details>
+    <details class="q"><summary>How long does the battery last?<span class="pm">+</span></summary><div class="a">Around 60 minutes of continuous cruising per charge — plenty for an afternoon — and it recharges between sessions.</div></details>
+    <details class="q"><summary>What if I don't love it?<span class="pm">+</span></summary><div class="a">You're covered by our 30-day money-back guarantee. Return it for a full refund, no hassle.</div></details>
+  </div>
+</div></div>
 
 <!-- TESTIMONIALS -->
 <div class="sec alt" id="reviews"><div class="wrap">
@@ -260,7 +264,7 @@
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');
     if(ctap)ctap.textContent=o.getAttribute('data-p');
-    if(ctasv)ctasv.textContent=o.getAttribute('data-sv')+' · 12% code applies at checkout';
+    if(ctasv)ctasv.textContent='Get it 1+1 now · '+o.getAttribute('data-sv')+' · 12% code applies at checkout';
   });});
   function checkout(){
     if(busy)return; busy=true;
