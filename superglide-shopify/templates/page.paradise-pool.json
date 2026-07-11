@@ -1,0 +1,8 @@
+{
+  "sections": {
+    "main": {
+      "type": "helios-pool-landing"
+    }
+  },
+  "order": ["main"]
+}

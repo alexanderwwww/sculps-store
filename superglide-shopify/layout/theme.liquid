@@ -215,11 +215,13 @@
           var items=(c&&c.items)||[]; if(!items.length) return;
           var ids=items.map(function(i){ return i.variant_id; });
           var qual=TIERQ.some(function(t){ return ids.indexOf(t)>-1; });
+          var SGLOW=[47945658269861,47935890817189]; // 1-pack / 2-pack gliders — only these get the upgrade pitch
+          var hasLowGlider=SGLOW.some(function(t){ return ids.indexOf(t)>-1; });
           var missing=GIFTS.filter(function(g){ return ids.indexOf(g)===-1; });
           if(qual && missing.length){
             if(ss('hgp_a')==='1' && !IS_CART) return; // cart page always re-offers unclaimed gifts
             root.dataset.missing=missing.join(','); open('a');
-          } else if(!qual){
+          } else if(!qual && hasLowGlider){
             if(ss('hgp_b')==='1') return;
             var n=parseInt(ss('hgp_bc')||'0',10); if(n>=2) return; sset('hgp_bc',''+(n+1));
             open('b');
