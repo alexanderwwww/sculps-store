@@ -141,6 +141,7 @@
   #hb-{{ sid }} .hb-tierprice{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
   #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:19px;color:#0A0D11;letter-spacing:-.01em;}
   #hb-{{ sid }} .hb-tierprice s{font-size:12.5px;color:#b3bac2;font-weight:600;}
+  #hb-{{ sid }} .hb-offp{display:inline-block;vertical-align:middle;background:#E11D48;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;margin-right:9px;font-family:'Archivo',sans-serif;}
   #hb-{{ sid }} .hb-dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 10px;background:linear-gradient(90deg,#FFE9B0,#FFD36B,#FFE9B0);color:#5A3E00;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:9px 12px;border-radius:12px;font-family:'Archivo',sans-serif;}
   #hb-{{ sid }} .hb-ob{background:#0A0E12;border:1.5px solid rgba(16,201,126,.5);border-radius:16px;padding:16px;text-align:center;margin:0 0 12px;cursor:pointer;transition:transform .12s;}
   #hb-{{ sid }} .hb-ob:hover{transform:translateY(-2px);}
@@ -334,7 +335,7 @@
       </a>
 
       <div class="hb-priceline">
-        <b class="hb-price-main" id="hb-price-{{ sid }}">{{ cur.price | times: 0.88 | round | money }}</b>
+        {%- assign hb_scp0 = cur.price | times: 0.88 | round -%}<em class="hb-offp" id="hb-off-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | minus: hb_scp0 | times: 100 | divided_by: cur.compare_at_price }}% OFF</em><b class="hb-price-main" id="hb-price-{{ sid }}">{{ cur.price | times: 0.88 | round | money }}</b>
         <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
         <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
       </div>
@@ -557,6 +558,7 @@
       var pv=parseFloat((d.price||'').replace(/[^0-9.]/g,''))||0, cv=parseFloat((d.compare||'').replace(/[^0-9.]/g,''))||0;
       if(ce){ if(cv>pv){ ce.style.display=''; ce.textContent=d.compare; } else ce.style.display='none'; }
       if(se){ if(cv>pv){ se.style.display=''; se.textContent='YOU SAVE $'+(cv-pv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ('+Math.round((1-pv/cv)*100)+'% OFF)'; } else se.style.display='none'; }
+      var oe=document.getElementById('hb-off-{{ sid }}'); if(oe){ if(cv>pv){ oe.style.display=''; oe.textContent=Math.round((1-pv/cv)*100)+'% OFF'; } else oe.style.display='none'; }
     });
   }
 

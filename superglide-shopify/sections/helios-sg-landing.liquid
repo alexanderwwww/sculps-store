@@ -81,9 +81,11 @@ body{overflow-x:clip}
 #mk .opt .lbl{flex:1;min-width:0}
 #mk .opt .lbl b{display:block;font-size:14px;font-weight:800}
 #mk .opt .lbl span{font-size:12px;color:var(--mut)}
-#mk .opt .pr{text-align:right;flex:0 0 auto}
+#mk .opt .pr{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
 #mk .opt .pr b{font-size:15px;font-weight:800}
-#mk .opt .offp{display:inline-block;background:#E11D48;color:#fff;font-size:10px;font-weight:800;letter-spacing:.02em;padding:2px 7px;border-radius:6px;margin-bottom:3px}
+#mk .opt .offp{display:inline-block;background:#E11D48;color:#fff;font-size:10px;font-weight:800;letter-spacing:.02em;padding:2px 7px;border-radius:6px;margin:0}
+#mk .hoff{display:inline-block;margin-top:12px;background:#E11D48;color:#fff;font-size:12.5px;font-weight:800;letter-spacing:.04em;padding:6px 13px;border-radius:100px;text-transform:uppercase}
+#mk .bhoff{margin-top:6px;color:#E11D48;font-size:14px;font-weight:800}
 #mk .opt .pr s{display:block;font-size:13px;color:#6B7580}
 #mk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ink);padding:3px 8px;border-radius:20px}
 #mk .dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;background:linear-gradient(90deg,#FFE9B0,#FFD36B,#FFE9B0);color:#5A3E00;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:9px 12px;border-radius:12px}
@@ -228,12 +230,13 @@ body{overflow-x:clip}
     <h1 id="ptitleh">Do you miss the old days — those endless summers on the water, <span class="it">when life felt like a dream</span>?</h1>
     <p class="hsub">Glide across the water like you're ten years old again — no worries, no clock, just you and the kids and the sun.</p>
     <div class="social" style="margin-top:12px"><span class="stars">★★★★★</span> <b>4.8</b> · loved by 3,900+ families · <b>21,600+ sold</b></div>
+    <div><span class="hoff">Summer sale — up to 63% OFF</span></div>
     <a class="heropill tocart" href="#buytop"><b>Feel like summer again <span class="ga">→</span></b><em>2 for the price of 1 · 57% OFF applied</em></a>
   </div>
   <div class="phone hphone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids on the Super Glide"></div>
 </div></div>
 <div class="wrap">
-<div class="bhead rv"><div class="eyebrow" id="cp_buy_ey">Meet the Super Glide</div><h2 id="cp_buy_h2">Get 2 for the price of 1. The 2nd is on us.</h2></div>
+<div class="bhead rv"><div class="eyebrow" id="cp_buy_ey">Meet the Super Glide</div><h2 id="cp_buy_h2">Get 2 for the price of 1. The 2nd is on us.</h2><div class="bhoff">Up to 63% OFF — already applied to every price below</div></div>
 <div class="buy" id="buytop">
   <div class="media">
     <div class="phone"><video id="u1" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u1">Tap for sound</span></div>
@@ -359,12 +362,12 @@ body{overflow-x:clip}
   <div class="rv"><h2>You only get so many summers.</h2>
   <p class="sub2">Make this the summer they tell their kids about. The water's waiting.</p>
   <a class="btn tocart" href="#buytop">Get 2 for the price of 1 →</a>
-  <div class="fbadges"><span>★ 4.8 · 4,228 reviews</span><span>21,600+ sold</span><span>30-day money-back</span><span>Free US shipping</span><span>Secure checkout</span></div>
+  <div class="fbadges"><span>Up to 63% OFF summer sale</span><span>★ 4.8 · 4,228 reviews</span><span>21,600+ sold</span><span>30-day money-back</span><span>Free US shipping</span><span>Secure checkout</span></div>
   <div class="wave"></div>
   <div class="brand">HELIOS</div></div>
 </div></div>
 
-<div id="mkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="l"><b id="stlbl">SuperGlide Pro · 1+1 FREE</b><s id="stc" style="color:rgba(255,255,255,.45);font-size:11px;margin-right:6px">$599.98</s><span id="stp">$259.99</span></div><button id="stbtn">Get it →</button></div>
+<div id="mkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="l"><b id="stlbl">SuperGlide Pro · 1+1 · 57% OFF</b><s id="stc" style="color:rgba(255,255,255,.45);font-size:11px;margin-right:6px">$599.98</s><span id="stp">$259.99</span></div><button id="stbtn">Get it →</button></div>
 <div class="lb" id="lb"><span class="x" id="lbx">×</span><span class="nav prev" id="lbp">‹</span><img id="lbimg" src="" alt="Product photo"><span class="nav next" id="lbn">›</span></div>
 </div>
 <script>
@@ -438,7 +441,7 @@ body{overflow-x:clip}
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
   var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
   var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
-  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890849957':'SuperGlide Pro · 3-Pack', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
+  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 · 63% OFF', '47935890849957':'SuperGlide Pro · 3-Pack · 61% OFF', '47935890817189':'SuperGlide Pro · 1+1 · 57% OFF', '47945658269861':'SuperGlide Pro · single · 13% OFF' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');

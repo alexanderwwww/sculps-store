@@ -98,7 +98,7 @@
         "mini_image_3": "shopify://shop_images/c8d06404-24c2-44cb-ba24-85a276df6cb4.png",
         "mini_image_4": "shopify://shop_images/f697753e-6153-4fbc-a0a1-bfece0f77338.png",
         "title": "HELIOS Super Glide",
-        "subtitle": "",
+        "subtitle": "Summer sale — up to 63% OFF, already applied to the prices below.",
         "rating": "4.8",
         "review_count": "3,960",
         "tiktok_badge": false,
@@ -262,7 +262,7 @@
       "type": "helios-announcement",
       "name": "HELIOS Announcement",
       "settings": {
-        "message": "<h5><strong>12% OFF SITE-WIDE — code SUPERGLIDEIT · FREE SHIPPING ·  30-DAY MONEY-BACK</strong> ·</h5>"
+        "message": "<h5><strong>SUMMER SALE — UP TO 63% OFF · FREE SHIPPING · 30-DAY MONEY-BACK</strong></h5>"
       }
     },
     "footer": {
