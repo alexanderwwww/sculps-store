@@ -136,7 +136,7 @@
     {% endif %}
 
     {% comment %} HELIOS — global 4OFJULY promo toast: renders on every page (incl. cart), editor-proof {% endcomment %}
-    {% section 'helios-promo-toast' %}
+    {% unless template.suffix == 'super-glide' %}{% section 'helios-promo-toast' %}{% endunless %}
 
     {% comment %} HELIOS — one-time 50% Jet Ski popup (skip the funnel page, the jet ski PDP, and cart) {% endcomment %}
     {% unless template.suffix == 'jetski-oto' or template.suffix == 'waverider' or template.name == 'cart' %}
@@ -189,8 +189,8 @@
       function mark(){ try{sessionStorage.setItem(key,'1');}catch(e){} }
       function close(){ ov.classList.remove('in'); mark(); }
       function open(){ if(seen())return; mark(); ov.classList.add('in'); }
-      // Trigger 1 — 30s on the website
-      if(!seen()){ setTimeout(open, 30000); }
+      // Trigger 1 — 2 minutes on the website
+      if(!seen()){ setTimeout(open, 120000); }
       // Trigger 2 — added something that ISN'T the jet ski to cart -> pop 4s later
       function hasJetski(b){ if(!b)return false; var s; try{ s=(typeof b==='string')?b:JSON.stringify(b); }catch(e){ s=''+b; } for(var i=0;i<JETSKI.length;i++){ if(s.indexOf(JETSKI[i])>-1) return true; } return false; }
       function onAdd(b){ if(seen())return; if(hasJetski(b))return; setTimeout(open, 4000); }
@@ -212,4 +212,10 @@
     </div>
     {% endunless %}
   </body>
+  {% if additional_checkout_buttons %}
+<div style="display: none !important">
+    {{ content_for_additional_checkout_buttons }}
+</div>
+{% endif %}
+
 </html>

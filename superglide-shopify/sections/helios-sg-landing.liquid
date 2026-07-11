@@ -1,11 +1,11 @@
-{%- comment -%} HELIOS Super Glide — approved v2.2 mockup, real content. Theme provides header/announcement/footer.
-  Order: title → buy box (UGC phone + see-full | gallery(main+side thumbs) + title + social + pills + bundles + ATC + black CTA) → FAQ(green-check) → reviews+comments → out-on-water → dad → education → final. {%- endcomment -%}
+{%- comment -%} HELIOS Super Glide — v3: motion, memory-wall, rich dad duo, finale band, sticky buy bar, ETA, ATC carries discount. Theme provides header/announcement/footer. {%- endcomment -%}
 <style>
-#mk{--bg:#fff;--alt:#F5F6F8;--ink:#0E1116;--mut:#5C6672;--line:#E5E7EB;--ok:#16A34A;--star:#F5A623;--glass:rgba(22,163,74,.10);
+#mk{--bg:#fff;--alt:#F5F6F8;--ink:#0E1116;--mut:#5C6672;--line:#E5E7EB;--ok:#16A34A;--grn:#10C97E;--star:#F5A623;--glass:rgba(22,163,74,.10);
   margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%);
   background:var(--bg);color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;overflow-x:clip}
-#mk .sec,#mk .final{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%)}
+#mk .sec{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%)}
+@media(max-width:899px){#mk,#mk .sec{margin-left:0;margin-right:0;padding-left:0;padding-right:0}}
 #mk *{box-sizing:border-box}
 #mk img{max-width:100%;display:block}
 #mk a{text-decoration:none;color:inherit}
@@ -13,20 +13,35 @@
 #mk h2{font-size:clamp(21px,2.6vw,29px);font-weight:800;letter-spacing:-.02em;line-height:1.14;margin:0}
 #mk .eyebrow{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink)}
 #mk .stars{color:var(--star);letter-spacing:1.5px}
-/* emotional title — heavy, straight */
-#mk .ptitle{text-align:center;padding:24px 18px 6px;max-width:780px;margin:0 auto}
+/* scroll reveal */
+#mk .rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+#mk .rv.in{opacity:1;transform:none}
+/* title — word stagger + green shimmer */
+#mk .ptitle{text-align:center;padding:24px 18px 4px;max-width:780px;margin:0 auto}
 #mk .ptitle h1{font-weight:800;font-size:clamp(19px,4.6vw,36px);line-height:1.14;letter-spacing:-.022em;margin:0;text-wrap:balance}
-#mk .ptitle .it{color:#137a3e}
-/* BUY BOX — golden-ratio columns */
-#mk .buy{display:grid;grid-template-columns:1fr;gap:22px;padding:12px 0 8px}
+#mk .ptitle .w{display:inline-block;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;transition-delay:calc(var(--i)*45ms)}
+#mk .ptitle.go .w{opacity:1;transform:none}
+#mk .ptitle .it .w{background:linear-gradient(90deg,#137a3e,#10C97E,#0e9e63,#137a3e);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 5.5s linear infinite}
+@keyframes mkshim{to{background-position:220% 0}}
+#mk .tstrip{display:flex;gap:7px 18px;justify-content:center;flex-wrap:wrap;margin:12px auto 0;font-size:12.5px;color:var(--mut);font-weight:600}
+#mk .tstrip b{color:var(--ink)}
+/* BUY BOX */
+#mk .buy{display:grid;grid-template-columns:1fr;gap:22px;padding:14px 0 8px}
 @media(min-width:900px){#mk .buy{grid-template-columns:1fr 1.5fr;gap:34px;align-items:start}}
 @media(max-width:899px){#mk .media{order:2}#mk .panel{order:1}}
-/* left: UGC video + see full product */
-#mk .phone{position:relative;width:min(300px,82vw);margin:0 auto;aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#0E1116;border:1px solid var(--line);box-shadow:0 30px 60px -34px rgba(14,17,22,.6)}
+#mk .phone{position:relative;width:min(300px,82vw);margin:0 auto;aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#0E1116;border:1px solid var(--line);box-shadow:0 30px 60px -34px rgba(14,17,22,.6);animation:mkbob 6.5s ease-in-out infinite}
+@keyframes mkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 #mk .phone img,#mk .phone video{width:100%;height:100%;object-fit:cover}
 #mk .phone .snd{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);cursor:pointer;white-space:nowrap}
-#mk .seefull{display:block;max-width:300px;margin:14px auto 0;text-align:center;background:#fff;border:1.5px solid var(--ink);color:var(--ink);font-weight:800;font-size:13.5px;padding:12px;border-radius:100px}
-/* right panel: product gallery + buy */
+#mk .seefull{display:flex;align-items:center;justify-content:center;gap:8px;max-width:300px;margin:16px auto 0;text-align:center;background:#fff;border:2px solid var(--ink);color:var(--ink);font-weight:800;font-size:15px;padding:14px;border-radius:100px;box-shadow:0 10px 24px -14px rgba(14,17,22,.4);transition:background .15s,transform .15s}
+#mk .seefull:hover{background:#F4F5F6;transform:translateY(-1px)}
+#mk .seefull .ar{display:inline-block;animation:mknudge 1.8s ease-in-out infinite}
+@keyframes mknudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+/* fast-shipping chips under video */
+#mk .smar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);margin-top:16px;max-width:340px;margin-left:auto;margin-right:auto}
+#mk .smar .row{display:flex;gap:8px;width:max-content;padding:4px 2px;animation:mkcm 40s linear infinite}
+#mk .sc{flex:0 0 auto;display:flex;gap:6px;align-items:center;background:var(--glass);border:1px solid rgba(22,163,74,.28);border-radius:100px;padding:5px 12px;font-size:11.5px;font-weight:700;color:#137a3e;white-space:nowrap}
+/* gallery */
 #mk .gal{display:flex;gap:9px;align-items:flex-start}
 #mk .gthumbs{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
 #mk .gth{width:52px;aspect-ratio:1/1;border-radius:9px;overflow:hidden;border:1.5px solid var(--line);cursor:pointer;opacity:.5;transition:opacity .2s,border-color .2s;background:var(--alt)}
@@ -59,19 +74,23 @@
 #mk .atc:hover{background:#F4F5F6}
 #mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:#0A0E12;color:#fff;font-size:16.5px;font-weight:800;padding:16px;border:none;border-radius:100px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 14px 30px -12px rgba(14,17,22,.45),0 8px 26px -6px rgba(16,201,126,.35);transition:box-shadow .2s,transform .15s}
 #mk .cta:hover{transform:translateY(-1px);box-shadow:0 18px 36px -12px rgba(14,17,22,.5),0 10px 30px -4px rgba(16,201,126,.5)}
-#mk .cta .gp{color:#10C97E;font-weight:900}
+#mk .cta .gp{color:var(--grn);font-weight:900}
 #mk .cta:after{content:'';position:absolute;top:0;left:-60%;width:36%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.14),transparent);animation:mksheen 3.4s ease-in-out infinite}
 @keyframes mksheen{0%{left:-60%}55%{left:130%}100%{left:130%}}
-@media(prefers-reduced-motion:reduce){#mk .cta:after{animation:none}}
 #mk .cta small{display:block;font-weight:600;font-size:11.5px;opacity:.75;margin-top:3px}
-#mk .coupon{text-align:center;margin-top:10px;font-size:12px;color:#137a3e;font-weight:700}
-#mk .guar{display:flex;gap:8px 16px;justify-content:center;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mut);font-weight:600}
+#mk .eta{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;font-size:12.5px;font-weight:700;color:var(--ink)}
+#mk .eta .dot{width:8px;height:8px;border-radius:50%;background:var(--grn);animation:mkpulse 1.8s ease-in-out infinite}
+@keyframes mkpulse{0%,100%{box-shadow:0 0 0 0 rgba(16,201,126,.5)}50%{box-shadow:0 0 0 6px rgba(16,201,126,0)}}
+#mk .coupon{text-align:center;margin-top:9px;font-size:12px;color:#137a3e;font-weight:700}
+#mk .guar{display:flex;gap:8px 16px;justify-content:center;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--mut);font-weight:600}
+#mk .pays{display:flex;gap:6px;justify-content:center;margin-top:9px;flex-wrap:wrap}
+#mk .pays span{font-size:9.5px;font-weight:700;color:var(--mut);border:1px solid var(--line);border-radius:5px;padding:3px 7px;letter-spacing:.03em}
 /* sections */
 #mk .sec{padding-top:44px;padding-bottom:44px}
 #mk .sec.alt{background:var(--alt)}
-#mk .sec .head{text-align:center;max-width:620px;margin:0 auto 24px}
+#mk .sec .head{text-align:center;max-width:640px;margin:0 auto 24px}
 #mk .sec .head h2{margin-top:7px}
-/* FAQ motion + green-check memory */
+/* FAQ */
 #mk .faqs{max-width:720px;margin:0 auto;display:grid;gap:10px}
 #mk .fq{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;transition:border-color .25s}
 #mk .fq.on{border-color:var(--ink)}
@@ -95,33 +114,57 @@
 #mk .tc .nm{font-size:12.5px;font-weight:700}
 #mk .tc .nm span{display:block;color:var(--mut);font-weight:500;font-size:11px}
 #mk .tc .vf{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--ok);background:var(--glass);padding:3px 8px;border-radius:20px}
-#mk .cmar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);margin-top:20px}
-#mk .cmar .row{display:flex;gap:9px;width:max-content;padding:5px 4px;animation:mkcm 55s linear infinite}
+/* flowing comments — two rows, opposite directions */
+#mk .cmar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);margin-top:22px}
+#mk .cmar .row{display:flex;gap:9px;width:max-content;padding:5px 4px;animation:mkcm 58s linear infinite}
+#mk .cmar .rb{animation:mkcm2 48s linear infinite}
 #mk .cmar:hover .row{animation-play-state:paused}
 #mk .cb{flex:0 0 auto;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:100px;padding:5px 15px 5px 5px;box-shadow:0 8px 22px -16px rgba(15,27,45,.3)}
-#mk .cb .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex:0 0 auto;background:var(--ink)}
+#mk .cb .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex:0 0 auto}
 #mk .cb .tx{font-size:13px;white-space:nowrap}
 #mk .cb .tx b{font-weight:700}
 @keyframes mkcm{to{transform:translateX(-50%)}}
-/* out on the water */
-#mk .ootw{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media(min-width:760px){#mk .ootw{grid-template-columns:repeat(5,1fr)}}
-#mk .ootw img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;border:1px solid var(--line);cursor:pointer}
-/* dad */
-#mk .dad{display:grid;grid-template-columns:1fr;gap:22px;align-items:center;max-width:940px;margin:0 auto}
-@media(min-width:820px){#mk .dad{grid-template-columns:.9fr 1.1fr}}
-#mk .dadph{position:relative;width:min(290px,80vw);margin:0 auto;aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#0E1116;border:1px solid var(--line)}
-#mk .dadph img{width:100%;height:100%;object-fit:cover}
+@keyframes mkcm2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+/* MEMORY WALL (polaroids) */
+#mk .mem{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;max-width:940px;margin:0 auto}
+@media(min-width:760px){#mk .mem{grid-template-columns:repeat(3,1fr)}}
+#mk .pol{background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 9px 30px;box-shadow:0 16px 34px -22px rgba(15,27,45,.45);transform:rotate(var(--r,0deg));transition:transform .35s ease,box-shadow .35s ease;cursor:pointer;position:relative}
+#mk .pol:hover{transform:rotate(0deg) scale(1.04);box-shadow:0 26px 50px -24px rgba(15,27,45,.55);z-index:2}
+#mk .pol img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:3px}
+#mk .pol .cap{position:absolute;left:0;right:0;bottom:7px;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:12.5px;color:#3d4a56}
+/* DAD duo */
+#mk .dad{display:grid;grid-template-columns:1fr;gap:26px;align-items:center;max-width:980px;margin:0 auto}
+@media(min-width:860px){#mk .dad{grid-template-columns:1.1fr 1fr}}
+#mk .duo{display:flex;gap:14px;justify-content:center;align-items:center}
+#mk .duo .phone{width:min(218px,42vw);margin:0;animation:none}
+#mk .duo .phone:first-child{transform:rotate(-3deg)}
+#mk .duo .phone:last-child{transform:rotate(2.5deg)}
 #mk .dad .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
 #mk .dad .tags span{font-size:12px;font-weight:700;color:var(--ink);background:rgba(14,17,22,.06);padding:5px 10px;border-radius:100px}
+#mk .dad .q{margin:14px 0 0;padding-left:13px;border-left:3px solid var(--grn);font-family:Georgia,serif;font-style:italic;font-size:14.5px;color:#3d4a56}
 /* education */
 #mk .spec{max-width:720px;margin:16px auto 0;display:grid;grid-template-columns:1fr;gap:9px}
 @media(min-width:640px){#mk .spec{grid-template-columns:1fr 1fr}}
 #mk .spec div{display:flex;gap:9px;font-size:13.5px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
 #mk .spec b{color:var(--ok);flex:0 0 auto;font-weight:900}
-#mk .final{text-align:center;padding-top:46px;padding-bottom:46px}
-#mk .final .btn{display:inline-block;margin-top:16px;background:var(--ink);color:#fff;font-size:16px;font-weight:800;padding:15px 32px;border-radius:100px;cursor:pointer;box-shadow:0 16px 32px -14px rgba(14,17,22,.5)}
-#mk .final .btn:hover{background:#1b2230}
+/* FINALE band */
+#mk .finale{background:#0A0E12;color:#fff;text-align:center;overflow:hidden;position:relative}
+#mk .finale h2{color:#fff;font-size:clamp(24px,3.4vw,38px)}
+#mk .finale .sub2{color:rgba(255,255,255,.65);margin:12px auto 0;max-width:36ch;font-size:15px}
+#mk .finale .btn{display:inline-block;margin-top:22px;background:var(--grn);color:#06281B;font-size:16.5px;font-weight:900;padding:16px 36px;border-radius:100px;cursor:pointer;box-shadow:0 18px 40px -14px rgba(16,201,126,.6);transition:transform .15s}
+#mk .finale .btn:hover{transform:translateY(-2px)}
+#mk .fbadges{display:flex;gap:10px 22px;justify-content:center;flex-wrap:wrap;margin-top:24px;font-size:12px;color:rgba(255,255,255,.6);font-weight:600}
+#mk .brand{font-weight:900;letter-spacing:.1em;font-size:clamp(58px,13vw,170px);line-height:1;margin-top:34px;background:linear-gradient(100deg,#0E7C64 0%,#10C97E 30%,#8CF5CB 50%,#10C97E 70%,#0E7C64 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 7s linear infinite;user-select:none}
+#mk .wave{height:5px;max-width:420px;margin:26px auto 0;border-radius:10px;background:linear-gradient(90deg,transparent,#10C97E,transparent);background-size:60% 100%;background-repeat:no-repeat;animation:mkwave 3.2s ease-in-out infinite alternate}
+@keyframes mkwave{from{background-position:-40% 0}to{background-position:140% 0}}
+/* sticky buy bar */
+#mkstick{position:fixed;left:12px;right:12px;bottom:12px;z-index:80;max-width:560px;margin:0 auto;background:#0A0E12;border-radius:100px;padding:8px 8px 8px 8px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 44px -14px rgba(10,14,18,.6),0 8px 30px -8px rgba(16,201,126,.3);transform:translateY(160%);transition:transform .4s ease}
+#mkstick.show{transform:none}
+#mkstick .th{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:2px solid rgba(255,255,255,.2)}
+#mkstick .l{min-width:0}
+#mkstick .l b{display:block;color:#fff;font-size:12.5px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mkstick .l span{color:var(--grn);font-size:12px;font-weight:800}
+#mkstick button{margin-left:auto;flex:0 0 auto;background:var(--grn);color:#06281B;border:none;font-size:13.5px;font-weight:900;padding:12px 20px;border-radius:100px;cursor:pointer}
 /* lightbox */
 #mk .lb{position:fixed;inset:0;z-index:100;background:rgba(10,12,15,.93);display:none;align-items:center;justify-content:center;padding:20px}
 #mk .lb.on{display:flex}
@@ -130,23 +173,35 @@
 #mk .lb .nav{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:44px;cursor:pointer;padding:8px 14px;user-select:none}
 #mk .lb .prev{left:6px}
 #mk .lb .next{right:6px}
+@media(prefers-reduced-motion:reduce){
+  #mk .cta:after,#mk .phone,#mk .eta .dot,#mk .seefull .ar,#mk .brand,#mk .wave,#mk .ptitle .it .w{animation:none}
+  #mk .rv,#mk .ptitle .w{opacity:1;transform:none;transition:none}
+}
 </style>
 <div id="mk">
-<div class="ptitle"><h1>Get back your old joy of your childhood summer days — <span class="it">when life felt like a dream</span>, without today's stress and responsibilities.</h1></div>
+<div class="ptitle" id="ptitle"><h1 id="ptitleh">Get back your old joy of your childhood summer days — <span class="it">when life felt like a dream</span>, without today's stress and responsibilities.</h1>
+<div class="tstrip"><span>★ <b>4.8</b> (4,228 reviews)</span><span><b>21,600+</b> sold</span><span><b>30-day</b> money-back</span><span>Ships in <b>24 h</b></span></div></div>
 <div class="wrap">
 <div class="buy" id="buytop">
   <div class="media">
     <div class="phone"><video id="u1" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u1">Tap for sound</span></div>
-    <a class="seefull" href="/products/helios-super-glide-motorized-water-lounger">See the full product →</a>
+    <a class="seefull" href="/products/helios-super-glide-motorized-water-lounger">See the full product <span class="ar">→</span></a>
+    <div class="smar"><div class="row" id="srow">
+      <span class="sc">✓ Amanda L. — arrived in 4 days, everything in the box</span>
+      <span class="sc">✓ Dan K. — fast shipping, tracked the whole way</span>
+      <span class="sc">✓ Maria S. — 2nd summer with ours, zero leaks</span>
+      <span class="sc">✓ Ships from US warehouse within 24 h</span>
+      <span class="sc">✓ Greg P. — box arrived perfect, inflated same day</span>
+    </div></div>
   </div>
   <div class="panel">
     <div class="gal">
       <div class="gthumbs" id="gthumbs">
         <div class="gth on" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/S422daeaa8a1f4d90b13ccc8979923d65e_jpg_960x960q75_jpg.avif?v=1782437342"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/S422daeaa8a1f4d90b13ccc8979923d65e_jpg_960x960q75_jpg.avif?v=1782437342" alt="Super Glide"></div>
-        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="Super Glide on the water"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="On the water"></div>
         <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Lounging"></div>
         <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="In the pool"></div>
-        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/image0_1.jpg?v=1783204946"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/image0_1.jpg?v=1783204946" alt="Details"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Family"></div>
         <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243" alt="Full view"></div>
       </div>
       <div class="gmain" id="gmain"><img id="gmainimg" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/S422daeaa8a1f4d90b13ccc8979923d65e_jpg_960x960q75_jpg.avif?v=1782437342" alt="HELIOS Super Glide"><span class="zoom">tap to zoom ⤢</span></div>
@@ -157,7 +212,7 @@
       <span class="pill"><span class="c">✓</span> Twin motors — no paddling</span>
       <span class="pill"><span class="c">✓</span> Holds 300 lb · adult + 2 kids</span>
       <span class="pill"><span class="c">✓</span> 360° joystick steering</span>
-      <span class="pill"><span class="c">✓</span> ~60 min per charge</span>
+      <span class="pill"><span class="c">✓</span> ~2 hours per charge</span>
       <span class="pill"><span class="c">✓</span> Inflates in ~5 min</span>
       <span class="pill"><span class="c">✓</span> Pool · lake · river</span>
     </div>
@@ -168,18 +223,21 @@
     </div>
     <button class="atc" id="atc">Add to cart</button>
     <button class="cta" id="cta"><span id="ctalbl">Get it 1 + 1 now</span> — <span class="gp" id="ctap">$299.99</span> <span class="gp">→</span><small id="ctasv">1+1 free · 12% code applies at checkout</small></button>
+    <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="coupon">12% SUPERGLIDEIT coupon applies itself — no code to type.</div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
+    <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>SHOP PAY</span><span>APPLE PAY</span></div>
   </div>
 </div>
 </div>
 
 <div class="sec" id="faq"><div class="wrap">
-  <div class="head"><div class="eyebrow">Clear answers</div><h2>Everything you're wondering.</h2></div>
+  <div class="head rv"><div class="eyebrow">Clear answers</div><h2>Everything you're wondering.</h2></div>
   <div class="faqs" id="faqs">
     <div class="fq on"><div class="q">Does it actually move on its own, or do I paddle?<span class="ico">+</span></div><div class="p"><div class="in">It moves itself. Twin electric thrusters push you forward and let you spin 360° with the joysticks — completely hands-free. No paddling, no gas, no motorboat.</div></div></div>
+    <div class="fq"><div class="q">Is it safe for kids?<span class="ico">+</span></div><div class="p"><div class="in">Yes — the thrusters are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent up to the 300 lb capacity, life jackets on like any water toy.</div></div></div>
     <div class="fq"><div class="q">Will it really hold an adult + the kids?<span class="ico">+</span></div><div class="p"><div class="in">Yes — rated up to 300 lb. Room for a parent and two kids, with a padded headrest, backrest and dual cup holders.</div></div></div>
-    <div class="fq"><div class="q">How long does the battery last?<span class="ico">+</span></div><div class="p"><div class="in">Around 60 minutes of continuous cruising per charge — plenty for an afternoon — and it recharges between sessions.</div></div></div>
+    <div class="fq"><div class="q">How long does the battery last?<span class="ico">+</span></div><div class="p"><div class="in">About 2 hours of continuous cruising per charge — a whole afternoon on the water — and it recharges between sessions.</div></div></div>
     <div class="fq"><div class="q">Is it durable, or will it pop?<span class="ico">+</span></div><div class="p"><div class="in">Heavy-duty marine-grade reinforced PVC — thick, tough material built to take a full summer of kids, docks and dragging. Not a flimsy pool toy.</div></div></div>
     <div class="fq"><div class="q">How hard is it to set up?<span class="ico">+</span></div><div class="p"><div class="in">Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</div></div></div>
     <div class="fq"><div class="q">What exactly do I get for $299 (1+1)?<span class="ico">+</span></div><div class="p"><div class="in">Two complete Super Glides — one for you, one free for the family — plus free shipping and the 30-day money-back guarantee. The 12% code applies itself at checkout.</div></div></div>
@@ -188,50 +246,101 @@
 </div></div>
 
 <div class="sec alt" id="reviews"><div class="wrap">
-  <div class="head"><div class="eyebrow">Real families, real photos</div><h2>Loved by 3,900+ families.</h2><div class="social" style="justify-content:center"><span class="stars">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
+  <div class="head rv"><div class="eyebrow">Real families, real photos</div><h2>Loved by 3,900+ families.</h2><div class="social" style="justify-content:center"><span class="stars">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
   <div class="tg">
-    <div class="tc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Customer photo"><div class="b"><span class="stars">★★★★★</span><div class="obj">“Will the kids actually use it?”</div><p>My son will NOT get off this thing. literally he refuses :')</p><div class="by"><span class="av">e</span><span class="nm">elena d.<span>Verified · June 23, 2026</span></span><span class="vf">Verified</span></div></div></div>
-    <div class="tc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed800814-8280-4515-ab36-29f15996c019.png?v=1782882243" alt="Customer photo"><div class="b"><span class="stars">★★★★★</span><div class="obj">“Is it cheap / hard to set up?”</div><p>Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Works perfect.</p><div class="by"><span class="av">D</span><span class="nm">Dea W.<span>Verified · June 27, 2026</span></span><span class="vf">Verified</span></div></div></div>
-    <div class="tc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243" alt="Customer photo"><div class="b"><span class="stars">★★★★★</span><div class="obj">“Is it big enough & comfortable?”</div><p>This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol.</p><div class="by"><span class="av">C</span><span class="nm">Chris Tes.<span>Verified · June 22, 2026</span></span><span class="vf">Verified</span></div></div></div>
+    <div class="tc rv"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Customer photo"><div class="b"><span class="stars">★★★★★</span><div class="obj">“Will the kids actually use it?”</div><p>My son will NOT get off this thing. literally he refuses :')</p><div class="by"><span class="av">e</span><span class="nm">elena d.<span>Verified · June 23, 2026</span></span><span class="vf">Verified</span></div></div></div>
+    <div class="tc rv" style="transition-delay:.12s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed800814-8280-4515-ab36-29f15996c019.png?v=1782882243" alt="Customer photo"><div class="b"><span class="stars">★★★★★</span><div class="obj">“Is it cheap / hard to set up?”</div><p>Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Works perfect.</p><div class="by"><span class="av">D</span><span class="nm">Dea W.<span>Verified · June 27, 2026</span></span><span class="vf">Verified</span></div></div></div>
+    <div class="tc rv" style="transition-delay:.24s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243" alt="Customer photo"><div class="b"><span class="stars">★★★★★</span><div class="obj">“Is it big enough & comfortable?”</div><p>This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol.</p><div class="by"><span class="av">C</span><span class="nm">Chris Tes.<span>Verified · June 22, 2026</span></span><span class="vf">Verified</span></div></div></div>
   </div>
-  <div class="cmar"><div class="row" id="crow"><div class="cb"><span class="av">L</span><span class="tx"><b>Linda M.</b> now I'M the one who won't get off it</span></div><div class="cb"><span class="av">D</span><span class="tx"><b>Debbie K.</b> sat on the lake and just breathed. Worth every penny.</span></div><div class="cb"><span class="av">S</span><span class="tx"><b>Susan R.</b> ordered a 2nd one. Cup holders!</span></div><div class="cb"><span class="av">G</span><span class="tx"><b>Gary P.</b> first float that actually MOVES. 10/10.</span></div><div class="cb"><span class="av">F</span><span class="tx"><b>Frank T.</b> thought it'd be cheap. It is NOT.</span></div><div class="cb"><span class="av">R</span><span class="tx"><b>Robert &amp; Carol</b> grandkids think we're cool now</span></div><div class="cb"><span class="av">P</span><span class="tx"><b>Patty &amp; Jim</b> whole family out every weekend now</span></div></div></div>
+  <div class="cmar"><div class="row" id="crow"><div class="cb"><span class="av" style="background:#E4573E">L</span><span class="tx"><b>Linda M.</b> now I'M the one who won't get off it</span></div><div class="cb"><span class="av" style="background:#7A5AA6">D</span><span class="tx"><b>Debbie K.</b> sat on the lake and just breathed. Worth every penny.</span></div><div class="cb"><span class="av" style="background:#3B7D4F">S</span><span class="tx"><b>Susan R.</b> ordered a 2nd one. Cup holders!</span></div><div class="cb"><span class="av" style="background:#4A6DA7">G</span><span class="tx"><b>Gary P.</b> first float that actually MOVES. 10/10.</span></div></div>
+  <div class="row rb" id="crow2"><div class="cb"><span class="av" style="background:#2E7D8F">R</span><span class="tx"><b>Robert &amp; Carol</b> grandkids think we're cool now</span></div><div class="cb"><span class="av" style="background:#C9822B">F</span><span class="tx"><b>Frank T.</b> thought it'd be cheap. It is NOT.</span></div><div class="cb"><span class="av" style="background:#B0553E">P</span><span class="tx"><b>Patty &amp; Jim</b> whole family out every weekend now</span></div><div class="cb"><span class="av" style="background:#586b8c">T</span><span class="tx"><b>Tom D.</b> kids won't get out of the water anymore</span></div></div></div>
 </div></div>
 
+<!-- MEMORY WALL -->
 <div class="sec"><div class="wrap">
-  <div class="head"><div class="eyebrow">Out on the water</div><h2>Real summers, real families.</h2></div>
-  <div class="ootw" id="ootw">
-    <img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_hero_15adc6f4-8a7f-44b8-9a8f-177e7eaadbd0.jpg?v=1782766099" alt="On the water" loading="lazy">
-    <img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Kids on the Super Glide" loading="lazy">
-    <img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_side_58a8782a-79b9-433e-9d4f-777d333ef9aa.jpg?v=1782766100" alt="Backyard pool" loading="lazy">
-    <img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_kid_2583f893-2e8d-451f-9dc2-752d57b1d017.jpg?v=1782766100" alt="Family fun" loading="lazy">
-    <img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup_6c508243-62c3-4e30-a179-7689e4937344.jpg?v=1782766099" alt="Easy setup" loading="lazy">
+  <div class="head rv"><div class="eyebrow">This is what they'll remember</div><h2>Get back the lifetime memories of fun with your family.</h2></div>
+  <div class="mem">
+    <div class="pol rv" style="--r:-2.5deg"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids" loading="lazy"><div class="cap">dad's throne</div></div>
+    <div class="pol rv" style="--r:2deg;transition-delay:.08s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Kids playing" loading="lazy"><div class="cap">he refuses to get off</div></div>
+    <div class="pol rv" style="--r:-1.5deg;transition-delay:.16s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Two kids" loading="lazy"><div class="cap">who steers first?</div></div>
+    <div class="pol rv" style="--r:2.5deg;transition-delay:.24s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Pool day" loading="lazy"><div class="cap">golden hour cruises</div></div>
+    <div class="pol rv" style="--r:-2deg;transition-delay:.32s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492" alt="Family and dog" loading="lazy"><div class="cap">rollie approves</div></div>
+    <div class="pol rv" style="--r:1.8deg;transition-delay:.4s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Lounging" loading="lazy"><div class="cap">the good spot</div></div>
   </div>
 </div></div>
 
+<!-- DAD duo -->
 <div class="sec alt"><div class="wrap"><div class="dad">
-  <div class="dadph"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids on the Super Glide"></div>
-  <div><div class="eyebrow">The whole family's favorite seat</div><h2 style="margin-top:8px">Get back your joy and peace of your childhood memories.</h2><p style="color:var(--mut);margin:12px 0 0">Big enough for you and the kids, steady enough for snacks and drinks, comfy enough to stay out all afternoon — no fighting over the good spot.</p><div class="tags"><span>Cup holders for everyone</span><span>Holds up to 300 lb</span><span>All-day comfort</span></div><a class="cta tocart" style="max-width:290px;margin-top:18px" href="#buytop">Feel like summer again →</a></div>
+  <div class="duo rv">
+    <div class="phone"><video id="u2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u2">Tap for sound</span></div>
+    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids on the Super Glide"></div>
+  </div>
+  <div class="rv" style="transition-delay:.15s"><div class="eyebrow">The whole family's favorite seat</div><h2 style="margin-top:8px">Get back your joy and peace of your childhood memories.</h2><p style="color:var(--mut);margin:12px 0 0">Big enough for you and the kids, steady enough for snacks and drinks, comfy enough to stay out all afternoon — no fighting over the good spot.</p><div class="q">“This is what I come home to every day… you build happy memories. Worth it 10000%.” — jenna.r, verified</div><div class="tags"><span>Cup holders for everyone</span><span>Holds up to 300 lb</span><span>All-day comfort</span></div><a class="cta tocart" style="max-width:290px;margin-top:18px" href="#buytop">Feel like summer again <span class="gp">→</span></a></div>
 </div></div></div>
 
 <div class="sec"><div class="wrap">
-  <div class="head"><div class="eyebrow">Why it's built different</div><h2>A real motorized lounger — not a pool toy.</h2></div>
-  <div class="spec">
+  <div class="head rv"><div class="eyebrow">Why it's built different</div><h2>A real motorized lounger — not a pool toy.</h2></div>
+  <div class="spec rv">
     <div><b>✓</b>Twin electric thrusters · true 360° joystick steering</div>
     <div><b>✓</b>Marine-grade reinforced PVC · holds up to 300 lb</div>
     <div><b>✓</b>Padded headrest, backrest &amp; dual cup holders</div>
-    <div><b>✓</b>~60 min runtime per charge · inflates in ~5 min</div>
+    <div><b>✓</b>~2 h runtime per charge · inflates in ~5 min</div>
     <div><b>✓</b>Works in pool, lake or river</div>
     <div><b>✓</b>Includes pump nozzle &amp; charger in the box</div>
   </div>
 </div></div>
 
-<div class="final"><div class="wrap"><h2>You only get so many summers.</h2><p style="color:var(--mut);margin:11px auto 0;max-width:34ch">Make this the one they talk about for years. The water's waiting.</p><a class="btn tocart" href="#buytop">Get 2 for the price of 1 →</a></div></div>
+<!-- FINALE -->
+<div class="sec finale"><div class="wrap">
+  <div class="rv"><h2>You only get so many summers.</h2>
+  <p class="sub2">Make this the one they talk about for years. The water's waiting.</p>
+  <a class="btn tocart" href="#buytop">Get 2 for the price of 1 →</a>
+  <div class="fbadges"><span>★ 4.8 · 4,228 reviews</span><span>21,600+ sold</span><span>30-day money-back</span><span>Free US shipping</span><span>Secure checkout</span></div>
+  <div class="wave"></div>
+  <div class="brand">HELIOS</div></div>
+</div></div>
+
+<div id="mkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="l"><b id="stlbl">SuperGlide Pro · 1+1 FREE</b><span id="stp">$299.99</span></div><button id="stbtn">Get it →</button></div>
 <div class="lb" id="lb"><span class="x" id="lbx">×</span><span class="nav prev" id="lbp">‹</span><img id="lbimg" src="" alt="Product photo"><span class="nav next" id="lbn">›</span></div>
 </div>
 <script>
 (function(){
   var root=document.getElementById('mk'); if(!root||root.dataset.i)return; root.dataset.i='1';
   var DISC='SUPERGLIDEIT', sel='47935890817189', busy=false;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // title word stagger
+  var h1=document.getElementById('ptitleh');
+  if(h1&&!reduce){
+    var idx=0;
+    function wrapWords(node){
+      [].slice.call(node.childNodes).forEach(function(ch){
+        if(ch.nodeType===3){
+          var frag=document.createDocumentFragment();
+          ch.textContent.split(/(\s+)/).forEach(function(t){
+            if(!t)return;
+            if(/^\s+$/.test(t)){frag.appendChild(document.createTextNode(t));return;}
+            var s=document.createElement('span');s.className='w';s.style.setProperty('--i',idx++);s.textContent=t;frag.appendChild(s);
+          });
+          node.replaceChild(frag,ch);
+        } else if(ch.nodeType===1){ wrapWords(ch); }
+      });
+    }
+    wrapWords(h1);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){document.getElementById('ptitle').classList.add('go');});});
+  } else if(h1){ document.getElementById('ptitle').classList.add('go'); }
+  // scroll reveal
+  var rvs=[].slice.call(root.querySelectorAll('.rv'));
+  if('IntersectionObserver' in window && !reduce){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+    rvs.forEach(function(el){io.observe(el);});
+  } else { rvs.forEach(function(el){el.classList.add('in');}); }
+  // ETA date (5-8 days out)
+  (function(){
+    var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var a=new Date(Date.now()+5*864e5), b=new Date(Date.now()+8*864e5);
+    var t=(a.getMonth()===b.getMonth())? m[a.getMonth()]+' '+a.getDate()+'–'+b.getDate() : m[a.getMonth()]+' '+a.getDate()+' – '+m[b.getMonth()]+' '+b.getDate();
+    var e=document.getElementById('etadate'); if(e)e.textContent='arrives '+t;
+  })();
   // UGC sound
   [].slice.call(root.querySelectorAll('.phone .snd')).forEach(function(b){
     var v=document.getElementById(b.getAttribute('data-v')); if(!v)return;
@@ -244,10 +353,10 @@
   var gmainImg=document.getElementById('gmainimg'), gi=0;
   function setG(i){gi=(i%gimgs.length+gimgs.length)%gimgs.length;gmainImg.src=gimgs[gi];gthumbs.forEach(function(x,j){x.classList.toggle('on',j===gi);});}
   gthumbs.forEach(function(t,i){t.addEventListener('click',function(){setG(i);});});
-  // lightbox
+  // lightbox (gallery + memory wall)
   var lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg');
   document.getElementById('gmain').addEventListener('click',function(){lbimg.src=gimgs[gi];lb.classList.add('on');});
-  [].slice.call(document.querySelectorAll('#ootw img')).forEach(function(im){im.addEventListener('click',function(){lbimg.src=im.src;lb.classList.add('on');});});
+  [].slice.call(root.querySelectorAll('.pol img')).forEach(function(im){im.parentNode.addEventListener('click',function(){lbimg.src=im.src;lb.classList.add('on');});});
   document.getElementById('lbx').addEventListener('click',function(){lb.classList.remove('on');});
   lb.addEventListener('click',function(e){if(e.target===lb)lb.classList.remove('on');});
   document.getElementById('lbp').addEventListener('click',function(e){e.stopPropagation();setG(gi-1);lbimg.src=gimgs[gi];});
@@ -256,15 +365,19 @@
   // bundles
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
   var ctap=document.getElementById('ctap'), ctasv=document.getElementById('ctasv'), ctalbl=document.getElementById('ctalbl');
+  var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
   var LBL={ '47935890882725':'Get 2 + 2 now', '47935890817189':'Get it 1 + 1 now', '47945658269861':'Get yours now' };
+  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');
     if(ctap)ctap.textContent=o.getAttribute('data-p');
     if(ctalbl)ctalbl.textContent=LBL[sel]||'Get it now';
     if(ctasv)ctasv.textContent=o.getAttribute('data-sv')+' · 12% code applies at checkout';
+    if(stp)stp.textContent=o.getAttribute('data-p');
+    if(stlbl)stlbl.textContent=SLBL[sel]||'SuperGlide Pro';
   });});
-  // add to cart (stays in flow: adds, then opens cart)
+  // buy actions — BOTH paths carry the discount (fixes cart abandon)
   function addThen(dest,fallback){
     if(busy)return; busy=true;
     try{
@@ -274,11 +387,17 @@
     }catch(e){ busy=false; window.location.href=fallback; }
   }
   var atc=document.getElementById('atc');
-  if(atc)atc.addEventListener('click',function(){ addThen('/cart','/cart/'+sel+':1'); });
+  if(atc)atc.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
   var cta=document.getElementById('cta');
   if(cta)cta.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
+  var stbtn=document.getElementById('stbtn');
+  if(stbtn)stbtn.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
+  // sticky bar visibility
+  var stick=document.getElementById('mkstick'), buyEl=document.getElementById('buytop');
+  function onScroll(){ if(!buyEl)return; var r=buyEl.getBoundingClientRect(); stick.classList.toggle('show', r.bottom<0); }
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
   // scroll-to-buy links
-  [].slice.call(root.querySelectorAll('.tocart')).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var t=document.getElementById('buytop');if(t)t.scrollIntoView({behavior:'smooth'});});});
+  [].slice.call(root.querySelectorAll('.tocart')).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();if(buyEl)buyEl.scrollIntoView({behavior:'smooth'});});});
   // FAQ — accordion + green check on answered
   var fqs=[].slice.call(document.querySelectorAll('#faqs .fq'));
   function setH(f){var p=f.querySelector('.p');p.style.maxHeight=f.classList.contains('on')?p.scrollHeight+'px':'0px';}
@@ -292,7 +411,8 @@
       setH(f);
     });
   });
-  var cr=document.getElementById('crow'); if(cr)cr.innerHTML+=cr.innerHTML;
+  // marquees
+  ['crow','crow2','srow'].forEach(function(i){var e=document.getElementById(i);if(e)e.innerHTML+=e.innerHTML;});
 })();
 </script>
 {% schema %}
