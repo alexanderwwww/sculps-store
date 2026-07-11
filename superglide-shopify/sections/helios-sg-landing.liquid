@@ -1,12 +1,12 @@
 {%- comment -%} HELIOS Super Glide — v3: motion, memory-wall, rich dad duo, finale band, sticky buy bar, ETA, ATC carries discount. Theme provides header/announcement/footer. {%- endcomment -%}
 <style>
+body{overflow-x:clip}
 #mk{--bg:#fff;--alt:#F5F6F8;--ink:#0E1116;--mut:#5C6672;--line:#E5E7EB;--ok:#16A34A;--grn:#10C97E;--star:#F5A623;--glass:rgba(22,163,74,.10);
-  margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%);
+  position:relative;width:100vw;margin-left:calc(50% - 50vw);
   background:var(--bg);color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;overflow-x:clip}
-#mk .sec{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%)}
-@media(max-width:899px){#mk,#mk .sec{margin-left:0;margin-right:0;padding-left:0;padding-right:0}}
 #mk *{box-sizing:border-box}
+#mk .media,#mk .panel{min-width:0;max-width:100%}
 #mk img{max-width:100%;display:block}
 #mk a{text-decoration:none;color:inherit}
 #mk .wrap{max-width:1040px;margin:0 auto;padding:0 18px}
@@ -317,6 +317,14 @@
 (function(){
   var root=document.getElementById('mk'); if(!root||root.dataset.i)return; root.dataset.i='1';
   var DISC='SUPERGLIDEIT', sel='47935890817189', busy=false;
+  // pixel-perfect full-bleed: exact client width, pinned to viewport left (scrollbar-safe, parent-offset-safe)
+  function bleed(){
+    root.style.width='auto'; root.style.marginLeft='0px';
+    var w=document.documentElement.clientWidth;
+    var l=root.getBoundingClientRect().left;
+    root.style.width=w+'px'; root.style.marginLeft=(-l)+'px';
+  }
+  bleed(); window.addEventListener('resize',bleed);
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // title word stagger
   var h1=document.getElementById('ptitleh');
