@@ -89,6 +89,24 @@ body{overflow-x:clip}
 #mk .opt .pr s{display:block;font-size:13px;color:#6B7580}
 #mk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ink);padding:3px 8px;border-radius:20px}
 #mk .dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;background:linear-gradient(90deg,#FFE9B0,#FFD36B,#FFE9B0);color:#5A3E00;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:9px 12px;border-radius:12px}
+#mk .opt .gft{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:800;color:#06281B;background:linear-gradient(90deg,#7CF5C2,#10C97E);padding:2px 8px;border-radius:100px}
+#mk .pumprow{display:flex;align-items:center;gap:10px;margin-top:10px;border:1.5px dashed #C7CED6;border-radius:14px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+#mk .pumprow.on{border-color:#0A0E12;border-style:solid;background:#F6F8FA}
+#mk .pumprow.free{border-color:rgba(16,201,126,.65);border-style:solid;background:rgba(16,201,126,.08);cursor:default}
+#mk .pumprow .pck{flex:0 0 auto;width:21px;height:21px;border:2px solid #C7CED6;border-radius:7px;background:#fff;position:relative;transition:.15s}
+#mk .pumprow.on .pck{background:#0A0E12;border-color:#0A0E12}
+#mk .pumprow.on .pck::after{content:"";position:absolute;left:5.5px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+#mk .pumprow.free .pck{border:none;background:none}
+#mk .pumprow.free .pck::after{content:"🎁";position:absolute;inset:0;font-size:17px;line-height:21px}
+#mk .pumprow img{width:42px;height:42px;border-radius:10px;object-fit:cover;background:#F4F6F8;flex:0 0 auto}
+#mk .pumprow .plbl{flex:1;min-width:0}
+#mk .pumprow .plbl b{display:block;font-size:13px;font-weight:800}
+#mk .pumprow .plbl span{font-size:11px;color:var(--mut)}
+#mk .pumprow .ppr{text-align:right;flex:0 0 auto}
+#mk .pumprow .ppr b{display:block;font-size:14px;font-weight:800}
+#mk .pumprow .ppr s{font-size:11.5px;color:#6B7580}
+#mk .pumprow.free .ppr b{color:#0E9F6E}
+#mk .ob .gline{display:block;margin-top:8px;font-size:12px;font-weight:800;color:#7CF5C2}
 #mk .ob{background:#0A0E12;border:1.5px solid rgba(16,201,126,.5);border-radius:18px;padding:18px 16px;text-align:center;margin-top:10px;cursor:pointer;transition:transform .12s,box-shadow .2s}
 #mk .ob .nar{display:inline-block;animation:mknudge 1.8s ease-in-out infinite;color:var(--grn)}
 #mk .ob:hover{transform:translateY(-2px);box-shadow:0 16px 34px -14px rgba(10,14,18,.55)}
@@ -236,7 +254,7 @@ body{overflow-x:clip}
   <div class="phone hphone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids on the Super Glide"></div>
 </div></div>
 <div class="wrap">
-<div class="bhead rv"><div class="eyebrow" id="cp_buy_ey">Meet the Super Glide</div><h2 id="cp_buy_h2">Get 2 for the price of 1. The 2nd is on us.</h2><div class="bhoff">Up to 63% OFF — already applied to every price below</div></div>
+<div class="bhead rv"><div class="eyebrow" id="cp_buy_ey">Meet the Super Glide</div><h2 id="cp_buy_h2">Get 2 for the price of 1. The 2nd is on us.</h2><div class="bhoff">Up to 63% OFF — already applied · FREE Jet Ski + Pump with 3+ gliders 🎁</div></div>
 <div class="buy" id="buytop">
   <div class="media">
     <div class="phone"><video id="u1" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u1">Tap for sound</span></div>
@@ -273,13 +291,14 @@ body{overflow-x:clip}
     </div>
     <div class="ocard"><div class="ostrip"><span id="cp_strip_l">☀ 2-for-1 Summer Deal</span><span class="mp" id="cp_strip_r">★ Most Popular</span></div><div class="oin">
     <div class="opts" id="opts">
-      <div class="opt" data-vid="47935890882725" data-p="$439.99" data-c="$1,199.96" data-sv2="YOU SAVE $760 (63% OFF) — 2 gliders FREE" data-sv="Best value — save $760"><span class="tag">Buy 2, get 2 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>4 Super Glides</b><span>The whole crew</span></div><div class="pr"><em class="offp">63% OFF</em><b>$439.99</b><s>$1,199.96</s></div></div>
-      <div class="opt" data-vid="47935890849957" data-p="$351.99" data-c="$899.97" data-sv2="YOU SAVE $548 (61% OFF) — three gliders" data-sv="3-pack — save $548"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>3 Super Glides</b><span>You plus two more seats</span></div><div class="pr"><em class="offp">61% OFF</em><b>$351.99</b><s>$899.97</s></div></div>
+      <div class="opt" data-vid="47935890882725" data-gift="1" data-p="$439.99" data-c="$1,199.96" data-sv2="YOU SAVE $760 (63% OFF) + FREE Jet Ski &amp; Pump" data-sv="Best value + FREE Jet Ski"><span class="tag">Buy 2, get 2 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>4 Super Glides</b><span>The whole crew</span> <span class="gft">🎁 + FREE Jet Ski &amp; Pump</span></div><div class="pr"><em class="offp">63% OFF</em><b>$439.99</b><s>$1,199.96</s></div></div>
+      <div class="opt" data-vid="47935890849957" data-gift="1" data-p="$351.99" data-c="$899.97" data-sv2="YOU SAVE $548 (61% OFF) + FREE Jet Ski &amp; Pump" data-sv="3-pack + FREE Jet Ski"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>3 Super Glides</b><span>You plus two more seats</span> <span class="gft">🎁 + FREE Jet Ski &amp; Pump</span></div><div class="pr"><em class="offp">61% OFF</em><b>$351.99</b><s>$899.97</s></div></div>
       <div class="opt on" data-vid="47935890817189" data-p="$259.99" data-c="$599.98" data-sv2="YOU SAVE $340 (57% OFF) — 2 for the price of 1" data-sv="Most popular — save $340"><span class="tag">Most popular · 1+1 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>2 Super Glides</b><span>One for you, one for the family</span></div><div class="pr"><em class="offp">57% OFF</em><b>$259.99</b><s>$599.98</s></div></div>
       <div class="opt" data-vid="47945658269861" data-p="$259.99" data-c="$299.99" data-sv2="YOU SAVE $40 (13% OFF)" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><em class="offp">13% OFF</em><b>$259.99</b><s>$299.99</s></div></div>
     </div>
-    <div class="dbn">⚡ Summer sale — up to 63% OFF, already applied</div>
-    <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order <span class="nar">→</span></div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 (57% OFF) — 2 for the price of 1</span></div>
+    <div class="pumprow" id="pumprow" role="button" tabindex="0" aria-label="Add the cordless rapid pump"><span class="pck"></span><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/107f7b2d-9d3a-4d8f-bcfe-b0bfa133a1b8.png?v=1783791768" alt="Cordless rapid pump"><div class="plbl"><b id="pumpb">Add the cordless rapid pump</b><span id="pumps">Inflates it in ~5 min — no outlet, no sweat</span></div><div class="ppr"><b id="pumpp">$39.99</b><s id="pumpc">$59.99</s></div></div>
+    <div class="dbn">⚡ Up to 63% OFF · 🎁 FREE Jet Ski + Pump with 3+ gliders</div>
+    <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order <span class="nar">→</span></div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 (57% OFF) — 2 for the price of 1</span><span class="gline" id="obg" style="display:none">🎁 FREE Jet Ski + FREE Pump included — $409.98 value</span></div>
     <button class="atcg" id="atcg">Add to cart — $259.99</button>
     <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
@@ -362,7 +381,7 @@ body{overflow-x:clip}
   <div class="rv"><h2>You only get so many summers.</h2>
   <p class="sub2">Make this the summer they tell their kids about. The water's waiting.</p>
   <a class="btn tocart" href="#buytop">Get 2 for the price of 1 →</a>
-  <div class="fbadges"><span>Up to 63% OFF summer sale</span><span>★ 4.8 · 4,228 reviews</span><span>21,600+ sold</span><span>30-day money-back</span><span>Free US shipping</span><span>Secure checkout</span></div>
+  <div class="fbadges"><span>Up to 63% OFF summer sale</span><span>🎁 FREE Jet Ski with 3+ gliders</span><span>★ 4.8 · 4,228 reviews</span><span>21,600+ sold</span><span>30-day money-back</span><span>Free US shipping</span><span>Secure checkout</span></div>
   <div class="wave"></div>
   <div class="brand">HELIOS</div></div>
 </div></div>
@@ -437,40 +456,75 @@ body{overflow-x:clip}
   document.getElementById('lbp').addEventListener('click',function(e){e.stopPropagation();setG(gi-1);lbimg.src=gimgs[gi];});
   document.getElementById('lbn').addEventListener('click',function(e){e.stopPropagation();setG(gi+1);lbimg.src=gimgs[gi];});
   document.addEventListener('keydown',function(e){if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft'){setG(gi-1);lbimg.src=gimgs[gi];}if(e.key==='ArrowRight'){setG(gi+1);lbimg.src=gimgs[gi];}});
-  // bundles
+  // bundles + free-gift tiers (3/4 gliders -> FREE Jet Ski + Pump) + pump add-on
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
   var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
   var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
-  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 · 63% OFF', '47935890849957':'SuperGlide Pro · 3-Pack · 61% OFF', '47935890817189':'SuperGlide Pro · 1+1 · 57% OFF', '47945658269861':'SuperGlide Pro · single · 13% OFF' };
+  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 + FREE Jet Ski', '47935890849957':'SuperGlide Pro · 3-Pack + FREE Jet Ski', '47935890817189':'SuperGlide Pro · 1+1 · 57% OFF', '47945658269861':'SuperGlide Pro · single · 13% OFF' };
+  var GIFTS=[48001507197093,48001507262629], PUMPV=48001507131557, pumpOn=false;
+  var pumprow=document.getElementById('pumprow'), obg=document.getElementById('obg');
+  function selOpt(){ for(var i=0;i<opts.length;i++){ if(opts[i].getAttribute('data-vid')===sel) return opts[i]; } return opts[0]; }
+  function isGiftTier(){ var o=selOpt(); return !!(o&&o.getAttribute('data-gift')); }
+  function fm(n){ return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  function num(s){ return parseFloat((s||'0').replace(/[^0-9.]/g,''))||0; }
+  function syncBuy(){
+    var o=selOpt(); if(!o)return;
+    var gift=isGiftTier();
+    var addP=(pumpOn&&!gift)?39.99:0, addC=(pumpOn&&!gift)?59.99:0;
+    var p=fm(num(o.getAttribute('data-p'))+addP), c=fm(num(o.getAttribute('data-c'))+addC);
+    if(obc)obc.textContent=c;
+    if(obp)obp.textContent=p;
+    if(obs)obs.textContent=o.getAttribute('data-sv2');
+    if(stp)stp.textContent=p;
+    var stc=document.getElementById('stc'); if(stc)stc.textContent=c;
+    var ag=document.getElementById('atcg'); if(ag)ag.textContent='Add to cart — '+p;
+    if(stlbl)stlbl.textContent=SLBL[sel]||'SuperGlide Pro';
+    if(obg)obg.style.display=gift?'':'none';
+    if(pumprow){
+      pumprow.classList.toggle('free',gift);
+      pumprow.classList.toggle('on',pumpOn&&!gift);
+      var pb=document.getElementById('pumpb'), ps=document.getElementById('pumps'), pp=document.getElementById('pumpp'), pc=document.getElementById('pumpc');
+      if(gift){ if(pb)pb.textContent='Cordless rapid pump — yours FREE'; if(ps)ps.textContent='Included with your 3+ glider order, with the FREE Jet Ski'; if(pp)pp.textContent='FREE'; if(pc)pc.textContent='$59.99'; }
+      else { if(pb)pb.textContent=pumpOn?'Cordless rapid pump — added':'Add the cordless rapid pump'; if(ps)ps.textContent='Inflates it in ~5 min — no outlet, no sweat'; if(pp)pp.textContent='$39.99'; if(pc)pc.textContent='$59.99'; }
+    }
+  }
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');
-    if(obc)obc.textContent=o.getAttribute('data-c');
-    if(obp)obp.textContent=o.getAttribute('data-p');
-    if(obs)obs.textContent=o.getAttribute('data-sv2');
-    if(stp)stp.textContent=o.getAttribute('data-p');
-    var stc=document.getElementById('stc'); if(stc)stc.textContent=o.getAttribute('data-c');
-    var ag=document.getElementById('atcg'); if(ag)ag.textContent='Add to cart — '+o.getAttribute('data-p');
-    if(stlbl)stlbl.textContent=SLBL[sel]||'SuperGlide Pro';
+    syncBuy();
   });});
-  // buy actions — BOTH paths carry the discount (fixes cart abandon)
-  function addThen(dest,fallback,el){
+  if(pumprow){
+    pumprow.addEventListener('click',function(){ if(isGiftTier())return; pumpOn=!pumpOn; syncBuy(); });
+    pumprow.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pumprow.click(); } });
+  }
+  syncBuy();
+  // buy actions — BOTH paths carry the discount; gift tiers auto-add the FREE Jet Ski + Pump
+  function cartItems(){
+    var ids=[parseInt(sel,10)];
+    if(isGiftTier()){ ids=ids.concat(GIFTS); }
+    else if(pumpOn){ ids.push(PUMPV); }
+    return ids;
+  }
+  function addThen(el){
     if(busy)return; busy=true;
+    var ids=cartItems();
+    var dest='/discount/'+DISC+'?redirect=%2Fcart';
+    var fallback='/cart/'+ids.map(function(id){return id+':1';}).join(',')+'?discount='+DISC;
     if(el){ el.dataset.t=el.textContent; el.textContent='Adding to your cart…'; el.setAttribute('aria-busy','true'); el.style.pointerEvents='none'; }
     function un(){ if(el){ el.textContent=el.dataset.t; el.removeAttribute('aria-busy'); el.style.pointerEvents=''; } }
     try{
-      fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:[{id:parseInt(sel,10),quantity:1}]})})
+      fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:ids.map(function(id){return {id:id,quantity:1};})})})
         .then(function(r){ if(!r.ok)throw 0; window.location.href=dest; })
         .catch(function(){ busy=false; un(); window.location.href=fallback; });
     }catch(e){ busy=false; un(); window.location.href=fallback; }
   }
   var atcg=document.getElementById('atcg');
-  if(atcg)atcg.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC,atcg); });
+  if(atcg)atcg.addEventListener('click',function(){ addThen(atcg); });
   var sgob=document.getElementById('sgob');
-  if(sgob){ sgob.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC,sgob.querySelector('.hh')); });
+  if(sgob){ sgob.addEventListener('click',function(){ addThen(sgob.querySelector('.hh')); });
     sgob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sgob.click(); } }); }
   var stbtn=document.getElementById('stbtn');
-  if(stbtn)stbtn.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC,stbtn); });
+  if(stbtn)stbtn.addEventListener('click',function(){ addThen(stbtn); });
   // sticky bar visibility
   var stick=document.getElementById('mkstick'), buyEl=document.getElementById('buytop');
   function onScroll(){ if(!buyEl)return; var r=buyEl.getBoundingClientRect(); stick.classList.toggle('show', r.bottom<0); }
