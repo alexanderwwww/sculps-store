@@ -64,7 +64,15 @@ body{overflow-x:clip}
 #mk .pills{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0 0}
 #mk .pill{display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid rgba(22,163,74,.30);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#137a3e;font-size:12px;font-weight:700;padding:6px 11px;border-radius:100px}
 #mk .pill .c{color:var(--ok);font-weight:900}
-#mk .opts{display:grid;gap:9px;margin-top:16px}
+#mk .bhead{text-align:center;padding:8px 18px 4px}
+#mk .bhead h2{font-size:clamp(23px,3vw,32px)}
+#mk .ocard{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:16px;background:#fff;box-shadow:0 18px 44px -30px rgba(17,24,39,.45)}
+#mk .ostrip{display:flex;justify-content:space-between;gap:10px;background:#0A0E12;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.05em;padding:10px 14px;text-transform:uppercase}
+#mk .ostrip .mp{color:#FFD36B}
+#mk .ocard .oin{padding:13px 13px 15px}
+#mk .minifull{display:block;text-align:center;margin-top:10px;font-size:13px;font-weight:800;color:var(--ink)}
+#mk .minifull:hover{text-decoration:underline}
+#mk .opts{display:grid;gap:9px;margin-top:0}
 #mk .opt{display:flex;align-items:center;gap:11px;padding:12px 13px;border:1.5px solid var(--line);border-radius:13px;cursor:pointer;position:relative;background:#fff}
 #mk .opt.on{border-color:var(--ink);border-width:2px;background:#FAFBFC}
 #mk .opt .radio{width:20px;height:20px;border-radius:50%;border:2px solid #C4CDD8;flex:0 0 auto}
@@ -222,6 +230,7 @@ body{overflow-x:clip}
   <div class="phone hphone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids on the Super Glide"></div>
 </div></div>
 <div class="wrap">
+<div class="bhead rv"><div class="eyebrow" id="cp_buy_ey">Meet the Super Glide</div><h2 id="cp_buy_h2">Get 2 for the price of 1. The 2nd is on us.</h2></div>
 <div class="buy" id="buytop">
   <div class="media">
     <div class="phone"><video id="u1" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u1">Tap for sound</span></div>
@@ -256,6 +265,7 @@ body{overflow-x:clip}
       <span class="pill"><span class="c">✓</span> Inflates in ~5 min</span>
       <span class="pill"><span class="c">✓</span> Pool · lake · river</span>
     </div>
+    <div class="ocard"><div class="ostrip"><span id="cp_strip_l">☀ Summer Special Deal</span><span class="mp" id="cp_strip_r">★ Most Popular</span></div><div class="oin">
     <div class="opts" id="opts">
       <div class="opt" data-vid="47935890882725" data-p="$439.99" data-c="$1,199.96" data-sv2="YOU SAVE $760 — 2 gliders FREE" data-sv="Best value — save $760"><span class="tag">Buy 2, get 2 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>4 Super Glides</b><span>The whole crew</span></div><div class="pr"><b>$439.99</b><s>$1,199.96</s></div></div>
       <div class="opt on" data-vid="47935890817189" data-p="$259.99" data-c="$599.98" data-sv2="YOU SAVE $340 — 2 for the price of 1" data-sv="Most popular — save $340"><span class="tag">Most popular · 1+1 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>2 Super Glides</b><span>One for you, one for the family</span></div><div class="pr"><b>$259.99</b><s>$599.98</s></div></div>
@@ -264,9 +274,11 @@ body{overflow-x:clip}
     <div class="dbn">⚡ 12% discount — already applied to these prices</div>
     <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order →</div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 — 2 for the price of 1</span></div>
     <button class="atcg" id="atcg">add to cart</button>
+    <a class="minifull" id="cp_seefull" href="/products/helios-super-glide-motorized-water-lounger">or see the full product →</a>
     <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
     <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>SHOP PAY</span><span>APPLE PAY</span></div>
+    </div></div>
   </div>
 </div>
 </div>
