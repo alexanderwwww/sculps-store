@@ -1,0 +1,554 @@
+{%- comment -%} HELIOS Super Glide — GERMAN (DE) twin of helios-sg-landing. Same structure/JS, translated copy, EU shipping promise. Theme provides header/announcement/footer. {%- endcomment -%}
+<style>
+body{overflow-x:clip}
+#mk{--bg:#fff;--alt:#F5F6F8;--ink:#0E1116;--mut:#5C6672;--line:#E5E7EB;--ok:#16A34A;--grn:#10C97E;--star:#F5A623;--glass:rgba(22,163,74,.10);
+  position:relative;width:100vw;margin-left:calc(50% - 50vw);
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;overflow-x:clip}
+#mk *{box-sizing:border-box}
+#mk .media,#mk .panel{min-width:0;max-width:100%}
+#mk img{max-width:100%;display:block}
+#mk a{text-decoration:none;color:inherit}
+#mk .wrap{max-width:1040px;margin:0 auto;padding:0 18px}
+#mk h2{font-size:clamp(21px,2.6vw,29px);font-weight:800;letter-spacing:-.02em;line-height:1.14;margin:0}
+#mk .eyebrow{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink)}
+#mk .stars{color:var(--star);letter-spacing:1.5px}
+#mk .rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+#mk .rv.in{opacity:1;transform:none}
+#mk .ptitle{padding:26px 18px 6px;max-width:1040px;margin:0 auto}
+#mk .hgrid{display:grid;grid-template-columns:1fr;gap:24px;align-items:center;text-align:center}
+@media(min-width:900px){#mk .hgrid{grid-template-columns:1.05fr .95fr;gap:44px;text-align:left}}
+#mk .ptitle h1{font-weight:800;font-size:clamp(24px,4.9vw,44px);line-height:1.1;letter-spacing:-.024em;margin:10px 0 0;text-wrap:balance}
+#mk .hsub{font-family:Georgia,serif;font-style:italic;font-size:clamp(15px,1.7vw,19px);color:#3d4a56;margin:12px 0 0}
+#mk .heropill{display:inline-block;text-align:center;background:#0A0E12;border-radius:16px;padding:15px 26px;margin-top:18px;cursor:pointer;box-shadow:0 16px 34px -14px rgba(10,14,18,.55);transition:transform .15s}
+#mk .heropill:hover{transform:translateY(-2px)}
+#mk .heropill b{display:block;font-size:16.5px;font-weight:800;color:#fff}
+#mk .heropill b .ga{color:var(--grn)}
+#mk .heropill em{font-style:normal;font-size:11.5px;color:rgba(255,255,255,.6)}
+#mk .hphone{margin:0 auto}
+#mk .ptitle .w{display:inline-block;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;transition-delay:calc(var(--i)*45ms)}
+#mk .ptitle.go .w{opacity:1;transform:none}
+#mk .ptitle .it .w{background:linear-gradient(90deg,#137a3e,#10C97E,#0e9e63,#137a3e);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 5.5s linear infinite}
+@keyframes mkshim{to{background-position:220% 0}}
+#mk .buy{display:grid;grid-template-columns:1fr;gap:22px;padding:14px 0 8px}
+@media(min-width:900px){#mk .buy{grid-template-columns:1fr 1.5fr;gap:34px;align-items:start}}
+@media(max-width:899px){#mk .media{order:2}#mk .panel{order:1}}
+#mk .phone{position:relative;width:min(300px,82vw);margin:0 auto;aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#0E1116;border:1px solid var(--line);box-shadow:0 30px 60px -34px rgba(14,17,22,.6);animation:mkbob 6.5s ease-in-out infinite}
+@keyframes mkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+#mk .phone img,#mk .phone video{width:100%;height:100%;object-fit:cover}
+#mk .phone .snd{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);cursor:pointer;white-space:nowrap}
+#mk .seefull{display:flex;align-items:center;justify-content:center;gap:8px;max-width:300px;margin:16px auto 0;text-align:center;background:#fff;border:2px solid var(--ink);color:var(--ink);font-weight:800;font-size:15px;padding:14px;border-radius:100px;box-shadow:0 10px 24px -14px rgba(14,17,22,.4);transition:background .15s,transform .15s}
+#mk .seefull:hover{background:#F4F5F6;transform:translateY(-1px)}
+#mk .seefull .ar{display:inline-block;animation:mknudge 1.8s ease-in-out infinite}
+@keyframes mknudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+#mk .smar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);margin-top:16px;max-width:340px;margin-left:auto;margin-right:auto}
+#mk .smar .row{display:flex;gap:8px;width:max-content;padding:4px 2px;animation:mkcm 40s linear infinite}
+#mk .sc{flex:0 0 auto;display:flex;gap:6px;align-items:center;background:var(--glass);border:1px solid rgba(22,163,74,.28);border-radius:100px;padding:5px 12px;font-size:11.5px;font-weight:700;color:#137a3e;white-space:nowrap}
+#mk .gal{display:flex;gap:9px;align-items:flex-start}
+#mk .gthumbs{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+#mk .gth{width:52px;aspect-ratio:1/1;border-radius:9px;overflow:hidden;border:1.5px solid var(--line);cursor:pointer;opacity:.5;transition:opacity .2s,border-color .2s;background:var(--alt)}
+#mk .gth.on{opacity:1;border-color:var(--ink)}
+#mk .gth img{width:100%;height:100%;object-fit:cover}
+#mk .gmain{flex:1;min-width:0;position:relative;aspect-ratio:1/1;max-height:370px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--alt);cursor:zoom-in}
+#mk .gmain img{width:100%;height:100%;object-fit:cover}
+#mk .gmain .zoom{position:absolute;bottom:9px;right:9px;background:rgba(14,17,22,.7);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px}
+@media(max-width:899px){#mk .gal{flex-direction:column-reverse}#mk .gthumbs{flex-direction:row;overflow-x:auto;width:100%;scrollbar-width:none}#mk .gthumbs::-webkit-scrollbar{display:none}#mk .gth{flex:0 0 auto;width:56px}#mk .gmain{max-height:none;width:100%}}
+#mk .ptl{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:15px 0 0}
+#mk .social{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0;font-size:13px;color:var(--mut)}
+#mk .social b{color:var(--ink)}
+#mk .pills{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0 0}
+#mk .pill{display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid rgba(22,163,74,.30);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#137a3e;font-size:12px;font-weight:700;padding:6px 11px;border-radius:100px}
+#mk .pill .c{color:var(--ok);font-weight:900}
+#mk .bhead{text-align:center;padding:8px 18px 4px}
+#mk .bhead h2{font-size:clamp(23px,3vw,32px)}
+#mk .ocard{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:16px;background:#fff;box-shadow:0 18px 44px -30px rgba(17,24,39,.45)}
+#mk .ostrip{display:flex;justify-content:space-between;gap:10px;background:#0A0E12;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.05em;padding:10px 14px;text-transform:uppercase}
+#mk .ostrip .mp{color:#FFD36B}
+#mk .ocard .oin{padding:13px 13px 15px}
+#mk .minifull{display:block;text-align:center;margin-top:10px;font-size:12px;font-weight:600;color:var(--mut)}
+#mk .minifull:hover{text-decoration:underline}
+#mk .opts{display:grid;gap:14px;margin-top:5px}
+#mk .opt{display:flex;align-items:center;gap:11px;padding:12px 13px;border:1.5px solid var(--line);border-radius:13px;cursor:pointer;position:relative;background:#fff}
+#mk .opt.on{border-color:var(--ink);border-width:2px;background:#FAFBFC}
+#mk .opt .radio{width:20px;height:20px;border-radius:50%;border:2px solid #C4CDD8;flex:0 0 auto}
+#mk .opt.on .radio{border:6.5px solid var(--ink)}
+#mk .opt .pic{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:0 0 auto;border:1px solid var(--line)}
+#mk .opt .lbl{flex:1;min-width:0}
+#mk .opt .lbl b{display:block;font-size:14px;font-weight:800}
+#mk .opt .lbl span{font-size:12px;color:var(--mut)}
+#mk .opt .pr{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+#mk .opt .pr b{font-size:15px;font-weight:800}
+#mk .opt .offp{display:inline-block;background:#E11D48;color:#fff;font-size:10px;font-weight:800;letter-spacing:.02em;padding:2px 7px;border-radius:6px;margin:0}
+#mk .hoff{display:inline-block;margin-top:12px;background:#E11D48;color:#fff;font-size:12.5px;font-weight:800;letter-spacing:.04em;padding:6px 13px;border-radius:100px;text-transform:uppercase}
+#mk .bhoff{margin-top:6px;color:#E11D48;font-size:14px;font-weight:800}
+#mk .opt .pr s{display:block;font-size:13px;color:#6B7580}
+#mk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ink);padding:3px 8px;border-radius:20px}
+#mk .dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;background:linear-gradient(90deg,#FFE9B0,#FFD36B,#FFE9B0);color:#5A3E00;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:9px 12px;border-radius:12px}
+#mk .opt .gft{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:800;color:#06281B;background:linear-gradient(90deg,#7CF5C2,#10C97E);padding:2px 8px;border-radius:100px}
+#mk .pumprow{display:flex;align-items:center;gap:10px;margin-top:10px;border:1.5px dashed #C7CED6;border-radius:14px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+#mk .pumprow.on{border-color:#0A0E12;border-style:solid;background:#F6F8FA}
+#mk .pumprow.free{border-color:rgba(16,201,126,.65);border-style:solid;background:rgba(16,201,126,.08);cursor:default}
+#mk .pumprow .pck{flex:0 0 auto;width:21px;height:21px;border:2px solid #C7CED6;border-radius:7px;background:#fff;position:relative;transition:.15s}
+#mk .pumprow.on .pck{background:#0A0E12;border-color:#0A0E12}
+#mk .pumprow.on .pck::after{content:"";position:absolute;left:5.5px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+#mk .pumprow.free .pck{border:none;background:none}
+#mk .pumprow.free .pck::after{content:"🎁";position:absolute;inset:0;font-size:17px;line-height:21px}
+#mk .pumprow img{width:42px;height:42px;border-radius:10px;object-fit:cover;background:#F4F6F8;flex:0 0 auto}
+#mk .pumprow .plbl{flex:1;min-width:0}
+#mk .pumprow .plbl b{display:block;font-size:13px;font-weight:800}
+#mk .pumprow .plbl span{font-size:11px;color:var(--mut)}
+#mk .pumprow .ppr{text-align:right;flex:0 0 auto}
+#mk .pumprow .ppr b{display:block;font-size:14px;font-weight:800}
+#mk .pumprow .ppr s{font-size:11.5px;color:#6B7580}
+#mk .pumprow.free .ppr b{color:#0E9F6E}
+#mk .ob .gline{display:block;margin-top:8px;font-size:12px;font-weight:800;color:#7CF5C2}
+#mk .ob{background:#0A0E12;border:1.5px solid rgba(16,201,126,.5);border-radius:18px;padding:18px 16px;text-align:center;margin-top:10px;cursor:pointer;transition:transform .12s,box-shadow .2s}
+#mk .ob .nar{display:inline-block;animation:mknudge 1.8s ease-in-out infinite;color:var(--grn)}
+#mk .ob:hover{transform:translateY(-2px);box-shadow:0 16px 34px -14px rgba(10,14,18,.55)}
+#mk .ob:active{transform:translateY(0)}
+#mk .ob .hh{font-weight:800;font-size:15px;color:#fff}
+#mk .ob .pl{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-top:5px}
+#mk .ob .pl s{font-size:18px;color:rgba(255,255,255,.42);font-weight:700}
+#mk .ob .pl b{font-weight:900;font-size:38px;color:var(--grn);line-height:1;letter-spacing:-.02em}
+#mk .ob .sv{display:inline-block;margin-top:9px;font-size:12px;font-weight:800;color:#06281B;background:var(--grn);padding:5px 13px;border-radius:100px}
+#mk .atcg{display:block;width:100%;text-align:center;margin-top:12px;background:#fff;color:#0A0E12;font-size:15.5px;font-weight:800;padding:14px;border:2px solid var(--ink);border-radius:100px;cursor:pointer;transition:background .15s,transform .12s}
+#mk .atcg:hover{background:#F4F5F6;transform:translateY(-1px)}
+#mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:var(--grn);color:#06281B;font-size:17px;font-weight:900;padding:17px;border:none;border-radius:100px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 16px 34px -12px rgba(16,201,126,.55);transition:box-shadow .2s,transform .15s}
+#mk .cta:hover{transform:translateY(-1px);box-shadow:0 20px 40px -12px rgba(16,201,126,.65)}
+#mk .cta .gp{color:#06281B;font-weight:900}
+#mk .cta:after{content:'';position:absolute;top:0;left:-60%;width:36%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.14),transparent);animation:mksheen 3.4s ease-in-out infinite}
+@keyframes mksheen{0%{left:-60%}55%{left:130%}100%{left:130%}}
+#mk .cta small{display:block;font-weight:600;font-size:11.5px;opacity:.75;margin-top:3px}
+#mk .eta{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;font-size:12.5px;font-weight:700;color:var(--ink)}
+#mk .eta .dot{width:8px;height:8px;border-radius:50%;background:var(--grn);animation:mkpulse 1.8s ease-in-out infinite}
+@keyframes mkpulse{0%,100%{box-shadow:0 0 0 0 rgba(16,201,126,.5)}50%{box-shadow:0 0 0 6px rgba(16,201,126,0)}}
+#mk .coupon{text-align:center;margin-top:9px;font-size:12px;color:#137a3e;font-weight:700}
+#mk .guar{display:flex;gap:8px 16px;justify-content:center;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--mut);font-weight:600}
+#mk .pays{display:flex;gap:6px;justify-content:center;margin-top:9px;flex-wrap:wrap}
+#mk .pays span{font-size:9.5px;font-weight:700;color:var(--mut);border:1px solid var(--line);border-radius:5px;padding:3px 7px;letter-spacing:.03em}
+#mk .sec{padding-top:44px;padding-bottom:44px}
+#mk .sec.alt{background:var(--alt)}
+#mk .sec .head{text-align:center;max-width:640px;margin:0 auto 24px}
+#mk .sec .head h2{margin-top:7px}
+#mk .faqs{max-width:720px;margin:0 auto;display:grid;gap:10px}
+#mk .fq{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;transition:border-color .25s}
+#mk .fq.on{border-color:var(--ink)}
+#mk .fq.done{border-color:rgba(22,163,74,.4)}
+#mk .fq .q{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;font-weight:700;font-size:14.5px}
+#mk .fq .ico{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;transition:transform .3s,background .3s}
+#mk .fq.on .ico{transform:rotate(135deg)}
+#mk .fq.done:not(.on) .ico{background:var(--ok);transform:none}
+#mk .fq .p{max-height:0;overflow:hidden;transition:max-height .35s ease}
+#mk .fq .p .in{padding:0 16px 15px;color:var(--mut);font-size:13.5px}
+#mk .rvtrack{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:6px 4px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#mk .rvtrack::-webkit-scrollbar{display:none}
+#mk .rvc{scroll-snap-align:center;flex:0 0 84%;display:flex;flex-direction:column;gap:11px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border-radius:20px;padding:16px;box-shadow:0 18px 44px -20px rgba(15,27,45,.32)}
+@media(min-width:560px){#mk .rvc{flex-basis:48%}}
+@media(min-width:880px){#mk .rvc{flex-basis:calc(33.333% - 11px)}}
+#mk .rvc>img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:13px}
+#mk .rvc .rtop{display:flex;align-items:center;justify-content:space-between}
+#mk .rvc p{font-size:13.5px;color:#2B3A4A;margin:0;line-height:1.5}
+#mk .rvc .rby{display:flex;align-items:center;gap:9px;margin-top:auto}
+#mk .rvc .rav{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex:0 0 auto}
+#mk .rvc .rnm{font-size:12.5px;font-weight:700}
+#mk .rvc .rnm span{display:block;color:var(--mut);font-weight:500;font-size:11px}
+#mk .rvc .rvf{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--ok);background:var(--glass);padding:3px 8px;border-radius:20px}
+#mk .rdots{display:flex;gap:6px;justify-content:center;margin-top:14px}
+#mk .rdot{width:7px;height:7px;border-radius:50%;background:rgba(14,17,22,.18);transition:all .25s;cursor:pointer;border:none;padding:0}
+#mk .rdot.on{background:var(--ink);width:20px;border-radius:4px}
+#mk .cmar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);margin-top:22px}
+#mk .cmar .row{display:flex;gap:9px;width:max-content;padding:5px 4px;animation:mkcm 58s linear infinite}
+#mk .cmar .rb{animation:mkcm2 48s linear infinite}
+#mk .cmar:hover .row{animation-play-state:paused}
+#mk .cb{flex:0 0 auto;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:100px;padding:5px 15px 5px 5px;box-shadow:0 8px 22px -16px rgba(15,27,45,.3)}
+#mk .cb .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex:0 0 auto}
+#mk .cb .tx{font-size:13px;white-space:nowrap}
+#mk .cb .tx b{font-weight:700}
+@keyframes mkcm{to{transform:translateX(-50%)}}
+@keyframes mkcm2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+#mk .memsec{background:#F8F5EF}
+#mk .mem{display:grid;grid-template-columns:repeat(2,1fr);gap:22px 14px;max-width:960px;margin:0 auto;padding-top:8px}
+@media(min-width:760px){#mk .mem{grid-template-columns:repeat(3,1fr);gap:32px 24px}#mk .mem .pol:nth-child(3n+2){transform:rotate(var(--r,0deg)) translateY(18px)}}
+#mk .pol{position:relative;background:#fff;border:1px solid #EAE4D8;border-radius:4px;padding:10px 10px 34px;box-shadow:0 14px 30px -18px rgba(60,50,30,.35);transform:rotate(var(--r,0deg));transition:transform .35s ease,box-shadow .35s ease;cursor:pointer}
+#mk .pol:hover{transform:rotate(0deg) translateY(-6px) scale(1.03);box-shadow:0 30px 55px -22px rgba(60,50,30,.45);z-index:2}
+#mk .pol:before{content:'';position:absolute;top:-10px;left:50%;width:72px;height:22px;transform:translateX(-50%) rotate(var(--tr,-2deg));background:rgba(255,238,170,.6);border:1px solid rgba(180,160,90,.25);box-shadow:0 2px 5px rgba(0,0,0,.08);z-index:3}
+#mk .pol .shot{overflow:hidden;border-radius:2px}
+#mk .pol .shot img{width:100%;aspect-ratio:1/1;object-fit:cover;transition:transform .5s ease}
+#mk .pol:hover .shot img{transform:scale(1.06)}
+#mk .pol .cap{position:absolute;left:0;right:0;bottom:9px;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:13px;color:#4a4436}
+#mk .pol.ctap .shot{display:grid;place-items:center;aspect-ratio:1/1;border:2px dashed #CFC6B4;background:#FCFAF5;text-align:center}
+#mk .pol.ctap .plus{font-size:46px;font-weight:300;color:#B9AE97;line-height:1}
+#mk .pol.ctap .txt{margin-top:10px;font-size:13px;font-weight:700;color:#6b6252;padding:0 16px}
+@media(min-width:760px){#mk .pol.ctap{grid-column:2}}
+@media(max-width:759px){#mk .pol.ctap{grid-column:1/-1;max-width:330px;width:100%;margin:0 auto}}
+#mk .dad{display:grid;grid-template-columns:1fr;gap:26px;align-items:center;max-width:980px;margin:0 auto}
+@media(min-width:860px){#mk .dad{grid-template-columns:1.1fr 1fr}}
+#mk .duo{display:flex;gap:14px;justify-content:center;align-items:center}
+#mk .duo .phone{width:min(218px,42vw);margin:0;animation:none}
+#mk .duo .phone:first-child{transform:rotate(-3deg)}
+#mk .duo .phone:last-child{transform:rotate(2.5deg)}
+#mk .dad .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+#mk .dad .tags span{font-size:12px;font-weight:700;color:var(--ink);background:rgba(14,17,22,.06);padding:5px 10px;border-radius:100px}
+#mk .dad .q{margin:14px 0 0;padding-left:13px;border-left:3px solid var(--grn);font-family:Georgia,serif;font-style:italic;font-size:14.5px;color:#3d4a56}
+#mk .spec{max-width:720px;margin:16px auto 0;display:grid;grid-template-columns:1fr;gap:9px}
+@media(min-width:640px){#mk .spec{grid-template-columns:1fr 1fr}}
+#mk .spec div{display:flex;gap:9px;font-size:13.5px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+#mk .spec b{color:var(--ok);flex:0 0 auto;font-weight:900}
+#mk .finale{background:#0A0E12;color:#fff;text-align:center;overflow:hidden;position:relative}
+#mk .finale h2{color:#fff;font-size:clamp(24px,3.4vw,38px)}
+#mk .finale .sub2{color:rgba(255,255,255,.65);margin:12px auto 0;max-width:36ch;font-size:15px}
+#mk .finale .btn{display:inline-block;margin-top:22px;background:var(--grn);color:#06281B;font-size:16.5px;font-weight:900;padding:16px 36px;border-radius:100px;cursor:pointer;box-shadow:0 18px 40px -14px rgba(16,201,126,.6);transition:transform .15s}
+#mk .finale .btn:hover{transform:translateY(-2px)}
+#mk .fbadges{display:flex;gap:10px 22px;justify-content:center;flex-wrap:wrap;margin-top:24px;font-size:12px;color:rgba(255,255,255,.6);font-weight:600}
+#mk .brand{font-weight:900;letter-spacing:.1em;font-size:clamp(58px,13vw,170px);line-height:1;margin-top:34px;background:linear-gradient(100deg,#0E7C64 0%,#10C97E 30%,#8CF5CB 50%,#10C97E 70%,#0E7C64 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 7s linear infinite;user-select:none}
+#mk .wave{height:5px;max-width:420px;margin:26px auto 0;border-radius:10px;background:linear-gradient(90deg,transparent,#10C97E,transparent);background-size:60% 100%;background-repeat:no-repeat;animation:mkwave 3.2s ease-in-out infinite alternate}
+@keyframes mkwave{from{background-position:-40% 0}to{background-position:140% 0}}
+#mk .gu{background:#fff;border:1.5px dashed rgba(16,201,126,.55);border-radius:20px;padding:24px;text-align:center;max-width:600px;margin:0 auto}
+#mk .gu h3{font-size:20px;font-weight:800;margin:8px 0 6px}
+#mk .gu p{color:var(--mut);margin:0;font-size:14.5px}
+#mkstick{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:80;max-width:560px;margin:0 auto;background:#0A0E12;border-radius:100px;padding:8px 8px 8px 8px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 44px -14px rgba(10,14,18,.6),0 8px 30px -8px rgba(16,201,126,.3);transform:translateY(160%);transition:transform .4s ease}
+#mkstick.show{transform:none}
+@media(max-width:620px){#mkstick{left:10px;right:74px;padding:7px}#mkstick button{padding:11px 16px;font-size:13px}}
+#mkstick .th{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:2px solid rgba(255,255,255,.2)}
+#mkstick .l{min-width:0}
+#mkstick .l b{display:block;color:#fff;font-size:12.5px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mkstick .l span{color:var(--grn);font-size:12px;font-weight:800}
+#mkstick button{margin-left:auto;flex:0 0 auto;background:var(--grn);color:#06281B;border:none;font-size:13.5px;font-weight:900;padding:12px 20px;border-radius:100px;cursor:pointer}
+#mk .lb{position:fixed;inset:0;z-index:100;background:rgba(10,12,15,.93);display:none;align-items:center;justify-content:center;padding:20px}
+#mk .lb.on{display:flex}
+#mk .lb img{max-width:92vw;max-height:82vh;border-radius:14px}
+#mk .lb .x{position:absolute;top:14px;right:18px;color:#fff;font-size:32px;cursor:pointer;line-height:1}
+#mk .lb .nav{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:44px;cursor:pointer;padding:8px 14px;user-select:none}
+#mk .lb .prev{left:6px}
+#mk .lb .next{right:6px}
+@media(prefers-reduced-motion:reduce){
+  #mk .cta:after,#mk .phone,#mk .eta .dot,#mk .seefull .ar,#mk .brand,#mk .wave,#mk .ptitle .it .w{animation:none}
+  #mk .rv,#mk .ptitle .w{opacity:1;transform:none;transition:none}
+}
+</style>
+<div id="mk">
+<div class="ptitle" id="ptitle"><div class="hgrid">
+  <div>
+    <div class="eyebrow">Die motorisierte Wasserliege</div>
+    <h1 id="ptitleh">Vermisst du die alten Zeiten — diese endlosen Sommer am Wasser, <span class="it">als das Leben sich wie ein Traum anfühlte</span>?</h1>
+    <p class="hsub">Gleite übers Wasser wie damals mit zehn — keine Sorgen, keine Uhr, nur du, die Kinder und die Sonne.</p>
+    <div class="social" style="margin-top:12px"><span class="stars">★★★★★</span> <b>4,8</b> · von 3.900+ Familien geliebt · <b>21.600+ verkauft</b></div>
+    <div><span class="hoff">Sommer-Sale — bis zu 63% Rabatt</span></div>
+    <a class="heropill tocart" href="#buytop"><b>Fühl dich wieder wie im Sommer <span class="ga">→</span></b><em>2 zum Preis von 1 · 57% Rabatt schon abgezogen</em></a>
+  </div>
+  <div class="phone hphone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Papa und Kinder auf dem Super Glide"></div>
+</div></div>
+<div class="wrap">
+<div class="bhead rv"><div class="eyebrow" id="cp_buy_ey">Das ist der Super Glide</div><h2 id="cp_buy_h2">Hol dir 2 zum Preis von 1. Der 2. geht auf uns.</h2><div class="bhoff">Bis zu 63% Rabatt — schon eingerechnet · GRATIS Jet-Ski + Pumpe ab 3 Glidern 🎁</div></div>
+<div class="buy" id="buytop">
+  <div class="media">
+    <div class="phone"><video id="u1" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u1">Für Ton tippen</span></div>
+    <a class="seefull" href="/products/helios-super-glide-motorized-water-lounger">Alle Produktdetails ansehen <span class="ar">→</span></a>
+    <div class="smar"><div class="row" id="srow">
+      <span class="sc">✓ Sabine L. — in 9 Tagen da, alles in der Box</span>
+      <span class="sc">✓ Daniel K. — schneller Versand, komplett verfolgbar</span>
+      <span class="sc">✓ Maria S. — 2. Sommer mit unserem, null Lecks</span>
+      <span class="sc">✓ Versand innerhalb von 24 h · Sendungsverfolgung</span>
+      <span class="sc">✓ Georg P. — Karton perfekt angekommen, am selben Tag aufgepumpt</span>
+    </div></div>
+  </div>
+  <div class="panel">
+    <div class="gal">
+      <div class="gthumbs" id="gthumbs">
+        <div class="gth on" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/S422daeaa8a1f4d90b13ccc8979923d65e_jpg_960x960q75_jpg.avif?v=1782437342"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/S422daeaa8a1f4d90b13ccc8979923d65e_jpg_960x960q75_jpg.avif?v=1782437342" alt="Super Glide"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="Auf dem Wasser"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Entspannen"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Im Pool"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Familie"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243" alt="Gesamtansicht"></div>
+      </div>
+      <div class="gmain" id="gmain"><img id="gmainimg" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/S422daeaa8a1f4d90b13ccc8979923d65e_jpg_960x960q75_jpg.avif?v=1782437342" alt="HELIOS Super Glide"><span class="zoom">zum Zoomen tippen ⤢</span></div>
+    </div>
+    <div class="ptl">HELIOS SuperGlide Pro 1+1 GRATIS</div>
+    <div class="social"><span class="stars">★★★★★</span> <b>4,8</b> · 4.228 Bewertungen · <b>21.600+ verkauft</b> · trägt 136 kg</div>
+    <div class="pills">
+      <span class="pill"><span class="c">✓</span> Zwei Motoren — kein Paddeln</span>
+      <span class="pill"><span class="c">✓</span> Trägt 136 kg · Erwachsener + 2 Kinder</span>
+      <span class="pill"><span class="c">✓</span> 360°-Joystick-Steuerung</span>
+      <span class="pill"><span class="c">✓</span> ~2 Stunden pro Ladung</span>
+      <span class="pill"><span class="c">✓</span> In ~5 Min aufgepumpt</span>
+      <span class="pill"><span class="c">✓</span> Pool · See · Fluss</span>
+    </div>
+    <div class="ocard"><div class="ostrip"><span id="cp_strip_l">☀ 2-für-1 Sommer-Deal</span><span class="mp" id="cp_strip_r">★ Am beliebtesten</span></div><div class="oin">
+    <div class="opts" id="opts">
+      <div class="opt" data-vid="47935890882725" data-gift="1" data-p="$439.99" data-c="$1,199.96" data-sv2="DU SPARST $760 (63% RABATT) + GRATIS Jet-Ski &amp; Pumpe" data-sv="Bestes Angebot + GRATIS Jet-Ski"><span class="tag">2 kaufen, 2 gratis</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>4 Super Glides</b><span>Für die ganze Crew</span> <span class="gft">🎁 + GRATIS Jet-Ski &amp; Pumpe</span></div><div class="pr"><em class="offp">63% RABATT</em><b>$439.99</b><s>$1,199.96</s></div></div>
+      <div class="opt" data-vid="47935890849957" data-gift="1" data-p="$351.99" data-c="$899.97" data-sv2="DU SPARST $548 (61% RABATT) + GRATIS Jet-Ski &amp; Pumpe" data-sv="3er-Pack + GRATIS Jet-Ski"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>3 Super Glides</b><span>Du plus zwei Plätze mehr</span> <span class="gft">🎁 + GRATIS Jet-Ski &amp; Pumpe</span></div><div class="pr"><em class="offp">61% RABATT</em><b>$351.99</b><s>$899.97</s></div></div>
+      <div class="opt on" data-vid="47935890817189" data-p="$259.99" data-c="$599.98" data-sv2="DU SPARST $340 (57% RABATT) — 2 zum Preis von 1" data-sv="Am beliebtesten — spare $340"><span class="tag">Am beliebtesten · 1+1 gratis</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>2 Super Glides</b><span>Einer für dich, einer für die Familie</span></div><div class="pr"><em class="offp">57% RABATT</em><b>$259.99</b><s>$599.98</s></div></div>
+      <div class="opt" data-vid="47945658269861" data-p="$259.99" data-c="$299.99" data-sv2="DU SPARST $40 (13% RABATT)" data-sv="Nur du — zum Ausprobieren"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Nur für mich</span></div><div class="pr"><em class="offp">13% RABATT</em><b>$259.99</b><s>$299.99</s></div></div>
+    </div>
+    <div class="pumprow" id="pumprow" role="button" tabindex="0" aria-label="Kabellose Schnellpumpe hinzufügen"><span class="pck"></span><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/107f7b2d-9d3a-4d8f-bcfe-b0bfa133a1b8.png?v=1783791768" alt="Kabellose Schnellpumpe"><div class="plbl"><b id="pumpb">Kabellose Schnellpumpe dazu</b><span id="pumps">Pumpt ihn in ~5 Min auf — ganz ohne Steckdose</span></div><div class="ppr"><b id="pumpp">$39.99</b><s id="pumpc">$59.99</s></div></div>
+    <div class="dbn">⚡ Bis zu 63% Rabatt · 🎁 GRATIS Jet-Ski + Pumpe ab 3 Glidern</div>
+    <div class="ob" id="sgob" role="button" tabindex="0" aria-label="In meine Bestellung"><div class="hh">In meine Bestellung <span class="nar">→</span></div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">DU SPARST $340 (57% RABATT) — 2 zum Preis von 1</span><span class="gline" id="obg" style="display:none">🎁 GRATIS Jet-Ski + GRATIS Pumpe inklusive — $409.98 Wert</span></div>
+    <button class="atcg" id="atcg">In den Warenkorb — $259.99</button>
+    <div class="eta"><span class="dot"></span><span>Heute bestellt — in 24 h verschickt, <b id="etadate">bald bei dir</b></span></div>
+    <div class="guar"><span>⚡ Einfacher Checkout</span><span>🚚 Kostenloser Versand</span><span>🛡 30 Tage Geld-zurück</span></div>
+    <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>SHOP PAY</span><span>APPLE PAY</span></div>
+    <a class="minifull" id="cp_seefull" href="/products/helios-super-glide-motorized-water-lounger">oder erst alle Details ansehen →</a>
+    </div></div>
+  </div>
+</div>
+</div>
+
+<div class="sec" id="faq"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">Ehrliche Antworten</div><h2>Alles, was du wissen willst — beantwortet.</h2></div>
+  <div class="faqs" id="faqs">
+    <div class="fq on"><div class="q">Fährt er wirklich von selbst, oder muss ich paddeln?<span class="ico">+</span></div><div class="p"><div class="in">Er fährt von selbst. Zwei elektrische Thruster schieben dich vorwärts und lassen dich mit den Joysticks um 360° drehen — komplett ohne Hände. Kein Paddeln, kein Benzin, kein Motorboot.</div></div></div>
+    <div class="fq"><div class="q">Ist er sicher für Kinder?<span class="ico">+</span></div><div class="p"><div class="in">Ja — die Thruster sind vollständig gekapselt, keine freiliegenden Propeller, und er gleitet in gemütlichem Schritttempo. Kinder fahren mit einem Elternteil mit, bis 136 kg Tragkraft — Schwimmwesten an, wie bei jedem Wasserspielzeug.</div></div></div>
+    <div class="fq"><div class="q">Trägt er wirklich einen Erwachsenen + die Kinder?<span class="ico">+</span></div><div class="p"><div class="in">Ja — ausgelegt auf bis zu 136 kg. Platz für einen Elternteil und zwei Kinder, mit gepolsterter Kopfstütze, Rückenlehne und zwei Becherhaltern.</div></div></div>
+    <div class="fq"><div class="q">Wie lange hält der Akku?<span class="ico">+</span></div><div class="p"><div class="in">Etwa 2 Stunden durchgehendes Cruisen pro Ladung — ein ganzer Nachmittag auf dem Wasser — und zwischen den Sessions lädst du einfach nach.</div></div></div>
+    <div class="fq"><div class="q">Ist er robust, oder platzt er?<span class="ico">+</span></div><div class="p"><div class="in">Marine-verstärktes Heavy-Duty-PVC — dickes, zähes Material, gebaut für einen ganzen Sommer voller Kinder, Stege und Rumschleifen. Kein billiges Poolspielzeug.</div></div></div>
+    <div class="fq"><div class="q">Wie aufwendig ist der Aufbau?<span class="ico">+</span></div><div class="p"><div class="in">In etwa 5 Minuten mit dem mitgelieferten Aufsatz aufpumpen, ins Wasser setzen, Joysticks greifen und los. Kein Werkzeug nötig.</div></div></div>
+    <div class="fq"><div class="q">Was genau bekomme ich für $259.99 (1+1)?<span class="ico">+</span></div><div class="p"><div class="in">Zwei komplette Super Glides — einen für dich, einen gratis für die Familie — das sind 57% unter dem regulären Preis für zwei Liegen, plus kostenloser Versand und 30 Tage Geld-zurück-Garantie. Der Rabatt steckt schon im angezeigten Preis.</div></div></div>
+    <div class="fq"><div class="q">Und wenn er mir nicht gefällt?<span class="ico">+</span></div><div class="p"><div class="in">Schick ihn innerhalb von 30 Tagen zurück und bekomm den vollen Betrag erstattet. Ohne Diskussion — das Risiko liegt komplett bei uns.</div></div></div>
+  </div>
+</div></div>
+
+<!-- DAD duo -->
+<div class="sec alt"><div class="wrap"><div class="dad">
+  <div class="duo rv">
+    <div class="phone"><video id="u2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u2">Für Ton tippen</span></div>
+    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Kinder auf dem Super Glide"></div>
+  </div>
+  <div class="rv" style="transition-delay:.15s"><div class="eyebrow">Echte Familien, echtes Wasser — sieh es in Aktion</div><h2 style="margin-top:8px">Hol dir die Freude und Ruhe deiner Kindheitserinnerungen zurück.</h2><p style="color:var(--mut);margin:12px 0 0">Platz für dich und zwei Kinder, stabil genug für Getränke in den Becherhaltern, so einfach, dass Oma ihn fahren kann — und niemand muss nach Hause paddeln.</p><div class="q">„Das ist es, wozu ich jeden Tag nach Hause komme… man baut glückliche Erinnerungen. Jeden Cent wert, 10000%.“ — jenna.r, verifiziert</div><div class="tags"><span>Becherhalter für alle</span><span>Trägt bis 136 kg</span><span>Ganztags-Komfort</span></div><a class="cta tocart" style="max-width:290px;margin-top:18px" href="#buytop">Fühl dich wieder wie im Sommer <span class="gp">→</span></a></div>
+</div></div></div>
+
+<div class="sec" id="reviews"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">Was Familien sagen</div><h2>21.600+ Fahrten — und es werden mehr.</h2><div class="social" style="justify-content:center"><span class="stars">★★★★★</span> <b>4,8</b> · 4.228 Bewertungen</div></div>
+  <div class="rvtrack rv" id="rvtrack">
+    <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Kundenfoto" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verifiziert</span></div><p>Mein Sohn geht da NICHT mehr runter. Er weigert sich einfach :').</p><div class="rby"><span class="rav">e</span><span class="rnm">elena d.<span>23. Juni 2026</span></span></div></div>
+    <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492" alt="Kundenfoto" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verifiziert</span></div><p>das ist es wozu ich jeden tag nach hause komme... holt ihn euch leute, jeden cent wert, am ende zählen die glücklichen erinnerungen 10000% (der hund heißt rollie).</p><div class="rby"><span class="rav">j</span><span class="rnm">jenna.r.<span>3. Juni 2025</span></span></div></div>
+    <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed800814-8280-4515-ab36-29f15996c019.png?v=1782882243" alt="Kundenfoto" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verifiziert</span></div><p>Dachte ehrlich, er fühlt sich billig an — tut er nicht. Richtig gut verarbeitet, in ca. 5 Minuten aufgepumpt. Sieht super aus und Leute, im Ernst: funktioniert perfekt und macht sooo viel Spaß.</p><div class="rby"><span class="rav">D</span><span class="rnm">Dea W.<span>27. Juni 2026</span></span></div></div>
+    <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243" alt="Kundenfoto" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verifiziert</span></div><p>Das Ding ist RIESIG und so bequem. Becherhalter, Kopfstütze, alles dabei. Ich mache darauf öfter Mittagsschlaf, als die Kinder fahren, lol.</p><div class="rby"><span class="rav">C</span><span class="rnm">Chris Tes.<span>22. Juni 2026</span></span></div></div>
+    <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/359ded2c-3def-48f5-90fe-7b69429864fb.png?v=1782882243" alt="Kundenfoto" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verifiziert</span></div><p>Kam top verpackt an und alles war in der Box. Super, super spaßig.</p><div class="rby"><span class="rav">m</span><span class="rnm">mike L.<span>18. Juni 2026</span></span></div></div>
+    <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup_6c508243-62c3-4e30-a179-7689e4937344.jpg?v=1782766099" alt="Kundenfoto" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verifiziert</span></div><p>Aufbau war lächerlich einfach — aufpumpen, reinsetzen, Joysticks greifen. Die Motoren haben richtig Power. 10/10.</p><div class="rby"><span class="rav">p</span><span class="rnm">pablo P.<span>12. Juni 2026</span></span></div></div>
+  </div>
+  <div class="rdots" id="rdots"></div>
+  <div class="cmar"><div class="row" id="crow"><div class="cb"><span class="av" style="background:#E4573E">L</span><span class="tx"><b>Linda M.</b> jetzt bin ICH diejenige, die nicht mehr runter will</span></div><div class="cb"><span class="av" style="background:#7A5AA6">D</span><span class="tx"><b>Debbie K.</b> saß auf dem See und hab einfach nur durchgeatmet. Jeden Cent wert.</span></div><div class="cb"><span class="av" style="background:#3B7D4F">S</span><span class="tx"><b>Susan R.</b> zweiten bestellt. Becherhalter!</span></div><div class="cb"><span class="av" style="background:#4A6DA7">G</span><span class="tx"><b>Gerd P.</b> das erste Floatie, das sich wirklich BEWEGT. 10/10.</span></div></div>
+  <div class="row rb" id="crow2"><div class="cb"><span class="av" style="background:#2E7D8F">R</span><span class="tx"><b>Robert &amp; Carola</b> die Enkel finden uns jetzt cool</span></div><div class="cb"><span class="av" style="background:#C9822B">F</span><span class="tx"><b>Frank T.</b> dachte, er wäre billig. Ist er NICHT.</span></div><div class="cb"><span class="av" style="background:#B0553E">P</span><span class="tx"><b>Petra &amp; Jim</b> die ganze Familie ist jetzt jedes Wochenende draußen</span></div><div class="cb"><span class="av" style="background:#586b8c">T</span><span class="tx"><b>Tom D.</b> die Kinder wollen gar nicht mehr aus dem Wasser</span></div></div></div>
+</div></div>
+
+<!-- MEMORY WALL -->
+<div class="sec memsec"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">Das ist es, woran sie sich erinnern werden</div><h2>Hol dir die Erinnerungen fürs Leben zurück — Spaß mit deiner Familie.</h2></div>
+  <div class="mem">
+    <div class="pol rv" style="--r:-2.5deg;--tr:-3deg"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Papa und Kinder" loading="lazy"></div><div class="cap">papas thron · sommer '26</div></div>
+    <div class="pol rv" style="--r:2deg;--tr:2.5deg;transition-delay:.08s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Spielende Kinder" loading="lazy"></div><div class="cap">er will einfach nicht runter</div></div>
+    <div class="pol rv" style="--r:-1.5deg;--tr:-1.5deg;transition-delay:.16s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Zwei Kinder" loading="lazy"></div><div class="cap">wer steuert zuerst?</div></div>
+    <div class="pol rv" style="--r:2.5deg;--tr:3deg;transition-delay:.24s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Pooltag" loading="lazy"></div><div class="cap">cruisen zur goldenen stunde</div></div>
+    <div class="pol rv" style="--r:-2deg;--tr:2deg;transition-delay:.32s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492" alt="Familie mit Hund" loading="lazy"></div><div class="cap">rollie findet's gut · pooltag</div></div>
+    <div class="pol rv" style="--r:1.8deg;--tr:-2.5deg;transition-delay:.4s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Entspannen" loading="lazy"></div><div class="cap">der beste platz</div></div>
+    <div class="pol ctap rv tocart" style="--r:1.2deg;--tr:1.5deg;transition-delay:.48s"><div class="shot"><div><div class="plus">+</div><div class="txt">deine familie hier — nächstes wochenende</div></div></div><div class="cap">reservier dir deinen sommer →</div></div>
+  </div>
+</div></div>
+
+
+<div class="sec"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">Was du wirklich bekommst</div><h2>Eine echte motorisierte Liege — kein Poolspielzeug.</h2></div>
+  <div class="spec rv">
+    <div><b>✓</b>Zwei Elektro-Thruster · echte 360°-Joystick-Steuerung</div>
+    <div><b>✓</b>Marine-verstärktes PVC · trägt bis zu 136 kg</div>
+    <div><b>✓</b>Gepolsterte Kopfstütze, Rückenlehne &amp; zwei Becherhalter</div>
+    <div><b>✓</b>~2 h Laufzeit pro Ladung · in ~5 Min aufgepumpt</div>
+    <div><b>✓</b>Für Pool, See und Fluss</div>
+    <div><b>✓</b>Pumpaufsatz &amp; Ladegerät in der Box</div>
+  </div>
+</div></div>
+
+<div class="sec"><div class="wrap"><div class="gu rv"><div style="font-size:30px">🛡️</div><h3>30 Tage Cool-oder-Geld-zurück-Versprechen</h3><p>Nimm ihn 30 Tage mit raus. Wenn er deinen Sommer nicht besser macht, schick ihn zurück — volle Rückerstattung. Das Risiko liegt komplett bei uns.</p></div></div></div>
+
+<!-- FINALE -->
+<div class="sec finale"><div class="wrap">
+  <div class="rv"><h2>So viele Sommer hast du nicht mehr.</h2>
+  <p class="sub2">Mach das zu dem Sommer, von dem sie ihren Kindern erzählen. Das Wasser wartet.</p>
+  <a class="btn tocart" href="#buytop">Hol dir 2 zum Preis von 1 →</a>
+  <div class="fbadges"><span>Bis zu 63% Rabatt im Sommer-Sale</span><span>🎁 GRATIS Jet-Ski ab 3 Glidern</span><span>★ 4,8 · 4.228 Bewertungen</span><span>21.600+ verkauft</span><span>30 Tage Geld-zurück</span><span>Kostenloser Versand</span><span>Sicherer Checkout</span></div>
+  <div class="wave"></div>
+  <div class="brand">HELIOS</div></div>
+</div></div>
+
+<div id="mkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="l"><b id="stlbl">SuperGlide Pro · 1+1 · 57% RABATT</b><s id="stc" style="color:rgba(255,255,255,.45);font-size:11px;margin-right:6px">$599.98</s><span id="stp">$259.99</span></div><button id="stbtn">Jetzt holen →</button></div>
+<div class="lb" id="lb"><span class="x" id="lbx">×</span><span class="nav prev" id="lbp">‹</span><img id="lbimg" src="" alt="Produktfoto"><span class="nav next" id="lbn">›</span></div>
+</div>
+<script>
+(function(){
+  var root=document.getElementById('mk'); if(!root||root.dataset.i)return; root.dataset.i='1';
+  var DISC='SUPERGLIDEIT', sel='47935890817189', busy=false;
+  // pixel-perfect full-bleed: exact client width, pinned to viewport left (scrollbar-safe, parent-offset-safe)
+  function bleed(){
+    root.style.width='auto'; root.style.marginLeft='0px';
+    var w=document.documentElement.clientWidth;
+    var l=root.getBoundingClientRect().left;
+    root.style.width=w+'px'; root.style.marginLeft=(-l)+'px';
+  }
+  bleed(); window.addEventListener('resize',bleed);
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // title word stagger
+  var h1=document.getElementById('ptitleh');
+  if(h1&&!reduce){
+    var idx=0;
+    function wrapWords(node){
+      [].slice.call(node.childNodes).forEach(function(ch){
+        if(ch.nodeType===3){
+          var frag=document.createDocumentFragment();
+          ch.textContent.split(/(\s+)/).forEach(function(t){
+            if(!t)return;
+            if(/^\s+$/.test(t)){frag.appendChild(document.createTextNode(t));return;}
+            var s=document.createElement('span');s.className='w';s.style.setProperty('--i',idx++);s.textContent=t;frag.appendChild(s);
+          });
+          node.replaceChild(frag,ch);
+        } else if(ch.nodeType===1){ wrapWords(ch); }
+      });
+    }
+    wrapWords(h1);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){document.getElementById('ptitle').classList.add('go');});});
+  } else if(h1){ document.getElementById('ptitle').classList.add('go'); }
+  // scroll reveal
+  var rvs=[].slice.call(root.querySelectorAll('.rv'));
+  if('IntersectionObserver' in window && !reduce){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+    rvs.forEach(function(el){io.observe(el);});
+  } else { rvs.forEach(function(el){el.classList.add('in');}); }
+  // ETA date (7-12 days out, EU shipping)
+  (function(){
+    var m=['Jan.','Feb.','März','Apr.','Mai','Juni','Juli','Aug.','Sept.','Okt.','Nov.','Dez.'];
+    var a=new Date(Date.now()+7*864e5), b=new Date(Date.now()+12*864e5);
+    var t=(a.getMonth()===b.getMonth())? a.getDate()+'.–'+b.getDate()+'. '+m[b.getMonth()] : a.getDate()+'. '+m[a.getMonth()]+' – '+b.getDate()+'. '+m[b.getMonth()];
+    var e=document.getElementById('etadate'); if(e)e.textContent='Ankunft '+t;
+  })();
+  // UGC sound
+  [].slice.call(root.querySelectorAll('.phone .snd')).forEach(function(b){
+    var v=document.getElementById(b.getAttribute('data-v')); if(!v)return;
+    var u=function(){v.muted=!v.muted;b.textContent=v.muted?'Für Ton tippen':'Stumm schalten';var p=v.play();if(p&&p.catch)p.catch(function(){});};
+    v.addEventListener('click',u); b.addEventListener('click',u);
+  });
+  // gallery
+  var gthumbs=[].slice.call(document.querySelectorAll('#gthumbs .gth'));
+  var gimgs=gthumbs.map(function(t){return t.getAttribute('data-src');});
+  var gmainImg=document.getElementById('gmainimg'), gi=0;
+  function setG(i){gi=(i%gimgs.length+gimgs.length)%gimgs.length;gmainImg.src=gimgs[gi];gthumbs.forEach(function(x,j){x.classList.toggle('on',j===gi);});}
+  gthumbs.forEach(function(t,i){t.addEventListener('click',function(){setG(i);});});
+  // lightbox (gallery + memory wall)
+  var lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg');
+  document.getElementById('gmain').addEventListener('click',function(){lbimg.src=gimgs[gi];lb.classList.add('on');});
+  [].slice.call(root.querySelectorAll('.pol img')).forEach(function(im){im.parentNode.addEventListener('click',function(){lbimg.src=im.src;lb.classList.add('on');});});
+  document.getElementById('lbx').addEventListener('click',function(){lb.classList.remove('on');});
+  lb.addEventListener('click',function(e){if(e.target===lb)lb.classList.remove('on');});
+  document.getElementById('lbp').addEventListener('click',function(e){e.stopPropagation();setG(gi-1);lbimg.src=gimgs[gi];});
+  document.getElementById('lbn').addEventListener('click',function(e){e.stopPropagation();setG(gi+1);lbimg.src=gimgs[gi];});
+  document.addEventListener('keydown',function(e){if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft'){setG(gi-1);lbimg.src=gimgs[gi];}if(e.key==='ArrowRight'){setG(gi+1);lbimg.src=gimgs[gi];}});
+  // bundles + free-gift tiers (3/4 gliders -> FREE Jet Ski + Pump) + pump add-on
+  var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
+  var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
+  var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
+  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 + GRATIS Jet-Ski', '47935890849957':'SuperGlide Pro · 3er-Pack + GRATIS Jet-Ski', '47935890817189':'SuperGlide Pro · 1+1 · 57% RABATT', '47945658269861':'SuperGlide Pro · einzeln · 13% RABATT' };
+  var GIFTS=[48001507197093,48001507262629], PUMPV=48001507131557, pumpOn=false;
+  var pumprow=document.getElementById('pumprow'), obg=document.getElementById('obg');
+  function selOpt(){ for(var i=0;i<opts.length;i++){ if(opts[i].getAttribute('data-vid')===sel) return opts[i]; } return opts[0]; }
+  function isGiftTier(){ var o=selOpt(); return !!(o&&o.getAttribute('data-gift')); }
+  function fm(n){ return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  function num(s){ return parseFloat((s||'0').replace(/[^0-9.]/g,''))||0; }
+  function syncBuy(){
+    var o=selOpt(); if(!o)return;
+    var gift=isGiftTier();
+    var addP=(pumpOn&&!gift)?39.99:0, addC=(pumpOn&&!gift)?59.99:0;
+    var p=fm(num(o.getAttribute('data-p'))+addP), c=fm(num(o.getAttribute('data-c'))+addC);
+    if(obc)obc.textContent=c;
+    if(obp)obp.textContent=p;
+    if(obs)obs.textContent=o.getAttribute('data-sv2');
+    if(stp)stp.textContent=p;
+    var stc=document.getElementById('stc'); if(stc)stc.textContent=c;
+    var ag=document.getElementById('atcg'); if(ag)ag.textContent='In den Warenkorb — '+p;
+    if(stlbl)stlbl.textContent=SLBL[sel]||'SuperGlide Pro';
+    if(obg)obg.style.display=gift?'':'none';
+    if(pumprow){
+      pumprow.classList.toggle('free',gift);
+      pumprow.classList.toggle('on',pumpOn&&!gift);
+      var pb=document.getElementById('pumpb'), ps=document.getElementById('pumps'), pp=document.getElementById('pumpp'), pc=document.getElementById('pumpc');
+      if(gift){ if(pb)pb.textContent='Kabellose Schnellpumpe — GRATIS für dich'; if(ps)ps.textContent='Bei 3+ Glidern inklusive, zusammen mit dem GRATIS Jet-Ski'; if(pp)pp.textContent='GRATIS'; if(pc)pc.textContent='$59.99'; }
+      else { if(pb)pb.textContent=pumpOn?'Kabellose Schnellpumpe — hinzugefügt':'Kabellose Schnellpumpe dazu'; if(ps)ps.textContent='Pumpt ihn in ~5 Min auf — ganz ohne Steckdose'; if(pp)pp.textContent='$39.99'; if(pc)pc.textContent='$59.99'; }
+    }
+  }
+  opts.forEach(function(o){o.addEventListener('click',function(){
+    opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
+    sel=o.getAttribute('data-vid');
+    syncBuy();
+  });});
+  if(pumprow){
+    pumprow.addEventListener('click',function(){ if(isGiftTier())return; pumpOn=!pumpOn; syncBuy(); });
+    pumprow.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pumprow.click(); } });
+  }
+  syncBuy();
+  // buy actions — BOTH paths carry the discount; gift tiers auto-add the FREE Jet Ski + Pump
+  function cartItems(){
+    var ids=[parseInt(sel,10)];
+    if(isGiftTier()){ ids=ids.concat(GIFTS); }
+    else if(pumpOn){ ids.push(PUMPV); }
+    return ids;
+  }
+  function addThen(el){
+    if(busy)return; busy=true;
+    var ids=cartItems();
+    var dest='/discount/'+DISC+'?redirect=%2Fcart';
+    var fallback='/cart/'+ids.map(function(id){return id+':1';}).join(',')+'?discount='+DISC;
+    if(el){ el.dataset.t=el.textContent; el.textContent='Wird in den Warenkorb gelegt…'; el.setAttribute('aria-busy','true'); el.style.pointerEvents='none'; }
+    function un(){ if(el){ el.textContent=el.dataset.t; el.removeAttribute('aria-busy'); el.style.pointerEvents=''; } }
+    try{
+      fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:ids.map(function(id){return {id:id,quantity:1};})})})
+        .then(function(r){ if(!r.ok)throw 0; window.location.href=dest; })
+        .catch(function(){ busy=false; un(); window.location.href=fallback; });
+    }catch(e){ busy=false; un(); window.location.href=fallback; }
+  }
+  var atcg=document.getElementById('atcg');
+  if(atcg)atcg.addEventListener('click',function(){ addThen(atcg); });
+  var sgob=document.getElementById('sgob');
+  if(sgob){ sgob.addEventListener('click',function(){ addThen(sgob.querySelector('.hh')); });
+    sgob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sgob.click(); } }); }
+  var stbtn=document.getElementById('stbtn');
+  if(stbtn)stbtn.addEventListener('click',function(){ addThen(stbtn); });
+  // sticky bar visibility
+  var stick=document.getElementById('mkstick'), buyEl=document.getElementById('buytop');
+  function onScroll(){ if(!buyEl)return; var r=buyEl.getBoundingClientRect(); stick.classList.toggle('show', r.bottom<0); }
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  // scroll-to-buy links
+  [].slice.call(root.querySelectorAll('.tocart')).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();if(buyEl)buyEl.scrollIntoView({behavior:'smooth'});});});
+  // FAQ — accordion + green check on answered
+  var fqs=[].slice.call(document.querySelectorAll('#faqs .fq'));
+  function setH(f){var p=f.querySelector('.p');p.style.maxHeight=f.classList.contains('on')?p.scrollHeight+'px':'0px';}
+  function markDone(f){if(f.classList.contains('ever')){f.classList.add('done');f.querySelector('.ico').textContent='✓';}}
+  fqs.forEach(function(f){ if(f.classList.contains('on'))f.classList.add('ever'); setH(f);
+    f.querySelector('.q').addEventListener('click',function(){
+      var opening=!f.classList.contains('on');
+      fqs.forEach(function(o){ if(o!==f && o.classList.contains('on')){ o.classList.remove('on'); markDone(o); setH(o); } });
+      if(opening){ f.classList.add('on','ever'); f.classList.remove('done'); f.querySelector('.ico').textContent='+'; }
+      else { f.classList.remove('on'); markDone(f); }
+      setH(f);
+    });
+  });
+  // review carousel — dots + auto-glide
+  var rtrack=document.getElementById('rvtrack'), rdots=document.getElementById('rdots');
+  if(rtrack&&rdots){
+    var rcards=[].slice.call(rtrack.querySelectorAll('.rvc')), ri=0, rauto=null, rhold=false;
+    rdots.innerHTML=''; rcards.forEach(function(c,i){var d=document.createElement('button');d.className='rdot'+(i===0?' on':'');d.setAttribute('aria-label','Bewertung '+(i+1));rdots.appendChild(d);});
+    var rds=[].slice.call(rdots.children);
+    function rgo(i,smooth){ri=(i%rcards.length+rcards.length)%rcards.length;rtrack.scrollTo({left:rcards[ri].offsetLeft-rtrack.offsetLeft,behavior:smooth===false?'auto':'smooth'});}
+    if('IntersectionObserver' in window){
+      var rio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.intersectionRatio>=0.6){var i=rcards.indexOf(e.target);ri=i;rds.forEach(function(d,j){d.classList.toggle('on',j===i);});}});},{root:rtrack,threshold:[0.6]});
+      rcards.forEach(function(c){rio.observe(c);});
+    }
+    rds.forEach(function(d,i){d.addEventListener('click',function(){rhold=true;rgo(i);setTimeout(function(){rhold=false;},9000);});});
+    function rpause(){rhold=true;clearTimeout(rtrack._rt);rtrack._rt=setTimeout(function(){rhold=false;},9000);}
+    ['pointerdown','touchstart','wheel'].forEach(function(ev){rtrack.addEventListener(ev,rpause,{passive:true});});
+    if(!reduce){rauto=setInterval(function(){if(rhold)return;if(document.hidden)return;rgo(ri+1);},4500);}
+  }
+  // marquees
+  ['crow','crow2','srow'].forEach(function(i){var e=document.getElementById(i);if(e)e.innerHTML+=e.innerHTML;});
+})();
+</script>
+{% schema %}
+{ "name": "SG Landing DE", "settings": [], "presets": [{ "name": "SG Landing DE" }] }
+{% endschema %}
