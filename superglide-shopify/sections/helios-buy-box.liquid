@@ -513,14 +513,24 @@
   tiers.forEach(function(t){ t.addEventListener('click', function(e){ e.preventDefault(); selectTier(t); }); });
 
   /* ---- buy now → add selected bundle, straight to checkout ---- */
+  var DISC = '{{ section.settings.discount_code }}';
   var buynow = document.getElementById('hb-buynow-{{ sid }}');
   if(buynow) buynow.addEventListener('click', function(){
     var vid = (hid && hid.value) ? hid.value : '{{ cur.id }}';
     var label = buynow.textContent; buynow.disabled = true; buynow.textContent = '…';
     fetch('/cart/add.js', { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({ id: parseInt(vid,10), quantity: 1 }) })
-      .then(function(){ window.location.href = '/checkout'; })
+      .then(function(){ window.location.href = DISC ? ('/discount/'+DISC+'?redirect=%2Fcheckout') : '/checkout'; })
       .catch(function(){ buynow.disabled = false; buynow.textContent = label; });
   });
+
+  /* ---- displayed price = paid price: route the native add-to-cart through the code too ---- */
+  var hbf = document.querySelector('#hb-{{ sid }} form[action*="/cart/add"]');
+  if(hbf && DISC){ hbf.addEventListener('submit', function(e){
+    e.preventDefault();
+    fetch('/cart/add.js', { method:'POST', body: new FormData(hbf) })
+      .then(function(r){ if(!r.ok) throw 0; window.location.href = '/discount/'+DISC+'?redirect=%2Fcart'; })
+      .catch(function(){ hbf.submit(); });
+  }); }
 
   /* ---- gallery thumbs (generic for double + mini) ---- */
   function bindGallery(gal){
