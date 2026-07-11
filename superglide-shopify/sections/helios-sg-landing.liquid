@@ -17,14 +17,21 @@ body{overflow-x:clip}
 #mk .rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
 #mk .rv.in{opacity:1;transform:none}
 /* title — word stagger + green shimmer */
-#mk .ptitle{text-align:center;padding:24px 18px 4px;max-width:780px;margin:0 auto}
-#mk .ptitle h1{font-weight:800;font-size:clamp(19px,4.6vw,36px);line-height:1.14;letter-spacing:-.022em;margin:0;text-wrap:balance}
+#mk .ptitle{padding:26px 18px 6px;max-width:1040px;margin:0 auto}
+#mk .hgrid{display:grid;grid-template-columns:1fr;gap:24px;align-items:center;text-align:center}
+@media(min-width:900px){#mk .hgrid{grid-template-columns:1.05fr .95fr;gap:44px;text-align:left}}
+#mk .ptitle h1{font-weight:800;font-size:clamp(24px,4.9vw,44px);line-height:1.1;letter-spacing:-.024em;margin:10px 0 0;text-wrap:balance}
+#mk .hsub{font-family:Georgia,serif;font-style:italic;font-size:clamp(15px,1.7vw,19px);color:#3d4a56;margin:12px 0 0}
+#mk .heropill{display:inline-block;text-align:center;background:#0A0E12;border-radius:16px;padding:15px 26px;margin-top:18px;cursor:pointer;box-shadow:0 16px 34px -14px rgba(10,14,18,.55);transition:transform .15s}
+#mk .heropill:hover{transform:translateY(-2px)}
+#mk .heropill b{display:block;font-size:16.5px;font-weight:800;color:#fff}
+#mk .heropill b .ga{color:var(--grn)}
+#mk .heropill em{font-style:normal;font-size:11.5px;color:rgba(255,255,255,.6)}
+#mk .hphone{margin:0 auto}
 #mk .ptitle .w{display:inline-block;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;transition-delay:calc(var(--i)*45ms)}
 #mk .ptitle.go .w{opacity:1;transform:none}
 #mk .ptitle .it .w{background:linear-gradient(90deg,#137a3e,#10C97E,#0e9e63,#137a3e);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 5.5s linear infinite}
 @keyframes mkshim{to{background-position:220% 0}}
-#mk .tstrip{display:flex;gap:7px 18px;justify-content:center;flex-wrap:wrap;margin:12px auto 0;font-size:12.5px;color:var(--mut);font-weight:600}
-#mk .tstrip b{color:var(--ink)}
 /* BUY BOX */
 #mk .buy{display:grid;grid-template-columns:1fr;gap:22px;padding:14px 0 8px}
 @media(min-width:900px){#mk .buy{grid-template-columns:1fr 1.5fr;gap:34px;align-items:start}}
@@ -179,6 +186,9 @@ body{overflow-x:clip}
 #mk .brand{font-weight:900;letter-spacing:.1em;font-size:clamp(58px,13vw,170px);line-height:1;margin-top:34px;background:linear-gradient(100deg,#0E7C64 0%,#10C97E 30%,#8CF5CB 50%,#10C97E 70%,#0E7C64 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 7s linear infinite;user-select:none}
 #mk .wave{height:5px;max-width:420px;margin:26px auto 0;border-radius:10px;background:linear-gradient(90deg,transparent,#10C97E,transparent);background-size:60% 100%;background-repeat:no-repeat;animation:mkwave 3.2s ease-in-out infinite alternate}
 @keyframes mkwave{from{background-position:-40% 0}to{background-position:140% 0}}
+#mk .gu{background:#fff;border:1.5px dashed rgba(16,201,126,.55);border-radius:20px;padding:24px;text-align:center;max-width:600px;margin:0 auto}
+#mk .gu h3{font-size:20px;font-weight:800;margin:8px 0 6px}
+#mk .gu p{color:var(--mut);margin:0;font-size:14.5px}
 /* sticky buy bar */
 #mkstick{position:fixed;left:12px;right:12px;bottom:12px;z-index:80;max-width:560px;margin:0 auto;background:#0A0E12;border-radius:100px;padding:8px 8px 8px 8px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 44px -14px rgba(10,14,18,.6),0 8px 30px -8px rgba(16,201,126,.3);transform:translateY(160%);transition:transform .4s ease}
 #mkstick.show{transform:none}
@@ -201,8 +211,16 @@ body{overflow-x:clip}
 }
 </style>
 <div id="mk">
-<div class="ptitle" id="ptitle"><h1 id="ptitleh">Get back your old joy of your childhood summer days — <span class="it">when life felt like a dream</span>, without today's stress and responsibilities.</h1>
-<div class="tstrip"><span>★ <b>4.8</b> (4,228 reviews)</span><span><b>21,600+</b> sold</span><span><b>30-day</b> money-back</span><span>Ships in <b>24 h</b></span></div></div>
+<div class="ptitle" id="ptitle"><div class="hgrid">
+  <div>
+    <div class="eyebrow">The motorized water lounger</div>
+    <h1 id="ptitleh">Do you miss the old days — <span class="it">when life felt like a dream</span>, and summer felt stress-free?</h1>
+    <p class="hsub">Get back your old joy of your childhood summer days — without today's stress and responsibilities.</p>
+    <div class="social" style="margin-top:12px"><span class="stars">★★★★★</span> <b>4.8</b> · loved by 3,900+ families · <b>21,600+ sold</b></div>
+    <a class="heropill tocart" href="#buytop"><b>Feel like summer again <span class="ga">→</span></b><em>2 for the price of 1 · 12% already applied</em></a>
+  </div>
+  <div class="phone hphone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids on the Super Glide"></div>
+</div></div>
 <div class="wrap">
 <div class="buy" id="buytop">
   <div class="media">
@@ -267,7 +285,16 @@ body{overflow-x:clip}
   </div>
 </div></div>
 
-<div class="sec alt" id="reviews"><div class="wrap">
+<!-- DAD duo -->
+<div class="sec alt"><div class="wrap"><div class="dad">
+  <div class="duo rv">
+    <div class="phone"><video id="u2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u2">Tap for sound</span></div>
+    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Kids on the Super Glide"></div>
+  </div>
+  <div class="rv" style="transition-delay:.15s"><div class="eyebrow">Straight from real summers — see it in the wild</div><h2 style="margin-top:8px">Get back your joy and peace of your childhood memories.</h2><p style="color:var(--mut);margin:12px 0 0">Big enough for you and the kids, steady enough for snacks and drinks, comfy enough to stay out all afternoon — no fighting over the good spot.</p><div class="q">“This is what I come home to every day… you build happy memories. Worth it 10000%.” — jenna.r, verified</div><div class="tags"><span>Cup holders for everyone</span><span>Holds up to 300 lb</span><span>All-day comfort</span></div><a class="cta tocart" style="max-width:290px;margin-top:18px" href="#buytop">Feel like summer again <span class="gp">→</span></a></div>
+</div></div></div>
+
+<div class="sec" id="reviews"><div class="wrap">
   <div class="head rv"><div class="eyebrow">See what our beloved customers have to say for us</div><h2>21,600+ glides and counting.</h2><div class="social" style="justify-content:center"><span class="stars">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
   <div class="rvtrack rv" id="rvtrack">
     <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Customer photo" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verified</span></div><p>My son will NOT get off this thing. literally he refuses :').</p><div class="rby"><span class="rav">e</span><span class="rnm">elena d.<span>June 23, 2026</span></span></div></div>
@@ -296,14 +323,6 @@ body{overflow-x:clip}
   </div>
 </div></div>
 
-<!-- DAD duo -->
-<div class="sec alt"><div class="wrap"><div class="dad">
-  <div class="duo rv">
-    <div class="phone"><video id="u2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u2">Tap for sound</span></div>
-    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids on the Super Glide"></div>
-  </div>
-  <div class="rv" style="transition-delay:.15s"><div class="eyebrow">The whole family's favorite seat</div><h2 style="margin-top:8px">Get back your joy and peace of your childhood memories.</h2><p style="color:var(--mut);margin:12px 0 0">Big enough for you and the kids, steady enough for snacks and drinks, comfy enough to stay out all afternoon — no fighting over the good spot.</p><div class="q">“This is what I come home to every day… you build happy memories. Worth it 10000%.” — jenna.r, verified</div><div class="tags"><span>Cup holders for everyone</span><span>Holds up to 300 lb</span><span>All-day comfort</span></div><a class="cta tocart" style="max-width:290px;margin-top:18px" href="#buytop">Feel like summer again <span class="gp">→</span></a></div>
-</div></div></div>
 
 <div class="sec"><div class="wrap">
   <div class="head rv"><div class="eyebrow">Why it's built different</div><h2>A real motorized lounger — not a pool toy.</h2></div>
@@ -316,6 +335,8 @@ body{overflow-x:clip}
     <div><b>✓</b>Includes pump nozzle &amp; charger in the box</div>
   </div>
 </div></div>
+
+<div class="sec"><div class="wrap"><div class="gu rv"><div style="font-size:30px">🛡️</div><h3>30-Day Cool-or-Refund Promise</h3><p>Take it out for 30 days. If it doesn't make your summer better, send it back for a full refund. The risk is entirely ours.</p></div></div></div>
 
 <!-- FINALE -->
 <div class="sec finale"><div class="wrap">
