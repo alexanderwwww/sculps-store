@@ -1,43 +1,150 @@
 {%- comment -%}
-  HELIOS — Footer. sections/helios-footer.liquid
+  HELIOS — Footer (ocean-night edition). sections/helios-footer.liquid
 {%- endcomment -%}
 {%- assign sid = section.id -%}
 <section class="helios" id="hft-{{ sid }}">
 <style>
-  #hft-{{ sid }} footer{border-top:1px solid var(--helios-line,rgba(255,255,255,.6));background:var(--helios-g-bg2,rgba(255,255,255,.4));backdrop-filter:var(--helios-g-blur);padding:54px 0 32px;}
-  #hft-{{ sid }} .wrap{max-width:1200px;margin:0 auto;padding:0 22px;}
-  #hft-{{ sid }} .top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:36px;}
-  #hft-{{ sid }} .brand{max-width:260px;}
-  #hft-{{ sid }} .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:var(--helios-ink2,#0A1219);}
-  #hft-{{ sid }} .brand p{color:var(--helios-mut,#56636E);font-size:13.5px;margin-top:12px;}
-  #hft-{{ sid }} h5{font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 12px;color:var(--helios-mut,#56636E);}
-  #hft-{{ sid }} ul{list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.1;}
-  #hft-{{ sid }} ul a{color:var(--helios-mut,#56636E);}
-  #hft-{{ sid }} .pays{display:flex;gap:8px;margin-top:34px;flex-wrap:wrap;}
-  #hft-{{ sid }} .pays span{font-size:10px;font-weight:700;border:1px solid var(--helios-lins,rgba(12,26,36,.08));border-radius:6px;padding:4px 8px;color:var(--helios-mut,#56636E);}
-  #hft-{{ sid }} .copy{margin-top:18px;font-size:11.5px;color:var(--helios-mut,#56636E);}
+  #hft-{{ sid }} footer{position:relative;background:#0A0E12;color:#E8EDF2;padding:0;overflow:hidden}
+  #hft-{{ sid }} .wrap{max-width:1200px;margin:0 auto;padding:0 22px;position:relative;z-index:2}
+  /* animated wave crest at the top edge */
+  #hft-{{ sid }} .crest{height:5px;background:linear-gradient(90deg,transparent,#10C97E,transparent);background-size:55% 100%;background-repeat:no-repeat;animation:hftwave 3.6s ease-in-out infinite alternate;opacity:.9}
+  @keyframes hftwave{from{background-position:-40% 0}to{background-position:140% 0}}
+  /* rising bubbles */
+  #hft-{{ sid }} .bub{position:absolute;bottom:-40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(140,245,203,.28),rgba(16,201,126,.08));filter:blur(1px);animation:hftrise linear infinite;z-index:1;pointer-events:none}
+  @keyframes hftrise{to{transform:translateY(-120vh)}}
+  /* ---- trust bar ---- */
+  #hft-{{ sid }} .badges{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 26px;padding:26px 22px;border-bottom:1px solid rgba(255,255,255,.08)}
+  #hft-{{ sid }} .rank{display:inline-flex;align-items:center;gap:8px;font-family:'Archivo';font-weight:800;font-size:13px;letter-spacing:.02em;color:#06281B;background:#10C97E;padding:7px 14px;border-radius:999px;box-shadow:0 10px 26px -10px rgba(16,201,126,.55)}
+  #hft-{{ sid }} .rank svg{width:14px;height:14px;color:#06281B}
+  #hft-{{ sid }} .badge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:rgba(232,237,242,.75)}
+  #hft-{{ sid }} .badge svg{width:16px;height:16px;flex-shrink:0;color:#8CF5CB;opacity:.9}
+  #hft-{{ sid }} .badge .stars{color:#FFC531;display:inline-flex;gap:1px}
+  #hft-{{ sid }} .badge .stars svg{color:#FFC531;width:13px;height:13px;opacity:1}
+  /* ---- main grid ---- */
+  #hft-{{ sid }} .top{display:grid;grid-template-columns:1.4fr repeat(3,1fr) 1.5fr;gap:40px;padding:46px 0 32px}
+  #hft-{{ sid }} .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:#fff}
+  #hft-{{ sid }} .brand p{color:rgba(232,237,242,.6);font-size:13.5px;margin-top:12px;max-width:250px;line-height:1.6}
+  #hft-{{ sid }} .brand .pos{margin-top:14px;font-family:'Archivo';font-weight:800;font-size:13px;color:#8CF5CB}
+  #hft-{{ sid }} h5{font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 14px;color:#fff;font-weight:800}
+  #hft-{{ sid }} ul{list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.15}
+  #hft-{{ sid }} ul a{color:rgba(232,237,242,.65);text-decoration:none;background-image:linear-gradient(90deg,#10C97E,#10C97E);background-size:0% 1.5px;background-repeat:no-repeat;background-position:0 100%;transition:background-size .25s ease,color .15s ease}
+  #hft-{{ sid }} ul a:hover{color:#fff;background-size:100% 1.5px}
+  /* ---- signup ---- */
+  #hft-{{ sid }} .nl .lead{font-family:'Archivo';font-weight:800;font-size:16px;color:#fff;line-height:1.25;margin-bottom:4px}
+  #hft-{{ sid }} .nl .sub{font-size:12.5px;color:rgba(232,237,242,.6);margin-bottom:14px;line-height:1.5}
+  #hft-{{ sid }} .nl-field{position:relative;margin-bottom:9px}
+  #hft-{{ sid }} .nl-tag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;letter-spacing:.02em;background:rgba(16,201,126,.15);color:#8CF5CB;padding:3px 8px;border-radius:6px}
+  #hft-{{ sid }} .nl input{width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:12px 78px 12px 13px;font-size:13.5px;background:rgba(255,255,255,.06);color:#fff}
+  #hft-{{ sid }} .nl input::placeholder{color:rgba(232,237,242,.45)}
+  #hft-{{ sid }} .nl input:focus{outline:none;border-color:#10C97E}
+  #hft-{{ sid }} .nl-btn{width:100%;border:none;border-radius:11px;padding:13px;background:#10C97E;color:#06281B;font-family:'Archivo';font-weight:800;font-size:14px;cursor:pointer;margin-top:3px;box-shadow:0 14px 30px -10px rgba(16,201,126,.55);transition:transform .12s ease}
+  #hft-{{ sid }} .nl-btn:hover{transform:translateY(-1px)}
+  #hft-{{ sid }} .nl-note{font-size:11px;color:rgba(232,237,242,.4);margin-top:9px;line-height:1.5}
+  #hft-{{ sid }} .nl-ok{font-size:13px;color:#8CF5CB;font-weight:700;margin-top:8px}
+  /* ---- bottom ---- */
+  #hft-{{ sid }} .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;border-top:1px solid rgba(255,255,255,.08);padding-top:22px;margin-top:8px}
+  #hft-{{ sid }} .pays{display:flex;gap:7px;flex-wrap:wrap}
+  #hft-{{ sid }} .pays span{font-size:10px;font-weight:800;letter-spacing:.02em;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:5px 9px;color:rgba(232,237,242,.6);background:rgba(255,255,255,.04)}
+  #hft-{{ sid }} .copy{font-size:11.5px;color:rgba(232,237,242,.4)}
+  /* ---- giant water wordmark ---- */
+  #hft-{{ sid }} .mega{text-align:center;margin:36px 0 0;padding-bottom:10px;user-select:none;line-height:.86}
+  #hft-{{ sid }} .mega b{font-family:'Archivo';font-weight:900;letter-spacing:.1em;font-size:clamp(62px,13.5vw,185px);background:linear-gradient(100deg,#0E7C64 0%,#10C97E 30%,#8CF5CB 50%,#10C97E 70%,#0E7C64 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:hftshim 7s linear infinite}
+  @keyframes hftshim{to{background-position:200% 0}}
+  #hft-{{ sid }} .mega .tag{display:block;font-size:11px;font-weight:800;letter-spacing:.4em;text-transform:uppercase;color:rgba(232,237,242,.35);margin-bottom:10px}
+  @media(max-width:860px){
+    #hft-{{ sid }} .top{grid-template-columns:1fr 1fr;gap:30px 24px;padding:36px 0 24px}
+    #hft-{{ sid }} .brand{grid-column:1 / -1}
+    #hft-{{ sid }} .nl{grid-column:1 / -1}
+    #hft-{{ sid }} .foot{justify-content:center;text-align:center}
+  }
+  @media(prefers-reduced-motion:reduce){
+    #hft-{{ sid }} .crest,#hft-{{ sid }} .bub,#hft-{{ sid }} .mega b{animation:none}
+  }
 </style>
 <footer>
+  <div class="crest"></div>
+  <span class="bub" style="left:8%;width:14px;height:14px;animation-duration:14s;animation-delay:0s"></span>
+  <span class="bub" style="left:26%;width:8px;height:8px;animation-duration:11s;animation-delay:3s"></span>
+  <span class="bub" style="left:55%;width:18px;height:18px;animation-duration:16s;animation-delay:1.5s"></span>
+  <span class="bub" style="left:74%;width:10px;height:10px;animation-duration:12s;animation-delay:5s"></span>
+  <span class="bub" style="left:90%;width:13px;height:13px;animation-duration:15s;animation-delay:2.5s"></span>
   <div class="wrap">
+
+    {%- comment -%} ---- real trust badges + #1 rank ---- {%- endcomment -%}
+    <div class="badges">
+      <span class="rank">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
+        {{ section.settings.rank_text | default: 'THE #1-RATED MOTORIZED WATER LOUNGER' }}
+      </span>
+      <span class="badge">
+        <span class="stars">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
+        </span>
+        {{ section.settings.rating_text | default: '4.8 from 3,912 verified riders' }}
+      </span>
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>30-day money-back</span>
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>Free shipping</span>
+      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout</span>
+    </div>
+
     <div class="top">
       <div class="brand">
         <span class="logo">{{ section.settings.brand | default: 'HELIOS' }}</span>
         <p>{{ section.settings.tagline }}</p>
+        <div class="pos">{{ section.settings.positioning | default: 'The #1 name in motorized water gear.' }}</div>
       </div>
+
       {%- for block in section.blocks -%}
         {%- if block.type == 'menu' -%}
           <div {{ block.shopify_attributes }}>
             <h5>{{ block.settings.heading }}</h5>
             <ul>
               {%- assign items = block.settings.links | newline_to_br | split: '<br />' -%}
-              {%- for it in items -%}{%- assign t = it | strip -%}{%- if t != blank -%}<li><a href="#">{{ t }}</a></li>{%- endif -%}{%- endfor -%}
+              {%- for it in items -%}
+                {%- assign parts = it | strip | split: '|' -%}
+                {%- assign label = parts[0] | strip -%}
+                {%- assign url = parts[1] | strip | default: '#' -%}
+                {%- if label != blank -%}<li><a href="{{ url }}">{{ label }}</a></li>{%- endif -%}
+              {%- endfor -%}
             </ul>
           </div>
         {%- endif -%}
       {%- endfor -%}
+
+      {%- comment -%} ---- email 10% / phone 15% signup ---- {%- endcomment -%}
+      <div class="nl">
+        <div class="lead">{{ section.settings.nl_heading | default: 'Get up to 15% off your first order' }}</div>
+        <div class="sub">{{ section.settings.nl_sub | default: 'Enter your email for 10% off — add your phone and get 15%. Riders-only drops and deals.' }}</div>
+        {%- form 'customer', id: 'helios-footer-signup' -%}
+          {%- if form.posted_successfully? -%}
+            <p class="nl-ok">You are in. Check your inbox for your code.</p>
+          {%- endif -%}
+          <input type="hidden" name="contact[tags]" value="newsletter,footer-signup">
+          <div class="nl-field">
+            <input type="email" name="contact[email]" placeholder="Your email" required>
+            <span class="nl-tag">10% OFF</span>
+          </div>
+          <div class="nl-field">
+            <input type="tel" name="contact[phone]" placeholder="Your phone (optional)">
+            <span class="nl-tag">15% OFF</span>
+          </div>
+          <button type="submit" class="nl-btn">Unlock my discount</button>
+          <p class="nl-note">{{ section.settings.nl_note | default: 'By signing up you agree to receive emails/texts. Unsubscribe anytime.' }}</p>
+        {%- endform -%}
+      </div>
     </div>
-    <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span><span>G PAY</span></div>
-    <div class="copy">{{ section.settings.copyright }}</div>
+
+    <div class="foot">
+      <div class="copy">{{ section.settings.copyright }}</div>
+      <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span><span>G PAY</span></div>
+    </div>
+
+    <div class="mega"><span class="tag">You only get so many summers</span><b>{{ section.settings.brand | default: 'HELIOS' }}</b></div>
+
   </div>
 </footer>
 </section>
@@ -48,20 +155,26 @@
   "settings": [
     { "type": "text", "id": "brand", "label": "Brand", "default": "HELIOS" },
     { "type": "richtext", "id": "tagline", "label": "Tagline", "default": "<p>Summer, handled. Premium gear that makes the heat a non-issue.</p>" },
-    { "type": "text", "id": "copyright", "label": "Copyright", "default": "© 2026 HELIOS — concept demo store." }
+    { "type": "text", "id": "positioning", "label": "Positioning line", "default": "The #1 name in motorized water gear." },
+    { "type": "text", "id": "rank_text", "label": "Rank badge", "default": "THE #1-RATED MOTORIZED WATER LOUNGER" },
+    { "type": "text", "id": "rating_text", "label": "Rating badge", "default": "4.8 from 3,912 verified riders" },
+    { "type": "text", "id": "nl_heading", "label": "Signup heading", "default": "Get up to 15% off your first order" },
+    { "type": "text", "id": "nl_sub", "label": "Signup subtext", "default": "Enter your email for 10% off — add your phone and get 15%. Riders-only drops and deals." },
+    { "type": "text", "id": "nl_note", "label": "Signup fine print", "default": "By signing up you agree to receive emails/texts. Unsubscribe anytime." },
+    { "type": "text", "id": "copyright", "label": "Copyright", "default": "© 2026 HELIOS. All rights reserved." }
   ],
   "blocks": [
     { "type": "menu", "name": "Menu column", "settings": [
       { "type": "text", "id": "heading", "label": "Heading", "default": "Shop" },
-      { "type": "textarea", "id": "links", "label": "Links (one per line)", "default": "Super Glide\nCooling Fan\nSummer Kit" }
+      { "type": "textarea", "id": "links", "label": "Links (one per line — use Label | /url)", "default": "Super Glide | /products/helios-super-glide-motorized-water-lounger\nMini Glide | /products/helios-super-glide-motorized-water-lounger\nJet Ski | /products/helios-wave-rider" }
     ]}
   ],
   "presets": [{
     "name": "HELIOS Footer",
     "blocks": [
-      { "type": "menu", "settings": { "heading": "Shop", "links": "Super Glide\nCooling Fan\nSummer Kit" } },
-      { "type": "menu", "settings": { "heading": "Help", "links": "Track Order\nShipping\nReturns\nContact" } },
-      { "type": "menu", "settings": { "heading": "Company", "links": "Our Story\nReviews\nGuarantee" } }
+      { "type": "menu", "settings": { "heading": "Shop", "links": "Super Glide | /products/helios-super-glide-motorized-water-lounger\nMini Glide | /products/helios-super-glide-motorized-water-lounger\nJet Ski | /products/helios-wave-rider" } },
+      { "type": "menu", "settings": { "heading": "Help", "links": "Track Order | /account\nShipping | /pages/shipping\nReturns | /pages/returns\nContact | /pages/contact" } },
+      { "type": "menu", "settings": { "heading": "Company", "links": "Our Story | /pages/about\nReviews | /#reviews\nGuarantee | /pages/guarantee" } }
     ]
   }]
 }
