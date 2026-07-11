@@ -325,7 +325,7 @@
       </a>
 
       <div class="hb-priceline">
-        <b class="hb-price-main" id="hb-price-{{ sid }}">{{ cur.price | money }}</b>
+        <b class="hb-price-main" id="hb-price-{{ sid }}">{{ cur.price | times: 0.88 | round | money }}</b>
         <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
         <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
       </div>
@@ -368,10 +368,10 @@
                 <div style="flex:1;">
                   <span class="hb-tiername">{{ mqty }} × Mini Glide</span>
                   <span class="hb-tiersub">{{ msub }}</span>
-                  <span class="hb-tierper">{{ mper | money }} / glider</span>
+                  <span class="hb-tierper">{{ mper | times: 0.88 | round | money }} / glider</span>
                 </div>
                 <div class="hb-tierprice">
-                  <b>{{ v.price | money }}</b>
+                  <b>{{ v.price | times: 0.88 | round | money }}</b>
                   {%- if v.compare_at_price > v.price -%}<s>{{ v.compare_at_price | money }}</s>{%- endif -%}
                 </div>
               </label>
@@ -401,10 +401,10 @@
                 <div style="flex:1;">
                   <span class="hb-tiername">{{ block.settings.label | default: bv.title }}</span>
                   {%- if block.settings.sublabel != blank -%}<span class="hb-tiersub">{{ block.settings.sublabel }}</span>{%- endif -%}
-                  <span class="hb-tierper">{{ perunit | money }} each</span>
+                  <span class="hb-tierper">{{ perunit | times: 0.88 | round | money }} each</span>
                 </div>
                 <div class="hb-tierprice">
-                  <b>{{ tprice | money }}</b>
+                  <b>{{ tprice | times: 0.88 | round | money }}</b>
                   {%- if tcompare > tprice -%}<s>{{ tcompare | money }}</s>{%- endif -%}
                 </div>
               </label>
@@ -455,7 +455,7 @@
     {%- if product.featured_image != blank -%}<img class="hb-sk-thumb" src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}
     <div style="min-width:0;">
       <div class="hb-sk-name">{{ section.settings.title | default: 'HELIOS Super Glide' }}</div>
-      <div class="hb-sk-price"><b id="hb-sk-price-{{ sid }}">{{ cur.price | money }}</b></div>
+      <div class="hb-sk-price"><b id="hb-sk-price-{{ sid }}">{{ cur.price | times: 0.88 | round | money }}</b></div>
     </div>
   </div>
   <button type="button" class="hb-sk-add" id="hb-sk-add-{{ sid }}">Add</button>
@@ -498,7 +498,7 @@
   function selectTier(t){
     tiers.forEach(function(x){ x.classList.remove('sel'); });
     t.classList.add('sel');
-    var p = parseInt(t.dataset.price,10), c = parseInt(t.dataset.compare,10) || 0;
+    var p = Math.round(parseInt(t.dataset.price,10)*0.88), c = parseInt(t.dataset.compare,10) || 0;
     if(hid) hid.value = t.dataset.vid;
     if(total) total.textContent = money(p);
     if(price) price.textContent = money(p);
