@@ -70,9 +70,9 @@ body{overflow-x:clip}
 #mk .ostrip{display:flex;justify-content:space-between;gap:10px;background:#0A0E12;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.05em;padding:10px 14px;text-transform:uppercase}
 #mk .ostrip .mp{color:#FFD36B}
 #mk .ocard .oin{padding:13px 13px 15px}
-#mk .minifull{display:block;text-align:center;margin-top:10px;font-size:13px;font-weight:800;color:var(--ink)}
+#mk .minifull{display:block;text-align:center;margin-top:10px;font-size:12px;font-weight:600;color:var(--mut)}
 #mk .minifull:hover{text-decoration:underline}
-#mk .opts{display:grid;gap:9px;margin-top:0}
+#mk .opts{display:grid;gap:14px;margin-top:5px}
 #mk .opt{display:flex;align-items:center;gap:11px;padding:12px 13px;border:1.5px solid var(--line);border-radius:13px;cursor:pointer;position:relative;background:#fff}
 #mk .opt.on{border-color:var(--ink);border-width:2px;background:#FAFBFC}
 #mk .opt .radio{width:20px;height:20px;border-radius:50%;border:2px solid #C4CDD8;flex:0 0 auto}
@@ -83,10 +83,11 @@ body{overflow-x:clip}
 #mk .opt .lbl span{font-size:12px;color:var(--mut)}
 #mk .opt .pr{text-align:right;flex:0 0 auto}
 #mk .opt .pr b{font-size:15px;font-weight:800}
-#mk .opt .pr s{display:block;font-size:11.5px;color:#9AA6B2}
+#mk .opt .pr s{display:block;font-size:13px;color:#6B7580}
 #mk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ink);padding:3px 8px;border-radius:20px}
 #mk .dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;background:linear-gradient(90deg,#FFE9B0,#FFD36B,#FFE9B0);color:#5A3E00;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:9px 12px;border-radius:12px}
-#mk .ob{background:#0A0E12;border-radius:18px;padding:18px 16px;text-align:center;margin-top:10px;cursor:pointer;transition:transform .12s,box-shadow .2s}
+#mk .ob{background:#0A0E12;border:1.5px solid rgba(16,201,126,.5);border-radius:18px;padding:18px 16px;text-align:center;margin-top:10px;cursor:pointer;transition:transform .12s,box-shadow .2s}
+#mk .ob .nar{display:inline-block;animation:mknudge 1.8s ease-in-out infinite;color:var(--grn)}
 #mk .ob:hover{transform:translateY(-2px);box-shadow:0 16px 34px -14px rgba(10,14,18,.55)}
 #mk .ob:active{transform:translateY(0)}
 #mk .ob .hh{font-weight:800;font-size:15px;color:#fff}
@@ -94,8 +95,8 @@ body{overflow-x:clip}
 #mk .ob .pl s{font-size:18px;color:rgba(255,255,255,.42);font-weight:700}
 #mk .ob .pl b{font-weight:900;font-size:38px;color:var(--grn);line-height:1;letter-spacing:-.02em}
 #mk .ob .sv{display:inline-block;margin-top:9px;font-size:12px;font-weight:800;color:#06281B;background:var(--grn);padding:5px 13px;border-radius:100px}
-#mk .atcg{display:block;width:100%;text-align:center;margin-top:12px;background:#EEF0F3;color:#0A0E12;font-size:15.5px;font-weight:800;padding:15px;border:none;border-radius:100px;cursor:pointer;transition:background .15s,transform .12s}
-#mk .atcg:hover{background:#E4E7EB;transform:translateY(-1px)}
+#mk .atcg{display:block;width:100%;text-align:center;margin-top:12px;background:#fff;color:#0A0E12;font-size:15.5px;font-weight:800;padding:14px;border:2px solid var(--ink);border-radius:100px;cursor:pointer;transition:background .15s,transform .12s}
+#mk .atcg:hover{background:#F4F5F6;transform:translateY(-1px)}
 #mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:var(--grn);color:#06281B;font-size:17px;font-weight:900;padding:17px;border:none;border-radius:100px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 16px 34px -12px rgba(16,201,126,.55);transition:box-shadow .2s,transform .15s}
 #mk .cta:hover{transform:translateY(-1px);box-shadow:0 20px 40px -12px rgba(16,201,126,.65)}
 #mk .cta .gp{color:#06281B;font-weight:900}
@@ -198,7 +199,7 @@ body{overflow-x:clip}
 #mk .gu h3{font-size:20px;font-weight:800;margin:8px 0 6px}
 #mk .gu p{color:var(--mut);margin:0;font-size:14.5px}
 /* sticky buy bar */
-#mkstick{position:fixed;left:12px;right:12px;bottom:12px;z-index:80;max-width:560px;margin:0 auto;background:#0A0E12;border-radius:100px;padding:8px 8px 8px 8px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 44px -14px rgba(10,14,18,.6),0 8px 30px -8px rgba(16,201,126,.3);transform:translateY(160%);transition:transform .4s ease}
+#mkstick{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:80;max-width:560px;margin:0 auto;background:#0A0E12;border-radius:100px;padding:8px 8px 8px 8px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 44px -14px rgba(10,14,18,.6),0 8px 30px -8px rgba(16,201,126,.3);transform:translateY(160%);transition:transform .4s ease}
 #mkstick.show{transform:none}
 #mkstick .th{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:2px solid rgba(255,255,255,.2)}
 #mkstick .l{min-width:0}
@@ -272,12 +273,12 @@ body{overflow-x:clip}
       <div class="opt" data-vid="47945658269861" data-p="$259.99" data-c="$299.99" data-sv2="YOU SAVE $40 — 12% included" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><b>$259.99</b><s>$299.99</s></div></div>
     </div>
     <div class="dbn">⚡ 12% discount — already applied to these prices</div>
-    <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order →</div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 — 2 for the price of 1</span></div>
-    <button class="atcg" id="atcg">add to cart</button>
-    <a class="minifull" id="cp_seefull" href="/products/helios-super-glide-motorized-water-lounger">or see every detail first →</a>
+    <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order <span class="nar">→</span></div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 — 2 for the price of 1</span></div>
+    <button class="atcg" id="atcg">Add to cart — $259.99</button>
     <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
     <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>SHOP PAY</span><span>APPLE PAY</span></div>
+    <a class="minifull" id="cp_seefull" href="/products/helios-super-glide-motorized-water-lounger">or see every detail first →</a>
     </div></div>
   </div>
 </div>
@@ -303,11 +304,11 @@ body{overflow-x:clip}
     <div class="phone"><video id="u2" src="https://cdn.shopify.com/videos/c/o/v/b104a8c36b9146a7b6b3711173f8ff3a.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u2">Tap for sound</span></div>
     <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Kids on the Super Glide"></div>
   </div>
-  <div class="rv" style="transition-delay:.15s"><div class="eyebrow">Real families, real water — see it in action</div><h2 style="margin-top:8px">Get back your joy and peace of your childhood memories.</h2><p style="color:var(--mut);margin:12px 0 0">Room for you and two kids, steady enough for drinks in the cup holders, simple enough that Grandma can drive it — and nobody has to paddle home.</p><div class="q">“This is what I come home to every day… you build happy memories. Worth it 10000%.” — jenna.r, verified</div><div class="tags"><span>Cup holders for everyone</span><span>Holds up to 300 lb</span><span>All-day comfort</span></div><a class="cta tocart" style="max-width:290px;margin-top:18px" href="#buytop">Feel like summer again <span class="gp">→</span></a></div>
+  <div class="rv" style="transition-delay:.15s"><div class="eyebrow">Real families, real water — see it in action</div><h2 style="margin-top:8px">Get back the joy and peace of your childhood memories.</h2><p style="color:var(--mut);margin:12px 0 0">Room for you and two kids, steady enough for drinks in the cup holders, simple enough that Grandma can drive it — and nobody has to paddle home.</p><div class="q">“This is what I come home to every day… you build happy memories. Worth it 10000%.” — jenna.r, verified</div><div class="tags"><span>Cup holders for everyone</span><span>Holds up to 300 lb</span><span>All-day comfort</span></div><a class="cta tocart" style="max-width:290px;margin-top:18px" href="#buytop">Feel like summer again <span class="gp">→</span></a></div>
 </div></div></div>
 
 <div class="sec" id="reviews"><div class="wrap">
-  <div class="head rv"><div class="eyebrow">See what our beloved customers have to say for us</div><h2>21,600+ glides and counting.</h2><div class="social" style="justify-content:center"><span class="stars">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
+  <div class="head rv"><div class="eyebrow">What families are saying</div><h2>21,600+ glides and counting.</h2><div class="social" style="justify-content:center"><span class="stars">★★★★★</span> <b>4.8</b> · 4,228 reviews</div></div>
   <div class="rvtrack rv" id="rvtrack">
     <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Customer photo" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verified</span></div><p>My son will NOT get off this thing. literally he refuses :').</p><div class="rby"><span class="rav">e</span><span class="rnm">elena d.<span>June 23, 2026</span></span></div></div>
     <div class="rvc"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492" alt="Customer photo" loading="lazy"><div class="rtop"><span class="stars">★★★★★</span><span class="rvf">Verified</span></div><p>this is what i come home to everyday... get it guys worth everything, you build happy memories after all worth the money 10000% (the dogs name is rollie).</p><div class="rby"><span class="rav">j</span><span class="rnm">jenna.r.<span>June 3, 2025</span></span></div></div>
@@ -360,7 +361,7 @@ body{overflow-x:clip}
   <div class="brand">HELIOS</div></div>
 </div></div>
 
-<div id="mkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="l"><b id="stlbl">SuperGlide Pro · 1+1 FREE</b><span id="stp">$259.99</span></div><button id="stbtn">Get it →</button></div>
+<div id="mkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="l"><b id="stlbl">SuperGlide Pro · 1+1 FREE</b><s id="stc" style="color:rgba(255,255,255,.45);font-size:11px;margin-right:6px">$599.98</s><span id="stp">$259.99</span></div><button id="stbtn">Get it →</button></div>
 <div class="lb" id="lb"><span class="x" id="lbx">×</span><span class="nav prev" id="lbp">‹</span><img id="lbimg" src="" alt="Product photo"><span class="nav next" id="lbn">›</span></div>
 </div>
 <script>
@@ -442,24 +443,28 @@ body{overflow-x:clip}
     if(obp)obp.textContent=o.getAttribute('data-p');
     if(obs)obs.textContent=o.getAttribute('data-sv2');
     if(stp)stp.textContent=o.getAttribute('data-p');
+    var stc=document.getElementById('stc'); if(stc)stc.textContent=o.getAttribute('data-c');
+    var ag=document.getElementById('atcg'); if(ag)ag.textContent='Add to cart — '+o.getAttribute('data-p');
     if(stlbl)stlbl.textContent=SLBL[sel]||'SuperGlide Pro';
   });});
   // buy actions — BOTH paths carry the discount (fixes cart abandon)
-  function addThen(dest,fallback){
+  function addThen(dest,fallback,el){
     if(busy)return; busy=true;
+    if(el){ el.dataset.t=el.textContent; el.textContent='Adding to your cart…'; el.setAttribute('aria-busy','true'); el.style.pointerEvents='none'; }
+    function un(){ if(el){ el.textContent=el.dataset.t; el.removeAttribute('aria-busy'); el.style.pointerEvents=''; } }
     try{
       fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:[{id:parseInt(sel,10),quantity:1}]})})
         .then(function(r){ if(!r.ok)throw 0; window.location.href=dest; })
-        .catch(function(){ busy=false; window.location.href=fallback; });
-    }catch(e){ busy=false; window.location.href=fallback; }
+        .catch(function(){ busy=false; un(); window.location.href=fallback; });
+    }catch(e){ busy=false; un(); window.location.href=fallback; }
   }
   var atcg=document.getElementById('atcg');
-  if(atcg)atcg.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
+  if(atcg)atcg.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC,atcg); });
   var sgob=document.getElementById('sgob');
-  if(sgob){ sgob.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
+  if(sgob){ sgob.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC,sgob.querySelector('.hh')); });
     sgob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sgob.click(); } }); }
   var stbtn=document.getElementById('stbtn');
-  if(stbtn)stbtn.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
+  if(stbtn)stbtn.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC,stbtn); });
   // sticky bar visibility
   var stick=document.getElementById('mkstick'), buyEl=document.getElementById('buytop');
   function onScroll(){ if(!buyEl)return; var r=buyEl.getBoundingClientRect(); stick.classList.toggle('show', r.bottom<0); }
