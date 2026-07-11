@@ -125,13 +125,22 @@
 #mk .cb .tx b{font-weight:700}
 @keyframes mkcm{to{transform:translateX(-50%)}}
 @keyframes mkcm2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-/* MEMORY WALL (polaroids) */
-#mk .mem{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;max-width:940px;margin:0 auto}
-@media(min-width:760px){#mk .mem{grid-template-columns:repeat(3,1fr)}}
-#mk .pol{background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 9px 30px;box-shadow:0 16px 34px -22px rgba(15,27,45,.45);transform:rotate(var(--r,0deg));transition:transform .35s ease,box-shadow .35s ease;cursor:pointer;position:relative}
-#mk .pol:hover{transform:rotate(0deg) scale(1.04);box-shadow:0 26px 50px -24px rgba(15,27,45,.55);z-index:2}
-#mk .pol img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:3px}
-#mk .pol .cap{position:absolute;left:0;right:0;bottom:7px;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:12.5px;color:#3d4a56}
+/* MEMORY WALL (scrapbook) */
+#mk .memsec{background:#F8F5EF}
+#mk .mem{display:grid;grid-template-columns:repeat(2,1fr);gap:22px 14px;max-width:960px;margin:0 auto;padding-top:8px}
+@media(min-width:760px){#mk .mem{grid-template-columns:repeat(3,1fr);gap:32px 24px}#mk .mem .pol:nth-child(3n+2){transform:rotate(var(--r,0deg)) translateY(18px)}}
+#mk .pol{position:relative;background:#fff;border:1px solid #EAE4D8;border-radius:4px;padding:10px 10px 34px;box-shadow:0 14px 30px -18px rgba(60,50,30,.35);transform:rotate(var(--r,0deg));transition:transform .35s ease,box-shadow .35s ease;cursor:pointer}
+#mk .pol:hover{transform:rotate(0deg) translateY(-6px) scale(1.03);box-shadow:0 30px 55px -22px rgba(60,50,30,.45);z-index:2}
+#mk .pol:before{content:'';position:absolute;top:-10px;left:50%;width:72px;height:22px;transform:translateX(-50%) rotate(var(--tr,-2deg));background:rgba(255,238,170,.6);border:1px solid rgba(180,160,90,.25);box-shadow:0 2px 5px rgba(0,0,0,.08);z-index:3}
+#mk .pol .shot{overflow:hidden;border-radius:2px}
+#mk .pol .shot img{width:100%;aspect-ratio:1/1;object-fit:cover;transition:transform .5s ease}
+#mk .pol:hover .shot img{transform:scale(1.06)}
+#mk .pol .cap{position:absolute;left:0;right:0;bottom:9px;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:13px;color:#4a4436}
+#mk .pol.ctap .shot{display:grid;place-items:center;aspect-ratio:1/1;border:2px dashed #CFC6B4;background:#FCFAF5;text-align:center}
+#mk .pol.ctap .plus{font-size:46px;font-weight:300;color:#B9AE97;line-height:1}
+#mk .pol.ctap .txt{margin-top:10px;font-size:13px;font-weight:700;color:#6b6252;padding:0 16px}
+@media(min-width:760px){#mk .pol.ctap{grid-column:2}}
+@media(max-width:759px){#mk .pol.ctap{grid-column:1/-1;max-width:330px;width:100%;margin:0 auto}}
 /* DAD duo */
 #mk .dad{display:grid;grid-template-columns:1fr;gap:26px;align-items:center;max-width:980px;margin:0 auto}
 @media(min-width:860px){#mk .dad{grid-template-columns:1.1fr 1fr}}
@@ -257,15 +266,16 @@
 </div></div>
 
 <!-- MEMORY WALL -->
-<div class="sec"><div class="wrap">
+<div class="sec memsec"><div class="wrap">
   <div class="head rv"><div class="eyebrow">This is what they'll remember</div><h2>Get back the lifetime memories of fun with your family.</h2></div>
   <div class="mem">
-    <div class="pol rv" style="--r:-2.5deg"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids" loading="lazy"><div class="cap">dad's throne</div></div>
-    <div class="pol rv" style="--r:2deg;transition-delay:.08s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Kids playing" loading="lazy"><div class="cap">he refuses to get off</div></div>
-    <div class="pol rv" style="--r:-1.5deg;transition-delay:.16s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Two kids" loading="lazy"><div class="cap">who steers first?</div></div>
-    <div class="pol rv" style="--r:2.5deg;transition-delay:.24s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Pool day" loading="lazy"><div class="cap">golden hour cruises</div></div>
-    <div class="pol rv" style="--r:-2deg;transition-delay:.32s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492" alt="Family and dog" loading="lazy"><div class="cap">rollie approves</div></div>
-    <div class="pol rv" style="--r:1.8deg;transition-delay:.4s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Lounging" loading="lazy"><div class="cap">the good spot</div></div>
+    <div class="pol rv" style="--r:-2.5deg;--tr:-3deg"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids" loading="lazy"></div><div class="cap">dad's throne · summer '26</div></div>
+    <div class="pol rv" style="--r:2deg;--tr:2.5deg;transition-delay:.08s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529" alt="Kids playing" loading="lazy"></div><div class="cap">he refuses to get off</div></div>
+    <div class="pol rv" style="--r:-1.5deg;--tr:-1.5deg;transition-delay:.16s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_twokids_aba770c3-39b3-4a12-88e5-891bbd745de9.jpg?v=1782766099" alt="Two kids" loading="lazy"></div><div class="cap">who steers first?</div></div>
+    <div class="pol rv" style="--r:2.5deg;--tr:3deg;transition-delay:.24s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="Pool day" loading="lazy"></div><div class="cap">golden hour cruises</div></div>
+    <div class="pol rv" style="--r:-2deg;--tr:2deg;transition-delay:.32s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492" alt="Family and dog" loading="lazy"></div><div class="cap">rollie approves · lake day</div></div>
+    <div class="pol rv" style="--r:1.8deg;--tr:-2.5deg;transition-delay:.4s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Lounging" loading="lazy"></div><div class="cap">the good spot</div></div>
+    <div class="pol ctap rv tocart" style="--r:1.2deg;--tr:1.5deg;transition-delay:.48s"><div class="shot"><div><div class="plus">+</div><div class="txt">your family here — next weekend</div></div></div><div class="cap">reserve your summer →</div></div>
   </div>
 </div></div>
 
