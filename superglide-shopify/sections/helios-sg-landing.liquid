@@ -79,6 +79,8 @@ body{overflow-x:clip}
 #mk .ob .pl s{font-size:18px;color:rgba(255,255,255,.42);font-weight:700}
 #mk .ob .pl b{font-weight:900;font-size:38px;color:var(--grn);line-height:1;letter-spacing:-.02em}
 #mk .ob .sv{display:inline-block;margin-top:9px;font-size:12px;font-weight:800;color:#06281B;background:var(--grn);padding:5px 13px;border-radius:100px}
+#mk .atcg{display:block;width:100%;text-align:center;margin-top:12px;background:#EEF0F3;color:#0A0E12;font-size:15.5px;font-weight:800;padding:15px;border:none;border-radius:100px;cursor:pointer;transition:background .15s,transform .12s}
+#mk .atcg:hover{background:#E4E7EB;transform:translateY(-1px)}
 #mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:var(--grn);color:#06281B;font-size:17px;font-weight:900;padding:17px;border:none;border-radius:100px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 16px 34px -12px rgba(16,201,126,.55);transition:box-shadow .2s,transform .15s}
 #mk .cta:hover{transform:translateY(-1px);box-shadow:0 20px 40px -12px rgba(16,201,126,.65)}
 #mk .cta .gp{color:#06281B;font-weight:900}
@@ -243,7 +245,8 @@ body{overflow-x:clip}
     </div>
     <div class="dbn">⚡ 12% discount — already applied to these prices</div>
     <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order →</div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 — 2 for the price of 1</span></div>
-    <button class="cta" id="cta"><span id="ctalbl">Add 1 + 1 to cart</span> <span class="gp">→</span></button>
+    <button class="atcg" id="atcg">add to cart</button>
+    <button class="cta" id="cta"><span id="ctalbl">Get it 1 + 1 now</span> <span class="gp">→</span></button>
     <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
     <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>SHOP PAY</span><span>APPLE PAY</span></div>
@@ -400,7 +403,7 @@ body{overflow-x:clip}
   var ctalbl=document.getElementById('ctalbl');
   var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
   var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
-  var LBL={ '47935890882725':'Add 2 + 2 to cart', '47935890817189':'Add 1 + 1 to cart', '47945658269861':'Add to cart' };
+  var LBL={ '47935890882725':'Get 2 + 2 now', '47935890817189':'Get it 1 + 1 now', '47945658269861':'Get yours now' };
   var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
@@ -421,6 +424,8 @@ body{overflow-x:clip}
         .catch(function(){ busy=false; window.location.href=fallback; });
     }catch(e){ busy=false; window.location.href=fallback; }
   }
+  var atcg=document.getElementById('atcg');
+  if(atcg)atcg.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
   var cta=document.getElementById('cta');
   if(cta)cta.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
   var sgob=document.getElementById('sgob');
