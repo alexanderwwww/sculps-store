@@ -175,6 +175,8 @@
   #hb-{{ sid }} .hb-cyob-add{background:#0A0D11;color:#fff;border:none;border-radius:100px;padding:13px 22px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:transform .12s;}
   #hb-{{ sid }} .hb-cyob-add:hover{transform:translateY(-1px);}
   #hb-{{ sid }} .hb-cyob-add:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+  #hb-{{ sid }} .hb-cyob-band{max-width:780px;margin:30px auto 0;}
+  #hb-{{ sid }} .hb-cyob-band .hb-cyob{margin-top:0;}
   #hb-{{ sid }} .hb-add .hb-sheen{position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:helios-sheen 4.5s ease-in-out infinite;}
   #hb-{{ sid }} .hb-pay{margin-top:11px;}
   #hb-{{ sid }} .hb-pay .shopify-payment-button__button{border-radius:14px !important;font-family:'Archivo',sans-serif !important;font-weight:800 !important;}
@@ -447,27 +449,6 @@
         <button type="button" class="hb-buynow" id="hb-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy now</button>
       {%- endform -%}
 
-      {%- comment -%} ===== Create your own bundle — right after the buy buttons ===== {%- endcomment -%}
-      {%- assign cy_jet = all_products['helios-wave-rider'] -%}
-      {%- assign cyv_sg = product.selected_or_first_available_variant -%}
-      {%- assign cyv_mini = blank -%}
-      {%- for v in product.variants -%}{%- if v.title contains 'Mini' -%}{%- assign cyv_mini = v -%}{%- break -%}{%- endif -%}{%- endfor -%}
-      {%- assign cyv_jet  = cy_jet.variants.first -%}
-      {%- assign cy_mini_img = cyv_mini.image | default: product.featured_image -%}
-      <div class="hb-cyob" id="hb-cyob-{{ sid }}">
-        <div class="hb-cyob-hd"><b>Create your own bundle</b><span>Mix any 2 for 30% off — or any 3 for 50% off. Discount applies at checkout.</span></div>
-        <div class="hb-cyob-tiers">
-          <div class="hb-cyob-tp" data-tp="2"><b>2 items</b><span>30% off</span></div>
-          <div class="hb-cyob-tp" data-tp="3"><b>3 items</b><span>50% off</span></div>
-        </div>
-        <div class="hb-cyob-row" data-vid="{{ cyv_sg.id }}" data-price="{{ cyv_sg.price }}"><span class="hb-cyob-ck on" data-ck></span>{%- if product.featured_image -%}<img src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Super Glide</b><span>Double · 2 seats</span></div><span class="hb-cyob-p">{{ cyv_sg.price | money }}</span></div>
-        <div class="hb-cyob-row" data-vid="{{ cyv_mini.id }}" data-price="{{ cyv_mini.price }}"><span class="hb-cyob-ck on" data-ck></span>{%- if cy_mini_img -%}<img src="{{ cy_mini_img | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Mini Glide</b><span>Single seat</span></div><span class="hb-cyob-p">{{ cyv_mini.price | money }}</span></div>
-        <div class="hb-cyob-row" data-vid="{{ cyv_jet.id }}" data-price="{{ cyv_jet.price }}"><span class="hb-cyob-ck" data-ck></span>{%- if cy_jet.featured_image -%}<img src="{{ cy_jet.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Jet Ski</b><span>Ride alongside</span></div><span class="hb-cyob-p">{{ cyv_jet.price | money }}</span></div>
-        <div class="hb-cyob-foot">
-          <div class="hb-cyob-tot">Bundle total<span class="amt"><b id="hb-cyob-final-{{ sid }}">$0.00</b><s id="hb-cyob-was-{{ sid }}" style="display:none;"></s></span><span class="hb-cyob-save" id="hb-cyob-save-{{ sid }}" style="display:none;"></span></div>
-          <button type="button" class="hb-cyob-add" id="hb-cyob-add-{{ sid }}">Add bundle</button>
-        </div>
-      </div>
 
       {%- if section.settings.discount_code != blank -%}
         <button type="button" class="hb-code" id="hb-code-{{ sid }}" data-code="{{ section.settings.discount_code }}">
@@ -496,6 +477,31 @@
         </div>
       {%- endif -%}
     </div>
+  </div>
+
+  {%- comment -%} ===== Create your own bundle — full-width band under the grid (balances columns) ===== {%- endcomment -%}
+  <div class="hb-cyob-band">
+        {%- comment -%} ===== Create your own bundle — right after the buy buttons ===== {%- endcomment -%}
+        {%- assign cy_jet = all_products['helios-wave-rider'] -%}
+        {%- assign cyv_sg = product.selected_or_first_available_variant -%}
+        {%- assign cyv_mini = blank -%}
+        {%- for v in product.variants -%}{%- if v.title contains 'Mini' -%}{%- assign cyv_mini = v -%}{%- break -%}{%- endif -%}{%- endfor -%}
+        {%- assign cyv_jet  = cy_jet.variants.first -%}
+        {%- assign cy_mini_img = cyv_mini.image | default: product.featured_image -%}
+        <div class="hb-cyob" id="hb-cyob-{{ sid }}">
+          <div class="hb-cyob-hd"><b>Create your own bundle</b><span>Mix any 2 for 30% off — or any 3 for 50% off. Discount applies at checkout.</span></div>
+          <div class="hb-cyob-tiers">
+            <div class="hb-cyob-tp" data-tp="2"><b>2 items</b><span>30% off</span></div>
+            <div class="hb-cyob-tp" data-tp="3"><b>3 items</b><span>50% off</span></div>
+          </div>
+          <div class="hb-cyob-row" data-vid="{{ cyv_sg.id }}" data-price="{{ cyv_sg.price }}"><span class="hb-cyob-ck on" data-ck></span>{%- if product.featured_image -%}<img src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Super Glide</b><span>Double · 2 seats</span></div><span class="hb-cyob-p">{{ cyv_sg.price | money }}</span></div>
+          <div class="hb-cyob-row" data-vid="{{ cyv_mini.id }}" data-price="{{ cyv_mini.price }}"><span class="hb-cyob-ck on" data-ck></span>{%- if cy_mini_img -%}<img src="{{ cy_mini_img | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Mini Glide</b><span>Single seat</span></div><span class="hb-cyob-p">{{ cyv_mini.price | money }}</span></div>
+          <div class="hb-cyob-row" data-vid="{{ cyv_jet.id }}" data-price="{{ cyv_jet.price }}"><span class="hb-cyob-ck" data-ck></span>{%- if cy_jet.featured_image -%}<img src="{{ cy_jet.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Jet Ski</b><span>Ride alongside</span></div><span class="hb-cyob-p">{{ cyv_jet.price | money }}</span></div>
+          <div class="hb-cyob-foot">
+            <div class="hb-cyob-tot">Bundle total<span class="amt"><b id="hb-cyob-final-{{ sid }}">$0.00</b><s id="hb-cyob-was-{{ sid }}" style="display:none;"></s></span><span class="hb-cyob-save" id="hb-cyob-save-{{ sid }}" style="display:none;"></span></div>
+            <button type="button" class="hb-cyob-add" id="hb-cyob-add-{{ sid }}">Add bundle</button>
+          </div>
+        </div>
   </div>
 </div>
 

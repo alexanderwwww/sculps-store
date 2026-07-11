@@ -1,12 +1,3 @@
-/*
- * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
- * ------------------------------------------------------------
- */
 {
   "sections": {
     "announcement": {
@@ -18,6 +9,7 @@
     },
     "header": {
       "type": "helios-header",
+      "disabled": true,
       "settings": {
         "logo_text": "HELIOS",
         "l1": "Super Glide",
@@ -54,7 +46,7 @@
             "qty": 2,
             "label": "2 Super Glides",
             "sublabel": "1 + 1 FREE",
-            "badge": "Most popular",
+            "badge": "1+1 FREE",
             "badge_style": "accent",
             "preselect": true,
             "fallback_price": "29999",
@@ -81,8 +73,8 @@
             "variant_id": "47935890882725",
             "qty": 4,
             "label": "4 Super Glides",
-            "sublabel": "The whole Family — best value",
-            "badge": "Best value",
+            "sublabel": "2+2 FREE",
+            "badge": "2+2 FREE",
             "badge_style": "teal",
             "preselect": false,
             "fallback_price": "59999",
@@ -109,11 +101,21 @@
         "subtitle": "",
         "rating": "4.8",
         "review_count": "3,960",
-        "tiktok_badge": true,
+        "tiktok_badge": false,
         "show_picker": true,
         "cta_text": "Add to Cart",
         "discount_code": "SUPERGLIDEIT",
-        "discount_label": "Extra savings — tap to copy",
+        "discount_label": "Extra savings — tap to copy.",
+        "show_bestprice": true,
+        "bestprice_pill": "#1 Seller in the U.S.",
+        "bestprice_tag": "Lowest price, guaranteed",
+        "bestprice_head": "The best price in the country.",
+        "competitor_price": "$250",
+        "our_price": "$299",
+        "show_promo4": true,
+        "promo4_tag": "4th of July",
+        "promo4_amount": "$21.99",
+        "promo4_days": 3,
         "show_countdown": false,
         "countdown_minutes": 480,
         "eta_line": "Order today → ships in 24h, arrives in 5–8 days",
@@ -129,7 +131,7 @@
       "type": "helios-reviews-carousel",
       "settings": {
         "eyebrow": "see what our beloved customers have to say for us",
-        "heading": "4032+ glides and counting.",
+        "heading": "21.600+ glides and counting.",
         "rating": "4.8",
         "review_count": "4,228",
         "bulk_reviews": "elena d. | 5 | My son will NOT get off this thing. literally he refuses :'). | June 23, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529\njenna.r. | 5 | this is what i come home to everyday... get it guys worth everything , you build happy memories after all worth the money 10000%(the dogs name is rollie). | June 3, 2025 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492\nDea W. | 5 | Honestly thought it'd feel cheap — it doesn't. Really well made, inflated in about 5 minutes. Looks super good and guys for real it works perfect is fun affffffff. | June 27, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed800814-8280-4515-ab36-29f15996c019.png?v=1782882243\nChris Tes. | 5 | This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol. | June 22, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243\nmike L. | 5 | Arrived well packaged and everything was in the box super super fun. | June 18, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/359ded2c-3def-48f5-90fe-7b69429864fb.png?v=1782882243\npablo P. | 5 | Setup was stupid easy — pump it up, drop it in, grab the joysticks. Motors have real power. 10/10. | June 12, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup_6c508243-62c3-4e30-a179-7689e4937344.jpg?v=1782766099"
@@ -149,7 +151,7 @@
         "c2": {
           "type": "clip",
           "settings": {
-            "video": "shopify://files/videos/download (2).mp4",
+            "video": "shopify://files/videos/202607082326.mp4",
             "handle": "",
             "caption": ""
           }
@@ -276,12 +278,20 @@
         "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
         "copyright": "© 2026 HELIOS"
       }
+    },
+    "clearfaq": {
+      "type": "helios-clear-faq",
+      "settings": {
+        "eyebrow": "Clear answers",
+        "heading": "Everything you're wondering."
+      }
     }
   },
   "order": [
     "announcement",
     "header",
     "buybox",
+    "clearfaq",
     "reviewcarousel",
     "tiktok",
     "reviews",
