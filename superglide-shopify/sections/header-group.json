@@ -8,12 +8,14 @@
         "logo_text": "HELIOS",
         "l1": "Super Glide",
         "l1_url": "/",
-        "l2": "Jet Ski",
-        "l2_url": "/products/helios-wave-rider",
-        "l3": "Reviews",
-        "l3_url": "/#reviews",
-        "l4": "FAQ",
-        "l4_url": "/#faq"
+        "l2": "Sofa Pool",
+        "l2_url": "/pages/paradise-pool",
+        "l3": "Jet Ski",
+        "l3_url": "/products/helios-wave-rider",
+        "l4": "Reviews",
+        "l4_url": "/#reviews",
+        "l5": "FAQ",
+        "l5_url": "/#faq"
       }
     },
     "178258088251ed6b33": {
@@ -50,7 +52,7 @@
       "type": "helios-announcement",
       "name": "HELIOS Announcement",
       "settings": {
-        "message": "<h4><strong>SUMMER SALE — UP TO 63% OFF · 1+1 FREE · 🎁 FREE JET SKI + PUMP WITH 3+ GLIDERS · FREE SHIPPING</strong></h4>"
+        "message": "<h4><strong>SUMMER SALE — UP TO 63% OFF · 🎁 FREE JET SKI + PUMP WITH 3+ GLIDERS · 🩷 NEW: THE VIRAL SOFA POOL · FREE SHIPPING</strong></h4>"
       }
     }
   },

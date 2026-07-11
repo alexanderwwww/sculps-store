@@ -1,22 +1,44 @@
 {%- comment -%}
-  HELIOS — Announcement bar (liquid glass + reflections + scrolling offer).
+  HELIOS — Announcement bar v2 (aurora glass: deep ink, drifting green/pink glow, shimmer text, slow marquee).
   sections/helios-announcement.liquid
 {%- endcomment -%}
 {%- assign sid = section.id -%}
 {% render 'helios-base' %}
 <section class="helios" id="ha-{{ sid }}">
 <style>
-  #ha-{{ sid }} .ha{position:relative;height:46px;overflow:hidden;background:#0A2A4A;border-bottom:1px solid rgba(255,255,255,.10);color:#ffffff;}
-  #ha-{{ sid }} .ha-mq b{color:#BFE3F5;}
-  #ha-{{ sid }} .ha-spec{display:none;}
-  #ha-{{ sid }} .ha-glare{display:none;}
-  #ha-{{ sid }} .ha-mq{position:absolute;inset:0;display:flex;align-items:center;white-space:nowrap;z-index:1;animation:helios-mq 22s linear infinite;font-size:12.5px;font-weight:700;letter-spacing:.04em;}
-  #ha-{{ sid }} .ha-mq span{display:inline-flex;align-items:center;gap:8px;padding:0 26px;}
-  #ha-{{ sid }} .ha-mq b{font-family:'Archivo';font-weight:900;letter-spacing:.06em;}
+  #ha-{{ sid }} .ha{position:relative;height:42px;overflow:hidden;background:#070D12;border-bottom:1px solid rgba(16,201,126,.22);}
+  #ha-{{ sid }} .ha::before{content:'';position:absolute;inset:-60% -10%;pointer-events:none;
+    background:radial-gradient(38% 130% at 18% 50%,rgba(16,201,126,.28),transparent 62%),
+               radial-gradient(32% 120% at 58% 50%,rgba(255,92,158,.16),transparent 60%),
+               radial-gradient(30% 110% at 88% 50%,rgba(14,124,196,.20),transparent 60%);
+    animation:ha-aur-{{ sid }} 16s ease-in-out infinite alternate;}
+  @keyframes ha-aur-{{ sid }}{from{transform:translateX(-4%)}to{transform:translateX(6%)}}
+  #ha-{{ sid }} .ha::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(124,245,194,.7),transparent);background-size:45% 100%;background-repeat:no-repeat;
+    animation:ha-line-{{ sid }} 4.5s ease-in-out infinite alternate;}
+  @keyframes ha-line-{{ sid }}{from{background-position:-30% 0}to{background-position:130% 0}}
+  #ha-{{ sid }} .ha-spec,#ha-{{ sid }} .ha-glare{display:none;}
+  #ha-{{ sid }} .ha-mq{position:absolute;inset:0;display:flex;align-items:center;white-space:nowrap;z-index:1;
+    animation:helios-mq 34s linear infinite;
+    font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(234,246,240,.92);
+    -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);}
+  #ha-{{ sid }} .ha:hover .ha-mq{animation-play-state:paused;}
+  #ha-{{ sid }} .ha-mq span{display:inline-flex;align-items:center;gap:8px;padding:0 30px;position:relative;}
+  #ha-{{ sid }} .ha-mq span::after{content:'✦';position:absolute;right:-6px;font-size:9px;color:rgba(124,245,194,.55);}
+  #ha-{{ sid }} .ha-mq h1,#ha-{{ sid }} .ha-mq h2,#ha-{{ sid }} .ha-mq h3,#ha-{{ sid }} .ha-mq h4,#ha-{{ sid }} .ha-mq h5,#ha-{{ sid }} .ha-mq h6,#ha-{{ sid }} .ha-mq p{margin:0;font:inherit;letter-spacing:inherit;}
+  #ha-{{ sid }} .ha-mq b,#ha-{{ sid }} .ha-mq strong{font-family:'Archivo',sans-serif;font-weight:800;letter-spacing:.12em;
+    background:linear-gradient(90deg,#EAF6F0 0%,#7CF5C2 28%,#EAF6F0 55%,#FFD9E8 78%,#EAF6F0 100%);background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:ha-shim-{{ sid }} 7s linear infinite;}
+  @keyframes ha-shim-{{ sid }}{to{background-position:220% 0}}
+  @media(prefers-reduced-motion:reduce){
+    #ha-{{ sid }} .ha::before,#ha-{{ sid }} .ha::after{animation:none;}
+    #ha-{{ sid }} .ha-mq b,#ha-{{ sid }} .ha-mq strong{animation:none;color:#EAF6F0;background:none;}
+  }
 </style>
 <div class="ha">
   <span class="ha-spec"></span><span class="ha-glare"></span>
   <div class="ha-mq">
+    <span>{{ section.settings.message }}</span>
     <span>{{ section.settings.message }}</span>
     <span>{{ section.settings.message }}</span>
     <span>{{ section.settings.message }}</span>
