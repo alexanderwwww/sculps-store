@@ -72,9 +72,17 @@ body{overflow-x:clip}
 #mk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ink);padding:3px 8px;border-radius:20px}
 #mk .atc{display:block;width:100%;text-align:center;margin-top:14px;background:#fff;border:1.6px solid var(--ink);color:var(--ink);font-size:15px;font-weight:800;padding:14px;border-radius:100px;cursor:pointer;transition:background .15s}
 #mk .atc:hover{background:#F4F5F6}
-#mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:#0A0E12;color:#fff;font-size:16.5px;font-weight:800;padding:16px;border:none;border-radius:100px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 14px 30px -12px rgba(14,17,22,.45),0 8px 26px -6px rgba(16,201,126,.35);transition:box-shadow .2s,transform .15s}
-#mk .cta:hover{transform:translateY(-1px);box-shadow:0 18px 36px -12px rgba(14,17,22,.5),0 10px 30px -4px rgba(16,201,126,.5)}
-#mk .cta .gp{color:var(--grn);font-weight:900}
+#mk .ob{background:#0A0E12;border-radius:18px;padding:16px;text-align:center;margin-top:14px;cursor:pointer;transition:transform .12s,box-shadow .2s}
+#mk .ob:hover{transform:translateY(-2px);box-shadow:0 16px 34px -14px rgba(10,14,18,.55)}
+#mk .ob:active{transform:translateY(0)}
+#mk .ob .hh{font-weight:800;font-size:15px;color:#fff}
+#mk .ob .pl{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-top:5px}
+#mk .ob .pl s{font-size:18px;color:rgba(255,255,255,.42);font-weight:700}
+#mk .ob .pl b{font-weight:900;font-size:34px;color:var(--grn);line-height:1;letter-spacing:-.02em}
+#mk .ob .sv{display:inline-block;margin-top:9px;font-size:12px;font-weight:800;color:#06281B;background:var(--grn);padding:5px 13px;border-radius:100px}
+#mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:var(--grn);color:#06281B;font-size:17px;font-weight:900;padding:17px;border:none;border-radius:100px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 16px 34px -12px rgba(16,201,126,.55);transition:box-shadow .2s,transform .15s}
+#mk .cta:hover{transform:translateY(-1px);box-shadow:0 20px 40px -12px rgba(16,201,126,.65)}
+#mk .cta .gp{color:#06281B;font-weight:900}
 #mk .cta:after{content:'';position:absolute;top:0;left:-60%;width:36%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.14),transparent);animation:mksheen 3.4s ease-in-out infinite}
 @keyframes mksheen{0%{left:-60%}55%{left:130%}100%{left:130%}}
 #mk .cta small{display:block;font-weight:600;font-size:11.5px;opacity:.75;margin-top:3px}
@@ -230,12 +238,13 @@ body{overflow-x:clip}
       <span class="pill"><span class="c">✓</span> Pool · lake · river</span>
     </div>
     <div class="opts" id="opts">
-      <div class="opt" data-vid="47935890882725" data-p="$439.99" data-sv="Best value — save $760"><span class="tag">Buy 2, get 2 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>4 Super Glides</b><span>The whole crew</span></div><div class="pr"><b>$439.99</b><s>$1,199.96</s></div></div>
-      <div class="opt on" data-vid="47935890817189" data-p="$259.99" data-sv="Most popular — save $340"><span class="tag">Most popular · 1+1 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>2 Super Glides</b><span>One for you, one for the family</span></div><div class="pr"><b>$259.99</b><s>$599.98</s></div></div>
-      <div class="opt" data-vid="47945658269861" data-p="$259.99" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><b>$259.99</b><s>$299.99</s></div></div>
+      <div class="opt" data-vid="47935890882725" data-p="$439.99" data-c="$1,199.96" data-sv2="YOU SAVE $760 — 2 gliders FREE" data-sv="Best value — save $760"><span class="tag">Buy 2, get 2 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>4 Super Glides</b><span>The whole crew</span></div><div class="pr"><b>$439.99</b><s>$1,199.96</s></div></div>
+      <div class="opt on" data-vid="47935890817189" data-p="$259.99" data-c="$599.98" data-sv2="YOU SAVE $340 — 2 for the price of 1" data-sv="Most popular — save $340"><span class="tag">Most popular · 1+1 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>2 Super Glides</b><span>One for you, one for the family</span></div><div class="pr"><b>$259.99</b><s>$599.98</s></div></div>
+      <div class="opt" data-vid="47945658269861" data-p="$259.99" data-c="$299.99" data-sv2="YOU SAVE $40 — 12% included" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><b>$259.99</b><s>$299.99</s></div></div>
     </div>
+    <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order and checkout"><div class="hh">Add to my order →</div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 — 2 for the price of 1</span></div>
     <button class="atc" id="atc">Add to cart</button>
-    <button class="cta" id="cta"><span id="ctalbl">Get it 1 + 1 now</span> — <span class="gp" id="ctap">$259.99</span> <span class="gp">→</span><small id="ctasv">1+1 free · save $340 · 12% already applied</small></button>
+    <button class="cta" id="cta"><span id="ctalbl">Get it 1 + 1 now</span> <span class="gp">→</span></button>
     <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="coupon">Prices already include the 12% SUPERGLIDEIT discount — it applies itself at checkout.</div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
@@ -390,16 +399,18 @@ body{overflow-x:clip}
   document.addEventListener('keydown',function(e){if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft'){setG(gi-1);lbimg.src=gimgs[gi];}if(e.key==='ArrowRight'){setG(gi+1);lbimg.src=gimgs[gi];}});
   // bundles
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
-  var ctap=document.getElementById('ctap'), ctasv=document.getElementById('ctasv'), ctalbl=document.getElementById('ctalbl');
+  var ctalbl=document.getElementById('ctalbl');
+  var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
   var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
   var LBL={ '47935890882725':'Get 2 + 2 now', '47935890817189':'Get it 1 + 1 now', '47945658269861':'Get yours now' };
   var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');
-    if(ctap)ctap.textContent=o.getAttribute('data-p');
     if(ctalbl)ctalbl.textContent=LBL[sel]||'Get it now';
-    if(ctasv)ctasv.textContent=o.getAttribute('data-sv')+' · 12% already applied';
+    if(obc)obc.textContent=o.getAttribute('data-c');
+    if(obp)obp.textContent=o.getAttribute('data-p');
+    if(obs)obs.textContent=o.getAttribute('data-sv2');
     if(stp)stp.textContent=o.getAttribute('data-p');
     if(stlbl)stlbl.textContent=SLBL[sel]||'SuperGlide Pro';
   });});
@@ -416,6 +427,9 @@ body{overflow-x:clip}
   if(atc)atc.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
   var cta=document.getElementById('cta');
   if(cta)cta.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
+  var sgob=document.getElementById('sgob');
+  if(sgob){ sgob.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
+    sgob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sgob.click(); } }); }
   var stbtn=document.getElementById('stbtn');
   if(stbtn)stbtn.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
   // sticky bar visibility
