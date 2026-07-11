@@ -2,8 +2,10 @@
   Order: title → buy box (UGC phone + see-full | gallery(main+side thumbs) + title + social + pills + bundles + ATC + black CTA) → FAQ(green-check) → reviews+comments → out-on-water → dad → education → final. {%- endcomment -%}
 <style>
 #mk{--bg:#fff;--alt:#F5F6F8;--ink:#0E1116;--mut:#5C6672;--line:#E5E7EB;--ok:#16A34A;--star:#F5A623;--glass:rgba(22,163,74,.10);
-  margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);background:var(--bg);color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;overflow:hidden}
+  margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%);
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;overflow-x:clip}
+#mk .sec,#mk .final{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%)}
 #mk *{box-sizing:border-box}
 #mk img{max-width:100%;display:block}
 #mk a{text-decoration:none;color:inherit}
@@ -12,9 +14,9 @@
 #mk .eyebrow{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink)}
 #mk .stars{color:var(--star);letter-spacing:1.5px}
 /* emotional title — heavy, straight */
-#mk .ptitle{text-align:center;padding:26px 18px 8px;max-width:800px;margin:0 auto}
-#mk .ptitle h1{font-weight:900;font-size:clamp(23px,3.3vw,40px);line-height:1.05;letter-spacing:-.03em;margin:0}
-#mk .ptitle .it{font-weight:500}
+#mk .ptitle{text-align:center;padding:24px 18px 6px;max-width:780px;margin:0 auto}
+#mk .ptitle h1{font-weight:800;font-size:clamp(19px,4.6vw,36px);line-height:1.14;letter-spacing:-.022em;margin:0;text-wrap:balance}
+#mk .ptitle .it{color:#137a3e}
 /* BUY BOX — golden-ratio columns */
 #mk .buy{display:grid;grid-template-columns:1fr;gap:22px;padding:12px 0 8px}
 @media(min-width:900px){#mk .buy{grid-template-columns:1fr 1.5fr;gap:34px;align-items:start}}
@@ -55,13 +57,17 @@
 #mk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ink);padding:3px 8px;border-radius:20px}
 #mk .atc{display:block;width:100%;text-align:center;margin-top:14px;background:#fff;border:1.6px solid var(--ink);color:var(--ink);font-size:15px;font-weight:800;padding:14px;border-radius:100px;cursor:pointer;transition:background .15s}
 #mk .atc:hover{background:#F4F5F6}
-#mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:var(--ink);color:#fff;font-size:16px;font-weight:800;padding:16px;border:none;border-radius:100px;cursor:pointer;box-shadow:0 16px 32px -14px rgba(14,17,22,.5);transition:background .15s,transform .15s}
-#mk .cta:hover{background:#1b2230;transform:translateY(-1px)}
+#mk .cta{display:block;width:100%;text-align:center;margin-top:10px;background:#0A0E12;color:#fff;font-size:16.5px;font-weight:800;padding:16px;border:none;border-radius:100px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 14px 30px -12px rgba(14,17,22,.45),0 8px 26px -6px rgba(16,201,126,.35);transition:box-shadow .2s,transform .15s}
+#mk .cta:hover{transform:translateY(-1px);box-shadow:0 18px 36px -12px rgba(14,17,22,.5),0 10px 30px -4px rgba(16,201,126,.5)}
+#mk .cta .gp{color:#10C97E;font-weight:900}
+#mk .cta:after{content:'';position:absolute;top:0;left:-60%;width:36%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.14),transparent);animation:mksheen 3.4s ease-in-out infinite}
+@keyframes mksheen{0%{left:-60%}55%{left:130%}100%{left:130%}}
+@media(prefers-reduced-motion:reduce){#mk .cta:after{animation:none}}
 #mk .cta small{display:block;font-weight:600;font-size:11.5px;opacity:.75;margin-top:3px}
 #mk .coupon{text-align:center;margin-top:10px;font-size:12px;color:#137a3e;font-weight:700}
 #mk .guar{display:flex;gap:8px 16px;justify-content:center;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mut);font-weight:600}
 /* sections */
-#mk .sec{padding:44px 0}
+#mk .sec{padding-top:44px;padding-bottom:44px}
 #mk .sec.alt{background:var(--alt)}
 #mk .sec .head{text-align:center;max-width:620px;margin:0 auto 24px}
 #mk .sec .head h2{margin-top:7px}
@@ -113,7 +119,7 @@
 @media(min-width:640px){#mk .spec{grid-template-columns:1fr 1fr}}
 #mk .spec div{display:flex;gap:9px;font-size:13.5px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
 #mk .spec b{color:var(--ok);flex:0 0 auto;font-weight:900}
-#mk .final{text-align:center;padding:46px 0}
+#mk .final{text-align:center;padding-top:46px;padding-bottom:46px}
 #mk .final .btn{display:inline-block;margin-top:16px;background:var(--ink);color:#fff;font-size:16px;font-weight:800;padding:15px 32px;border-radius:100px;cursor:pointer;box-shadow:0 16px 32px -14px rgba(14,17,22,.5)}
 #mk .final .btn:hover{background:#1b2230}
 /* lightbox */
@@ -161,7 +167,7 @@
       <div class="opt" data-vid="47945658269861" data-p="$259.99" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><b>$259.99</b><s>$299.99</s></div></div>
     </div>
     <button class="atc" id="atc">Add to cart</button>
-    <button class="cta" id="cta">Get it now — <span id="ctap">$299.99</span><small id="ctasv">1+1 free · 12% code applies at checkout</small></button>
+    <button class="cta" id="cta"><span id="ctalbl">Get it 1 + 1 now</span> — <span class="gp" id="ctap">$299.99</span> <span class="gp">→</span><small id="ctasv">1+1 free · 12% code applies at checkout</small></button>
     <div class="coupon">12% SUPERGLIDEIT coupon applies itself — no code to type.</div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
   </div>
@@ -249,11 +255,13 @@
   document.addEventListener('keydown',function(e){if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft'){setG(gi-1);lbimg.src=gimgs[gi];}if(e.key==='ArrowRight'){setG(gi+1);lbimg.src=gimgs[gi];}});
   // bundles
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
-  var ctap=document.getElementById('ctap'), ctasv=document.getElementById('ctasv');
+  var ctap=document.getElementById('ctap'), ctasv=document.getElementById('ctasv'), ctalbl=document.getElementById('ctalbl');
+  var LBL={ '47935890882725':'Get 2 + 2 now', '47935890817189':'Get it 1 + 1 now', '47945658269861':'Get yours now' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');
     if(ctap)ctap.textContent=o.getAttribute('data-p');
+    if(ctalbl)ctalbl.textContent=LBL[sel]||'Get it now';
     if(ctasv)ctasv.textContent=o.getAttribute('data-sv')+' · 12% code applies at checkout';
   });});
   // add to cart (stays in flow: adds, then opens cart)
