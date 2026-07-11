@@ -246,7 +246,6 @@ body{overflow-x:clip}
     <div class="dbn">⚡ 12% discount — already applied to these prices</div>
     <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order →</div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 — 2 for the price of 1</span></div>
     <button class="atcg" id="atcg">add to cart</button>
-    <button class="cta" id="cta"><span id="ctalbl">Get it 1 + 1 now</span> <span class="gp">→</span></button>
     <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
     <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>SHOP PAY</span><span>APPLE PAY</span></div>
@@ -400,15 +399,12 @@ body{overflow-x:clip}
   document.addEventListener('keydown',function(e){if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft'){setG(gi-1);lbimg.src=gimgs[gi];}if(e.key==='ArrowRight'){setG(gi+1);lbimg.src=gimgs[gi];}});
   // bundles
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
-  var ctalbl=document.getElementById('ctalbl');
   var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
   var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
-  var LBL={ '47935890882725':'Get 2 + 2 now', '47935890817189':'Get it 1 + 1 now', '47945658269861':'Get yours now' };
   var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');
-    if(ctalbl)ctalbl.textContent=LBL[sel]||'Get it now';
     if(obc)obc.textContent=o.getAttribute('data-c');
     if(obp)obp.textContent=o.getAttribute('data-p');
     if(obs)obs.textContent=o.getAttribute('data-sv2');
@@ -426,8 +422,6 @@ body{overflow-x:clip}
   }
   var atcg=document.getElementById('atcg');
   if(atcg)atcg.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
-  var cta=document.getElementById('cta');
-  if(cta)cta.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
   var sgob=document.getElementById('sgob');
   if(sgob){ sgob.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
     sgob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sgob.click(); } }); }
