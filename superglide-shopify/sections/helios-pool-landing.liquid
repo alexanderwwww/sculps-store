@@ -40,6 +40,32 @@ body{overflow-x:clip}
 #pk .smar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);margin-top:16px;max-width:340px;margin-left:auto;margin-right:auto}
 #pk .smar .row{display:flex;gap:8px;width:max-content;padding:4px 2px;animation:pkcm 40s linear infinite}
 #pk .sc{flex:0 0 auto;display:flex;gap:6px;align-items:center;background:var(--glass);border:1px solid rgba(214,51,108,.25);border-radius:100px;padding:5px 12px;font-size:11.5px;font-weight:700;color:#B02458;white-space:nowrap}
+#pk .gal{display:flex;gap:9px;align-items:flex-start}
+#pk .gthumbs{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+#pk .gth{width:52px;aspect-ratio:1/1;border-radius:9px;overflow:hidden;border:1.5px solid var(--line);cursor:pointer;opacity:.5;transition:opacity .2s,border-color .2s;background:var(--alt)}
+#pk .gth.on{opacity:1;border-color:var(--ink)}
+#pk .gth img{width:100%;height:100%;object-fit:cover}
+#pk .gmain{flex:1;min-width:0;position:relative;aspect-ratio:1/1;max-height:370px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--alt);cursor:zoom-in}
+#pk .gmain img{width:100%;height:100%;object-fit:cover}
+#pk .gmain .zoom{position:absolute;bottom:9px;right:9px;background:rgba(26,14,20,.7);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px}
+@media(max-width:899px){#pk .gal{flex-direction:column-reverse}#pk .gthumbs{flex-direction:row;overflow-x:auto;width:100%;scrollbar-width:none}#pk .gthumbs::-webkit-scrollbar{display:none}#pk .gth{flex:0 0 auto;width:56px}#pk .gmain{max-height:none;width:100%}}
+#pk .lb{position:fixed;inset:0;z-index:100;background:rgba(15,10,12,.93);display:none;align-items:center;justify-content:center;padding:20px}
+#pk .lb.on{display:flex}
+#pk .lb img{max-width:92vw;max-height:82vh;border-radius:14px}
+#pk .lb .x{position:absolute;top:14px;right:18px;color:#fff;font-size:32px;cursor:pointer;line-height:1}
+#pk .lb .nav{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:44px;cursor:pointer;padding:8px 14px;user-select:none}
+#pk .lb .prev{left:6px}
+#pk .lb .next{right:6px}
+#pk .memsec{background:#FBF2F0}
+#pk .mem{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 16px;max-width:860px;margin:0 auto;padding-top:8px}
+@media(max-width:680px){#pk .mem{grid-template-columns:1fr;max-width:330px}}
+#pk .pol{position:relative;background:#fff;border:1px solid #EEDDE2;border-radius:4px;padding:10px 10px 34px;box-shadow:0 14px 30px -18px rgba(70,30,45,.35);transform:rotate(var(--r,0deg));transition:transform .35s ease,box-shadow .35s ease;cursor:pointer}
+#pk .pol:hover{transform:rotate(0deg) translateY(-6px) scale(1.03);box-shadow:0 30px 55px -22px rgba(70,30,45,.45);z-index:2}
+#pk .pol:before{content:'';position:absolute;top:-10px;left:50%;width:72px;height:22px;transform:translateX(-50%) rotate(var(--tr,-2deg));background:rgba(255,214,232,.72);border:1px solid rgba(200,120,155,.3);box-shadow:0 2px 5px rgba(0,0,0,.08);z-index:3}
+#pk .pol .shot{overflow:hidden;border-radius:2px}
+#pk .pol .shot img{width:100%;aspect-ratio:1/1;object-fit:cover;transition:transform .5s ease}
+#pk .pol:hover .shot img{transform:scale(1.06)}
+#pk .pol .cap{position:absolute;left:0;right:0;bottom:9px;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:13px;color:#5a3644}
 #pk .ptl{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:15px 0 0}
 #pk .social{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0;font-size:13px;color:var(--mut)}
 #pk .social b{color:var(--ink)}
@@ -168,7 +194,7 @@ body{overflow-x:clip}
 <div class="bhead rv"><div class="eyebrow">Meet the Paradise Sofa Pool</div><h2>The couch your backyard has been missing.</h2><div class="bhoff">Sold out at big-box stores — in stock here · discount already applied</div></div>
 <div class="buy" id="buytop">
   <div class="media">
-    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/preview_images/7107b4312d42481fbdacb4458bf29a61.thumbnail.0000000000.jpg?v=1783802706" alt="Paradise Sofa Pool"></div>
+    <div class="phone"><video id="u2" src="https://cdn.shopify.com/videos/c/vp/7107b4312d42481fbdacb4458bf29a61/7107b4312d42481fbdacb4458bf29a61.HD-720p-1.6Mbps-88715260.mp4" muted loop playsinline autoplay preload="metadata" poster="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/preview_images/7107b4312d42481fbdacb4458bf29a61.thumbnail.0000000000.jpg?v=1783802706"></video><span class="snd" data-v="u2">Tap for sound</span></div>
     <div class="smar"><div class="row" id="srow">
       <span class="sc">✓ Kayla M. — set it up for my birthday, everyone lost it</span>
       <span class="sc">✓ Ships from US warehouse within 24 h</span>
@@ -178,6 +204,17 @@ body{overflow-x:clip}
     </div></div>
   </div>
   <div class="panel">
+    <div class="gal">
+      <div class="gthumbs" id="gthumbs">
+        <div class="gth on" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed49f19c-8cc6-4990-b5be-3ba5145c75db_885dfa1f-91a9-4cc9-a704-93168f84a9e4.png?v=1783804303"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed49f19c-8cc6-4990-b5be-3ba5145c75db_885dfa1f-91a9-4cc9-a704-93168f84a9e4.png?v=1783804303" alt="Paradise Sofa Pool"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a8e1ad39-6db1-4b9f-8f8c-5e473dcc7ade_85761380-2f47-4119-a22e-fc05423de543.png?v=1783804303"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a8e1ad39-6db1-4b9f-8f8c-5e473dcc7ade_85761380-2f47-4119-a22e-fc05423de543.png?v=1783804303" alt="Product shot"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-styled-wide.jpg?v=1783804302"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-styled-wide.jpg?v=1783804302" alt="Backyard setup"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-umbrella-shells.jpg?v=1783804303"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-umbrella-shells.jpg?v=1783804303" alt="Sofa seating"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-snack-tray.jpg?v=1783804303"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-snack-tray.jpg?v=1783804303" alt="Floating snack tray"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/paradise-sofa-pool.jpg?v=1783802762"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/paradise-sofa-pool.jpg?v=1783802762" alt="Girls day"></div>
+      </div>
+      <div class="gmain" id="gmain"><img id="gmainimg" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed49f19c-8cc6-4990-b5be-3ba5145c75db_885dfa1f-91a9-4cc9-a704-93168f84a9e4.png?v=1783804303" alt="HELIOS Paradise Sofa Pool"><span class="zoom">tap to zoom ⤢</span></div>
+    </div>
     <div class="ptl">HELIOS Paradise Sofa Pool — 12ft</div>
     <div class="social"><span class="stars">★★★★★</span> <b>4.9</b> · the viral sofa pool · <b>12+ ft</b> · seats 2–3 adults + kids</div>
     <div class="pills">
@@ -190,8 +227,8 @@ body{overflow-x:clip}
     </div>
     <div class="ocard"><div class="ostrip"><span>☀ Summer Sale</span><span class="mp">★ Sold out in stores</span></div><div class="oin">
     <div class="opts" id="opts">
-      <div class="opt on" data-vid="48001698463909" data-p="$199.99" data-c="$299.99" data-sv2="YOU SAVE $100 (33% OFF) — sold out in stores, in stock here" data-sv="The main character purchase"><span class="tag">Sold out in stores</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/preview_images/7107b4312d42481fbdacb4458bf29a61.thumbnail.0000000000.jpg?v=1783802706" alt=""><div class="lbl"><b>1 Sofa Pool</b><span>Your backyard, upgraded</span></div><div class="pr"><em class="offp">33% OFF</em><b>$199.99</b><s>$299.99</s></div></div>
-      <div class="opt" data-vid="48001698496677" data-p="$349.99" data-c="$599.98" data-sv2="YOU SAVE $250 (42% OFF) — one for the lake house too" data-sv="2-pack — save $250"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/preview_images/7107b4312d42481fbdacb4458bf29a61.thumbnail.0000000000.jpg?v=1783802706" alt=""><div class="lbl"><b>2 Sofa Pools</b><span>One for the bestie or the lake house</span></div><div class="pr"><em class="offp">42% OFF</em><b>$349.99</b><s>$599.98</s></div></div>
+      <div class="opt on" data-vid="48001698463909" data-p="$199.99" data-c="$299.99" data-sv2="YOU SAVE $100 (33% OFF) — sold out in stores, in stock here" data-sv="The main character purchase"><span class="tag">Sold out in stores</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed49f19c-8cc6-4990-b5be-3ba5145c75db_885dfa1f-91a9-4cc9-a704-93168f84a9e4.png?v=1783804303" alt=""><div class="lbl"><b>1 Sofa Pool</b><span>Your backyard, upgraded</span></div><div class="pr"><em class="offp">33% OFF</em><b>$199.99</b><s>$299.99</s></div></div>
+      <div class="opt" data-vid="48001698496677" data-p="$349.99" data-c="$599.98" data-sv2="YOU SAVE $250 (42% OFF) — one for the lake house too" data-sv="2-pack — save $250"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed49f19c-8cc6-4990-b5be-3ba5145c75db_885dfa1f-91a9-4cc9-a704-93168f84a9e4.png?v=1783804303" alt=""><div class="lbl"><b>2 Sofa Pools</b><span>One for the bestie or the lake house</span></div><div class="pr"><em class="offp">42% OFF</em><b>$349.99</b><s>$599.98</s></div></div>
     </div>
     <div class="pumprow" id="pumprow" role="button" tabindex="0" aria-label="Add the cordless rapid pump"><span class="pck"></span><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/107f7b2d-9d3a-4d8f-bcfe-b0bfa133a1b8.png?v=1783791768" alt="Cordless rapid pump"><div class="plbl"><b id="pumpb">Add the cordless rapid pump</b><span id="pumps">It's 12 feet of air — the pump does it in minutes, not hours</span></div><div class="ppr"><b id="pumpp">$39.99</b><s id="pumpc">$59.99</s></div></div>
     <div class="dbn">⚡ 33% OFF — already applied · sold out at big-box stores</div>
@@ -233,6 +270,16 @@ body{overflow-x:clip}
   </div>
 </div></div>
 
+<!-- POLAROID STRIP -->
+<div class="sec memsec"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">This is the group chat's new HQ</div><h2>The girls' day starter pack.</h2></div>
+  <div class="mem">
+    <div class="pol rv" style="--r:-2.5deg;--tr:-3deg"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-umbrella-shells.jpg?v=1783804303" alt="Sofa seating with umbrella" loading="lazy"></div><div class="cap">everyone lock in &amp; sit down</div></div>
+    <div class="pol rv" style="--r:2deg;--tr:2.5deg;transition-delay:.08s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/pool-snack-tray.jpg?v=1783804303" alt="Floating snack tray" loading="lazy"></div><div class="cap">snacks stay dry · drinks stay cold</div></div>
+    <div class="pol rv" style="--r:-1.5deg;--tr:-1.5deg;transition-delay:.16s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/paradise-sofa-pool.jpg?v=1783802762" alt="Girls day in the pool" loading="lazy"></div><div class="cap">golden hour venue · summer '26</div></div>
+  </div>
+</div></div>
+
 <div class="sec"><div class="wrap"><div class="gu rv"><div style="font-size:30px">🛡️</div><h3>30-Day Cool-or-Refund Promise</h3><p>Set it up, fill it, host the day. If it doesn't make your summer better, send it back for a full refund. The risk is entirely ours.</p></div></div></div>
 
 <!-- FINALE -->
@@ -245,7 +292,8 @@ body{overflow-x:clip}
   <div class="brand">HELIOS</div></div>
 </div></div>
 
-<div id="pkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/preview_images/7107b4312d42481fbdacb4458bf29a61.thumbnail.0000000000.jpg?v=1783802706" alt=""><div class="l"><b id="stlbl">Paradise Sofa Pool · 33% OFF</b><s id="stc" style="color:rgba(255,255,255,.45);font-size:11px;margin-right:6px">$299.99</s><span id="stp">$199.99</span></div><button id="stbtn">Get it →</button></div>
+<div id="pkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed49f19c-8cc6-4990-b5be-3ba5145c75db_885dfa1f-91a9-4cc9-a704-93168f84a9e4.png?v=1783804303" alt=""><div class="l"><b id="stlbl">Paradise Sofa Pool · 33% OFF</b><s id="stc" style="color:rgba(255,255,255,.45);font-size:11px;margin-right:6px">$299.99</s><span id="stp">$199.99</span></div><button id="stbtn">Get it →</button></div>
+<div class="lb" id="lb"><span class="x" id="lbx">×</span><span class="nav prev" id="lbp">‹</span><img id="lbimg" src="" alt="Product photo"><span class="nav next" id="lbn">›</span></div>
 </div>
 <script>
 (function(){
@@ -295,6 +343,22 @@ body{overflow-x:clip}
     var u=function(){v.muted=!v.muted;b.textContent=v.muted?'Tap for sound':'Tap to mute';var p=v.play();if(p&&p.catch)p.catch(function(){});};
     v.addEventListener('click',u); b.addEventListener('click',u);
   });
+  // gallery + lightbox (gallery + polaroids)
+  var gthumbs=[].slice.call(document.querySelectorAll('#gthumbs .gth'));
+  var gimgs=gthumbs.map(function(t){return t.getAttribute('data-src');});
+  var gmainImg=document.getElementById('gmainimg'), gi=0;
+  function setG(i){gi=(i%gimgs.length+gimgs.length)%gimgs.length;gmainImg.src=gimgs[gi];gthumbs.forEach(function(x,j){x.classList.toggle('on',j===gi);});}
+  gthumbs.forEach(function(t,i){t.addEventListener('click',function(){setG(i);});});
+  var lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg');
+  if(lb&&lbimg){
+    var gm=document.getElementById('gmain'); if(gm)gm.addEventListener('click',function(){lbimg.src=gimgs[gi];lb.classList.add('on');});
+    [].slice.call(root.querySelectorAll('.pol img')).forEach(function(im){im.parentNode.addEventListener('click',function(){lbimg.src=im.src;lb.classList.add('on');});});
+    document.getElementById('lbx').addEventListener('click',function(){lb.classList.remove('on');});
+    lb.addEventListener('click',function(e){if(e.target===lb)lb.classList.remove('on');});
+    document.getElementById('lbp').addEventListener('click',function(e){e.stopPropagation();setG(gi-1);lbimg.src=gimgs[gi];});
+    document.getElementById('lbn').addEventListener('click',function(e){e.stopPropagation();setG(gi+1);lbimg.src=gimgs[gi];});
+    document.addEventListener('keydown',function(e){if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft'){setG(gi-1);lbimg.src=gimgs[gi];}if(e.key==='ArrowRight'){setG(gi+1);lbimg.src=gimgs[gi];}});
+  }
   // bundles + pump add-on
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
   var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
