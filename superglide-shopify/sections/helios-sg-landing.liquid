@@ -70,8 +70,6 @@ body{overflow-x:clip}
 #mk .opt .pr b{font-size:15px;font-weight:800}
 #mk .opt .pr s{display:block;font-size:11.5px;color:#9AA6B2}
 #mk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ink);padding:3px 8px;border-radius:20px}
-#mk .atc{display:block;width:100%;text-align:center;margin-top:14px;background:#fff;border:1.6px solid var(--ink);color:var(--ink);font-size:15px;font-weight:800;padding:14px;border-radius:100px;cursor:pointer;transition:background .15s}
-#mk .atc:hover{background:#F4F5F6}
 #mk .ob{background:#0A0E12;border-radius:18px;padding:16px;text-align:center;margin-top:14px;cursor:pointer;transition:transform .12s,box-shadow .2s}
 #mk .ob:hover{transform:translateY(-2px);box-shadow:0 16px 34px -14px rgba(10,14,18,.55)}
 #mk .ob:active{transform:translateY(0)}
@@ -243,8 +241,7 @@ body{overflow-x:clip}
       <div class="opt" data-vid="47945658269861" data-p="$259.99" data-c="$299.99" data-sv2="YOU SAVE $40 — 12% included" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><b>$259.99</b><s>$299.99</s></div></div>
     </div>
     <div class="ob" id="sgob" role="button" tabindex="0" aria-label="Add to my order and checkout"><div class="hh">Add to my order →</div><div class="pl"><s id="obc">$599.98</s><b id="obp">$259.99</b></div><span class="sv" id="obs">YOU SAVE $340 — 2 for the price of 1</span></div>
-    <button class="atc" id="atc">Add to cart</button>
-    <button class="cta" id="cta"><span id="ctalbl">Get it 1 + 1 now</span> <span class="gp">→</span></button>
+    <button class="cta" id="cta"><span id="ctalbl">Add 1 + 1 to cart</span> <span class="gp">→</span></button>
     <div class="eta"><span class="dot"></span><span>Order today — ships in 24 h, <b id="etadate">arrives soon</b></span></div>
     <div class="coupon">Prices already include the 12% SUPERGLIDEIT discount — it applies itself at checkout.</div>
     <div class="guar"><span>⚡ Easy checkout</span><span>🚚 Free shipping</span><span>🛡 30-day money-back</span></div>
@@ -402,7 +399,7 @@ body{overflow-x:clip}
   var ctalbl=document.getElementById('ctalbl');
   var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
   var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
-  var LBL={ '47935890882725':'Get 2 + 2 now', '47935890817189':'Get it 1 + 1 now', '47945658269861':'Get yours now' };
+  var LBL={ '47935890882725':'Add 2 + 2 to cart', '47935890817189':'Add 1 + 1 to cart', '47945658269861':'Add to cart' };
   var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
@@ -423,10 +420,8 @@ body{overflow-x:clip}
         .catch(function(){ busy=false; window.location.href=fallback; });
     }catch(e){ busy=false; window.location.href=fallback; }
   }
-  var atc=document.getElementById('atc');
-  if(atc)atc.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
   var cta=document.getElementById('cta');
-  if(cta)cta.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
+  if(cta)cta.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcart','/cart/'+sel+':1?discount='+DISC); });
   var sgob=document.getElementById('sgob');
   if(sgob){ sgob.addEventListener('click',function(){ addThen('/discount/'+DISC+'?redirect=%2Fcheckout','/cart/'+sel+':1?discount='+DISC); });
     sgob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sgob.click(); } }); }
