@@ -422,8 +422,8 @@
         </div>
 
         {%- assign hb_scp = cur.price | times: 0.88 | round -%}
-        <div class="hb-dbn">⚡ 12% discount — already applied to these prices</div>
-        <div class="hb-ob" id="hb-ob-{{ sid }}" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order <span class="nar">→</span></div><div class="pl"><s id="hb-ob-c-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | money }}</s><b id="hb-ob-p-{{ sid }}">{{ hb_scp | money }}</b></div><span class="sv" id="hb-ob-s-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>YOU SAVE {{ cur.compare_at_price | minus: hb_scp | money }}</span></div>
+        <div class="hb-dbn">⚡ Summer sale — up to 63% OFF, already applied</div>
+        <div class="hb-ob" id="hb-ob-{{ sid }}" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order <span class="nar">→</span></div><div class="pl"><s id="hb-ob-c-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | money }}</s><b id="hb-ob-p-{{ sid }}">{{ hb_scp | money }}</b></div><span class="sv" id="hb-ob-s-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>YOU SAVE {{ cur.compare_at_price | minus: hb_scp | money }}{% if cur.compare_at_price > 0 %} ({{ cur.compare_at_price | minus: hb_scp | times: 100 | divided_by: cur.compare_at_price }}% OFF){% endif %}</span></div>
         <button type="submit" name="add" class="hb-atc" {% unless cur.available %}disabled{% endunless %}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           {{ section.settings.cta_text | default: 'Add to Cart' }}
@@ -556,7 +556,7 @@
       if(pe&&d.price)pe.textContent=d.price;
       var pv=parseFloat((d.price||'').replace(/[^0-9.]/g,''))||0, cv=parseFloat((d.compare||'').replace(/[^0-9.]/g,''))||0;
       if(ce){ if(cv>pv){ ce.style.display=''; ce.textContent=d.compare; } else ce.style.display='none'; }
-      if(se){ if(cv>pv){ se.style.display=''; se.textContent='YOU SAVE $'+(cv-pv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); } else se.style.display='none'; }
+      if(se){ if(cv>pv){ se.style.display=''; se.textContent='YOU SAVE $'+(cv-pv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ('+Math.round((1-pv/cv)*100)+'% OFF)'; } else se.style.display='none'; }
     });
   }
 
