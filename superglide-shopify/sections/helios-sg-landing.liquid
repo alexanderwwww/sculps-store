@@ -270,6 +270,7 @@ body{overflow-x:clip}
     <div class="ocard"><div class="ostrip"><span id="cp_strip_l">☀ 2-for-1 Summer Deal</span><span class="mp" id="cp_strip_r">★ Most Popular</span></div><div class="oin">
     <div class="opts" id="opts">
       <div class="opt" data-vid="47935890882725" data-p="$439.99" data-c="$1,199.96" data-sv2="YOU SAVE $760 — 2 gliders FREE" data-sv="Best value — save $760"><span class="tag">Buy 2, get 2 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>4 Super Glides</b><span>The whole crew</span></div><div class="pr"><b>$439.99</b><s>$1,199.96</s></div></div>
+      <div class="opt" data-vid="47935890849957" data-p="$351.99" data-c="$899.97" data-sv2="YOU SAVE $548 — three gliders" data-sv="3-pack — save $548"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>3 Super Glides</b><span>You plus two more seats</span></div><div class="pr"><b>$351.99</b><s>$899.97</s></div></div>
       <div class="opt on" data-vid="47935890817189" data-p="$259.99" data-c="$599.98" data-sv2="YOU SAVE $340 — 2 for the price of 1" data-sv="Most popular — save $340"><span class="tag">Most popular · 1+1 free</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>2 Super Glides</b><span>One for you, one for the family</span></div><div class="pr"><b>$259.99</b><s>$599.98</s></div></div>
       <div class="opt" data-vid="47945658269861" data-p="$259.99" data-c="$299.99" data-sv2="YOU SAVE $40 — 12% included" data-sv="Just you — try it out"><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt=""><div class="lbl"><b>1 Super Glide</b><span>Just me</span></div><div class="pr"><b>$259.99</b><s>$299.99</s></div></div>
     </div>
@@ -436,7 +437,7 @@ body{overflow-x:clip}
   var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
   var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
   var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
-  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
+  var SLBL={ '47935890882725':'SuperGlide Pro · 2+2 FREE', '47935890849957':'SuperGlide Pro · 3-Pack', '47935890817189':'SuperGlide Pro · 1+1 FREE', '47945658269861':'SuperGlide Pro · single' };
   opts.forEach(function(o){o.addEventListener('click',function(){
     opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
     sel=o.getAttribute('data-vid');
