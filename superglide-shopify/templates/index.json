@@ -83,10 +83,10 @@
         }
       },
       "block_order": [
-        "b1",
-        "b2",
+        "b3",
         "b4",
-        "b3"
+        "b2",
+        "b1"
       ],
       "settings": {
         "featured_product": "helios-super-glide-motorized-water-lounger",
@@ -285,6 +285,13 @@
         "eyebrow": "Clear answers",
         "heading": "Everything you're wondering."
       }
+    },
+    "cyob": {
+      "type": "helios-cyob",
+      "settings": {
+        "featured_product": "helios-super-glide-motorized-water-lounger",
+        "heading": "Create your own bundle"
+      }
     }
   },
   "order": [
@@ -292,6 +299,7 @@
     "header",
     "buybox",
     "clearfaq",
+    "cyob",
     "reviewcarousel",
     "tiktok",
     "reviews",

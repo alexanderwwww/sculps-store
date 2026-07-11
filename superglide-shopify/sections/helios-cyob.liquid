@@ -1,0 +1,84 @@
+{%- comment -%} HELIOS — Create Your Own Bundle (standalone). Extracted from helios-buy-box. {%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign product = all_products[section.settings.featured_product] -%}
+{%- assign cy_jet = all_products['helios-wave-rider'] -%}
+{%- assign cyv_sg = product.selected_or_first_available_variant -%}
+{%- assign cyv_mini = blank -%}
+{%- for v in product.variants -%}{%- if v.title contains 'Mini' -%}{%- assign cyv_mini = v -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- assign cyv_jet  = cy_jet.variants.first -%}
+{%- assign cy_mini_img = cyv_mini.image | default: product.featured_image -%}
+<section class="helios" id="cy-{{ sid }}">
+<style>
+  #cy-{{ sid }}{font-family:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  #cy-{{ sid }} .wrap{max-width:780px;margin:0 auto;padding:clamp(26px,4vw,46px) 18px}
+  #cy-{{ sid }} .hb-cyob{border:1px solid rgba(17,19,21,.12);border-radius:18px;padding:18px 16px;background:#fff;box-shadow:0 10px 30px -22px rgba(17,19,21,.3);}
+  #cy-{{ sid }} .hb-cyob-hd b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;color:#0A0D11;letter-spacing:-.01em;}
+  #cy-{{ sid }} .hb-cyob-hd span{display:block;font-size:12.5px;color:#5B6470;margin:2px 0 14px;}
+  #cy-{{ sid }} .hb-cyob-tiers{display:flex;gap:8px;margin:0 0 14px;}
+  #cy-{{ sid }} .hb-cyob-tp{flex:1;text-align:center;border:1.5px solid #E4E8EC;border-radius:12px;padding:8px 6px;transition:.16s;}
+  #cy-{{ sid }} .hb-cyob-tp b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
+  #cy-{{ sid }} .hb-cyob-tp span{font-size:10.5px;color:#8A93A0;}
+  #cy-{{ sid }} .hb-cyob-tp.on{border-color:#3E5568;background:#F2F5F8;}
+  #cy-{{ sid }} .hb-cyob-tp.on span{color:#3E5568;font-weight:700;}
+  #cy-{{ sid }} .hb-cyob-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid rgba(17,19,21,.08);cursor:pointer;}
+  #cy-{{ sid }} .hb-cyob-row:first-of-type{border-top:none;}
+  #cy-{{ sid }} .hb-cyob-ck{flex:0 0 auto;width:22px;height:22px;border:2px solid #C7CED6;border-radius:7px;background:#fff;position:relative;transition:.15s;}
+  #cy-{{ sid }} .hb-cyob-ck.on{background:#3E5568;border-color:#3E5568;}
+  #cy-{{ sid }} .hb-cyob-ck.on::after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg);}
+  #cy-{{ sid }} .hb-cyob-row img{width:48px;height:48px;border-radius:11px;object-fit:cover;flex:0 0 auto;background:#F4F6F8;}
+  #cy-{{ sid }} .hb-cyob-in{flex:1;min-width:0;}
+  #cy-{{ sid }} .hb-cyob-in b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
+  #cy-{{ sid }} .hb-cyob-in span{font-size:11.5px;color:#8A93A0;}
+  #cy-{{ sid }} .hb-cyob-p{font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;flex:0 0 auto;}
+  #cy-{{ sid }} .hb-cyob-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(17,19,21,.08);flex-wrap:wrap;}
+  #cy-{{ sid }} .hb-cyob-tot{font-size:12px;color:#5B6470;}
+  #cy-{{ sid }} .hb-cyob-tot .amt{display:flex;align-items:baseline;gap:7px;margin-top:2px;}
+  #cy-{{ sid }} .hb-cyob-tot .amt b{font-family:'Archivo',sans-serif;font-weight:800;font-size:21px;color:#0A0D11;letter-spacing:-.02em;}
+  #cy-{{ sid }} .hb-cyob-tot .amt s{font-size:13px;color:#b3bac2;font-weight:600;}
+  #cy-{{ sid }} .hb-cyob-save{display:inline-block;margin-top:4px;font-size:10.5px;font-weight:800;color:#1F6B4A;background:rgba(74,190,140,.15);padding:3px 8px;border-radius:20px;}
+  #cy-{{ sid }} .hb-cyob-add{background:#0A0D11;color:#fff;border:none;border-radius:100px;padding:13px 22px;font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:transform .12s;}
+  #cy-{{ sid }} .hb-cyob-add:hover{transform:translateY(-1px);}
+  #cy-{{ sid }} .hb-cyob-add:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+</style>
+<div class="wrap">
+  <div class="hb-cyob" id="hb-cyob-{{ sid }}">
+    <div class="hb-cyob-hd"><b>{{ section.settings.heading | default: 'Create your own bundle' }}</b><span>Mix any 2 for 30% off — or any 3 for 50% off. Discount applies at checkout.</span></div>
+    <div class="hb-cyob-tiers">
+      <div class="hb-cyob-tp" data-tp="2"><b>2 items</b><span>30% off</span></div>
+      <div class="hb-cyob-tp" data-tp="3"><b>3 items</b><span>50% off</span></div>
+    </div>
+    <div class="hb-cyob-row" data-vid="{{ cyv_sg.id }}" data-price="{{ cyv_sg.price }}"><span class="hb-cyob-ck on" data-ck></span>{%- if product.featured_image -%}<img src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Super Glide</b><span>Double · 2 seats</span></div><span class="hb-cyob-p">{{ cyv_sg.price | money }}</span></div>
+    <div class="hb-cyob-row" data-vid="{{ cyv_mini.id }}" data-price="{{ cyv_mini.price }}"><span class="hb-cyob-ck on" data-ck></span>{%- if cy_mini_img -%}<img src="{{ cy_mini_img | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Mini Glide</b><span>Single seat</span></div><span class="hb-cyob-p">{{ cyv_mini.price | money }}</span></div>
+    <div class="hb-cyob-row" data-vid="{{ cyv_jet.id }}" data-price="{{ cyv_jet.price }}"><span class="hb-cyob-ck" data-ck></span>{%- if cy_jet.featured_image -%}<img src="{{ cy_jet.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}<div class="hb-cyob-in"><b>Jet Ski</b><span>Ride alongside</span></div><span class="hb-cyob-p">{{ cyv_jet.price | money }}</span></div>
+    <div class="hb-cyob-foot">
+      <div class="hb-cyob-tot">Bundle total<span class="amt"><b id="hb-cyob-final-{{ sid }}">$0.00</b><s id="hb-cyob-was-{{ sid }}" style="display:none;"></s></span><span class="hb-cyob-save" id="hb-cyob-save-{{ sid }}" style="display:none;"></span></div>
+      <button type="button" class="hb-cyob-add" id="hb-cyob-add-{{ sid }}">Add bundle</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var box = document.getElementById('hb-cyob-{{ sid }}'); if(!box || box.dataset.init) return; box.dataset.init='1';
+  var money = function(c){ return '{{ shop.money_format | strip_html }}'.replace(/\{\{\s*amount\s*\}\}/, (c/100).toFixed(2)).replace(/\{\{\s*amount_no_decimals\s*\}\}/, Math.round(c/100)); };
+  var rows = [].slice.call(box.querySelectorAll('.hb-cyob-row'));
+  var finalEl=document.getElementById('hb-cyob-final-{{ sid }}'), wasEl=document.getElementById('hb-cyob-was-{{ sid }}'), saveEl=document.getElementById('hb-cyob-save-{{ sid }}'), addBtn=document.getElementById('hb-cyob-add-{{ sid }}');
+  var tps=[].slice.call(box.querySelectorAll('.hb-cyob-tp'));
+  function st(){ var sum=0,n=0,ids=[]; rows.forEach(function(r){ if(r.querySelector('[data-ck]').classList.contains('on')){ sum+=parseInt(r.dataset.price,10)||0; n++; ids.push(r.dataset.vid);} }); var d=n>=3?0.5:(n===2?0.3:0); return {sum:sum,n:n,ids:ids,d:d,code:d===0.5?'MIX50':(d===0.3?'MIX30':'')}; }
+  function calc(){ var s=st(); var f=Math.round(s.sum*(1-s.d)); finalEl.textContent=money(f); tps.forEach(function(t){ t.classList.toggle('on',(t.dataset.tp==='3'&&s.n>=3)||(t.dataset.tp==='2'&&s.n===2)); }); if(s.d>0){ wasEl.style.display=''; wasEl.textContent=money(s.sum); saveEl.style.display=''; saveEl.textContent='Save '+money(s.sum-f)+' · '+Math.round(s.d*100)+'% off'; } else { wasEl.style.display='none'; saveEl.style.display='none'; } if(s.n<2){ addBtn.disabled=true; addBtn.textContent='Pick 2+ to unlock'; } else { addBtn.disabled=false; addBtn.textContent='Add bundle → '+money(f); } }
+  rows.forEach(function(r){ r.addEventListener('click',function(){ r.querySelector('[data-ck]').classList.toggle('on'); calc(); }); });
+  addBtn.addEventListener('click',function(){ var s=st(); if(s.n<2)return; var p=s.ids.map(function(id){return id+':1';}).join(','); addBtn.disabled=true; addBtn.textContent='Adding…'; window.location.href='/cart/'+p+(s.code?('?discount='+s.code):''); });
+  calc();
+})();
+</script>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Create Your Bundle",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "featured_product", "label": "Featured product handle", "default": "helios-super-glide-motorized-water-lounger" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Create your own bundle" }
+  ],
+  "presets": [{ "name": "HELIOS Create Your Bundle" }]
+}
+{% endschema %}
