@@ -43,7 +43,21 @@ body{overflow-x:clip}
 #mk .phone{position:relative;width:min(300px,82vw);margin:0 auto;aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#0E1116;border:1px solid var(--line);box-shadow:0 30px 60px -30px rgba(122,74,18,.5);animation:mkbob 6.5s ease-in-out infinite}
 @keyframes mkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 #mk .phone img,#mk .phone video{width:100%;height:100%;object-fit:cover}
-#mk .phone .snd{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);cursor:pointer;white-space:nowrap}
+#mk .phone .snd{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);cursor:pointer;white-space:nowrap;z-index:6}
+/* iPhone media carousel */
+#mk .iph{border:9px solid #17181C;border-radius:46px;box-shadow:0 30px 60px -30px rgba(122,74,18,.55),inset 0 0 0 2px #2A2B31}
+#mk .iph .isl{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:86px;height:24px;background:#0B0B0E;border-radius:14px;z-index:5}
+#mk .iph .isl::after{content:'';position:absolute;right:9px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#1E2B3A;box-shadow:inset 0 0 2px #4A6584}
+#mk .iph .isl-item{position:absolute;inset:0;opacity:0;transition:opacity .45s ease;pointer-events:none}
+#mk .iph .isl-item.on{opacity:1;pointer-events:auto}
+#mk .iph .isl-item img,#mk .iph .isl-item video{width:100%;height:100%;object-fit:cover}
+#mk .iph .iar{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:32px;height:32px;border-radius:50%;background:rgba(20,16,10,.4);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#fff;border:1px solid rgba(255,255,255,.25);font-size:18px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+#mk .iph .iar.prev{left:9px}
+#mk .iph .iar.next{right:9px}
+#mk .iph .idots{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:6}
+#mk .iph .idot{width:6px;height:6px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .25s}
+#mk .iph .idot.on{background:#fff;width:15px}
+@media(min-width:900px){#mk .media{position:sticky;top:90px;align-self:start}#mk .iph{width:min(320px,82vw)}}
 #mk .seefull{display:flex;align-items:center;justify-content:center;gap:8px;max-width:300px;margin:16px auto 0;text-align:center;background:#fff;border:2px solid var(--ink);color:var(--ink);font-weight:800;font-size:15px;padding:14px;border-radius:100px;box-shadow:0 10px 24px -14px rgba(14,17,22,.4);transition:background .15s,transform .15s}
 #mk .seefull:hover{background:#F4F5F6;transform:translateY(-1px)}
 #mk .seefull .ar{display:inline-block;animation:mknudge 1.8s ease-in-out infinite}
@@ -261,7 +275,18 @@ body{overflow-x:clip}
 <div class="bhead rv"><div class="eyebrow" id="cp_buy_ey">☀ Meet the Super Glide</div><h2 id="cp_buy_h2">Get 2 for the price of 1. The 2nd is on us.</h2><div class="bhoff">Up to 63% OFF — already applied · FREE Jet Ski + Pump with 3+ gliders 🎁</div></div>
 <div class="buy" id="buytop">
   <div class="media">
-    <div class="phone"><video id="u1" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="snd" data-v="u1">Tap for sound</span></div>
+    <div class="phone iph" id="iph">
+      <span class="isl"></span>
+      <div class="isl-item on"><video id="u1" src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video></div>
+      <div class="isl-item"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/3a816736-4b57-464c-9f16-4e8c196bc71b.png?v=1782835882" alt="Super Glide on the water" loading="lazy"></div>
+      <div class="isl-item"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/c6e27d47-a213-45d6-ae65-78508e6a8c30.png?v=1782073103" alt="Dad and kids" loading="lazy"></div>
+      <div class="isl-item"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/296a5f2a-c3b3-4a72-9d9b-ba15a5292497.png?v=1782073106" alt="Lounging" loading="lazy"></div>
+      <div class="isl-item"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/05c1f105-d779-40af-b7e7-b8fe9c9ab11c.png?v=1782073104" alt="In the pool" loading="lazy"></div>
+      <button class="iar prev" id="iprev" aria-label="Previous">‹</button>
+      <button class="iar next" id="inext" aria-label="Next">›</button>
+      <span class="snd" data-v="u1">Tap for sound</span>
+      <div class="idots" id="idots"></div>
+    </div>
     <a class="seefull" href="/products/helios-super-glide-motorized-water-lounger">See the full product <span class="ar">→</span></a>
     <div class="smar"><div class="row" id="srow">
       <span class="sc">✓ Amanda L. — arrived in 4 days, everything in the box</span>
@@ -445,6 +470,26 @@ body{overflow-x:clip}
     var u=function(){v.muted=!v.muted;b.textContent=v.muted?'Tap for sound':'Tap to mute';var p=v.play();if(p&&p.catch)p.catch(function(){});};
     v.addEventListener('click',u); b.addEventListener('click',u);
   });
+  // iPhone media carousel — video first, then photos, arrows to swipe
+  var iph=document.getElementById('iph');
+  if(iph&&!iph.dataset.ic){ iph.dataset.ic='1';
+    var iitems=[].slice.call(iph.querySelectorAll('.isl-item')), ii=0, ihold=false;
+    var idots=document.getElementById('idots');
+    iitems.forEach(function(_,k){var d=document.createElement('span');d.className='idot'+(k===0?' on':'');idots.appendChild(d);});
+    var idns=[].slice.call(idots.children);
+    var ivid=document.getElementById('u1'), isnd=iph.querySelector('.snd');
+    function igo(k){
+      ii=(k%iitems.length+iitems.length)%iitems.length;
+      iitems.forEach(function(it,j){it.classList.toggle('on',j===ii);});
+      idns.forEach(function(d,j){d.classList.toggle('on',j===ii);});
+      if(isnd)isnd.style.display=(ii===0)?'':'none';
+      if(ivid){ if(ii===0){var p=ivid.play();if(p&&p.catch)p.catch(function(){});} else {ivid.pause();} }
+    }
+    function ipause(){ ihold=true; clearTimeout(iph._t); iph._t=setTimeout(function(){ihold=false;},10000); }
+    document.getElementById('iprev').addEventListener('click',function(e){e.stopPropagation();ipause();igo(ii-1);});
+    document.getElementById('inext').addEventListener('click',function(e){e.stopPropagation();ipause();igo(ii+1);});
+    if(!reduce){ (function iloop(){ setTimeout(function(){ if(!ihold&&!document.hidden) igo(ii+1); iloop(); }, ii===0?7000:4000); })(); }
+  }
   // gallery
   var gthumbs=[].slice.call(document.querySelectorAll('#gthumbs .gth'));
   var gimgs=gthumbs.map(function(t){return t.getAttribute('data-src');});
