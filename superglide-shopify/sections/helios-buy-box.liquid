@@ -30,12 +30,26 @@
     #hb-{{ sid }} .hb-grid{grid-template-columns:1.04fr .96fr;gap:46px;align-items:start;}
     #hb-{{ sid }} .hb-gallery{position:sticky;top:90px;}
   }
-  #hb-{{ sid }} .hb-stage{position:relative;display:flex;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:44px;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:9px solid #17181C;box-shadow:0 26px 60px -18px rgba(6,47,73,.35),inset 0 0 0 2px #2A2B31;aspect-ratio:3/4;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
-  #hb-{{ sid }} .hb-island{position:absolute;top:18px;left:50%;transform:translateX(-50%);width:84px;height:23px;background:#0B0B0E;border-radius:14px;z-index:5;pointer-events:none;}
-  #hb-{{ sid }} .hb-island::after{content:'';position:absolute;right:9px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#1E2B3A;box-shadow:inset 0 0 2px #4A6584;}
-  #hb-{{ sid }} .hb-iar{position:absolute;top:38%;z-index:6;width:38px;height:38px;border-radius:50%;background:rgba(12,26,36,.45);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;}
-  #hb-{{ sid }} .hb-iar.prev{left:12px;}
-  #hb-{{ sid }} .hb-iar.next{right:12px;}
+  #hb-{{ sid }} .hb-stage{position:relative;display:flex;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:24px;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:1/1;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+  /* landing-style iPhone replaces the square gallery on the main product view */
+  #hb-{{ sid }} .hb-gallery[data-gal="double"] .hb-stage,#hb-{{ sid }} .hb-gallery[data-gal="double"] .hb-dots,#hb-{{ sid }} .hb-gallery[data-gal="double"] .hb-thumbs{display:none;}
+  #hb-{{ sid }} .hb-iph{position:relative;width:min(300px,82vw);margin:0 auto;aspect-ratio:9/16;border-radius:46px;overflow:hidden;background:#0E1116;border:9px solid #17181C;box-shadow:0 30px 60px -30px rgba(6,47,73,.55),inset 0 0 0 2px #2A2B31;animation:hbbob 6.5s ease-in-out infinite;}
+  @keyframes hbbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @media(min-width:900px){#hb-{{ sid }} .hb-iph{width:min(320px,82vw);}}
+  @media(max-width:899px){#hb-{{ sid }} .hb-iph{width:min(240px,64vw);}}
+  #hb-{{ sid }} .hb-iph .isl2{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:86px;height:24px;background:#0B0B0E;border-radius:14px;z-index:5;}
+  #hb-{{ sid }} .hb-iph .isl2::after{content:'';position:absolute;right:9px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#1E2B3A;box-shadow:inset 0 0 2px #4A6584;}
+  #hb-{{ sid }} .hb-iph .icell{position:absolute;inset:0;opacity:0;transition:opacity .45s ease;pointer-events:none;}
+  #hb-{{ sid }} .hb-iph .icell.on{opacity:1;pointer-events:auto;}
+  #hb-{{ sid }} .hb-iph .icell img,#hb-{{ sid }} .hb-iph .icell video{width:100%;height:100%;object-fit:cover;display:block;}
+  #hb-{{ sid }} .hb-iph .iar2{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:38px;height:38px;border-radius:50%;background:rgba(12,26,36,.45);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;}
+  #hb-{{ sid }} .hb-iph .iar2.prev{left:9px;}
+  #hb-{{ sid }} .hb-iph .iar2.next{right:9px;}
+  #hb-{{ sid }} .hb-iph .isnd{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);cursor:pointer;white-space:nowrap;z-index:6;}
+  #hb-{{ sid }} .hb-iph .idots2{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:6;}
+  #hb-{{ sid }} .hb-iph .idot2{width:6px;height:6px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .25s;}
+  #hb-{{ sid }} .hb-iph .idot2.on{background:#fff;width:15px;}
+  @media(prefers-reduced-motion:reduce){#hb-{{ sid }} .hb-iph{animation:none;}}
   #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;height:100%;overflow:hidden;}
   #hb-{{ sid }} .hb-stage::-webkit-scrollbar{display:none;}
   #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;}
@@ -269,9 +283,17 @@
           <div class="hb-cell" data-slide="0"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--helios-mut,#56636E);padding:24px;"><span style="width:58px;height:58px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-4.5-4.5L7 21"/></svg></span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add your demo video or photos</div><div style="font-size:12px;opacity:.75;">Product → Media · the first one shows here</div></div></div>
         {%- endif -%}
       </div>
-      <span class="hb-island"></span>
-      <button type="button" class="hb-iar prev" data-hbprev aria-label="Previous">‹</button>
-      <button type="button" class="hb-iar next" data-hbnext aria-label="Next">›</button>
+      <div class="hb-iph" id="hb-iph-{{ sid }}">
+        <span class="isl2"></span>
+        <div class="icell on"><video id="hb-iphv-{{ sid }}" muted loop playsinline autoplay preload="metadata"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>
+        {%- for img in product.images limit: 4 -%}
+        <div class="icell"><img src="{{ img | image_url: width: 700 }}" alt="{{ product.title | escape }}" loading="lazy"></div>
+        {%- endfor -%}
+        <button type="button" class="iar2 prev" data-ihprev aria-label="Previous">‹</button>
+        <button type="button" class="iar2 next" data-ihnext aria-label="Next">›</button>
+        <span class="isnd" data-ihsnd>Tap for sound</span>
+        <div class="idots2" data-ihdots></div>
+      </div>
       <div class="hb-dots" data-dots></div>
       <div class="hb-thumbs">
         {%- comment -%} product images first (Product → Media), min 4 slots {%- endcomment -%}
@@ -714,13 +736,25 @@
 {%- comment -%} =================== SCHEMA =================== {%- endcomment -%}
 <script>
 (function(){
-  var root=document.getElementById('hb-{{ sid }}'); if(!root||root.dataset.iar)return; root.dataset.iar='1';
-  var gal=root.querySelector('.hb-gallery[data-gal="double"]'); if(!gal)return;
-  var track=gal.querySelector('[data-track]');
-  var prev=gal.querySelector('[data-hbprev]'), next=gal.querySelector('[data-hbnext]');
-  if(!track||!prev||!next)return;
-  prev.addEventListener('click',function(e){ e.preventDefault(); track.scrollBy({left:-track.clientWidth,behavior:'smooth'}); });
-  next.addEventListener('click',function(e){ e.preventDefault(); track.scrollBy({left:track.clientWidth,behavior:'smooth'}); });
+  var iph=document.getElementById('hb-iph-{{ sid }}'); if(!iph||iph.dataset.ic)return; iph.dataset.ic='1';
+  var items=[].slice.call(iph.querySelectorAll('.icell')), ii=0, iback=null;
+  var dots=iph.querySelector('[data-ihdots]');
+  items.forEach(function(_,k){var d=document.createElement('span');d.className='idot2'+(k===0?' on':'');dots.appendChild(d);});
+  var dns=[].slice.call(dots.children);
+  var vid=document.getElementById('hb-iphv-{{ sid }}'), snd=iph.querySelector('[data-ihsnd]');
+  function igo(k){
+    ii=(k%items.length+items.length)%items.length;
+    items.forEach(function(it,j){it.classList.toggle('on',j===ii);});
+    dns.forEach(function(d,j){d.classList.toggle('on',j===ii);});
+    if(snd)snd.style.display=(ii===0)?'':'none';
+    if(vid){ if(ii===0){var p=vid.play();if(p&&p.catch)p.catch(function(){});} else {vid.pause();} }
+    clearTimeout(iback);
+    if(ii!==0){ iback=setTimeout(function(){ igo(0); }, 12000); } // auto-return to the playing video
+  }
+  iph.querySelector('[data-ihprev]').addEventListener('click',function(e){e.stopPropagation();igo(ii-1);});
+  iph.querySelector('[data-ihnext]').addEventListener('click',function(e){e.stopPropagation();igo(ii+1);});
+  if(snd&&vid){ var tg=function(){vid.muted=!vid.muted;snd.textContent=vid.muted?'Tap for sound':'Tap to mute';var p=vid.play();if(p&&p.catch)p.catch(function(){});}; snd.addEventListener('click',tg); vid.addEventListener('click',tg); }
+  var p0=vid&&vid.play&&vid.play(); if(p0&&p0.catch)p0.catch(function(){});
 })();
 </script>
 {% schema %}
