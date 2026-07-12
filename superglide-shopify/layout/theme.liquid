@@ -183,6 +183,100 @@
     </div>
     {% endunless %}
 
+    {% comment %} HELIOS — exit-intent email capture: leaving with a full cart -> email for 20% off (feeds abandoned-cart emails) {% endcomment %}
+    <div id="helios-exitcap">
+    <style>
+      #helios-exitcap .ov{position:fixed;inset:0;z-index:110;display:grid;place-items:center;padding:18px;background:rgba(6,16,26,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .3s ease;}
+      #helios-exitcap .ov.in{opacity:1;pointer-events:auto;}
+      #helios-exitcap .pop{width:100%;max-width:380px;background:#fff;border-radius:22px;padding:26px 24px 22px;position:relative;text-align:center;box-shadow:0 40px 90px -24px rgba(6,30,52,.6);transform:translateY(24px) scale(.97);transition:transform .45s cubic-bezier(.2,.9,.3,1.15);font-family:'Archivo',system-ui,sans-serif;color:#0C1A24;}
+      #helios-exitcap .ov.in .pop{transform:none;}
+      #helios-exitcap .x{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(12,26,36,.06);cursor:pointer;font-size:14px;color:#33424d;}
+      #helios-exitcap .big{font-size:34px;line-height:1;}
+      #helios-exitcap h2{font-weight:900;font-size:23px;line-height:1.08;letter-spacing:-.02em;margin:10px 0 7px;}
+      #helios-exitcap h2 .g{color:#0E9F6E;}
+      #helios-exitcap .sub{font-size:13px;color:#5A6B79;font-weight:600;line-height:1.45;margin-bottom:15px;}
+      #helios-exitcap input{width:100%;border:1.5px solid #D8DFE6;border-radius:12px;padding:13px 14px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;}
+      #helios-exitcap input:focus{border-color:#0A0E12;}
+      #helios-exitcap .btn{display:block;width:100%;border:none;cursor:pointer;background:#0A1219;color:#fff;font-family:'Archivo';font-weight:900;font-size:15px;padding:15px;border-radius:12px;margin-top:9px;box-shadow:0 14px 28px -12px rgba(10,18,25,.55);}
+      #helios-exitcap .btn .p{color:#10C97E;}
+      #helios-exitcap .code{display:none;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(16,163,116,.5);background:#F0FBF6;border-radius:12px;padding:12px;margin:4px 0 10px;}
+      #helios-exitcap .code .lab{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#5A6B79;}
+      #helios-exitcap .code .val{font-weight:900;font-size:19px;letter-spacing:.07em;color:#0C1A24;}
+      #helios-exitcap .later{display:block;width:100%;background:none;border:none;cursor:pointer;color:#90a1ae;font-weight:700;font-size:12px;margin-top:10px;text-decoration:underline;font-family:inherit;}
+      #helios-exitcap .fine{font-size:10px;color:#9aa8b4;margin-top:10px;font-weight:600;}
+    </style>
+    <div class="ov" id="helios-exitcap-ov">
+      <div class="pop">
+        <button class="x" data-exx aria-label="Close">✕</button>
+        <div data-ex-step1>
+          <div class="big">🛒✋</div>
+          <h2>Wait — your cart just got <span class="g">20% cheaper</span>.</h2>
+          <div class="sub">Drop your email and we'll unlock <b>20% OFF</b> your whole order right now — and hold your cart for you.</div>
+          <input type="email" id="helios-exitcap-em" placeholder="Your email" autocomplete="email">
+          <button class="btn" data-ex-go>Unlock my 20% OFF <span class="p">→</span></button>
+          <button class="later" data-exx>No thanks, I'll pay full price</button>
+          <div class="fine">One email, no spam · unsubscribe anytime</div>
+        </div>
+        <div data-ex-step2 style="display:none">
+          <div class="big">🎉</div>
+          <h2>Unlocked — <span class="g">20% OFF</span> is yours.</h2>
+          <div class="sub">We also emailed you the code so it's safe. It applies to everything in your cart.</div>
+          <div class="code" style="display:flex"><span class="lab">Your code</span><span class="val">COMEBACK20</span></div>
+          <button class="btn" data-ex-apply>Apply 20% &amp; checkout <span class="p">→</span></button>
+          <div class="fine">Free shipping · 30-day money-back</div>
+        </div>
+      </div>
+    </div>
+    <script>
+    (function(){
+      var root=document.getElementById('helios-exitcap'); if(!root||root.dataset.i)return; root.dataset.i='1';
+      var ov=document.getElementById('helios-exitcap-ov');
+      function ss(k){ try{return sessionStorage.getItem(k);}catch(e){return null;} }
+      function sset(k,v){ try{sessionStorage.setItem(k,v);}catch(e){} }
+      var hasCart=false, armed=false;
+      fetch('/cart.js',{headers:{'Accept':'application/json'}}).then(function(r){return r.json();}).then(function(c){ hasCart=!!(c&&c.item_count); armed=true; }).catch(function(){});
+      function busyElsewhere(){
+        var gp=document.getElementById('helios-giftpop-ov'); if(gp&&gp.classList.contains('in')) return true;
+        var cb=document.getElementById('helios-cartback-bar'); if(cb&&cb.classList.contains('in')) return true;
+        return false;
+      }
+      function open(){
+        if(!armed||!hasCart) return;
+        if(ss('h_exit')==='1') return;
+        if(busyElsewhere()) return;
+        sset('h_exit','1'); ov.classList.add('in');
+      }
+      // desktop: mouse heads for the browser chrome
+      document.addEventListener('mouseout',function(e){ if(!e.relatedTarget && e.clientY<=8) open(); });
+      // mobile: one hard scroll-up toward the top after engaging
+      var lastY=window.scrollY||0, engaged=false;
+      setTimeout(function(){ engaged=true; },15000);
+      window.addEventListener('scroll',function(){
+        var y=window.scrollY||0;
+        if(engaged && (lastY-y)>650 && y<400) open();
+        lastY=y;
+      },{passive:true});
+      function close(){ ov.classList.remove('in'); }
+      root.querySelectorAll('[data-exx]').forEach(function(b){ b.addEventListener('click',close); });
+      ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+      var s1=root.querySelector('[data-ex-step1]'), s2=root.querySelector('[data-ex-step2]');
+      root.querySelector('[data-ex-go]').addEventListener('click',function(){
+        var em=(document.getElementById('helios-exitcap-em').value||'').trim();
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ document.getElementById('helios-exitcap-em').focus(); return; }
+        var btn=this; btn.disabled=true; btn.textContent='Unlocking…';
+        var body='form_type=customer&utf8=%E2%9C%93&contact%5Bemail%5D='+encodeURIComponent(em)+'&contact%5Btags%5D='+encodeURIComponent('newsletter,exit-capture');
+        fetch('/contact',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
+          .then(function(){ s1.style.display='none'; s2.style.display=''; })
+          .catch(function(){ s1.style.display='none'; s2.style.display=''; });
+      });
+      root.querySelector('[data-ex-apply]').addEventListener('click',function(){
+        this.textContent='Applying 20% off…';
+        window.location.href='/discount/COMEBACK20?redirect=%2Fcart';
+      });
+    })();
+    </script>
+    </div>
+
     {% comment %} HELIOS — FREE Jet Ski + Pump gift popup (3+ gliders). Pops after add-to-cart and on the cart page. {% endcomment %}
     {% unless template.suffix == 'jetski-oto' or template.suffix == 'waverider' %}
     <div id="helios-giftpop">
