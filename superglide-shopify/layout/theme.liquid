@@ -183,6 +183,33 @@
     </div>
     {% endunless %}
 
+    {% comment %} HELIOS — hide the app-injected "VERIFIED RIDERS" review cards (keeps the payment badges) {% endcomment %}
+    <script>
+    (function(){
+      function zap(){
+        var els=document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,div,span,strong,b');
+        for(var i=0;i<els.length;i++){
+          var t=(els[i].textContent||'').trim();
+          if(t.length<60 && /^VERIFIED RIDERS/i.test(t)){
+            var n=els[i], best=els[i];
+            while(n.parentElement){
+              var p=n.parentElement, pt=p.textContent||'';
+              if(/GUARANTEED SAFE/i.test(pt) || p.querySelector('form[action*="/cart/add"]') || (p.id&&p.id.indexOf('hb-')===0) || p.tagName==='BODY') break;
+              best=p; n=p;
+            }
+            best.style.display='none';
+            var s=best.nextElementSibling, g=0;
+            while(s && g++<6 && (s.textContent||'').indexOf('Verified')>-1 && !/GUARANTEED/i.test(s.textContent||'')){ var nx=s.nextElementSibling; s.style.display='none'; s=nx; }
+            return true;
+          }
+        }
+        return false;
+      }
+      var t=0, iv=setInterval(function(){ if(zap()&&t>4||++t>24) clearInterval(iv); },500);
+      if(document.readyState!=='loading'){ zap(); } else { document.addEventListener('DOMContentLoaded',zap); }
+    })();
+    </script>
+
     {% comment %} HELIOS — exit-intent email capture: leaving with a full cart -> email for 20% off (feeds abandoned-cart emails) {% endcomment %}
     <div id="helios-exitcap">
     <style>
