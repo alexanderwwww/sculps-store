@@ -256,6 +256,35 @@ body{overflow-x:clip}
 #mk .lb .nav{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:44px;cursor:pointer;padding:8px 14px;user-select:none}
 #mk .lb .prev{left:6px}
 #mk .lb .next{right:6px}
+/* mobile compact pass — shorter offer column, smaller phone */
+@media(max-width:899px){
+  #mk .iph{width:min(238px,64vw)}
+  #mk .opts{gap:10px}
+  #mk .opt{padding:10px 11px;gap:9px}
+  #mk .opt .pic{width:34px;height:34px}
+  #mk .opt .lbl b{font-size:13.5px}
+  #mk .opt .lbl span{font-size:11.5px}
+  #mk .opt .gft{font-size:9.5px;padding:1px 6px;margin-top:2px}
+  #mk .opt .pr b{font-size:14px}
+  #mk .opt .pr s{font-size:12px}
+  #mk .opt .offp{font-size:9px;padding:2px 6px}
+  #mk .dbn{font-size:10.5px;padding:8px 10px;letter-spacing:.02em}
+  #mk .ob{padding:14px 13px}
+  #mk .ob .pl b{font-size:31px}
+  #mk .ob .pl s{font-size:15px}
+  #mk .ob .hh{font-size:14px}
+  #mk .ob .sv{font-size:11px;padding:4px 10px}
+  #mk .ob .gline{font-size:11px}
+  #mk .pumprow{padding:9px 10px;gap:8px}
+  #mk .pumprow img{width:36px;height:36px}
+  #mk .pumprow .plbl b{font-size:12.5px}
+  #mk .pumprow .plbl span{font-size:10.5px}
+  #mk .pumprow .ppr b{font-size:13px}
+  #mk .ez{font-size:11.5px;gap:4px 10px;margin:2px 0 10px}
+  #mk .atcg{padding:12px;font-size:14.5px}
+  #mk .pills{gap:5px}
+  #mk .pill{font-size:11px;padding:5px 9px}
+}
 @media(prefers-reduced-motion:reduce){
   #mk .cta:after,#mk .phone,#mk .eta .dot,#mk .seefull .ar,#mk .brand,#mk .wave,#mk .ptitle .it .w,#mk .ptitle::before,#mk .ptitle::after{animation:none}
   #mk .rv,#mk .ptitle .w{opacity:1;transform:none;transition:none;filter:none}
@@ -491,7 +520,10 @@ body{overflow-x:clip}
     function ipause(){ ihold=true; clearTimeout(iph._t); iph._t=setTimeout(function(){ihold=false;},10000); }
     document.getElementById('iprev').addEventListener('click',function(e){e.stopPropagation();ipause();igo(ii-1);});
     document.getElementById('inext').addEventListener('click',function(e){e.stopPropagation();ipause();igo(ii+1);});
-    if(!reduce){ (function iloop(){ setTimeout(function(){ if(!ihold&&!document.hidden) igo(ii+1); iloop(); }, ii===0?7000:4000); })(); }
+    // video plays uninterrupted — photos only via the arrows; auto-return to video after browsing
+    var iback=null;
+    function iarm(){ clearTimeout(iback); if(ii!==0){ iback=setTimeout(function(){ igo(0); }, 12000); } }
+    var _igo=igo; igo=function(k){ _igo(k); iarm(); };
   }
   // gallery
   var gthumbs=[].slice.call(document.querySelectorAll('#gthumbs .gth'));
