@@ -36,6 +36,15 @@
   #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;}
   #hb-{{ sid }} .hb-cell > img,#hb-{{ sid }} .hb-cell > video{width:100%;height:100%;object-fit:contain;display:block;}
   #hb-{{ sid }} .hb-dots{display:flex;gap:6px;justify-content:center;margin-top:11px;min-height:7px;}
+  /* small UGC phone under the carousel — desktop only, fills the scroll gap */
+  #hb-{{ sid }} .hb-ugc{display:none;}
+  @media(min-width:900px){
+    #hb-{{ sid }} .hb-ugc{display:flex;justify-content:center;margin-top:20px;}
+    #hb-{{ sid }} .hb-ugcphone{position:relative;width:210px;aspect-ratio:9/16;border-radius:34px;overflow:hidden;background:#0E1116;border:7px solid #17181C;box-shadow:0 26px 54px -26px rgba(6,47,73,.55),inset 0 0 0 2px #2A2B31;}
+    #hb-{{ sid }} .hb-ugcphone::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:58px;height:16px;background:#0B0B0E;border-radius:10px;z-index:5;}
+    #hb-{{ sid }} .hb-ugcphone video{width:100%;height:100%;object-fit:cover;display:block;}
+    #hb-{{ sid }} .hb-ugctag{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font-size:10.5px;font-weight:700;padding:4px 11px;border-radius:100px;border:1px solid rgba(255,255,255,.3);white-space:nowrap;z-index:6;}
+  }
   #hb-{{ sid }} .hb-dot{width:7px;height:7px;border-radius:50%;background:rgba(12,26,36,.18);transition:.2s;}
   #hb-{{ sid }} .hb-dot.on{background:var(--helios-acc,#0E7CC4);width:20px;border-radius:4px;}
   #hb-{{ sid }} .hb-pk{flex:1;display:flex;align-items:center;gap:11px;text-align:left;cursor:pointer;border:2px solid rgba(12,26,36,.14);background:#fff;border-radius:14px;padding:10px 13px;transition:.18s;}
@@ -285,6 +294,7 @@
           {%- endif -%}
         {%- endfor -%}
       </div>
+      <div class="hb-ugc"><div class="hb-ugcphone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="hb-ugctag">▶ Real families, real water</span></div></div>
     </div>
 
     {%- comment -%} ---------- GALLERY (mini) ---------- {%- endcomment -%}
@@ -709,19 +719,6 @@
   var grid=root.querySelector('.hb-grid'); if(!grid)return;
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function activeGal(){ var gs=[].slice.call(grid.querySelectorAll('.hb-gallery')); for(var i=0;i<gs.length;i++){ if(gs[i].style.display!=='none'&&gs[i].offsetParent!==null) return gs[i]; } return gs[0]; }
-  /* JS sticky — rides the gallery down the column as you scroll; immune to ancestor overflow clipping */
-  var raf=false;
-  function stick(){
-    raf=false;
-    var gal=activeGal(); if(!gal)return;
-    if(window.innerWidth<900){ gal.style.transform=''; return; }
-    var gr=grid.getBoundingClientRect();
-    var room=Math.max(0, grid.offsetHeight-gal.offsetHeight);
-    var shift=Math.min(Math.max(0, 96-gr.top), room);
-    gal.style.transform=shift>0?'translateY('+shift+'px)':'';
-  }
-  function onScroll(){ if(!raf){ raf=true; requestAnimationFrame(stick); } }
-  window.addEventListener('scroll',onScroll,{passive:true}); window.addEventListener('resize',onScroll); stick();
   /* gentle auto-cycle through slides while the gallery is on screen; any touch pauses it */
   var hold=false;
   function arm(){ hold=true; clearTimeout(grid._h); grid._h=setTimeout(function(){hold=false;},9000); }
