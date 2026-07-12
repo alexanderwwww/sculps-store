@@ -17,10 +17,13 @@ body{overflow-x:clip}
 #mk .rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
 #mk .rv.in{opacity:1;transform:none}
 /* title — word stagger + green shimmer */
-#mk .ptitle{padding:26px 18px 6px;max-width:1040px;margin:0 auto;background:radial-gradient(90% 75% at 72% 4%,rgba(255,187,92,.26),transparent 62%)}
+#mk .ptitle{position:relative;padding:26px 18px 6px;max-width:1040px;margin:0 auto;background:radial-gradient(90% 75% at 72% 4%,rgba(255,187,92,.26),transparent 62%)}
+#mk .ptitle::before{content:'✦';position:absolute;top:10%;left:52%;font-size:17px;color:#E8A94E;opacity:.65;animation:mkfloat 5.5s ease-in-out infinite;pointer-events:none}
+#mk .ptitle::after{content:'✦';position:absolute;top:64%;left:4%;font-size:11px;color:#E8A94E;opacity:.4;animation:mkfloat 7s ease-in-out 1.2s infinite;pointer-events:none}
+@keyframes mkfloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-9px) rotate(18deg)}}
 #mk .hgrid{display:grid;grid-template-columns:1fr;gap:24px;align-items:center;text-align:center}
 @media(min-width:900px){#mk .hgrid{grid-template-columns:1.05fr .95fr;gap:44px;text-align:left}}
-#mk .ptitle h1{font-weight:800;font-size:clamp(24px,4.9vw,44px);line-height:1.1;letter-spacing:-.024em;margin:10px 0 0;text-wrap:balance}
+#mk .ptitle h1{font-weight:800;font-size:clamp(25px,5.3vw,49px);line-height:1.07;letter-spacing:-.024em;margin:10px 0 0;text-wrap:balance}
 #mk .hsub{font-family:Georgia,serif;font-style:italic;font-size:clamp(15px,1.7vw,19px);color:#5E4B33;margin:12px 0 0}
 #mk .heropill{display:inline-block;text-align:center;background:#14100A;border-radius:16px;padding:15px 26px;margin-top:18px;cursor:pointer;box-shadow:0 16px 34px -14px rgba(10,14,18,.55);transition:transform .15s}
 #mk .heropill:hover{transform:translateY(-2px)}
@@ -28,9 +31,10 @@ body{overflow-x:clip}
 #mk .heropill b .ga{color:var(--grn)}
 #mk .heropill em{font-style:normal;font-size:11.5px;color:rgba(255,255,255,.6)}
 #mk .hphone{margin:0 auto}
-#mk .ptitle .w{display:inline-block;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;transition-delay:calc(var(--i)*45ms)}
-#mk .ptitle.go .w{opacity:1;transform:none}
-#mk .ptitle .it .w{background:linear-gradient(90deg,#137a3e,#10C97E,#0e9e63,#137a3e);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 5.5s linear infinite}
+#mk .ptitle .w{display:inline-block;opacity:0;transform:translateY(14px);filter:blur(5px);transition:opacity .55s ease,transform .55s ease,filter .55s ease;transition-delay:calc(var(--i)*45ms)}
+#mk .ptitle.go .w{opacity:1;transform:none;filter:none}
+#mk .ptitle .it{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;letter-spacing:0}
+#mk .ptitle .it .w{font-size:1.06em;background:linear-gradient(90deg,#A8641A,#E8A94E,#FFE3A8,#E8A94E,#A8641A);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mkshim 5.5s linear infinite}
 @keyframes mkshim{to{background-position:220% 0}}
 /* BUY BOX */
 #mk .buy{display:grid;grid-template-columns:1fr;gap:22px;padding:14px 0 8px}
@@ -237,8 +241,8 @@ body{overflow-x:clip}
 #mk .lb .prev{left:6px}
 #mk .lb .next{right:6px}
 @media(prefers-reduced-motion:reduce){
-  #mk .cta:after,#mk .phone,#mk .eta .dot,#mk .seefull .ar,#mk .brand,#mk .wave,#mk .ptitle .it .w{animation:none}
-  #mk .rv,#mk .ptitle .w{opacity:1;transform:none;transition:none}
+  #mk .cta:after,#mk .phone,#mk .eta .dot,#mk .seefull .ar,#mk .brand,#mk .wave,#mk .ptitle .it .w,#mk .ptitle::before,#mk .ptitle::after{animation:none}
+  #mk .rv,#mk .ptitle .w{opacity:1;transform:none;transition:none;filter:none}
 }
 </style>
 <div id="mk">
