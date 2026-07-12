@@ -79,7 +79,10 @@ body{overflow-x:clip}
 #mk .ptl{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:15px 0 0}
 #mk .social{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0;font-size:13px;color:var(--mut)}
 #mk .social b{color:var(--ink)}
-#mk .pills{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0 0}
+#mk .pills{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);margin:13px 0 0}
+#mk .pills .prow{display:flex;gap:7px;width:max-content;padding:2px 0;animation:mkcm 34s linear infinite}
+#mk .pills:hover .prow{animation-play-state:paused}
+#mk .pill{flex:0 0 auto;white-space:nowrap}
 #mk .pill{display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid rgba(22,163,74,.30);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#137a3e;font-size:12px;font-weight:700;padding:6px 11px;border-radius:100px}
 #mk .pill .c{color:var(--ok);font-weight:900}
 #mk .bhead{text-align:center;padding:8px 18px 4px}
@@ -341,14 +344,14 @@ body{overflow-x:clip}
     </div>
     <div class="ptl">HELIOS SuperGlide Pro 1+1 FREE</div>
     <div class="social"><span class="stars">★★★★★</span> <b>4.8</b> · 4,228 reviews · <b>21,600+ sold</b> · holds 300 lb</div>
-    <div class="pills">
+    <div class="pills"><div class="prow" id="pillrow">
       <span class="pill"><span class="c">✓</span> The motor does the work — no paddling</span>
       <span class="pill"><span class="c">✓</span> Holds 300 lb · you + 2 kids</span>
       <span class="pill"><span class="c">✓</span> Steers with two easy joysticks</span>
       <span class="pill"><span class="c">✓</span> Runs about 2 hours per charge</span>
       <span class="pill"><span class="c">✓</span> Blows up in about 5 minutes</span>
       <span class="pill"><span class="c">✓</span> Pool · lake · river</span>
-    </div>
+    </div></div>
     <div class="ocard"><div class="ostrip"><span id="cp_strip_l">☀ 2-for-1 Summer Deal</span><span class="mp" id="cp_strip_r">★ Most Popular</span></div><div class="oin">
     <div class="ez"><span><b>1.</b> Pick your deal below</span><span><b>2.</b> Tap "Add to cart"</span><span><b>3.</b> We ship it free</span></div>
     <div class="opts" id="opts">
@@ -645,7 +648,7 @@ body{overflow-x:clip}
     if(!reduce){rauto=setInterval(function(){if(rhold)return;if(document.hidden)return;rgo(ri+1);},4500);}
   }
   // marquees
-  ['crow','crow2','srow'].forEach(function(i){var e=document.getElementById(i);if(e)e.innerHTML+=e.innerHTML;});
+  ['crow','crow2','srow','pillrow'].forEach(function(i){var e=document.getElementById(i);if(e)e.innerHTML+=e.innerHTML;});
 })();
 </script>
 {% schema %}
