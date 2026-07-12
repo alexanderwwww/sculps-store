@@ -56,6 +56,7 @@
   #hb-{{ sid }} .hb-pk.on b{color:#fff;}
   #hb-{{ sid }} .hb-pk.on span{color:rgba(255,255,255,.72);}
   #hb-{{ sid }} .hb-gallery{position:relative;}
+  #hb-{{ sid }} .hb-stagewrap{position:relative;}
   #hb-{{ sid }} .hb-dots{display:none;}
   #hb-{{ sid }} .hb-thumbs{position:absolute;left:0;right:0;bottom:12px;z-index:4;display:flex;gap:7px;justify-content:center;align-items:center;padding:0 12px;margin:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   #hb-{{ sid }} .hb-thumbs::-webkit-scrollbar{display:none;}
@@ -70,7 +71,7 @@
   #hb-{{ sid }} .hb-sub{color:#5B6470;font-size:15px;line-height:1.5;margin:8px 0 0;max-width:480px;}
   #hb-{{ sid }} .hb-eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#3E5568;margin-bottom:5px;}
   #hb-{{ sid }} .hb-pills{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 0;}
-  #hb-{{ sid }} .hb-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#1F6B4A;background:rgba(74,190,140,.14);border:1px solid rgba(74,190,140,.38);border-radius:100px;padding:4px 10px;}
+  #hb-{{ sid }} .hb-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#1F6B4A;background:rgba(74,190,140,.14);border:1px solid rgba(74,190,140,.38);border-radius:100px;padding:5px 11px;}
   #hb-{{ sid }} .hb-pill::before{content:"✓";font-size:10px;}
   #hb-{{ sid }} .hb-rate{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;margin:12px 0 18px;font-size:13.5px;color:#5B6470;text-decoration:none;}
   #hb-{{ sid }} .hb-rate .hb-metadot{color:#c5ccd4;}
@@ -137,6 +138,8 @@
   #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
   #hb-{{ sid }} .hb-chip{font-size:11.5px;font-weight:700;color:var(--helios-ink,#0C1A24);background:rgba(14,124,196,.08);border:1px solid rgba(14,124,196,.16);border-radius:30px;padding:5px 10px;white-space:nowrap;}
   #hb-{{ sid }} .hb-timer{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));backdrop-filter:var(--helios-g-blur);padding:7px 12px;border-radius:9px;margin-bottom:16px;}
+  #hb-{{ sid }} .hb-ez{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;margin:0 0 12px;font-size:12.5px;font-weight:700;color:#5B6470;}
+  #hb-{{ sid }} .hb-ez b{color:#0A0D11;}
   #hb-{{ sid }} .hb-tiers{display:flex;flex-direction:column;gap:12px;background:transparent;border:none;padding:0;box-shadow:none;}
   #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:13px;border:1.5px solid #E4E8EC;border-radius:16px;padding:16px;cursor:pointer;position:relative;background:#fff;transition:.16s;margin:0;}
   #hb-{{ sid }} .hb-tier.sel{border-color:#0A0D11;border-width:2px;background:#F6FBF8;box-shadow:0 10px 24px -12px rgba(10,13,17,.3);}
@@ -145,8 +148,8 @@
   #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;left:16px;font-size:10px;font-weight:700;letter-spacing:.01em;text-transform:lowercase;color:#fff;padding:4px 12px;border-radius:20px;background:#0A0D11;box-shadow:0 5px 12px rgba(10,13,17,.3);}
   #hb-{{ sid }} .hb-badge.teal{background:#3E5568;}
   #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:800;font-size:16px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-tiersub{display:block;font-size:12.5px;color:#5B6470;font-weight:500;margin-top:2px;}
-  #hb-{{ sid }} .hb-tierper{display:block;font-size:11.5px;color:#9aa2ab;font-weight:500;margin-top:3px;}
+  #hb-{{ sid }} .hb-tiersub{display:block;font-size:13.5px;color:#5B6470;font-weight:500;margin-top:2px;}
+  #hb-{{ sid }} .hb-tierper{display:block;font-size:12.5px;color:#8A93A0;font-weight:500;margin-top:3px;}
   #hb-{{ sid }} .hb-tierprice{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
   #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:19px;color:#0A0D11;letter-spacing:-.01em;}
   #hb-{{ sid }} .hb-tierprice s{font-size:12.5px;color:#b3bac2;font-weight:600;}
@@ -254,6 +257,7 @@
 
     {%- comment -%} ---------- GALLERY (double) ---------- {%- endcomment -%}
     <div class="hb-gallery" data-gal="double">
+      <div class="hb-stagewrap">
       <div class="hb-stage" id="hb-stage-{{ sid }}" data-track>
         {%- assign mainimg = product.featured_image | default: section.settings.lead_image -%}
         {%- assign nimg = product.images.size -%}
@@ -293,6 +297,7 @@
           </button>
           {%- endif -%}
         {%- endfor -%}
+      </div>
       </div>
       <div class="hb-ugc"><div class="hb-ugcphone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="hb-ugctag">▶ Real families, real water</span></div></div>
     </div>
@@ -341,7 +346,7 @@
         <span style="color:#f5a623;letter-spacing:1px;">★★★★★</span>
         <b style="color:var(--helios-ink,#0C1A24);">{{ section.settings.rating | default: '4.8' }}</b>
         <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.review_count | default: '3,912' }} reviews</span>
-        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.meta_1 | default: 'dual thrusters' }}</span>
+        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.meta_1 | default: 'the motor does the work' }}</span>
         <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.meta_2 | default: 'holds 300 lb' }}</span>
       </a>
 
@@ -374,6 +379,7 @@
         </div>
         {%- endif -%}
 
+        <div class="hb-ez"><span><b>1.</b> Pick your deal below</span><span><b>2.</b> Tap "add to cart"</span><span><b>3.</b> We ship it free</span></div>
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
           {%- if section.settings.show_picker -%}
           {%- comment -%} auto Mini tier (single-seat variant) {%- endcomment -%}
