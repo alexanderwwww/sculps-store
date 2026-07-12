@@ -703,6 +703,51 @@
 })();
 </script>
 
+<script>
+(function(){
+  var root=document.getElementById('hb-{{ sid }}'); if(!root||root.dataset.stick)return; root.dataset.stick='1';
+  var grid=root.querySelector('.hb-grid'); if(!grid)return;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function activeGal(){ var gs=[].slice.call(grid.querySelectorAll('.hb-gallery')); for(var i=0;i<gs.length;i++){ if(gs[i].style.display!=='none'&&gs[i].offsetParent!==null) return gs[i]; } return gs[0]; }
+  /* JS sticky — rides the gallery down the column as you scroll; immune to ancestor overflow clipping */
+  var raf=false;
+  function stick(){
+    raf=false;
+    var gal=activeGal(); if(!gal)return;
+    if(window.innerWidth<900){ gal.style.transform=''; return; }
+    var gr=grid.getBoundingClientRect();
+    var room=Math.max(0, grid.offsetHeight-gal.offsetHeight);
+    var shift=Math.min(Math.max(0, 96-gr.top), room);
+    gal.style.transform=shift>0?'translateY('+shift+'px)':'';
+  }
+  function onScroll(){ if(!raf){ raf=true; requestAnimationFrame(stick); } }
+  window.addEventListener('scroll',onScroll,{passive:true}); window.addEventListener('resize',onScroll); stick();
+  /* gentle auto-cycle through slides while the gallery is on screen; any touch pauses it */
+  var hold=false;
+  function arm(){ hold=true; clearTimeout(grid._h); grid._h=setTimeout(function(){hold=false;},9000); }
+  ['pointerdown','wheel','touchstart'].forEach(function(ev){ grid.addEventListener(ev,arm,{passive:true}); });
+  function cellSync(track){
+    var cells=[].slice.call(track.querySelectorAll('.hb-cell')); if(!cells.length)return null;
+    var idx=Math.round(track.scrollLeft/Math.max(1,track.clientWidth)); idx=Math.max(0,Math.min(cells.length-1,idx));
+    cells.forEach(function(c,j){ var v=c.querySelector('video'); if(v){ if(j===idx){ var p=v.play(); if(p&&p.catch)p.catch(function(){}); } else { v.pause(); } } });
+    return {cells:cells,idx:idx};
+  }
+  if(!reduce){
+    setInterval(function(){
+      if(hold||document.hidden)return;
+      var gal=activeGal(); if(!gal)return;
+      var track=gal.querySelector('[data-track]'); if(!track)return;
+      var r=track.getBoundingClientRect(); if(r.bottom<80||r.top>window.innerHeight-80)return;
+      var s=cellSync(track); if(!s||s.cells.length<2)return;
+      var nx=(s.idx+1)%s.cells.length;
+      track.scrollTo({left:nx*track.clientWidth,behavior:'smooth'});
+    },5500);
+  }
+  /* keep videos playing/paused correctly on manual swipes too */
+  var t; grid.addEventListener('scroll',function(e){ var el=e.target; if(el&&el.getAttribute&&el.hasAttribute('data-track')){ clearTimeout(t); t=setTimeout(function(){ cellSync(el); },140); } },true);
+})();
+</script>
+
 {%- comment -%} =================== SCHEMA =================== {%- endcomment -%}
 {% schema %}
 {
