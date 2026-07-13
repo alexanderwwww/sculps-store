@@ -295,7 +295,7 @@
   #hb-{{ sid }} .hb-pk .hb-pktx{align-items:center;text-align:center;}
   #hb-{{ sid }} .hb-pk .hb-pktx b{font-size:14px;color:#0A0D11;font-family:'Archivo',sans-serif;}
   #hb-{{ sid }} .hb-pk .hb-pktx span{font-size:11px;color:#8A93A0;}
-  #hb-{{ sid }} .hb-pk.on{background:#fff;border:none;box-shadow:0 2px 9px rgba(10,13,17,.14);}
+  #hb-{{ sid }} .hb-pk.on{background:#fff;border:1.5px solid #0A0D11;box-shadow:none;}
   #hb-{{ sid }} .hb-pk.on .hb-pktx b{color:#0A0D11;}
   #hb-{{ sid }} .hb-pk.on .hb-pktx span{color:#8A93A0;}
   #hb-{{ sid }} .hb-ob{margin-top:12px;}
@@ -304,7 +304,7 @@
   #hb-{{ sid }} .hb-kleft{margin-top:6px;}
   #hb-{{ sid }} .hb-kquote{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;border:1px solid #E7E9E7;border-radius:12px;background:#fff;padding:11px 14px;font-size:13px;color:#33413A;text-align:center;}
   #hb-{{ sid }} .hb-kquote b{color:#0A0D11;font-weight:700;}
-  #hb-{{ sid }} .hb-kcheck{display:block;text-align:center;background:#FFF7DC;border:1px solid #F1E4B4;border-radius:12px;padding:11px 14px;margin-top:9px;font-size:13px;font-weight:700;color:#5A4A17;text-decoration:none;}
+  #hb-{{ sid }} .hb-kcheck{display:block;text-align:center;background:#EDF7EF;border:1px solid #D8EBDC;border-radius:10px;padding:11px 14px;margin-top:9px;font-size:13px;font-weight:700;color:#2E5A3C;text-decoration:none;}
   #hb-{{ sid }} .hb-kstory{margin-top:18px;}
   #hb-{{ sid }} .hb-kstory h3{font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:#0A0D11;margin:0 0 7px;}
   #hb-{{ sid }} .hb-kstory p{font-size:14px;line-height:1.6;color:#5B6470;margin:0;max-width:60ch;}
@@ -362,14 +362,23 @@
   #hb-{{ sid }} .hb-buy{border:none!important;box-shadow:none!important;padding:0!important;}
   #hb-{{ sid }} .hb-krate{margin:0 0 6px;}
   #hb-{{ sid }} .hb-ktitle{margin:0 0 2px;}
-  #hb-{{ sid }} .hb-sub{margin:10px 0 0;}
+  #hb-{{ sid }} .hb-sub{margin:10px 0 0;font-weight:700;font-size:14px;color:#111;line-height:1.45;}
   #hb-{{ sid }} .hb-kbest{margin:8px 0 0;}
   #hb-{{ sid }} .hb-picker{margin:16px 0 14px!important;}
   #hb-{{ sid }} .hb-klabel{margin:0 0 9px;}
   #hb-{{ sid }} .hb-tiers{gap:10px;}
   #hb-{{ sid }} .hb-atc{margin-top:16px;}
   #hb-{{ sid }} .hb-kleft{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
-  #hb-{{ sid }} .hb-dbn,#hb-{{ sid }} .hb-ob,#hb-{{ sid }} .hb-code,#hb-{{ sid }} .hb-trust,#hb-{{ sid }} .hb-pays,#hb-{{ sid }} .hb-eta,#hb-{{ sid }} .hb-kpromise,#hb-{{ sid }} .hb-kships,#hb-{{ sid }} .hb-kfacts,#hb-{{ sid }} .hb-kpills,#hb-{{ sid }} .hb-pills,#hb-{{ sid }} .hb-ez,#hb-{{ sid }} .hb-kfaq{display:none!important;}
+  #hb-{{ sid }} .hb-dbn,#hb-{{ sid }} .hb-ob,#hb-{{ sid }} .hb-code,#hb-{{ sid }} .hb-trust,#hb-{{ sid }} .hb-pays,#hb-{{ sid }} .hb-eta,#hb-{{ sid }} .hb-kpromise,#hb-{{ sid }} .hb-kships,#hb-{{ sid }} .hb-kfacts,#hb-{{ sid }} .hb-pills,#hb-{{ sid }} .hb-ez{display:none!important;}
+  /* bulletproof Super Glide / Mini toggle (segmented control, visible labels) */
+  #hb-{{ sid }} .hb-picker{display:flex!important;gap:0!important;background:#EFEFED!important;border:1px solid #E2E2E0!important;border-radius:12px!important;padding:4px!important;margin:16px 0 14px!important;}
+  #hb-{{ sid }} .hb-pk{flex:1 1 0!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important;min-width:0!important;padding:10px 8px!important;border:none!important;background:transparent!important;border-radius:9px!important;box-shadow:none!important;cursor:pointer;}
+  #hb-{{ sid }} .hb-pkimg{display:none!important;}
+  #hb-{{ sid }} .hb-pktx{display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;min-width:0!important;}
+  #hb-{{ sid }} .hb-pktx b{font-size:14px!important;font-weight:800!important;color:#0A0D11!important;font-family:'Archivo',sans-serif!important;line-height:1.2!important;}
+  #hb-{{ sid }} .hb-pktx span{font-size:11px!important;color:#8A93A0!important;font-weight:500!important;}
+  #hb-{{ sid }} .hb-pk.on{background:#fff!important;box-shadow:0 1px 6px rgba(10,13,17,.16)!important;}
+  #hb-{{ sid }} .hb-pk.on .hb-pktx b{color:#0A0D11!important;}
 </style>
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
@@ -462,6 +471,7 @@
           <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
         </div>
       </div>
+      <div class="hb-kpills"><span>☀ Summer Sale — up to 63% OFF</span><span>🛡 30-Day Money-Back</span></div>
       <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
       <div class="hb-kbest"><b>Best for:</b> Pool Days, Lake Weekends, The Grandkids, All-Summer Lounging</div>
 
@@ -476,14 +486,12 @@
         <div class="hb-picker" style="display:flex;gap:9px;margin:0 0 14px;">
           {%- assign pk_dbl = product.featured_image | default: section.settings.lead_image -%}
           <button type="button" data-pick="double" class="hb-pk on">
-            {%- if pk_dbl != blank -%}<img class="hb-pkimg" src="{{ pk_dbl | image_url: width: 120 }}" alt="Super Glide">{%- endif -%}
             <span class="hb-pktx"><b>Super Glide</b><span>Double · 2 seats</span></span>
           </button>
           {%- assign mini_variant = blank -%}
           {%- for v in product.variants -%}{%- if v.title contains 'Mini' -%}{%- assign mini_variant = v -%}{%- break -%}{%- endif -%}{%- endfor -%}
           {%- assign pk_mini = mini_variant.image | default: section.settings.mini_image_1 -%}
           <button type="button" data-pick="mini" class="hb-pk">
-            {%- if pk_mini != blank -%}<img class="hb-pkimg" src="{{ pk_mini | image_url: width: 120 }}" alt="Mini Glide">{%- endif -%}
             <span class="hb-pktx"><b>Mini Glide</b><span>Single · 1 seat</span></span>
           </button>
         </div>
@@ -576,13 +584,32 @@
     {%- comment -%} KURU-style left column under the gallery: quote strip, check strip, FAQ chips, story, Quick Facts {%- endcomment -%}
     <div class="hb-kleft">
       <div class="hb-kquote"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><span>"My son will NOT get off this thing. Literally, he refuses."</span><b>— elena d.</b></div>
-      <div class="hb-kchips">
-        <a class="hb-kchip" href="#faq">＋ How does the motor work?</a>
-        <a class="hb-kchip" href="#faq">＋ Is it safe for kids?</a>
-        <a class="hb-kchip" href="#faq">＋ What exactly is in the box?</a>
-      </div>
+      <a class="hb-kcheck" href="#hb-kfaq-{{ sid }}">Is the Super Glide right for your family? Let's check →</a>
     </div>
   </div>
+
+  {%- comment -%} FAQ + UGC phone video {%- endcomment -%}
+  <div class="hb-kfaq" id="hb-kfaq-{{ sid }}">
+    <div class="hb-kfaq-phone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="tag">▶ Real families, real water</span></div>
+    <div class="hb-kfaq-list">
+      <h2>Everything you're wondering, answered.</h2>
+      <div class="fsub">Honest answers — watch it in action while you read.</div>
+      <div class="hb-kfq on"><div class="q">Does it really move on its own?<span class="ic">+</span></div><div class="a"><p>Yes — twin quiet electric motors push you forward and let you spin 360° with the joysticks. No paddling, no gas, no motorboat. Completely hands-free.</p></div></div>
+      <div class="hb-kfq"><div class="q">Is it safe for kids?<span class="ic">+</span></div><div class="a"><p>Yes — the motors are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent up to the 300 lb capacity, life jackets on.</p></div></div>
+      <div class="hb-kfq"><div class="q">How long does the battery last?<span class="ic">+</span></div><div class="a"><p>About 2 hours of continuous cruising per charge — a whole afternoon on the water — and it recharges between sessions.</p></div></div>
+      <div class="hb-kfq"><div class="q">How hard is it to set up?<span class="ic">+</span></div><div class="a"><p>Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</p></div></div>
+      <div class="hb-kfq"><div class="q">What if I don't love it?<span class="ic">+</span></div><div class="a"><p>Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</p></div></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){var r=document.getElementById('hb-kfaq-{{ sid }}');if(!r||r.dataset.i)return;r.dataset.i='1';
+var fqs=[].slice.call(r.querySelectorAll('.hb-kfq'));
+function setH(f){var a=f.querySelector('.a');a.style.maxHeight=f.classList.contains('on')?a.scrollHeight+'px':'0px';}
+fqs.forEach(function(f){setH(f);f.querySelector('.q').addEventListener('click',function(){var op=!f.classList.contains('on');fqs.forEach(function(o){o.classList.remove('on');setH(o);});if(op){f.classList.add('on');}setH(f);});});
+var v=r.querySelector('video');if(v){var p=v.play();if(p&&p.catch)p.catch(function(){});}
+})();
+</script>
 
 <div id="hb-sticky-{{ sid }}" aria-hidden="true">
   <div class="hb-sk-info">
