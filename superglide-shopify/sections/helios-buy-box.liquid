@@ -309,6 +309,28 @@
   #hb-{{ sid }} .hb-kstory h3{font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:#0A0D11;margin:0 0 7px;}
   #hb-{{ sid }} .hb-kstory p{font-size:14px;line-height:1.6;color:#5B6470;margin:0;max-width:60ch;}
   @media(max-width:879px){#hb-{{ sid }} .hb-buy{padding:16px 14px;}#hb-{{ sid }} .hb-ktitle{flex-direction:column;gap:4px;}#hb-{{ sid }} .hb-ktitle .hb-priceline{flex-direction:row;align-items:baseline;gap:9px;}}
+  /* ===== PROPORTION FIX — whole buy column visible in first view (KURU density) ===== */
+  @media(min-width:880px){
+    #hb-{{ sid }} .hb-grid{grid-template-columns:1.12fr 1fr!important;gap:32px!important;align-items:start!important;}
+    #hb-{{ sid }} .hb-stage{aspect-ratio:auto!important;height:clamp(420px,38vw,540px)!important;}
+    #hb-{{ sid }} .hb-gallery{position:sticky;top:80px;align-self:start;}
+    #hb-{{ sid }} .hb-iph{width:min(180px,50%)!important;}
+  }
+  /* tighten buy column so bundles rise up into the first view */
+  #hb-{{ sid }} .hb-buy{padding:18px;}
+  #hb-{{ sid }} .hb-kcrumb{margin-bottom:5px;}
+  #hb-{{ sid }} .hb-krate{margin:0 0 4px;}
+  #hb-{{ sid }} .hb-ktitle{margin:0;}
+  #hb-{{ sid }} .hb-ktitle h1{margin:0;}
+  #hb-{{ sid }} .hb-kpills{margin:8px 0 0;}
+  #hb-{{ sid }} .hb-sub{margin:9px 0 0;font-size:14px;line-height:1.45;}
+  #hb-{{ sid }} .hb-kbest{margin:8px 0 0;}
+  #hb-{{ sid }} .hb-pills{display:none;}
+  #hb-{{ sid }} .hb-picker{margin:14px 0 12px!important;}
+  #hb-{{ sid }} .hb-klabel{margin:0 0 8px;}
+  #hb-{{ sid }} .hb-ez{margin:0 0 10px;font-size:12px;}
+  #hb-{{ sid }} .hb-tiers{gap:9px;}
+  #hb-{{ sid }} .hb-tier{padding:12px 14px;}
 </style>
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
