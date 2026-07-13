@@ -1,888 +1,300 @@
 {%- comment -%}
-============================================================================
-  HELIOS SUPER GLIDE — BUY BOX  (product-first, conversion-optimized)
-  Drop into: sections/helios-buy-box.liquid  →  add to product template.
-  ----------------------------------------------------------------------------
-  • Real Shopify buy form: {% form 'product', product %} + {{ form | payment_button }}
-    renders Apple Pay / Shop Pay / Google Pay express buttons.
-  • Bundle tiers = section BLOCKS, each pointing at a REAL variant ID, so each
-    tier adds the correct variant. Prices pulled live via {{ variant.price | money }}.
-  • Lead media = demo video (autoplay muted loop playsinline, poster fallback),
-    with gallery thumbs below. Hero video vs image is a setting (A/B).
-  • Countdown (per-session, honest), low-stock, live viewers, recent-purchase toasts.
-  HOW TO WIRE VARIANTS:
-    Online Store → Theme editor → this section → each "Bundle tier" block →
-    paste the numeric Variant ID (Products → variant → the number at the end of
-    the admin URL …/variants/<ID>). qty = how many units that variant represents.
-============================================================================
+  HELIOS Buy Box — v2, coded from scratch on the KURU blueprint.
+  Left: thumb rail + big square image + review strip + check strip.
+  Right: crumb, stars, title+price, pills, bold sub, best-for, variant toggle, bundles, ATC, Buy Now.
+  Below: FAQ + UGC phone video. All exact-pay pricing (x0.88), gift auto-add on 3/4-pack.
 {%- endcomment -%}
-
-{%- unless product -%}{%- assign product = section.settings.featured_product -%}{%- endunless -%}
-{%- assign cur = product.selected_or_first_available_variant -%}
 {%- assign sid = section.id -%}
-{%- capture hb_flag -%}<svg class="hb-flag" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="14" fill="#B22234"/><rect y="2" width="20" height="2" fill="#fff"/><rect y="6" width="20" height="2" fill="#fff"/><rect y="10" width="20" height="2" fill="#fff"/><rect width="9" height="8" fill="#3C3B6E"/><g fill="#fff"><circle cx="2" cy="2" r=".7"/><circle cx="4.5" cy="2" r=".7"/><circle cx="7" cy="2" r=".7"/><circle cx="3.25" cy="4" r=".7"/><circle cx="5.75" cy="4" r=".7"/><circle cx="2" cy="6" r=".7"/><circle cx="4.5" cy="6" r=".7"/><circle cx="7" cy="6" r=".7"/></g></svg>{%- endcapture -%}
-
-<section class="helios helios-buy" id="hb-{{ sid }}">
+{%- assign product = all_products[section.settings.featured_product] | default: product -%}
+{%- assign cur = product.selected_or_first_available_variant -%}
+{%- assign scp = cur.price | times: 0.88 | round -%}
+<section class="helios" id="hb-{{ sid }}">
 <style>
-  #hb-{{ sid }} .hb-wrap{max-width:1200px;margin:0 auto;padding:clamp(16px,3vw,40px) 22px clamp(32px,5vw,56px);}
-  #hb-{{ sid }} .hb-grid{display:grid;grid-template-columns:1fr;gap:30px;}
-  @media(min-width:880px){
-    #hb-{{ sid }} .hb-grid{grid-template-columns:1.04fr .96fr;gap:46px;align-items:start;}
-    #hb-{{ sid }} .hb-gallery{position:sticky;top:90px;}
-  }
-  #hb-{{ sid }} .hb-stage{position:relative;display:flex;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:14px;background:#F7F8F7;border:1px solid #E5E8E5;box-shadow:none;aspect-ratio:1/1;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
-  #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;height:100%;overflow:hidden;}
-  #hb-{{ sid }} .hb-stage::-webkit-scrollbar{display:none;}
-  #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;}
-  #hb-{{ sid }} .hb-cell > img,#hb-{{ sid }} .hb-cell > video{width:100%;height:100%;object-fit:contain;display:block;}
-  #hb-{{ sid }} .hb-dots{display:flex;gap:6px;justify-content:center;margin-top:11px;min-height:7px;}
-  /* small UGC phone under the carousel — desktop only, fills the scroll gap */
-  #hb-{{ sid }} .hb-ugc{display:none;}
-  @media(min-width:900px){
-    #hb-{{ sid }} .hb-ugc{display:flex;justify-content:center;margin-top:26px;}
-    #hb-{{ sid }} .hb-ugcphone{position:relative;width:310px;aspect-ratio:9/16;border-radius:48px;overflow:hidden;background:#0E1116;border:10px solid #17181C;box-shadow:0 34px 68px -30px rgba(6,47,73,.6),inset 0 0 0 2px #2A2B31;}
-    #hb-{{ sid }} .hb-ugcphone::before{content:'';position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:26px;background:#0B0B0E;border-radius:16px;z-index:5;}
-    #hb-{{ sid }} .hb-ugcphone::after{content:'';position:absolute;top:50%;right:20px;transform:translateY(-50%);width:9px;height:9px;border-radius:50%;background:transparent;}
-    #hb-{{ sid }} .hb-ugcphone video{width:100%;height:100%;object-fit:cover;display:block;}
-    #hb-{{ sid }} .hb-ugctag{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font-size:11.5px;font-weight:700;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,.3);white-space:nowrap;z-index:6;}
-  }
-  #hb-{{ sid }} .hb-dot{width:7px;height:7px;border-radius:50%;background:rgba(12,26,36,.18);transition:.2s;}
-  #hb-{{ sid }} .hb-dot.on{background:var(--helios-acc,#0E7CC4);width:20px;border-radius:4px;}
-  #hb-{{ sid }} .hb-pk{flex:1;display:flex;align-items:center;gap:11px;text-align:left;cursor:pointer;border:2px solid rgba(12,26,36,.14);background:#fff;border-radius:14px;padding:10px 13px;transition:.18s;}
-  #hb-{{ sid }} .hb-pk .hb-pkimg{flex:0 0 46px;width:46px;height:46px;border-radius:10px;object-fit:cover;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);}
-  #hb-{{ sid }} .hb-pk .hb-pktx{display:flex;flex-direction:column;min-width:0;}
-  #hb-{{ sid }} .hb-pk b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:var(--helios-ink,#0C1A24);}
-  #hb-{{ sid }} .hb-pk span{font-size:11.5px;color:var(--helios-mut,#56636E);}
-  #hb-{{ sid }} .hb-pk.on{background:#0A1219;border-color:#0A1219;box-shadow:0 12px 26px rgba(6,30,46,.30);}
-  #hb-{{ sid }} .hb-pk.on b{color:#fff;}
-  #hb-{{ sid }} .hb-pk.on span{color:rgba(255,255,255,.72);}
-  #hb-{{ sid }} .hb-gallery{position:relative;}
-  #hb-{{ sid }} .hb-stagewrap{position:relative;}
-  #hb-{{ sid }} .hb-dots{display:none;}
-  #hb-{{ sid }} .hb-thumbs{position:static;display:flex;gap:8px;justify-content:flex-start;align-items:center;padding:0;margin:10px 0 0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
-  #hb-{{ sid }} .hb-thumbs::-webkit-scrollbar{display:none;}
-  #hb-{{ sid }} .hb-thumb{position:relative;padding:2px;flex:0 0 auto;width:clamp(44px,11%,58px);aspect-ratio:1/1;border:1.5px solid #DDE1DD;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;opacity:1;transition:border-color .2s ease;}
-  #hb-{{ sid }} .hb-thumb:hover{border-color:#9AA79E;}
-  #hb-{{ sid }} .hb-thumb.sel{border:2px solid #0E9F6E;}
-  @keyframes hb-thumb-live{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-2px) scale(1.045);}}
-  @media(prefers-reduced-motion:reduce){ #hb-{{ sid }} .hb-thumb.sel{animation:none;} }
-  #hb-{{ sid }} .hb-thumb img,#hb-{{ sid }} .hb-thumb video{width:100%;height:100%;object-fit:contain;display:block;border-radius:8px;}
-  #hb-{{ sid }} .hb-ey{display:inline-flex;align-items:center;gap:7px;background:#0C1A24;color:#fff;font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:30px;margin-bottom:14px;}
-  #hb-{{ sid }} h1{font-weight:800;font-size:clamp(28px,4.4vw,42px);line-height:1.04;letter-spacing:-.02em;margin:0;}
-  #hb-{{ sid }} .hb-sub{color:#5B6470;font-size:15px;line-height:1.5;margin:8px 0 0;max-width:480px;}
-  #hb-{{ sid }} .hb-eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#3E5568;margin-bottom:5px;}
-  #hb-{{ sid }} .hb-pills{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 0;}
-  #hb-{{ sid }} .hb-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#1F6B4A;background:rgba(74,190,140,.14);border:1px solid rgba(74,190,140,.38);border-radius:100px;padding:5px 11px;}
-  #hb-{{ sid }} .hb-pill::before{content:"✓";font-size:10px;}
-  #hb-{{ sid }} .hb-rate{display:flex;align-items:center;flex-wrap:wrap;gap:5px 8px;margin:12px 0 18px;font-size:13.5px;color:#5B6470;text-decoration:none;}
-  #hb-{{ sid }} .hb-rate .hb-metadot{color:#c5ccd4;}
-  #hb-{{ sid }} .hb-rate .hb-metaspec{color:#5B6470;font-weight:500;}
-  #hb-{{ sid }} .hb-priceline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 18px;}
-  #hb-{{ sid }} .hb-price-main{font-family:'Archivo',sans-serif;font-weight:800;font-size:39px;letter-spacing:-.02em;color:#0A0D11;}
-  #hb-{{ sid }} .hb-priceline s{font-size:15px;color:#9aa2ab;font-weight:600;}
-  #hb-{{ sid }} .hb-savesub{font-size:12.5px;font-weight:700;color:#16a34a;}
-  #hb-{{ sid }} .hb-top{display:flex;align-items:flex-start;gap:13px;margin:2px 0 9px;}
-  #hb-{{ sid }} .hb-top-left{flex:1 1 auto;min-width:0;}
-  #hb-{{ sid }} .hb-top-div{flex:0 0 auto;align-self:stretch;width:1px;background:rgba(20,26,32,.12);margin:4px 0;}
-  #hb-{{ sid }} .hb-top-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:7px;padding-top:4px;}
-  #hb-{{ sid }} .hb-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0;}
-  #hb-{{ sid }} .hb-price b{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(33px,8.6vw,44px);line-height:1;letter-spacing:-.02em;color:#E11D2A;}
-  #hb-{{ sid }} .hb-price s{font-size:clamp(17px,4.4vw,21px);color:#9aa2ab;font-weight:600;}
-  #hb-{{ sid }} .hb-bundlepill{display:inline-flex;align-items:center;gap:6px;margin-top:7px;font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:7px 12px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.28);white-space:nowrap;max-width:100%;}
-  #hb-{{ sid }} .hb-autodisc{display:flex;align-items:flex-start;gap:8px;margin-top:6px;}
-  #hb-{{ sid }} .hb-autodisc-ck{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:#16a34a;display:grid;place-items:center;margin-top:1px;}
-  #hb-{{ sid }} .hb-autodisc-ck svg{width:12px;height:12px;stroke:#fff;}
-  #hb-{{ sid }} .hb-autodisc b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#15803d;line-height:1.25;}
-  #hb-{{ sid }} .hb-autodisc span{display:block;font-size:12.5px;color:#8a929c;}
-  #hb-{{ sid }} .hb-savebox{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(16px,4.6vw,20px);color:#15803d;background:#daf3e3;padding:9px 15px;border-radius:12px;white-space:nowrap;text-align:center;letter-spacing:-.01em;}
-  #hb-{{ sid }} .hb-savesub{font-size:13px;font-weight:800;color:#16a34a;white-space:nowrap;}
-  #hb-{{ sid }} .hb-shipbox{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 14px;margin:0 0 12px;padding:9px 13px;background:#fff;border:1px solid rgba(20,26,32,.12);border-radius:12px;box-shadow:0 4px 12px -8px rgba(10,20,30,.1);}
-  #hb-{{ sid }} .hb-shipcol{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#3b444d;min-width:0;}
-  #hb-{{ sid }} .hb-shipcol svg{flex:0 0 auto;color:#0A0D11;}
-  #hb-{{ sid }} .hb-shipcol.ok svg{color:#16a34a;}
-  #hb-{{ sid }} .hb-shipcol b{font-family:'Archivo',sans-serif;font-weight:800;color:#0A0D11;white-space:nowrap;}
-  #hb-{{ sid }} .hb-shipcol.ok b{color:#16a34a;}
-  #hb-{{ sid }} .hb-shipcol i{font-style:normal;color:#8a929c;white-space:nowrap;}
-  #hb-{{ sid }} .hb-1seller{margin:0 0 14px;border-radius:14px;padding:12px 13px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 8px 20px -12px rgba(10,20,30,.12);}
-  #hb-{{ sid }} .hb-promo4{display:flex;align-items:center;gap:12px;margin:2px 0 12px;border-radius:14px;padding:11px 13px;background:#fff;border:1px solid rgba(20,26,32,.10);box-shadow:0 6px 16px -8px rgba(10,20,30,.12);}
-  #hb-{{ sid }} .hb-promo4-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px;}
-  #hb-{{ sid }} .hb-promo4-row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  #hb-{{ sid }} .hb-promo4-tag{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:6px 10px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.3),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;}
-  #hb-{{ sid }} .hb-promo4-off{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(20px,5.4vw,26px);line-height:1;letter-spacing:-.01em;color:#E11D2A;white-space:nowrap;}
-  #hb-{{ sid }} .hb-flag{height:1.15em;width:auto;border-radius:1.5px;flex:0 0 auto;display:block;box-shadow:0 0 0 .5px rgba(255,255,255,.25);}
-  #hb-{{ sid }} .hb-promo4-applied{display:inline-flex;align-items:center;gap:5px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:#0f8a4d;background:#e8f7ef;padding:5px 9px;border-radius:20px;white-space:nowrap;}
-  #hb-{{ sid }} .hb-promo4-sub{font-size:11.5px;line-height:1.35;color:#6b7480;}
-  #hb-{{ sid }} .hb-promo4-div{flex:0 0 auto;width:1px;align-self:stretch;background:rgba(20,26,32,.12);}
-  #hb-{{ sid }} .hb-promo4-ends{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:#3b444d;white-space:nowrap;}
-  #hb-{{ sid }} .hb-promo4-ends b{display:block;font-weight:800;color:#0A0D11;}
-  #hb-{{ sid }} .hb-promo4-ends svg{color:#8a929c;flex:0 0 auto;}
-  @media(max-width:430px){
-    #hb-{{ sid }} .hb-promo4{gap:9px;padding:10px 11px;}
-    #hb-{{ sid }} .hb-promo4-off{font-size:21px;}
-    #hb-{{ sid }} .hb-promo4-applied{font-size:9px;padding:4px 8px;}
-    #hb-{{ sid }} .hb-promo4-sub{font-size:10.5px;}
-    #hb-{{ sid }} .hb-promo4-ends{font-size:10.5px;gap:5px;}
-  }
-  #hb-{{ sid }} .hb-1seller-pill{display:inline-flex;align-items:center;gap:6px;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#2b2f36,#0a0d11);padding:6px 11px;border-radius:30px;box-shadow:0 4px 10px rgba(10,13,17,.28),inset 0 1px 0 rgba(255,255,255,.12);}
-  #hb-{{ sid }} .hb-1seller-vf{display:flex;align-items:center;gap:5px;margin-top:9px;font-size:11px;font-weight:600;color:#6b7480;}
-  #hb-{{ sid }} .hb-1seller-tx b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14.5px;color:#0A0D11;margin:8px 0 4px;letter-spacing:-.01em;}
-  #hb-{{ sid }} .hb-1seller-tx p{margin:0;font-size:12px;color:#6b7480;line-height:1.45;}
-  #hb-{{ sid }} .hb-1seller-tx s{color:#e23b3b;font-weight:700;}
-  #hb-{{ sid }} .hb-1seller-tx em{font-style:normal;font-weight:800;color:#0A0D11;}
-  #hb-sticky-{{ sid }}{position:fixed;left:14px;right:82px;bottom:16px;z-index:9998;display:flex;align-items:center;gap:11px;padding:8px 9px 8px 12px;background:rgba(255,255,255,.40);backdrop-filter:blur(24px) saturate(185%);-webkit-backdrop-filter:blur(24px) saturate(185%);border:1px solid rgba(255,255,255,.55);border-radius:26px;box-shadow:0 16px 36px rgba(6,30,46,.22),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(calc(100% + 30px));transition:transform .42s cubic-bezier(.2,.8,.2,1);}
-  #hb-sticky-{{ sid }}.show{transform:translateY(0);}
-  #hb-sticky-{{ sid }} .hb-sk-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
-  #hb-sticky-{{ sid }} .hb-sk-thumb{width:40px;height:40px;flex-shrink:0;border-radius:13px;object-fit:cover;border:1px solid rgba(255,255,255,.6);}
-  #hb-sticky-{{ sid }} .hb-sk-name{font-family:'Archivo',sans-serif;font-weight:800;font-size:13.5px;line-height:1.1;color:#0C1A24;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  #hb-sticky-{{ sid }} .hb-sk-price b{font-family:'Archivo',sans-serif;font-weight:800;font-size:13px;color:#0C1A24;}
-  #hb-sticky-{{ sid }} .hb-sk-add{flex-shrink:0;background:#0A1219;color:#fff;border:none;border-radius:30px;padding:13px 21px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 22px rgba(10,18,25,.34);}
-  #hb-{{ sid }} .hb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;}
-  #hb-{{ sid }} .hb-chip{font-size:11.5px;font-weight:700;color:var(--helios-ink,#0C1A24);background:rgba(14,124,196,.08);border:1px solid rgba(14,124,196,.16);border-radius:30px;padding:5px 10px;white-space:nowrap;}
-  #hb-{{ sid }} .hb-timer{display:inline-flex;align-items:center;gap:7px;font-family:'Archivo';font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));backdrop-filter:var(--helios-g-blur);padding:7px 12px;border-radius:9px;margin-bottom:16px;}
-  #hb-{{ sid }} .hb-ez{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;margin:0 0 12px;font-size:12.5px;font-weight:700;color:#5B6470;}
-  #hb-{{ sid }} .hb-ez b{color:#0A0D11;}
-  #hb-{{ sid }} .hb-tiers{display:flex;flex-direction:column;gap:12px;background:transparent;border:none;padding:0;box-shadow:none;}
-  #hb-{{ sid }} .hb-tier{display:flex;align-items:center;gap:13px;border:1.5px solid #E4E8EC;border-radius:16px;padding:16px;cursor:pointer;position:relative;background:#fff;transition:.16s;margin:0;}
-  #hb-{{ sid }} .hb-tier.sel{border-color:#0A0D11;border-width:2px;background:#F6FBF8;box-shadow:0 10px 24px -12px rgba(10,13,17,.3);}
-  #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #C7CED6;flex-shrink:0;transition:.2s;background:#fff;}
-  #hb-{{ sid }} .hb-tier.sel .hb-radio{border:6.5px solid #0A0D11;}
-  #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;left:16px;font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:#fff;padding:4px 12px;border-radius:20px;background:#0A0D11;box-shadow:0 5px 12px rgba(10,13,17,.3);}
-  #hb-{{ sid }} .hb-badge.teal{background:#3E5568;}
-  #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:800;font-size:16px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-tiersub{display:block;font-size:13.5px;color:#5B6470;font-weight:500;margin-top:2px;}
-  #hb-{{ sid }} .hb-tierper{display:block;font-size:12.5px;color:#8A93A0;font-weight:500;margin-top:3px;}
-  #hb-{{ sid }} .hb-tierprice{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-  #hb-{{ sid }} .hb-tierprice b{font-family:'Archivo';font-weight:800;font-size:19px;color:#0A0D11;letter-spacing:-.01em;}
-  #hb-{{ sid }} .hb-tierprice s{font-size:12.5px;color:#b3bac2;font-weight:600;}
-  #hb-{{ sid }} .hb-offp{display:inline-block;vertical-align:middle;background:#E11D48;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;margin-right:9px;font-family:'Archivo',sans-serif;}
-  #hb-{{ sid }} .hb-dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 10px;background:linear-gradient(90deg,#FFE9B0,#FFD36B,#FFE9B0);color:#5A3E00;font-size:12.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:9px 12px;border-radius:12px;font-family:'Archivo',sans-serif;}
-  #hb-{{ sid }} .hb-ob{background:#123D2B;border:1.5px solid rgba(16,201,126,.45);border-radius:14px;padding:16px;text-align:center;margin:0 0 12px;cursor:pointer;transition:transform .12s;}
-  #hb-{{ sid }} .hb-ob:hover{transform:translateY(-2px);}
-  #hb-{{ sid }} .hb-ob .hh{font-family:'Archivo';font-weight:800;font-size:14.5px;color:#fff;}
-  #hb-{{ sid }} .hb-ob .pl{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-top:4px;}
-  #hb-{{ sid }} .hb-ob .pl s{font-size:16px;color:rgba(255,255,255,.42);font-weight:700;}
-  #hb-{{ sid }} .hb-ob .pl b{font-family:'Archivo';font-weight:900;font-size:34px;color:#10C97E;line-height:1;}
-  #hb-{{ sid }} .hb-ob .sv{display:inline-block;margin-top:8px;font-family:'Archivo';font-size:11.5px;font-weight:800;color:#06281B;background:#10C97E;padding:4px 12px;border-radius:100px;}
-  #hb-{{ sid }} .hb-ob .nar{display:inline-block;color:#10C97E;}
-  #hb-{{ sid }} .hb-ob .gline{display:block;margin-top:8px;font-family:'Archivo';font-size:12.5px;font-weight:800;color:#7CF5C2;}
-  #hb-{{ sid }} .hb-atc{display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:#0A0D11;color:#fff;border:none;border-radius:100px;padding:17px;font-family:'Archivo';font-weight:800;font-size:17px;text-transform:lowercase;cursor:pointer;box-shadow:0 16px 34px rgba(10,13,17,.36);transition:transform .15s,background .15s,box-shadow .15s;margin-top:16px;}
-  #hb-{{ sid }} .hb-atc:hover{transform:translateY(-2px);background:#161c23;box-shadow:0 20px 40px rgba(10,13,17,.42);}
-  #hb-{{ sid }} .hb-atc svg{width:18px;height:18px;}
-  #hb-{{ sid }} .hb-atc:disabled,#hb-{{ sid }} .hb-buynow:disabled{opacity:.45;cursor:not-allowed;}
-  #hb-{{ sid }} .hb-buynow{display:flex;width:100%;align-items:center;justify-content:center;background:#fff;color:#0A0D11;border:1.6px solid #0A0D11;border-radius:100px;padding:15px;font-family:'Archivo';font-weight:700;font-size:15px;text-transform:lowercase;letter-spacing:.01em;cursor:pointer;transition:transform .15s,background .15s;margin-top:11px;}
-  #hb-{{ sid }} .hb-buynow:hover{transform:translateY(-1px);background:#f4f5f6;}
-  #hb-{{ sid }} .hb-add .hb-sheen{position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:helios-sheen 4.5s ease-in-out infinite;}
-  #hb-{{ sid }} .hb-pay{margin-top:11px;}
-  #hb-{{ sid }} .hb-pay .shopify-payment-button__button{border-radius:14px !important;font-family:'Archivo',sans-serif !important;font-weight:800 !important;}
-  #hb-{{ sid }} .hb-code{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:11px;background:var(--helios-g-bg,rgba(255,255,255,.55));border:1px dashed var(--helios-acc,#0E7CC4);backdrop-filter:var(--helios-g-blur);border-radius:13px;padding:12px 15px;cursor:pointer;transition:.2s;}
-  #hb-{{ sid }} .hb-code b{font-family:'Archivo';font-weight:800;font-size:14px;color:var(--helios-accd,#0A5E97);letter-spacing:.04em;display:inline-flex;gap:8px;align-items:center;}
-  #hb-{{ sid }} .hb-trust{display:flex;align-items:center;gap:6px 4px;justify-content:space-between;margin-top:11px;font-size:12px;color:var(--helios-mut,#56636E);text-align:center;flex-wrap:wrap;}
-  #hb-{{ sid }} .hb-trust span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;flex:1;justify-content:center;min-width:88px;}
-  #hb-{{ sid }} .hb-pays{display:flex;gap:7px;justify-content:center;margin-top:8px;opacity:.72;flex-wrap:wrap;}
-  #hb-{{ sid }} .hb-pays span{font-size:10px;font-weight:700;border:1px solid var(--helios-lins,rgba(12,26,36,.08));border-radius:6px;padding:4px 8px;color:var(--helios-mut,#56636E);}
-  #hb-{{ sid }} .hb-eta{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;font-size:12.5px;font-weight:700;color:#137a3e;}
-  #hb-{{ sid }} .hb-stock{margin-top:14px;background:var(--helios-g-bg,rgba(255,255,255,.55));border:var(--helios-g-bd2,1px solid rgba(255,255,255,.45));border-radius:13px;padding:12px 14px;font-size:12.5px;color:var(--helios-accd,#0A5E97);font-weight:600;}
-  #hb-{{ sid }} .hb-stockbar{height:6px;background:#CFE7F5;border-radius:6px;margin-top:9px;overflow:hidden;}
-  #hb-{{ sid }} .hb-stockbar i{display:block;height:100%;width:78%;background:linear-gradient(90deg,var(--helios-acc,#0E7CC4),var(--helios-teal,#2FC1D6));border-radius:6px;}
-  #hb-{{ sid }} .hb-live{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:12px;font-size:12px;color:var(--helios-mut,#56636E);}
-  #hb-{{ sid }} .hb-dot{width:8px;height:8px;border-radius:50%;background:#1aa86b;animation:helios-pulse 1.6s ease-in-out infinite;}
-  #hb-toast-{{ sid }}{position:fixed;left:16px;bottom:88px;z-index:120;display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.86);backdrop-filter:var(--helios-g-blur);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-sh);border-radius:14px;padding:11px 15px 11px 12px;max-width:300px;opacity:0;pointer-events:none;transition:opacity .3s;}
-  #hb-toast-{{ sid }}.show{opacity:1;animation:helios-toastin .4s ease;}
-  #hb-toast-{{ sid }} .hb-tt-em{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--helios-acc,#0E7CC4),var(--helios-acc2,#16A6D6));display:grid;place-items:center;font-size:16px;flex-shrink:0;}
-  {%- comment -%} build-your-own bundle {%- endcomment -%}
-  #hb-{{ sid }} .hb-byo{margin:0 0 12px;border:1px dashed rgba(20,26,32,.24);border-radius:14px;overflow:hidden;background:#fbfcfd;}
-  #hb-{{ sid }} .hb-byo-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:none;padding:12px 14px;cursor:pointer;text-align:left;}
-  #hb-{{ sid }} .hb-byo-tt b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-byo-tt{flex:1;min-width:0;}
-  #hb-{{ sid }} .hb-byo-tt em{display:block;font-style:normal;font-size:11.5px;color:#6b7480;margin-top:1px;}
-  #hb-{{ sid }} .hb-byo-tt em strong{color:#15803d;font-weight:800;}
-  #hb-{{ sid }} .hb-byo-badge{flex:0 0 auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.03em;color:#fff;background:linear-gradient(180deg,#1e9f5c,#127a44);padding:5px 9px;border-radius:20px;white-space:nowrap;box-shadow:0 3px 8px rgba(18,122,68,.3);}
-  #hb-{{ sid }} .hb-byo-banner{margin:2px 0 8px;padding:9px 11px;background:#eafaf0;border:1px solid rgba(22,163,74,.25);border-radius:10px;font-size:12px;color:#15803d;line-height:1.35;}
-  #hb-{{ sid }} .hb-byo-banner b{font-weight:800;}
-  #hb-{{ sid }} .hb-byo-price{font-weight:600;}
-  #hb-{{ sid }} .hb-byo-sum{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:11px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-byo-sum s{color:#9aa2ab;font-weight:600;}
-  #hb-{{ sid }} .hb-byo-sum b{color:#E11D2A;}
-  #hb-{{ sid }} .hb-byo-savepill{font-size:10px;font-weight:800;color:#15803d;background:#daf3e3;padding:4px 8px;border-radius:20px;letter-spacing:.02em;}
-  #hb-{{ sid }} .hb-byo-chev{color:#6b7480;flex:0 0 auto;transition:transform .2s;}
-  #hb-{{ sid }} .hb-byo.open .hb-byo-chev{transform:rotate(180deg);}
-  #hb-{{ sid }} .hb-byo-body{padding:0 12px 12px;}
-  #hb-{{ sid }} .hb-byo-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid rgba(20,26,32,.08);}
-  #hb-{{ sid }} .hb-byo-img{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:0 0 auto;background:#eef4f9;}
-  #hb-{{ sid }} .hb-byo-info{flex:1;min-width:0;}
-  #hb-{{ sid }} .hb-byo-info b{display:block;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-byo-info span{font-size:12.5px;color:#6b7480;}
-  #hb-{{ sid }} .hb-byo-step{display:inline-flex;align-items:center;border:1px solid rgba(20,26,32,.16);border-radius:30px;overflow:hidden;flex:0 0 auto;background:#fff;}
-  #hb-{{ sid }} .hb-byo-step button{width:32px;height:32px;border:none;background:none;font-size:18px;font-weight:700;color:#0A0D11;cursor:pointer;line-height:1;}
-  #hb-{{ sid }} .hb-byo-step button:active{background:#f0f2f4;}
-  #hb-{{ sid }} .hb-byo-step span{min-width:24px;text-align:center;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#0A0D11;}
-  #hb-{{ sid }} .hb-byo-add{width:100%;margin-top:11px;background:#0A1219;color:#fff;border:none;border-radius:13px;padding:13px;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:opacity .15s;}
-  #hb-{{ sid }} .hb-byo-add:disabled{opacity:.4;cursor:not-allowed;}
-  {%- comment -%} ===== MOBILE-FIRST (≤430px): tighter cards, one-line pills, balanced hierarchy ===== {%- endcomment -%}
-  @media(max-width:430px){
-    #hb-{{ sid }} .hb-top{gap:9px;margin:2px 0 11px;}
-    #hb-{{ sid }} .hb-price{gap:8px;}
-    #hb-{{ sid }} .hb-price b{font-size:32px;}
-    #hb-{{ sid }} .hb-price s{font-size:16px;}
-    #hb-{{ sid }} .hb-bundlepill{font-size:9px;padding:6px 9px;margin-top:8px;gap:5px;}
-    #hb-{{ sid }} .hb-autodisc{margin-top:8px;gap:7px;}
-    #hb-{{ sid }} .hb-autodisc-ck{width:18px;height:18px;}
-    #hb-{{ sid }} .hb-autodisc b{font-size:12.5px;}
-    #hb-{{ sid }} .hb-autodisc span{font-size:11px;}
-    #hb-{{ sid }} .hb-top-right{gap:5px;padding-top:2px;}
-    #hb-{{ sid }} .hb-savebox{font-size:16px;padding:10px 13px;border-radius:12px;}
-    #hb-{{ sid }} .hb-savesub{font-size:11.5px;}
-    #hb-{{ sid }} .hb-shipbox{gap:4px 12px;padding:8px 11px;margin-bottom:11px;}
-    #hb-{{ sid }} .hb-shipcol{gap:5px;font-size:11px;}
-    #hb-{{ sid }} .hb-shipcol svg{width:15px;height:15px;}
-    #hb-{{ sid }} .hb-shipcol b{font-size:11.5px;}
-    #hb-{{ sid }} .hb-shipcol i{font-size:11px;}
-    #hb-{{ sid }} .hb-tiers{padding:4px;}
-    #hb-{{ sid }} .hb-tier{padding:10px 10px;gap:10px;}
-    #hb-{{ sid }} .hb-tiername{font-size:15px;}
-    #hb-{{ sid }} .hb-tiersub{font-size:12px;}
-    #hb-{{ sid }} .hb-tierper{font-size:10.5px;margin-top:1px;}
-    #hb-{{ sid }} .hb-tierpill{font-size:9.5px;padding:4px 8px;gap:3px;margin-top:6px;letter-spacing:.01em;}
-    #hb-{{ sid }} .hb-tierpill svg{width:9px;height:9px;}
-    #hb-{{ sid }} .hb-tierprice b{font-size:17px;}
-    #hb-{{ sid }} .hb-tierprice s{font-size:12px;}
-    #hb-{{ sid }} .hb-tiersave{font-size:11px;}
-    #hb-{{ sid }} .hb-badge{font-size:9px;padding:4px 10px;top:-10px;left:14px;}
-    #hb-{{ sid }} .hb-radio{width:20px;height:20px;}
-    #hb-{{ sid }} .hb-tier.sel .hb-radio{border-width:6px;}
-  }
-  /* ===== KURU-style clarity layer ===== */
-  #hb-{{ sid }} .hb-atc,#hb-{{ sid }} .hb-buynow{text-transform:none;}
-  #hb-{{ sid }} .hb-krate{display:flex;align-items:center;gap:7px;font-size:13px;color:#5B6470;margin:0 0 6px;text-decoration:none;}
-  #hb-{{ sid }} .hb-krate b{color:#0A0D11;}
-  #hb-{{ sid }} .hb-kbest{font-size:13.5px;color:#5B6470;margin:10px 0 0;}
-  #hb-{{ sid }} .hb-kbest b{color:#0A0D11;font-weight:700;}
-  #hb-{{ sid }} .hb-kpromise{border:1px solid #D8E5DD;border-radius:14px;overflow:hidden;margin-top:16px;background:#fff;}
-  #hb-{{ sid }} .hb-kpromise .hd{display:flex;align-items:center;gap:9px;background:#123D2B;color:#fff;padding:12px 15px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;}
-  #hb-{{ sid }} .hb-kpromise .sub{display:block;font-weight:600;font-size:11.5px;color:rgba(255,255,255,.75);margin-top:2px;}
-  #hb-{{ sid }} .hb-kpromise .bd{padding:9px 15px 12px;}
-  #hb-{{ sid }} .hb-kpromise .ln{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px;color:#22302A;border-bottom:1px solid #EEF3EF;}
-  #hb-{{ sid }} .hb-kpromise .ln:last-child{border-bottom:none;}
-  #hb-{{ sid }} .hb-kpromise .ck{color:#0E9F6E;font-weight:900;flex:0 0 auto;}
-  #hb-{{ sid }} .hb-kships{display:flex;justify-content:space-around;gap:8px;margin-top:12px;padding:12px 8px;border:1px solid #E5E8E5;border-radius:14px;background:#fff;}
-  #hb-{{ sid }} .hb-kships div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#5B6470;text-align:center;}
-  #hb-{{ sid }} .hb-kships .em{font-size:17px;}
-  #hb-{{ sid }} .hb-kfacts{margin-top:18px;}
-  #hb-{{ sid }} .hb-kfacts .tt{font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#0A0D11;margin:0 0 9px;}
-  #hb-{{ sid }} .hb-kfgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  #hb-{{ sid }} .hb-kf{display:flex;align-items:center;gap:9px;border:1px solid #E5E8E5;border-radius:11px;padding:9px 11px;background:#fff;}
-  #hb-{{ sid }} .hb-kf .em{font-size:16px;flex:0 0 auto;}
-  #hb-{{ sid }} .hb-kf b{display:block;font-size:12.5px;color:#0A0D11;font-weight:700;line-height:1.25;}
-  #hb-{{ sid }} .hb-kf span{display:block;font-size:11px;color:#8A93A0;}
-  #hb-{{ sid }} .hb-kchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;}
-  #hb-{{ sid }} .hb-kchip{display:inline-flex;align-items:center;gap:6px;border:1px solid #DDE3DE;background:#F6F8F6;border-radius:100px;padding:8px 13px;font-size:12px;font-weight:600;color:#33413A;text-decoration:none;transition:border-color .15s;}
-  #hb-{{ sid }} .hb-kchip:hover{border-color:#9AA79E;}
-  #hb-{{ sid }} .hb-trust{display:none;}
-  /* KURU exact layer 2 — buy card, title/price row, tabs, left-column story */
-  #hb-{{ sid }} .hb-buy{border:1px solid #E7E9E7;border-radius:18px;padding:20px 18px;background:#fff;box-shadow:0 8px 28px -20px rgba(10,13,17,.25);}
-  #hb-{{ sid }} .hb-kcrumb{font-size:10px;font-weight:600;letter-spacing:.08em;color:#9AA3AC;margin-bottom:8px;}
-  #hb-{{ sid }} .hb-ktitle{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
-  #hb-{{ sid }} .hb-ktitle h1{font-size:clamp(24px,3vw,32px);}
-  #hb-{{ sid }} .hb-ktitle .hb-priceline{flex:0 0 auto;flex-direction:column;align-items:flex-end;gap:2px;margin:4px 0 0;display:flex;}
-  #hb-{{ sid }} .hb-ktitle .hb-price-main{font-size:26px;}
-  #hb-{{ sid }} .hb-ktitle s{font-size:13px;}
-  #hb-{{ sid }} .hb-kpills{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 2px;}
-  #hb-{{ sid }} .hb-kpills span{font-size:11px;font-weight:700;color:#33413A;background:#F1F5F2;border:1px solid #DFE7E1;border-radius:6px;padding:4px 9px;}
-  #hb-{{ sid }} .hb-klabel{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0A0D11;margin:2px 0 8px;}
-  #hb-{{ sid }} .hb-picker{border:1px solid #D9DED9!important;border-radius:100px!important;padding:4px!important;gap:0!important;background:#F1F4F1!important;margin:0 0 16px!important;}
-  #hb-{{ sid }} .hb-pk{flex:1;justify-content:center;border:none;background:transparent;border-radius:100px;padding:11px 8px;box-shadow:none;gap:0;}
-  #hb-{{ sid }} .hb-pk .hb-pkimg{display:none;}
-  #hb-{{ sid }} .hb-pk .hb-pktx{align-items:center;text-align:center;}
-  #hb-{{ sid }} .hb-pk .hb-pktx b{font-size:14px;color:#0A0D11;font-family:'Archivo',sans-serif;}
-  #hb-{{ sid }} .hb-pk .hb-pktx span{font-size:11px;color:#8A93A0;}
-  #hb-{{ sid }} .hb-pk.on{background:#fff;border:1.5px solid #0A0D11;box-shadow:none;}
-  #hb-{{ sid }} .hb-pk.on .hb-pktx b{color:#0A0D11;}
-  #hb-{{ sid }} .hb-pk.on .hb-pktx span{color:#8A93A0;}
-  #hb-{{ sid }} .hb-ob{margin-top:12px;}
-  #hb-{{ sid }} .hb-kpromise .ln{justify-content:space-between;}
-  #hb-{{ sid }} .hb-kpromise .ln .ck{order:2;}
-  #hb-{{ sid }} .hb-kleft{margin-top:6px;}
-  #hb-{{ sid }} .hb-kquote{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;border:1px solid #E7E9E7;border-radius:12px;background:#fff;padding:11px 14px;font-size:13px;color:#33413A;text-align:center;}
-  #hb-{{ sid }} .hb-kquote b{color:#0A0D11;font-weight:700;}
-  #hb-{{ sid }} .hb-kcheck{display:block;text-align:center;background:#EDF7EF;border:1px solid #D8EBDC;border-radius:10px;padding:11px 14px;margin-top:9px;font-size:13px;font-weight:700;color:#2E5A3C;text-decoration:none;}
-  #hb-{{ sid }} .hb-kstory{margin-top:18px;}
-  #hb-{{ sid }} .hb-kstory h3{font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:#0A0D11;margin:0 0 7px;}
-  #hb-{{ sid }} .hb-kstory p{font-size:14px;line-height:1.6;color:#5B6470;margin:0;max-width:60ch;}
-  @media(max-width:879px){#hb-{{ sid }} .hb-buy{padding:16px 14px;}#hb-{{ sid }} .hb-ktitle{flex-direction:column;gap:4px;}#hb-{{ sid }} .hb-ktitle .hb-priceline{flex-direction:row;align-items:baseline;gap:9px;}}
-  /* ===== PROPORTION FIX — whole buy column visible in first view (KURU density) ===== */
-  @media(min-width:880px){
-    #hb-{{ sid }} .hb-grid{grid-template-columns:1.12fr 1fr!important;gap:32px!important;align-items:start!important;}
-    #hb-{{ sid }} .hb-stage{aspect-ratio:auto!important;height:clamp(460px,44vw,600px)!important;}
-    #hb-{{ sid }} .hb-gallery{position:sticky;top:80px;align-self:start;}
-  }
-  /* tighten buy column so bundles rise up into the first view */
-  #hb-{{ sid }} .hb-buy{padding:18px;}
-  #hb-{{ sid }} .hb-kcrumb{margin-bottom:5px;}
-  #hb-{{ sid }} .hb-krate{margin:0 0 4px;}
-  #hb-{{ sid }} .hb-ktitle{margin:0;}
-  #hb-{{ sid }} .hb-ktitle h1{margin:0;}
-  #hb-{{ sid }} .hb-kpills{margin:8px 0 0;}
-  #hb-{{ sid }} .hb-sub{margin:9px 0 0;font-size:14px;line-height:1.45;}
-  #hb-{{ sid }} .hb-kbest{margin:8px 0 0;}
-  #hb-{{ sid }} .hb-pills{display:none;}
-  #hb-{{ sid }} .hb-picker{margin:14px 0 12px!important;}
-  #hb-{{ sid }} .hb-klabel{margin:0 0 8px;}
-  #hb-{{ sid }} .hb-ez{margin:0 0 10px;font-size:12px;}
-  #hb-{{ sid }} .hb-tiers{gap:9px;}
-  #hb-{{ sid }} .hb-tier{padding:12px 14px;}
-  /* ==== FAQ + phone-video block, right under the buy box ==== */
-  #hb-{{ sid }} .hb-kfaq{max-width:1160px;margin:10px auto 0;padding:30px 22px 10px;display:grid;grid-template-columns:1fr;gap:26px;border-top:1px solid #EDEDEA;}
-  @media(min-width:880px){#hb-{{ sid }} .hb-kfaq{grid-template-columns:.82fr 1.18fr;gap:44px;align-items:center;padding-top:40px;}}
-  #hb-{{ sid }} .hb-kfaq-phone{justify-self:center;position:relative;width:min(280px,78vw);aspect-ratio:9/16;border-radius:44px;overflow:hidden;background:#0E1116;border:9px solid #17181C;box-shadow:0 30px 60px -28px rgba(10,13,17,.5),inset 0 0 0 2px #2A2B31;}
-  #hb-{{ sid }} .hb-kfaq-phone::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);width:82px;height:23px;background:#0B0B0E;border-radius:14px;z-index:5;}
-  #hb-{{ sid }} .hb-kfaq-phone video{width:100%;height:100%;object-fit:cover;display:block;}
-  #hb-{{ sid }} .hb-kfaq-phone .tag{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);white-space:nowrap;z-index:6;}
-  #hb-{{ sid }} .hb-kfaq-list h2{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(21px,2.4vw,28px);color:#1A1A1A;letter-spacing:-.01em;margin:0 0 4px;}
-  #hb-{{ sid }} .hb-kfaq-list .fsub{font-size:14px;color:#6b6b6b;margin:0 0 16px;}
-  #hb-{{ sid }} .hb-kfq{border-bottom:1px solid #E6E6E6;}
-  #hb-{{ sid }} .hb-kfq .q{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 2px;cursor:pointer;font-weight:700;font-size:15.5px;color:#1A1A1A;}
-  #hb-{{ sid }} .hb-kfq .ic{flex:0 0 auto;width:24px;height:24px;border-radius:50%;border:1.5px solid #C9CFC9;display:grid;place-items:center;font-size:16px;line-height:1;color:#1f5c3d;transition:transform .3s,background .3s;}
-  #hb-{{ sid }} .hb-kfq.on .ic{transform:rotate(45deg);background:#1f5c3d;color:#fff;border-color:#1f5c3d;}
-  #hb-{{ sid }} .hb-kfq .a{max-height:0;overflow:hidden;transition:max-height .32s ease;}
-  #hb-{{ sid }} .hb-kfq .a p{margin:0;padding:0 2px 15px;font-size:14px;line-height:1.6;color:#5b6470;}
-  /* ===== CLEAN REBUILD — KURU proportions, zero white space ===== */
-  #hb-{{ sid }} .hb-wrap{max-width:1180px;padding:clamp(14px,2.5vw,34px) 22px;}
-  @media(min-width:880px){#hb-{{ sid }} .hb-grid{grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr)!important;gap:34px!important;align-items:start!important;}}
-  #hb-{{ sid }} .hb-gallery{position:static!important;display:flex;gap:12px;align-items:flex-start;}
-  #hb-{{ sid }} .hb-stagewrap{flex:1;min-width:0;order:2;}
-  #hb-{{ sid }} .hb-gallery[data-gal="mini"] .hb-stage{order:2;}
-  #hb-{{ sid }} .hb-stage{aspect-ratio:1/1!important;height:auto!important;border:1px solid #E6E6E6;border-radius:16px;background:#F5F7F6;box-shadow:none;}
-  #hb-{{ sid }} .hb-cell>img,#hb-{{ sid }} .hb-cell>video{object-fit:contain;}
-  #hb-{{ sid }} .hb-thumbs{position:static!important;order:1;display:flex;flex-direction:column;gap:8px;width:64px;flex:0 0 64px;left:auto!important;right:auto!important;bottom:auto!important;padding:0!important;margin:0!important;max-height:560px;overflow-y:auto;scrollbar-width:none;}
-  #hb-{{ sid }} .hb-thumbs::-webkit-scrollbar{display:none;}
-  #hb-{{ sid }} .hb-thumb{width:64px;height:64px;aspect-ratio:1/1;flex:0 0 auto;border:1.5px solid #E2E2E0;border-radius:10px;opacity:1;background:#fff;box-shadow:none;animation:none;}
-  #hb-{{ sid }} .hb-thumb.sel{border:2px solid #0A0D11;box-shadow:none;animation:none;}
-  #hb-{{ sid }} .hb-dots{display:none!important;}
-  @media(max-width:879px){#hb-{{ sid }} .hb-gallery{flex-direction:column;}#hb-{{ sid }} .hb-thumbs{order:2;flex-direction:row;width:auto;flex:none;max-height:none;overflow-x:auto;}}
-  #hb-{{ sid }} .hb-buy{border:none!important;box-shadow:none!important;padding:0!important;}
-  #hb-{{ sid }} .hb-krate{margin:0 0 6px;}
-  #hb-{{ sid }} .hb-ktitle{margin:0 0 2px;}
-  #hb-{{ sid }} .hb-sub{margin:10px 0 0;font-weight:700;font-size:14px;color:#111;line-height:1.45;}
-  #hb-{{ sid }} .hb-kbest{margin:8px 0 0;}
-  #hb-{{ sid }} .hb-picker{margin:16px 0 14px!important;}
-  #hb-{{ sid }} .hb-klabel{margin:0 0 9px;}
-  #hb-{{ sid }} .hb-tiers{gap:10px;}
-  #hb-{{ sid }} .hb-atc{margin-top:16px;}
-  #hb-{{ sid }} .hb-kleft{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
-  #hb-{{ sid }} .hb-dbn,#hb-{{ sid }} .hb-ob,#hb-{{ sid }} .hb-code,#hb-{{ sid }} .hb-trust,#hb-{{ sid }} .hb-pays,#hb-{{ sid }} .hb-eta,#hb-{{ sid }} .hb-kpromise,#hb-{{ sid }} .hb-kships,#hb-{{ sid }} .hb-kfacts,#hb-{{ sid }} .hb-pills,#hb-{{ sid }} .hb-ez{display:none!important;}
-  /* bulletproof Super Glide / Mini toggle (segmented control, visible labels) */
-  #hb-{{ sid }} .hb-picker{display:flex!important;gap:0!important;background:#EFEFED!important;border:1px solid #E2E2E0!important;border-radius:12px!important;padding:4px!important;margin:16px 0 14px!important;}
-  #hb-{{ sid }} .hb-pk{flex:1 1 0!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important;min-width:0!important;padding:10px 8px!important;border:none!important;background:transparent!important;border-radius:9px!important;box-shadow:none!important;cursor:pointer;}
-  #hb-{{ sid }} .hb-pkimg{display:none!important;}
-  #hb-{{ sid }} .hb-pktx{display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;min-width:0!important;}
-  #hb-{{ sid }} .hb-pktx b{font-size:14px!important;font-weight:800!important;color:#0A0D11!important;font-family:'Archivo',sans-serif!important;line-height:1.2!important;}
-  #hb-{{ sid }} .hb-pktx span{font-size:11px!important;color:#8A93A0!important;font-weight:500!important;}
-  #hb-{{ sid }} .hb-pk.on{background:#fff!important;box-shadow:0 1px 6px rgba(10,13,17,.16)!important;}
-  #hb-{{ sid }} .hb-pk.on .hb-pktx b{color:#0A0D11!important;}
+  #hb-{{ sid }}{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111;background:#fff;}
+  #hb-{{ sid }} *{box-sizing:border-box;}
+  #hb-{{ sid }} .k-wrap{max-width:1180px;margin:0 auto;padding:26px 22px;display:grid;grid-template-columns:1fr;gap:30px;align-items:start;}
+  @media(min-width:880px){#hb-{{ sid }} .k-wrap{grid-template-columns:1.08fr .92fr;gap:38px;}}
+  /* LEFT */
+  #hb-{{ sid }} .k-gal{display:flex;gap:12px;}
+  #hb-{{ sid }} .k-rail{display:flex;flex-direction:column;gap:8px;width:56px;flex:0 0 56px;max-height:600px;overflow-y:auto;scrollbar-width:none;}
+  #hb-{{ sid }} .k-rail::-webkit-scrollbar{display:none;}
+  #hb-{{ sid }} .k-th{width:56px;height:56px;flex:0 0 auto;border:1.5px solid #E3E3E1;border-radius:9px;background:#fff;overflow:hidden;cursor:pointer;padding:0;position:relative;}
+  #hb-{{ sid }} .k-th img{width:100%;height:100%;object-fit:cover;display:block;}
+  #hb-{{ sid }} .k-th.sel{border:2px solid #0A0D11;}
+  #hb-{{ sid }} .k-th .vk{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px;text-shadow:0 1px 5px rgba(0,0,0,.6);}
+  #hb-{{ sid }} .k-stage{flex:1;min-width:0;position:relative;aspect-ratio:1/1;background:#F5F6F4;border-radius:8px;overflow:hidden;}
+  #hb-{{ sid }} .k-stage img,#hb-{{ sid }} .k-stage video{width:100%;height:100%;object-fit:cover;display:block;}
+  #hb-{{ sid }} .k-bs{position:absolute;top:12px;right:12px;background:#0A0D11;color:#fff;font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px;z-index:2;}
+  #hb-{{ sid }} .k-ar{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid #E3E3E1;display:grid;place-items:center;font-size:16px;cursor:pointer;z-index:2;}
+  #hb-{{ sid }} .k-quote{display:flex;align-items:center;gap:12px;background:#F7F7F5;border-radius:8px;padding:13px 16px;margin-top:12px;font-size:13.5px;}
+  #hb-{{ sid }} .k-quote .st{letter-spacing:2px;font-size:12px;color:#111;flex:0 0 auto;}
+  #hb-{{ sid }} .k-quote b{font-weight:700;}
+  #hb-{{ sid }} .k-quote .who{margin-left:auto;color:#666;font-size:12.5px;flex:0 0 auto;}
+  #hb-{{ sid }} .k-check{display:block;text-align:center;background:#EDF7EF;border-radius:8px;padding:11px;margin-top:8px;font-size:13px;color:#2E5A3C;font-weight:600;text-decoration:none;}
+  /* RIGHT */
+  #hb-{{ sid }} .k-crumb{font-size:9.5px;letter-spacing:.08em;color:#999;font-weight:600;margin-bottom:10px;text-transform:uppercase;}
+  #hb-{{ sid }} .k-stars{font-size:13px;color:#111;margin-bottom:6px;text-decoration:none;display:block;}
+  #hb-{{ sid }} .k-stars span{letter-spacing:1px;color:#f5a623;}
+  #hb-{{ sid }} .k-trow{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+  #hb-{{ sid }} .k-trow h1{font-size:clamp(24px,2.6vw,30px);font-weight:800;margin:0;letter-spacing:.01em;}
+  #hb-{{ sid }} .k-price{text-align:right;white-space:nowrap;padding-top:3px;}
+  #hb-{{ sid }} .k-price b{font-size:22px;font-weight:700;display:block;}
+  #hb-{{ sid }} .k-price s{font-size:12.5px;color:#b3b3b1;}
+  #hb-{{ sid }} .k-price .sv{display:block;font-size:11.5px;font-weight:700;color:#16a34a;}
+  #hb-{{ sid }} .k-pills{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px;}
+  #hb-{{ sid }} .k-pill{font-size:11px;font-weight:700;background:#F4F1E8;border-radius:6px;padding:5px 9px;color:#4d4a3a;}
+  #hb-{{ sid }} .k-desc{font-size:14px;font-weight:700;line-height:1.45;margin-bottom:8px;}
+  #hb-{{ sid }} .k-desc p{margin:0;display:inline;}
+  #hb-{{ sid }} .k-best{font-size:13px;color:#555;margin-bottom:14px;}
+  #hb-{{ sid }} .k-best b{color:#111;}
+  #hb-{{ sid }} .k-seg{display:flex;background:#F1F1EF;border:1px solid #E3E3E1;border-radius:100px;padding:4px;margin-bottom:16px;}
+  #hb-{{ sid }} .k-seg button{flex:1;text-align:center;padding:11px;font-size:14px;font-weight:700;border-radius:100px;color:#333;background:transparent;border:1.5px solid transparent;cursor:pointer;font-family:inherit;}
+  #hb-{{ sid }} .k-seg button.on{background:#fff;border-color:#111;color:#111;}
+  #hb-{{ sid }} .k-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;margin:0 0 10px;color:#0A0D11;text-transform:uppercase;}
+  #hb-{{ sid }} .k-tier{display:flex;align-items:center;gap:11px;border:1.5px solid #E4E4E2;border-radius:13px;padding:12px 14px;margin-bottom:9px;position:relative;cursor:pointer;background:#fff;}
+  #hb-{{ sid }} .k-tier.sel{border:2px solid #0A0D11;background:#F6FBF8;}
+  #hb-{{ sid }} .k-badge{position:absolute;top:-9px;left:14px;background:#0A0D11;color:#fff;font-size:9px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:12px;text-transform:uppercase;}
+  #hb-{{ sid }} .k-rad{width:19px;height:19px;flex:0 0 auto;border-radius:50%;border:2px solid #C9C9C7;background:#fff;}
+  #hb-{{ sid }} .k-tier.sel .k-rad{border:6px solid #0A0D11;}
+  #hb-{{ sid }} .k-tin{flex:1;min-width:0;}
+  #hb-{{ sid }} .k-tin b{display:block;font-size:14.5px;}
+  #hb-{{ sid }} .k-tin span{display:block;font-size:12px;color:#777;}
+  #hb-{{ sid }} .k-tp{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+  #hb-{{ sid }} .k-tp b{display:block;font-size:16.5px;font-weight:800;}
+  #hb-{{ sid }} .k-tp s{font-size:11.5px;color:#bbb;}
+  #hb-{{ sid }} .k-off{display:inline-block;background:#E11D48;color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.02em;padding:2px 7px;border-radius:6px;}
+  #hb-{{ sid }} .k-per{display:block;font-size:11px;color:#9aa3ab;margin-top:1px;}
+  #hb-{{ sid }} .k-gift{display:inline-block;font-size:10px;font-weight:800;color:#06281B;background:linear-gradient(90deg,#7CF5C2,#10C97E);padding:1px 7px;border-radius:100px;margin-top:2px;}
+  #hb-{{ sid }} .k-atc{width:100%;background:#0A0D11;border:none;color:#fff;font-size:16px;font-weight:800;padding:16px;border-radius:100px;margin-top:12px;cursor:pointer;font-family:inherit;}
+  #hb-{{ sid }} .k-atc[disabled]{opacity:.5;cursor:default;}
+  #hb-{{ sid }} .k-buynow{width:100%;background:#F1F1EF;border:none;color:#111;font-size:14.5px;font-weight:700;padding:14px;border-radius:100px;margin-top:9px;cursor:pointer;font-family:inherit;}
+  /* FAQ + phone */
+  #hb-{{ sid }} .k-faq{max-width:1180px;margin:8px auto 0;padding:34px 22px 14px;display:grid;grid-template-columns:1fr;gap:26px;border-top:1px solid #EDEDEA;}
+  @media(min-width:880px){#hb-{{ sid }} .k-faq{grid-template-columns:.78fr 1.22fr;gap:46px;align-items:center;}}
+  #hb-{{ sid }} .k-phone{justify-self:center;position:relative;width:min(270px,76vw);aspect-ratio:9/16;border-radius:42px;overflow:hidden;background:#0E1116;border:9px solid #17181C;box-shadow:0 28px 56px -28px rgba(10,13,17,.5),inset 0 0 0 2px #2A2B31;}
+  #hb-{{ sid }} .k-phone::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0B0B0E;border-radius:14px;z-index:5;}
+  #hb-{{ sid }} .k-phone video{width:100%;height:100%;object-fit:cover;display:block;}
+  #hb-{{ sid }} .k-phone .tag{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);white-space:nowrap;z-index:6;}
+  #hb-{{ sid }} .k-fh{font-size:clamp(20px,2.3vw,27px);font-weight:800;margin:0 0 4px;letter-spacing:-.01em;}
+  #hb-{{ sid }} .k-fsub{font-size:14px;color:#6b6b6b;margin:0 0 14px;}
+  #hb-{{ sid }} .k-fq{border-bottom:1px solid #E6E6E6;}
+  #hb-{{ sid }} .k-fq .q{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 2px;cursor:pointer;font-weight:700;font-size:15.5px;}
+  #hb-{{ sid }} .k-fq .ic{flex:0 0 auto;width:24px;height:24px;border-radius:50%;border:1.5px solid #C9CFC9;display:grid;place-items:center;font-size:16px;line-height:1;color:#1f5c3d;transition:transform .3s;}
+  #hb-{{ sid }} .k-fq.on .ic{transform:rotate(45deg);background:#1f5c3d;color:#fff;border-color:#1f5c3d;}
+  #hb-{{ sid }} .k-fq .a{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  #hb-{{ sid }} .k-fq .a p{margin:0;padding:0 2px 15px;font-size:14px;line-height:1.6;color:#5b6470;}
+  /* sticky bar */
+  #hb-stk-{{ sid }}{position:fixed;left:14px;right:82px;bottom:16px;z-index:9998;display:flex;align-items:center;gap:11px;padding:8px 9px 8px 12px;background:rgba(255,255,255,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #E5E5E3;border-radius:26px;box-shadow:0 16px 36px rgba(6,30,46,.18);transform:translateY(calc(100% + 30px));transition:transform .4s cubic-bezier(.2,.8,.2,1);}
+  #hb-stk-{{ sid }}.show{transform:translateY(0);}
+  #hb-stk-{{ sid }} img{width:40px;height:40px;border-radius:12px;object-fit:cover;}
+  #hb-stk-{{ sid }} .n{font-weight:800;font-size:13.5px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #hb-stk-{{ sid }} .p{font-weight:800;font-size:13px;}
+  #hb-stk-{{ sid }} .i{flex:1;min-width:0;}
+  #hb-stk-{{ sid }} button{flex:0 0 auto;background:#0A0D11;color:#fff;border:none;border-radius:30px;padding:13px 21px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;}
+  @media(max-width:879px){#hb-{{ sid }} .k-gal{flex-direction:column-reverse;}#hb-{{ sid }} .k-rail{flex-direction:row;width:100%;flex:none;max-height:none;overflow-x:auto;}#hb-{{ sid }} .k-trow{flex-direction:column;gap:4px;}#hb-{{ sid }} .k-price{text-align:left;display:flex;align-items:baseline;gap:9px;}#hb-{{ sid }} .k-price .sv{display:inline;}}
 </style>
 
-<div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
-  <div class="hb-grid">
-
-    {%- comment -%} ---------- GALLERY (double) ---------- {%- endcomment -%}
-    <div class="hb-gallery" data-gal="double">
-      <div class="hb-stagewrap">
-      <div class="hb-stage" id="hb-stage-{{ sid }}" data-track>
-        {%- assign mainimg = product.featured_image | default: section.settings.lead_image -%}
-        {%- assign nimg = product.images.size -%}
-        {%- capture hb_vidcell -%}<div class="hb-cell" data-slide="vid"><video muted loop playsinline preload="none"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>{%- endcapture -%}
-        {%- if nimg > 0 -%}
-          {%- for img in product.images -%}
-            <div class="hb-cell" data-slide="{{ forloop.index0 }}"><img src="{{ img | image_url: width: 700 }}" srcset="{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 700 }} 700w, {{ img | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="{{ product.title | escape }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async"{% if forloop.first %} fetchpriority="high"{% endif %}></div>
-            {%- if forloop.first and section.settings.lead_video != blank -%}{{ hb_vidcell }}{%- endif -%}
-          {%- endfor -%}
-        {%- elsif mainimg != blank -%}
-          <div class="hb-cell" data-slide="0"><img src="{{ mainimg | image_url: width: 700 }}" srcset="{{ mainimg | image_url: width: 400 }} 400w, {{ mainimg | image_url: width: 700 }} 700w, {{ mainimg | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="{{ product.title | escape }}" loading="eager" fetchpriority="high"></div>
-          {%- if section.settings.lead_video != blank -%}{{ hb_vidcell }}{%- endif -%}
-        {%- elsif section.settings.lead_video != blank -%}
-          {{ hb_vidcell }}
-        {%- endif -%}
-        {%- if nimg == 0 and mainimg == blank and section.settings.lead_video == blank -%}
-          <div class="hb-cell" data-slide="0"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:var(--helios-mut,#56636E);padding:24px;"><span style="width:58px;height:58px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-4.5-4.5L7 21"/></svg></span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add your demo video or photos</div><div style="font-size:12px;opacity:.75;">Product → Media · the first one shows here</div></div></div>
-        {%- endif -%}
-      </div>
-      <div class="hb-dots" data-dots></div>
-      <div class="hb-thumbs">
-        {%- comment -%} product images first (Product → Media), min 4 slots {%- endcomment -%}
-        {%- assign nimg = product.images.size -%}
-        {%- if nimg < 4 -%}{%- assign slotcount = 4 -%}{%- else -%}{%- assign slotcount = nimg -%}{%- endif -%}
-        {%- for n in (1..slotcount) -%}
-          {%- assign idx = n | minus: 1 -%}
-          {%- assign img = product.images[idx] -%}
-          {%- if img != blank -%}
-            <button type="button" class="hb-thumb{% if forloop.first %} sel{% endif %}" data-goto="{{ idx }}"><img src="{{ img | image_url: width: 220 }}" alt="{{ product.title | escape }}" loading="lazy"></button>
-          {%- else -%}
-            <button type="button" class="hb-thumb" aria-hidden="true"><span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-mut,#56636E);font-size:11px;gap:3px;opacity:.7;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>img</span></button>
-          {%- endif -%}
-          {%- comment -%} video as the SECOND thumbnail — autoplays {%- endcomment -%}
+<div class="k-wrap" id="buy" style="scroll-margin-top:84px;">
+  <div>
+    <div class="k-gal">
+      <div class="k-rail" id="k-rail-{{ sid }}">
+        {%- assign vposter = '' -%}
+        {%- if section.settings.lead_video != blank and section.settings.lead_video.preview_image != blank -%}{%- assign vposter = section.settings.lead_video.preview_image | image_url: width: 220 -%}{%- endif -%}
+        {%- for img in product.images limit: 9 -%}
+          <button type="button" class="k-th{% if forloop.first %} sel{% endif %}" data-kind="img" data-src="{{ img | image_url: width: 900 }}"><img src="{{ img | image_url: width: 220 }}" alt="{{ product.title | escape }}" loading="lazy"></button>
           {%- if forloop.first and section.settings.lead_video != blank -%}
-          <button type="button" class="hb-thumb hb-thumb-vid" data-goto="vid">
-            <video muted loop playsinline autoplay preload="auto"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 220 }}"{% endif %}>{%- for s in section.settings.lead_video.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video>
-          </button>
+          <button type="button" class="k-th" data-kind="vid">{% if vposter != '' %}<img src="{{ vposter }}" alt="video">{% endif %}<span class="vk">▶</span></button>
           {%- endif -%}
         {%- endfor -%}
       </div>
-      </div>
-    </div>
-
-    {%- comment -%} ---------- GALLERY (mini) ---------- {%- endcomment -%}
-    <div class="hb-gallery" data-gal="mini" style="display:none;">
-      <div class="hb-stage" data-track>
-        {%- assign mhas = false -%}
-        {%- for i in (1..4) -%}
-          {%- case i -%}{%- when 1 -%}{%- assign mi = section.settings.mini_image_1 -%}{%- when 2 -%}{%- assign mi = section.settings.mini_image_2 -%}{%- when 3 -%}{%- assign mi = section.settings.mini_image_3 -%}{%- when 4 -%}{%- assign mi = section.settings.mini_image_4 -%}{%- endcase -%}
-          {%- if mi != blank -%}<div class="hb-cell" data-slide="{{ i }}"><img src="{{ mi | image_url: width: 700 }}" srcset="{{ mi | image_url: width: 400 }} 400w, {{ mi | image_url: width: 700 }} 700w, {{ mi | image_url: width: 1000 }} 1000w" sizes="(min-width:880px) 540px, 92vw" width="1000" height="1000" alt="Super Glide Mini" loading="{% unless mhas %}eager{% else %}lazy{% endunless %}" decoding="async"></div>{%- assign mhas = true -%}{%- endif -%}
-        {%- endfor -%}
-        {%- if section.settings.mini_video_1 != blank -%}<div class="hb-cell" data-slide="v1"><video muted loop playsinline preload="none"{% if section.settings.mini_video_1.preview_image != blank %} poster="{{ section.settings.mini_video_1.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.mini_video_1.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>{%- assign mhas = true -%}{%- endif -%}
-        {%- if section.settings.mini_video_2 != blank -%}<div class="hb-cell" data-slide="v2"><video muted loop playsinline preload="none"{% if section.settings.mini_video_2.preview_image != blank %} poster="{{ section.settings.mini_video_2.preview_image | image_url: width: 700 }}"{% endif %}>{%- for s in section.settings.mini_video_2.sources -%}<source src="{{ s.url }}" type="{{ s.mime_type }}">{%- endfor -%}</video></div>{%- endif -%}
-        {%- unless mhas -%}<div class="hb-cell" data-slide="1"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--helios-mut,#56636E);padding:24px;text-align:center;"><span style="width:52px;height:52px;border-radius:50%;background:rgba(14,124,196,.10);display:grid;place-items:center;color:var(--helios-accd,#0A5E97);">🌀</span><div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;color:var(--helios-ink,#0C1A24);">Add Mini media</div><div style="font-size:12px;opacity:.75;">Customize → Mini media (2 videos + images)</div></div></div>{%- endunless -%}
-      </div>
-      <div class="hb-dots" data-dots></div>
-      <div class="hb-thumbs">
-        {%- for i in (1..4) -%}
-          {%- case i -%}{%- when 1 -%}{%- assign mi = section.settings.mini_image_1 -%}{%- when 2 -%}{%- assign mi = section.settings.mini_image_2 -%}{%- when 3 -%}{%- assign mi = section.settings.mini_image_3 -%}{%- when 4 -%}{%- assign mi = section.settings.mini_image_4 -%}{%- endcase -%}
-          {%- if mi != blank -%}
-            <button type="button" class="hb-thumb{% if forloop.first %} sel{% endif %}" data-goto="{{ i }}"><img src="{{ mi | image_url: width: 220 }}" alt="Super Glide Mini" loading="lazy"></button>
-          {%- else -%}
-            <button type="button" class="hb-thumb" aria-hidden="true"><span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-mut,#56636E);font-size:11px;gap:3px;opacity:.7;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>img</span></button>
-          {%- endif -%}
-        {%- endfor -%}
-        {%- if section.settings.mini_video_1 != blank -%}<button type="button" class="hb-thumb" data-goto="v1">{%- if section.settings.mini_video_1.preview_image != blank -%}<img src="{{ section.settings.mini_video_1.preview_image | image_url: width: 220 }}" alt="video"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video</span></span>{%- endif -%}</button>{%- endif -%}
-        {%- if section.settings.mini_video_2 != blank -%}<button type="button" class="hb-thumb" data-goto="v2">{%- if section.settings.mini_video_2.preview_image != blank -%}<img src="{{ section.settings.mini_video_2.preview_image | image_url: width: 220 }}" alt="video 2"><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);">▶</span>{%- else -%}<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:var(--helios-accd,#0A5E97);font-size:11px;gap:3px;">▶<span style="opacity:.7;">video 2</span></span>{%- endif -%}</button>{%- endif -%}
-      </div>
-    </div>
-
-    {%- comment -%} ---------- BUY ---------- {%- endcomment -%}
-    <div class="hb-buy">
-      {%- comment -%} clean, Glo-style header {%- endcomment -%}
-      <div class="hb-kcrumb">HOME &rsaquo; WATER LOUNGERS &rsaquo; SUPER GLIDE</div>
-      <a href="#reviews" class="hb-krate"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><b>{{ section.settings.rating | default: '4.8' }}</b><span>({{ section.settings.review_count | default: '3,912' }} reviews)</span></a>
-      <div class="hb-ktitle">
-        <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
-        <div class="hb-priceline">
-          {%- assign hb_scpt = cur.price | times: 0.88 | round -%}<b class="hb-price-main" id="hb-price-{{ sid }}">{{ hb_scpt | money }}</b>
-          <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
-          <em class="hb-offp" id="hb-off-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | minus: hb_scpt | times: 100 | divided_by: cur.compare_at_price }}% OFF</em>
-          <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
-        </div>
-      </div>
-      <div class="hb-kpills"><span>☀ Summer Sale — up to 63% OFF</span><span>🛡 30-Day Money-Back</span></div>
-      <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
-      <div class="hb-kbest"><b>Best for:</b> Pool Days, Lake Weekends, The Grandkids, All-Summer Lounging</div>
-
-
-      {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
-      {%- assign hb_form_id = 'hb-form-' | append: sid -%}
-      {%- form 'product', product, id: hb_form_id -%}
-        <input type="hidden" name="id" id="hb-vid-{{ sid }}" value="{{ cur.id }}">
-
-        {%- if section.settings.show_picker -%}
-        {%- comment -%} variant picker (Super Glide / Mini) — right above the bundles {%- endcomment -%}
-        <div class="hb-picker" style="display:flex;gap:9px;margin:0 0 14px;">
-          {%- assign pk_dbl = product.featured_image | default: section.settings.lead_image -%}
-          <button type="button" data-pick="double" class="hb-pk on">
-            <span class="hb-pktx"><b>Super Glide</b><span>Double · 2 seats</span></span>
-          </button>
-          {%- assign mini_variant = blank -%}
-          {%- for v in product.variants -%}{%- if v.title contains 'Mini' -%}{%- assign mini_variant = v -%}{%- break -%}{%- endif -%}{%- endfor -%}
-          {%- assign pk_mini = mini_variant.image | default: section.settings.mini_image_1 -%}
-          <button type="button" data-pick="mini" class="hb-pk">
-            <span class="hb-pktx"><b>Mini Glide</b><span>Single · 1 seat</span></span>
-          </button>
-        </div>
+      <div class="k-stage" id="k-stage-{{ sid }}">
+        <img id="k-main-{{ sid }}" src="{{ product.featured_image | default: section.settings.lead_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}">
+        {%- if section.settings.lead_video != blank -%}
+        <video id="k-vid-{{ sid }}" style="display:none;" muted loop playsinline preload="metadata"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 900 }}"{% endif %}>{%- for src in section.settings.lead_video.sources -%}<source src="{{ src.url }}" type="{{ src.mime_type }}">{%- endfor -%}</video>
         {%- endif -%}
+        <span class="k-bs">Best Seller</span>
+        <button type="button" class="k-ar" data-knext aria-label="Next image">›</button>
+      </div>
+    </div>
+    <div class="k-quote"><span class="st">★★★★★</span><span><b>5 stars for summer!</b> My son will NOT get off this thing.</span><span class="who">elena d.</span></div>
+    <a class="k-check" href="#k-faq-{{ sid }}">Is the Super Glide right for your family? Let's check →</a>
+  </div>
 
-        <div class="hb-klabel">Pick Your Bundle</div>
-        <div class="hb-tiers" id="hb-tiers-{{ sid }}">
-          {%- if section.settings.show_picker -%}
-          {%- comment -%} auto Mini tier (single-seat variant) {%- endcomment -%}
-          {%- for v in product.variants -%}
-            {%- if v.title contains 'Mini' -%}
-              {%- assign mqty = 1 -%}{%- assign msub = 'Single seat · most affordable' -%}{%- assign mbadge = '' -%}{%- assign msel = '' -%}
-              {%- if v.title contains '2' -%}{%- assign mqty = 2 -%}{%- assign msub = 'BUY 1 GET 1 50% OFF · race a friend' -%}{%- assign mbadge = 'Most popular' -%}{%- assign msel = ' sel' -%}{%- endif -%}
-              {%- if v.title contains '3' -%}{%- assign mqty = 3 -%}{%- assign msub = 'Best value · the whole crew' -%}{%- assign mbadge = 'Best value' -%}{%- endif -%}
-              {%- assign mper = v.price | divided_by: mqty -%}
-              <label class="hb-tier{{ msel }}" data-tier="mini" style="display:none;" data-vid="{{ v.id }}" data-price="{{ v.price }}" data-compare="{{ v.compare_at_price }}">
-                {%- if mbadge != blank -%}<span class="hb-badge{% if mbadge == 'Best value' %} teal{% endif %}">{{ mbadge }}</span>{%- endif -%}
-                <span class="hb-radio"></span>
-                <div style="flex:1;">
-                  <span class="hb-tiername">{{ mqty }} × Mini Glide</span>
-                  <span class="hb-tiersub">{{ msub }}</span>
-                  <span class="hb-tierper">{{ mper | times: 0.88 | round | money }} / glider</span>
-                </div>
-                <div class="hb-tierprice">
-                  <b>{{ v.price | times: 0.88 | round | money }}</b>
-                  {%- if v.compare_at_price > v.price -%}<s>{{ v.compare_at_price | money }}</s>{%- endif -%}
-                </div>
-              </label>
-            {%- endif -%}
-          {%- endfor -%}
+  <div>
+    <div class="k-crumb">Home &rsaquo; Water Loungers &rsaquo; Super Glide</div>
+    <a class="k-stars" href="#reviews"><span>★★★★★</span> <b>{{ section.settings.rating | default: '4.8' }}</b> ({{ section.settings.review_count | default: '3,912' }} reviews)</a>
+    <div class="k-trow">
+      <h1 id="k-title-{{ sid }}">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
+      <div class="k-price">
+        <b id="k-price-{{ sid }}">{{ scp | money }}</b>
+        <s id="k-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | money }}</s>
+        <span class="sv" id="k-save-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>You save {{ cur.compare_at_price | minus: scp | money }}</span>
+      </div>
+    </div>
+    <div class="k-pills"><span class="k-pill">☀ Summer Sale — up to 63% OFF</span><span class="k-pill">🛡 30-Day Money-Back</span></div>
+    <div class="k-desc">A motorized water lounger — because summer memories don't make themselves.</div>
+    <div class="k-best"><b>Best for:</b> Pool Days, Lake Weekends, The Grandkids, Everyday</div>
+
+    {%- assign hb_form_id = 'k-form-' | append: sid -%}
+    {%- form 'product', product, id: hb_form_id -%}
+      <input type="hidden" name="id" id="k-vidin-{{ sid }}" value="{{ cur.id }}">
+      {%- if section.settings.show_picker -%}
+      <div class="k-seg" id="k-seg-{{ sid }}">
+        <button type="button" class="on" data-pick="double">Super Glide</button>
+        <button type="button" data-pick="mini">Mini Glide</button>
+      </div>
+      {%- endif -%}
+      <div class="k-lbl">Pick Your Bundle</div>
+      <div id="k-tiers-{{ sid }}">
+        {%- if section.settings.show_picker -%}
+        {%- for v in product.variants -%}
+          {%- if v.title contains 'Mini' -%}
+            {%- assign mqty = 1 -%}{%- assign msub = 'Single seat · most affordable' -%}{%- assign mbadge = '' -%}{%- assign msel = '' -%}
+            {%- if v.title contains '2' -%}{%- assign mqty = 2 -%}{%- assign msub = 'BUY 1 GET 1 50% OFF · race a friend' -%}{%- assign mbadge = 'Most popular' -%}{%- assign msel = ' sel' -%}{%- endif -%}
+            {%- if v.title contains '3' -%}{%- assign mqty = 3 -%}{%- assign msub = 'Best value · the whole crew' -%}{%- assign mbadge = 'Best value' -%}{%- endif -%}
+            <div class="k-tier{{ msel }}" data-tier="mini" style="display:none;" data-vid="{{ v.id }}" data-price="{{ v.price }}" data-compare="{{ v.compare_at_price | default: 0 }}">
+              {%- if mbadge != blank -%}<span class="k-badge">{{ mbadge }}</span>{%- endif -%}
+              <span class="k-rad"></span>
+              {%- assign mpaid = v.price | times: 0.88 | round -%}
+              {%- assign mper = mpaid | divided_by: mqty -%}
+              <div class="k-tin"><b>{{ mqty }} × Mini Glide</b><span>{{ msub }}</span><span class="k-per">{{ mper | money }} each</span></div>
+              <div class="k-tp">{% if v.compare_at_price > mpaid %}<em class="k-off">{{ v.compare_at_price | minus: mpaid | times: 100 | divided_by: v.compare_at_price }}% OFF</em>{% endif %}<b>{{ mpaid | money }}</b>{% if v.compare_at_price > v.price %}<s>{{ v.compare_at_price | money }}</s>{% endif %}</div>
+            </div>
           {%- endif -%}
-          {%- for block in section.blocks -%}
-            {%- if block.type == 'bundle' -%}
-              {%- assign vid = block.settings.variant_id | times: 1 -%}
-              {%- assign bv = blank -%}
-              {%- for v in product.variants -%}{%- if v.id == vid -%}{%- assign bv = v -%}{%- endif -%}{%- endfor -%}
-              {%- assign qty = block.settings.qty | default: 1 -%}
-              {%- assign tprice = bv.price | default: block.settings.fallback_price | plus: 0 -%}
-              {%- assign tcompare = bv.compare_at_price | default: block.settings.fallback_compare | plus: 0 -%}
-              {%- assign saveamt = tcompare | minus: tprice -%}
-              {%- assign perunit = tprice | divided_by: qty -%}
-              {%- assign pilltxt = 'FOR ' | append: block.settings.label | upcase -%}
-              {%- if qty == 2 -%}{%- assign pilltxt = pilltxt | append: ' (2-PACK)' -%}{%- endif -%}
-              {%- if qty == 4 -%}{%- assign pilltxt = pilltxt | append: ' (2+2)' -%}{%- endif -%}
-              <label class="hb-tier{% if block.settings.preselect %} sel{% endif %}" data-tier="double"
-                     data-vid="{{ bv.id | default: vid }}" data-price="{{ tprice }}" data-compare="{{ tcompare }}" data-pill="{{ pilltxt }}"
-                     {{ block.shopify_attributes }}>
-                {%- if block.settings.badge != blank -%}
-                  <span class="hb-badge{% if block.settings.badge_style == 'teal' %} teal{% endif %}">{{ block.settings.badge }}</span>
-                {%- endif -%}
-                <span class="hb-radio"></span>
-                <div style="flex:1;">
-                  <span class="hb-tiername">{{ block.settings.label | default: bv.title }}</span>
-                  {%- if block.settings.sublabel != blank -%}<span class="hb-tiersub">{{ block.settings.sublabel }}</span>{%- endif -%}
-                  <span class="hb-tierper">{{ perunit | times: 0.88 | round | money }} each</span>
-                </div>
-                <div class="hb-tierprice">
-                  <b>{{ tprice | times: 0.88 | round | money }}</b>
-                  {%- if tcompare > tprice -%}<s>{{ tcompare | money }}</s>{%- endif -%}
-                </div>
-              </label>
-            {%- endif -%}
-          {%- endfor -%}
-        </div>
-
-        {%- assign hb_scp = cur.price | times: 0.88 | round -%}
-        <button type="submit" name="add" class="hb-atc" {% unless cur.available %}disabled{% endunless %}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          {{ section.settings.cta_text | default: 'Add to Cart' }} →
-        </button>
-        <button type="button" class="hb-buynow" id="hb-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy Now</button>
-      {%- endform -%}
-
-
-
-      {%- if section.settings.show_stock -%}
-        <div class="hb-stock">🔥 Summer demand is high — only <b>{{ section.settings.stock_left | default: 24 }}</b> left at this price.
-          <div class="hb-stockbar"><i></i></div>
-        </div>
-      {%- endif -%}
-
-      {%- if section.settings.show_live -%}
-        <div class="hb-live"><span class="hb-dot"></span>
-          <b id="hb-view-{{ sid }}" style="color:var(--helios-ink,#0C1A24);">{{ section.settings.live_viewers | default: 58 }}</b> viewing ·
-          <b id="hb-sold-{{ sid }}" style="color:var(--helios-ink,#0C1A24);">{{ section.settings.sold_today | default: 202 }}</b> sold today
-        </div>
-      {%- endif -%}
-    </div>
-
-    {%- comment -%} KURU-style left column under the gallery: quote strip, check strip, FAQ chips, story, Quick Facts {%- endcomment -%}
-    <div class="hb-kleft">
-      <div class="hb-kquote"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><span>"My son will NOT get off this thing. Literally, he refuses."</span><b>— elena d.</b></div>
-      <a class="hb-kcheck" href="#hb-kfaq-{{ sid }}">Is the Super Glide right for your family? Let's check →</a>
-    </div>
-  </div>
-
-  {%- comment -%} FAQ + UGC phone video {%- endcomment -%}
-  <div class="hb-kfaq" id="hb-kfaq-{{ sid }}">
-    <div class="hb-kfaq-phone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="tag">▶ Real families, real water</span></div>
-    <div class="hb-kfaq-list">
-      <h2>Everything you're wondering, answered.</h2>
-      <div class="fsub">Honest answers — watch it in action while you read.</div>
-      <div class="hb-kfq on"><div class="q">Does it really move on its own?<span class="ic">+</span></div><div class="a"><p>Yes — twin quiet electric motors push you forward and let you spin 360° with the joysticks. No paddling, no gas, no motorboat. Completely hands-free.</p></div></div>
-      <div class="hb-kfq"><div class="q">Is it safe for kids?<span class="ic">+</span></div><div class="a"><p>Yes — the motors are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent up to the 300 lb capacity, life jackets on.</p></div></div>
-      <div class="hb-kfq"><div class="q">How long does the battery last?<span class="ic">+</span></div><div class="a"><p>About 2 hours of continuous cruising per charge — a whole afternoon on the water — and it recharges between sessions.</p></div></div>
-      <div class="hb-kfq"><div class="q">How hard is it to set up?<span class="ic">+</span></div><div class="a"><p>Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</p></div></div>
-      <div class="hb-kfq"><div class="q">What if I don't love it?<span class="ic">+</span></div><div class="a"><p>Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</p></div></div>
-    </div>
+        {%- endfor -%}
+        {%- endif -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'bundle' -%}
+            {%- assign vid = block.settings.variant_id | times: 1 -%}
+            {%- assign bv = blank -%}
+            {%- for v in product.variants -%}{%- if v.id == vid -%}{%- assign bv = v -%}{%- endif -%}{%- endfor -%}
+            {%- assign tprice = bv.price | default: block.settings.fallback_price | plus: 0 -%}
+            {%- assign tcompare = bv.compare_at_price | default: block.settings.fallback_compare | plus: 0 -%}
+            {%- assign qty = block.settings.qty | default: 1 -%}
+            {%- assign paid = tprice | times: 0.88 | round -%}
+            {%- assign perunit = paid | divided_by: qty -%}
+            <div class="k-tier{% if block.settings.preselect %} sel{% endif %}" data-tier="double" data-vid="{{ bv.id | default: vid }}" data-price="{{ tprice }}" data-compare="{{ tcompare }}" {{ block.shopify_attributes }}>
+              {%- if block.settings.badge != blank -%}<span class="k-badge">{{ block.settings.badge }}</span>{%- endif -%}
+              <span class="k-rad"></span>
+              <div class="k-tin"><b>{{ block.settings.label | default: bv.title }}</b>{% if block.settings.sublabel != blank %}<span>{{ block.settings.sublabel }}</span>{% endif %}{% if qty >= 3 %}<span class="k-gift">🎁 FREE Jet Ski &amp; Pump included</span>{% endif %}<span class="k-per">{{ perunit | money }} each</span></div>
+              <div class="k-tp">{% if tcompare > paid %}<em class="k-off">{{ tcompare | minus: paid | times: 100 | divided_by: tcompare }}% OFF</em>{% endif %}<b>{{ paid | money }}</b>{% if tcompare > tprice %}<s>{{ tcompare | money }}</s>{% endif %}</div>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+      <button type="submit" name="add" class="k-atc" id="k-atc-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>🛒 {{ section.settings.cta_text | default: 'Add to Cart' }} →</button>
+      <button type="button" class="k-buynow" id="k-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy Now</button>
+    {%- endform -%}
   </div>
 </div>
-<script>
-(function(){var r=document.getElementById('hb-kfaq-{{ sid }}');if(!r||r.dataset.i)return;r.dataset.i='1';
-var fqs=[].slice.call(r.querySelectorAll('.hb-kfq'));
-function setH(f){var a=f.querySelector('.a');a.style.maxHeight=f.classList.contains('on')?a.scrollHeight+'px':'0px';}
-fqs.forEach(function(f){setH(f);f.querySelector('.q').addEventListener('click',function(){var op=!f.classList.contains('on');fqs.forEach(function(o){o.classList.remove('on');setH(o);});if(op){f.classList.add('on');}setH(f);});});
-var v=r.querySelector('video');if(v){var p=v.play();if(p&&p.catch)p.catch(function(){});}
-})();
-</script>
 
-<div id="hb-sticky-{{ sid }}" aria-hidden="true">
-  <div class="hb-sk-info">
-    {%- if product.featured_image != blank -%}<img class="hb-sk-thumb" src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}
-    <div style="min-width:0;">
-      <div class="hb-sk-name">{{ section.settings.title | default: 'HELIOS Super Glide' }}</div>
-      <div class="hb-sk-price"><b id="hb-sk-price-{{ sid }}">{{ cur.price | times: 0.88 | round | money }}</b></div>
-    </div>
+<div class="k-faq" id="k-faq-{{ sid }}">
+  <div class="k-phone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="tag">▶ Real families, real water</span></div>
+  <div>
+    <h2 class="k-fh">Everything you're wondering, answered.</h2>
+    <div class="k-fsub">Honest answers — watch it in action while you read.</div>
+    <div class="k-fq on"><div class="q">Does it really move on its own?<span class="ic">+</span></div><div class="a"><p>Yes — twin quiet electric motors push you forward and let you spin 360° with the joysticks. No paddling, no gas, no motorboat. Completely hands-free.</p></div></div>
+    <div class="k-fq"><div class="q">Is it safe for kids?<span class="ic">+</span></div><div class="a"><p>Yes — the motors are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent up to the 300 lb capacity, life jackets on.</p></div></div>
+    <div class="k-fq"><div class="q">How long does the battery last?<span class="ic">+</span></div><div class="a"><p>About 2 hours of continuous cruising per charge — a whole afternoon on the water — and it recharges between sessions.</p></div></div>
+    <div class="k-fq"><div class="q">How hard is it to set up?<span class="ic">+</span></div><div class="a"><p>Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</p></div></div>
+    <div class="k-fq"><div class="q">What if I don't love it?<span class="ic">+</span></div><div class="a"><p>Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</p></div></div>
   </div>
-  <button type="button" class="hb-sk-add" id="hb-sk-add-{{ sid }}">Add to cart</button>
+</div>
+</section>
+
+<div id="hb-stk-{{ sid }}" aria-hidden="true">
+  {%- if product.featured_image != blank -%}<img src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}
+  <div class="i"><div class="n">{{ section.settings.title | default: 'HELIOS Super Glide' }}</div><div class="p" id="k-stkp-{{ sid }}">{{ scp | money }}</div></div>
+  <button type="button" id="k-stka-{{ sid }}">Add to cart</button>
 </div>
 
-{%- if section.settings.show_toasts -%}
-  <div id="hb-toast-{{ sid }}"><span class="hb-tt-em">🌊</span><div style="line-height:1.25;"><div id="hb-toast-name-{{ sid }}" style="font-size:13px;font-weight:700;color:var(--helios-ink,#0C1A24);"></div><div id="hb-toast-meta-{{ sid }}" style="font-size:11.5px;color:var(--helios-mut,#56636E);"></div></div></div>
-{%- endif -%}
-
 <script>
 (function(){
-  var root = document.getElementById('hb-{{ sid }}');
-  if(!root || root.dataset.init) return; root.dataset.init = '1';
+  var root=document.getElementById('hb-{{ sid }}'); if(!root||root.dataset.i)return; root.dataset.i='1';
+  var DISC='{{ section.settings.discount_code }}';
+  var HGT={'47935890849957':1,'47935890882725':1}, GIFTS=[48001507197093,48001507262629];
+  var money=function(c){return '{{ shop.money_format | strip_html }}'.replace(/\{\{\s*amount\s*\}\}/,(c/100).toFixed(2)).replace(/\{\{\s*amount_no_decimals\s*\}\}/,Math.round(c/100));};
 
-  (function(){
-    var sk = document.getElementById('hb-sticky-{{ sid }}');
-    var atc = root.querySelector('.hb-atc');
-    if(!sk || !atc) return;
-    if(sk.parentNode !== document.body) document.body.appendChild(sk);
-    if('IntersectionObserver' in window){
-      new IntersectionObserver(function(ents){ ents.forEach(function(en){ sk.classList.toggle('show', !en.isIntersecting); }); }, {threshold:0}).observe(atc);
-    }
-    var skAdd = document.getElementById('hb-sk-add-{{ sid }}');
-    if(skAdd) skAdd.addEventListener('click', function(){ atc.click(); });
-    var skPrice = document.getElementById('hb-sk-price-{{ sid }}');
-    window.addEventListener('helios:variant', function(e){ if(e.detail && e.detail.price && skPrice) skPrice.textContent = e.detail.price; });
-  })();
-  var money = function(cents){ return '{{ shop.money_format | strip_html }}'.replace(/\{\{\s*amount\s*\}\}/, (cents/100).toFixed(2)).replace(/\{\{\s*amount_no_decimals\s*\}\}/, Math.round(cents/100)); };
-
-
-  /* ---- bundle tiers → hidden variant id + total + savings ---- */
-  var hid = document.getElementById('hb-vid-{{ sid }}');
-  var total = document.getElementById('hb-total-{{ sid }}');
-  var price = document.getElementById('hb-price-{{ sid }}');
-  var cmp = document.getElementById('hb-cmp-{{ sid }}');
-  var savebox = document.getElementById('hb-savebox-{{ sid }}');
-  var savesub = document.getElementById('hb-savesub-{{ sid }}');
-  var bundlepill = document.getElementById('hb-bundlepill-{{ sid }}');
-  var tiers = root.querySelectorAll('.hb-tier');
-  function selectTier(t){
-    tiers.forEach(function(x){ x.classList.remove('sel'); });
-    t.classList.add('sel');
-    var p = Math.round(parseInt(t.dataset.price,10)*0.88), c = parseInt(t.dataset.compare,10) || 0;
-    if(hid) hid.value = t.dataset.vid;
-    if(total) total.textContent = money(p);
-    if(price) price.textContent = money(p);
-    if(cmp){ if(c>p){ cmp.style.display=''; cmp.textContent = money(c); } else cmp.style.display='none'; }
-    var pct = c>p ? Math.round((1-p/c)*100) : 0;
-    if(savebox){ if(pct>0){ savebox.style.display=''; savebox.textContent = 'SAVE ' + pct + '%'; } else savebox.style.display='none'; }
-    if(savesub){ if(c>p){ savesub.style.display=''; savesub.textContent = 'You save ' + money(c-p); } else savesub.style.display='none'; }
-    if(bundlepill && t.dataset.pill){ bundlepill.textContent = '📦 ' + t.dataset.pill; }
-    var hbg=document.getElementById('hb-ob-g-{{ sid }}'); if(hbg) hbg.style.display = HGT[t.dataset.vid] ? '' : 'none';
-    try{ var u=new URL(window.location); u.searchParams.set('variant', t.dataset.vid); history.replaceState({}, '', u); }catch(e){}
-    window.dispatchEvent(new CustomEvent('helios:variant', { detail: { id: t.dataset.vid, price: money(p), compare: c>p ? money(c) : '' } }));
+  /* gallery: thumbs swap the main image / video */
+  var rail=document.getElementById('k-rail-{{ sid }}');
+  var main=document.getElementById('k-main-{{ sid }}');
+  var vid=document.getElementById('k-vid-{{ sid }}');
+  var ths=[].slice.call(rail.querySelectorAll('.k-th')), ki=0;
+  function kshow(i){
+    ki=(i%ths.length+ths.length)%ths.length;
+    ths.forEach(function(t,j){t.classList.toggle('sel',j===ki);});
+    var t=ths[ki];
+    if(t.dataset.kind==='vid'&&vid){ main.style.display='none'; vid.style.display='block'; var p=vid.play(); if(p&&p.catch)p.catch(function(){}); }
+    else { if(vid){vid.pause(); vid.style.display='none';} main.style.display='block'; if(t.dataset.src) main.src=t.dataset.src; }
   }
-  tiers.forEach(function(t){ t.addEventListener('click', function(e){ e.preventDefault(); selectTier(t); }); });
+  ths.forEach(function(t,i){t.addEventListener('click',function(){kshow(i);});});
+  var nx=root.querySelector('[data-knext]'); if(nx)nx.addEventListener('click',function(){kshow(ki+1);});
 
-  /* ---- free-gift tiers: 3 & 4 gliders ship with the FREE Jet Ski + Pump ---- */
-  var HGT={'47935890849957':1,'47935890882725':1}, HGIFTS=[48001507197093,48001507262629];
-  function withGifts(vid){
-    var items=[{id:parseInt(vid,10),quantity:1}];
-    if(HGT[''+vid]) HGIFTS.forEach(function(g){ items.push({id:g,quantity:1}); });
-    return items;
+  /* tiers */
+  var hid=document.getElementById('k-vidin-{{ sid }}');
+  var priceEl=document.getElementById('k-price-{{ sid }}'), cmpEl=document.getElementById('k-cmp-{{ sid }}'), saveEl=document.getElementById('k-save-{{ sid }}'), stkp=document.getElementById('k-stkp-{{ sid }}');
+  var tiersBox=document.getElementById('k-tiers-{{ sid }}');
+  function tiers(){return [].slice.call(tiersBox.querySelectorAll('.k-tier'));}
+  function pick(t){
+    tiers().forEach(function(x){x.classList.remove('sel');}); t.classList.add('sel');
+    hid.value=t.dataset.vid;
+    var p=Math.round(parseInt(t.dataset.price,10)*0.88), c=parseInt(t.dataset.compare,10)||0;
+    if(priceEl)priceEl.textContent=money(p);
+    if(stkp)stkp.textContent=money(p);
+    if(cmpEl){ if(c>p){cmpEl.style.display='';cmpEl.textContent=money(c);} else cmpEl.style.display='none'; }
+    if(saveEl){ if(c>p){saveEl.style.display='';saveEl.textContent='You save '+money(c-p);} else saveEl.style.display='none'; }
   }
+  tiers().forEach(function(t){t.addEventListener('click',function(){pick(t);});});
 
-  /* ---- buy now → add selected bundle (+ free gifts), straight to checkout ---- */
-  var DISC = '{{ section.settings.discount_code }}';
-  var buynow = document.getElementById('hb-buynow-{{ sid }}');
-  if(buynow) buynow.addEventListener('click', function(){
-    var vid = (hid && hid.value) ? hid.value : '{{ cur.id }}';
-    var label = buynow.textContent; buynow.disabled = true; buynow.textContent = '…';
-    fetch('/cart/add.js', { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({ items: withGifts(vid) }) })
-      .then(function(){ window.location.href = DISC ? ('/discount/'+DISC+'?redirect=%2Fcheckout') : '/checkout'; })
-      .catch(function(){ buynow.disabled = false; buynow.textContent = label; });
-  });
-
-  /* ---- displayed price = paid price: route the native add-to-cart through the code too ---- */
-  var hbf = document.querySelector('#hb-{{ sid }} form[action*="/cart/add"]');
-  if(hbf && DISC){ hbf.addEventListener('submit', function(e){
-    e.preventDefault();
-    var vid = (hid && hid.value) ? hid.value : '{{ cur.id }}';
-    fetch('/cart/add.js', { method:'POST', body: new FormData(hbf) })
-      .then(function(r){ if(!r.ok) throw 0; })
-      .then(function(){
-        if(!HGT[''+vid]) return;
-        return fetch('/cart/add.js', { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({ items: HGIFTS.map(function(g){ return {id:g,quantity:1}; }) }) });
-      })
-      .then(function(){ window.location.href = '/discount/'+DISC+'?redirect=%2Fcart'; })
-      .catch(function(){ hbf.submit(); });
-  }); }
-
-  /* ---- receipt box mirrors the selected tier and adds to cart ---- */
-  var hbob=document.getElementById('hb-ob-{{ sid }}');
-  if(hbob){
-    var hbatc=document.querySelector('#hb-{{ sid }} .hb-atc');
-    hbob.addEventListener('click',function(){ if(hbatc)hbatc.click(); });
-    hbob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); if(hbatc)hbatc.click(); } });
-    window.addEventListener('helios:variant',function(e){
-      var d=e.detail||{};
-      var pe=document.getElementById('hb-ob-p-{{ sid }}'),ce=document.getElementById('hb-ob-c-{{ sid }}'),se=document.getElementById('hb-ob-s-{{ sid }}');
-      if(pe&&d.price)pe.textContent=d.price;
-      var pv=parseFloat((d.price||'').replace(/[^0-9.]/g,''))||0, cv=parseFloat((d.compare||'').replace(/[^0-9.]/g,''))||0;
-      if(ce){ if(cv>pv){ ce.style.display=''; ce.textContent=d.compare; } else ce.style.display='none'; }
-      if(se){ if(cv>pv){ se.style.display=''; se.textContent='YOU SAVE $'+(cv-pv).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ('+Math.round((1-pv/cv)*100)+'% OFF)'; } else se.style.display='none'; }
-      var oe=document.getElementById('hb-off-{{ sid }}'); if(oe){ if(cv>pv){ oe.style.display=''; oe.textContent=Math.round((1-pv/cv)*100)+'% OFF'; } else oe.style.display='none'; }
+  /* Super/Mini toggle */
+  var seg=document.getElementById('k-seg-{{ sid }}');
+  var title=document.getElementById('k-title-{{ sid }}');
+  if(seg){ [].slice.call(seg.querySelectorAll('button')).forEach(function(b){
+    b.addEventListener('click',function(){
+      [].slice.call(seg.querySelectorAll('button')).forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+      var mode=b.dataset.pick;
+      if(title) title.textContent = mode==='mini' ? 'HELIOS Mini Glide' : '{{ section.settings.title | default: 'HELIOS Super Glide' }}';
+      tiers().forEach(function(t){ t.style.display = (t.dataset.tier===mode)?'':'none'; });
+      var first=tiers().filter(function(t){return t.dataset.tier===mode;})[0];
+      if(first) pick(first);
     });
+  }); tiers().forEach(function(t){ t.style.display=(t.dataset.tier==='double')?'':'none'; }); }
+
+  /* add to cart: fetch add (+gifts on 3/4-pack), then discount redirect */
+  function items(){
+    var arr=[{id:parseInt(hid.value,10),quantity:1}];
+    if(HGT[hid.value]) GIFTS.forEach(function(g){arr.push({id:g,quantity:1});});
+    return arr;
+  }
+  function addThen(dest,btn){
+    var t=btn.textContent; btn.disabled=true; btn.textContent='Adding…';
+    fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:items()})})
+      .then(function(r){ if(!r.ok)throw 0; window.location.href=dest; })
+      .catch(function(){ btn.disabled=false; btn.textContent=t; window.location.href='/cart/'+hid.value+':1'+(DISC?('?discount='+DISC):''); });
+  }
+  var form=document.getElementById('k-form-{{ sid }}');
+  var atc=document.getElementById('k-atc-{{ sid }}');
+  if(form&&atc){ form.addEventListener('submit',function(e){ e.preventDefault(); addThen(DISC?('/discount/'+DISC+'?redirect=%2Fcart'):'/cart',atc); }); }
+  var bn=document.getElementById('k-buynow-{{ sid }}');
+  if(bn) bn.addEventListener('click',function(){ addThen(DISC?('/discount/'+DISC+'?redirect=%2Fcheckout'):'/checkout',bn); });
+
+  /* sticky bar */
+  var stk=document.getElementById('hb-stk-{{ sid }}');
+  if(stk){ if(stk.parentNode!==document.body)document.body.appendChild(stk);
+    if('IntersectionObserver' in window && atc){ new IntersectionObserver(function(es){es.forEach(function(en){stk.classList.toggle('show',!en.isIntersecting);});},{threshold:0}).observe(atc); }
+    var ska=document.getElementById('k-stka-{{ sid }}'); if(ska)ska.addEventListener('click',function(){ addThen(DISC?('/discount/'+DISC+'?redirect=%2Fcart'):'/cart',ska); });
   }
 
-  /* ---- gallery thumbs (generic for double + mini) ---- */
-  function bindGallery(gal){
-    var track = gal.querySelector('[data-track]'); if(!track) return;
-    var cells = Array.prototype.slice.call(track.querySelectorAll('.hb-cell'));
-    var thumbs = Array.prototype.slice.call(gal.querySelectorAll('.hb-thumb[data-goto]'));
-    var dotsWrap = gal.querySelector('[data-dots]');
-    if(!cells.length) return;
-    if(dotsWrap){ dotsWrap.innerHTML=''; cells.forEach(function(c,i){ var d=document.createElement('span'); d.className='hb-dot'+(i===0?' on':''); dotsWrap.appendChild(d); }); }
-    var dots = dotsWrap ? Array.prototype.slice.call(dotsWrap.children) : [];
-    function setActive(i){
-      dots.forEach(function(d,j){ d.classList.toggle('on', j===i); });
-      var key = cells[i].getAttribute('data-slide');
-      thumbs.forEach(function(t){ t.classList.toggle('sel', t.getAttribute('data-goto')===key); });
-      cells.forEach(function(c,j){ var v=c.querySelector('video'); if(v){ if(j===i){ var p=v.play(); if(p&&p.catch)p.catch(function(){}); } else { try{ v.pause(); }catch(e){} } } });
-    }
-    if('IntersectionObserver' in window){
-      var io=new IntersectionObserver(function(ents){
-        ents.forEach(function(en){ if(en.isIntersecting && en.intersectionRatio>=0.55){ var i=cells.indexOf(en.target); if(i>=0) setActive(i); } });
-      },{root:track,threshold:[0.55,0.8]});
-      cells.forEach(function(c){ io.observe(c); });
-    }
-    thumbs.forEach(function(t){
-      t.addEventListener('click', function(){
-        var key=t.getAttribute('data-goto');
-        for(var i=0;i<cells.length;i++){ if(cells[i].getAttribute('data-slide')===key){ track.scrollTo({left:cells[i].offsetLeft,behavior:'smooth'}); setActive(i); break; } }
-      });
-    });
+  /* FAQ accordion + phone autoplay */
+  var fr=document.getElementById('k-faq-{{ sid }}');
+  if(fr){ var fqs=[].slice.call(fr.querySelectorAll('.k-fq'));
+    function setH(f){var a=f.querySelector('.a');a.style.maxHeight=f.classList.contains('on')?a.scrollHeight+'px':'0px';}
+    fqs.forEach(function(f){setH(f);f.querySelector('.q').addEventListener('click',function(){var op=!f.classList.contains('on');fqs.forEach(function(o){o.classList.remove('on');setH(o);});if(op)f.classList.add('on');setH(f);});});
+    var pv=fr.querySelector('.k-phone video'); if(pv){var pp=pv.play(); if(pp&&pp.catch)pp.catch(function(){});}
   }
-  root.querySelectorAll('[data-gal]').forEach(bindGallery);
-
-  /* ---- variant picker (Double / Mini) + Meta ad deep-link ---- */
-  var picks = root.querySelectorAll('[data-pick]');
-  function setMode(m){
-    picks.forEach(function(p){ p.classList.toggle('on', p.dataset.pick===m); });
-    root.querySelectorAll('[data-gal]').forEach(function(g){ g.style.display=g.dataset.gal===m?'':'none'; });
-    root.querySelectorAll('[data-tier]').forEach(function(t){ t.style.display=t.dataset.tier===m?'':'none'; });
-    var ttl=document.getElementById('hb-title-{{ sid }}'); if(ttl){ var nm=(m==='mini')?ttl.getAttribute('data-mini'):ttl.getAttribute('data-double'); if(nm) ttl.textContent=nm; }
-    var def = root.querySelector('[data-tier="'+m+'"].sel') || root.querySelector('[data-tier="'+m+'"]');
-    if(def) selectTier(def);
-  }
-  picks.forEach(function(p){ p.addEventListener('click', function(){ setMode(p.dataset.pick); }); });
-  (function(){
-    var qv=null; try{ qv=new URL(window.location).searchParams.get('variant'); }catch(e){}
-    var st = qv ? root.querySelector('.hb-tier[data-vid="'+qv+'"]') : null;
-    if(st){ setMode(st.dataset.tier || 'double'); selectTier(st); }
-    else { setMode('double'); }
-  })();
-
-  /* ---- copy code ---- */
-  var code = document.getElementById('hb-code-{{ sid }}');
-  if(code) code.addEventListener('click', function(){
-    var c = code.dataset.code, b = code.querySelector('b');
-    var done = function(){ var html=b.innerHTML; b.textContent='✓ Copied '+c+'!'; code.style.borderColor='#1aa86b'; setTimeout(function(){ b.innerHTML=html; code.style.borderColor=''; },1800); };
-    if(navigator.clipboard){ navigator.clipboard.writeText(c).then(done).catch(done); } else done();
-  });
-
-
-  /* ---- honest per-session countdown ---- */
-  {%- if section.settings.show_countdown -%}
-  (function(){
-    var el = document.getElementById('hb-cd-{{ sid }}'); if(!el) return;
-    var span = {{ section.settings.countdown_minutes | default: 480 }} * 60000;
-    var key = 'helios_cd_{{ sid }}';
-    var end = parseInt(sessionStorage.getItem(key),10);
-    if(!end || isNaN(end) || end < Date.now()){ end = Date.now() + span; sessionStorage.setItem(key, end); }
-    function tick(){ var d=Math.max(0,end-Date.now()); var h=Math.floor(d/3.6e6),m=Math.floor(d%3.6e6/6e4),s=Math.floor(d%6e4/1e3); el.textContent = (h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s; }
-    tick(); setInterval(tick,1000);
-  })();
-  {%- endif -%}
-
-  /* ---- live viewers ---- */
-  {%- if section.settings.show_live -%}
-  (function(){
-    var lv=document.getElementById('hb-view-{{ sid }}'), sd=document.getElementById('hb-sold-{{ sid }}');
-    var v={{ section.settings.live_viewers | default: 58 }}, s={{ section.settings.sold_today | default: 202 }};
-    setInterval(function(){ v=Math.max(20,v+(Math.random()<0.5?-1:1)*(1+Math.floor(Math.random()*3))); if(lv)lv.textContent=v; if(Math.random()<0.4){ s++; if(sd)sd.textContent=s; } },3200);
-  })();
-  {%- endif -%}
-
-  /* ---- recent-purchase toasts ---- */
-  {%- if section.settings.show_toasts -%}
-  (function(){
-    var box=document.getElementById('hb-toast-{{ sid }}'),
-        nm=document.getElementById('hb-toast-name-{{ sid }}'),
-        mt=document.getElementById('hb-toast-meta-{{ sid }}');
-    if(!box) return;
-    var names=[['Jordan from TX','bought 2 — 3 min ago'],['Maya from HI','bought 1 — 7 min ago'],['Chris from NC','bought 4 — 12 min ago'],['Sophie from FL','bought 2 — 18 min ago'],['Devon from AZ','bought 1 — 24 min ago'],['Natalie from SC','bought 2 — 31 min ago']];
-    var i=0;
-    function show(){ var n=names[i%names.length]; i++; nm.textContent=n[0]; mt.textContent='Super Glide · '+n[1]; box.classList.add('show'); setTimeout(function(){ box.classList.remove('show'); }, 4200); }
-    setTimeout(function loop(){ show(); setTimeout(loop, 11000); }, 6000);
-  })();
-  {%- endif -%}
 })();
 </script>
 
-
-<script>
-/* HELIOS — remove the app-injected "Product details" card (AfterSell re-adds it; this kills it on sight). */
-(function(){
-  function kill(){
-    var nodes = document.querySelectorAll('h1,h2,h3,h4,h5,strong,p,span,div');
-    for(var i=0;i<nodes.length;i++){
-      var n = nodes[i];
-      if(n.children.length===0 && (n.textContent||'').trim().toLowerCase()==='product details'){
-        var el = n;
-        for(var up=0; up<8 && el && el.parentElement; up++){
-          el = el.parentElement;
-          var tx = el.textContent || '';
-          if(tx.indexOf('HELIOS Super Glide')>-1 && tx.indexOf('Jet Ski')>-1 && el.offsetHeight>140){
-            el.style.setProperty('display','none','important');
-            el.setAttribute('data-hb-killed','1');
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-  if(!kill()){
-    var t=0, iv=setInterval(function(){ if(kill() || ++t>16){ clearInterval(iv); } }, 400);
-  }
-  document.addEventListener('DOMContentLoaded', kill);
-})();
-</script>
-
-<script>
-(function(){
-  var root=document.getElementById('hb-{{ sid }}'); if(!root||root.dataset.stick)return; root.dataset.stick='1';
-  var grid=root.querySelector('.hb-grid'); if(!grid)return;
-  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function activeGal(){ var gs=[].slice.call(grid.querySelectorAll('.hb-gallery')); for(var i=0;i<gs.length;i++){ if(gs[i].style.display!=='none'&&gs[i].offsetParent!==null) return gs[i]; } return gs[0]; }
-  /* gentle auto-cycle through slides while the gallery is on screen; any touch pauses it */
-  var hold=false;
-  function arm(){ hold=true; clearTimeout(grid._h); grid._h=setTimeout(function(){hold=false;},9000); }
-  ['pointerdown','wheel','touchstart'].forEach(function(ev){ grid.addEventListener(ev,arm,{passive:true}); });
-  function cellSync(track){
-    var cells=[].slice.call(track.querySelectorAll('.hb-cell')); if(!cells.length)return null;
-    var idx=Math.round(track.scrollLeft/Math.max(1,track.clientWidth)); idx=Math.max(0,Math.min(cells.length-1,idx));
-    cells.forEach(function(c,j){ var v=c.querySelector('video'); if(v){ if(j===idx){ var p=v.play(); if(p&&p.catch)p.catch(function(){}); } else { v.pause(); } } });
-    return {cells:cells,idx:idx};
-  }
-  if(!reduce){
-    setInterval(function(){
-      if(hold||document.hidden)return;
-      var gal=activeGal(); if(!gal)return;
-      var track=gal.querySelector('[data-track]'); if(!track)return;
-      var r=track.getBoundingClientRect(); if(r.bottom<80||r.top>window.innerHeight-80)return;
-      var s=cellSync(track); if(!s||s.cells.length<2)return;
-      var nx=(s.idx+1)%s.cells.length;
-      track.scrollTo({left:nx*track.clientWidth,behavior:'smooth'});
-    },5500);
-  }
-  /* keep videos playing/paused correctly on manual swipes too */
-  var t; grid.addEventListener('scroll',function(e){ var el=e.target; if(el&&el.getAttribute&&el.hasAttribute('data-track')){ clearTimeout(t); t=setTimeout(function(){ cellSync(el); },140); } },true);
-})();
-</script>
-
-{%- comment -%} =================== SCHEMA =================== {%- endcomment -%}
 {% schema %}
 {
   "name": "HELIOS Buy Box",
@@ -972,4 +384,3 @@ var v=r.querySelector('video');if(v){var p=v.play();if(p&&p.catch)p.catch(functi
   ]
 }
 {% endschema %}
-</section>
