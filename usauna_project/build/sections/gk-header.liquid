@@ -1,0 +1,107 @@
+{%- liquid
+  assign p_url = '/products/usauna-the-big-three'
+  assign img = 'https://raw.githubusercontent.com/alexanderwwww/sculps-store/1c672ae0a8a29459960bd5fd15e0aa7e94293c45/glo_project/build/assets'
+-%}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  .gk-hd, .gk-hd * { box-sizing:border-box; }
+  .gk-hd a { text-decoration:none; }
+  .gk-annc { background:#111315; color:#F4F6F8; text-align:center; padding:8px 12px; font-size:12px; letter-spacing:0.02em; font-family:'Inter',sans-serif; }
+  .gk-nav { position:sticky; top:0; z-index:50; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:16px; padding:11px clamp(16px,4vw,48px); background:rgba(255,255,255,0.86); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid rgba(17,19,21,0.10); font-family:'Inter',sans-serif; }
+  .gk-burger { display:inline-flex; align-items:center; gap:9px; background:none; border:none; cursor:pointer; padding:6px 0; font-family:inherit; font-size:13px; font-weight:600; color:#111315; text-transform:lowercase; letter-spacing:-0.01em; justify-self:start; }
+  .gk-burger .bars { display:inline-flex; flex-direction:column; gap:4px; }
+  .gk-burger .bars i { width:22px; height:1.8px; background:#111315; border-radius:2px; display:block; }
+  .gk-burger .word { display:none; }
+  @media (min-width:750px){ .gk-burger .word { display:inline; } }
+  .gk-wordmark { justify-self:center; font-family:'General Sans',sans-serif; font-weight:700; font-size:22px; text-transform:lowercase; letter-spacing:-0.03em; color:#111315; }
+  .gk-navright { justify-self:end; display:flex; align-items:center; gap:16px; }
+  .gk-bag { background:#111315; color:#fff; border:none; border-radius:100px; padding:10px 20px; font-size:13px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; cursor:pointer; font-family:inherit; display:inline-block; }
+
+  /* drawer */
+  .gk-drawer-overlay { position:fixed; inset:0; background:rgba(17,19,21,0.38); opacity:0; pointer-events:none; transition:opacity .28s ease; z-index:70; }
+  .gk-drawer-overlay.open { opacity:1; pointer-events:auto; }
+  .gk-drawer { position:fixed; top:0; left:0; height:100%; width:min(420px,90vw); background:#F4F6F8; z-index:80; transform:translateX(-102%); transition:transform .3s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; font-family:'Inter',sans-serif; box-shadow:0 0 40px rgba(17,19,21,0.12); }
+  .gk-drawer.open { transform:translateX(0); }
+  .gk-drawer__top { display:flex; align-items:center; justify-content:space-between; padding:18px clamp(20px,5vw,32px); border-bottom:1px solid rgba(17,19,21,0.10); }
+  .gk-drawer__top .wm { font-family:'General Sans',sans-serif; font-weight:700; font-size:20px; text-transform:lowercase; letter-spacing:-0.03em; color:#111315; }
+  .gk-drawer__close { background:none; border:none; cursor:pointer; font-size:24px; line-height:1; color:#111315; padding:4px; }
+  .gk-drawer__links { display:flex; flex-direction:column; padding:12px clamp(20px,5vw,32px); gap:2px; }
+  .gk-drawer__links a { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; letter-spacing:-0.02em; font-size:clamp(26px,7vw,34px); color:#111315; padding:9px 0; line-height:1.1; }
+  .gk-drawer__product { margin:8px clamp(20px,5vw,32px) 0; display:flex; align-items:center; gap:14px; background:#fff; border:1px solid rgba(17,19,21,0.08); border-radius:16px; padding:12px; }
+  .gk-drawer__product img { width:56px; height:56px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+  .gk-drawer__product .t { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; font-size:15px; }
+  .gk-drawer__product .s { font-size:12px; color:#5B6470; }
+  .gk-drawer__product .go { margin-left:auto; background:#111315; color:#fff; border-radius:100px; padding:9px 16px; font-size:12px; font-weight:600; text-transform:lowercase; }
+  .gk-drawer__foot { margin-top:auto; padding:20px clamp(20px,5vw,32px) 28px; border-top:1px solid rgba(17,19,21,0.10); display:flex; flex-wrap:wrap; gap:10px 20px; }
+  .gk-drawer__foot a { font-size:12px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:#5B6470; }
+</style>
+
+<div class="gk-hd">
+  <div class="gk-annc">{{ section.settings.announcement | default: 'free insured delivery · 30-day home trial · 0% apr financing' }}</div>
+  <div class="gk-nav">
+    <button class="gk-burger" type="button" aria-label="Open menu" data-gk-open><span class="bars"><i></i><i></i><i></i></span><span class="word">menu</span></button>
+    <a href="/" class="gk-wordmark">{% if section.settings.logo != blank %}<img src="{{ section.settings.logo | image_url: width: 400 }}" alt="{{ shop.name | escape }}" style="height:{{ section.settings.logo_height | default: 26 }}px;width:auto;display:block;">{% else %}{{ section.settings.logo_text | default: 'usauna' }}{% endif %}</a>
+    <div class="gk-navright">
+      <a href="/cart" class="gk-bag">bag{% if cart.item_count > 0 %} &middot; {{ cart.item_count }}{% endif %}</a>
+    </div>
+  </div>
+
+  <div class="gk-drawer-overlay" data-gk-overlay></div>
+  <nav class="gk-drawer" data-gk-drawer aria-hidden="true">
+    <div class="gk-drawer__top">
+      <span class="wm">usauna</span>
+      <button class="gk-drawer__close" type="button" aria-label="Close menu" data-gk-close>&times;</button>
+    </div>
+    <div class="gk-drawer__links">
+      <a href="{{ p_url }}" data-gk-close>the big three</a>
+      <a href="{{ p_url }}#how-to-use" data-gk-close>how it works</a>
+      <a href="{{ p_url }}#reviews" data-gk-close>reviews</a>
+      <a href="{{ p_url }}#faq" data-gk-close>faq</a>
+      <a href="/" data-gk-close>home</a>
+    </div>
+    <a href="{{ p_url }}" class="gk-drawer__product" data-gk-close>
+      <img src="{{ img }}/glo-detail-2.png" alt="the big three">
+      <span>
+        <span class="t">the big three</span><br>
+        <span class="s">sauna + cold plunge + red light &middot; from $5,497</span>
+      </span>
+      <span class="go">shop</span>
+    </a>
+    <div class="gk-drawer__foot">
+      <a href="{{ p_url }}">about usauna</a>
+      <a href="{{ p_url }}#faq">shipping</a>
+      <a href="{{ p_url }}#faq">returns</a>
+      <a href="/cart">bag</a>
+    </div>
+  </nav>
+</div>
+
+<script>
+  (function(){
+    var d=document.querySelector('[data-gk-drawer]'), o=document.querySelector('[data-gk-overlay]');
+    if(!d) return;
+    function open(){ d.classList.add('open'); o.classList.add('open'); d.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+    function close(){ d.classList.remove('open'); o.classList.remove('open'); d.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+    document.querySelectorAll('[data-gk-open]').forEach(function(b){ b.addEventListener('click',open); });
+    document.querySelectorAll('[data-gk-close]').forEach(function(b){ b.addEventListener('click',close); });
+    if(o) o.addEventListener('click',close);
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "GK Header",
+  "settings": [
+    { "type": "image_picker", "id": "logo", "label": "Logo image (upload yours)" },
+    { "type": "range", "id": "logo_height", "label": "Logo height", "min": 16, "max": 48, "step": 2, "unit": "px", "default": 26 },
+    { "type": "text", "id": "logo_text", "label": "Logo text (if no image)", "default": "usauna" },
+    { "type": "text", "id": "announcement", "label": "Announcement bar text", "default": "free insured delivery · 30-day home trial · 0% apr financing" }
+  ],
+  "enabled_on": { "groups": ["header"] }
+}
+{% endschema %}
