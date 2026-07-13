@@ -345,6 +345,31 @@
   #hb-{{ sid }} .hb-kfq.on .ic{transform:rotate(45deg);background:#1f5c3d;color:#fff;border-color:#1f5c3d;}
   #hb-{{ sid }} .hb-kfq .a{max-height:0;overflow:hidden;transition:max-height .32s ease;}
   #hb-{{ sid }} .hb-kfq .a p{margin:0;padding:0 2px 15px;font-size:14px;line-height:1.6;color:#5b6470;}
+  /* ===== CLEAN REBUILD — KURU proportions, zero white space ===== */
+  #hb-{{ sid }} .hb-wrap{max-width:1180px;padding:clamp(14px,2.5vw,34px) 22px;}
+  @media(min-width:880px){#hb-{{ sid }} .hb-grid{grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr)!important;gap:34px!important;align-items:start!important;}}
+  #hb-{{ sid }} .hb-gallery{position:static!important;display:flex;gap:12px;align-items:flex-start;}
+  #hb-{{ sid }} .hb-stagewrap{flex:1;min-width:0;order:2;}
+  #hb-{{ sid }} .hb-gallery[data-gal="mini"] .hb-stage{order:2;}
+  #hb-{{ sid }} .hb-stage{aspect-ratio:1/1!important;height:auto!important;border:1px solid #E6E6E6;border-radius:16px;background:#F5F7F6;box-shadow:none;}
+  #hb-{{ sid }} .hb-cell>img,#hb-{{ sid }} .hb-cell>video{object-fit:contain;}
+  #hb-{{ sid }} .hb-thumbs{position:static!important;order:1;display:flex;flex-direction:column;gap:8px;width:64px;flex:0 0 64px;left:auto!important;right:auto!important;bottom:auto!important;padding:0!important;margin:0!important;max-height:560px;overflow-y:auto;scrollbar-width:none;}
+  #hb-{{ sid }} .hb-thumbs::-webkit-scrollbar{display:none;}
+  #hb-{{ sid }} .hb-thumb{width:64px;height:64px;aspect-ratio:1/1;flex:0 0 auto;border:1.5px solid #E2E2E0;border-radius:10px;opacity:1;background:#fff;box-shadow:none;animation:none;}
+  #hb-{{ sid }} .hb-thumb.sel{border:2px solid #0A0D11;box-shadow:none;animation:none;}
+  #hb-{{ sid }} .hb-dots{display:none!important;}
+  @media(max-width:879px){#hb-{{ sid }} .hb-gallery{flex-direction:column;}#hb-{{ sid }} .hb-thumbs{order:2;flex-direction:row;width:auto;flex:none;max-height:none;overflow-x:auto;}}
+  #hb-{{ sid }} .hb-buy{border:none!important;box-shadow:none!important;padding:0!important;}
+  #hb-{{ sid }} .hb-krate{margin:0 0 6px;}
+  #hb-{{ sid }} .hb-ktitle{margin:0 0 2px;}
+  #hb-{{ sid }} .hb-sub{margin:10px 0 0;}
+  #hb-{{ sid }} .hb-kbest{margin:8px 0 0;}
+  #hb-{{ sid }} .hb-picker{margin:16px 0 14px!important;}
+  #hb-{{ sid }} .hb-klabel{margin:0 0 9px;}
+  #hb-{{ sid }} .hb-tiers{gap:10px;}
+  #hb-{{ sid }} .hb-atc{margin-top:16px;}
+  #hb-{{ sid }} .hb-kleft{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+  #hb-{{ sid }} .hb-dbn,#hb-{{ sid }} .hb-ob,#hb-{{ sid }} .hb-code,#hb-{{ sid }} .hb-trust,#hb-{{ sid }} .hb-pays,#hb-{{ sid }} .hb-eta,#hb-{{ sid }} .hb-kpromise,#hb-{{ sid }} .hb-kships,#hb-{{ sid }} .hb-kfacts,#hb-{{ sid }} .hb-kpills,#hb-{{ sid }} .hb-pills,#hb-{{ sid }} .hb-ez,#hb-{{ sid }} .hb-kfaq{display:none!important;}
 </style>
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
@@ -437,15 +462,9 @@
           <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
         </div>
       </div>
-      <div class="hb-kpills"><span>☀ Summer Sale — up to 63% OFF</span><span>🛡 30-Day Money-Back Promise</span></div>
       <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
       <div class="hb-kbest"><b>Best for:</b> Pool Days, Lake Weekends, The Grandkids, All-Summer Lounging</div>
 
-      <div class="hb-pills">
-        <span class="hb-pill">{{ section.settings.pill_1 | default: 'Hands-free thrusters' }}</span>
-        <span class="hb-pill">{{ section.settings.pill_2 | default: 'Fits the whole family' }}</span>
-        <span class="hb-pill">{{ section.settings.pill_3 | default: 'Inflates in ~5 min' }}</span>
-      </div>
 
       {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
       {%- assign hb_form_id = 'hb-form-' | append: sid -%}
@@ -471,7 +490,6 @@
         {%- endif -%}
 
         <div class="hb-klabel">Pick Your Bundle</div>
-        <div class="hb-ez"><span><b>1.</b> Pick your deal below</span><span><b>2.</b> Tap "Add to Cart"</span><span><b>3.</b> We ship it free</span></div>
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
           {%- if section.settings.show_picker -%}
           {%- comment -%} auto Mini tier (single-seat variant) {%- endcomment -%}
@@ -532,46 +550,14 @@
         </div>
 
         {%- assign hb_scp = cur.price | times: 0.88 | round -%}
-        <div class="hb-dbn">⚡ Up to 63% OFF · 🎁 FREE Jet Ski + Pump with 3+ gliders</div>
         <button type="submit" name="add" class="hb-atc" {% unless cur.available %}disabled{% endunless %}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           {{ section.settings.cta_text | default: 'Add to Cart' }} →
         </button>
         <button type="button" class="hb-buynow" id="hb-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy Now</button>
-        <div class="hb-ob" id="hb-ob-{{ sid }}" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Your order <span class="nar">→</span></div><div class="pl"><s id="hb-ob-c-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | money }}</s><b id="hb-ob-p-{{ sid }}">{{ hb_scp | money }}</b></div><span class="sv" id="hb-ob-s-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>YOU SAVE {{ cur.compare_at_price | minus: hb_scp | money }}{% if cur.compare_at_price > 0 %} ({{ cur.compare_at_price | minus: hb_scp | times: 100 | divided_by: cur.compare_at_price }}% OFF){% endif %}</span><span class="gline" id="hb-ob-g-{{ sid }}" style="display:none">🎁 FREE Jet Ski + FREE Pump included — $409.98 value</span></div>
       {%- endform -%}
 
-      {%- comment -%} KURU-style promise card + ships row + quick facts + FAQ chips {%- endcomment -%}
-      <div class="hb-kpromise">
-        <div class="hd"><span>🌊</span><span>HELIOS Summer Promise™<span class="sub">Try it for 30 days. If it doesn't make your summer, send it back for a full refund.</span></span></div>
-        <div class="bd">
-          <div class="ln"><span class="ck">✓</span>Free 30-Day Returns &amp; Money-Back</div>
-          <div class="ln"><span class="ck">✓</span>Free Shipping — ships in 24–48 h</div>
-          <div class="ln"><span class="ck">✓</span>6-Month Product Warranty</div>
-          <div class="ln"><span class="ck">✓</span>Secure Checkout &amp; Order Protection</div>
-          <div class="ln"><span class="ck">🎁</span>FREE Jet Ski + Pump with 3+ gliders</div>
-        </div>
-      </div>
-      <div class="hb-kships">
-        <div><span class="em">🚚</span>Free Shipping</div>
-        <div><span class="em">🔁</span>Free Exchanges</div>
-        <div><span class="em">↩️</span>Free Returns</div>
-      </div>
 
-
-      {%- if section.settings.discount_code != blank -%}
-        <button type="button" class="hb-code" id="hb-code-{{ sid }}" data-code="{{ section.settings.discount_code }}">
-          <span style="font-size:12.5px;color:var(--helios-mut,#56636E);">{{ section.settings.discount_label | default: 'Extra savings — tap to copy' }}</span>
-          <b>{{ section.settings.discount_code }}
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
-          </b>
-        </button>
-      {%- endif -%}
-
-      <div class="hb-trust"><span>🛡 30-day refund</span><span>🚚 Free shipping</span><span>📦 Ships together</span><span>⚡ One-tap checkout</span></div>
-      <div class="hb-pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span></div>
-
-      {%- if section.settings.eta_line != blank -%}<div class="hb-eta">🚚 {{ section.settings.eta_line }}</div>{%- endif -%}
 
       {%- if section.settings.show_stock -%}
         <div class="hb-stock">🔥 Summer demand is high — only <b>{{ section.settings.stock_left | default: 24 }}</b> left at this price.
@@ -591,46 +577,12 @@
     <div class="hb-kleft">
       <div class="hb-kquote"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><span>"My son will NOT get off this thing. Literally, he refuses."</span><b>— elena d.</b></div>
       <div class="hb-kchips">
-        <a class="hb-kchip" href="#hb-kfaq-{{ sid }}">＋ How does the motor work?</a>
-        <a class="hb-kchip" href="#hb-kfaq-{{ sid }}">＋ Is it safe for kids?</a>
-        <a class="hb-kchip" href="#hb-kfaq-{{ sid }}">＋ What exactly is in the box?</a>
-      </div>
-      <div class="hb-kfacts">
-        <div class="tt">Quick Facts</div>
-        <div class="hb-kfgrid">
-          <div class="hb-kf"><span class="em">💪</span><div><b>Holds 300 lb</b><span>adult + 2 kids</span></div></div>
-          <div class="hb-kf"><span class="em">🔋</span><div><b>~2 h per charge</b><span>a whole afternoon</span></div></div>
-          <div class="hb-kf"><span class="em">💨</span><div><b>Inflates in ~5 min</b><span>no tools needed</span></div></div>
-          <div class="hb-kf"><span class="em">🕹</span><div><b>360° joysticks</b><span>easy steering</span></div></div>
-          <div class="hb-kf"><span class="em">🛡</span><div><b>Marine-grade PVC</b><span>built for summers</span></div></div>
-          <div class="hb-kf"><span class="em">🌊</span><div><b>Pool · lake · river</b><span>any calm water</span></div></div>
-        </div>
+        <a class="hb-kchip" href="#faq">＋ How does the motor work?</a>
+        <a class="hb-kchip" href="#faq">＋ Is it safe for kids?</a>
+        <a class="hb-kchip" href="#faq">＋ What exactly is in the box?</a>
       </div>
     </div>
   </div>
-
-  {%- comment -%} FAQ + phone-video (moved out of the buy box, per KURU clarity) {%- endcomment -%}
-  <div class="hb-kfaq" id="hb-kfaq-{{ sid }}">
-    <div class="hb-kfaq-phone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="tag">▶ Real families, real water</span></div>
-    <div class="hb-kfaq-list">
-      <h2>Everything you're wondering, answered.</h2>
-      <div class="fsub">Honest answers — watch it in action while you read.</div>
-      <div class="hb-kfq on"><div class="q">Does it really move on its own?<span class="ic">+</span></div><div class="a"><p>Yes — twin quiet electric motors push you forward and let you spin 360° with the joysticks. No paddling, no gas, no motorboat. Completely hands-free.</p></div></div>
-      <div class="hb-kfq"><div class="q">Is it safe for kids?<span class="ic">+</span></div><div class="a"><p>Yes — the motors are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent up to the 300 lb capacity, life jackets on.</p></div></div>
-      <div class="hb-kfq"><div class="q">How long does the battery last?<span class="ic">+</span></div><div class="a"><p>About 2 hours of continuous cruising per charge — a whole afternoon on the water — and it recharges between sessions.</p></div></div>
-      <div class="hb-kfq"><div class="q">How hard is it to set up?<span class="ic">+</span></div><div class="a"><p>Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</p></div></div>
-      <div class="hb-kfq"><div class="q">What if I don't love it?<span class="ic">+</span></div><div class="a"><p>Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</p></div></div>
-    </div>
-  </div>
-</div>
-<script>
-(function(){var r=document.getElementById('hb-kfaq-{{ sid }}');if(!r||r.dataset.i)return;r.dataset.i='1';
-var fqs=[].slice.call(r.querySelectorAll('.hb-kfq'));
-function setH(f){var a=f.querySelector('.a');a.style.maxHeight=f.classList.contains('on')?a.scrollHeight+'px':'0px';}
-fqs.forEach(function(f){setH(f);f.querySelector('.q').addEventListener('click',function(){var op=!f.classList.contains('on');fqs.forEach(function(o){o.classList.remove('on');setH(o);});if(op){f.classList.add('on');}setH(f);});});
-var v=r.querySelector('video');if(v){var p=v.play();if(p&&p.catch)p.catch(function(){});}
-})();
-</script>
 
 <div id="hb-sticky-{{ sid }}" aria-hidden="true">
   <div class="hb-sk-info">
