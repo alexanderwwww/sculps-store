@@ -43,9 +43,10 @@
     <nav class="hd-nav">
       <a href="{{ section.settings.l1_url | default: '#buy' }}">{{ section.settings.l1 | default: 'Shop' }}</a>
       <a href="{{ section.settings.l2_url | default: '#reviews' }}"{% if section.settings.l2_url contains 'paradise-pool' %} class="hot"{% endif %}>{{ section.settings.l2 | default: 'Reviews' }}{% if section.settings.l2_url contains 'paradise-pool' %}<span class="nw">NEW</span>{% endif %}</a>
-      <a href="{{ section.settings.l3_url | default: '#faq' }}"{% if section.settings.l3_url contains 'paradise-pool' %} class="hot"{% endif %}>{{ section.settings.l3 | default: 'FAQ' }}{% if section.settings.l3_url contains 'paradise-pool' %}<span class="nw">NEW</span>{% endif %}</a>
+      <a href="{{ section.settings.l3_url | default: '#faq' }}"{% if section.settings.l3_url contains 'party-island' %} class="hot"{% endif %}>{{ section.settings.l3 | default: 'FAQ' }}{% if section.settings.l3_url contains 'party-island' %}<span class="nw">NEW</span>{% endif %}</a>
       <a href="{{ section.settings.l4_url | default: '/pages/contact' }}">{{ section.settings.l4 | default: 'Contact' }}</a>
       {% if section.settings.l5 != blank %}<a href="{{ section.settings.l5_url }}">{{ section.settings.l5 }}</a>{% endif %}
+      {% if section.settings.l6 != blank %}<a href="{{ section.settings.l6_url }}"{% if section.settings.l6_url contains "party-island" %} class="hot"{% endif %}>{{ section.settings.l6 }}{% if section.settings.l6_url contains "party-island" %}<span class="nw">NEW</span>{% endif %}</a>{% endif %}
     </nav>
     <div class="hd-right"><a href="/cart" class="hd-cart" aria-label="Cart"><svg class="hd-cart-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>{% if cart.item_count > 0 %}<span class="hd-cart-ct">{{ cart.item_count }}</span>{% endif %}</a></div>
   </div>
@@ -57,9 +58,10 @@
       <a href="/">Home</a>
       <a href="{{ section.settings.l1_url | default: '#buy' }}">{{ section.settings.l1 | default: 'Shop' }}</a>
       <a href="{{ section.settings.l2_url | default: '#reviews' }}"{% if section.settings.l2_url contains 'paradise-pool' %} class="hot"{% endif %}><span>{{ section.settings.l2 | default: 'Reviews' }}{% if section.settings.l2_url contains 'paradise-pool' %}<span class="nw">NEW</span>{% endif %}</span></a>
-      <a href="{{ section.settings.l3_url | default: '#faq' }}"{% if section.settings.l3_url contains 'paradise-pool' %} class="hot"{% endif %}><span>{{ section.settings.l3 | default: 'FAQ' }}{% if section.settings.l3_url contains 'paradise-pool' %}<span class="nw">NEW</span>{% endif %}</span></a>
+      <a href="{{ section.settings.l3_url | default: '#faq' }}"{% if section.settings.l3_url contains 'party-island' %} class="hot"{% endif %}><span>{{ section.settings.l3 | default: 'FAQ' }}{% if section.settings.l3_url contains 'party-island' %}<span class="nw">NEW</span>{% endif %}</span></a>
       <a href="{{ section.settings.l4_url | default: '/pages/contact' }}">{{ section.settings.l4 | default: 'Contact' }}</a>
       {% if section.settings.l5 != blank %}<a href="{{ section.settings.l5_url }}">{{ section.settings.l5 }}</a>{% endif %}
+      {% if section.settings.l6 != blank %}<a href="{{ section.settings.l6_url }}"{% if section.settings.l6_url contains "party-island" %} class="hot"{% endif %}>{{ section.settings.l6 }}{% if section.settings.l6_url contains "party-island" %}<span class="nw">NEW</span>{% endif %}</a>{% endif %}
     </nav>
     <a href="/cart" class="hd-pcart">Cart <b>({{ cart.item_count }})</b></a>
     <div class="hd-pfine">Free shipping · 30-day money-back · ★ 4.8</div>
@@ -78,5 +80,5 @@ if(cart){var clean=function(){var x=cart.querySelectorAll('svg:not(.hd-cart-ico)
 </script>
 </div>
 {% schema %}
-{"name":"HELIOS Header","tag":"section","settings":[{"type":"text","id":"logo_text","label":"Logo text","default":"HELIOS"},{"type":"text","id":"l1","label":"Link 1","default":"Shop"},{"type":"text","id":"l1_url","label":"Link 1 URL","default":"#buy"},{"type":"text","id":"l2","label":"Link 2","default":"Reviews"},{"type":"text","id":"l2_url","label":"Link 2 URL","default":"#reviews"},{"type":"text","id":"l3","label":"Link 3","default":"FAQ"},{"type":"text","id":"l3_url","label":"Link 3 URL","default":"#faq"},{"type":"text","id":"l4","label":"Link 4","default":"Contact"},{"type":"text","id":"l4_url","label":"Link 4 URL","default":"/pages/contact"},{"type":"text","id":"l5","label":"Link 5"},{"type":"text","id":"l5_url","label":"Link 5 URL"}],"presets":[{"name":"HELIOS Header"}]}
+{"name":"HELIOS Header","tag":"section","settings":[{"type":"text","id":"logo_text","label":"Logo text","default":"HELIOS"},{"type":"text","id":"l1","label":"Link 1","default":"Shop"},{"type":"text","id":"l1_url","label":"Link 1 URL","default":"#buy"},{"type":"text","id":"l2","label":"Link 2","default":"Reviews"},{"type":"text","id":"l2_url","label":"Link 2 URL","default":"#reviews"},{"type":"text","id":"l3","label":"Link 3","default":"FAQ"},{"type":"text","id":"l3_url","label":"Link 3 URL","default":"#faq"},{"type":"text","id":"l4","label":"Link 4","default":"Contact"},{"type":"text","id":"l4_url","label":"Link 4 URL","default":"/pages/contact"},{"type":"text","id":"l5","label":"Link 5"},{"type":"text","id":"l5_url","label":"Link 5 URL"},{"type":"text","id":"l6","label":"Link 6"},{"type":"text","id":"l6_url","label":"Link 6 URL"}],"presets":[{"name":"HELIOS Header"}]}
 {% endschema %}
