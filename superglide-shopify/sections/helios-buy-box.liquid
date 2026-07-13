@@ -278,6 +278,32 @@
   #hb-{{ sid }} .hb-kchip{display:inline-flex;align-items:center;gap:6px;border:1px solid #DDE3DE;background:#F6F8F6;border-radius:100px;padding:8px 13px;font-size:12px;font-weight:600;color:#33413A;text-decoration:none;transition:border-color .15s;}
   #hb-{{ sid }} .hb-kchip:hover{border-color:#9AA79E;}
   #hb-{{ sid }} .hb-trust{display:none;}
+  /* KURU exact layer 2 — buy card, title/price row, tabs, left-column story */
+  #hb-{{ sid }} .hb-buy{border:1px solid #E7E9E7;border-radius:18px;padding:20px 18px;background:#fff;box-shadow:0 8px 28px -20px rgba(10,13,17,.25);}
+  #hb-{{ sid }} .hb-kcrumb{font-size:10px;font-weight:600;letter-spacing:.08em;color:#9AA3AC;margin-bottom:8px;}
+  #hb-{{ sid }} .hb-ktitle{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+  #hb-{{ sid }} .hb-ktitle h1{font-size:clamp(24px,3vw,32px);}
+  #hb-{{ sid }} .hb-ktitle .hb-priceline{flex:0 0 auto;flex-direction:column;align-items:flex-end;gap:2px;margin:4px 0 0;display:flex;}
+  #hb-{{ sid }} .hb-ktitle .hb-price-main{font-size:26px;}
+  #hb-{{ sid }} .hb-ktitle s{font-size:13px;}
+  #hb-{{ sid }} .hb-kpills{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 2px;}
+  #hb-{{ sid }} .hb-kpills span{font-size:11px;font-weight:700;color:#33413A;background:#F1F5F2;border:1px solid #DFE7E1;border-radius:6px;padding:4px 9px;}
+  #hb-{{ sid }} .hb-klabel{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0A0D11;margin:2px 0 8px;}
+  #hb-{{ sid }} .hb-pk{border-radius:100px;justify-content:center;padding:11px 10px;border:1.5px solid #D9DED9;}
+  #hb-{{ sid }} .hb-pk .hb-pkimg{display:none;}
+  #hb-{{ sid }} .hb-pk .hb-pktx{align-items:center;text-align:center;}
+  #hb-{{ sid }} .hb-pk.on{background:#0A0D11;border-color:#0A0D11;box-shadow:none;}
+  #hb-{{ sid }} .hb-ob{margin-top:12px;}
+  #hb-{{ sid }} .hb-kpromise .ln{justify-content:space-between;}
+  #hb-{{ sid }} .hb-kpromise .ln .ck{order:2;}
+  #hb-{{ sid }} .hb-kleft{margin-top:6px;}
+  #hb-{{ sid }} .hb-kquote{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;border:1px solid #E7E9E7;border-radius:12px;background:#fff;padding:11px 14px;font-size:13px;color:#33413A;text-align:center;}
+  #hb-{{ sid }} .hb-kquote b{color:#0A0D11;font-weight:700;}
+  #hb-{{ sid }} .hb-kcheck{display:block;text-align:center;background:#FFF7DC;border:1px solid #F1E4B4;border-radius:12px;padding:11px 14px;margin-top:9px;font-size:13px;font-weight:700;color:#5A4A17;text-decoration:none;}
+  #hb-{{ sid }} .hb-kstory{margin-top:18px;}
+  #hb-{{ sid }} .hb-kstory h3{font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:#0A0D11;margin:0 0 7px;}
+  #hb-{{ sid }} .hb-kstory p{font-size:14px;line-height:1.6;color:#5B6470;margin:0;max-width:60ch;}
+  @media(max-width:879px){#hb-{{ sid }} .hb-buy{padding:16px 14px;}#hb-{{ sid }} .hb-ktitle{flex-direction:column;gap:4px;}#hb-{{ sid }} .hb-ktitle .hb-priceline{flex-direction:row;align-items:baseline;gap:9px;}}
 </style>
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
@@ -360,9 +386,18 @@
     {%- comment -%} ---------- BUY ---------- {%- endcomment -%}
     <div class="hb-buy">
       {%- comment -%} clean, Glo-style header {%- endcomment -%}
-      <div class="hb-eyebrow">{{ section.settings.eyebrow | default: 'The motorized water lounger' }}</div>
+      <div class="hb-kcrumb">HOME &rsaquo; WATER LOUNGERS &rsaquo; SUPER GLIDE</div>
       <a href="#reviews" class="hb-krate"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><b>{{ section.settings.rating | default: '4.8' }}</b><span>({{ section.settings.review_count | default: '3,912' }} reviews)</span></a>
-      <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
+      <div class="hb-ktitle">
+        <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
+        <div class="hb-priceline">
+          {%- assign hb_scpt = cur.price | times: 0.88 | round -%}<b class="hb-price-main" id="hb-price-{{ sid }}">{{ hb_scpt | money }}</b>
+          <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
+          <em class="hb-offp" id="hb-off-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | minus: hb_scpt | times: 100 | divided_by: cur.compare_at_price }}% OFF</em>
+          <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
+        </div>
+      </div>
+      <div class="hb-kpills"><span>☀ Summer Sale — up to 63% OFF</span><span>🛡 30-Day Money-Back Promise</span></div>
       <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
       <div class="hb-kbest"><b>Best for:</b> Pool Days, Lake Weekends, The Grandkids, All-Summer Lounging</div>
 
@@ -370,12 +405,6 @@
         <span class="hb-pill">{{ section.settings.pill_1 | default: 'Hands-free thrusters' }}</span>
         <span class="hb-pill">{{ section.settings.pill_2 | default: 'Fits the whole family' }}</span>
         <span class="hb-pill">{{ section.settings.pill_3 | default: 'Inflates in ~5 min' }}</span>
-      </div>
-
-      <div class="hb-priceline" style="margin-top:14px;">
-        {%- assign hb_scp0 = cur.price | times: 0.88 | round -%}<em class="hb-offp" id="hb-off-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | minus: hb_scp0 | times: 100 | divided_by: cur.compare_at_price }}% OFF</em><b class="hb-price-main" id="hb-price-{{ sid }}">{{ cur.price | times: 0.88 | round | money }}</b>
-        <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
-        <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
       </div>
 
       {%- comment -%} ========== REAL SHOPIFY FORM ========== {%- endcomment -%}
@@ -401,7 +430,8 @@
         </div>
         {%- endif -%}
 
-        <div class="hb-ez"><span><b>1.</b> Pick your deal below</span><span><b>2.</b> Tap "add to cart"</span><span><b>3.</b> We ship it free</span></div>
+        <div class="hb-klabel">Pick Your Bundle</div>
+        <div class="hb-ez"><span><b>1.</b> Pick your deal below</span><span><b>2.</b> Tap "Add to Cart"</span><span><b>3.</b> We ship it free</span></div>
         <div class="hb-tiers" id="hb-tiers-{{ sid }}">
           {%- if section.settings.show_picker -%}
           {%- comment -%} auto Mini tier (single-seat variant) {%- endcomment -%}
@@ -463,12 +493,12 @@
 
         {%- assign hb_scp = cur.price | times: 0.88 | round -%}
         <div class="hb-dbn">⚡ Up to 63% OFF · 🎁 FREE Jet Ski + Pump with 3+ gliders</div>
-        <div class="hb-ob" id="hb-ob-{{ sid }}" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Add to my order <span class="nar">→</span></div><div class="pl"><s id="hb-ob-c-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | money }}</s><b id="hb-ob-p-{{ sid }}">{{ hb_scp | money }}</b></div><span class="sv" id="hb-ob-s-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>YOU SAVE {{ cur.compare_at_price | minus: hb_scp | money }}{% if cur.compare_at_price > 0 %} ({{ cur.compare_at_price | minus: hb_scp | times: 100 | divided_by: cur.compare_at_price }}% OFF){% endif %}</span><span class="gline" id="hb-ob-g-{{ sid }}" style="display:none">🎁 FREE Jet Ski + FREE Pump included — $409.98 value</span></div>
         <button type="submit" name="add" class="hb-atc" {% unless cur.available %}disabled{% endunless %}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           {{ section.settings.cta_text | default: 'Add to Cart' }} →
         </button>
         <button type="button" class="hb-buynow" id="hb-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy Now</button>
+        <div class="hb-ob" id="hb-ob-{{ sid }}" role="button" tabindex="0" aria-label="Add to my order"><div class="hh">Your order <span class="nar">→</span></div><div class="pl"><s id="hb-ob-c-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | money }}</s><b id="hb-ob-p-{{ sid }}">{{ hb_scp | money }}</b></div><span class="sv" id="hb-ob-s-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>YOU SAVE {{ cur.compare_at_price | minus: hb_scp | money }}{% if cur.compare_at_price > 0 %} ({{ cur.compare_at_price | minus: hb_scp | times: 100 | divided_by: cur.compare_at_price }}% OFF){% endif %}</span><span class="gline" id="hb-ob-g-{{ sid }}" style="display:none">🎁 FREE Jet Ski + FREE Pump included — $409.98 value</span></div>
       {%- endform -%}
 
       {%- comment -%} KURU-style promise card + ships row + quick facts + FAQ chips {%- endcomment -%}
@@ -486,22 +516,6 @@
         <div><span class="em">🚚</span>Free Shipping</div>
         <div><span class="em">🔁</span>Free Exchanges</div>
         <div><span class="em">↩️</span>Free Returns</div>
-      </div>
-      <div class="hb-kfacts">
-        <div class="tt">Quick Facts</div>
-        <div class="hb-kfgrid">
-          <div class="hb-kf"><span class="em">💪</span><div><b>Holds 300 lb</b><span>adult + 2 kids</span></div></div>
-          <div class="hb-kf"><span class="em">🔋</span><div><b>~2 h per charge</b><span>a whole afternoon</span></div></div>
-          <div class="hb-kf"><span class="em">💨</span><div><b>Inflates in ~5 min</b><span>no tools needed</span></div></div>
-          <div class="hb-kf"><span class="em">🕹</span><div><b>360° joysticks</b><span>easy steering</span></div></div>
-          <div class="hb-kf"><span class="em">🛡</span><div><b>Marine-grade PVC</b><span>built for summers</span></div></div>
-          <div class="hb-kf"><span class="em">🌊</span><div><b>Pool · lake · river</b><span>any calm water</span></div></div>
-        </div>
-      </div>
-      <div class="hb-kchips">
-        <a class="hb-kchip" href="#faq">＋ How does the motor work?</a>
-        <a class="hb-kchip" href="#faq">＋ Is it safe for kids?</a>
-        <a class="hb-kchip" href="#faq">＋ What exactly is in the box?</a>
       </div>
 
 
@@ -531,6 +545,32 @@
           <b id="hb-sold-{{ sid }}" style="color:var(--helios-ink,#0C1A24);">{{ section.settings.sold_today | default: 202 }}</b> sold today
         </div>
       {%- endif -%}
+    </div>
+
+    {%- comment -%} KURU-style left column under the gallery: quote strip, check strip, FAQ chips, story, Quick Facts {%- endcomment -%}
+    <div class="hb-kleft">
+      <div class="hb-kquote"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><span>"My son will NOT get off this thing. Literally, he refuses."</span><b>— elena d.</b></div>
+      <a class="hb-kcheck" href="#faq">Is the Super Glide right for your family? Let's check → ✏️</a>
+      <div class="hb-kchips">
+        <a class="hb-kchip" href="#faq">＋ How does the motor work?</a>
+        <a class="hb-kchip" href="#faq">＋ Is it safe for kids?</a>
+        <a class="hb-kchip" href="#faq">＋ What exactly is in the box?</a>
+      </div>
+      <div class="hb-kstory">
+        <h3>Summer for All the Moments In Between</h3>
+        <p>At HELIOS, we know summer doesn't wait. The Super Glide is a real motorized lounger — twin quiet motors, easy joysticks, room for you and two kids — so the whole family gets back on the water without paddling, gas, or fuss. From the first cannonball of June to the last golden hour of September.</p>
+      </div>
+      <div class="hb-kfacts">
+        <div class="tt">Quick Facts</div>
+        <div class="hb-kfgrid">
+          <div class="hb-kf"><span class="em">💪</span><div><b>Holds 300 lb</b><span>adult + 2 kids</span></div></div>
+          <div class="hb-kf"><span class="em">🔋</span><div><b>~2 h per charge</b><span>a whole afternoon</span></div></div>
+          <div class="hb-kf"><span class="em">💨</span><div><b>Inflates in ~5 min</b><span>no tools needed</span></div></div>
+          <div class="hb-kf"><span class="em">🕹</span><div><b>360° joysticks</b><span>easy steering</span></div></div>
+          <div class="hb-kf"><span class="em">🛡</span><div><b>Marine-grade PVC</b><span>built for summers</span></div></div>
+          <div class="hb-kf"><span class="em">🌊</span><div><b>Pool · lake · river</b><span>any calm water</span></div></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
