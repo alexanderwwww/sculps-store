@@ -149,6 +149,12 @@ body{overflow-x:clip}
 #pk .cb .tx b{font-weight:700}
 @keyframes pkcm{to{transform:translateX(-50%)}}
 @keyframes pkcm2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+#pk .feat2{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px;margin:0 auto}
+@media(max-width:680px){#pk .feat2{grid-template-columns:1fr}}
+#pk .fcard{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;padding-bottom:16px;text-align:center}
+#pk .fcard img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+#pk .fcard b{display:block;font-size:16.5px;font-weight:800;margin:13px 0 4px}
+#pk .fcard span{display:block;font-size:13.5px;color:var(--mut);padding:0 16px;line-height:1.5}
 #pk .spec{max-width:720px;margin:16px auto 0;display:grid;grid-template-columns:1fr;gap:9px}
 @media(min-width:640px){#pk .spec{grid-template-columns:1fr 1fr}}
 #pk .spec div{display:flex;gap:9px;font-size:13.5px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
@@ -173,6 +179,9 @@ body{overflow-x:clip}
 #pkstick .l b{display:block;color:#fff;font-size:12.5px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #pkstick .l span{color:var(--pnk);font-size:12px;font-weight:800}
 #pkstick button{margin-left:auto;flex:0 0 auto;background:var(--pnk);color:#3d0a20;border:none;font-size:13.5px;font-weight:900;padding:12px 20px;border-radius:100px;cursor:pointer}
+/* island: product images are landscape/square — no phone frames */
+#pk .phone{aspect-ratio:1/1;width:min(430px,90vw);border-radius:18px;background:#fff;border:1px solid var(--line);box-shadow:0 22px 46px -30px rgba(14,60,90,.45);animation:none}
+#pk .phone img{object-fit:cover}
 @media(prefers-reduced-motion:reduce){
   #pk .phone,#pk .eta .dot,#pk .brand,#pk .wave,#pk .ptitle .it .w,#pk .ob .nar{animation:none}
   #pk .rv,#pk .ptitle .w{opacity:1;transform:none;transition:none}
@@ -194,7 +203,7 @@ body{overflow-x:clip}
 <div class="bhead rv"><div class="eyebrow">Meet the Tropical Breeze</div><h2>The floating island the whole crew swims to.</h2><div class="bhoff">The 6-person party island · discount already applied</div></div>
 <div class="buy" id="buytop">
   <div class="media">
-    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-2.jpg?v=1783930294" alt="Party island on the lake"></div>
+    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-5.jpg?v=1783930294" alt="Party island on the lake"></div>
     <div class="smar"><div class="row" id="srow">
       <span class="sc">✓ Marcus T. — best lake day of the summer, hands down</span>
       <span class="sc">✓ Ships from US warehouse within 24 h</span>
@@ -240,6 +249,13 @@ body{overflow-x:clip}
     <div class="fq"><div class="q">Is it durable, or will it pop?<span class="ico">+</span></div><div class="p"><div class="in">Heavy-duty PVC with multiple independent air chambers, a grab rope all around and a repair patch included. Rinse and dry before storing and it'll last for summers.</div></div></div>
     <div class="fq"><div class="q">Can I anchor it so it doesn't drift?<span class="ico">+</span></div><div class="p"><div class="in">Yes — there's a built-in anchor connection point, so drop an anchor (sold separately) and the party stays exactly where you want it. Deflate, fold and it packs down for the garage.</div></div></div>
     <div class="fq"><div class="q">What if I don't love it?<span class="ico">+</span></div><div class="p"><div class="in">Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</div></div></div>
+  </div>
+</div></div>
+
+<div class="sec"><div class="wrap">
+  <div class="feat2">
+    <div class="fcard rv"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-6.jpg?v=1783930294" alt="Canopy shade" loading="lazy"><b>Shade on demand</b><span>The arched canopy clips on for cool shade over the front seats — and clips off when you want full sun.</span></div>
+    <div class="fcard rv" style="transition-delay:.1s"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-4.jpg?v=1783930294" alt="Built-in cooler" loading="lazy"><b>The cooler is built in</b><span>Ice, drinks and snacks live on board with 6 cupholders — nobody swims back to shore.</span></div>
   </div>
 </div></div>
 
