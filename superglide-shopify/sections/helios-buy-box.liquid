@@ -30,7 +30,7 @@
     #hb-{{ sid }} .hb-grid{grid-template-columns:1.04fr .96fr;gap:46px;align-items:start;}
     #hb-{{ sid }} .hb-gallery{position:sticky;top:90px;}
   }
-  #hb-{{ sid }} .hb-stage{position:relative;display:flex;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:24px;background:linear-gradient(160deg,#EAF6FB,#D6ECF5);border:var(--helios-g-bd,1px solid rgba(255,255,255,.65));box-shadow:var(--helios-g-shlg,0 26px 60px -18px rgba(6,47,73,.3));aspect-ratio:1/1;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+  #hb-{{ sid }} .hb-stage{position:relative;display:flex;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scroll-snap-type:x mandatory;scroll-behavior:smooth;border-radius:14px;background:#F7F8F7;border:1px solid #E5E8E5;box-shadow:none;aspect-ratio:1/1;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
   #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;height:100%;overflow:hidden;}
   #hb-{{ sid }} .hb-stage::-webkit-scrollbar{display:none;}
   #hb-{{ sid }} .hb-cell{flex:0 0 100%;scroll-snap-align:center;display:grid;place-items:center;position:relative;}
@@ -59,11 +59,11 @@
   #hb-{{ sid }} .hb-gallery{position:relative;}
   #hb-{{ sid }} .hb-stagewrap{position:relative;}
   #hb-{{ sid }} .hb-dots{display:none;}
-  #hb-{{ sid }} .hb-thumbs{position:absolute;left:0;right:0;bottom:12px;z-index:4;display:flex;gap:7px;justify-content:center;align-items:center;padding:0 12px;margin:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  #hb-{{ sid }} .hb-thumbs{position:static;display:flex;gap:8px;justify-content:flex-start;align-items:center;padding:0;margin:10px 0 0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   #hb-{{ sid }} .hb-thumbs::-webkit-scrollbar{display:none;}
-  #hb-{{ sid }} .hb-thumb{position:relative;padding:3px;flex:0 0 auto;width:clamp(32px,8.5%,42px);aspect-ratio:1/1;border:1.5px solid rgba(255,255,255,.7);border-radius:11px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,.15);backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%);box-shadow:0 3px 10px rgba(6,30,46,.18);opacity:.55;transition:opacity .28s ease,width .34s cubic-bezier(.34,1.56,.64,1),transform .28s ease,box-shadow .28s ease,border-color .28s ease;}
-  #hb-{{ sid }} .hb-thumb:hover{opacity:.9;transform:translateY(-2px);}
-  #hb-{{ sid }} .hb-thumb.sel{opacity:1;width:clamp(52px,14%,66px);border:2px solid #fff;box-shadow:0 8px 24px rgba(6,30,46,.45);animation:hb-thumb-live 2.6s ease-in-out infinite;}
+  #hb-{{ sid }} .hb-thumb{position:relative;padding:2px;flex:0 0 auto;width:clamp(44px,11%,58px);aspect-ratio:1/1;border:1.5px solid #DDE1DD;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;opacity:1;transition:border-color .2s ease;}
+  #hb-{{ sid }} .hb-thumb:hover{border-color:#9AA79E;}
+  #hb-{{ sid }} .hb-thumb.sel{border:2px solid #0E9F6E;}
   @keyframes hb-thumb-live{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-2px) scale(1.045);}}
   @media(prefers-reduced-motion:reduce){ #hb-{{ sid }} .hb-thumb.sel{animation:none;} }
   #hb-{{ sid }} .hb-thumb img,#hb-{{ sid }} .hb-thumb video{width:100%;height:100%;object-fit:contain;display:block;border-radius:8px;}
@@ -146,7 +146,7 @@
   #hb-{{ sid }} .hb-tier.sel{border-color:#0A0D11;border-width:2px;background:#F6FBF8;box-shadow:0 10px 24px -12px rgba(10,13,17,.3);}
   #hb-{{ sid }} .hb-radio{width:22px;height:22px;border-radius:50%;border:2px solid #C7CED6;flex-shrink:0;transition:.2s;background:#fff;}
   #hb-{{ sid }} .hb-tier.sel .hb-radio{border:6.5px solid #0A0D11;}
-  #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;left:16px;font-size:10px;font-weight:700;letter-spacing:.01em;text-transform:lowercase;color:#fff;padding:4px 12px;border-radius:20px;background:#0A0D11;box-shadow:0 5px 12px rgba(10,13,17,.3);}
+  #hb-{{ sid }} .hb-badge{position:absolute;top:-11px;left:16px;font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:#fff;padding:4px 12px;border-radius:20px;background:#0A0D11;box-shadow:0 5px 12px rgba(10,13,17,.3);}
   #hb-{{ sid }} .hb-badge.teal{background:#3E5568;}
   #hb-{{ sid }} .hb-tiername{font-family:'Archivo';font-weight:800;font-size:16px;color:#0A0D11;}
   #hb-{{ sid }} .hb-tiersub{display:block;font-size:13.5px;color:#5B6470;font-weight:500;margin-top:2px;}
@@ -156,7 +156,7 @@
   #hb-{{ sid }} .hb-tierprice s{font-size:12.5px;color:#b3bac2;font-weight:600;}
   #hb-{{ sid }} .hb-offp{display:inline-block;vertical-align:middle;background:#E11D48;color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;margin-right:9px;font-family:'Archivo',sans-serif;}
   #hb-{{ sid }} .hb-dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 10px;background:linear-gradient(90deg,#FFE9B0,#FFD36B,#FFE9B0);color:#5A3E00;font-size:12.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:9px 12px;border-radius:12px;font-family:'Archivo',sans-serif;}
-  #hb-{{ sid }} .hb-ob{background:#0A0E12;border:1.5px solid rgba(16,201,126,.5);border-radius:16px;padding:16px;text-align:center;margin:0 0 12px;cursor:pointer;transition:transform .12s;}
+  #hb-{{ sid }} .hb-ob{background:#123D2B;border:1.5px solid rgba(16,201,126,.45);border-radius:14px;padding:16px;text-align:center;margin:0 0 12px;cursor:pointer;transition:transform .12s;}
   #hb-{{ sid }} .hb-ob:hover{transform:translateY(-2px);}
   #hb-{{ sid }} .hb-ob .hh{font-family:'Archivo';font-weight:800;font-size:14.5px;color:#fff;}
   #hb-{{ sid }} .hb-ob .pl{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-top:4px;}
@@ -251,6 +251,33 @@
     #hb-{{ sid }} .hb-radio{width:20px;height:20px;}
     #hb-{{ sid }} .hb-tier.sel .hb-radio{border-width:6px;}
   }
+  /* ===== KURU-style clarity layer ===== */
+  #hb-{{ sid }} .hb-atc,#hb-{{ sid }} .hb-buynow{text-transform:none;}
+  #hb-{{ sid }} .hb-krate{display:flex;align-items:center;gap:7px;font-size:13px;color:#5B6470;margin:0 0 6px;text-decoration:none;}
+  #hb-{{ sid }} .hb-krate b{color:#0A0D11;}
+  #hb-{{ sid }} .hb-kbest{font-size:13.5px;color:#5B6470;margin:10px 0 0;}
+  #hb-{{ sid }} .hb-kbest b{color:#0A0D11;font-weight:700;}
+  #hb-{{ sid }} .hb-kpromise{border:1px solid #D8E5DD;border-radius:14px;overflow:hidden;margin-top:16px;background:#fff;}
+  #hb-{{ sid }} .hb-kpromise .hd{display:flex;align-items:center;gap:9px;background:#123D2B;color:#fff;padding:12px 15px;font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;}
+  #hb-{{ sid }} .hb-kpromise .sub{display:block;font-weight:600;font-size:11.5px;color:rgba(255,255,255,.75);margin-top:2px;}
+  #hb-{{ sid }} .hb-kpromise .bd{padding:9px 15px 12px;}
+  #hb-{{ sid }} .hb-kpromise .ln{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px;color:#22302A;border-bottom:1px solid #EEF3EF;}
+  #hb-{{ sid }} .hb-kpromise .ln:last-child{border-bottom:none;}
+  #hb-{{ sid }} .hb-kpromise .ck{color:#0E9F6E;font-weight:900;flex:0 0 auto;}
+  #hb-{{ sid }} .hb-kships{display:flex;justify-content:space-around;gap:8px;margin-top:12px;padding:12px 8px;border:1px solid #E5E8E5;border-radius:14px;background:#fff;}
+  #hb-{{ sid }} .hb-kships div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#5B6470;text-align:center;}
+  #hb-{{ sid }} .hb-kships .em{font-size:17px;}
+  #hb-{{ sid }} .hb-kfacts{margin-top:18px;}
+  #hb-{{ sid }} .hb-kfacts .tt{font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#0A0D11;margin:0 0 9px;}
+  #hb-{{ sid }} .hb-kfgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  #hb-{{ sid }} .hb-kf{display:flex;align-items:center;gap:9px;border:1px solid #E5E8E5;border-radius:11px;padding:9px 11px;background:#fff;}
+  #hb-{{ sid }} .hb-kf .em{font-size:16px;flex:0 0 auto;}
+  #hb-{{ sid }} .hb-kf b{display:block;font-size:12.5px;color:#0A0D11;font-weight:700;line-height:1.25;}
+  #hb-{{ sid }} .hb-kf span{display:block;font-size:11px;color:#8A93A0;}
+  #hb-{{ sid }} .hb-kchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;}
+  #hb-{{ sid }} .hb-kchip{display:inline-flex;align-items:center;gap:6px;border:1px solid #DDE3DE;background:#F6F8F6;border-radius:100px;padding:8px 13px;font-size:12px;font-weight:600;color:#33413A;text-decoration:none;transition:border-color .15s;}
+  #hb-{{ sid }} .hb-kchip:hover{border-color:#9AA79E;}
+  #hb-{{ sid }} .hb-trust{display:none;}
 </style>
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
@@ -334,8 +361,10 @@
     <div class="hb-buy">
       {%- comment -%} clean, Glo-style header {%- endcomment -%}
       <div class="hb-eyebrow">{{ section.settings.eyebrow | default: 'The motorized water lounger' }}</div>
+      <a href="#reviews" class="hb-krate"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><b>{{ section.settings.rating | default: '4.8' }}</b><span>({{ section.settings.review_count | default: '3,912' }} reviews)</span></a>
       <h1 id="hb-title-{{ sid }}" data-double="{{ section.settings.title | default: 'HELIOS Super Glide' }}" data-mini="HELIOS Mini Glide">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
       <p class="hb-sub">{{ section.settings.subtitle | default: 'Kick back, grab the joysticks, and glide across the water. No paddling — just cruise.' }}</p>
+      <div class="hb-kbest"><b>Best for:</b> Pool Days, Lake Weekends, The Grandkids, All-Summer Lounging</div>
 
       <div class="hb-pills">
         <span class="hb-pill">{{ section.settings.pill_1 | default: 'Hands-free thrusters' }}</span>
@@ -343,15 +372,7 @@
         <span class="hb-pill">{{ section.settings.pill_3 | default: 'Inflates in ~5 min' }}</span>
       </div>
 
-      <a href="#reviews" class="hb-rate">
-        <span style="color:#f5a623;letter-spacing:1px;">★★★★★</span>
-        <b style="color:var(--helios-ink,#0C1A24);">{{ section.settings.rating | default: '4.8' }}</b>
-        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.review_count | default: '3,912' }} reviews</span>
-        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.meta_1 | default: 'the motor does the work' }}</span>
-        <span class="hb-metadot">·</span><span class="hb-metaspec">{{ section.settings.meta_2 | default: 'holds 300 lb' }}</span>
-      </a>
-
-      <div class="hb-priceline">
+      <div class="hb-priceline" style="margin-top:14px;">
         {%- assign hb_scp0 = cur.price | times: 0.88 | round -%}<em class="hb-offp" id="hb-off-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | minus: hb_scp0 | times: 100 | divided_by: cur.compare_at_price }}% OFF</em><b class="hb-price-main" id="hb-price-{{ sid }}">{{ cur.price | times: 0.88 | round | money }}</b>
         <s id="hb-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none;"{% endunless %}>{{ cur.compare_at_price | money }}</s>
         <span class="hb-savesub" id="hb-savesub-{{ sid }}"></span>
@@ -447,8 +468,41 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           {{ section.settings.cta_text | default: 'Add to Cart' }} →
         </button>
-        <button type="button" class="hb-buynow" id="hb-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy now</button>
+        <button type="button" class="hb-buynow" id="hb-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy Now</button>
       {%- endform -%}
+
+      {%- comment -%} KURU-style promise card + ships row + quick facts + FAQ chips {%- endcomment -%}
+      <div class="hb-kpromise">
+        <div class="hd"><span>🌊</span><span>HELIOS Summer Promise™<span class="sub">Try it for 30 days. If it doesn't make your summer, send it back for a full refund.</span></span></div>
+        <div class="bd">
+          <div class="ln"><span class="ck">✓</span>Free 30-Day Returns &amp; Money-Back</div>
+          <div class="ln"><span class="ck">✓</span>Free Shipping — ships in 24–48 h</div>
+          <div class="ln"><span class="ck">✓</span>6-Month Product Warranty</div>
+          <div class="ln"><span class="ck">✓</span>Secure Checkout &amp; Order Protection</div>
+          <div class="ln"><span class="ck">🎁</span>FREE Jet Ski + Pump with 3+ gliders</div>
+        </div>
+      </div>
+      <div class="hb-kships">
+        <div><span class="em">🚚</span>Free Shipping</div>
+        <div><span class="em">🔁</span>Free Exchanges</div>
+        <div><span class="em">↩️</span>Free Returns</div>
+      </div>
+      <div class="hb-kfacts">
+        <div class="tt">Quick Facts</div>
+        <div class="hb-kfgrid">
+          <div class="hb-kf"><span class="em">💪</span><div><b>Holds 300 lb</b><span>adult + 2 kids</span></div></div>
+          <div class="hb-kf"><span class="em">🔋</span><div><b>~2 h per charge</b><span>a whole afternoon</span></div></div>
+          <div class="hb-kf"><span class="em">💨</span><div><b>Inflates in ~5 min</b><span>no tools needed</span></div></div>
+          <div class="hb-kf"><span class="em">🕹</span><div><b>360° joysticks</b><span>easy steering</span></div></div>
+          <div class="hb-kf"><span class="em">🛡</span><div><b>Marine-grade PVC</b><span>built for summers</span></div></div>
+          <div class="hb-kf"><span class="em">🌊</span><div><b>Pool · lake · river</b><span>any calm water</span></div></div>
+        </div>
+      </div>
+      <div class="hb-kchips">
+        <a class="hb-kchip" href="#faq">＋ How does the motor work?</a>
+        <a class="hb-kchip" href="#faq">＋ Is it safe for kids?</a>
+        <a class="hb-kchip" href="#faq">＋ What exactly is in the box?</a>
+      </div>
 
 
       {%- if section.settings.discount_code != blank -%}
