@@ -312,9 +312,8 @@
   /* ===== PROPORTION FIX — whole buy column visible in first view (KURU density) ===== */
   @media(min-width:880px){
     #hb-{{ sid }} .hb-grid{grid-template-columns:1.12fr 1fr!important;gap:32px!important;align-items:start!important;}
-    #hb-{{ sid }} .hb-stage{aspect-ratio:auto!important;height:clamp(420px,38vw,540px)!important;}
+    #hb-{{ sid }} .hb-stage{aspect-ratio:auto!important;height:clamp(460px,44vw,600px)!important;}
     #hb-{{ sid }} .hb-gallery{position:sticky;top:80px;align-self:start;}
-    #hb-{{ sid }} .hb-iph{width:min(180px,50%)!important;}
   }
   /* tighten buy column so bundles rise up into the first view */
   #hb-{{ sid }} .hb-buy{padding:18px;}
@@ -331,6 +330,21 @@
   #hb-{{ sid }} .hb-ez{margin:0 0 10px;font-size:12px;}
   #hb-{{ sid }} .hb-tiers{gap:9px;}
   #hb-{{ sid }} .hb-tier{padding:12px 14px;}
+  /* ==== FAQ + phone-video block, right under the buy box ==== */
+  #hb-{{ sid }} .hb-kfaq{max-width:1160px;margin:10px auto 0;padding:30px 22px 10px;display:grid;grid-template-columns:1fr;gap:26px;border-top:1px solid #EDEDEA;}
+  @media(min-width:880px){#hb-{{ sid }} .hb-kfaq{grid-template-columns:.82fr 1.18fr;gap:44px;align-items:center;padding-top:40px;}}
+  #hb-{{ sid }} .hb-kfaq-phone{justify-self:center;position:relative;width:min(280px,78vw);aspect-ratio:9/16;border-radius:44px;overflow:hidden;background:#0E1116;border:9px solid #17181C;box-shadow:0 30px 60px -28px rgba(10,13,17,.5),inset 0 0 0 2px #2A2B31;}
+  #hb-{{ sid }} .hb-kfaq-phone::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);width:82px;height:23px;background:#0B0B0E;border-radius:14px;z-index:5;}
+  #hb-{{ sid }} .hb-kfaq-phone video{width:100%;height:100%;object-fit:cover;display:block;}
+  #hb-{{ sid }} .hb-kfaq-phone .tag{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);white-space:nowrap;z-index:6;}
+  #hb-{{ sid }} .hb-kfaq-list h2{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(21px,2.4vw,28px);color:#1A1A1A;letter-spacing:-.01em;margin:0 0 4px;}
+  #hb-{{ sid }} .hb-kfaq-list .fsub{font-size:14px;color:#6b6b6b;margin:0 0 16px;}
+  #hb-{{ sid }} .hb-kfq{border-bottom:1px solid #E6E6E6;}
+  #hb-{{ sid }} .hb-kfq .q{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 2px;cursor:pointer;font-weight:700;font-size:15.5px;color:#1A1A1A;}
+  #hb-{{ sid }} .hb-kfq .ic{flex:0 0 auto;width:24px;height:24px;border-radius:50%;border:1.5px solid #C9CFC9;display:grid;place-items:center;font-size:16px;line-height:1;color:#1f5c3d;transition:transform .3s,background .3s;}
+  #hb-{{ sid }} .hb-kfq.on .ic{transform:rotate(45deg);background:#1f5c3d;color:#fff;border-color:#1f5c3d;}
+  #hb-{{ sid }} .hb-kfq .a{max-height:0;overflow:hidden;transition:max-height .32s ease;}
+  #hb-{{ sid }} .hb-kfq .a p{margin:0;padding:0 2px 15px;font-size:14px;line-height:1.6;color:#5b6470;}
 </style>
 
 <div class="hb-wrap" id="buy" style="scroll-margin-top:84px;">
@@ -380,7 +394,6 @@
         {%- endfor -%}
       </div>
       </div>
-      <div class="hb-ugc"><div class="hb-ugcphone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="hb-ugctag">▶ Real families, real water</span></div></div>
     </div>
 
     {%- comment -%} ---------- GALLERY (mini) ---------- {%- endcomment -%}
@@ -577,15 +590,10 @@
     {%- comment -%} KURU-style left column under the gallery: quote strip, check strip, FAQ chips, story, Quick Facts {%- endcomment -%}
     <div class="hb-kleft">
       <div class="hb-kquote"><span style="color:#f5a623;letter-spacing:1px;">★★★★★</span><span>"My son will NOT get off this thing. Literally, he refuses."</span><b>— elena d.</b></div>
-      <a class="hb-kcheck" href="#faq">Is the Super Glide right for your family? Let's check → ✏️</a>
       <div class="hb-kchips">
-        <a class="hb-kchip" href="#faq">＋ How does the motor work?</a>
-        <a class="hb-kchip" href="#faq">＋ Is it safe for kids?</a>
-        <a class="hb-kchip" href="#faq">＋ What exactly is in the box?</a>
-      </div>
-      <div class="hb-kstory">
-        <h3>Summer for All the Moments In Between</h3>
-        <p>At HELIOS, we know summer doesn't wait. The Super Glide is a real motorized lounger — twin quiet motors, easy joysticks, room for you and two kids — so the whole family gets back on the water without paddling, gas, or fuss. From the first cannonball of June to the last golden hour of September.</p>
+        <a class="hb-kchip" href="#hb-kfaq-{{ sid }}">＋ How does the motor work?</a>
+        <a class="hb-kchip" href="#hb-kfaq-{{ sid }}">＋ Is it safe for kids?</a>
+        <a class="hb-kchip" href="#hb-kfaq-{{ sid }}">＋ What exactly is in the box?</a>
       </div>
       <div class="hb-kfacts">
         <div class="tt">Quick Facts</div>
@@ -600,7 +608,29 @@
       </div>
     </div>
   </div>
+
+  {%- comment -%} FAQ + phone-video (moved out of the buy box, per KURU clarity) {%- endcomment -%}
+  <div class="hb-kfaq" id="hb-kfaq-{{ sid }}">
+    <div class="hb-kfaq-phone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="tag">▶ Real families, real water</span></div>
+    <div class="hb-kfaq-list">
+      <h2>Everything you're wondering, answered.</h2>
+      <div class="fsub">Honest answers — watch it in action while you read.</div>
+      <div class="hb-kfq on"><div class="q">Does it really move on its own?<span class="ic">+</span></div><div class="a"><p>Yes — twin quiet electric motors push you forward and let you spin 360° with the joysticks. No paddling, no gas, no motorboat. Completely hands-free.</p></div></div>
+      <div class="hb-kfq"><div class="q">Is it safe for kids?<span class="ic">+</span></div><div class="a"><p>Yes — the motors are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent up to the 300 lb capacity, life jackets on.</p></div></div>
+      <div class="hb-kfq"><div class="q">How long does the battery last?<span class="ic">+</span></div><div class="a"><p>About 2 hours of continuous cruising per charge — a whole afternoon on the water — and it recharges between sessions.</p></div></div>
+      <div class="hb-kfq"><div class="q">How hard is it to set up?<span class="ic">+</span></div><div class="a"><p>Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</p></div></div>
+      <div class="hb-kfq"><div class="q">What if I don't love it?<span class="ic">+</span></div><div class="a"><p>Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</p></div></div>
+    </div>
+  </div>
 </div>
+<script>
+(function(){var r=document.getElementById('hb-kfaq-{{ sid }}');if(!r||r.dataset.i)return;r.dataset.i='1';
+var fqs=[].slice.call(r.querySelectorAll('.hb-kfq'));
+function setH(f){var a=f.querySelector('.a');a.style.maxHeight=f.classList.contains('on')?a.scrollHeight+'px':'0px';}
+fqs.forEach(function(f){setH(f);f.querySelector('.q').addEventListener('click',function(){var op=!f.classList.contains('on');fqs.forEach(function(o){o.classList.remove('on');setH(o);});if(op){f.classList.add('on');}setH(f);});});
+var v=r.querySelector('video');if(v){var p=v.play();if(p&&p.catch)p.catch(function(){});}
+})();
+</script>
 
 <div id="hb-sticky-{{ sid }}" aria-hidden="true">
   <div class="hb-sk-info">
