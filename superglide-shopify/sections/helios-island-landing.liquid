@@ -1,0 +1,434 @@
+{%- comment -%} HELIOS Tropical Breeze Party Island — ocean landing/sell page. Same conversion skeleton as SG landing (receipt box, exact-pay pricing, pump add-on, sticky bar). {%- endcomment -%}
+<style>
+body{overflow-x:clip}
+#pk{--bg:#fff;--alt:#EFF7FB;--ink:#0C1A24;--mut:#5A6B79;--line:#D9E8F0;--ok:#0E7CC4;--pnk:#16A6D6;--star:#F5A623;--glass:rgba(14,124,196,.09);
+  position:relative;width:100vw;margin-left:calc(50% - 50vw);
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;overflow-x:clip}
+#pk *{box-sizing:border-box}
+#pk .media,#pk .panel{min-width:0;max-width:100%}
+#pk img{max-width:100%;display:block}
+#pk a{text-decoration:none;color:inherit}
+#pk .wrap{max-width:1040px;margin:0 auto;padding:0 18px}
+#pk h2{font-size:clamp(21px,2.6vw,29px);font-weight:800;letter-spacing:-.02em;line-height:1.14;margin:0}
+#pk .eyebrow{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ok)}
+#pk .stars{color:var(--star);letter-spacing:1.5px}
+#pk .rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+#pk .rv.in{opacity:1;transform:none}
+#pk .ptitle{padding:26px 18px 6px;max-width:1040px;margin:0 auto}
+#pk .hgrid{display:grid;grid-template-columns:1fr;gap:24px;align-items:center;text-align:center}
+@media(min-width:900px){#pk .hgrid{grid-template-columns:1.05fr .95fr;gap:44px;text-align:left}}
+#pk .ptitle h1{font-weight:800;font-size:clamp(24px,4.9vw,44px);line-height:1.1;letter-spacing:-.024em;margin:10px 0 0;text-wrap:balance}
+#pk .hsub{font-family:Georgia,serif;font-style:italic;font-size:clamp(15px,1.7vw,19px);color:#3d4a56;margin:12px 0 0}
+#pk .heropill{display:inline-block;text-align:center;background:#1A0E14;border-radius:16px;padding:15px 26px;margin-top:18px;cursor:pointer;box-shadow:0 16px 34px -14px rgba(26,14,20,.55);transition:transform .15s}
+#pk .heropill:hover{transform:translateY(-2px)}
+#pk .heropill b{display:block;font-size:16.5px;font-weight:800;color:#fff}
+#pk .heropill b .ga{color:var(--pnk)}
+#pk .heropill em{font-style:normal;font-size:11.5px;color:rgba(255,255,255,.6)}
+#pk .hphone{margin:0 auto}
+#pk .ptitle .w{display:inline-block;opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease;transition-delay:calc(var(--i)*45ms)}
+#pk .ptitle.go .w{opacity:1;transform:none}
+#pk .ptitle .it .w{background:linear-gradient(90deg,#0A5E97,#16A6D6,#0E7CC4,#0A5E97);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:pkshim 5.5s linear infinite}
+@keyframes pkshim{to{background-position:220% 0}}
+#pk .buy{display:grid;grid-template-columns:1fr;gap:22px;padding:14px 0 8px}
+@media(min-width:900px){#pk .buy{grid-template-columns:1fr 1.5fr;gap:34px;align-items:start}}
+@media(max-width:899px){#pk .media{order:2}#pk .panel{order:1}}
+#pk .phone{position:relative;width:min(300px,82vw);margin:0 auto;aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:#1A0E14;border:1px solid var(--line);box-shadow:0 30px 60px -34px rgba(26,14,20,.6);animation:pkbob 6.5s ease-in-out infinite}
+@keyframes pkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+#pk .phone img,#pk .phone video{width:100%;height:100%;object-fit:cover}
+#pk .phone .snd{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);cursor:pointer;white-space:nowrap}
+#pk .smar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);margin-top:16px;max-width:340px;margin-left:auto;margin-right:auto}
+#pk .smar .row{display:flex;gap:8px;width:max-content;padding:4px 2px;animation:pkcm 40s linear infinite}
+#pk .sc{flex:0 0 auto;display:flex;gap:6px;align-items:center;background:var(--glass);border:1px solid rgba(214,51,108,.25);border-radius:100px;padding:5px 12px;font-size:11.5px;font-weight:700;color:#0A5E97;white-space:nowrap}
+#pk .gal{display:flex;gap:9px;align-items:flex-start}
+#pk .gthumbs{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+#pk .gth{width:52px;aspect-ratio:1/1;border-radius:9px;overflow:hidden;border:1.5px solid var(--line);cursor:pointer;opacity:.5;transition:opacity .2s,border-color .2s;background:var(--alt)}
+#pk .gth.on{opacity:1;border-color:var(--ink)}
+#pk .gth img{width:100%;height:100%;object-fit:cover}
+#pk .gmain{flex:1;min-width:0;position:relative;aspect-ratio:1/1;max-height:370px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--alt);cursor:zoom-in}
+#pk .gmain img{width:100%;height:100%;object-fit:cover}
+#pk .gmain .zoom{position:absolute;bottom:9px;right:9px;background:rgba(26,14,20,.7);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px}
+@media(max-width:899px){#pk .gal{flex-direction:column-reverse}#pk .gthumbs{flex-direction:row;overflow-x:auto;width:100%;scrollbar-width:none}#pk .gthumbs::-webkit-scrollbar{display:none}#pk .gth{flex:0 0 auto;width:56px}#pk .gmain{max-height:none;width:100%}}
+#pk .lb{position:fixed;inset:0;z-index:100;background:rgba(15,10,12,.93);display:none;align-items:center;justify-content:center;padding:20px}
+#pk .lb.on{display:flex}
+#pk .lb img{max-width:92vw;max-height:82vh;border-radius:14px}
+#pk .lb .x{position:absolute;top:14px;right:18px;color:#fff;font-size:32px;cursor:pointer;line-height:1}
+#pk .lb .nav{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:44px;cursor:pointer;padding:8px 14px;user-select:none}
+#pk .lb .prev{left:6px}
+#pk .lb .next{right:6px}
+#pk .memsec{background:#EFF6FB}
+#pk .mem{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 16px;max-width:860px;margin:0 auto;padding-top:8px}
+@media(max-width:680px){#pk .mem{grid-template-columns:1fr;max-width:330px}}
+#pk .pol{position:relative;background:#fff;border:1px solid #D7E7F0;border-radius:4px;padding:10px 10px 34px;box-shadow:0 14px 30px -18px rgba(20,60,90,.35);transform:rotate(var(--r,0deg));transition:transform .35s ease,box-shadow .35s ease;cursor:pointer}
+#pk .pol:hover{transform:rotate(0deg) translateY(-6px) scale(1.03);box-shadow:0 30px 55px -22px rgba(20,60,90,.45);z-index:2}
+#pk .pol:before{content:'';position:absolute;top:-10px;left:50%;width:72px;height:22px;transform:translateX(-50%) rotate(var(--tr,-2deg));background:rgba(191,227,245,.72);border:1px solid rgba(120,170,200,.3);box-shadow:0 2px 5px rgba(0,0,0,.08);z-index:3}
+#pk .pol .shot{overflow:hidden;border-radius:2px}
+#pk .pol .shot img{width:100%;aspect-ratio:1/1;object-fit:cover;transition:transform .5s ease}
+#pk .pol:hover .shot img{transform:scale(1.06)}
+#pk .pol .cap{position:absolute;left:0;right:0;bottom:9px;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:13px;color:#3d4a56}
+#pk .ptl{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:15px 0 0}
+#pk .social{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0;font-size:13px;color:var(--mut)}
+#pk .social b{color:var(--ink)}
+#pk .pills{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0 0}
+#pk .pill{display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid rgba(214,51,108,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#0A5E97;font-size:12px;font-weight:700;padding:6px 11px;border-radius:100px}
+#pk .pill .c{color:var(--ok);font-weight:900}
+#pk .bhead{text-align:center;padding:8px 18px 4px}
+#pk .bhead h2{font-size:clamp(23px,3vw,32px)}
+#pk .bhoff{margin-top:6px;color:#E11D48;font-size:14px;font-weight:800}
+#pk .hoff{display:inline-block;margin-top:12px;background:#E11D48;color:#fff;font-size:12.5px;font-weight:800;letter-spacing:.04em;padding:6px 13px;border-radius:100px;text-transform:uppercase}
+#pk .ocard{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:16px;background:#fff;box-shadow:0 18px 44px -30px rgba(80,20,45,.45)}
+#pk .ostrip{display:flex;justify-content:space-between;gap:10px;background:#1A0E14;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.05em;padding:10px 14px;text-transform:uppercase}
+#pk .ostrip .mp{color:#A6D8F0}
+#pk .ocard .oin{padding:13px 13px 15px}
+#pk .opts{display:grid;gap:14px;margin-top:5px}
+#pk .opt{display:flex;align-items:center;gap:11px;padding:12px 13px;border:1.5px solid var(--line);border-radius:13px;cursor:pointer;position:relative;background:#fff}
+#pk .opt.on{border-color:var(--ink);border-width:2px;background:#F9FCFE}
+#pk .opt .radio{width:20px;height:20px;border-radius:50%;border:2px solid #D8C4CD;flex:0 0 auto}
+#pk .opt.on .radio{border:6.5px solid var(--ink)}
+#pk .opt .pic{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:0 0 auto;border:1px solid var(--line)}
+#pk .opt .lbl{flex:1;min-width:0}
+#pk .opt .lbl b{display:block;font-size:14px;font-weight:800}
+#pk .opt .lbl span{font-size:12px;color:var(--mut)}
+#pk .opt .pr{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+#pk .opt .pr b{font-size:15px;font-weight:800}
+#pk .opt .offp{display:inline-block;background:#E11D48;color:#fff;font-size:10px;font-weight:800;letter-spacing:.02em;padding:2px 7px;border-radius:6px;margin:0}
+#pk .opt .pr s{display:block;font-size:13px;color:#8a6b78}
+#pk .opt .tag{position:absolute;top:-9px;left:13px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--ok);padding:3px 8px;border-radius:20px}
+#pk .dbn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;background:linear-gradient(90deg,#DFF1FB,#A6D8F0,#DFF1FB);color:#0A3A54;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:9px 12px;border-radius:12px}
+#pk .pumprow{display:flex;align-items:center;gap:10px;margin-top:10px;border:1.5px dashed #D8C4CD;border-radius:14px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+#pk .pumprow.on{border-color:#1A0E14;border-style:solid;background:#F1F8FC}
+#pk .pumprow .pck{flex:0 0 auto;width:21px;height:21px;border:2px solid #D8C4CD;border-radius:7px;background:#fff;position:relative;transition:.15s}
+#pk .pumprow.on .pck{background:#1A0E14;border-color:#1A0E14}
+#pk .pumprow.on .pck::after{content:"";position:absolute;left:5.5px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+#pk .pumprow img{width:42px;height:42px;border-radius:10px;object-fit:cover;background:#F1F8FC;flex:0 0 auto}
+#pk .pumprow .plbl{flex:1;min-width:0}
+#pk .pumprow .plbl b{display:block;font-size:13px;font-weight:800}
+#pk .pumprow .plbl span{font-size:11px;color:var(--mut)}
+#pk .pumprow .ppr{text-align:right;flex:0 0 auto}
+#pk .pumprow .ppr b{display:block;font-size:14px;font-weight:800}
+#pk .pumprow .ppr s{font-size:11.5px;color:#8a6b78}
+#pk .ob{background:#1A0E14;border:1.5px solid rgba(22,166,214,.55);border-radius:18px;padding:18px 16px;text-align:center;margin-top:10px;cursor:pointer;transition:transform .12s,box-shadow .2s}
+#pk .ob .nar{display:inline-block;animation:pknudge 1.8s ease-in-out infinite;color:var(--pnk)}
+@keyframes pknudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+#pk .ob:hover{transform:translateY(-2px);box-shadow:0 16px 34px -14px rgba(26,14,20,.55)}
+#pk .ob:active{transform:translateY(0)}
+#pk .ob .hh{font-weight:800;font-size:15px;color:#fff}
+#pk .ob .pl{display:flex;align-items:baseline;justify-content:center;gap:11px;margin-top:5px}
+#pk .ob .pl s{font-size:18px;color:rgba(255,255,255,.42);font-weight:700}
+#pk .ob .pl b{font-weight:900;font-size:38px;color:var(--pnk);line-height:1;letter-spacing:-.02em}
+#pk .ob .sv{display:inline-block;margin-top:9px;font-size:12px;font-weight:800;color:#3d0a20;background:var(--pnk);padding:5px 13px;border-radius:100px}
+#pk .atcg{display:block;width:100%;text-align:center;margin-top:12px;background:#fff;color:#1A0E14;font-size:15.5px;font-weight:800;padding:14px;border:2px solid var(--ink);border-radius:100px;cursor:pointer;transition:background .15s,transform .12s}
+#pk .atcg:hover{background:#F1F8FC;transform:translateY(-1px)}
+#pk .eta{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;font-size:12.5px;font-weight:700;color:var(--ink)}
+#pk .eta .dot{width:8px;height:8px;border-radius:50%;background:var(--pnk);animation:pkpulse 1.8s ease-in-out infinite}
+@keyframes pkpulse{0%,100%{box-shadow:0 0 0 0 rgba(22,166,214,.5)}50%{box-shadow:0 0 0 6px rgba(22,166,214,0)}}
+#pk .guar{display:flex;gap:8px 16px;justify-content:center;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--mut);font-weight:600}
+#pk .pays{display:flex;gap:6px;justify-content:center;margin-top:9px;flex-wrap:wrap}
+#pk .pays span{font-size:9.5px;font-weight:700;color:var(--mut);border:1px solid var(--line);border-radius:5px;padding:3px 7px;letter-spacing:.03em}
+#pk .sec{padding-top:44px;padding-bottom:44px}
+#pk .sec.alt{background:var(--alt)}
+#pk .sec .head{text-align:center;max-width:640px;margin:0 auto 24px}
+#pk .sec .head h2{margin-top:7px}
+#pk .faqs{max-width:720px;margin:0 auto;display:grid;gap:10px}
+#pk .fq{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;transition:border-color .25s}
+#pk .fq.on{border-color:var(--ink)}
+#pk .fq.done{border-color:rgba(214,51,108,.4)}
+#pk .fq .q{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;font-weight:700;font-size:14.5px}
+#pk .fq .ico{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;transition:transform .3s,background .3s}
+#pk .fq.on .ico{transform:rotate(135deg)}
+#pk .fq.done:not(.on) .ico{background:var(--ok);transform:none}
+#pk .fq .p{max-height:0;overflow:hidden;transition:max-height .35s ease}
+#pk .fq .p .in{padding:0 16px 15px;color:var(--mut);font-size:13.5px}
+#pk .cmar{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);margin-top:22px}
+#pk .cmar .row{display:flex;gap:9px;width:max-content;padding:5px 4px;animation:pkcm 58s linear infinite}
+#pk .cmar .rb{animation:pkcm2 48s linear infinite}
+#pk .cmar:hover .row{animation-play-state:paused}
+#pk .cb{flex:0 0 auto;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:100px;padding:5px 15px 5px 5px;box-shadow:0 8px 22px -16px rgba(80,20,45,.3)}
+#pk .cb .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex:0 0 auto}
+#pk .cb .tx{font-size:13px;white-space:nowrap}
+#pk .cb .tx b{font-weight:700}
+@keyframes pkcm{to{transform:translateX(-50%)}}
+@keyframes pkcm2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+#pk .spec{max-width:720px;margin:16px auto 0;display:grid;grid-template-columns:1fr;gap:9px}
+@media(min-width:640px){#pk .spec{grid-template-columns:1fr 1fr}}
+#pk .spec div{display:flex;gap:9px;font-size:13.5px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+#pk .spec b{color:var(--ok);flex:0 0 auto;font-weight:900}
+#pk .finale{background:#1A0E14;color:#fff;text-align:center;overflow:hidden;position:relative}
+#pk .finale h2{color:#fff;font-size:clamp(24px,3.4vw,38px)}
+#pk .finale .sub2{color:rgba(255,255,255,.65);margin:12px auto 0;max-width:36ch;font-size:15px}
+#pk .finale .btn{display:inline-block;margin-top:22px;background:var(--pnk);color:#3d0a20;font-size:16.5px;font-weight:900;padding:16px 36px;border-radius:100px;cursor:pointer;box-shadow:0 18px 40px -14px rgba(22,166,214,.6);transition:transform .15s}
+#pk .finale .btn:hover{transform:translateY(-2px)}
+#pk .fbadges{display:flex;gap:10px 22px;justify-content:center;flex-wrap:wrap;margin-top:24px;font-size:12px;color:rgba(255,255,255,.6);font-weight:600}
+#pk .brand{font-weight:900;letter-spacing:.1em;font-size:clamp(58px,13vw,170px);line-height:1;margin-top:34px;background:linear-gradient(100deg,#0A5E97 0%,#16A6D6 30%,#BFE3F5 50%,#16A6D6 70%,#0A5E97 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:pkshim 7s linear infinite;user-select:none}
+#pk .wave{height:5px;max-width:420px;margin:26px auto 0;border-radius:10px;background:linear-gradient(90deg,transparent,#16A6D6,transparent);background-size:60% 100%;background-repeat:no-repeat;animation:pkwave 3.2s ease-in-out infinite alternate}
+@keyframes pkwave{from{background-position:-40% 0}to{background-position:140% 0}}
+#pk .gu{background:#fff;border:1.5px dashed rgba(22,166,214,.6);border-radius:20px;padding:24px;text-align:center;max-width:600px;margin:0 auto}
+#pk .gu h3{font-size:20px;font-weight:800;margin:8px 0 6px}
+#pk .gu p{color:var(--mut);margin:0;font-size:14.5px}
+#pkstick{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:80;max-width:560px;margin:0 auto;background:#1A0E14;border-radius:100px;padding:8px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 44px -14px rgba(26,14,20,.6),0 8px 30px -8px rgba(22,166,214,.3);transform:translateY(160%);transition:transform .4s ease}
+#pkstick.show{transform:none}
+@media(max-width:620px){#pkstick{left:10px;right:74px;padding:7px}#pkstick button{padding:11px 16px;font-size:13px}}
+#pkstick .th{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:2px solid rgba(255,255,255,.2)}
+#pkstick .l{min-width:0}
+#pkstick .l b{display:block;color:#fff;font-size:12.5px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pkstick .l span{color:var(--pnk);font-size:12px;font-weight:800}
+#pkstick button{margin-left:auto;flex:0 0 auto;background:var(--pnk);color:#3d0a20;border:none;font-size:13.5px;font-weight:900;padding:12px 20px;border-radius:100px;cursor:pointer}
+@media(prefers-reduced-motion:reduce){
+  #pk .phone,#pk .eta .dot,#pk .brand,#pk .wave,#pk .ptitle .it .w,#pk .ob .nar{animation:none}
+  #pk .rv,#pk .ptitle .w{opacity:1;transform:none;transition:none}
+}
+</style>
+<div id="pk">
+<div class="ptitle" id="ptitle"><div class="hgrid">
+  <div>
+    <div class="eyebrow">The 6-person party island</div>
+    <h1 id="ptitleh">One island. Six seats. <span class="it">This is the summer you promised yourself</span>.</h1>
+    <p class="hsub">Over 15 feet of floating lounge — a sun canopy, a built-in cooler, six cupholders. The one the whole lake swims to.</p>
+    <div class="social" style="margin-top:12px"><span class="stars">★★★★★</span> <b>4.8</b> · the island going viral on TikTok · <b>337 sold this week</b></div>
+    <div><span class="hoff">Summer sale — 30% OFF · ships free</span></div>
+    <a class="heropill tocart" href="#buytop"><b>Claim your island <span class="ga">→</span></b><em>$279.99 · free shipping · 30-day money-back</em></a>
+  </div>
+  <div class="phone hphone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-hero.jpg?v=1783930294" alt="HELIOS Party Island"></div>
+</div></div>
+<div class="wrap">
+<div class="bhead rv"><div class="eyebrow">Meet the Tropical Breeze</div><h2>The floating island the whole crew swims to.</h2><div class="bhoff">The 6-person party island · discount already applied</div></div>
+<div class="buy" id="buytop">
+  <div class="media">
+    <div class="phone"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-2.jpg?v=1783930294" alt="Party island on the lake"></div>
+    <div class="smar"><div class="row" id="srow">
+      <span class="sc">✓ Marcus T. — best lake day of the summer, hands down</span>
+      <span class="sc">✓ Ships from US warehouse within 24 h</span>
+      <span class="sc">✓ The Rivera family — all 6 of us fit, canopy is clutch</span>
+      <span class="sc">✓ Anchored it in the cove and never left</span>
+      <span class="sc">✓ Dana W. — cooler kept the drinks cold all afternoon</span>
+    </div></div>
+  </div>
+  <div class="panel">
+    <div class="gal">
+      <div class="gthumbs" id="gthumbs">
+        <div class="gth on" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-hero.jpg?v=1783930294"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-hero.jpg?v=1783930294" alt="HELIOS Party Island"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-3.jpg?v=1783930294"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-3.jpg?v=1783930294" alt="Product shot"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-4.jpg?v=1783930294"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-4.jpg?v=1783930294" alt="Backyard setup"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-5.jpg?v=1783930294"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-5.jpg?v=1783930294" alt="Sofa seating"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-6.jpg?v=1783930294"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-6.jpg?v=1783930294" alt="Floating snack tray"></div>
+        <div class="gth" data-src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-7.jpg?v=1783930294"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-7.jpg?v=1783930294" alt="Girls day"></div>
+      </div>
+      <div class="gmain" id="gmain"><img id="gmainimg" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-hero.jpg?v=1783930294" alt="HELIOS Tropical Breeze Party Island"><span class="zoom">tap to zoom ⤢</span></div>
+    </div>
+    <div class="ptl">HELIOS Tropical Breeze Party Island — 6-Person</div>
+    <div class="social"><span class="stars">★★★★★</span> <b>4.8</b> · the viral party island · <b>15+ ft</b> · seats 6</div>
+    <div class="pills">
+      <span class="pill"><span class="c">✓</span> Seats 6 adults</span>
+      <span class="pill"><span class="c">✓</span> Removable sun canopy</span>
+      <span class="pill"><span class="c">✓</span> Built-in cooler + 6 cupholders</span>
+      <span class="pill"><span class="c">✓</span> 15+ ft — the whole crew fits</span>
+      <span class="pill"><span class="c">✓</span> Grab rope + boarding platform</span>
+      <span class="pill"><span class="c">✓</span> Anchor point — stays put</span>
+    </div>
+    <div class="ocard"><div class="ostrip"><span>☀ Summer Sale</span><span class="mp">★ TikTok famous</span></div><div class="oin">
+    <div class="opts" id="opts">
+      <div class="opt on" data-vid="48004825219237" data-p="$279.99" data-c="$399.99" data-sv2="YOU SAVE $120 (30% OFF) — the whole crew floats" data-sv="The whole-crew purchase"><span class="tag">TikTok famous</span><span class="radio"></span><img class="pic" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-hero.jpg?v=1783930294" alt=""><div class="lbl"><b>1 Party Island</b><span>Seats 6 · canopy · cooler</span></div><div class="pr"><em class="offp">30% OFF</em><b>$279.99</b><s>$399.99</s></div></div>
+</div>
+
+<div class="sec" id="faq"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">Honest answers</div><h2>Everything you're wondering, answered.</h2></div>
+  <div class="faqs" id="faqs">
+    <div class="fq on"><div class="q">How big is it, really?<span class="ico">+</span></div><div class="p"><div class="in">Over 15 feet across — a genuine 6-person floating island. Backrest lounging on both ends, an open deck in the middle, plus the shaded canopy seats. Room for the whole crew.</div></div></div>
+    <div class="fq"><div class="q">What's actually in the box?<span class="ico">+</span></div><div class="p"><div class="in">The 6-person Tropical Breeze island with removable sun canopy, built-in cooler compartment, 6 cupholders, grab rope all around, boarding platform, anchor point and a repair patch. Everything in the photos comes in the box.</div></div></div>
+    <div class="fq"><div class="q">How long does it take to set up?<span class="ico">+</span></div><div class="p"><div class="in">About 15–20 minutes with an electric pump (multiple air chambers). We recommend any electric pump — by hand is a workout. Then float it and climb on.</div></div></div>
+    <div class="fq"><div class="q">Does the canopy really keep you shaded?<span class="ico">+</span></div><div class="p"><div class="in">Yes — the removable arched canopy throws real shade over the front seats, and it clips off completely when you want full sun. The built-in cooler keeps drinks cold and six cupholders keep them out of the water.</div></div></div>
+    <div class="fq"><div class="q">Is it durable, or will it pop?<span class="ico">+</span></div><div class="p"><div class="in">Heavy-duty PVC with multiple independent air chambers, a grab rope all around and a repair patch included. Rinse and dry before storing and it'll last for summers.</div></div></div>
+    <div class="fq"><div class="q">Can I anchor it so it doesn't drift?<span class="ico">+</span></div><div class="p"><div class="in">Yes — there's a built-in anchor connection point, so drop an anchor (sold separately) and the party stays exactly where you want it. Deflate, fold and it packs down for the garage.</div></div></div>
+    <div class="fq"><div class="q">What if I don't love it?<span class="ico">+</span></div><div class="p"><div class="in">Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</div></div></div>
+  </div>
+</div></div>
+
+<div class="sec alt"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">What you're actually getting</div><h2>A real 6-person island — not a cheap raft.</h2></div>
+  <div class="spec rv">
+    <div><b>✓</b>Over 15 ft · seats 6 adults</div>
+    <div><b>✓</b>Removable arched sun canopy</div>
+    <div><b>✓</b>Built-in cooler + 6 cupholders</div>
+    <div><b>✓</b>Heavy-duty PVC · multiple air chambers</div>
+    <div><b>✓</b>Grab rope all around + boarding platform</div>
+    <div><b>✓</b>Anchor connection point — stays put</div>
+  </div>
+</div></div>
+
+<!-- POLAROID STRIP -->
+<div class="sec memsec"><div class="wrap">
+  <div class="head rv"><div class="eyebrow">This is the lake crew's new HQ</div><h2>The lake day starter pack.</h2></div>
+  <div class="mem">
+    <div class="pol rv" style="--r:-2.5deg;--tr:-3deg"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-5.jpg?v=1783930294" alt="Sofa seating with umbrella" loading="lazy"></div><div class="cap">the whole crew, one island</div></div>
+    <div class="pol rv" style="--r:2deg;--tr:2.5deg;transition-delay:.08s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-6.jpg?v=1783930294" alt="Floating snack tray" loading="lazy"></div><div class="cap">cooler stays stocked</div></div>
+    <div class="pol rv" style="--r:-1.5deg;--tr:-1.5deg;transition-delay:.16s"><div class="shot"><img src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-7.jpg?v=1783930294" alt="Girls day in the pool" loading="lazy"></div><div class="cap">golden hour on the water · summer '26</div></div>
+  </div>
+</div></div>
+
+<div class="sec"><div class="wrap"><div class="gu rv"><div style="font-size:30px">🛡️</div><h3>30-Day Cool-or-Refund Promise</h3><p>Float it, anchor it, host the day. If it doesn't make your summer better, send it back for a full refund. The risk is entirely ours.</p></div></div></div>
+
+<!-- FINALE -->
+<div class="sec finale"><div class="wrap">
+  <div class="rv"><h2>Be the crew everyone floats to.</h2>
+  <p class="sub2">Summers like this don't wait — and neither does the stock. TikTok already knows.</p>
+  <a class="btn tocart" href="#buytop">Claim my party island →</a>
+  <div class="fbadges"><span>30% OFF summer sale</span><span>TikTok famous</span><span>★ 4.8 rated</span><span>30-day money-back</span><span>Free US shipping</span><span>Secure checkout</span></div>
+  <div class="wave"></div>
+  <div class="brand">HELIOS</div></div>
+</div></div>
+
+<div id="pkstick"><img class="th" src="https://cdn.shopify.com/s/files/1/0769/8320/6053/files/island-hero.jpg?v=1783930294" alt=""><div class="l"><b id="stlbl">Party Island · 30% OFF</b><s id="stc" style="color:rgba(255,255,255,.45);font-size:11px;margin-right:6px">$399.99</s><span id="stp">$279.99</span></div><button id="stbtn">Get it →</button></div>
+<div class="lb" id="lb"><span class="x" id="lbx">×</span><span class="nav prev" id="lbp">‹</span><img id="lbimg" src="" alt="Product photo"><span class="nav next" id="lbn">›</span></div>
+</div>
+<script>
+(function(){
+  var root=document.getElementById('pk'); if(!root||root.dataset.i)return; root.dataset.i='1';
+  var DISC='SUPERGLIDEIT', sel='48004825219237', busy=false;
+  function bleed(){
+    root.style.width='auto'; root.style.marginLeft='0px';
+    var w=document.documentElement.clientWidth;
+    var l=root.getBoundingClientRect().left;
+    root.style.width=w+'px'; root.style.marginLeft=(-l)+'px';
+  }
+  bleed(); window.addEventListener('resize',bleed);
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var h1=document.getElementById('ptitleh');
+  if(h1&&!reduce){
+    var idx=0;
+    function wrapWords(node){
+      [].slice.call(node.childNodes).forEach(function(ch){
+        if(ch.nodeType===3){
+          var frag=document.createDocumentFragment();
+          ch.textContent.split(/(\s+)/).forEach(function(t){
+            if(!t)return;
+            if(/^\s+$/.test(t)){frag.appendChild(document.createTextNode(t));return;}
+            var s=document.createElement('span');s.className='w';s.style.setProperty('--i',idx++);s.textContent=t;frag.appendChild(s);
+          });
+          node.replaceChild(frag,ch);
+        } else if(ch.nodeType===1){ wrapWords(ch); }
+      });
+    }
+    wrapWords(h1);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){document.getElementById('ptitle').classList.add('go');});});
+  } else if(h1){ document.getElementById('ptitle').classList.add('go'); }
+  var rvs=[].slice.call(root.querySelectorAll('.rv'));
+  if('IntersectionObserver' in window && !reduce){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+    rvs.forEach(function(el){io.observe(el);});
+  } else { rvs.forEach(function(el){el.classList.add('in');}); }
+  // ETA date (5-8 days out)
+  (function(){
+    var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var a=new Date(Date.now()+5*864e5), b=new Date(Date.now()+8*864e5);
+    var t=(a.getMonth()===b.getMonth())? m[a.getMonth()]+' '+a.getDate()+'–'+b.getDate() : m[a.getMonth()]+' '+a.getDate()+' – '+m[b.getMonth()]+' '+b.getDate();
+    var e=document.getElementById('etadate'); if(e)e.textContent='arrives '+t;
+  })();
+  [].slice.call(root.querySelectorAll('.phone .snd')).forEach(function(b){
+    var v=document.getElementById(b.getAttribute('data-v')); if(!v)return;
+    var u=function(){v.muted=!v.muted;b.textContent=v.muted?'Tap for sound':'Tap to mute';var p=v.play();if(p&&p.catch)p.catch(function(){});};
+    v.addEventListener('click',u); b.addEventListener('click',u);
+  });
+  // gallery + lightbox (gallery + polaroids)
+  var gthumbs=[].slice.call(document.querySelectorAll('#gthumbs .gth'));
+  var gimgs=gthumbs.map(function(t){return t.getAttribute('data-src');});
+  var gmainImg=document.getElementById('gmainimg'), gi=0;
+  function setG(i){gi=(i%gimgs.length+gimgs.length)%gimgs.length;gmainImg.src=gimgs[gi];gthumbs.forEach(function(x,j){x.classList.toggle('on',j===gi);});}
+  gthumbs.forEach(function(t,i){t.addEventListener('click',function(){setG(i);});});
+  var lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg');
+  if(lb&&lbimg){
+    var gm=document.getElementById('gmain'); if(gm)gm.addEventListener('click',function(){lbimg.src=gimgs[gi];lb.classList.add('on');});
+    [].slice.call(root.querySelectorAll('.pol img')).forEach(function(im){im.parentNode.addEventListener('click',function(){lbimg.src=im.src;lb.classList.add('on');});});
+    document.getElementById('lbx').addEventListener('click',function(){lb.classList.remove('on');});
+    lb.addEventListener('click',function(e){if(e.target===lb)lb.classList.remove('on');});
+    document.getElementById('lbp').addEventListener('click',function(e){e.stopPropagation();setG(gi-1);lbimg.src=gimgs[gi];});
+    document.getElementById('lbn').addEventListener('click',function(e){e.stopPropagation();setG(gi+1);lbimg.src=gimgs[gi];});
+    document.addEventListener('keydown',function(e){if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft'){setG(gi-1);lbimg.src=gimgs[gi];}if(e.key==='ArrowRight'){setG(gi+1);lbimg.src=gimgs[gi];}});
+  }
+  // bundles + pump add-on
+  var opts=[].slice.call(document.querySelectorAll('#opts .opt'));
+  var obc=document.getElementById('obc'), obp=document.getElementById('obp'), obs=document.getElementById('obs');
+  var stp=document.getElementById('stp'), stlbl=document.getElementById('stlbl');
+  var SLBL={ '48004825219237':'Party Island · 30% OFF' };
+  var PUMPV=48001507131557, pumpOn=false;
+  var pumprow=document.getElementById('pumprow');
+  function selOpt(){ for(var i=0;i<opts.length;i++){ if(opts[i].getAttribute('data-vid')===sel) return opts[i]; } return opts[0]; }
+  function fm(n){ return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  function num(s){ return parseFloat((s||'0').replace(/[^0-9.]/g,''))||0; }
+  function syncBuy(){
+    var o=selOpt(); if(!o)return;
+    var addP=pumpOn?39.99:0, addC=pumpOn?59.99:0;
+    var p=fm(num(o.getAttribute('data-p'))+addP), c=fm(num(o.getAttribute('data-c'))+addC);
+    if(obc)obc.textContent=c;
+    if(obp)obp.textContent=p;
+    if(obs)obs.textContent=o.getAttribute('data-sv2');
+    if(stp)stp.textContent=p;
+    var stc=document.getElementById('stc'); if(stc)stc.textContent=c;
+    var ag=document.getElementById('atcg'); if(ag)ag.textContent='Add to cart — '+p;
+    if(stlbl)stlbl.textContent=SLBL[sel]||'Party Island';
+    if(pumprow){
+      pumprow.classList.toggle('on',pumpOn);
+      var pb=document.getElementById('pumpb');
+      if(pb)pb.textContent=pumpOn?'Cordless rapid pump — added':'Add the cordless rapid pump';
+    }
+  }
+  opts.forEach(function(o){o.addEventListener('click',function(){
+    opts.forEach(function(x){x.classList.remove('on');}); o.classList.add('on');
+    sel=o.getAttribute('data-vid');
+    syncBuy();
+  });});
+  if(pumprow){
+    pumprow.addEventListener('click',function(){ pumpOn=!pumpOn; syncBuy(); });
+    pumprow.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pumprow.click(); } });
+  }
+  syncBuy();
+  // buy actions — BOTH paths carry the discount
+  function cartItems(){
+    var ids=[parseInt(sel,10)];
+    if(pumpOn){ ids.push(PUMPV); }
+    return ids;
+  }
+  function addThen(el){
+    if(busy)return; busy=true;
+    var ids=cartItems();
+    var dest='/discount/'+DISC+'?redirect=%2Fcart';
+    var fallback='/cart/'+ids.map(function(id){return id+':1';}).join(',')+'?discount='+DISC;
+    if(el){ el.dataset.t=el.textContent; el.textContent='Adding to your cart…'; el.setAttribute('aria-busy','true'); el.style.pointerEvents='none'; }
+    function un(){ if(el){ el.textContent=el.dataset.t; el.removeAttribute('aria-busy'); el.style.pointerEvents=''; } }
+    try{
+      fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:ids.map(function(id){return {id:id,quantity:1};})})})
+        .then(function(r){ if(!r.ok)throw 0; window.location.href=dest; })
+        .catch(function(){ busy=false; un(); window.location.href=fallback; });
+    }catch(e){ busy=false; un(); window.location.href=fallback; }
+  }
+  var atcg=document.getElementById('atcg');
+  if(atcg)atcg.addEventListener('click',function(){ addThen(atcg); });
+  var sgob=document.getElementById('sgob');
+  if(sgob){ sgob.addEventListener('click',function(){ addThen(sgob.querySelector('.hh')); });
+    sgob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sgob.click(); } }); }
+  var stbtn=document.getElementById('stbtn');
+  if(stbtn)stbtn.addEventListener('click',function(){ addThen(stbtn); });
+  // sticky bar visibility
+  var stick=document.getElementById('pkstick'), buyEl=document.getElementById('buytop');
+  function onScroll(){ if(!buyEl)return; var r=buyEl.getBoundingClientRect(); stick.classList.toggle('show', r.bottom<0); }
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  [].slice.call(root.querySelectorAll('.tocart')).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();if(buyEl)buyEl.scrollIntoView({behavior:'smooth'});});});
+  // FAQ
+  var fqs=[].slice.call(document.querySelectorAll('#faqs .fq'));
+  function setH(f){var p=f.querySelector('.p');p.style.maxHeight=f.classList.contains('on')?p.scrollHeight+'px':'0px';}
+  function markDone(f){if(f.classList.contains('ever')){f.classList.add('done');f.querySelector('.ico').textContent='✓';}}
+  fqs.forEach(function(f){ if(f.classList.contains('on'))f.classList.add('ever'); setH(f);
+    f.querySelector('.q').addEventListener('click',function(){
+      var opening=!f.classList.contains('on');
+      fqs.forEach(function(o){ if(o!==f && o.classList.contains('on')){ o.classList.remove('on'); markDone(o); setH(o); } });
+      if(opening){ f.classList.add('on','ever'); f.classList.remove('done'); f.querySelector('.ico').textContent='+'; }
+      else { f.classList.remove('on'); markDone(f); }
+      setH(f);
+    });
+  });
+  // marquees
+  ['crow','crow2','srow'].forEach(function(i){var e=document.getElementById(i);if(e)e.innerHTML+=e.innerHTML;});
+})();
+</script>
+{% schema %}
+{ "name": "Island Landing", "settings": [], "presets": [{ "name": "Island Landing" }] }
+{% endschema %}
