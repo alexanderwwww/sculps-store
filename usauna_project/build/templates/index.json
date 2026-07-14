@@ -1,0 +1,284 @@
+{
+  "sections": {
+    "hero": {
+      "type": "gk-usauna-hero",
+      "settings": {
+        "eyebrow": "the big three",
+        "heading": "heat. cold. light.",
+        "subtext": "the complete recovery ritual the world's best spas are built on — cedar heat, a cold plunge, and full-body red light. in your backyard, in a single afternoon.",
+        "button_label": "build yours — from $5,497",
+        "button_link": "/products/usauna-the-big-three",
+        "rating_text": "4.9 · 312 verified owners",
+        "show_chips": true
+      }
+    },
+    "label": {
+      "type": "gk-label",
+      "settings": {
+        "text": "cedar heat · cold plunge · red light · made for recovery",
+        "color": "#5b6470",
+        "bg": "#ffffff"
+      }
+    },
+    "trio": {
+      "type": "gk-usauna-trio",
+      "settings": {
+        "bg": "#f4f6f8"
+      }
+    },
+    "buy": {
+      "type": "gk-usauna-buy",
+      "settings": {
+        "featured_product": "usauna-the-big-three",
+        "bg": "#ffffff"
+      }
+    },
+    "schedule": {
+      "type": "gk-schedule",
+      "blocks": {
+        "b1": {
+          "type": "line",
+          "settings": {
+            "phase": "the heat",
+            "cadence": "15 min",
+            "detail": "deep cedar warmth — let the day melt off"
+          }
+        },
+        "b2": {
+          "type": "line",
+          "settings": {
+            "phase": "the cold",
+            "cadence": "1–3 min",
+            "detail": "a brave plunge — wake all the way up"
+          }
+        },
+        "b3": {
+          "type": "line",
+          "settings": {
+            "phase": "the light",
+            "cadence": "10 min",
+            "detail": "warm red light — the calm to finish"
+          }
+        }
+      },
+      "block_order": ["b1", "b2", "b3"],
+      "settings": {
+        "eyebrow": "the daily ritual",
+        "heading": "the whole thing takes fifteen minutes",
+        "subtext": "no appointments, no drive. here's the simple cadence owners follow — heat, then cold, then light.",
+        "note_title": "the usauna ritual ✨",
+        "areas": "sauna · cold plunge · red light",
+        "dl_label": "download the ritual",
+        "button_label": "save to your notes",
+        "file_name": "usauna-ritual",
+        "bg": "#ffffff"
+      }
+    },
+    "stats": {
+      "type": "gk-stats",
+      "blocks": {
+        "b1": {
+          "type": "stat",
+          "settings": {
+            "value": "9 in 10",
+            "label": "would recommend the ritual to a friend*"
+          }
+        },
+        "b2": {
+          "type": "stat",
+          "settings": {
+            "value": "94%",
+            "label": "said they feel more relaxed and rested since starting*"
+          }
+        },
+        "b3": {
+          "type": "stat",
+          "settings": {
+            "value": "4+ nights",
+            "label": "the average owner uses their sauna each week*"
+          }
+        }
+      },
+      "block_order": ["b1", "b2", "b3"],
+      "settings": {
+        "note": "*based on a 2026 survey of usauna owners. individual experiences vary.",
+        "bg": "#f4f6f8"
+      }
+    },
+    "values": {
+      "type": "gk-values",
+      "blocks": {
+        "b1": {
+          "type": "row",
+          "settings": {
+            "title": "our mission",
+            "body": "make the recovery ritual of the world's best spas something you actually own — and use every single day."
+          }
+        },
+        "b2": {
+          "type": "row",
+          "settings": {
+            "title": "how it works",
+            "body": "heat, then cold, then light. fifteen minutes. the contrast relaxes your body, resets it, and leaves you recovered — no membership, no drive."
+          }
+        },
+        "b3": {
+          "type": "row",
+          "settings": {
+            "title": "our guarantee",
+            "body": "30-day home trial and a 5-year structural warranty. if it's not for you, we arrange the pickup — no drama."
+          }
+        }
+      },
+      "block_order": ["b1", "b2", "b3"],
+      "settings": {
+        "statement": "we help you recover, sleep, and feel years younger — in your own backyard, on your own schedule.",
+        "button_label": "build yours",
+        "button_link": "/products/usauna-the-big-three",
+        "bg": "#ffffff"
+      }
+    },
+    "guarantee": {
+      "type": "gk-guarantee",
+      "settings": {
+        "eyebrow": "risk-free",
+        "heading": "love the ritual, or we take it back",
+        "body": "try the big three at home for 30 days. keep the simple daily ritual — heat, cold, light — and see how you feel. if it isn't the best part of your day, call us and we arrange the pickup. no restocking games, no fine print. every system is covered by a 5-year structural warranty.",
+        "point_1": "30-day home trial",
+        "point_2": "5-year structural warranty",
+        "point_3": "free insured delivery",
+        "bg": "#f4f6f8"
+      }
+    },
+    "faq": {
+      "type": "gk-faq",
+      "blocks": {
+        "q1": {
+          "type": "qa",
+          "settings": {
+            "q": "do i need a contractor or an electrician?",
+            "a": "no contractor. the sauna arrives in flat panels and assembles in an afternoon with two people. entry models run on standard home power — and we confirm your exact setup before anything ships."
+          }
+        },
+        "q2": {
+          "type": "qa",
+          "settings": {
+            "q": "how long until it's in my backyard?",
+            "a": "typically 2–3 weeks, fully insured and tracked. you get the tracking link the moment it ships, and the delivery team calls before the truck arrives."
+          }
+        },
+        "q3": {
+          "type": "qa",
+          "settings": {
+            "q": "what space do i need?",
+            "a": "the 2-person sauna needs roughly a 4×4 ft footprint on any flat, solid surface — a patio, deck, or level yard. the plunge and light tuck alongside."
+          }
+        },
+        "q4": {
+          "type": "qa",
+          "settings": {
+            "q": "is the cold plunge safe for someone my age?",
+            "a": "you set the temperature and the pace — many owners start with cool water and a single minute. as with any new wellness routine, check with your doctor first if you have a heart condition."
+          }
+        },
+        "q5": {
+          "type": "qa",
+          "settings": {
+            "q": "can i start with just the sauna?",
+            "a": "of course. the sauna stands on its own, and most owners add the plunge within a few months — the big three simply locks in the savings today."
+          }
+        },
+        "q6": {
+          "type": "qa",
+          "settings": {
+            "q": "what if it isn't for me?",
+            "a": "you have 30 days at home. if the ritual doesn't stick, call us and we'll arrange the pickup. no lectures, no hassle."
+          }
+        }
+      },
+      "block_order": ["q1", "q2", "q3", "q4", "q5", "q6"],
+      "settings": {
+        "heading": "questions, answered.",
+        "bg": "#ffffff"
+      }
+    },
+    "reviews": {
+      "type": "gk-reviews",
+      "blocks": {
+        "b1": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "i'm 61 and i haven't slept like this since my thirties. the heat-then-cold thing sounded crazy — now it's the best part of my day.",
+            "author": "richard m. · scottsdale, az"
+          }
+        },
+        "b2": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "my husband stopped groaning getting out of his chair after golf. we argue over who goes in first.",
+            "author": "diane k. · naples, fl"
+          }
+        },
+        "b3": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "assembled in an afternoon, no contractor. we're in it every night now.",
+            "author": "gary & susan · the villages, fl"
+          }
+        },
+        "b4": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "cancelled the country-club spa. it paid for itself in months — and it's twenty steps from my kitchen.",
+            "author": "tom b. · austin, tx"
+          }
+        },
+        "b5": {
+          "type": "review",
+          "settings": {
+            "stars": 4,
+            "verified": true,
+            "text": "the cold plunge sounded insane at my age. now it's the part i brag about. start slow and you're perfectly fine.",
+            "author": "bill h. · boulder, co"
+          }
+        },
+        "b6": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "verified": true,
+            "text": "coffee on the patio after our morning session. best thing we've bought for the house in years.",
+            "author": "frank d. · scottsdale, az"
+          }
+        }
+      },
+      "block_order": ["b1", "b2", "b3", "b4", "b5", "b6"],
+      "settings": {
+        "heading": "what owners are saying",
+        "speed": 46,
+        "bg": "#f4f6f8",
+        "card_bg": "#ffffff"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "label",
+    "trio",
+    "buy",
+    "schedule",
+    "stats",
+    "values",
+    "guarantee",
+    "faq",
+    "reviews"
+  ]
+}

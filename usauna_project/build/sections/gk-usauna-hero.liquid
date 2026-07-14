@@ -1,0 +1,90 @@
+{%- liquid
+  assign btn_link = section.settings.button_link | default: '/products/usauna-the-big-three'
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  #shopify-section-{{ section.id }} .u-hero, #shopify-section-{{ section.id }} .u-hero * { box-sizing:border-box; }
+  #shopify-section-{{ section.id }} .u-hero { font-family:'Inter',sans-serif; background:#fff; padding:clamp(16px,3vw,28px) clamp(12px,3vw,40px) clamp(6px,1vw,10px); }
+  #shopify-section-{{ section.id }} .stage { position:relative; max-width:1440px; margin:0 auto; border-radius:clamp(18px,2.4vw,28px); overflow:hidden; aspect-ratio:16/10;
+    background:
+      radial-gradient(720px 420px at 78% 18%, rgba(240,178,107,.42), transparent 62%),
+      radial-gradient(560px 380px at 10% 92%, rgba(125,166,190,.28), transparent 60%),
+      linear-gradient(158deg,#221a12 0%,#312415 46%,#1b2830 100%); }
+  @media (max-width:749px){ #shopify-section-{{ section.id }} .stage { aspect-ratio:4/5; } }
+  #shopify-section-{{ section.id }} .stage video, #shopify-section-{{ section.id }} .stage img.bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  #shopify-section-{{ section.id }} .glow { position:absolute; right:8%; top:12%; width:44%; height:64%; border-radius:24px; opacity:.85; pointer-events:none;
+    background:
+      radial-gradient(closest-side, rgba(255,217,160,.75), rgba(232,168,92,.35) 55%, transparent 100%); filter:blur(6px); }
+  #shopify-section-{{ section.id }} .slats { position:absolute; right:10%; top:16%; width:40%; height:56%; border-radius:18px; opacity:.5; pointer-events:none;
+    background: repeating-linear-gradient(90deg, rgba(169,119,63,.85) 0 26px, rgba(150,101,47,.85) 26px 52px); mix-blend-mode:soft-light; }
+  #shopify-section-{{ section.id }} .scrim { position:absolute; inset:0; background:linear-gradient(180deg, rgba(17,19,21,0) 38%, rgba(17,19,21,0.58) 100%); }
+  #shopify-section-{{ section.id }} .copy { position:absolute; left:0; right:0; bottom:0; padding:clamp(22px,4vw,52px); display:flex; flex-direction:column; gap:14px; align-items:flex-start; color:#fff; }
+  #shopify-section-{{ section.id }} .eyebrow { font-size:12.5px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#f0c088; }
+  #shopify-section-{{ section.id }} h1 { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.04em; font-size:clamp(1.9rem,4.4vw,3.4rem); line-height:0.98; margin:0; max-width:16ch; }
+  #shopify-section-{{ section.id }} .copy p { font-size:clamp(14px,1.5vw,17px); line-height:1.5; max-width:46ch; margin:0; opacity:0.95; }
+  #shopify-section-{{ section.id }} .cta { display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-top:4px; }
+  #shopify-section-{{ section.id }} .cta a.btn { background:#fff; color:#111315; border-radius:100px; padding:15px 30px; font-size:14px; font-weight:600; text-transform:lowercase; letter-spacing:-0.01em; text-decoration:none; }
+  #shopify-section-{{ section.id }} .cta .rating { display:flex; align-items:center; gap:8px; color:#fff; font-size:13px; }
+  #shopify-section-{{ section.id }} .chips { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:1440px; margin:14px auto 6px; }
+  #shopify-section-{{ section.id }} .chip { background:rgba(255,255,255,0.72); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(17,19,21,0.08); border-radius:100px; padding:10px 18px; font-size:12.5px; font-weight:600; color:#111315; box-shadow:0 6px 18px rgba(46,42,30,0.07); }
+  #shopify-section-{{ section.id }} .chip b { color:#7c4e22; margin-right:5px; }
+</style>
+
+<div class="u-hero">
+  <div class="stage">
+    {%- if section.settings.hero_video != blank -%}
+      {{ section.settings.hero_video | video_tag: image_size: '1600x', autoplay: true, loop: true, muted: true, controls: false, playsinline: true, preload: 'auto' }}
+    {%- elsif section.settings.hero_video_url != blank -%}
+      <video autoplay loop muted playsinline preload="auto" {% if section.settings.poster %}poster="{{ section.settings.poster | image_url: width: 1600 }}"{% endif %}>
+        <source src="{{ section.settings.hero_video_url }}" type="video/mp4">
+      </video>
+    {%- elsif section.settings.poster != blank -%}
+      <img class="bg" src="{{ section.settings.poster | image_url: width: 1600 }}" alt="{{ section.settings.heading | escape }}">
+    {%- else -%}
+      <div class="slats"></div>
+      <div class="glow"></div>
+    {%- endif -%}
+    <div class="scrim"></div>
+    <div class="copy">
+      {%- if section.settings.eyebrow != blank -%}<div class="eyebrow">{{ section.settings.eyebrow }}</div>{%- endif -%}
+      <h1>{{ section.settings.heading }}</h1>
+      {%- if section.settings.subtext != blank -%}<p>{{ section.settings.subtext }}</p>{%- endif -%}
+      <div class="cta">
+        <a class="btn" href="{{ btn_link }}">{{ section.settings.button_label | default: 'build yours' }}</a>
+        {%- if section.settings.rating_text != blank -%}
+          <span class="rating"><span style="letter-spacing:1px;">&#9733;&#9733;&#9733;&#9733;&#9733;</span> {{ section.settings.rating_text }}</span>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+  {%- if section.settings.show_chips -%}
+  <div class="chips">
+    <div class="chip"><b>★ 4.9</b> 312 owners</div>
+    <div class="chip"><b>✓</b> free insured delivery</div>
+    <div class="chip"><b>✓</b> 30-day home trial</div>
+    <div class="chip"><b>✓</b> 0% apr financing</div>
+    <div class="chip"><b>✓</b> 5-year warranty</div>
+  </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "USAUNA Hero",
+  "settings": [
+    { "type": "video", "id": "hero_video", "label": "Hero video (upload your clip here)" },
+    { "type": "url", "id": "hero_video_url", "label": "…or paste an external .mp4 URL" },
+    { "type": "image_picker", "id": "poster", "label": "Poster / fallback image" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "the big three" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "heat. cold. light." },
+    { "type": "textarea", "id": "subtext", "label": "Subtext", "default": "the complete recovery ritual the world's best spas are built on — cedar heat, a cold plunge, and full-body red light. in your backyard, in a single afternoon." },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "build yours — from $5,497" },
+    { "type": "url", "id": "button_link", "label": "Button link" },
+    { "type": "text", "id": "rating_text", "label": "Rating text", "default": "4.9 · 312 verified owners" },
+    { "type": "checkbox", "id": "show_chips", "label": "Show trust chips under hero", "default": true }
+  ],
+  "presets": [{ "name": "USAUNA Hero" }]
+}
+{% endschema %}

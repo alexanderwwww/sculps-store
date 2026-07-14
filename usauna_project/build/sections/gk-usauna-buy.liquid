@@ -1,0 +1,184 @@
+{%- liquid
+  assign prod = product
+  if prod == blank and section.settings.featured_product != blank
+    assign prod = all_products[section.settings.featured_product]
+  endif
+  if prod == blank
+    assign prod = all_products['usauna-the-big-three']
+  endif
+-%}
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  #shopify-section-{{ section.id }} .s, #shopify-section-{{ section.id }} .s * { box-sizing:border-box; }
+  #shopify-section-{{ section.id }} .s { font-family:'Inter',sans-serif; color:#111315; background:{{ section.settings.bg }}; padding:clamp(24px,4vw,54px) clamp(16px,3vw,44px); }
+  #shopify-section-{{ section.id }} .grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr); gap:clamp(22px,3.4vw,52px); align-items:start; }
+  @media (max-width:880px){ #shopify-section-{{ section.id }} .grid { grid-template-columns:1fr; } }
+  #shopify-section-{{ section.id }} .stage-wrap { position:sticky; top:76px; }
+  @media (max-width:880px){ #shopify-section-{{ section.id }} .stage-wrap { position:static; } }
+  #shopify-section-{{ section.id }} .stage { border-radius:26px; overflow:hidden; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(500px 320px at 70% 22%, rgba(240,178,107,.35), transparent 62%), linear-gradient(165deg,#f7efe2,#e9dcc4); }
+  #shopify-section-{{ section.id }} .stage img { width:100%; height:100%; object-fit:cover; display:block; }
+  #shopify-section-{{ section.id }} .stage svg { width:70%; height:auto; }
+  #shopify-section-{{ section.id }} .cap { text-align:center; font-size:12px; color:#8a8377; margin-top:10px; }
+
+  #shopify-section-{{ section.id }} .crumb { font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#7c4e22; }
+  #shopify-section-{{ section.id }} h1.t { font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-0.035em; font-size:clamp(1.7rem,3.4vw,2.4rem); line-height:1.06; margin:8px 0 0; }
+  #shopify-section-{{ section.id }} .rating { margin-top:8px; font-size:13.5px; color:#5B6470; }
+  #shopify-section-{{ section.id }} .rating b { color:#E8A33D; letter-spacing:1.5px; font-weight:400; }
+  #shopify-section-{{ section.id }} .pricerow { display:flex; align-items:baseline; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  #shopify-section-{{ section.id }} .price { font-family:'General Sans',sans-serif; font-weight:700; font-size:28px; letter-spacing:-0.03em; }
+  #shopify-section-{{ section.id }} .cmp { font-size:17px; color:#9AA2AC; text-decoration:line-through; }
+  #shopify-section-{{ section.id }} .save { background:#1F7A55; color:#fff; font-size:12px; font-weight:700; padding:4px 11px; border-radius:100px; }
+  #shopify-section-{{ section.id }} .permo { font-size:14.5px; color:#2E4A68; margin-top:6px; }
+  #shopify-section-{{ section.id }} .permo b { font-size:15.5px; }
+
+  #shopify-section-{{ section.id }} .oh { margin-top:24px; font-family:'General Sans',sans-serif; font-weight:700; text-transform:lowercase; font-size:17px; letter-spacing:-0.01em; }
+  #shopify-section-{{ section.id }} .os { font-size:13px; color:#5B6470; margin-top:2px; }
+  #shopify-section-{{ section.id }} .opt { margin-top:12px; border:1.5px solid rgba(17,19,21,0.12); border-radius:18px; padding:16px 18px; display:flex; gap:13px; align-items:center; background:#fff; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+  #shopify-section-{{ section.id }} .opt.on { border-color:#111315; box-shadow:0 0 0 1.5px #111315 inset; }
+  #shopify-section-{{ section.id }} .rad { width:21px; height:21px; border-radius:50%; border:1.5px solid rgba(17,19,21,0.25); flex:none; display:grid; place-items:center; }
+  #shopify-section-{{ section.id }} .opt.on .rad { border-color:#111315; background:#111315; }
+  #shopify-section-{{ section.id }} .opt.on .rad::after { content:''; width:7px; height:7px; border-radius:50%; background:#fff; }
+  #shopify-section-{{ section.id }} .sw { width:48px; height:48px; border-radius:12px; flex:none; }
+  #shopify-section-{{ section.id }} .sw.a { background:linear-gradient(160deg,#b98a4e,#7c4e22); }
+  #shopify-section-{{ section.id }} .sw.b { background:linear-gradient(160deg,#7FB4CC,#33637C); }
+  #shopify-section-{{ section.id }} .sw.c { background:linear-gradient(160deg,#C15A50,#5A2A31); }
+  #shopify-section-{{ section.id }} .nm { font-family:'General Sans',sans-serif; font-weight:600; text-transform:lowercase; font-size:15.5px; letter-spacing:-0.01em; }
+  #shopify-section-{{ section.id }} .ds { font-size:13px; color:#5B6470; margin-top:2px; line-height:1.45; }
+  #shopify-section-{{ section.id }} .opr { margin-left:auto; text-align:right; flex:none; }
+  #shopify-section-{{ section.id }} .opr .p { font-size:15px; font-weight:700; }
+  #shopify-section-{{ section.id }} .opr .w { display:block; font-size:12px; color:#9AA2AC; text-decoration:line-through; }
+  #shopify-section-{{ section.id }} .bestpill { display:inline-block; background:#111315; color:#fff; font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border-radius:100px; padding:3px 9px; margin-left:8px; vertical-align:2px; }
+
+  #shopify-section-{{ section.id }} .atc { display:block; width:100%; text-align:center; background:#111315; color:#fff; border:0; border-radius:100px; padding:17px; font-family:'Inter',sans-serif; font-size:15.5px; font-weight:600; text-transform:lowercase; margin-top:20px; cursor:pointer; }
+  #shopify-section-{{ section.id }} .atc:hover { background:#000; }
+  #shopify-section-{{ section.id }} .buynow { display:block; width:100%; text-align:center; background:#fff; color:#111315; border:1.5px solid #111315; border-radius:100px; padding:15px; font-size:14.5px; font-weight:600; text-transform:lowercase; margin-top:10px; cursor:pointer; }
+  #shopify-section-{{ section.id }} .ship { margin-top:16px; font-size:13.5px; color:#3d4750; line-height:1.95; }
+  #shopify-section-{{ section.id }} .ship .ok { color:#1F7A55; font-weight:700; margin-right:7px; }
+  #shopify-section-{{ section.id }} .ship b { font-weight:600; color:#111315; }
+</style>
+<div class="s" id="usauna-buy-{{ section.id }}">
+  <div class="grid">
+    <div class="stage-wrap">
+      <div class="stage">
+        {%- if prod.featured_image -%}
+          <img src="{{ prod.featured_image | image_url: width: 1100 }}" alt="{{ prod.title | escape }}">
+        {%- else -%}
+          <svg viewBox="0 0 330 300" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="165" cy="286" rx="140" ry="10" fill="#000" opacity=".08"/>
+            <rect x="35" y="20" width="260" height="264" rx="14" fill="#2b2620"/>
+            <rect x="43" y="28" width="244" height="248" rx="9" fill="#3a332a"/>
+            <rect x="52" y="36" width="60" height="232" fill="#b98a4e"/>
+            <rect x="218" y="36" width="60" height="232" fill="#b98a4e"/>
+            <g stroke="#2b2620" stroke-width="1" opacity=".3">
+              <line x1="52" y1="76" x2="112" y2="76"/><line x1="52" y1="116" x2="112" y2="116"/><line x1="52" y1="156" x2="112" y2="156"/><line x1="52" y1="196" x2="112" y2="196"/><line x1="52" y1="236" x2="112" y2="236"/>
+              <line x1="218" y1="76" x2="278" y2="76"/><line x1="218" y1="116" x2="278" y2="116"/><line x1="218" y1="156" x2="278" y2="156"/><line x1="218" y1="196" x2="278" y2="196"/><line x1="218" y1="236" x2="278" y2="236"/>
+            </g>
+            <rect x="118" y="36" width="94" height="232" rx="4" fill="#171310"/>
+            <rect x="124" y="42" width="82" height="220" rx="3" fill="#2c2418"/>
+            <ellipse cx="165" cy="118" rx="44" ry="50" fill="#ffd9a0" opacity=".6"/>
+            <rect x="128" y="150" width="74" height="68" rx="4" fill="#c58a45"/>
+            <rect x="196" y="140" width="5" height="32" rx="2.5" fill="#e8e2d4"/>
+          </svg>
+        {%- endif -%}
+      </div>
+      <div class="cap">{{ section.settings.caption | default: 'the usauna cedar sauna — heart of the big three' }}</div>
+    </div>
+    <div>
+      <div class="crumb">{{ section.settings.crumb | default: 'usauna · build your system' }}</div>
+      <h1 class="t">{{ prod.title | downcase | default: 'usauna — the big three' }}</h1>
+      <div class="rating"><b>★★★★★</b> &nbsp;{{ section.settings.rating_text | default: '4.9 · 312 verified reviews' }}</div>
+      <div class="pricerow">
+        <div class="price" data-u-price>{{ prod.selected_or_first_available_variant.price | money }}</div>
+        <div class="cmp" data-u-cmp>{% if prod.selected_or_first_available_variant.compare_at_price > prod.selected_or_first_available_variant.price %}{{ prod.selected_or_first_available_variant.compare_at_price | money }}{% endif %}</div>
+        <div class="save" data-u-save style="display:none;"></div>
+      </div>
+      <div class="permo">or <b data-u-permo></b> for 36 mo. at 0% apr*</div>
+
+      <div class="oh">{{ section.settings.opt_heading | default: 'choose your package.' }}</div>
+      <div class="os">{{ section.settings.opt_sub | default: 'every system is built around the cedar sauna.' }}</div>
+
+      {%- assign descs = 'the full ritual — cedar sauna, cold plunge with chiller, and full-body red light.|the contrast pair — cedar sauna plus the cold plunge with chiller.|the foundation — the 2-person canadian red cedar sauna on its own.' | split: '|' -%}
+      {%- assign sws = 'a|b|c' | split: '|' -%}
+      <form method="post" action="/cart/add" id="u-form-{{ section.id }}">
+        <input type="hidden" name="id" data-u-id value="{{ prod.selected_or_first_available_variant.id }}">
+        <input type="hidden" name="return_to" data-u-return value="/cart">
+        {%- for v in prod.variants -%}
+          <div class="opt {% if forloop.first %}on{% endif %}" data-u-opt
+               data-vid="{{ v.id }}" data-price="{{ v.price | money_without_trailing_zeros | strip_html }}"
+               data-pcents="{{ v.price }}" data-ccents="{{ v.compare_at_price | default: 0 }}">
+            <div class="rad"></div>
+            <div class="sw {{ sws[forloop.index0] | default: 'a' }}"></div>
+            <div>
+              <div class="nm">{{ v.title | downcase }}{% if forloop.first %}<span class="bestpill">best value</span>{% endif %}</div>
+              <div class="ds">{{ descs[forloop.index0] }}</div>
+            </div>
+            <div class="opr">
+              <div class="p">{{ v.price | money }}</div>
+              {% if v.compare_at_price > v.price %}<span class="w">{{ v.compare_at_price | money }}</span>{% endif %}
+            </div>
+          </div>
+        {%- endfor -%}
+        <button type="submit" class="atc">{{ section.settings.atc_label | default: 'add to bag' }}</button>
+        <button type="button" class="buynow" data-u-buynow>{{ section.settings.buy_label | default: 'buy it now' }}</button>
+      </form>
+
+      <div class="ship">
+        <div><span class="ok">✓</span><b>free insured delivery</b> — tracked door-to-door, typically 2–3 weeks</div>
+        <div><span class="ok">✓</span><b>30-day home trial</b> — if the ritual doesn't stick, we arrange the pickup</div>
+        <div><span class="ok">✓</span><b>5-year structural warranty</b> — support by phone, always a human</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var root = document.getElementById('usauna-buy-{{ section.id }}');
+  if (!root) return;
+  var opts = root.querySelectorAll('[data-u-opt]');
+  var idIn = root.querySelector('[data-u-id]');
+  var priceEl = root.querySelector('[data-u-price]');
+  var cmpEl = root.querySelector('[data-u-cmp]');
+  var saveEl = root.querySelector('[data-u-save]');
+  var permoEl = root.querySelector('[data-u-permo]');
+  var retIn = root.querySelector('[data-u-return]');
+  var form = document.getElementById('u-form-{{ section.id }}');
+  function fmt(cents){ return '$' + (Math.round(cents)/100).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+  function pick(o){
+    opts.forEach(function(x){ x.classList.remove('on'); });
+    o.classList.add('on');
+    idIn.value = o.getAttribute('data-vid');
+    var p = parseInt(o.getAttribute('data-pcents'),10);
+    var c = parseInt(o.getAttribute('data-ccents'),10) || 0;
+    priceEl.textContent = fmt(p);
+    if (c > p) {
+      cmpEl.textContent = fmt(c);
+      saveEl.textContent = 'save ' + fmt(c-p);
+      saveEl.style.display = 'inline-block';
+    } else { cmpEl.textContent=''; saveEl.style.display='none'; }
+    if (permoEl) permoEl.textContent = fmt(p/36) + '/mo.';
+  }
+  opts.forEach(function(o){ o.addEventListener('click', function(){ pick(o); }); });
+  if (opts.length) pick(opts[0]);
+  var bn = root.querySelector('[data-u-buynow]');
+  if (bn) bn.addEventListener('click', function(){ retIn.value = '/checkout'; form.submit(); });
+})();
+</script>
+{% schema %}
+{
+  "name": "USAUNA Buy box",
+  "settings": [
+    { "type": "product", "id": "featured_product", "label": "Product (leave blank on product pages)" },
+    { "type": "text", "id": "crumb", "label": "Crumb", "default": "usauna · build your system" },
+    { "type": "text", "id": "rating_text", "label": "Rating text", "default": "4.9 · 312 verified reviews" },
+    { "type": "text", "id": "opt_heading", "label": "Options heading", "default": "choose your package." },
+    { "type": "text", "id": "opt_sub", "label": "Options subtext", "default": "every system is built around the cedar sauna." },
+    { "type": "text", "id": "caption", "label": "Image caption", "default": "the usauna cedar sauna — heart of the big three" },
+    { "type": "text", "id": "atc_label", "label": "Add to cart label", "default": "add to bag" },
+    { "type": "text", "id": "buy_label", "label": "Buy now label", "default": "buy it now" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "USAUNA Buy box" }]
+}
+{% endschema %}
