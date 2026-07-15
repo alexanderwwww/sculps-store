@@ -1,0 +1,382 @@
+{%- comment -%}
+  HELIOS Buy Box — v3 "Clarity". Rebuilt for simplicity + trust.
+  Real prices (no hidden multiplier), Apple/liquid-glass, animated bundle thumbnails.
+  FAQ block preserved untouched. Gift auto-adds on the 4-pack.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign product = all_products[section.settings.featured_product] | default: product -%}
+{%- assign cur = product.selected_or_first_available_variant -%}
+<section class="helios" id="hb-{{ sid }}">
+<style>
+  #hb-{{ sid }}{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0A0D11;background:#fff;overflow-x:clip;}
+  #hb-{{ sid }} *{box-sizing:border-box;}
+  #hb-{{ sid }} .k-wrap{max-width:1140px;margin:0 auto;padding:26px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:30px;align-items:start;overflow-x:clip;}
+  #hb-{{ sid }} .k-wrap > div{min-width:0;}
+  @media(min-width:880px){#hb-{{ sid }} .k-wrap{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;}}
+  /* LEFT — gallery */
+  #hb-{{ sid }} .k-gal{display:flex;gap:12px;min-width:0;max-width:100%;}
+  #hb-{{ sid }} .k-rail{display:flex;flex-direction:column;gap:8px;width:58px;flex:0 0 58px;max-height:560px;overflow-y:auto;scrollbar-width:none;}
+  #hb-{{ sid }} .k-rail::-webkit-scrollbar{display:none;}
+  #hb-{{ sid }} .k-th{width:58px;height:58px;flex:0 0 auto;border:1.5px solid #ECECEA;border-radius:12px;background:#F7F8F6;overflow:hidden;cursor:pointer;padding:0;position:relative;transition:border-color .2s,transform .2s;}
+  #hb-{{ sid }} .k-th img{width:100%;height:100%;object-fit:cover;display:block;}
+  #hb-{{ sid }} .k-th.sel{border:2px solid #0A0D11;}
+  #hb-{{ sid }} .k-th .vk{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px;text-shadow:0 1px 5px rgba(0,0,0,.6);}
+  #hb-{{ sid }} .k-stage{flex:1;min-width:0;position:relative;aspect-ratio:1/1;background:#F5F6F4;border-radius:20px;overflow:hidden;}
+  #hb-{{ sid }} .k-stage img,#hb-{{ sid }} .k-stage video{width:100%;height:100%;object-fit:cover;display:block;max-width:100%;}
+  #hb-{{ sid }} .k-bs{position:absolute;top:14px;left:14px;background:rgba(10,13,17,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px;z-index:2;letter-spacing:.02em;}
+  #hb-{{ sid }} .k-ar{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #ECECEA;display:grid;place-items:center;font-size:17px;cursor:pointer;z-index:2;color:#0A0D11;}
+  #hb-{{ sid }} .k-quote{display:flex;align-items:center;gap:12px;background:#F7F8F6;border-radius:14px;padding:13px 16px;margin-top:14px;font-size:13.5px;}
+  #hb-{{ sid }} .k-quote .st{letter-spacing:1px;font-size:12px;color:#f5a623;flex:0 0 auto;}
+  #hb-{{ sid }} .k-quote b{font-weight:700;}
+  #hb-{{ sid }} .k-quote .who{margin-left:auto;color:#9aa0a6;font-size:12.5px;flex:0 0 auto;}
+  #hb-{{ sid }} .k-val{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px;}
+  #hb-{{ sid }} .k-vitem{border:1px solid #EEEEEC;border-radius:14px;padding:14px 10px;text-align:center;background:#fff;}
+  #hb-{{ sid }} .k-vitem b{display:block;font-size:18px;font-weight:800;color:#0A0D11;}
+  #hb-{{ sid }} .k-vitem span{font-size:11px;color:#8a9096;line-height:1.3;display:block;margin-top:3px;}
+  #hb-{{ sid }} .k-dpills{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;}
+  #hb-{{ sid }} .k-dpills span{font-size:12px;font-weight:600;color:#2E5A3C;background:#EDF7EF;border-radius:100px;padding:6px 11px;}
+  /* RIGHT — buy box */
+  #hb-{{ sid }} .k-crumb{font-size:9.5px;letter-spacing:.08em;color:#b3b7bb;font-weight:600;margin-bottom:10px;text-transform:uppercase;}
+  #hb-{{ sid }} .k-stars{font-size:13px;color:#0A0D11;margin-bottom:8px;text-decoration:none;display:block;}
+  #hb-{{ sid }} .k-stars span{letter-spacing:1px;color:#f5a623;}
+  #hb-{{ sid }} .k-trow{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+  #hb-{{ sid }} .k-trow h1{font-size:clamp(25px,2.7vw,32px);font-weight:800;margin:0;letter-spacing:-.01em;line-height:1.1;}
+  #hb-{{ sid }} .k-price{text-align:right;white-space:nowrap;padding-top:4px;}
+  #hb-{{ sid }} .k-price b{font-size:26px;font-weight:800;display:block;letter-spacing:-.02em;}
+  #hb-{{ sid }} .k-price s{font-size:13px;color:#c2c5c8;}
+  #hb-{{ sid }} .k-price .sv{display:inline-block;font-size:11.5px;font-weight:800;color:#fff;background:#16a34a;border-radius:100px;padding:2px 9px;margin-top:4px;}
+  #hb-{{ sid }} .k-pills{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px;}
+  #hb-{{ sid }} .k-pill{font-size:11.5px;font-weight:700;background:#F4F1E8;border-radius:100px;padding:6px 12px;color:#6b5f3a;}
+  #hb-{{ sid }} .k-desc{font-size:15px;font-weight:600;line-height:1.5;margin-bottom:18px;color:#3a4149;}
+  #hb-{{ sid }} .k-desc p{margin:0;display:inline;}
+  #hb-{{ sid }} .k-lbl{font-size:11px;font-weight:800;letter-spacing:.07em;margin:0 0 11px;color:#0A0D11;text-transform:uppercase;}
+  /* bundle cards with animated thumbnail */
+  #hb-{{ sid }} .k-tier{display:flex;align-items:center;gap:13px;border:1.5px solid #EAEAE8;border-radius:18px;padding:12px 15px 12px 12px;margin-bottom:11px;position:relative;cursor:pointer;background:#fff;transition:border-color .25s,box-shadow .25s,background .25s;}
+  #hb-{{ sid }} .k-tier.sel{border:2px solid #0A0D11;background:linear-gradient(180deg,#F8FCFA,#F3FAF6);box-shadow:0 10px 30px -14px rgba(10,13,17,.28);}
+  #hb-{{ sid }} .k-badge{position:absolute;top:-10px;left:16px;background:#0A0D11;color:#fff;font-size:9px;font-weight:800;letter-spacing:.05em;padding:4px 10px;border-radius:100px;text-transform:uppercase;}
+  #hb-{{ sid }} .k-thumb{width:60px;height:60px;flex:0 0 auto;border-radius:14px;background:radial-gradient(circle at 50% 35%,#eef3f7,#dfe6ec);display:grid;place-items:center;overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+  #hb-{{ sid }} .k-thumb img{width:88%;height:88%;object-fit:contain;display:block;filter:drop-shadow(0 4px 8px rgba(10,13,17,.18));transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+  #hb-{{ sid }} .k-tier:hover .k-thumb img{transform:scale(1.06);}
+  #hb-{{ sid }} .k-tier.sel .k-thumb{transform:scale(1.05);animation:kfloat-{{ sid }} 3.2s ease-in-out infinite;}
+  #hb-{{ sid }} .k-tier.sel .k-thumb img{transform:scale(1.1);}
+  @keyframes kfloat-{{ sid }}{0%,100%{transform:scale(1.05) translateY(0)}50%{transform:scale(1.05) translateY(-3px)}}
+  @media(prefers-reduced-motion:reduce){#hb-{{ sid }} .k-tier.sel .k-thumb{animation:none;}}
+  #hb-{{ sid }} .k-rad{width:20px;height:20px;flex:0 0 auto;border-radius:50%;border:2px solid #CDD1D4;background:#fff;transition:border .2s;}
+  #hb-{{ sid }} .k-tier.sel .k-rad{border:6px solid #0A0D11;}
+  #hb-{{ sid }} .k-tin{flex:1;min-width:0;}
+  #hb-{{ sid }} .k-tin b{display:block;font-size:15px;font-weight:800;line-height:1.25;}
+  #hb-{{ sid }} .k-tin span{display:block;font-size:12px;color:#8a9096;margin-top:1px;}
+  #hb-{{ sid }} .k-gift{display:inline-block;font-size:10px;font-weight:800;color:#06281B;background:linear-gradient(90deg,#7CF5C2,#10C97E);padding:2px 8px;border-radius:100px;margin-top:4px;}
+  #hb-{{ sid }} .k-per{display:block;font-size:11px;color:#a3a9af;margin-top:2px;}
+  #hb-{{ sid }} .k-tp{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+  #hb-{{ sid }} .k-tp b{display:block;font-size:17px;font-weight:800;}
+  #hb-{{ sid }} .k-tp s{font-size:11.5px;color:#c2c5c8;}
+  #hb-{{ sid }} .k-off{display:inline-block;background:#E11D48;color:#fff;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:100px;}
+  /* buttons */
+  #hb-{{ sid }} .k-atc{width:100%;background:#0A0D11;border:none;color:#fff;font-size:16px;font-weight:800;padding:17px;border-radius:100px;margin-top:14px;cursor:pointer;font-family:inherit;transition:transform .12s,opacity .2s;}
+  #hb-{{ sid }} .k-atc:active{transform:scale(.98);}
+  #hb-{{ sid }} .k-atc[disabled]{opacity:.5;cursor:default;}
+  #hb-{{ sid }} .k-buynow{width:100%;background:rgba(240,241,239,.9);border:1px solid #EAEAE8;color:#0A0D11;font-size:14.5px;font-weight:700;padding:15px;border-radius:100px;margin-top:10px;cursor:pointer;font-family:inherit;}
+  #hb-{{ sid }} .k-trust{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:16px;font-size:12px;color:#7c8288;font-weight:600;}
+  #hb-{{ sid }} .k-trust span{display:inline-flex;align-items:center;gap:5px;}
+  /* FAQ + phone (preserved) */
+  #hb-{{ sid }} .k-faq{max-width:1140px;margin:8px auto 0;padding:36px 22px 14px;display:grid;grid-template-columns:1fr;gap:26px;border-top:1px solid #F0F0ED;}
+  @media(min-width:880px){#hb-{{ sid }} .k-faq{grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);gap:46px;align-items:center;}}
+  #hb-{{ sid }} .k-phone{justify-self:center;position:relative;width:min(270px,76vw);aspect-ratio:9/16;border-radius:42px;overflow:hidden;background:#0E1116;border:9px solid #17181C;box-shadow:0 28px 56px -28px rgba(10,13,17,.5),inset 0 0 0 2px #2A2B31;}
+  #hb-{{ sid }} .k-phone::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0B0B0E;border-radius:14px;z-index:5;}
+  #hb-{{ sid }} .k-phone video{width:100%;height:100%;object-fit:cover;display:block;}
+  #hb-{{ sid }} .k-phone .tag{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.3);white-space:nowrap;z-index:6;}
+  #hb-{{ sid }} .k-fh{font-size:clamp(20px,2.3vw,27px);font-weight:800;margin:0 0 4px;letter-spacing:-.01em;}
+  #hb-{{ sid }} .k-fsub{font-size:14px;color:#8a9096;margin:0 0 14px;}
+  #hb-{{ sid }} .k-fq{border-bottom:1px solid #EEEEEC;}
+  #hb-{{ sid }} .k-fq .q{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px 2px;cursor:pointer;font-weight:700;font-size:15.5px;}
+  #hb-{{ sid }} .k-fq .ic{flex:0 0 auto;width:24px;height:24px;border-radius:50%;border:1.5px solid #C9CFC9;display:grid;place-items:center;font-size:16px;line-height:1;color:#1f5c3d;transition:transform .3s;}
+  #hb-{{ sid }} .k-fq.on .ic{transform:rotate(45deg);background:#1f5c3d;color:#fff;border-color:#1f5c3d;}
+  #hb-{{ sid }} .k-fq .a{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  #hb-{{ sid }} .k-fq .a p{margin:0;padding:0 2px 15px;font-size:14px;line-height:1.6;color:#5b6470;}
+  /* sticky bar */
+  #hb-stk-{{ sid }}{position:fixed;left:14px;right:82px;bottom:16px;z-index:9998;display:flex;align-items:center;gap:11px;padding:8px 9px 8px 12px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #EAEAE8;border-radius:26px;box-shadow:0 16px 36px rgba(6,30,46,.18);transform:translateY(calc(100% + 30px));transition:transform .4s cubic-bezier(.2,.8,.2,1);}
+  #hb-stk-{{ sid }}.show{transform:translateY(0);}
+  #hb-stk-{{ sid }} img{width:40px;height:40px;border-radius:12px;object-fit:cover;}
+  #hb-stk-{{ sid }} .n{font-weight:800;font-size:13.5px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #hb-stk-{{ sid }} .p{font-weight:800;font-size:13px;}
+  #hb-stk-{{ sid }} .i{flex:1;min-width:0;}
+  #hb-stk-{{ sid }} button{flex:0 0 auto;background:#0A0D11;color:#fff;border:none;border-radius:30px;padding:13px 21px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;}
+  @media(max-width:879px){
+    #hb-{{ sid }} .k-gal{flex-direction:column-reverse;}
+    #hb-{{ sid }} .k-rail{flex-direction:row;width:100%;flex:none;max-height:none;overflow-x:auto;}
+    #hb-{{ sid }} .k-trow{flex-direction:column;gap:6px;}
+    #hb-{{ sid }} .k-price{text-align:left;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+    #hb-{{ sid }} .k-price .sv{margin-top:0;}
+  }
+  @media(max-width:600px){
+    #hb-{{ sid }} .k-wrap{padding:16px 14px;gap:22px;}
+    #hb-{{ sid }} .k-trow h1{font-size:23px;}
+    #hb-{{ sid }} .k-price b{font-size:23px;}
+    #hb-{{ sid }} .k-vitem{padding:11px 6px;}
+    #hb-{{ sid }} .k-vitem b{font-size:16px;}
+    #hb-{{ sid }} .k-thumb{width:52px;height:52px;}
+    #hb-{{ sid }} .k-atc{font-size:15px;padding:16px;}
+  }
+</style>
+
+<div class="k-wrap" id="buy" style="scroll-margin-top:84px;">
+  <div>
+    <div class="k-gal">
+      <div class="k-rail" id="k-rail-{{ sid }}">
+        {%- assign vposter = '' -%}
+        {%- if section.settings.lead_video != blank and section.settings.lead_video.preview_image != blank -%}{%- assign vposter = section.settings.lead_video.preview_image | image_url: width: 220 -%}{%- endif -%}
+        {%- for img in product.images limit: 9 -%}
+          <button type="button" class="k-th{% if forloop.first %} sel{% endif %}" data-kind="img" data-src="{{ img | image_url: width: 1100 }}"><img src="{{ img | image_url: width: 220 }}" alt="{{ product.title | escape }}" loading="lazy"></button>
+          {%- if forloop.first and section.settings.lead_video != blank -%}
+          <button type="button" class="k-th" data-kind="vid">{% if vposter != '' %}<img src="{{ vposter }}" alt="video">{% endif %}<span class="vk">▶</span></button>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+      <div class="k-stage" id="k-stage-{{ sid }}">
+        <img id="k-main-{{ sid }}" src="{{ product.featured_image | default: section.settings.lead_image | image_url: width: 1100 }}" alt="{{ product.title | escape }}">
+        {%- if section.settings.lead_video != blank -%}
+        <video id="k-vid-{{ sid }}" style="display:none;" muted loop playsinline preload="metadata"{% if section.settings.lead_video.preview_image != blank %} poster="{{ section.settings.lead_video.preview_image | image_url: width: 900 }}"{% endif %}>{%- for src in section.settings.lead_video.sources -%}<source src="{{ src.url }}" type="{{ src.mime_type }}">{%- endfor -%}</video>
+        {%- endif -%}
+        <span class="k-bs">★ Best Seller</span>
+        <button type="button" class="k-ar" data-knext aria-label="Next image">›</button>
+      </div>
+    </div>
+    <div class="k-quote"><span class="st">★★★★★</span><span><b>5 stars for summer!</b> My son will NOT get off this thing.</span><span class="who">elena d.</span></div>
+    <div class="k-val">
+      <div class="k-vitem"><b>#1</b><span>Motorized lounger in the USA</span></div>
+      <div class="k-vitem"><b>21,600+</b><span>sold to happy families</span></div>
+      <div class="k-vitem"><b>30-Day</b><span>money-back guarantee</span></div>
+    </div>
+    <div class="k-dpills">
+      <span>✓ Holds 300 lb</span><span>✓ ~2 h per charge</span><span>✓ Inflates in ~5 min</span><span>✓ Easy joysticks</span><span>✓ Pool · lake · river</span>
+    </div>
+  </div>
+
+  <div>
+    <div class="k-crumb">Home &rsaquo; Water Loungers &rsaquo; Super Glide</div>
+    <a class="k-stars" href="#reviews"><span>★★★★★</span> <b>{{ section.settings.rating | default: '4.8' }}</b> ({{ section.settings.review_count | default: '3,912' }} reviews)</a>
+    <div class="k-trow">
+      <h1 id="k-title-{{ sid }}">{{ section.settings.title | default: 'HELIOS Super Glide' }}</h1>
+      <div class="k-price">
+        <b id="k-price-{{ sid }}">{{ cur.price | money }}</b>
+        <s id="k-cmp-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>{{ cur.compare_at_price | money }}</s>
+        <span class="sv" id="k-save-{{ sid }}"{% unless cur.compare_at_price > cur.price %} style="display:none"{% endunless %}>Save {{ cur.compare_at_price | minus: cur.price | money }}</span>
+      </div>
+    </div>
+    <div class="k-pills"><span class="k-pill">☀ Summer Sale</span><span class="k-pill">🛡 30-Day Money-Back</span><span class="k-pill">🚚 Free Shipping</span></div>
+    <div class="k-desc">A motorized water lounger — because summer memories don't make themselves.</div>
+
+    {%- assign hb_form_id = 'k-form-' | append: sid -%}
+    {%- form 'product', product, id: hb_form_id -%}
+      <input type="hidden" name="id" id="k-vidin-{{ sid }}" value="{{ cur.id }}">
+      <div class="k-lbl">Choose your bundle</div>
+      <div id="k-tiers-{{ sid }}">
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'bundle' -%}
+            {%- assign vid = block.settings.variant_id | times: 1 -%}
+            {%- assign bv = blank -%}
+            {%- for v in product.variants -%}{%- if v.id == vid -%}{%- assign bv = v -%}{%- endif -%}{%- endfor -%}
+            {%- if bv == blank -%}{%- continue -%}{%- endif -%}
+            {%- assign qty = block.settings.qty | default: 1 -%}
+            {%- assign perunit = bv.price | divided_by: qty -%}
+            {%- assign timg = bv.image | default: product.images[forloop.index0] | default: product.featured_image -%}
+            <div class="k-tier{% if block.settings.preselect %} sel{% endif %}" data-tier="bundle" data-vid="{{ bv.id }}" data-price="{{ bv.price }}" data-compare="{{ bv.compare_at_price | default: 0 }}" {{ block.shopify_attributes }}>
+              {%- if block.settings.badge != blank -%}<span class="k-badge">{{ block.settings.badge }}</span>{%- endif -%}
+              <div class="k-thumb"><img src="{{ timg | image_url: width: 180 }}" alt="{{ block.settings.label | escape }}" loading="lazy"></div>
+              <div class="k-tin"><b>{{ block.settings.label | default: bv.title }}</b>{% if block.settings.sublabel != blank %}<span>{{ block.settings.sublabel }}</span>{% endif %}{% if qty >= 4 %}<span class="k-gift">🎁 FREE Jet Ski &amp; Pump included</span>{% endif %}<span class="k-per">{{ perunit | money }} each</span></div>
+              <div class="k-tp">{% if bv.compare_at_price > bv.price %}<em class="k-off">{{ bv.compare_at_price | minus: bv.price | times: 100 | divided_by: bv.compare_at_price }}% OFF</em>{% endif %}<b>{{ bv.price | money }}</b>{% if bv.compare_at_price > bv.price %}<s>{{ bv.compare_at_price | money }}</s>{% endif %}</div>
+              <span class="k-rad"></span>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+      <button type="submit" name="add" class="k-atc" id="k-atc-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>{{ section.settings.cta_text | default: 'Add to Cart' }}</button>
+      <button type="button" class="k-buynow" id="k-buynow-{{ sid }}" {% unless cur.available %}disabled{% endunless %}>Buy it now</button>
+      <div class="k-trust"><span>🛡 30-day money-back</span><span>🔒 Secure checkout</span><span>🚚 Ships in 5–8 days</span></div>
+    {%- endform -%}
+  </div>
+</div>
+
+<div class="k-faq" id="k-faq-{{ sid }}">
+  <div class="k-phone"><video src="https://cdn.shopify.com/videos/c/o/v/a9eb5029ae0d4f0e817fb55493545906.mp4" muted loop playsinline autoplay preload="metadata"></video><span class="tag">▶ Real families, real water</span></div>
+  <div>
+    <h2 class="k-fh">Everything you're wondering, answered.</h2>
+    <div class="k-fsub">Honest answers — watch it in action while you read.</div>
+    <div class="k-fq on"><div class="q">Does it really move on its own?<span class="ic">+</span></div><div class="a"><p>Yes — twin quiet electric motors push you forward and let you spin 360° with the joysticks. No paddling, no gas, no motorboat. Completely hands-free.</p></div></div>
+    <div class="k-fq"><div class="q">Is it safe for kids?<span class="ic">+</span></div><div class="a"><p>Yes — the motors are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent up to the 300 lb capacity, life jackets on.</p></div></div>
+    <div class="k-fq"><div class="q">How long does the battery last?<span class="ic">+</span></div><div class="a"><p>About 2 hours of continuous cruising per charge — a whole afternoon on the water — and it recharges between sessions.</p></div></div>
+    <div class="k-fq"><div class="q">How hard is it to set up?<span class="ic">+</span></div><div class="a"><p>Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</p></div></div>
+    <div class="k-fq"><div class="q">What if I don't love it?<span class="ic">+</span></div><div class="a"><p>Send it back within 30 days for a full refund. No hassle — the risk is entirely ours.</p></div></div>
+  </div>
+</div>
+</section>
+
+<div id="hb-stk-{{ sid }}" aria-hidden="true">
+  {%- if product.featured_image != blank -%}<img src="{{ product.featured_image | image_url: width: 120 }}" alt="">{%- endif -%}
+  <div class="i"><div class="n">{{ section.settings.title | default: 'HELIOS Super Glide' }}</div><div class="p" id="k-stkp-{{ sid }}">{{ cur.price | money }}</div></div>
+  <button type="button" id="k-stka-{{ sid }}">Add to cart</button>
+</div>
+
+<script>
+(function(){
+  var root=document.getElementById('hb-{{ sid }}'); if(!root||root.dataset.i)return; root.dataset.i='1';
+  var GIFTS=[48001507197093,48001507262629], HGT={'47935890882725':1};
+  var money=function(c){return '{{ shop.money_format | strip_html }}'.replace(/\{\{\s*amount\s*\}\}/,(c/100).toFixed(2)).replace(/\{\{\s*amount_no_decimals\s*\}\}/,Math.round(c/100));};
+
+  /* gallery */
+  var rail=document.getElementById('k-rail-{{ sid }}');
+  var main=document.getElementById('k-main-{{ sid }}');
+  var vid=document.getElementById('k-vid-{{ sid }}');
+  var ths=[].slice.call(rail.querySelectorAll('.k-th')), ki=0;
+  function kshow(i){
+    ki=(i%ths.length+ths.length)%ths.length;
+    ths.forEach(function(t,j){t.classList.toggle('sel',j===ki);});
+    var t=ths[ki];
+    if(t.dataset.kind==='vid'&&vid){ main.style.display='none'; vid.style.display='block'; var p=vid.play(); if(p&&p.catch)p.catch(function(){}); }
+    else { if(vid){vid.pause(); vid.style.display='none';} main.style.display='block'; if(t.dataset.src) main.src=t.dataset.src; }
+  }
+  ths.forEach(function(t,i){t.addEventListener('click',function(){kshow(i);});});
+  var nx=root.querySelector('[data-knext]'); if(nx)nx.addEventListener('click',function(){kshow(ki+1);});
+
+  /* bundle tiers — real prices */
+  var hid=document.getElementById('k-vidin-{{ sid }}');
+  var priceEl=document.getElementById('k-price-{{ sid }}'), cmpEl=document.getElementById('k-cmp-{{ sid }}'), saveEl=document.getElementById('k-save-{{ sid }}'), stkp=document.getElementById('k-stkp-{{ sid }}');
+  var tiersBox=document.getElementById('k-tiers-{{ sid }}');
+  function tiers(){return [].slice.call(tiersBox.querySelectorAll('.k-tier'));}
+  function pick(t){
+    tiers().forEach(function(x){x.classList.remove('sel');}); t.classList.add('sel');
+    hid.value=t.dataset.vid;
+    var p=parseInt(t.dataset.price,10), c=parseInt(t.dataset.compare,10)||0;
+    if(priceEl)priceEl.textContent=money(p);
+    if(stkp)stkp.textContent=money(p);
+    if(cmpEl){ if(c>p){cmpEl.style.display='';cmpEl.textContent=money(c);} else cmpEl.style.display='none'; }
+    if(saveEl){ if(c>p){saveEl.style.display='';saveEl.textContent='Save '+money(c-p);} else saveEl.style.display='none'; }
+  }
+  tiers().forEach(function(t){t.addEventListener('click',function(){pick(t);});});
+  var pre=tiers().filter(function(t){return t.classList.contains('sel');})[0]||tiers()[0];
+  if(pre)pick(pre);
+
+  /* add to cart (+gift on 4-pack) */
+  function items(){
+    var arr=[{id:parseInt(hid.value,10),quantity:1}];
+    if(HGT[hid.value]) GIFTS.forEach(function(g){arr.push({id:g,quantity:1});});
+    return arr;
+  }
+  function addThen(dest,btn){
+    var t=btn.textContent; btn.disabled=true; btn.textContent='Adding…';
+    fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:items()})})
+      .then(function(r){ if(!r.ok)throw 0; window.location.href=dest; })
+      .catch(function(){ btn.disabled=false; btn.textContent=t; window.location.href='/cart/'+hid.value+':1'; });
+  }
+  var form=document.getElementById('k-form-{{ sid }}');
+  var atc=document.getElementById('k-atc-{{ sid }}');
+  if(form&&atc){ form.addEventListener('submit',function(e){ e.preventDefault(); addThen('/cart',atc); }); }
+  var bn=document.getElementById('k-buynow-{{ sid }}');
+  if(bn) bn.addEventListener('click',function(){ addThen('/checkout',bn); });
+
+  /* sticky bar */
+  var stk=document.getElementById('hb-stk-{{ sid }}');
+  if(stk){ if(stk.parentNode!==document.body)document.body.appendChild(stk);
+    if('IntersectionObserver' in window && atc){ new IntersectionObserver(function(es){es.forEach(function(en){stk.classList.toggle('show',!en.isIntersecting);});},{threshold:0}).observe(atc); }
+    var ska=document.getElementById('k-stka-{{ sid }}'); if(ska)ska.addEventListener('click',function(){ addThen('/cart',ska); });
+  }
+
+  /* FAQ accordion + phone autoplay (preserved) */
+  var fr=document.getElementById('k-faq-{{ sid }}');
+  if(fr){ var fqs=[].slice.call(fr.querySelectorAll('.k-fq'));
+    function setH(f){var a=f.querySelector('.a');a.style.maxHeight=f.classList.contains('on')?a.scrollHeight+'px':'0px';}
+    fqs.forEach(function(f){setH(f);f.querySelector('.q').addEventListener('click',function(){var op=!f.classList.contains('on');fqs.forEach(function(o){o.classList.remove('on');setH(o);});if(op)f.classList.add('on');setH(f);});});
+    var pv=fr.querySelector('.k-phone video'); if(pv){var pp=pv.play(); if(pp&&pp.catch)pp.catch(function(){});}
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "HELIOS Buy Box",
+  "tag": "section",
+  "class": "helios-section",
+  "settings": [
+    { "type": "product", "id": "featured_product", "label": "Product (for homepage / non-product templates)" },
+    { "type": "header", "content": "Lead media (A/B: video vs image)" },
+    { "type": "select", "id": "lead_media_type", "label": "Lead media", "options": [{"value":"video","label":"Demo video (proof of motion)"},{"value":"image","label":"Image"}], "default": "video" },
+    { "type": "video", "id": "lead_video", "label": "Demo video (autoplay muted loop)" },
+    { "type": "image_picker", "id": "lead_image", "label": "Lead / poster image" },
+    { "type": "header", "content": "Mini Glider media (legacy — unused)" },
+    { "type": "video", "id": "mini_video_1", "label": "Mini video 1" },
+    { "type": "video", "id": "mini_video_2", "label": "Mini video 2" },
+    { "type": "image_picker", "id": "mini_image_1", "label": "Mini image 1" },
+    { "type": "image_picker", "id": "mini_image_2", "label": "Mini image 2" },
+    { "type": "image_picker", "id": "mini_image_3", "label": "Mini image 3" },
+    { "type": "image_picker", "id": "mini_image_4", "label": "Mini image 4" },
+    { "type": "header", "content": "Copy" },
+    { "type": "text", "id": "title", "label": "Product title", "default": "HELIOS Super Glide" },
+    { "type": "richtext", "id": "subtitle", "label": "Subtitle" },
+    { "type": "text", "id": "rating", "label": "Rating", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Review count", "default": "3,912" },
+    { "type": "checkbox", "id": "tiktok_badge", "label": "Show 'As seen on TikTok' badge", "default": true },
+    { "type": "checkbox", "id": "show_picker", "label": "Show Super/Mini variant picker (legacy — unused)", "default": false },
+    { "type": "text", "id": "cta_text", "label": "Add-to-cart text", "default": "Add to Cart" },
+    { "type": "header", "content": "Discount chip (legacy — unused)" },
+    { "type": "text", "id": "discount_code", "label": "Discount code", "default": "" },
+    { "type": "text", "id": "discount_label", "label": "Discount label", "default": "" },
+    { "type": "header", "content": "#1 seller / best-price banner (legacy — unused)" },
+    { "type": "checkbox", "id": "show_bestprice", "label": "Show '#1 seller · best price' banner", "default": false },
+    { "type": "text", "id": "bestprice_pill", "label": "Gold pill text", "default": "#1 Seller in the U.S." },
+    { "type": "text", "id": "bestprice_tag", "label": "Secondary tag", "default": "Lowest price, guaranteed" },
+    { "type": "text", "id": "bestprice_head", "label": "Headline", "default": "The best price in the country." },
+    { "type": "text", "id": "competitor_price", "label": "Competitor price (each)", "default": "$350" },
+    { "type": "text", "id": "our_price", "label": "Our 2-pack price", "default": "$299" },
+    { "type": "header", "content": "Auto-coupon advert (legacy — unused)" },
+    { "type": "checkbox", "id": "show_promo4", "label": "Show auto-coupon advert", "default": false },
+    { "type": "text", "id": "promo4_tag", "label": "Tag", "default": "4th of July" },
+    { "type": "text", "id": "promo4_amount", "label": "Discount amount", "default": "$21.99" },
+    { "type": "number", "id": "promo4_days", "label": "Days remaining", "default": 3 },
+    { "type": "header", "content": "Urgency & social proof (legacy — unused)" },
+    { "type": "checkbox", "id": "show_countdown", "label": "Show countdown", "default": false },
+    { "type": "range", "id": "countdown_minutes", "label": "Countdown length (minutes, per session)", "min": 30, "max": 1440, "step": 30, "default": 480 },
+    { "type": "text", "id": "eta_line", "label": "Delivery ETA line", "default": "Order today → ships in 24h, arrives in 5–8 days" },
+    { "type": "checkbox", "id": "show_stock", "label": "Show low-stock bar", "default": false },
+    { "type": "number", "id": "stock_left", "label": "Stock left", "default": 24 },
+    { "type": "checkbox", "id": "show_live", "label": "Show live viewers / sold", "default": false },
+    { "type": "number", "id": "live_viewers", "label": "Viewers (starting)", "default": 58 },
+    { "type": "number", "id": "sold_today", "label": "Sold today (starting)", "default": 202 },
+    { "type": "checkbox", "id": "show_toasts", "label": "Show recent-purchase toasts", "default": false }
+  ],
+  "blocks": [
+    {
+      "type": "bundle",
+      "name": "Bundle tier",
+      "settings": [
+        { "type": "text", "id": "variant_id", "label": "Variant ID (real, numeric)", "info": "Products → variant → number at end of admin URL" },
+        { "type": "number", "id": "qty", "label": "Units in this bundle", "default": 1 },
+        { "type": "text", "id": "label", "label": "Tier label", "default": "2 Super Glides" },
+        { "type": "text", "id": "sublabel", "label": "Sub label", "default": "Buy 1, get 1 free" },
+        { "type": "text", "id": "badge", "label": "Badge text (optional)", "default": "Most popular" },
+        { "type": "select", "id": "badge_style", "label": "Badge style", "options": [{"value":"accent","label":"Accent gradient"},{"value":"teal","label":"Teal"}], "default": "accent" },
+        { "type": "checkbox", "id": "preselect", "label": "Pre-select this tier", "default": false },
+        { "type": "text", "id": "fallback_price", "label": "Fallback price (cents)", "info": "Only used if Variant ID is empty", "default": "19999" },
+        { "type": "text", "id": "fallback_compare", "label": "Fallback compare-at (cents)", "default": "39998" }
+      ]
+    },
+    {
+      "type": "thumb",
+      "name": "Gallery thumbnail",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "HELIOS Buy Box",
+      "blocks": [
+        { "type": "bundle", "settings": { "qty": 2, "label": "Buy 1 Get 1 Free", "sublabel": "2 Super Glides", "badge": "Most popular", "badge_style": "accent", "preselect": true, "fallback_price": "24900", "fallback_compare": "49800" } },
+        { "type": "bundle", "settings": { "qty": 1, "label": "1 Super Glide", "sublabel": "Just me", "badge": "", "badge_style": "accent", "preselect": false, "fallback_price": "14900", "fallback_compare": "24900" } },
+        { "type": "bundle", "settings": { "qty": 4, "label": "Family 4-Pack", "sublabel": "Buy 2 get 2", "badge": "Best value", "badge_style": "teal", "preselect": false, "fallback_price": "44900", "fallback_compare": "99600" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
