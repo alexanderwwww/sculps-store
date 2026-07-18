@@ -1,0 +1,16 @@
+# secrets — NEVER commit these
+gmgn_private.pem
+config.json
+state.json
+
+# runtime
+venv/
+__pycache__/
+*.pyc
+dist/
+build/
+*.spec
+
+# re-include app code (root .gitignore blocks *.py/*.html globally)
+!*.py
+!ui.html
