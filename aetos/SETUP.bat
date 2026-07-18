@@ -36,11 +36,11 @@ if errorlevel 1 ( echo  Install failed. Check your internet and retry. & pause &
 
 echo  [3/3] Creating desktop shortcut...
 powershell -NoProfile -Command ^
-  "$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\AETOS.lnk');" ^
+  "$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\XTRADE.lnk');" ^
   "$s.TargetPath='%~dp0venv\Scripts\pythonw.exe';" ^
   "$s.Arguments='\"%~dp0aetos.py\"';" ^
   "$s.WorkingDirectory='%~dp0';" ^
-  "$s.Description='AETOS - GMGN scalper';" ^
+  "$s.Description='XTRADE - GMGN scalper';" ^
   "$s.Save()" >nul 2>&1
 
 echo.

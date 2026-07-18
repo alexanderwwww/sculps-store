@@ -201,10 +201,17 @@ class Api:
 # ---------- browser fallback server ----------
 
 def run_browser_mode(api):
+    import secrets
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+    token = secrets.token_urlsafe(24)
     with open(resource("ui.html"), "r", encoding="utf-8") as f:
         html = f.read()
+    # inject the session token so only our own served page can call the bridge
+    html = html.replace("</head>", f"<script>window.__AETOS_TOKEN='{token}';</script></head>", 1)
+    html = html.replace(
+        "{method:'POST', headers:{'Content-Type':'application/json'},",
+        "{method:'POST', headers:{'Content-Type':'application/json','X-Aetos-Token':window.__AETOS_TOKEN||''},", 1)
 
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -227,6 +234,9 @@ def run_browser_mode(api):
         def do_POST(self):
             if not self.path.startswith("/api/"):
                 return self._send(404, "{}")
+            # only our own served page (which carries the session token) may call the bridge
+            if self.headers.get("X-Aetos-Token") != token:
+                return self._send(403, json.dumps({"ok": False, "msg": "forbidden"}))
             name = self.path[5:]
             if not hasattr(api, name) or name.startswith("_"):
                 return self._send(404, json.dumps({"ok": False, "msg": "unknown"}))
@@ -259,7 +269,7 @@ def main():
             with open(resource("ui.html"), "r", encoding="utf-8") as f:
                 html = f.read()
             win = webview.create_window(
-                "AETOS", html=html,
+                "XTRADE", html=html,
                 width=430, height=880,
                 frameless=True, easy_drag=False,
                 transparent=True, on_top=False,

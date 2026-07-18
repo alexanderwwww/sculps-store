@@ -177,5 +177,108 @@ b.cooldown_until = 0
 b.daily["pnl"] = -999
 check("daily cap halts entries", b._blocked() == "daily_cap")
 
+
+# ---------- 3. live-path safety (the fixes) ----------
+
+print("\n[3/3] Live-path safety")
+
+
+class ApiErr(Exception):
+    def __init__(self, status=400, code=1, error="X", is_rl=False):
+        self.status, self.code, self.error, self.api_message = status, code, error, "err"
+        self.is_rate_limit = is_rl
+
+
+import gmgn_client as gc  # noqa: E402
+gc_ApiError = gc.ApiError
+
+
+class LiveClient(FakeClient):
+    def __init__(self):
+        super().__init__()
+        self.swap_calls = 0
+        self.confirm_status = "confirmed"
+        self.swap_mode = "ok"   # ok | ambiguous | reject
+        self.holdings = []
+
+    def swap(self, params):
+        self.swap_calls += 1
+        if self.swap_mode == "ambiguous":
+            raise gc_ApiError("POST", "/v1/trade/swap", 0, code=None, error=None, message="network: timeout")
+        if self.swap_mode == "reject":
+            raise gc_ApiError("POST", "/v1/trade/swap", 400, code=40003, error="BAD_PARAM", message="bad")
+        return {"order_id": "oid-1", "status": "pending"}
+
+    def query_order(self, order_id, chain):
+        return {"status": self.confirm_status}
+
+    def wallet_holdings(self, *a, **k):
+        return {"holdings": self.holdings}
+
+    def strategy_orders(self, *a, **k):
+        return []
+
+    def cancel_strategy_order(self, *a, **k):
+        return {}
+
+
+tmp2 = tempfile.mkdtemp()
+lb = Brain(tmp2, {"mode": "live", "api_key": "k", "wallet": "So11111111111111111111111111111111111111112",
+                  "armed": True, "settings": {"entry_gap_sec": 0}})
+lc = LiveClient()
+lb.client = lc
+
+# double-buy guard: ambiguous swap error must NOT create a position
+lc.swap_mode = "ambiguous"
+c = lb._parse_candidate(lc.trending("sol")["rank"][0])
+ok_buy = lb._live_buy(c, 25000000)
+check("ambiguous BUY error -> no fill (no double-buy)", ok_buy is False and lc.swap_calls == 1)
+
+# definitive rejection -> plain retry attempted (2 calls), still no position
+lc.swap_calls = 0; lc.swap_mode = "reject"
+ok_buy2 = lb._live_buy(c, 25000000)
+check("rejected BUY retries plain once then fails", ok_buy2 is False and lc.swap_calls == 2)
+
+# failed SELL must KEEP the position (not book PnL)
+lc.swap_mode = "ok"; lc.confirm_status = "failed"
+tok = "LIVEtoken111111111111111111111111111111111"
+lb.positions[tok] = {"token": tok, "symbol": "LIVE", "mode": "live", "opened": time.time(),
+                     "cost_usd": 5.0, "lamports_in": 25000000, "tokens_raw": 5000*1e6, "decimals": 6,
+                     "entry_price": 0.001, "peak_value": 6.0, "last_value": 6.0, "entry_liquidity": 50000}
+before_trades = len(lb.trades)
+lb._exit(tok, "test", 25)
+check("failed SELL keeps position", tok in lb.positions and len(lb.trades) == before_trades)
+
+# confirmed SELL closes it and books the trade
+lc.confirm_status = "confirmed"
+lb._exit(tok, "take profit", 25)
+check("confirmed SELL closes + books", tok not in lb.positions and len(lb.trades) == before_trades + 1)
+
+# reconcile: wallet no longer holds it -> finalize as server-TP/SL close
+tok2 = "GONEtoken111111111111111111111111111111111"
+lb.positions[tok2] = {"token": tok2, "symbol": "GONE", "mode": "live", "opened": time.time()-60,
+                      "cost_usd": 5.0, "lamports_in": 25000000, "tokens_raw": 5000*1e6, "decimals": 6,
+                      "entry_price": 0.001, "peak_value": 7.0, "last_value": 7.0, "entry_liquidity": 50000}
+lc.holdings = []  # not held anymore
+n_before = len(lb.trades)
+lb._reconcile_live()
+check("reconcile finalizes vanished position", tok2 not in lb.positions and len(lb.trades) == n_before + 1)
+
+# mode switch drops live positions (no cross-contamination)
+tok3 = "KEEPtoken111111111111111111111111111111111"
+lb.positions[tok3] = {"token": tok3, "symbol": "KEEP", "mode": "live", "opened": time.time(),
+                      "cost_usd": 5.0, "tokens_raw": None, "decimals": None, "entry_price": 0.001,
+                      "peak_value": 5.0, "last_value": 5.0, "entry_liquidity": 50000, "lamports_in": 1}
+lb.reconfigure({"mode": "paper", "api_key": "k", "settings": {}})
+check("mode switch clears live positions", tok3 not in lb.positions)
+
+# fresh stop event per start generation (no stale-thread resurrection)
+e1 = lb._stop_evt
+lb.config = {"mode": "paper", "api_key": "k", "settings": {}}
+lb.client = lc
+lb.start(); time.sleep(0.1); lb.stop()
+e2 = lb._stop_evt
+check("start() uses a fresh stop event", e1 is not e2 and e2.is_set())
+
 print(f"\nResult: {PASS} passed, {FAIL} failed")
 sys.exit(1 if FAIL else 0)

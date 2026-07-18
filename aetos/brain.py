@@ -120,6 +120,7 @@ class Brain:
         self.halted_reason = None
         self.last_scan_ts = 0.0
         self.scan_note = "idle"
+        self.equity_hist = deque(maxlen=2000)   # (ts, equity_usd) for the live chart
 
         self._load_state()
         self._init_client()
@@ -187,9 +188,17 @@ class Brain:
 
     def reconfigure(self, config):
         with self._lock:
+            prev_mode = self.config.get("mode")
             self.config = config
             self.settings.update(config.get("settings") or {})
             self._init_client()
+            # switching modes must not carry positions across (paper<->live)
+            if config.get("mode") != prev_mode and self.positions:
+                for tok, p in list(self.positions.items()):
+                    if p.get("mode") == "live":
+                        self.log("warn", f"mode switch: DROPPING tracked live position {p.get('symbol')} "
+                                          f"— close it manually in GMGN if still open")
+                self.positions = {}
 
     # ---------- lifecycle ----------
 
@@ -204,10 +213,14 @@ class Brain:
                     return False, "LIVE mode requires ARM confirmation"
                 if not self.config.get("wallet"):
                     return False, "LIVE mode requires your wallet address"
+            # if a previous loop thread is still winding down, tell it to quit
+            if self._thread and self._thread.is_alive():
+                self._stop_evt.set()
             self.halted_reason = None
-            self._stop_evt.clear()
+            evt = threading.Event()          # fresh event per generation
+            self._stop_evt = evt
             self.running = True
-            self._thread = threading.Thread(target=self._loop, daemon=True)
+            self._thread = threading.Thread(target=self._loop, args=(evt,), daemon=True)
             self._thread.start()
             self.log("info", f"engine started ({self.config.get('mode','paper').upper()})")
             return True, "started"
@@ -231,13 +244,15 @@ class Brain:
 
     # ---------- main loop ----------
 
-    def _loop(self):
+    def _loop(self, evt):
         tick = 0
-        while not self._stop_evt.is_set():
+        while not evt.is_set():
             try:
                 self._roll_day()
                 self._manage_positions()
-                if tick % 5 == 0:          # scan every ~20s (tick = 4s)
+                if tick % 5 == 0 and not evt.is_set():   # reconcile live holdings periodically
+                    self._reconcile_live()
+                if tick % 5 == 0 and not evt.is_set():   # scan every ~20s (tick = 4s)
                     self._scan_and_enter()
                 if tick % 15 == 0:
                     self.save_state()
@@ -246,13 +261,13 @@ class Brain:
                 if e.is_rate_limit and e.reset_at:
                     wait = max(0, e.reset_at - time.time()) + 1
                     self.log("warn", f"rate limit: pausing {int(wait)}s")
-                    self._stop_evt.wait(min(wait, 300))
+                    evt.wait(min(wait, 300))
                 else:
                     self.log("error", f"api: {e}")
             except Exception as e:
                 self.log("error", f"loop: {e} | {traceback.format_exc().splitlines()[-1]}")
             tick += 1
-            self._stop_evt.wait(4)
+            evt.wait(4)
         self.save_state()
 
     def _roll_day(self):
@@ -473,8 +488,18 @@ class Brain:
             q = self.client.quote(CHAIN, wallet, SOL_MINT, token, lamports, self.settings["slippage"]) or {}
             tokens_raw = fnum(pick(q, "output_amount", "out_amount"))
             decimals = fnum(pick(q, "output_token_decimals", "out_decimals"))
+        except ApiError as e:
+            if e.is_rate_limit:
+                raise
+            self.log("warn", f"{symbol}: quote failed ({e.error or e.api_message}); using scan price fill")
         except Exception as e:
             self.log("warn", f"{symbol}: quote failed ({e}); using scan price fill")
+
+        # if we can neither count tokens nor price it, we could never value/exit it safely -> skip
+        if tokens_raw is None and c["price"] is None:
+            self.log("warn", f"{symbol}: no fill quote and no scan price — skipping (cannot value position)")
+            self.blacklist[token] = time.time() + 1800
+            return
 
         if mode == "live":
             ok = self._live_buy(c, lamports)
@@ -528,12 +553,23 @@ class Brain:
             res = self.client.swap({**base, "condition_orders": cond, "sell_ratio_type": "buy_amount"})
             self.config["_server_protected"] = True
         except ApiError as e:
-            if e.is_rate_limit: raise
-            self.log("warn", f"swap w/ server TP/SL rejected ({e.error or e.api_message}); retrying plain")
+            if e.is_rate_limit:
+                raise
+            # AMBIGUOUS failure (network drop, 5xx, no error code) = the buy MIGHT have
+            # gone through. Retrying a plain swap here risks a DOUBLE BUY. Abort instead.
+            ambiguous = (e.status == 0) or (e.status is not None and e.status >= 500) or (e.code is None)
+            if ambiguous:
+                self.log("error", f"BUY {c['symbol']}: swap outcome UNKNOWN ({e.error or e.api_message}). "
+                                  f"Not retrying (double-buy risk). Check GMGN.")
+                return False
+            # definitive rejection (e.g. condition_orders shape) -> the buy did NOT happen; plain retry is safe
+            self.log("warn", f"server TP/SL rejected ({e.error or e.api_message}); retrying plain buy")
             try:
                 res = self.client.swap(base)
             except ApiError as e2:
-                self.log("error", f"BUY failed: {e2.error or e2.api_message}")
+                if e2.is_rate_limit:
+                    raise
+                self.log("error", f"BUY {c['symbol']} failed: {e2.error or e2.api_message}")
                 return False
         order_id = pick(res or {}, "order_id", "id")
         return self._confirm_order(order_id, "BUY", c["symbol"])
@@ -590,7 +626,20 @@ class Brain:
             pass
         return pos.get("last_value", pos["cost_usd"])
 
+    def _record_equity(self):
+        """Equity curve point for the live chart."""
+        open_value = sum(p.get("last_value", p["cost_usd"]) for p in self.positions.values())
+        if self.config.get("mode") == "live":
+            equity = round(self.daily.get("pnl", 0.0) + sum(
+                p.get("last_value", p["cost_usd"]) - p["cost_usd"] for p in self.positions.values()), 2)
+        else:
+            equity = round(self.paper_balance + open_value, 2)
+        if not self.equity_hist or abs(self.equity_hist[-1][1] - equity) > 0.001 \
+                or time.time() - self.equity_hist[-1][0] > 30:
+            self.equity_hist.append((time.time(), equity))
+
     def _manage_positions(self):
+        self._record_equity()
         if not self.positions:
             return
         s = self.settings
@@ -603,6 +652,19 @@ class Brain:
                 pos["pnl_pct"] = round(pnl_pct, 2)
                 held_min = (time.time() - pos["opened"]) / 60
                 peak_dd = (1 - value / pos["peak_value"]) * 100 if pos["peak_value"] else 0
+
+                # refresh liquidity so the rug guard runs for healthy positions too
+                if time.time() - pos.get("_liq_ts", 0) > 12:
+                    try:
+                        info = self.client.token_info(CHAIN, token) or {}
+                        lq = fnum(pick(info, "liquidity", "liquidity_usd", "pool_liquidity"))
+                        if lq is not None:
+                            pos["_last_liq"] = lq
+                        pos["_liq_ts"] = time.time()
+                    except ApiError:
+                        raise
+                    except Exception:
+                        pass
 
                 # rug guard: liquidity collapse vs entry
                 liq_now = pos.get("_last_liq")
@@ -625,10 +687,13 @@ class Brain:
                 self.log("warn", f"manage {pos['symbol']}: {e}")
 
     def _exit(self, token, reason, slippage):
-        pos = self.positions.get(token)
+        # atomically claim the position so the loop + panic thread can't both sell it
+        with self._lock:
+            pos = self.positions.pop(token, None)
         if not pos:
             return
         value = pos.get("last_value", pos["cost_usd"])
+
         if pos["mode"] == "live":
             params = {
                 "chain": CHAIN,
@@ -642,10 +707,22 @@ class Brain:
             }
             try:
                 res = self.client.swap(params)
-                self._confirm_order(pick(res or {}, "order_id", "id"), "SELL", pos["symbol"])
+                ok = self._confirm_order(pick(res or {}, "order_id", "id"), "SELL", pos["symbol"])
             except ApiError as e:
-                self.log("error", f"SELL {pos['symbol']} failed: {e.error or e.api_message} — RETRY MANUALLY IN GMGN")
-                return  # keep position visible; do not silently drop
+                ok = False
+                if e.is_rate_limit:
+                    # transient — put it back so we retry next tick, don't book anything
+                    with self._lock:
+                        self.positions[token] = pos
+                    raise
+                self.log("error", f"SELL {pos['symbol']} failed: {e.error or e.api_message}")
+            if not ok:
+                # sell not confirmed — restore the position; the manage loop retries next tick.
+                self.log("error", f"SELL {pos['symbol']} NOT confirmed — keeping position, will retry")
+                with self._lock:
+                    self.positions[token] = pos
+                return
+            self._cleanup_server_orders(token, pos["symbol"])
         else:
             self.paper_balance += value
 
@@ -669,9 +746,77 @@ class Brain:
             "reason": reason, "mode": pos["mode"],
             "held_min": round((time.time() - pos["opened"]) / 60, 1),
         })
-        with self._lock:
-            self.positions.pop(token, None)
         self.log("trade", f"SELL {pos['symbol']} {reason} -> {'+' if pnl>=0 else ''}{pnl:.2f}$")
+        self.save_state()
+
+    def _cleanup_server_orders(self, token, symbol):
+        """After a live sell, cancel any lingering server-side TP/SL for this token
+        so GMGN can't try to sell tokens we no longer hold."""
+        if not self.config.get("_server_protected"):
+            return
+        try:
+            orders = rows_of(self.client.strategy_orders(CHAIN))
+        except Exception as e:
+            self.log("warn", f"{symbol}: couldn't list server orders to clean up ({e})")
+            return
+        for od in orders:
+            otok = pick(od, "token", "output_token", "input_token", "token_address")
+            oid = pick(od, "order_id", "id", "strategy_id")
+            if otok == token and oid:
+                try:
+                    self.client.cancel_strategy_order({"chain": CHAIN, "order_id": oid})
+                    self.log("info", f"{symbol}: cancelled leftover server order {str(oid)[:8]}")
+                except Exception as e:
+                    self.log("warn", f"{symbol}: cancel server order failed ({e})")
+
+    def _reconcile_live(self):
+        """For live positions, if the wallet no longer holds the token, the server-side
+        TP/SL already sold it. Finalize locally instead of trying to sell again."""
+        if self.config.get("mode") != "live" or not self.positions or not self.config.get("wallet"):
+            return
+        try:
+            data = self.client.wallet_holdings(CHAIN, self.config["wallet"])
+        except Exception as e:
+            self.log("warn", f"reconcile: holdings fetch failed ({e})")
+            return
+        held = set()
+        for row in rows_of(data):
+            tok = pick(row, "token_address", "address", "token")
+            if isinstance(tok, dict):
+                tok = pick(tok, "address", "token_address")
+            bal = fnum(pick(row, "balance", "amount", "ui_amount"), 0) or 0
+            if tok and bal > 0:
+                held.add(tok)
+        for token in list(self.positions.keys()):
+            pos = self.positions[token]
+            if pos.get("mode") != "live":
+                continue
+            if token not in held and (time.time() - pos["opened"]) > 30:
+                self.log("info", f"{pos['symbol']}: no longer in wallet — server TP/SL closed it; finalizing")
+                self._finalize_closed(token, pos)
+
+    def _finalize_closed(self, token, pos):
+        """Book a position that was already closed on-chain (by server TP/SL), no swap."""
+        with self._lock:
+            if token not in self.positions:
+                return
+            self.positions.pop(token, None)
+        value = pos.get("last_value", pos["cost_usd"])
+        pnl = value - pos["cost_usd"]
+        self.daily["pnl"] += pnl
+        if pnl >= 0:
+            self.daily["wins"] += 1; self.loss_streak = 0
+        else:
+            self.daily["losses"] += 1; self.loss_streak += 1
+            self.blacklist[token] = time.time() + 7200
+        self.trades.appendleft({
+            "ts": time.time(), "symbol": pos["symbol"], "token": token,
+            "pnl_usd": round(pnl, 2), "pnl_pct": pos.get("pnl_pct", 0),
+            "reason": "server TP/SL (auto)", "mode": "live",
+            "held_min": round((time.time() - pos["opened"]) / 60, 1),
+        })
+        self._cleanup_server_orders(token, pos["symbol"])
+        self.log("trade", f"CLOSED {pos['symbol']} via server TP/SL -> {'+' if pnl>=0 else ''}{pnl:.2f}$")
         self.save_state()
 
     # ---------- state for UI ----------
@@ -695,6 +840,14 @@ class Brain:
                 for p in self.positions.values()
             ],
             "trades": list(self.trades)[:40],
-            "log": list(self._log_buf)[-60:],
+            "log": list(self._log_buf)[-80:],
             "settings": self.settings,
+            "equity_hist": self._equity_points(120),
         }
+
+    def _equity_points(self, max_points):
+        pts = list(self.equity_hist)
+        if len(pts) <= max_points:
+            return pts
+        step = len(pts) / max_points
+        return [pts[int(i * step)] for i in range(max_points - 1)] + [pts[-1]]
