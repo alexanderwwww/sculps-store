@@ -37,7 +37,7 @@ def resource(name):
 
 
 def load_config():
-    cfg = {"mode": "paper", "armed": False, "api_key": "", "wallet": "", "settings": {}}
+    cfg = {"mode": "live", "armed": False, "api_key": "", "wallet": "", "settings": {}}
     try:
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             cfg.update(json.load(f))
@@ -270,18 +270,21 @@ def main():
                 html = f.read()
             win = webview.create_window(
                 "XTRADE", html=html,
-                width=430, height=880,
-                frameless=True, easy_drag=False,
-                transparent=True, on_top=False,
-                background_color="#000000",
+                width=420, height=860,
+                min_size=(380, 720),
+                frameless=True, easy_drag=True,   # solid frameless, our own chrome
+                transparent=False, on_top=False,
+                background_color="#0B0B0F",
                 js_api=api,
             )
             api.window = win
+            # start(gui=...) auto-picks EdgeChromium on Windows; let pywebview decide.
             webview.start()
             api.brain.stop()
             return
         except Exception as e:
             print(f"[aetos] native window unavailable ({e}); falling back to browser mode")
+            import traceback; traceback.print_exc()
     run_browser_mode(api)
 
 
