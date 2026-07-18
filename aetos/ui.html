@@ -218,19 +218,38 @@
 </div>
 
 <script>
-function api(name, arg){
+/* hardened bridge: every call times out, never throws to callers */
+function rawApi(name, arg){
   if (window.pywebview && window.pywebview.api) return window.pywebview.api[name](arg===undefined?null:arg);
   return fetch('/api/' + name, {method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({arg: arg===undefined?null:arg})}).then(r=>r.json());
 }
-let state=null, tab='term', armed=false;
+function api(name, arg, ms){
+  ms = ms || 25000;
+  return Promise.race([
+    rawApi(name, arg),
+    new Promise(res => setTimeout(()=>res({ok:false, msg:name+' timed out — check xtrade.log'}), ms)),
+  ]).catch(e => ({ok:false, msg:String(e&&e.message||e)}));
+}
+let state=null, tab='term', armed=false, lastHash='', misses=0;
 function money(n){ n=Number(n||0); return (n<0?'-$':'$')+Math.abs(n).toFixed(2); }
 function esc(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
-async function refresh(){ try{ state=await api('get_state'); render(); }catch(e){} }
+async function refresh(){
+  const s = await api('get_state', null, 6000);
+  if (s && s.daily !== undefined){ state=s; misses=0; render(); }
+  else if (++misses >= 3) document.getElementById('statusLine').innerHTML='<b>reconnecting…</b>';
+}
 
 function render(){
   if(!state) return; const s=state;
+  // skip DOM work entirely when nothing changed (no lag, no flicker)
+  const h = JSON.stringify([s.running,s.daily,s.positions,s.trades&&s.trades.length,
+    s.log&&s.log.length&&s.log[s.log.length-1].ts,s.scan_note,s.live_sol_balance,s.sol_price,
+    s.equity_hist&&s.equity_hist.length,s.heartbeat_age|0,s.candidates,tab,
+    s.has_api_key,s.has_private_key,s.has_wallet,s.halted]);
+  if (h === lastHash) return;
+  lastHash = h;
   const connected = s.has_api_key && s.has_private_key && s.has_wallet;
   const chip=document.getElementById('statusChip');
   if (s.running){ chip.className='statuschip live'; chip.innerHTML='<span class="dot on"></span>LIVE'; }
@@ -262,6 +281,9 @@ function render(){
   const nb = feed.scrollHeight-feed.scrollTop-feed.clientHeight < 50;
   if (tab==='term'){
     let st = s.running ? ('engine · '+(s.scan_note||'…')) : (connected?'ready — press Go Live':'connect to begin');
+    if (s.running && s.heartbeat_age!=null) st += ' · ♥'+s.heartbeat_age+'s';
+    if (s.running && s.candidates && s.candidates.length)
+      st += ' · watching: '+s.candidates.map(c=>c.symbol+' '+Number(c.score).toFixed(1)).join(' · ');
     if (s.halted) st+=' · HALTED:'+s.halted;
     feed.innerHTML = (s.log||[]).map(l=>'<div class="tl '+l.level+'"><span class="tm">'+
       new Date(l.ts*1000).toLocaleTimeString()+'</span> <b>'+esc(l.msg)+'</b></div>').join('')

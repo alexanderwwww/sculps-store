@@ -121,6 +121,8 @@ class Brain:
         self.last_scan_ts = 0.0
         self.scan_note = "idle"
         self.equity_hist = deque(maxlen=2000)   # (ts, equity_usd) for the live chart
+        self.last_tick_ts = 0.0                 # heartbeat for the UI/watchdog
+        self.top_candidates = []                # last scan's best tokens (for the UI ticker)
 
         self._load_state()
         self._init_client()
@@ -232,21 +234,23 @@ class Brain:
         self.save_state()
 
     def panic(self):
-        """Sell everything now, then stop."""
-        self.log("warn", "PANIC: closing all positions")
-        with self._lock:
-            for token in list(self.positions.keys()):
-                try:
-                    self._exit(token, reason="panic", slippage=self.settings["rug_exit_slippage"])
-                except Exception as e:
-                    self.log("error", f"panic exit {token[:8]}: {e}")
-        self.stop()
+        """Stop the engine FIRST (no new entries can start), then sell everything."""
+        self.log("warn", "PANIC: stopping engine + closing all positions")
+        self._stop_evt.set()
+        self.running = False
+        for token in list(self.positions.keys()):
+            try:
+                self._exit(token, reason="panic", slippage=self.settings["rug_exit_slippage"])
+            except Exception as e:
+                self.log("error", f"panic exit {token[:8]}: {e}")
+        self.save_state()
 
     # ---------- main loop ----------
 
     def _loop(self, evt):
         tick = 0
         while not evt.is_set():
+            self.last_tick_ts = time.time()
             try:
                 self._roll_day()
                 self._manage_positions()
@@ -365,6 +369,10 @@ class Brain:
             return
 
         candidates.sort(key=lambda c: c["score"], reverse=True)
+        self.top_candidates = [
+            {"symbol": c["symbol"], "score": c["score"], "liq": round(c["liquidity"] or 0)}
+            for c in candidates[:3]
+        ]
         for c in candidates[:6]:
             if c["score"] < self.settings["min_score"]:
                 break
@@ -579,7 +587,9 @@ class Brain:
             self.log("warn", f"{side} {symbol}: no order_id in response; assuming submitted")
             return True
         for _ in range(6):
-            self._stop_evt.wait(5)
+            # real sleep, NOT stop-event wait: pressing Stop must not fast-forward
+            # confirmation polling into a false "timeout -> treat as filled"
+            time.sleep(5)
             try:
                 od = self.client.query_order(order_id, CHAIN) or {}
             except ApiError as e:
@@ -740,12 +750,13 @@ class Brain:
                 self.log("warn", f"{self.loss_streak} losses in a row — cooling down {self.settings['cooldown_min']:.0f}m")
                 self.loss_streak = 0
 
-        self.trades.appendleft({
-            "ts": time.time(), "symbol": pos["symbol"], "token": token,
-            "pnl_usd": round(pnl, 2), "pnl_pct": pos.get("pnl_pct", 0),
-            "reason": reason, "mode": pos["mode"],
-            "held_min": round((time.time() - pos["opened"]) / 60, 1),
-        })
+        with self._lock:
+            self.trades.appendleft({
+                "ts": time.time(), "symbol": pos["symbol"], "token": token,
+                "pnl_usd": round(pnl, 2), "pnl_pct": pos.get("pnl_pct", 0),
+                "reason": reason, "mode": pos["mode"],
+                "held_min": round((time.time() - pos["opened"]) / 60, 1),
+            })
         self.log("trade", f"SELL {pos['symbol']} {reason} -> {'+' if pnl>=0 else ''}{pnl:.2f}$")
         self.save_state()
 
@@ -809,12 +820,13 @@ class Brain:
         else:
             self.daily["losses"] += 1; self.loss_streak += 1
             self.blacklist[token] = time.time() + 7200
-        self.trades.appendleft({
-            "ts": time.time(), "symbol": pos["symbol"], "token": token,
-            "pnl_usd": round(pnl, 2), "pnl_pct": pos.get("pnl_pct", 0),
-            "reason": "server TP/SL (auto)", "mode": "live",
-            "held_min": round((time.time() - pos["opened"]) / 60, 1),
-        })
+        with self._lock:
+            self.trades.appendleft({
+                "ts": time.time(), "symbol": pos["symbol"], "token": token,
+                "pnl_usd": round(pnl, 2), "pnl_pct": pos.get("pnl_pct", 0),
+                "reason": "server TP/SL (auto)", "mode": "live",
+                "held_min": round((time.time() - pos["opened"]) / 60, 1),
+            })
         self._cleanup_server_orders(token, pos["symbol"])
         self.log("trade", f"CLOSED {pos['symbol']} via server TP/SL -> {'+' if pnl>=0 else ''}{pnl:.2f}$")
         self.save_state()
@@ -822,28 +834,43 @@ class Brain:
     # ---------- state for UI ----------
 
     def snapshot(self):
-        mode = self.config.get("mode", "paper")
-        return {
-            "running": self.running,
-            "mode": mode,
-            "armed": bool(self.config.get("armed")),
-            "scan_note": self.scan_note,
-            "halted": self.halted_reason,
-            "cooldown_until": self.cooldown_until if self.cooldown_until > time.time() else 0,
-            "paper_balance": round(self.paper_balance, 2),
-            "live_sol_balance": self.live_sol_balance,
-            "sol_price": self.sol_price,
-            "daily": self.daily,
-            "loss_streak": self.loss_streak,
-            "positions": [
-                {k: v for k, v in p.items() if not k.startswith("_") and k != "row"}
-                for p in self.positions.values()
-            ],
-            "trades": list(self.trades)[:40],
-            "log": list(self._log_buf)[-80:],
-            "settings": self.settings,
-            "equity_hist": self._equity_points(120),
-        }
+        """Thread-safe state for the UI. MUST NEVER RAISE — the UI depends on it."""
+        try:
+            with self._lock:
+                positions = [
+                    {k: v for k, v in p.items() if not k.startswith("_") and k != "row"}
+                    for p in list(self.positions.values())
+                ]
+                trades = list(self.trades)[:40]
+                daily = dict(self.daily)
+            return {
+                "running": self.running,
+                "mode": self.config.get("mode", "paper"),
+                "armed": bool(self.config.get("armed")),
+                "scan_note": self.scan_note,
+                "halted": self.halted_reason,
+                "cooldown_until": self.cooldown_until if self.cooldown_until > time.time() else 0,
+                "paper_balance": round(self.paper_balance, 2),
+                "live_sol_balance": self.live_sol_balance,
+                "sol_price": self.sol_price,
+                "daily": daily,
+                "loss_streak": self.loss_streak,
+                "positions": positions,
+                "trades": trades,
+                "log": list(self._log_buf)[-80:],
+                "settings": dict(self.settings),
+                "equity_hist": self._equity_points(120),
+                "heartbeat_age": round(time.time() - self.last_tick_ts, 1) if self.last_tick_ts else None,
+                "candidates": list(self.top_candidates),
+            }
+        except Exception as e:
+            return {"running": self.running, "mode": self.config.get("mode", "paper"),
+                    "armed": False, "scan_note": "snapshot error", "halted": None, "cooldown_until": 0,
+                    "paper_balance": 0, "live_sol_balance": None, "sol_price": None,
+                    "daily": {"pnl": 0, "wins": 0, "losses": 0}, "loss_streak": 0,
+                    "positions": [], "trades": [], "log": [{"ts": time.time(), "level": "error",
+                    "msg": f"snapshot: {e}"}], "settings": dict(self.settings),
+                    "equity_hist": [], "heartbeat_age": None, "candidates": []}
 
     def _equity_points(self, max_points):
         pts = list(self.equity_hist)
