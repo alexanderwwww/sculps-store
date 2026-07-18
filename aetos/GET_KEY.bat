@@ -1,0 +1,7 @@
+@echo off
+title XTRADE - Get my GMGN key
+cd /d "%~dp0"
+if not exist venv\Scripts\python.exe ( echo Run SETUP.bat first. & pause & exit /b 1 )
+venv\Scripts\python get_key.py
+echo.
+pause

@@ -2,6 +2,7 @@
 gmgn_private.pem
 config.json
 state.json
+PUBLIC_KEY.txt
 
 # runtime
 venv/

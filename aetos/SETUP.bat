@@ -47,8 +47,16 @@ powershell -NoProfile -Command ^
   "$s.Save()" >nul 2>&1
 
 echo.
+echo  Making your GMGN key (it will be COPIED to your clipboard)...
+venv\Scripts\python get_key.py
+
+echo.
 echo  Done. Starting XTRADE...
 echo  (Next time: just double-click XTRADE on your desktop)
 echo.
+echo  NEXT: in GMGN's "Create API Key" box just press Ctrl+V
+echo        (your public key is already in the clipboard)
+echo.
 start "" venv\Scripts\pythonw.exe aetos.py
+pause
 exit /b 0
