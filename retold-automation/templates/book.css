@@ -1,0 +1,321 @@
+/* ============================================================================
+   RETOLD — INTERIOR PDF STYLESHEET  (CSS Paged Media, for WeasyPrint)
+   ----------------------------------------------------------------------------
+   This file controls how the *inside pages* of the memory book are printed.
+   It is written for a print-on-demand press (Lulu / Peecho), so every size is
+   in real-world inches and the page includes bleed so colour runs off the edge
+   with no white slivers after trimming.
+
+   FOR THE NON-TECHNICAL OWNER — the three things that matter here:
+     1. PAGE SIZE  = trim + bleed. Our book trims to 8.5 x 8.5 inches, and we
+        add 0.125" of bleed on every side, so each printed sheet is 8.75 x 8.75".
+     2. SAFE AREA  = the margins below. Nothing important (text, faces) should
+        sit outside the safe area or the trimming blade may cut it off.
+     3. GUTTER     = the extra inside margin near the spine so text isn't
+        swallowed by the binding. Left and right pages mirror each other.
+
+   The exact numbers are injected by render_pdf.py from book.json -> "print",
+   so if the trim ever changes we change it in ONE place, not here.
+   ============================================================================ */
+
+/* ---- BRAND PALETTE (RETOLD) ------------------------------------------------ */
+:root {
+  --cream:  #F4EDDB;   /* page background — warm paper */
+  --forest: #1F4934;   /* headers, body accents */
+  --gold:   #C7A44B;   /* rules, QR frames, pull-quotes */
+  --ink:    #2C2A24;   /* body text — soft near-black, easier on cream */
+  --muted:  #6B6455;   /* captions, folios */
+}
+
+/* ----------------------------------------------------------------------------
+   PAGE GEOMETRY
+   The @page size and margins are written by render_pdf.py into an inline
+   <style> block (see book.html) using the numbers from book.json. We keep the
+   *named* page rules here so the recto/verso mirroring and running elements
+   live with the rest of the design.
+   ---------------------------------------------------------------------------- */
+
+/* Right-hand (recto, odd) pages: wide margin on the OUTER (right) edge. */
+@page :right {
+  margin-left:  var(--gutter);   /* spine side */
+  margin-right: var(--outer);    /* outer edge */
+  @bottom-right {
+    content: counter(page);
+    font-family: var(--serif);
+    font-size: 9pt;
+    color: var(--muted);
+    margin-bottom: var(--bleed);
+  }
+  @bottom-left {
+    content: "Retold";
+    font-family: var(--serif);
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    font-size: 7.5pt;
+    color: var(--gold);
+    margin-bottom: var(--bleed);
+  }
+}
+
+/* Left-hand (verso, even) pages: mirror image of the above. */
+@page :left {
+  margin-left:  var(--outer);
+  margin-right: var(--gutter);
+  @bottom-left {
+    content: counter(page);
+    font-family: var(--serif);
+    font-size: 9pt;
+    color: var(--muted);
+    margin-bottom: var(--bleed);
+  }
+  @bottom-right {
+    content: "Retold";
+    font-family: var(--serif);
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    font-size: 7.5pt;
+    color: var(--gold);
+    margin-bottom: var(--bleed);
+  }
+}
+
+/* Front-matter pages (title, dedication) carry no folio or running foot. */
+@page frontmatter { margin: var(--outer); }
+@page frontmatter :left  { @bottom-left  { content: none; } @bottom-right { content: none; } }
+@page frontmatter :right { @bottom-right { content: none; } @bottom-left  { content: none; } }
+
+/* A page whose illustration bleeds to all four edges: zero margins. */
+@page fullbleed { margin: 0; }
+@page fullbleed :left  { @bottom-left  { content: none; } @bottom-right { content: none; } }
+@page fullbleed :right { @bottom-right { content: none; } @bottom-left  { content: none; } }
+
+/* ---- BASE TYPOGRAPHY ------------------------------------------------------- */
+html {
+  /* var(--serif) resolves to Georgia when installed, otherwise a metric-
+     compatible serif so line breaks stay identical. Defined in book.html. */
+  font-family: var(--serif);
+  color: var(--ink);
+  font-size: 11.5pt;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: var(--cream);
+}
+
+/* Every page paints the full 8.75" sheet cream so the colour bleeds off-trim. */
+.sheet-bg { display: none; }
+
+p {
+  margin: 0 0 0.72em 0;
+  text-align: justify;
+  hyphens: auto;
+  orphans: 2;   /* never leave 1 line of a paragraph stranded */
+  widows: 2;
+}
+
+/* ============================================================================
+   FRONT MATTER
+   ============================================================================ */
+.title-page {
+  page: frontmatter;
+  break-before: right;   /* title always opens on a right-hand page */
+  break-after: always;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.title-page .wordmark {
+  font-variant: small-caps;
+  letter-spacing: 0.35em;
+  color: var(--gold);
+  font-size: 13pt;
+  margin-bottom: 2.2in;
+}
+.title-page h1 {
+  color: var(--forest);
+  font-size: 34pt;
+  font-weight: normal;
+  line-height: 1.15;
+  margin: 0 0 0.4in 0;
+  max-width: 6in;
+}
+.title-page .subject-line {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13pt;
+}
+.title-page .rule {
+  width: 1.6in;
+  border: none;
+  border-top: 1.5pt solid var(--gold);
+  margin: 0.5in auto;
+}
+
+/* ============================================================================
+   CHAPTERS
+   Each chapter begins on a fresh page. Layout per chapter:
+     - chapter number + title (forest, with a thin gold rule)
+     - optional full-width illustration with caption
+     - justified prose
+     - a gold-framed pull-quote
+     - a gold QR code that links to the parent's real voice for this chapter
+   ============================================================================ */
+.chapter {
+  page: auto;
+  break-before: right;   /* each chapter opens on a recto for a premium feel */
+}
+
+.chapter-header {
+  text-align: center;
+  margin-bottom: 0.35in;
+}
+.chapter-number {
+  font-variant: small-caps;
+  letter-spacing: 0.3em;
+  color: var(--gold);
+  font-size: 10pt;
+  display: block;
+  margin-bottom: 0.12in;
+}
+.chapter-title {
+  color: var(--forest);
+  font-size: 22pt;
+  font-weight: normal;
+  line-height: 1.2;
+  margin: 0 auto 0.16in auto;
+  max-width: 5.4in;
+}
+.chapter-header .rule {
+  width: 1.1in;
+  border: none;
+  border-top: 1pt solid var(--gold);
+  margin: 0.16in auto 0 auto;
+}
+
+/* Illustration — painterly memory scene. NEVER a photoreal face (brand rule). */
+.illustration {
+  margin: 0.2in 0 0.12in 0;
+  break-inside: avoid;
+  text-align: center;
+}
+.illustration img {
+  width: 100%;
+  /* Crop to an editorial landscape band so the header, illustration AND the
+     start of the prose all live together on the chapter's opening page
+     instead of the picture shoving the text onto a later leaf. */
+  height: 3.35in;
+  object-fit: cover;
+  display: block;
+  border-radius: 2pt;
+}
+.photo-caption {
+  font-style: italic;
+  font-size: 9.5pt;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 0.06in;
+}
+
+/* Drop-cap on the first paragraph of each chapter's prose. */
+.prose > p:first-of-type::first-letter {
+  font-size: 3.1em;
+  line-height: 0.82;
+  float: left;
+  padding: 0.02em 0.08em 0 0;
+  color: var(--forest);
+  font-weight: bold;
+}
+
+/* Pull-quote — one memorable line, set large in gold with rules above/below. */
+.pull-quote {
+  break-inside: avoid;
+  margin: 0.3in auto;
+  max-width: 5in;
+  text-align: center;
+  color: var(--forest);
+  font-style: italic;
+  font-size: 16pt;
+  line-height: 1.35;
+  padding: 0.18in 0;
+  border-top: 1pt solid var(--gold);
+  border-bottom: 1pt solid var(--gold);
+}
+.pull-quote::before { content: "\201C"; color: var(--gold); }
+.pull-quote::after  { content: "\201D"; color: var(--gold); }
+
+/* QR block — "Hear this in her voice" — gold framed, kept whole on the page. */
+.voice-qr {
+  break-inside: avoid;
+  margin-top: 0.32in;
+  display: flex;
+  align-items: center;
+  gap: 0.22in;
+  padding: 0.16in;
+  border: 1pt solid var(--gold);
+  border-radius: 3pt;
+  background: rgba(199, 164, 75, 0.06);
+}
+.voice-qr .qr-img { width: 0.95in; height: 0.95in; flex: 0 0 auto; }
+.voice-qr .qr-img img,
+.voice-qr .qr-img svg { width: 100%; height: 100%; display: block; }
+.voice-qr .qr-copy { font-size: 10pt; color: var(--ink); }
+.voice-qr .qr-copy .kicker {
+  font-variant: small-caps;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  font-size: 8.5pt;
+  display: block;
+  margin-bottom: 0.04in;
+}
+.voice-qr .qr-copy strong { color: var(--forest); font-weight: normal; font-size: 12pt; }
+
+/* ============================================================================
+   FULL-BLEED ILLUSTRATION PAGE (optional, e.g. chapter opener plate)
+   ============================================================================ */
+.plate {
+  page: fullbleed;
+  break-before: left;
+  break-after: always;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.plate img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ============================================================================
+   BACK MATTER — the grandchildren keepsake-card index / colophon
+   ============================================================================ */
+.colophon {
+  page: frontmatter;
+  break-before: right;
+  text-align: center;
+  padding-top: 1.4in;
+}
+.colophon h2 {
+  color: var(--forest);
+  font-weight: normal;
+  font-size: 18pt;
+  margin-bottom: 0.3in;
+}
+.colophon p { text-align: center; color: var(--muted); font-size: 10.5pt; }
+.colophon .wordmark {
+  font-variant: small-caps;
+  letter-spacing: 0.35em;
+  color: var(--gold);
+  font-size: 11pt;
+  margin-top: 0.6in;
+}
+
+/* Honesty line printed in the book — the voice is real, never synthesized. */
+.honesty {
+  font-size: 8.5pt;
+  color: var(--muted);
+  font-style: italic;
+  max-width: 4.4in;
+  margin: 0.5in auto 0 auto;
+}

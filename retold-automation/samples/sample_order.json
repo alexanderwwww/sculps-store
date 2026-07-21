@@ -1,0 +1,12 @@
+{
+  "order_id": "1001",
+  "sku": "book_film",
+  "subject": {
+    "name": "Rosa",
+    "relation": "grandmother",
+    "birth_year": 1941
+  },
+  "grandchildren": ["Mia", "Luca", "Sofia"],
+  "interview_audio": "sample_master.wav",
+  "notes": "Recorded over two afternoons at Rosa's kitchen table. She speaks English with an Italian accent; interviewer is her granddaughter Mia."
+}

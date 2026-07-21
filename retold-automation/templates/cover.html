@@ -1,0 +1,77 @@
+{# =============================================================================
+   RETOLD — COVER PDF TEMPLATE (Jinja2 -> WeasyPrint) : full BACK|SPINE|FRONT wrap
+   -----------------------------------------------------------------------------
+   render_pdf.py computes every inch offset (from book.json + the Lulu spine
+   formula) and passes them in, so this template just drops the three panels
+   into place. See compute_spine_width() in render_pdf.py.
+
+   Variables passed in:
+     book         -> full book.json dict
+     cover_w_in   -> total wrap width  = 2*bleed + 2*trim + spine
+     cover_h_in   -> total wrap height = 2*bleed + trim
+     bleed_in     -> bleed per side
+     trim_in      -> trim width/height (square book: same both ways)
+     spine_in     -> computed spine width
+     back_x_in    -> left offset where the BACK panel starts (= bleed)
+     spine_x_in   -> left offset where the SPINE starts
+     front_x_in   -> left offset where the FRONT starts
+     serif_stack  -> CSS font-family string
+     cover_css    -> absolute file:// path to cover.css
+     marks        -> draw crop / fold marks for proofing
+   ============================================================================= #}
+<link rel="stylesheet" href="{{ cover_css }}">
+
+<style>
+  :root { --serif: {{ serif_stack }}; }
+  @page {
+    size: {{ cover_w_in }}in {{ cover_h_in }}in;
+    {% if marks %}marks: crop;{% endif %}
+  }
+</style>
+
+<div class="wrap">
+
+  {# Gold safe-area keyline, inset one bleed + 0.25" from every edge. #}
+  <div class="safe-frame"
+       style="top: {{ bleed_in + 0.25 }}in; bottom: {{ bleed_in + 0.25 }}in;
+              left: {{ bleed_in + 0.25 }}in; right: {{ bleed_in + 0.25 }}in;
+              width: auto; height: auto;"></div>
+
+  {# ---- BACK COVER (left) -------------------------------------------------- #}
+  <div class="panel back" style="left: {{ back_x_in }}in; width: {{ trim_in + bleed_in }}in;">
+    <div class="blurb">
+      <span class="lede">Some stories should never be lost.</span>
+      {{ book.subject.name }} lived a life worth remembering &mdash; and now it is
+      written down, in {{ book.subject.name }}&rsquo;s own words, with the real
+      voice behind every chapter just a scan away. A keepsake for the whole family,
+      and for the {{ book.subject.relation }}{{ "s" if not book.subject.relation.endswith("s") else "" }}
+      and grandchildren who will read it for years to come.
+    </div>
+    <div class="foot">
+      <div class="wordmark">{{ book.cover.wordmark | default("Retold") }}</div>
+      {% if book.chapters and book.chapters[0].qr_file %}
+      <div class="back-qr">{{ embed_qr(book.chapters[0].qr_file) }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ---- SPINE (centre) ----------------------------------------------------- #}
+  <div class="panel spine" style="left: {{ spine_x_in }}in; width: {{ spine_in }}in;">
+    <div class="spine-text">
+      {{ book.cover.spine_title | default(book.cover.title) }}
+      <span class="dot">&bull;</span>
+      {{ book.cover.wordmark | default("Retold") }}
+    </div>
+  </div>
+
+  {# ---- FRONT COVER (right) ------------------------------------------------ #}
+  <div class="panel front" style="left: {{ front_x_in }}in; width: {{ trim_in + bleed_in }}in;">
+    <div class="wordmark">{{ book.cover.wordmark | default("Retold") }}</div>
+    <h1>{{ book.cover.title }}</h1>
+    <hr class="rule">
+    <div class="subject">
+      The life &amp; words of {{ book.subject.name }}
+    </div>
+  </div>
+
+</div>

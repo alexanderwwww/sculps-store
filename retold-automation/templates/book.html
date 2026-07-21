@@ -1,0 +1,110 @@
+{# =============================================================================
+   RETOLD — INTERIOR PDF TEMPLATE (Jinja2 -> rendered by WeasyPrint)
+   -----------------------------------------------------------------------------
+   This is the *inside* of the memory book. render_pdf.py fills in the numbers
+   and text from book.json, then WeasyPrint turns it into interior.pdf.
+
+   It intentionally holds NO business logic. Everything it needs arrives in the
+   `book` object (the shared book.json) and a few pre-computed size variables.
+
+   Variables passed in by render_pdf.py:
+     book        -> the full book.json dict
+     page_w_in   -> printed sheet width  = trim + 2*bleed   (inches)
+     page_h_in   -> printed sheet height = trim + 2*bleed   (inches)
+     bleed_in    -> bleed on each side (inches)
+     outer_in    -> outer/top/bottom safe margin (inches)
+     gutter_in   -> inner (spine-side) margin (inches)
+     serif_stack -> CSS font-family string (Georgia first, safe fallbacks)
+     book_css    -> absolute file:// path to book.css
+     marks       -> true to draw crop marks (proofing) / false for press
+   ============================================================================= #}
+<link rel="stylesheet" href="{{ book_css }}">
+
+<style>
+  /* --- Sizes injected from book.json so the whole book resizes from one place. */
+  :root {
+    --serif:  {{ serif_stack }};
+    --bleed:  {{ bleed_in }}in;
+    --outer:  {{ outer_in }}in;
+    --gutter: {{ gutter_in }}in;
+  }
+
+  /* The real printed sheet: trim + bleed on every side.
+     Crop marks are only drawn for internal proofs (marks=true); the press-ready
+     file we send to Lulu/Peecho has bleed baked into the page size and no marks. */
+  @page {
+    size: {{ page_w_in }}in {{ page_h_in }}in;
+    margin: {{ outer_in }}in;
+    {% if marks %}bleed: {{ bleed_in }}in; marks: crop cross;{% endif %}
+    background: #F4EDDB;   /* cream bleeds off every edge */
+  }
+</style>
+
+{# ---- TITLE PAGE ----------------------------------------------------------- #}
+<section class="title-page">
+  <div class="wordmark">{{ book.cover.wordmark | default("Retold") }}</div>
+  <h1>{{ book.cover.title }}</h1>
+  <hr class="rule">
+  <div class="subject-line">
+    The life &amp; words of {{ book.subject.name }}{% if book.subject.birth_year %}, born {{ book.subject.birth_year }}{% endif %}
+  </div>
+</section>
+
+{# ---- CHAPTERS ------------------------------------------------------------- #}
+{% for ch in book.chapters %}
+<section class="chapter">
+  <header class="chapter-header">
+    <span class="chapter-number">Chapter {{ ch.n }}</span>
+    <h2 class="chapter-title">{{ ch.title }}</h2>
+    <hr class="rule">
+  </header>
+
+  {% if ch.illustration_file %}
+  <figure class="illustration">
+    {# Painterly memory scene only — never a photoreal face (brand honesty rule). #}
+    <img src="{{ asset(ch.illustration_file) }}" alt="Illustration for chapter {{ ch.n }}">
+    {% if ch.photo_caption %}<figcaption class="photo-caption">{{ ch.photo_caption }}</figcaption>{% endif %}
+  </figure>
+  {% endif %}
+
+  <div class="prose">
+    {# Prose is the subject's own idiom. Split on blank lines into paragraphs. #}
+    {% for para in ch.prose.split('\n\n') if para.strip() %}
+    <p>{{ para.strip() }}</p>
+    {% endfor %}
+  </div>
+
+  {% if ch.pull_quote %}
+  <blockquote class="pull-quote">{{ ch.pull_quote }}</blockquote>
+  {% endif %}
+
+  {% if ch.qr_file %}
+  <aside class="voice-qr">
+    <div class="qr-img">{{ embed_qr(ch.qr_file) }}</div>
+    <div class="qr-copy">
+      <span class="kicker">Hear this chapter</span>
+      <strong>In {{ book.subject.name }}&rsquo;s own voice</strong><br>
+      <span>Scan to listen to the real recording.</span>
+    </div>
+  </aside>
+  {% endif %}
+</section>
+{% endfor %}
+
+{# ---- BACK MATTER: colophon + honesty statement --------------------------- #}
+<section class="colophon">
+  <h2>For the family</h2>
+  {% if book.grandchildren %}
+  <p>
+    Keepsake voice cards were made for
+    {% for g in book.grandchildren %}{{ g.name }}{% if not loop.last %}{% if loop.revindex0 == 1 %} &amp; {% else %}, {% endif %}{% endif %}{% endfor %}.
+    Each card scans straight to {{ book.subject.name }}&rsquo;s recordings.
+  </p>
+  {% endif %}
+  <p class="honesty">
+    Every word in this book is drawn from {{ book.subject.name }}&rsquo;s own
+    tellings, and every voice recording you hear is the real recording — only
+    trimmed, never imitated or synthesized.
+  </p>
+  <div class="wordmark">{{ book.cover.wordmark | default("Retold") }}</div>
+</section>

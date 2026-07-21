@@ -1,0 +1,1535 @@
+{
+  "name": "RETOLD — order → memory book pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retold/shopify/orders-paid",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "075d376c-706f-450f-9bd4-2333275d0330",
+      "name": "1 · Shopify orders/paid (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "notes": "Register this URL as a Shopify webhook for topic 'orders/paid'. Raw Body ON so the exact bytes are available for HMAC verification.",
+      "notesInFlow": true,
+      "webhookId": "retold-shopify-orders-paid"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// STAGE 2 — Verify the webhook really came from Shopify (HMAC-SHA256).\n// Mirrors integrations/shopify.py verify_webhook_hmac(). Reject fakes so no\n// money-spending run is ever triggered by a forged 'paid' order.\nconst crypto = require('crypto');\nconst item = items[0];\nconst secret = $env.SHOPIFY_WEBHOOK_SECRET;\nif (!secret) throw new Error('SHOPIFY_WEBHOOK_SECRET not set in environment.');\n\n// Raw body bytes captured by the Webhook node (rawBody = true).\nconst raw = item.binary && item.binary.data\n  ? Buffer.from(item.binary.data.data, 'base64')\n  : Buffer.from(JSON.stringify(item.json.body || item.json), 'utf8');\n\nconst headers = item.json.headers || {};\nconst sig = headers['x-shopify-hmac-sha256'] || headers['X-Shopify-Hmac-Sha256'] || '';\nconst digest = crypto.createHmac('sha256', secret).update(raw).digest('base64');\n\nconst a = Buffer.from(digest);\nconst b = Buffer.from(String(sig).trim());\nconst ok = a.length === b.length && crypto.timingSafeEqual(a, b);\nif (!ok) throw new Error('Shopify HMAC verification FAILED — rejecting webhook.');\n\n// Parse the verified order for downstream stages.\nlet order;\ntry { order = JSON.parse(raw.toString('utf8')); }\ncatch (e) { order = item.json.body || item.json; }\nreturn [{ json: { verified: true, shopifyOrder: order } }];\n"
+      },
+      "id": "42d16dc4-b6f1-42ca-bcb1-a9d31a5196a1",
+      "name": "2 · Verify HMAC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        540,
+        300
+      ],
+      "notes": "Constant-time HMAC check. Throws (stops the run) on any forged/tampered payload.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "ok"
+      },
+      "id": "aa8f377c-7e42-4469-9efc-3935815029c9",
+      "name": "2b · 200 OK to Shopify",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        540,
+        480
+      ],
+      "notes": "Acknowledge fast; the long pipeline continues asynchronously.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// STAGE 3 — Build the RETOLD order object from the Shopify order.\n// Mirrors integrations/shopify.py order_to_retold(). Decides book vs book_film\n// from line-item SKUs, and pulls intake props / note_attributes if present.\nconst so = items[0].json.shopifyOrder;\nconst li = so.line_items || [];\nconst skus = li.map(x => (x.sku || '').toLowerCase());\nconst isFilm = skus.some(s => s.includes('film'));\n\nconst props = {};\nfor (const item of li) for (const p of (item.properties || [])) if (p.name) props[p.name] = p.value;\nfor (const na of (so.note_attributes || [])) if (na.name) props[na.name] = na.value;\nconst first = (...keys) => { for (const k of keys) if (props[k]) return props[k]; return null; };\n\nlet by = first('birth_year', 'Birth year');\nby = by ? parseInt(by, 10) : null;\nlet gk = first('grandchildren', 'Grandchildren');\nif (typeof gk === 'string') gk = gk.split(',').map(s => s.trim()).filter(Boolean);\n\nconst order = {\n  order_id: String(so.id || so.order_id),\n  order_number: so.name,\n  sku: isFilm ? 'book_film' : 'book',\n  customer_email: so.email || (so.customer && so.customer.email) || '',\n  subject: {\n    name: first('subject_name', 'Name', 'Parent name') || '',\n    relation: first('relation', 'Relation') || '',\n    birth_year: Number.isFinite(by) ? by : null,\n  },\n  grandchildren: gk || [],\n  notes: first('notes', 'Notes') || '',\n  shipping_address: so.shipping_address || {},\n};\nreturn [{ json: { order } }];\n"
+      },
+      "id": "f7d64dd3-3d28-4236-8978-293c0bf1f896",
+      "name": "3 · Create order state",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        840,
+        300
+      ],
+      "notes": "Normalises the Shopify payload into RETOLD's order object (the seed for book.json).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'order_received', order_id: $json.order.order_id, subject_name: $json.order.subject.name }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $json.order.customer_email } } }, unique_id: $json.order.order_id + '-order_received' } } }) }}",
+        "options": {}
+      },
+      "id": "cb0d8969-d662-4893-80a5-17dbeefe4a6d",
+      "name": "4a · Klaviyo: order_received",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1140,
+        300
+      ],
+      "notes": "STAGE 4 — status email 'order received'. Fires the Klaviyo Flow keyed on metric 'RETOLD Status'.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'intake_sent', order_id: $json.order.order_id, subject_name: $json.order.subject.name, tally_url: ($env.TALLY_FORM_URL || 'https://tally.so/r/retold') + '?order_id=' + $json.order.order_id }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $json.order.customer_email } } }, unique_id: $json.order.order_id + '-intake_sent' } } }) }}",
+        "options": {}
+      },
+      "id": "9a13208a-a320-4ef6-879f-dc7a2b54ac65",
+      "name": "4b · Send Tally intake link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1440,
+        300
+      ],
+      "notes": "STAGE 4 — emails the family a personalised Tally intake link (photos, names, scheduling).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "id": "ed39451b-29ff-4129-96b5-b302b1867dde",
+      "name": "5 · Wait: intake + interview capture",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1740,
+        300
+      ],
+      "notes": "STAGE 5 — pauses until Tally/interview tooling POSTs back to this node's resume URL with the recording URL (field 'recording_url') + confirmed intake. This spans scheduling + the actual recorded interview.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'recording_received', order_id: $node['3 · Create order state'].json.order.order_id }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $node['3 · Create order state'].json.order.customer_email } } }, unique_id: $node['3 · Create order state'].json.order.order_id + '-recording_received' } } }) }}",
+        "options": {}
+      },
+      "id": "5940b7d7-8330-4b7b-bd8c-b9ab87ef157f",
+      "name": "6a · Klaviyo: recording_received",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2040,
+        300
+      ],
+      "notes": "STAGE 6 — status 'we have the recording'.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $node['5 · Wait: intake + interview capture'].json.body.recording_url || $node['5 · Wait: intake + interview capture'].json.recording_url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "id": "fae892c0-cbfa-4fd5-a93a-4878790e0a87",
+      "name": "6b · Download recording",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2340,
+        300
+      ],
+      "notes": "Fetches the raw interview audio as a binary file for upload to R2 + AssemblyAI.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $env.R2_PUBLIC_BASE }}/{{ $node['3 · Create order state'].json.order.order_id }}/audio/master.wav",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CF_R2_ACCESS_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "audio/wav"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "7d5d752b-3b82-4268-b65e-0b74248d1eb2",
+      "name": "6c · Store master in R2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2640,
+        300
+      ],
+      "notes": "STAGE 6 — persists the ORIGINAL voice master to R2 (audio/master.wav). This is the ONLY voice we ever use — trimmed later, never cloned. Swap for the n8n 'S3' node against your R2 endpoint if you prefer credentialed auth.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.assemblyai.com/v2/upload",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "={{$env.ASSEMBLYAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "4039bc3c-e432-4cba-83a7-b00a89d1390e",
+      "name": "7a · AssemblyAI upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2940,
+        300
+      ],
+      "notes": "STAGE 7 — uploads the audio to AssemblyAI, returns an upload_url.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.assemblyai.com/v2/transcript",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "={{$env.ASSEMBLYAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ audio_url: $json.upload_url, speaker_labels: true, punctuate: true, format_text: true }) }}",
+        "options": {}
+      },
+      "id": "912d96fb-ef24-4fa1-97d0-2fb49218c3c6",
+      "name": "7b · AssemblyAI transcribe",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3240,
+        300
+      ],
+      "notes": "Requests a diarized transcript with speaker labels + word timings.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "78ac85e7-157e-443c-a161-780061cf7879",
+      "name": "7c · Wait 60s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        3540,
+        300
+      ],
+      "notes": "Give AssemblyAI time before polling.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.assemblyai.com/v2/transcript/{{ $node['7b · AssemblyAI transcribe'].json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "={{$env.ASSEMBLYAI_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c909e1e8-c7cf-44ed-b483-836d6ef7c082",
+      "name": "7d · AssemblyAI poll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        3840,
+        300
+      ],
+      "notes": "Poll transcript status.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "fa157517-a9ea-43f2-92ea-fa679208c7c7",
+      "name": "7e · Transcript done?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4140,
+        300
+      ],
+      "notes": "If not yet completed, loop back to the 60s wait.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "command": "cd /home/user/sculps-store/retold-automation && mkdir -p out/{{ $node['3 · Create order state'].json.order.order_id }} && cat > out/{{ $node['3 · Create order state'].json.order.order_id }}/order.json <<'RETOLD_ORDER_JSON'\n{{ JSON.stringify($node['3 · Create order state'].json.order) }}\nRETOLD_ORDER_JSON\ncat > out/{{ $node['3 · Create order state'].json.order.order_id }}/transcript.json <<'RETOLD_TX_JSON'\n{{ JSON.stringify($node['7d · AssemblyAI poll'].json) }}\nRETOLD_TX_JSON\npython engine/produce.py --order out/{{ $node['3 · Create order state'].json.order.order_id }}/order.json --out out/{{ $node['3 · Create order state'].json.order.order_id }}/"
+      },
+      "id": "23f510ef-b1de-40e6-b724-71938d39af1a",
+      "name": "8 · Run engine (produce.py)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        4440,
+        300
+      ],
+      "notes": "STAGE 8 — writes order.json (+ transcript.json as a handoff drop-off in the order folder), then runs the RETOLD engine. Produces book.json, interior.pdf, cover.pdf, audio clips, illustrations, QR codes, voice_page.json under out/<order_id>/. Add --mock for a keyless dry run. The engine performs its own honesty QC pass.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "command": "cd /home/user/sculps-store/retold-automation && echo '{\"book\":' && cat out/{{ $node['3 · Create order state'].json.order.order_id }}/book.json && echo ',\"voice_page\":' && cat out/{{ $node['3 · Create order state'].json.order.order_id }}/voice_page.json && echo '}'"
+      },
+      "id": "d11cf47a-f8c1-42b3-8b98-78e8a2137122",
+      "name": "8b · Load book.json",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        4740,
+        300
+      ],
+      "notes": "Emit book.json + voice_page.json on stdout for downstream stages.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the engine's book.json + voice_page.json from stdout.\nconst out = items[0].json.stdout || items[0].json;\nconst parsed = typeof out === 'string' ? JSON.parse(out) : out;\nreturn [{ json: parsed }];"
+      },
+      "id": "c25cf464-f808-4f4e-a8f7-268aa7cc6bc0",
+      "name": "8c · Parse book",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        5040,
+        300
+      ],
+      "notes": "Now $json.book and $json.voice_page are available to all following nodes.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'book_drafted', order_id: $json.book.order_id, subject_name: $json.book.subject.name }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $node['3 · Create order state'].json.order.customer_email } } }, unique_id: $json.book.order_id + '-book_drafted' } } }) }}",
+        "options": {}
+      },
+      "id": "7eadffe6-fc76-4bfa-ab56-2ef7e124be7d",
+      "name": "8d · Klaviyo: book_drafted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5340,
+        300
+      ],
+      "notes": "STAGE 8 — status 'first draft written'.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'proof_ready', order_id: $json.book.order_id, proof_url: $env.R2_PUBLIC_BASE + '/' + $json.book.order_id + '/interior.pdf' }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $node['3 · Create order state'].json.order.customer_email } } }, unique_id: $json.book.order_id + '-proof_ready' } } }) }}",
+        "options": {}
+      },
+      "id": "c96c73bf-15cc-4c76-a813-c3c666d451f0",
+      "name": "9a · Klaviyo: proof_ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        5640,
+        300
+      ],
+      "notes": "STAGE 9 — emails the family a link to review the proof PDF.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "id": "4c309c21-a239-4bb0-b5b4-23b622a90b36",
+      "name": "9b · Human proof gate (approval)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        5940,
+        300
+      ],
+      "notes": "STAGE 9 — HARD STOP. Pauses until a human (owner or the family) POSTs approval to the resume URL, e.g. { approved: true }. Nothing is printed or charged before this. Honors the credit-spending rule.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.approved !== undefined ? $json.body.approved : $json.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "bdb58cc2-e6f9-42b6-a028-741eeb658e09",
+      "name": "9c · Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        300
+      ],
+      "notes": "True -> proceed to print/provision. False -> back to the engine for revisions (re-run with proof notes).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'proof_approved', order_id: $node['8c · Parse book'].json.book.order_id }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $node['3 · Create order state'].json.order.customer_email } } }, unique_id: $node['8c · Parse book'].json.book.order_id + '-proof_approved' } } }) }}",
+        "options": {}
+      },
+      "id": "60be9948-b030-4c39-b21d-94e9bdd81011",
+      "name": "9d · Klaviyo: proof_approved",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        6540,
+        300
+      ],
+      "notes": "STAGE 9 — status 'proof approved, off to print'.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.LULU_SANDBOX === 'false' ? 'https://api.lulu.com' : 'https://api.sandbox.lulu.com') }}/auth/realms/glasstree/protocol/openid-connect/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($env.LULU_CLIENT_KEY + ':' + $env.LULU_CLIENT_SECRET).toString('base64') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "433437d0-066d-4ce5-9767-c955cff65501",
+      "name": "10a · Lulu OAuth token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        6840,
+        300
+      ],
+      "notes": "STAGE 10 — client-credentials login. Mirrors integrations/lulu.get_access_token().",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.LULU_SANDBOX === 'false' ? 'https://api.lulu.com' : 'https://api.sandbox.lulu.com') }}/print-jobs/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const book = $node['8c · Parse book'].json.book; const order = $node['3 · Create order state'].json.order; const base = $env.R2_PUBLIC_BASE + '/' + book.order_id; const addr = order.shipping_address || {}; return JSON.stringify({ external_id: 'retold-' + book.order_id, contact_email: $env.LULU_CONTACT_EMAIL || 'orders@retold.family', line_items: [{ external_id: 'retold-' + book.order_id + '-book', title: (book.cover && book.cover.title) || ('RETOLD ' + book.order_id), page_count: (book.print && book.print.page_count) || 60, pod_package_id: $env.LULU_POD_PACKAGE_ID || '0850X0850FCPRECW080CW444GXX', quantity: 1, printable_normalization: { cover: { source_url: base + '/cover.pdf' }, interior: { source_url: base + '/interior.pdf' } } }], shipping_address: { name: addr.name || ((addr.first_name||'') + ' ' + (addr.last_name||'')).trim(), street1: addr.address1 || '', street2: addr.address2 || '', city: addr.city || '', state_code: addr.province_code || addr.province || '', postcode: addr.zip || '', country_code: addr.country_code || addr.country || '', phone_number: addr.phone || '0000000000' }, shipping_level: $env.LULU_SHIPPING_LEVEL || 'MAIL' }); })() }}",
+        "options": {}
+      },
+      "id": "070b02f9-4882-4613-8eae-57dbf62b471f",
+      "name": "10b · Lulu create print job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        7140,
+        300
+      ],
+      "notes": "STAGE 10 — submits interior.pdf + cover.pdf (public R2 URLs) with trim/spine via the POD package. Mirrors integrations/lulu.create_print_job(). external_id makes retries idempotent.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'printing', order_id: $node['8c · Parse book'].json.book.order_id, lulu_job_id: $json.id }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $node['3 · Create order state'].json.order.customer_email } } }, unique_id: $node['8c · Parse book'].json.book.order_id + '-printing' } } }) }}",
+        "options": {}
+      },
+      "id": "8069ae35-f803-409b-b615-dbfb587c11ed",
+      "name": "10c · Klaviyo: printing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        7440,
+        300
+      ],
+      "notes": "STAGE 10 — status 'your book is being printed'.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ (['test','sandbox','stage'].includes(($env.PEECHO_ENV||'live').toLowerCase()) ? 'https://test.print-api.com/v2' : 'https://www.print-api.com/v2') }}/orders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($env.PEECHO_API_KEY + ':').toString('base64') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const book = $node['8c · Parse book'].json.book; const order = $node['3 · Create order state'].json.order; const base = $env.R2_PUBLIC_BASE + '/' + book.order_id; const addr = order.shipping_address || {}; const items = (book.grandchildren||[]).filter(g=>g.card_file).map(g=>({ offeringId: $env.PEECHO_OFFERING_ID || 'greeting-card-square', quantity: 1, title: 'RETOLD voice card — ' + g.name, files: { content: base + '/' + g.card_file.replace(/^\\//,'') }, metadata: { grandchild: g.name } })); return JSON.stringify({ merchantOrderId: 'retold-' + book.order_id + '-cards', email: order.customer_email, items: items, recipient: { name: addr.name || ((addr.first_name||'')+' '+(addr.last_name||'')).trim(), address: addr.address1||'', city: addr.city||'', zipCode: addr.zip||'', country: addr.country_code||addr.country||'' }, environment: $env.PEECHO_ENV || 'live' }); })() }}",
+        "options": {}
+      },
+      "id": "5cb0c073-e008-48d8-9671-81faa81f4342",
+      "name": "11 · Peecho grandchild cards",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        7740,
+        300
+      ],
+      "notes": "STAGE 11 — prints one personalised voice card per grandchild (each with its own ?from= QR). Mirrors integrations/peecho.create_card_order(). Empty grandchildren list -> empty items (no-op).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.RETOLD_DOMAIN }}/provision",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.WORKER_PROVISION_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($node['8c · Parse book'].json.voice_page) }}",
+        "options": {}
+      },
+      "id": "6b1c6e20-9dcf-42ab-a970-26a366578db8",
+      "name": "12 · Provision voice page (worker)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        8040,
+        300
+      ],
+      "notes": "STAGE 12 — POSTs voice_page.json to the Cloudflare Worker so retold.family/f/<token> goes live with the real-voice clips + grandchild links.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $node['8c · Parse book'].json.book.sku }}",
+              "rightValue": "book_film",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "e480fb3d-c209-4c7e-b9de-833b2d57a5bb",
+      "name": "13a · Is book_film?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        8340,
+        300
+      ],
+      "notes": "STAGE 13 — only the book_film SKU gets a memory film.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "command": "cd /home/user/sculps-store/retold-automation && python -c \"import json,sys; sys.path.insert(0,'.'); from integrations import shotstack; book=json.load(open('out/{{ $node['8c · Parse book'].json.book.order_id }}/book.json')); print(json.dumps(shotstack.render_film(book)))\""
+      },
+      "id": "71a401cc-1c50-42f4-b0bd-61009eb02f0d",
+      "name": "13b · Shotstack render film",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        8640,
+        180
+      ],
+      "notes": "STAGE 13 — builds the edit from film/shotstack_template.json (real voice clips + Ken-Burns illustrations + word captions) and submits to Shotstack. Mirrors integrations/shotstack.render_film().",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'film_ready', order_id: $node['8c · Parse book'].json.book.order_id }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $node['3 · Create order state'].json.order.customer_email } } }, unique_id: $node['8c · Parse book'].json.book.order_id + '-film_ready' } } }) }}",
+        "options": {}
+      },
+      "id": "74423e64-4d2c-4c0f-bea7-40f1cce70662",
+      "name": "13c · Klaviyo: film_ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        8940,
+        180
+      ],
+      "notes": "STAGE 13 — status 'your memory film is ready'.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "chooseBranchMode": "waitForAll",
+        "output": "input1"
+      },
+      "id": "a165d5b5-70b6-4895-9cfb-0544e5638005",
+      "name": "14 · Merge (film + no-film)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        9240,
+        300
+      ],
+      "notes": "STAGE 14 — rejoin both paths so fulfillment runs exactly once.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "amount": 24,
+        "unit": "hours"
+      },
+      "id": "bec3bd07-7c9b-4f34-851b-b47bb896b778",
+      "name": "15 · Wait for print/ship (24h)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        9540,
+        300
+      ],
+      "notes": "STAGE 15 — printing + shipping takes days; poll Lulu daily. In production, drive this from Lulu's webhook instead for instant tracking.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.LULU_SANDBOX === 'false' ? 'https://api.lulu.com' : 'https://api.sandbox.lulu.com') }}/auth/realms/glasstree/protocol/openid-connect/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($env.LULU_CLIENT_KEY + ':' + $env.LULU_CLIENT_SECRET).toString('base64') }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4608c1e-2094-4bce-8091-85095500395b",
+      "name": "16a · Lulu OAuth (poll)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        9840,
+        300
+      ],
+      "notes": "Fresh token to poll job status.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ ($env.LULU_SANDBOX === 'false' ? 'https://api.lulu.com' : 'https://api.sandbox.lulu.com') }}/print-jobs/{{ $node['10b · Lulu create print job'].json.id }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "94226a1a-cbe2-43e0-a6f7-f6bbf6855c9e",
+      "name": "16b · Lulu job status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        10140,
+        300
+      ],
+      "notes": "STAGE 16 — read status + tracking. Mirrors integrations/lulu.extract_tracking().",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status && $json.status.name }}",
+              "rightValue": "SHIPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "896006a0-5853-45fc-8013-ea1e0586c794",
+      "name": "16c · Shipped?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        10440,
+        300
+      ],
+      "notes": "Not shipped yet -> wait another day.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://{{ $env.SHOPIFY_STORE }}/admin/api/2024-07/orders/{{ $node['3 · Create order state'].json.order.order_id }}/fulfillment_orders.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Shopify-Access-Token",
+              "value": "={{$env.SHOPIFY_ADMIN_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6487534d-1423-422e-9a06-33988f80a82d",
+      "name": "17a · Shopify fulfillment orders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        10740,
+        300
+      ],
+      "notes": "STAGE 17 — fetch open fulfillment orders to fulfil. Mirrors integrations/shopify.mark_fulfilled().",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.SHOPIFY_STORE }}/admin/api/2024-07/fulfillments.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Shopify-Access-Token",
+              "value": "={{$env.SHOPIFY_ADMIN_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => { const fos = ($json.fulfillment_orders||[]).filter(f=>['open','in_progress','scheduled'].includes(f.status)).map(f=>({ fulfillment_order_id: f.id })); const t = $node['16b · Lulu job status'].json; let track=null; for (const li of (t.line_items||[])) { if (li.tracking_id||li.tracking_number) { track={ number: li.tracking_id||li.tracking_number, url: (li.tracking_urls&&li.tracking_urls[0])||li.tracking_url, company: li.carrier_name||'Lulu' }; break; } } const f = { notify_customer: true, line_items_by_fulfillment_order: fos }; if (track) f.tracking_info = track; return JSON.stringify({ fulfillment: f }); })() }}",
+        "options": {}
+      },
+      "id": "47dc898d-2646-4a59-a717-1e3efc73c6d1",
+      "name": "17b · Shopify mark fulfilled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        11040,
+        300
+      ],
+      "notes": "STAGE 17 — creates the fulfillment with tracking; notify_customer=true fires Shopify's shipping-confirmation email.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/events/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Klaviyo-API-Key {{$env.KLAVIYO_API_KEY}}"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'shipped', order_id: $node['8c · Parse book'].json.book.order_id, tracking_url: (() => { const t=$node['16b · Lulu job status'].json; for (const li of (t.line_items||[])) { if (li.tracking_urls&&li.tracking_urls[0]) return li.tracking_urls[0]; } return null; })() }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $node['3 · Create order state'].json.order.customer_email } } }, unique_id: $node['8c · Parse book'].json.book.order_id + '-shipped' } } }) }}",
+        "options": {}
+      },
+      "id": "8bf041db-6a2a-45ef-b117-befbdf2a13ee",
+      "name": "18 · Klaviyo: shipped",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        11340,
+        300
+      ],
+      "notes": "STAGE 18 — final status 'on its way'. Pipeline complete.",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "1 · Shopify orders/paid (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "2 · Verify HMAC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2 · Verify HMAC": {
+      "main": [
+        [
+          {
+            "node": "2b · 200 OK to Shopify",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3 · Create order state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 · Create order state": {
+      "main": [
+        [
+          {
+            "node": "4a · Klaviyo: order_received",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4a · Klaviyo: order_received": {
+      "main": [
+        [
+          {
+            "node": "4b · Send Tally intake link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4b · Send Tally intake link": {
+      "main": [
+        [
+          {
+            "node": "5 · Wait: intake + interview capture",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 · Wait: intake + interview capture": {
+      "main": [
+        [
+          {
+            "node": "6a · Klaviyo: recording_received",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6a · Klaviyo: recording_received": {
+      "main": [
+        [
+          {
+            "node": "6b · Download recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6b · Download recording": {
+      "main": [
+        [
+          {
+            "node": "6c · Store master in R2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6c · Store master in R2": {
+      "main": [
+        [
+          {
+            "node": "7a · AssemblyAI upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7a · AssemblyAI upload": {
+      "main": [
+        [
+          {
+            "node": "7b · AssemblyAI transcribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7b · AssemblyAI transcribe": {
+      "main": [
+        [
+          {
+            "node": "7c · Wait 60s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7c · Wait 60s": {
+      "main": [
+        [
+          {
+            "node": "7d · AssemblyAI poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7d · AssemblyAI poll": {
+      "main": [
+        [
+          {
+            "node": "7e · Transcript done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7e · Transcript done?": {
+      "main": [
+        [
+          {
+            "node": "8 · Run engine (produce.py)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "7c · Wait 60s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8 · Run engine (produce.py)": {
+      "main": [
+        [
+          {
+            "node": "8b · Load book.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8b · Load book.json": {
+      "main": [
+        [
+          {
+            "node": "8c · Parse book",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8c · Parse book": {
+      "main": [
+        [
+          {
+            "node": "8d · Klaviyo: book_drafted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8d · Klaviyo: book_drafted": {
+      "main": [
+        [
+          {
+            "node": "9a · Klaviyo: proof_ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9a · Klaviyo: proof_ready": {
+      "main": [
+        [
+          {
+            "node": "9b · Human proof gate (approval)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9b · Human proof gate (approval)": {
+      "main": [
+        [
+          {
+            "node": "9c · Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9c · Approved?": {
+      "main": [
+        [
+          {
+            "node": "9d · Klaviyo: proof_approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "8 · Run engine (produce.py)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9d · Klaviyo: proof_approved": {
+      "main": [
+        [
+          {
+            "node": "10a · Lulu OAuth token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10a · Lulu OAuth token": {
+      "main": [
+        [
+          {
+            "node": "10b · Lulu create print job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10b · Lulu create print job": {
+      "main": [
+        [
+          {
+            "node": "10c · Klaviyo: printing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10c · Klaviyo: printing": {
+      "main": [
+        [
+          {
+            "node": "11 · Peecho grandchild cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11 · Peecho grandchild cards": {
+      "main": [
+        [
+          {
+            "node": "12 · Provision voice page (worker)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12 · Provision voice page (worker)": {
+      "main": [
+        [
+          {
+            "node": "13a · Is book_film?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "13a · Is book_film?": {
+      "main": [
+        [
+          {
+            "node": "13b · Shotstack render film",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "14 · Merge (film + no-film)",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "13b · Shotstack render film": {
+      "main": [
+        [
+          {
+            "node": "13c · Klaviyo: film_ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "13c · Klaviyo: film_ready": {
+      "main": [
+        [
+          {
+            "node": "14 · Merge (film + no-film)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "14 · Merge (film + no-film)": {
+      "main": [
+        [
+          {
+            "node": "15 · Wait for print/ship (24h)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "15 · Wait for print/ship (24h)": {
+      "main": [
+        [
+          {
+            "node": "16a · Lulu OAuth (poll)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16a · Lulu OAuth (poll)": {
+      "main": [
+        [
+          {
+            "node": "16b · Lulu job status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16b · Lulu job status": {
+      "main": [
+        [
+          {
+            "node": "16c · Shipped?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16c · Shipped?": {
+      "main": [
+        [
+          {
+            "node": "17a · Shopify fulfillment orders",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "15 · Wait for print/ship (24h)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "17a · Shopify fulfillment orders": {
+      "main": [
+        [
+          {
+            "node": "17b · Shopify mark fulfilled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "17b · Shopify mark fulfilled": {
+      "main": [
+        [
+          {
+            "node": "18 · Klaviyo: shipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": [
+    {
+      "name": "retold"
+    }
+  ],
+  "meta": {
+    "templateId": "retold-pipeline"
+  },
+  "pinData": {}
+}

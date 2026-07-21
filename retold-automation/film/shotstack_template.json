@@ -1,0 +1,42 @@
+{
+  "_comment": "RETOLD memory-film template for Shotstack. integrations/shotstack.py loads this, then fills timeline.tracks with per-chapter Ken-Burns illustration clips, real-voice audio clips, and word-for-word captions built from book.json. A non-technical owner can safely tweak look-and-feel here (background colour, output resolution, fonts in the caption HTML) without touching Python. HONESTY: the only audio ever placed on the timeline is the parent's REAL trimmed voice clip files plus an optional soft licensed music bed — voices are never cloned or synthesized.",
+  "timeline": {
+    "background": "#1F4934",
+    "fonts": [
+      {
+        "src": "https://templates.shotstack.io/basic/asset/font/georgia.ttf"
+      }
+    ],
+    "soundtrack": {
+      "_comment": "Optional. shotstack.py overrides src with env MUSIC_URL (licensed bed) at low volume, far under the real voice. Remove if you want voice only.",
+      "src": "",
+      "effect": "fadeInFadeOut",
+      "volume": 0.12
+    },
+    "tracks": [
+      {
+        "_comment": "Track 0 (captions) — filled at build time with the parent's own words, one per chapter.",
+        "clips": []
+      },
+      {
+        "_comment": "Track 1 (brand) — filled at build time with the opening RETOLD title card and any lower-thirds.",
+        "clips": []
+      },
+      {
+        "_comment": "Track 2 (imagery) — filled at build time with Ken-Burns pans across the book's painterly illustrations (never photoreal faces).",
+        "clips": []
+      },
+      {
+        "_comment": "Track 3 (voice) — filled at build time with the REAL trimmed voice clips, sequential and gapless.",
+        "clips": []
+      }
+    ]
+  },
+  "output": {
+    "format": "mp4",
+    "resolution": "hd",
+    "fps": 25,
+    "quality": "medium",
+    "_comment": "hd = 720p, matching the economy default (720p for feed). Bump to '1080' for a premium keepsake export."
+  }
+}

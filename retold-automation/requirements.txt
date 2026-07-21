@@ -1,0 +1,47 @@
+# =============================================================================
+# RETOLD — Python dependencies (merged: engine + PDF templates + integrations)
+# =============================================================================
+# Install once, from the repo root:
+#     pip install -r requirements.txt
+#
+# GOOD NEWS: `make test-mock` (python engine/produce.py ... --mock) runs the
+# WHOLE pipeline end-to-end even if some of these are missing — the engine
+# degrades to pure-Python placeholders (plain-proof PDF, WAV audio slices,
+# placeholder QR) so you can smoke-test with ZERO API keys. Install everything
+# below for the full-quality, LIVE output.
+# =============================================================================
+
+# --- Engine: the Claude writing chain + honesty QC (write_book.py) -----------
+anthropic>=0.39,<1.0
+
+# --- Engine + integrations: HTTP calls (AssemblyAI, fal.ai, fallback clients) -
+requests>=2.31
+
+# --- Engine: gold QR SVGs for chapters + grandchild cards (voicecode.py) ------
+segno>=1.6
+
+# --- Engine: nicer painterly placeholder illustrations in --mock (illustrate) -
+Pillow>=10.0
+
+# --- Templates (Component 2): the real press-ready interior.pdf + cover.pdf ---
+# WeasyPrint renders the beautiful RETOLD book from book.json. If it is NOT
+# installed, the engine automatically falls back to its built-in proof PDF, so
+# a --mock run still finishes. WeasyPrint needs a few system libraries too —
+# see the README "One-time setup" (Pango/Cairo/GDK-PixBuf via your OS packages).
+weasyprint>=60
+jinja2>=3.1
+markupsafe>=2.1
+
+# --- Templates: build the bundled offline sample (render_pdf.py, no engine) ---
+qrcode>=7.4
+
+# =============================================================================
+# NOT Python packages — install separately (see README):
+#   ffmpeg   -> system binary (brew install ffmpeg / apt-get install ffmpeg).
+#               Cuts each chapter's REAL voice clip to MP3. If absent, the engine
+#               writes a WAV slice at the .mp3 path so the pipeline still runs.
+#   Node.js  -> only for the Cloudflare Worker (worker/) — see worker/README.md.
+#
+# The integrations (Shopify / Lulu / Peecho / Shotstack / Klaviyo) are written
+# with the Python standard library only (urllib), so they add NO dependencies.
+# =============================================================================

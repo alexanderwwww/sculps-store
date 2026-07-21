@@ -1,0 +1,57 @@
+# =============================================================================
+# RETOLD — Family Voice-Page Worker : Cloudflare configuration
+# =============================================================================
+# This file tells Cloudflare how to run our little voice-page program and which
+# storage it can touch. You (the owner) mostly don't edit this — the README walks
+# you through the two or three IDs you need to paste in once.
+#
+# After editing, deploy with:   npx wrangler deploy
+# =============================================================================
+
+name = "retold-voice-page"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# A plain, human-readable variable available inside the Worker as env.RETOLD_DOMAIN.
+# (Non-secret, so it lives here rather than in a secret.)
+[vars]
+RETOLD_DOMAIN = "retold.family"
+
+# -----------------------------------------------------------------------------
+# R2 — the private storage bucket that holds each chapter's audio clip.
+# The Worker streams clips straight from here (never makes the bucket public).
+# In code this is available as  env.CF_R2_BUCKET
+#
+#   binding      = the name the code uses (leave as CF_R2_BUCKET).
+#   bucket_name  = your real bucket's name (must match your .env CF_R2_BUCKET).
+# -----------------------------------------------------------------------------
+[[r2_buckets]]
+binding = "CF_R2_BUCKET"
+bucket_name = "retold-family"          # <-- change if your bucket is named differently
+
+# -----------------------------------------------------------------------------
+# KV — the tiny database that remembers each family's page (token -> chapters).
+# In code this is available as  env.FAMILIES
+# Create it once with:  npx wrangler kv namespace create FAMILIES
+# then paste the printed id below.
+# -----------------------------------------------------------------------------
+[[kv_namespaces]]
+binding = "FAMILIES"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+
+# -----------------------------------------------------------------------------
+# Custom domain routing — makes the printed URL https://retold.family/f/... work.
+# Requires retold.family to be a zone on your Cloudflare account.
+# You can also set this in the dashboard (Workers & Pages -> your worker ->
+# Settings -> Domains & Routes) instead of here; see README.
+# -----------------------------------------------------------------------------
+# [[routes]]
+# pattern = "retold.family/f/*"
+# zone_name = "retold.family"
+#
+# [[routes]]
+# pattern = "retold.family/provision"
+# zone_name = "retold.family"
+
+[observability]
+enabled = true

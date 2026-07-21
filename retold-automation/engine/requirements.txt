@@ -1,0 +1,16 @@
+# RETOLD production engine — Python dependencies.
+#
+# NOTE: `python engine/produce.py --mock` runs end-to-end with NONE of these
+# strictly required (the engine degrades to pure-stdlib placeholders). Install
+# them for LIVE runs and nicer proof output.
+
+anthropic>=0.39,<1.0     # write_book.py — Claude prompt chain + honesty QC
+requests>=2.31           # transcribe.py (AssemblyAI) + illustrate.py (fal.ai)
+segno>=1.6               # voicecode.py — gold QR SVGs (chapter + grandchild cards)
+Pillow>=10.0             # illustrate.py — nicer placeholder PNGs in --mock
+
+# Optional / used by the real (non-mock) paths and other components:
+#   ffmpeg  -> system binary (apt-get install ffmpeg) for real MP3 clip cutting.
+#              If absent, voicecode.py falls back to pure-Python WAV slices.
+#   The beautiful interior/cover PDFs are rendered by ../templates when present;
+#   otherwise engine/pdf_fallback.py renders a legible pure-Python proof copy.

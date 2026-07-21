@@ -1,0 +1,143 @@
+/* ============================================================================
+   RETOLD — COVER PDF STYLESHEET  (full wrap: BACK | SPINE | FRONT)
+   ----------------------------------------------------------------------------
+   A print-on-demand cover is ONE flat sheet that wraps around the whole book.
+   Reading left to right on that flat sheet you get:
+
+        +-----------------+---+-----------------+
+        |   BACK COVER    | S |   FRONT COVER   |
+        |                 | P |                 |
+        |   (blurb, QR)   | I |  (title, name)  |
+        |                 | N |                 |
+        +-----------------+---+-----------------+
+          <-- trim -->     spine   <-- trim -->
+        <----------------- total width --------->
+
+   TOTAL WIDTH  = bleed + trim(back) + spine + trim(front) + bleed
+   TOTAL HEIGHT = bleed + trim + bleed
+   SPINE WIDTH  = computed from the interior page count (Lulu's formula).
+
+   All real sizes are injected by render_pdf.py (compute_spine_width + book.json),
+   so this file only positions the three panels and styles the artwork.
+   ============================================================================ */
+
+:root {
+  --cream:  #F4EDDB;
+  --forest: #1F4934;
+  --gold:   #C7A44B;
+  --ink:    #2C2A24;
+}
+
+html, body { margin: 0; padding: 0; height: 100%; }
+
+/* The whole wrap is one page; its size is set inline in cover.html. */
+@page { margin: 0; }
+
+/* position:fixed pins the wrap to the full page box so it actually fills the
+   sheet (a plain height:100% collapses to zero in paged media). */
+.wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--forest);   /* forest-green wrap; front art sits on top */
+  color: var(--cream);
+  font-family: var(--serif);
+  overflow: hidden;
+}
+
+/* Thin gold keyline framing the whole cover, inset to the SAFE area so it is
+   never cut off. Its inset equals bleed + a little breathing room. */
+.safe-frame {
+  position: absolute;
+  border: 1.2pt solid var(--gold);
+  pointer-events: none;
+}
+
+/* ---- PANELS: positioned absolutely by inch offsets from cover.html -------- */
+.panel { position: absolute; top: 0; height: 100%; box-sizing: border-box; }
+
+/* FRONT COVER (right panel) */
+.front {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.front .wordmark {
+  font-variant: small-caps;
+  letter-spacing: 0.4em;
+  color: var(--gold);
+  font-size: 15pt;
+  margin-bottom: 1.4in;
+}
+.front h1 {
+  font-weight: normal;
+  font-size: 40pt;
+  line-height: 1.12;
+  margin: 0 0 0.35in 0;
+  max-width: 6in;
+  color: var(--cream);
+}
+.front .rule {
+  width: 1.8in;
+  border: none;
+  border-top: 1.5pt solid var(--gold);
+  margin: 0.35in 0;
+}
+.front .subject {
+  font-style: italic;
+  font-size: 15pt;
+  color: #E9E0C6;
+}
+
+/* SPINE (centre panel) — text reads bottom-to-top, standard for shelves. */
+.spine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 0.75pt solid rgba(199,164,75,0.5);
+  border-right: 0.75pt solid rgba(199,164,75,0.5);
+}
+.spine .spine-text {
+  transform: rotate(-90deg);
+  white-space: nowrap;
+  font-size: 12pt;
+  letter-spacing: 0.06em;
+  color: var(--cream);
+}
+.spine .spine-text .dot { color: var(--gold); padding: 0 0.5em; }
+
+/* BACK COVER (left panel) */
+.back {
+  padding: 1in 0.9in;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.back .blurb {
+  font-size: 12pt;
+  line-height: 1.6;
+  color: #EDE4CB;
+  max-width: 5in;
+}
+.back .blurb .lede {
+  font-size: 15pt;
+  font-style: italic;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 0.25in;
+}
+.back .foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.4in;
+}
+.back .foot .wordmark {
+  font-variant: small-caps;
+  letter-spacing: 0.3em;
+  color: var(--gold);
+  font-size: 11pt;
+}
+.back .back-qr { width: 0.85in; height: 0.85in; background: var(--cream); padding: 0.06in; border-radius: 2pt; }
+.back .back-qr svg, .back .back-qr img { width: 100%; height: 100%; display: block; }

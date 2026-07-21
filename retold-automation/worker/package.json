@@ -1,0 +1,17 @@
+{
+  "name": "retold-voice-page",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RETOLD family voice-page Worker: serves each family's private per-chapter audio page and streams the parent's real recorded voice from R2 (zero-egress). Provisions unguessable, stable tokens for printed QR codes.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "kv:create": "wrangler kv namespace create FAMILIES"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
