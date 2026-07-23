@@ -4,9 +4,15 @@
   "subject": {
     "name": "Rosa",
     "relation": "grandmother",
-    "birth_year": 1941
+    "birth_year": 1941,
+    "phone": "+14155550123"
   },
+  "buyer": {
+    "name": "Mia",
+    "email": "mia@example.com"
+  },
+  "consent_to_record": true,
   "grandchildren": ["Mia", "Luca", "Sofia"],
   "interview_audio": "sample_master.wav",
-  "notes": "Recorded over two afternoons at Rosa's kitchen table. She speaks English with an Italian accent; interviewer is her granddaughter Mia."
+  "notes": "Fully automated: the RETOLD AI interviewer calls Rosa on +14155550123 over a few short sessions. She speaks English with an Italian accent. Consent to record confirmed by the buyer at intake."
 }

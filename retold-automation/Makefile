@@ -16,12 +16,15 @@ PY ?= $(shell command -v python3 >/dev/null 2>&1 && echo python3 || echo python)
 ORDER ?= samples/sample_order.json
 OUT   ?= out/1001
 
-.PHONY: help setup test-mock produce clean
+.PHONY: help setup test-mock interview all produce clean
 
 help:
 	@echo "RETOLD — available commands:"
 	@echo "  make setup       Install Python deps and create your .env from the template."
 	@echo "  make test-mock   Build a full SAMPLE book with no API keys (writes out/test/)."
+	@echo "  make interview   AI-call the parent for one order -> master.wav + enriched order."
+	@echo "  make all         Full chain: AI interview THEN build the book. Example:"
+	@echo "                     make all ORDER=samples/sample_order.json OUT=out/1001 MOCK=--mock"
 	@echo "  make produce     Build a real order. Example:"
 	@echo "                     make produce ORDER=samples/sample_order.json OUT=out/1001"
 	@echo "  make clean       Delete the generated out/ folder."
@@ -46,6 +49,17 @@ test-mock:
 	@echo "  out/test/interior.pdf   (the book pages)"
 	@echo "  out/test/cover.pdf      (the wrap cover)"
 	@echo "  out/test/book.json      (the master data object)"
+
+# --- AI interview: phone the parent, assemble master.wav ---------------------
+# Add MOCK=--mock to fake the calls (no account, no phone).
+interview:
+	$(PY) interview/orchestrate.py --order $(ORDER) --out $(OUT) $(MOCK)
+
+# --- Full chain: AI interview THEN build the book ----------------------------
+# The interviewer writes out/<id>/order.enriched.json, which the engine consumes.
+all:
+	$(PY) interview/orchestrate.py --order $(ORDER) --out $(OUT) $(MOCK)
+	$(PY) engine/produce.py --order $(OUT)/order.enriched.json --out $(OUT) $(MOCK)
 
 # --- Build a real order ------------------------------------------------------
 produce:

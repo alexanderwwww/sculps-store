@@ -128,11 +128,11 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'intake_sent', order_id: $json.order.order_id, subject_name: $json.order.subject.name, tally_url: ($env.TALLY_FORM_URL || 'https://tally.so/r/retold') + '?order_id=' + $json.order.order_id }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $json.order.customer_email } } }, unique_id: $json.order.order_id + '-intake_sent' } } }) }}",
+        "jsonBody": "={{ JSON.stringify({ data: { type: 'event', attributes: { properties: { status: 'intake_sent', order_id: $json.order.order_id, subject_name: $json.order.subject.name, intake_url: ($env.INTAKE_FORM_URL || 'https://tally.so/r/retold') + '?order_id=' + $json.order.order_id, note: 'Collects the parent phone number + consent to record. The AI then calls them.' }, metric: { data: { type: 'metric', attributes: { name: 'RETOLD Status' } } }, profile: { data: { type: 'profile', attributes: { email: $json.order.customer_email } } }, unique_id: $json.order.order_id + '-intake_sent' } } }) }}",
         "options": {}
       },
       "id": "9a13208a-a320-4ef6-879f-dc7a2b54ac65",
-      "name": "4b · Send Tally intake link",
+      "name": "4b · Send intake (parent phone + consent)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
@@ -148,7 +148,7 @@
         "options": {}
       },
       "id": "ed39451b-29ff-4129-96b5-b302b1867dde",
-      "name": "5 · Wait: intake + interview capture",
+      "name": "5 · Wait: parent phone + consent",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
@@ -185,7 +185,7 @@
         "options": {}
       },
       "id": "5940b7d7-8330-4b7b-bd8c-b9ab87ef157f",
-      "name": "6a · Klaviyo: recording_received",
+      "name": "6a · Klaviyo: interview_recorded",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
@@ -506,13 +506,14 @@
     },
     {
       "parameters": {
-        "resume": "webhook",
-        "options": {}
+        "jsMode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Automated proof gate. The engine's SEPARATE honesty pass wrote\n// book._qc = { clean: bool, issues: [...] }. We auto-approve a clean\n// book, and HOLD (approved=false) only when a possible fabrication was\n// flagged — the one safety catch that protects the 'never invented'\n// promise and real print spend.\nconst book = $node['8c · Parse book'].json.book || $json.book || $json;\nconst qc = (book && book._qc) || { clean: false, issues: ['no _qc found'] };\nconst approved = qc.clean === true;\nreturn [{ json: { approved, qc, order_id: book.order_id,\n  reason: approved ? 'honesty QC clean — auto-approved'\n    : ('held for review — ' + (qc.issues||[]).length + ' flag(s)') } }];"
       },
       "id": "4c309c21-a239-4bb0-b5b4-23b622a90b36",
-      "name": "9b · Human proof gate (approval)",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1,
+      "name": "9b · Auto proof gate (honesty QC)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         5940,
         300
@@ -530,7 +531,7 @@
           "combinator": "and",
           "conditions": [
             {
-              "leftValue": "={{ $json.body.approved !== undefined ? $json.body.approved : $json.approved }}",
+              "leftValue": "={{ $json.approved }}",
               "rightValue": true,
               "operator": {
                 "type": "boolean",
@@ -1073,6 +1074,34 @@
       ],
       "notes": "STAGE 18 — final status 'on its way'. Pipeline complete.",
       "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "command": "cd /home/user/sculps-store/retold-automation && OID={{ $node['3 · Create order state'].json.order.order_id }} && mkdir -p out/$OID && cat > out/$OID/order.json <<'RETOLD_ORDER_JSON'\n{{ JSON.stringify($node['5 · Wait: parent phone + consent'].json.order || $node['3 · Create order state'].json.order) }}\nRETOLD_ORDER_JSON\n# AI voice agent calls the parent over a few sessions and assembles master.wav\npython interview/orchestrate.py --order out/$OID/order.json --out out/$OID/"
+      },
+      "id": "5b000000-0000-4000-8000-000000000abc",
+      "name": "5b · Run AI interviewer (orchestrate.py)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Fully automated (no humans)\n- **Intake (4b/5):** the buyer submits only the parent's **phone + consent**.\n- **5b · AI interviewer:** `orchestrate.py` places a few warm AI voice calls to the parent and assembles `master.wav`. No human interviewer.\n- **9b · Auto proof gate:** reads the engine's honesty check `book._qc.clean`. Clean → prints automatically. Flagged → holds & notifies (protects the 'never invented' promise + print spend).\n- The parent's voice is only ever **recorded**, never cloned.",
+        "height": 320,
+        "width": 420
+      },
+      "id": "note00000-0000-4000-8000-0000000000aa",
+      "name": "RETOLD — automation notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1700,
+        -80
+      ]
     }
   ],
   "connections": {
@@ -1118,40 +1147,7 @@
       "main": [
         [
           {
-            "node": "4b · Send Tally intake link",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "4b · Send Tally intake link": {
-      "main": [
-        [
-          {
-            "node": "5 · Wait: intake + interview capture",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "5 · Wait: intake + interview capture": {
-      "main": [
-        [
-          {
-            "node": "6a · Klaviyo: recording_received",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "6a · Klaviyo: recording_received": {
-      "main": [
-        [
-          {
-            "node": "6b · Download recording",
+            "node": "4b · Send intake (parent phone + consent)",
             "type": "main",
             "index": 0
           }
@@ -1290,18 +1286,7 @@
       "main": [
         [
           {
-            "node": "9b · Human proof gate (approval)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "9b · Human proof gate (approval)": {
-      "main": [
-        [
-          {
-            "node": "9c · Approved?",
+            "node": "9b · Auto proof gate (honesty QC)",
             "type": "main",
             "index": 0
           }
@@ -1510,6 +1495,61 @@
         [
           {
             "node": "18 · Klaviyo: shipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4b · Send intake (parent phone + consent)": {
+      "main": [
+        [
+          {
+            "node": "5 · Wait: parent phone + consent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 · Wait: parent phone + consent": {
+      "main": [
+        [
+          {
+            "node": "5b · Run AI interviewer (orchestrate.py)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6a · Klaviyo: interview_recorded": {
+      "main": [
+        [
+          {
+            "node": "6b · Download recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9b · Auto proof gate (honesty QC)": {
+      "main": [
+        [
+          {
+            "node": "9c · Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5b · Run AI interviewer (orchestrate.py)": {
+      "main": [
+        [
+          {
+            "node": "6a · Klaviyo: interview_recorded",
             "type": "main",
             "index": 0
           }

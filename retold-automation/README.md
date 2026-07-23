@@ -12,9 +12,14 @@ with almost no human work in between.
 
 ## 1. What this actually is
 
-A customer buys a book on your Shopify store. You interview their loved one and
-get one audio recording. From there, this system:
+A customer buys a book on your Shopify store and tells us the parent's **phone
+number**. From there this system runs **entirely on its own — no human in the
+loop**:
 
+0. **Interviews the parent by AI voice call** — a warm agent phones them over a
+   few short, gentle sessions (childhood → love → wisdom) and records it all.
+   The agent asks the questions in its *own* neutral voice; the **parent's real
+   voice is only recorded, never cloned.** (This is the `interview/` component.)
 1. **Transcribes** the recording (turns the voice into text, with speaker labels).
 2. **Writes the book** — Claude drafts warm, first-person chapters *in the
    speaker's own words*, then a **separate honesty check** re-reads the transcript
@@ -36,6 +41,8 @@ The whole thing is stitched together by **n8n** (a visual "when this happens, do
 that" tool — no coding), and the private voice pages run on **Cloudflare**.
 
 ### The honesty promise (this is a selling point, and it's enforced in code)
+- The **interview is run by AI, but the parent's voice is real** — the agent
+  only asks questions; the parent's answers are recorded, never cloned.
 - The **voice is always real** — only trimmed, never synthesized or cloned.
 - **No invented facts or quotes** — a dedicated Claude QC pass checks every draft
   against the transcript.
@@ -48,6 +55,7 @@ that" tool — no coding), and the private voice pages run on **Cloudflare**.
 
 | Folder | Plain-English job | Do you touch it? |
 |--------|-------------------|------------------|
+| `interview/` | The AI voice interviewer. Phones the parent and records the story — no human interviewer. | Edit the questions; else run it. |
 | `engine/` | The brain. One command turns an order into the whole book. | Run it; don't edit. |
 | `templates/` | Turns the book's data into the two beautiful PDFs. | No. |
 | `worker/` | The little Cloudflare program that serves each family's private voice page. | Deploy once (its own README). |
