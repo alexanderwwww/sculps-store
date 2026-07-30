@@ -125,6 +125,37 @@ It blocks on a missing postal address, a missing unsubscribe link, a deceptive
 subject, a suppressed recipient, an exceeded touch cap, a forbidden performance
 claim, or the daily send cap — by raising, not warning. There is no override flag.
 
+## Spec videos — photos before contact
+
+```bash
+# Pull photos from operators' own websites (robots.txt-aware, rate-limited)
+python -m engine harvest --list operators.csv --out ./inbox \
+    --contact https://yoursite.com/about
+
+# Turn each property into image-to-video prompts for OpenArt / Kling / Runway
+python -m engine pack --inbox ./inbox --out ./packs
+```
+
+`harvest` collects from the **business's own domain**, never a booking platform —
+`assert_source_allowed()` refuses those. Everything lands with a `RIGHTS.txt`
+marking it `SPEC_ONLY`: fine for a private pitch to that same business, not for
+portfolio, ads, or any public posting until they grant permission in writing.
+
+`pack` writes `prompts.txt` + `manifest.json` per property — paste each prompt
+with its image into your image-to-video tool. This is the reel's workflow run
+over a whole box, with one difference: the prompts are constrained to the
+photographed room.
+
+```python
+from engine.produce.i2v import assert_prompt_truthful
+assert_prompt_truthful("Cinematic real estate walkthrough, gliding forward "
+                       "from the entryway ... into a cozy bedroom")
+# FabricatingPrompt: implies touring rooms the photo doesn't show
+```
+
+The checker is negation-aware, so "do not add furniture" reads as a constraint
+rather than an instruction. Every prompt the packer emits passes it.
+
 ## Production
 
 ```bash
@@ -181,7 +212,7 @@ if the label can't be rendered the shot doesn't ship at all.
 python -m unittest discover -s tests -v
 ```
 
-68 tests. They render real video through ffmpeg (a few seconds each), assert the
+84 tests. They render real video through ffmpeg (a few seconds each), assert the
 compliance gate refuses on every hard rule, assert the renderer refuses every
 fabricating move before writing any output, and assert the manual queue contains
 no way to send.
@@ -201,6 +232,7 @@ engine/
     registry.py             city STR permit datasets (Socrata)
     places.py               Google Places — property managers
     csv_import.py           manual lists, provenance required
+    site_photos.py          spec-work harvester (own-website, robots-aware)
   pipeline/normalize.py     clean, dedupe, infer segment, US-only filter
   outreach/
     compliance.py           the hard gate
@@ -212,6 +244,7 @@ engine/
     ffmpeg.py               binary discovery, capability probe
     motion.py               truthful camera moves; refuses fabrication
     assemble.py             crossfade, music, captions, end card
+    i2v.py                  truthful image-to-video prompts; refuses fabrication
     intake.py               rights grant + job construction
     batch.py                the "box of listings" run
 ```

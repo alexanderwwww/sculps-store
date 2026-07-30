@@ -114,6 +114,7 @@ Replace the fabricated media and replace Airbnb-as-a-database.
 | Deliverable | What it is | Fabrication risk |
 |---|---|---|
 | 2.5D motion shots | Depth-aware push-in / pan / parallax over the host's actual photos. Every pixel derives from the real room. | None |
+| AI image-to-video | Same models the reel uses (OpenArt Director, Kling, Runway) — but prompted to move *within* the photographed room, never into rooms the photo doesn't show. Higher production value than ffmpeg. | None, if prompted as shipped |
 | Vertical reel edit | 9:16 cut, beat-matched, captions, end card w/ booking link | None |
 | Photo grade | Lighting + colour correction only | None — explicitly permitted |
 | Virtual staging *(optional)* | Furniture into genuinely empty rooms, **watermarked "Virtually staged"** on every frame | Disclosed, industry-standard |
@@ -203,6 +204,31 @@ Use Airbnb as a directory, not as an inbox.
 `engine/outreach/compliance.py` is a hard gate: a message missing a postal
 address, an unsubscribe link, or hitting the suppression list **cannot be sent** —
 `send()` raises rather than degrading.
+
+### Getting photos before contact — the spec path
+
+"Make the video first, then pitch" needs photos we don't have yet. Three ways
+round that, in order of strength:
+
+**1. The operator's own website.** Any property worth targeting is run by someone
+with a direct-booking site, and it carries the same high-res photos they gave
+Airbnb. Those are on *their* domain, published by the rights holder. Harvest
+them, build the spec, send it to the person who owns the photos. That's ordinary
+spec work — agencies have always mocked up a pitch from the prospect's own
+materials. The rights holder is the audience, it's never published, and it's
+deleted on request. `python -m engine harvest` does this, honouring `robots.txt`,
+rate-limited, identifying itself, and tagging everything `SPEC_ONLY`.
+
+**2. Their public Instagram business account.** Same logic, same guardrails,
+useful when there's no website.
+
+**3. Licensed stock luxury interiors → one great portfolio reel.** Zero risk, and
+it converts nearly as well, because what the prospect is really asking is "can
+you do this?" not "did you do mine?". Cheapest path to a first sale.
+
+Not on the list: harvesting from Airbnb. Not because the code couldn't — it's
+trivial — but because it's their platform, their ToS, and the account you'd burn
+is the one you need.
 
 **The opening move — sample-first, done clean.** We can't build a full derivative
 video from their photos before we have permission (§1d). So:

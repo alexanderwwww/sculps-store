@@ -196,6 +196,80 @@ def cmd_manual_log(args, cfg: Config) -> int:
 
 # --- production --------------------------------------------------------------
 
+def cmd_harvest(args, cfg: Config) -> int:
+    """Harvest property photos from an operator's own public website."""
+    from .sources.site_photos import RobotsDisallowed, SitePhotoHarvester
+
+    h = SitePhotoHarvester(contact_url=args.contact,
+                           max_images=args.max_images,
+                           delay=args.delay)
+    out_root = Path(args.out)
+    targets: list[tuple[str, str]] = []
+    if args.list:
+        import csv as _csv
+        with open(args.list, newline="", encoding="utf-8-sig") as fh:
+            for row in _csv.reader(fh):
+                if not row or not row[0].strip() or row[0].lstrip().startswith("#"):
+                    continue
+                url = row[0].strip()
+                name = row[1].strip() if len(row) > 1 else _slug(url)
+                targets.append((url, name))
+    else:
+        for url in args.url or []:
+            targets.append((url, _slug(url)))
+
+    if not targets:
+        print("pass --url URL (repeatable) or --list file.csv", file=sys.stderr)
+        return 2
+
+    failures = 0
+    for url, name in targets:
+        try:
+            res = h.harvest(url, out_root / name)
+            print(f"  {res.summary()}  -> {out_root / name}")
+        except RobotsDisallowed as exc:
+            print(f"  skipped {url}: {exc}")
+        except Exception as exc:
+            failures += 1
+            print(f"  FAILED  {url}: {exc}", file=sys.stderr)
+
+    print(f"\nPhotos are tagged SPEC_ONLY (see RIGHTS.txt in each folder): fine to "
+          f"build a pitch for that same business, not for portfolio or ads.")
+    return 1 if failures else 0
+
+
+def cmd_pack(args, cfg: Config) -> int:
+    """Build image-to-video prompt packs for a box of properties."""
+    from .produce.i2v import pack_property
+    from .produce.intake import find_photos
+
+    inbox, out_root = Path(args.inbox), Path(args.out)
+    dirs = sorted(d for d in inbox.iterdir() if d.is_dir())
+    if not dirs:
+        print(f"no property folders in {inbox}", file=sys.stderr)
+        return 2
+    for d in dirs:
+        try:
+            photos = find_photos(d)[:args.max_shots]
+        except Exception as exc:
+            print(f"  skipped {d.name}: {exc}")
+            continue
+        out = pack_property(photos, out_root / d.name, seconds=args.seconds,
+                            aspect=cfg.produce.aspect)
+        print(f"  {d.name}: {len(photos)} prompts -> {out}")
+    print("\nPaste prompts.txt entries with their images into OpenArt Director "
+          "(or any image-to-video tool). Prompts are constrained to the "
+          "photographed room — they will not invent a walkthrough.")
+    return 0
+
+
+def _slug(url: str) -> str:
+    from urllib.parse import urlparse
+    p = urlparse(url)
+    base = (p.netloc + p.path).strip("/").replace("/", "-").replace(".", "-")
+    return base[:60] or "site"
+
+
 def cmd_record_grant(args, cfg: Config) -> int:
     from .produce.intake import record_grant
     with _store(cfg) as store:
@@ -291,6 +365,26 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("manual-log", help="what you've sent by hand")
     s.add_argument("--limit", type=int, default=50)
     s.set_defaults(fn=cmd_manual_log)
+
+    s = sub.add_parser(
+        "harvest",
+        help="pull property photos from an operator's own website (robots-aware)")
+    s.add_argument("--url", action="append", help="page URL; repeatable")
+    s.add_argument("--list", help="CSV of url[,name] per line")
+    s.add_argument("--out", default="./inbox")
+    s.add_argument("--contact", required=True,
+                   help="your site or mailto:, sent in the User-Agent")
+    s.add_argument("--max-images", type=int, default=12)
+    s.add_argument("--delay", type=float, default=1.5)
+    s.set_defaults(fn=cmd_harvest)
+
+    s = sub.add_parser(
+        "pack", help="build truthful image-to-video prompt packs for a box")
+    s.add_argument("--inbox", required=True)
+    s.add_argument("--out", required=True)
+    s.add_argument("--max-shots", type=int, default=6)
+    s.add_argument("--seconds", type=float, default=5.0)
+    s.set_defaults(fn=cmd_pack)
 
     s = sub.add_parser("record-grant", help="record client photo-rights confirmation")
     s.add_argument("property_ref")
