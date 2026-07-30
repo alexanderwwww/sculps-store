@@ -1,0 +1,197 @@
+# Listing Engine
+
+Automated pipeline for selling and producing **short-form property video** to US
+short-term-rental operators, property managers, and real-estate agents.
+
+Three stages, one CLI:
+
+```
+leads  →  outreach  →  production
+```
+
+- **[PLAN.md](PLAN.md)** — the strategy, the honest economics, and what the source
+  reel got wrong
+- **[COMPLIANCE.md](COMPLIANCE.md)** — the rules, and which ones the code enforces
+
+Two defaults are deliberate and worth knowing up front:
+
+1. **Outreach is dry-run unless you pass `--send`.**
+2. **Production refuses to run without a recorded photo-rights grant.**
+
+---
+
+## Install
+
+```bash
+cd listing-engine
+pip install -r requirements.txt
+cp config.example.toml config.toml   # then fill it in
+```
+
+**ffmpeg:** install a real one — `apt install ffmpeg` or `brew install ffmpeg`.
+The `imageio-ffmpeg` fallback works for rendering motion but is usually built
+without `drawtext`, so captions, end cards and the virtually-staged disclosure
+won't render. The pipeline tells you when that happens rather than silently
+dropping text.
+
+Secrets come from the environment, never `config.toml`:
+
+```bash
+export LISTING_ENGINE_EMAIL_API_KEY=...        # Resend
+export LISTING_ENGINE_GOOGLE_PLACES_KEY=...    # Google Places
+```
+
+---
+
+## Leads
+
+```bash
+# Find a city's STR permit dataset (public open data)
+python -m engine discover --query "short term rental"
+
+# Ingest one
+python -m engine pull-registry --domain data.nashville.gov \
+    --dataset xxxx-xxxx --state TN --city Nashville
+
+# Property managers by metro (the best segment — see PLAN.md §2)
+python -m engine pull-places --metro Nashville --state TN
+
+# Your own list. Needs provenance: a source_url column, or --source-url.
+python -m engine import-csv leads.csv --source-url "NARPM directory 2026"
+
+python -m engine stats
+```
+
+Ingest normalises, drops non-US and out-of-target-state rows, strips role
+addresses (`noreply@`, `postmaster@`…), infers segment, and dedupes on email —
+falling back to normalised business name + state, so one operator holding twelve
+permits lands as one lead.
+
+**Airbnb, Vrbo and Booking.com are not implementable as sources.** Automated
+collection breaches their terms; `assert_source_allowed()` refuses those hosts so a
+mis-typed endpoint can't quietly point the pipeline at them. See COMPLIANCE.md §2.
+
+## Outreach
+
+```bash
+# Dry run — renders every message and runs every compliance check, sends nothing
+python -m engine campaign --portfolio-url https://example.com/reel --limit 25
+
+# Only property managers
+python -m engine campaign --portfolio-url https://example.com/reel \
+    --segment property_manager
+
+# For real
+python -m engine campaign --portfolio-url https://example.com/reel --send
+
+# Opt-out. Permanent, no undo.
+python -m engine suppress someone@example.com
+```
+
+`--portfolio-url` is required: the first touch leads with real work, and the offer
+is a free first video. That's what keeps the outreach clean — the prospect sends
+their photos, and the handover is the rights grant.
+
+Every message passes `engine/outreach/compliance.py` before any transport sees it.
+It blocks on a missing postal address, a missing unsubscribe link, a deceptive
+subject, a suppressed recipient, an exceeded touch cap, a forbidden performance
+claim, or the daily send cap — by raising, not warning. There is no override flag.
+
+## Production
+
+```bash
+# 1. Record the rights grant, in the client's own words
+python -m engine record-grant nashville-2br-downtown \
+    --supplied-by host@example.com --via email \
+    --note "I own the rights to these photos and authorise you to edit them into video."
+
+# 2. Batch-produce. One folder per property.
+python -m engine produce --inbox ./inbox --out ./delivery --end-card "Book direct"
+```
+
+```
+inbox/
+  nashville-2br-downtown/     <- folder name is the property_ref
+    living.jpg
+    kitchen.jpg
+  austin-loft-e6th/
+    ...
+```
+
+A folder with no grant on file is **skipped with a reason**, not produced.
+
+### What the renderer will and won't do
+
+Every output frame is a crop-and-scale of a real photograph. Moves available:
+`push_in`, `pull_out`, `pan_left`, `pan_right`, `tilt_up`, `tilt_down`,
+`push_in_left`, `push_in_right`, `hold` — eased with a smoothstep so they start
+and end at rest, which is most of what separates a cinematic push from a
+slideshow.
+
+These raise `FabricationRefused`:
+
+| Requested | Why refused |
+|---|---|
+| `walkthrough` | implies a floor plan a single photo can't support |
+| `orbit` | needs geometry not in the photograph |
+| `dolly_through_doorway` | needs the space beyond the doorway generated |
+| `outpaint` / `uncrop` | extends past the photo's real edges |
+
+That's the whole design point. Content that invents rooms or hides defects can get
+the **client's** listing suspended — Airbnb asks hosts to remove AI content that
+misrepresents a listing, and has suspended listings and refunded guests over it.
+Lighting and colour work is explicitly fine; inventing space is not.
+
+Any shot marked `virtually_staged` gets a `Virtually staged` label burned in, and
+if the label can't be rendered the shot doesn't ship at all.
+
+---
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+55 tests. They render real video through ffmpeg (a few seconds each), assert the
+compliance gate refuses on every hard rule, and assert the renderer refuses every
+fabricating move before writing any output.
+
+---
+
+## Layout
+
+```
+engine/
+  cli.py                    argparse entry point (python -m engine)
+  config.py                 TOML config; secrets from env only
+  db.py                     sqlite; suppression table is append-only by design
+  models.py                 Lead, Job, Shot, PhotoGrant
+  sources/
+    base.py                 source interface + blocked-platform guard
+    registry.py             city STR permit datasets (Socrata)
+    places.py               Google Places — property managers
+    csv_import.py           manual lists, provenance required
+  pipeline/normalize.py     clean, dedupe, infer segment, US-only filter
+  outreach/
+    compliance.py           the hard gate
+    templates.py            sequences per segment; footer always appended
+    sequencer.py            render → gate → transport → record
+    transport.py            Resend / console
+  produce/
+    ffmpeg.py               binary discovery, capability probe
+    motion.py               truthful camera moves; refuses fabrication
+    assemble.py             crossfade, music, captions, end card
+    intake.py               rights grant + job construction
+    batch.py                the "box of listings" run
+```
+
+## Status
+
+Working: lead ingest and dedupe, the compliance gate, the full render and assembly
+pipeline, batch production, rights-grant enforcement, the CLI.
+
+Not built yet: the unsubscribe web endpoint (the URL is generated and enforced,
+but you need to host the handler), reply detection, email-from-website
+enrichment, invoicing, and the `[[sources.registry]]` config block is written for
+you to read rather than auto-loaded. See PLAN.md §8 for the open decisions.

@@ -1,0 +1,3 @@
+requests>=2.31
+# ffmpeg: prefer a system install. This is the fallback if you don't have one.
+imageio-ffmpeg>=0.5

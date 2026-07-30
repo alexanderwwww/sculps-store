@@ -1,0 +1,54 @@
+# Copy to config.toml and fill in. Secrets are NOT stored here — they come from
+# the environment:
+#
+#   LISTING_ENGINE_EMAIL_API_KEY        (Resend)
+#   LISTING_ENGINE_GOOGLE_PLACES_KEY    (Google Places)
+
+[sender]
+# All four are legally required in every commercial email (CAN-SPAM). The
+# postal_address must be a real address where you can receive mail — a mailbox
+# service is fine, a placeholder is not. The pipeline refuses to send without it.
+from_name       = ""
+from_email      = ""
+reply_to        = ""
+postal_address  = ""
+
+[outreach]
+# Where your one-click opt-out endpoint lives. Required before any real send.
+unsubscribe_base_url = ""
+
+[limits]
+per_inbox_daily          = 25   # ramp up slowly; new inboxes need 4 weeks warmup
+per_domain_daily         = 50
+max_touches              = 4    # then stop, permanently
+min_seconds_between_sends = 45
+
+[targeting]
+# US only. Empty list = all US states. Start narrow — 3-4 metros beats national.
+states = ["TN", "TX", "CO", "AZ"]
+
+[produce]
+aspect             = "9:16"
+width              = 1080
+fps                = 30
+shot_seconds       = 4.0
+crossfade_seconds  = 0.5
+# "none"     = ffmpeg camera moves only (free, ships today)
+# "external" = you supply depth maps for true parallax (better, needs GPU/API)
+depth_backend      = "none"
+font               = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+
+[paths]
+# db_path  = "data/engine.db"
+# work_dir = "work"
+
+# --- Lead sources ------------------------------------------------------------
+# Dataset ids change. Find current ones with:  python -m engine discover
+# Then pin them here for the record. (Read by you, not yet auto-loaded — see
+# PLAN.md §8 open decisions.)
+#
+# [[sources.registry]]
+# domain  = "data.nashville.gov"
+# dataset = "xxxx-xxxx"
+# state   = "TN"
+# city    = "Nashville"

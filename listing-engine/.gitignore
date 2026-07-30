@@ -1,0 +1,9 @@
+config.toml
+data/
+work/
+delivery/
+inbox/
+*.db
+__pycache__/
+*.pyc
+.venv/
