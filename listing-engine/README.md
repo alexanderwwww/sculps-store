@@ -3,11 +3,19 @@
 Automated pipeline for selling and producing **short-form property video** to US
 short-term-rental operators, property managers, and real-estate agents.
 
-Three stages, one CLI:
+Three stages, a CLI and a local app:
 
 ```
 leads  →  outreach  →  production
 ```
+
+```bash
+python -m engine app          # opens a dashboard at 127.0.0.1:8765
+```
+
+The app is the same engine with buttons: harvest photos, record rights, render,
+build AI prompts, preview the reel in the page. Loopback only, no auth, nothing
+hosted — do not port-forward it.
 
 - **[PLAN.md](PLAN.md)** — the strategy, the honest economics, and what the source
   reel got wrong
@@ -212,7 +220,7 @@ if the label can't be rendered the shot doesn't ship at all.
 python -m unittest discover -s tests -v
 ```
 
-84 tests. They render real video through ffmpeg (a few seconds each), assert the
+100 tests. They render real video through ffmpeg (a few seconds each), assert the
 compliance gate refuses on every hard rule, assert the renderer refuses every
 fabricating move before writing any output, and assert the manual queue contains
 no way to send.
@@ -233,6 +241,10 @@ engine/
     places.py               Google Places — property managers
     csv_import.py           manual lists, provenance required
     site_photos.py          spec-work harvester (own-website, robots-aware)
+  app/
+    server.py               local dashboard (127.0.0.1, no auth by design)
+    jobs.py                 background job runner
+    ui.html                 the page; no external requests
   pipeline/normalize.py     clean, dedupe, infer segment, US-only filter
   outreach/
     compliance.py           the hard gate

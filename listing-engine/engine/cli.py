@@ -270,6 +270,14 @@ def _slug(url: str) -> str:
     return base[:60] or "site"
 
 
+def cmd_app(args, cfg: Config) -> int:
+    """Run the local web dashboard."""
+    from .app.server import serve
+    serve(cfg, inbox=Path(args.inbox), out=Path(args.out), packs=Path(args.packs),
+          port=args.port, open_browser=not args.no_browser)
+    return 0
+
+
 def cmd_record_grant(args, cfg: Config) -> int:
     from .produce.intake import record_grant
     with _store(cfg) as store:
@@ -385,6 +393,14 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--max-shots", type=int, default=6)
     s.add_argument("--seconds", type=float, default=5.0)
     s.set_defaults(fn=cmd_pack)
+
+    s = sub.add_parser("app", help="run the local web dashboard (127.0.0.1 only)")
+    s.add_argument("--port", type=int, default=8765)
+    s.add_argument("--inbox", default="./inbox")
+    s.add_argument("--out", default="./delivery")
+    s.add_argument("--packs", default="./packs")
+    s.add_argument("--no-browser", action="store_true")
+    s.set_defaults(fn=cmd_app)
 
     s = sub.add_parser("record-grant", help="record client photo-rights confirmation")
     s.add_argument("property_ref")

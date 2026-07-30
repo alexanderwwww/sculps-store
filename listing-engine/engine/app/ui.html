@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listing Engine</title>
+<style>
+  :root{
+    --bg:#0e0e10; --panel:#17171a; --line:#26262b; --ink:#f2f2f4;
+    --muted:#8b8b95; --accent:#c9a96e; --ok:#5fbf7f; --err:#e0616b;
+    --radius:10px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#faf8f5; --panel:#fff; --line:#e6e2db; --ink:#1a1410;
+           --muted:#79736b; --accent:#a8873f; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  header{padding:22px 26px;border-bottom:1px solid var(--line);
+         display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  h1{font-size:17px;margin:0;letter-spacing:.14em;text-transform:uppercase}
+  .stats{margin-left:auto;display:flex;gap:18px;color:var(--muted);font-size:13px}
+  .stats b{color:var(--ink);font-weight:600}
+  main{max-width:1080px;margin:0 auto;padding:26px}
+  section{background:var(--panel);border:1px solid var(--line);
+          border-radius:var(--radius);padding:20px;margin-bottom:20px}
+  h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+     color:var(--muted);margin:0 0 14px;font-weight:600}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input,textarea{background:var(--bg);border:1px solid var(--line);color:var(--ink);
+        padding:9px 11px;border-radius:8px;font:inherit;font-size:14px}
+  input{flex:1;min-width:180px}
+  textarea{width:100%;min-height:70px;resize:vertical}
+  label.chk{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:13px}
+  label.chk input{flex:none;min-width:0}
+  button{background:var(--accent);color:#12100c;border:0;padding:9px 15px;
+         border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+     color:var(--muted);padding:0 10px 10px;font-weight:600}
+  td{padding:11px 10px;border-top:1px solid var(--line);vertical-align:middle}
+  .name{font-weight:600}
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:5px;
+       border:1px solid var(--line);color:var(--muted);margin-left:6px}
+  .tag.warn{color:var(--err);border-color:var(--err)}
+  .tag.ok{color:var(--ok);border-color:var(--ok)}
+  .muted{color:var(--muted);font-size:13px}
+  .job{display:flex;gap:10px;align-items:baseline;padding:7px 0;
+       border-top:1px solid var(--line);font-size:13px}
+  .job:first-child{border-top:0}
+  .dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .queued .dot,.running .dot{background:var(--accent)}
+  .done .dot{background:var(--ok)}
+  .error .dot{background:var(--err)}
+  .job .err{color:var(--err);flex:1}
+  video{width:100%;max-width:290px;border-radius:8px;border:1px solid var(--line);
+        display:block;margin-top:9px}
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);
+         border-radius:var(--radius);padding:22px;max-width:520px;width:92%}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
+  pre{white-space:pre-wrap;font-size:12px;background:var(--bg);padding:12px;
+      border-radius:8px;border:1px solid var(--line);max-height:300px;overflow:auto}
+  .note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1>Listing Engine</h1>
+  <div class="stats" id="stats"></div>
+</header>
+
+<main>
+  <section>
+    <h2>Add a property</h2>
+    <div class="row">
+      <input id="h-url" placeholder="Operator's own site — https://theirdomain.com/the-listing">
+      <input id="h-name" placeholder="folder name (optional)" style="max-width:220px">
+      <button id="h-go">Harvest photos</button>
+    </div>
+    <p class="note">
+      Pulls photos from the business's <b>own website</b>, honouring robots.txt.
+      Booking platforms are refused. Everything lands tagged <b>SPEC_ONLY</b> —
+      fine for a private pitch to that business, not for portfolio or ads until
+      they say yes in writing.<br>
+      You can also just drop photos into the inbox folder by hand.
+    </p>
+  </section>
+
+  <section>
+    <h2>Properties</h2>
+    <table>
+      <thead><tr><th>Property</th><th>Photos</th><th>Rights</th><th>Output</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="muted" id="empty" style="display:none">
+      Nothing yet. Harvest a site above, or drop photos into the inbox folder.
+    </p>
+  </section>
+
+  <section>
+    <h2>Activity</h2>
+    <div id="jobs"></div>
+  </section>
+</main>
+
+<dialog id="grant-dlg">
+  <h2 style="margin-bottom:14px">Record photo rights</h2>
+  <p class="muted" id="grant-for"></p>
+  <div style="margin:14px 0">
+    <input id="g-by" placeholder="Who supplied them (email or name)" style="width:100%">
+  </div>
+  <textarea id="g-note" placeholder="Their actual words confirming rights — paste from the email, don't paraphrase."></textarea>
+  <label class="chk" style="margin-top:12px">
+    <input type="checkbox" id="g-portfolio"> They also gave written permission to use it in my portfolio
+  </label>
+  <p class="note">
+    Production won't run without this. If you harvested these from their site as
+    spec, record that honestly — spec is fine to pitch with, not to publish.
+  </p>
+  <div class="row" style="margin-top:16px;justify-content:flex-end">
+    <button class="ghost" id="g-cancel">Cancel</button>
+    <button id="g-save">Save</button>
+  </div>
+</dialog>
+
+<dialog id="pack-dlg">
+  <h2 style="margin-bottom:12px">AI prompts</h2>
+  <p class="muted">Paste each with its photo into Higgsfield, OpenArt Director,
+  Kling or Runway. These are constrained to the photographed room — they won't
+  invent a walkthrough.</p>
+  <pre id="pack-text"></pre>
+  <div class="row" style="margin-top:14px;justify-content:flex-end">
+    <button class="ghost" id="p-copy">Copy all</button>
+    <button id="p-close">Close</button>
+  </div>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+let pending = false;
+
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  return r.json();
+}
+async function post(path, body){
+  return api(path, {method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(body||{})});
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function refresh(){
+  const s = await api('/api/state');
+  const q = s.summary;
+  const leadTotal = Object.values(q.leads||{}).reduce((a,b)=>a+b,0);
+  $('#stats').innerHTML =
+    `<span>leads <b>${leadTotal}</b></span>`+
+    `<span>emails today <b>${q.sends_today}</b></span>`+
+    `<span>by hand today <b>${q.manual_today}</b></span>`+
+    `<span>running <b>${q.active_jobs}</b></span>`;
+
+  const rows = s.properties;
+  $('#empty').style.display = rows.length ? 'none' : 'block';
+  $('#rows').innerHTML = rows.map(p => {
+    const rights = p.has_grant
+      ? `<span class="tag ok">granted</span>`
+      : `<span class="tag warn">no grant</span>`;
+    const spec = p.spec_only ? `<span class="tag">spec only</span>` : '';
+    const reels = p.reels.map(r =>
+      `<video src="/media/${encodeURIComponent(r)}" controls preload="metadata"></video>`
+    ).join('');
+    return `<tr>
+      <td class="name">${esc(p.name)}${spec}</td>
+      <td>${p.photos}</td>
+      <td>${rights}<div class="muted">${esc(p.grant_by||'')}</div></td>
+      <td>${reels || '<span class="muted">—</span>'}</td>
+      <td>
+        <div class="row" style="justify-content:flex-end">
+          <button class="ghost" data-grant="${esc(p.name)}">Rights</button>
+          <button class="ghost" data-pack="${esc(p.name)}">${p.pack?'Prompts':'AI prompts'}</button>
+          <button data-render="${esc(p.name)}" ${p.has_grant?'':'disabled'}>Render</button>
+        </div>
+      </td></tr>`;
+  }).join('');
+
+  $('#jobs').innerHTML = s.jobs.length ? s.jobs.map(j => `
+    <div class="job ${j.status}">
+      <span class="dot"></span>
+      <span>${esc(j.kind)}</span>
+      <b>${esc(j.label)}</b>
+      ${j.status==='error' ? `<span class="err">${esc(j.error)}</span>`
+        : `<span class="muted">${esc(j.status)}${j.result?' · '+esc(JSON.stringify(j.result)):''}</span>`}
+    </div>`).join('') : '<p class="muted">Nothing yet.</p>';
+
+  pending = s.summary.active_jobs > 0;
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target;
+  if (t.dataset.render){
+    t.disabled = true;
+    await post('/api/render', {name: t.dataset.render});
+    refresh();
+  }
+  if (t.dataset.pack){
+    const name = t.dataset.pack;
+    let r = await api('/api/pack/'+encodeURIComponent(name));
+    if (r.error){ await post('/api/pack',{name}); setTimeout(refresh, 600);
+      alert('Building prompts — click again in a moment.'); return; }
+    $('#pack-text').textContent = r.text;
+    $('#pack-dlg').showModal();
+  }
+  if (t.dataset.grant){
+    $('#grant-dlg').dataset.name = t.dataset.grant;
+    $('#grant-for').textContent = 'For: ' + t.dataset.grant;
+    $('#g-by').value = ''; $('#g-note').value = '';
+    $('#g-portfolio').checked = false;
+    $('#grant-dlg').showModal();
+  }
+});
+
+$('#h-go').onclick = async () => {
+  const url = $('#h-url').value.trim();
+  if (!url) return;
+  $('#h-go').disabled = true;
+  const r = await post('/api/harvest', {url, name: $('#h-name').value.trim()});
+  if (r.error) alert(r.error);
+  $('#h-url').value = ''; $('#h-name').value = '';
+  $('#h-go').disabled = false;
+  refresh();
+};
+
+$('#g-save').onclick = async () => {
+  const r = await post('/api/grant', {
+    name: $('#grant-dlg').dataset.name,
+    supplied_by: $('#g-by').value,
+    note: $('#g-note').value,
+    portfolio_ok: $('#g-portfolio').checked,
+  });
+  if (r.error){ alert(r.error); return; }
+  $('#grant-dlg').close();
+  refresh();
+};
+$('#g-cancel').onclick = () => $('#grant-dlg').close();
+$('#p-close').onclick = () => $('#pack-dlg').close();
+$('#p-copy').onclick = () => navigator.clipboard.writeText($('#pack-text').textContent);
+
+refresh();
+setInterval(() => { if (pending) refresh(); }, 2000);
+setInterval(refresh, 10000);
+</script>
+</body>
+</html>
