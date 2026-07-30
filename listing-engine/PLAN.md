@@ -74,11 +74,21 @@ account termination, IP blocking, and a breach-of-contract claim, independent of
 whether any criminal statute is involved. An automated "box of listings" pointed
 at Airbnb is built on sand.
 
-**c) Bulk DMing hosts through Airbnb's inbox is the fastest way to lose the
-account.** That inbox is for booking-related communication. Unsolicited
-commercial outreach at volume is spam by any platform's definition, and it's the
-single highest-ban-risk step in the whole chain. Worse, the account that gets
-banned is the account you need to keep prospecting from.
+**c) Airbnb's Off-Platform Policy names this pitch explicitly.** It prohibits
+"including links that take people off of the Airbnb platform in listings or
+messages" and "soliciting or facilitating any off-Airbnb transaction". Offering
+paid video work is both, and no rewording fixes it — the solicitation *is* the
+violation. Two consequences worth separating:
+
+- *Sales:* penalties apply to the **host who engages**, not just the sender. You
+  are asking a professional operator to risk their listing to reply to you. The
+  good ones — the ones with budget — know this and won't.
+- *Survival:* automating it is what actually ends things. A bot on a logged-in
+  session is what anti-automation detects, and the ban takes the prospecting
+  channel with it.
+
+Sending a few by hand is a judgement call, and §4 supports it as a hand-worked
+queue. Automating it is not on the table.
 
 **d) Derivative works from the host's photos.** Listing photos belong to the host
 or their photographer. Building a video from them before you have permission is a
@@ -151,7 +161,35 @@ behind one interface, so more can be added without touching the rest.
 ## 4. Outreach that doesn't get us banned
 
 **Channels:** our own cold email (primary), business IG DM (low volume, manual),
-phone (highest close rate, unautomated). **Never Airbnb's internal messaging.**
+phone (highest close rate, unautomated). Airbnb's inbox is supported only as a
+hand-worked queue — see "Working Airbnb by hand" below.
+
+### Working Airbnb by hand
+
+If you want to message hosts on Airbnb anyway, `python -m engine manual` builds
+the queue. What it does and doesn't do:
+
+- **Never sends.** It prints messages for you to paste. The module has no
+  transport — a test asserts it contains no HTTP client, no SMTP, no browser
+  driver.
+- **No links in the copy.** Off-platform links are a specifically named
+  violation, and it's the one part of the surface we can actually reduce. The
+  ask is "let me know the best way to send it over."
+- **Short.** Under ~60 words. A booking inbox is not email.
+- **One message per listing, ~10/day.** A follow-up in a host's booking inbox is
+  spam, and volume is what triggers review.
+- **Varies phrasing** across a session; identical text at volume reads as a bot.
+
+This lowers the odds of a ban. It does not make the outreach compliant.
+
+**The bridge — this is the part that scales.** A listing usually names the
+operator: a business name, a "Managed by …" line, a professional host profile.
+Browsing Airbnb by hand to *identify* that operator is fine. Search the name;
+most run a website or an Instagram business account. Contacting the business
+there is ordinary B2B outreach — automatable, links allowed, nobody's listing at
+risk. Feed those into `import-csv` and run them through `campaign`.
+
+Use Airbnb as a directory, not as an inbox.
 
 **CAN-SPAM requirements the sequencer enforces, not just documents:**
 

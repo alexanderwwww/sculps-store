@@ -88,6 +88,34 @@ python -m engine campaign --portfolio-url https://example.com/reel --send
 python -m engine suppress someone@example.com
 ```
 
+### Airbnb hosts, by hand
+
+```bash
+# Build a hand-send queue. Prints messages; sends nothing.
+python -m engine manual --list listings.csv --max-per-day 10
+
+# After you've pasted them in yourself
+python -m engine manual --mark-sent --handle https://www.airbnb.com/rooms/123
+python -m engine manual-log
+```
+
+Read this before using it. Airbnb's **Off-Platform Policy** prohibits "including
+links that take people off of the Airbnb platform in … messages" and "soliciting
+or facilitating any off-Airbnb transaction". A paid-work pitch is both, and no
+wording fixes it — the solicitation is the violation. Penalties reach account
+suspension **and apply to the host who replies**, which is also why the operators
+with real budget won't engage.
+
+So the queue is harm reduction, not compliance: link-free copy, under 60 words,
+one message per listing, ~10/day, varied phrasing, and no transport in the module
+at all (a test asserts it). Sending is your call; automating it is not something
+this repo will do.
+
+The bridge that scales: a listing usually names the operator. Browse by hand to
+find that business, then contact it off-platform — automatable, links fine, no
+listing at risk. `import-csv` those into `campaign`. **Airbnb as a directory, not
+an inbox.**
+
 `--portfolio-url` is required: the first touch leads with real work, and the offer
 is a free first video. That's what keeps the outreach clean — the prospect sends
 their photos, and the handover is the rights grant.
@@ -153,9 +181,10 @@ if the label can't be rendered the shot doesn't ship at all.
 python -m unittest discover -s tests -v
 ```
 
-55 tests. They render real video through ffmpeg (a few seconds each), assert the
-compliance gate refuses on every hard rule, and assert the renderer refuses every
-fabricating move before writing any output.
+68 tests. They render real video through ffmpeg (a few seconds each), assert the
+compliance gate refuses on every hard rule, assert the renderer refuses every
+fabricating move before writing any output, and assert the manual queue contains
+no way to send.
 
 ---
 
@@ -178,6 +207,7 @@ engine/
     templates.py            sequences per segment; footer always appended
     sequencer.py            render → gate → transport → record
     transport.py            Resend / console
+    manual.py               hand-send queue (Airbnb/IG); no transport by design
   produce/
     ffmpeg.py               binary discovery, capability probe
     motion.py               truthful camera moves; refuses fabrication

@@ -124,6 +124,76 @@ def cmd_campaign(args, cfg: Config) -> int:
     return 0
 
 
+def cmd_manual(args, cfg: Config) -> int:
+    """Print a hand-worked outreach queue. Sends nothing."""
+    import csv as _csv
+
+    from .outreach.manual import DISCLAIMER, ManualQueue, bridge_note
+
+    handles: list[tuple[str, str]] = []
+    if args.list:
+        with open(args.list, newline="", encoding="utf-8-sig") as fh:
+            for row in _csv.reader(fh):
+                if not row or not row[0].strip() or row[0].lstrip().startswith("#"):
+                    continue
+                handles.append((row[0].strip(),
+                                row[1].strip() if len(row) > 1 else ""))
+    else:
+        handles = [(h, "") for h in args.handle or []]
+
+    if not handles:
+        print("nothing to do: pass --handle URL (repeatable) or --list file.csv",
+              file=sys.stderr)
+        return 2
+
+    with _store(cfg) as store:
+        q = ManualQueue(store, channel=args.channel, max_per_day=args.max_per_day)
+
+        if args.mark_sent:
+            for handle, label in handles:
+                q.mark_sent(handle, label=label)
+                print(f"recorded: {handle}")
+            print(f"\n{q.remaining_today()} left in today's budget")
+            return 0
+
+        items = q.build(handles)
+        print(DISCLAIMER)
+        if not items:
+            print("queue empty — every handle is already contacted, or today's "
+                  f"cap of {args.max_per_day} is used up.")
+            print(f"\n{bridge_note()}")
+            return 0
+
+        for i, item in enumerate(items, 1):
+            print(f"--- {i}/{len(items)} · {item.label or item.handle} ---")
+            print(f"open: {item.handle}\n")
+            print(item.message)
+            print()
+
+        print(f"{len(items)} to send by hand. {q.remaining_today()} left in "
+              "today's budget.")
+        print("After sending, record them:")
+        print(f"  python -m engine manual --mark-sent "
+              + " ".join(f"--handle {i.handle}" for i in items[:2])
+              + (" ..." if len(items) > 2 else ""))
+        print(f"\n{bridge_note()}")
+    return 0
+
+
+def cmd_manual_log(args, cfg: Config) -> int:
+    with _store(cfg) as store:
+        rows = store.manual_history(args.limit)
+        if not rows:
+            print("no manual touches recorded")
+            return 0
+        print(f"{'when':21} {'channel':16} handle")
+        for r in rows:
+            print(f"{r['sent_at']:21} {r['channel']:16} "
+                  f"{r['label'] or r['handle']}")
+        print(f"\ntoday: {store.manual_touches_today()}")
+    return 0
+
+
 # --- production --------------------------------------------------------------
 
 def cmd_record_grant(args, cfg: Config) -> int:
@@ -205,6 +275,22 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--segment", choices=[x.value for x in Segment])
     s.add_argument("--send", action="store_true", help="actually send")
     s.set_defaults(fn=cmd_campaign)
+
+    s = sub.add_parser(
+        "manual",
+        help="print a hand-send queue for Airbnb/IG (sends nothing, ever)")
+    s.add_argument("--handle", action="append",
+                   help="listing URL or handle; repeatable")
+    s.add_argument("--list", help="CSV of handle[,label] per line")
+    s.add_argument("--channel", default="airbnb_message")
+    s.add_argument("--max-per-day", type=int, default=10)
+    s.add_argument("--mark-sent", action="store_true",
+                   help="record the given handles as sent by hand")
+    s.set_defaults(fn=cmd_manual)
+
+    s = sub.add_parser("manual-log", help="what you've sent by hand")
+    s.add_argument("--limit", type=int, default=50)
+    s.set_defaults(fn=cmd_manual_log)
 
     s = sub.add_parser("record-grant", help="record client photo-rights confirmation")
     s.add_argument("property_ref")

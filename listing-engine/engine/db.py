@@ -46,10 +46,27 @@ CREATE TABLE IF NOT EXISTS sends (
     step       INTEGER NOT NULL,
     subject    TEXT NOT NULL,
     inbox      TEXT NOT NULL,
+    channel    TEXT NOT NULL DEFAULT 'email',
     sent_at    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_sends_email ON sends(email);
 CREATE INDEX IF NOT EXISTS idx_sends_sent_at ON sends(sent_at);
+-- idx_sends_channel is created in _migrate(), after the column is guaranteed to
+-- exist; a pre-existing database won't have it yet at executescript time.
+
+-- Manually-worked prospects that have no email: Airbnb listings, IG accounts.
+-- ``handle`` is whatever identifies them on that channel (listing URL, @name).
+CREATE TABLE IF NOT EXISTS manual_touches (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    handle      TEXT NOT NULL,
+    channel     TEXT NOT NULL,
+    label       TEXT DEFAULT '',
+    step        INTEGER NOT NULL DEFAULT 0,
+    outcome     TEXT DEFAULT '',
+    sent_at     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_manual_handle ON manual_touches(handle);
+CREATE INDEX IF NOT EXISTS idx_manual_sent_at ON manual_touches(sent_at);
 
 CREATE TABLE IF NOT EXISTS grants (
     property_ref         TEXT PRIMARY KEY,
@@ -70,7 +87,17 @@ class Store:
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    def _migrate(self) -> None:
+        """Add columns introduced after a database was first created."""
+        cols = {r["name"] for r in self.conn.execute("PRAGMA table_info(sends)")}
+        if "channel" not in cols:
+            self.conn.execute(
+                "ALTER TABLE sends ADD COLUMN channel TEXT NOT NULL DEFAULT 'email'")
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_sends_channel ON sends(channel)")
 
     def close(self) -> None:
         self.conn.close()
@@ -172,11 +199,11 @@ class Store:
     # --- sends ---------------------------------------------------------------
 
     def record_send(self, email: str, campaign: str, step: int, subject: str,
-                    inbox: str) -> None:
+                    inbox: str, channel: str = "email") -> None:
         self.conn.execute(
-            """INSERT INTO sends (email, campaign, step, subject, inbox, sent_at)
-               VALUES (?,?,?,?,?,?)""",
-            (email.strip().lower(), campaign, step, subject, inbox, utcnow()))
+            """INSERT INTO sends (email, campaign, step, subject, inbox, channel, sent_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            (email.strip().lower(), campaign, step, subject, inbox, channel, utcnow()))
         self.conn.commit()
 
     def touch_count(self, email: str) -> int:
@@ -191,6 +218,37 @@ class Store:
             sql += " AND inbox = ?"
             params.append(inbox)
         return int(self.conn.execute(sql, params).fetchone()["n"])
+
+    # --- manual (human-sent) touches -----------------------------------------
+
+    def record_manual_touch(self, handle: str, channel: str, step: int = 0,
+                            label: str = "", outcome: str = "") -> None:
+        self.conn.execute(
+            """INSERT INTO manual_touches (handle, channel, label, step, outcome, sent_at)
+               VALUES (?,?,?,?,?,?)""",
+            (handle.strip(), channel, label, step, outcome, utcnow()))
+        self.conn.commit()
+
+    def manual_touch_count(self, handle: str) -> int:
+        r = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM manual_touches WHERE handle = ?",
+            (handle.strip(),)).fetchone()
+        return int(r["n"])
+
+    def manual_touches_today(self, channel: str | None = None) -> int:
+        sql = ("SELECT COUNT(*) AS n FROM manual_touches "
+               "WHERE date(sent_at) = date('now')")
+        params: list[object] = []
+        if channel:
+            sql += " AND channel = ?"
+            params.append(channel)
+        return int(self.conn.execute(sql, params).fetchone()["n"])
+
+    def manual_history(self, limit: int = 50) -> list[dict]:
+        rows = self.conn.execute(
+            "SELECT * FROM manual_touches ORDER BY sent_at DESC LIMIT ?",
+            (limit,)).fetchall()
+        return [dict(r) for r in rows]
 
     # --- grants --------------------------------------------------------------
 

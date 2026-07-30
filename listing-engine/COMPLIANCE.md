@@ -56,9 +56,35 @@ staged. This is standard practice in US real estate. It is not optional.
 - Scraping Airbnb, Vrbo, or Booking.com. Automated collection breaches their
   Terms of Service. Exposure: account termination, IP blocking, breach-of-contract
   claim.
-- Using any listing platform's internal messaging system for commercial outreach.
+- **Automating** any listing platform's internal messaging system. A bot driving a
+  logged-in session is precisely what platform anti-automation detects, and the
+  ban removes the channel you were prospecting through.
 - Email address harvesting or dictionary attacks. Under CAN-SPAM these are
   aggravating factors that increase per-violation penalties.
+
+### Airbnb's inbox — read this before using it
+
+Airbnb's **Off-Platform Policy** specifically prohibits:
+
+- "including links that take people off of the Airbnb platform in listings or
+  messages"
+- "soliciting or facilitating any off-Airbnb transaction"
+
+A message offering paid video work is both. **There is no wording that fixes
+this** — the solicitation itself is the violation. Penalties reach listing and
+account suspension, and they apply to the **host who engages**, not just to the
+sender. That is a sales problem as much as a rules problem: you are asking a
+professional operator to risk their listing in order to reply to you, and the
+good ones know it.
+
+`engine/outreach/manual.py` supports this channel as a **hand-worked queue** — it
+prints messages for you to paste, records them, and caps volume. It has no
+transport and cannot send. That is harm reduction, not compliance. Use it knowing
+the difference.
+
+The scalable version is the bridge: identify the operating business from the
+listing, then contact that business off-platform, where automation and links are
+both fine.
 
 ### Allowed
 
