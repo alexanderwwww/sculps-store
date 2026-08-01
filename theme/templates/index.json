@@ -141,7 +141,7 @@
       }
     },
     "reviews": {
-      "type": "lockin-reviews",
+      "type": "lockin-review-carousel",
       "blocks": {
         "r1": {
           "type": "review",
@@ -160,16 +160,31 @@
           "settings": {
             "is_placeholder": true
           }
+        },
+        "r4": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r5": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
         }
       },
       "block_order": [
         "r1",
         "r2",
-        "r3"
+        "r3",
+        "r4",
+        "r5"
       ],
       "settings": {
         "eyebrow": "In their words",
-        "heading": "What people say."
+        "heading": "What people say.",
+        "note": "Reviews from verified customers appear here as they come in."
       }
     },
     "closing_cta": {

@@ -49,6 +49,7 @@
     data-lockin-buy
     data-after-add="{{ section.settings.after_add }}"
     data-cart-url="{{ routes.cart_url }}"
+    data-sub-discount="{{ discount }}"
   >
     <div class="lk-bf__grid">
       {%- comment -%} ---------- Full-bleed media ---------- {%- endcomment -%}
@@ -165,6 +166,7 @@
             {{- product.selected_or_first_available_variant.price | money -}}
           </span>
           <s class="lk-bf__was" data-lockin-was hidden></s>
+          <span class="lk-bf__save" data-lockin-save hidden></span>
           <span class="lk-bf__perday" data-lockin-perday></span>
         </div>
         <p class="lk-bf__liveNote" data-lockin-live aria-live="polite"></p>
@@ -311,9 +313,9 @@
                   assign per_box_sub = sub_price | divided_by: months
                   assign per_day = variant.price | divided_by: days
 
-                  assign saving = 0
+                  assign save_pct = 0
                   if variant.compare_at_price > variant.price
-                    assign saving = variant.compare_at_price | minus: variant.price
+                    assign save_pct = variant.compare_at_price | minus: variant.price | times: 100.0 | divided_by: variant.compare_at_price | round
                   endif
                 -%}
                 <div class="lk-bundle">
@@ -332,6 +334,7 @@
                     data-per-box-onetime="{{ per_box | money }}"
                     data-per-box-subscribe="{{ per_box_sub | money }}"
                     data-per-day="{{ per_day | money }}"
+                    data-save-pct="{{ save_pct }}"
                     data-label="{{ block.settings.label | default: variant.title | escape }}"
                     {% if forloop.index == section.settings.default_bundle %}checked{% endif %}
                     {% unless variant.available %}disabled{% endunless %}
@@ -344,8 +347,8 @@
                       <span class="lk-bundle__perbox">
                         <span data-lockin-perbox-for="{{ variant.id }}">{{ per_box | money }}</span>
                         {{ section.settings.per_box_suffix }}
-                        {%- if saving > 0 %}
-                          <span class="lk-bundle__saving">Save {{ saving | money }}</span>
+                        {%- if save_pct > 0 %}
+                          <span class="lk-bundle__saving">Save {{ save_pct }}%</span>
                         {%- endif %}
                       </span>
                     </span>
@@ -386,6 +389,16 @@
   {%- comment -%} ---------- Sticky bar ---------- {%- endcomment -%}
   <div class="lk lk-stickybar" data-lockin-stickybar hidden>
     <div class="lk-container lk-stickybar__inner">
+      {%- if product.featured_image -%}
+        <img
+          class="lk-stickybar__thumb"
+          src="{{ product.featured_image | image_url: width: 120 }}"
+          alt=""
+          width="48"
+          height="48"
+          loading="lazy"
+        >
+      {%- endif -%}
       <div class="lk-stickybar__info">
         <span class="lk-stickybar__title">{{ section.settings.title | default: product.title }}</span>
         <span class="lk-stickybar__meta">
@@ -599,6 +612,19 @@
   .lk-bf__was {
     font-size: 1.0625rem;
     color: var(--lk-muted);
+  }
+
+  .lk-bf__save {
+    align-self: center;
+    padding: 5px 11px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-accent);
+    color: var(--lk-ink);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .lk-bf__perday {
@@ -936,6 +962,16 @@
     gap: 14px;
   }
 
+  .lk-stickybar__thumb {
+    flex: none;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: var(--lk-r-sm);
+    border: 1px solid var(--lk-line);
+    object-fit: cover;
+    background: var(--lk-ice-soft);
+  }
+
   .lk-stickybar__info {
     display: flex;
     flex-direction: column;
@@ -1061,6 +1097,7 @@
       var planInput = root.querySelector('[data-lockin-plan-input]');
       var priceEl = root.querySelector('[data-lockin-price]');
       var wasEl = root.querySelector('[data-lockin-was]');
+      var saveEl = root.querySelector('[data-lockin-save]');
       var perDayEl = root.querySelector('[data-lockin-perday]');
       var liveEl = root.querySelector('[data-lockin-live]');
       var submitEl = root.querySelector('[data-lockin-submit]');
@@ -1100,6 +1137,18 @@
             wasEl.hidden = false;
           } else {
             wasEl.hidden = true;
+          }
+        }
+
+        if (saveEl) {
+          var pct = subscribing
+            ? parseInt(root.dataset.subDiscount || '0', 10)
+            : parseInt(bundle.dataset.savePct || '0', 10);
+          if (pct > 0) {
+            saveEl.textContent = 'Save ' + pct + '%';
+            saveEl.hidden = false;
+          } else {
+            saveEl.hidden = true;
           }
         }
 
@@ -1325,7 +1374,7 @@
       "type": "text",
       "id": "offer_title",
       "label": "Offer title",
-      "default": "Up to €60 off multi-month supplies"
+      "default": "Up to $60 off multi-month supplies"
     },
     {
       "type": "textarea",

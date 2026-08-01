@@ -4,9 +4,11 @@
   Comment-card look: avatar, name, context line, quote. Horizontal
   scroll-snap with arrow buttons; drag/swipe native.
 
-  Same honesty rules as everywhere else: cards ship flagged as placeholders
-  until each is switched off for a real, attributable review, and there are
-  no star ratings, review counts or invented like-counts anywhere.
+  Same honesty rules as everywhere else: a card marked as placeholder renders
+  a clean skeleton ("Verified review — coming soon") instead of any text, so
+  nothing invented ever shows. Untick the checkbox once a real, attributable
+  review fills the card. No star ratings, review counts or invented
+  like-counts anywhere.
 {%- endcomment -%}
 
 <div class="lk lk-section lk-rc">
@@ -32,11 +34,29 @@
   <div class="lk-rc__scroller lk-reveal" data-lockin-rc tabindex="0" role="region" aria-label="{{ section.settings.heading | default: 'Reviews' | escape }}">
     <ul class="lk-rc__track">
       {%- for block in section.blocks -%}
+        {%- if block.settings.is_placeholder -%}
+          {%- comment -%} Reserved slot: skeleton only — no invented reviewer, no invented quote. {%- endcomment -%}
+          {%- assign w = forloop.index0 | modulo: 3 -%}
+          <li class="lk-rc__card lk-rc__card--pending" {{ block.shopify_attributes }}>
+            <div class="lk-rc__who" aria-hidden="true">
+              <span class="lk-rc__avatar lk-rc__avatar--pending"></span>
+              <span class="lk-rc__whoText">
+                <span class="lk-rc__bar" style="inline-size: {% case w %}{% when 0 %}44%{% when 1 %}36%{% else %}52%{% endcase %}"></span>
+                <span class="lk-rc__bar lk-rc__bar--soft" style="inline-size: {% case w %}{% when 0 %}62%{% when 1 %}70%{% else %}56%{% endcase %}"></span>
+              </span>
+            </div>
+            <div class="lk-rc__pendingBody" aria-hidden="true">
+              <span class="lk-rc__bar lk-rc__bar--line"></span>
+              <span class="lk-rc__bar lk-rc__bar--line" style="inline-size: {% case w %}{% when 0 %}86%{% when 1 %}92%{% else %}78%{% endcase %}"></span>
+              <span class="lk-rc__bar lk-rc__bar--line" style="inline-size: {% case w %}{% when 0 %}56%{% when 1 %}44%{% else %}64%{% endcase %}"></span>
+            </div>
+            <p class="lk-rc__pending">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7.25" stroke="currentColor" stroke-width="1.5"/><path d="m7 10.2 2.1 2.1L13.2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Verified review — coming soon
+            </p>
+          </li>
+        {%- else -%}
         <li class="lk-rc__card" {{ block.shopify_attributes }}>
-          {%- if block.settings.is_placeholder -%}
-            <p class="lk-rc__flag">Placeholder — replace with a real review</p>
-          {%- endif -%}
-
           <div class="lk-rc__who">
             {%- if block.settings.avatar != blank -%}
               <img class="lk-rc__avatar" src="{{ block.settings.avatar | image_url: width: 96 }}" alt="" width="48" height="48" loading="lazy">
@@ -61,6 +81,7 @@
             </p>
           {%- endif -%}
         </li>
+        {%- endif -%}
       {%- endfor -%}
     </ul>
   </div>
@@ -149,20 +170,59 @@
     border: 1px solid var(--lk-line);
   }
 
-  .lk-rc__flag {
-    align-self: flex-start;
-    padding: 5px 11px;
+  /* Reserved (placeholder) cards: quiet skeleton, same geometry as real cards. */
+  .lk-rc__card--pending {
+    background: var(--lk-paper);
+  }
+
+  .lk-rc__card--pending .lk-rc__whoText {
+    gap: 7px;
+    flex: 1;
+  }
+
+  .lk-rc__avatar--pending {
+    background: var(--lk-ice);
+  }
+
+  .lk-rc__bar {
+    display: block;
+    inline-size: 100%;
+    block-size: 10px;
     border-radius: var(--lk-r-pill);
-    background: repeating-linear-gradient(
-      -45deg,
-      color-mix(in srgb, var(--lk-accent) 22%, transparent) 0 7px,
-      transparent 7px 14px
-    );
-    border: 1px dashed var(--lk-accent);
-    font-size: 0.625rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    background: color-mix(in srgb, var(--lk-ink) 8%, transparent);
+  }
+
+  .lk-rc__bar--soft {
+    block-size: 8px;
+    background: color-mix(in srgb, var(--lk-ink) 5%, transparent);
+  }
+
+  .lk-rc__bar--line {
+    block-size: 9px;
+    background: color-mix(in srgb, var(--lk-ink) 6%, transparent);
+  }
+
+  .lk-rc__pendingBody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-block: 4px 2px;
+  }
+
+  .lk-rc__pending {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--lk-muted);
+  }
+
+  .lk-rc__pending svg {
+    inline-size: 15px;
+    block-size: 15px;
+    color: var(--lk-accent);
   }
 
   .lk-rc__who {
@@ -300,8 +360,8 @@
       "type": "textarea",
       "id": "note",
       "label": "Note under the carousel",
-      "info": "Clear this once placeholder quotes are replaced.",
-      "default": "Placeholder content — these are not real customer reviews yet. Ratings and counts stay off until verified reviews exist."
+      "info": "Clear this once real reviews fill the cards.",
+      "default": "Reviews from verified customers appear here as they come in."
     }
   ],
   "blocks": [
@@ -312,20 +372,20 @@
         {
           "type": "checkbox",
           "id": "is_placeholder",
-          "label": "Mark as placeholder",
+          "label": "Reserved slot (no real review yet)",
+          "info": "Renders a clean skeleton card. Untick once the fields below hold a real, verifiable customer review.",
           "default": true
         },
         {
           "type": "text",
           "id": "name",
-          "label": "Name",
-          "default": "[Reviewer name]"
+          "label": "Name"
         },
         {
           "type": "text",
           "id": "context",
           "label": "Context line",
-          "default": "[Verified purchase — placeholder]"
+          "info": "e.g. Verified buyer"
         },
         {
           "type": "image_picker",
@@ -336,15 +396,13 @@
         {
           "type": "textarea",
           "id": "quote",
-          "label": "Quote",
-          "default": "[Placeholder review — replace with a real customer quote.]"
+          "label": "Quote"
         },
         {
           "type": "text",
           "id": "footer",
           "label": "Footer line",
-          "info": "Optional, e.g. what they bought. No invented like-counts.",
-          "default": "3-month supply"
+          "info": "Optional, e.g. what they bought. No invented like-counts."
         }
       ]
     }
