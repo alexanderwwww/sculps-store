@@ -213,60 +213,62 @@
           <input type="hidden" name="selling_plan" value="" data-lockin-plan-input disabled>
           <input type="hidden" name="quantity" value="1">
 
-          <fieldset class="lk-bf__fieldset lk-purchase">
-            <legend class="lk-bf__legend">{{ section.settings.purchase_legend }}</legend>
-            <div class="lk-purchase__options">
-              <div class="lk-purchase__option">
-                <input
-                  class="lk-vh-input"
-                  type="radio"
-                  name="lockin-purchase-type"
-                  id="{{ section.id }}-sub"
-                  value="subscribe"
-                  data-lockin-purchase="subscribe"
-                  data-selling-plan="{{ selling_plan.id }}"
-                  {% unless has_selling_plans %}disabled{% endunless %}
-                >
-                <label class="lk-purchase__label" for="{{ section.id }}-sub">
-                  <span class="lk-radio" aria-hidden="true"></span>
-                  <span class="lk-purchase__text">
-                    <span class="lk-purchase__name">{{ section.settings.subscribe_label }}</span>
-                    <span class="lk-purchase__meta">{{ section.settings.subscribe_note }}</span>
-                  </span>
-                  <span class="lk-purchase__tag">Save {{ discount }}%</span>
-                </label>
+          {%- comment -%}
+            The subscribe/one-time chooser renders only when the product has a
+            real selling plan — a disabled option is buy-box noise. It appears
+            automatically the moment a subscriptions app adds a plan.
+          {%- endcomment -%}
+          {%- if has_selling_plans -%}
+            <fieldset class="lk-bf__fieldset lk-purchase">
+              <legend class="lk-bf__legend">{{ section.settings.purchase_legend }}</legend>
+              <div class="lk-purchase__options">
+                <div class="lk-purchase__option">
+                  <input
+                    class="lk-vh-input"
+                    type="radio"
+                    name="lockin-purchase-type"
+                    id="{{ section.id }}-sub"
+                    value="subscribe"
+                    data-lockin-purchase="subscribe"
+                    data-selling-plan="{{ selling_plan.id }}"
+                  >
+                  <label class="lk-purchase__label" for="{{ section.id }}-sub">
+                    <span class="lk-radio" aria-hidden="true"></span>
+                    <span class="lk-purchase__text">
+                      <span class="lk-purchase__name">{{ section.settings.subscribe_label }}</span>
+                      <span class="lk-purchase__meta">{{ section.settings.subscribe_note }}</span>
+                    </span>
+                    <span class="lk-purchase__tag">Save {{ discount }}%</span>
+                  </label>
+                </div>
+                <div class="lk-purchase__option">
+                  <input
+                    class="lk-vh-input"
+                    type="radio"
+                    name="lockin-purchase-type"
+                    id="{{ section.id }}-once"
+                    value="onetime"
+                    data-lockin-purchase="onetime"
+                    checked
+                  >
+                  <label class="lk-purchase__label" for="{{ section.id }}-once">
+                    <span class="lk-radio" aria-hidden="true"></span>
+                    <span class="lk-purchase__text">
+                      <span class="lk-purchase__name">{{ section.settings.onetime_label }}</span>
+                      <span class="lk-purchase__meta">{{ section.settings.onetime_note }}</span>
+                    </span>
+                  </label>
+                </div>
               </div>
-              <div class="lk-purchase__option">
-                <input
-                  class="lk-vh-input"
-                  type="radio"
-                  name="lockin-purchase-type"
-                  id="{{ section.id }}-once"
-                  value="onetime"
-                  data-lockin-purchase="onetime"
-                  checked
-                >
-                <label class="lk-purchase__label" for="{{ section.id }}-once">
-                  <span class="lk-radio" aria-hidden="true"></span>
-                  <span class="lk-purchase__text">
-                    <span class="lk-purchase__name">{{ section.settings.onetime_label }}</span>
-                    <span class="lk-purchase__meta">{{ section.settings.onetime_note }}</span>
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {%- unless has_selling_plans -%}
-              <p class="lk-purchase__pending">{{ section.settings.subscribe_unavailable_note }}</p>
-              {%- if request.design_mode -%}
-                <p class="lk-editor-todo">
-                  <strong>TODO — subscriptions not connected.</strong>
-                  Install a subscriptions app and create a {{ discount }}% plan on this product;
-                  this section picks it up automatically.
-                </p>
-              {%- endif -%}
-            {%- endunless -%}
-          </fieldset>
+            </fieldset>
+          {%- elsif request.design_mode -%}
+            <p class="lk-editor-todo">
+              <strong>Subscriptions hidden.</strong>
+              No selling plan on this product yet, so the subscribe/one-time chooser is not shown
+              to customers. Install a subscriptions app and add a {{ discount }}% plan — the
+              chooser appears automatically.
+            </p>
+          {%- endif -%}
 
           <fieldset class="lk-bf__fieldset lk-bundles">
             <legend class="lk-bf__legend">{{ section.settings.bundle_legend }}</legend>
@@ -440,12 +442,13 @@
     scroll-snap-stop: always;
   }
 
+  /* Square on phones so title + price sit near the fold. */
   .lk-bf__hero {
     display: block;
     inline-size: 100%;
     block-size: 100%;
-    aspect-ratio: 4 / 5;
-    max-block-size: 78svh;
+    aspect-ratio: 1 / 1;
+    max-block-size: 62svh;
     object-fit: cover;
   }
 
@@ -512,8 +515,9 @@
     block-size: 13px;
   }
 
+  /* Dots carry the position on phones; thumbnails are desktop chrome. */
   .lk-bf__thumbs {
-    display: flex;
+    display: none;
     gap: 10px;
     margin: 0;
     padding: 12px var(--lk-gutter);
@@ -1025,8 +1029,13 @@
       display: grid;
     }
 
+    .lk-bf__thumbs {
+      display: flex;
+    }
+
     .lk-bf__hero {
       block-size: 100%;
+      aspect-ratio: auto;
       max-block-size: none;
     }
 
