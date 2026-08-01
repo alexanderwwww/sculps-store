@@ -372,6 +372,46 @@
             </div>
           </fieldset>
 
+          {%- comment -%}
+            Order bump: one-tap add-on. Renders only when the boost product is
+            active and purchasable — a checkbox that charges for a draft or
+            out-of-stock product would be a chargeback machine.
+          {%- endcomment -%}
+          {%- assign boost = section.settings.boost_product -%}
+          {%- assign boost_variant = boost.selected_or_first_available_variant -%}
+          {%- if boost != blank and boost_variant != blank and boost_variant.available -%}
+            <div class="lk-bump">
+              <input
+                class="lk-vh-input"
+                type="checkbox"
+                id="{{ section.id }}-bump"
+                value="{{ boost_variant.id }}"
+                data-lockin-bump
+              >
+              <label class="lk-bump__label" for="{{ section.id }}-bump">
+                <span class="lk-checkbox" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.4 3 3L12.8 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                {%- if boost.featured_image -%}
+                  <img class="lk-bump__thumb" src="{{ boost.featured_image | image_url: width: 120 }}" alt="" width="44" height="44" loading="lazy">
+                {%- endif -%}
+                <span class="lk-bump__text">
+                  <span class="lk-bump__name">{{ section.settings.boost_label | default: boost.title }}</span>
+                  {%- if section.settings.boost_note != blank -%}
+                    <span class="lk-bump__meta">{{ section.settings.boost_note }}</span>
+                  {%- endif -%}
+                </span>
+                <span class="lk-bump__price">+{{ boost_variant.price | money }}</span>
+              </label>
+            </div>
+          {%- elsif request.design_mode -%}
+            <p class="lk-editor-todo">
+              <strong>Boost hidden.</strong>
+              Select an <em>active, in-stock</em> product under Boost add-on in this
+              section's settings — the one-tap add appears here automatically.
+            </p>
+          {%- endif -%}
+
           <button class="lk-btn lk-btn--primary lk-btn--block lk-bf__submit" type="submit" data-lockin-submit>
             {{ section.settings.submit_label }}
           </button>
@@ -1038,6 +1078,96 @@
     font-weight: 600;
   }
 
+  /* ---------- Order bump ---------- */
+
+  .lk-bump {
+    margin: 0 0 16px;
+  }
+
+  .lk-bump__label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--lk-r-md);
+    border: 1.5px dashed color-mix(in srgb, var(--lk-accent) 65%, var(--lk-line));
+    background: color-mix(in srgb, var(--lk-accent) 8%, var(--lk-paper));
+    cursor: pointer;
+    transition: border-color 0.2s var(--lk-ease), background-color 0.2s var(--lk-ease);
+  }
+
+  .lk-checkbox {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 21px;
+    block-size: 21px;
+    border-radius: 6px;
+    border: 1.5px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+    color: var(--lk-paper);
+    transition: background-color 0.18s var(--lk-ease), border-color 0.18s var(--lk-ease);
+  }
+
+  .lk-checkbox svg {
+    inline-size: 12px;
+    block-size: 12px;
+    opacity: 0;
+    transition: opacity 0.18s var(--lk-ease);
+  }
+
+  .lk-vh-input:checked + .lk-bump__label {
+    border-style: solid;
+    border-color: var(--lk-ink);
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-vh-input:checked + .lk-bump__label .lk-checkbox {
+    background: var(--lk-ink);
+    border-color: var(--lk-ink);
+  }
+
+  .lk-vh-input:checked + .lk-bump__label .lk-checkbox svg {
+    opacity: 1;
+  }
+
+  .lk-bump__thumb {
+    flex: none;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: var(--lk-r-sm);
+    border: 1px solid var(--lk-line);
+    object-fit: cover;
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-bump__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .lk-bump__name {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
+  }
+
+  .lk-bump__meta {
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-bump__price {
+    margin-left: auto;
+    flex: none;
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
   .lk-bf__submit {
     margin-top: 4px;
   }
@@ -1265,11 +1395,20 @@
         var addUrl = (window.Theme && Theme.routes && Theme.routes.cart_add_url) || '/cart/add';
         var cartUrl = root.dataset.cartUrl || '/cart';
 
+        var items = [{ id: Number(variantInput.value), quantity: 1 }];
+        if (planInput && !planInput.disabled && planInput.value) {
+          items[0].selling_plan = Number(planInput.value);
+        }
+        var bump = root.querySelector('[data-lockin-bump]');
+        if (bump && bump.checked) {
+          items.push({ id: Number(bump.value), quantity: 1 });
+        }
+
         fetch(addUrl + '.js', {
           method: 'POST',
-          headers: { Accept: 'application/json' },
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: new FormData(form),
+          body: JSON.stringify({ items: items }),
         })
           .then(function (response) {
             return response.json().then(function (data) {
@@ -1458,6 +1597,28 @@
       "id": "per_box_suffix",
       "label": "Per-box suffix",
       "default": "/ box"
+    },
+    {
+      "type": "header",
+      "content": "Boost add-on"
+    },
+    {
+      "type": "product",
+      "id": "boost_product",
+      "label": "Boost product",
+      "info": "One-tap add-on under the bundles. Shows only while this product is active and in stock — its real price is displayed."
+    },
+    {
+      "type": "text",
+      "id": "boost_label",
+      "label": "Boost label",
+      "default": "Anti-aging boost"
+    },
+    {
+      "type": "text",
+      "id": "boost_note",
+      "label": "Boost note",
+      "default": "Added to your order. One tap to remove."
     },
     {
       "type": "header",
