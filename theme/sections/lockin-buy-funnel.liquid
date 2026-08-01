@@ -1,0 +1,1438 @@
+{%- comment -%}
+  lockin — buy funnel (product page main).
+
+  Funnel order, top to bottom:
+    full-bleed product media with glass bullet pills over it
+    title + description
+    price
+    offer banner
+    small FAQ
+    purchase type + bundle cards + add to cart
+  plus the sticky add-to-cart bar once the funnel scrolls past.
+
+  Bundle cards are driven by the product's own variants and labelled by
+  blocks matched in order (bundle blocks only), so the mapping cannot drift.
+
+  Subscribe pricing: with a selling plan present the option submits a real
+  `selling_plan`; without one it renders disabled with a note, so no
+  customer is shown a price the store cannot honour.
+{%- endcomment -%}
+
+{%- liquid
+  assign product = section.settings.product | default: product
+
+  assign discount = section.settings.subscribe_discount
+  assign remainder = 100 | minus: discount
+
+  assign sp_group = product.selling_plan_groups | first
+  assign selling_plan = sp_group.selling_plans | first
+  assign has_selling_plans = false
+  if selling_plan != blank
+    assign has_selling_plans = true
+  endif
+
+  assign form_id = 'lockin-buy-' | append: section.id
+
+  assign hero = section.settings.hero_image
+  if hero == blank
+    assign hero = product.featured_image
+  endif
+-%}
+
+{%- if product == blank -%}
+  {%- if request.design_mode -%}
+    <div class="lk lk-section"><div class="lk-container"><p class="lk-body">Select a product in this section's settings.</p></div></div>
+  {%- endif -%}
+{%- else -%}
+  <div
+    class="lk lk-bf"
+    data-lockin-buy
+    data-after-add="{{ section.settings.after_add }}"
+    data-cart-url="{{ routes.cart_url }}"
+  >
+    <div class="lk-bf__grid">
+      {%- comment -%} ---------- Full-bleed media ---------- {%- endcomment -%}
+      <div class="lk-bf__mediaCol">
+        <div class="lk-bf__mediaSticky">
+          <div class="lk-bf__stage">
+            {%- if hero != blank -%}
+              <img
+                class="lk-bf__hero"
+                data-lockin-main-image
+                src="{{ hero | image_url: width: 1400 }}"
+                srcset="{{ hero | image_url: width: 700 }} 700w, {{ hero | image_url: width: 1400 }} 1400w, {{ hero | image_url: width: 2000 }} 2000w"
+                sizes="(min-width: 990px) 55vw, 100vw"
+                alt="{{ hero.alt | default: product.title | escape }}"
+                width="{{ hero.width }}"
+                height="{{ hero.height }}"
+                loading="eager"
+                fetchpriority="high"
+              >
+            {%- else -%}
+              {{ 'product-1' | placeholder_svg_tag: 'lk-bf__hero' }}
+            {%- endif -%}
+
+            {%- comment -%} Glass bullet pills over the image {%- endcomment -%}
+            {%- assign has_glass = false -%}
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'glass' and block.settings.text != blank -%}
+                {%- assign has_glass = true -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- if has_glass -%}
+              <ul class="lk-bf__glass" aria-label="Highlights">
+                {%- for block in section.blocks -%}
+                  {%- if block.type == 'glass' and block.settings.text != blank -%}
+                    <li class="lk-bf__glassPill" {{ block.shopify_attributes }}>
+                      <span class="lk-bf__glassDot" aria-hidden="true"></span>
+                      {{ block.settings.text }}
+                    </li>
+                  {%- endif -%}
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </div>
+
+          {%- if product.media.size > 1 -%}
+            <ul class="lk-bf__thumbs" aria-label="Product images">
+              {%- for media in product.media -%}
+                <li>
+                  <button
+                    class="lk-bf__thumb{% if forloop.first %} is-active{% endif %}"
+                    type="button"
+                    data-lockin-thumb
+                    data-full="{{ media | image_url: width: 1400 }}"
+                    data-srcset="{{ media | image_url: width: 700 }} 700w, {{ media | image_url: width: 1400 }} 1400w"
+                    data-alt="{{ media.alt | default: product.title | escape }}"
+                    aria-label="Show image {{ forloop.index }} of {{ product.media.size }}"
+                    aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
+                  >
+                    <img src="{{ media | image_url: width: 200 }}" alt="" width="100" height="100" loading="lazy">
+                  </button>
+                </li>
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+        </div>
+      </div>
+
+      {%- comment -%} ---------- Funnel column ---------- {%- endcomment -%}
+      <div class="lk-bf__panel">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+
+        <h1 class="lk-bf__title">{{ section.settings.title | default: product.title }}</h1>
+
+        {%- if section.settings.subtitle != blank -%}
+          <p class="lk-bf__subtitle">{{ section.settings.subtitle }}</p>
+        {%- endif -%}
+
+        {%- assign has_badges = false -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'badge' and block.settings.label != blank -%}{%- assign has_badges = true -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if has_badges -%}
+          <ul class="lk-pills lk-bf__pills">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'badge' and block.settings.label != blank -%}
+                <li class="lk-pill" {{ block.shopify_attributes }}>{{ block.settings.label }}</li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        {%- comment -%} ---------- Price ---------- {%- endcomment -%}
+        <div class="lk-bf__priceRow">
+          <span class="lk-bf__price" data-lockin-price>
+            {{- product.selected_or_first_available_variant.price | money -}}
+          </span>
+          <s class="lk-bf__was" data-lockin-was hidden></s>
+          <span class="lk-bf__perday" data-lockin-perday></span>
+        </div>
+        <p class="lk-bf__liveNote" data-lockin-live aria-live="polite"></p>
+
+        {%- comment -%} ---------- Offer ---------- {%- endcomment -%}
+        {%- if section.settings.offer_title != blank or section.settings.offer_text != blank -%}
+          <aside class="lk-bf__offer" aria-label="Current offer">
+            {%- if section.settings.offer_badge != blank -%}
+              <span class="lk-bf__offerBadge">{{ section.settings.offer_badge }}</span>
+            {%- endif -%}
+            {%- if section.settings.offer_title != blank -%}
+              <p class="lk-bf__offerTitle">{{ section.settings.offer_title }}</p>
+            {%- endif -%}
+            {%- if section.settings.offer_text != blank -%}
+              <p class="lk-bf__offerText">{{ section.settings.offer_text }}</p>
+            {%- endif -%}
+          </aside>
+        {%- endif -%}
+
+        {%- comment -%} ---------- Small FAQ ---------- {%- endcomment -%}
+        {%- assign has_minifaq = false -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'faq' and block.settings.question != blank -%}{%- assign has_minifaq = true -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if has_minifaq -%}
+          <div class="lk-bf__minifaq">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'faq' and block.settings.question != blank -%}
+                <details class="lk-bf__qa" name="lockin-minifaq-{{ section.id }}" {{ block.shopify_attributes }}>
+                  <summary class="lk-bf__q">
+                    <span>{{ block.settings.question }}</span>
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+                      <path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </summary>
+                  <div class="lk-bf__a">{{ block.settings.answer }}</div>
+                </details>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+
+        {%- comment -%} ---------- Bundles + purchase ---------- {%- endcomment -%}
+        {%- form 'product', product, id: form_id, class: 'lk-bf__form', novalidate: 'novalidate' -%}
+          <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" data-lockin-variant-input>
+          <input type="hidden" name="selling_plan" value="" data-lockin-plan-input disabled>
+          <input type="hidden" name="quantity" value="1">
+
+          <fieldset class="lk-bf__fieldset lk-purchase">
+            <legend class="lk-bf__legend">{{ section.settings.purchase_legend }}</legend>
+            <div class="lk-purchase__options">
+              <div class="lk-purchase__option">
+                <input
+                  class="lk-vh-input"
+                  type="radio"
+                  name="lockin-purchase-type"
+                  id="{{ section.id }}-sub"
+                  value="subscribe"
+                  data-lockin-purchase="subscribe"
+                  data-selling-plan="{{ selling_plan.id }}"
+                  {% unless has_selling_plans %}disabled{% endunless %}
+                >
+                <label class="lk-purchase__label" for="{{ section.id }}-sub">
+                  <span class="lk-radio" aria-hidden="true"></span>
+                  <span class="lk-purchase__text">
+                    <span class="lk-purchase__name">{{ section.settings.subscribe_label }}</span>
+                    <span class="lk-purchase__meta">{{ section.settings.subscribe_note }}</span>
+                  </span>
+                  <span class="lk-purchase__tag">Save {{ discount }}%</span>
+                </label>
+              </div>
+              <div class="lk-purchase__option">
+                <input
+                  class="lk-vh-input"
+                  type="radio"
+                  name="lockin-purchase-type"
+                  id="{{ section.id }}-once"
+                  value="onetime"
+                  data-lockin-purchase="onetime"
+                  checked
+                >
+                <label class="lk-purchase__label" for="{{ section.id }}-once">
+                  <span class="lk-radio" aria-hidden="true"></span>
+                  <span class="lk-purchase__text">
+                    <span class="lk-purchase__name">{{ section.settings.onetime_label }}</span>
+                    <span class="lk-purchase__meta">{{ section.settings.onetime_note }}</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {%- unless has_selling_plans -%}
+              <p class="lk-purchase__pending">{{ section.settings.subscribe_unavailable_note }}</p>
+              {%- if request.design_mode -%}
+                <p class="lk-editor-todo">
+                  <strong>TODO — subscriptions not connected.</strong>
+                  Install a subscriptions app and create a {{ discount }}% plan on this product;
+                  this section picks it up automatically.
+                </p>
+              {%- endif -%}
+            {%- endunless -%}
+          </fieldset>
+
+          <fieldset class="lk-bf__fieldset lk-bundles">
+            <legend class="lk-bf__legend">{{ section.settings.bundle_legend }}</legend>
+            <div class="lk-bundles__list">
+              {%- for variant in product.variants -%}
+                {%- liquid
+                  # Match the nth variant to the nth block of type "bundle".
+                  assign want = forloop.index
+                  assign seen = 0
+                  assign block = blank
+                  for candidate in section.blocks
+                    if candidate.type == 'bundle'
+                      assign seen = seen | plus: 1
+                      if seen == want
+                        assign block = candidate
+                        break
+                      endif
+                    endif
+                  endfor
+
+                  assign months = block.settings.months | default: forloop.index
+                  if months < 1
+                    assign months = 1
+                  endif
+                  assign days = months | times: 30
+
+                  assign sub_price = 0
+                  if has_selling_plans
+                    for allocation in variant.selling_plan_allocations
+                      if allocation.selling_plan_id == selling_plan.id
+                        assign sub_price = allocation.price
+                      endif
+                    endfor
+                  endif
+                  if sub_price == 0
+                    assign sub_price = variant.price | times: remainder | divided_by: 100
+                  endif
+
+                  assign per_box = variant.price | divided_by: months
+                  assign per_box_sub = sub_price | divided_by: months
+                  assign per_day = variant.price | divided_by: days
+
+                  assign saving = 0
+                  if variant.compare_at_price > variant.price
+                    assign saving = variant.compare_at_price | minus: variant.price
+                  endif
+                -%}
+                <div class="lk-bundle">
+                  <input
+                    class="lk-vh-input"
+                    type="radio"
+                    name="lockin-bundle"
+                    id="{{ section.id }}-v{{ variant.id }}"
+                    value="{{ variant.id }}"
+                    data-lockin-bundle
+                    data-variant-id="{{ variant.id }}"
+                    data-available="{{ variant.available }}"
+                    data-price-onetime="{{ variant.price | money }}"
+                    data-price-subscribe="{{ sub_price | money }}"
+                    data-compare="{% if variant.compare_at_price > variant.price %}{{ variant.compare_at_price | money }}{% endif %}"
+                    data-per-box-onetime="{{ per_box | money }}"
+                    data-per-box-subscribe="{{ per_box_sub | money }}"
+                    data-per-day="{{ per_day | money }}"
+                    data-label="{{ block.settings.label | default: variant.title | escape }}"
+                    {% if forloop.index == section.settings.default_bundle %}checked{% endif %}
+                    {% unless variant.available %}disabled{% endunless %}
+                  >
+                  <label class="lk-bundle__label" for="{{ section.id }}-v{{ variant.id }}">
+                    <span class="lk-radio" aria-hidden="true"></span>
+                    <span class="lk-bundle__main">
+                      <span class="lk-bundle__name">{{ block.settings.label | default: variant.title }}</span>
+                      <span class="lk-bundle__sub">{{ block.settings.sublabel | default: variant.title }}</span>
+                      <span class="lk-bundle__perbox">
+                        <span data-lockin-perbox-for="{{ variant.id }}">{{ per_box | money }}</span>
+                        {{ section.settings.per_box_suffix }}
+                        {%- if saving > 0 %}
+                          <span class="lk-bundle__saving">Save {{ saving | money }}</span>
+                        {%- endif %}
+                      </span>
+                    </span>
+                    <span class="lk-bundle__pricing">
+                      {%- if variant.compare_at_price > variant.price -%}
+                        <s class="lk-bundle__was">{{ variant.compare_at_price | money }}</s>
+                      {%- endif -%}
+                      <span class="lk-bundle__now" data-lockin-bundleprice-for="{{ variant.id }}">
+                        {{- variant.price | money -}}
+                      </span>
+                      {%- unless variant.available -%}
+                        <span class="lk-bundle__soldout">Sold out</span>
+                      {%- endunless -%}
+                    </span>
+                    {%- if block.settings.badge != blank -%}
+                      <span class="lk-bundle__badge">{{ block.settings.badge }}</span>
+                    {%- endif -%}
+                  </label>
+                </div>
+              {%- endfor -%}
+            </div>
+          </fieldset>
+
+          <button class="lk-btn lk-btn--primary lk-btn--block lk-bf__submit" type="submit" data-lockin-submit>
+            {{ section.settings.submit_label }}
+          </button>
+
+          {%- if section.settings.reassurance != blank -%}
+            <p class="lk-bf__reassurance">{{ section.settings.reassurance }}</p>
+          {%- endif -%}
+        {%- endform -%}
+      </div>
+    </div>
+
+    <span class="lk-bf__sentinel" data-lockin-sentinel aria-hidden="true"></span>
+  </div>
+
+  {%- comment -%} ---------- Sticky bar ---------- {%- endcomment -%}
+  <div class="lk lk-stickybar" data-lockin-stickybar hidden>
+    <div class="lk-container lk-stickybar__inner">
+      <div class="lk-stickybar__info">
+        <span class="lk-stickybar__title">{{ section.settings.title | default: product.title }}</span>
+        <span class="lk-stickybar__meta">
+          <span data-lockin-sticky-label></span>
+          <span class="lk-stickybar__dot" aria-hidden="true">·</span>
+          <span data-lockin-sticky-price></span>
+        </span>
+      </div>
+      <button
+        class="lk-btn lk-btn--primary lk-stickybar__btn"
+        type="submit"
+        form="{{ form_id }}"
+        data-lockin-sticky-submit
+      >
+        {{ section.settings.submit_label }}
+      </button>
+    </div>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .lk-bf {
+    background: var(--lk-paper);
+  }
+
+  .lk-bf__grid {
+    display: grid;
+  }
+
+  /* ---------- Full-bleed media ---------- */
+
+  .lk-bf__stage {
+    position: relative;
+    background: var(--lk-ice-soft);
+    overflow: hidden;
+  }
+
+  .lk-bf__hero {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    max-block-size: 78svh;
+    object-fit: cover;
+  }
+
+  .lk-bf__glass {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 14px var(--lk-gutter) 16px;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: linear-gradient(to top, color-mix(in srgb, var(--lk-ink) 16%, transparent), transparent);
+  }
+
+  .lk-bf__glassPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    border-radius: var(--lk-r-pill);
+    background: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lk-paper) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+    white-space: nowrap;
+  }
+
+  .lk-bf__glassDot {
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 2px;
+    background: var(--lk-accent);
+    flex: none;
+  }
+
+  .lk-bf__thumbs {
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    padding: 12px var(--lk-gutter);
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .lk-bf__thumbs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lk-bf__thumb {
+    inline-size: 64px;
+    block-size: 64px;
+    padding: 0;
+    border-radius: var(--lk-r-sm);
+    border: 1px solid var(--lk-line);
+    background: var(--lk-ice-soft);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s var(--lk-ease);
+  }
+
+  .lk-bf__thumb.is-active {
+    border-color: var(--lk-ink);
+  }
+
+  .lk-bf__thumb img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  /* ---------- Funnel column ---------- */
+
+  .lk-bf__panel {
+    padding: 26px var(--lk-gutter) 56px;
+    max-width: 620px;
+  }
+
+  .lk-bf__title {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: clamp(1.9rem, 6.6vw, 2.7rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 12px 0 0;
+    text-wrap: balance;
+  }
+
+  .lk-bf__subtitle {
+    margin-top: 12px;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-bf__pills {
+    margin-top: 16px;
+  }
+
+  .lk-bf__priceRow {
+    margin-top: 22px;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .lk-bf__price {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 2rem;
+    letter-spacing: -0.025em;
+  }
+
+  .lk-bf__was {
+    font-size: 1.0625rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-bf__perday {
+    font-size: 0.875rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-bf__liveNote {
+    margin-top: 4px;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+    min-height: 1.2em;
+  }
+
+  /* ---------- Offer ---------- */
+
+  .lk-bf__offer {
+    position: relative;
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-radius: var(--lk-r-md);
+    background:
+      radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, var(--lk-accent) 26%, transparent) 0%, transparent 55%),
+      var(--lk-ice-soft);
+    border: 1px solid color-mix(in srgb, var(--lk-accent) 45%, var(--lk-line));
+  }
+
+  .lk-bf__offerBadge {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 4px 11px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .lk-bf__offerTitle {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+  }
+
+  .lk-bf__offerText {
+    margin-top: 4px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--lk-muted);
+  }
+
+  /* ---------- Small FAQ ---------- */
+
+  .lk-bf__minifaq {
+    margin-top: 18px;
+    border-top: 1px solid var(--lk-line);
+  }
+
+  .lk-bf__qa {
+    border-bottom: 1px solid var(--lk-line);
+  }
+
+  .lk-bf__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-block: 13px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+  }
+
+  .lk-bf__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .lk-bf__q svg {
+    flex: none;
+    inline-size: 16px;
+    block-size: 16px;
+    color: var(--lk-muted);
+    transition: transform 0.25s var(--lk-ease);
+  }
+
+  .lk-bf__qa[open] .lk-bf__q svg {
+    transform: rotate(180deg);
+  }
+
+  .lk-bf__a {
+    padding: 0 30px 14px 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+  }
+
+  /* ---------- Form controls (self-contained copies of the lk control kit,
+     so this section styles correctly on its own) ---------- */
+
+  .lk-vh-input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .lk-radio {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 21px;
+    block-size: 21px;
+    border-radius: var(--lk-r-pill);
+    border: 1.5px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+    transition: border-color 0.2s var(--lk-ease);
+  }
+
+  .lk-radio::after {
+    content: '';
+    inline-size: 10px;
+    block-size: 10px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ink);
+    transform: scale(0);
+    transition: transform 0.18s var(--lk-ease);
+  }
+
+  .lk-vh-input:checked + label .lk-radio {
+    border-color: var(--lk-ink);
+  }
+
+  .lk-vh-input:checked + label .lk-radio::after {
+    transform: scale(1);
+  }
+
+  .lk-vh-input:focus-visible + label {
+    outline: 2px solid var(--lk-accent);
+    outline-offset: 3px;
+  }
+
+  .lk-vh-input:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .lk-purchase__options {
+    display: grid;
+    gap: 10px;
+  }
+
+  .lk-purchase__label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 16px;
+    border-radius: var(--lk-r-md);
+    border: 1.5px solid var(--lk-line);
+    background: var(--lk-paper);
+    cursor: pointer;
+    transition: border-color 0.2s var(--lk-ease), background-color 0.2s var(--lk-ease);
+  }
+
+  .lk-vh-input:checked + .lk-purchase__label {
+    border-color: var(--lk-ink);
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-purchase__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .lk-purchase__name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .lk-purchase__meta {
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-purchase__tag {
+    margin-left: auto;
+    flex: none;
+    padding: 5px 11px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-accent);
+    color: var(--lk-ink);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .lk-purchase__pending {
+    margin-top: 10px;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--lk-muted);
+  }
+
+  .lk-editor-todo {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: var(--lk-r-sm);
+    border: 1px dashed var(--lk-accent);
+    background: color-mix(in srgb, var(--lk-accent) 10%, transparent);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--lk-ink);
+  }
+
+  .lk-bundles__list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .lk-bundle {
+    position: relative;
+  }
+
+  .lk-bundle__label {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 18px 16px;
+    border-radius: var(--lk-r-md);
+    border: 1.5px solid var(--lk-line);
+    background: var(--lk-paper);
+    cursor: pointer;
+    transition: border-color 0.2s var(--lk-ease), background-color 0.2s var(--lk-ease);
+  }
+
+  .lk-vh-input:checked + .lk-bundle__label {
+    border-color: var(--lk-ink);
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-bundle__main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .lk-bundle__name {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+  }
+
+  .lk-bundle__sub,
+  .lk-bundle__perbox {
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-bundle__pricing {
+    margin-left: auto;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex: none;
+  }
+
+  .lk-bundle__was {
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-bundle__now {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.125rem;
+  }
+
+  .lk-bundle__soldout {
+    font-size: 0.75rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-bundle__badge {
+    position: absolute;
+    top: -9px;
+    right: 14px;
+    padding: 4px 11px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ---------- Sticky bar ---------- */
+
+  .lk-stickybar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 60;
+    background: color-mix(in srgb, var(--lk-paper) 92%, transparent);
+    backdrop-filter: saturate(140%) blur(16px);
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+    border-top: 1px solid var(--lk-line);
+    padding-block: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform 0.32s var(--lk-ease), visibility 0s linear 0.32s;
+  }
+
+  .lk-stickybar.is-visible {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.32s var(--lk-ease), visibility 0s linear 0s;
+  }
+
+  .lk-stickybar__inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .lk-stickybar__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .lk-stickybar__title {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .lk-stickybar__meta {
+    display: flex;
+    gap: 6px;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+    white-space: nowrap;
+  }
+
+  .lk-stickybar .lk-stickybar__btn {
+    margin-left: auto;
+    flex: none;
+    min-height: 46px;
+    padding-inline: 24px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk-stickybar {
+      transition: none;
+    }
+  }
+
+  /* ---------- Form ---------- */
+
+  .lk-bf__form {
+    margin-top: 24px;
+  }
+
+  .lk-bf__fieldset {
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
+  }
+
+  .lk-bf__legend {
+    padding: 0;
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--lk-muted);
+  }
+
+  .lk-bundle__saving {
+    margin-left: 8px;
+    color: var(--lk-ink);
+    font-weight: 600;
+  }
+
+  .lk-bf__submit {
+    margin-top: 4px;
+  }
+
+  .lk-bf__reassurance {
+    margin-top: 12px;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--lk-muted);
+    text-align: center;
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-bf__grid {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .lk-bf__mediaSticky {
+      position: sticky;
+      top: var(--header-height, 0px);
+    }
+
+    .lk-bf__stage {
+      min-block-size: calc(100svh - var(--header-height, 76px) - 90px);
+      display: grid;
+    }
+
+    .lk-bf__hero {
+      block-size: 100%;
+      max-block-size: none;
+    }
+
+    .lk-bf__glass {
+      padding: 18px 28px 20px;
+    }
+
+    .lk-bf__panel {
+      padding: 48px 56px 96px;
+      justify-self: start;
+    }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    function init(root) {
+      if (!root || root.dataset.lockinReady === 'true') return;
+      root.dataset.lockinReady = 'true';
+
+      var form = root.querySelector('form');
+      var variantInput = root.querySelector('[data-lockin-variant-input]');
+      var planInput = root.querySelector('[data-lockin-plan-input]');
+      var priceEl = root.querySelector('[data-lockin-price]');
+      var wasEl = root.querySelector('[data-lockin-was]');
+      var perDayEl = root.querySelector('[data-lockin-perday]');
+      var liveEl = root.querySelector('[data-lockin-live]');
+      var submitEl = root.querySelector('[data-lockin-submit]');
+      var sentinel = root.querySelector('[data-lockin-sentinel]');
+
+      var bundles = Array.prototype.slice.call(root.querySelectorAll('[data-lockin-bundle]'));
+      var purchases = Array.prototype.slice.call(root.querySelectorAll('[data-lockin-purchase]'));
+
+      var section = root.closest('.shopify-section') || document;
+      var bar = section.querySelector('[data-lockin-stickybar]');
+
+      function selectedBundle() {
+        return bundles.filter(function (input) { return input.checked; })[0];
+      }
+
+      function selectedMode() {
+        var checked = purchases.filter(function (input) { return input.checked; })[0];
+        return checked ? checked.value : 'onetime';
+      }
+
+      function render() {
+        var bundle = selectedBundle();
+        if (!bundle) return;
+
+        var mode = selectedMode();
+        var subscribing = mode === 'subscribe';
+        var price = subscribing ? bundle.dataset.priceSubscribe : bundle.dataset.priceOnetime;
+        var oneTime = bundle.dataset.priceOnetime;
+        var compare = bundle.dataset.compare;
+
+        if (priceEl) priceEl.textContent = price;
+
+        var struck = subscribing ? oneTime : compare;
+        if (wasEl) {
+          if (struck) {
+            wasEl.textContent = struck;
+            wasEl.hidden = false;
+          } else {
+            wasEl.hidden = true;
+          }
+        }
+
+        if (perDayEl) perDayEl.textContent = bundle.dataset.perDay ? bundle.dataset.perDay + ' / day' : '';
+
+        bundles.forEach(function (input) {
+          var id = input.dataset.variantId;
+          var perBox = section.querySelector('[data-lockin-perbox-for="' + id + '"]');
+          var total = section.querySelector('[data-lockin-bundleprice-for="' + id + '"]');
+          if (perBox) perBox.textContent = subscribing ? input.dataset.perBoxSubscribe : input.dataset.perBoxOnetime;
+          if (total) total.textContent = subscribing ? input.dataset.priceSubscribe : input.dataset.priceOnetime;
+        });
+
+        variantInput.value = bundle.dataset.variantId;
+
+        var subscribeRadio = purchases.filter(function (input) { return input.value === 'subscribe'; })[0];
+        var planId = subscribeRadio ? subscribeRadio.dataset.sellingPlan : '';
+        if (subscribing && planId) {
+          planInput.value = planId;
+          planInput.disabled = false;
+        } else {
+          planInput.value = '';
+          planInput.disabled = true;
+        }
+
+        if (liveEl) {
+          liveEl.textContent = bundle.dataset.label + ' — ' + price + (subscribing ? ', subscription' : ', one-time');
+        }
+
+        if (bar) {
+          var barLabel = bar.querySelector('[data-lockin-sticky-label]');
+          var barPrice = bar.querySelector('[data-lockin-sticky-price]');
+          if (barLabel) barLabel.textContent = bundle.dataset.label;
+          if (barPrice) barPrice.textContent = price;
+        }
+      }
+
+      bundles.concat(purchases).forEach(function (input) {
+        input.addEventListener('change', render);
+      });
+
+      render();
+
+      /* Thumbnails */
+      var mainImage = root.querySelector('[data-lockin-main-image]');
+      root.querySelectorAll('[data-lockin-thumb]').forEach(function (thumb) {
+        thumb.addEventListener('click', function () {
+          if (!mainImage) return;
+          mainImage.src = thumb.dataset.full;
+          mainImage.srcset = thumb.dataset.srcset || '';
+          mainImage.alt = thumb.dataset.alt || '';
+          root.querySelectorAll('[data-lockin-thumb]').forEach(function (other) {
+            other.classList.toggle('is-active', other === thumb);
+            other.setAttribute('aria-pressed', other === thumb ? 'true' : 'false');
+          });
+        });
+      });
+
+      /* Sticky bar */
+      if (bar && sentinel && 'IntersectionObserver' in window) {
+        bar.hidden = false;
+        bar.setAttribute('inert', '');
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              var past = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+              bar.classList.toggle('is-visible', past);
+              if (past) {
+                bar.removeAttribute('inert');
+              } else {
+                bar.setAttribute('inert', '');
+              }
+            });
+          },
+          { threshold: 0 }
+        );
+        observer.observe(sentinel);
+      }
+
+      /* Add to cart */
+      if (!form) return;
+      form.addEventListener('submit', function (event) {
+        if (!window.fetch) return;
+        event.preventDefault();
+
+        var buttons = [submitEl, section.querySelector('[data-lockin-sticky-submit]')].filter(Boolean);
+        buttons.forEach(function (button) { button.disabled = true; });
+
+        var addUrl = (window.Theme && Theme.routes && Theme.routes.cart_add_url) || '/cart/add';
+        var cartUrl = root.dataset.cartUrl || '/cart';
+
+        fetch(addUrl + '.js', {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin',
+          body: new FormData(form),
+        })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) throw new Error(data.description || data.message || 'Add to cart failed');
+              return data;
+            });
+          })
+          .then(function () {
+            return fetch(cartUrl + '.js', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .catch(function () { return null; });
+          })
+          .then(function (cart) {
+            if (cart) {
+              document.dispatchEvent(new CustomEvent('lockin:cart:updated', { detail: { itemCount: cart.item_count } }));
+            }
+            var behaviour = root.dataset.afterAdd || 'drawer';
+            if (behaviour === 'checkout') { window.location.href = '/checkout'; return; }
+            if (behaviour === 'cart') { window.location.href = cartUrl; return; }
+
+            var drawerComponent = document.querySelector('cart-drawer-component');
+            var host = drawerComponent && drawerComponent.closest ? drawerComponent.closest('theme-drawer') : null;
+            var items = document.querySelector('cart-items-component');
+
+            Promise.resolve(items && items.fetchCartData ? items.fetchCartData() : null)
+              .catch(function () {})
+              .then(function () {
+                if (host && typeof host.open === 'function') {
+                  host.open();
+                  buttons.forEach(function (button) { button.disabled = false; });
+                } else {
+                  window.location.href = cartUrl;
+                }
+              });
+          })
+          .catch(function (error) {
+            if (liveEl) liveEl.textContent = error.message || 'Something went wrong. Please try again.';
+            buttons.forEach(function (button) { button.disabled = false; });
+          });
+      });
+    }
+
+    function scan() {
+      document.querySelectorAll('[data-lockin-buy]').forEach(init);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scan);
+    } else {
+      scan();
+    }
+    document.addEventListener('shopify:section:load', scan);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "lockin buy funnel",
+  "tag": "section",
+  "class": "lockin-buy-funnel-section",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Leave empty on a product template to use the product being viewed."
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Full-bleed image",
+      "info": "Falls back to the product's featured image."
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Cellular energy chewables"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Energy that doesn't crash."
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Description",
+      "default": "Two chewables a day, sealed one dose at a time. NR, PQQ, CoQ10 and KSM-66 at the full studied doses — no caffeine, no sugar, nothing to come down from."
+    },
+    {
+      "type": "header",
+      "content": "Offer"
+    },
+    {
+      "type": "text",
+      "id": "offer_badge",
+      "label": "Offer badge",
+      "default": "Launch offer"
+    },
+    {
+      "type": "text",
+      "id": "offer_title",
+      "label": "Offer title",
+      "default": "Up to €60 off multi-month supplies"
+    },
+    {
+      "type": "textarea",
+      "id": "offer_text",
+      "label": "Offer text",
+      "default": "3- and 6-month supplies ship free and lock the launch price. Applied automatically — no code needed."
+    },
+    {
+      "type": "header",
+      "content": "Purchase type"
+    },
+    {
+      "type": "text",
+      "id": "purchase_legend",
+      "label": "Group label",
+      "default": "Purchase type"
+    },
+    {
+      "type": "range",
+      "id": "subscribe_discount",
+      "label": "Subscribe discount",
+      "info": "Display only until the product has a selling plan; then the plan's real price is used.",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "%",
+      "default": 20
+    },
+    {
+      "type": "text",
+      "id": "subscribe_label",
+      "label": "Subscribe label",
+      "default": "Subscribe & save"
+    },
+    {
+      "type": "text",
+      "id": "subscribe_note",
+      "label": "Subscribe note",
+      "default": "Delivered monthly. Skip or cancel anytime."
+    },
+    {
+      "type": "text",
+      "id": "onetime_label",
+      "label": "One-time label",
+      "default": "One-time purchase"
+    },
+    {
+      "type": "text",
+      "id": "onetime_note",
+      "label": "One-time note",
+      "default": "No commitment."
+    },
+    {
+      "type": "textarea",
+      "id": "subscribe_unavailable_note",
+      "label": "Note when subscriptions are unavailable",
+      "default": "Subscriptions are not open yet. One-time purchase ships today."
+    },
+    {
+      "type": "header",
+      "content": "Bundles"
+    },
+    {
+      "type": "text",
+      "id": "bundle_legend",
+      "label": "Group label",
+      "default": "Choose your supply"
+    },
+    {
+      "type": "range",
+      "id": "default_bundle",
+      "label": "Pre-selected option",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "type": "text",
+      "id": "per_box_suffix",
+      "label": "Per-box suffix",
+      "default": "/ box"
+    },
+    {
+      "type": "header",
+      "content": "Submit"
+    },
+    {
+      "type": "text",
+      "id": "submit_label",
+      "label": "Button label",
+      "default": "Add to cart"
+    },
+    {
+      "type": "textarea",
+      "id": "reassurance",
+      "label": "Reassurance line",
+      "default": "30-day money-back guarantee · Free shipping on 3+ months"
+    },
+    {
+      "type": "select",
+      "id": "after_add",
+      "label": "After adding to cart",
+      "options": [
+        { "value": "drawer", "label": "Open the cart drawer" },
+        { "value": "cart", "label": "Go to the cart page" },
+        { "value": "checkout", "label": "Go straight to checkout" }
+      ],
+      "default": "drawer"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "glass",
+      "name": "Glass bullet",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "NR 300mg — cellular repair"
+        }
+      ]
+    },
+    {
+      "type": "badge",
+      "name": "Pill badge",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "No caffeine"
+        }
+      ]
+    },
+    {
+      "type": "faq",
+      "name": "Small FAQ row",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "When will I feel it?"
+        },
+        {
+          "type": "textarea",
+          "id": "answer",
+          "label": "Answer",
+          "default": "NAD+ support builds over weeks — judge it at day 30, not day one."
+        }
+      ]
+    },
+    {
+      "type": "bundle",
+      "name": "Bundle label",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Bundle labels map to the product's variants in order."
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "1 month"
+        },
+        {
+          "type": "text",
+          "id": "sublabel",
+          "label": "Sub-label",
+          "default": "30 singles"
+        },
+        {
+          "type": "number",
+          "id": "months",
+          "label": "Months of supply",
+          "default": 1
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "Badge"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin buy funnel",
+      "blocks": [
+        { "type": "glass", "settings": { "text": "NR 300mg" } },
+        { "type": "glass", "settings": { "text": "CoQ10 100mg" } },
+        { "type": "glass", "settings": { "text": "KSM-66 300mg" } },
+        { "type": "bundle", "settings": { "label": "1 month", "sublabel": "30 singles", "months": 1 } },
+        { "type": "bundle", "settings": { "label": "3 months", "sublabel": "90 singles", "months": 3, "badge": "Best value" } },
+        { "type": "bundle", "settings": { "label": "6 months", "sublabel": "180 singles", "months": 6 } }
+      ]
+    }
+  ]
+}
+{% endschema %}

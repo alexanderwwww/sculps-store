@@ -1,0 +1,278 @@
+{%- comment -%}
+  lockin — video showcase (how-it-works hero).
+
+  A big cinematic screen: MP4 URL plays muted/looped; otherwise the poster
+  gets the ambient slow zoom. Copy sits above, chapter chips below.
+{%- endcomment -%}
+
+<div class="lk lk-vs">
+  <div class="lk-container">
+    <div class="lk-vs__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h1 class="lk-h1 lk-vs__heading">{{ section.settings.heading }}</h1>
+      {%- endif -%}
+      {%- if section.settings.body != blank -%}
+        <p class="lk-lede lk-vs__body">{{ section.settings.body }}</p>
+      {%- endif -%}
+    </div>
+
+    <figure class="lk-vs__screen lk-reveal">
+      {%- if section.settings.video_url != blank -%}
+        <video
+          class="lk-vs__video"
+          data-lockin-ambient-video
+          src="{{ section.settings.video_url }}"
+          {% if section.settings.poster != blank %}
+            poster="{{ section.settings.poster | image_url: width: 1800 }}"
+          {% endif %}
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+        ></video>
+      {%- elsif section.settings.poster != blank -%}
+        <img
+          class="lk-vs__video lk-ambient"
+          src="{{ section.settings.poster | image_url: width: 1800 }}"
+          srcset="{{ section.settings.poster | image_url: width: 900 }} 900w, {{ section.settings.poster | image_url: width: 1800 }} 1800w"
+          sizes="(min-width: 990px) 90vw, 100vw"
+          alt="{{ section.settings.poster.alt | default: section.settings.heading | escape }}"
+          width="{{ section.settings.poster.width }}"
+          height="{{ section.settings.poster.height }}"
+          loading="eager"
+          fetchpriority="high"
+        >
+      {%- else -%}
+        <div class="lk-vs__empty">{{ 'lifestyle-1' | placeholder_svg_tag: 'lk-vs__emptySvg' }}</div>
+      {%- endif -%}
+
+      {%- if section.settings.screen_caption != blank -%}
+        <figcaption class="lk-vs__chip">{{ section.settings.screen_caption }}</figcaption>
+      {%- endif -%}
+    </figure>
+
+    {%- if section.blocks.size > 0 -%}
+      <ol class="lk-vs__chapters">
+        {%- for block in section.blocks -%}
+          <li class="lk-vs__chapter lk-reveal" {{ block.shopify_attributes }}>
+            <span class="lk-vs__chapterNum" aria-hidden="true">{{ forloop.index }}</span>
+            <span class="lk-vs__chapterText">
+              <strong>{{ block.settings.title }}</strong>
+              {%- if block.settings.text != blank -%}
+                <span>{{ block.settings.text }}</span>
+              {%- endif -%}
+            </span>
+          </li>
+        {%- endfor -%}
+      </ol>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-vs {
+    background: var(--lk-paper);
+    padding-block: 40px 56px;
+  }
+
+  .lk-vs__head {
+    max-width: 52ch;
+    margin-bottom: 30px;
+  }
+
+  .lk-vs__heading {
+    margin-top: 14px;
+    max-width: 14ch;
+  }
+
+  .lk-vs__body {
+    margin-top: 16px;
+  }
+
+  .lk-vs__screen {
+    position: relative;
+    margin: 0;
+    border-radius: var(--lk-r-lg);
+    overflow: hidden;
+    background: var(--lk-ice);
+    aspect-ratio: 4 / 3;
+  }
+
+  .lk-vs__video {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .lk-vs__empty {
+    display: grid;
+    place-items: center;
+    block-size: 100%;
+  }
+
+  .lk-vs__empty svg {
+    inline-size: 50%;
+    fill: color-mix(in srgb, var(--lk-ink) 15%, transparent);
+  }
+
+  .lk-vs__chip {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    padding: 9px 16px;
+    border-radius: var(--lk-r-pill);
+    background: color-mix(in srgb, var(--lk-paper) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lk-paper) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+  }
+
+  .lk-vs__chapters {
+    margin: 26px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+  }
+
+  .lk-vs__chapter {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: var(--lk-r-md);
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-vs__chapterNum {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 32px;
+    block-size: 32px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .lk-vs__chapterText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .lk-vs__chapterText strong {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+  }
+
+  .lk-vs__chapterText span {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--lk-muted);
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-vs {
+      padding-block: 64px 88px;
+    }
+
+    .lk-vs__screen {
+      aspect-ratio: 21 / 10;
+    }
+
+    .lk-vs__chapters {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 18px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin video showcase",
+  "tag": "section",
+  "class": "lockin-vs-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "How it works"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "One foil a day. Here's the whole ritual."
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body",
+      "default": "No water, no counting, no timing around meals. Tear one foil, chew two chewables, get on with your day."
+    },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Video URL (MP4)",
+      "info": "Upload under Content → Files and paste the link. Empty = ambient poster."
+    },
+    {
+      "type": "image_picker",
+      "id": "poster",
+      "label": "Poster image"
+    },
+    {
+      "type": "text",
+      "id": "screen_caption",
+      "label": "Caption chip",
+      "default": "The 10-second morning"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "chapter",
+      "name": "Chapter",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Tear"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "One foil off the strip. It lives in a bag, a car door, a jacket."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin video showcase",
+      "blocks": [
+        { "type": "chapter", "settings": { "title": "Tear", "text": "One foil off the strip. It lives in a bag, a car door, a jacket." } },
+        { "type": "chapter", "settings": { "title": "Chew", "text": "Two blueberry chewables. No water, lightly sweet, no chalk." } },
+        { "type": "chapter", "settings": { "title": "Repeat tomorrow", "text": "The work is cumulative — day 30 is the day to judge it." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

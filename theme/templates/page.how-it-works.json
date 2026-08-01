@@ -1,0 +1,183 @@
+{
+  "sections": {
+    "showcase": {
+      "type": "lockin-video-showcase",
+      "blocks": {
+        "c1": { "type": "chapter", "settings": { "title": "Tear", "text": "One foil off the strip. It lives in a bag, a car door, a jacket." } },
+        "c2": { "type": "chapter", "settings": { "title": "Chew", "text": "Two blueberry chewables. No water, lightly sweet, no chalk." } },
+        "c3": { "type": "chapter", "settings": { "title": "Repeat tomorrow", "text": "The work is cumulative — day 30 is the day to judge it." } }
+      },
+      "block_order": ["c1", "c2", "c3"],
+      "settings": {
+        "eyebrow": "How it works",
+        "heading": "One foil a day. Here's the whole ritual.",
+        "body": "No water, no counting, no timing around meals. Tear one foil, chew two chewables, get on with your day.",
+        "poster": "shopify://shop_images/lockin-detail-hero-wide.jpg",
+        "screen_caption": "The 10-second morning"
+      }
+    },
+    "mechanism": {
+      "type": "lockin-mechanism",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "tag": "NR 300mg",
+            "title": "Raise the raw material",
+            "body": "<p>Nicotinamide riboside is a precursor your cells convert into NAD+. Supplying the precursor is the practical route to raising NAD+, because NAD+ itself is too large to cross into the cell intact.</p>"
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "tag": "PQQ 20mg · CoQ10 100mg",
+            "title": "Support the machinery that uses it",
+            "body": "<p>NAD+ is spent inside the mitochondria. PQQ is studied for mitochondrial biogenesis, and CoQ10 as ubiquinol sits directly in the electron transport chain where ATP is produced.</p>"
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "tag": "KSM-66 300mg",
+            "title": "Keep cortisol from undoing it",
+            "body": "<p>Sustained cortisol works against steady energy. KSM-66 ashwagandha at the full studied dose is included for healthy cortisol balance — it is the reason the energy reads as calm rather than wired.</p>"
+          }
+        }
+      },
+      "block_order": ["s1", "s2", "s3"],
+      "settings": {
+        "eyebrow": "Inside the cell",
+        "heading": "Three steps, one dose.",
+        "body": "lockin does not add energy to your system. It supports the machinery that makes energy in the first place."
+      }
+    },
+    "media": {
+      "type": "lockin-media-grid",
+      "blocks": {
+        "m1": {
+          "type": "media",
+          "settings": {
+            "wide": true,
+            "ambient": true,
+            "image": "shopify://shop_images/lockin-box-foils-chewables.png",
+            "tag": "The system",
+            "caption": "Box, foils, chewables — a month of doses, each sealed at full strength."
+          }
+        },
+        "m2": {
+          "type": "media",
+          "settings": {
+            "image": "shopify://shop_images/lockin-detail-chewables.jpg",
+            "tag": "The dose",
+            "caption": "Two blueberry chewables. Natural blue from butterfly pea flower."
+          }
+        },
+        "m3": {
+          "type": "media",
+          "settings": {
+            "image": "shopify://shop_images/lockin-detail-foils.jpg",
+            "tag": "Sealed fresh",
+            "caption": "NR and vitamin C degrade in air — so nothing is opened until you tear it."
+          }
+        },
+        "m4": {
+          "type": "media",
+          "settings": {
+            "image": "shopify://shop_images/lockin-detail-box.jpg",
+            "tag": "The box",
+            "caption": "30 singles. Slimmer than a paperback."
+          }
+        },
+        "m5": {
+          "type": "media",
+          "settings": {
+            "wide": true,
+            "image": "shopify://shop_images/lockin-detail-hero-wide.jpg",
+            "tag": "Add your footage",
+            "caption": "This card takes an MP4 URL — drop in real unboxing or how-to video here."
+          }
+        }
+      },
+      "block_order": ["m1", "m2", "m3", "m4", "m5"],
+      "settings": {
+        "eyebrow": "Up close",
+        "heading": "Every detail, on purpose."
+      }
+    },
+    "how_to": {
+      "type": "lockin-how-to",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "title": "Tear one foil",
+            "body": "Two chewables inside. That is the full dose — no counting, no measuring."
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "title": "Chew, don't swallow",
+            "body": "Blueberry, lightly sweet. No water needed, so it works anywhere."
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "title": "Any time of day",
+            "body": "No caffeine, so a 4pm dose will not cost you your sleep. Most people take it with breakfast."
+          }
+        }
+      },
+      "block_order": ["s1", "s2", "s3"],
+      "settings": {
+        "eyebrow": "The routine",
+        "heading": "Tear one foil. That's the dose."
+      }
+    },
+    "facts": {
+      "type": "lockin-supplement-facts",
+      "blocks": {
+        "nr": { "type": "row", "settings": { "name": "Nicotinamide riboside (NR)", "amount": "300 mg", "dv": "†" } },
+        "pqq": { "type": "row", "settings": { "name": "PQQ", "detail": "Pyrroloquinoline quinone", "amount": "20 mg", "dv": "†" } },
+        "coq10": { "type": "row", "settings": { "name": "CoQ10", "detail": "Ubiquinol", "amount": "100 mg", "dv": "†" } },
+        "ksm": { "type": "row", "settings": { "name": "Ashwagandha", "detail": "KSM-66 root extract", "amount": "300 mg", "dv": "†" } },
+        "vitc": { "type": "row", "settings": { "name": "Vitamin C", "detail": "Ascorbic acid", "amount": "250 mg", "dv": "278%" } },
+        "b12": { "type": "row", "settings": { "name": "Vitamin B12", "detail": "Methylcobalamin", "amount": "500 mcg", "dv": "20,833%" } }
+      },
+      "block_order": ["nr", "pqq", "coq10", "ksm", "vitc", "b12"],
+      "settings": {
+        "eyebrow": "Supplement facts",
+        "heading": "Open label. Full doses.",
+        "body": "<p>Serving size: 2 chewables. Nothing is hidden behind a proprietary blend — every active is listed with the amount you actually get.</p><p>Blueberry, sweetened with allulose and stevia. Natural blue from butterfly pea flower. No sugar, no artificial dyes, no gelatin.</p>",
+        "table_caption": "Per serving — 2 chewables",
+        "col_ingredient": "Ingredient",
+        "col_amount": "Amount",
+        "show_dv": true,
+        "col_dv": "% DV",
+        "footnote": "† Daily Value not established."
+      }
+    },
+    "cta": {
+      "type": "lockin-cta-band",
+      "blocks": {
+        "b1": { "type": "badge", "settings": { "label": "No caffeine" } },
+        "b2": { "type": "badge", "settings": { "label": "No sugar" } },
+        "b3": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+      },
+      "block_order": ["b1", "b2", "b3"],
+      "settings": {
+        "eyebrow": "One box. Thirty days.",
+        "heading": "Start the ritual.",
+        "body": "Two chewables in the morning. No water, no caffeine, no 3pm drop.",
+        "tone": "ice",
+        "product": "lockin-cellular-energy-chewables",
+        "cta_label": "Shop lockin",
+        "cta_link": "shopify://products/lockin-cellular-energy-chewables",
+        "secondary_label": "Read the science",
+        "secondary_link": "shopify://pages/science"
+      }
+    }
+  },
+  "order": ["showcase", "mechanism", "media", "how_to", "facts", "cta"]
+}

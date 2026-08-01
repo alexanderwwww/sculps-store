@@ -31,7 +31,8 @@
         <p class="lk-eyebrow lk-nad__eyebrow">{{ section.settings.eyebrow }}</p>
       {%- endif -%}
       {%- if section.settings.heading != blank -%}
-        <h2 class="lk-h2 lk-nad__heading">{{ section.settings.heading }}</h2>
+        {%- assign tag = section.settings.heading_tag | default: 'h2' -%}
+        <{{ tag }} class="lk-h2 lk-nad__heading">{{ section.settings.heading }}</{{ tag }}>
       {%- endif -%}
       {%- if section.settings.body != blank -%}
         <p class="lk-nad__body">{{ section.settings.body }}</p>
@@ -298,6 +299,17 @@
       "id": "heading",
       "label": "Heading",
       "default": "NAD+ falls for everyone."
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "Heading level",
+      "info": "Use H1 when this is the first section on a page.",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" }
+      ],
+      "default": "h2"
     },
     {
       "type": "textarea",

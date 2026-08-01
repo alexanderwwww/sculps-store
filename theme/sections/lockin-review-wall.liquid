@@ -1,0 +1,234 @@
+{%- comment -%}
+  lockin — review wall with images.
+
+  Masonry-style wall of longer reviews, each with an optional photo.
+  Placeholder-flagged until each card carries a real, attributable review.
+  No star ratings, no review counts.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-rw">
+  <div class="lk-container">
+    <div class="lk-rw__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-rw__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+    </div>
+
+    <div class="lk-rw__wall">
+      {%- for block in section.blocks -%}
+        <figure class="lk-rw__card lk-reveal" {{ block.shopify_attributes }}>
+          {%- if block.settings.is_placeholder -%}
+            <p class="lk-rw__flag">Placeholder — replace with a real review</p>
+          {%- endif -%}
+
+          {%- if block.settings.image != blank -%}
+            <img
+              class="lk-rw__image"
+              src="{{ block.settings.image | image_url: width: 800 }}"
+              srcset="{{ block.settings.image | image_url: width: 400 }} 400w, {{ block.settings.image | image_url: width: 800 }} 800w"
+              sizes="(min-width: 990px) 30vw, 90vw"
+              alt="{{ block.settings.image.alt | escape }}"
+              width="{{ block.settings.image.width }}"
+              height="{{ block.settings.image.height }}"
+              loading="lazy"
+            >
+          {%- endif -%}
+
+          <blockquote class="lk-rw__quote"><p>{{ block.settings.quote }}</p></blockquote>
+
+          <figcaption class="lk-rw__by">
+            <span class="lk-rw__name">{{ block.settings.name }}</span>
+            {%- if block.settings.detail != blank -%}
+              <span class="lk-rw__detail">{{ block.settings.detail }}</span>
+            {%- endif -%}
+          </figcaption>
+        </figure>
+      {%- endfor -%}
+    </div>
+
+    {%- if section.settings.note != blank -%}
+      <p class="lk-rw__note">{{ section.settings.note }}</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-rw {
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-rw__head {
+    max-width: 42ch;
+    margin-bottom: 32px;
+  }
+
+  .lk-rw__heading {
+    margin-top: 14px;
+  }
+
+  /* Masonry via columns; cards keep their own rhythm. */
+  .lk-rw__wall {
+    columns: 1;
+    column-gap: 16px;
+  }
+
+  .lk-rw__card {
+    break-inside: avoid;
+    margin: 0 0 16px;
+    padding: 20px;
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-paper);
+    border: 1px solid var(--lk-line);
+    display: flow-root;
+  }
+
+  .lk-rw__flag {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 5px 11px;
+    border-radius: var(--lk-r-pill);
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--lk-accent) 22%, transparent) 0 7px,
+      transparent 7px 14px
+    );
+    border: 1px dashed var(--lk-accent);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .lk-rw__image {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--lk-r-md);
+    margin-bottom: 16px;
+  }
+
+  .lk-rw__quote {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.62;
+    color: var(--lk-ink);
+    text-wrap: pretty;
+  }
+
+  .lk-rw__by {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .lk-rw__name {
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .lk-rw__detail {
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-rw__note {
+    margin-top: 20px;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+    max-width: 70ch;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-rw__wall {
+      columns: 2;
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-rw__wall {
+      columns: 3;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin review wall",
+  "tag": "section",
+  "class": "lockin-rw-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "More from customers"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Thirty days in, in their words."
+    },
+    {
+      "type": "textarea",
+      "id": "note",
+      "label": "Note under the wall",
+      "default": "Placeholder content — these are not real customer reviews yet."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review",
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "is_placeholder",
+          "label": "Mark as placeholder",
+          "default": true
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Photo"
+        },
+        {
+          "type": "textarea",
+          "id": "quote",
+          "label": "Quote",
+          "default": "[Placeholder review — replace with a real customer quote.]"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "[Reviewer name]"
+        },
+        {
+          "type": "text",
+          "id": "detail",
+          "label": "Detail",
+          "default": "[Verified purchase — placeholder]"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin review wall",
+      "blocks": [
+        { "type": "review" },
+        { "type": "review" },
+        { "type": "review" },
+        { "type": "review" },
+        { "type": "review" },
+        { "type": "review" }
+      ]
+    }
+  ]
+}
+{% endschema %}

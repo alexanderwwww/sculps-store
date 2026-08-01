@@ -263,6 +263,27 @@
     border: 0;
   }
 
+  /* ---------- Ambient media (shared by video/media sections) ---------- */
+
+  .lk-ambient {
+    animation: lk-ambient-zoom 16s ease-in-out infinite alternate;
+  }
+
+  @keyframes lk-ambient-zoom {
+    from {
+      transform: scale(1) translateY(0);
+    }
+    to {
+      transform: scale(1.08) translateY(-1.5%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk-ambient {
+      animation: none;
+    }
+  }
+
   /* ---------- Scroll reveal (opt-in, honours reduced motion) ---------- */
 
   .lk-reveal {
@@ -298,6 +319,30 @@
 {% endstyle %}
 
 <script>
+  /* Ambient videos pause for reduced-motion users. Global because several
+     sections (video+FAQ, video showcase, media grid) share the attribute. */
+  (function () {
+    if (window.__lockinAmbientVideo) return;
+    window.__lockinAmbientVideo = true;
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function apply() {
+      document.querySelectorAll('[data-lockin-ambient-video]').forEach(function (video) {
+        if (reduce.matches) {
+          video.removeAttribute('autoplay');
+          video.pause();
+        } else if (video.paused) {
+          video.play().catch(function () {});
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', apply);
+    document.addEventListener('shopify:section:load', apply);
+    reduce.addEventListener('change', apply);
+  })();
+
   /* Shared scroll-reveal for all lockin sections. Reduced motion short-circuits to visible. */
   (function () {
     if (window.__lockinReveal) return;

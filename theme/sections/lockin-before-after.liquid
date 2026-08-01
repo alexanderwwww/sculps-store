@@ -1,0 +1,358 @@
+{%- comment -%}
+  lockin — before / after comparison slider.
+
+  Draggable divider built on a real <input type="range">, so keyboard and
+  assistive tech get the browser's slider for free.
+
+  Ships honest: with no images picked it compares two illustrative energy
+  curves (a stimulant crash day vs a steady lockin day), clearly captioned as
+  illustrative. Pick two images to replace them.
+{%- endcomment -%}
+
+{%- liquid
+  assign before_img = section.settings.before_image
+  assign after_img = section.settings.after_image
+-%}
+
+<div class="lk lk-section lk-ba">
+  <div class="lk-container">
+    <div class="lk-ba__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-ba__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+      {%- if section.settings.subheading != blank -%}
+        <p class="lk-lede lk-ba__sub">{{ section.settings.subheading }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="lk-ba__frame lk-reveal" data-lockin-ba style="--lk-ba-pos: 50%;">
+      {%- comment -%} AFTER layer (base) {%- endcomment -%}
+      <div class="lk-ba__layer">
+        {%- if after_img != blank -%}
+          <img
+            class="lk-ba__img"
+            src="{{ after_img | image_url: width: 1400 }}"
+            alt="{{ after_img.alt | default: section.settings.after_label | escape }}"
+            width="{{ after_img.width }}"
+            height="{{ after_img.height }}"
+            loading="lazy"
+          >
+        {%- else -%}
+          <div class="lk-ba__chart lk-ba__chart--after" aria-hidden="true">
+            <svg viewBox="0 0 700 380" preserveAspectRatio="none">
+              <path d="M0 330 C 60 300 110 250 170 235 C 260 212 320 205 420 200 C 520 196 600 198 700 205 L 700 380 L 0 380 Z" fill="currentColor" opacity="0.14"/>
+              <path d="M0 330 C 60 300 110 250 170 235 C 260 212 320 205 420 200 C 520 196 600 198 700 205" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        {%- endif -%}
+        <span class="lk-ba__tag lk-ba__tag--after">{{ section.settings.after_label }}</span>
+      </div>
+
+      {%- comment -%} BEFORE layer (clipped from the right) {%- endcomment -%}
+      <div class="lk-ba__layer lk-ba__layer--before">
+        {%- if before_img != blank -%}
+          <img
+            class="lk-ba__img"
+            src="{{ before_img | image_url: width: 1400 }}"
+            alt="{{ before_img.alt | default: section.settings.before_label | escape }}"
+            width="{{ before_img.width }}"
+            height="{{ before_img.height }}"
+            loading="lazy"
+          >
+        {%- else -%}
+          <div class="lk-ba__chart lk-ba__chart--before" aria-hidden="true">
+            <svg viewBox="0 0 700 380" preserveAspectRatio="none">
+              <path d="M0 330 C 50 260 80 130 140 120 C 190 112 220 160 260 230 C 300 300 330 330 380 335 C 450 341 500 250 545 245 C 600 240 650 300 700 330 L 700 380 L 0 380 Z" fill="currentColor" opacity="0.12"/>
+              <path d="M0 330 C 50 260 80 130 140 120 C 190 112 220 160 260 230 C 300 300 330 330 380 335 C 450 341 500 250 545 245 C 600 240 650 300 700 330" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        {%- endif -%}
+        <span class="lk-ba__tag lk-ba__tag--before">{{ section.settings.before_label }}</span>
+      </div>
+
+      {%- comment -%} Divider + handle {%- endcomment -%}
+      <div class="lk-ba__divider" aria-hidden="true">
+        <span class="lk-ba__handle">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M9 7 4 12l5 5M15 7l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+
+      <input
+        class="lk-ba__range"
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        value="50"
+        aria-label="{{ section.settings.slider_label | escape }}"
+        data-lockin-ba-range
+      >
+    </div>
+
+    {%- if section.settings.caption != blank -%}
+      <p class="lk-ba__caption lk-reveal">{{ section.settings.caption }}</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-ba__head {
+    max-width: 46ch;
+    margin-bottom: 30px;
+  }
+
+  .lk-ba__heading {
+    margin-top: 14px;
+  }
+
+  .lk-ba__sub {
+    margin-top: 14px;
+  }
+
+  .lk-ba__frame {
+    position: relative;
+    border-radius: var(--lk-r-lg);
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+    touch-action: pan-y;
+  }
+
+  .lk-ba__layer {
+    position: absolute;
+    inset: 0;
+  }
+
+  .lk-ba__layer--before {
+    clip-path: inset(0 calc(100% - var(--lk-ba-pos, 50%)) 0 0);
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-ba__img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .lk-ba__chart {
+    position: absolute;
+    inset: 0;
+    padding: 12% 0 0;
+  }
+
+  .lk-ba__chart svg {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .lk-ba__chart--before {
+    color: var(--lk-muted);
+    background: color-mix(in srgb, var(--lk-ink) 4%, var(--lk-paper));
+  }
+
+  .lk-ba__chart--after {
+    color: var(--lk-accent);
+    background: var(--lk-ink);
+  }
+
+  .lk-ba__tag {
+    position: absolute;
+    top: 14px;
+    padding: 7px 14px;
+    border-radius: var(--lk-r-pill);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .lk-ba__tag--before {
+    left: 14px;
+    background: color-mix(in srgb, var(--lk-paper) 75%, transparent);
+    color: var(--lk-ink);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-ba__tag--after {
+    right: 14px;
+    background: color-mix(in srgb, var(--lk-ink) 55%, transparent);
+    color: var(--lk-paper);
+    border: 1px solid color-mix(in srgb, var(--lk-paper) 25%, transparent);
+  }
+
+  .lk-ba__divider {
+    position: absolute;
+    inset-block: 0;
+    left: var(--lk-ba-pos, 50%);
+    inline-size: 2px;
+    margin-left: -1px;
+    background: var(--lk-paper);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lk-ink) 15%, transparent);
+    pointer-events: none;
+  }
+
+  .lk-ba__handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-paper);
+    color: var(--lk-ink);
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--lk-ink) 25%, transparent);
+  }
+
+  .lk-ba__handle svg {
+    inline-size: 20px;
+    block-size: 20px;
+  }
+
+  /* The real control: an invisible full-size range input on top. */
+  .lk-ba__range {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: ew-resize;
+  }
+
+  .lk-ba__range:focus-visible ~ * {
+    outline: none;
+  }
+
+  .lk-ba__frame:has(.lk-ba__range:focus-visible) {
+    outline: 2px solid var(--lk-accent);
+    outline-offset: 3px;
+  }
+
+  .lk-ba__caption {
+    margin-top: 18px;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    max-width: 76ch;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-ba__frame {
+      aspect-ratio: 21 / 10;
+    }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    function init(frame) {
+      if (frame.dataset.lockinReady === 'true') return;
+      frame.dataset.lockinReady = 'true';
+      var range = frame.querySelector('[data-lockin-ba-range]');
+      if (!range) return;
+      var update = function () {
+        frame.style.setProperty('--lk-ba-pos', range.value + '%');
+      };
+      range.addEventListener('input', update);
+      update();
+    }
+
+    function scan() {
+      document.querySelectorAll('[data-lockin-ba]').forEach(init);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scan);
+    } else {
+      scan();
+    }
+    document.addEventListener('shopify:section:load', scan);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "lockin before / after",
+  "tag": "section",
+  "class": "lockin-ba-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "The difference"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Your afternoon, before and after."
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Drag the slider. A stimulant day spikes and drops. A lockin day is flatter on purpose — energy your cells make, not energy you borrow."
+    },
+    {
+      "type": "header",
+      "content": "Before side"
+    },
+    {
+      "type": "text",
+      "id": "before_label",
+      "label": "Label",
+      "default": "Caffeine day"
+    },
+    {
+      "type": "image_picker",
+      "id": "before_image",
+      "label": "Image",
+      "info": "Leave empty to show the illustrative energy curve."
+    },
+    {
+      "type": "header",
+      "content": "After side"
+    },
+    {
+      "type": "text",
+      "id": "after_label",
+      "label": "Label",
+      "default": "lockin day"
+    },
+    {
+      "type": "image_picker",
+      "id": "after_image",
+      "label": "Image",
+      "info": "Leave empty to show the illustrative energy curve."
+    },
+    {
+      "type": "text",
+      "id": "slider_label",
+      "label": "Slider label for screen readers",
+      "default": "Compare a caffeine day with a lockin day"
+    },
+    {
+      "type": "textarea",
+      "id": "caption",
+      "label": "Caption",
+      "default": "Illustrative curves, not measurements. Individual experience varies — many people notice nothing on day one, because there is no stimulant to notice."
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin before / after"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,358 @@
+{%- comment -%}
+  lockin — what you receive & what it does.
+
+  Image collage of the box/foils/chewables on one side; two lists on the
+  other: exactly what arrives, and what each part of the formula is for.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-wi">
+  <div class="lk-container">
+    <div class="lk-wi__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-wi__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+    </div>
+
+    <div class="lk-wi__grid">
+      <div class="lk-wi__collage lk-reveal">
+        {%- assign col_images = 'image_1,image_2,image_3' | split: ',' -%}
+        {%- for key in col_images -%}
+          {%- assign img = section.settings[key] -%}
+          <figure class="lk-wi__cell lk-wi__cell--{{ forloop.index }}">
+            {%- if img != blank -%}
+              <img
+                src="{{ img | image_url: width: 900 }}"
+                srcset="{{ img | image_url: width: 500 }} 500w, {{ img | image_url: width: 900 }} 900w"
+                sizes="(min-width: 990px) 30vw, 60vw"
+                alt="{{ img.alt | escape }}"
+                width="{{ img.width }}"
+                height="{{ img.height }}"
+                loading="lazy"
+              >
+            {%- else -%}
+              {{ 'product-4' | placeholder_svg_tag: 'lk-wi__placeholder' }}
+            {%- endif -%}
+          </figure>
+        {%- endfor -%}
+      </div>
+
+      <div class="lk-wi__lists">
+        {%- if section.settings.received_title != blank -%}
+          <h3 class="lk-wi__listTitle">{{ section.settings.received_title }}</h3>
+        {%- endif -%}
+        <ul class="lk-wi__received">
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'item' and block.settings.text != blank -%}
+              <li class="lk-wi__item" {{ block.shopify_attributes }}>
+                {%- if block.settings.qty != blank -%}
+                  <span class="lk-wi__qty">{{ block.settings.qty }}</span>
+                {%- endif -%}
+                <span>
+                  <strong class="lk-wi__itemName">{{ block.settings.text }}</strong>
+                  {%- if block.settings.detail != blank -%}
+                    <span class="lk-wi__itemDetail">{{ block.settings.detail }}</span>
+                  {%- endif -%}
+                </span>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+
+        {%- assign has_does = false -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'does' and block.settings.text != blank -%}{%- assign has_does = true -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if has_does -%}
+          {%- if section.settings.does_title != blank -%}
+            <h3 class="lk-wi__listTitle lk-wi__listTitle--does">{{ section.settings.does_title }}</h3>
+          {%- endif -%}
+          <ul class="lk-wi__does">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'does' and block.settings.text != blank -%}
+                <li class="lk-wi__doesItem" {{ block.shopify_attributes }}>
+                  <span class="lk-wi__tick" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="none"><path d="m4 8.4 2.6 2.6L12 5.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  <span>{{ block.settings.text }}</span>
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        {%- if section.settings.footnote != blank -%}
+          <p class="lk-wi__footnote">{{ section.settings.footnote }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-wi {
+    background: var(--lk-paper);
+  }
+
+  .lk-wi__head {
+    max-width: 44ch;
+    margin-bottom: 32px;
+  }
+
+  .lk-wi__heading {
+    margin-top: 14px;
+  }
+
+  .lk-wi__grid {
+    display: grid;
+    gap: 30px;
+    align-items: center;
+  }
+
+  .lk-wi__collage {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+  }
+
+  .lk-wi__cell {
+    margin: 0;
+    border-radius: var(--lk-r-md);
+    overflow: hidden;
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-wi__cell--1 {
+    grid-row: 1 / 3;
+  }
+
+  .lk-wi__cell img,
+  .lk-wi__placeholder {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .lk-wi__placeholder {
+    fill: color-mix(in srgb, var(--lk-ink) 14%, transparent);
+    aspect-ratio: 1;
+  }
+
+  .lk-wi__listTitle {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.1875rem;
+    letter-spacing: -0.015em;
+    margin: 0 0 16px;
+  }
+
+  .lk-wi__listTitle--does {
+    margin-top: 30px;
+  }
+
+  .lk-wi__received {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+
+  .lk-wi__item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--lk-r-md);
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-wi__qty {
+    flex: none;
+    display: grid;
+    place-items: center;
+    min-inline-size: 44px;
+    block-size: 34px;
+    padding-inline: 8px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-paper);
+    border: 1px solid var(--lk-line);
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  .lk-wi__itemName {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+  }
+
+  .lk-wi__itemDetail {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-wi__does {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  .lk-wi__doesItem {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-wi__tick {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    margin-top: 1px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ice);
+    color: var(--lk-ink);
+  }
+
+  .lk-wi__tick svg {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+
+  .lk-wi__footnote {
+    margin-top: 22px;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--lk-muted);
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-wi__grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: 64px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin what you receive",
+  "tag": "section",
+  "class": "lockin-wi-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "In the box"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What you receive, and what it does."
+    },
+    {
+      "type": "image_picker",
+      "id": "image_1",
+      "label": "Large image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_2",
+      "label": "Small image (top)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_3",
+      "label": "Small image (bottom)"
+    },
+    {
+      "type": "text",
+      "id": "received_title",
+      "label": "Received list title",
+      "default": "Inside every box"
+    },
+    {
+      "type": "text",
+      "id": "does_title",
+      "label": "Does list title",
+      "default": "What two chewables do"
+    },
+    {
+      "type": "textarea",
+      "id": "footnote",
+      "label": "Footnote",
+      "default": "Blueberry flavour. No sugar, no artificial dyes, no gelatin. Full supplement facts on the how-it-works page."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Received item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "qty",
+          "label": "Quantity",
+          "default": "30×"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Item",
+          "default": "Individually sealed foils"
+        },
+        {
+          "type": "text",
+          "id": "detail",
+          "label": "Detail",
+          "default": "One foil is one day. Tear, chew, done."
+        }
+      ]
+    },
+    {
+      "type": "does",
+      "name": "What it does",
+      "settings": [
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "NR raises NAD+ — the coenzyme your cells use for energy and DNA repair."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin what you receive",
+      "blocks": [
+        { "type": "item", "settings": { "qty": "30×", "text": "Individually sealed foils", "detail": "One foil is one day. Tear, chew, done." } },
+        { "type": "item", "settings": { "qty": "60×", "text": "Blueberry chewables", "detail": "Two per foil — that is the full daily dose." } },
+        { "type": "item", "settings": { "qty": "1×", "text": "The box", "detail": "A month of doses at full strength, day 1 to day 30." } },
+        { "type": "does", "settings": { "text": "NR 300mg raises NAD+ — the coenzyme your cells use for energy and DNA repair." } },
+        { "type": "does", "settings": { "text": "PQQ 20mg and CoQ10 100mg support the mitochondria that spend that NAD+." } },
+        { "type": "does", "settings": { "text": "KSM-66 ashwagandha 300mg keeps cortisol from making the energy feel anxious." } },
+        { "type": "does", "settings": { "text": "Vitamin C 250mg and B12 500mcg round out the formula — open label, nothing hidden." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

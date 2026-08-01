@@ -1,0 +1,360 @@
+{%- comment -%}
+  lockin — FAQ with video screen.
+
+  Left: a video "screen". Give it an MP4 URL (Shopify Files works) and it
+  plays muted/looped inline; leave the URL empty and the poster image gets a
+  slow ambient zoom instead, so the screen still feels alive with no footage.
+  Both respect prefers-reduced-motion.
+
+  Right: the full FAQ accordion.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-vfaq">
+  <div class="lk-container">
+    <div class="lk-vfaq__grid">
+      <div class="lk-vfaq__screenCol lk-reveal">
+        <figure class="lk-vfaq__screen">
+          {%- if section.settings.video_url != blank -%}
+            <video
+              class="lk-vfaq__video"
+              data-lockin-ambient-video
+              src="{{ section.settings.video_url }}"
+              {% if section.settings.poster != blank %}
+                poster="{{ section.settings.poster | image_url: width: 1200 }}"
+              {% endif %}
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+            ></video>
+          {%- elsif section.settings.poster != blank -%}
+            <img
+              class="lk-vfaq__poster lk-ambient"
+              src="{{ section.settings.poster | image_url: width: 1200 }}"
+              srcset="{{ section.settings.poster | image_url: width: 700 }} 700w, {{ section.settings.poster | image_url: width: 1200 }} 1200w"
+              sizes="(min-width: 990px) 44vw, 92vw"
+              alt="{{ section.settings.poster.alt | default: section.settings.heading | escape }}"
+              width="{{ section.settings.poster.width }}"
+              height="{{ section.settings.poster.height }}"
+              loading="lazy"
+            >
+          {%- else -%}
+            <div class="lk-vfaq__empty">{{ 'product-3' | placeholder_svg_tag: 'lk-vfaq__emptySvg' }}</div>
+          {%- endif -%}
+
+          {%- if section.settings.screen_caption != blank -%}
+            <figcaption class="lk-vfaq__chip">{{ section.settings.screen_caption }}</figcaption>
+          {%- endif -%}
+        </figure>
+      </div>
+
+      <div class="lk-vfaq__faqCol">
+        <div class="lk-vfaq__head lk-reveal">
+          {%- if section.settings.eyebrow != blank -%}
+            <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+          {%- endif -%}
+          {%- if section.settings.heading != blank -%}
+            <h2 class="lk-h2 lk-vfaq__heading">{{ section.settings.heading }}</h2>
+          {%- endif -%}
+        </div>
+
+        <div class="lk-vfaq__list lk-reveal">
+          {%- for block in section.blocks -%}
+            <details
+              class="lk-vfaq__item"
+              name="{% if section.settings.one_at_a_time %}lockin-vfaq-{{ section.id }}{% else %}lockin-vfaq-{{ section.id }}-{{ block.id }}{% endif %}"
+              {{ block.shopify_attributes }}
+            >
+              <summary class="lk-vfaq__q">
+                <span>{{ block.settings.question }}</span>
+                <span class="lk-vfaq__icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path d="M4 10h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <path class="lk-vfaq__iconBar" d="M10 4v12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                  </svg>
+                </span>
+              </summary>
+              <div class="lk-vfaq__a">{{ block.settings.answer }}</div>
+            </details>
+          {%- endfor -%}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-vfaq {
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-vfaq__grid {
+    display: grid;
+    gap: 30px;
+    align-items: start;
+  }
+
+  .lk-vfaq__screen {
+    position: relative;
+    margin: 0;
+    border-radius: var(--lk-r-lg);
+    overflow: hidden;
+    background: var(--lk-ice);
+    aspect-ratio: 4 / 5;
+  }
+
+  .lk-vfaq__video,
+  .lk-vfaq__poster {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .lk-vfaq__empty {
+    display: grid;
+    place-items: center;
+    block-size: 100%;
+  }
+
+  .lk-vfaq__empty svg {
+    inline-size: 55%;
+    fill: color-mix(in srgb, var(--lk-ink) 15%, transparent);
+  }
+
+  .lk-vfaq__chip {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    padding: 8px 14px;
+    border-radius: var(--lk-r-pill);
+    background: color-mix(in srgb, var(--lk-paper) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lk-paper) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+  }
+
+  .lk-vfaq__head {
+    margin-bottom: 22px;
+  }
+
+  .lk-vfaq__heading {
+    margin-top: 12px;
+    max-width: 16ch;
+  }
+
+  .lk-vfaq__list {
+    border-top: 1px solid var(--lk-line);
+  }
+
+  .lk-vfaq__item {
+    border-bottom: 1px solid var(--lk-line);
+  }
+
+  .lk-vfaq__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 18px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--lk-font-head);
+    font-weight: 500;
+    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+    color: var(--lk-ink);
+    text-wrap: pretty;
+  }
+
+  .lk-vfaq__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .lk-vfaq__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 30px;
+    block-size: 30px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-paper);
+    color: var(--lk-ink);
+  }
+
+  .lk-vfaq__icon svg {
+    inline-size: 17px;
+    block-size: 17px;
+  }
+
+  .lk-vfaq__iconBar {
+    transform-origin: center;
+    transition: transform 0.25s var(--lk-ease), opacity 0.25s var(--lk-ease);
+  }
+
+  .lk-vfaq__item[open] .lk-vfaq__iconBar {
+    transform: rotate(90deg);
+    opacity: 0;
+  }
+
+  .lk-vfaq__a {
+    padding: 0 44px 20px 0;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-vfaq__a p + p {
+    margin-top: 1em;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (interpolate-size: allow-keywords) {
+      .lk-vfaq__list {
+        interpolate-size: allow-keywords;
+      }
+
+      .lk-vfaq__item::details-content {
+        block-size: 0;
+        overflow: hidden;
+        transition: block-size 0.32s var(--lk-ease), content-visibility 0.32s allow-discrete;
+      }
+
+      .lk-vfaq__item[open]::details-content {
+        block-size: auto;
+      }
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-vfaq__grid {
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+      gap: 56px;
+    }
+
+    .lk-vfaq__screenCol {
+      position: sticky;
+      top: calc(var(--header-height, 76px) + 24px);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin video + FAQ",
+  "tag": "section",
+  "class": "lockin-vfaq-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Video screen"
+    },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Video URL (MP4)",
+      "info": "Upload a video under Content → Files and paste its link. Leave empty to show the poster with a slow ambient zoom."
+    },
+    {
+      "type": "image_picker",
+      "id": "poster",
+      "label": "Poster image"
+    },
+    {
+      "type": "text",
+      "id": "screen_caption",
+      "label": "Caption chip on the screen",
+      "default": "One foil. Two chewables. Done."
+    },
+    {
+      "type": "header",
+      "content": "FAQ"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Questions"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Everything people ask."
+    },
+    {
+      "type": "checkbox",
+      "id": "one_at_a_time",
+      "label": "Only one answer open at a time",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "qa",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "Will I feel it like caffeine?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>No. There is no stimulant in lockin, so there is no lift and no drop. What most people notice is the absence of the afternoon dip.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin video + FAQ",
+      "blocks": [
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Will I feel it like caffeine?",
+            "answer": "<p>No. There is no stimulant in lockin, so there is no lift and no drop. What most people notice is the absence of the afternoon dip rather than a spike in the morning.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "How long until it does anything?",
+            "answer": "<p>NAD+ support is cumulative, not immediate. Give it the full 30 days before you judge it. Vitamin C and B12 act sooner, but they are the smaller part of the formula.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Can I take it at night?",
+            "answer": "<p>Yes. No caffeine means a late dose will not affect your sleep. Ashwagandha is often taken in the evening for exactly that reason.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Why foils instead of a bottle?",
+            "answer": "<p>NR and vitamin C degrade on contact with air. An opened bottle gets weaker every time you open it. A sealed foil per dose means day thirty is as strong as day one.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Who should not take it?",
+            "answer": "<p>Not for use if pregnant, nursing, or under 18. Ashwagandha can interact with thyroid and sedative medications — talk to your physician before starting if either applies to you.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

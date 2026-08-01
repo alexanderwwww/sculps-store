@@ -1,8 +1,36 @@
 {
   "sections": {
     "main": {
-      "type": "lockin-product-buy",
+      "type": "lockin-buy-funnel",
       "blocks": {
+        "glass1": { "type": "glass", "settings": { "text": "NR 300mg — repair" } },
+        "glass2": { "type": "glass", "settings": { "text": "CoQ10 + PQQ — energy" } },
+        "glass3": { "type": "glass", "settings": { "text": "KSM-66 300mg — calm" } },
+        "badge1": { "type": "badge", "settings": { "label": "No caffeine" } },
+        "badge2": { "type": "badge", "settings": { "label": "No sugar" } },
+        "badge3": { "type": "badge", "settings": { "label": "No crash" } },
+        "badge4": { "type": "badge", "settings": { "label": "30 sealed foils" } },
+        "mfaq1": {
+          "type": "faq",
+          "settings": {
+            "question": "When will I feel it?",
+            "answer": "NAD+ support builds over weeks — judge it at day 30, not day one. There is no stimulant, so there is nothing to feel in hour one."
+          }
+        },
+        "mfaq2": {
+          "type": "faq",
+          "settings": {
+            "question": "How do I take it?",
+            "answer": "Tear one foil a day, chew both chewables. No water, any time of day — no caffeine means it won't touch your sleep."
+          }
+        },
+        "mfaq3": {
+          "type": "faq",
+          "settings": {
+            "question": "Shipping and returns?",
+            "answer": "3- and 6-month supplies ship free. 30-day money-back guarantee — if it's not for you, say so and we'll make it right."
+          }
+        },
         "bundle1": {
           "type": "bundle",
           "settings": { "label": "1 month", "sublabel": "30 singles", "months": 1, "badge": "" }
@@ -13,17 +41,22 @@
         },
         "bundle3": {
           "type": "bundle",
-          "settings": { "label": "6 months", "sublabel": "180 singles", "months": 6, "badge": "" }
-        },
-        "pill1": { "type": "badge", "settings": { "label": "No caffeine" } },
-        "pill2": { "type": "badge", "settings": { "label": "No sugar" } },
-        "pill3": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+          "settings": { "label": "6 months", "sublabel": "180 singles", "months": 6, "badge": "Biggest saving" }
+        }
       },
-      "block_order": ["bundle1", "bundle2", "bundle3", "pill1", "pill2", "pill3"],
+      "block_order": [
+        "glass1", "glass2", "glass3",
+        "badge1", "badge2", "badge3", "badge4",
+        "mfaq1", "mfaq2", "mfaq3",
+        "bundle1", "bundle2", "bundle3"
+      ],
       "settings": {
         "eyebrow": "Cellular energy chewables",
         "title": "Energy that doesn't crash.",
-        "subtitle": "Two chewables a day, sealed one dose at a time. NR, PQQ, CoQ10 and KSM-66 at the full studied doses.",
+        "subtitle": "Two chewables a day, sealed one dose at a time. NR, PQQ, CoQ10 and KSM-66 at the full studied doses — no caffeine, no sugar, nothing to come down from.",
+        "offer_badge": "Launch offer",
+        "offer_title": "Up to €60 off multi-month supplies",
+        "offer_text": "3- and 6-month supplies ship free and lock the launch price. Applied automatically — no code needed.",
         "purchase_legend": "Purchase type",
         "subscribe_discount": 20,
         "subscribe_label": "Subscribe & save",
@@ -35,66 +68,12 @@
         "default_bundle": 2,
         "per_box_suffix": "/ box",
         "submit_label": "Add to cart",
-        "reassurance": "Free shipping on 3- and 6-month supplies.",
+        "reassurance": "30-day money-back guarantee · Free shipping on 3+ months",
         "after_add": "drawer"
       }
     },
-    "facts": {
-      "type": "lockin-supplement-facts",
-      "blocks": {
-        "nr": { "type": "row", "settings": { "name": "Nicotinamide riboside (NR)", "amount": "300 mg", "dv": "†" } },
-        "pqq": { "type": "row", "settings": { "name": "PQQ", "detail": "Pyrroloquinoline quinone", "amount": "20 mg", "dv": "†" } },
-        "coq10": { "type": "row", "settings": { "name": "CoQ10", "detail": "Ubiquinol", "amount": "100 mg", "dv": "†" } },
-        "ksm": { "type": "row", "settings": { "name": "Ashwagandha", "detail": "KSM-66 root extract", "amount": "300 mg", "dv": "†" } },
-        "vitc": { "type": "row", "settings": { "name": "Vitamin C", "detail": "Ascorbic acid", "amount": "250 mg", "dv": "278%" } },
-        "b12": { "type": "row", "settings": { "name": "Vitamin B12", "detail": "Methylcobalamin", "amount": "500 mcg", "dv": "20,833%" } }
-      },
-      "block_order": ["nr", "pqq", "coq10", "ksm", "vitc", "b12"],
-      "settings": {
-        "eyebrow": "Supplement facts",
-        "heading": "Open label. Full doses.",
-        "body": "<p>Serving size: 2 chewables. Nothing is hidden behind a proprietary blend — every active is listed with the amount you actually get.</p><p>Blueberry, sweetened with allulose and stevia. Natural blue from butterfly pea flower. No sugar, no artificial dyes, no gelatin.</p>",
-        "table_caption": "Per serving — 2 chewables",
-        "col_ingredient": "Ingredient",
-        "col_amount": "Amount",
-        "show_dv": true,
-        "col_dv": "% DV",
-        "footnote": "† Daily Value not established."
-      }
-    },
-    "how_to": {
-      "type": "lockin-how-to",
-      "blocks": {
-        "s1": {
-          "type": "step",
-          "settings": {
-            "title": "Tear one foil",
-            "body": "Two chewables inside. That is the full dose — no counting, no measuring."
-          }
-        },
-        "s2": {
-          "type": "step",
-          "settings": {
-            "title": "Chew, don't swallow",
-            "body": "Blueberry, lightly sweet. No water needed, so it works anywhere."
-          }
-        },
-        "s3": {
-          "type": "step",
-          "settings": {
-            "title": "Any time of day",
-            "body": "No caffeine, so a 4pm dose will not cost you your sleep. Most people take it with breakfast."
-          }
-        }
-      },
-      "block_order": ["s1", "s2", "s3"],
-      "settings": {
-        "eyebrow": "How to take it",
-        "heading": "Tear one foil. That's the dose."
-      }
-    },
-    "faq": {
-      "type": "lockin-faq",
+    "video_faq": {
+      "type": "lockin-video-faq",
       "blocks": {
         "q1": {
           "type": "qa",
@@ -134,12 +113,79 @@
       },
       "block_order": ["q1", "q2", "q3", "q4", "q5"],
       "settings": {
+        "poster": "shopify://shop_images/lockin-detail-foils.jpg",
+        "screen_caption": "One foil. Two chewables. Done.",
         "eyebrow": "Questions",
-        "heading": "The things people ask.",
-        "support_text": "Anything not covered here — get in touch and a person will answer.",
+        "heading": "Everything people ask.",
         "one_at_a_time": true
+      }
+    },
+    "before_after": {
+      "type": "lockin-before-after",
+      "settings": {
+        "eyebrow": "The difference",
+        "heading": "Your afternoon, before and after.",
+        "subheading": "Drag the slider. A stimulant day spikes and drops. A lockin day is flatter on purpose — energy your cells make, not energy you borrow.",
+        "before_label": "Caffeine day",
+        "after_label": "lockin day",
+        "slider_label": "Compare a caffeine day with a lockin day",
+        "caption": "Illustrative curves, not measurements. Individual experience varies — many people notice nothing on day one, because there is no stimulant to notice."
+      }
+    },
+    "review_carousel": {
+      "type": "lockin-review-carousel",
+      "blocks": {
+        "r1": { "type": "review", "settings": { "is_placeholder": true } },
+        "r2": { "type": "review", "settings": { "is_placeholder": true } },
+        "r3": { "type": "review", "settings": { "is_placeholder": true } },
+        "r4": { "type": "review", "settings": { "is_placeholder": true } },
+        "r5": { "type": "review", "settings": { "is_placeholder": true } }
+      },
+      "block_order": ["r1", "r2", "r3", "r4", "r5"],
+      "settings": {
+        "eyebrow": "In their words",
+        "heading": "What people say."
+      }
+    },
+    "whats_inside": {
+      "type": "lockin-whats-inside",
+      "blocks": {
+        "i1": { "type": "item", "settings": { "qty": "30×", "text": "Individually sealed foils", "detail": "One foil is one day. Tear, chew, done." } },
+        "i2": { "type": "item", "settings": { "qty": "60×", "text": "Blueberry chewables", "detail": "Two per foil — that is the full daily dose." } },
+        "i3": { "type": "item", "settings": { "qty": "1×", "text": "The box", "detail": "A month of doses at full strength, day 1 to day 30." } },
+        "d1": { "type": "does", "settings": { "text": "NR 300mg raises NAD+ — the coenzyme your cells use for energy and DNA repair." } },
+        "d2": { "type": "does", "settings": { "text": "PQQ 20mg and CoQ10 100mg support the mitochondria that spend that NAD+." } },
+        "d3": { "type": "does", "settings": { "text": "KSM-66 ashwagandha 300mg keeps cortisol from making the energy feel anxious." } },
+        "d4": { "type": "does", "settings": { "text": "Vitamin C 250mg and B12 500mcg round out the formula — open label, nothing hidden." } }
+      },
+      "block_order": ["i1", "i2", "i3", "d1", "d2", "d3", "d4"],
+      "settings": {
+        "eyebrow": "In the box",
+        "heading": "What you receive, and what it does.",
+        "image_1": "shopify://shop_images/lockin-box-foils-chewables.png",
+        "image_2": "shopify://shop_images/lockin-detail-foils.jpg",
+        "image_3": "shopify://shop_images/lockin-detail-chewables.jpg",
+        "received_title": "Inside every box",
+        "does_title": "What two chewables do",
+        "footnote": "Blueberry flavour. No sugar, no artificial dyes, no gelatin. Full supplement facts on the how-it-works page."
+      }
+    },
+    "review_wall": {
+      "type": "lockin-review-wall",
+      "blocks": {
+        "w1": { "type": "review", "settings": { "is_placeholder": true } },
+        "w2": { "type": "review", "settings": { "is_placeholder": true, "image": "shopify://shop_images/lockin-detail-chewables.jpg" } },
+        "w3": { "type": "review", "settings": { "is_placeholder": true } },
+        "w4": { "type": "review", "settings": { "is_placeholder": true, "image": "shopify://shop_images/lockin-detail-foils.jpg" } },
+        "w5": { "type": "review", "settings": { "is_placeholder": true } },
+        "w6": { "type": "review", "settings": { "is_placeholder": true, "image": "shopify://shop_images/lockin-detail-box.jpg" } }
+      },
+      "block_order": ["w1", "w2", "w3", "w4", "w5", "w6"],
+      "settings": {
+        "eyebrow": "More from customers",
+        "heading": "Thirty days in, in their words."
       }
     }
   },
-  "order": ["main", "facts", "how_to", "faq"]
+  "order": ["main", "video_faq", "before_after", "review_carousel", "whats_inside", "review_wall"]
 }

@@ -1,0 +1,225 @@
+{%- comment -%}
+  lockin — media grid.
+
+  A showcase wall of media cards. Each block is an image or an MP4 URL with
+  an optional tag + caption. Videos play muted/looped; still images can opt
+  into the ambient zoom. Everything honours reduced motion.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-mg">
+  <div class="lk-container">
+    {%- if section.settings.eyebrow != blank or section.settings.heading != blank -%}
+      <div class="lk-mg__head lk-reveal">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="lk-h2 lk-mg__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class="lk-mg__grid">
+      {%- for block in section.blocks -%}
+        <figure class="lk-mg__card{% if block.settings.wide %} lk-mg__card--wide{% endif %} lk-reveal" {{ block.shopify_attributes }}>
+          <div class="lk-mg__media">
+            {%- if block.settings.video_url != blank -%}
+              <video
+                data-lockin-ambient-video
+                src="{{ block.settings.video_url }}"
+                {% if block.settings.image != blank %}
+                  poster="{{ block.settings.image | image_url: width: 1200 }}"
+                {% endif %}
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+              ></video>
+            {%- elsif block.settings.image != blank -%}
+              <img
+                class="{% if block.settings.ambient %}lk-ambient{% endif %}"
+                src="{{ block.settings.image | image_url: width: 1200 }}"
+                srcset="{{ block.settings.image | image_url: width: 600 }} 600w, {{ block.settings.image | image_url: width: 1200 }} 1200w"
+                sizes="(min-width: 990px) 33vw, 92vw"
+                alt="{{ block.settings.image.alt | default: block.settings.caption | escape }}"
+                width="{{ block.settings.image.width }}"
+                height="{{ block.settings.image.height }}"
+                loading="lazy"
+              >
+            {%- else -%}
+              {{ 'product-5' | placeholder_svg_tag: 'lk-mg__placeholder' }}
+            {%- endif -%}
+
+            {%- if block.settings.tag != blank -%}
+              <span class="lk-mg__tag">{{ block.settings.tag }}</span>
+            {%- endif -%}
+          </div>
+
+          {%- if block.settings.caption != blank -%}
+            <figcaption class="lk-mg__caption">{{ block.settings.caption }}</figcaption>
+          {%- endif -%}
+        </figure>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-mg__head {
+    max-width: 44ch;
+    margin-bottom: 32px;
+  }
+
+  .lk-mg__heading {
+    margin-top: 14px;
+  }
+
+  .lk-mg__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .lk-mg__card {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .lk-mg__card--wide {
+    grid-column: 1 / -1;
+  }
+
+  .lk-mg__media {
+    position: relative;
+    border-radius: var(--lk-r-md);
+    overflow: hidden;
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+    aspect-ratio: 1;
+  }
+
+  .lk-mg__card--wide .lk-mg__media {
+    aspect-ratio: 16 / 9;
+  }
+
+  .lk-mg__media img,
+  .lk-mg__media video,
+  .lk-mg__placeholder {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .lk-mg__placeholder {
+    fill: color-mix(in srgb, var(--lk-ink) 14%, transparent);
+  }
+
+  .lk-mg__tag {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    padding: 5px 12px;
+    border-radius: var(--lk-r-pill);
+    background: color-mix(in srgb, var(--lk-paper) 65%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lk-paper) 75%, transparent);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--lk-ink);
+  }
+
+  .lk-mg__caption {
+    margin-top: 10px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-mg__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .lk-mg__card--wide {
+      grid-column: span 2;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin media grid",
+  "tag": "section",
+  "class": "lockin-mg-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Up close"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Every detail, on purpose."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "media",
+      "name": "Media card",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image",
+          "info": "Also used as the poster when a video URL is set."
+        },
+        {
+          "type": "text",
+          "id": "video_url",
+          "label": "Video URL (MP4)"
+        },
+        {
+          "type": "checkbox",
+          "id": "ambient",
+          "label": "Ambient zoom on the image",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "wide",
+          "label": "Wide card",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "tag",
+          "label": "Tag chip"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin media grid",
+      "blocks": [
+        { "type": "media", "settings": { "wide": true, "ambient": true, "tag": "Sealed fresh", "caption": "Every dose in its own foil — full strength on day 30." } },
+        { "type": "media", "settings": { "tag": "The dose", "caption": "Two blueberry chewables. No water needed." } },
+        { "type": "media", "settings": { "tag": "The box", "caption": "30 singles. A month on the shelf, not a bottle going stale." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

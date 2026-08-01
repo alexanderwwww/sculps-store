@@ -11,6 +11,7 @@
       "settings": {
         "eyebrow": "The decline",
         "heading": "NAD+ falls for everyone.",
+        "heading_tag": "h1",
         "body": "NAD+ is the coenzyme your mitochondria use to convert food into ATP, and the substrate your cells draw on for DNA repair. Measured levels fall steadily from early adulthood onward.",
         "chart_title": "Line chart of NAD+ levels declining with age",
         "chart_description": "NAD+ is at 100% around age 20, roughly 70% by age 40, and roughly 50% by age 50, continuing to decline into later life.",
