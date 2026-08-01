@@ -1,0 +1,402 @@
+{%- comment -%}
+  lockin — NAD+ decline curve.
+
+  Dark field, ice-blue line. On scroll the line draws itself, then the age
+  markers fade in one after another. Marker positions are computed from each
+  block's age/value against the axis range, so the chart stays honest when the
+  numbers are edited.
+
+  Coordinate system (SVG viewBox 0 0 800 420):
+    plot area x 60 → 770, y 40 → 350.
+{%- endcomment -%}
+
+{%- liquid
+  assign age_min = section.settings.age_min
+  assign age_max = section.settings.age_max
+  assign span = age_max | minus: age_min
+  if span <= 0
+    assign span = 1
+  endif
+
+  assign plot_x0 = 60
+  assign plot_w = 710
+  assign plot_y1 = 350
+  assign plot_h = 310
+-%}
+
+<div class="lk lk-nad">
+  <div class="lk-container">
+    <div class="lk-nad__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow lk-nad__eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-nad__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+      {%- if section.settings.body != blank -%}
+        <p class="lk-nad__body">{{ section.settings.body }}</p>
+      {%- endif -%}
+    </div>
+
+    <figure class="lk-nad__figure lk-reveal">
+      <svg
+        class="lk-nad__svg"
+        viewBox="0 0 800 420"
+        role="img"
+        aria-labelledby="lk-nad-title-{{ section.id }} lk-nad-desc-{{ section.id }}"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <title id="lk-nad-title-{{ section.id }}">{{ section.settings.chart_title | escape }}</title>
+        <desc id="lk-nad-desc-{{ section.id }}">{{ section.settings.chart_description | escape }}</desc>
+
+        {%- comment -%} Gridlines {%- endcomment -%}
+        <g class="lk-nad__grid" aria-hidden="true">
+          {%- for i in (0..4) -%}
+            {%- assign gy = i | times: 77 | plus: 40 -%}
+            <line x1="60" y1="{{ gy }}" x2="770" y2="{{ gy }}" />
+          {%- endfor -%}
+        </g>
+
+        {%- comment -%} Axis labels {%- endcomment -%}
+        <g class="lk-nad__axis" aria-hidden="true">
+          <text x="52" y="46" text-anchor="end">100%</text>
+          <text x="52" y="200" text-anchor="end">50%</text>
+          <text x="52" y="354" text-anchor="end">0</text>
+          <text x="60" y="380" text-anchor="start">{{ age_min }}</text>
+          <text x="770" y="380" text-anchor="end">{{ age_max }}</text>
+          <text x="415" y="406" text-anchor="middle" class="lk-nad__axisTitle">
+            {{ section.settings.x_axis_label }}
+          </text>
+        </g>
+
+        {%- comment -%} The curve, drawn on scroll. pathLength normalises the dash maths. {%- endcomment -%}
+        <path
+          class="lk-nad__area"
+          d="{{ section.settings.curve_path }} L 770 350 L 60 350 Z"
+          aria-hidden="true"
+        />
+        <path
+          class="lk-nad__line"
+          d="{{ section.settings.curve_path }}"
+          pathLength="1"
+          fill="none"
+          aria-hidden="true"
+        />
+
+        {%- comment -%} Age markers {%- endcomment -%}
+        <g class="lk-nad__markers">
+          {%- for block in section.blocks -%}
+            {%- liquid
+              assign age = block.settings.age
+              assign value = block.settings.value
+
+              assign cx = age | minus: age_min | times: plot_w | divided_by: span | plus: plot_x0
+              assign drop = value | times: plot_h | divided_by: 100
+              assign cy = plot_y1 | minus: drop
+
+              assign label_anchor = 'middle'
+              if forloop.first
+                assign label_anchor = 'start'
+              endif
+              if forloop.last
+                assign label_anchor = 'end'
+              endif
+
+              assign label_y = cy | minus: 26
+              assign value_y = cy | minus: 46
+            -%}
+            <g
+              class="lk-nad__marker"
+              style="--lk-marker-delay: {{ forloop.index0 | times: 300 | plus: 1500 }}ms;"
+              {{ block.shopify_attributes }}
+            >
+              <line class="lk-nad__stem" x1="{{ cx }}" y1="{{ cy }}" x2="{{ cx }}" y2="350" />
+              <circle class="lk-nad__dotHalo" cx="{{ cx }}" cy="{{ cy }}" r="13" />
+              <circle class="lk-nad__dot" cx="{{ cx }}" cy="{{ cy }}" r="6" />
+              <text class="lk-nad__markerValue" x="{{ cx }}" y="{{ value_y }}" text-anchor="{{ label_anchor }}">
+                {{- block.settings.value_label | default: block.settings.value -}}
+              </text>
+              <text class="lk-nad__markerLabel" x="{{ cx }}" y="{{ label_y }}" text-anchor="{{ label_anchor }}">
+                {{- block.settings.label -}}
+              </text>
+            </g>
+          {%- endfor -%}
+        </g>
+      </svg>
+
+      {%- if section.settings.caption != blank -%}
+        <figcaption class="lk-nad__caption">{{ section.settings.caption }}</figcaption>
+      {%- endif -%}
+    </figure>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-nad {
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    padding-block: var(--lk-section-y);
+  }
+
+  .lk-nad__head {
+    max-width: 46ch;
+    margin-bottom: 36px;
+  }
+
+  .lk-nad__eyebrow {
+    color: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+  }
+
+  .lk-nad__heading {
+    margin-top: 14px;
+    color: var(--lk-paper);
+  }
+
+  .lk-nad__body {
+    margin-top: 16px;
+    font-size: 1.0625rem;
+    line-height: 1.62;
+    color: color-mix(in srgb, var(--lk-paper) 68%, transparent);
+    text-wrap: pretty;
+  }
+
+  .lk-nad__figure {
+    margin: 0;
+  }
+
+  .lk-nad__svg {
+    inline-size: 100%;
+    block-size: auto;
+    overflow: visible;
+  }
+
+  .lk-nad__grid line {
+    stroke: color-mix(in srgb, var(--lk-paper) 10%, transparent);
+    stroke-width: 1;
+  }
+
+  .lk-nad__axis text {
+    fill: color-mix(in srgb, var(--lk-paper) 45%, transparent);
+    font-family: var(--lk-font-body);
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .lk-nad__axisTitle {
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .lk-nad__area {
+    fill: color-mix(in srgb, var(--lk-accent) 12%, transparent);
+    opacity: 0;
+    transition: opacity 0.8s var(--lk-ease) 0.9s;
+  }
+
+  .lk-nad__line {
+    stroke: var(--lk-accent);
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 1.6s var(--lk-ease);
+  }
+
+  .lk-nad__marker {
+    opacity: 0;
+    transition: opacity 0.55s var(--lk-ease);
+    transition-delay: var(--lk-marker-delay, 0ms);
+  }
+
+  .lk-nad__stem {
+    stroke: color-mix(in srgb, var(--lk-accent) 35%, transparent);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 5;
+  }
+
+  .lk-nad__dot {
+    fill: var(--lk-accent);
+  }
+
+  .lk-nad__dotHalo {
+    fill: color-mix(in srgb, var(--lk-accent) 22%, transparent);
+  }
+
+  .lk-nad__markerValue {
+    fill: var(--lk-paper);
+    font-family: var(--lk-font-head);
+    font-size: 25px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .lk-nad__markerLabel {
+    fill: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+    font-family: var(--lk-font-body);
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  /* Reveal state, set by the shared scroll observer. */
+  .lk-nad__figure.is-visible .lk-nad__line {
+    stroke-dashoffset: 0;
+  }
+
+  .lk-nad__figure.is-visible .lk-nad__area {
+    opacity: 1;
+  }
+
+  .lk-nad__figure.is-visible .lk-nad__marker {
+    opacity: 1;
+  }
+
+  .lk-nad__caption {
+    margin-top: 22px;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: color-mix(in srgb, var(--lk-paper) 50%, transparent);
+    max-width: 76ch;
+  }
+
+  /* No drawing, no staggering — the finished chart, immediately. */
+  @media (prefers-reduced-motion: reduce) {
+    .lk-nad__line {
+      stroke-dashoffset: 0;
+      transition: none;
+    }
+
+    .lk-nad__area,
+    .lk-nad__marker {
+      opacity: 1;
+      transition: none;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-nad__head {
+      margin-bottom: 48px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin NAD+ curve",
+  "tag": "section",
+  "class": "lockin-nad-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "The decline"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "NAD+ falls for everyone."
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body",
+      "default": "NAD+ is the coenzyme your mitochondria use to convert food into ATP, and the substrate your cells draw on for DNA repair. Measured levels fall steadily from early adulthood onward."
+    },
+    {
+      "type": "header",
+      "content": "Chart"
+    },
+    {
+      "type": "text",
+      "id": "chart_title",
+      "label": "Accessible title",
+      "info": "Read by screen readers in place of the chart.",
+      "default": "Line chart of NAD+ levels declining with age"
+    },
+    {
+      "type": "textarea",
+      "id": "chart_description",
+      "label": "Accessible description",
+      "default": "NAD+ is at 100% around age 20, roughly 70% by age 40, and roughly 50% by age 50, continuing to decline into later life."
+    },
+    {
+      "type": "number",
+      "id": "age_min",
+      "label": "Axis start age",
+      "default": 20
+    },
+    {
+      "type": "number",
+      "id": "age_max",
+      "label": "Axis end age",
+      "default": 80
+    },
+    {
+      "type": "text",
+      "id": "x_axis_label",
+      "label": "X axis label",
+      "default": "Age"
+    },
+    {
+      "type": "textarea",
+      "id": "curve_path",
+      "label": "Curve path (SVG)",
+      "info": "Plot area is x 60–770, y 40 (100%) to 350 (0%) in a 800×420 viewBox.",
+      "default": "M 60 40 C 150 70 230 108 297 133 C 340 150 385 174 415 195 C 520 228 650 248 770 258"
+    },
+    {
+      "type": "textarea",
+      "id": "caption",
+      "label": "Caption",
+      "default": "Illustrative. The curve shows the shape of the decline reported across the ageing literature, not a measurement of any individual. Your own levels are not knowable without a blood test."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "marker",
+      "name": "Age marker",
+      "limit": 5,
+      "settings": [
+        {
+          "type": "number",
+          "id": "age",
+          "label": "Age",
+          "default": 20
+        },
+        {
+          "type": "number",
+          "id": "value",
+          "label": "NAD+ level",
+          "info": "Percent of the level at the axis start age. Sets the marker's height on the chart.",
+          "default": 100
+        },
+        {
+          "type": "text",
+          "id": "value_label",
+          "label": "Value label",
+          "default": "100%"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Age 20"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin NAD+ curve",
+      "blocks": [
+        { "type": "marker", "settings": { "age": 20, "value": 100, "value_label": "100%", "label": "Age 20" } },
+        { "type": "marker", "settings": { "age": 40, "value": 70, "value_label": "~70%", "label": "Age 40" } },
+        { "type": "marker", "settings": { "age": 50, "value": 50, "value_label": "~50%", "label": "Age 50" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,263 @@
+{%- comment -%}
+  lockin — FAQ accordion.
+
+  Built on <details>/<summary>: keyboard operable, screen-reader correct and
+  fully functional with no JavaScript. The height animation is progressive
+  enhancement only and is skipped under reduced motion.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-faq">
+  <div class="lk-container">
+    <div class="lk-faq__grid">
+      <div class="lk-faq__head lk-reveal">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="lk-h2 lk-faq__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+        {%- if section.settings.support_text != blank -%}
+          <p class="lk-body lk-faq__support">{{ section.settings.support_text }}</p>
+        {%- endif -%}
+      </div>
+
+      <div class="lk-faq__list lk-reveal" data-lockin-faq>
+        {%- for block in section.blocks -%}
+          <details
+            class="lk-faq__item"
+            name="{% if section.settings.one_at_a_time %}lockin-faq-{{ section.id }}{% else %}lockin-faq-{{ section.id }}-{{ block.id }}{% endif %}"
+            {{ block.shopify_attributes }}
+          >
+            <summary class="lk-faq__q">
+              <span>{{ block.settings.question }}</span>
+              <span class="lk-faq__icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M4 10h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                  <path class="lk-faq__iconBar" d="M10 4v12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </summary>
+            <div class="lk-faq__a">
+              <div class="lk-faq__aInner">{{ block.settings.answer }}</div>
+            </div>
+          </details>
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-faq__grid {
+    display: grid;
+    gap: 30px;
+    align-items: start;
+  }
+
+  .lk-faq__heading {
+    margin-top: 14px;
+    max-width: 16ch;
+  }
+
+  .lk-faq__support {
+    margin-top: 16px;
+    max-width: 38ch;
+  }
+
+  .lk-faq__list {
+    border-top: 1px solid var(--lk-line);
+  }
+
+  .lk-faq__item {
+    border-bottom: 1px solid var(--lk-line);
+  }
+
+  .lk-faq__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 20px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--lk-font-head);
+    font-weight: 500;
+    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+    color: var(--lk-ink);
+    text-wrap: pretty;
+  }
+
+  .lk-faq__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .lk-faq__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 30px;
+    block-size: 30px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ice);
+    color: var(--lk-ink);
+  }
+
+  .lk-faq__icon svg {
+    inline-size: 17px;
+    block-size: 17px;
+  }
+
+  .lk-faq__iconBar {
+    transform-origin: center;
+    transition: transform 0.25s var(--lk-ease), opacity 0.25s var(--lk-ease);
+  }
+
+  .lk-faq__item[open] .lk-faq__iconBar {
+    transform: rotate(90deg);
+    opacity: 0;
+  }
+
+  .lk-faq__a {
+    overflow: hidden;
+  }
+
+  .lk-faq__aInner {
+    padding-bottom: 22px;
+    padding-right: 44px;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-faq__aInner p + p {
+    margin-top: 1em;
+  }
+
+  .lk-faq__aInner a {
+    color: var(--lk-ink);
+  }
+
+  /* Progressive open/close animation where the browser supports it. */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (interpolate-size: allow-keywords) {
+      .lk-faq__list {
+        interpolate-size: allow-keywords;
+      }
+
+      .lk-faq__item::details-content {
+        block-size: 0;
+        overflow: hidden;
+        transition: block-size 0.32s var(--lk-ease), content-visibility 0.32s allow-discrete;
+      }
+
+      .lk-faq__item[open]::details-content {
+        block-size: auto;
+      }
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-faq__grid {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 56px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin FAQ",
+  "tag": "section",
+  "class": "lockin-faq-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Questions"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "The things people ask."
+    },
+    {
+      "type": "textarea",
+      "id": "support_text",
+      "label": "Support text",
+      "default": "Anything not covered here — get in touch and a person will answer."
+    },
+    {
+      "type": "checkbox",
+      "id": "one_at_a_time",
+      "label": "Only one answer open at a time",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "qa",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "Will I feel it like caffeine?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>No. There is no stimulant in lockin, so there is no lift and no drop. What most people notice is the absence of the afternoon dip rather than a spike in the morning.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin FAQ",
+      "blocks": [
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Will I feel it like caffeine?",
+            "answer": "<p>No. There is no stimulant in lockin, so there is no lift and no drop. What most people notice is the absence of the afternoon dip rather than a spike in the morning.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "How long until it does anything?",
+            "answer": "<p>NAD+ support is cumulative, not immediate. Give it the full 30 days before you judge it. Vitamin C and B12 act sooner, but they are the smaller part of the formula.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Can I take it at night?",
+            "answer": "<p>Yes. No caffeine means a late dose will not affect your sleep. Ashwagandha is often taken in the evening for exactly that reason.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Why foils instead of a bottle?",
+            "answer": "<p>NR and vitamin C degrade on contact with air. An opened bottle gets weaker every time you open it. A sealed foil per dose means day thirty is as strong as day one.</p>"
+          }
+        },
+        {
+          "type": "qa",
+          "settings": {
+            "question": "Who should not take it?",
+            "answer": "<p>Not for use if pregnant, nursing, or under 18. Ashwagandha can interact with thyroid and sedative medications — talk to your physician before starting if either applies to you.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

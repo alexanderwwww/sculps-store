@@ -1,0 +1,311 @@
+{%- comment -%}
+  lockin — hero.
+
+  Soft radial ice-blue field, headline left, product right. Pill badges are
+  blocks so they can be reordered and reworded in the editor.
+{%- endcomment -%}
+
+{%- liquid
+  assign hero_product = section.settings.product
+  assign hero_image = section.settings.image
+  if hero_image == blank and hero_product != blank
+    assign hero_image = hero_product.featured_image
+  endif
+
+  assign cta_url = section.settings.cta_link
+  if cta_url == blank and hero_product != blank
+    assign cta_url = hero_product.url
+  endif
+-%}
+
+<div class="lk lk-hero" style="--lk-hero-glow: {{ section.settings.glow_opacity | divided_by: 100.0 }};">
+  <div class="lk-hero__field" aria-hidden="true"></div>
+
+  <div class="lk-container lk-hero__inner">
+    <div class="lk-hero__copy lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow lk-hero__eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <h1 class="lk-h1 lk-hero__heading">{{ section.settings.heading }}</h1>
+      {%- endif -%}
+
+      {%- if section.settings.subline != blank -%}
+        <p class="lk-lede lk-hero__subline">{{ section.settings.subline }}</p>
+      {%- endif -%}
+
+      <div class="lk-hero__actions">
+        {%- if section.settings.cta_label != blank and cta_url != blank -%}
+          <a class="lk-btn lk-btn--primary" href="{{ cta_url }}">{{ section.settings.cta_label }}</a>
+        {%- endif -%}
+
+        {%- if section.settings.secondary_label != blank and section.settings.secondary_link != blank -%}
+          <a class="lk-btn lk-btn--ghost" href="{{ section.settings.secondary_link }}">
+            {{ section.settings.secondary_label }}
+          </a>
+        {%- endif -%}
+      </div>
+
+      {%- if section.settings.price_note != blank -%}
+        <p class="lk-hero__note">{{ section.settings.price_note }}</p>
+      {%- endif -%}
+
+      {%- if section.blocks.size > 0 -%}
+        <ul class="lk-pills lk-hero__pills">
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'badge' and block.settings.label != blank -%}
+              <li class="lk-pill" {{ block.shopify_attributes }}>{{ block.settings.label }}</li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+
+    <div class="lk-hero__media lk-reveal">
+      {%- if hero_image != blank -%}
+        <img
+          class="lk-hero__image"
+          src="{{ hero_image | image_url: width: 1200 }}"
+          srcset="
+            {{ hero_image | image_url: width: 500 }} 500w,
+            {{ hero_image | image_url: width: 800 }} 800w,
+            {{ hero_image | image_url: width: 1200 }} 1200w
+          "
+          sizes="(min-width: 990px) 46vw, 88vw"
+          alt="{{ hero_image.alt | default: section.settings.heading | escape }}"
+          width="{{ hero_image.width }}"
+          height="{{ hero_image.height }}"
+          loading="eager"
+          fetchpriority="high"
+        >
+      {%- else -%}
+        <div class="lk-hero__placeholder">
+          {{ 'product-1' | placeholder_svg_tag: 'lk-hero__placeholderSvg' }}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--lk-paper);
+    padding-block: 40px 56px;
+  }
+
+  /* The soft ice-blue field. Two offset radials read softer than one. */
+  .lk-hero__field {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    block-size: 130%;
+    z-index: -1;
+    background:
+      radial-gradient(
+        58% 46% at 72% 26%,
+        color-mix(in srgb, var(--lk-accent) calc(var(--lk-hero-glow, 0.45) * 100%), transparent) 0%,
+        transparent 68%
+      ),
+      radial-gradient(46% 40% at 18% 8%, color-mix(in srgb, var(--lk-ice) 85%, transparent) 0%, transparent 70%);
+    filter: blur(6px);
+  }
+
+  .lk-hero__inner {
+    display: grid;
+    gap: 36px;
+    align-items: center;
+  }
+
+  .lk-hero__eyebrow {
+    margin-bottom: 16px;
+  }
+
+  .lk-hero__heading {
+    max-width: 15ch;
+  }
+
+  .lk-hero__subline {
+    margin-top: 18px;
+    max-width: 46ch;
+  }
+
+  .lk-hero__actions {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .lk-hero__note {
+    margin-top: 14px;
+    font-size: 0.875rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-hero__pills {
+    margin-top: 30px;
+  }
+
+  .lk-hero__media {
+    position: relative;
+    order: -1;
+  }
+
+  .lk-hero__image,
+  .lk-hero__placeholderSvg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    max-block-size: 62vh;
+    object-fit: contain;
+    border-radius: var(--lk-r-lg);
+  }
+
+  .lk-hero__placeholder {
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-ice);
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+  }
+
+  .lk-hero__placeholder svg {
+    inline-size: 60%;
+    fill: color-mix(in srgb, var(--lk-ink) 18%, transparent);
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-hero {
+      padding-block: 64px 96px;
+    }
+
+    .lk-hero__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr);
+      gap: 56px;
+    }
+
+    .lk-hero__media {
+      order: 0;
+    }
+
+    .lk-hero__image,
+    .lk-hero__placeholderSvg {
+      max-block-size: 78vh;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin hero",
+  "tag": "section",
+  "class": "lockin-hero-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Cellular energy chewables"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Headline",
+      "default": "Energy that doesn't crash."
+    },
+    {
+      "type": "textarea",
+      "id": "subline",
+      "label": "Subline",
+      "default": "Two chewables a day, sealed one dose at a time. NR, PQQ and CoQ10 work inside your mitochondria — so you make energy instead of borrowing it from tomorrow."
+    },
+    {
+      "type": "header",
+      "content": "Buttons"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Primary button label",
+      "default": "Shop lockin"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Primary button link",
+      "info": "Leave empty to link to the product selected below."
+    },
+    {
+      "type": "text",
+      "id": "secondary_label",
+      "label": "Secondary button label",
+      "default": "See the science"
+    },
+    {
+      "type": "url",
+      "id": "secondary_link",
+      "label": "Secondary button link"
+    },
+    {
+      "type": "text",
+      "id": "price_note",
+      "label": "Note under the buttons",
+      "default": "From $49 — 30 sealed daily doses."
+    },
+    {
+      "type": "header",
+      "content": "Media"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Used for the fallback image and the primary button link."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Hero image",
+      "info": "Falls back to the product's featured image."
+    },
+    {
+      "type": "range",
+      "id": "glow_opacity",
+      "label": "Ice-blue glow strength",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "%",
+      "default": 30
+    }
+  ],
+  "blocks": [
+    {
+      "type": "badge",
+      "name": "Pill badge",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "No caffeine"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin hero",
+      "blocks": [
+        { "type": "badge", "settings": { "label": "No caffeine" } },
+        { "type": "badge", "settings": { "label": "No sugar" } },
+        { "type": "badge", "settings": { "label": "No crash" } },
+        { "type": "badge", "settings": { "label": "30 sealed foils" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

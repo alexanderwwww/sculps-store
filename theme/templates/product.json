@@ -1,0 +1,145 @@
+{
+  "sections": {
+    "main": {
+      "type": "lockin-product-buy",
+      "blocks": {
+        "bundle1": {
+          "type": "bundle",
+          "settings": { "label": "1 month", "sublabel": "30 singles", "months": 1, "badge": "" }
+        },
+        "bundle2": {
+          "type": "bundle",
+          "settings": { "label": "3 months", "sublabel": "90 singles", "months": 3, "badge": "Best value" }
+        },
+        "bundle3": {
+          "type": "bundle",
+          "settings": { "label": "6 months", "sublabel": "180 singles", "months": 6, "badge": "" }
+        },
+        "pill1": { "type": "badge", "settings": { "label": "No caffeine" } },
+        "pill2": { "type": "badge", "settings": { "label": "No sugar" } },
+        "pill3": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+      },
+      "block_order": ["bundle1", "bundle2", "bundle3", "pill1", "pill2", "pill3"],
+      "settings": {
+        "eyebrow": "Cellular energy chewables",
+        "title": "Energy that doesn't crash.",
+        "subtitle": "Two chewables a day, sealed one dose at a time. NR, PQQ, CoQ10 and KSM-66 at the full studied doses.",
+        "purchase_legend": "Purchase type",
+        "subscribe_discount": 20,
+        "subscribe_label": "Subscribe & save",
+        "subscribe_note": "Delivered monthly. Skip or cancel anytime.",
+        "onetime_label": "One-time purchase",
+        "onetime_note": "No commitment.",
+        "subscribe_unavailable_note": "Subscriptions are not open yet. One-time purchase ships today.",
+        "bundle_legend": "Choose your supply",
+        "default_bundle": 2,
+        "per_box_suffix": "/ box",
+        "submit_label": "Add to cart",
+        "reassurance": "Free shipping on 3- and 6-month supplies.",
+        "after_add": "drawer"
+      }
+    },
+    "facts": {
+      "type": "lockin-supplement-facts",
+      "blocks": {
+        "nr": { "type": "row", "settings": { "name": "Nicotinamide riboside (NR)", "amount": "300 mg", "dv": "†" } },
+        "pqq": { "type": "row", "settings": { "name": "PQQ", "detail": "Pyrroloquinoline quinone", "amount": "20 mg", "dv": "†" } },
+        "coq10": { "type": "row", "settings": { "name": "CoQ10", "detail": "Ubiquinol", "amount": "100 mg", "dv": "†" } },
+        "ksm": { "type": "row", "settings": { "name": "Ashwagandha", "detail": "KSM-66 root extract", "amount": "300 mg", "dv": "†" } },
+        "vitc": { "type": "row", "settings": { "name": "Vitamin C", "detail": "Ascorbic acid", "amount": "250 mg", "dv": "278%" } },
+        "b12": { "type": "row", "settings": { "name": "Vitamin B12", "detail": "Methylcobalamin", "amount": "500 mcg", "dv": "20,833%" } }
+      },
+      "block_order": ["nr", "pqq", "coq10", "ksm", "vitc", "b12"],
+      "settings": {
+        "eyebrow": "Supplement facts",
+        "heading": "Open label. Full doses.",
+        "body": "<p>Serving size: 2 chewables. Nothing is hidden behind a proprietary blend — every active is listed with the amount you actually get.</p><p>Blueberry, sweetened with allulose and stevia. Natural blue from butterfly pea flower. No sugar, no artificial dyes, no gelatin.</p>",
+        "table_caption": "Per serving — 2 chewables",
+        "col_ingredient": "Ingredient",
+        "col_amount": "Amount",
+        "show_dv": true,
+        "col_dv": "% DV",
+        "footnote": "† Daily Value not established."
+      }
+    },
+    "how_to": {
+      "type": "lockin-how-to",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "title": "Tear one foil",
+            "body": "Two chewables inside. That is the full dose — no counting, no measuring."
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "title": "Chew, don't swallow",
+            "body": "Blueberry, lightly sweet. No water needed, so it works anywhere."
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "title": "Any time of day",
+            "body": "No caffeine, so a 4pm dose will not cost you your sleep. Most people take it with breakfast."
+          }
+        }
+      },
+      "block_order": ["s1", "s2", "s3"],
+      "settings": {
+        "eyebrow": "How to take it",
+        "heading": "Tear one foil. That's the dose."
+      }
+    },
+    "faq": {
+      "type": "lockin-faq",
+      "blocks": {
+        "q1": {
+          "type": "qa",
+          "settings": {
+            "question": "Will I feel it like caffeine?",
+            "answer": "<p>No. There is no stimulant in lockin, so there is no lift and no drop. What most people notice is the absence of the afternoon dip rather than a spike in the morning.</p>"
+          }
+        },
+        "q2": {
+          "type": "qa",
+          "settings": {
+            "question": "How long until it does anything?",
+            "answer": "<p>NAD+ support is cumulative, not immediate. Give it the full 30 days before you judge it. Vitamin C and B12 act sooner, but they are the smaller part of the formula.</p>"
+          }
+        },
+        "q3": {
+          "type": "qa",
+          "settings": {
+            "question": "Can I take it at night?",
+            "answer": "<p>Yes. No caffeine means a late dose will not affect your sleep. Ashwagandha is often taken in the evening for exactly that reason.</p>"
+          }
+        },
+        "q4": {
+          "type": "qa",
+          "settings": {
+            "question": "Why foils instead of a bottle?",
+            "answer": "<p>NR and vitamin C degrade on contact with air. An opened bottle gets weaker every time you open it. A sealed foil per dose means day thirty is as strong as day one.</p>"
+          }
+        },
+        "q5": {
+          "type": "qa",
+          "settings": {
+            "question": "Who should not take it?",
+            "answer": "<p>Not for use if pregnant, nursing, or under 18. Ashwagandha can interact with thyroid and sedative medications — talk to your physician before starting if either applies to you.</p>"
+          }
+        }
+      },
+      "block_order": ["q1", "q2", "q3", "q4", "q5"],
+      "settings": {
+        "eyebrow": "Questions",
+        "heading": "The things people ask.",
+        "support_text": "Anything not covered here — get in touch and a person will answer.",
+        "one_at_a_time": true
+      }
+    }
+  },
+  "order": ["main", "facts", "how_to", "faq"]
+}

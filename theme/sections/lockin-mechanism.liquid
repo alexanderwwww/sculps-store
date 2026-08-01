@@ -1,0 +1,235 @@
+{%- comment -%}
+  lockin — three-step mechanism explainer.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-mech">
+  <div class="lk-container">
+    <div class="lk-mech__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-mech__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+      {%- if section.settings.body != blank -%}
+        <p class="lk-lede lk-mech__body">{{ section.settings.body }}</p>
+      {%- endif -%}
+    </div>
+
+    <ol class="lk-mech__steps">
+      {%- for block in section.blocks -%}
+        <li class="lk-mech__step lk-reveal" {{ block.shopify_attributes }}>
+          <div class="lk-mech__marker" aria-hidden="true">
+            <span class="lk-mech__num">{{ forloop.index }}</span>
+          </div>
+
+          <div class="lk-mech__content">
+            {%- if block.settings.tag != blank -%}
+              <p class="lk-mech__tag">{{ block.settings.tag }}</p>
+            {%- endif -%}
+            {%- if block.settings.title != blank -%}
+              <h3 class="lk-mech__title">{{ block.settings.title }}</h3>
+            {%- endif -%}
+            {%- if block.settings.body != blank -%}
+              <div class="lk-mech__text">{{ block.settings.body }}</div>
+            {%- endif -%}
+          </div>
+        </li>
+      {%- endfor -%}
+    </ol>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-mech__head {
+    max-width: 46ch;
+    margin-bottom: 40px;
+  }
+
+  .lk-mech__heading {
+    margin-top: 14px;
+  }
+
+  .lk-mech__body {
+    margin-top: 16px;
+  }
+
+  .lk-mech__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+  }
+
+  .lk-mech__step {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 20px;
+    padding-bottom: 34px;
+  }
+
+  .lk-mech__marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .lk-mech__num {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    flex: none;
+    border-radius: var(--lk-r-pill);
+    border: 1.5px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    color: var(--lk-ink);
+  }
+
+  /* The connecting rail between steps. */
+  .lk-mech__step:not(:last-child) .lk-mech__marker::after {
+    content: '';
+    flex: 1;
+    inline-size: 1.5px;
+    background: linear-gradient(to bottom, var(--lk-line-strong), transparent);
+  }
+
+  .lk-mech__content {
+    padding-top: 6px;
+  }
+
+  .lk-mech__tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lk-accent);
+    margin: 0 0 8px;
+  }
+
+  .lk-mech__title {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: clamp(1.25rem, 3.6vw, 1.5rem);
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+
+  .lk-mech__text {
+    margin-top: 12px;
+    font-size: 1rem;
+    line-height: 1.62;
+    color: var(--lk-muted);
+    max-width: 60ch;
+    text-wrap: pretty;
+  }
+
+  .lk-mech__text p + p {
+    margin-top: 1em;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-mech__step {
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 28px;
+      padding-bottom: 46px;
+    }
+
+    .lk-mech__num {
+      inline-size: 56px;
+      block-size: 56px;
+      font-size: 1.25rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin mechanism",
+  "tag": "section",
+  "class": "lockin-mech-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "How it works"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Three steps, inside the cell."
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body",
+      "default": "lockin does not add energy to your system. It supports the machinery that makes energy in the first place."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "limit": 5,
+      "settings": [
+        {
+          "type": "text",
+          "id": "tag",
+          "label": "Tag",
+          "default": "NR 300mg"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Raise the raw material"
+        },
+        {
+          "type": "richtext",
+          "id": "body",
+          "label": "Body",
+          "default": "<p>Nicotinamide riboside is a precursor your cells convert into NAD+. Supplying the precursor is the practical route to raising NAD+, because NAD+ itself is too large to cross into the cell intact.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin mechanism",
+      "blocks": [
+        {
+          "type": "step",
+          "settings": {
+            "tag": "NR 300mg",
+            "title": "Raise the raw material",
+            "body": "<p>Nicotinamide riboside is a precursor your cells convert into NAD+. Supplying the precursor is the practical route to raising NAD+, because NAD+ itself is too large to cross into the cell intact.</p>"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "tag": "PQQ 20mg · CoQ10 100mg",
+            "title": "Support the machinery that uses it",
+            "body": "<p>NAD+ is spent inside the mitochondria. PQQ is studied for mitochondrial biogenesis, and CoQ10 as ubiquinol sits directly in the electron transport chain where ATP is produced. More raw material matters less if the machinery running on it is not supported.</p>"
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "tag": "KSM-66 300mg",
+            "title": "Keep cortisol from undoing it",
+            "body": "<p>Sustained cortisol works against steady energy. KSM-66 ashwagandha at the full studied dose is included for healthy cortisol balance — it is the reason the energy reads as calm rather than wired.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

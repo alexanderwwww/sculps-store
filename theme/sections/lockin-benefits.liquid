@@ -1,0 +1,254 @@
+{%- comment -%}
+  lockin — benefit cards (Repair / Energy / Calm).
+{%- endcomment -%}
+
+<div class="lk lk-section lk-benefits">
+  <div class="lk-container">
+    {%- if section.settings.eyebrow != blank or section.settings.heading != blank -%}
+      <div class="lk-benefits__head lk-reveal">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="lk-h2 lk-benefits__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+        {%- if section.settings.subheading != blank -%}
+          <p class="lk-lede lk-benefits__sub">{{ section.settings.subheading }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <ul class="lk-benefits__grid">
+      {%- for block in section.blocks -%}
+        <li class="lk-card lk-reveal" {{ block.shopify_attributes }}>
+          <span class="lk-card__icon" aria-hidden="true">
+            {%- case block.settings.icon -%}
+              {%- when 'repair' -%}
+                <svg viewBox="0 0 32 32" fill="none">
+                  <path d="M11 6.5c3.6 2.2 3.6 6.8 0 9s-3.6 6.8 0 9M21 6.5c-3.6 2.2-3.6 6.8 0 9s3.6 6.8 0 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                  <path d="M12.4 11h7.2M12.4 21h7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+              {%- when 'calm' -%}
+                <svg viewBox="0 0 32 32" fill="none">
+                  <path d="M5 19c3.2 0 3.2-4 6.4-4s3.2 4 6.4 4 3.2-4 6.4-4S27.5 19 27.5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8 11.5c2.6 0 2.6-3 5.2-3s2.6 3 5.2 3 2.6-3 5.2-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+                </svg>
+              {%- when 'shield' -%}
+                <svg viewBox="0 0 32 32" fill="none">
+                  <path d="M16 4.5 6.5 8.3v7.2c0 5.6 3.9 10.6 9.5 12 5.6-1.4 9.5-6.4 9.5-12V8.3L16 4.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                  <path d="m12 16 2.9 2.9L20.5 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              {%- else -%}
+                <svg viewBox="0 0 32 32" fill="none">
+                  <path d="M17.6 4 8 18h6.6L14 28l9.8-14.2H17l.6-9.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                </svg>
+            {%- endcase -%}
+          </span>
+
+          {%- if block.settings.title != blank -%}
+            <h3 class="lk-card__title">{{ block.settings.title }}</h3>
+          {%- endif -%}
+
+          {%- if block.settings.body != blank -%}
+            <p class="lk-card__body">{{ block.settings.body }}</p>
+          {%- endif -%}
+
+          {%- if block.settings.footnote != blank -%}
+            <p class="lk-card__note">{{ block.settings.footnote }}</p>
+          {%- endif -%}
+        </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-benefits__head {
+    max-width: 44ch;
+    margin-bottom: 40px;
+  }
+
+  .lk-benefits__heading {
+    margin-top: 14px;
+  }
+
+  .lk-benefits__sub {
+    margin-top: 16px;
+  }
+
+  .lk-benefits__grid {
+    display: grid;
+    gap: 14px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lk-card {
+    display: flex;
+    flex-direction: column;
+    padding: 28px 24px 30px;
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-card__icon {
+    display: grid;
+    place-items: center;
+    inline-size: 48px;
+    block-size: 48px;
+    border-radius: var(--lk-r-sm);
+    background: var(--lk-paper);
+    color: var(--lk-accent);
+    margin-bottom: 22px;
+  }
+
+  .lk-card__icon svg {
+    inline-size: 26px;
+    block-size: 26px;
+  }
+
+  .lk-card__title {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.3125rem;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+
+  .lk-card__body {
+    margin-top: 12px;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-card__note {
+    margin-top: auto;
+    padding-top: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lk-ink);
+    opacity: 0.55;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-benefits__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .lk-benefits__head {
+      margin-bottom: 52px;
+    }
+
+    .lk-card {
+      padding: 34px 30px 36px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin benefits",
+  "tag": "section",
+  "class": "lockin-benefits-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "What two chewables do"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Three jobs, one dose."
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Open label — every gram is on the box, nothing hidden behind a proprietary blend."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "benefit",
+      "name": "Benefit card",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "repair", "label": "Repair (helix)" },
+            { "value": "energy", "label": "Energy (bolt)" },
+            { "value": "calm", "label": "Calm (waves)" },
+            { "value": "shield", "label": "Shield" }
+          ],
+          "default": "repair"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Repair"
+        },
+        {
+          "type": "textarea",
+          "id": "body",
+          "label": "Body",
+          "default": "NR raises NAD+, the coenzyme your cells use for DNA repair — and the one that drops as you age."
+        },
+        {
+          "type": "text",
+          "id": "footnote",
+          "label": "Footnote",
+          "default": "NR 300mg"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin benefits",
+      "blocks": [
+        {
+          "type": "benefit",
+          "settings": {
+            "icon": "repair",
+            "title": "Repair",
+            "body": "NR raises NAD+, the coenzyme your cells use for DNA repair — and the one that drops as you age.",
+            "footnote": "NR 300mg"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "icon": "energy",
+            "title": "Energy",
+            "body": "PQQ and CoQ10 work inside the mitochondria, so you produce energy rather than borrow it from tomorrow.",
+            "footnote": "PQQ 20mg · CoQ10 100mg"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "icon": "calm",
+            "title": "Calm",
+            "body": "KSM-66 ashwagandha at the full studied dose. It is what makes the energy steady instead of anxious.",
+            "footnote": "KSM-66 300mg"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,133 @@
+{
+  "sections": {
+    "curve": {
+      "type": "lockin-nad-curve",
+      "blocks": {
+        "m20": { "type": "marker", "settings": { "age": 20, "value": 100, "value_label": "100%", "label": "Age 20" } },
+        "m40": { "type": "marker", "settings": { "age": 40, "value": 70, "value_label": "~70%", "label": "Age 40" } },
+        "m50": { "type": "marker", "settings": { "age": 50, "value": 50, "value_label": "~50%", "label": "Age 50" } }
+      },
+      "block_order": ["m20", "m40", "m50"],
+      "settings": {
+        "eyebrow": "The decline",
+        "heading": "NAD+ falls for everyone.",
+        "body": "NAD+ is the coenzyme your mitochondria use to convert food into ATP, and the substrate your cells draw on for DNA repair. Measured levels fall steadily from early adulthood onward.",
+        "chart_title": "Line chart of NAD+ levels declining with age",
+        "chart_description": "NAD+ is at 100% around age 20, roughly 70% by age 40, and roughly 50% by age 50, continuing to decline into later life.",
+        "age_min": 20,
+        "age_max": 80,
+        "x_axis_label": "Age",
+        "curve_path": "M 60 40 C 150 70 230 108 297 133 C 340 150 385 174 415 195 C 520 228 650 248 770 258",
+        "caption": "Illustrative. The curve shows the shape of the decline reported across the ageing literature, not a measurement of any individual. Your own levels are not knowable without a blood test."
+      }
+    },
+    "mechanism": {
+      "type": "lockin-mechanism",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "tag": "NR 300mg",
+            "title": "Raise the raw material",
+            "body": "<p>Nicotinamide riboside is a precursor your cells convert into NAD+. Supplying the precursor is the practical route to raising NAD+, because NAD+ itself is too large to cross into the cell intact.</p>"
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "tag": "PQQ 20mg · CoQ10 100mg",
+            "title": "Support the machinery that uses it",
+            "body": "<p>NAD+ is spent inside the mitochondria. PQQ is studied for mitochondrial biogenesis, and CoQ10 as ubiquinol sits directly in the electron transport chain where ATP is produced. More raw material matters less if the machinery running on it is not supported.</p>"
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "tag": "KSM-66 300mg",
+            "title": "Keep cortisol from undoing it",
+            "body": "<p>Sustained cortisol works against steady energy. KSM-66 ashwagandha at the full studied dose is included for healthy cortisol balance — it is the reason the energy reads as calm rather than wired.</p>"
+          }
+        }
+      },
+      "block_order": ["s1", "s2", "s3"],
+      "settings": {
+        "eyebrow": "How it works",
+        "heading": "Three steps, inside the cell.",
+        "body": "lockin does not add energy to your system. It supports the machinery that makes energy in the first place."
+      }
+    },
+    "quote": {
+      "type": "lockin-doctor-quote",
+      "settings": {
+        "is_placeholder": true,
+        "quote": "[Placeholder quote — replace with an approved statement from a named, credentialled reviewer. Do not publish this section with invented text.]",
+        "name": "[Reviewer name]",
+        "credentials": "[Degree, specialty, affiliation — placeholder]",
+        "disclosure": "[Placeholder disclosure] This reviewer is a paid partner of lockin. They were compensated for their time reviewing the formulation. Their statement is their own opinion and is not a medical claim about the product."
+      }
+    },
+    "evidence": {
+      "type": "lockin-evidence",
+      "blocks": {
+        "c1": {
+          "type": "claim",
+          "settings": {
+            "stance": "supported",
+            "claim": "NR raises blood NAD+ in humans.",
+            "detail": "This is reasonably well replicated across small, short human trials. It is the clearest thing we can say."
+          }
+        },
+        "c2": {
+          "type": "claim",
+          "settings": {
+            "stance": "supported",
+            "claim": "KSM-66 ashwagandha is studied for cortisol.",
+            "detail": "The 300mg dose in lockin matches the dose used in the published trials rather than a fraction of it."
+          }
+        },
+        "c3": {
+          "type": "claim",
+          "settings": {
+            "stance": "unsupported",
+            "claim": "Raising NAD+ reverses ageing.",
+            "detail": "It does not follow. Raising a marker is not the same as changing an outcome, and the human outcome data does not exist."
+          }
+        },
+        "c4": {
+          "type": "claim",
+          "settings": {
+            "stance": "unsupported",
+            "claim": "You will feel it on day one.",
+            "detail": "There is no stimulant here. Anything you notice builds over weeks, and some people notice nothing at all."
+          }
+        }
+      },
+      "block_order": ["c1", "c2", "c3", "c4"],
+      "settings": {
+        "eyebrow": "Where the evidence stops",
+        "heading": "What we won't claim.",
+        "statement": "No supplement has been shown to reverse ageing. Not this one, not any of them. Anyone who tells you otherwise is selling something they cannot back up.",
+        "footnote": "<p>Much of the NAD+ research is in animal models or small, short human trials. Where human data exists, it generally shows that NR raises blood NAD+ — which is a different and much narrower claim than any statement about how you will feel or how long you will live.</p><p>These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.</p>"
+      }
+    },
+    "cta": {
+      "type": "lockin-cta-band",
+      "blocks": {
+        "b1": { "type": "badge", "settings": { "label": "No caffeine" } },
+        "b2": { "type": "badge", "settings": { "label": "No sugar" } },
+        "b3": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+      },
+      "block_order": ["b1", "b2", "b3"],
+      "settings": {
+        "eyebrow": "Full doses, open label",
+        "heading": "Judge it over thirty days.",
+        "body": "Two chewables a day, sealed one dose at a time. No stimulant, so there is nothing to feel on day one — and nothing to come down from.",
+        "tone": "dark",
+        "product": "lockin-cellular-energy-chewables",
+        "cta_label": "Shop lockin",
+        "cta_link": "shopify://products/lockin-cellular-energy-chewables"
+      }
+    }
+  },
+  "order": ["curve", "mechanism", "quote", "evidence", "cta"]
+}

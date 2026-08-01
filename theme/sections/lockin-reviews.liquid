@@ -1,0 +1,212 @@
+{%- comment -%}
+  lockin — reviews.
+
+  Ships with placeholder copy on purpose. There are no star ratings and no
+  review counts here: inventing either would be a fabricated trust signal.
+  Each card carries a visible PLACEHOLDER flag until it is switched off
+  per card, once a real, attributable review is in place.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-reviews">
+  <div class="lk-container">
+    <div class="lk-reviews__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-reviews__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+    </div>
+
+    <ul class="lk-reviews__grid">
+      {%- for block in section.blocks -%}
+        <li class="lk-review lk-reveal" {{ block.shopify_attributes }}>
+          {%- if block.settings.is_placeholder -%}
+            <p class="lk-review__flag">Placeholder — replace with a real review</p>
+          {%- endif -%}
+
+          <blockquote class="lk-review__quote">
+            <p>{{ block.settings.quote }}</p>
+          </blockquote>
+
+          <figcaption class="lk-review__by">
+            <span class="lk-review__name">{{ block.settings.name }}</span>
+            {%- if block.settings.detail != blank -%}
+              <span class="lk-review__detail">{{ block.settings.detail }}</span>
+            {%- endif -%}
+          </figcaption>
+        </li>
+      {%- endfor -%}
+    </ul>
+
+    {%- if section.settings.note != blank -%}
+      <p class="lk-reviews__note">{{ section.settings.note }}</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-reviews__head {
+    max-width: 40ch;
+    margin-bottom: 36px;
+  }
+
+  .lk-reviews__heading {
+    margin-top: 14px;
+  }
+
+  .lk-reviews__grid {
+    display: grid;
+    gap: 14px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lk-review {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 28px 24px;
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-paper);
+    border: 1px solid var(--lk-line);
+  }
+
+  /* Deliberately loud. This should look unfinished until it is real. */
+  .lk-review__flag {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: var(--lk-r-pill);
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--lk-accent) 22%, transparent) 0 7px,
+      transparent 7px 14px
+    );
+    border: 1px dashed var(--lk-accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lk-ink);
+  }
+
+  .lk-review__quote {
+    margin: 0;
+    font-family: var(--lk-font-head);
+    font-weight: 500;
+    font-size: 1.125rem;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    color: var(--lk-ink);
+    text-wrap: pretty;
+  }
+
+  .lk-review__by {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .lk-review__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .lk-review__detail {
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-reviews__note {
+    margin-top: 28px;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+    max-width: 70ch;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-reviews__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .lk-review {
+      padding: 32px 28px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin reviews",
+  "tag": "section",
+  "class": "lockin-reviews-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "In their words"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What people say."
+    },
+    {
+      "type": "textarea",
+      "id": "note",
+      "label": "Note under the cards",
+      "info": "Clear this once the placeholder quotes are replaced.",
+      "default": "Placeholder content. These quotes are not real customer reviews and no rating or review count is shown — both stay off until verified reviews exist."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review card",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "is_placeholder",
+          "label": "Mark as placeholder",
+          "info": "Shows a visible PLACEHOLDER flag on the card. Switch off only when the quote is a real, attributable review.",
+          "default": true
+        },
+        {
+          "type": "textarea",
+          "id": "quote",
+          "label": "Quote",
+          "default": "[Placeholder review — replace with a real customer quote.]"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "[Reviewer name]"
+        },
+        {
+          "type": "text",
+          "id": "detail",
+          "label": "Detail",
+          "default": "[Verified purchase — placeholder]"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin reviews",
+      "blocks": [
+        { "type": "review" },
+        { "type": "review" },
+        { "type": "review" }
+      ]
+    }
+  ]
+}
+{% endschema %}

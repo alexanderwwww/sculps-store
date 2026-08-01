@@ -1,0 +1,66 @@
+{%- comment -%}
+  lockin wordmark.
+
+  Always lowercase. Set in Fredoka 600 with a dotless i (U+0131) so the
+  brand's ice-blue rounded-square dot can sit in place of the stock tittle.
+
+  Accepts:
+    size  — CSS length for the wordmark font-size. Default 1.5rem.
+    tone  — 'dark' (ink on light, default) or 'light' (paper on dark).
+    tag   — element to render. Default 'span'.
+{%- endcomment -%}
+
+{%- liquid
+  assign lk_size = size | default: '1.5rem'
+  assign lk_tone = tone | default: 'dark'
+  assign lk_tag = tag | default: 'span'
+-%}
+
+<{{ lk_tag }}
+  class="lk-wordmark lk-wordmark--{{ lk_tone }}"
+  style="--lk-wordmark-size: {{ lk_size }};"
+  translate="no"
+>
+  <span aria-hidden="true">lock<span class="lk-wordmark__i">&#x0131;</span>n</span>
+  <span class="lk-visually-hidden">lockin</span>
+</{{ lk_tag }}>
+
+{% style %}
+  .lk-wordmark {
+    display: inline-block;
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: var(--lk-wordmark-size, 1.5rem);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .lk-wordmark--dark {
+    color: var(--lk-ink);
+  }
+
+  .lk-wordmark--light {
+    color: var(--lk-paper);
+  }
+
+  .lk-wordmark__i {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* The ice-blue rounded square standing in for the tittle. Sized and placed
+     in em so it tracks the wordmark at every size. */
+  .lk-wordmark__i::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0.78em;
+    transform: translateX(-50%);
+    inline-size: 0.2em;
+    block-size: 0.2em;
+    border-radius: 0.055em;
+    background: var(--lk-accent);
+  }
+{% endstyle %}

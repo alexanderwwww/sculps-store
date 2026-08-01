@@ -1,0 +1,194 @@
+{%- comment -%}
+  lockin — expert quote block.
+
+  Ships as a placeholder. The name, credentials and the paid-partnership
+  disclosure are all settings, and the disclosure renders whenever it is
+  filled in — an endorsement without one should not go live.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-quote">
+  <div class="lk-container">
+    <figure class="lk-quote__card lk-reveal">
+      {%- if section.settings.is_placeholder -%}
+        <p class="lk-quote__flag">Placeholder — replace before publishing</p>
+      {%- endif -%}
+
+      <blockquote class="lk-quote__body">
+        <p>{{ section.settings.quote }}</p>
+      </blockquote>
+
+      <figcaption class="lk-quote__by">
+        {%- if section.settings.portrait != blank -%}
+          <img
+            class="lk-quote__portrait"
+            src="{{ section.settings.portrait | image_url: width: 160 }}"
+            alt=""
+            width="80"
+            height="80"
+            loading="lazy"
+          >
+        {%- else -%}
+          <span class="lk-quote__portrait lk-quote__portrait--empty" aria-hidden="true"></span>
+        {%- endif -%}
+
+        <span class="lk-quote__who">
+          <span class="lk-quote__name">{{ section.settings.name }}</span>
+          {%- if section.settings.credentials != blank -%}
+            <span class="lk-quote__creds">{{ section.settings.credentials }}</span>
+          {%- endif -%}
+        </span>
+      </figcaption>
+
+      {%- if section.settings.disclosure != blank -%}
+        <p class="lk-quote__disclosure">{{ section.settings.disclosure }}</p>
+      {%- endif -%}
+    </figure>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-quote {
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-quote__card {
+    max-width: 62rem;
+    margin-inline: auto;
+    padding: 34px 26px 30px;
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-paper);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-quote__flag {
+    display: inline-block;
+    margin-bottom: 22px;
+    padding: 6px 12px;
+    border-radius: var(--lk-r-pill);
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--lk-accent) 22%, transparent) 0 7px,
+      transparent 7px 14px
+    );
+    border: 1px dashed var(--lk-accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .lk-quote__body {
+    margin: 0;
+    font-family: var(--lk-font-head);
+    font-weight: 500;
+    font-size: clamp(1.25rem, 3.6vw, 1.75rem);
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    color: var(--lk-ink);
+    text-wrap: pretty;
+  }
+
+  .lk-quote__by {
+    margin-top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .lk-quote__portrait {
+    inline-size: 52px;
+    block-size: 52px;
+    border-radius: var(--lk-r-pill);
+    object-fit: cover;
+    flex: none;
+  }
+
+  .lk-quote__portrait--empty {
+    background: var(--lk-ice);
+    border: 1px dashed var(--lk-line-strong);
+  }
+
+  .lk-quote__who {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .lk-quote__name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .lk-quote__creds {
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  /* Disclosure sits with the quote, not buried at the foot of the page. */
+  .lk-quote__disclosure {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--lk-line);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--lk-muted);
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-quote__card {
+      padding: 48px 44px 40px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin expert quote",
+  "tag": "section",
+  "class": "lockin-quote-section",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "is_placeholder",
+      "label": "Mark as placeholder",
+      "info": "Shows a visible flag on the card. Switch off only once this is a real, approved quote from a named person.",
+      "default": true
+    },
+    {
+      "type": "textarea",
+      "id": "quote",
+      "label": "Quote",
+      "default": "[Placeholder quote — replace with an approved statement from a named, credentialled reviewer. Do not publish this section with invented text.]"
+    },
+    {
+      "type": "text",
+      "id": "name",
+      "label": "Name",
+      "default": "[Reviewer name]"
+    },
+    {
+      "type": "text",
+      "id": "credentials",
+      "label": "Credentials",
+      "default": "[Degree, specialty, affiliation — placeholder]"
+    },
+    {
+      "type": "image_picker",
+      "id": "portrait",
+      "label": "Portrait"
+    },
+    {
+      "type": "textarea",
+      "id": "disclosure",
+      "label": "Paid-partnership disclosure",
+      "info": "Required whenever the reviewer is compensated. Keep it specific and keep it here, next to the quote.",
+      "default": "[Placeholder disclosure] This reviewer is a paid partner of lockin. They were compensated for their time reviewing the formulation. Their statement is their own opinion and is not a medical claim about the product."
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin expert quote"
+    }
+  ]
+}
+{% endschema %}

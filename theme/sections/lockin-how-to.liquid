@@ -1,0 +1,165 @@
+{%- comment -%}
+  lockin — how to take it. Numbered step cards.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-how">
+  <div class="lk-container">
+    <div class="lk-how__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-how__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+    </div>
+
+    <ol class="lk-how__grid">
+      {%- for block in section.blocks -%}
+        <li class="lk-how__card lk-reveal" {{ block.shopify_attributes }}>
+          <span class="lk-how__step" aria-hidden="true">{{ forloop.index }}</span>
+          {%- if block.settings.title != blank -%}
+            <h3 class="lk-how__title">{{ block.settings.title }}</h3>
+          {%- endif -%}
+          {%- if block.settings.body != blank -%}
+            <p class="lk-how__body">{{ block.settings.body }}</p>
+          {%- endif -%}
+        </li>
+      {%- endfor -%}
+    </ol>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-how__head {
+    max-width: 40ch;
+    margin-bottom: 36px;
+  }
+
+  .lk-how__heading {
+    margin-top: 14px;
+  }
+
+  .lk-how__grid {
+    display: grid;
+    gap: 14px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: none;
+  }
+
+  .lk-how__card {
+    padding: 26px 24px 28px;
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-how__step {
+    display: grid;
+    place-items: center;
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    margin-bottom: 20px;
+  }
+
+  .lk-how__title {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.1875rem;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+
+  .lk-how__body {
+    margin-top: 10px;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-how__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin how to take",
+  "tag": "section",
+  "class": "lockin-how-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "How to take it"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Tear one foil. That's the dose."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Tear one foil"
+        },
+        {
+          "type": "textarea",
+          "id": "body",
+          "label": "Body",
+          "default": "Two chewables inside. That is the full dose — no counting, no measuring."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin how to take",
+      "blocks": [
+        {
+          "type": "step",
+          "settings": {
+            "title": "Tear one foil",
+            "body": "Two chewables inside. That is the full dose — no counting, no measuring."
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "title": "Chew, don't swallow",
+            "body": "Blueberry, lightly sweet. No water needed, so it works anywhere."
+          }
+        },
+        {
+          "type": "step",
+          "settings": {
+            "title": "Any time of day",
+            "body": "No caffeine, so a 4pm dose will not cost you your sleep. Most people take it with breakfast."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

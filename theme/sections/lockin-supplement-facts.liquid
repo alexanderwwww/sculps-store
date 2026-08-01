@@ -1,0 +1,282 @@
+{%- comment -%}
+  lockin — supplement facts table. One block per ingredient row.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-facts">
+  <div class="lk-container">
+    <div class="lk-facts__grid">
+      <div class="lk-facts__intro lk-reveal">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="lk-h2 lk-facts__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+        {%- if section.settings.body != blank -%}
+          <div class="lk-body lk-facts__body">{{ section.settings.body }}</div>
+        {%- endif -%}
+      </div>
+
+      <div class="lk-facts__panel lk-reveal">
+        <table class="lk-facts__table">
+          <caption class="lk-facts__caption">
+            {{ section.settings.table_caption }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ section.settings.col_ingredient }}</th>
+              <th scope="col" class="lk-facts__num">{{ section.settings.col_amount }}</th>
+              {%- if section.settings.show_dv -%}
+                <th scope="col" class="lk-facts__num">{{ section.settings.col_dv }}</th>
+              {%- endif -%}
+            </tr>
+          </thead>
+          <tbody>
+            {%- for block in section.blocks -%}
+              <tr {{ block.shopify_attributes }}>
+                <th scope="row">
+                  {{ block.settings.name }}
+                  {%- if block.settings.detail != blank -%}
+                    <span class="lk-facts__detail">{{ block.settings.detail }}</span>
+                  {%- endif -%}
+                </th>
+                <td class="lk-facts__num">{{ block.settings.amount }}</td>
+                {%- if section.settings.show_dv -%}
+                  <td class="lk-facts__num">{{ block.settings.dv | default: '†' }}</td>
+                {%- endif -%}
+              </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+
+        {%- if section.settings.footnote != blank -%}
+          <p class="lk-facts__footnote">{{ section.settings.footnote }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-facts {
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-facts__grid {
+    display: grid;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .lk-facts__heading {
+    margin-top: 14px;
+    max-width: 18ch;
+  }
+
+  .lk-facts__body {
+    margin-top: 18px;
+    max-width: 44ch;
+  }
+
+  .lk-facts__body p + p {
+    margin-top: 1em;
+  }
+
+  .lk-facts__panel {
+    padding: 8px 20px 20px;
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-paper);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-facts__table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .lk-facts__caption {
+    padding-block: 18px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--lk-muted);
+    text-align: left;
+  }
+
+  .lk-facts__table th,
+  .lk-facts__table td {
+    padding-block: 14px;
+    border-bottom: 1px solid var(--lk-line);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    vertical-align: baseline;
+  }
+
+  .lk-facts__table thead th {
+    padding-block: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lk-muted);
+    border-bottom-color: var(--lk-line-strong);
+  }
+
+  .lk-facts__table tbody th {
+    font-weight: 500;
+    color: var(--lk-ink);
+    padding-right: 16px;
+  }
+
+  .lk-facts__table tbody tr:last-child th,
+  .lk-facts__table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .lk-facts__detail {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--lk-muted);
+  }
+
+  .lk-facts__num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .lk-facts__footnote {
+    margin-top: 18px;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--lk-muted);
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-facts__grid {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 56px;
+    }
+
+    .lk-facts__panel {
+      padding: 10px 32px 28px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin supplement facts",
+  "tag": "section",
+  "class": "lockin-facts-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Supplement facts"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Open label. Full doses."
+    },
+    {
+      "type": "richtext",
+      "id": "body",
+      "label": "Body",
+      "default": "<p>Serving size: 2 chewables. Nothing is hidden behind a proprietary blend — every active is listed with the amount you actually get.</p><p>Blueberry, sweetened with allulose and stevia. Natural blue from butterfly pea flower. No sugar, no artificial dyes, no gelatin.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Table"
+    },
+    {
+      "type": "text",
+      "id": "table_caption",
+      "label": "Caption",
+      "default": "Per serving — 2 chewables"
+    },
+    {
+      "type": "text",
+      "id": "col_ingredient",
+      "label": "Column 1 heading",
+      "default": "Ingredient"
+    },
+    {
+      "type": "text",
+      "id": "col_amount",
+      "label": "Column 2 heading",
+      "default": "Amount"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dv",
+      "label": "Show % Daily Value column",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "col_dv",
+      "label": "Column 3 heading",
+      "default": "% DV"
+    },
+    {
+      "type": "textarea",
+      "id": "footnote",
+      "label": "Footnote",
+      "default": "† Daily Value not established."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "row",
+      "name": "Ingredient row",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Ingredient",
+          "default": "Nicotinamide riboside (NR)"
+        },
+        {
+          "type": "text",
+          "id": "detail",
+          "label": "Detail",
+          "info": "Optional second line."
+        },
+        {
+          "type": "text",
+          "id": "amount",
+          "label": "Amount",
+          "default": "300 mg"
+        },
+        {
+          "type": "text",
+          "id": "dv",
+          "label": "% Daily Value",
+          "info": "Leave empty to show †.",
+          "default": "†"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin supplement facts",
+      "blocks": [
+        { "type": "row", "settings": { "name": "Nicotinamide riboside (NR)", "amount": "300 mg", "dv": "†" } },
+        { "type": "row", "settings": { "name": "PQQ", "detail": "Pyrroloquinoline quinone", "amount": "20 mg", "dv": "†" } },
+        { "type": "row", "settings": { "name": "CoQ10", "detail": "Ubiquinol", "amount": "100 mg", "dv": "†" } },
+        { "type": "row", "settings": { "name": "Ashwagandha", "detail": "KSM-66 root extract", "amount": "300 mg", "dv": "†" } },
+        { "type": "row", "settings": { "name": "Vitamin C", "detail": "Ascorbic acid", "amount": "250 mg", "dv": "278%" } },
+        { "type": "row", "settings": { "name": "Vitamin B12", "detail": "Methylcobalamin", "amount": "500 mcg", "dv": "20,833%" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

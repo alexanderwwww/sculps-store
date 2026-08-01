@@ -1,0 +1,243 @@
+{%- comment -%}
+  lockin — full-width dark stat band.
+
+  Built for the NAD+ figure: one very large number, one plain-language line,
+  and a link into the science page.
+{%- endcomment -%}
+
+<div class="lk lk-band">
+  <div class="lk-container lk-band__inner">
+    <div class="lk-band__figure lk-reveal">
+      <p
+        class="lk-band__stat"
+        data-lockin-countup
+        data-value="{{ section.settings.stat | escape }}"
+      >
+        {{ section.settings.stat }}
+      </p>
+      {%- if section.settings.stat_caption != blank -%}
+        <p class="lk-band__statCaption">{{ section.settings.stat_caption }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="lk-band__copy lk-reveal">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h3 lk-band__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.body != blank -%}
+        <p class="lk-band__body">{{ section.settings.body }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.link_label != blank and section.settings.link != blank -%}
+        <a class="lk-band__link" href="{{ section.settings.link }}">
+          {{ section.settings.link_label }}
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+            <path d="M4 10h11m0 0-4.2-4.2M15 10l-4.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-band {
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    padding-block: var(--lk-section-y);
+  }
+
+  .lk-band__inner {
+    display: grid;
+    gap: 32px;
+    align-items: center;
+  }
+
+  .lk-band__stat {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: clamp(5.5rem, 26vw, 13rem);
+    line-height: 0.84;
+    letter-spacing: -0.05em;
+    color: var(--lk-accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lk-band__statCaption {
+    margin-top: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+  }
+
+  .lk-band__heading {
+    color: var(--lk-paper);
+    max-width: 22ch;
+  }
+
+  .lk-band__body {
+    margin-top: 16px;
+    font-size: 1.0625rem;
+    line-height: 1.62;
+    color: color-mix(in srgb, var(--lk-paper) 68%, transparent);
+    max-width: 52ch;
+    text-wrap: pretty;
+  }
+
+  .lk-band__link {
+    margin-top: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--lk-accent);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--lk-accent) 45%, transparent);
+    padding-bottom: 3px;
+    transition: border-color 0.2s var(--lk-ease);
+  }
+
+  .lk-band__link:hover {
+    border-bottom-color: var(--lk-accent);
+  }
+
+  .lk-band__link svg {
+    inline-size: 18px;
+    block-size: 18px;
+    transition: transform 0.25s var(--lk-ease);
+  }
+
+  .lk-band__link:hover svg {
+    transform: translateX(3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk-band__link:hover svg {
+      transform: none;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-band__inner {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+      gap: 56px;
+    }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    if (window.__lockinCountUp) return;
+    window.__lockinCountUp = true;
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function animate(el) {
+      var raw = el.dataset.value || el.textContent || '';
+      var match = raw.match(/-?\d+(?:\.\d+)?/);
+
+      /* Non-numeric values (or reduced motion) simply stand as written. */
+      if (!match || reduce.matches) return;
+
+      var target = parseFloat(match[0]);
+      var decimals = (match[0].split('.')[1] || '').length;
+      var prefix = raw.slice(0, match.index);
+      var suffix = raw.slice(match.index + match[0].length);
+      var duration = 1100;
+      var start;
+
+      el.textContent = prefix + (0).toFixed(decimals) + suffix;
+
+      function tick(now) {
+        if (!start) start = now;
+        var progress = Math.min((now - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = prefix + (target * eased).toFixed(decimals) + suffix;
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function init() {
+      var nodes = document.querySelectorAll('[data-lockin-countup]:not([data-counted])');
+      if (!nodes.length) return;
+
+      if (reduce.matches || !('IntersectionObserver' in window)) return;
+
+      var observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            entry.target.setAttribute('data-counted', 'true');
+            animate(entry.target);
+            observer.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.5 }
+      );
+
+      nodes.forEach(function (node) {
+        observer.observe(node);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('shopify:section:load', init);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "lockin stat band",
+  "tag": "section",
+  "class": "lockin-stat-band-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "stat",
+      "label": "Stat",
+      "info": "Counts up on scroll when it starts with a number. Static otherwise, and always static under reduced motion.",
+      "default": "50%"
+    },
+    {
+      "type": "text",
+      "id": "stat_caption",
+      "label": "Stat caption",
+      "default": "NAD+ remaining at 50"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "By 50, your NAD+ is roughly half what it was at 20."
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body",
+      "default": "NAD+ is the coenzyme your mitochondria use to turn food into usable energy, and the one your cells use for DNA repair. Levels fall steadily with age. That decline is the reason lockin leads with NR rather than a stimulant."
+    },
+    {
+      "type": "text",
+      "id": "link_label",
+      "label": "Link label",
+      "default": "Read the science"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin stat band"
+    }
+  ]
+}
+{% endschema %}

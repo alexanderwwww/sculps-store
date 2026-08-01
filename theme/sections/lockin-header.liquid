@@ -1,0 +1,397 @@
+{%- comment -%}
+  lockin — site header.
+
+  Sticky, minimal: wordmark, a short menu, and a cart link that upgrades to
+  Horizon's cart drawer when JS is available (plain /cart link otherwise).
+{%- endcomment -%}
+
+{%- liquid
+  assign menu = linklists[section.settings.menu]
+  assign cart_count = cart.item_count
+-%}
+
+<div class="lk lk-header-root">
+  {%- if section.settings.show_announcement and section.settings.announcement_text != blank -%}
+    <div class="lk-announce">
+      <div class="lk-container lk-announce__inner">
+        {%- if section.settings.announcement_link != blank -%}
+          <a class="lk-announce__text" href="{{ section.settings.announcement_link }}">
+            {{ section.settings.announcement_text }}
+          </a>
+        {%- else -%}
+          <p class="lk-announce__text">{{ section.settings.announcement_text }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  <header
+    class="lk-header{% if section.settings.sticky %} lk-header--sticky{% endif %}"
+    data-lockin-header
+  >
+    <div class="lk-container lk-header__inner">
+      <a class="lk-header__brand" href="{{ routes.root_url }}" aria-label="lockin — home">
+        {% render 'lockin-wordmark', size: 'clamp(1.45rem, 5vw, 1.8rem)' %}
+      </a>
+
+      {%- if menu != blank and menu.links.size > 0 -%}
+        <nav class="lk-header__nav" aria-label="{{ section.settings.nav_label | escape }}">
+          <ul class="lk-header__links">
+            {%- for link in menu.links -%}
+              <li>
+                <a
+                  class="lk-header__link"
+                  href="{{ link.url }}"
+                  {% if link.active %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{- link.title -}}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </nav>
+      {%- endif -%}
+
+      <div class="lk-header__actions">
+        {%- if section.settings.show_cta and section.settings.cta_label != blank -%}
+          <a
+            class="lk-btn lk-btn--primary lk-header__cta"
+            href="{{ section.settings.cta_link | default: routes.root_url }}"
+          >
+            {{ section.settings.cta_label }}
+          </a>
+        {%- endif -%}
+
+        <a
+          class="lk-header__cart"
+          href="{{ routes.cart_url }}"
+          data-lockin-cart-link
+          aria-label="Cart, {{ cart_count }} item{% if cart_count != 1 %}s{% endif %}"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+            <path
+              d="M6.5 8h11l-1.1 10.2a2 2 0 0 1-2 1.8H9.6a2 2 0 0 1-2-1.8L6.5 8Z"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M9.5 8V6.75a2.5 2.5 0 0 1 5 0V8"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span
+            class="lk-header__count{% if cart_count == 0 %} is-empty{% endif %}"
+            data-lockin-cart-count
+            aria-hidden="true"
+          >
+            {{- cart_count -}}
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+</div>
+
+{% stylesheet %}
+  .lk-header-root {
+    position: relative;
+    z-index: 40;
+  }
+
+  .lk-announce {
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+  }
+
+  .lk-announce__inner {
+    display: flex;
+    justify-content: center;
+  }
+
+  .lk-announce__text {
+    display: block;
+    padding-block: 11px;
+    font-size: 0.78125rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-align: center;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a.lk-announce__text {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in srgb, currentcolor 40%, transparent);
+  }
+
+  .lk-header {
+    background: color-mix(in srgb, var(--lk-paper) 82%, transparent);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-bottom: 1px solid var(--lk-line);
+  }
+
+  .lk-header--sticky {
+    position: sticky;
+    top: 0;
+  }
+
+  .lk-header__inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 62px;
+  }
+
+  .lk-header__brand {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .lk-header__nav {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .lk-header__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lk-header__links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lk-header__link {
+    display: inline-block;
+    padding-block: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--lk-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s var(--lk-ease);
+  }
+
+  .lk-header__link[aria-current='page'],
+  .lk-header__link:hover {
+    color: var(--lk-ink);
+  }
+
+  .lk-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Scoped one level deeper than .lk-btn so these win regardless of the order
+     Shopify concatenates section stylesheets in. */
+  .lk-header .lk-header__cta {
+    min-height: 40px;
+    padding-inline: 20px;
+    font-size: 0.875rem;
+    display: none;
+  }
+
+  .lk-header__cart {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 42px;
+    block-size: 42px;
+    border-radius: var(--lk-r-pill);
+    color: var(--lk-ink);
+    text-decoration: none;
+    transition: background-color 0.2s var(--lk-ease);
+  }
+
+  .lk-header__cart:hover {
+    background: var(--lk-ice);
+  }
+
+  .lk-header__cart svg {
+    inline-size: 23px;
+    block-size: 23px;
+  }
+
+  .lk-header__count {
+    position: absolute;
+    top: 3px;
+    right: 1px;
+    min-inline-size: 17px;
+    padding: 0 4px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-accent);
+    color: var(--lk-ink);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 17px;
+    text-align: center;
+  }
+
+  .lk-header__count.is-empty {
+    display: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-header__inner {
+      min-height: 76px;
+      gap: 24px;
+    }
+
+    .lk-header__links {
+      gap: 30px;
+    }
+
+    .lk-header .lk-header__cta {
+      display: inline-flex;
+    }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    if (window.__lockinHeader) return;
+    window.__lockinHeader = true;
+
+    function setCount(count) {
+      document.querySelectorAll('[data-lockin-cart-count]').forEach(function (node) {
+        node.textContent = String(count);
+        node.classList.toggle('is-empty', !count);
+        var link = node.closest('[data-lockin-cart-link]');
+        if (link) {
+          link.setAttribute('aria-label', 'Cart, ' + count + ' item' + (count === 1 ? '' : 's'));
+        }
+      });
+    }
+
+    /* Our own buy module announces cart changes so the badge stays truthful. */
+    document.addEventListener('lockin:cart:updated', function (event) {
+      if (event.detail && typeof event.detail.itemCount === 'number') setCount(event.detail.itemCount);
+    });
+
+    /* Restoring from bfcache can show a stale badge. */
+    window.addEventListener('pageshow', function (event) {
+      if (!event.persisted) return;
+      fetch(window.Theme && Theme.routes ? Theme.routes.cart_url + '.js' : '/cart.js', {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          return r.ok ? r.json() : null;
+        })
+        .then(function (cart) {
+          if (cart) setCount(cart.item_count);
+        })
+        .catch(function () {});
+    });
+
+    /* Upgrade the cart link to Horizon's drawer when it is on the page. */
+    document.addEventListener('click', function (event) {
+      var link = event.target.closest && event.target.closest('[data-lockin-cart-link]');
+      if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+
+      var drawer = document.querySelector('cart-drawer-component');
+      var host = drawer && drawer.closest ? drawer.closest('theme-drawer') : null;
+      if (!host || typeof host.open !== 'function') return;
+
+      event.preventDefault();
+      host.open();
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "lockin header",
+  "tag": "section",
+  "class": "lockin-header-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Announcement bar"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_announcement",
+      "label": "Show announcement bar",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "announcement_text",
+      "label": "Announcement text",
+      "default": "Free shipping on 3- and 6-month supplies"
+    },
+    {
+      "type": "url",
+      "id": "announcement_link",
+      "label": "Announcement link"
+    },
+    {
+      "type": "header",
+      "content": "Navigation"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "text",
+      "id": "nav_label",
+      "label": "Navigation landmark label",
+      "info": "Read by screen readers. Not shown on screen.",
+      "default": "Primary"
+    },
+    {
+      "type": "checkbox",
+      "id": "sticky",
+      "label": "Stick to top on scroll",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Call to action"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cta",
+      "label": "Show button",
+      "info": "Hidden below 750px to keep the mobile header light.",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Button label",
+      "default": "Shop"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link"
+    }
+  ],
+  "enabled_on": {
+    "groups": ["header"]
+  }
+}
+{% endschema %}

@@ -1,0 +1,20 @@
+{
+  "type": "header",
+  "name": "Header",
+  "sections": {
+    "lockin_header": {
+      "type": "lockin-header",
+      "settings": {
+        "show_announcement": true,
+        "announcement_text": "Free shipping on 3- and 6-month supplies",
+        "menu": "main-menu",
+        "nav_label": "Primary",
+        "sticky": true,
+        "show_cta": true,
+        "cta_label": "Shop",
+        "cta_link": "shopify://products/lockin-cellular-energy-chewables"
+      }
+    }
+  },
+  "order": ["lockin_header"]
+}

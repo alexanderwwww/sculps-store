@@ -1,0 +1,299 @@
+{%- comment -%}
+  lockin — split feature. Image on one side, argument on the other.
+  Built for "why foils, not a bottle", but reusable.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-split{% if section.settings.tone == 'ice' %} lk-split--ice{% endif %}">
+  <div class="lk-container">
+    <div class="lk-split__inner{% if section.settings.media_position == 'right' %} lk-split__inner--mediaRight{% endif %}">
+      <div class="lk-split__media lk-reveal">
+        {%- if section.settings.image != blank -%}
+          <img
+            class="lk-split__image"
+            src="{{ section.settings.image | image_url: width: 1000 }}"
+            srcset="
+              {{ section.settings.image | image_url: width: 500 }} 500w,
+              {{ section.settings.image | image_url: width: 1000 }} 1000w
+            "
+            sizes="(min-width: 990px) 46vw, 90vw"
+            alt="{{ section.settings.image.alt | default: section.settings.heading | escape }}"
+            width="{{ section.settings.image.width }}"
+            height="{{ section.settings.image.height }}"
+            loading="lazy"
+          >
+        {%- else -%}
+          <div class="lk-split__placeholder">
+            {{ 'product-2' | placeholder_svg_tag: 'lk-split__placeholderSvg' }}
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div class="lk-split__copy lk-reveal">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+
+        {%- if section.settings.heading != blank -%}
+          <h2 class="lk-h2 lk-split__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+
+        {%- if section.settings.body != blank -%}
+          <div class="lk-body lk-split__body">{{ section.settings.body }}</div>
+        {%- endif -%}
+
+        {%- if section.blocks.size > 0 -%}
+          <ul class="lk-split__points">
+            {%- for block in section.blocks -%}
+              {%- if block.settings.text != blank -%}
+                <li class="lk-split__point" {{ block.shopify_attributes }}>
+                  <span class="lk-split__tick" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="none">
+                      <path d="m4 8.4 2.6 2.6L12 5.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>
+                    {%- if block.settings.title != blank -%}
+                      <strong class="lk-split__pointTitle">{{ block.settings.title }}</strong>
+                    {%- endif -%}
+                    {{ block.settings.text }}
+                  </span>
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        {%- if section.settings.cta_label != blank and section.settings.cta_link != blank -%}
+          <a class="lk-btn lk-btn--ghost lk-split__cta" href="{{ section.settings.cta_link }}">
+            {{ section.settings.cta_label }}
+          </a>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-split--ice {
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-split__inner {
+    display: grid;
+    gap: 32px;
+    align-items: center;
+  }
+
+  .lk-split__image,
+  .lk-split__placeholderSvg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--lk-r-lg);
+    object-fit: cover;
+  }
+
+  .lk-split__placeholder {
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-ice);
+    aspect-ratio: 1 / 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .lk-split__placeholder svg {
+    inline-size: 55%;
+    fill: color-mix(in srgb, var(--lk-ink) 16%, transparent);
+  }
+
+  .lk-split__heading {
+    margin-top: 14px;
+    max-width: 18ch;
+  }
+
+  .lk-split__body {
+    margin-top: 18px;
+    max-width: 48ch;
+  }
+
+  .lk-split__body p + p {
+    margin-top: 1em;
+  }
+
+  .lk-split__points {
+    margin: 26px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 14px;
+  }
+
+  .lk-split__point {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-split__pointTitle {
+    display: block;
+    color: var(--lk-ink);
+    font-weight: 600;
+  }
+
+  .lk-split__tick {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    margin-top: 1px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-paper);
+    border: 1px solid var(--lk-line);
+    color: var(--lk-accent);
+  }
+
+  .lk-split--ice .lk-split__tick {
+    background: var(--lk-paper);
+  }
+
+  .lk-split__tick svg {
+    inline-size: 14px;
+    block-size: 14px;
+  }
+
+  .lk-split__cta {
+    margin-top: 30px;
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-split__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 64px;
+    }
+
+    .lk-split__inner--mediaRight .lk-split__media {
+      order: 2;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin split feature",
+  "tag": "section",
+  "class": "lockin-split-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Why foils, not a bottle"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Dose thirty as strong as dose one."
+    },
+    {
+      "type": "richtext",
+      "id": "body",
+      "label": "Body",
+      "default": "<p>NR and vitamin C degrade on contact with air. In an opened bottle, every time you take the lid off, what is left inside gets a little weaker. By the end of the month you are taking a different product than the one you bought.</p>"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "select",
+      "id": "media_position",
+      "label": "Image position (desktop)",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "select",
+      "id": "tone",
+      "label": "Background",
+      "options": [
+        { "value": "paper", "label": "Paper" },
+        { "value": "ice", "label": "Ice" }
+      ],
+      "default": "ice"
+    },
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Button label"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "point",
+      "name": "Point",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Full strength on day 30"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "Each dose is sealed on its own, so nothing oxidises until you tear it."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin split feature",
+      "blocks": [
+        {
+          "type": "point",
+          "settings": {
+            "title": "Full strength on day 30",
+            "text": "Each dose is sealed on its own, so nothing oxidises until you tear it."
+          }
+        },
+        {
+          "type": "point",
+          "settings": {
+            "title": "No counting, no rattle",
+            "text": "One foil is the whole dose. Two chewables inside — that is it."
+          }
+        },
+        {
+          "type": "point",
+          "settings": {
+            "title": "Fits where a bottle doesn't",
+            "text": "A bag, a car door, a jacket pocket. The dose travels with you."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,25 @@
+{
+  "type": "footer",
+  "name": "Footer",
+  "sections": {
+    "lockin_footer": {
+      "type": "lockin-footer",
+      "blocks": {
+        "explore": {
+          "type": "menu",
+          "settings": {
+            "heading": "Explore",
+            "menu": "footer"
+          }
+        }
+      },
+      "block_order": ["explore"],
+      "settings": {
+        "tagline": "Cellular energy chewables. Two a day, sealed one dose at a time.",
+        "disclaimer": "These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.",
+        "secondary_disclaimer": "Not for use if pregnant, nursing, or under 18. Ashwagandha can interact with thyroid and sedative medications — consult your physician first."
+      }
+    }
+  },
+  "order": ["lockin_footer"]
+}

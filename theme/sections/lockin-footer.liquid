@@ -1,0 +1,249 @@
+{%- comment -%}
+  lockin — site footer.
+
+  Carries the mandatory FDA disclaimer. The disclaimer text is a setting so it
+  can be corrected, but it ships with the required wording as its default.
+{%- endcomment -%}
+
+<div class="lk lk-footer">
+  <div class="lk-container">
+    <div class="lk-footer__top">
+      <div class="lk-footer__brand">
+        {% render 'lockin-wordmark', size: 'clamp(1.7rem, 6vw, 2.1rem)', tone: 'light' %}
+        {%- if section.settings.tagline != blank -%}
+          <p class="lk-footer__tagline">{{ section.settings.tagline }}</p>
+        {%- endif -%}
+      </div>
+
+      <div class="lk-footer__menus">
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'menu' -%}
+            {%- assign menu = linklists[block.settings.menu] -%}
+            <nav class="lk-footer__menu" {{ block.shopify_attributes }}>
+              {%- if block.settings.heading != blank -%}
+                <h2 class="lk-footer__menuTitle">{{ block.settings.heading }}</h2>
+              {%- endif -%}
+              {%- if menu != blank and menu.links.size > 0 -%}
+                <ul class="lk-footer__list">
+                  {%- for link in menu.links -%}
+                    <li><a class="lk-footer__link" href="{{ link.url }}">{{ link.title }}</a></li>
+                  {%- endfor -%}
+                </ul>
+              {%- endif -%}
+            </nav>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+
+    {%- if section.settings.disclaimer != blank -%}
+      <div class="lk-footer__disclaimer">
+        <p class="lk-footer__disclaimerText">{{ section.settings.disclaimer }}</p>
+        {%- if section.settings.secondary_disclaimer != blank -%}
+          <p class="lk-footer__disclaimerText">{{ section.settings.secondary_disclaimer }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class="lk-footer__bottom">
+      <p class="lk-footer__fine">
+        &copy; {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.
+      </p>
+      {%- if shop.policies.size > 0 -%}
+        <ul class="lk-footer__policies">
+          {%- for policy in shop.policies -%}
+            <li><a class="lk-footer__fineLink" href="{{ policy.url }}">{{ policy.title }}</a></li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-footer {
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    padding-block: 64px 40px;
+  }
+
+  .lk-footer__top {
+    display: grid;
+    gap: 40px;
+    padding-bottom: 40px;
+  }
+
+  .lk-footer__tagline {
+    margin-top: 14px;
+    max-width: 30ch;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: color-mix(in srgb, var(--lk-paper) 62%, transparent);
+  }
+
+  .lk-footer__menus {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 32px;
+  }
+
+  .lk-footer__menuTitle {
+    font-family: var(--lk-font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+    margin: 0 0 14px;
+  }
+
+  .lk-footer__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+
+  .lk-footer__link {
+    font-size: 0.9375rem;
+    color: color-mix(in srgb, var(--lk-paper) 85%, transparent);
+    text-decoration: none;
+    transition: color 0.2s var(--lk-ease);
+  }
+
+  .lk-footer__link:hover {
+    color: var(--lk-paper);
+  }
+
+  /* The FDA disclaimer. Deliberately legible, not hidden in fine print. */
+  .lk-footer__disclaimer {
+    padding: 22px 24px;
+    border-radius: var(--lk-r-md);
+    background: color-mix(in srgb, var(--lk-paper) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lk-paper) 12%, transparent);
+    display: grid;
+    gap: 10px;
+  }
+
+  .lk-footer__disclaimerText {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: color-mix(in srgb, var(--lk-paper) 70%, transparent);
+    max-width: 88ch;
+  }
+
+  .lk-footer__bottom {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid color-mix(in srgb, var(--lk-paper) 12%, transparent);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .lk-footer__fine {
+    font-size: 0.8125rem;
+    color: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+  }
+
+  .lk-footer__policies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lk-footer__fineLink {
+    font-size: 0.8125rem;
+    color: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+    text-decoration: none;
+  }
+
+  .lk-footer__fineLink:hover {
+    color: var(--lk-paper);
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-footer {
+      padding-block: 88px 44px;
+    }
+
+    .lk-footer__top {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: 56px;
+      padding-bottom: 52px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin footer",
+  "tag": "section",
+  "class": "lockin-footer-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "tagline",
+      "label": "Tagline",
+      "default": "Cellular energy chewables. Two a day, sealed one dose at a time."
+    },
+    {
+      "type": "header",
+      "content": "Disclaimers"
+    },
+    {
+      "type": "textarea",
+      "id": "disclaimer",
+      "label": "FDA disclaimer",
+      "info": "Required on supplement storefronts. Do not remove.",
+      "default": "These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease."
+    },
+    {
+      "type": "textarea",
+      "id": "secondary_disclaimer",
+      "label": "Additional safety text",
+      "default": "Not for use if pregnant, nursing, or under 18. Ashwagandha can interact with thyroid and sedative medications — consult your physician first."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "menu",
+      "name": "Menu column",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Explore"
+        },
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "Menu",
+          "default": "footer"
+        }
+      ]
+    }
+  ],
+  "enabled_on": {
+    "groups": ["footer"]
+  },
+  "presets": [
+    {
+      "name": "lockin footer",
+      "blocks": [
+        {
+          "type": "menu"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

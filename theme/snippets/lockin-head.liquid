@@ -1,0 +1,351 @@
+{%- comment -%}
+  lockin — brand foundation.
+
+  Rendered once from layout/theme.liquid <head>. Holds the type stack, the
+  palette and the shared primitives every lockin-* section builds on.
+
+  Palette and radii live here on purpose: they are brand constants, not
+  per-page copy. Editable copy lives in each section's schema.
+{%- endcomment -%}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap"
+>
+
+{% style %}
+  :root {
+    /* Palette */
+    --lk-paper: #FAFBFC;
+    --lk-ice: #E6EDF2;
+    --lk-ink: #0B0E11;
+    --lk-muted: #6A7781;
+    --lk-accent: #7FB1D4;
+
+    --lk-ice-soft: color-mix(in srgb, var(--lk-ice) 55%, var(--lk-paper));
+    --lk-line: color-mix(in srgb, var(--lk-ink) 10%, transparent);
+    --lk-line-strong: color-mix(in srgb, var(--lk-ink) 18%, transparent);
+
+    /* Radii — generous, per brand */
+    --lk-r-sm: 16px;
+    --lk-r-md: 20px;
+    --lk-r-lg: 26px;
+    --lk-r-pill: 999px;
+
+    /* Type */
+    --lk-font-head: 'Fredoka', ui-rounded, 'Segoe UI', system-ui, sans-serif;
+    --lk-font-body: 'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+    /* Layout */
+    --lk-maxw: 1180px;
+    --lk-gutter: 20px;
+    --lk-section-y: 64px;
+
+    /* Motion */
+    --lk-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  @media screen and (min-width: 750px) {
+    :root {
+      --lk-gutter: 40px;
+      --lk-section-y: 104px;
+    }
+  }
+
+  /* ---------- Primitives ---------- */
+
+  .lk {
+    font-family: var(--lk-font-body);
+    color: var(--lk-ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .lk *,
+  .lk *::before,
+  .lk *::after {
+    box-sizing: border-box;
+  }
+
+  .lk-section {
+    padding-block: var(--lk-section-y);
+    background: var(--lk-paper);
+    position: relative;
+  }
+
+  .lk-container {
+    width: 100%;
+    max-width: calc(var(--lk-maxw) + (var(--lk-gutter) * 2));
+    margin-inline: auto;
+    padding-inline: var(--lk-gutter);
+  }
+
+  .lk h1,
+  .lk h2,
+  .lk h3,
+  .lk h4 {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.06;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .lk p {
+    margin: 0;
+  }
+
+  .lk-h1 {
+    font-size: clamp(2.5rem, 9.2vw, 4.5rem);
+  }
+
+  .lk-h2 {
+    font-size: clamp(1.95rem, 6.2vw, 3.15rem);
+  }
+
+  .lk-h3 {
+    font-size: clamp(1.3rem, 3.4vw, 1.6rem);
+  }
+
+  .lk-lede {
+    font-size: clamp(1.02rem, 2.6vw, 1.22rem);
+    line-height: 1.55;
+    color: var(--lk-muted);
+    font-weight: 400;
+    text-wrap: pretty;
+  }
+
+  .lk-body {
+    font-size: 1rem;
+    line-height: 1.62;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-eyebrow {
+    font-family: var(--lk-font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lk-muted);
+    margin: 0;
+  }
+
+  /* ---------- Buttons ---------- */
+
+  .lk-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 54px;
+    padding: 0 30px;
+    border-radius: var(--lk-r-pill);
+    border: 1px solid transparent;
+    font-family: var(--lk-font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.22s var(--lk-ease), background-color 0.22s var(--lk-ease), color 0.22s var(--lk-ease),
+      border-color 0.22s var(--lk-ease);
+  }
+
+  .lk-btn--primary {
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+  }
+
+  .lk-btn--ghost {
+    background: transparent;
+    color: var(--lk-ink);
+    border-color: var(--lk-line-strong);
+  }
+
+  .lk-btn--onDark {
+    background: var(--lk-paper);
+    color: var(--lk-ink);
+  }
+
+  .lk-btn--ghostOnDark {
+    background: transparent;
+    color: var(--lk-paper);
+    border-color: color-mix(in srgb, var(--lk-paper) 35%, transparent);
+  }
+
+  .lk-btn--block {
+    width: 100%;
+  }
+
+  @media (hover: hover) {
+    .lk-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .lk-btn--ghost:hover {
+      border-color: var(--lk-ink);
+    }
+  }
+
+  .lk-btn:active {
+    transform: translateY(0);
+  }
+
+  .lk-btn[disabled],
+  .lk-btn[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ---------- Pills ---------- */
+
+  .lk-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lk-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 15px;
+    border-radius: var(--lk-r-pill);
+    background: color-mix(in srgb, var(--lk-ice) 70%, var(--lk-paper));
+    border: 1px solid var(--lk-line);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--lk-ink);
+    white-space: nowrap;
+  }
+
+  .lk-pill::before {
+    content: '';
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 2px;
+    background: var(--lk-accent);
+    flex: none;
+  }
+
+  .lk-pill--plain::before {
+    display: none;
+  }
+
+  /* ---------- Focus ---------- */
+
+  .lk :focus-visible,
+  .lk-focusable:focus-visible {
+    outline: 2px solid var(--lk-accent);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  .lk-visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---------- Scroll reveal (opt-in, honours reduced motion) ---------- */
+
+  .lk-reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s var(--lk-ease), transform 0.7s var(--lk-ease);
+  }
+
+  .lk-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk *,
+    .lk *::before,
+    .lk *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .lk-reveal {
+      opacity: 1;
+      transform: none;
+    }
+
+    .lk-btn:hover {
+      transform: none;
+    }
+  }
+{% endstyle %}
+
+<script>
+  /* Shared scroll-reveal for all lockin sections. Reduced motion short-circuits to visible. */
+  (function () {
+    if (window.__lockinReveal) return;
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function showAll() {
+      document.querySelectorAll('.lk-reveal').forEach(function (el) {
+        el.classList.add('is-visible');
+      });
+    }
+
+    if (reduce.matches || !('IntersectionObserver' in window)) {
+      document.addEventListener('DOMContentLoaded', showAll);
+      window.__lockinReveal = { observe: function () {} };
+      return;
+    }
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+    );
+
+    function scan(root) {
+      (root || document).querySelectorAll('.lk-reveal:not(.is-visible)').forEach(function (el) {
+        observer.observe(el);
+      });
+    }
+
+    window.__lockinReveal = { observe: scan };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      scan();
+    });
+
+    /* Theme editor re-renders sections after DOMContentLoaded. */
+    document.addEventListener('shopify:section:load', function (event) {
+      scan(event.target);
+    });
+
+    reduce.addEventListener('change', function (event) {
+      if (event.matches) showAll();
+    });
+  })();
+</script>

@@ -1,0 +1,274 @@
+{%- comment -%}
+  lockin — where the evidence stops.
+
+  The point of this section is to say plainly what the research does not
+  support. The headline claim setting defaults to the flat statement that no
+  supplement has been shown to reverse ageing; leave it in.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-evidence">
+  <div class="lk-container">
+    <div class="lk-evidence__grid">
+      <div class="lk-evidence__head lk-reveal">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="lk-h2 lk-evidence__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+      </div>
+
+      <div class="lk-evidence__content">
+        {%- if section.settings.statement != blank -%}
+          <p class="lk-evidence__statement lk-reveal">{{ section.settings.statement }}</p>
+        {%- endif -%}
+
+        {%- if section.blocks.size > 0 -%}
+          <dl class="lk-evidence__list">
+            {%- for block in section.blocks -%}
+              <div class="lk-evidence__item lk-reveal" {{ block.shopify_attributes }}>
+                <dt class="lk-evidence__term">
+                  <span
+                    class="lk-evidence__mark lk-evidence__mark--{{ block.settings.stance }}"
+                    aria-hidden="true"
+                  >
+                    {%- if block.settings.stance == 'supported' -%}
+                      <svg viewBox="0 0 16 16" fill="none">
+                        <path d="m4 8.4 2.6 2.6L12 5.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    {%- else -%}
+                      <svg viewBox="0 0 16 16" fill="none">
+                        <path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    {%- endif -%}
+                  </span>
+                  <span>
+                    <span class="lk-visually-hidden">
+                      {%- if block.settings.stance == 'supported' -%}
+                        What the evidence supports:
+                      {%- else -%}
+                        What the evidence does not support:
+                      {%- endif -%}
+                    </span>
+                    {{ block.settings.claim }}
+                  </span>
+                </dt>
+                {%- if block.settings.detail != blank -%}
+                  <dd class="lk-evidence__detail">{{ block.settings.detail }}</dd>
+                {%- endif -%}
+              </div>
+            {%- endfor -%}
+          </dl>
+        {%- endif -%}
+
+        {%- if section.settings.footnote != blank -%}
+          <div class="lk-evidence__footnote lk-reveal">{{ section.settings.footnote }}</div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-evidence__grid {
+    display: grid;
+    gap: 30px;
+    align-items: start;
+  }
+
+  .lk-evidence__heading {
+    margin-top: 14px;
+    max-width: 16ch;
+  }
+
+  .lk-evidence__statement {
+    font-family: var(--lk-font-head);
+    font-weight: 500;
+    font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+    color: var(--lk-ink);
+    padding: 22px 24px;
+    border-radius: var(--lk-r-md);
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+    text-wrap: pretty;
+  }
+
+  .lk-evidence__list {
+    margin: 26px 0 0;
+    display: grid;
+    gap: 22px;
+  }
+
+  .lk-evidence__item {
+    display: grid;
+    gap: 6px;
+  }
+
+  .lk-evidence__term {
+    display: flex;
+    gap: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+    text-wrap: pretty;
+  }
+
+  .lk-evidence__mark {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    margin-top: 1px;
+    border-radius: var(--lk-r-pill);
+  }
+
+  .lk-evidence__mark svg {
+    inline-size: 15px;
+    block-size: 15px;
+  }
+
+  .lk-evidence__mark--supported {
+    background: color-mix(in srgb, var(--lk-accent) 22%, transparent);
+    color: var(--lk-ink);
+  }
+
+  .lk-evidence__mark--unsupported {
+    background: color-mix(in srgb, var(--lk-ink) 8%, transparent);
+    color: var(--lk-muted);
+  }
+
+  .lk-evidence__detail {
+    margin: 0 0 0 36px;
+    font-size: 0.9375rem;
+    line-height: 1.62;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-evidence__footnote {
+    margin-top: 30px;
+    padding-top: 22px;
+    border-top: 1px solid var(--lk-line);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+  }
+
+  .lk-evidence__footnote p + p {
+    margin-top: 0.8em;
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-evidence__grid {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 56px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin evidence limits",
+  "tag": "section",
+  "class": "lockin-evidence-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Where the evidence stops"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What we won't claim."
+    },
+    {
+      "type": "textarea",
+      "id": "statement",
+      "label": "Headline statement",
+      "info": "Keep this plain and keep it here. It is the section's whole purpose.",
+      "default": "No supplement has been shown to reverse ageing. Not this one, not any of them. Anyone who tells you otherwise is selling something they cannot back up."
+    },
+    {
+      "type": "richtext",
+      "id": "footnote",
+      "label": "Footnote",
+      "default": "<p>Much of the NAD+ research is in animal models or small, short human trials. Where human data exists, it generally shows that NR raises blood NAD+ — which is a different and much narrower claim than any statement about how you will feel or how long you will live.</p><p>These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.</p>"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "claim",
+      "name": "Claim",
+      "settings": [
+        {
+          "type": "select",
+          "id": "stance",
+          "label": "Stance",
+          "options": [
+            { "value": "supported", "label": "Evidence supports this" },
+            { "value": "unsupported", "label": "Evidence does not support this" }
+          ],
+          "default": "supported"
+        },
+        {
+          "type": "text",
+          "id": "claim",
+          "label": "Claim",
+          "default": "NR raises blood NAD+ in humans."
+        },
+        {
+          "type": "textarea",
+          "id": "detail",
+          "label": "Detail",
+          "default": "This is reasonably well replicated in small human trials."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin evidence limits",
+      "blocks": [
+        {
+          "type": "claim",
+          "settings": {
+            "stance": "supported",
+            "claim": "NR raises blood NAD+ in humans.",
+            "detail": "This is reasonably well replicated across small, short human trials. It is the clearest thing we can say."
+          }
+        },
+        {
+          "type": "claim",
+          "settings": {
+            "stance": "supported",
+            "claim": "KSM-66 ashwagandha is studied for cortisol.",
+            "detail": "The 300mg dose in lockin matches the dose used in the published trials rather than a fraction of it."
+          }
+        },
+        {
+          "type": "claim",
+          "settings": {
+            "stance": "unsupported",
+            "claim": "Raising NAD+ reverses ageing.",
+            "detail": "It does not follow. Raising a marker is not the same as changing an outcome, and the human outcome data does not exist."
+          }
+        },
+        {
+          "type": "claim",
+          "settings": {
+            "stance": "unsupported",
+            "claim": "You will feel it on day one.",
+            "detail": "There is no stimulant here. Anything you notice builds over weeks, and some people notice nothing at all."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

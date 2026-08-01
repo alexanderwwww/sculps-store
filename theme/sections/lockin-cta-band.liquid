@@ -1,0 +1,237 @@
+{%- comment -%}
+  lockin — closing call to action.
+{%- endcomment -%}
+
+{%- liquid
+  assign cta_url = section.settings.cta_link
+  if cta_url == blank and section.settings.product != blank
+    assign cta_url = section.settings.product.url
+  endif
+-%}
+
+<div class="lk lk-section lk-cta{% if section.settings.tone == 'dark' %} lk-cta--dark{% endif %}">
+  <div class="lk-container">
+    <div class="lk-cta__panel lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow lk-cta__eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-cta__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.body != blank -%}
+        <p class="lk-cta__body">{{ section.settings.body }}</p>
+      {%- endif -%}
+
+      <div class="lk-cta__actions">
+        {%- if section.settings.cta_label != blank and cta_url != blank -%}
+          <a
+            class="lk-btn {% if section.settings.tone == 'dark' %}lk-btn--onDark{% else %}lk-btn--primary{% endif %}"
+            href="{{ cta_url }}"
+          >
+            {{ section.settings.cta_label }}
+          </a>
+        {%- endif -%}
+
+        {%- if section.settings.secondary_label != blank and section.settings.secondary_link != blank -%}
+          <a
+            class="lk-btn {% if section.settings.tone == 'dark' %}lk-btn--ghostOnDark{% else %}lk-btn--ghost{% endif %}"
+            href="{{ section.settings.secondary_link }}"
+          >
+            {{ section.settings.secondary_label }}
+          </a>
+        {%- endif -%}
+      </div>
+
+      {%- if section.blocks.size > 0 -%}
+        <ul class="lk-pills lk-cta__pills">
+          {%- for block in section.blocks -%}
+            {%- if block.settings.label != blank -%}
+              <li class="lk-pill" {{ block.shopify_attributes }}>{{ block.settings.label }}</li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-cta__panel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: 48px 26px 52px;
+    border-radius: var(--lk-r-lg);
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lk-cta__panel::before {
+    content: '';
+    position: absolute;
+    inset: auto -20% -60% -20%;
+    block-size: 100%;
+    z-index: -1;
+    background: radial-gradient(
+      50% 60% at 50% 100%,
+      color-mix(in srgb, var(--lk-accent) 32%, transparent) 0%,
+      transparent 72%
+    );
+  }
+
+  .lk-cta--dark .lk-cta__panel {
+    background: var(--lk-ink);
+    border-color: transparent;
+    color: var(--lk-paper);
+  }
+
+  .lk-cta--dark .lk-cta__heading {
+    color: var(--lk-paper);
+  }
+
+  .lk-cta--dark .lk-cta__eyebrow {
+    color: color-mix(in srgb, var(--lk-paper) 60%, transparent);
+  }
+
+  .lk-cta--dark .lk-cta__body {
+    color: color-mix(in srgb, var(--lk-paper) 70%, transparent);
+  }
+
+  .lk-cta--dark .lk-pill {
+    background: color-mix(in srgb, var(--lk-paper) 10%, transparent);
+    border-color: color-mix(in srgb, var(--lk-paper) 18%, transparent);
+    color: var(--lk-paper);
+  }
+
+  .lk-cta__heading {
+    margin-top: 14px;
+    max-width: 18ch;
+  }
+
+  .lk-cta__body {
+    margin-top: 16px;
+    max-width: 48ch;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-cta__actions {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .lk-cta__pills {
+    margin-top: 28px;
+    justify-content: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .lk-cta__panel {
+      padding: 84px 48px 88px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin CTA band",
+  "tag": "section",
+  "class": "lockin-cta-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "One box. Thirty days."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Start with a month."
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body",
+      "default": "Two chewables in the morning. No water, no caffeine, no 3pm drop. If it is not for you, say so and we will make it right."
+    },
+    {
+      "type": "select",
+      "id": "tone",
+      "label": "Background",
+      "options": [
+        { "value": "ice", "label": "Ice with glow" },
+        { "value": "dark", "label": "Near-black" }
+      ],
+      "default": "ice"
+    },
+    {
+      "type": "header",
+      "content": "Buttons"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "info": "Used for the primary button link when no link is set."
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Primary button label",
+      "default": "Shop lockin"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Primary button link"
+    },
+    {
+      "type": "text",
+      "id": "secondary_label",
+      "label": "Secondary button label"
+    },
+    {
+      "type": "url",
+      "id": "secondary_link",
+      "label": "Secondary button link"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "badge",
+      "name": "Pill badge",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "No caffeine"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin CTA band",
+      "blocks": [
+        { "type": "badge", "settings": { "label": "No caffeine" } },
+        { "type": "badge", "settings": { "label": "No sugar" } },
+        { "type": "badge", "settings": { "label": "30 sealed foils" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
