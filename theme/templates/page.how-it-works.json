@@ -3,16 +3,38 @@
     "showcase": {
       "type": "lockin-video-showcase",
       "blocks": {
-        "c1": { "type": "chapter", "settings": { "title": "Tear", "text": "One foil off the strip. It lives in a bag, a car door, a jacket." } },
-        "c2": { "type": "chapter", "settings": { "title": "Chew", "text": "Two blueberry chewables. No water, lightly sweet, no chalk." } },
-        "c3": { "type": "chapter", "settings": { "title": "Repeat tomorrow", "text": "The work is cumulative — day 30 is the day to judge it." } }
+        "c1": {
+          "type": "chapter",
+          "settings": {
+            "title": "Tear",
+            "text": "One foil off the strip. It lives in a bag, a car door, a jacket."
+          }
+        },
+        "c2": {
+          "type": "chapter",
+          "settings": {
+            "title": "Chew",
+            "text": "Two blueberry chewables. No water, lightly sweet, no chalk."
+          }
+        },
+        "c3": {
+          "type": "chapter",
+          "settings": {
+            "title": "Repeat tomorrow",
+            "text": "The work is cumulative — day 30 is the day to judge it."
+          }
+        }
       },
-      "block_order": ["c1", "c2", "c3"],
+      "block_order": [
+        "c1",
+        "c2",
+        "c3"
+      ],
       "settings": {
         "eyebrow": "How it works",
         "heading": "One foil a day. Here's the whole ritual.",
         "body": "No water, no counting, no timing around meals. Tear one foil, chew two chewables, get on with your day.",
-        "poster": "shopify://shop_images/lockin-detail-hero-wide.jpg",
+        "poster": "shopify://shop_images/lockin-photo-desk.png",
         "screen_caption": "The 10-second morning"
       }
     },
@@ -44,7 +66,11 @@
           }
         }
       },
-      "block_order": ["s1", "s2", "s3"],
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
       "settings": {
         "eyebrow": "Inside the cell",
         "heading": "Three steps, one dose.",
@@ -59,7 +85,7 @@
           "settings": {
             "wide": true,
             "ambient": true,
-            "image": "shopify://shop_images/lockin-box-foils-chewables.png",
+            "image": "shopify://shop_images/lockin-photo-box-front.png",
             "tag": "The system",
             "caption": "Box, foils, chewables — a month of doses, each sealed at full strength."
           }
@@ -67,38 +93,44 @@
         "m2": {
           "type": "media",
           "settings": {
-            "image": "shopify://shop_images/lockin-detail-chewables.jpg",
+            "image": "shopify://shop_images/lockin-photo-macro.png",
             "tag": "The dose",
-            "caption": "Two blueberry chewables. Natural blue from butterfly pea flower."
+            "caption": "Two blueberry chewables. Chew, don’t swallow — no water needed."
           }
         },
         "m3": {
           "type": "media",
           "settings": {
-            "image": "shopify://shop_images/lockin-detail-foils.jpg",
-            "tag": "Sealed fresh",
-            "caption": "NR and vitamin C degrade in air — so nothing is opened until you tear it."
+            "image": "shopify://shop_images/lockin-photo-marble.png",
+            "tag": "Anywhere",
+            "caption": "One foil lives wherever your morning happens."
           }
         },
         "m4": {
           "type": "media",
           "settings": {
-            "image": "shopify://shop_images/lockin-detail-box.jpg",
-            "tag": "The box",
-            "caption": "30 singles. Slimmer than a paperback."
+            "image": "shopify://shop_images/lockin-photo-box-foil.png",
+            "tag": "Sealed fresh",
+            "caption": "NR and vitamin C degrade in air — nothing is opened until you tear it."
           }
         },
         "m5": {
           "type": "media",
           "settings": {
             "wide": true,
-            "image": "shopify://shop_images/lockin-detail-hero-wide.jpg",
-            "tag": "Add your footage",
-            "caption": "This card takes an MP4 URL — drop in real unboxing or how-to video here."
+            "image": "shopify://shop_images/lockin-photo-kitchen.png",
+            "tag": "Late is fine",
+            "caption": "No caffeine, so a 10pm dose won’t touch your sleep. This card also takes an MP4 URL for real footage."
           }
         }
       },
-      "block_order": ["m1", "m2", "m3", "m4", "m5"],
+      "block_order": [
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5"
+      ],
       "settings": {
         "eyebrow": "Up close",
         "heading": "Every detail, on purpose."
@@ -129,7 +161,11 @@
           }
         }
       },
-      "block_order": ["s1", "s2", "s3"],
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
       "settings": {
         "eyebrow": "The routine",
         "heading": "Tear one foil. That's the dose."
@@ -138,14 +174,68 @@
     "facts": {
       "type": "lockin-supplement-facts",
       "blocks": {
-        "nr": { "type": "row", "settings": { "name": "Nicotinamide riboside (NR)", "amount": "300 mg", "dv": "†" } },
-        "pqq": { "type": "row", "settings": { "name": "PQQ", "detail": "Pyrroloquinoline quinone", "amount": "20 mg", "dv": "†" } },
-        "coq10": { "type": "row", "settings": { "name": "CoQ10", "detail": "Ubiquinol", "amount": "100 mg", "dv": "†" } },
-        "ksm": { "type": "row", "settings": { "name": "Ashwagandha", "detail": "KSM-66 root extract", "amount": "300 mg", "dv": "†" } },
-        "vitc": { "type": "row", "settings": { "name": "Vitamin C", "detail": "Ascorbic acid", "amount": "250 mg", "dv": "278%" } },
-        "b12": { "type": "row", "settings": { "name": "Vitamin B12", "detail": "Methylcobalamin", "amount": "500 mcg", "dv": "20,833%" } }
+        "nr": {
+          "type": "row",
+          "settings": {
+            "name": "Nicotinamide riboside (NR)",
+            "amount": "300 mg",
+            "dv": "†"
+          }
+        },
+        "pqq": {
+          "type": "row",
+          "settings": {
+            "name": "PQQ",
+            "detail": "Pyrroloquinoline quinone",
+            "amount": "20 mg",
+            "dv": "†"
+          }
+        },
+        "coq10": {
+          "type": "row",
+          "settings": {
+            "name": "CoQ10",
+            "detail": "Ubiquinol",
+            "amount": "100 mg",
+            "dv": "†"
+          }
+        },
+        "ksm": {
+          "type": "row",
+          "settings": {
+            "name": "Ashwagandha",
+            "detail": "KSM-66 root extract",
+            "amount": "300 mg",
+            "dv": "†"
+          }
+        },
+        "vitc": {
+          "type": "row",
+          "settings": {
+            "name": "Vitamin C",
+            "detail": "Ascorbic acid",
+            "amount": "250 mg",
+            "dv": "278%"
+          }
+        },
+        "b12": {
+          "type": "row",
+          "settings": {
+            "name": "Vitamin B12",
+            "detail": "Methylcobalamin",
+            "amount": "500 mcg",
+            "dv": "20,833%"
+          }
+        }
       },
-      "block_order": ["nr", "pqq", "coq10", "ksm", "vitc", "b12"],
+      "block_order": [
+        "nr",
+        "pqq",
+        "coq10",
+        "ksm",
+        "vitc",
+        "b12"
+      ],
       "settings": {
         "eyebrow": "Supplement facts",
         "heading": "Open label. Full doses.",
@@ -161,11 +251,30 @@
     "cta": {
       "type": "lockin-cta-band",
       "blocks": {
-        "b1": { "type": "badge", "settings": { "label": "No caffeine" } },
-        "b2": { "type": "badge", "settings": { "label": "No sugar" } },
-        "b3": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+        "b1": {
+          "type": "badge",
+          "settings": {
+            "label": "No caffeine"
+          }
+        },
+        "b2": {
+          "type": "badge",
+          "settings": {
+            "label": "No sugar"
+          }
+        },
+        "b3": {
+          "type": "badge",
+          "settings": {
+            "label": "30 sealed foils"
+          }
+        }
       },
-      "block_order": ["b1", "b2", "b3"],
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
       "settings": {
         "eyebrow": "One box. Thirty days.",
         "heading": "Start the ritual.",
@@ -179,5 +288,12 @@
       }
     }
   },
-  "order": ["showcase", "mechanism", "media", "how_to", "facts", "cta"]
+  "order": [
+    "showcase",
+    "mechanism",
+    "media",
+    "how_to",
+    "facts",
+    "cta"
+  ]
 }

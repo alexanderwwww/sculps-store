@@ -3,12 +3,37 @@
     "hero": {
       "type": "lockin-hero",
       "blocks": {
-        "b1": { "type": "badge", "settings": { "label": "No caffeine" } },
-        "b2": { "type": "badge", "settings": { "label": "No sugar" } },
-        "b3": { "type": "badge", "settings": { "label": "No crash" } },
-        "b4": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+        "b1": {
+          "type": "badge",
+          "settings": {
+            "label": "No caffeine"
+          }
+        },
+        "b2": {
+          "type": "badge",
+          "settings": {
+            "label": "No sugar"
+          }
+        },
+        "b3": {
+          "type": "badge",
+          "settings": {
+            "label": "No crash"
+          }
+        },
+        "b4": {
+          "type": "badge",
+          "settings": {
+            "label": "30 sealed foils"
+          }
+        }
       },
-      "block_order": ["b1", "b2", "b3", "b4"],
+      "block_order": [
+        "b1",
+        "b2",
+        "b3",
+        "b4"
+      ],
       "settings": {
         "eyebrow": "Cellular energy chewables",
         "heading": "Energy that doesn't crash.",
@@ -17,9 +42,10 @@
         "cta_link": "shopify://products/lockin-cellular-energy-chewables",
         "secondary_label": "See the science",
         "secondary_link": "shopify://pages/science",
-        "price_note": "From $49 — 30 sealed daily doses.",
+        "price_note": "From €49 — 30 sealed daily doses.",
         "product": "lockin-cellular-energy-chewables",
-        "glow_opacity": 30
+        "glow_opacity": 30,
+        "image": "shopify://shop_images/lockin-photo-box-front.png"
       }
     },
     "stat_band": {
@@ -64,7 +90,11 @@
           }
         }
       },
-      "block_order": ["repair", "energy", "calm"],
+      "block_order": [
+        "repair",
+        "energy",
+        "calm"
+      ],
       "settings": {
         "eyebrow": "What two chewables do",
         "heading": "Three jobs, one dose.",
@@ -96,23 +126,47 @@
           }
         }
       },
-      "block_order": ["p1", "p2", "p3"],
+      "block_order": [
+        "p1",
+        "p2",
+        "p3"
+      ],
       "settings": {
         "eyebrow": "Why foils, not a bottle",
         "heading": "Dose thirty as strong as dose one.",
         "body": "<p>NR and vitamin C degrade on contact with air. In an opened bottle, every time you take the lid off, what is left inside gets a little weaker. By the end of the month you are taking a different product than the one you bought.</p>",
         "media_position": "left",
-        "tone": "ice"
+        "tone": "ice",
+        "image": "shopify://shop_images/lockin-photo-marble.png"
       }
     },
     "reviews": {
       "type": "lockin-reviews",
       "blocks": {
-        "r1": { "type": "review", "settings": { "is_placeholder": true } },
-        "r2": { "type": "review", "settings": { "is_placeholder": true } },
-        "r3": { "type": "review", "settings": { "is_placeholder": true } }
+        "r1": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r2": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r3": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        }
       },
-      "block_order": ["r1", "r2", "r3"],
+      "block_order": [
+        "r1",
+        "r2",
+        "r3"
+      ],
       "settings": {
         "eyebrow": "In their words",
         "heading": "What people say."
@@ -121,11 +175,30 @@
     "closing_cta": {
       "type": "lockin-cta-band",
       "blocks": {
-        "b1": { "type": "badge", "settings": { "label": "No caffeine" } },
-        "b2": { "type": "badge", "settings": { "label": "No sugar" } },
-        "b3": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+        "b1": {
+          "type": "badge",
+          "settings": {
+            "label": "No caffeine"
+          }
+        },
+        "b2": {
+          "type": "badge",
+          "settings": {
+            "label": "No sugar"
+          }
+        },
+        "b3": {
+          "type": "badge",
+          "settings": {
+            "label": "30 sealed foils"
+          }
+        }
       },
-      "block_order": ["b1", "b2", "b3"],
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
       "settings": {
         "eyebrow": "One box. Thirty days.",
         "heading": "Start with a month.",
@@ -139,5 +212,12 @@
       }
     }
   },
-  "order": ["hero", "stat_band", "benefits", "foils", "reviews", "closing_cta"]
+  "order": [
+    "hero",
+    "stat_band",
+    "benefits",
+    "foils",
+    "reviews",
+    "closing_cta"
+  ]
 }

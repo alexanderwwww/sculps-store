@@ -3,13 +3,48 @@
     "main": {
       "type": "lockin-buy-funnel",
       "blocks": {
-        "glass1": { "type": "glass", "settings": { "text": "NR 300mg — repair" } },
-        "glass2": { "type": "glass", "settings": { "text": "CoQ10 + PQQ — energy" } },
-        "glass3": { "type": "glass", "settings": { "text": "KSM-66 300mg — calm" } },
-        "badge1": { "type": "badge", "settings": { "label": "No caffeine" } },
-        "badge2": { "type": "badge", "settings": { "label": "No sugar" } },
-        "badge3": { "type": "badge", "settings": { "label": "No crash" } },
-        "badge4": { "type": "badge", "settings": { "label": "30 sealed foils" } },
+        "glass1": {
+          "type": "glass",
+          "settings": {
+            "text": "NR 300mg — repair"
+          }
+        },
+        "glass2": {
+          "type": "glass",
+          "settings": {
+            "text": "CoQ10 + PQQ — energy"
+          }
+        },
+        "glass3": {
+          "type": "glass",
+          "settings": {
+            "text": "KSM-66 300mg — calm"
+          }
+        },
+        "badge1": {
+          "type": "badge",
+          "settings": {
+            "label": "No caffeine"
+          }
+        },
+        "badge2": {
+          "type": "badge",
+          "settings": {
+            "label": "No sugar"
+          }
+        },
+        "badge3": {
+          "type": "badge",
+          "settings": {
+            "label": "No crash"
+          }
+        },
+        "badge4": {
+          "type": "badge",
+          "settings": {
+            "label": "30 sealed foils"
+          }
+        },
         "mfaq1": {
           "type": "faq",
           "settings": {
@@ -33,22 +68,46 @@
         },
         "bundle1": {
           "type": "bundle",
-          "settings": { "label": "1 month", "sublabel": "30 singles", "months": 1, "badge": "" }
+          "settings": {
+            "label": "1 month",
+            "sublabel": "30 singles",
+            "months": 1,
+            "badge": ""
+          }
         },
         "bundle2": {
           "type": "bundle",
-          "settings": { "label": "3 months", "sublabel": "90 singles", "months": 3, "badge": "Best value" }
+          "settings": {
+            "label": "3 months",
+            "sublabel": "90 singles",
+            "months": 3,
+            "badge": "Best value"
+          }
         },
         "bundle3": {
           "type": "bundle",
-          "settings": { "label": "6 months", "sublabel": "180 singles", "months": 6, "badge": "Biggest saving" }
+          "settings": {
+            "label": "6 months",
+            "sublabel": "180 singles",
+            "months": 6,
+            "badge": "Biggest saving"
+          }
         }
       },
       "block_order": [
-        "glass1", "glass2", "glass3",
-        "badge1", "badge2", "badge3", "badge4",
-        "mfaq1", "mfaq2", "mfaq3",
-        "bundle1", "bundle2", "bundle3"
+        "glass1",
+        "glass2",
+        "glass3",
+        "badge1",
+        "badge2",
+        "badge3",
+        "badge4",
+        "mfaq1",
+        "mfaq2",
+        "mfaq3",
+        "bundle1",
+        "bundle2",
+        "bundle3"
       ],
       "settings": {
         "eyebrow": "Cellular energy chewables",
@@ -111,9 +170,15 @@
           }
         }
       },
-      "block_order": ["q1", "q2", "q3", "q4", "q5"],
+      "block_order": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5"
+      ],
       "settings": {
-        "poster": "shopify://shop_images/lockin-detail-foils.jpg",
+        "poster": "shopify://shop_images/lockin-photo-marble.png",
         "screen_caption": "One foil. Two chewables. Done.",
         "eyebrow": "Questions",
         "heading": "Everything people ask.",
@@ -135,13 +200,44 @@
     "review_carousel": {
       "type": "lockin-review-carousel",
       "blocks": {
-        "r1": { "type": "review", "settings": { "is_placeholder": true } },
-        "r2": { "type": "review", "settings": { "is_placeholder": true } },
-        "r3": { "type": "review", "settings": { "is_placeholder": true } },
-        "r4": { "type": "review", "settings": { "is_placeholder": true } },
-        "r5": { "type": "review", "settings": { "is_placeholder": true } }
+        "r1": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r2": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r3": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r4": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r5": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        }
       },
-      "block_order": ["r1", "r2", "r3", "r4", "r5"],
+      "block_order": [
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5"
+      ],
       "settings": {
         "eyebrow": "In their words",
         "heading": "What people say."
@@ -150,21 +246,70 @@
     "whats_inside": {
       "type": "lockin-whats-inside",
       "blocks": {
-        "i1": { "type": "item", "settings": { "qty": "30×", "text": "Individually sealed foils", "detail": "One foil is one day. Tear, chew, done." } },
-        "i2": { "type": "item", "settings": { "qty": "60×", "text": "Blueberry chewables", "detail": "Two per foil — that is the full daily dose." } },
-        "i3": { "type": "item", "settings": { "qty": "1×", "text": "The box", "detail": "A month of doses at full strength, day 1 to day 30." } },
-        "d1": { "type": "does", "settings": { "text": "NR 300mg raises NAD+ — the coenzyme your cells use for energy and DNA repair." } },
-        "d2": { "type": "does", "settings": { "text": "PQQ 20mg and CoQ10 100mg support the mitochondria that spend that NAD+." } },
-        "d3": { "type": "does", "settings": { "text": "KSM-66 ashwagandha 300mg keeps cortisol from making the energy feel anxious." } },
-        "d4": { "type": "does", "settings": { "text": "Vitamin C 250mg and B12 500mcg round out the formula — open label, nothing hidden." } }
+        "i1": {
+          "type": "item",
+          "settings": {
+            "qty": "30×",
+            "text": "Individually sealed foils",
+            "detail": "One foil is one day. Tear, chew, done."
+          }
+        },
+        "i2": {
+          "type": "item",
+          "settings": {
+            "qty": "60×",
+            "text": "Blueberry chewables",
+            "detail": "Two per foil — that is the full daily dose."
+          }
+        },
+        "i3": {
+          "type": "item",
+          "settings": {
+            "qty": "1×",
+            "text": "The box",
+            "detail": "A month of doses at full strength, day 1 to day 30."
+          }
+        },
+        "d1": {
+          "type": "does",
+          "settings": {
+            "text": "NR 300mg raises NAD+ — the coenzyme your cells use for energy and DNA repair."
+          }
+        },
+        "d2": {
+          "type": "does",
+          "settings": {
+            "text": "PQQ 20mg and CoQ10 100mg support the mitochondria that spend that NAD+."
+          }
+        },
+        "d3": {
+          "type": "does",
+          "settings": {
+            "text": "KSM-66 ashwagandha 300mg keeps cortisol from making the energy feel anxious."
+          }
+        },
+        "d4": {
+          "type": "does",
+          "settings": {
+            "text": "Vitamin C 250mg and B12 500mcg round out the formula — open label, nothing hidden."
+          }
+        }
       },
-      "block_order": ["i1", "i2", "i3", "d1", "d2", "d3", "d4"],
+      "block_order": [
+        "i1",
+        "i2",
+        "i3",
+        "d1",
+        "d2",
+        "d3",
+        "d4"
+      ],
       "settings": {
         "eyebrow": "In the box",
         "heading": "What you receive, and what it does.",
-        "image_1": "shopify://shop_images/lockin-box-foils-chewables.png",
-        "image_2": "shopify://shop_images/lockin-detail-foils.jpg",
-        "image_3": "shopify://shop_images/lockin-detail-chewables.jpg",
+        "image_1": "shopify://shop_images/lockin-photo-box-foil.png",
+        "image_2": "shopify://shop_images/lockin-photo-macro.png",
+        "image_3": "shopify://shop_images/lockin-photo-desk.png",
         "received_title": "Inside every box",
         "does_title": "What two chewables do",
         "footnote": "Blueberry flavour. No sugar, no artificial dyes, no gelatin. Full supplement facts on the how-it-works page."
@@ -173,19 +318,66 @@
     "review_wall": {
       "type": "lockin-review-wall",
       "blocks": {
-        "w1": { "type": "review", "settings": { "is_placeholder": true } },
-        "w2": { "type": "review", "settings": { "is_placeholder": true, "image": "shopify://shop_images/lockin-detail-chewables.jpg" } },
-        "w3": { "type": "review", "settings": { "is_placeholder": true } },
-        "w4": { "type": "review", "settings": { "is_placeholder": true, "image": "shopify://shop_images/lockin-detail-foils.jpg" } },
-        "w5": { "type": "review", "settings": { "is_placeholder": true } },
-        "w6": { "type": "review", "settings": { "is_placeholder": true, "image": "shopify://shop_images/lockin-detail-box.jpg" } }
+        "w1": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "w2": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true,
+            "image": "shopify://shop_images/lockin-photo-macro.png"
+          }
+        },
+        "w3": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "w4": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true,
+            "image": "shopify://shop_images/lockin-photo-marble.png"
+          }
+        },
+        "w5": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "w6": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true,
+            "image": "shopify://shop_images/lockin-photo-kitchen.png"
+          }
+        }
       },
-      "block_order": ["w1", "w2", "w3", "w4", "w5", "w6"],
+      "block_order": [
+        "w1",
+        "w2",
+        "w3",
+        "w4",
+        "w5",
+        "w6"
+      ],
       "settings": {
         "eyebrow": "More from customers",
         "heading": "Thirty days in, in their words."
       }
     }
   },
-  "order": ["main", "video_faq", "before_after", "review_carousel", "whats_inside", "review_wall"]
+  "order": [
+    "main",
+    "video_faq",
+    "before_after",
+    "review_carousel",
+    "whats_inside",
+    "review_wall"
+  ]
 }

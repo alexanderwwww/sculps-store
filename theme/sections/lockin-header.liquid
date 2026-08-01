@@ -1,8 +1,10 @@
 {%- comment -%}
   lockin — site header.
 
-  Sticky, minimal: wordmark, a short menu, and a cart link that upgrades to
-  Horizon's cart drawer when JS is available (plain /cart link otherwise).
+  Mobile: burger → slide-in drawer with big links and a Shop button.
+  Desktop: wordmark left, inline nav, CTA + cart right.
+  The drawer is plain markup + a class toggle: ESC and backdrop close it,
+  focus moves in on open and returns on close, body scroll locks while open.
 {%- endcomment -%}
 
 {%- liquid
@@ -30,6 +32,19 @@
     data-lockin-header
   >
     <div class="lk-container lk-header__inner">
+      <button
+        class="lk-header__burger"
+        type="button"
+        data-lockin-burger
+        aria-expanded="false"
+        aria-controls="lockin-nav-drawer"
+        aria-label="Open menu"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+
       <a class="lk-header__brand" href="{{ routes.root_url }}" aria-label="lockin — home">
         {% render 'lockin-wordmark', size: 'clamp(1.45rem, 5vw, 1.8rem)' %}
       </a>
@@ -95,6 +110,63 @@
       </div>
     </div>
   </header>
+
+  {%- comment -%} ---------- Mobile drawer ---------- {%- endcomment -%}
+  <div class="lk-drawer" id="lockin-nav-drawer" data-lockin-drawer hidden>
+    <div class="lk-drawer__backdrop" data-lockin-drawer-close aria-hidden="true"></div>
+    <div class="lk-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+      <div class="lk-drawer__top">
+        {% render 'lockin-wordmark', size: '1.6rem' %}
+        <button
+          class="lk-drawer__close"
+          type="button"
+          data-lockin-drawer-close
+          aria-label="Close menu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      {%- if menu != blank and menu.links.size > 0 -%}
+        <nav class="lk-drawer__nav" aria-label="{{ section.settings.nav_label | escape }}">
+          <ul class="lk-drawer__links">
+            {%- for link in menu.links -%}
+              <li>
+                <a
+                  class="lk-drawer__link"
+                  href="{{ link.url }}"
+                  {% if link.active %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{ link.title }}
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+                    <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </nav>
+      {%- endif -%}
+
+      <div class="lk-drawer__foot">
+        {%- if section.settings.cta_label != blank -%}
+          <a
+            class="lk-btn lk-btn--primary lk-btn--block"
+            href="{{ section.settings.cta_link | default: routes.root_url }}"
+          >
+            {{ section.settings.cta_label }}
+          </a>
+        {%- endif -%}
+        <a class="lk-drawer__cartLink" href="{{ routes.cart_url }}" data-lockin-cart-link>
+          View cart (<span data-lockin-cart-count>{{ cart_count }}</span>)
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
 {% stylesheet %}
@@ -131,7 +203,7 @@
   }
 
   .lk-header {
-    background: color-mix(in srgb, var(--lk-paper) 82%, transparent);
+    background: color-mix(in srgb, var(--lk-paper) 88%, transparent);
     backdrop-filter: saturate(140%) blur(14px);
     -webkit-backdrop-filter: saturate(140%) blur(14px);
     border-bottom: 1px solid var(--lk-line);
@@ -142,36 +214,54 @@
     top: 0;
   }
 
+  /* Mobile: burger / brand / cart. */
   .lk-header__inner {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 44px 1fr 44px;
     align-items: center;
-    gap: 12px;
-    min-height: 62px;
+    gap: 8px;
+    min-height: 60px;
+  }
+
+  .lk-header__burger {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--lk-r-pill);
+    background: transparent;
+    color: var(--lk-ink);
+    cursor: pointer;
+  }
+
+  .lk-header__burger:hover {
+    background: var(--lk-ice);
+  }
+
+  .lk-header__burger svg {
+    inline-size: 24px;
+    block-size: 24px;
   }
 
   .lk-header__brand {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-self: center;
   }
 
   .lk-header__nav {
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .lk-header__nav::-webkit-scrollbar {
     display: none;
+    min-width: 0;
   }
 
   .lk-header__links {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
+    gap: 30px;
     list-style: none;
     margin: 0;
     padding: 0;
@@ -180,7 +270,7 @@
   .lk-header__link {
     display: inline-block;
     padding-block: 6px;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 500;
     color: var(--lk-muted);
     text-decoration: none;
@@ -196,11 +286,10 @@
   .lk-header__actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 10px;
   }
 
-  /* Scoped one level deeper than .lk-btn so these win regardless of the order
-     Shopify concatenates section stylesheets in. */
   .lk-header .lk-header__cta {
     min-height: 40px;
     padding-inline: 20px;
@@ -213,8 +302,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    inline-size: 42px;
-    block-size: 42px;
+    inline-size: 44px;
+    block-size: 44px;
     border-radius: var(--lk-r-pill);
     color: var(--lk-ink);
     text-decoration: none;
@@ -249,14 +338,152 @@
     display: none;
   }
 
-  @media screen and (min-width: 750px) {
+  /* ---------- Drawer ---------- */
+
+  .lk-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+  }
+
+  .lk-drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--lk-ink) 40%, transparent);
+    opacity: 0;
+    transition: opacity 0.25s var(--lk-ease);
+  }
+
+  .lk-drawer__panel {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    inline-size: min(86vw, 360px);
+    background: var(--lk-paper);
+    display: flex;
+    flex-direction: column;
+    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 0 60px color-mix(in srgb, var(--lk-ink) 25%, transparent);
+    transform: translateX(-102%);
+    transition: transform 0.3s var(--lk-ease);
+  }
+
+  .lk-drawer.is-open .lk-drawer__backdrop {
+    opacity: 1;
+  }
+
+  .lk-drawer.is-open .lk-drawer__panel {
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk-drawer__backdrop,
+    .lk-drawer__panel {
+      transition: none;
+    }
+  }
+
+  .lk-drawer__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+  }
+
+  .lk-drawer__close {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-ice);
+    color: var(--lk-ink);
+    cursor: pointer;
+  }
+
+  .lk-drawer__close svg {
+    inline-size: 20px;
+    block-size: 20px;
+  }
+
+  .lk-drawer__nav {
+    margin-top: 18px;
+    flex: 1;
+  }
+
+  .lk-drawer__links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+  }
+
+  .lk-drawer__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 17px;
+    border-bottom: 1px solid var(--lk-line);
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.375rem;
+    letter-spacing: -0.02em;
+    color: var(--lk-ink);
+    text-decoration: none;
+  }
+
+  .lk-drawer__link svg {
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--lk-muted);
+    flex: none;
+  }
+
+  .lk-drawer__link[aria-current='page'] {
+    color: var(--lk-accent);
+  }
+
+  .lk-drawer__foot {
+    display: grid;
+    gap: 14px;
+    padding-top: 18px;
+  }
+
+  .lk-drawer__cartLink {
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--lk-muted);
+    text-decoration: none;
+  }
+
+  .lk-drawer__cartLink:hover {
+    color: var(--lk-ink);
+  }
+
+  /* ---------- Desktop ---------- */
+
+  @media screen and (min-width: 990px) {
     .lk-header__inner {
+      grid-template-columns: auto 1fr auto;
       min-height: 76px;
       gap: 24px;
     }
 
-    .lk-header__links {
-      gap: 30px;
+    .lk-header__burger,
+    .lk-drawer {
+      display: none;
+    }
+
+    .lk-header__brand {
+      justify-self: start;
+    }
+
+    .lk-header__nav {
+      display: block;
     }
 
     .lk-header .lk-header__cta {
@@ -270,39 +497,36 @@
     if (window.__lockinHeader) return;
     window.__lockinHeader = true;
 
+    /* ---------- Cart badge ---------- */
+
     function setCount(count) {
       document.querySelectorAll('[data-lockin-cart-count]').forEach(function (node) {
         node.textContent = String(count);
         node.classList.toggle('is-empty', !count);
         var link = node.closest('[data-lockin-cart-link]');
-        if (link) {
+        if (link && link.hasAttribute('aria-label')) {
           link.setAttribute('aria-label', 'Cart, ' + count + ' item' + (count === 1 ? '' : 's'));
         }
       });
     }
 
-    /* Our own buy module announces cart changes so the badge stays truthful. */
     document.addEventListener('lockin:cart:updated', function (event) {
       if (event.detail && typeof event.detail.itemCount === 'number') setCount(event.detail.itemCount);
     });
 
-    /* Restoring from bfcache can show a stale badge. */
     window.addEventListener('pageshow', function (event) {
       if (!event.persisted) return;
       fetch(window.Theme && Theme.routes ? Theme.routes.cart_url + '.js' : '/cart.js', {
         headers: { Accept: 'application/json' },
         credentials: 'same-origin',
       })
-        .then(function (r) {
-          return r.ok ? r.json() : null;
-        })
-        .then(function (cart) {
-          if (cart) setCount(cart.item_count);
-        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (cart) { if (cart) setCount(cart.item_count); })
         .catch(function () {});
     });
 
-    /* Upgrade the cart link to Horizon's drawer when it is on the page. */
+    /* ---------- Cart drawer upgrade ---------- */
+
     document.addEventListener('click', function (event) {
       var link = event.target.closest && event.target.closest('[data-lockin-cart-link]');
       if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
@@ -312,7 +536,77 @@
       if (!host || typeof host.open !== 'function') return;
 
       event.preventDefault();
+      closeNav();
       host.open();
+    });
+
+    /* ---------- Burger drawer ---------- */
+
+    var lastFocus = null;
+
+    function nav() {
+      return document.querySelector('[data-lockin-drawer]');
+    }
+
+    function burger() {
+      return document.querySelector('[data-lockin-burger]');
+    }
+
+    function openNav() {
+      var drawer = nav();
+      if (!drawer) return;
+      lastFocus = document.activeElement;
+      drawer.hidden = false;
+      /* Let `hidden` clear before the transition class lands. */
+      requestAnimationFrame(function () {
+        drawer.classList.add('is-open');
+      });
+      burger()?.setAttribute('aria-expanded', 'true');
+      document.documentElement.style.overflow = 'hidden';
+      var first = drawer.querySelector('.lk-drawer__close');
+      if (first) first.focus();
+    }
+
+    function closeNav() {
+      var drawer = nav();
+      if (!drawer || drawer.hidden) return;
+      drawer.classList.remove('is-open');
+      burger()?.setAttribute('aria-expanded', 'false');
+      document.documentElement.style.overflow = '';
+      var done = function () {
+        drawer.hidden = true;
+      };
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) {
+        done();
+      } else {
+        setTimeout(done, 320);
+      }
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    document.addEventListener('click', function (event) {
+      if (event.target.closest && event.target.closest('[data-lockin-burger]')) {
+        var drawer = nav();
+        if (drawer && drawer.hidden) {
+          openNav();
+        } else {
+          closeNav();
+        }
+        return;
+      }
+      if (event.target.closest && event.target.closest('[data-lockin-drawer-close]')) {
+        closeNav();
+        return;
+      }
+      /* Navigating from a drawer link closes it too. */
+      if (event.target.closest && event.target.closest('.lk-drawer__link')) {
+        closeNav();
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeNav();
     });
   })();
 </script>
@@ -374,15 +668,15 @@
     {
       "type": "checkbox",
       "id": "show_cta",
-      "label": "Show button",
-      "info": "Hidden below 750px to keep the mobile header light.",
+      "label": "Show button (desktop)",
       "default": true
     },
     {
       "type": "text",
       "id": "cta_label",
       "label": "Button label",
-      "default": "Shop"
+      "info": "Also used for the button inside the mobile menu.",
+      "default": "Shop lockin"
     },
     {
       "type": "url",
