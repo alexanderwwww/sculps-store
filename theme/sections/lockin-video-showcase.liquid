@@ -12,7 +12,7 @@
         <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
       {%- endif -%}
       {%- if section.settings.heading != blank -%}
-        <h1 class="lk-h1 lk-vs__heading">{{ section.settings.heading }}</h1>
+        <{{ section.settings.heading_tag | default: 'h2' }} class="lk-h1 lk-vs__heading">{{ section.settings.heading }}</{{ section.settings.heading_tag | default: 'h2' }}>
       {%- endif -%}
       {%- if section.settings.body != blank -%}
         <p class="lk-lede lk-vs__body">{{ section.settings.body }}</p>
@@ -212,6 +212,17 @@
       "id": "eyebrow",
       "label": "Eyebrow",
       "default": "How it works"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "Heading level",
+      "info": "h1 only when this section opens the page.",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" }
+      ],
+      "default": "h2"
     },
     {
       "type": "text",

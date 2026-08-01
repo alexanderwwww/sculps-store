@@ -35,7 +35,8 @@
         "heading": "One foil a day. Here's the whole ritual.",
         "body": "No water, no counting, no timing around meals. Tear one foil, chew two chewables, get on with your day.",
         "poster": "shopify://shop_images/lockin-photo-desk.png",
-        "screen_caption": "The 10-second morning"
+        "screen_caption": "The 10-second morning",
+        "heading_tag": "h1"
       }
     },
     "mechanism": {

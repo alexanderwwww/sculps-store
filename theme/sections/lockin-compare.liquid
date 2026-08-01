@@ -1,0 +1,309 @@
+{%- comment -%}
+  lockin — comparison table.
+
+  "Why this and not coffee?" answered in one glance. A real <table> for
+  accessibility; the lockin column is visually raised. Cell values: "yes"
+  renders a check, "no" renders a cross, anything else prints as text —
+  keep every row objective and factual (caffeine content, sugar, dosing),
+  no invented scores or made-up competitor failings.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-cmp">
+  <div class="lk-container">
+    <header class="lk-cmp__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+    </header>
+
+    <div class="lk-cmp__scroll lk-reveal">
+      <table class="lk-cmp__table">
+        <thead>
+          <tr>
+            <th class="lk-cmp__corner" scope="col"><span class="lk-vh">Feature</span></th>
+            <th class="lk-cmp__col lk-cmp__col--self" scope="col">{{ section.settings.col_self }}</th>
+            <th class="lk-cmp__col" scope="col">{{ section.settings.col_b }}</th>
+            <th class="lk-cmp__col" scope="col">{{ section.settings.col_c }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {%- for block in section.blocks -%}
+            <tr {{ block.shopify_attributes }}>
+              <th class="lk-cmp__label" scope="row">{{ block.settings.label }}</th>
+              {%- for col in (1..3) -%}
+                {%- liquid
+                  if col == 1
+                    assign raw = block.settings.value_self
+                  elsif col == 2
+                    assign raw = block.settings.value_b
+                  else
+                    assign raw = block.settings.value_c
+                  endif
+                  assign v = raw | strip | downcase
+                -%}
+                <td class="lk-cmp__cell{% if col == 1 %} lk-cmp__cell--self{% endif %}">
+                  {%- if v == 'yes' -%}
+                    <span class="lk-cmp__icon lk-cmp__icon--yes" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.4 3 3L12.8 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="lk-vh">Yes</span>
+                  {%- elsif v == 'no' -%}
+                    <span class="lk-cmp__icon lk-cmp__icon--no" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" fill="none"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                    <span class="lk-vh">No</span>
+                  {%- else -%}
+                    {{ raw | strip }}
+                  {%- endif -%}
+                </td>
+              {%- endfor -%}
+            </tr>
+          {%- endfor -%}
+        </tbody>
+      </table>
+    </div>
+
+    {%- if section.settings.footnote != blank -%}
+      <p class="lk-cmp__footnote lk-reveal">{{ section.settings.footnote }}</p>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-cmp__head {
+    max-width: 560px;
+    margin-bottom: 26px;
+  }
+
+  .lk-cmp__head .lk-h2 {
+    margin-top: 12px;
+  }
+
+  .lk-vh {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .lk-cmp__scroll {
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(var(--lk-gutter) * -1);
+    padding-inline: var(--lk-gutter);
+  }
+
+  .lk-cmp__scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lk-cmp__table {
+    inline-size: 100%;
+    min-inline-size: 460px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8125rem;
+  }
+
+  .lk-cmp__table th,
+  .lk-cmp__table td {
+    padding: 13px 10px;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--lk-line);
+  }
+
+  .lk-cmp__corner {
+    border-bottom: 1px solid var(--lk-line);
+  }
+
+  .lk-cmp__col {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: -0.01em;
+    color: var(--lk-muted);
+    white-space: nowrap;
+  }
+
+  .lk-cmp__label {
+    text-align: left;
+    font-weight: 600;
+    color: var(--lk-ink);
+    padding-left: 0;
+    min-inline-size: 118px;
+  }
+
+  .lk-cmp__cell {
+    color: var(--lk-muted);
+    line-height: 1.4;
+  }
+
+  /* Raised lockin column. */
+  .lk-cmp__col--self,
+  .lk-cmp__cell--self {
+    background: var(--lk-ice-soft);
+    color: var(--lk-ink);
+    font-weight: 600;
+    border-inline: 1px solid color-mix(in srgb, var(--lk-accent) 40%, var(--lk-line));
+  }
+
+  .lk-cmp__col--self {
+    color: var(--lk-ink);
+    border-top: 1px solid color-mix(in srgb, var(--lk-accent) 40%, var(--lk-line));
+    border-start-start-radius: var(--lk-r-sm);
+    border-start-end-radius: var(--lk-r-sm);
+  }
+
+  .lk-cmp__table tbody tr:last-child .lk-cmp__cell--self {
+    border-bottom: 1px solid color-mix(in srgb, var(--lk-accent) 40%, var(--lk-line));
+    border-end-start-radius: var(--lk-r-sm);
+    border-end-end-radius: var(--lk-r-sm);
+  }
+
+  .lk-cmp__icon {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 22px;
+    block-size: 22px;
+    border-radius: var(--lk-r-pill);
+  }
+
+  .lk-cmp__icon svg {
+    inline-size: 12px;
+    block-size: 12px;
+  }
+
+  .lk-cmp__icon--yes {
+    background: var(--lk-accent);
+    color: var(--lk-ink);
+  }
+
+  /* Outside the lockin column a check is just a fact, not a win — keep it neutral. */
+  .lk-cmp__cell:not(.lk-cmp__cell--self) .lk-cmp__icon--yes {
+    background: color-mix(in srgb, var(--lk-ink) 7%, transparent);
+    color: var(--lk-muted);
+  }
+
+  .lk-cmp__icon--no {
+    background: color-mix(in srgb, var(--lk-ink) 7%, transparent);
+    color: var(--lk-muted);
+  }
+
+  .lk-cmp__footnote {
+    margin-top: 16px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--lk-muted);
+    max-width: 70ch;
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-cmp__table {
+      font-size: 0.9375rem;
+    }
+
+    .lk-cmp__table th,
+    .lk-cmp__table td {
+      padding: 16px 14px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin compare",
+  "tag": "section",
+  "class": "lockin-cmp-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "The alternative"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Why not just coffee?"
+    },
+    {
+      "type": "text",
+      "id": "col_self",
+      "label": "Column 1 (this product)",
+      "default": "lockin"
+    },
+    {
+      "type": "text",
+      "id": "col_b",
+      "label": "Column 2",
+      "default": "Coffee"
+    },
+    {
+      "type": "text",
+      "id": "col_c",
+      "label": "Column 3",
+      "default": "Energy drinks"
+    },
+    {
+      "type": "textarea",
+      "id": "footnote",
+      "label": "Footnote",
+      "info": "Keep comparisons factual — quantities and ingredient facts, not invented scores.",
+      "default": "Typical values: brewed coffee ~95mg caffeine per cup; a 250ml energy drink ~80mg caffeine and up to 27g sugar."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "row",
+      "name": "Comparison row",
+      "limit": 8,
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Row label",
+          "default": "Caffeine"
+        },
+        {
+          "type": "text",
+          "id": "value_self",
+          "label": "This product",
+          "info": "\"yes\" = check, \"no\" = cross, anything else prints as text.",
+          "default": "no"
+        },
+        {
+          "type": "text",
+          "id": "value_b",
+          "label": "Column 2 value",
+          "default": "yes"
+        },
+        {
+          "type": "text",
+          "id": "value_c",
+          "label": "Column 3 value",
+          "default": "yes"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin compare",
+      "blocks": [
+        { "type": "row", "settings": { "label": "Caffeine", "value_self": "None", "value_b": "~95mg / cup", "value_c": "~80mg / can" } },
+        { "type": "row", "settings": { "label": "Sugar", "value_self": "None", "value_b": "Depends", "value_c": "Up to 27g" } },
+        { "type": "row", "settings": { "label": "Afternoon crash", "value_self": "no", "value_b": "yes", "value_c": "yes" } },
+        { "type": "row", "settings": { "label": "NAD+ support (NR)", "value_self": "yes", "value_b": "no", "value_c": "no" } },
+        { "type": "row", "settings": { "label": "Works after 4pm", "value_self": "yes", "value_b": "no", "value_c": "no" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

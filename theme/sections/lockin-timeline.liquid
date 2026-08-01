@@ -1,0 +1,241 @@
+{%- comment -%}
+  lockin — "what to expect" timeline.
+
+  Expectation-setting for a non-stimulant: the buyer needs to know nothing
+  happens on day one BEFORE they buy, or they refund on day three. Each step
+  is a block; a step marked "highlight" renders as the accent guarantee card.
+  No outcome promises — the copy sets a judgement point, not a result.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-tl">
+  <div class="lk-container">
+    <header class="lk-tl__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+      {%- if section.settings.subheading != blank -%}
+        <p class="lk-tl__sub">{{ section.settings.subheading }}</p>
+      {%- endif -%}
+    </header>
+
+    <ol class="lk-tl__list">
+      {%- for block in section.blocks -%}
+        <li class="lk-tl__step{% if block.settings.highlight %} lk-tl__step--highlight{% endif %} lk-reveal" {{ block.shopify_attributes }}>
+          <span class="lk-tl__marker" aria-hidden="true">
+            {%- if block.settings.highlight -%}
+              <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.4 3 3L12.8 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {%- endif -%}
+          </span>
+          <div class="lk-tl__card">
+            {%- if block.settings.label != blank -%}
+              <p class="lk-tl__label">{{ block.settings.label }}</p>
+            {%- endif -%}
+            {%- if block.settings.title != blank -%}
+              <h3 class="lk-tl__title">{{ block.settings.title }}</h3>
+            {%- endif -%}
+            {%- if block.settings.text != blank -%}
+              <p class="lk-tl__text">{{ block.settings.text }}</p>
+            {%- endif -%}
+          </div>
+        </li>
+      {%- endfor -%}
+    </ol>
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-tl__head {
+    max-width: 560px;
+    margin-bottom: 34px;
+  }
+
+  .lk-tl__head .lk-h2 {
+    margin-top: 12px;
+  }
+
+  .lk-tl__sub {
+    margin-top: 12px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-tl__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+    position: relative;
+  }
+
+  .lk-tl__step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 16px;
+    padding-bottom: 22px;
+  }
+
+  /* Connecting line between markers. */
+  .lk-tl__step::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 26px;
+    bottom: -2px;
+    width: 2px;
+    background: var(--lk-line);
+  }
+
+  .lk-tl__step:last-child::before {
+    display: none;
+  }
+
+  .lk-tl__step:last-child {
+    padding-bottom: 0;
+  }
+
+  .lk-tl__marker {
+    display: grid;
+    place-items: center;
+    inline-size: 24px;
+    block-size: 24px;
+    margin-top: 2px;
+    border-radius: var(--lk-r-pill);
+    border: 2px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+    z-index: 1;
+  }
+
+  .lk-tl__step--highlight .lk-tl__marker {
+    border-color: var(--lk-accent);
+    background: var(--lk-accent);
+    color: var(--lk-ink);
+  }
+
+  .lk-tl__marker svg {
+    inline-size: 13px;
+    block-size: 13px;
+  }
+
+  .lk-tl__label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lk-muted);
+  }
+
+  .lk-tl__step--highlight .lk-tl__label {
+    color: var(--lk-ink);
+  }
+
+  .lk-tl__title {
+    margin-top: 4px;
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1.125rem;
+    letter-spacing: -0.015em;
+  }
+
+  .lk-tl__text {
+    margin-top: 5px;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+    max-width: 52ch;
+  }
+
+  .lk-tl__step--highlight .lk-tl__card {
+    padding: 18px 20px;
+    border-radius: var(--lk-r-md);
+    background:
+      radial-gradient(130% 170% at 100% 0%, color-mix(in srgb, var(--lk-accent) 24%, transparent) 0%, transparent 55%),
+      var(--lk-ice-soft);
+    border: 1px solid color-mix(in srgb, var(--lk-accent) 45%, var(--lk-line));
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-tl__head {
+      margin-bottom: 42px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin timeline",
+  "tag": "section",
+  "class": "lockin-tl-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "What to expect"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "The honest timeline."
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "This isn't caffeine, so day one feels like nothing. Here's the actual shape of it."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Day 1"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "No jolt. That's the point."
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "Nothing to feel in an hour — there's no stimulant to spike."
+        },
+        {
+          "type": "checkbox",
+          "id": "highlight",
+          "label": "Highlight as guarantee card",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin timeline",
+      "blocks": [
+        { "type": "step", "settings": { "label": "Day 1", "title": "No jolt. That's the point.", "text": "Nothing to feel in an hour — there's no stimulant to spike." } },
+        { "type": "step", "settings": { "label": "Week 1–2", "title": "The habit locks in.", "text": "One foil with breakfast. Ten seconds, no water." } },
+        { "type": "step", "settings": { "label": "Week 3–4", "title": "Judge it here.", "text": "This is where you take stock of your afternoons — not day one." } },
+        { "type": "step", "settings": { "label": "Day 30", "title": "Not for you? Money back.", "text": "Full refund inside 30 days. No forms, no return games.", "highlight": true } }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -110,6 +110,188 @@
         "after_add": "drawer"
       }
     },
+    "timeline": {
+      "type": "lockin-timeline",
+      "blocks": {
+        "t1": {
+          "type": "step",
+          "settings": {
+            "label": "Day 1",
+            "title": "No jolt. That's the point.",
+            "text": "Nothing to feel in an hour — there's no stimulant to spike."
+          }
+        },
+        "t2": {
+          "type": "step",
+          "settings": {
+            "label": "Week 1–2",
+            "title": "The habit locks in.",
+            "text": "One foil with breakfast. Ten seconds, no water."
+          }
+        },
+        "t3": {
+          "type": "step",
+          "settings": {
+            "label": "Week 3–4",
+            "title": "Judge it here.",
+            "text": "This is where you take stock of your afternoons — not day one."
+          }
+        },
+        "t4": {
+          "type": "step",
+          "settings": {
+            "label": "Day 30",
+            "title": "Not for you? Money back.",
+            "text": "Full refund inside 30 days. No forms, no return games.",
+            "highlight": true
+          }
+        }
+      },
+      "block_order": ["t1", "t2", "t3", "t4"],
+      "settings": {
+        "eyebrow": "What to expect",
+        "heading": "The honest timeline.",
+        "subheading": "This isn't caffeine, so day one feels like nothing. Here's the actual shape of it."
+      }
+    },
+    "video": {
+      "type": "lockin-video-showcase",
+      "blocks": {
+        "c1": {
+          "type": "chapter",
+          "settings": {
+            "title": "Tear",
+            "text": "One foil off the strip. It lives in a bag, a car door, a jacket."
+          }
+        },
+        "c2": {
+          "type": "chapter",
+          "settings": {
+            "title": "Chew",
+            "text": "Two blueberry chewables. No water, lightly sweet, no chalk."
+          }
+        },
+        "c3": {
+          "type": "chapter",
+          "settings": {
+            "title": "Repeat tomorrow",
+            "text": "The work is cumulative — day 30 is the day to judge it."
+          }
+        }
+      },
+      "block_order": ["c1", "c2", "c3"],
+      "settings": {
+        "eyebrow": "See it",
+        "heading": "Ten seconds a day.",
+        "body": "Tear one foil, chew two chewables, get on with your morning.",
+        "poster": "shopify://shop_images/lockin-photo-kitchen.png",
+        "screen_caption": "The 10-second morning"
+      }
+    },
+    "compare": {
+      "type": "lockin-compare",
+      "blocks": {
+        "row1": {
+          "type": "row",
+          "settings": {
+            "label": "Caffeine",
+            "value_self": "None",
+            "value_b": "~95mg / cup",
+            "value_c": "~80mg / can"
+          }
+        },
+        "row2": {
+          "type": "row",
+          "settings": {
+            "label": "Sugar",
+            "value_self": "None",
+            "value_b": "Depends",
+            "value_c": "Up to 27g"
+          }
+        },
+        "row3": {
+          "type": "row",
+          "settings": {
+            "label": "Afternoon crash",
+            "value_self": "no",
+            "value_b": "yes",
+            "value_c": "yes"
+          }
+        },
+        "row4": {
+          "type": "row",
+          "settings": {
+            "label": "NAD+ support (NR)",
+            "value_self": "yes",
+            "value_b": "no",
+            "value_c": "no"
+          }
+        },
+        "row5": {
+          "type": "row",
+          "settings": {
+            "label": "Fine after 4pm",
+            "value_self": "yes",
+            "value_b": "no",
+            "value_c": "no"
+          }
+        }
+      },
+      "block_order": ["row1", "row2", "row3", "row4", "row5"],
+      "settings": {
+        "eyebrow": "The alternative",
+        "heading": "Why not just coffee?",
+        "col_self": "lockin",
+        "col_b": "Coffee",
+        "col_c": "Energy drinks",
+        "footnote": "Typical values: brewed coffee ~95mg caffeine per cup; a 250ml energy drink ~80mg caffeine and up to 27g sugar."
+      }
+    },
+    "gallery": {
+      "type": "lockin-media-grid",
+      "blocks": {
+        "g1": {
+          "type": "media",
+          "settings": {
+            "wide": true,
+            "ambient": true,
+            "image": "shopify://shop_images/lockin-photo-marble.png",
+            "tag": "Anywhere",
+            "caption": "One foil lives wherever your morning happens."
+          }
+        },
+        "g2": {
+          "type": "media",
+          "settings": {
+            "image": "shopify://shop_images/lockin-photo-macro.png",
+            "tag": "The dose",
+            "caption": "Two blueberry chewables. Chew, don't swallow."
+          }
+        },
+        "g3": {
+          "type": "media",
+          "settings": {
+            "image": "shopify://shop_images/lockin-photo-box-foil.png",
+            "tag": "Sealed fresh",
+            "caption": "Nothing is opened until you tear it."
+          }
+        },
+        "g4": {
+          "type": "media",
+          "settings": {
+            "wide": true,
+            "image": "shopify://shop_images/lockin-photo-desk.png",
+            "tag": "Desk-drawer proof",
+            "caption": "This card takes an MP4 URL — drop real footage in when you have it."
+          }
+        }
+      },
+      "block_order": ["g1", "g2", "g3", "g4"],
+      "settings": {
+        "eyebrow": "Up close",
+        "heading": "What lands on your doorstep."
+      }
+    },
     "video_faq": {
       "type": "lockin-video-faq",
       "blocks": {
@@ -280,6 +462,10 @@
   "order": [
     "main",
     "whats_inside",
+    "timeline",
+    "video",
+    "compare",
+    "gallery",
     "review_carousel",
     "video_faq"
   ]
