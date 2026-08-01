@@ -21,49 +21,25 @@
             "text": "KSM-66 300mg — calm"
           }
         },
-        "badge1": {
-          "type": "badge",
-          "settings": {
-            "label": "No caffeine"
-          }
-        },
-        "badge2": {
-          "type": "badge",
-          "settings": {
-            "label": "No sugar"
-          }
-        },
-        "badge3": {
-          "type": "badge",
-          "settings": {
-            "label": "No crash"
-          }
-        },
-        "badge4": {
-          "type": "badge",
-          "settings": {
-            "label": "30 sealed foils"
-          }
-        },
         "mfaq1": {
           "type": "faq",
           "settings": {
-            "question": "When will I feel it?",
-            "answer": "NAD+ support builds over weeks — judge it at day 30, not day one. There is no stimulant, so there is nothing to feel in hour one."
+            "question": "What does it do?",
+            "answer": "NR raises NAD+ — the fuel your cells use for energy and repair. PQQ and CoQ10 support the mitochondria that spend it, and KSM-66 keeps the energy calm instead of wired."
           }
         },
         "mfaq2": {
           "type": "faq",
           "settings": {
-            "question": "How do I take it?",
-            "answer": "Tear one foil a day, chew both chewables. No water, any time of day — no caffeine means it won't touch your sleep."
+            "question": "Is it safe?",
+            "answer": "Open label, full studied doses, no caffeine, no sugar. Not for use if pregnant, nursing, or under 18 — and if you take thyroid or sedative medication, check with your physician first, because ashwagandha can interact."
           }
         },
         "mfaq3": {
           "type": "faq",
           "settings": {
-            "question": "Shipping and returns?",
-            "answer": "3- and 6-month supplies ship free. 30-day money-back guarantee — if it's not for you, say so and we'll make it right."
+            "question": "How long until it works?",
+            "answer": "It builds — this is cellular support, not a stimulant. Most people judge it right at day 30. If it's not for you, there's a 30-day money-back guarantee."
           }
         },
         "bundle1": {
@@ -98,10 +74,6 @@
         "glass1",
         "glass2",
         "glass3",
-        "badge1",
-        "badge2",
-        "badge3",
-        "badge4",
         "mfaq1",
         "mfaq2",
         "mfaq3",
@@ -183,18 +155,6 @@
         "eyebrow": "Questions",
         "heading": "Everything people ask.",
         "one_at_a_time": true
-      }
-    },
-    "before_after": {
-      "type": "lockin-before-after",
-      "settings": {
-        "eyebrow": "The difference",
-        "heading": "Your afternoon, before and after.",
-        "subheading": "Drag the slider. A stimulant day spikes and drops. A lockin day is flatter on purpose — energy your cells make, not energy you borrow.",
-        "before_label": "Caffeine day",
-        "after_label": "lockin day",
-        "slider_label": "Compare a caffeine day with a lockin day",
-        "caption": "Illustrative curves, not measurements. Individual experience varies — many people notice nothing on day one, because there is no stimulant to notice."
       }
     },
     "review_carousel": {
@@ -314,70 +274,12 @@
         "does_title": "What two chewables do",
         "footnote": "Blueberry flavour. No sugar, no artificial dyes, no gelatin. Full supplement facts on the how-it-works page."
       }
-    },
-    "review_wall": {
-      "type": "lockin-review-wall",
-      "blocks": {
-        "w1": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "w2": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true,
-            "image": "shopify://shop_images/lockin-photo-macro.png"
-          }
-        },
-        "w3": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "w4": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true,
-            "image": "shopify://shop_images/lockin-photo-marble.png"
-          }
-        },
-        "w5": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "w6": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true,
-            "image": "shopify://shop_images/lockin-photo-kitchen.png"
-          }
-        }
-      },
-      "block_order": [
-        "w1",
-        "w2",
-        "w3",
-        "w4",
-        "w5",
-        "w6"
-      ],
-      "settings": {
-        "eyebrow": "More from customers",
-        "heading": "Thirty days in, in their words."
-      }
     }
   },
   "order": [
     "main",
-    "video_faq",
-    "before_after",
-    "review_carousel",
     "whats_inside",
-    "review_wall"
+    "review_carousel",
+    "video_faq"
   ]
 }
