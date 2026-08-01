@@ -37,12 +37,12 @@
       "settings": {
         "eyebrow": "Cellular energy chewables",
         "heading": "Energy that doesn't crash.",
-        "subline": "Two chewables a day, sealed one dose at a time. NR, PQQ and CoQ10 work inside your mitochondria — so you make energy instead of borrowing it from tomorrow.",
+        "subline": "Cellular energy, sealed one dose at a time.",
         "cta_label": "Shop lockin",
         "cta_link": "shopify://products/lockin-cellular-energy-chewables",
         "secondary_label": "See the science",
         "secondary_link": "shopify://pages/science",
-        "price_note": "From €49 — 30 sealed daily doses.",
+        "price_note": "From €49 · 30 daily doses",
         "product": "lockin-cellular-energy-chewables",
         "glow_opacity": 30,
         "image": "shopify://shop_images/lockin-photo-box-front.png"
@@ -54,7 +54,7 @@
         "stat": "50%",
         "stat_caption": "NAD+ remaining at 50",
         "heading": "By 50, your NAD+ is roughly half what it was at 20.",
-        "body": "NAD+ is the coenzyme your mitochondria use to turn food into usable energy, and the one your cells use for DNA repair. Levels fall steadily with age. That decline is the reason lockin leads with NR rather than a stimulant.",
+        "body": "NAD+ powers your cells' energy and repair — and it falls with age. That's why lockin leads with NR, not a stimulant.",
         "link_label": "Read the science",
         "link": "shopify://pages/science"
       }
@@ -67,7 +67,7 @@
           "settings": {
             "icon": "repair",
             "title": "Repair",
-            "body": "NR raises NAD+, the coenzyme your cells use for DNA repair — and the one that drops as you age.",
+            "body": "Your cells repair themselves daily. lockin feeds that process.",
             "footnote": "NR 300mg"
           }
         },
@@ -76,7 +76,7 @@
           "settings": {
             "icon": "energy",
             "title": "Energy",
-            "body": "PQQ and CoQ10 work inside the mitochondria, so you produce energy rather than borrow it from tomorrow.",
+            "body": "Energy made inside the cell — all day, no spike.",
             "footnote": "PQQ 20mg · CoQ10 100mg"
           }
         },
@@ -85,7 +85,7 @@
           "settings": {
             "icon": "calm",
             "title": "Calm",
-            "body": "KSM-66 ashwagandha at the full studied dose. It is what makes the energy steady instead of anxious.",
+            "body": "Stress hormones stay in check. Steady, not wired.",
             "footnote": "KSM-66 300mg"
           }
         }
@@ -97,8 +97,8 @@
       ],
       "settings": {
         "eyebrow": "What two chewables do",
-        "heading": "Three jobs, one dose.",
-        "subheading": "Open label — every gram is on the box, nothing hidden behind a proprietary blend."
+        "heading": "Repair. Energy. Calm.",
+        "subheading": "Open label. Nothing hidden."
       }
     },
     "foils": {
@@ -134,7 +134,7 @@
       "settings": {
         "eyebrow": "Why foils, not a bottle",
         "heading": "Dose thirty as strong as dose one.",
-        "body": "<p>NR and vitamin C degrade on contact with air. In an opened bottle, every time you take the lid off, what is left inside gets a little weaker. By the end of the month you are taking a different product than the one you bought.</p>",
+        "body": "<p>Air degrades NR and vitamin C — an opened bottle gets weaker every day. Foils don't.</p>",
         "media_position": "left",
         "tone": "ice",
         "image": "shopify://shop_images/lockin-photo-marble.png"
@@ -202,7 +202,7 @@
       "settings": {
         "eyebrow": "One box. Thirty days.",
         "heading": "Start with a month.",
-        "body": "Two chewables in the morning. No water, no caffeine, no 3pm drop. If it is not for you, say so and we will make it right.",
+        "body": "Two chewables in the morning. 30-day money-back.",
         "tone": "ice",
         "product": "lockin-cellular-energy-chewables",
         "cta_label": "Shop lockin",

@@ -6,40 +6,40 @@
         "glass1": {
           "type": "glass",
           "settings": {
-            "text": "NR 300mg — repair"
+            "text": "Daily cell repair"
           }
         },
         "glass2": {
           "type": "glass",
           "settings": {
-            "text": "CoQ10 + PQQ — energy"
+            "text": "All-day energy"
           }
         },
         "glass3": {
           "type": "glass",
           "settings": {
-            "text": "KSM-66 300mg — calm"
+            "text": "Calm, not wired"
           }
         },
         "mfaq1": {
           "type": "faq",
           "settings": {
             "question": "What does it do?",
-            "answer": "NR raises NAD+ — the fuel your cells use for energy and repair. PQQ and CoQ10 support the mitochondria that spend it, and KSM-66 keeps the energy calm instead of wired."
+            "answer": "Cell repair, steady energy, calm focus. Full formula on the box — no proprietary blends."
           }
         },
         "mfaq2": {
           "type": "faq",
           "settings": {
             "question": "Is it safe?",
-            "answer": "Open label, full studied doses, no caffeine, no sugar. Not for use if pregnant, nursing, or under 18 — and if you take thyroid or sedative medication, check with your physician first, because ashwagandha can interact."
+            "answer": "No caffeine, no sugar, open label. Not for pregnancy, nursing or under 18 — on thyroid or sedative meds, ask your doctor first."
           }
         },
         "mfaq3": {
           "type": "faq",
           "settings": {
             "question": "How long until it works?",
-            "answer": "It builds — this is cellular support, not a stimulant. Most people judge it right at day 30. If it's not for you, there's a 30-day money-back guarantee."
+            "answer": "It builds over weeks — judge it at day 30. Money-back if it's not for you."
           }
         },
         "bundle1": {
@@ -84,10 +84,10 @@
       "settings": {
         "eyebrow": "Cellular energy chewables",
         "title": "Energy that doesn't crash.",
-        "subtitle": "Two chewables a day, sealed one dose at a time. NR, PQQ, CoQ10 and KSM-66 at the full studied doses — no caffeine, no sugar, nothing to come down from.",
+        "subtitle": "Two chewables a day. No caffeine, no sugar, no crash.",
         "offer_badge": "Launch offer",
-        "offer_title": "Up to €60 off multi-month supplies",
-        "offer_text": "3- and 6-month supplies ship free and lock the launch price. Applied automatically — no code needed.",
+        "offer_title": "Up to €60 off",
+        "offer_text": "3+ months ship free. Applied automatically.",
         "purchase_legend": "Purchase type",
         "subscribe_discount": 20,
         "subscribe_label": "Subscribe & save",
@@ -99,7 +99,7 @@
         "default_bundle": 2,
         "per_box_suffix": "/ box",
         "submit_label": "Add to cart",
-        "reassurance": "30-day money-back guarantee · Free shipping on 3+ months",
+        "reassurance": "30-day money-back · Free shipping on 3+ months",
         "after_add": "drawer"
       }
     },
@@ -110,35 +110,35 @@
           "type": "qa",
           "settings": {
             "question": "Will I feel it like caffeine?",
-            "answer": "<p>No. There is no stimulant in lockin, so there is no lift and no drop. What most people notice is the absence of the afternoon dip rather than a spike in the morning.</p>"
+            "answer": "<p>No. There's no stimulant — no lift, no drop. You just stop dipping at 3pm.</p>"
           }
         },
         "q2": {
           "type": "qa",
           "settings": {
             "question": "How long until it does anything?",
-            "answer": "<p>NAD+ support is cumulative, not immediate. Give it the full 30 days before you judge it. Vitamin C and B12 act sooner, but they are the smaller part of the formula.</p>"
+            "answer": "<p>It builds. Judge it at day 30, not day one.</p>"
           }
         },
         "q3": {
           "type": "qa",
           "settings": {
             "question": "Can I take it at night?",
-            "answer": "<p>Yes. No caffeine means a late dose will not affect your sleep. Ashwagandha is often taken in the evening for exactly that reason.</p>"
+            "answer": "<p>Yes — no caffeine, so it won't touch your sleep.</p>"
           }
         },
         "q4": {
           "type": "qa",
           "settings": {
             "question": "Why foils instead of a bottle?",
-            "answer": "<p>NR and vitamin C degrade on contact with air. An opened bottle gets weaker every time you open it. A sealed foil per dose means day thirty is as strong as day one.</p>"
+            "answer": "<p>Air kills NR and vitamin C. Sealed foils mean day 30 is as strong as day 1.</p>"
           }
         },
         "q5": {
           "type": "qa",
           "settings": {
             "question": "Who should not take it?",
-            "answer": "<p>Not for use if pregnant, nursing, or under 18. Ashwagandha can interact with thyroid and sedative medications — talk to your physician before starting if either applies to you.</p>"
+            "answer": "<p>Not for pregnancy, nursing or under 18. On thyroid or sedative meds, ask your doctor.</p>"
           }
         }
       },
@@ -153,7 +153,7 @@
         "poster": "shopify://shop_images/lockin-photo-marble.png",
         "screen_caption": "One foil. Two chewables. Done.",
         "eyebrow": "Questions",
-        "heading": "Everything people ask.",
+        "heading": "Questions.",
         "one_at_a_time": true
       }
     },
@@ -200,7 +200,8 @@
       ],
       "settings": {
         "eyebrow": "In their words",
-        "heading": "What people say."
+        "heading": "What people say.",
+        "note": "Placeholder quotes — real reviews land here."
       }
     },
     "whats_inside": {
@@ -211,7 +212,7 @@
           "settings": {
             "qty": "30×",
             "text": "Individually sealed foils",
-            "detail": "One foil is one day. Tear, chew, done."
+            "detail": "One foil = one day."
           }
         },
         "i2": {
@@ -219,7 +220,7 @@
           "settings": {
             "qty": "60×",
             "text": "Blueberry chewables",
-            "detail": "Two per foil — that is the full daily dose."
+            "detail": "Two per foil. That's the dose."
           }
         },
         "i3": {
@@ -227,31 +228,25 @@
           "settings": {
             "qty": "1×",
             "text": "The box",
-            "detail": "A month of doses at full strength, day 1 to day 30."
+            "detail": "Full strength, day 1 to 30."
           }
         },
         "d1": {
           "type": "does",
           "settings": {
-            "text": "NR 300mg raises NAD+ — the coenzyme your cells use for energy and DNA repair."
+            "text": "Repairs — supports your cells' daily DNA repair."
           }
         },
         "d2": {
           "type": "does",
           "settings": {
-            "text": "PQQ 20mg and CoQ10 100mg support the mitochondria that spend that NAD+."
+            "text": "Energizes — steady output all day, no spike, no dip."
           }
         },
         "d3": {
           "type": "does",
           "settings": {
-            "text": "KSM-66 ashwagandha 300mg keeps cortisol from making the energy feel anxious."
-          }
-        },
-        "d4": {
-          "type": "does",
-          "settings": {
-            "text": "Vitamin C 250mg and B12 500mcg round out the formula — open label, nothing hidden."
+            "text": "Balances — keeps stress hormones in check."
           }
         }
       },
@@ -261,18 +256,17 @@
         "i3",
         "d1",
         "d2",
-        "d3",
-        "d4"
+        "d3"
       ],
       "settings": {
         "eyebrow": "In the box",
-        "heading": "What you receive, and what it does.",
+        "heading": "What you get.",
         "image_1": "shopify://shop_images/lockin-photo-box-foil.png",
         "image_2": "shopify://shop_images/lockin-photo-macro.png",
         "image_3": "shopify://shop_images/lockin-photo-desk.png",
         "received_title": "Inside every box",
-        "does_title": "What two chewables do",
-        "footnote": "Blueberry flavour. No sugar, no artificial dyes, no gelatin. Full supplement facts on the how-it-works page."
+        "does_title": "What it does",
+        "footnote": "Blueberry. No sugar, no dyes, no gelatin. Full ingredient doses on the how-it-works page."
       }
     }
   },

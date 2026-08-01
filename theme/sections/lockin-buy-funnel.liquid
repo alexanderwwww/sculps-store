@@ -55,19 +55,35 @@
       <div class="lk-bf__mediaCol">
         <div class="lk-bf__mediaSticky">
           <div class="lk-bf__stage">
-            {%- if hero != blank -%}
-              <img
-                class="lk-bf__hero"
-                data-lockin-main-image
-                src="{{ hero | image_url: width: 1400 }}"
-                srcset="{{ hero | image_url: width: 700 }} 700w, {{ hero | image_url: width: 1400 }} 1400w, {{ hero | image_url: width: 2000 }} 2000w"
-                sizes="(min-width: 990px) 55vw, 100vw"
-                alt="{{ hero.alt | default: product.title | escape }}"
-                width="{{ hero.width }}"
-                height="{{ hero.height }}"
-                loading="eager"
-                fetchpriority="high"
-              >
+            {%- if product.media.size > 0 -%}
+              {%- comment -%} Full-bleed swipeable gallery of every product image. {%- endcomment -%}
+              <div class="lk-bf__track" data-lockin-track tabindex="0" aria-label="Product images">
+                {%- for media in product.media -%}
+                  <div class="lk-bf__slide" data-lockin-slide>
+                    <img
+                      class="lk-bf__hero"
+                      src="{{ media | image_url: width: 1400 }}"
+                      srcset="{{ media | image_url: width: 700 }} 700w, {{ media | image_url: width: 1400 }} 1400w, {{ media | image_url: width: 2000 }} 2000w"
+                      sizes="(min-width: 990px) 55vw, 100vw"
+                      alt="{{ media.alt | default: product.title | escape }}"
+                      {% if forloop.first %}
+                        loading="eager"
+                        fetchpriority="high"
+                      {% else %}
+                        loading="lazy"
+                      {% endif %}
+                    >
+                  </div>
+                {%- endfor -%}
+              </div>
+
+              {%- if product.media.size > 1 -%}
+                <div class="lk-bf__dots" data-lockin-dots aria-hidden="true">
+                  {%- for media in product.media -%}
+                    <span class="lk-bf__dot{% if forloop.first %} is-active{% endif %}"></span>
+                  {%- endfor -%}
+                </div>
+              {%- endif -%}
             {%- else -%}
               {{ 'product-1' | placeholder_svg_tag: 'lk-bf__hero' }}
             {%- endif -%}
@@ -94,16 +110,14 @@
           </div>
 
           {%- if product.media.size > 1 -%}
-            <ul class="lk-bf__thumbs" aria-label="Product images">
+            <ul class="lk-bf__thumbs" aria-label="Jump to image">
               {%- for media in product.media -%}
                 <li>
                   <button
                     class="lk-bf__thumb{% if forloop.first %} is-active{% endif %}"
                     type="button"
                     data-lockin-thumb
-                    data-full="{{ media | image_url: width: 1400 }}"
-                    data-srcset="{{ media | image_url: width: 700 }} 700w, {{ media | image_url: width: 1400 }} 1400w"
-                    data-alt="{{ media.alt | default: product.title | escape }}"
+                    data-index="{{ forloop.index0 }}"
                     aria-label="Show image {{ forloop.index }} of {{ product.media.size }}"
                     aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
                   >
@@ -404,12 +418,57 @@
     overflow: hidden;
   }
 
+  /* Swipeable full-bleed gallery. */
+  .lk-bf__track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .lk-bf__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lk-bf__slide {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
   .lk-bf__hero {
     display: block;
     inline-size: 100%;
-    block-size: auto;
+    block-size: 100%;
+    aspect-ratio: 4 / 5;
     max-block-size: 78svh;
     object-fit: cover;
+  }
+
+  .lk-bf__dots {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .lk-bf__dot {
+    inline-size: 7px;
+    block-size: 7px;
+    border-radius: var(--lk-r-pill);
+    background: color-mix(in srgb, var(--lk-paper) 55%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lk-ink) 25%, transparent);
+    transition: background-color 0.2s var(--lk-ease), transform 0.2s var(--lk-ease);
+  }
+
+  .lk-bf__dot.is-active {
+    background: var(--lk-ink);
+    transform: scale(1.2);
   }
 
   .lk-bf__glass {
@@ -417,7 +476,8 @@
     inset-inline: 0;
     bottom: 0;
     margin: 0;
-    padding: 14px var(--lk-gutter) 16px;
+    pointer-events: none;
+    padding: 14px var(--lk-gutter) 30px;
     list-style: none;
     display: flex;
     flex-wrap: wrap;
@@ -1071,20 +1131,44 @@
 
       render();
 
-      /* Thumbnails */
-      var mainImage = root.querySelector('[data-lockin-main-image]');
-      root.querySelectorAll('[data-lockin-thumb]').forEach(function (thumb) {
-        thumb.addEventListener('click', function () {
-          if (!mainImage) return;
-          mainImage.src = thumb.dataset.full;
-          mainImage.srcset = thumb.dataset.srcset || '';
-          mainImage.alt = thumb.dataset.alt || '';
-          root.querySelectorAll('[data-lockin-thumb]').forEach(function (other) {
-            other.classList.toggle('is-active', other === thumb);
-            other.setAttribute('aria-pressed', other === thumb ? 'true' : 'false');
+      /* Gallery: swipeable track, dots + thumbs stay in sync. */
+      var track = root.querySelector('[data-lockin-track]');
+      if (track) {
+        var slides = Array.prototype.slice.call(track.querySelectorAll('[data-lockin-slide]'));
+        var dots = Array.prototype.slice.call(root.querySelectorAll('.lk-bf__dot'));
+        var thumbs = Array.prototype.slice.call(root.querySelectorAll('[data-lockin-thumb]'));
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+        function markActive(index) {
+          dots.forEach(function (dot, i) {
+            dot.classList.toggle('is-active', i === index);
+          });
+          thumbs.forEach(function (thumb, i) {
+            thumb.classList.toggle('is-active', i === index);
+            thumb.setAttribute('aria-pressed', i === index ? 'true' : 'false');
+          });
+        }
+
+        var raf = null;
+        track.addEventListener('scroll', function () {
+          if (raf) return;
+          raf = requestAnimationFrame(function () {
+            raf = null;
+            var index = Math.round(track.scrollLeft / track.clientWidth);
+            markActive(Math.max(0, Math.min(slides.length - 1, index)));
           });
         });
-      });
+
+        thumbs.forEach(function (thumb) {
+          thumb.addEventListener('click', function () {
+            var index = parseInt(thumb.dataset.index || '0', 10);
+            track.scrollTo({
+              left: index * track.clientWidth,
+              behavior: reduce.matches ? 'auto' : 'smooth',
+            });
+          });
+        });
+      }
 
       /* Sticky bar */
       if (bar && sentinel && 'IntersectionObserver' in window) {
