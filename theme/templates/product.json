@@ -6,19 +6,19 @@
         "glass1": {
           "type": "glass",
           "settings": {
-            "text": "Daily cell repair"
+            "text": "DNA repair"
           }
         },
         "glass2": {
           "type": "glass",
           "settings": {
-            "text": "All-day energy"
+            "text": "Clean energy"
           }
         },
         "glass3": {
           "type": "glass",
           "settings": {
-            "text": "Calm, not wired"
+            "text": "Cortisol balance"
           }
         },
         "mfaq1": {
@@ -68,12 +68,19 @@
             "months": 6,
             "badge": "Biggest saving"
           }
+        },
+        "glass4": {
+          "type": "glass",
+          "settings": {
+            "text": "Healthy aging"
+          }
         }
       },
       "block_order": [
         "glass1",
         "glass2",
         "glass3",
+        "glass4",
         "mfaq1",
         "mfaq2",
         "mfaq3",

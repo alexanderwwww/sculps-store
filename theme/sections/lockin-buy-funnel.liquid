@@ -88,25 +88,7 @@
               {{ 'product-1' | placeholder_svg_tag: 'lk-bf__hero' }}
             {%- endif -%}
 
-            {%- comment -%} Glass bullet pills over the image {%- endcomment -%}
-            {%- assign has_glass = false -%}
-            {%- for block in section.blocks -%}
-              {%- if block.type == 'glass' and block.settings.text != blank -%}
-                {%- assign has_glass = true -%}
-              {%- endif -%}
-            {%- endfor -%}
-            {%- if has_glass -%}
-              <ul class="lk-bf__glass" aria-label="Highlights">
-                {%- for block in section.blocks -%}
-                  {%- if block.type == 'glass' and block.settings.text != blank -%}
-                    <li class="lk-bf__glassPill" {{ block.shopify_attributes }}>
-                      <span class="lk-bf__glassDot" aria-hidden="true"></span>
-                      {{ block.settings.text }}
-                    </li>
-                  {%- endif -%}
-                {%- endfor -%}
-              </ul>
-            {%- endif -%}
+            {%- comment -%} Image stays clean — benefits render in the panel below. {%- endcomment -%}
           </div>
 
           {%- if product.media.size > 1 -%}
@@ -140,6 +122,27 @@
 
         {%- if section.settings.subtitle != blank -%}
           <p class="lk-bf__subtitle">{{ section.settings.subtitle }}</p>
+        {%- endif -%}
+
+        {%- assign has_benefits = false -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'glass' and block.settings.text != blank -%}
+            {%- assign has_benefits = true -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if has_benefits -%}
+          <ul class="lk-bf__benefits" aria-label="Benefits">
+            {%- for block in section.blocks -%}
+              {%- if block.type == 'glass' and block.settings.text != blank -%}
+                <li class="lk-bf__benefit" {{ block.shopify_attributes }}>
+                  <span class="lk-bf__benefitTick" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.4 3 3L12.8 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  {{ block.settings.text }}
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
         {%- endif -%}
 
         {%- assign has_badges = false -%}
@@ -471,42 +474,42 @@
     transform: scale(1.2);
   }
 
-  .lk-bf__glass {
-    position: absolute;
-    inset-inline: 0;
-    bottom: 0;
-    margin: 0;
-    pointer-events: none;
-    padding: 14px var(--lk-gutter) 30px;
+  /* Bold benefit checklist under the title — the sell, in four words each. */
+  .lk-bf__benefits {
+    margin: 18px 0 0;
+    padding: 0;
     list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    background: linear-gradient(to top, color-mix(in srgb, var(--lk-ink) 16%, transparent), transparent);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
   }
 
-  .lk-bf__glassPill {
-    display: inline-flex;
+  .lk-bf__benefit {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 9px 15px;
-    border-radius: var(--lk-r-pill);
-    background: color-mix(in srgb, var(--lk-paper) 55%, transparent);
-    border: 1px solid color-mix(in srgb, var(--lk-paper) 70%, transparent);
-    backdrop-filter: blur(14px) saturate(150%);
-    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    gap: 9px;
     font-size: 0.8125rem;
-    font-weight: 600;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
     color: var(--lk-ink);
     white-space: nowrap;
   }
 
-  .lk-bf__glassDot {
-    inline-size: 6px;
-    block-size: 6px;
-    border-radius: 2px;
-    background: var(--lk-accent);
+  .lk-bf__benefitTick {
     flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 22px;
+    block-size: 22px;
+    border-radius: var(--lk-r-pill);
+    background: var(--lk-accent);
+    color: var(--lk-ink);
+  }
+
+  .lk-bf__benefitTick svg {
+    inline-size: 13px;
+    block-size: 13px;
   }
 
   .lk-bf__thumbs {
@@ -1428,7 +1431,7 @@
   "blocks": [
     {
       "type": "glass",
-      "name": "Glass bullet",
+      "name": "Benefit",
       "limit": 6,
       "settings": [
         {
