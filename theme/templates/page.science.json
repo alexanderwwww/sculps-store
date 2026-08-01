@@ -3,11 +3,39 @@
     "curve": {
       "type": "lockin-nad-curve",
       "blocks": {
-        "m20": { "type": "marker", "settings": { "age": 20, "value": 100, "value_label": "100%", "label": "Age 20" } },
-        "m40": { "type": "marker", "settings": { "age": 40, "value": 70, "value_label": "~70%", "label": "Age 40" } },
-        "m50": { "type": "marker", "settings": { "age": 50, "value": 50, "value_label": "~50%", "label": "Age 50" } }
+        "m20": {
+          "type": "marker",
+          "settings": {
+            "age": 20,
+            "value": 100,
+            "value_label": "100%",
+            "label": "Age 20"
+          }
+        },
+        "m40": {
+          "type": "marker",
+          "settings": {
+            "age": 40,
+            "value": 70,
+            "value_label": "~70%",
+            "label": "Age 40"
+          }
+        },
+        "m50": {
+          "type": "marker",
+          "settings": {
+            "age": 50,
+            "value": 50,
+            "value_label": "~50%",
+            "label": "Age 50"
+          }
+        }
       },
-      "block_order": ["m20", "m40", "m50"],
+      "block_order": [
+        "m20",
+        "m40",
+        "m50"
+      ],
       "settings": {
         "eyebrow": "The decline",
         "heading": "NAD+ falls for everyone.",
@@ -50,21 +78,15 @@
           }
         }
       },
-      "block_order": ["s1", "s2", "s3"],
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
       "settings": {
         "eyebrow": "How it works",
         "heading": "Three steps, inside the cell.",
         "body": "lockin does not add energy to your system. It supports the machinery that makes energy in the first place."
-      }
-    },
-    "quote": {
-      "type": "lockin-doctor-quote",
-      "settings": {
-        "is_placeholder": true,
-        "quote": "[Placeholder quote — replace with an approved statement from a named, credentialled reviewer. Do not publish this section with invented text.]",
-        "name": "[Reviewer name]",
-        "credentials": "[Degree, specialty, affiliation — placeholder]",
-        "disclosure": "[Placeholder disclosure] This reviewer is a paid partner of lockin. They were compensated for their time reviewing the formulation. Their statement is their own opinion and is not a medical claim about the product."
       }
     },
     "evidence": {
@@ -103,7 +125,12 @@
           }
         }
       },
-      "block_order": ["c1", "c2", "c3", "c4"],
+      "block_order": [
+        "c1",
+        "c2",
+        "c3",
+        "c4"
+      ],
       "settings": {
         "eyebrow": "Where the evidence stops",
         "heading": "What we won't claim.",
@@ -114,11 +141,30 @@
     "cta": {
       "type": "lockin-cta-band",
       "blocks": {
-        "b1": { "type": "badge", "settings": { "label": "No caffeine" } },
-        "b2": { "type": "badge", "settings": { "label": "No sugar" } },
-        "b3": { "type": "badge", "settings": { "label": "30 sealed foils" } }
+        "b1": {
+          "type": "badge",
+          "settings": {
+            "label": "No caffeine"
+          }
+        },
+        "b2": {
+          "type": "badge",
+          "settings": {
+            "label": "No sugar"
+          }
+        },
+        "b3": {
+          "type": "badge",
+          "settings": {
+            "label": "30 sealed foils"
+          }
+        }
       },
-      "block_order": ["b1", "b2", "b3"],
+      "block_order": [
+        "b1",
+        "b2",
+        "b3"
+      ],
       "settings": {
         "eyebrow": "Full doses, open label",
         "heading": "Judge it over thirty days.",
@@ -130,5 +176,10 @@
       }
     }
   },
-  "order": ["curve", "mechanism", "quote", "evidence", "cta"]
+  "order": [
+    "curve",
+    "mechanism",
+    "evidence",
+    "cta"
+  ]
 }

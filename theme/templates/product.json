@@ -72,7 +72,7 @@
         "glass4": {
           "type": "glass",
           "settings": {
-            "text": "NAD+ activation"
+            "text": "Anti-aging activation"
           }
         }
       },
@@ -147,7 +147,12 @@
           }
         }
       },
-      "block_order": ["t1", "t2", "t3", "t4"],
+      "block_order": [
+        "t1",
+        "t2",
+        "t3",
+        "t4"
+      ],
       "settings": {
         "eyebrow": "What to expect",
         "heading": "The honest timeline.",
@@ -179,7 +184,11 @@
           }
         }
       },
-      "block_order": ["c1", "c2", "c3"],
+      "block_order": [
+        "c1",
+        "c2",
+        "c3"
+      ],
       "settings": {
         "eyebrow": "See it",
         "heading": "Ten seconds a day.",
@@ -221,7 +230,7 @@
         "row4": {
           "type": "row",
           "settings": {
-            "label": "NAD+ support (NR)",
+            "label": "Anti-aging support",
             "value_self": "yes",
             "value_b": "no",
             "value_c": "no"
@@ -237,7 +246,13 @@
           }
         }
       },
-      "block_order": ["row1", "row2", "row3", "row4", "row5"],
+      "block_order": [
+        "row1",
+        "row2",
+        "row3",
+        "row4",
+        "row5"
+      ],
       "settings": {
         "eyebrow": "The alternative",
         "heading": "Why not just coffee?",
@@ -282,11 +297,16 @@
             "wide": true,
             "image": "shopify://shop_images/lockin-photo-desk.png",
             "tag": "Desk-drawer proof",
-            "caption": "This card takes an MP4 URL — drop real footage in when you have it."
+            "caption": "Lives in a desk drawer. No fridge, no shaker, no ceremony."
           }
         }
       },
-      "block_order": ["g1", "g2", "g3", "g4"],
+      "block_order": [
+        "g1",
+        "g2",
+        "g3",
+        "g4"
+      ],
       "settings": {
         "eyebrow": "Up close",
         "heading": "What lands on your doorstep."
@@ -344,53 +364,6 @@
         "eyebrow": "Questions",
         "heading": "Questions.",
         "one_at_a_time": true
-      }
-    },
-    "review_carousel": {
-      "type": "lockin-review-carousel",
-      "blocks": {
-        "r1": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r2": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r3": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r4": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r5": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        }
-      },
-      "block_order": [
-        "r1",
-        "r2",
-        "r3",
-        "r4",
-        "r5"
-      ],
-      "settings": {
-        "eyebrow": "In their words",
-        "heading": "What people say.",
-        "note": "Reviews from verified customers appear here as they come in."
       }
     },
     "whats_inside": {
@@ -466,7 +439,6 @@
     "video",
     "compare",
     "gallery",
-    "review_carousel",
     "video_faq"
   ]
 }
