@@ -55,7 +55,11 @@
     <ul class="lk-rc__track">
       {%- for block in section.blocks -%}
         {%- if block.settings.is_placeholder -%}
-          {%- comment -%} Reserved slot: skeleton only — no invented reviewer, no invented quote. {%- endcomment -%}
+          {%- comment -%}
+            Reserved slot: editor-only skeleton — no invented reviewer, no
+            invented quote, and never shown to customers alongside real cards.
+          {%- endcomment -%}
+          {%- if request.design_mode -%}
           {%- assign w = forloop.index0 | modulo: 3 -%}
           <li class="lk-rc__card lk-rc__card--pending" {{ block.shopify_attributes }}>
             <div class="lk-rc__who" aria-hidden="true">
@@ -75,6 +79,7 @@
               Verified review — coming soon
             </p>
           </li>
+          {%- endif -%}
         {%- else -%}
         <li class="lk-rc__card" {{ block.shopify_attributes }}>
           <div class="lk-rc__who">

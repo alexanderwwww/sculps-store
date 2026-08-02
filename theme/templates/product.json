@@ -440,7 +440,11 @@
         "r1": {
           "type": "review",
           "settings": {
-            "is_placeholder": true
+            "is_placeholder": false,
+            "name": "The lockin founders",
+            "context": "A note from us — not a customer review",
+            "quote": "We built lockin because we were tired of renting energy from caffeine and paying it back at 3pm. Two chewables, every dose printed on the box, nothing to crash from — that's the whole idea. Verified customer reviews will appear right here as orders ship.",
+            "footer": ""
           }
         },
         "r2": {
@@ -477,7 +481,7 @@
       ],
       "settings": {
         "eyebrow": "In their words",
-        "heading": "What people say.",
+        "heading": "Straight from the source.",
         "note": ""
       }
     },
