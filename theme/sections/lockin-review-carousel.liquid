@@ -11,7 +11,27 @@
   like-counts anywhere.
 {%- endcomment -%}
 
+{%- liquid
+  # Hidden on the live site until at least one card holds a real review —
+  # positioned social proof, never an empty frame.
+  assign real_count = 0
+  for block in section.blocks
+    unless block.settings.is_placeholder
+      assign real_count = real_count | plus: 1
+    endunless
+  endfor
+-%}
+{%- if real_count > 0 or request.design_mode -%}
 <div class="lk lk-section lk-rc">
+  {%- if real_count == 0 and request.design_mode -%}
+    <div class="lk-container">
+      <p class="lk-editor-todo">
+        <strong>Hidden on the live site.</strong>
+        This carousel appears to customers as soon as one card holds a real review
+        (untick "Reserved slot" on a card after filling it in).
+      </p>
+    </div>
+  {%- endif -%}
   <div class="lk-container lk-rc__headRow lk-reveal">
     <div>
       {%- if section.settings.eyebrow != blank -%}
@@ -92,6 +112,7 @@
     </div>
   {%- endif -%}
 </div>
+{%- endif -%}
 
 {% stylesheet %}
   .lk-rc {

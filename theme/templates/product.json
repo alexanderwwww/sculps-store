@@ -433,10 +433,68 @@
         "does_title": "What it does",
         "footnote": "Blueberry. No sugar, no dyes, no gelatin. Full ingredient doses on the how-it-works page."
       }
+    },
+    "reviews": {
+      "type": "lockin-review-carousel",
+      "blocks": {
+        "r1": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r2": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r3": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r4": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        },
+        "r5": {
+          "type": "review",
+          "settings": {
+            "is_placeholder": true
+          }
+        }
+      },
+      "block_order": [
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5"
+      ],
+      "settings": {
+        "eyebrow": "In their words",
+        "heading": "What people say.",
+        "note": ""
+      }
+    },
+    "doctor_video": {
+      "type": "lockin-ugc-video",
+      "settings": {
+        "eyebrow": "Watch",
+        "heading": "The science, explained.",
+        "body": "Ninety seconds on why your energy dips — and what actually fixes it.",
+        "ratio": "portrait"
+      }
     }
   },
   "order": [
     "main",
+    "reviews",
+    "doctor_video",
     "whats_inside",
     "timeline",
     "video",
