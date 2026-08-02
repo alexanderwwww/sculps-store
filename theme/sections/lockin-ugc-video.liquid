@@ -2,14 +2,15 @@
   lockin — UGC video screen.
 
   One embedded video (YouTube or Vimeo), framed like a phone screen.
-  Renders nothing on the live site until a video URL is set — an empty
-  player frame is dummy data. Made for the doctor/spokesperson video.
+  Until a video URL is set, the frame shows the poster image — a visible,
+  honest placement with no fake play button. Made for the
+  doctor/spokesperson video.
 {%- endcomment -%}
 
 {%- liquid
   assign v = section.settings.video_url
 -%}
-{%- if v != blank or request.design_mode -%}
+{%- if v != blank or section.settings.poster != blank or request.design_mode -%}
 <div class="lk lk-section lk-uv">
   <div class="lk-container lk-uv__inner">
     <div class="lk-uv__copy lk-reveal">
@@ -24,7 +25,7 @@
       {%- endif -%}
     </div>
 
-    {%- if v != blank -%}
+    {%- if v != blank or section.settings.poster != blank -%}
       <div class="lk-uv__screen{% if section.settings.ratio == 'landscape' %} lk-uv__screen--wide{% endif %} lk-reveal">
         {%- if v.type == 'youtube' -%}
           <iframe
@@ -44,6 +45,13 @@
             allow="autoplay; fullscreen; picture-in-picture"
             allowfullscreen
           ></iframe>
+        {%- else -%}
+          <img
+            class="lk-uv__frame lk-uv__poster"
+            src="{{ section.settings.poster | image_url: width: 900 }}"
+            alt="{{ section.settings.heading | default: 'lockin' | escape }}"
+            loading="lazy"
+          >
         {%- endif -%}
       </div>
     {%- else -%}
@@ -107,6 +115,10 @@
     border: 0;
   }
 
+  .lk-uv__poster {
+    object-fit: cover;
+  }
+
   @media screen and (min-width: 990px) {
     .lk-uv__inner {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -145,7 +157,13 @@
       "id": "video_url",
       "label": "Video (YouTube or Vimeo)",
       "accept": ["youtube", "vimeo"],
-      "info": "The section is hidden on the live site until this is set."
+      "info": "Replaces the poster image the moment it's set."
+    },
+    {
+      "type": "image_picker",
+      "id": "poster",
+      "label": "Poster image",
+      "info": "Fills the frame until the video link is set. Without either, the section hides on the live site."
     },
     {
       "type": "select",

@@ -487,7 +487,8 @@
         "eyebrow": "Watch",
         "heading": "The science, explained.",
         "body": "Ninety seconds on why your energy dips — and what actually fixes it.",
-        "ratio": "portrait"
+        "ratio": "portrait",
+        "poster": "shopify://shop_images/lockin-photo-desk.png"
       }
     },
     "founder_note": {
