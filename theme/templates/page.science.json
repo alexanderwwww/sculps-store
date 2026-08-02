@@ -50,6 +50,56 @@
         "caption": "Illustrative. The curve shows the shape of the decline reported across the ageing literature, not a measurement of any individual. Your own levels are not knowable without a blood test."
       }
     },
+    "cortisol": {
+      "type": "lockin-nad-curve",
+      "blocks": {
+        "d0": {
+          "type": "marker",
+          "settings": {
+            "age": 0,
+            "value": 100,
+            "value_label": "100%",
+            "label": "Day 0"
+          }
+        },
+        "d30": {
+          "type": "marker",
+          "settings": {
+            "age": 30,
+            "value": 88,
+            "value_label": "88%",
+            "label": "Day 30"
+          }
+        },
+        "d60": {
+          "type": "marker",
+          "settings": {
+            "age": 60,
+            "value": 77,
+            "value_label": "77%",
+            "label": "Day 60"
+          }
+        }
+      },
+      "block_order": [
+        "d0",
+        "d30",
+        "d60"
+      ],
+      "settings": {
+        "eyebrow": "Hormone balance",
+        "heading": "Cortisol trends down.",
+        "heading_tag": "h2",
+        "body": "KSM-66 ashwagandha at the full 300mg dose is the part of the formula studied for cortisol — the stress hormone that keeps energy anxious instead of steady. In published trials of the same extract, morning cortisol fell over about eight weeks.",
+        "chart_title": "Line chart of cortisol declining over 60 days in a published ashwagandha trial",
+        "chart_description": "In a published trial of the studied ashwagandha extract, average morning cortisol was 100% at day 0, roughly 88% by day 30, and roughly 77% by day 60 — about a 23% reduction versus baseline.",
+        "age_min": 0,
+        "age_max": 60,
+        "x_axis_label": "Days on the studied extract",
+        "curve_path": "M 60 40 C 200 52 310 66 415 77 C 530 89 660 100 770 111",
+        "caption": "From published double-blind trials of the KSM-66 ashwagandha extract (e.g. Lopresti 2019; Salve 2019) — roughly a 23% average reduction in morning cortisol over 8 weeks versus placebo. This shows the extract's trial result, not a measurement of any individual or a claim that this product produces the same effect. Individual results vary. These statements have not been evaluated by the FDA; this product is not intended to diagnose, treat, cure, or prevent any disease."
+      }
+    },
     "mechanism": {
       "type": "lockin-mechanism",
       "blocks": {
@@ -178,6 +228,7 @@
   },
   "order": [
     "curve",
+    "cortisol",
     "mechanism",
     "evidence",
     "cta"
