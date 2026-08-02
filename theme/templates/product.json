@@ -302,13 +302,32 @@
             "tag": "Desk-drawer proof",
             "caption": "Lives in a desk drawer. No fridge, no shaker, no ceremony."
           }
+        },
+        "g5": {
+          "type": "media",
+          "settings": {
+            "wide": true,
+            "image": "shopify://shop_images/lockin-photo-open-box.jpg",
+            "tag": "Unboxed",
+            "caption": "First open: a month of sealed foils, ready to go."
+          }
+        },
+        "g6": {
+          "type": "media",
+          "settings": {
+            "image": "shopify://shop_images/lockin-photo-label.jpg",
+            "tag": "Open label",
+            "caption": "Every ingredient and dose, printed on the box."
+          }
         }
       },
       "block_order": [
         "g1",
         "g2",
         "g3",
-        "g4"
+        "g4",
+        "g5",
+        "g6"
       ],
       "settings": {
         "eyebrow": "Up close",
