@@ -138,8 +138,9 @@
     display: block;
     inline-size: 100%;
     aspect-ratio: 4 / 5;
-    object-fit: cover;
-    border-radius: var(--lk-r-lg);
+    /* Whole image always visible — no cropping. */
+    object-fit: contain;
+    border-radius: 10px;
     border: 1px solid var(--lk-line);
     background: var(--lk-ice-soft);
   }
@@ -155,7 +156,7 @@
     display: grid;
     place-items: center;
     aspect-ratio: 4 / 5;
-    border-radius: var(--lk-r-lg);
+    border-radius: 10px;
     border: 1px dashed var(--lk-line-strong);
     background: var(--lk-ice-soft);
   }
