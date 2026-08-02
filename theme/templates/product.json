@@ -266,57 +266,47 @@
       }
     },
     "gallery": {
-      "type": "lockin-media-grid",
+      "type": "lockin-image-carousel",
       "blocks": {
         "g1": {
-          "type": "media",
+          "type": "image",
           "settings": {
-            "wide": true,
-            "ambient": true,
             "image": "shopify://shop_images/lockin-photo-marble.png",
-            "tag": "Anywhere",
             "caption": "One foil lives wherever your morning happens."
           }
         },
         "g2": {
-          "type": "media",
+          "type": "image",
           "settings": {
             "image": "shopify://shop_images/lockin-photo-macro.png",
-            "tag": "The dose",
             "caption": "Two blueberry chewables. Chew, don't swallow."
           }
         },
         "g3": {
-          "type": "media",
+          "type": "image",
           "settings": {
             "image": "shopify://shop_images/lockin-photo-box-foil.png",
-            "tag": "Sealed fresh",
             "caption": "Nothing is opened until you tear it."
           }
         },
         "g4": {
-          "type": "media",
+          "type": "image",
           "settings": {
-            "wide": true,
             "image": "shopify://shop_images/lockin-photo-desk.png",
-            "tag": "Desk-drawer proof",
             "caption": "Lives in a desk drawer. No fridge, no shaker, no ceremony."
           }
         },
         "g5": {
-          "type": "media",
+          "type": "image",
           "settings": {
-            "wide": true,
             "image": "shopify://shop_images/lockin-photo-open-box.jpg",
-            "tag": "Unboxed",
             "caption": "First open: a month of sealed foils, ready to go."
           }
         },
         "g6": {
-          "type": "media",
+          "type": "image",
           "settings": {
             "image": "shopify://shop_images/lockin-photo-label.jpg",
-            "tag": "Open label",
             "caption": "Every ingredient and dose, printed on the box."
           }
         }

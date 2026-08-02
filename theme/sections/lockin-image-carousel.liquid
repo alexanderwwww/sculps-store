@@ -1,0 +1,260 @@
+{%- comment -%}
+  lockin — image carousel.
+
+  Swipeable strip of image cards: scroll-snap on touch, arrow buttons on
+  desktop. Every card is an image picker with an optional caption. Cards
+  without an image render only in the editor; with no images at all the
+  section hides on the live site.
+{%- endcomment -%}
+
+{%- liquid
+  assign filled = 0
+  for block in section.blocks
+    if block.settings.image != blank
+      assign filled = filled | plus: 1
+    endif
+  endfor
+-%}
+{%- if filled > 0 or request.design_mode -%}
+<div class="lk lk-section lk-ic">
+  <div class="lk-container lk-ic__headRow lk-reveal">
+    <div>
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2 lk-ic__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+    </div>
+    <div class="lk-ic__nav">
+      <button class="lk-ic__arrow" type="button" data-lockin-ic-prev aria-label="Previous images">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="lk-ic__arrow" type="button" data-lockin-ic-next aria-label="Next images">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="lk-ic__scroller lk-reveal" data-lockin-ic tabindex="0" role="region" aria-label="{{ section.settings.heading | default: 'Images' | escape }}">
+    <ul class="lk-ic__track">
+      {%- for block in section.blocks -%}
+        {%- if block.settings.image != blank -%}
+          <li class="lk-ic__card" {{ block.shopify_attributes }}>
+            <img
+              class="lk-ic__img"
+              src="{{ block.settings.image | image_url: width: 900 }}"
+              srcset="{{ block.settings.image | image_url: width: 500 }} 500w, {{ block.settings.image | image_url: width: 900 }} 900w"
+              sizes="(min-width: 990px) 360px, 78vw"
+              alt="{{ block.settings.caption | default: section.settings.heading | escape }}"
+              loading="lazy"
+            >
+            {%- if block.settings.caption != blank -%}
+              <p class="lk-ic__caption">{{ block.settings.caption }}</p>
+            {%- endif -%}
+          </li>
+        {%- elsif request.design_mode -%}
+          <li class="lk-ic__card lk-ic__card--empty" {{ block.shopify_attributes }}>
+            <p class="lk-ic__emptyNote">Pick an image for this slot — empty slots don't show on the live site.</p>
+          </li>
+        {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+</div>
+{%- endif -%}
+
+{% stylesheet %}
+  .lk-ic {
+    overflow: hidden;
+  }
+
+  .lk-ic__headRow {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .lk-ic__heading {
+    margin-top: 12px;
+  }
+
+  .lk-ic__nav {
+    display: flex;
+    gap: 8px;
+    flex: none;
+  }
+
+  .lk-ic__arrow {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: var(--lk-r-pill);
+    border: 1px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+    color: var(--lk-ink);
+    cursor: pointer;
+    transition: background-color 0.2s var(--lk-ease);
+  }
+
+  .lk-ic__arrow:hover {
+    background: var(--lk-ice);
+  }
+
+  .lk-ic__arrow svg {
+    inline-size: 18px;
+    block-size: 18px;
+  }
+
+  .lk-ic__scroller {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-inline: var(--lk-gutter);
+  }
+
+  .lk-ic__scroller::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lk-ic__track {
+    display: flex;
+    gap: 14px;
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--lk-gutter) 6px 0;
+    inline-size: max-content;
+  }
+
+  .lk-ic__card {
+    scroll-snap-align: start;
+    inline-size: min(78vw, 360px);
+  }
+
+  .lk-ic__img {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: var(--lk-r-lg);
+    border: 1px solid var(--lk-line);
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-ic__caption {
+    margin-top: 10px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--lk-muted);
+  }
+
+  .lk-ic__card--empty {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--lk-r-lg);
+    border: 1px dashed var(--lk-line-strong);
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-ic__emptyNote {
+    padding: 20px;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+    text-align: center;
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-ic__scroller {
+      padding-inline: max(var(--lk-gutter), calc((100vw - var(--lk-maxw)) / 2));
+    }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    function init(scroller) {
+      if (scroller.dataset.lockinReady === 'true') return;
+      scroller.dataset.lockinReady = 'true';
+      var section = scroller.closest('.shopify-section') || document;
+      var step = function () {
+        var card = scroller.querySelector('.lk-ic__card');
+        return card ? card.getBoundingClientRect().width + 14 : 320;
+      };
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      var go = function (dir) {
+        scroller.scrollBy({ left: dir * step(), behavior: reduce.matches ? 'auto' : 'smooth' });
+      };
+      section.querySelector('[data-lockin-ic-prev]')?.addEventListener('click', function () { go(-1); });
+      section.querySelector('[data-lockin-ic-next]')?.addEventListener('click', function () { go(1); });
+    }
+
+    function scan() {
+      document.querySelectorAll('[data-lockin-ic]').forEach(init);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scan);
+    } else {
+      scan();
+    }
+    document.addEventListener('shopify:section:load', scan);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "lockin image carousel",
+  "tag": "section",
+  "class": "lockin-ic-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Up close"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What lands on your doorstep."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": "Image slot",
+      "limit": 8,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin image carousel",
+      "blocks": [
+        { "type": "image" },
+        { "type": "image" },
+        { "type": "image" },
+        { "type": "image" },
+        { "type": "image" },
+        { "type": "image" }
+      ]
+    }
+  ]
+}
+{% endschema %}
