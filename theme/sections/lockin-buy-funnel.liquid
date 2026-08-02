@@ -167,24 +167,15 @@
           </span>
           <s class="lk-bf__was" data-lockin-was hidden></s>
           <span class="lk-bf__save" data-lockin-save hidden></span>
+          {%- if section.settings.offer_pill != blank -%}
+            <span class="lk-bf__offerPill">{{ section.settings.offer_pill }}</span>
+          {%- endif -%}
           <span class="lk-bf__perday" data-lockin-perday></span>
         </div>
-        <p class="lk-bf__liveNote" data-lockin-live aria-live="polite"></p>
-
-        {%- comment -%} ---------- Offer ---------- {%- endcomment -%}
-        {%- if section.settings.offer_title != blank or section.settings.offer_text != blank -%}
-          <aside class="lk-bf__offer" aria-label="Current offer">
-            {%- if section.settings.offer_badge != blank -%}
-              <span class="lk-bf__offerBadge">{{ section.settings.offer_badge }}</span>
-            {%- endif -%}
-            {%- if section.settings.offer_title != blank -%}
-              <p class="lk-bf__offerTitle">{{ section.settings.offer_title }}</p>
-            {%- endif -%}
-            {%- if section.settings.offer_text != blank -%}
-              <p class="lk-bf__offerText">{{ section.settings.offer_text }}</p>
-            {%- endif -%}
-          </aside>
+        {%- if section.settings.offer_text != blank -%}
+          <p class="lk-bf__offerLine">{{ section.settings.offer_text }}</p>
         {%- endif -%}
+        <p class="lk-bf__liveNote" data-lockin-live aria-live="polite"></p>
 
         {%- comment -%} ---------- Small FAQ ---------- {%- endcomment -%}
         {%- assign has_minifaq = false -%}
@@ -687,40 +678,23 @@
 
   /* ---------- Offer ---------- */
 
-  .lk-bf__offer {
-    position: relative;
-    margin-top: 14px;
-    padding: 16px 18px;
-    border-radius: var(--lk-r-md);
-    background:
-      radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, var(--lk-accent) 26%, transparent) 0%, transparent 55%),
-      var(--lk-ice-soft);
-    border: 1px solid color-mix(in srgb, var(--lk-accent) 45%, var(--lk-line));
-  }
-
-  .lk-bf__offerBadge {
-    display: inline-block;
-    margin-bottom: 8px;
-    padding: 4px 11px;
+  /* Small pill by the price — outline style so it reads distinct from SAVE %. */
+  .lk-bf__offerPill {
+    align-self: center;
+    padding: 4px 10px;
     border-radius: var(--lk-r-pill);
-    background: var(--lk-ink);
-    color: var(--lk-paper);
+    border: 1.5px solid var(--lk-ink);
+    color: var(--lk-ink);
     font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    font-weight: 800;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
-  .lk-bf__offerTitle {
-    font-family: var(--lk-font-head);
-    font-weight: 600;
-    font-size: 1.0625rem;
-    letter-spacing: -0.01em;
-  }
-
-  .lk-bf__offerText {
-    margin-top: 4px;
-    font-size: 0.875rem;
+  .lk-bf__offerLine {
+    margin-top: 8px;
+    font-size: 0.8125rem;
     line-height: 1.5;
     color: var(--lk-muted);
   }
@@ -1563,21 +1537,17 @@
     },
     {
       "type": "text",
-      "id": "offer_badge",
-      "label": "Offer badge",
-      "default": "Launch offer"
-    },
-    {
-      "type": "text",
-      "id": "offer_title",
-      "label": "Offer title",
-      "default": "Up to $60 off multi-month supplies"
+      "id": "offer_pill",
+      "label": "Offer pill (by the price)",
+      "info": "Small outline pill next to the price. Leave blank to hide.",
+      "default": "$60 off"
     },
     {
       "type": "textarea",
       "id": "offer_text",
-      "label": "Offer text",
-      "default": "3- and 6-month supplies ship free and lock the launch price. Applied automatically — no code needed."
+      "label": "Offer line (under the price)",
+      "info": "One short line under the price. Leave blank to hide.",
+      "default": "3+ months ship free. Applied automatically."
     },
     {
       "type": "header",
