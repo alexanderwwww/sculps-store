@@ -1,0 +1,214 @@
+{%- comment -%}
+  lockin — contact page form.
+
+  Native Shopify contact form: submissions arrive at the store's
+  customer email. Honest response-time copy is schema-configurable.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-ct">
+  <div class="lk-container lk-ct__inner">
+    <header class="lk-ct__head lk-reveal">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      <h1 class="lk-h1">{{ section.settings.heading | default: page.title }}</h1>
+      {%- if section.settings.body != blank -%}
+        <p class="lk-ct__body">{{ section.settings.body }}</p>
+      {%- endif -%}
+    </header>
+
+    {%- form 'contact', class: 'lk-ct__form' -%}
+      {%- if form.posted_successfully? -%}
+        <p class="lk-ct__success" tabindex="-1" autofocus>
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7.25" stroke="currentColor" stroke-width="1.5"/><path d="m7 10.2 2.1 2.1L13.2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {{ section.settings.success_text }}
+        </p>
+      {%- else -%}
+        {%- if form.errors -%}
+          <p class="lk-ct__error" role="alert">Something needs a fix: {{ form.errors.translated_fields | join: ', ' }}.</p>
+        {%- endif -%}
+
+        <div class="lk-ct__grid">
+          <div class="lk-ct__field">
+            <label class="lk-ct__label" for="{{ section.id }}-name">Name</label>
+            <input class="lk-ct__input" type="text" id="{{ section.id }}-name" name="contact[name]" autocomplete="name">
+          </div>
+          <div class="lk-ct__field">
+            <label class="lk-ct__label" for="{{ section.id }}-email">Email *</label>
+            <input class="lk-ct__input" type="email" id="{{ section.id }}-email" name="contact[email]" autocomplete="email" required>
+          </div>
+        </div>
+        <div class="lk-ct__field">
+          <label class="lk-ct__label" for="{{ section.id }}-order">Order number (optional)</label>
+          <input class="lk-ct__input" type="text" id="{{ section.id }}-order" name="contact[order_number]">
+        </div>
+        <div class="lk-ct__field">
+          <label class="lk-ct__label" for="{{ section.id }}-message">Message *</label>
+          <textarea class="lk-ct__input lk-ct__textarea" id="{{ section.id }}-message" name="contact[body]" rows="6" required></textarea>
+        </div>
+
+        <button class="lk-btn lk-btn--primary lk-ct__submit" type="submit">
+          {{ section.settings.button_label }}
+        </button>
+
+        {%- if section.settings.footnote != blank -%}
+          <p class="lk-ct__footnote">{{ section.settings.footnote }}</p>
+        {%- endif -%}
+      {%- endif -%}
+    {%- endform -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-ct__inner {
+    max-width: 640px;
+  }
+
+  .lk-ct__head {
+    margin-bottom: 30px;
+  }
+
+  .lk-ct__head .lk-h1 {
+    margin-top: 12px;
+  }
+
+  .lk-ct__body {
+    margin-top: 12px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-ct__grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .lk-ct__field {
+    margin-bottom: 14px;
+  }
+
+  .lk-ct__label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--lk-ink);
+  }
+
+  .lk-ct__input {
+    inline-size: 100%;
+    padding: 12px 14px;
+    border-radius: var(--lk-r-sm);
+    border: 1.5px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+    font: inherit;
+    font-size: 1rem;
+    color: var(--lk-ink);
+  }
+
+  .lk-ct__input:focus {
+    outline: none;
+    border-color: var(--lk-ink);
+  }
+
+  .lk-ct__textarea {
+    resize: vertical;
+    min-block-size: 130px;
+  }
+
+  .lk-ct__submit {
+    margin-top: 6px;
+  }
+
+  .lk-ct__footnote {
+    margin-top: 14px;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-ct__error {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: var(--lk-r-sm);
+    border: 1px solid #b3261e;
+    color: #b3261e;
+    font-size: 0.875rem;
+  }
+
+  .lk-ct__success {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px;
+    border-radius: var(--lk-r-md);
+    background: var(--lk-ice-soft);
+    border: 1px solid color-mix(in srgb, var(--lk-accent) 45%, var(--lk-line));
+    font-weight: 600;
+  }
+
+  .lk-ct__success svg {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--lk-accent);
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-ct__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin contact",
+  "tag": "section",
+  "class": "lockin-ct-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Support"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Talk to us."
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body",
+      "default": "Questions, orders, refunds — everything lands here. We reply within one business day."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Send"
+    },
+    {
+      "type": "text",
+      "id": "success_text",
+      "label": "Success message",
+      "default": "Got it. We'll reply within one business day."
+    },
+    {
+      "type": "text",
+      "id": "footnote",
+      "label": "Footnote",
+      "default": "Refunds: just include your order number — no forms, no fight."
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin contact"
+    }
+  ]
+}
+{% endschema %}

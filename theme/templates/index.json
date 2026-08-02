@@ -140,6 +140,16 @@
         "image": "shopify://shop_images/lockin-photo-marble.png"
       }
     },
+    "signup": {
+      "type": "lockin-signup",
+      "settings": {
+        "eyebrow": "The list",
+        "heading": "Lock in your inbox.",
+        "body": "Launch offers and restocks, first. No spam, ever.",
+        "button_label": "Join",
+        "tone": "ice"
+      }
+    },
     "closing_cta": {
       "type": "lockin-cta-band",
       "blocks": {
@@ -185,6 +195,7 @@
     "stat_band",
     "benefits",
     "foils",
+    "signup",
     "closing_cta"
   ]
 }

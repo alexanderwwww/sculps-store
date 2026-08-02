@@ -1,0 +1,228 @@
+{%- comment -%}
+  lockin — email capture band.
+
+  Native Shopify customer form (tags: newsletter) so signups land in
+  Shopify's customer list with marketing consent — no app needed.
+  Copy promises only what exists: no invented discount codes.
+{%- endcomment -%}
+
+<div class="lk lk-section lk-su{% if section.settings.tone == 'ice' %} lk-su--ice{% endif %}">
+  <div class="lk-container lk-su__inner lk-reveal">
+    <div class="lk-su__copy">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="lk-eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 class="lk-h2">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+      {%- if section.settings.body != blank -%}
+        <p class="lk-su__body">{{ section.settings.body }}</p>
+      {%- endif -%}
+    </div>
+
+    {%- form 'customer', class: 'lk-su__form' -%}
+      {%- if form.posted_successfully? -%}
+        <p class="lk-su__success" tabindex="-1" autofocus>
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7.25" stroke="currentColor" stroke-width="1.5"/><path d="m7 10.2 2.1 2.1L13.2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {{ section.settings.success_text }}
+        </p>
+      {%- else -%}
+        <input type="hidden" name="contact[tags]" value="newsletter">
+        <div class="lk-su__row">
+          <label class="lk-su__label" for="{{ section.id }}-email">Email address</label>
+          <input
+            class="lk-su__input"
+            type="email"
+            id="{{ section.id }}-email"
+            name="contact[email]"
+            placeholder="{{ section.settings.placeholder | escape }}"
+            autocomplete="email"
+            required
+          >
+          <button class="lk-btn lk-btn--primary lk-su__btn" type="submit">
+            {{ section.settings.button_label }}
+          </button>
+        </div>
+        {%- if form.errors -%}
+          <p class="lk-su__error" role="alert">{{ form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email }}</p>
+        {%- endif -%}
+        {%- if section.settings.footnote != blank -%}
+          <p class="lk-su__footnote">{{ section.settings.footnote }}</p>
+        {%- endif -%}
+      {%- endif -%}
+    {%- endform -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .lk-su--ice {
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-su__inner {
+    display: grid;
+    gap: 26px;
+  }
+
+  .lk-su__copy .lk-h2 {
+    margin-top: 12px;
+  }
+
+  .lk-su__body {
+    margin-top: 12px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--lk-muted);
+    max-width: 46ch;
+    text-wrap: pretty;
+  }
+
+  .lk-su__label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .lk-su__row {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    border-radius: var(--lk-r-pill);
+    border: 1.5px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+  }
+
+  .lk-su__row:focus-within {
+    border-color: var(--lk-ink);
+  }
+
+  .lk-su__input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--lk-ink);
+  }
+
+  .lk-su__input:focus {
+    outline: none;
+  }
+
+  .lk-su__btn {
+    flex: none;
+    min-height: 46px;
+    padding-inline: 22px;
+  }
+
+  .lk-su__error {
+    margin-top: 10px;
+    font-size: 0.8125rem;
+    color: #b3261e;
+  }
+
+  .lk-su__footnote {
+    margin-top: 10px;
+    font-size: 0.8125rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-su__success {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 18px;
+    border-radius: var(--lk-r-md);
+    background: var(--lk-ice-soft);
+    border: 1px solid color-mix(in srgb, var(--lk-accent) 45%, var(--lk-line));
+    font-weight: 600;
+  }
+
+  .lk-su__success svg {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--lk-accent);
+  }
+
+  @media screen and (min-width: 990px) {
+    .lk-su__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: 56px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "lockin signup",
+  "tag": "section",
+  "class": "lockin-su-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "The list"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Lock in your inbox."
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body",
+      "default": "Launch offers and restocks, first. No spam, ever."
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "Input placeholder",
+      "default": "you@email.com"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Join"
+    },
+    {
+      "type": "text",
+      "id": "success_text",
+      "label": "Success message",
+      "default": "You're in. Watch your inbox."
+    },
+    {
+      "type": "text",
+      "id": "footnote",
+      "label": "Footnote",
+      "default": "Unsubscribe anytime."
+    },
+    {
+      "type": "select",
+      "id": "tone",
+      "label": "Background",
+      "options": [
+        { "value": "paper", "label": "Paper" },
+        { "value": "ice", "label": "Ice" }
+      ],
+      "default": "ice"
+    }
+  ],
+  "presets": [
+    {
+      "name": "lockin signup"
+    }
+  ]
+}
+{% endschema %}

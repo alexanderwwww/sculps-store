@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "main": {
+      "type": "lockin-contact",
+      "settings": {
+        "eyebrow": "Support",
+        "heading": "Talk to us.",
+        "body": "Questions, orders, refunds — everything lands here. We reply within one business day.",
+        "button_label": "Send",
+        "success_text": "Got it. We'll reply within one business day.",
+        "footnote": "Refunds: just include your order number — no forms, no fight."
+      }
+    }
+  },
+  "order": ["main"]
+}
