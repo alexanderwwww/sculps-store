@@ -92,7 +92,7 @@
         "eyebrow": "Cellular energy chewables",
         "title": "Energy that doesn't crash.",
         "subtitle": "Two chewables a day. No caffeine, no sugar, no crash.",
-        "offer_badge": "Launch offer",
+        "offer_badge": "",
         "offer_title": "Up to $60 off",
         "offer_text": "3+ months ship free. Applied automatically.",
         "purchase_legend": "Purchase type",
@@ -509,6 +509,106 @@
         "credentials": "Why we built it",
         "disclosure": ""
       }
+    },
+    "nad_chart": {
+      "type": "lockin-nad-curve",
+      "blocks": {
+        "m20": {
+          "type": "marker",
+          "settings": {
+            "age": 20,
+            "value": 100,
+            "value_label": "100%",
+            "label": "Age 20"
+          }
+        },
+        "m40": {
+          "type": "marker",
+          "settings": {
+            "age": 40,
+            "value": 70,
+            "value_label": "~70%",
+            "label": "Age 40"
+          }
+        },
+        "m50": {
+          "type": "marker",
+          "settings": {
+            "age": 50,
+            "value": 50,
+            "value_label": "~50%",
+            "label": "Age 50"
+          }
+        }
+      },
+      "block_order": [
+        "m20",
+        "m40",
+        "m50"
+      ],
+      "settings": {
+        "eyebrow": "Why it matters",
+        "heading": "NAD+ falls for everyone.",
+        "heading_tag": "h2",
+        "body": "NAD+ is the coenzyme your cells use to turn food into energy and to repair DNA. It drops steadily with age — which is why lockin leads with NR, not a stimulant.",
+        "chart_title": "Line chart of NAD+ levels declining with age",
+        "chart_description": "NAD+ is at 100% around age 20, roughly 70% by age 40, and roughly 50% by age 50, continuing to decline into later life.",
+        "age_min": 20,
+        "age_max": 80,
+        "x_axis_label": "Age",
+        "curve_path": "M 60 40 C 150 70 230 108 297 133 C 340 150 385 174 415 195 C 520 228 650 248 770 258",
+        "caption": "Illustrative of the decline reported across the ageing literature, not a measurement of any individual."
+      }
+    },
+    "cortisol_chart": {
+      "type": "lockin-nad-curve",
+      "blocks": {
+        "d0": {
+          "type": "marker",
+          "settings": {
+            "age": 0,
+            "value": 100,
+            "value_label": "100%",
+            "label": "Day 0"
+          }
+        },
+        "d30": {
+          "type": "marker",
+          "settings": {
+            "age": 30,
+            "value": 88,
+            "value_label": "88%",
+            "label": "Day 30"
+          }
+        },
+        "d60": {
+          "type": "marker",
+          "settings": {
+            "age": 60,
+            "value": 77,
+            "value_label": "77%",
+            "label": "Day 60"
+          }
+        }
+      },
+      "block_order": [
+        "d0",
+        "d30",
+        "d60"
+      ],
+      "settings": {
+        "eyebrow": "Hormone balance",
+        "heading": "Cortisol trends down.",
+        "heading_tag": "h2",
+        "body": "KSM-66 ashwagandha at the full 300mg dose is the part of the formula studied for cortisol — the stress hormone that keeps energy anxious instead of steady. In published trials of the same extract, morning cortisol fell over about eight weeks.",
+        "chart_title": "Line chart of cortisol declining over 60 days in a published ashwagandha trial",
+        "chart_description": "In a published trial of the studied ashwagandha extract, average morning cortisol was 100% at day 0, roughly 88% by day 30, and roughly 77% by day 60 — about a 23% reduction versus baseline.",
+        "age_min": 0,
+        "age_max": 60,
+        "x_axis_label": "Days on the studied extract",
+        "curve_path": "M 60 40 C 200 52 310 66 415 77 C 530 89 660 100 770 111",
+        "caption": "From published double-blind trials of the KSM-66 ashwagandha extract (e.g. Lopresti 2019; Salve 2019) — roughly a 23% average reduction in morning cortisol over 8 weeks versus placebo. This shows the extract's trial result, not a measurement of any individual or a claim that this product produces the same effect. Individual results vary. These statements have not been evaluated by the FDA; this product is not intended to diagnose, treat, cure, or prevent any disease."
+      }
     }
   },
   "order": [
@@ -519,6 +619,8 @@
     "timeline",
     "video",
     "compare",
+    "nad_chart",
+    "cortisol_chart",
     "gallery",
     "founder_note",
     "video_faq"

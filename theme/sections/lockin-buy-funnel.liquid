@@ -192,20 +192,25 @@
           {%- if block.type == 'faq' and block.settings.question != blank -%}{%- assign has_minifaq = true -%}{%- endif -%}
         {%- endfor -%}
         {%- if has_minifaq -%}
-          <div class="lk-bf__minifaq">
-            {%- for block in section.blocks -%}
-              {%- if block.type == 'faq' and block.settings.question != blank -%}
-                <details class="lk-bf__qa" name="lockin-minifaq-{{ section.id }}" {{ block.shopify_attributes }}>
-                  <summary class="lk-bf__q">
-                    <span>{{ block.settings.question }}</span>
-                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
-                      <path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </summary>
-                  <div class="lk-bf__a">{{ block.settings.answer }}</div>
-                </details>
-              {%- endif -%}
-            {%- endfor -%}
+          <div class="lk-bf__faqCar" data-lockin-faqcar>
+            <ul class="lk-bf__faqTrack">
+              {%- for block in section.blocks -%}
+                {%- if block.type == 'faq' and block.settings.question != blank -%}
+                  <li class="lk-bf__faqCard" {{ block.shopify_attributes }}>
+                    <p class="lk-bf__faqQ">{{ block.settings.question }}</p>
+                    <p class="lk-bf__faqA">{{ block.settings.answer }}</p>
+                  </li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+            <div class="lk-bf__faqNav" aria-hidden="true">
+              <button class="lk-bf__faqArrow" type="button" data-lockin-faq-prev aria-label="Previous question">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="lk-bf__faqArrow" type="button" data-lockin-faq-next aria-label="Next question">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
           </div>
         {%- endif -%}
 
@@ -720,51 +725,81 @@
     color: var(--lk-muted);
   }
 
-  /* ---------- Small FAQ ---------- */
+  /* ---------- Small FAQ carousel ---------- */
 
-  .lk-bf__minifaq {
-    margin-top: 18px;
-    border-top: 1px solid var(--lk-line);
+  .lk-bf__faqCar {
+    margin-top: 20px;
   }
 
-  .lk-bf__qa {
-    border-bottom: 1px solid var(--lk-line);
-  }
-
-  .lk-bf__q {
+  .lk-bf__faqTrack {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    padding-block: 13px;
-    cursor: pointer;
+    gap: 12px;
+    margin: 0;
+    padding: 0 0 4px;
     list-style: none;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--lk-ink);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
   }
 
-  .lk-bf__q::-webkit-details-marker {
+  .lk-bf__faqTrack::-webkit-scrollbar {
     display: none;
   }
 
-  .lk-bf__q svg {
-    flex: none;
+  .lk-bf__faqCard {
+    flex: 0 0 min(80%, 300px);
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 18px 20px;
+    border-radius: var(--lk-r-md);
+    border: 1px solid var(--lk-line);
+    background: var(--lk-ice-soft);
+  }
+
+  .lk-bf__faqQ {
+    font-family: var(--lk-font-head);
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+    color: var(--lk-ink);
+  }
+
+  .lk-bf__faqA {
+    font-size: 0.875rem;
+    line-height: 1.58;
+    color: var(--lk-muted);
+    text-wrap: pretty;
+  }
+
+  .lk-bf__faqNav {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .lk-bf__faqArrow {
+    display: grid;
+    place-items: center;
+    inline-size: 40px;
+    block-size: 40px;
+    border-radius: var(--lk-r-pill);
+    border: 1px solid var(--lk-line-strong);
+    background: var(--lk-paper);
+    color: var(--lk-ink);
+    cursor: pointer;
+    transition: background-color 0.2s var(--lk-ease);
+  }
+
+  .lk-bf__faqArrow:hover {
+    background: var(--lk-ice);
+  }
+
+  .lk-bf__faqArrow svg {
     inline-size: 16px;
     block-size: 16px;
-    color: var(--lk-muted);
-    transition: transform 0.25s var(--lk-ease);
-  }
-
-  .lk-bf__qa[open] .lk-bf__q svg {
-    transform: rotate(180deg);
-  }
-
-  .lk-bf__a {
-    padding: 0 30px 14px 0;
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--lk-muted);
   }
 
   /* ---------- Form controls (self-contained copies of the lk control kit,
@@ -1362,25 +1397,47 @@
         });
       }
 
-      /* Sticky bar */
-      if (bar && sentinel && 'IntersectionObserver' in window) {
+      /* Mini-FAQ carousel arrows */
+      var faqCar = root.querySelector('[data-lockin-faqcar]');
+      if (faqCar) {
+        var faqTrack = faqCar.querySelector('.lk-bf__faqTrack');
+        var faqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+        var faqStep = function () {
+          var card = faqCar.querySelector('.lk-bf__faqCard');
+          return card ? card.getBoundingClientRect().width + 12 : 300;
+        };
+        var faqGo = function (dir) {
+          if (faqTrack) faqTrack.scrollBy({ left: dir * faqStep(), behavior: faqReduce.matches ? 'auto' : 'smooth' });
+        };
+        faqCar.querySelector('[data-lockin-faq-prev]')?.addEventListener('click', function () { faqGo(-1); });
+        faqCar.querySelector('[data-lockin-faq-next]')?.addEventListener('click', function () { faqGo(1); });
+      }
+
+      /* Sticky bar: IntersectionObserver drives it, plus a scroll fallback so
+         a fast jump-scroll past the sentinel can't leave it stuck. */
+      if (bar && sentinel) {
         bar.hidden = false;
         bar.setAttribute('inert', '');
-        var observer = new IntersectionObserver(
-          function (entries) {
-            entries.forEach(function (entry) {
-              var past = !entry.isIntersecting && entry.boundingClientRect.top < 0;
-              bar.classList.toggle('is-visible', past);
-              if (past) {
-                bar.removeAttribute('inert');
-              } else {
-                bar.setAttribute('inert', '');
-              }
-            });
-          },
-          { threshold: 0 }
-        );
-        observer.observe(sentinel);
+        var setBar = function (past) {
+          bar.classList.toggle('is-visible', past);
+          if (past) {
+            bar.removeAttribute('inert');
+          } else {
+            bar.setAttribute('inert', '');
+          }
+        };
+        var syncBar = function () {
+          setBar(sentinel.getBoundingClientRect().top < 0);
+        };
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver(function () { syncBar(); }, { threshold: 0 }).observe(sentinel);
+        }
+        var barRaf = null;
+        window.addEventListener('scroll', function () {
+          if (barRaf) return;
+          barRaf = requestAnimationFrame(function () { barRaf = null; syncBar(); });
+        }, { passive: true });
+        syncBar();
       }
 
       /* Add to cart */
