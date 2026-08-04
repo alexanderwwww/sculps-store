@@ -270,6 +270,11 @@
 
           <fieldset class="lk-bf__fieldset lk-bundles">
             <legend class="lk-bf__legend">{{ section.settings.bundle_legend }}</legend>
+            <div class="lk-bundles__steps" aria-hidden="true">
+              <span><b>1</b> Pick your supply</span>
+              <span><b>2</b> Add to cart</span>
+              <span><b>3</b> Ships free on 3+ months</span>
+            </div>
             <div class="lk-bundles__list">
               {%- for variant in product.variants -%}
                 {%- liquid
@@ -310,8 +315,10 @@
                   assign per_day = variant.price | divided_by: days
 
                   assign save_pct = 0
+                  assign save_amt = 0
                   if variant.compare_at_price > variant.price
                     assign save_pct = variant.compare_at_price | minus: variant.price | times: 100.0 | divided_by: variant.compare_at_price | round
+                    assign save_amt = variant.compare_at_price | minus: variant.price
                   endif
                 -%}
                 <div class="lk-bundle">
@@ -337,18 +344,21 @@
                   >
                   <label class="lk-bundle__label" for="{{ section.id }}-v{{ variant.id }}">
                     <span class="lk-radio" aria-hidden="true"></span>
+                    {%- if product.featured_image -%}
+                      <img class="lk-bundle__thumb" src="{{ product.featured_image | image_url: width: 120 }}" alt="" width="46" height="46" loading="lazy">
+                    {%- endif -%}
                     <span class="lk-bundle__main">
                       <span class="lk-bundle__name">{{ block.settings.label | default: variant.title }}</span>
                       <span class="lk-bundle__sub">{{ block.settings.sublabel | default: variant.title }}</span>
                       <span class="lk-bundle__perbox">
                         <span data-lockin-perbox-for="{{ variant.id }}">{{ per_box | money }}</span>
                         {{ section.settings.per_box_suffix }}
-                        {%- if save_pct > 0 %}
-                          <span class="lk-bundle__saving">Save {{ save_pct }}%</span>
-                        {%- endif %}
                       </span>
                     </span>
                     <span class="lk-bundle__pricing">
+                      {%- if save_amt > 0 -%}
+                        <span class="lk-bundle__saveamt">Save {{ save_amt | money }}</span>
+                      {%- endif -%}
                       {%- if variant.compare_at_price > variant.price -%}
                         <s class="lk-bundle__was">{{ variant.compare_at_price | money }}</s>
                       {%- endif -%}
@@ -895,6 +905,33 @@
     color: var(--lk-ink);
   }
 
+  .lk-bundles__steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 2px 0 12px;
+    font-size: 0.78rem;
+    color: var(--lk-muted);
+  }
+
+  .lk-bundles__steps span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .lk-bundles__steps b {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    font-size: 0.66rem;
+    font-weight: 700;
+  }
+
   .lk-bundles__list {
     display: grid;
     gap: 10px;
@@ -902,6 +939,29 @@
 
   .lk-bundle {
     position: relative;
+  }
+
+  .lk-bundle__thumb {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: var(--lk-ice-soft);
+    border: 1px solid var(--lk-line);
+  }
+
+  .lk-bundle__saveamt {
+    align-self: flex-end;
+    background: #C0392B;
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 2px;
+    white-space: nowrap;
   }
 
   .lk-bundle__label {
@@ -970,16 +1030,22 @@
   .lk-bundle__badge {
     position: absolute;
     top: -9px;
-    right: 14px;
-    padding: 4px 11px;
+    left: 16px;
+    right: auto;
+    padding: 4px 12px;
     border-radius: var(--lk-r-pill);
-    background: var(--lk-ink);
-    color: var(--lk-paper);
+    background: var(--lk-accent);
+    color: var(--lk-ink);
     font-size: 0.6875rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     white-space: nowrap;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--lk-accent) 45%, transparent);
+  }
+
+  .lk-vh-input:checked + .lk-bundle__label {
+    box-shadow: 0 0 0 1.5px var(--lk-ink);
   }
 
   /* ---------- Sticky bar ---------- */
