@@ -270,12 +270,17 @@
 
           <fieldset class="lk-bf__fieldset lk-bundles">
             <legend class="lk-bf__legend">{{ section.settings.bundle_legend }}</legend>
-            <div class="lk-bundles__steps" aria-hidden="true">
-              <span><b>1</b> Pick your supply</span>
-              <span><b>2</b> Add to cart</span>
-              <span><b>3</b> Ships free on 3+ months</span>
-            </div>
-            <div class="lk-bundles__list">
+            <div class="lk-dealframe">
+              <div class="lk-dealframe__head">
+                <span>{{ section.settings.deal_name | default: 'Best-value bundle' }}</span>
+                <span class="lk-dealframe__flag">{{ section.settings.deal_flag | default: '★ 3+ months ship free' }}</span>
+              </div>
+              <div class="lk-bundles__steps" aria-hidden="true">
+                <span><b>1</b> Pick your supply</span>
+                <span><b>2</b> Add to cart</span>
+                <span><b>3</b> Ships free on 3+ months</span>
+              </div>
+              <div class="lk-bundles__list">
               {%- for variant in product.variants -%}
                 {%- liquid
                   # Match the nth variant to the nth block of type "bundle".
@@ -375,6 +380,7 @@
                   </label>
                 </div>
               {%- endfor -%}
+              </div>
             </div>
           </fieldset>
 
@@ -903,6 +909,45 @@
     font-size: 0.8125rem;
     line-height: 1.5;
     color: var(--lk-ink);
+  }
+
+  .lk-dealframe {
+    border: 1.5px solid var(--lk-line);
+    border-radius: var(--lk-r-md);
+    overflow: hidden;
+    background: var(--lk-paper);
+  }
+
+  .lk-dealframe__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    background: var(--lk-ink);
+    color: var(--lk-paper);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .lk-dealframe__flag {
+    color: var(--lk-accent);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+
+  .lk-dealframe .lk-bundles__steps {
+    padding: 11px 16px;
+    margin: 0;
+    background: var(--lk-ice-soft);
+    border-bottom: 1px solid var(--lk-line);
+  }
+
+  .lk-dealframe .lk-bundles__list {
+    padding: 12px;
   }
 
   .lk-bundles__steps {
