@@ -1303,12 +1303,16 @@
   @media screen and (min-width: 990px) {
     .lk-bf__grid {
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-      align-items: start;
+      align-items: stretch;
+    }
+
+    .lk-bf__mediaCol {
+      position: relative;
     }
 
     .lk-bf__mediaSticky {
       position: sticky;
-      top: var(--header-height, 0px);
+      top: calc(var(--header-height, 0px) + 20px);
     }
 
     .lk-bf__stage {
