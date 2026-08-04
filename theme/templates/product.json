@@ -3,95 +3,24 @@
     "main": {
       "type": "lockin-buy-funnel",
       "blocks": {
-        "glass1": {
-          "type": "glass",
-          "settings": {
-            "text": "DNA repair"
-          }
-        },
-        "glass2": {
-          "type": "glass",
-          "settings": {
-            "text": "Clean energy"
-          }
-        },
-        "glass3": {
-          "type": "glass",
-          "settings": {
-            "text": "Cortisol balance"
-          }
-        },
-        "mfaq1": {
-          "type": "faq",
-          "settings": {
-            "question": "What does it do?",
-            "answer": "Cell repair, steady energy, calm focus. Full formula on the box — no proprietary blends."
-          }
-        },
-        "mfaq2": {
-          "type": "faq",
-          "settings": {
-            "question": "Is it safe?",
-            "answer": "No caffeine, no sugar, open label. Not for pregnancy, nursing or under 18 — on thyroid or sedative meds, ask your doctor first."
-          }
-        },
-        "mfaq3": {
-          "type": "faq",
-          "settings": {
-            "question": "How long until it works?",
-            "answer": "It builds over weeks — judge it at day 30. Money-back if it's not for you."
-          }
-        },
-        "bundle1": {
-          "type": "bundle",
-          "settings": {
-            "label": "1 month",
-            "sublabel": "30 singles",
-            "months": 1,
-            "badge": ""
-          }
-        },
-        "bundle2": {
-          "type": "bundle",
-          "settings": {
-            "label": "3 months",
-            "sublabel": "90 singles",
-            "months": 3,
-            "badge": "Best value"
-          }
-        },
-        "bundle3": {
-          "type": "bundle",
-          "settings": {
-            "label": "6 months",
-            "sublabel": "180 singles",
-            "months": 6,
-            "badge": "Biggest saving"
-          }
-        },
-        "glass4": {
-          "type": "glass",
-          "settings": {
-            "text": "Anti-aging activation"
-          }
-        }
+        "glass1": { "type": "glass", "settings": { "text": "DNA repair" } },
+        "glass2": { "type": "glass", "settings": { "text": "Clean energy" } },
+        "glass3": { "type": "glass", "settings": { "text": "Cortisol balance" } },
+        "glass4": { "type": "glass", "settings": { "text": "Anti-aging activation" } },
+        "mfaq1": { "type": "faq", "settings": { "question": "What does it do?", "answer": "Cell repair, steady energy, calm focus. Full formula on the box — no proprietary blends." } },
+        "mfaq2": { "type": "faq", "settings": { "question": "Is it safe?", "answer": "No caffeine, no sugar, open label. Not for pregnancy, nursing or under 18 — on thyroid or sedative meds, ask your doctor first." } },
+        "mfaq3": { "type": "faq", "settings": { "question": "How long until it works?", "answer": "It builds over weeks — judge it at day 30. Money-back if it's not for you." } },
+        "bundle1": { "type": "bundle", "settings": { "label": "1 month", "sublabel": "30 singles", "months": 1, "badge": "" } },
+        "bundle2": { "type": "bundle", "settings": { "label": "3 months", "sublabel": "90 singles", "months": 3, "badge": "Best value" } },
+        "bundle3": { "type": "bundle", "settings": { "label": "6 months", "sublabel": "180 singles", "months": 6, "badge": "Biggest saving" } }
       },
-      "block_order": [
-        "glass1",
-        "glass2",
-        "glass3",
-        "glass4",
-        "mfaq1",
-        "mfaq2",
-        "mfaq3",
-        "bundle1",
-        "bundle2",
-        "bundle3"
-      ],
+      "block_order": ["glass1", "glass2", "glass3", "glass4", "mfaq1", "mfaq2", "mfaq3", "bundle1", "bundle2", "bundle3"],
       "settings": {
+        "product": "",
         "eyebrow": "Cellular energy chewables",
-        "title": "Energy that doesn't crash.",
+        "title": "lockin",
         "subtitle": "Two chewables a day. No caffeine, no sugar, no crash.",
+        "offer_pill": "€60 off",
         "offer_text": "3+ months ship free. Applied automatically.",
         "purchase_legend": "Purchase type",
         "subscribe_discount": 20,
@@ -100,337 +29,39 @@
         "onetime_label": "One-time purchase",
         "onetime_note": "No commitment.",
         "subscribe_unavailable_note": "Subscriptions are not open yet. One-time purchase ships today.",
-        "boost_product": "lockin-boost-anti-aging",
-        "boost_label": "Anti-aging boost",
-        "boost_note": "Added to your order. One tap to remove.",
         "bundle_legend": "Choose your supply",
         "default_bundle": 2,
         "per_box_suffix": "/ box",
+        "boost_product": "lockin-boost-anti-aging",
+        "boost_label": "Anti-aging boost",
+        "boost_note": "Added to your order. One tap to remove.",
         "submit_label": "Add to cart",
         "reassurance": "30-day money-back · Free shipping on 3+ months",
-        "after_add": "drawer",
-        "offer_pill": "$60 off"
+        "after_add": "drawer"
       }
     },
-    "timeline": {
-      "type": "lockin-timeline",
-      "blocks": {
-        "t1": {
-          "type": "step",
-          "settings": {
-            "label": "Day 1",
-            "title": "No jolt. That's the point.",
-            "text": "Nothing to feel in an hour — there's no stimulant to spike."
-          }
-        },
-        "t2": {
-          "type": "step",
-          "settings": {
-            "label": "Week 1–2",
-            "title": "The habit locks in.",
-            "text": "One foil with breakfast. Ten seconds, no water."
-          }
-        },
-        "t3": {
-          "type": "step",
-          "settings": {
-            "label": "Week 3–4",
-            "title": "Judge it here.",
-            "text": "This is where you take stock of your afternoons — not day one."
-          }
-        },
-        "t4": {
-          "type": "step",
-          "settings": {
-            "label": "Day 30",
-            "title": "Not for you? Money back.",
-            "text": "Full refund inside 30 days. No forms, no return games.",
-            "highlight": true
-          }
-        }
-      },
-      "block_order": [
-        "t1",
-        "t2",
-        "t3",
-        "t4"
-      ],
+    "doctor_video": {
+      "type": "lockin-ugc-video",
       "settings": {
-        "eyebrow": "What to expect",
-        "heading": "The honest timeline.",
-        "subheading": "This isn't caffeine, so day one feels like nothing. Here's the actual shape of it."
-      }
-    },
-    "video": {
-      "type": "lockin-video-showcase",
-      "blocks": {
-        "c1": {
-          "type": "chapter",
-          "settings": {
-            "title": "Tear",
-            "text": "One foil off the strip. It lives in a bag, a car door, a jacket."
-          }
-        },
-        "c2": {
-          "type": "chapter",
-          "settings": {
-            "title": "Chew",
-            "text": "Two blueberry chewables. No water, lightly sweet, no chalk."
-          }
-        },
-        "c3": {
-          "type": "chapter",
-          "settings": {
-            "title": "Repeat tomorrow",
-            "text": "The work is cumulative — day 30 is the day to judge it."
-          }
-        }
-      },
-      "block_order": [
-        "c1",
-        "c2",
-        "c3"
-      ],
-      "settings": {
-        "eyebrow": "See it",
-        "heading": "Ten seconds a day.",
-        "body": "Tear one foil, chew two chewables, get on with your morning.",
-        "poster": "shopify://shop_images/lockin-photo-kitchen.png",
-        "screen_caption": "The 10-second morning"
-      }
-    },
-    "compare": {
-      "type": "lockin-compare",
-      "blocks": {
-        "row1": {
-          "type": "row",
-          "settings": {
-            "label": "Caffeine",
-            "value_self": "None",
-            "value_b": "~95mg / cup",
-            "value_c": "~80mg / can"
-          }
-        },
-        "row2": {
-          "type": "row",
-          "settings": {
-            "label": "Sugar",
-            "value_self": "None",
-            "value_b": "Depends",
-            "value_c": "Up to 27g"
-          }
-        },
-        "row3": {
-          "type": "row",
-          "settings": {
-            "label": "Afternoon crash",
-            "value_self": "no",
-            "value_b": "yes",
-            "value_c": "yes"
-          }
-        },
-        "row4": {
-          "type": "row",
-          "settings": {
-            "label": "Anti-aging support",
-            "value_self": "yes",
-            "value_b": "no",
-            "value_c": "no"
-          }
-        },
-        "row5": {
-          "type": "row",
-          "settings": {
-            "label": "Fine after 4pm",
-            "value_self": "yes",
-            "value_b": "no",
-            "value_c": "no"
-          }
-        }
-      },
-      "block_order": [
-        "row1",
-        "row2",
-        "row3",
-        "row4",
-        "row5"
-      ],
-      "settings": {
-        "eyebrow": "The alternative",
-        "heading": "Why not just coffee?",
-        "col_self": "lockin",
-        "col_b": "Coffee",
-        "col_c": "Energy drinks",
-        "footnote": "Typical values: brewed coffee ~95mg caffeine per cup; a 250ml energy drink ~80mg caffeine and up to 27g sugar."
-      }
-    },
-    "gallery": {
-      "type": "lockin-image-carousel",
-      "blocks": {
-        "g1": {
-          "type": "image",
-          "settings": {
-            "image": "shopify://shop_images/lockin-photo-marble.png",
-            "caption": "One foil lives wherever your morning happens."
-          }
-        },
-        "g2": {
-          "type": "image",
-          "settings": {
-            "image": "shopify://shop_images/lockin-photo-macro.png",
-            "caption": "Two blueberry chewables. Chew, don't swallow."
-          }
-        },
-        "g3": {
-          "type": "image",
-          "settings": {
-            "image": "shopify://shop_images/lockin-photo-box-foil.png",
-            "caption": "Nothing is opened until you tear it."
-          }
-        },
-        "g4": {
-          "type": "image",
-          "settings": {
-            "image": "shopify://shop_images/lockin-photo-desk.png",
-            "caption": "Lives in a desk drawer. No fridge, no shaker, no ceremony."
-          }
-        },
-        "g5": {
-          "type": "image",
-          "settings": {
-            "image": "shopify://shop_images/lockin-photo-open-box.jpg",
-            "caption": "First open: a month of sealed foils, ready to go."
-          }
-        },
-        "g6": {
-          "type": "image",
-          "settings": {
-            "image": "shopify://shop_images/lockin-photo-label.jpg",
-            "caption": "Every ingredient and dose, printed on the box."
-          }
-        }
-      },
-      "block_order": [
-        "g1",
-        "g2",
-        "g3",
-        "g4",
-        "g5",
-        "g6"
-      ],
-      "settings": {
-        "eyebrow": "Up close",
-        "heading": "What lands on your doorstep."
-      }
-    },
-    "video_faq": {
-      "type": "lockin-video-faq",
-      "blocks": {
-        "q1": {
-          "type": "qa",
-          "settings": {
-            "question": "Will I feel it like caffeine?",
-            "answer": "<p>No. There's no stimulant — no lift, no drop. You just stop dipping at 3pm.</p>"
-          }
-        },
-        "q2": {
-          "type": "qa",
-          "settings": {
-            "question": "How long until it does anything?",
-            "answer": "<p>It builds. Judge it at day 30, not day one.</p>"
-          }
-        },
-        "q3": {
-          "type": "qa",
-          "settings": {
-            "question": "Can I take it at night?",
-            "answer": "<p>Yes — no caffeine, so it won't touch your sleep.</p>"
-          }
-        },
-        "q4": {
-          "type": "qa",
-          "settings": {
-            "question": "Why foils instead of a bottle?",
-            "answer": "<p>Air kills NR and vitamin C. Sealed foils mean day 30 is as strong as day 1.</p>"
-          }
-        },
-        "q5": {
-          "type": "qa",
-          "settings": {
-            "question": "Who should not take it?",
-            "answer": "<p>Not for pregnancy, nursing or under 18. On thyroid or sedative meds, ask your doctor.</p>"
-          }
-        }
-      },
-      "block_order": [
-        "q1",
-        "q2",
-        "q3",
-        "q4",
-        "q5"
-      ],
-      "settings": {
-        "poster": "shopify://shop_images/lockin-photo-marble.png",
-        "screen_caption": "One foil. Two chewables. Done.",
-        "eyebrow": "Questions",
-        "heading": "Questions.",
-        "one_at_a_time": true
+        "eyebrow": "Watch",
+        "heading": "The science, explained.",
+        "body": "Ninety seconds on why your energy dips — and what actually fixes it.",
+        "video_url": "",
+        "poster": "shopify://shop_images/lockin-photo-desk.png",
+        "ratio": "portrait"
       }
     },
     "whats_inside": {
       "type": "lockin-whats-inside",
       "blocks": {
-        "i1": {
-          "type": "item",
-          "settings": {
-            "qty": "30×",
-            "text": "Individually sealed foils",
-            "detail": "One foil = one day."
-          }
-        },
-        "i2": {
-          "type": "item",
-          "settings": {
-            "qty": "60×",
-            "text": "Blueberry chewables",
-            "detail": "Two per foil. That's the dose."
-          }
-        },
-        "i3": {
-          "type": "item",
-          "settings": {
-            "qty": "1×",
-            "text": "The box",
-            "detail": "Full strength, day 1 to 30."
-          }
-        },
-        "d1": {
-          "type": "does",
-          "settings": {
-            "text": "Repairs — supports your cells' daily DNA repair."
-          }
-        },
-        "d2": {
-          "type": "does",
-          "settings": {
-            "text": "Energizes — steady output all day, no spike, no dip."
-          }
-        },
-        "d3": {
-          "type": "does",
-          "settings": {
-            "text": "Balances — keeps stress hormones in check."
-          }
-        }
+        "i1": { "type": "item", "settings": { "qty": "30×", "text": "Individually sealed foils", "detail": "One foil = one day." } },
+        "i2": { "type": "item", "settings": { "qty": "60×", "text": "Blueberry chewables", "detail": "Two per foil. That's the dose." } },
+        "i3": { "type": "item", "settings": { "qty": "1×", "text": "The box", "detail": "Full strength, day 1 to 30." } },
+        "d1": { "type": "does", "settings": { "text": "Repairs — supports your cells' daily DNA repair." } },
+        "d2": { "type": "does", "settings": { "text": "Energizes — steady output all day, no spike, no dip." } },
+        "d3": { "type": "does", "settings": { "text": "Balances — keeps stress hormones in check." } }
       },
-      "block_order": [
-        "i1",
-        "i2",
-        "i3",
-        "d1",
-        "d2",
-        "d3"
-      ],
+      "block_order": ["i1", "i2", "i3", "d1", "d2", "d3"],
       "settings": {
         "eyebrow": "In the box",
         "heading": "What you get.",
@@ -442,109 +73,66 @@
         "footnote": "Blueberry. No sugar, no dyes, no gelatin. Full ingredient doses on the how-it-works page."
       }
     },
-    "reviews": {
-      "type": "lockin-review-carousel",
+    "timeline": {
+      "type": "lockin-timeline",
       "blocks": {
-        "r1": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r2": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r3": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r4": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        },
-        "r5": {
-          "type": "review",
-          "settings": {
-            "is_placeholder": true
-          }
-        }
+        "t1": { "type": "step", "settings": { "label": "Day 1", "title": "No jolt. That's the point.", "text": "Nothing to feel in an hour — there's no stimulant to spike.", "highlight": false } },
+        "t2": { "type": "step", "settings": { "label": "Week 1–2", "title": "The habit locks in.", "text": "One foil with breakfast. Ten seconds, no water.", "highlight": false } },
+        "t3": { "type": "step", "settings": { "label": "Week 3–4", "title": "Judge it here.", "text": "This is where you take stock of your afternoons — not day one.", "highlight": false } },
+        "t4": { "type": "step", "settings": { "label": "Day 30", "title": "Not for you? Money back.", "text": "Full refund inside 30 days. No forms, no return games.", "highlight": true } }
       },
-      "block_order": [
-        "r1",
-        "r2",
-        "r3",
-        "r4",
-        "r5"
-      ],
+      "block_order": ["t1", "t2", "t3", "t4"],
       "settings": {
-        "eyebrow": "In their words",
-        "heading": "What people say.",
-        "note": ""
+        "eyebrow": "What to expect",
+        "heading": "The honest timeline.",
+        "subheading": "This isn't caffeine, so day one feels like nothing. Here's the actual shape of it."
       }
     },
-    "doctor_video": {
-      "type": "lockin-ugc-video",
+    "video": {
+      "type": "lockin-video-showcase",
+      "blocks": {
+        "c1": { "type": "chapter", "settings": { "title": "Tear", "text": "One foil off the strip. It lives in a bag, a car door, a jacket." } },
+        "c2": { "type": "chapter", "settings": { "title": "Chew", "text": "Two blueberry chewables. No water, lightly sweet, no chalk." } },
+        "c3": { "type": "chapter", "settings": { "title": "Repeat tomorrow", "text": "The work is cumulative — day 30 is the day to judge it." } }
+      },
+      "block_order": ["c1", "c2", "c3"],
       "settings": {
-        "eyebrow": "Watch",
-        "heading": "The science, explained.",
-        "body": "Ninety seconds on why your energy dips — and what actually fixes it.",
-        "ratio": "portrait",
-        "poster": "shopify://shop_images/lockin-photo-desk.png"
+        "eyebrow": "See it",
+        "heading_tag": "h2",
+        "heading": "Ten seconds a day.",
+        "body": "Tear one foil, chew two chewables, get on with your morning.",
+        "video_url": "",
+        "poster": "shopify://shop_images/lockin-photo-kitchen.png",
+        "screen_caption": "The 10-second morning"
       }
     },
-    "founder_note": {
-      "type": "lockin-doctor-quote",
+    "compare": {
+      "type": "lockin-compare",
+      "blocks": {
+        "row1": { "type": "row", "settings": { "label": "Caffeine", "value_self": "None", "value_b": "~95mg / cup", "value_c": "~80mg / can" } },
+        "row2": { "type": "row", "settings": { "label": "Sugar", "value_self": "None", "value_b": "Depends", "value_c": "Up to 27g" } },
+        "row3": { "type": "row", "settings": { "label": "Afternoon crash", "value_self": "no", "value_b": "yes", "value_c": "yes" } },
+        "row4": { "type": "row", "settings": { "label": "Anti-aging support", "value_self": "yes", "value_b": "no", "value_c": "no" } },
+        "row5": { "type": "row", "settings": { "label": "Fine after 4pm", "value_self": "yes", "value_b": "no", "value_c": "no" } }
+      },
+      "block_order": ["row1", "row2", "row3", "row4", "row5"],
       "settings": {
-        "is_placeholder": false,
-        "quote": "We built lockin because we were tired of renting energy from caffeine and paying it back at 3pm. Two chewables, every dose printed on the box, nothing to crash from — that's the whole idea.",
-        "name": "The lockin founders",
-        "credentials": "Why we built it",
-        "disclosure": ""
+        "eyebrow": "The alternative",
+        "heading": "Why not just coffee?",
+        "col_self": "lockin",
+        "col_b": "Coffee",
+        "col_c": "Energy drinks",
+        "footnote": "Typical values: brewed coffee ~95mg caffeine per cup; a 250ml energy drink ~80mg caffeine and up to 27g sugar."
       }
     },
     "nad_chart": {
       "type": "lockin-nad-curve",
       "blocks": {
-        "m20": {
-          "type": "marker",
-          "settings": {
-            "age": 20,
-            "value": 100,
-            "value_label": "100%",
-            "label": "Age 20"
-          }
-        },
-        "m40": {
-          "type": "marker",
-          "settings": {
-            "age": 40,
-            "value": 70,
-            "value_label": "~70%",
-            "label": "Age 40"
-          }
-        },
-        "m50": {
-          "type": "marker",
-          "settings": {
-            "age": 50,
-            "value": 50,
-            "value_label": "~50%",
-            "label": "Age 50"
-          }
-        }
+        "m20": { "type": "marker", "settings": { "age": 20, "value": 100, "value_label": "100%", "label": "Age 20" } },
+        "m40": { "type": "marker", "settings": { "age": 40, "value": 70, "value_label": "~70%", "label": "Age 40" } },
+        "m50": { "type": "marker", "settings": { "age": 50, "value": 50, "value_label": "~50%", "label": "Age 50" } }
       },
-      "block_order": [
-        "m20",
-        "m40",
-        "m50"
-      ],
+      "block_order": ["m20", "m40", "m50"],
       "settings": {
         "eyebrow": "Why it matters",
         "heading": "NAD+ falls for everyone.",
@@ -562,39 +150,11 @@
     "cortisol_chart": {
       "type": "lockin-nad-curve",
       "blocks": {
-        "d0": {
-          "type": "marker",
-          "settings": {
-            "age": 0,
-            "value": 100,
-            "value_label": "100%",
-            "label": "Day 0"
-          }
-        },
-        "d30": {
-          "type": "marker",
-          "settings": {
-            "age": 30,
-            "value": 88,
-            "value_label": "88%",
-            "label": "Day 30"
-          }
-        },
-        "d60": {
-          "type": "marker",
-          "settings": {
-            "age": 60,
-            "value": 77,
-            "value_label": "77%",
-            "label": "Day 60"
-          }
-        }
+        "d0": { "type": "marker", "settings": { "age": 0, "value": 100, "value_label": "100%", "label": "Day 0" } },
+        "d30": { "type": "marker", "settings": { "age": 30, "value": 88, "value_label": "88%", "label": "Day 30" } },
+        "d60": { "type": "marker", "settings": { "age": 60, "value": 77, "value_label": "77%", "label": "Day 60" } }
       },
-      "block_order": [
-        "d0",
-        "d30",
-        "d60"
-      ],
+      "block_order": ["d0", "d30", "d60"],
       "settings": {
         "eyebrow": "Hormone balance",
         "heading": "Cortisol trends down.",
@@ -608,20 +168,52 @@
         "curve_path": "M 60 40 C 200 52 310 66 415 77 C 530 89 660 100 770 111",
         "caption": "From published double-blind trials of the KSM-66 ashwagandha extract (e.g. Lopresti 2019; Salve 2019) — roughly a 23% average reduction in morning cortisol over 8 weeks versus placebo. This shows the extract's trial result, not a measurement of any individual or a claim that this product produces the same effect. Individual results vary. These statements have not been evaluated by the FDA; this product is not intended to diagnose, treat, cure, or prevent any disease."
       }
+    },
+    "gallery": {
+      "type": "lockin-image-carousel",
+      "blocks": {
+        "g1": { "type": "image", "settings": { "image": "shopify://shop_images/lockin-photo-marble.png", "caption": "One foil lives wherever your morning happens." } },
+        "g2": { "type": "image", "settings": { "image": "shopify://shop_images/lockin-photo-macro.png", "caption": "Two blueberry chewables. Chew, don't swallow." } },
+        "g3": { "type": "image", "settings": { "image": "shopify://shop_images/lockin-photo-box-foil.png", "caption": "Nothing is opened until you tear it." } },
+        "g4": { "type": "image", "settings": { "image": "shopify://shop_images/lockin-photo-desk.png", "caption": "Lives in a desk drawer. No fridge, no shaker, no ceremony." } },
+        "g5": { "type": "image", "settings": { "image": "shopify://shop_images/lockin-photo-open-box.jpg", "caption": "First open: a month of sealed foils, ready to go." } },
+        "g6": { "type": "image", "settings": { "image": "shopify://shop_images/lockin-photo-label.jpg", "caption": "Every ingredient and dose, printed on the box." } }
+      },
+      "block_order": ["g1", "g2", "g3", "g4", "g5", "g6"],
+      "settings": {
+        "eyebrow": "Up close",
+        "heading": "What lands on your doorstep."
+      }
+    },
+    "founder_note": {
+      "type": "lockin-doctor-quote",
+      "settings": {
+        "is_placeholder": false,
+        "quote": "We built lockin because we were tired of renting energy from caffeine and paying it back at 3pm. Two chewables, every dose printed on the box, nothing to crash from — that's the whole idea.",
+        "name": "The lockin founders",
+        "credentials": "Why we built it",
+        "disclosure": ""
+      }
+    },
+    "video_faq": {
+      "type": "lockin-video-faq",
+      "blocks": {
+        "q1": { "type": "qa", "settings": { "question": "Will I feel it like caffeine?", "answer": "<p>No. There's no stimulant — no lift, no drop. You just stop dipping at 3pm.</p>" } },
+        "q2": { "type": "qa", "settings": { "question": "How long until it does anything?", "answer": "<p>It builds. Judge it at day 30, not day one.</p>" } },
+        "q3": { "type": "qa", "settings": { "question": "Can I take it at night?", "answer": "<p>Yes — no caffeine, so it won't touch your sleep.</p>" } },
+        "q4": { "type": "qa", "settings": { "question": "Why foils instead of a bottle?", "answer": "<p>Air kills NR and vitamin C. Sealed foils mean day 30 is as strong as day 1.</p>" } },
+        "q5": { "type": "qa", "settings": { "question": "Who should not take it?", "answer": "<p>Not for pregnancy, nursing or under 18. On thyroid or sedative meds, ask your doctor.</p>" } }
+      },
+      "block_order": ["q1", "q2", "q3", "q4", "q5"],
+      "settings": {
+        "video_url": "",
+        "poster": "shopify://shop_images/lockin-photo-marble.png",
+        "screen_caption": "One foil. Two chewables. Done.",
+        "eyebrow": "Questions",
+        "heading": "Questions.",
+        "one_at_a_time": true
+      }
     }
   },
-  "order": [
-    "main",
-    "reviews",
-    "doctor_video",
-    "whats_inside",
-    "timeline",
-    "video",
-    "compare",
-    "nad_chart",
-    "cortisol_chart",
-    "gallery",
-    "founder_note",
-    "video_faq"
-  ]
+  "order": ["main", "doctor_video", "whats_inside", "timeline", "video", "compare", "nad_chart", "cortisol_chart", "gallery", "founder_note", "video_faq"]
 }
