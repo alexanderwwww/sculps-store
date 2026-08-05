@@ -117,8 +117,7 @@ A soft-touch black pebble fob, single button with a white status LED, XERO wordm
 420 Nm of instant torque is the headline. It is more twist than a superbike, available at zero
 rpm, in a 68 kg machine. Say that. It is true and it is the whole story.
 
-**Price:** `$X,XXX` — I will give you the number. Put a clear placeholder and use it
-consistently everywhere until I replace it.
+**Price: $4,999 USD.** Use this exact figure everywhere it appears.
 
 **Never invent a number.** No 0–60 times, no horsepower conversions I didn't give you, no
 made-up review counts, no fake customer names, no fake press logos. If you want a stat and it
@@ -194,7 +193,7 @@ Single page. Sections in this order. Copy is given — use it, refine it, don't 
 generic e-commerce filler.
 
 **0 · Nav** — Liquid glass bar, floating, pinned top. `XERO` wordmark left. Right: Chiron,
-Specs, Reserve. On scroll past the hero it contracts and gains a **Reserve — $X,XXX** button.
+Specs, Reserve. On scroll past the hero it contracts and gains a **Reserve — $4,999** button.
 
 **1 · Hero** — Full viewport. Lifestyle render, large.
 > # XERO Chiron.
@@ -207,19 +206,24 @@ Below the fold edge: a slow-breathing scroll cue.
 > One piece of aluminum. No tube frame, no bolted panels, no seams — except the one we lit.
 Three glass stat cards beneath: `Monocoque unibody` · `68 kg curb` · `IP67 sealed`.
 
-**3 · The Seam** — Background goes black here. Hero the LED hairline against the dark.
+**3 · Turn it over — THE 3D MODEL.** See the dedicated brief below. A live, interactive 3D
+XERO Chiron the visitor can drag to orbit, on a seamless background, slowly auto-rotating.
+> ## Every angle.
+> Drag to turn it.
+
+**4 · The Seam** — Background goes black here. Hero the LED hairline against the dark.
 > ## Your color. Your line.
 Interactive **color swatches** (ice blue / violet / red / white / green / amber). Clicking one
 recolors the LED seam live with a 600ms eased transition. Do this with a masked glow overlay in
 `mix-blend-mode: screen` positioned over the product image — the actual light changes color,
 it is not a filter over the whole photo. The swatch tray itself is liquid glass.
 
-**4 · Power** — Dark. Stat counters that animate up when scrolled into view:
+**5 · Power** — Dark. Stat counters that animate up when scrolled into view:
 `420 Nm` · `72 km/h` · `124 km` · `12 kW`
 > ## Instant. Silent. Relentless.
 > Peak torque at zero rpm. Every time. 2.5 hours from empty to full.
 
-**5 · The Key** — Close-up of the control panel and iPhone dock.
+**6 · The Key** — Close-up of the control panel and iPhone dock.
 > ## Your iPhone is the key.
 > Drop it in the dock. The bike knows you. Wireless charging, navigation, and a 3.5" TFT that
 > tells you everything and nothing you don't need.
@@ -227,33 +231,87 @@ Animate an iPhone descending into the dock and snapping into place with a small 
 and pulse the LED seam once when it lands. Call out the panel elements with thin leader lines
 that draw themselves on scroll: dock, TFT, rotary encoder, speaker, function keys, quick bar.
 
-**6 · The App** — The 4 app screens. Let them scroll horizontally on a glass rail, or fan out.
+**7 · The App** — The 4 app screens. Let them scroll horizontally on a glass rail, or fan out.
 > ## Everything, in your pocket.
 > Dashboard. Stats. Charge. Security. Lock it from anywhere.
 
-**7 · Technical** — The line-art orthographic drawings from the tech sheet. Side elevation
+**8 · Technical** — The line-art orthographic drawings from the tech sheet. Side elevation
 large, with the dimension callouts (`1890`, `1280`, `870`, `340`) drawing themselves in on
 scroll like a blueprint being plotted. This section is on light background — a deliberate
 palate cleanser between two dark chapters.
 > ## Every millimeter, accounted for.
 
-**8 · Specs** — Full spec table from above. Two-column, hairline dividers, generous row height,
+**9 · Specs** — Full spec table from above. Two-column, hairline dividers, generous row height,
 tabular numerals. Collapsible groups: Vehicle / Powertrain / Chassis / Electronics / In the box.
 
-**9 · Reserve** — The conversion section. Black.
-> ## XERO Chiron. $X,XXX.
+**10 · Reserve** — The conversion section. Black.
+> ## XERO Chiron. $4,999.
 > Reserve yours. Fully refundable.
 Email capture + reserve button, with a real success state (glass card, checkmark, confirmation
 copy). Beneath it, in small type: what happens next, refund policy, estimated delivery window.
 
-**10 · FAQ** — Glass accordions. Answer the actual objections: Is it street legal? *(depends on
+**11 · FAQ** — Glass accordions. Answer the actual objections: Is it street legal? *(depends on
 your region — say so honestly.)* How long does the battery last? What's the warranty? Can I
 service it myself? Is the battery removable? *(Yes — 18.5 kg quick-release.)* What's in the box?
 
-**11 · Footer** — `XERO — Zero gas. Zero noise. Zero cables.` Minimal links, wordmark, year.
+**12 · Footer** — `XERO — Zero gas. Zero noise. Zero cables.` Minimal links, wordmark, year.
 
 **Sticky buy bar** — After the hero, a liquid glass bar slides up from the bottom on mobile and
 docks in the nav on desktop: product thumbnail, name, price, `Reserve`. Never covers content.
+
+---
+
+## THE 3D MODEL — can you build it?
+
+I want to know if you can model this bike in 3D and put it live on the page. Attempt it.
+
+**Where it goes:** Section 3, as a dedicated interactive moment — full viewport, seamless
+background that matches the page, soft contact shadow, slowly auto-rotating, drag to orbit.
+If it turns out genuinely excellent, promote it to the hero and make it the first thing anyone
+sees. Your call — you'll know once you see it rendered.
+
+**How to build it:** Three.js r160+ from a CDN, ES modules via import map. Build the bike from
+geometry in code — no external model files, nothing to download. Study the orthographic line
+drawings in the attached tech sheet: side elevation, front, and top views, all dimensioned.
+Model to those dimensions in real meters — 1280 mm wheelbase, 870 mm seat height, 340 mm
+ground clearance, 26° rake, 19" front wheel, 18" rear. If it's built to the real numbers, the
+proportions come out right on their own.
+
+**What it has to have, in priority order:**
+1. **The monocoque body.** This is the whole product. Build it as an extruded side profile with
+   proper chamfered bevels — `ExtrudeGeometry` with `bevelEnabled`, 4+ bevel segments — in
+   `MeshPhysicalMaterial`, warm-gray anodized aluminum, `metalness ≈ 0.7`, `roughness ≈ 0.4`,
+   with clearcoat. Trace the profile off the side elevation. Get this right and the rest follows.
+2. **The LED hairline seam.** An emissive tube (`TubeGeometry` along a curve) tracing the front
+   edge of the body. Thin, `emissiveIntensity ≈ 1.2`, plus a wider transparent additive tube
+   underneath for glow. Wire it to the color swatches so picking a color changes the actual
+   light in 3D. This is the payoff of building it in 3D at all.
+3. **Wheels.** Torus tires with knob boxes instanced around them, spoked rims (`LatheGeometry`
+   for the rim profile, `InstancedMesh` for spokes), floating brake discs — cut the drill holes
+   as real holes in an `ExtrudeGeometry` shape, don't fake them.
+4. **Black hardware.** Inverted forks (fat lowers, slim uppers), two triple clamps, coil-over
+   shock with a real helix spring swept as a `TubeGeometry`, swingarm, footpegs, side stand.
+5. **Seat blade** with black pad and the red LED tail bar.
+6. **The control panel** on the top deck: glossy black inlay, recessed phone dock, speaker
+   circle, knurled crown dial, flush touch keys.
+
+**Lighting and finish:** PMREM studio environment for real reflections — build a small
+environment scene of soft emissive panels and generate the env map from it, or use
+`RoomEnvironment`. ACES Filmic tone mapping, sRGB output. Soft contact shadow. Fog the
+background so it fades seamlessly into the page background color — no visible horizon line,
+no floating-in-a-void look.
+
+**Performance:** 60fps on a laptop. Cap pixel ratio at 2. Instance anything repeated. Static
+geometry only — no per-frame rebuilds.
+
+**The rule that matters most:** a mediocre 3D bike is worse than no 3D bike. The renders I
+attached are beautiful; if your model doesn't hold up next to them, it drags the whole page
+down. So build it, render it, look at it honestly — and if it reads as blocky, toy-like, or
+plasticky, **cut it and use the renders for that section instead.** Then tell me you cut it and
+why. I'd rather have a perfect page without 3D than a good page with a bad model on it.
+
+Either way, ship the page with the static-render fallback wired in for browsers without WebGL,
+and respect `prefers-reduced-motion` by holding the model still instead of auto-rotating.
 
 ---
 
@@ -300,8 +358,11 @@ Before you tell me it's done, verify all of these yourself:
 4. Nothing snaps. Scrub the page slowly and fast; motion is weighted and continuous both ways.
 5. The color swatches actually change the color of the light on the bike.
 6. Mobile at 390px wide is as good as desktop. Not "acceptable" — as good.
-7. Every number on the page matches the spec table above exactly.
+7. Every number on the page matches the spec table above exactly, and the price reads $4,999
+   everywhere.
 8. No lorem ipsum, no placeholder gray boxes, no `#`-only links anywhere.
+9. If you built the 3D bike: it holds up next to the attached renders. If it doesn't, you cut
+   it and told me. Either answer is acceptable — shipping a weak model is not.
 
 If something in this brief can't be done well, tell me what and why instead of shipping a weak
 version of it.
@@ -312,8 +373,7 @@ version of it.
 
 ## Notes for you (not part of the prompt)
 
-- **Price** — I left `$X,XXX` as a placeholder throughout. Set it before you send, or tell the
-  model the number in a follow-up.
+- **Price** — set to $4,999 in all four places.
 - **The 5-hour figure** — your spec sheet lists 124 km WMTC range and 2.5 h charging, so I wrote
   ride time as "~5 hours real trail riding," which is consistent with 124 km at trail speeds.
   The 2.5 h in the sheet is charge time, not battery life — worth keeping those separate in
