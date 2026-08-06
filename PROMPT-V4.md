@@ -131,3 +131,49 @@ Two glass recipes, used deliberately:
 9. All prior invariants hold: exact spec numbers, $4,999, no fake reviewers, no RGB
    section, nav pill design frozen, honest demo checkout.
 If any point can't be hit, say which and why before shipping — never ship the weak version.
+
+---
+
+## 8 · ADDENDUM — three upgrades, same language
+
+### Full bleed for the product
+The hero imagery and the 3D stage run FULL BLEED — 100vw, edge to edge, no container, no
+card frame around the product. The bike gets the whole glass of the screen; the deal panel
+floats over/beside it as frosted glass at the 38.2% φ split (over it on desktop, below on
+mobile). Text and controls live on the 980px grid; the product does not. This contrast —
+contained typography, uncontained machine — IS the drama. Apply the same to the film chapter
+and the biggest render moments: product full bleed, words on the grid.
+
+### The 3D viewer gets a light switch
+Default: WHITE studio — seamless `#ffffff`→`#f5f5f7` background fog-matched to the page,
+bright PMREM environment, soft shadow. Floating beside the [ 3D | Photos ] segmented control:
+a round glass **Day/Night toggle** (sun/moon, iOS-style). Tapping night TURNS OFF THE STUDIO
+LIGHTS: environment intensity eases down to near-black over 700ms (Apple easing), the
+background travels to `#050505`, the contact shadow softens — and the bike's own lights come
+up: LED hairline seam, 4-LED headlight bar, red tail bar glow emissive against the dark.
+Day reverses it. This is a user-triggered mode, exempt from the "two black chapters" rule.
+Build it so it works with the loaded GLB (material emissive slots) AND gracefully in Photos
+mode (swap to the dark studio renders). This is the "woah" interaction of the buy box —
+make the transition feel like a real studio dimmer, continuous, never a cut.
+
+### NEW SECTION — THE KEYS (insert between REVIEWS and THE FILM)
+A full dedicated chapter, two acts, φ-proportioned, light background:
+- **Act 1 — `Your iPhone is the key.`** Full-bleed close-up of the top-deck dock (panel
+  photography). The phone-in-dock moment: as the section scrolls, an iPhone silhouette
+  eases down into the tray and seats with one soft settle (24px travel, water physics), the
+  panel's screen area brightens. Copy on the grid: drop it in the dock — NFC unlock,
+  wireless charging, navigation, the 3.5" TFT. Callout chips in glass: dock · TFT · crown
+  dial · speaker · touch keys.
+- **Act 2 — `No phone? Still your key.`** The black pebble NFC fob, hero'd on `#f5f5f7`
+  like an AirTag product shot: photography large, then three glass spec chips — `NFC ·
+  Bluetooth 5.0` · `IP67 waterproof` · `CR2032 · replaceable` · `60 × 30 × 10 mm`. One line:
+  tap the fob to the panel and ride — phone at home.
+Both acts obey the language: SF type scale, 61.8/38.2 layouts, glass chips, Apple easing,
+one idea per viewport. This replaces the single compressed iPhone interlude — the Keys are
+now a headline chapter of the page.
+
+### Acceptance additions
+10. Hero and 3D stage are truly full bleed at every viewport; deal panel floats at φ split.
+11. Day/Night toggle: continuous 700ms studio dim with emissive bike lights in 3D mode and
+    dark-render swap in Photos mode; day mode restores fully; toggle is glass, iOS-style.
+12. THE KEYS chapter exists between reviews and film, both acts, dock settle animation live.
