@@ -69,17 +69,40 @@ code, bind to real reviews before launch. Variant selection rolls the price digi
 cart is REAL: drawer, line items with add-ons, quantities, totals, localStorage, badge,
 fly-to-cart. Buy now opens an honest demo checkout sheet — no fake payment processing.
 
-## SKELETON FIRST — asset contract
-Build the complete working shell now; heavy assets drop in later with zero code changes:
-- **Bike:** real model arrives later at `assets/chiron.glb`. Build the Three.js viewer now
-  (r160+ CDN, GLTFLoader, DRACO-ready, PMREM, ACES) but stage the bike as high-res cutout
-  renders until then (2.5D: drag gives a limited parallax arc + momentum; angle thumbs swap
-  renders). Do NOT build a bike from geometry primitives. When the GLB lands, full orbit
-  takes over — same controls, same UI.
-- **Worlds:** final backgrounds arrive later at `assets/worlds/{studio,city,mars}-{day,night}.jpg`
-  (+ optional HDR for lighting). Until then, recreate each world yourself as close to the
-  screenshots as possible. If you need any crop, image, or file from me to hit accuracy —
-  ASK. I will supply it.
+## THE WORLDS — build them YOURSELF. To the mockups. Identical.
+No world files are coming for now — you create all six environments, and the bar is
+IDENTICAL to the attached screenshots, not "inspired by":
+- **Studio·Day / Studio·Night**: build these two PERFECTLY in code — they are light and
+  gradient, fully within your power. White infinity cyclorama with the pedestal disc and
+  soft ceiling glow; black studio with the single overhead spotlight pool and haze. Match
+  the sampled tones (#eeeeef day, #1a1b1f night ambience). Zero excuse for drift on these.
+- **City·Day / City·Night / Mars·Day / Mars·Night**: extract and rebuild the backgrounds
+  from the attached mockups themselves — outpaint/extend the mockup backgrounds, clean the
+  bike out, and use THAT as the environment, so the world is literally the one in my
+  images. Add gentle parallax layering (sky / skyline / ground) so drag feels dimensional.
+- Whatever the technique, the six states must sit behind the bike exactly like the
+  screenshots: same horizon height, same palette, same mood, same clean center stage.
+- Architect world loading behind ONE swap point (`assets/worlds/*` file slots + an env-map
+  hook): higher-quality 360° panoramas will replace your versions later WITHOUT code
+  changes. Your worlds are v1, not throwaway — make them good enough to ship.
+- If a specific crop or bike-free area of any mockup would help you rebuild a background
+  cleanly, ASK ME and I'll supply it.
+
+## THE BIKE — WAIT for the real model. Do not build one.
+The production 3D bike is coming from Meshy (GLB export, PBR textures) as
+`assets/chiron.glb`. Until it arrives:
+- Stage the bike as the high-res cutouts from the mockups (2.5D sprite: drag gives a
+  limited parallax arc with momentum; angle thumbs swap renders). Do NOT build a bike
+  from geometry primitives.
+- Have the GLB path fully working and PROVEN with any placeholder GLB: Three.js r160+
+  from CDN, GLTFLoader + DRACO, PMREM environment lighting per world, ACES tone mapping,
+  soft contact shadow, orbit with damped momentum, pinch/scroll zoom with eased limits,
+  double-tap focus, hotspot focus points.
+- Plan for Meshy-specific handling when it lands: auto-center and auto-scale to the stage
+  (fit to a 1.89m-long bounding box), correct Y-up orientation, and a material pass hook —
+  if the model has no emissive materials for the LED seam and headlight, add a thin
+  emissive strip/glow pass in night modes so the seam still lights. Keep all of this in
+  one clearly-marked function so tuning the real file is a 5-minute job.
 - Keep all product data (variants, prices, add-ons) in ONE plain JS object at the top of
   store.js — this page will be ported to a Shopify theme and that object gets swapped for
   Shopify's product JSON.
