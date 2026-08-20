@@ -33,7 +33,7 @@
    ==========================================================================
    SIZE - fixed pixels, not rem, not a formula. Two heights, that's it.
    ==========================================================================
-   Desktop 30px.  Mobile 22px (small on purpose - the old size killed the tap
+   Desktop 30px.  Mobile 20px (small on purpose - the old size killed the tap
    layout on phones). Change these two numbers and the control rescales.
 */
 
@@ -107,6 +107,12 @@
   color: #ffffff !important;
   text-shadow: 0 1px 2px rgba(0,0,0,.45) !important;
   transition: none !important;
+
+  /* CRITICAL: xero-theme.css sets `min-height:44px` on these buttons at <=900px for a
+     touch target. That is TALLER than the whole track, so the button overflowed BELOW
+     the bar and dragged its label out from under the glass. Kill it here - the real tap
+     target is the invisible ::after collar defined in the mobile block, not the button. */
+  min-height: 0 !important;
 }
 
 /* icons follow the label colour */
@@ -151,13 +157,15 @@
 @media (max-width: 900px){
   [data-m="ctl"] > div,
   [data-m="worldpill"]{
-    height: 22px !important;
+    height: 20px !important;
     padding: 3px !important;
   }
-  [data-m="ctl"] > div > button{ font-size: 9.5px !important; padding: 0 9px !important; gap: 4px !important; }
-  [data-m="worldpill"] > button{ font-size: 8.5px !important; padding: 0 8px !important; letter-spacing: .05em !important; }
+  [data-m="ctl"] > div > button,
+  [data-m="worldpill"] > button{ min-height: 0 !important; }
+  [data-m="ctl"] > div > button{ font-size: 9px !important; padding: 0 8px !important; gap: 4px !important; }
+  [data-m="worldpill"] > button{ font-size: 8px !important; padding: 0 7px !important; letter-spacing: .05em !important; }
   [data-m="ctl"] svg,
-  [data-m="worldpill"] svg{ width: 9px !important; height: 9px !important; }
+  [data-m="worldpill"] svg{ width: 8.5px !important; height: 8.5px !important; }
 
   /* invisible hit areas */
   [data-m="ctl"] > div > button::after,

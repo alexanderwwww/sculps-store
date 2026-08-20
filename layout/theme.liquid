@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1a1b1f">
+  <link rel="canonical" href="{{ canonical_url }}">
+  {%- if settings.favicon != blank -%}<link rel="icon" href="{{ settings.favicon | image_url: width: 96 }}">{%- endif -%}
+  <title>{{ page_title }}{% unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless %}</title>
+  {%- if page_description -%}<meta name="description" content="{{ page_description | escape }}">{%- endif -%}
+
+  {{ content_for_header }}
+
+  <link rel="stylesheet" href="{{ 'xero-theme.css' | asset_url }}">
+  {%- comment -%} Overrides only, must load after xero-theme.css. {%- endcomment -%}
+  <link rel="stylesheet" href="{{ 'xero-fix.css' | asset_url }}">
+  {%- comment -%}
+    The segmented control (3D/Photos, Day/Night, Studio/City/Mars). Its own file because it
+    is one component with a long rationale, and because its geometry and colour logic must
+    have exactly one home - the whole class of bugs there came from the same relationship
+    being asserted in several places at once. Must load after xero-fix.css.
+  {%- endcomment -%}
+  <link rel="stylesheet" href="{{ 'xero-pill.css' | asset_url }}">
+
+  {%- comment -%}
+    xero-stage.js resolves three and three/addons/ with bare specifiers inside its dynamic
+    import(), so the page needs an import map for the GLB path to work at all. It must be
+    parsed before the first dynamic import runs, hence head. The DRACO decoder path inside
+    stage.js is pinned to the same version.
+  {%- endcomment -%}
+  {%- raw -%}
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+  {%- endraw -%}
+
+  <script>
+    /* Shopify serves assets from its CDN, so every path must come from Liquid.
+       The stage can never build one by string concatenation. */
+    /* Only City and Mars are photographic. Studio is drawn as geometry by the stage and
+       has no image files, so including it here produced empty asset_url strings. */
+    window.XERO_ASSETS = {
+      worlds: {
+        {%- assign panos = 'city-day,city-night,mars-day,mars-night' | split: ',' -%}
+        {%- for p in panos -%}
+          "{{ p }}": {
+            "1600": "{{ p | append: '-1600.webp' | asset_url }}",
+            "900":  "{{ p | append: '-900.webp'  | asset_url }}"
+          }{% unless forloop.last %},{% endunless %}
+        {%- endfor -%}
+      },
+      bikeDay:   "{{ 'bike-day.webp'   | asset_url }}",
+      bikeNight: "{{ 'bike-night.webp' | asset_url }}",
+      bikeSeam:  "{{ 'bike-seam.webp'  | asset_url }}"
+    };
+    window.XERO_ROUTES = {
+      cartAdd:    "{{ routes.cart_add_url }}.js",
+      cartChange: "{{ routes.cart_change_url }}.js",
+      cart:       "{{ routes.cart_url }}.js",
+      checkout:   "{{ routes.cart_url }}/checkout"
+    };
+    window.XERO_MONEY_FORMAT = {{ shop.money_format | json }};
+    window.XERO_SETTINGS = {
+      splash:   false,
+      splashMs: 0
+    };
+  </script>
+
+  <script src="{{ 'xero-stage.js' | asset_url }}" defer></script>
+  <script src="{{ 'xero-store.js' | asset_url }}" defer></script>
+  {%- comment -%}
+    Mounts the GLB and replaces the stage's limited sprite arc with a real turntable.
+    Must load after both of the above: it patches objects they create.
+  {%- endcomment -%}
+  <script src="{{ 'xero-model.js' | asset_url }}" defer></script>
+</head>
+
+<body>
+  {%- section 'xero-header' -%}
+
+  <main id="MainContent">
+    {{ content_for_layout }}
+  </main>
+
+  {%- comment -%}
+    Persistent chrome: mini bar, sticky cart, cart drawer, intro screen.
+    Rendered outside {{ content_for_layout }} so it survives navigation.
+  {%- endcomment -%}
+  {%- section 'xero-chrome' -%}
+
+  {%- comment -%}
+    THE MODEL.
+
+    Inline body scripts run before deferred scripts, so this wins over anything a section
+    set earlier in the page.
+
+    XERO_MODEL_URL - Shopify transcoded the product's Model3d into a 5.8 MB plain GLB on
+    its CDN, 20x lighter than the raw upload and needing no special decoders. Swap this URL
+    if the model itself is ever replaced.
+
+    XERO_TEXTURE_URL - DELIBERATELY EMPTY. The viewer now shows the pure GLB with its own
+    baked maps. An external base-colour overlay used to be rebound here on top of the model
+    and broke the look; xero-model.js's retexture() is a no-op and this stays "" so nothing
+    is ever painted over the uploaded file. To restore an overlay you would set this AND
+    re-enable retexture() - do not do one without the other.
+  {%- endcomment -%}
+  <script>
+    window.XERO_MODEL_URL = "https://cdn.shopify.com/3d/models/o/ffa775409b18ef79/XERO_Chiron.glb";
+    window.XERO_TEXTURE_URL = "";
+  </script>
+</body>
+</html>
