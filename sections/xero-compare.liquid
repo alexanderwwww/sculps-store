@@ -1,0 +1,84 @@
+{%- comment -%}
+  XERO compare - the spec table.
+  Two columns: the Chiron and whatever the rider is cross-shopping. Rows come from
+  blocks so every line is editable in the theme editor. The XERO column is the only
+  thing with colour; the rival column is deliberately grey and quiet.
+  Mobile: the table keeps both columns but shrinks - a spec sheet that reflows into
+  cards stops being a comparison.
+{%- endcomment -%}
+
+<section class="xero-night" data-sec="compare" id="compare" style="position:relative;width:100%;background:var(--pg);padding:7rem 0 6rem;">
+
+  <div style="max-width:56rem;margin:0 auto 2.6rem;padding:0 1.4rem;text-align:center;">
+    <div style="font-size:.78rem;font-weight:600;letter-spacing:.22em;color:var(--txt3,#7c7d85);">{{ section.settings.kicker }}</div>
+    <h2 style="margin:1rem 0 0;font-size:clamp(2.1rem,4.6vw,3.6rem);font-weight:700;letter-spacing:-.038em;line-height:1.04;color:var(--txt,#0e0e0e);">{{ section.settings.heading }}</h2>
+    {%- if section.settings.sub != blank -%}
+      <p style="margin:.9rem auto 0;max-width:32rem;font-size:1.02rem;line-height:1.5;color:var(--txt2,#55565c);">{{ section.settings.sub }}</p>
+    {%- endif -%}
+  </div>
+
+  <div style="max-width:60rem;margin:0 auto;padding:0 1.1rem;">
+    <div style="border-radius:1.4rem;overflow:hidden;border:1px solid var(--hair,rgba(255,255,255,.10));background:var(--sub,rgba(255,255,255,.04));">
+
+      {%- comment -%} header row {%- endcomment -%}
+      <div style="display:grid;grid-template-columns:1.25fr 1fr 1fr;align-items:end;padding:1.3rem .9rem 1rem;border-bottom:1px solid var(--hair,rgba(255,255,255,.10));">
+        <div></div>
+        <div style="text-align:center;">
+          <div style="font-size:clamp(.98rem,2.2vw,1.22rem);font-weight:700;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">{{ section.settings.col_us }}</div>
+          <div style="margin-top:.3rem;font-size:.78rem;font-weight:600;color:#3a82fb;">{{ section.settings.col_us_price }}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:clamp(.98rem,2.2vw,1.22rem);font-weight:500;letter-spacing:-.02em;color:var(--txt3,#7c7d85);">{{ section.settings.col_them }}</div>
+          <div style="margin-top:.3rem;font-size:.78rem;font-weight:500;color:var(--txt3,#7c7d85);">{{ section.settings.col_them_price }}</div>
+        </div>
+      </div>
+
+      {%- comment -%} spec rows {%- endcomment -%}
+      {%- for block in section.blocks -%}
+        <div {{ block.shopify_attributes }} style="display:grid;grid-template-columns:1.25fr 1fr 1fr;align-items:center;padding:.92rem .9rem;{% unless forloop.last %}border-bottom:1px solid var(--hair,rgba(255,255,255,.07));{% endunless %}">
+          <div style="font-size:clamp(.82rem,1.9vw,.95rem);color:var(--txt2,#55565c);">{{ block.settings.label }}</div>
+          <div style="text-align:center;font-size:clamp(.88rem,2.1vw,1.05rem);font-weight:650;letter-spacing:-.015em;color:var(--txt,#0e0e0e);">{{ block.settings.ours }}</div>
+          <div style="text-align:center;font-size:clamp(.82rem,1.9vw,.98rem);font-weight:400;color:var(--txt3,#7c7d85);">{{ block.settings.theirs }}</div>
+        </div>
+      {%- endfor -%}
+
+    </div>
+
+    {%- if section.settings.footnote != blank -%}
+      <p style="margin:1.1rem auto 0;max-width:40rem;text-align:center;font-size:.8rem;line-height:1.5;color:var(--txt3,#7c7d85);">{{ section.settings.footnote }}</p>
+    {%- endif -%}
+  </div>
+
+</section>
+
+{% schema %}
+{
+  "name": "XERO compare",
+  "tag": "div",
+  "max_blocks": 20,
+  "settings": [
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "THE NUMBERS" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Compare it to the best." },
+    { "type": "text", "id": "sub", "label": "Subheading", "default": "Every number that matters, next to the bike the industry calls the benchmark." },
+    { "type": "header", "content": "Columns" },
+    { "type": "text", "id": "col_us", "label": "Our column", "default": "XERO Chiron" },
+    { "type": "text", "id": "col_us_price", "label": "Our price", "default": "$4,999" },
+    { "type": "text", "id": "col_them", "label": "Rival column", "default": "Class leader" },
+    { "type": "text", "id": "col_them_price", "label": "Rival price", "default": "$13,490" },
+    { "type": "header", "content": "Footnote" },
+    { "type": "textarea", "id": "footnote", "label": "Footnote", "default": "Comparison figures are the class leader's published manufacturer specifications. Real-world results vary with terrain, rider weight and setup." }
+  ],
+  "blocks": [
+    {
+      "type": "row",
+      "name": "Spec row",
+      "settings": [
+        { "type": "text", "id": "label", "label": "Spec", "default": "Peak power" },
+        { "type": "text", "id": "ours", "label": "XERO", "default": "82 hp" },
+        { "type": "text", "id": "theirs", "label": "Rival", "default": "80 hp" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "XERO compare" }]
+}
+{% endschema %}

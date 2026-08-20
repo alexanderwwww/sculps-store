@@ -1,0 +1,71 @@
+{%- comment -%}
+  Product wiring for the storefront controller, plus the GLB handoff.
+
+  Rendered LAST on the page on purpose. xero-store.js reads window.XERO_PRODUCT and
+  window.XERO_ADDONS lazily and boots on DOMContentLoaded, which fires after this has
+  run, so running last means no earlier section can overwrite good data with an empty
+  product picker. It is still deferential: if something already published a usable
+  variant id, this leaves it alone.
+
+  Note: all_products only sees products published to the Online Store channel. If these
+  lookups come back empty, check the product's sales channels before anything else. That
+  failure is silent and looks exactly like a broken Add to cart button.
+
+  This section only publishes data. Mounting the model is xero-model.js, which is a
+  deferred script and therefore runs after this inline block.
+
+  Liquid's variant.price is already in cents, which is the unit store.js expects.
+
+  The bike ships in two configurations, both real variants of xero-chiron:
+    [0] Chiron                          4,999.00
+    [1] Chiron + 10-Year Replacement    6,998.99
+  The only add-on is the spare wireless key. store.js hardwires toggleKey to addons()[0];
+  there is no second toggle in the markup, and toggleAddon() no-ops on a missing index.
+{%- endcomment -%}
+{%- assign chiron = all_products['xero-chiron'] -%}
+{%- assign addon_key = all_products['wireless-key-nfc-pebble'] -%}
+
+{%- assign glb_url = '' -%}
+{%- assign model_media = chiron.media | where: 'media_type', 'model' | first -%}
+{%- if model_media -%}
+  {%- for src in model_media.sources -%}
+    {%- if src.format == 'glb' -%}{%- assign glb_url = src.url -%}{%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
+<script>
+(function () {
+  var P = window.XERO_PRODUCT;
+  if (!P || !P.variants || !P.variants.length || !P.variants[0].id) {
+    {%- if chiron != blank and chiron.variants.size > 0 %}
+    window.XERO_PRODUCT = {
+      title: {{ chiron.title | json }},
+      variants: [
+        {%- for v in chiron.variants %}
+        { id: {{ v.id }}, title: {{ v.title | json }}, price: {{ v.price }} }{% unless forloop.last %},{% endunless %}
+        {%- endfor %}
+      ]
+    };
+    {%- else %}
+    console.warn('[xero] xero-chiron not found by all_products. Is it published to the Online Store channel?');
+    {%- endif %}
+  }
+
+  var A = window.XERO_ADDONS;
+  if (!A || !A.length || !A[0].id) {
+    window.XERO_ADDONS = [
+      {%- if addon_key != blank and addon_key.variants.size > 0 %}
+      { id: {{ addon_key.variants.first.id }}, title: {{ addon_key.title | json }}, price: {{ addon_key.variants.first.price }} }
+      {%- endif %}
+    ];
+  }
+
+  {%- if glb_url != '' %}
+  window.XERO_MODEL_URL = {{ glb_url | json }};
+  {%- endif %}
+})();
+</script>
+
+{% schema %}
+{ "name": "XERO product data", "settings": [] }
+{% endschema %}

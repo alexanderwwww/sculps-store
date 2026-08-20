@@ -198,7 +198,7 @@
   }
 
   /* ---- patches on the element class ----
-     _render3D is the free-orbit camera: full yaw, tilt clamped off the poles. */
+     _render3D is the orbit camera: full yaw, elevation locked. */
   function patchClass() {
     var Stage = window.customElements && customElements.get('xero-stage');
     if (!Stage) return false;
@@ -239,7 +239,7 @@
     return true;
   }
 
-  /* ---- drag: free orbit, yaw + pitch. Pauses the autorotate. --------------- */
+  /* ---- drag: horizontal only (yaw). Pauses the autorotate. ----------------- */
   function bindOrbit(S) {
     var e = S.el;
     if (!e || e._xeroOrbitBound) return;
@@ -368,7 +368,7 @@
       tagView(S);
       autoRotate(S);
       if (S.el.renderer) S.el._frame();
-      console.info('[xero] 3D live - free orbit, autorotate on, edited skin');
+      console.info('[xero] 3D live - horizontal 360, autorotate on');
     }).catch(function (err) {
       console.error('[xero] model load failed', err);
     });

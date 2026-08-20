@@ -1,0 +1,99 @@
+{%- comment -%}
+  ADD-TO-CART SOUND.
+
+  Synthesised with the Web Audio API rather than an audio file: nothing to host,
+  nothing to license, about 1 kB, and no request on page load. It is a soft
+  rising two-note with a short breathy sweep under it — the same shape as a mail
+  sent chime, tuned to the brand rather than borrowed from an OS.
+
+  Browsers block audio until the visitor has interacted with the page, so the
+  context is created lazily on the first click and resumed if suspended.
+  Respects prefers-reduced-motion, and never fires twice within 300ms.
+{%- endcomment -%}
+
+<script>
+(function(){
+  if (window.__xeroSound) return;
+  window.__xeroSound = true;
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var ctx = null, last = 0;
+
+  function audio(){
+    if (!ctx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  function sent(){
+    var now = Date.now();
+    if (now - last < 300) return;     // no double fire
+    last = now;
+
+    var a = audio();
+    if (!a) return;
+    var t = a.currentTime;
+
+    // ---- the two notes: a fifth apart, second one lands slightly late ----
+    var master = a.createGain();
+    master.gain.value = 0.16;
+    master.connect(a.destination);
+
+    [[880, 0.00], [1320, 0.075]].forEach(function(pair, i){
+      var f = pair[0], delay = pair[1];
+      var osc = a.createOscillator();
+      var g = a.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, t + delay);
+      osc.frequency.exponentialRampToValueAtTime(f * 1.02, t + delay + 0.18);
+
+      g.gain.setValueAtTime(0.0001, t + delay);
+      g.gain.exponentialRampToValueAtTime(i === 0 ? 0.5 : 0.42, t + delay + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.34);
+
+      osc.connect(g); g.connect(master);
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.4);
+    });
+
+    // ---- the breathy sweep underneath: filtered noise, gone in 200ms ----
+    var len = Math.floor(a.sampleRate * 0.22);
+    var buf = a.createBuffer(1, len, a.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++){
+      d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    }
+    var src = a.createBufferSource();
+    src.buffer = buf;
+
+    var bp = a.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(900, t);
+    bp.frequency.exponentialRampToValueAtTime(3600, t + 0.2);
+    bp.Q.value = 1.1;
+
+    var ng = a.createGain();
+    ng.gain.setValueAtTime(0.16, t);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+
+    src.connect(bp); bp.connect(ng); ng.connect(master);
+    src.start(t);
+    src.stop(t + 0.24);
+  }
+
+  // delegated, so it catches the hero button, the sticky bar and the drawer
+  document.addEventListener('click', function(e){
+    var el = e.target && e.target.closest
+      ? e.target.closest('[data-act="addToCart"], [data-m="addcart"]')
+      : null;
+    if (el) sent();
+  }, true);
+
+  window.xeroSentSound = sent;   // callable from anywhere if needed
+})();
+</script>

@@ -1,0 +1,17 @@
+[
+  {
+    "name": "XERO delivery roster",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Controls the Track your build page. Only IDs listed here can see a tracking view. One rider per line:  XR-4F2K-9L07 : 2 : Austin, TX : 30.27 : -97.74 : 2026-08-10  — that is  ID : stage : city : latitude : longitude : date the current stage started.  Stages: 1 Order confirmed, 2 Preparing your order, 3 Key out for delivery, 4 Final shakedown, 5 Bike out for delivery, 6 Delivered. The date is what fills the progress bar on the active stage, so update it whenever you move someone forward."
+      },
+      {
+        "type": "textarea",
+        "id": "track_roster",
+        "label": "Rider roster",
+        "default": "XR-4F2K-9L07 : 2 : Austin, TX : 30.27 : -97.74 : 2026-08-11\nXR-8T3M-2Q55 : 4 : Denver, CO : 39.74 : -104.99 : 2026-08-13\nXR-1B9X-7K42 : 6 : Portland, OR : 45.52 : -122.68 : 2026-08-09"
+      }
+    ]
+  }
+]

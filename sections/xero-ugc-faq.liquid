@@ -1,0 +1,125 @@
+{%- comment -%}
+  UGC + FAQ.
+
+  The clip on the left now actually renders (the old version had a dead video
+  setting and a fake play button), autoplays muted on scroll-in, loops, pauses
+  on scroll-out. Questions are blocks so they can be edited and reordered.
+{%- endcomment -%}
+
+{%- assign clip = section.settings.ugc -%}
+
+<section class="xero-night" data-sec="ugc-faq" id="faq" style="position:relative;width:100%;background:var(--pg2);padding:6rem 1.4rem;">
+
+  <div style="max-width:76rem;margin:0 auto;display:flex;flex-wrap:wrap;gap:4rem;align-items:flex-start;justify-content:center;">
+
+    {%- comment -%} the clip {%- endcomment -%}
+    <div data-m="clip" style="flex:0 1 22rem;min-width:0;width:100%;max-width:24rem;">
+      <div style="position:relative;width:100%;aspect-ratio:9 / 16;border-radius:1.8rem;overflow:hidden;background:#000;border:1px solid var(--hair,rgba(255,255,255,.12));box-shadow:0 1.6rem 4rem rgba(0,0,0,.45);">
+        {%- if clip != blank -%}
+          {{ clip | video_tag:
+               image_size: '1200x',
+               playsinline: true,
+               muted: true,
+               loop: true,
+               autoplay: true,
+               controls: false,
+               preload: 'metadata',
+               style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'
+          }}
+          <button data-m="sound" aria-label="Toggle sound"
+            style="position:absolute;right:.8rem;bottom:.8rem;z-index:2;width:2.4rem;height:2.4rem;border-radius:50%;background:rgba(14,14,20,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
+          </button>
+        {%- elsif section.settings.poster != blank -%}
+          <div style="position:absolute;inset:0;">
+            {% render 'xero-image', key: 'poster', label: "", radius: 0, circle: false %}
+          </div>
+        {%- else -%}
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 12px,transparent 12px 24px);">
+            <span style="font:500 .78rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;color:var(--txt3,#8a8b91);">ugc clip &mdash; 9:16</span>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    {%- comment -%} the questions {%- endcomment -%}
+    <div style="flex:1 1 26rem;min-width:0;">
+      <h2 style="margin:0 0 2rem;font-size:clamp(2rem,3.6vw,3rem);font-weight:700;letter-spacing:-.035em;line-height:1.05;color:var(--txt,#0e0e0e);">{{ section.settings.heading }}</h2>
+
+      {%- for block in section.blocks -%}
+        <details {{ block.shopify_attributes }} style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            {{ block.settings.q }}
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">{{ block.settings.a }}</div>
+        </details>
+      {%- endfor -%}
+    </div>
+
+  </div>
+
+</section>
+
+<style>
+  [data-sec="ugc-faq"] summary::-webkit-details-marker{ display:none; }
+  [data-sec="ugc-faq"] details[open] [data-m="chev"]{ transform:rotate(180deg); }
+</style>
+
+<script>
+(function(){
+  var sec = document.querySelector('[data-sec="ugc-faq"]');
+  if (!sec) return;
+  var v = sec.querySelector('video');
+  if (!v) return;
+
+  v.muted = true;
+  v.setAttribute('muted','');
+  v.setAttribute('playsinline','');
+  v.setAttribute('webkit-playsinline','');
+  v.loop = true;
+
+  new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if (e.isIntersecting){ v.play().catch(function(){}); }
+      else if (!v.paused){ v.pause(); }
+    });
+  }, { threshold: .2 }).observe(v);
+
+  var btn = sec.querySelector('[data-m="sound"]');
+  if (btn){
+    btn.addEventListener('click', function(){
+      v.muted = !v.muted;
+      sec.querySelector('[data-m="mute"]').style.display   = v.muted ? '' : 'none';
+      sec.querySelector('[data-m="unmute"]').style.display = v.muted ? 'none' : '';
+      if (v.paused) v.play().catch(function(){});
+    });
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "XERO UGC + FAQ",
+  "tag": "div",
+  "max_blocks": 12,
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Questions." },
+    { "type": "video", "id": "ugc", "label": "UGC clip (9:16)" },
+    { "type": "image_picker", "id": "poster", "label": "Poster (shown if there is no clip)" }
+  ],
+  "blocks": [
+    {
+      "type": "qa",
+      "name": "Question",
+      "settings": [
+        { "type": "text", "id": "q", "label": "Question", "default": "How fast is it?" },
+        { "type": "textarea", "id": "a", "label": "Answer", "default": "120 km/h." }
+      ]
+    }
+  ],
+  "presets": [{ "name": "XERO UGC + FAQ" }]
+}
+{% endschema %}

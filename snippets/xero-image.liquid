@@ -1,0 +1,31 @@
+{%- comment -%}
+  One shared image slot. Resolution order:
+    1. an image object passed directly (blocks)
+    2. the section setting with this key (theme editor)
+    3. the Files CDN: a file named exactly <key>.png uploaded in Content > Files.
+       Emitted directly via file_img_url; if the file doesn't exist the <img>
+       404s, hides itself, and reveals the styled placeholder underneath.
+{%- endcomment -%}
+{%- assign img = image -%}
+{%- unless img -%}{%- assign img = section.settings[key] -%}{%- endunless -%}
+{%- assign r = radius | default: 0 -%}
+{%- if circle -%}
+  {%- assign shape = 'border-radius:50%;' -%}
+{%- else -%}
+  {%- assign shape = 'border-radius:' | append: r | append: 'px;' -%}
+{%- endif -%}
+{%- if img != blank -%}
+  <img class="xero-fill" src="{{ img | image_url: width: 1600 }}"
+       srcset="{{ img | image_url: width: 600 }} 600w, {{ img | image_url: width: 1000 }} 1000w, {{ img | image_url: width: 1600 }} 1600w"
+       sizes="(max-width: 900px) 100vw, 60vw"
+       width="{{ img.width }}" height="{{ img.height }}"
+       alt="{{ img.alt | escape }}" loading="lazy" decoding="async" style="{{ shape }}">
+{%- else -%}
+  {%- assign xf = key | append: '.png' -%}
+  <img class="xero-fill" src="{{ xf | file_img_url: '1600x' }}"
+       alt="" loading="lazy" decoding="async" style="{{ shape }}"
+       onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='flex';">
+  <div class="xero-ph{% if circle %} xero-ph--circle{% endif %}" style="display:none;{{ shape }}">
+    {%- if label != blank -%}<span>{{ label }}</span>{%- endif -%}
+  </div>
+{%- endif -%}

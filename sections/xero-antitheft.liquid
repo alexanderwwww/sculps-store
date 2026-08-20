@@ -1,0 +1,106 @@
+{%- comment -%}
+  ANTI-THEFT - deliberately short. No photography, no hardware shots.
+  Three plain reasons, then one quiet line about knowing where it is.
+  The argument is the design: type, space, and one icon.
+{%- endcomment -%}
+
+<section class="xero-night" data-sec="antitheft" style="position:relative;width:100%;background:var(--pg);padding:7rem 1.4rem;">
+  <div style="max-width:58rem;margin:0 auto;">
+
+    {%- if section.settings.kicker != blank -%}
+      <div style="font-size:.74rem;font-weight:700;letter-spacing:.2em;color:var(--txt3,#7c7d85);">{{ section.settings.kicker }}</div>
+    {%- endif -%}
+
+    <h2 style="margin:1rem 0 0;font-size:clamp(2.1rem,5vw,3.6rem);font-weight:700;letter-spacing:-.04em;line-height:1.03;color:var(--txt,#f4f4f6);text-wrap:balance;">
+      {{ section.settings.heading }}
+    </h2>
+
+    {%- if section.settings.sub != blank -%}
+      <p style="margin:1.15rem 0 0;max-width:34rem;font-size:1.12rem;line-height:1.5;letter-spacing:-.014em;color:var(--txt2,#a9aab1);text-wrap:pretty;">{{ section.settings.sub }}</p>
+    {%- endif -%}
+
+    {%- comment -%} three reasons, as plain numbered type {%- endcomment -%}
+    <div data-m="atrow" style="margin-top:3.4rem;display:grid;grid-template-columns:repeat(3,1fr);gap:2.4rem;">
+      {%- assign locks = 'lock1,lock2,lock3' | split: ',' -%}
+      {%- for l in locks -%}
+        {%- assign t = l | append: '_title' -%}
+        {%- assign b = l | append: '_body' -%}
+        {%- if section.settings[t] != blank -%}
+        <div>
+          <div style="font:600 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:var(--acc,#0a84ff);">0{{ forloop.index }}</div>
+          <div style="margin-top:.9rem;font-size:1.18rem;font-weight:650;letter-spacing:-.024em;line-height:1.2;color:var(--txt,#f4f4f6);">{{ section.settings[t] }}</div>
+          <p style="margin:.55rem 0 0;font-size:.97rem;line-height:1.5;color:var(--txt2,#a9aab1);text-wrap:pretty;">{{ section.settings[b] }}</p>
+        </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    {%- comment -%}
+      The locator line. Icon comes from a setting so it can be swapped without touching
+      code; if it is empty a neutral concentric-ring mark is drawn inline instead, so the
+      section never renders broken.
+    {%- endcomment -%}
+    <div data-m="atfind" style="margin-top:3.6rem;padding-top:2.4rem;border-top:1px solid var(--hair,rgba(255,255,255,.09));display:flex;align-items:center;gap:1.5rem;">
+
+      <div style="flex:0 0 auto;width:4.2rem;height:4.2rem;border-radius:1.05rem;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        {%- if section.settings.find_icon != blank -%}
+          <img src="{{ section.settings.find_icon | image_url: width: 240 }}"
+               alt="{{ section.settings.find_icon.alt | default: 'Locate your Chiron' | escape }}"
+               width="84" height="84" loading="lazy" decoding="async"
+               style="width:100%;height:100%;object-fit:contain;display:block;">
+        {%- else -%}
+          <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" fill="none" stroke="var(--acc,#0a84ff)" stroke-opacity=".22" stroke-width="3"/>
+            <circle cx="50" cy="50" r="29" fill="none" stroke="var(--acc,#0a84ff)" stroke-opacity=".45" stroke-width="3"/>
+            <circle cx="50" cy="50" r="11" fill="var(--acc,#0a84ff)"/>
+          </svg>
+        {%- endif -%}
+      </div>
+
+      <div style="min-width:0;">
+        <div style="font-size:1.24rem;font-weight:650;letter-spacing:-.026em;line-height:1.25;color:var(--txt,#f4f4f6);text-wrap:balance;">{{ section.settings.find_title }}</div>
+        {%- if section.settings.find_body != blank -%}
+          <p style="margin:.4rem 0 0;font-size:.98rem;line-height:1.5;color:var(--txt2,#a9aab1);text-wrap:pretty;">{{ section.settings.find_body }}</p>
+        {%- endif -%}
+      </div>
+
+    </div>
+
+    {%- if section.settings.payoff != blank -%}
+      <div style="margin-top:3.4rem;font-size:clamp(1.35rem,2.8vw,2rem);font-weight:650;letter-spacing:-.032em;line-height:1.2;color:var(--txt,#f4f4f6);text-wrap:balance;">{{ section.settings.payoff }}</div>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<style>
+  @media (max-width: 760px){
+    [data-sec="antitheft"] [data-m="atrow"]{ grid-template-columns:1fr !important; gap:2rem !important; }
+    [data-sec="antitheft"] [data-m="atfind"]{ gap:1.1rem !important; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "XERO anti-theft",
+  "tag": "div",
+  "settings": [
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "SECURITY" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Stealing it is easy. Riding it is impossible." },
+    { "type": "textarea", "id": "sub", "label": "Sub", "default": "Anyone can lift a 104 kg bike into a van. Nobody can start one that has never met their phone." },
+    { "type": "header", "content": "The three locks" },
+    { "type": "text", "id": "lock1_title", "label": "1 title", "default": "Paired to one phone" },
+    { "type": "textarea", "id": "lock1_body", "label": "1 body", "default": "Your steel card claims the bike once, to you. From then on it wakes for your iPhone and refuses every other device." },
+    { "type": "text", "id": "lock2_title", "label": "2 title", "default": "No key to copy" },
+    { "type": "textarea", "id": "lock2_body", "label": "2 body", "default": "There is no barrel, no blade and no fob to clone. There is nothing on the machine to pick, drill or hotwire." },
+    { "type": "text", "id": "lock3_title", "label": "3 title", "default": "Dead without you" },
+    { "type": "textarea", "id": "lock3_body", "label": "3 body", "default": "Cut the loom and it still will not move. The controller stays locked until it sees the paired device, exactly like your phone in a stranger's hand." },
+    { "type": "header", "content": "Locator" },
+    { "type": "image_picker", "id": "find_icon", "label": "Icon", "info": "Falls back to a neutral locator mark if empty." },
+    { "type": "text", "id": "find_title", "label": "Locator title", "default": "And you always know where it is." },
+    { "type": "textarea", "id": "find_body", "label": "Locator body", "default": "Pair it once, the way you pair earbuds. The Chiron reports its position to your iPhone, so a stolen bike is a tracked bike." },
+    { "type": "text", "id": "payoff", "label": "Payoff line", "default": "Take it. It will never be yours." }
+  ],
+  "presets": [{ "name": "XERO anti-theft" }]
+}
+{% endschema %}

@@ -1,0 +1,136 @@
+/* XERO Chiron — theme CSS.
+   Only what cannot be inline lives here: keyframes, pseudo-states, media queries,
+   the night token pin, and the striped image placeholder. */
+
+:root{
+  font-size:clamp(8.5px, min(calc(100vw / 90.5), calc(100vh / 62)), 16.6px);
+  /* NIGHT is the boot state — these fallbacks stop a one-frame white flash. */
+  --pg:rgba(26,27,31,1);--glass:rgba(13,13,15,.88);--glass-b:rgba(255,255,255,.075);--solid:rgba(20,20,23,1);--pill:rgba(30,31,36,.8);--pill-b:rgba(255,255,255,.08);--knob:rgba(46,47,55,1);--chip:rgba(30,31,37,.88);--txt:rgba(244,244,246,1);--txt2:rgba(169,170,177,1);--txt3:rgba(116,117,124,1);--acc:rgba(10,132,255,1);--acc-fill:rgba(64,156,255,1);--hair:rgba(255,255,255,.085);--card:rgba(26,27,32,.74);--sub:rgba(255,255,255,.05);--ok:rgba(52,208,88,1);--shadow:rgba(0,0,0,.45);--vsel:rgba(255,255,255,.045);--vidle:rgba(255,255,255,.035);--vb:rgba(255,255,255,.08);--sheen:rgba(255,255,255,.17);--gloss:rgba(255,255,255,.09);--glow:rgba(255,255,255,.04);--liq1:rgba(255,255,255,.1);--liq2:rgba(150,190,255,.14);--stickybg:rgba(22,22,26,.26);--stickyrim:rgba(255,255,255,.11);--pg2:rgba(16,16,19,1);--rvb:rgba(255,255,255,.08);
+  --nite:1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--pg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{overflow-x:hidden;font-family:system-ui,-apple-system,'SF Pro Display','SF Pro Text','Helvetica Neue',Helvetica,sans-serif;letter-spacing:-.011em;color:var(--txt)}
+a{color:var(--acc);text-decoration:none}
+a:hover{color:var(--acc-fill)}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+img{max-width:100%}
+
+/* Below-the-fold sections are permanently night. An element's own declared custom
+   property always beats one inherited from the JS-painted <html>, so the hero's
+   DAY/NIGHT state can never leak down here. */
+.xero-night{--pg:rgba(26,27,31,1);--glass:rgba(13,13,15,.88);--glass-b:rgba(255,255,255,.075);--solid:rgba(20,20,23,1);--pill:rgba(30,31,36,.8);--pill-b:rgba(255,255,255,.08);--knob:rgba(46,47,55,1);--chip:rgba(30,31,37,.88);--txt:rgba(244,244,246,1);--txt2:rgba(169,170,177,1);--txt3:rgba(116,117,124,1);--acc:rgba(10,132,255,1);--acc-fill:rgba(64,156,255,1);--hair:rgba(255,255,255,.085);--card:rgba(26,27,32,.74);--sub:rgba(255,255,255,.05);--ok:rgba(52,208,88,1);--shadow:rgba(0,0,0,.45);--vsel:rgba(255,255,255,.045);--vidle:rgba(255,255,255,.035);--vb:rgba(255,255,255,.08);--sheen:rgba(255,255,255,.17);--gloss:rgba(255,255,255,.09);--glow:rgba(255,255,255,.04);--liq1:rgba(255,255,255,.1);--liq2:rgba(150,190,255,.14);--stickybg:rgba(22,22,26,.26);--stickyrim:rgba(255,255,255,.11);--pg2:rgba(16,16,19,1);--rvb:rgba(255,255,255,.08);--nite:1}
+
+@keyframes xmarqA{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@keyframes xmarqB{from{transform:translate3d(-50%,0,0)}to{transform:translate3d(0,0,0)}}
+@keyframes xcoast{
+  0%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+  12.5%{transform:translate3d(0,-1.84rem,0) rotate(2.1deg)}
+  25%{transform:translate3d(0,0,0) rotate(3deg)}
+  37.5%{transform:translate3d(0,1.84rem,0) rotate(2.1deg)}
+  50%{transform:translate3d(0,2.6rem,0) rotate(0deg)}
+  62.5%{transform:translate3d(0,1.84rem,0) rotate(-2.1deg)}
+  75%{transform:translate3d(0,0,0) rotate(-3deg)}
+  87.5%{transform:translate3d(0,-1.84rem,0) rotate(-2.1deg)}
+  100%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+}
+@keyframes xtick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@keyframes xliqA{0%{transform:translate3d(-38%,-14%,0) scale(1)}50%{transform:translate3d(46%,10%,0) scale(1.18)}100%{transform:translate3d(-38%,-14%,0) scale(1)}}
+@keyframes xliqB{0%{transform:translate3d(58%,12%,0) scale(1.1)}50%{transform:translate3d(-26%,-10%,0) scale(.92)}100%{transform:translate3d(58%,12%,0) scale(1.1)}}
+
+/* generated pseudo-state rules (were style-hover / style-active in the design) */
+[data-x~="xh0"]:hover{transform:scale(1.09);}
+[data-x~="xh1"]:active{transform:scale(.985);}
+[data-x~="xh2"]:hover{transform:translateY(-2px);}
+[data-x~="xh3"]:hover{transform:scale(1.06);}
+[data-x~="xh4"]:active{transform:scale(.99);}
+[data-x~="xh5"]:hover{animation-play-state:paused;}
+[data-x~="xh6"]:hover{transform:translateY(-1px);}
+[data-x~="xh7"]:hover{color:var(--txt,#0e0e0e);}
+
+/* striped placeholder — one shared class, used by every unfilled image and video */
+.xero-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;
+  background:repeating-linear-gradient(135deg,var(--sub) 0 12px,transparent 12px 24px),var(--card);
+  border:1px solid var(--rvb)}
+.xero-ph span{font:500 .8rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;color:var(--txt3);text-align:center;padding:0 1rem}
+.xero-ph--circle{border-radius:50%}
+.xero-fill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.xero-fill--contain{object-fit:contain}
+.xero-play{width:4.4rem;height:4.4rem;border-radius:50%;background:var(--acc);box-shadow:0 .6rem 2rem rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
+
+/* Shopify's accelerated checkout button. We own the box, Shopify owns the mark inside —
+   only sizing and corner radius are ours to set. */
+[data-m="paybtn"] form{margin:0}
+[data-m="paybtn"] .shopify-payment-button{width:100%}
+[data-m="paybtn"] .shopify-payment-button__button{width:100%;height:3.25rem;border-radius:1.63rem;font-size:1.1rem}
+[data-m="paybtn"] .shopify-payment-button__more-options{display:none}
+
+/* Long pages composite far more than the design file did. Two cheap wins:
+   - contain the below-fold sections so layout/paint never escapes them
+   - never let an offscreen animation hold a compositor layer */
+.shopify-section{contain:layout paint style}
+[data-anim]{will-change:auto}
+[data-m="rvcard"]{contain:layout paint}
+
+@media (prefers-reduced-motion:reduce){[data-anim]{animation:none !important}}
+
+@media (max-width:900px){
+  :root{font-size:clamp(12.2px, calc(100vw / 30.2), 15px)}
+  body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
+
+  /* Mobile perf, in order of cost:
+     1. backdrop-filter on a full-width buy box is the single most expensive thing a
+        phone GPU can be asked to do here, and at this size the blur reads as a flat
+        tint anyway — so drop it entirely and raise the fill opacity to compensate.
+     2. content-visibility lets the browser skip layout+paint for offscreen sections. */
+  [data-m="buy"],[data-m="nav"]{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  [data-m="buy"]{background:var(--solid) !important}
+  [data-m="nav"]{background:var(--pill) !important}
+  [data-m="sticky"]{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  .shopify-section{content-visibility:auto;contain-intrinsic-size:auto 800px}
+  [data-m="hero"]{content-visibility:visible}
+  /* the coaster's 3D perspective forces a costly layer on mobile for no visible gain */
+  [data-m="coaster"]{perspective:none}
+  [data-m="rvcard"]{animation:none !important}
+  [data-m="hero"]{height:auto}
+  [data-m="stage"]{position:relative;inset:auto;width:100%;height:58vh}
+  [data-m="buy"]{position:relative;inset:auto;width:auto;height:auto;margin:1.1rem 1.1rem 0}
+  [data-m="nav"]{left:auto;right:4.6rem;width:auto;padding:0 .5rem}
+  [data-m="navact"],[data-m="navlbl"],[data-m="side"]{display:none}
+  [data-m="ctl"]{top:4.5rem;left:.9rem;gap:.65rem;transform:scale(.9);transform-origin:0 0}
+  [data-m="photolayer"]>div{inset:4% 0 12% 0;padding:0 4%}
+  [data-m="railcard"]{width:3rem;height:2.4rem;flex:0 0 auto}
+  [data-m="rail"]{gap:.4rem}
+  [data-m="worldcol"]{gap:.5rem;top:auto;bottom:1.1rem}
+  [data-m="worldpill"]{height:2.7rem;border-radius:1.35rem}
+  [data-m="worldpill"] button{width:5.6rem}
+  [data-m="dragchip"]{width:9.6rem;height:2.6rem}
+  [data-m="coaster"]{padding:2.4rem 0 2.8rem}
+  [data-m="rvcard"]{width:14.4rem}
+  [data-m="ftbig"]{font-size:15vw}
+  [data-m="ftgrid"]{gap:2rem 1.6rem}
+  [data-m="ftgrid"]>div{flex:1 1 42% !important}
+  [data-m="mini"]{display:flex}
+  [data-m="sticky"]{display:none}
+  [data-m="hdr"]{height:4.4rem}
+  [data-m="splash"] img{max-height:34vh}
+  /* mobile hit targets: the primary controls clear 44px. The photo rail keeps its
+     small visual size by design — it gets a transparent tap collar instead. */
+  [data-m="worldpill"] button,[data-m="ctl"] button{min-height:44px}
+  [data-m="mini"] button{min-height:44px}
+  [data-m="rail"]{padding:7px 0}
+  [data-m="railcard"]{position:relative}
+  [data-m="railcard"]::after{content:"";position:absolute;left:0;right:0;top:-7px;bottom:-7px}
+  [data-sec] a,[data-m="ftgrid"] a{min-height:32px;display:inline-flex;align-items:center}
+  /* the drawer must clear the notch and the home indicator */
+  [data-m="cartdrawer"],aside[data-screen-label="Cart"]{padding-top:env(safe-area-inset-top)}
+  .shopify-section > section,.shopify-section > footer{padding-left:1.15rem !important;padding-right:1.15rem !important}
+  [data-m="hero"],[data-sec="film"],[data-sec="reviews"],[data-sec="footer"]{padding-left:0 !important;padding-right:0 !important}
+  [data-sec="gallery"]{padding-top:3.4rem !important}
+  [data-sec="iphone-key"],[data-sec="breakdown"],[data-sec="ugc-faq"],[data-sec="panel"],[data-sec="delivery"]{padding-top:3.6rem !important;padding-bottom:3.6rem !important}
+  .shopify-section h2{font-size:2.05rem !important;letter-spacing:-.03em !important}
+  [data-m="chapters"] button,[data-m="panelrow"]>div,[data-m="steprow"]>div,[data-m="dlvpair"]>div{flex:1 1 100% !important}
+  [data-m="approw"]{gap:2.4rem !important}
+  [data-m="approw"]>div{flex:1 1 100% !important;margin:0 auto}
+  [data-m="specrow"]>div{flex:1 1 45% !important}
+}

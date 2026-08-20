@@ -147,10 +147,10 @@
 }
 
 /* ==========================================================================
-   MOBILE - fixed 22px. Small visual, generous invisible tap targets.
+   MOBILE - fixed 20px. Small visual, generous invisible tap targets.
    ==========================================================================
-   The visible chip is 22px (under the 44px touch minimum) so each segment
-   carries a hidden hit area centred on it: looks 22px, taps ~38px. The world
+   The visible chip is 20px (under the 44px touch minimum) so each segment
+   carries a hidden hit area centred on it: looks 20px, taps ~38px. The world
    switcher's hit area is capped so it does not overhang the thumbnail rail
    below it. Padding stays 3px so the geometry formulas above hold unchanged.
 */

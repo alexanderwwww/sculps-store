@@ -1,0 +1,52 @@
+{%- comment -%}
+  NETWORK / NOTIFICATIONS - one full-bleed image, minimal type over it.
+  The artwork carries the message, so the copy stays out of its way.
+{%- endcomment -%}
+
+<section class="xero-night" data-sec="network" style="position:relative;width:100%;background:#000;overflow:hidden;">
+
+  <div style="position:relative;width:100%;min-height:clamp(30rem,62vw,52rem);">
+
+    {%- if section.settings.bg != blank -%}
+      <img src="{{ section.settings.bg | image_url: width: 2400 }}"
+           srcset="{{ section.settings.bg | image_url: width: 900 }} 900w, {{ section.settings.bg | image_url: width: 1600 }} 1600w, {{ section.settings.bg | image_url: width: 2400 }} 2400w"
+           sizes="100vw"
+           alt="{{ section.settings.bg.alt | default: section.settings.heading | escape }}"
+           width="{{ section.settings.bg.width }}" height="{{ section.settings.bg.height }}"
+           loading="lazy" decoding="async"
+           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">
+    {%- else -%}
+      <div class="xero-ph" style="position:absolute;inset:0;"><span>full-bleed image - globe and phone</span></div>
+    {%- endif -%}
+
+    {%- comment -%} a soft floor so type stays legible whatever lands behind it {%- endcomment -%}
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 42%,rgba(0,0,0,.35) 100%);pointer-events:none;"></div>
+
+    <div style="position:relative;max-width:78rem;margin:0 auto;padding:4.6rem 1.6rem;">
+      <div style="max-width:32rem;">
+        {%- if section.settings.kicker != blank -%}
+          <div style="font-size:.74rem;font-weight:700;letter-spacing:.2em;color:rgba(255,255,255,.62);">{{ section.settings.kicker }}</div>
+        {%- endif -%}
+        <h2 style="margin:1rem 0 0;font-size:clamp(2rem,4.6vw,3.4rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:#fff;text-wrap:balance;">{{ section.settings.heading }}</h2>
+        {%- if section.settings.sub != blank -%}
+          <p style="margin:1.1rem 0 0;font-size:1.08rem;line-height:1.5;letter-spacing:-.014em;color:rgba(255,255,255,.72);text-wrap:pretty;">{{ section.settings.sub }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "XERO network",
+  "tag": "div",
+  "settings": [
+    { "type": "image_picker", "id": "bg", "label": "Full-bleed image" },
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "ALWAYS IN THE LOOP" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Updates and notifications at every step." },
+    { "type": "textarea", "id": "sub", "label": "Sub", "default": "From the moment your card is etched to the minute the van turns into your street. Build, quality check, dispatch, and the driver three minutes out - it all lands on your phone." }
+  ],
+  "presets": [{ "name": "XERO network" }]
+}
+{% endschema %}
