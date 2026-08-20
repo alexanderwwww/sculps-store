@@ -12,13 +12,11 @@
    top the way the old broken build did.
 
    ==========================================================================
-   THE ORBIT IS FREE. Full 360 yaw + up/down tilt (see the top of the bike).
+   THE ORBIT IS HORIZONTAL 360 ONLY. Elevation is LOCKED.
    ==========================================================================
-   The old build locked elevation and clamped yaw to a 240 arc to hide a rear
-   panel. The uploaded model does not need that, so both cages are gone:
-     - yaw:   unlimited, wraps.
-     - pitch: clamped only off the two poles, so you can look down onto the top
-              and up under the belly without the camera flipping.
+     - yaw:   unlimited, wraps - a clean turntable.
+     - pitch: fixed at PITCH_HOME. No tilt up or down, so the camera can never
+              show the top or the underside (which read as broken).
 
    AUTOROTATE: on by default, a steady turntable, until the visitor GRABS the
    bike (pointerdown) - then it holds where they leave it. The round autorotate
@@ -42,11 +40,10 @@
 
   /* ---- orbit ---- */
   var YAW_HOME = 0.62;              // resting angle (front three-quarter)
-  var PITCH_HOME = 1.38;            // resting elevation (just above the horizon)
-  var PITCH_MIN = 0.34;            // ~19 deg from top  - lets you look down onto the bike
-  var PITCH_MAX = 2.75;            // ~157 deg          - lets you look up under it
+  var PITCH_HOME = 1.38;            // fixed elevation (just above the horizon)
+  var PITCH_MIN = 1.38;            // elevation is LOCKED: horizontal 360 only.
+  var PITCH_MAX = 1.38;            // no tilt up or down, so the top/underside never show.
   var YAW_SENS = 0.0085;           // radians per px, horizontal drag
-  var PITCH_SENS = 0.0072;         // radians per px, vertical drag
 
   /* ---- autorotate ---- */
   var SPIN_SPEED = 0.42;           // radians / second (~15s per full turn)
@@ -260,8 +257,8 @@
 
     e.addEventListener('pointermove', function (ev) {
       if (!drag) return;
+      // horizontal only - yaw spins a full 360; elevation is locked (no top/underside).
       e._yaw = e._yaw - (ev.clientX - drag.x) * YAW_SENS;
-      e._pitch = clampPitch(e._pitch + (ev.clientY - drag.y) * PITCH_SENS);
       drag.x = ev.clientX; drag.y = ev.clientY;
       if (e.renderer) e._frame();
     });
