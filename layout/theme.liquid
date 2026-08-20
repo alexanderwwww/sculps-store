@@ -112,10 +112,9 @@
   {%- endcomment -%}
   <script>
     window.XERO_MODEL_URL = "https://cdn.shopify.com/3d/models/o/ffa775409b18ef79/XERO_Chiron.glb";
-    /* Reverted to the GLB's own baked map (looked better than the edited skin).
-       To use the edited skin again, put its URL back here:
-       https://cdn.shopify.com/s/files/1/1011/2742/2336/files/xero-skin.jpg?v=1787225202 */
-    window.XERO_TEXTURE_URL = "";
+    /* Final edited skin, rebound onto the model's emissiveMap by xero-model.js.
+       Set to "" to fall back to the GLB's own baked map. */
+    window.XERO_TEXTURE_URL = "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/xero-skin-final.jpg?v=1787239994";
   </script>
 </body>
 </html>
