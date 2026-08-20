@@ -28,12 +28,23 @@
     parsed before the first dynamic import runs, hence head. The DRACO decoder path inside
     stage.js is pinned to the same version.
   {%- endcomment -%}
+  {%- comment -%}
+    SELF-HOSTED three.js. Previously loaded from unpkg.com (a third-party CDN); on mobile
+    networks that dependency was slow or blocked, so the 3D bike never appeared. All three
+    modules now live on Shopify's own Files CDN (fast, same infrastructure as the store,
+    served with the correct text/javascript MIME + CORS). Minified build = ~half the size.
+    GLTFLoader's one relative import was rewired to the bare 'three/addons/utils/...'
+    specifier so it resolves through this map. Zero external CDNs at runtime.
+    To upgrade three: re-upload the four files to Files and swap the URLs (bump ?v=).
+  {%- endcomment -%}
   {%- raw -%}
   <script type="importmap">
   {
     "imports": {
-      "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+      "three": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/three.module.min.js?v=1787259569",
+      "three/addons/loaders/GLTFLoader.js": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/GLTFLoader.js?v=1787259699",
+      "three/addons/loaders/DRACOLoader.js": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/DRACOLoader.js?v=1787259699",
+      "three/addons/utils/BufferGeometryUtils.js": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/BufferGeometryUtils.js?v=1787259698"
     }
   }
   </script>
