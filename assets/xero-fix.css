@@ -106,6 +106,14 @@ xero-stage[data-model="on"] img{ display: none !important; }
 [data-m="photolayer"] .xero-ph{ background: #fff !important; }
 [data-m="photolayer"] .xero-fill{ object-fit: contain !important; }
 
+/* NO NIGHT IN PHOTOS. The stage still carries whatever Day/Night world was last shown
+   (a dark studio/city/mars backdrop). In Photos we do not want ANY of it, so the whole
+   3D stage is taken out and only the white photo layer remains - a pure white room in
+   every mode. The stage returns the moment you switch back to 3D. */
+:root[data-xero-view="photos"] xero-stage{ opacity: 0 !important; visibility: hidden !important; }
+:root[data-xero-view="photos"] [data-m="stage"]{ background: #fff !important; }
+:root[data-xero-view="photos"] [data-m="photolayer"]{ background: #fff !important; opacity: 1 !important; }
+
 [data-m="photolayer"] > div{
   left: 0 !important;
   right: var(--xero-gold-i) !important;
