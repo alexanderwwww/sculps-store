@@ -208,7 +208,7 @@
     var origPaint = Stage.prototype._paintCube;
     Stage.prototype._paintCube = function () {
       origPaint.call(this);
-      hideSprite(this);
+      hideSprite(this);          // the 2D sprite is never shown - only the 3D bike
     };
 
     Stage.prototype._render3D = function () {
@@ -355,7 +355,7 @@
 
     patchClass();
     patchView(S);
-    hideSprite(S.el);
+    hideSprite(S.el);            // sprite deleted from view immediately - only the 3D bike shows
 
     S.loadModel(url).then(function () {
       if (S.el && S.el.modelSeam) { S.el.modelSeam.visible = false; if (S.el.modelSeam.parent) S.el.modelSeam.parent.remove(S.el.modelSeam); }

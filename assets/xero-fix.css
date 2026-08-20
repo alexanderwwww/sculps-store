@@ -66,7 +66,10 @@
    matches the sprite wrapper, which is the element _init3D() uses as its insertBefore
    anchor for the canvas. That combination took the whole 3D viewer off the page. */
 xero-stage[data-view="photos"] > canvas{ display: none !important; }
-xero-stage[data-model="on"] img{ display: none !important; }
+/* The 2D bike sprite (bike-day/night/seam) is NEVER shown - only the 3D model. The
+   sprites live inside <xero-stage>; the product photos are in a sibling [data-m="photolayer"],
+   so this only removes the sprite, never the Photos images. */
+xero-stage img{ display: none !important; }
 
 /* FIX 4: dead controls. (The autorotate button data-act="toggleSpin" is intentionally
    NOT hidden - it toggles the turntable.) */
