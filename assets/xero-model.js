@@ -2,12 +2,14 @@
    Loaded after xero-stage.js and xero-store.js. Patches, never forks, the stage.
 
    ==========================================================================
-   THIS FILE SHOWS THE PURE GLB, AS UPLOADED. NO EXTERNAL TEXTURE.
+   SKIN: the GLB's own emissive atlas, or an edited version of it.
    ==========================================================================
-   An earlier version fetched window.XERO_TEXTURE_URL and painted it over every
-   mesh as a base-colour map. The uploaded GLB already carries its own maps, so
-   that overlay sat ON TOP of the real skin and broke the look. retexture() is
-   now a deliberate no-op - the model renders exactly as the file ships.
+   The GLB carries its colour atlas in the EMISSIVE slot (mis-tagged by the
+   exporter). window.XERO_TEXTURE_URL is an edited version of that exact atlas,
+   painted over the same UV layout, and retexture() rebinds it onto emissiveMap -
+   same look as the pure GLB, just the edited pixels. Leave XERO_TEXTURE_URL ""
+   and the baked map is used untouched. It NEVER stacks a base-colour overlay on
+   top the way the old broken build did.
 
    ==========================================================================
    THE ORBIT IS FREE. Full 360 yaw + up/down tilt (see the top of the bike).
@@ -111,9 +113,57 @@
   }
 
   /* ==========================================================================
-     RETEXTURE - intentionally disabled. Show the uploaded GLB's own maps.
-     ========================================================================== */
-  function retexture(S) { /* pure GLB: no external base-colour overlay */ }
+     RETEXTURE - swap the EMISSIVE (skin) map at runtime.
+     ==========================================================================
+     The GLB's colour atlas is carried in its EMISSIVE slot (mis-tagged by the
+     exporter), which is why the bike self-illuminates. window.XERO_TEXTURE_URL is
+     an edited version of that exact atlas, painted over the same UV layout. We
+     rebind it onto emissiveMap so the look is identical to the pure GLB, just with
+     the edited pixels. Leave XERO_TEXTURE_URL "" to fall back to the baked map.
+
+     flipY=false      glTF UV origin is opposite three.js's default; true = upside down.
+     colorSpace sRGB  the atlas is authored sRGB; linear renders washed out.
+     emissive factor  left as the GLB set it, so brightness matches the baked look. */
+  function retexture(S) {
+    var e = S.el;
+    var url = window.XERO_TEXTURE_URL;
+    var T = e && e.THREE;
+    if (!url || !T || !e.model) return;
+
+    var loader = new T.TextureLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.load(url, function (tex) {
+      tex.flipY = false;
+      if ('colorSpace' in tex && T.SRGBColorSpace) tex.colorSpace = T.SRGBColorSpace;
+      else if ('encoding' in tex && T.sRGBEncoding) tex.encoding = T.sRGBEncoding;   // pre-r152
+      tex.wrapS = tex.wrapT = T.ClampToEdgeWrapping;
+      tex.generateMipmaps = true;
+      if (e.renderer && e.renderer.capabilities) {
+        tex.anisotropy = Math.min(8, e.renderer.capabilities.getMaxAnisotropy());
+      }
+      tex.needsUpdate = true;
+
+      var n = 0;
+      e.model.traverse(function (o) {
+        if (!o.isMesh || !o.material) return;
+        var mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach(function (m) {
+          if (!m || !('emissiveMap' in m)) return;
+          m.emissiveMap = tex;
+          // if the export shipped a black emissive factor the map would be invisible;
+          // only then force it to white so the skin actually shows.
+          if (m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) === 0 && m.emissive.setRGB) m.emissive.setRGB(1, 1, 1);
+          if ('emissiveIntensity' in m && !m.emissiveIntensity) m.emissiveIntensity = 1;
+          m.needsUpdate = true;
+          n++;
+        });
+      });
+      if (e.renderer) e._frame();
+      console.info('[xero] edited skin applied to ' + n + ' emissive material(s)');
+    }, undefined, function (err) {
+      console.error('[xero] skin texture failed to load, keeping the GLB original:', url, err);
+    });
+  }
 
   /* ---- WebGL context lifecycle ---- */
   function guardContext(S) {
@@ -316,12 +366,12 @@
       S.useModel(true);
       S.el.setAttribute('data-model', 'on');
       guardContext(S);
-      retexture(S);              // no-op: pure GLB
+      retexture(S);              // rebinds edited emissive skin if XERO_TEXTURE_URL is set
       bindOrbit(S);
       tagView(S);
       autoRotate(S);
       if (S.el.renderer) S.el._frame();
-      console.info('[xero] 3D live - free orbit, autorotate on, pure GLB');
+      console.info('[xero] 3D live - free orbit, autorotate on, edited skin');
     }).catch(function (err) {
       console.error('[xero] model load failed', err);
     });

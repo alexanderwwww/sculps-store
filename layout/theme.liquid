@@ -103,15 +103,16 @@
     its CDN, 20x lighter than the raw upload and needing no special decoders. Swap this URL
     if the model itself is ever replaced.
 
-    XERO_TEXTURE_URL - DELIBERATELY EMPTY. The viewer now shows the pure GLB with its own
-    baked maps. An external base-colour overlay used to be rebound here on top of the model
-    and broke the look; xero-model.js's retexture() is a no-op and this stays "" so nothing
-    is ever painted over the uploaded file. To restore an overlay you would set this AND
-    re-enable retexture() - do not do one without the other.
+    XERO_TEXTURE_URL - the EDITED skin atlas. The GLB carries its colour atlas in the
+    emissive slot; this is an edited version of that exact atlas, painted over the same UV
+    layout, and xero-model.js's retexture() rebinds it onto the model's emissiveMap at
+    runtime. So a new skin is one file upload here, not a GLB re-export. Set this back to ""
+    to fall back to the map baked into the GLB. Change the ?v= when you replace the file -
+    it is the cache key.
   {%- endcomment -%}
   <script>
     window.XERO_MODEL_URL = "https://cdn.shopify.com/3d/models/o/ffa775409b18ef79/XERO_Chiron.glb";
-    window.XERO_TEXTURE_URL = "";
+    window.XERO_TEXTURE_URL = "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/xero-skin.jpg?v=1787225202";
   </script>
 </body>
 </html>
