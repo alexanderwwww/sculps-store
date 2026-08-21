@@ -249,6 +249,33 @@
         agreement is trademark use on top of it. Restore only what is genuinely live, and
         take the marks from the provider's own brand kit.
       {%- endcomment -%}
+
+      {%- comment -%}
+        What fills the space the financing chips and the three fake trust seals used to
+        occupy. Those were removed because none of them were true; the answer is not to
+        leave a hole, it is to put the actual product story where the eye already is. Every
+        line here is a fact about the machine or a term the buyer is agreeing to, and each
+        one is stated somewhere else on the page and in the policies - nothing new is
+        claimed here. All four lines are editable, and any left empty simply do not render.
+      {%- endcomment -%}
+      {%- if section.settings.blurb != blank -%}
+        <p style="margin:1.1rem 0 0;font-size:.92rem;line-height:1.55;color:var(--txt2,#55565c);">{{ section.settings.blurb }}</p>
+      {%- endif -%}
+
+      {%- assign points = section.settings.points | split: '|' -%}
+      {%- if points.size > 0 -%}
+        <ul style="margin:.85rem 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:.5rem;">
+          {%- for pt in points -%}
+            {%- assign line = pt | strip -%}
+            {%- if line != blank -%}
+              <li style="display:flex;align-items:flex-start;gap:.55rem;font-size:.86rem;line-height:1.45;color:var(--txt2,#55565c);">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#005df9" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;margin-top:.15rem;"><path d="M3 8.4l3.1 3.1L13 4.6"></path></svg>
+                <span>{{ line }}</span>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
       </div>
     </div>
 
@@ -272,6 +299,8 @@
     { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "980 Nm. 120 km/h." },
     { "type": "text", "id": "ships_in", "label": "Shipping line", "default": "Ships in 4–6 weeks" },
     { "type": "text", "id": "finance_line", "label": "Financing line (leave empty unless a credit provider is live)" },
+    { "type": "textarea", "id": "blurb", "label": "Buy box description", "default": "An electric off-road motorcycle with no key, no barrel and nothing to clone. Your phone lies flat in the tank, charges while you ride, and is the only thing that wakes it." },
+    { "type": "textarea", "id": "points", "label": "Buy box bullets", "info": "Separate each line with | . Leave empty to hide.", "default": "Built to order and paired to your client ID before dispatch|Free delivery to your door, never a parcel courier|30-day returns - we collect, you pay nothing|Off-road machine, not street legal" },
     { "type": "header", "content": "Add-on thumbnails" },
     { "type": "image_picker", "id": "addon_key_img", "label": "Wireless key thumbnail" },
     { "type": "header", "content": "Stage photos" },
