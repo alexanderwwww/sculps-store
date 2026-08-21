@@ -105,10 +105,10 @@
   "name": "XERO film",
   "tag": "div",
   "settings": [
-    { "type": "text", "id": "youtube_id", "label": "YouTube video ID (just the ID, e.g. dQw4w9WgXcQ — overrides the uploaded film)" },
+    { "type": "text", "id": "youtube_id", "label": "YouTube video ID", "info": "Just the ID — the part after watch?v= — not the full URL. Overrides the uploaded film." },
     { "type": "video", "id": "film", "label": "Film" },
     { "type": "image_picker", "id": "poster", "label": "Poster (shown if there is no film)" },
-    { "type": "text", "id": "anchor", "label": "Anchor id (lets the nav link here, e.g. film)" },
+    { "type": "text", "id": "anchor", "label": "Anchor id", "info": "Lets the nav link here. The header Film link expects: film" },
     { "type": "text", "id": "label", "label": "Placeholder label", "default": "full-bleed film — 16:9" }
   ],
   "presets": [{ "name": "XERO film" }]
