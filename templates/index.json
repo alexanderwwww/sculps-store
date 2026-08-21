@@ -17,13 +17,13 @@
         "brand": "XERO CHIRON",
         "lede": "UNIQUE ELECTRIC PERFORMANCE",
         "sub": "Unlocks with your phone. Not a regular bike.",
-        "price_line": "$139",
-        "show_partners": true,
+        "price_line": "",
+        "show_partners": false,
         "partner_label": "No down payment with our partners:",
         "made_by": "MADE BY XERO",
         "cta_link": "",
         "cta_aria": "See the Chiron",
-        "aria": "XERO Chiron - electric performance from $139 a month",
+        "aria": "XERO Chiron - a concept electric motorcycle",
         "delay_ms": 2000,
         "version": "v3"
       }
@@ -34,9 +34,9 @@
         "product": "xero-chiron",
         "addon_key": "wireless-key-nfc-pebble",
         "title": "XERO Chiron.",
-        "subtitle": "980 Nm. 120 km/h.",
+        "subtitle": "Design targets: 980 Nm · 120 km/h",
         "ships_in": "Ships in 4–6 weeks",
-        "finance_line": "36 months · 0% APR · no deposit"
+        "finance_line": ""
       }
     },
     "gallery": {
@@ -46,158 +46,6 @@
         "pg_hero": "shopify://shop_images/hf_20260810_041320_269332c9-1739-458a-b679-9599df13b8bf.png",
         "pg_a": "shopify://shop_images/key_step3_phone.jpg",
         "pg_b": "shopify://shop_images/hf_20260809_071104_9a78b890-c126-4568-85ec-afb32c4458ab.png"
-      }
-    },
-    "compare": {
-      "type": "xero-compare",
-      "blocks": {
-        "r1": {
-          "type": "row",
-          "settings": {
-            "label": "Peak power",
-            "ours": "82 hp",
-            "theirs": "80 hp"
-          }
-        },
-        "r2": {
-          "type": "row",
-          "settings": {
-            "label": "Rear-wheel torque",
-            "ours": "980 Nm",
-            "theirs": "978 Nm"
-          }
-        },
-        "r3": {
-          "type": "row",
-          "settings": {
-            "label": "Top speed",
-            "ours": "120 km/h",
-            "theirs": "80 km/h"
-          }
-        },
-        "r4": {
-          "type": "row",
-          "settings": {
-            "label": "0–60 km/h",
-            "ours": "2.3 s",
-            "theirs": "2.6 s"
-          }
-        },
-        "r5": {
-          "type": "row",
-          "settings": {
-            "label": "Battery",
-            "ours": "8.4 kWh",
-            "theirs": "7.2 kWh"
-          }
-        },
-        "r6": {
-          "type": "row",
-          "settings": {
-            "label": "Charge 0–100%",
-            "ours": "55 min",
-            "theirs": "1–2 h"
-          }
-        },
-        "r7": {
-          "type": "row",
-          "settings": {
-            "label": "Battery swap",
-            "ours": "11 sec",
-            "theirs": "Not swappable"
-          }
-        },
-        "r8": {
-          "type": "row",
-          "settings": {
-            "label": "Cycles to 80%",
-            "ours": "1,500",
-            "theirs": "1,000"
-          }
-        },
-        "r9": {
-          "type": "row",
-          "settings": {
-            "label": "Weight",
-            "ours": "104 kg",
-            "theirs": "110 kg"
-          }
-        },
-        "r10": {
-          "type": "row",
-          "settings": {
-            "label": "Motor speed",
-            "ours": "15,000 rpm",
-            "theirs": "14,200 rpm"
-          }
-        },
-        "r11": {
-          "type": "row",
-          "settings": {
-            "label": "Front brake",
-            "ours": "280 mm, 4-piston",
-            "theirs": "260 mm, 4-piston"
-          }
-        },
-        "r12": {
-          "type": "row",
-          "settings": {
-            "label": "Suspension travel",
-            "ours": "310 mm",
-            "theirs": "310 mm"
-          }
-        },
-        "r13": {
-          "type": "row",
-          "settings": {
-            "label": "Sealing",
-            "ours": "IP69K",
-            "theirs": "IP69K"
-          }
-        },
-        "r14": {
-          "type": "row",
-          "settings": {
-            "label": "Phone as key",
-            "ours": "Standard",
-            "theirs": "No"
-          }
-        },
-        "r15": {
-          "type": "row",
-          "settings": {
-            "label": "Price",
-            "ours": "$4,999",
-            "theirs": "$13,490"
-          }
-        }
-      },
-      "block_order": [
-        "r1",
-        "r2",
-        "r3",
-        "r4",
-        "r5",
-        "r6",
-        "r7",
-        "r8",
-        "r9",
-        "r10",
-        "r11",
-        "r12",
-        "r13",
-        "r14",
-        "r15"
-      ],
-      "settings": {
-        "kicker": "THE NUMBERS",
-        "heading": "Compare it to the best.",
-        "sub": "Every number that matters, next to the bike the industry calls the benchmark.",
-        "col_us": "XERO Chiron",
-        "col_us_price": "$4,999",
-        "col_them": "Class leader",
-        "col_them_price": "$13,490",
-        "footnote": "Comparison figures are the class leader's published manufacturer specifications. Real-world results vary with terrain, rider weight and setup."
       }
     },
     "iphone-key": {
@@ -264,11 +112,11 @@
         "heading": "A new kind of battery.",
         "astra_hero": "shopify://shop_images/astra_cut.png",
         "stat1_value": "8.4 kWh",
-        "stat1_label": "Capacity",
+        "stat1_label": "Capacity (target)",
         "stat2_value": "11 sec",
-        "stat2_label": "To swap",
+        "stat2_label": "To swap (target)",
         "stat3_value": "1,500",
-        "stat3_label": "Cycles to 80%"
+        "stat3_label": "Cycles to 80% (target)"
       }
     },
     "breakdown": {
@@ -276,19 +124,19 @@
       "settings": {
         "eyebrow": "IN MOTION",
         "heading": "Watch it move.",
-        "sub": "No engine note, no clutch, no gears. Just a throttle and everything the pack has, instantly.",
+        "sub": "No engine note, no clutch, no gears. Just a throttle and everything the pack has, instantly. The figures below are design targets for a concept machine, not measured results.",
         "s1_value": "82 hp",
-        "s1_label": "PEAK POWER",
+        "s1_label": "PEAK POWER (TARGET)",
         "s2_value": "980 Nm",
-        "s2_label": "AT THE WHEEL",
+        "s2_label": "AT THE WHEEL (TARGET)",
         "s3_value": "120 km/h",
-        "s3_label": "TOP SPEED",
+        "s3_label": "TOP SPEED (TARGET)",
         "s4_value": "2.3 s",
-        "s4_label": "0–60 KM/H",
+        "s4_label": "0–60 KM/H (TARGET)",
         "s5_value": "104 kg",
-        "s5_label": "ALL IN",
+        "s5_label": "ALL IN (TARGET)",
         "s6_value": "0",
-        "s6_label": "SCHEDULED SERVICE"
+        "s6_label": "SCHEDULED SERVICE (TARGET)"
       }
     },
     "film2": {
@@ -324,35 +172,35 @@
           "type": "qa",
           "settings": {
             "q": "How fast is it?",
-            "a": "120 km/h, about 75 mph."
+            "a": "Design target, not a measured result — 120 km/h, about 75 mph."
           }
         },
         "q2": {
           "type": "qa",
           "settings": {
             "q": "How much torque?",
-            "a": "980 Nm at the rear wheel, with 82 hp peak. There is no gearbox between the motor and the road, so all of it arrives the moment you touch the throttle."
+            "a": "Design target, not a measured result — 980 Nm at the rear wheel, with 82 hp peak. There is no gearbox between the motor and the road, so all of it arrives the moment you touch the throttle."
           }
         },
         "q3": {
           "type": "qa",
           "settings": {
             "q": "What does it weigh?",
-            "a": "104 kg, all in. A single-piece cast frame carries the pack, so there is no subframe underneath adding weight back."
+            "a": "Design target, not a measured result — 104 kg, all in. A single-piece cast frame carries the pack, so there is no subframe underneath adding weight back."
           }
         },
         "q4": {
           "type": "qa",
           "settings": {
             "q": "How far does it go?",
-            "a": "An 8.4 kWh ASTRA ULTIMUM pack, good for a long day of trail riding. A second pack swaps in tool-free in about eleven seconds, which is the closest thing there is to unlimited range."
+            "a": "Design target, not a measured result — an 8.4 kWh ASTRA ULTIMUM pack, good for a long day of trail riding. A second pack swaps in tool-free in about eleven seconds, which is the closest thing there is to unlimited range."
           }
         },
         "q5": {
           "type": "qa",
           "settings": {
             "q": "How long does it charge?",
-            "a": "About 55 minutes from empty to full, and the pack holds over 80% of its capacity after 1,500 cycles."
+            "a": "Design target, not a measured result — about 55 minutes from empty to full, and the pack holds over 80% of its capacity after 1,500 cycles."
           }
         },
         "q6": {
@@ -493,13 +341,6 @@
         "scroll_span": 58
       }
     },
-    "reviews": {
-      "type": "xero-reviews",
-      "settings": {
-        "heading": "Ride to the stars.",
-        "sub": ""
-      }
-    },
     "film1": {
       "type": "xero-film",
       "settings": {
@@ -541,7 +382,6 @@
     "popup",
     "hero",
     "gallery",
-    "compare",
     "iphone-key",
     "antitheft",
     "box",
@@ -552,7 +392,6 @@
     "network",
     "ugc-faq",
     "ugc",
-    "reviews",
     "film1",
     "track",
     "footer",
