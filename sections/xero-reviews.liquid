@@ -1,0 +1,33 @@
+{%- comment -%}
+  DELIBERATELY EMPTY.
+
+  This section used to render 26 review cards with invented names, invented
+  Instagram handles, fake verified check marks and fake like counts, on a store
+  that has never had a customer. It also quoted a completely different spec
+  sheet from the rest of the site, which made it evidence of fabrication rather
+  than merely untrue.
+
+  It was removed from templates/index.json and templates/product.json. The file
+  itself is emptied rather than deleted because the Admin API refuses to delete
+  theme files; leaving the old markup here would mean a single click in the
+  theme editor could put all of it back on the storefront.
+
+  Review fraud is actionable separately from ordinary marketing claims in the
+  US, the UK and the EU, and it is one of the few things a payment processor
+  treats as disqualifying rather than fixable. Do not repopulate this file with
+  sample copy. When there are real reviews, use a review app that keeps them
+  tied to real verified orders.
+{%- endcomment -%}
+
+{% schema %}
+{
+  "name": "XERO reviews",
+  "tag": "div",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "This section is intentionally empty. It previously shipped fabricated reviews and must not be repopulated with sample copy. Use a review app backed by verified orders."
+    }
+  ]
+}
+{% endschema %}
