@@ -265,3 +265,38 @@ xero-stage img{ display: none !important; }
   [data-m="side"]{ display: none !important; }
   [data-m="dragchip"]{ display: none !important; }
 }
+
+/* ==========================================================================
+   FIX 10: smooth mobile navigation (CSS only, additive).
+   ==========================================================================
+   Evidence for each rule:
+   - xero-theme.css sets body{overflow-x:hidden} and, on mobile,
+     body{overflow:auto; overscroll-behavior-y:contain}. There is no momentum
+     scrolling hint, no smooth anchor scrolling, and nothing pins the scroll
+     axis to the root, so an inner scroller's rubber-band can chain to the page.
+   - xero-store.js scrollTo() already uses {behavior:'smooth'} for its own
+     anchor jumps; scroll-behavior:smooth makes native #anchor / keyboard
+     paging match it. Respect reduced-motion (see the block below).
+   - The stage (66svh), the marquee/coaster row ([data-anim] with xmarq) and the
+     photo rail ([data-m="rail"]) are the wide/overflowing elements; keep their
+     overscroll from chaining to the document and give the rail iOS momentum. */
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+}
+@media (max-width: 900px){
+  html, body{ overscroll-behavior-y: contain; }
+  body{ overscroll-behavior-x: none; }
+  /* horizontal scrollers must not rubber-band the whole page sideways, and
+     should carry iOS momentum */
+  [data-m="rail"]{
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* the auto-scrolling review row and the 3D stage are the two elements most
+     likely to trap a swipe; keep their gestures from chaining to the document */
+  [data-m="coaster"], [data-m="stage"]{ overscroll-behavior: contain; }
+  /* fixed overlays that are dismissed (default state) must never sit over the
+     page eating scroll — belt-and-braces alongside the JS pointer-events gates */
+  .xp[hidden]{ pointer-events: none !important; }
+}
