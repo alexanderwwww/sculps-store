@@ -128,13 +128,16 @@
      still nothing if the reference cube is ever switched on) and the cube and contact
      shadow keep exactly the state they had. */
   function set3D(S, on) {
+    /* The sprite is NEVER shown - owner's decision: only the model, ever. This function
+       now only tracks 3D state on the element (CSS and the context-loss timer read it)
+       and hides a dead canvas so a failed stage shows the clean gradient, not a frozen
+       frame. It must not touch iDay/iNight/iSeam: xero-fix.css hides them without
+       conditions, and re-showing them here would fight that rule with inline styles. */
     var e = S && S.el;
     if (!e || !e.setAttribute) return;
     if (on) { e.setAttribute('data-3d', 'ok'); return; }
     e.removeAttribute('data-3d');
     if (e.canvas) e.canvas.style.display = 'none';
-    if (e._paintCube) e._paintCube();
-    else [e.iDay, e.iNight, e.iSeam].forEach(function (i) { if (i) i.style.display = ''; });
   }
 
   /* ==========================================================================
@@ -268,12 +271,9 @@
     Stage.prototype._paintCube = function () {
       origPaint.call(this);
       /* _paintCube runs on every world, day/night and view change and restores the sprite
-         <img>s unconditionally, which would stack a flat photo on top of a live render.
-         So re-hide it - but only while the real bike is actually up. With no live 3D the
-         sprite IS the stage, and _paintCube putting it back is the correct behaviour. */
-      if (this.getAttribute('data-3d') === 'ok') {
-        [this.iDay, this.iNight, this.iSeam].forEach(function (i) { if (i) i.style.display = 'none'; });
-      }
+         <img>s unconditionally. The sprite is permanently banned from the stage (owner's
+         decision - only the model, ever), so re-hide it on every repaint, in every state. */
+      [this.iDay, this.iNight, this.iSeam].forEach(function (i) { if (i) i.style.display = 'none'; });
     };
 
     Stage.prototype._render3D = function () {
@@ -420,10 +420,8 @@
 
     patchClass();
     patchView(S);
-    /* The sprite is deliberately NOT hidden here. It used to be dropped the instant this
-       file ran, seconds before the GLB had even been requested, so a slow phone showed an
-       empty stage for the whole download and an empty stage forever if the download never
-       finished. It now stays until the model is genuinely mounted, below. */
+    /* Nothing to hide at boot: xero-fix.css removes the sprite unconditionally, so the
+       stage shows the studio gradient while the GLB downloads and after any failure. */
 
     S.loadModel(url).then(function () {
       if (S.el && S.el.modelSeam) { S.el.modelSeam.visible = false; if (S.el.modelSeam.parent) S.el.modelSeam.parent.remove(S.el.modelSeam); }
@@ -443,7 +441,7 @@
          three itself failing to resolve through the import map. Clearing the gate is what
          guarantees the visitor is left with a bike photo rather than an empty gradient. */
       set3D(S, false);
-      console.error('[xero] model load failed - staying on the 2D bike', err);
+      console.error('[xero] model load failed - stage stays empty by design', err);
     });
   }
 

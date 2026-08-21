@@ -10,12 +10,33 @@
 {%- endcomment -%}
 
 {%- assign film = section.settings.film -%}
+{%- assign yt = section.settings.youtube_id | strip -%}
 
-<section class="xero-night" data-sec="film" style="position:relative;width:100%;background:var(--pg);padding:0;">
+<section class="xero-night" data-sec="film" {% if section.settings.anchor != blank %}id="{{ section.settings.anchor }}"{% endif %} style="position:relative;width:100%;background:var(--pg);padding:0;">
 
   <div data-m="frame" style="position:relative;width:100%;height:min(84vh,56.25vw);min-height:20rem;overflow:hidden;background:#000;">
 
-    {%- if film != blank -%}
+    {%- if yt != blank -%}
+      {%- comment -%}
+        A film from the brand's own YouTube channel. This replaced the fake customer
+        reviews as the page's proof: a manufacturer film is honest social proof for a
+        vehicle - it shows the machine rather than asserting strangers' opinions.
+        The setting takes the VIDEO ID only (the part after watch?v=), not the full URL,
+        because URL parsing in Liquid is brittle across youtu.be/shorts/watch forms.
+        youtube-nocookie keeps the embed out of consent-banner territory. No autoplay:
+        embedded players with sound cannot autoplay anyway, and a user-started film with
+        sound is worth more than a muted one nobody noticed.
+      {%- endcomment -%}
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/{{ yt }}?rel=0&modestbranding=1&playsinline=1"
+        title="XERO film"
+        loading="lazy"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin"
+        style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
+
+    {%- elsif film != blank -%}
       {{ film | video_tag:
            image_size: '1600x',
            playsinline: true,
@@ -84,8 +105,10 @@
   "name": "XERO film",
   "tag": "div",
   "settings": [
+    { "type": "text", "id": "youtube_id", "label": "YouTube video ID (just the ID, e.g. dQw4w9WgXcQ — overrides the uploaded film)" },
     { "type": "video", "id": "film", "label": "Film" },
     { "type": "image_picker", "id": "poster", "label": "Poster (shown if there is no film)" },
+    { "type": "text", "id": "anchor", "label": "Anchor id (lets the nav link here, e.g. film)" },
     { "type": "text", "id": "label", "label": "Placeholder label", "default": "full-bleed film — 16:9" }
   ],
   "presets": [{ "name": "XERO film" }]

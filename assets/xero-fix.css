@@ -66,22 +66,19 @@
    matches the sprite wrapper, which is the element _init3D() uses as its insertBefore
    anchor for the canvas. That combination took the whole 3D viewer off the page. */
 xero-stage[data-view="photos"] > canvas{ display: none !important; }
-/* The 2D bike sprite (bike-day/night/seam) is hidden ONLY while the real 3D bike is on
-   screen, and xero-model.js owns that state: it stamps data-3d="ok" once the GLB has
-   actually mounted, and clears it on webglcontextlost and on any load failure.
-
-   This rule used to be unconditional, which made BLANK the designed failure mode. The
-   sprite is the only thing in the stage that is guaranteed to render - it is two WebP
-   files - so deleting it outright meant that any wobble further down the chain (the GLB
-   URL, the third-party Draco decoder, an out-of-memory context loss on a phone) left the
-   visitor looking at an empty gradient with a price next to it. Failure has to degrade to
-   a visible bike, never to nothing.
+/* The 2D bike sprite (bike-day/night/seam) is hidden unconditionally, permanently, by
+   the owner's explicit decision: only the 3D model may ever occupy the stage, and a
+   failure shows the clean studio gradient rather than a flat photo. This briefly carried
+   a data-3d="ok" gate that let the sprite stand in during load and on GLB failure; the
+   owner rejected the flat bike outright. The blank-failure risk that gate existed for is
+   now addressed at the root instead: the Draco decoder is non-fatal, the renderer no
+   longer over-allocates on phones, context loss actually recovers, and the tracking globe
+   no longer steals the hero's WebGL context. If the model URL ever dies, the stage shows
+   its gradient - that is the accepted trade.
 
    The sprites live inside <xero-stage>; the product photos are in a sibling
-   [data-m="photolayer"], so this only removes the sprite, never the Photos images. The
-   reference cube and the drawn contact shadow are divs, not images, and are untouched by
-   this rule - they stay suppressed by the stage's own refCube / view logic. */
-xero-stage[data-3d="ok"] img{ display: none !important; }
+   [data-m="photolayer"], so this only removes the sprite, never the Photos images. */
+xero-stage img{ display: none !important; }
 
 /* FIX 4: dead controls. (The autorotate button data-act="toggleSpin" is intentionally
    NOT hidden - it toggles the turntable.) */

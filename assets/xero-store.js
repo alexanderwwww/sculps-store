@@ -421,7 +421,7 @@
     toggleMenu:  function () { S.menuOpen = !S.menuOpen; S.cartOpen = false; paint(); },
     closeAll:    function () { S.cartOpen = false; S.menuOpen = false; paint(); },
     skipSplash:  closeSplash,
-    goReviews:   function () { scrollTo('[data-sec="reviews"]'); },
+    goFilm:      function () { scrollTo('#film'); scrollTo('[data-sec="film"]'); },
     goSpecs:     function () { scrollTo('[data-sec="breakdown"]'); }
   };
   // studio hotspots
