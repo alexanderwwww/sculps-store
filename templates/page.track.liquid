@@ -1,0 +1,412 @@
+{%- comment -%}
+  TRACK YOUR BUILD — hexagon globe, six stages.
+
+  THE ROSTER IS RIGHT HERE, in the ORDERS list below. Plain JavaScript, no
+  Shopify data model, no theme settings, nothing else to configure. To move an
+  owner forward, edit their line: change stage, and set since to today.
+
+  stage:  1 Order confirmed
+          2 Preparing your order
+          3 Your key is on its way   <- carrier tracking shows here
+          4 Final shakedown
+          5 Bike out for delivery
+          6 Delivered
+
+  The key case is small enough to go by carrier, so each order can carry a
+  carrier + tracking number. It appears as a real link on stage 3 and stays
+  visible afterwards as a completed record.
+{%- endcomment -%}
+
+<style>
+  :root{ --txt:#f2f2f4; --txt2:#a9aab2; --txt3:#7c7d85; --pg:#08080b; --acc:#c68bff; --hot:#ff7ae0; }
+  body{ background:#08080b; }
+
+  .xtr-wrap{ min-height:100vh; padding:clamp(5rem,12vw,7rem) clamp(1rem,4vw,1.2rem) 4rem; background:#08080b; overflow-x:clip; }
+  .xtr-inner{ max-width:74rem; margin:0 auto; }
+
+  .xtr-kicker{ font:600 clamp(.66rem,2.6vw,.74rem)/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.24em; color:#8b8c95; text-align:center; }
+  .xtr-title{ margin:.9rem 0 0; font-size:clamp(1.75rem,7vw,2.9rem); font-weight:700; letter-spacing:-.035em; line-height:1.06; color:#f2f2f4; text-align:center; text-wrap:balance; }
+  .xtr-sub{ margin:.8rem auto 0; max-width:27rem; font-size:clamp(.92rem,3.4vw,.98rem); line-height:1.5; color:#a9aab2; text-align:center; text-wrap:pretty; }
+
+  .xtr-form{ max-width:24rem; margin:2.2rem auto 0; }
+  .xtr-input{ width:100%; height:3.5rem; border-radius:1rem; border:1.6px solid rgba(255,255,255,.14); background:rgba(0,0,0,.4); color:#f2f2f4; font-size:clamp(1.02rem,4.2vw,1.18rem); font-weight:600; letter-spacing:.14em; text-align:center; text-transform:uppercase; outline:none; transition:border-color .3s, box-shadow .3s; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .xtr-input::placeholder{ color:#5c5d66; }
+  .xtr-input:focus{ border-color:var(--acc); box-shadow:0 0 0 4px rgba(198,139,255,.14); }
+  .xtr-input.bad{ border-color:#f87171; box-shadow:0 0 0 4px rgba(248,113,113,.12); animation:xshake .32s; }
+  @keyframes xshake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+  .xtr-btn{ margin-top:.85rem; width:100%; height:3.3rem; border-radius:1.65rem; background:#3a82fb; color:#fff; font-size:1.04rem; font-weight:600; border:0; cursor:pointer; transition:transform .25s cubic-bezier(.28,.11,.32,1), opacity .25s; display:flex; align-items:center; justify-content:center; gap:.6rem; }
+  .xtr-btn:active{ transform:scale(.98); }
+  .xtr-btn[disabled]{ opacity:.6; cursor:default; }
+  .xtr-spin{ width:1rem; height:1rem; border-radius:50%; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; animation:xspin .7s linear infinite; display:none; }
+  .xtr-btn.loading .xtr-spin{ display:block; }
+  @keyframes xspin{ to{ transform:rotate(360deg); } }
+
+  .xtr-msg{ display:none; margin:1.1rem auto 0; max-width:24rem; padding:1rem 1.1rem; border-radius:.9rem; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); text-align:left; }
+  .xtr-msg.on{ display:block; animation:xfade .35s cubic-bezier(.28,.11,.32,1); }
+  .xtr-msg b{ display:flex; align-items:center; gap:.5rem; font:600 .74rem/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.14em; color:#f0b552; }
+  .xtr-msg p{ margin:.6rem 0 0; font-size:.88rem; line-height:1.55; color:#a9aab2; }
+  .xtr-err{ margin:.7rem 0 0; font-size:.86rem; color:#f87171; min-height:1.2em; text-align:center; text-wrap:pretty; }
+  .xtr-hint{ margin:1.1rem 0 0; font-size:.82rem; color:#5c5d66; text-align:center; }
+
+  .xtr-live{ display:none; margin-top:2.4rem; }
+  .xtr-live.on{ display:block; animation:xfade .5s cubic-bezier(.28,.11,.32,1); }
+  @keyframes xfade{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+
+  .xtr-grid{ display:grid; grid-template-columns:1.25fr .75fr; gap:3rem; align-items:center; }
+
+  .xtr-globe{ position:relative; width:100%; aspect-ratio:1/1; overflow:visible; max-height:min(86vh,44rem); margin-inline:auto; }
+  .xtr-globe canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  .xtr-hud{ position:absolute; left:0; top:0; z-index:2; display:flex; align-items:center; gap:.5rem; padding:.42rem .8rem; border-radius:1rem; background:rgba(14,14,20,.72); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.1); font:600 .68rem/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.12em; color:#a9aab2; white-space:nowrap; }
+  .xtr-live-dot{ width:.45rem; height:.45rem; border-radius:50%; background:var(--acc); box-shadow:0 0 0 0 rgba(198,139,255,.7); animation:xpulse 2s infinite; }
+  @keyframes xpulse{ 70%{ box-shadow:0 0 0 .55rem rgba(198,139,255,0); } 100%{ box-shadow:0 0 0 0 rgba(198,139,255,0); } }
+
+  .xtr-route{ position:absolute; left:0; bottom:0; z-index:2; font:600 .66rem/1.7 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.1em; color:#6d6e77; }
+  .xtr-route b{ color:#a9aab2; font-weight:600; }
+  .xtr-city{ position:absolute; right:0; bottom:0; z-index:2; text-align:right; max-width:60%; }
+  .xtr-city b{ display:block; font-size:clamp(.94rem,3.6vw,1.05rem); font-weight:650; letter-spacing:-.02em; color:#f2f2f4; }
+  .xtr-city span{ font:600 .66rem/1.6 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.1em; color:#7c7d85; }
+
+  .xtr-head{ display:flex; align-items:center; gap:.7rem; flex-wrap:wrap; }
+  .xtr-idchip{ display:inline-block; padding:.34rem .8rem; border-radius:.65rem; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.84rem; letter-spacing:.12em; color:var(--acc); }
+  .xtr-badge{ display:none; align-items:center; gap:.4rem; padding:.32rem .7rem; border-radius:.65rem; background:rgba(52,199,89,.14); border:1px solid rgba(52,199,89,.35); font:600 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.1em; color:#5fd67f; }
+  .xtr-badge.on{ display:inline-flex; }
+
+  .xtr-step{ position:relative; display:flex; gap:.95rem; padding-bottom:1.25rem; }
+  .xtr-step:last-child{ padding-bottom:0; }
+  .xtr-rail{ position:absolute; left:.86rem; top:1.95rem; bottom:0; width:2px; background:rgba(255,255,255,.09); }
+  .xtr-step:last-child .xtr-rail{ display:none; }
+  .xtr-step.done .xtr-rail{ background:linear-gradient(180deg,var(--acc),var(--hot)); }
+  .xtr-dot{ position:relative; z-index:1; flex:0 0 auto; width:1.75rem; height:1.75rem; border-radius:50%; border:1.6px solid rgba(255,255,255,.14); background:#0e0e14; display:flex; align-items:center; justify-content:center; }
+  .xtr-step.done .xtr-dot{ border-color:var(--acc); background:rgba(198,139,255,.16); }
+  .xtr-step.now .xtr-dot{ border-color:var(--acc); background:var(--acc); box-shadow:0 0 0 6px rgba(198,139,255,.14); }
+  .xtr-stitle{ font-size:clamp(.94rem,3.6vw,.98rem); font-weight:650; letter-spacing:-.02em; color:#55565f; }
+  .xtr-step.done .xtr-stitle{ color:#a9aab2; }
+  .xtr-step.now .xtr-stitle{ color:#f2f2f4; }
+  .xtr-sbody{ margin:.22rem 0 0; font-size:.86rem; line-height:1.5; color:#6d6e77; text-wrap:pretty; }
+  .xtr-step.now .xtr-sbody{ color:#a9aab2; }
+
+  .xtr-work{ margin-top:.7rem; }
+  .xtr-bar{ height:3px; border-radius:2px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .xtr-bar i{ display:block; height:100%; width:0; border-radius:2px; background:linear-gradient(90deg,var(--acc),var(--hot)); transition:width 1.4s cubic-bezier(.28,.11,.32,1); }
+  .xtr-meta{ margin-top:.5rem; display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; font:600 .7rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; color:#8b8c95; }
+  .xtr-dots{ display:inline-flex; gap:.22rem; }
+  .xtr-dots i{ width:.3rem; height:.3rem; border-radius:50%; background:var(--acc); opacity:.35; animation:xbreathe 1.4s infinite ease-in-out; }
+  .xtr-dots i:nth-child(2){ animation-delay:.2s; }
+  .xtr-dots i:nth-child(3){ animation-delay:.4s; }
+  @keyframes xbreathe{ 0%,80%,100%{ opacity:.3; transform:scale(.85); } 40%{ opacity:1; transform:scale(1.15); } }
+
+  /* carrier tracking for the key case */
+  .xtr-ship{ margin-top:.75rem; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; padding:.6rem .75rem; border-radius:.7rem; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.1); }
+  .xtr-ship .car{ font:700 .66rem/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.14em; color:#f2f2f4; padding:.28rem .5rem; border-radius:.4rem; background:rgba(255,255,255,.09); }
+  .xtr-ship .num{ font:600 .78rem/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.06em; color:#a9aab2; word-break:break-all; }
+  .xtr-ship a{ margin-left:auto; display:inline-flex; align-items:center; gap:.3rem; font-size:.8rem; font-weight:600; color:#3a82fb; text-decoration:none; white-space:nowrap; }
+  .xtr-ship a:hover{ text-decoration:underline; }
+
+  .xtr-note{ margin:2.6rem auto 0; max-width:34rem; padding-top:1.5rem; border-top:1px solid rgba(255,255,255,.08); font-size:.88rem; line-height:1.55; color:#7c7d85; text-align:center; text-wrap:pretty; }
+  .xtr-links{ margin-top:1.4rem; display:flex; gap:1.1rem; justify-content:center; flex-wrap:wrap; }
+  .xtr-links a{ font-size:.9rem; color:#a9aab2; text-decoration:underline; text-underline-offset:.2em; cursor:pointer; }
+
+  @media (max-width: 900px){
+    .xtr-grid{ grid-template-columns:1fr; gap:1.4rem; }
+    .xtr-globe{
+      width:100vw; max-width:100vw; max-height:none;
+      margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+      aspect-ratio:1/1;
+    }
+    .xtr-hud{ left:clamp(1rem,4vw,1.2rem); top:.6rem; }
+    .xtr-route{ left:clamp(1rem,4vw,1.2rem); bottom:.6rem; }
+    .xtr-city{ right:clamp(1rem,4vw,1.2rem); bottom:.6rem; }
+    .xtr-head{ justify-content:center; }
+    .xtr-live .xtr-grid > div:last-child{ max-width:30rem; margin-inline:auto; width:100%; }
+  }
+  @media (max-width: 480px){
+    .xtr-hud{ font-size:.62rem; padding:.36rem .65rem; }
+    .xtr-route{ font-size:.6rem; }
+    .xtr-city b{ font-size:.92rem; }
+    .xtr-city span{ font-size:.6rem; }
+    .xtr-step{ gap:.75rem; padding-bottom:1.05rem; }
+    .xtr-links{ gap:.8rem; }
+    .xtr-ship a{ margin-left:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .xtr-live-dot,.xtr-dots i,.xtr-spin{ animation:none; }
+    .xtr-live.on,.xtr-msg.on{ animation:none; }
+    .xtr-bar i{ transition:none; }
+  }
+</style>
+
+<div class="xtr-wrap">
+  <div class="xtr-inner">
+
+    <div data-step="form">
+      <div class="xtr-kicker">TRACK YOUR BUILD</div>
+      <h1 class="xtr-title">Where is my Chiron?</h1>
+      <p class="xtr-sub">Enter your client ID — the number etched on your steel card. It is the same ID that pairs the bike to you.</p>
+      <div class="xtr-form">
+        <input id="xtrId" class="xtr-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="XR-0000-0000" aria-label="Client ID" />
+        <div id="xtrErr" class="xtr-err" role="alert" aria-live="polite"></div>
+        <button id="xtrGo" class="xtr-btn" type="button"><span class="xtr-spin"></span><span id="xtrGoLbl">Track</span></button>
+
+        <div class="xtr-msg" id="xtrMsg">
+          <b>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#f0b552" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6.4"></circle><path d="M8 5v3.4"></path><path d="M8 11h.01"></path></svg>
+            NOT ACTIVE YET
+          </b>
+          <p id="xtrMsgBody"></p>
+        </div>
+
+        <p class="xtr-hint">Tracking opens once your order is confirmed.</p>
+      </div>
+    </div>
+
+    <div data-step="live" class="xtr-live">
+      <div class="xtr-grid">
+        <div class="xtr-globe" id="xtrGlobe">
+          <canvas id="xtrCanvas"></canvas>
+          <div class="xtr-hud"><span class="xtr-live-dot"></span> <span id="xtrHudLbl">LIVE</span></div>
+          <div class="xtr-route">FROM<br><b>NEVADA, USA</b></div>
+          <div class="xtr-city"><b id="xtrCity"></b><span id="xtrCoord"></span></div>
+        </div>
+        <div>
+          <div class="xtr-head">
+            <span class="xtr-idchip" id="xtrShown"></span>
+            <span class="xtr-badge" id="xtrBadge">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#5fd67f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 4 6 12 3 9"></polyline></svg>
+              DELIVERED
+            </span>
+          </div>
+          <div id="xtrTimeline" style="margin-top:1.5rem;"></div>
+        </div>
+      </div>
+      <p class="xtr-note">Built in Nevada and delivered in person. Your driver calls you the morning it arrives.</p>
+      <div class="xtr-links">
+        <a id="xtrAgain">Track another ID</a>
+        <a href="/pages/activate">Activate</a>
+        <a href="/">Back to the bike</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% render 'xero-globe' %}
+
+<script>
+(function(){
+
+  /* =====================================================================
+     ORDERS — edit this list. One line per owner.
+
+     stage:   1 confirmed · 2 preparing · 3 key shipped · 4 shakedown
+              5 bike out for delivery · 6 delivered
+     since:   the date THAT stage began — fills the progress bar
+     note:    optional, replaces the "about N days left" line
+     carrier: USPS | UPS | FEDEX | DHL   (for the key case)
+     tracking: the carrier's tracking number — shows as a live link on stage 3
+     ===================================================================== */
+  var ORDERS = [
+    { id:"XR-4F2K-9L07", stage:2, city:"Austin, TX",   lat:30.27, lon:-97.74,  since:"2026-08-11", note:"", carrier:"",     tracking:"" },
+    { id:"XR-8T3M-2Q55", stage:3, city:"Denver, CO",   lat:39.74, lon:-104.99, since:"2026-08-14", note:"", carrier:"USPS", tracking:"9400111899223197428490" },
+    { id:"XR-1B9X-7K42", stage:6, city:"Portland, OR", lat:45.52, lon:-122.68, since:"2026-08-09", note:"", carrier:"USPS", tracking:"9400111899223197428491" }
+  ];
+  /* ===================================================================== */
+
+  var ORIGIN = { lat: 39.53, lon: -119.81 };   // Nevada facility
+  var RE = /^XR-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+
+  var CARRIERS = {
+    USPS:  { name:"USPS",   url:"https://tools.usps.com/go/TrackConfirmAction?tLabels=" },
+    UPS:   { name:"UPS",    url:"https://www.ups.com/track?tracknum=" },
+    FEDEX: { name:"FedEx",  url:"https://www.fedex.com/fedextrack/?trknbr=" },
+    DHL:   { name:"DHL",    url:"https://www.dhl.com/us-en/home/tracking.html?tracking-id=" }
+  };
+
+  var STAGES = [
+    { t:"Order confirmed",        b:"Your build slot is reserved and your ID is issued.",                 d:1 },
+    { t:"Preparing your order",   b:"Frame, pack and panel are being assembled and torqued by hand.",     d:6 },
+    { t:"Your key is on its way", b:"The aluminium case with your key and steel card ships first.",       d:3 },
+    { t:"Final shakedown",        b:"Every Chiron is ridden before it leaves us. Yours is on the bench.", d:2 },
+    { t:"Bike out for delivery",  b:"No carriers, no depots. Your driver has it.",                       d:1 },
+    { t:"Delivered",              b:"It is yours. Tap your card in and ride it.",                        d:0 }
+  ];
+  var KEY_STAGE = 3;
+
+  var ROSTER = {};
+  ORDERS.forEach(function(o){
+    var id = String(o.id || '').toUpperCase().trim();
+    if (!RE.test(id)) return;
+    ROSTER[id] = {
+      stage:    Math.max(1, Math.min(STAGES.length, parseInt(o.stage,10) || 1)),
+      city:     (o.city || '').trim() || 'Your address',
+      lat:      parseFloat(o.lat),
+      lon:      parseFloat(o.lon),
+      since:    (o.since || '').trim(),
+      note:     (o.note || '').trim(),
+      carrier:  (o.carrier || '').trim().toUpperCase(),
+      tracking: (o.tracking || '').trim()
+    };
+  });
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  function $(id){ return document.getElementById(id); }
+  var input=$('xtrId'), err=$('xtrErr'), go=$('xtrGo'), goLbl=$('xtrGoLbl');
+  var msg=$('xtrMsg'), msgBody=$('xtrMsgBody');
+  var form=document.querySelector('[data-step="form"]');
+  var live=document.querySelector('[data-step="live"]');
+  var built=false;
+
+  function fmt(v){
+    v = v.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if (v.slice(0,2) !== 'XR') v = 'XR' + v.replace(/^X?R?/,'');
+    v = v.slice(0,10);
+    var out = v.slice(0,2);
+    if (v.length > 2) out += '-' + v.slice(2,6);
+    if (v.length > 6) out += '-' + v.slice(6,10);
+    return out;
+  }
+  input.addEventListener('input', function(){
+    input.value = fmt(input.value);
+    input.classList.remove('bad');
+    err.textContent = '';
+    msg.classList.remove('on');
+  });
+
+  function reset(){
+    go.classList.remove('loading');
+    go.disabled = false;
+    goLbl.textContent = 'Track';
+  }
+  function fail(text){
+    reset();
+    input.classList.remove('bad');
+    void input.offsetWidth;
+    input.classList.add('bad');
+    err.textContent = text;
+    msg.classList.remove('on');
+  }
+  function notActive(id){
+    reset();
+    err.textContent = '';
+    input.classList.remove('bad');
+    msgBody.textContent = id + ' is not an active tracking code yet. Tracking switches on once your order is confirmed and your build slot is booked \u2014 usually within a day of ordering. If your steel card only just arrived, give it a few hours.';
+    msg.classList.add('on');
+  }
+
+  function shipBlock(rec){
+    if (!rec.tracking) return '';
+    var c = CARRIERS[rec.carrier] || { name: rec.carrier || 'CARRIER', url: '' };
+    var link = c.url ? '<a href="' + c.url + encodeURIComponent(rec.tracking) + '" target="_blank" rel="noopener">Track parcel' +
+               '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7v7"></path><path d="M13 3L6.5 9.5"></path><path d="M11 9v4H3V5h4"></path></svg></a>' : '';
+    return '<div class="xtr-ship">' +
+             '<span class="car">' + esc(c.name) + '</span>' +
+             '<span class="num">' + esc(rec.tracking) + '</span>' +
+             link +
+           '</div>';
+  }
+
+  function draw(id, rec){
+    var cur = STAGES[rec.stage-1];
+    var delivered = (rec.stage === STAGES.length);
+    var pct = 0, dayLine = '';
+
+    if (cur.d > 0){
+      var start = rec.since ? new Date(rec.since + 'T00:00:00') : null;
+      var days = (start && !isNaN(start.getTime())) ? (Date.now()-start.getTime())/86400000 : 0.5;
+      if (days < 0) days = 0;
+      pct = Math.max(4, Math.min(96, (days/cur.d)*100));
+      var left = Math.max(0, Math.ceil(cur.d - days));
+      dayLine = rec.note ? rec.note
+              : (left > 0 ? (left === 1 ? 'about a day left' : 'about ' + left + ' days left') : 'wrapping up');
+    }
+
+    $('xtrShown').textContent = id;
+    $('xtrCity').textContent = rec.city;
+    $('xtrCoord').textContent = (isFinite(rec.lat) && isFinite(rec.lon))
+      ? rec.lat.toFixed(2)+'\u00b0, '+rec.lon.toFixed(2)+'\u00b0' : '';
+    $('xtrHudLbl').textContent = delivered ? 'COMPLETE' : 'LIVE';
+    $('xtrBadge').classList.toggle('on', delivered);
+
+    $('xtrTimeline').innerHTML = STAGES.map(function(s,i){
+      var n=i+1, isNow=(n===rec.stage), cls = n<rec.stage ? 'done' : (isNow ? 'done now' : '');
+      var tick = n<rec.stage
+        ? '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#c68bff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 4 6 12 3 9"></polyline></svg>'
+        : (isNow ? '<svg width="8" height="8" viewBox="0 0 16 16" fill="#0b0b0e"><circle cx="8" cy="8" r="4"></circle></svg>' : '');
+      var work = (isNow && cur.d > 0)
+        ? '<div class="xtr-work"><div class="xtr-bar"><i data-fill="'+pct.toFixed(0)+'"></i></div>' +
+          '<div class="xtr-meta"><span class="xtr-dots"><i></i><i></i><i></i></span> IN PROGRESS \u00b7 ' + esc(dayLine) + '</div></div>'
+        : '';
+      // carrier tracking rides on the key stage, and stays visible after it
+      var ship = (n === KEY_STAGE && rec.stage >= KEY_STAGE) ? shipBlock(rec) : '';
+      return '<div class="xtr-step '+cls+'"><span class="xtr-rail"></span><span class="xtr-dot">'+tick+'</span>' +
+             '<div style="flex:1;min-width:0;"><div class="xtr-stitle">'+s.t+'</div>' +
+             '<p class="xtr-sbody">'+s.b+'</p>'+work+ship+'</div></div>';
+    }).join('');
+
+    form.style.display = 'none';
+    live.classList.add('on');
+
+    requestAnimationFrame(function(){
+      var f = document.querySelector('.xtr-bar i[data-fill]');
+      if (f) requestAnimationFrame(function(){ f.style.width = f.dataset.fill + '%'; });
+    });
+
+    try{ localStorage.setItem('xero_track_id', id); }catch(e){}
+
+    if (!built){
+      var lat = isFinite(rec.lat) ? rec.lat : 39.5;
+      var lon = isFinite(rec.lon) ? rec.lon : -98.35;
+      var overall = ((rec.stage-1)+(pct/100))/(STAGES.length-1);
+      var tries = 0;
+      var start = function(){
+        if (!window.XeroGlobe){
+          if (++tries > 100) return;
+          return setTimeout(start, 60);
+        }
+        built = true;
+        try{
+          window.XeroGlobe($('xtrGlobe'), $('xtrCanvas'), {
+            origin: ORIGIN, dest: { lat:lat, lon:lon }, progress: overall
+          });
+        }catch(e){}
+      };
+      requestAnimationFrame(start);
+    }
+  }
+
+  go.addEventListener('click', function(){
+    var v = input.value.trim().toUpperCase();
+    if (!v) return fail('Enter the client ID from your card.');
+    if (!RE.test(v)) return fail('That does not look like a client ID \u2014 the format is XR-XXXX-XXXX.');
+
+    go.classList.add('loading');
+    go.disabled = true;
+    goLbl.textContent = 'Checking\u2026';
+    msg.classList.remove('on');
+
+    setTimeout(function(){
+      var rec = ROSTER[v];
+      if (!rec) return notActive(v);
+      reset();
+      draw(v, rec);
+    }, 550);
+  });
+
+  input.addEventListener('keydown', function(e){ if (e.key === 'Enter') go.click(); });
+  $('xtrAgain').addEventListener('click', function(){
+    try{ localStorage.removeItem('xero_track_id'); }catch(e){}
+    location.reload();
+  });
+
+  try{
+    var prev = localStorage.getItem('xero_track_id');
+    if (prev && ROSTER[prev]) draw(prev, ROSTER[prev]);
+  }catch(e){}
+})();
+</script>

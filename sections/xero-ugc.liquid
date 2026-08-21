@@ -1,0 +1,449 @@
+{%- comment -%}
+  xero-ugc.liquid — "From the camera roll"
+  Scroll-driven 9:16 UGC coverflow carousel. iOS-26 liquid glass chrome.
+
+  Behaviour
+  ---------
+  • No JS / reduced-motion / theme-editor safe: renders as a native horizontally
+    scrollable, snap-aligned strip. Everything works without the enhancement.
+  • Enhanced: the stage pins (position:sticky) and the vertical scroll position
+    drives the horizontal track. Each card rotateY/scale/z by its distance from
+    centre. Horizontal drag scrubs the page scroll so drag and scroll agree.
+  • Transform + opacity only. One shared rAF. Paused when off-screen.
+
+  NOTE: containment. Several .shopify-section wrappers in this theme carry
+  `contain`, which creates a containing block and kills position:sticky the same
+  way it killed the fixed header. The rule at the top of the stylesheet below
+  pre-empts that for this section only.
+{%- endcomment -%}
+
+{%- assign shots = section.blocks -%}
+{%- assign count = shots.size -%}
+
+<style>
+  /* --- containment guard: sticky dies inside a contained ancestor --- */
+  #shopify-section-{{ section.id }}{ contain: none !important; content-visibility: visible !important; }
+
+  #shopify-section-{{ section.id }} .ugc{
+    --ugc-card-w: clamp(210px, 24vw, 306px);
+    --ugc-gap: clamp(14px, 1.6vw, 26px);
+    --ugc-radius: 30px;
+    --ugc-ink: {% if section.settings.theme == 'light' %}#0b0b0d{% else %}#f5f5f7{% endif %};
+    --ugc-dim: {% if section.settings.theme == 'light' %}rgba(11,11,13,.56){% else %}rgba(245,245,247,.58){% endif %};
+    --ugc-bg: {% if section.settings.theme == 'light' %}#f5f5f7{% else %}#08080a{% endif %};
+    --ugc-glass: {% if section.settings.theme == 'light' %}rgba(255,255,255,.62){% else %}rgba(255,255,255,.10){% endif %};
+    --ugc-edge: {% if section.settings.theme == 'light' %}rgba(11,11,13,.10){% else %}rgba(255,255,255,.18){% endif %};
+    position: relative;
+    background: var(--ugc-bg);
+    color: var(--ugc-ink);
+    isolation: isolate;
+  }
+
+  /* soft vignette so cards fade into the ground at the edges */
+  #shopify-section-{{ section.id }} .ugc-stage::before,
+  #shopify-section-{{ section.id }} .ugc-stage::after{
+    content:''; position:absolute; top:0; bottom:0; width:clamp(48px, 12vw, 200px);
+    z-index:5; pointer-events:none;
+  }
+  #shopify-section-{{ section.id }} .ugc-stage::before{ left:0;  background:linear-gradient(90deg, var(--ugc-bg), transparent); }
+  #shopify-section-{{ section.id }} .ugc-stage::after { right:0; background:linear-gradient(270deg, var(--ugc-bg), transparent); }
+
+  #shopify-section-{{ section.id }} .ugc-pin{
+    padding: clamp(56px, 8vh, 104px) 0 clamp(40px, 6vh, 72px);
+  }
+
+  #shopify-section-{{ section.id }} .ugc-head{
+    max-width: 44rem;
+    margin: 0 auto clamp(28px, 4vh, 52px);
+    padding: 0 24px;
+    text-align: center;
+  }
+  #shopify-section-{{ section.id }} .ugc-kicker{
+    display:inline-block; margin:0 0 14px;
+    font-size: 12px; letter-spacing:.14em; text-transform:uppercase;
+    color: var(--ugc-dim);
+  }
+  #shopify-section-{{ section.id }} .ugc-title{
+    margin:0; font-weight:600; letter-spacing:-.026em; line-height:1.06;
+    font-size: clamp(30px, 4.6vw, 60px);
+  }
+  #shopify-section-{{ section.id }} .ugc-sub{
+    margin:14px 0 0; color:var(--ugc-dim); line-height:1.5;
+    font-size: clamp(15px, 1.35vw, 18px);
+  }
+
+  /* ---------- base (no JS) : native snap strip ---------- */
+  #shopify-section-{{ section.id }} .ugc-stage{ position:relative; }
+  #shopify-section-{{ section.id }} .ugc-track{
+    display:flex; gap: var(--ugc-gap);
+    padding-inline: max(24px, calc(50vw - (var(--ugc-card-w) / 2)));
+    overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width:none;
+  }
+  #shopify-section-{{ section.id }} .ugc-track::-webkit-scrollbar{ display:none; }
+  #shopify-section-{{ section.id }} .ugc-card{
+    flex: 0 0 var(--ugc-card-w);
+    scroll-snap-align:center;
+  }
+
+  /* ---------- card ---------- */
+  #shopify-section-{{ section.id }} .ugc-card{
+    position:relative;
+    border-radius: var(--ugc-radius);
+    will-change: transform, opacity;
+  }
+  #shopify-section-{{ section.id }} .ugc-frame{
+    position:relative;
+    aspect-ratio: 9 / 16;
+    border-radius: var(--ugc-radius);
+    overflow:hidden;
+    background:{% if section.settings.theme == 'light' %}#e6e6ea{% else %}#141417{% endif %};
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.10) inset,
+      0 0 0 1px var(--ugc-edge),
+      0 30px 60px -22px rgba(0,0,0,.62);
+  }
+  #shopify-section-{{ section.id }} .ugc-frame img,
+  #shopify-section-{{ section.id }} .ugc-frame svg{
+    position:absolute; inset:-4%;
+    width:108%; height:108%;
+    object-fit:cover; display:block;
+    will-change: transform;
+  }
+  /* bottom scrim so the glass chip always reads */
+  #shopify-section-{{ section.id }} .ugc-frame::after{
+    content:''; position:absolute; left:0; right:0; bottom:0; height:52%;
+    background:linear-gradient(to top, rgba(0,0,0,.60), rgba(0,0,0,0));
+    pointer-events:none;
+  }
+
+  #shopify-section-{{ section.id }} .ugc-meta{
+    position:absolute; left:12px; right:12px; bottom:12px; z-index:2;
+    display:flex; flex-direction:column; gap:8px; align-items:flex-start;
+  }
+  #shopify-section-{{ section.id }} .ugc-chip{
+    display:inline-flex; align-items:center; gap:7px;
+    padding:7px 12px; border-radius:999px;
+    font-size:12px; font-weight:590; letter-spacing:-.01em; color:#fff;
+    background: rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.30), 0 8px 24px rgba(0,0,0,.28);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+  }
+  #shopify-section-{{ section.id }} .ugc-chip .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:#34c759; box-shadow:0 0 8px rgba(52,199,89,.9);
+  }
+  #shopify-section-{{ section.id }} .ugc-cap{
+    margin:0; padding:0 4px;
+    font-size:13px; line-height:1.35; color:rgba(255,255,255,.90);
+    text-shadow:0 1px 12px rgba(0,0,0,.55);
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+
+  /* ---------- dots ---------- */
+  #shopify-section-{{ section.id }} .ugc-dots{
+    display:flex; justify-content:center; gap:7px;
+    margin-top: clamp(26px, 3.4vh, 46px);
+  }
+  #shopify-section-{{ section.id }} .ugc-dots i{
+    width:6px; height:6px; border-radius:999px; display:block;
+    background: var(--ugc-dim); opacity:.38;
+    transition: opacity .35s ease, width .35s ease, background .35s ease;
+  }
+  #shopify-section-{{ section.id }} .ugc-dots i.on{ opacity:1; width:22px; background:var(--ugc-ink); }
+
+  /* ---------- enhanced (JS on) ---------- */
+  #shopify-section-{{ section.id }} .ugc[data-ready="1"] .ugc-runway{ position:relative; }
+  #shopify-section-{{ section.id }} .ugc[data-ready="1"] .ugc-pin{
+    position: sticky; top: 0;
+    min-height: 100svh;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  #shopify-section-{{ section.id }} .ugc[data-ready="1"] .ugc-stage{
+    overflow:hidden;
+    perspective: 1500px;
+    perspective-origin: 50% 46%;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+  #shopify-section-{{ section.id }} .ugc[data-ready="1"] .ugc-stage.drag{ cursor: grabbing; }
+  #shopify-section-{{ section.id }} .ugc[data-ready="1"] .ugc-track{
+    display:block; position:relative;
+    height: calc(var(--ugc-card-w) * 16 / 9);
+    overflow: visible;
+    padding:0; scroll-snap-type:none;
+    transform-style: preserve-3d;
+  }
+  #shopify-section-{{ section.id }} .ugc[data-ready="1"] .ugc-card{
+    position:absolute; top:0;
+    left: 50%; margin-left: calc(var(--ugc-card-w) / -2);
+    width: var(--ugc-card-w);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #shopify-section-{{ section.id }} .ugc-frame img{ inset:0; width:100%; height:100%; }
+  }
+  @media (max-width: 749px){
+    #shopify-section-{{ section.id }} .ugc{ --ugc-card-w: min(62vw, 260px); --ugc-radius: 26px; }
+  }
+</style>
+
+<div class="ugc" data-ugc data-count="{{ count }}" data-span="{{ section.settings.scroll_span }}">
+  <div class="ugc-runway" data-ugc-runway>
+    <div class="ugc-pin" data-ugc-pin>
+
+      <div class="ugc-head">
+        {%- if section.settings.kicker != blank -%}
+          <span class="ugc-kicker">{{ section.settings.kicker | escape }}</span>
+        {%- endif -%}
+        {%- if section.settings.title != blank -%}
+          <h2 class="ugc-title">{{ section.settings.title | escape }}</h2>
+        {%- endif -%}
+        {%- if section.settings.subtitle != blank -%}
+          <p class="ugc-sub">{{ section.settings.subtitle | escape }}</p>
+        {%- endif -%}
+      </div>
+
+      <div class="ugc-stage" data-ugc-stage>
+        <div class="ugc-track" data-ugc-track>
+          {%- for block in shots -%}
+            <article class="ugc-card" data-ugc-card data-i="{{ forloop.index0 }}" {{ block.shopify_attributes }}>
+              <div class="ugc-frame">
+                {%- if block.settings.image != blank -%}
+                  {{
+                    block.settings.image
+                    | image_url: width: 900
+                    | image_tag:
+                      loading: 'lazy',
+                      widths: '270,360,450,540,720,900',
+                      sizes: '(max-width: 749px) 62vw, 24vw',
+                      alt: block.settings.caption | default: block.settings.handle | default: 'XERO Chiron owner photo',
+                      data-ugc-img: ''
+                  }}
+                {%- else -%}
+                  {{ 'image' | placeholder_svg_tag: 'ugc-ph' }}
+                {%- endif -%}
+              </div>
+              {%- if block.settings.handle != blank or block.settings.caption != blank -%}
+                <div class="ugc-meta">
+                  {%- if block.settings.handle != blank -%}
+                    <span class="ugc-chip"><i class="dot"></i>{{ block.settings.handle | escape }}</span>
+                  {%- endif -%}
+                  {%- if block.settings.caption != blank -%}
+                    <p class="ugc-cap">{{ block.settings.caption | escape }}</p>
+                  {%- endif -%}
+                </div>
+              {%- endif -%}
+            </article>
+          {%- endfor -%}
+        </div>
+      </div>
+
+      {%- if section.settings.show_dots and count > 1 -%}
+        <div class="ugc-dots" data-ugc-dots aria-hidden="true">
+          {%- for block in shots -%}<i></i>{%- endfor -%}
+        </div>
+      {%- endif -%}
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var host = document.getElementById('shopify-section-{{ section.id }}');
+  if(!host) return;
+  var root = host.querySelector('[data-ugc]');
+  if(!root || root.dataset.ready === '1') return;
+
+  var runway = root.querySelector('[data-ugc-runway]');
+  var pin    = root.querySelector('[data-ugc-pin]');
+  var stage  = root.querySelector('[data-ugc-stage]');
+  var track  = root.querySelector('[data-ugc-track]');
+  var cards  = [].slice.call(root.querySelectorAll('[data-ugc-card]'));
+  var dots   = [].slice.call(root.querySelectorAll('[data-ugc-dots] i'));
+  var n      = cards.length;
+  if(n < 2) return;
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if(reduce.matches) return;
+
+  // vh of page scroll spent per card
+  var span = parseFloat(root.dataset.span) || 58;
+
+  root.dataset.ready = '1';
+
+  var step = 0, mobile = false;
+  var pos = 0, target = 0;   // virtual index, 0 .. n-1
+  var raf = 0, live = false, dirty = true;
+  var drag = null, lastDot = -1;
+
+  function measure(){
+    var cs = getComputedStyle(root);
+    var w = parseFloat(cs.getPropertyValue('--ugc-card-w')) || cards[0].offsetWidth;
+    var gap = parseFloat(cs.getPropertyValue('--ugc-gap')) || 20;
+    step = w + gap;
+    mobile = window.innerWidth < 750;
+    runway.style.height = (100 + (n - 1) * span) + 'svh';
+    dirty = true;
+  }
+
+  function progress(){
+    var total = runway.offsetHeight - pin.offsetHeight;
+    if(total <= 0) return 0;
+    var top = runway.getBoundingClientRect().top;
+    var p = (-top) / total;
+    return p < 0 ? 0 : (p > 1 ? 1 : p);
+  }
+
+  function paint(){
+    var rotMax = mobile ? 26 : 34;
+    for(var i = 0; i < n; i++){
+      var d = i - pos;                 // signed distance in card units
+      var a = Math.abs(d);
+      var c = a > 3.4 ? 3.4 : a;       // clamped for scale/opacity falloff
+
+      var x   = d * step * (1 - Math.min(a, 2) * 0.055);  // slight compression at the edges
+      var ry  = -d * (mobile ? 16 : 19);
+      if(ry >  rotMax) ry =  rotMax;
+      if(ry < -rotMax) ry = -rotMax;
+      var z   = -c * (mobile ? 60 : 110);
+      var s   = 1 - c * 0.075;
+      var o   = 1 - c * 0.235;
+      if(o < 0.06) o = 0.06;
+
+      var el = cards[i];
+      el.style.transform =
+        'translate3d(' + x.toFixed(2) + 'px,0,' + z.toFixed(1) + 'px) ' +
+        'rotateY(' + ry.toFixed(2) + 'deg) scale(' + s.toFixed(4) + ')';
+      el.style.opacity = o.toFixed(3);
+      el.style.zIndex = String(100 - Math.round(a * 10));
+
+      // counter-parallax on the photo itself so the frame feels like a window
+      var img = el.querySelector('[data-ugc-img], svg');
+      if(img) img.style.transform = 'translate3d(' + (-d * 13).toFixed(2) + 'px,0,0)';
+    }
+
+    if(dots.length){
+      var k = Math.round(pos);
+      if(k < 0) k = 0; if(k > n - 1) k = n - 1;
+      if(k !== lastDot){
+        if(lastDot > -1 && dots[lastDot]) dots[lastDot].classList.remove('on');
+        if(dots[k]) dots[k].classList.add('on');
+        lastDot = k;
+      }
+    }
+  }
+
+  function tick(){
+    raf = 0;
+    if(!drag) target = progress() * (n - 1);
+    var delta = target - pos;
+    if(Math.abs(delta) < 0.0004){
+      pos = target;
+      if(dirty){ paint(); dirty = false; }
+    } else {
+      pos += delta * 0.16;             // damped follow — the "flow"
+      paint();
+      dirty = false;
+    }
+    if(live || Math.abs(target - pos) > 0.0004) raf = requestAnimationFrame(tick);
+  }
+
+  function kick(){ if(!raf) raf = requestAnimationFrame(tick); }
+
+  // --- horizontal drag scrubs the page scroll, so drag and scroll never fight
+  stage.addEventListener('pointerdown', function(e){
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    drag = { x: e.clientX, y: e.clientY, sy: window.scrollY, locked: false };
+    stage.classList.add('drag');
+  });
+  window.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if(!drag.locked){
+      if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      if(Math.abs(dy) > Math.abs(dx)){ drag = null; stage.classList.remove('drag'); return; }
+      drag.locked = true;
+      try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+    }
+    var total = runway.offsetHeight - pin.offsetHeight;
+    var perCard = total / (n - 1);
+    window.scrollTo(0, drag.sy - (dx / step) * perCard);
+    target = progress() * (n - 1);
+    kick();
+  }, { passive: true });
+  function endDrag(){ if(drag){ drag = null; stage.classList.remove('drag'); kick(); } }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+
+  // --- only run while the section is on screen
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(entries){
+      live = entries[0].isIntersecting;
+      if(live) kick();
+    }, { rootMargin: '20% 0px' }).observe(root);
+  } else { live = true; }
+
+  window.addEventListener('scroll', kick, { passive: true });
+  window.addEventListener('resize', function(){ measure(); kick(); }, { passive: true });
+
+  measure();
+  pos = target = progress() * (n - 1);
+  paint();
+  kick();
+
+  // theme editor
+  document.addEventListener('shopify:section:load', function(e){
+    if(e.detail && e.detail.sectionId === '{{ section.id }}'){ measure(); kick(); }
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "XERO — UGC carousel",
+  "tag": "section",
+  "class": "xero-ugc-section",
+  "settings": [
+    { "type": "select", "id": "theme", "label": "Colour", "default": "dark",
+      "options": [ { "value": "dark", "label": "Dark" }, { "value": "light", "label": "Light" } ] },
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "Owners" },
+    { "type": "text", "id": "title", "label": "Heading", "default": "From the camera roll." },
+    { "type": "text", "id": "subtitle", "label": "Subheading", "default": "Not our photos. Theirs." },
+    { "type": "checkbox", "id": "show_dots", "label": "Show progress dots", "default": true },
+    { "type": "range", "id": "scroll_span", "min": 30, "max": 100, "step": 2, "unit": "vh",
+      "label": "Scroll distance per shot", "default": 58,
+      "info": "Lower = the carousel moves faster as you scroll." }
+  ],
+  "blocks": [
+    {
+      "type": "shot",
+      "name": "Shot",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image", "info": "Vertical 9:16 works best." },
+        { "type": "text", "id": "handle", "label": "Handle / name" },
+        { "type": "text", "id": "caption", "label": "Caption" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "XERO — UGC carousel",
+      "blocks": [
+        { "type": "shot", "settings": { "handle": "@m.ferrante", "caption": "Day one. Garage smells like new bike." } },
+        { "type": "shot", "settings": { "handle": "@kaiwrx", "caption": "3am. Nobody heard a thing." } },
+        { "type": "shot", "settings": { "handle": "@dustandpine", "caption": "40 miles of fire road, still 3 bars." } },
+        { "type": "shot", "settings": { "handle": "@leviathan.j", "caption": "Parked between two SUVs. Guess which one people photographed." } },
+        { "type": "shot", "settings": { "handle": "@sofia.rides", "caption": "Coast run. Phone unlocked it before I got off the curb." } },
+        { "type": "shot", "settings": { "handle": "@northtrail", "caption": "Trailhead at 6am. It just goes." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

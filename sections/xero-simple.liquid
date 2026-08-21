@@ -1,0 +1,19 @@
+{%- comment -%} Plain dark page shell: activation page, policies, 404, search. {%- endcomment -%}
+<section style="position:relative;width:100%;min-height:70vh;padding:11rem 2.06rem 6rem;background:var(--pg);">
+  <div style="max-width:44rem;margin:0 auto;">
+    {%- if section.settings.heading != blank -%}
+      <h1 style="margin:0 0 1.4rem;font-size:clamp(2.2rem,4.6vw,3.4rem);font-weight:700;letter-spacing:-.038em;line-height:1.04;color:var(--txt);text-wrap:balance;">{{ section.settings.heading }}</h1>
+    {%- endif -%}
+    <div style="font-size:1.05rem;line-height:1.6;color:var(--txt2);">
+      {{ content_for_layout }}
+      {%- if page -%}{{ page.content }}{%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "XERO simple page",
+  "settings": [ { "type": "text", "id": "heading", "label": "Heading" } ]
+}
+{% endschema %}

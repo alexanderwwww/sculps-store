@@ -1,0 +1,51 @@
+<section class="xero-night" data-sec="gallery" style="position:relative;width:100%;background:var(--pg);padding:6rem 0 0;">
+
+    <div style="max-width:76rem;margin:0 auto;padding:0 2.06rem;">
+      <h2 style="margin:0 0 2.2rem;font-size:clamp(2.2rem,4.4vw,3.6rem);font-weight:700;letter-spacing:-.035em;line-height:1.02;color:var(--txt,#0e0e0e);">{{ section.settings.heading | default: 'Every angle.' }}</h2>
+    </div>
+
+    {%- comment -%} full-bleed: images run edge to edge, hairline gaps, no radius.
+        Hero is cut to the golden ratio (1.618:1) - taller than the old 21:9,
+        so the bike gets vertical room and the section breathes like a poster. {%- endcomment -%}
+    <div style="position:relative;width:100%;aspect-ratio:1.618 / 1;overflow:hidden;">{% render 'xero-image', key: 'pg_hero', label: "hero product shot &mdash; full width", radius: 0, circle: false %}</div>
+    <div style="margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+      <div style="position:relative;width:100%;aspect-ratio:4 / 3;overflow:hidden;">{% render 'xero-image', key: 'pg_a', label: "detail &mdash; side panel", radius: 0, circle: false %}</div>
+      <div style="position:relative;width:100%;aspect-ratio:4 / 3;overflow:hidden;">{% render 'xero-image', key: 'pg_b', label: "detail &mdash; front plate", radius: 0, circle: false %}</div>
+    </div>
+  
+</section>
+
+{% schema %}
+{
+  "name": "XERO gallery",
+  "tag": "div",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Every angle."
+    },
+    {
+      "type": "image_picker",
+      "id": "pg_hero",
+      "label": "Hero shot (golden ratio 1.618:1)"
+    },
+    {
+      "type": "image_picker",
+      "id": "pg_a",
+      "label": "Detail A (4:3)"
+    },
+    {
+      "type": "image_picker",
+      "id": "pg_b",
+      "label": "Detail B (4:3)"
+    }
+  ],
+  "presets": [
+    {
+      "name": "XERO gallery"
+    }
+  ]
+}
+{% endschema %}

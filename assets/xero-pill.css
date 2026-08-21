@@ -1,0 +1,183 @@
+/* XERO - the segmented control (View / Day-Night / World).
+   Rebuilt clean. THREE pills, ONE mechanism, ZERO scaling formulas.
+
+   ==========================================================================
+   THE ONE CONSTRAINT THAT DICTATES EVERYTHING
+   ==========================================================================
+   store.js only sets --seg-view / --seg-mode / --seg-world (0,1[,2]). It never
+   tags which BUTTON is active. So the ONLY thing that can show selection is the
+   sliding knob - CSS cannot know the active segment to colour its label.
+
+   Every past bug came from fighting that. This version stops fighting it:
+
+     - The knob is a TRANSLUCENT frosted highlight, not an opaque white slab.
+     - Every label is a single solid colour with a soft shadow, so it stays
+       readable whether it sits over the knob or over the bare track.
+     - Only ONE thing flips by state - text goes dark in Photos (white room) -
+       and it flips off a single attribute the stage already sets:
+       :root[data-xero-view="photos"].
+
+   No mix-blend-mode. No calc() colour chains. No per-segment overrides.
+
+   ==========================================================================
+   GEOMETRY - do not touch. This is what keeps the knob in register.
+   ==========================================================================
+   store.js moves the knob with translateX(var(--seg-*) * 100%); that 100% is
+   the knob's OWN width. It only lands on a segment when knob width == one
+   segment == (track - 2*padding) / n. With padding = 3px:
+       n = 2  ->  calc(50% - 3px)
+       n = 3  ->  calc(33.3333% - 2px)
+   Padding stays 3px on BOTH breakpoints so these hold. Nothing else sets a
+   width - the buttons are flex:1 1 0 and equal by construction.
+
+   ==========================================================================
+   SIZE - fixed pixels, not rem, not a formula. Two heights, that's it.
+   ==========================================================================
+   Desktop 30px.  Mobile 20px (small on purpose - the old size killed the tap
+   layout on phones). Change these two numbers and the control rescales.
+*/
+
+/* ---- the track ---------------------------------------------------------- */
+[data-m="ctl"] > div,
+[data-m="worldpill"]{
+  position: relative !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: auto !important;
+  height: 30px !important;
+  min-height: 0 !important;
+  padding: 3px !important;
+  box-sizing: border-box !important;
+  border-radius: 999px !important;
+
+  /* glass: translucent frost, hairline rim, real backdrop blur */
+  background: rgba(20,21,25,.34) !important;
+  border: 1px solid rgba(255,255,255,.20) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.6) !important;
+  backdrop-filter: blur(20px) saturate(1.6) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    0 2px 10px rgba(0,0,0,.30) !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* ---- the knob: translucent frosted highlight, one segment wide ---------- */
+[data-m="ctl"] > div > div,
+[data-m="worldpill"] > div{
+  position: absolute !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  z-index: 0 !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.16)) !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.40),
+    0 1px 4px rgba(0,0,0,.28) !important;
+  transition: transform .38s cubic-bezier(.28,.11,.32,1) !important;
+}
+[data-m="ctl"] > div > div{ width: calc(50% - 3px) !important; }
+[data-m="worldpill"] > div{ width: calc(33.3333% - 2px) !important; }
+
+/* ---- the segments ------------------------------------------------------- */
+[data-m="ctl"] > div > button,
+[data-m="worldpill"] > button{
+  position: relative !important;
+  z-index: 1 !important;
+  width: auto !important;
+  flex: 1 1 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  padding: 0 13px !important;
+  border: 0 !important;
+  background: none !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.005em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+
+  /* one colour, readable on knob AND track. No blend, no state math. */
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45) !important;
+  transition: none !important;
+
+  /* CRITICAL: xero-theme.css sets `min-height:44px` on these buttons at <=900px for a
+     touch target. That is TALLER than the whole track, so the button overflowed BELOW
+     the bar and dragged its label out from under the glass. Kill it here - the real tap
+     target is the invisible ::after collar defined in the mobile block, not the button. */
+  min-height: 0 !important;
+}
+
+/* icons follow the label colour */
+[data-m="ctl"] > div > button svg [fill]:not([fill="none"]),
+[data-m="ctl"] > div > button svg[fill]:not([fill="none"]){ fill: currentColor !important; }
+[data-m="ctl"] > div > button svg [stroke]:not([stroke="none"]),
+[data-m="ctl"] > div > button svg[stroke]:not([stroke="none"]){ stroke: currentColor !important; }
+[data-m="ctl"] svg,
+[data-m="worldpill"] svg{ width: 11px !important; height: 11px !important; }
+
+/* world switcher: uppercase, tighter, state dots gone (knob carries state) */
+[data-m="worldpill"] > button{ font-size: 10px !important; letter-spacing: .06em !important; padding: 0 11px !important; }
+[data-m="worldpill"] > button > span:first-child{ display: none !important; }
+
+/* ==========================================================================
+   PHOTOS - white room. Track -> light chip, knob -> dark tint, text -> dark.
+   The one and only state flip, off a single attribute.
+   ========================================================================== */
+:root[data-xero-view="photos"] [data-m="ctl"] > div{
+  background: rgba(118,118,128,.16) !important;
+  border-color: rgba(0,0,0,.06) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 1px 3px rgba(0,0,0,.10) !important;
+}
+:root[data-xero-view="photos"] [data-m="ctl"] > div > div{
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(236,236,240,.95)) !important;
+  border-color: rgba(0,0,0,.05) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.20) !important;
+}
+:root[data-xero-view="photos"] [data-m="ctl"] > div > button{
+  color: #1a1b1f !important;
+  text-shadow: none !important;
+}
+
+/* ==========================================================================
+   MOBILE - fixed 20px. Small visual, generous invisible tap targets.
+   ==========================================================================
+   The visible chip is 20px (under the 44px touch minimum) so each segment
+   carries a hidden hit area centred on it: looks 20px, taps ~38px. The world
+   switcher's hit area is capped so it does not overhang the thumbnail rail
+   below it. Padding stays 3px so the geometry formulas above hold unchanged.
+*/
+@media (max-width: 900px){
+  [data-m="ctl"] > div,
+  [data-m="worldpill"]{
+    height: 20px !important;
+    padding: 3px !important;
+  }
+  [data-m="ctl"] > div > button,
+  [data-m="worldpill"] > button{ min-height: 0 !important; }
+  [data-m="ctl"] > div > button{ font-size: 9px !important; padding: 0 8px !important; gap: 4px !important; }
+  [data-m="worldpill"] > button{ font-size: 8px !important; padding: 0 7px !important; letter-spacing: .05em !important; }
+  [data-m="ctl"] svg,
+  [data-m="worldpill"] svg{ width: 8.5px !important; height: 8.5px !important; }
+
+  /* invisible hit areas */
+  [data-m="ctl"] > div > button::after,
+  [data-m="worldpill"] > button::after{
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important; right: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    border-radius: 999px !important;
+  }
+  [data-m="ctl"] > div > button::after{ height: 38px !important; }
+  [data-m="worldpill"] > button::after{ height: 28px !important; }
+  [data-m="worldcol"]{ gap: .7rem !important; }
+}

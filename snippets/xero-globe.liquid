@@ -1,0 +1,189 @@
+{%- comment -%}
+  Hexagon globe for the tracking page.
+
+  Coastlines come from assets/xero-landmask.js (Natural Earth 110m rasterised to
+  a 360x180 grid). A hexagon is placed only where a cell is land; alternate rows
+  are offset half a step so it reads as a honeycomb.
+
+  Fixes baked in:
+    1. InstancedMesh takes its bounding sphere from the BASE geometry, so the
+       frustum culler binned the whole landmass. frustumCulled = false.
+    2. The camera distance is now SOLVED from the viewport instead of guessed,
+       fitting the sphere in whichever axis is tighter, so the container can
+       never crop the globe at any aspect ratio.
+{%- endcomment -%}
+
+<script type="module">
+import * as THREE from 'three';
+import { isLand } from '{{ "xero-landmask.js" | asset_url }}';
+
+const R = 1;
+const RIM = R * 1.06;          // outermost thing we must keep in frame
+const PAD = 1.12;              // breathing room around it
+
+function latLonToVec(lat, lon, r = R){
+  const p = (90 - lat) * Math.PI / 180;
+  const t = (lon + 180) * Math.PI / 180;
+  return new THREE.Vector3(
+    -r * Math.sin(p) * Math.cos(t),
+     r * Math.cos(p),
+     r * Math.sin(p) * Math.sin(t)
+  );
+}
+
+window.XeroGlobe = function(host, canvas, opts){
+  const origin   = opts.origin;
+  const dest     = opts.dest;
+  const progress = Math.max(.02, Math.min(1, opts.progress == null ? .5 : opts.progress));
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+  const scene  = new THREE.Scene();
+  const FOV = 30;
+  const camera = new THREE.PerspectiveCamera(FOV, 1, .1, 100);
+
+  const world = new THREE.Group();
+  scene.add(world);
+
+  /* ocean */
+  const ocean = new THREE.Mesh(
+    new THREE.SphereGeometry(R * 0.988, 128, 128),
+    new THREE.MeshBasicMaterial({ color: 0x14161f })
+  );
+  ocean.renderOrder = 0;
+  world.add(ocean);
+
+  /* hexagon landmass */
+  const ROWS  = 118;
+  const STEP  = 180 / ROWS;
+  const HEX_R = (Math.PI / ROWS) * 0.60;
+
+  const geo  = new THREE.CircleGeometry(HEX_R, 6);
+  const mats = [];
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion();
+  const one = new THREE.Vector3(1,1,1), front = new THREE.Vector3(0,0,1);
+
+  for (let r = 0; r < ROWS; r++){
+    const lat  = 90 - (r + 0.5) * STEP;
+    const circ = Math.cos(lat * Math.PI / 180);
+    if (circ <= 0.015) continue;
+    const cols = Math.max(3, Math.round(ROWS * 2 * circ));
+    const off  = (r % 2) ? 0.5 : 0;
+    for (let c = 0; c < cols; c++){
+      const lon = -180 + ((c + off) / cols) * 360;
+      if (!isLand(lat, lon)) continue;
+      const pos = latLonToVec(lat, lon, R * 1.004);
+      q.setFromUnitVectors(front, pos.clone().normalize());
+      m.compose(pos, q, one);
+      mats.push(m.clone());
+    }
+  }
+
+  const hexes = new THREE.InstancedMesh(
+    geo,
+    new THREE.MeshBasicMaterial({ color: 0xc3c6d6, side: THREE.DoubleSide }),
+    Math.max(mats.length, 1)
+  );
+  mats.forEach((mm, i) => hexes.setMatrixAt(i, mm));
+  hexes.instanceMatrix.needsUpdate = true;
+  hexes.frustumCulled = false;
+  hexes.renderOrder = 1;
+  world.add(hexes);
+
+  /* route */
+  const oV = latLonToVec(origin.lat, origin.lon, R * 1.012);
+  const dV = latLonToVec(dest.lat,   dest.lon,   R * 1.012);
+
+  const mk = (v, col, size) => {
+    const s = new THREE.Mesh(new THREE.SphereGeometry(size, 20, 20), new THREE.MeshBasicMaterial({ color: col }));
+    s.position.copy(v); s.renderOrder = 3; world.add(s); return s;
+  };
+  mk(oV, 0xffffff, .015);
+  const destDot = mk(dV, 0xff7ae0, .022);
+
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(.028, .04, 48),
+    new THREE.MeshBasicMaterial({ color:0xff7ae0, transparent:true, opacity:.85, side:THREE.DoubleSide, depthWrite:false })
+  );
+  halo.position.copy(dV);
+  halo.lookAt(dV.clone().multiplyScalar(2));
+  halo.renderOrder = 3;
+  world.add(halo);
+
+  const mid   = oV.clone().add(dV).multiplyScalar(.5).normalize()
+                  .multiplyScalar(R + oV.distanceTo(dV) * .4);
+  const curve = new THREE.QuadraticBezierCurve3(oV, mid, dV);
+  const full  = curve.getPoints(180);
+
+  const faint = new THREE.Line(new THREE.BufferGeometry().setFromPoints(full),
+    new THREE.LineBasicMaterial({ color:0xc68bff, transparent:true, opacity:.18 }));
+  faint.renderOrder = 2; world.add(faint);
+
+  const lit = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(full.slice(0, Math.round(180 * progress) + 1)),
+    new THREE.LineBasicMaterial({ color:0xc68bff, transparent:true, opacity:.95 }));
+  lit.renderOrder = 2; world.add(lit);
+
+  const pulse = new THREE.Mesh(new THREE.SphereGeometry(.019, 14, 14),
+    new THREE.MeshBasicMaterial({ color:0xffffff }));
+  pulse.renderOrder = 3; world.add(pulse);
+
+  /* framing — solve the distance so nothing can crop */
+  const targetY = -Math.atan2(dV.x, dV.z);
+  world.rotation.y = targetY - 1.15;
+  world.rotation.x = 0.08;
+  let spinTarget = targetY;
+
+  function fit(){
+    const b = host.getBoundingClientRect();
+    const w = Math.max(b.width, 1), h = Math.max(b.height, 1);
+    renderer.setSize(w, h, false);
+    const aspect = w / h;
+    camera.aspect = aspect;
+
+    const vFOV = FOV * Math.PI / 180;
+    const distV = RIM / Math.tan(vFOV / 2);          // fit vertically
+    const hFOV  = 2 * Math.atan(Math.tan(vFOV / 2) * aspect);
+    const distH = RIM / Math.tan(hFOV / 2);          // fit horizontally
+    camera.position.set(0, 0, Math.max(distV, distH) * PAD);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }
+  fit();
+  addEventListener('resize', fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(host);
+
+  let down = false, lastX = 0, vel = 0;
+  host.addEventListener('pointerdown', e => { down = true; lastX = e.clientX; spinTarget = null; });
+  addEventListener('pointermove', e => {
+    if (!down) return;
+    vel = (e.clientX - lastX) * .006;
+    world.rotation.y += vel;
+    lastX = e.clientX;
+  });
+  addEventListener('pointerup', () => { down = false; });
+  host.style.cursor = 'grab';
+  host.style.touchAction = 'pan-y';
+
+  let t = 0;
+  (function tick(){
+    requestAnimationFrame(tick);
+    t += .0035;
+    const k = (t % 1) * progress;
+    pulse.position.copy(curve.getPoint(k));
+    pulse.scale.setScalar(.7 + Math.sin((t % 1) * Math.PI) * .9);
+    halo.scale.setScalar(1 + (t * 2 % 1) * 1.7);
+    halo.material.opacity = .85 * (1 - (t * 2 % 1));
+    destDot.scale.setScalar(1 + Math.sin(t * 6) * .12);
+    if (spinTarget !== null && !down){
+      world.rotation.y += (spinTarget - world.rotation.y) * .02;
+    } else if (!down){
+      world.rotation.y += vel; vel *= .95; world.rotation.y += .0005;
+    }
+    renderer.render(scene, camera);
+  })();
+
+  return { hexCount: mats.length };
+};
+</script>

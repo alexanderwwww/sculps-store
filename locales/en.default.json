@@ -1,0 +1,36 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "general": {
+    "404": {
+      "title": "Wrong turn.",
+      "subtext": "That page does not exist."
+    },
+    "accessibility": {
+      "skip_to_content": "Skip to content",
+      "close": "Close"
+    }
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "subtotal": "Subtotal",
+    "checkout": "Checkout",
+    "remove": "Remove",
+    "note": "Taxes and duties calculated at checkout. Free shipping."
+  },
+  "products": {
+    "product": {
+      "add_to_cart": "Add to cart",
+      "buy_now": "Buy now",
+      "sold_out": "Sold out"
+    }
+  }
+}

@@ -1,0 +1,239 @@
+{%- comment -%}
+  XERO box — what arrives before the bike.
+    1. the case (image)
+    2. the card (image) + copy
+    3. THE KEY, turnable in 3D
+
+  WHY THE KEY LOOKED WRONG, and what fixes it:
+    * three.js r152+ defaults outputColorSpace, and a GLB authored in sRGB
+      renders dark and colour-shifted unless you set it explicitly.
+    * A PBR metal material has almost nothing to reflect without an environment
+      map — directional lights alone make polished metal read flat and grey.
+      A PMREM RoomEnvironment gives it something to mirror, which is what makes
+      it look like metal at all.
+    * ACES tone mapping stops the highlights clipping to white.
+{%- endcomment -%}
+
+<section class="xero-night" data-sec="box" id="box" style="position:relative;width:100%;background:var(--pg);padding:7rem 1.4rem 6rem;">
+
+  <div style="max-width:52rem;margin:0 auto;text-align:center;">
+    <div style="font-size:.78rem;font-weight:600;letter-spacing:.22em;color:var(--txt3,#7c7d85);">{{ section.settings.kicker }}</div>
+    <h2 style="margin:1rem 0 0;font-size:clamp(2.1rem,4.6vw,3.6rem);font-weight:700;letter-spacing:-.038em;line-height:1.04;color:var(--txt,#0e0e0e);text-wrap:balance;">{{ section.settings.heading }}</h2>
+    {%- if section.settings.sub != blank -%}
+      <p style="margin:1rem auto 0;max-width:34rem;font-size:1.08rem;line-height:1.5;color:var(--txt2,#55565c);text-wrap:pretty;">{{ section.settings.sub }}</p>
+    {%- endif -%}
+  </div>
+
+  <div style="position:relative;width:100%;max-width:62rem;margin:2.4rem auto 0;aspect-ratio:16 / 10;">
+    {% render 'xero-image', key: 'box_open', label: "the case, open", radius: 0, circle: false %}
+  </div>
+
+  <div data-m="cardrow" style="max-width:62rem;margin:2.6rem auto 0;display:grid;grid-template-columns:1.1fr .9fr;gap:2.4rem;align-items:center;">
+    <div style="position:relative;width:100%;aspect-ratio:16 / 10;">
+      {% render 'xero-image', key: 'box_card', label: "the owner card", radius: 0, circle: false %}
+    </div>
+    <div>
+      <div style="font-size:.76rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">{{ section.settings.card_kicker }}</div>
+      <h3 style="margin:.8rem 0 0;font-size:clamp(1.5rem,2.6vw,2.1rem);font-weight:700;letter-spacing:-.03em;line-height:1.1;color:var(--txt,#0e0e0e);text-wrap:balance;">{{ section.settings.card_heading }}</h3>
+      <p style="margin:.9rem 0 0;font-size:1.02rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">{{ section.settings.card_body }}</p>
+      <a href="{{ section.settings.card_link | default: '/pages/track' }}" style="display:inline-flex;align-items:center;gap:.45rem;margin-top:1.3rem;font-size:1rem;font-weight:600;color:#3a82fb;text-decoration:none;">
+        {{ section.settings.card_cta }}
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M9 5l3 3-3 3"></path></svg>
+      </a>
+    </div>
+  </div>
+
+  <div style="max-width:52rem;margin:4.5rem auto 0;text-align:center;">
+    <div style="font-size:.76rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">{{ section.settings.key_kicker }}</div>
+    <h3 style="margin:.8rem 0 0;font-size:clamp(1.5rem,2.8vw,2.3rem);font-weight:700;letter-spacing:-.03em;line-height:1.1;color:var(--txt,#0e0e0e);text-wrap:balance;">{{ section.settings.key_heading }}</h3>
+  </div>
+
+  <div data-box3d
+       data-src="{{ section.settings.key_model_url }}"
+       style="position:relative;width:100%;max-width:44rem;margin:1.6rem auto 0;aspect-ratio:1 / 1;">
+    <canvas data-box-canvas style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+
+    <div data-box-fallback style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .6s cubic-bezier(.28,.11,.32,1);">
+      {% render 'xero-image', key: 'key_still', label: "the key", radius: 0, circle: false %}
+    </div>
+
+    <div data-box-hint style="position:absolute;left:50%;bottom:.4rem;transform:translateX(-50%);display:none;align-items:center;gap:.5rem;height:2.2rem;padding:0 .95rem;border-radius:1.1rem;background:var(--pill,rgba(255,255,255,.1));border:1px solid var(--pill-b,rgba(255,255,255,.12));backdrop-filter:blur(12px);font-size:.82rem;color:var(--txt2,#55565c);pointer-events:none;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 8h12M11 5l3 3-3 3"></path><path d="M5 5L2 8l3 3"></path></svg>
+      Drag side to side
+    </div>
+  </div>
+
+</section>
+
+<style>
+  @media (max-width: 760px){
+    [data-sec="box"] [data-m="cardrow"]{ grid-template-columns: 1fr !important; gap: 1.4rem !important; text-align: center; }
+  }
+</style>
+
+<script type="module">
+(() => {
+  const host = document.querySelector('[data-sec="box"] [data-box3d]');
+  if (!host || !host.dataset.src) return;
+  const src = host.dataset.src;
+
+  const YAW_LIMIT   = 0.62;
+  const SWAY_SPEED  = 0.00042;
+  const RETURN_EASE = 0.055;
+
+  let booted = false;
+
+  const boot = async () => {
+    if (booted) return; booted = true;
+    let THREE, GLTFLoader, RoomEnvironment;
+    try {
+      THREE = await import('three');
+      ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+      try {
+        ({ RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js'));
+      } catch (e) { RoomEnvironment = null; }
+    } catch (e) { return; }
+
+    const canvas   = host.querySelector('[data-box-canvas]');
+    const fallback = host.querySelector('[data-box-fallback]');
+    const hint     = host.querySelector('[data-box-hint]');
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+    /* ---- COLOUR PIPELINE — this is what was wrong ---- */
+    if ('outputColorSpace' in renderer && THREE.SRGBColorSpace) {
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+    } else if ('outputEncoding' in renderer && THREE.sRGBEncoding) {
+      renderer.outputEncoding = THREE.sRGBEncoding;      // older three
+    }
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(32, 1, .01, 100);
+
+    /* ---- ENVIRONMENT — metal needs something to reflect ---- */
+    if (RoomEnvironment) {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      pmrem.compileEquirectangularShader?.();
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    }
+
+    // gentle fill on top of the environment, not instead of it
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x202028, 0.55));
+    const kl = new THREE.DirectionalLight(0xffffff, 1.15); kl.position.set(3,5,4);  scene.add(kl);
+    const fl = new THREE.DirectionalLight(0xffffff, 0.35); fl.position.set(-3,1,4);  scene.add(fl);
+    const rl = new THREE.DirectionalLight(0xc68bff, 0.45); rl.position.set(-4,2,-3); scene.add(rl);
+
+    const pivot = new THREE.Group(); scene.add(pivot);
+
+    const size = () => {
+      const r = host.getBoundingClientRect();
+      renderer.setSize(r.width, r.height, false);
+      camera.aspect = r.width / Math.max(r.height, 1);
+      camera.updateProjectionMatrix();
+    };
+    size(); addEventListener('resize', size);
+
+    let ready = false;
+    new GLTFLoader().load(src, (gltf) => {
+      const model = gltf.scene;
+
+      // make sure every colour map is tagged sRGB, or textures render washed out
+      model.traverse((o) => {
+        if (!o.isMesh || !o.material) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m) => {
+          if (m.map && THREE.SRGBColorSpace) m.map.colorSpace = THREE.SRGBColorSpace;
+          if (m.emissiveMap && THREE.SRGBColorSpace) m.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+          if (m.envMapIntensity !== undefined) m.envMapIntensity = 1.1;
+          m.needsUpdate = true;
+        });
+      });
+
+      const bb = new THREE.Box3().setFromObject(model);
+      const s = new THREE.Vector3(), c = new THREE.Vector3();
+      bb.getSize(s); bb.getCenter(c);
+      const scale = 1 / Math.max(s.x, s.y, s.z);
+      model.scale.setScalar(scale);
+      model.position.set(-c.x*scale, -c.y*scale, -c.z*scale);
+      pivot.add(model);
+
+      camera.position.set(0, .18, 2.15);
+      camera.lookAt(0, 0, 0);
+
+      ready = true;
+      fallback.style.opacity = '0';
+      setTimeout(() => { fallback.style.display = 'none'; }, 620);
+      hint.style.display = 'flex';
+    });
+
+    const clamp = v => Math.max(-YAW_LIMIT, Math.min(YAW_LIMIT, v));
+    let yaw = 0, down = false, lastX = 0, vel = 0, touched = false, t = 0;
+
+    host.addEventListener('pointerdown', e => {
+      down = true; touched = true; vel = 0; lastX = e.clientX;
+      host.style.cursor = 'grabbing';
+    });
+    addEventListener('pointermove', e => {
+      if (!down) return;
+      vel = (e.clientX - lastX) * .006;
+      yaw = clamp(yaw + vel);
+      lastX = e.clientX;
+    });
+    addEventListener('pointerup', () => { down = false; host.style.cursor = 'grab'; });
+    host.style.cursor = 'grab';
+    host.style.touchAction = 'pan-y';
+
+    (function tick(){
+      requestAnimationFrame(tick);
+      if (ready) {
+        if (down) {
+          // yaw set by the move handler
+        } else if (!touched) {
+          t += 1;
+          yaw = Math.sin(t * SWAY_SPEED * 6.28) * (YAW_LIMIT * 0.72);
+        } else {
+          yaw = clamp(yaw + vel);
+          vel *= .92;
+          yaw += (0 - yaw) * RETURN_EASE;
+        }
+        pivot.rotation.y = yaw;
+      }
+      renderer.render(scene, camera);
+    })();
+  };
+
+  new IntersectionObserver((entries, obs) => {
+    if (entries.some(en => en.isIntersecting)) { obs.disconnect(); boot(); }
+  }, { rootMargin: '200px' }).observe(host);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "XERO box",
+  "tag": "div",
+  "settings": [
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "WHAT ARRIVES FIRST" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "The key lands before the bike." },
+    { "type": "textarea", "id": "sub", "label": "Subheading", "default": "A machined aluminium case arrives days ahead of delivery. Inside: your key and your card. Nothing else." },
+    { "type": "header", "content": "The case" },
+    { "type": "image_picker", "id": "box_open", "label": "Case image (cut-out PNG)" },
+    { "type": "header", "content": "The card" },
+    { "type": "image_picker", "id": "box_card", "label": "Card image (cut-out PNG)" },
+    { "type": "text", "id": "card_kicker", "label": "Card kicker", "default": "YOUR CARD" },
+    { "type": "text", "id": "card_heading", "label": "Card heading", "default": "Milled steel. Your number on it." },
+    { "type": "textarea", "id": "card_body", "label": "Card body", "default": "Every Chiron ships with a solid steel card carrying your serial and owner ID, laser-etched. Tap it into the tank once and the bike is paired to you." },
+    { "type": "text", "id": "card_cta", "label": "Card link text", "default": "Track your build" },
+    { "type": "url", "id": "card_link", "label": "Card link" },
+    { "type": "header", "content": "The key (3D)" },
+    { "type": "text", "id": "key_kicker", "label": "Key kicker", "default": "THE KEY" },
+    { "type": "text", "id": "key_heading", "label": "Key heading", "default": "Turn it over." },
+    { "type": "text", "id": "key_model_url", "label": "Key model URL (.glb)", "info": "Leave empty to show the still image only." },
+    { "type": "image_picker", "id": "key_still", "label": "Key image (fallback)" }
+  ],
+  "presets": [{ "name": "XERO box" }]
+}
+{% endschema %}

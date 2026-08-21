@@ -1,0 +1,71 @@
+{%- comment -%}
+  VIBES — two photographs, side by side, almost no copy.
+  A breather between the technical sections. Stacks on mobile.
+
+  Also renders the add-to-cart sound snippet. It attaches a delegated listener
+  to the whole document, so it works for every add-to-cart button on the page
+  regardless of where this section sits. If this section is ever removed, move
+  the render line into layout/theme.liquid.
+{%- endcomment -%}
+
+{% render 'xero-sound' %}
+
+<section class="xero-night" data-sec="vibes" style="position:relative;width:100%;background:var(--pg2);padding:6rem 0 6rem;overflow-x:clip;">
+
+  {%- if section.settings.heading != blank -%}
+    <div style="max-width:46rem;margin:0 auto 2.6rem;padding:0 1.4rem;text-align:center;">
+      {%- if section.settings.eyebrow != blank -%}
+        <div style="font-size:.76rem;font-weight:600;letter-spacing:.22em;color:var(--txt3,#7c7d85);">{{ section.settings.eyebrow }}</div>
+      {%- endif -%}
+      <h2 style="margin:.9rem 0 0;font-size:clamp(1.9rem,4.4vw,3.1rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:var(--txt,#0e0e0e);text-wrap:balance;">{{ section.settings.heading }}</h2>
+    </div>
+  {%- endif -%}
+
+  <div data-m="pair" style="max-width:78rem;margin:0 auto;padding:0 1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+    <figure style="margin:0;">
+      <div style="position:relative;width:100%;aspect-ratio:4 / 5;overflow:hidden;border-radius:1.1rem;background:#0d0d12;">
+        {% render 'xero-image', key: 'vibe_a', label: "", radius: 18, circle: false %}
+      </div>
+      {%- if section.settings.cap_a != blank -%}
+        <figcaption style="margin:.9rem 0 0;font:600 .7rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:var(--txt3,#7c7d85);">{{ section.settings.cap_a }}</figcaption>
+      {%- endif -%}
+    </figure>
+
+    <figure style="margin:0;">
+      <div style="position:relative;width:100%;aspect-ratio:4 / 5;overflow:hidden;border-radius:1.1rem;background:#0d0d12;">
+        {% render 'xero-image', key: 'vibe_b', label: "", radius: 18, circle: false %}
+      </div>
+      {%- if section.settings.cap_b != blank -%}
+        <figcaption style="margin:.9rem 0 0;font:600 .7rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:var(--txt3,#7c7d85);text-align:right;">{{ section.settings.cap_b }}</figcaption>
+      {%- endif -%}
+    </figure>
+
+  </div>
+
+</section>
+
+<style>
+  @media (max-width: 760px){
+    [data-sec="vibes"] [data-m="pair"]{ grid-template-columns:1fr !important; gap:1.6rem !important; }
+    [data-sec="vibes"] figcaption{ text-align:left !important; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "XERO vibes",
+  "tag": "div",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Out of the trailer. Into the night." },
+    { "type": "header", "content": "Left" },
+    { "type": "image_picker", "id": "vibe_a", "label": "Left image (4:5)" },
+    { "type": "text", "id": "cap_a", "label": "Left caption" },
+    { "type": "header", "content": "Right" },
+    { "type": "image_picker", "id": "vibe_b", "label": "Right image (4:5)" },
+    { "type": "text", "id": "cap_b", "label": "Right caption" }
+  ],
+  "presets": [{ "name": "XERO vibes" }]
+}
+{% endschema %}

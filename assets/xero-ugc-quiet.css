@@ -1,0 +1,16 @@
+/* XERO - UGC carousel, captionless.
+
+   The cards were designed with a name chip and a caption over the bottom of each shot, so
+   xero-ugc.liquid paints a scrim there: a gradient covering the bottom 52% of the frame,
+   reaching 60% black at the base. That exists purely to keep white text legible.
+
+   With the captions removed there is no text to protect, so the scrim is just half of
+   every photograph needlessly darkened. It comes off - unless a block still carries a
+   caption, in which case it comes back for that card only.
+
+   .ugc-meta is only rendered when a block has a handle or a caption (see the section's
+   {% if %}), so :has() reads the real state rather than a duplicated flag. A browser
+   without :has() simply never shows the scrim, which is the correct look here anyway. */
+
+.ugc-frame::after{ display: none !important; }
+.ugc-card:has(.ugc-meta) .ugc-frame::after{ display: block !important; }

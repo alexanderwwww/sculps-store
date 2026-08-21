@@ -1,0 +1,302 @@
+/* XERO - loaded after xero-theme.css. Overrides only.
+
+   The segmented control lives in xero-pill.css, which loads AFTER this file. Nothing in
+   here should style [data-m="ctl"] > div, [data-m="worldpill"] or their children beyond
+   POSITION - the whole class of pill bugs came from asserting the same relationship in
+   two files.
+
+   ONE GRID. xero-hero.liquid hardcodes its layout in inline percentages picked by eye:
+   buy box left:68%, photo plate right:32%, camera offset 0.105. Nothing agreed with
+   anything else. Everything is pinned to a single golden section at 61.8 / 38.2, and the
+   camera in xero-model.js centres the bike in the field it actually occupies.
+
+       0 -------------------------- 61.8% ------------- 100%
+       |        stage / photos        |     buy box      |
+
+   STAGE FURNITURE, one arrangement at every size:
+       top left      3D / Photos
+       top right     Day / Night        (3D only - nothing to light in a photo)
+       bottom centre world switcher + thumbnail rail
+*/
+
+:root{
+  --xero-hdr-h: 6.5rem;
+  --xero-gold: 61.8%;
+  --xero-gold-i: 38.2%;
+  --xero-ink: #0b0b0d;
+}
+
+/* ==========================================================================
+   FIX 1: sections whose only content is position:fixed were invisible.
+   ==========================================================================
+   xero-theme.css sets `.shopify-section{contain:layout paint style}`. Shopify wraps every
+   section in a .shopify-section div, and `contain:paint` makes that wrapper both a
+   containing block for fixed descendants AND a clipping box, so a section holding nothing
+   but fixed UI collapses to zero height and clips itself away.
+
+   Two selector strategies in separate rules on purpose: if a browser lacks :has() it drops
+   only that rule and the ID rules still land. */
+
+#shopify-section-xero-header,
+#shopify-section-xero-chrome,
+#shopify-section-popup{
+  contain: none !important;
+  content-visibility: visible !important;
+}
+
+.shopify-section:has(> [data-m="hdr"]),
+.shopify-section:has(> [data-m="sticky"]),
+.shopify-section:has(> [data-xero-popup]){
+  contain: none !important;
+  content-visibility: visible !important;
+}
+
+/* ==========================================================================
+   FIX 2 / 3: the stage only ever shows the 3D model.
+   ==========================================================================
+   The WebGL canvas is a sibling of the sprite layer and only exists once a GLB mounts, so
+   setView('photos') - written before the canvas existed - never hid it. And useModel(true)
+   hides the sprite, but _paintCube() runs afterwards on every world, day-night and view
+   change and restores it unconditionally.
+
+   The data-model="on" gate is load-bearing. Do NOT make it unconditional and do NOT try to
+   reach the shadow or the reference cube by matching a substring of an inline style
+   attribute - browsers reserialise inline styles with a space after the colon, so
+   `[style*="pointer-events:none"]` matches nothing while `[style*="transform-origin"]`
+   matches the sprite wrapper, which is the element _init3D() uses as its insertBefore
+   anchor for the canvas. That combination took the whole 3D viewer off the page. */
+xero-stage[data-view="photos"] > canvas{ display: none !important; }
+/* The 2D bike sprite (bike-day/night/seam) is NEVER shown - only the 3D model. The
+   sprites live inside <xero-stage>; the product photos are in a sibling [data-m="photolayer"],
+   so this only removes the sprite, never the Photos images. */
+xero-stage img{ display: none !important; }
+
+/* FIX 4: dead controls. (The autorotate button data-act="toggleSpin" is intentionally
+   NOT hidden - it toggles the turntable.) */
+[data-act^="hot"]{ display: none !important; }
+
+/* ==========================================================================
+   FIX 5: stage furniture. POSITION ONLY - appearance is in xero-pill.css.
+   ========================================================================== */
+[data-m="ctl"]{
+  left: 2.28% !important;
+  right: calc(var(--xero-gold-i) + 1.5rem) !important;
+  top: calc(var(--xero-hdr-h) + 1rem) !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 1rem !important;
+  pointer-events: none !important;
+}
+[data-m="ctl"] > div{ pointer-events: auto !important; }
+
+[data-m="worldcol"]{
+  top: auto !important;
+  bottom: 1.3rem !important;
+  left: calc(var(--xero-gold) / 2) !important;
+  gap: .55rem !important;
+}
+
+[data-m="railcard"]{ width: 2.6rem !important; height: 2.05rem !important; border-width: 1.3px !important; }
+[data-m="rail"]{ gap: .36rem !important; }
+
+/* ==========================================================================
+   FIX 6: Photos is a white room.
+   ========================================================================== */
+:root[data-xero-view="photos"] xero-stage,
+:root[data-xero-view="photos"] [data-m="stage"]{ background: #fff !important; }
+[data-m="photolayer"]{ background: #fff !important; }
+[data-m="photolayer"] .xero-ph{ background: #fff !important; }
+[data-m="photolayer"] .xero-fill{ object-fit: contain !important; }
+
+/* NO NIGHT IN PHOTOS. The stage still carries whatever Day/Night world was last shown
+   (a dark studio/city/mars backdrop). In Photos we do not want ANY of it, so the whole
+   3D stage is taken out and only the white photo layer remains - a pure white room in
+   every mode. The stage returns the moment you switch back to 3D. */
+:root[data-xero-view="photos"] xero-stage{ opacity: 0 !important; visibility: hidden !important; }
+:root[data-xero-view="photos"] [data-m="stage"]{ background: #fff !important; }
+:root[data-xero-view="photos"] [data-m="photolayer"]{ background: #fff !important; opacity: 1 !important; }
+
+[data-m="photolayer"] > div{
+  left: 0 !important;
+  right: var(--xero-gold-i) !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  padding: calc(var(--xero-hdr-h) + 3.6rem) 1.5rem 4.6rem !important;
+}
+
+:root[data-xero-view="photos"] [data-m="brand"]{ color: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-m="nav"]{
+  background: rgba(255,255,255,.74) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+:root[data-xero-view="photos"] [data-m="nav"] a,
+:root[data-xero-view="photos"] [data-m="nav"] button{ color: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-m="nav"] svg{ stroke: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-act="toggleMenu"] span{ background: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-m="railcard"]{ background: rgba(255,255,255,.92) !important; }
+
+:root[data-xero-view="photos"] [data-m="ctl"] > div:nth-child(2){ display: none !important; }
+:root[data-xero-view="photos"] [data-m="worldpill"]{ display: none !important; }
+:root[data-xero-view="photos"] [data-m="dragchip"]{ display: none !important; }
+:root[data-xero-view="photos"] [data-m="side"]{ display: none !important; }
+
+/* ==========================================================================
+   FIX 7: the buy box on the golden section.
+   ========================================================================== */
+@media (min-width: 901px){
+  [data-m="buy"]{ left: var(--xero-gold) !important; }
+}
+
+[data-m="buy"] [data-act="buyNow"],
+[data-m="buy"] [data-act="addToCart"]{
+  height: 2.9rem !important;
+  border-radius: 1.45rem !important;
+  font-size: 1.02rem !important;
+}
+[data-m="paybtn"]{ min-height: 2.9rem !important; }
+
+/* ==========================================================================
+   FIX 8: UGC carousel, captionless.
+   ========================================================================== */
+.ugc-frame::after{ display: none !important; }
+.ugc-card:has(.ugc-meta) .ugc-frame::after{ display: block !important; }
+
+/* ==========================================================================
+   FIX 9: mobile. The hero had no mobile layout at all.
+   ==========================================================================
+   xero-hero.liquid is one fixed viewport frame with everything absolutely positioned; the
+   percentages only describe a wide screen. Below 901px the hero stops being a frame and
+   becomes a stack.
+
+   The pills sit at top: HEADER + 1.5rem - previously .5rem, but the visible header carries
+   a wordmark plus its own vertical padding, and at .5rem the pill's top edge kissed the
+   wordmark's baseline. 1.5rem clears both cleanly. */
+@media (max-width: 900px){
+
+  :root{ --xero-hdr-h: 4.2rem; }
+
+  /* --- header --- */
+  [data-m="hdr"]{ height: var(--xero-hdr-h) !important; padding: 0 .9rem !important; }
+  [data-m="brand"]{ font-size: 1.4rem !important; }
+  [data-m="nav"]{
+    left: auto !important;
+    right: 3.3rem !important;
+    width: auto !important;
+    height: auto !important;
+    top: 50% !important;
+    margin-top: 0 !important;
+    transform: translateY(-50%) !important;
+    padding: .38rem .5rem !important;
+  }
+  [data-m="nav"] > a{
+    flex: 0 0 auto !important;
+    font-size: .7rem !important;
+    padding: 0 .4rem !important;
+    line-height: 1 !important;
+  }
+  [data-m="nav"] > div{ display: none !important; }              /* hairline dividers */
+  [data-m="nav"] [data-m="navlbl"]{ display: none !important; }  /* the word "Cart" */
+  [data-m="nav"] button{ flex: 0 0 auto !important; padding: 0 .4rem !important; }
+  [data-m="nav"] button svg{ width: 16px !important; height: 16px !important; }
+  [data-m="hdr"] [data-act="toggleMenu"]{ right: .9rem !important; width: 1.9rem !important; }
+
+  /* --- the frame becomes a stack --- */
+  [data-m="hero"]{
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  [data-m="stage"]{
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 66svh !important;
+    min-height: 22rem !important;
+  }
+
+  /* pills: full row, clear of the header. Position only - size lives in xero-pill.css */
+  [data-m="ctl"]{
+    left: 10px !important;
+    right: 10px !important;
+    top: calc(var(--xero-hdr-h) + 1rem) !important;
+    gap: .4rem !important;
+  }
+  [data-m="worldcol"]{ left: 50% !important; bottom: .8rem !important; gap: .55rem !important; }
+
+  [data-m="railcard"]{ width: 2.35rem !important; height: 1.85rem !important; flex: 0 0 auto !important; }
+  [data-m="rail"]{
+    gap: .32rem !important;
+    max-width: 94vw !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    padding-bottom: 2px !important;
+  }
+  [data-m="rail"]::-webkit-scrollbar{ display: none !important; }
+
+  /* photos: TRUE FULL BLEED on mobile - fill the stage edge to edge, clear only the
+     header. No side gutters, minimal top/bottom. The product sits big on pure white. */
+  [data-m="photolayer"] > div{
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    padding: calc(var(--xero-hdr-h) + 1rem) 0 1rem !important;
+  }
+  [data-m="photolayer"] .xero-fill{ object-fit: contain !important; }
+
+  /* buy box: out of absolute positioning, full width, normal flow */
+  [data-m="buy"]{
+    position: static !important;
+    left: auto !important; right: auto !important; top: auto !important; bottom: auto !important;
+    width: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 14px 12px 20px !important;
+    padding: 20px 16px 16px !important;
+    border-radius: 22px !important;
+  }
+  [data-m="buy"] h1{ font-size: 2.2rem !important; }
+  [data-m="buy"] [data-act="buyNow"],
+  [data-m="buy"] [data-act="addToCart"]{ height: 2.7rem !important; border-radius: 1.35rem !important; font-size: .96rem !important; }
+  [data-m="paybtn"]{ min-height: 2.7rem !important; }
+
+  [data-m="side"]{ display: none !important; }
+  [data-m="dragchip"]{ display: none !important; }
+}
+
+/* ==========================================================================
+   FIX 10: smooth mobile navigation (CSS only, additive).
+   ==========================================================================
+   Evidence for each rule:
+   - xero-theme.css sets body{overflow-x:hidden} and, on mobile,
+     body{overflow:auto; overscroll-behavior-y:contain}. There is no momentum
+     scrolling hint, no smooth anchor scrolling, and nothing pins the scroll
+     axis to the root, so an inner scroller's rubber-band can chain to the page.
+   - xero-store.js scrollTo() already uses {behavior:'smooth'} for its own
+     anchor jumps; scroll-behavior:smooth makes native #anchor / keyboard
+     paging match it. Respect reduced-motion (see the block below).
+   - The stage (66svh), the marquee/coaster row ([data-anim] with xmarq) and the
+     photo rail ([data-m="rail"]) are the wide/overflowing elements; keep their
+     overscroll from chaining to the document and give the rail iOS momentum. */
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+}
+@media (max-width: 900px){
+  html, body{ overscroll-behavior-y: contain; }
+  body{ overscroll-behavior-x: none; }
+  /* horizontal scrollers must not rubber-band the whole page sideways, and
+     should carry iOS momentum */
+  [data-m="rail"]{
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* the auto-scrolling review row and the 3D stage are the two elements most
+     likely to trap a swipe; keep their gestures from chaining to the document */
+  [data-m="coaster"], [data-m="stage"]{ overscroll-behavior: contain; }
+  /* fixed overlays that are dismissed (default state) must never sit over the
+     page eating scroll — belt-and-braces alongside the JS pointer-events gates */
+  .xp[hidden]{ pointer-events: none !important; }
+}

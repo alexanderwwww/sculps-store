@@ -1,0 +1,16 @@
+{%- comment -%}
+  Video slot. Accepts a native Shopify video OR an external url. Unfilled -> the
+  striped placeholder with a play mark, exactly like the design.
+{%- endcomment -%}
+{%- assign v = video -%}
+{%- assign vu = video_url -%}
+{%- if v != blank -%}
+  {{ v | video_tag: image_size: '1600x', autoplay: false, loop: false, controls: true, muted: false, class: 'xero-fill' }}
+{%- elsif vu != blank -%}
+  {{ vu | external_video_tag: class: 'xero-fill' }}
+{%- else -%}
+  <div class="xero-ph">
+    <span class="xero-play"><svg width="20" height="22" viewBox="0 0 20 22" fill="#fff"><polygon points="3,1.5 18,11 3,20.5"></polygon></svg></span>
+    {%- if label != blank -%}<span>{{ label }}</span>{%- endif -%}
+  </div>
+{%- endif -%}

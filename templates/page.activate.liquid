@@ -1,0 +1,118 @@
+{%- comment -%}
+  Activation page. Standalone dark screen: enter the XERO ID that ships with the bike
+  (format XR-XXXX-XXXX), validated client-side, remembered locally, and pointing the
+  rider to the app for the full activation. Header/chrome render above this via layout.
+{%- endcomment -%}
+<style>
+  /* the fixed header reads dark-on-dark here without these */
+  :root{
+    --txt:#f2f2f4; --txt2:#a9aab2; --txt3:#7c7d85;
+    --pill:rgba(28,28,34,.82); --pill-b:rgba(255,255,255,.09);
+    --knob:#2a2a32; --gloss:rgba(255,255,255,.09); --glow:rgba(255,255,255,.06);
+    --sheen:rgba(255,255,255,.14); --hair:rgba(255,255,255,.10);
+    --sub:rgba(255,255,255,.06); --chip:rgba(30,30,36,.92);
+    --solid:rgb(20,20,24); --glass:rgba(22,22,27,.9); --glass-b:rgba(255,255,255,.08);
+    --shadow:rgba(0,0,0,.5); --pg:#0b0b0e; --acc:#7dd3fc;
+  }
+  body{ background:#0b0b0e; }
+  .xact-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:8rem 1.2rem 4rem; background:radial-gradient(60% 50% at 50% 30%, #16161c 0%, #0b0b0e 70%); }
+  .xact-card{ width:min(30rem,100%); border-radius:1.4rem; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.09); box-shadow:0 2rem 5rem rgba(0,0,0,.5); padding:2.2rem 1.8rem; text-align:center; }
+  .xact-kicker{ font-size:.78rem; font-weight:700; letter-spacing:.18em; color:#8b8c95; }
+  .xact-title{ margin:.7rem 0 0; font-size:2rem; font-weight:700; letter-spacing:-.03em; color:#f2f2f4; }
+  .xact-sub{ margin:.6rem 0 0; font-size:.95rem; line-height:1.5; color:#a9aab2; }
+  .xact-input{ margin-top:1.6rem; width:100%; height:3.6rem; border-radius:1rem; border:1.6px solid rgba(255,255,255,.14); background:rgba(0,0,0,.35); color:#f2f2f4; font-size:1.25rem; font-weight:600; letter-spacing:.14em; text-align:center; text-transform:uppercase; outline:none; transition:border-color .3s, box-shadow .3s; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .xact-input::placeholder{ color:#5c5d66; letter-spacing:.14em; }
+  .xact-input:focus{ border-color:#7dd3fc; box-shadow:0 0 0 4px rgba(125,211,252,.14); }
+  .xact-input.bad{ border-color:#f87171; box-shadow:0 0 0 4px rgba(248,113,113,.12); }
+  .xact-btn{ margin-top:1rem; width:100%; height:3.4rem; border-radius:1.7rem; background:#3a82fb; color:#fff; font-size:1.08rem; font-weight:600; letter-spacing:-.01em; transition:transform .25s cubic-bezier(.28,.11,.32,1), opacity .25s; }
+  .xact-btn:active{ transform:scale(.98); }
+  .xact-err{ margin:.7rem 0 0; font-size:.85rem; color:#f87171; min-height:1.2em; }
+  .xact-ok{ display:none; }
+  .xact-ok .ring{ width:4.6rem; height:4.6rem; margin:0 auto; border-radius:50%; background:rgba(52,199,89,.12); border:1.6px solid rgba(52,199,89,.5); display:flex; align-items:center; justify-content:center; }
+  .xact-id{ margin-top:1rem; display:inline-block; padding:.4rem .9rem; border-radius:.7rem; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:1rem; letter-spacing:.12em; color:#7dd3fc; }
+  .xact-note{ margin-top:1.4rem; font-size:.85rem; line-height:1.55; color:#8b8c95; }
+  .xact-links{ margin-top:1.6rem; display:flex; gap:.6rem; justify-content:center; }
+  .xact-links a{ font-size:.9rem; color:#a9aab2; text-decoration:underline; text-underline-offset:.2em; }
+</style>
+
+<div class="xact-wrap">
+  <div class="xact-card">
+    <div data-step="form">
+      <div class="xact-kicker">ACTIVATE</div>
+      <h1 class="xact-title">Activate your Chiron</h1>
+      <p class="xact-sub">Enter the XERO ID from the card in your delivery box. It pairs this bike to you.</p>
+      <input id="xactId" class="xact-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="12" placeholder="XR-0000-0000" aria-label="XERO ID" />
+      <div id="xactErr" class="xact-err" role="alert"></div>
+      <button id="xactGo" class="xact-btn" type="button">Activate</button>
+      <p class="xact-note">Your XERO ID looks like <strong style="color:#d7d8de;">XR-4F2K-9L07</strong> and is printed on the key card and under the seat blade.</p>
+    </div>
+
+    <div data-step="done" class="xact-ok">
+      <div class="ring">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <h1 class="xact-title" style="margin-top:1.1rem;">Activated</h1>
+      <p class="xact-sub">This Chiron is now linked to this device.</p>
+      <div class="xact-id" id="xactShown"></div>
+      <p class="xact-note">Open the <strong style="color:#d7d8de;">XERO app</strong> on your iPhone and sign in with the same ID to unlock the full dashboard — live tracking, ride stats, LED control and your delivery status.</p>
+    </div>
+
+    <div class="xact-links">
+      <a href="/#reviews">Reviews</a>
+      <a href="/#specs">Specs</a>
+      <a href="/">Back to the bike</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var input = document.getElementById('xactId');
+  var err = document.getElementById('xactErr');
+  var go = document.getElementById('xactGo');
+  var formStep = document.querySelector('[data-step="form"]');
+  var doneStep = document.querySelector('[data-step="done"]');
+  var shown = document.getElementById('xactShown');
+  var RE = /^XR-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+
+  function fmt(v){
+    v = v.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if (v.slice(0,2) !== 'XR') v = 'XR' + v.replace(/^X?R?/,'');
+    v = v.slice(0,10);
+    var out = v.slice(0,2);
+    if (v.length > 2) out += '-' + v.slice(2,6);
+    if (v.length > 6) out += '-' + v.slice(6,10);
+    return out;
+  }
+  input.addEventListener('input', function(){
+    var p = fmt(input.value);
+    input.value = p;
+    input.classList.remove('bad');
+    err.textContent = '';
+  });
+
+  function done(id){
+    try { localStorage.setItem('xero_activated_id', id); localStorage.setItem('xero_activated_at', String(Date.now())); } catch(e){}
+    shown.textContent = id;
+    formStep.style.display = 'none';
+    doneStep.style.display = 'block';
+  }
+
+  go.addEventListener('click', function(){
+    var v = input.value.trim().toUpperCase();
+    if (!RE.test(v)) {
+      input.classList.add('bad');
+      err.textContent = 'That doesn\u2019t look like a XERO ID \u2014 format is XR-XXXX-XXXX.';
+      return;
+    }
+    go.disabled = true; go.style.opacity = '.6'; go.textContent = 'Activating\u2026';
+    setTimeout(function(){ done(v); }, 900);
+  });
+  input.addEventListener('keydown', function(e){ if (e.key === 'Enter') go.click(); });
+
+  try {
+    var prev = localStorage.getItem('xero_activated_id');
+    if (prev && RE.test(prev)) done(prev);
+  } catch(e){}
+})();
+</script>
