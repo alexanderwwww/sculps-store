@@ -158,18 +158,31 @@
     {%- endcomment -%}
     <p style="margin:.9rem 0 0;font-size:.94rem;color:var(--txt2,#55565c);">{{ section.settings.ships_in }}</p>
 
-    <div data-ref="priceRef" style="margin-top:.85rem;flex:0 0 auto;display:flex;align-items:flex-start;font-size:2.75rem;font-weight:700;letter-spacing:-.035em;line-height:1;color:var(--txt,#0e0e0e);">
-      <span>$</span>
-      <span style="display:inline-block;height:1em;overflow:hidden;"><span style="display:block;transform:translateY(calc(var(--d0,4) * -1em));transition:transform .55s cubic-bezier(.28,.11,.32,1);"><span style="display:block;height:1em;">0</span><span style="display:block;height:1em;">1</span><span style="display:block;height:1em;">2</span><span style="display:block;height:1em;">3</span><span style="display:block;height:1em;">4</span><span style="display:block;height:1em;">5</span><span style="display:block;height:1em;">6</span><span style="display:block;height:1em;">7</span><span style="display:block;height:1em;">8</span><span style="display:block;height:1em;">9</span></span></span>
-      <span>,</span>
-      <span style="display:inline-block;height:1em;overflow:hidden;"><span style="display:block;transform:translateY(calc(var(--d1,9) * -1em));transition:transform .55s cubic-bezier(.28,.11,.32,1);transition-delay:.03s;"><span style="display:block;height:1em;">0</span><span style="display:block;height:1em;">1</span><span style="display:block;height:1em;">2</span><span style="display:block;height:1em;">3</span><span style="display:block;height:1em;">4</span><span style="display:block;height:1em;">5</span><span style="display:block;height:1em;">6</span><span style="display:block;height:1em;">7</span><span style="display:block;height:1em;">8</span><span style="display:block;height:1em;">9</span></span></span>
-      <span style="display:inline-block;height:1em;overflow:hidden;"><span style="display:block;transform:translateY(calc(var(--d2,9) * -1em));transition:transform .55s cubic-bezier(.28,.11,.32,1);transition-delay:.06s;"><span style="display:block;height:1em;">0</span><span style="display:block;height:1em;">1</span><span style="display:block;height:1em;">2</span><span style="display:block;height:1em;">3</span><span style="display:block;height:1em;">4</span><span style="display:block;height:1em;">5</span><span style="display:block;height:1em;">6</span><span style="display:block;height:1em;">7</span><span style="display:block;height:1em;">8</span><span style="display:block;height:1em;">9</span></span></span>
-      <span style="display:inline-block;height:1em;overflow:hidden;"><span style="display:block;transform:translateY(calc(var(--d3,9) * -1em));transition:transform .55s cubic-bezier(.28,.11,.32,1);transition-delay:.09s;"><span style="display:block;height:1em;">0</span><span style="display:block;height:1em;">1</span><span style="display:block;height:1em;">2</span><span style="display:block;height:1em;">3</span><span style="display:block;height:1em;">4</span><span style="display:block;height:1em;">5</span><span style="display:block;height:1em;">6</span><span style="display:block;height:1em;">7</span><span style="display:block;height:1em;">8</span><span style="display:block;height:1em;">9</span></span></span>
+    {%- comment -%}
+      This was a digit-reel odometer whose four reels defaulted to 4/9/9/9 with a literal
+      "$" beside them. Nothing in xero-store.js ever set --d0..--d3, so it was a picture of
+      one price that never moved: choosing the 10-Year Replacement bundle updated the cart
+      and the sticky bar but left this still reading the base price. Displaying one number
+      while charging another is the hardest thing there is to defend in a chargeback, and
+      it is checked directly during payment underwriting.
+
+      data-bind="selectedPriceText" is already wired in xero-store.js from
+      money(checkoutTotal()), so it follows the selected bundle plus any add-on and formats
+      through shop.money_format - the currency symbol comes from the store rather than
+      being asserted here. The Liquid fallback covers first paint and JS-off.
+    {%- endcomment -%}
+    <div data-ref="priceRef" style="margin-top:.85rem;flex:0 0 auto;font-size:2.75rem;font-weight:700;letter-spacing:-.035em;line-height:1;color:var(--txt,#0e0e0e);">
+      <span data-bind="selectedPriceText">{{ product.variants.first.price | money }}</span>
     </div>
-    <div style="margin-top:.5rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
-      <span style="display:inline-flex;align-items:center;gap:.4rem;height:1.85rem;padding:0 .7rem;border-radius:.93rem;background:rgba(58,130,251,.12);font-size:.88rem;font-weight:600;letter-spacing:-.01em;color:#005df9;">or $139/mo</span>
-      <span style="font-size:.88rem;color:var(--txt2,#55565c);">36 months · 0% APR · no deposit</span>
-    </div>
+    {%- comment -%}
+      An "or $139/mo" chip and "36 months / 0% APR / no deposit" sat here. There is no
+      lender behind either number. A monthly figure and an APR are a consumer credit offer,
+      and making one with no named provider, no total amount repayable and none of the
+      provider's own disclosures is a regulated-advertising breach - quite apart from the
+      fact that no instalment provider is connected, so nothing at checkout could honour
+      it. Restore only when a provider is live, and let that provider's widget print the
+      figure. Never hardcode a monthly price here again.
+    {%- endcomment -%}
 
     <div style="margin-top:1.05rem;flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;">
       <span style="font-size:.82rem;font-weight:600;letter-spacing:.055em;color:var(--txt2,#55565c);">CHOOSE YOUR BUNDLE</span>
@@ -181,7 +194,7 @@
           <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">Chiron</span>
           <span style="font-size:.82rem;color:var(--txt2,#55565c);">The standard bike</span>
         </span>
-        <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--vp0,#005df9);transition:color .35s;">$4,999</span>
+        <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--vp0,#005df9);transition:color .35s;">{{ product.variants[0].price | money }}</span>
       </button>
       <button data-x="xh4" data-act="pickVariant1" style="display:flex;align-items:center;gap:.9rem;height:4.4rem;padding:0 1.15rem;border-radius:1rem;background:linear-gradient(180deg,var(--gloss,rgba(255,255,255,.46)),rgba(255,255,255,0) 46%,var(--glow,rgba(255,255,255,.22))),var(--vbg1,rgba(255,255,255,.6));border:1.8px solid var(--vb1,rgba(0,0,0,.06));box-shadow:inset 0 1px 0 var(--sheen,rgba(255,255,255,.88));text-align:left;transition:border-color .35s,background .35s,transform .3s cubic-bezier(.28,.11,.32,1);">
         <span style="flex:0 0 auto;width:1.32rem;height:1.32rem;border-radius:50%;border:1.8px solid var(--vr1,#c3c4c9);display:flex;align-items:center;justify-content:center;transition:border-color .35s;"><span style="width:.66rem;height:.66rem;border-radius:50%;background:var(--vd1,transparent);transition:background .35s,transform .3s cubic-bezier(.28,.11,.32,1);transform:scale(var(--vs1,0));"></span></span>
@@ -190,8 +203,8 @@
           <span style="font-size:.82rem;color:var(--txt2,#55565c);">We replace the whole bike. For ten years.</span>
         </span>
         <span style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
-          <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--vp1,var(--txt,#0e0e0e));transition:color .35s;">$6,998.99</span>
-          <span style="font-size:.82rem;font-weight:500;color:var(--txt2,#55565c);">+ $1,999.99</span>
+          <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--vp1,var(--txt,#0e0e0e));transition:color .35s;">{{ product.variants[1].price | money }}</span>
+          <span style="font-size:.82rem;font-weight:500;color:var(--txt2,#55565c);">+ {{ product.variants[1].price | minus: product.variants[0].price | money }}</span>
         </span>
       </button>
     </div>
@@ -201,7 +214,7 @@
       <button data-act="toggleKey" style="display:flex;align-items:center;width:100%;height:2.62rem;padding:0 .95rem;gap:.75rem;">
         <span style="position:relative;flex:0 0 auto;width:2.3rem;height:2.3rem;border-radius:.55rem;overflow:hidden;background:var(--sub,rgba(255,255,255,.05));border:1px solid var(--hair,rgba(255,255,255,.085));">{% render 'xero-image', key: 'addon_key_img', label: "", radius: 8, circle: false %}</span>
         <span style="flex:1;text-align:left;font-size:.88rem;font-weight:450;color:var(--txt,#0e0e0e);">Spare wireless key (NFC pebble)</span>
-        <span style="font-size:.88rem;color:var(--txt2,#55565c);">+ $99</span>
+        <span style="font-size:.88rem;color:var(--txt2,#55565c);">+ {{ key.price | money }}</span>
         <span style="position:relative;width:2.5rem;height:1.5rem;border-radius:.75rem;background:var(--sw0,rgba(120,120,128,.22));transition:background .34s cubic-bezier(.28,.11,.32,1);">
           <span style="position:absolute;top:.12rem;left:.12rem;width:1.26rem;height:1.26rem;border-radius:50%;background:#fff;box-shadow:0 .08rem .26rem rgba(0,0,0,.2);transform:translateX(calc(var(--swx0,0) * 1rem));transition:transform .34s cubic-bezier(.28,.11,.32,1);"></span>
         </span>
@@ -228,21 +241,18 @@
       <p data-ref="payNote" hidden style="margin:.55rem 0 0;text-align:center;font-size:.82rem;line-height:1.4;color:var(--txt2,#55565c);">Express checkout covers the bike only &mdash; use Buy now to include your add-ons.</p>
       <button data-x="xh1" data-act="buyNow" style="height:3.25rem;border-radius:1.63rem;background:#3a82fb;color:#fff;font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Buy now</button>
       <button data-x="xh1" data-act="addToCart" data-ref="addBtnRef" style="height:3.25rem;border-radius:1.63rem;background:transparent;border:1.6px solid #005df9;color:#005df9;font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Add to cart</button>
-      <div style="margin-top:.85rem;display:flex;flex-direction:column;gap:.5rem;align-items:center;">
-        <span style="font-size:.88rem;color:var(--txt2,#55565c);">Pay over time from <strong style="font-weight:600;color:#005df9;">$139/mo</strong></span>
-        <div style="display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;">
-          <span style="display:inline-flex;align-items:center;height:1.7rem;padding:0 .62rem;border-radius:.42rem;background:var(--sub,rgba(255,255,255,.5));border:1px solid var(--hair,rgba(0,0,0,.08));font-size:.72rem;font-weight:700;letter-spacing:.005em;color:var(--txt2,#55565c);white-space:nowrap;">Affirm</span>
-          <span style="display:inline-flex;align-items:center;height:1.7rem;padding:0 .62rem;border-radius:.42rem;background:var(--sub,rgba(255,255,255,.5));border:1px solid var(--hair,rgba(0,0,0,.08));font-size:.72rem;font-weight:700;letter-spacing:.005em;color:var(--txt2,#55565c);white-space:nowrap;">Klarna</span>
-          <span style="display:inline-flex;align-items:center;height:1.7rem;padding:0 .62rem;border-radius:.42rem;background:var(--sub,rgba(255,255,255,.5));border:1px solid var(--hair,rgba(0,0,0,.08));font-size:.72rem;font-weight:700;letter-spacing:.005em;color:var(--txt2,#55565c);white-space:nowrap;">Shop Pay</span>
-          <span style="display:inline-flex;align-items:center;height:1.7rem;padding:0 .62rem;border-radius:.42rem;background:var(--sub,rgba(255,255,255,.5));border:1px solid var(--hair,rgba(0,0,0,.08));font-size:.72rem;font-weight:700;letter-spacing:.005em;color:var(--txt2,#55565c);white-space:nowrap;">Afterpay</span>
-        </div>
+      {%- comment -%}
+        "Pay over time from $139/mo" over Affirm, Klarna, Shop Pay and Afterpay marks. None
+        of the four are enabled on this store, so anyone who picked one reached a checkout
+        that had never heard of it. Showing lender and wallet marks you do not accept is a
+        false representation at the point of sale, and using the wordmarks without an
+        agreement is trademark use on top of it. Restore only what is genuinely live, and
+        take the marks from the provider's own brand kit.
+      {%- endcomment -%}
       </div>
     </div>
 
     <div style="margin-top:auto;flex:0 0 auto;padding-top:.95rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;font-size:.78rem;color:var(--txt2,#55565c);">
-      <span style="display:inline-flex;align-items:center;gap:.38rem;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--txt2,#55565c)" stroke-width="1.25" stroke-linecap="round"><path d="M13.6 8a5.6 5.6 0 1 1-1.7-4"></path><path d="M13.4 1.8v2.6h-2.6"></path></svg>Fully refundable</span>
-      <span style="display:inline-flex;align-items:center;gap:.38rem;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--txt2,#55565c)" stroke-width="1.25" stroke-linejoin="round"><path d="M8 1.6 13.6 3.9v3.9c0 3-2.3 5.2-5.6 6.6-3.3-1.4-5.6-3.6-5.6-6.6V3.9z"></path></svg>2-year warranty</span>
-      <span style="display:inline-flex;align-items:center;gap:.38rem;"><svg width="15" height="15" viewBox="0 0 18 16" fill="none" stroke="var(--txt2,#55565c)" stroke-width="1.25" stroke-linejoin="round"><rect x="1" y="3.4" width="9.2" height="7.2" rx="1"></rect><path d="M10.2 5.8h3l2.2 2.4v2.4h-5.2z"></path><circle cx="5" cy="12.4" r="1.4"></circle><circle cx="12.6" cy="12.4" r="1.4"></circle></svg>Free shipping</span>
     </div>
   </aside>
   
@@ -261,7 +271,7 @@
     { "type": "text", "id": "title", "label": "Title", "default": "XERO Chiron." },
     { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "980 Nm. 120 km/h." },
     { "type": "text", "id": "ships_in", "label": "Shipping line", "default": "Ships in 4–6 weeks" },
-    { "type": "text", "id": "finance_line", "label": "Financing line", "default": "36 months · 0% APR · no deposit" },
+    { "type": "text", "id": "finance_line", "label": "Financing line (leave empty unless a credit provider is live)", "default": "" },
     { "type": "header", "content": "Add-on thumbnails" },
     { "type": "image_picker", "id": "addon_key_img", "label": "Wireless key thumbnail" },
     { "type": "header", "content": "Stage photos" },
