@@ -345,7 +345,8 @@
       "type": "xero-film",
       "settings": {
         "film": "",
-        "label": "full-bleed film — 16:9"
+        "label": "full-bleed film — 16:9",
+        "anchor": "film"
       }
     },
     "track": {
