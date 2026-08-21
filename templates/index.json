@@ -35,7 +35,7 @@
         "addon_key": "wireless-key-nfc-pebble",
         "title": "XERO Chiron.",
         "subtitle": "Design targets: 980 Nm · 120 km/h",
-        "ships_in": "Ships in 4–6 weeks",
+        "ships_in": "Concept in development · ships in 4-6 weeks",
         "finance_line": ""
       }
     },
@@ -63,8 +63,8 @@
         "step3_img": "shopify://shop_images/key_step3_phone.jpg",
         "s3_title": "Drop your phone in",
         "s3_body": "It lies flat and flush, the magnet holds it, and it charges while you ride. From then on the bike wakes for that phone alone.",
-        "payoff": "Built for iPhone. Only for iPhone.",
-        "payoff_sub": "The pocket, the magnet, the NFC handshake — every millimetre of it is designed around iOS. Your card and key ship days before the bike does, so you can register your ID the moment they land.",
+        "payoff": "Designed around iPhone.",
+        "payoff_sub": "The pocket, the magnet, the NFC handshake - every millimetre of it is designed around the iPhone you already carry. Your card and key ship days before the bike does, so you can register your ID the moment they land. XERO is not affiliated with or endorsed by Apple.",
         "cta": "Activate your ID",
         "cta_link": "/pages/activate"
       }
@@ -242,7 +242,7 @@
           "type": "qa",
           "settings": {
             "q": "How is it delivered?",
-            "a": "By us, in person, to your door. No carriers, no depots, no freight terminal, and shipping is free."
+            "a": "To your door on a tail-lift vehicle, by our own team or a specialist vehicle carrier we appoint - not a parcel courier. Nothing for you to collect, no freight terminal, and shipping is free."
           }
         },
         "q12": {
@@ -354,10 +354,10 @@
       "settings": {
         "eyebrow": "BUILT, CHECKED, DELIVERED",
         "heading": "Follow it to your door.",
-        "sub": "Your Chiron is already built and waiting. We run the final quality check, pair it to your ID, and bring it to you ourselves — no carriers, no depots, no freight terminal.",
+        "sub": "Every Chiron is built to order and paired to your client ID before it leaves us. You can follow it from the day your card is etched to the day it arrives.",
         "f1_text": "Free shipping",
         "f2_text": "Delivered to your door",
-        "f3_text": "By our own staff",
+        "f3_text": "Tracked at every stage",
         "cta": "Track",
         "hint": "Enter the client ID etched on your steel card."
       }
