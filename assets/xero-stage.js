@@ -461,13 +461,49 @@
          ============================================================ */
       loadModel: async function (url) {
         var GLTF = (await import('three/addons/loaders/GLTFLoader.js')).GLTFLoader;
-        var DRACO = (await import('three/addons/loaders/DRACOLoader.js')).DRACOLoader;
         var T = await import('three');
         el.THREE = T;
         var l = new GLTF();
-        var d = new DRACO(); d.setDecoderPath('https://unpkg.com/three@0.169.0/examples/jsm/libs/draco/');
-        l.setDRACOLoader(d);
-        var gltf = await l.loadAsync(url);
+
+        /* THE DRACO DECODER IS STILL THIRD-PARTY-HOSTED, AND IT IS THE LAST ONE.
+           three.js itself was pulled off unpkg and bundled into assets/ because that CDN
+           was slow or outright blocked on mobile and the 3D bike simply never appeared
+           (the reasoning is written out in layout/theme.liquid). This path was missed by
+           that pass because the decoder is fetched by URL at runtime rather than imported
+           through a bare specifier, so it never showed up as something the import map had
+           to answer for. The three decoder files - draco_wasm_wrapper.js, draco_decoder.wasm
+           and the js fallback - should be downloaded into assets/ and this pointed at
+           asset_url like everything else; whoever has network access to fetch them should
+           do that and delete this note.
+
+           In the meantime it must not be able to take the page down. Two things make it
+           non-fatal. First, the loader is attached inside a try: if the DRACOLoader module
+           itself cannot be resolved we simply do not attach one. Second, the decoder is
+           lazy - three only fetches it when a mesh actually carries a Draco extension - so
+           if this GLB is not compressed (and the transcoded Shopify GLB most likely is
+           not) unpkg is never contacted at all and none of this matters. If it IS
+           compressed and the decoder cannot be reached, loadAsync rejects, the rejection
+           travels up to xero-model.js's .catch, and the stage keeps the 2D bike instead of
+           going blank. */
+        try {
+          var DRACO = (await import('three/addons/loaders/DRACOLoader.js')).DRACOLoader;
+          var d = new DRACO();
+          d.setDecoderPath('https://unpkg.com/three@0.169.0/examples/jsm/libs/draco/');
+          l.setDRACOLoader(d);
+        } catch (err) {
+          console.warn('[stage] DRACO decoder unavailable - an uncompressed GLB still loads, a Draco-compressed one will not', err);
+        }
+
+        var gltf;
+        try {
+          gltf = await l.loadAsync(url);
+        } catch (err) {
+          // Named explicitly because the two likely causes look identical from the outside:
+          // the GLB URL is unreachable, or it is Draco-compressed and the decoder above
+          // could not be fetched. Either way the caller falls back to the visible sprite.
+          console.error('[stage] GLB did not load - keeping the 2D bike on screen:', url, err);
+          throw err;
+        }
         var root = gltf.scene;
 
         var box = new T.Box3().setFromObject(root), size = box.getSize(new T.Vector3());
@@ -522,7 +558,19 @@
     var canvas = el('canvas', 'position:absolute;inset:0;width:100%;height:100%;display:block;');
     this.insertBefore(canvas, this.bike);
     this.canvas = canvas;
-    var r = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+    /* preserveDrawingBuffer is gone on purpose. Nothing on this page ever reads the canvas
+       back - no toDataURL, no readPixels, no screenshot or share-image path - and the flag
+       only exists to serve that. What it costs is that the browser can no longer discard
+       the drawing buffer after compositing each frame, so it keeps a second full-viewport
+       buffer alive permanently. Stacked on top of the multisampled buffer antialias already
+       allocates, on a stage that is 66svh of a phone screen at up to 1.5x pixel ratio, that
+       is one of the most dependable ways to walk mobile Safari into an out-of-memory
+       context loss - and a lost context here is exactly the blank hero we are fixing.
+
+       antialias follows the same logic: it is a nicety, it costs a whole extra buffer, and
+       on a phone the device pixel ratio is already hiding the edges it would smooth. Spend
+       it where there is memory to spend it. */
+    var r = new T.WebGLRenderer({ canvas: canvas, antialias: window.innerWidth > 900, alpha: true });
     r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
     r.outputColorSpace = T.SRGBColorSpace;
     r.toneMapping = T.ACESFilmicToneMapping;

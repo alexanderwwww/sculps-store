@@ -9,6 +9,52 @@
   <title>{{ page_title }}{% unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless %}</title>
   {%- if page_description -%}<meta name="description" content="{{ page_description | escape }}">{%- endif -%}
 
+  {%- comment -%}
+    THE IMPORT MAP MUST COME BEFORE content_for_header, AND BEFORE EVERY OTHER SCRIPT.
+
+    An import map is only honoured while no module script has started loading. The moment
+    one has, the browser refuses the map outright - "An import map is added after module
+    script load was triggered" - and from then on every bare specifier on the page fails to
+    resolve. content_for_header is where Shopify injects web pixels and app embeds, and
+    those are module scripts. While this map sat underneath content_for_header the
+    resolution of 'three' was at the mercy of whichever apps happened to be installed on
+    the store, and when it lost it took out the hero stage and the tracking globe together,
+    because both resolve three through this map - which looks exactly like the page being
+    blank. Nothing may be moved above it.
+
+    xero-stage.js resolves three and three/addons/ with bare specifiers inside its dynamic
+    import(), so the GLB path does not work at all without this. The DRACO decoder path
+    inside stage.js is pinned to the same version.
+
+    SELF-HOSTED three.js, bundled INTO THE THEME (assets/). Previously loaded from unpkg.com
+    (third-party CDN) which was slow/blocked on mobile so the 3D bike never appeared. Now the
+    four modules ship inside the theme itself and load via asset_url from whatever store the
+    theme is installed on - so the theme is portable to any account and depends on NO external
+    CDN. Minified build = ~half the size. GLTFLoader's one relative import was rewired to the
+    bare 'three/addons/utils/...' specifier so it resolves through this map.
+    (Deliberately NOT wrapped in a raw tag: the URLs come from asset_url, which needs Liquid.
+    Do not write a literal raw tag anywhere in this file, even inside a comment - Shopify's
+    theme-file validator scans for raw tags before it strips comments, so an unpaired one
+    fails the whole upload with "raw tag was never closed".)
+
+    RoomEnvironment.js is mapped because sections/xero-box.liquid imports it and nothing
+    answered for the specifier. NOTE that the file is not vendored into assets/ yet, so the
+    entry currently resolves to a 404 - which is no worse than the unresolvable specifier it
+    replaces, and that section already treats a missing RoomEnvironment as non-fatal. Drop
+    the file into assets/ and the entry starts working with no further change.
+  {%- endcomment -%}
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "{{ 'three.module.min.js' | asset_url }}",
+      "three/addons/loaders/GLTFLoader.js": "{{ 'GLTFLoader.js' | asset_url }}",
+      "three/addons/loaders/DRACOLoader.js": "{{ 'DRACOLoader.js' | asset_url }}",
+      "three/addons/utils/BufferGeometryUtils.js": "{{ 'BufferGeometryUtils.js' | asset_url }}",
+      "three/addons/environments/RoomEnvironment.js": "{{ 'RoomEnvironment.js' | asset_url }}"
+    }
+  }
+  </script>
+
   {{ content_for_header }}
 
   <link rel="stylesheet" href="{{ 'xero-theme.css' | asset_url }}">
@@ -21,35 +67,6 @@
     being asserted in several places at once. Must load after xero-fix.css.
   {%- endcomment -%}
   <link rel="stylesheet" href="{{ 'xero-pill.css' | asset_url }}">
-
-  {%- comment -%}
-    xero-stage.js resolves three and three/addons/ with bare specifiers inside its dynamic
-    import(), so the page needs an import map for the GLB path to work at all. It must be
-    parsed before the first dynamic import runs, hence head. The DRACO decoder path inside
-    stage.js is pinned to the same version.
-  {%- endcomment -%}
-  {%- comment -%}
-    SELF-HOSTED three.js, bundled INTO THE THEME (assets/). Previously loaded from unpkg.com
-    (third-party CDN) which was slow/blocked on mobile so the 3D bike never appeared. Now the
-    four modules ship inside the theme itself and load via asset_url from whatever store the
-    theme is installed on - so the theme is portable to any account and depends on NO external
-    CDN. Minified build = ~half the size. GLTFLoader's one relative import was rewired to the
-    bare 'three/addons/utils/...' specifier so it resolves through this map.
-    (Deliberately NOT wrapped in a raw tag: the URLs come from asset_url, which needs Liquid.
-    Do not write a literal raw tag anywhere in this file, even inside a comment - Shopify's
-    theme-file validator scans for raw tags before it strips comments, so an unpaired one
-    fails the whole upload with "raw tag was never closed".)
-  {%- endcomment -%}
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "{{ 'three.module.min.js' | asset_url }}",
-      "three/addons/loaders/GLTFLoader.js": "{{ 'GLTFLoader.js' | asset_url }}",
-      "three/addons/loaders/DRACOLoader.js": "{{ 'DRACOLoader.js' | asset_url }}",
-      "three/addons/utils/BufferGeometryUtils.js": "{{ 'BufferGeometryUtils.js' | asset_url }}"
-    }
-  }
-  </script>
 
   <script>
     /* Shopify serves assets from its CDN, so every path must come from Liquid.

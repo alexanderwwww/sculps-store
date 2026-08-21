@@ -105,8 +105,36 @@
     }
   }
 
-  function hideSprite(e) {
-    [e.iDay, e.iNight, e.iSeam].forEach(function (i) { if (i) { i.style.display = 'none'; i.style.opacity = '0'; } });
+  /* ==========================================================================
+     THE 3D GATE - what the visitor sees when the GLB does not arrive.
+     ==========================================================================
+     This used to be hideSprite(), called unconditionally at boot and again from the
+     patched _paintCube, and it deleted the 2D bike outright. That made an empty gradient
+     the designed outcome of every failure: a bad GLB URL, a Draco decoder that will not
+     fetch, an out-of-memory context loss on a phone - all of them produced a stage with
+     nothing in it at all, next to a working buy box. The sprite is the one thing here that
+     always renders, so it has to stay on screen until something better is genuinely up.
+
+     So: <xero-stage> carries data-3d="ok" for exactly as long as a live renderer is
+     showing the real bike, and xero-fix.css hides the sprite off that attribute. Set it
+     after the GLB has mounted; clear it the moment the context is lost or the load fails.
+     Nothing else in this file may touch the sprite's display.
+
+     Clearing also has to undo the inline display:none that stage.js's useModel(true) writes
+     onto the three <img>s, because an inline style outranks the stylesheet and would keep
+     the fallback hidden no matter what the attribute says. Rather than force them visible,
+     re-run the stage's own _paintCube: with the attribute already gone the patch below no
+     longer re-hides, so the stage decides on its own terms (still nothing in Photos view,
+     still nothing if the reference cube is ever switched on) and the cube and contact
+     shadow keep exactly the state they had. */
+  function set3D(S, on) {
+    var e = S && S.el;
+    if (!e || !e.setAttribute) return;
+    if (on) { e.setAttribute('data-3d', 'ok'); return; }
+    e.removeAttribute('data-3d');
+    if (e.canvas) e.canvas.style.display = 'none';
+    if (e._paintCube) e._paintCube();
+    else [e.iDay, e.iNight, e.iSeam].forEach(function (i) { if (i) i.style.display = ''; });
   }
 
   /* ==========================================================================
@@ -174,25 +202,56 @@
       if (rebuilding) return;
       rebuilding = true;
       try {
-        var old = e.canvas;
+        var old = e.canvas, r = e.renderer;
+
+        /* Hand the GL context back BEFORE the canvas leaves the document. Detaching a
+           canvas does not release its context - the browser holds it until garbage
+           collection gets round to it, which may be never on a phone under memory
+           pressure - so the old code leaked one live context per rebuild attempt on a
+           device that only permits a handful. That is how a single recoverable loss turned
+           into a permanently dead stage: the recovery was what exhausted the budget.
+           dispose() frees the GPU-side objects, forceContextLoss() gives up the context. */
+        if (r) {
+          try { r.dispose(); } catch (err) {}
+          try { if (r.forceContextLoss) r.forceContextLoss(); } catch (err) {}
+        }
         if (old && old.parentNode) old.parentNode.removeChild(old);
         e.canvas = null; e.renderer = null; e.scene = null; e.cam = null;
+        set3D(S, false);          // the 2D bike holds the stage for the duration
 
         if (!S.useModel(true)) { console.error('[xero] could not rebuild the 3D context'); return; }
-        hideSprite(e);
         e.setAttribute('data-model', 'on');
+        set3D(S, true);
         guardContext(S);
         if (e._frame) e._frame();
         console.info('[xero] WebGL context restored - viewer rebuilt');
       } catch (err) {
         console.error('[xero] context rebuild failed', err);
+      } finally {
+        /* Always released. This latch was set true and never cleared, so the first rebuild -
+           whether it succeeded, threw, or bailed on useModel - permanently disabled every
+           later one, and the second context loss of a session was unrecoverable. */
+        rebuilding = false;
       }
     };
 
     c.addEventListener('webglcontextlost', function (ev) {
+      /* preventDefault() is the signal that we intend to restore this context. Without it
+         webglcontextrestored is never dispatched and the canvas is dead for good, so it
+         stays first, before anything that could throw. */
       ev.preventDefault();
-      console.warn('[xero] WebGL context lost - attempting recovery');
-      setTimeout(function () { if (!e.renderer || !e.canvas) return; rebuild(); }, 1200);
+      console.warn('[xero] WebGL context lost - showing the 2D bike while we rebuild');
+      set3D(S, false);
+      setTimeout(function () {
+        /* The old guard here read `if (!e.renderer || !e.canvas) return;` - but rebuild()
+           nulls both of those as its first act, so once a rebuild had started this timer
+           could never fire again and a second loss during recovery silently did nothing.
+           Ask the question that actually matters instead: is the real bike back on screen?
+           data-3d is only present while a live renderer is mounted, and rebuild() is
+           already idempotent through its own `rebuilding` latch. */
+        if (e.getAttribute('data-3d') === 'ok') return;
+        rebuild();
+      }, 1200);
     }, false);
     c.addEventListener('webglcontextrestored', rebuild, false);
   }
@@ -208,7 +267,13 @@
     var origPaint = Stage.prototype._paintCube;
     Stage.prototype._paintCube = function () {
       origPaint.call(this);
-      hideSprite(this);          // the 2D sprite is never shown - only the 3D bike
+      /* _paintCube runs on every world, day/night and view change and restores the sprite
+         <img>s unconditionally, which would stack a flat photo on top of a live render.
+         So re-hide it - but only while the real bike is actually up. With no live 3D the
+         sprite IS the stage, and _paintCube putting it back is the correct behaviour. */
+      if (this.getAttribute('data-3d') === 'ok') {
+        [this.iDay, this.iNight, this.iSeam].forEach(function (i) { if (i) i.style.display = 'none'; });
+      }
     };
 
     Stage.prototype._render3D = function () {
@@ -355,13 +420,17 @@
 
     patchClass();
     patchView(S);
-    hideSprite(S.el);            // sprite deleted from view immediately - only the 3D bike shows
+    /* The sprite is deliberately NOT hidden here. It used to be dropped the instant this
+       file ran, seconds before the GLB had even been requested, so a slow phone showed an
+       empty stage for the whole download and an empty stage forever if the download never
+       finished. It now stays until the model is genuinely mounted, below. */
 
     S.loadModel(url).then(function () {
       if (S.el && S.el.modelSeam) { S.el.modelSeam.visible = false; if (S.el.modelSeam.parent) S.el.modelSeam.parent.remove(S.el.modelSeam); }
       normalise(S);
       S.useModel(true);
       S.el.setAttribute('data-model', 'on');
+      set3D(S, true);            // only now is there something better than the sprite to show
       guardContext(S);
       retexture(S);              // rebinds edited emissive skin if XERO_TEXTURE_URL is set
       bindOrbit(S);
@@ -370,7 +439,11 @@
       if (S.el.renderer) S.el._frame();
       console.info('[xero] 3D live - horizontal 360, autorotate on');
     }).catch(function (err) {
-      console.error('[xero] model load failed', err);
+      /* Every way the GLB pipeline can fail arrives here: the model URL, the Draco decoder,
+         three itself failing to resolve through the import map. Clearing the gate is what
+         guarantees the visitor is left with a bike photo rather than an empty gradient. */
+      set3D(S, false);
+      console.error('[xero] model load failed - staying on the 2D bike', err);
     });
   }
 

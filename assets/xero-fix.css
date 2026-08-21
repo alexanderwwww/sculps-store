@@ -66,10 +66,22 @@
    matches the sprite wrapper, which is the element _init3D() uses as its insertBefore
    anchor for the canvas. That combination took the whole 3D viewer off the page. */
 xero-stage[data-view="photos"] > canvas{ display: none !important; }
-/* The 2D bike sprite (bike-day/night/seam) is NEVER shown - only the 3D model. The
-   sprites live inside <xero-stage>; the product photos are in a sibling [data-m="photolayer"],
-   so this only removes the sprite, never the Photos images. */
-xero-stage img{ display: none !important; }
+/* The 2D bike sprite (bike-day/night/seam) is hidden ONLY while the real 3D bike is on
+   screen, and xero-model.js owns that state: it stamps data-3d="ok" once the GLB has
+   actually mounted, and clears it on webglcontextlost and on any load failure.
+
+   This rule used to be unconditional, which made BLANK the designed failure mode. The
+   sprite is the only thing in the stage that is guaranteed to render - it is two WebP
+   files - so deleting it outright meant that any wobble further down the chain (the GLB
+   URL, the third-party Draco decoder, an out-of-memory context loss on a phone) left the
+   visitor looking at an empty gradient with a price next to it. Failure has to degrade to
+   a visible bike, never to nothing.
+
+   The sprites live inside <xero-stage>; the product photos are in a sibling
+   [data-m="photolayer"], so this only removes the sprite, never the Photos images. The
+   reference cube and the drawn contact shadow are divs, not images, and are untouched by
+   this rule - they stay suppressed by the stage's own refCube / view logic. */
+xero-stage[data-3d="ok"] img{ display: none !important; }
 
 /* FIX 4: dead controls. (The autorotate button data-act="toggleSpin" is intentionally
    NOT hidden - it toggles the turntable.) */
@@ -216,12 +228,21 @@ xero-stage img{ display: none !important; }
     min-height: 22rem !important;
   }
 
-  /* pills: full row, clear of the header. Position only - size lives in xero-pill.css */
+  /* pills: full row, clear of the header. Position only - size lives in xero-pill.css.
+
+     transform:none is not cosmetic. xero-theme.css's own mobile block still carries
+     `transform:scale(.9);transform-origin:0 0` from an older layout where the pills were
+     pinned to the top-left corner and had to be shrunk to fit beside the wordmark. This
+     block replaces the position but says nothing about transform, so the .9 survived and
+     multiplied the pill's height down to roughly 18px with ~8px glyphs - legible on a
+     desktop simulator, unreadable and untappable on a real phone. The pill's own geometry
+     stays where it belongs, in xero-pill.css; all we do here is stop scaling it. */
   [data-m="ctl"]{
     left: 10px !important;
     right: 10px !important;
     top: calc(var(--xero-hdr-h) + 1rem) !important;
     gap: .4rem !important;
+    transform: none !important;
   }
   [data-m="worldcol"]{ left: 50% !important; bottom: .8rem !important; gap: .55rem !important; }
 

@@ -88,6 +88,18 @@ img{max-width:100%}
   [data-m="nav"]{background:var(--pill) !important}
   [data-m="sticky"]{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
   .shopify-section{content-visibility:auto;contain-intrinsic-size:auto 800px}
+  /* The exemption has to name the element content-visibility was applied to. Shopify wraps
+     every section in a .shopify-section div, and xero-hero.liquid declares "tag": "div",
+     so the hero's own <section data-m="hero"> is a CHILD of #shopify-section-hero. Exempting
+     only the child left the wrapper skippable: above the fold, before the browser has
+     decided the hero is on screen, it renders as the 800px intrinsic placeholder and
+     nothing else - which is a large part of what "the page is blank on mobile" looked
+     like. Kept rather than deleted because the skip is a real win on a page this long;
+     line 71's contain:layout paint style does not buy back the offscreen paint budget.
+     Two selectors on purpose, same reasoning as FIX 1 in xero-fix.css: a browser without
+     :has() drops that rule and the ID rule still lands. */
+  #shopify-section-hero{content-visibility:visible}
+  .shopify-section:has([data-m="hero"]){content-visibility:visible}
   [data-m="hero"]{content-visibility:visible}
   /* the coaster's 3D perspective forces a costly layer on mobile for no visible gain */
   [data-m="coaster"]{perspective:none}
@@ -125,7 +137,16 @@ img{max-width:100%}
   /* the drawer must clear the notch and the home indicator */
   [data-m="cartdrawer"],aside[data-screen-label="Cart"]{padding-top:env(safe-area-inset-top)}
   .shopify-section > section,.shopify-section > footer{padding-left:1.15rem !important;padding-right:1.15rem !important}
-  [data-m="hero"],[data-sec="film"],[data-sec="reviews"],[data-sec="footer"]{padding-left:0 !important;padding-right:0 !important}
+  /* The full-bleed exceptions have to out-specify the gutter rule above, not merely follow
+     it. Both sides are !important, so the cascade is decided on specificity alone, and
+     `.shopify-section > section` is (0,1,1) against a bare `[data-m="hero"]` at (0,1,0) -
+     the gutter won and the hero, the film strip, the reviews rail and the footer all kept
+     1.15rem of side padding they were explicitly written to drop. Naming the element type
+     and the parent brings each one to (0,2,1). */
+  .shopify-section > section[data-m="hero"],
+  .shopify-section > section[data-sec="film"],
+  .shopify-section > section[data-sec="reviews"],
+  .shopify-section > footer[data-sec="footer"]{padding-left:0 !important;padding-right:0 !important}
   [data-sec="gallery"]{padding-top:3.4rem !important}
   [data-sec="iphone-key"],[data-sec="breakdown"],[data-sec="ugc-faq"],[data-sec="panel"],[data-sec="delivery"]{padding-top:3.6rem !important;padding-bottom:3.6rem !important}
   .shopify-section h2{font-size:2.05rem !important;letter-spacing:-.03em !important}

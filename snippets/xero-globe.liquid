@@ -11,6 +11,15 @@
     2. The camera distance is now SOLVED from the viewport instead of guessed,
        fitting the sphere in whichever axis is tighter, so the container can
        never crop the globe at any aspect ratio.
+    3. On a phone this globe is the SECOND WebGL context on the page - the hero
+       stage owns the first one. Mobile browsers cap how many live contexts they
+       will keep, and the usual policy is to evict the oldest, so scrolling far
+       enough to build the globe could silently kill the hero's renderer behind
+       you. A decorative globe is not worth the product. Below the breakpoint,
+       or on a device that reports very little memory, this draws a flat
+       still-frame version of the same map into the same canvas with the 2D
+       context instead: same coastlines, same route, no GL context, no render
+       loop. Desktop is unchanged.
 {%- endcomment -%}
 
 <script type="module">
@@ -31,10 +40,144 @@ function latLonToVec(lat, lon, r = R){
   );
 }
 
+/* Rows/step/hex radius are shared by both renderers so the flat version is the same map,
+   not a different one that happens to look similar. */
+const ROWS  = 118;
+const STEP  = 180 / ROWS;
+const HEX_R = (Math.PI / ROWS) * 0.60;
+
+/* One WebGL context is the hero's, and it is the one that matters. A phone will happily
+   hand out a second, then reclaim the first when it needs the memory back, and the visitor
+   scrolls back up to a dead stage. deviceMemory is only reported by Chromium, so the
+   viewport width does most of the work here and the memory check is a bonus for the wide
+   low-end tablets the breakpoint misses. */
+function wantsWebGL(){
+  if (window.innerWidth <= 900) return false;
+  if (navigator.deviceMemory && navigator.deviceMemory <= 4) return false;
+  return true;
+}
+
+/* The still frame. Same coastline data, same route, same framing maths - drawn once into
+   the 2D context of the same canvas. No GL context, no requestAnimationFrame, so it costs
+   the phone one paint and then nothing at all. Redraws on resize only. */
+function flatGlobe(host, canvas, origin, dest, progress){
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return { hexCount: 0 };
+
+  const land = [];
+  for (let r = 0; r < ROWS; r++){
+    const lat  = 90 - (r + 0.5) * STEP;
+    const circ = Math.cos(lat * Math.PI / 180);
+    if (circ <= 0.015) continue;
+    const cols = Math.max(3, Math.round(ROWS * 2 * circ));
+    const off  = (r % 2) ? 0.5 : 0;
+    for (let c = 0; c < cols; c++){
+      const lon = -180 + ((c + off) / cols) * 360;
+      if (isLand(lat, lon)) land.push(latLonToVec(lat, lon, R * 1.004));
+    }
+  }
+
+  const oV = latLonToVec(origin.lat, origin.lon, R * 1.012);
+  const dV = latLonToVec(dest.lat,   dest.lon,   R * 1.012);
+  const mid = oV.clone().add(dV).multiplyScalar(.5).normalize()
+                .multiplyScalar(R + oV.distanceTo(dV) * .4);
+  const arc = [];
+  for (let i = 0; i <= 180; i++){
+    const t = i / 180, u = 1 - t;
+    arc.push(new THREE.Vector3(
+      u*u*oV.x + 2*u*t*mid.x + t*t*dV.x,
+      u*u*oV.y + 2*u*t*mid.y + t*t*dV.y,
+      u*u*oV.z + 2*u*t*mid.z + t*t*dV.z
+    ));
+  }
+
+  // the settled orientation the animated globe eases to: destination facing the viewer
+  const ry = -Math.atan2(dV.x, dV.z), rx = 0.08;
+  const cy_ = Math.cos(ry), sy_ = Math.sin(ry), cx_ = Math.cos(rx), sx_ = Math.sin(rx);
+  // three applies XYZ euler order, so the group's own rotation is Rx * Ry
+  function view(p){
+    const x =  p.x * cy_ + p.z * sy_;
+    const z = -p.x * sy_ + p.z * cy_;
+    return { x: x, y: p.y * cx_ - z * sx_, z: p.y * sx_ + z * cx_ };
+  }
+
+  function paint(){
+    const b = host.getBoundingClientRect();
+    const w = Math.max(b.width, 1), h = Math.max(b.height, 1);
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const k = (Math.min(w, h) / 2) / (RIM * PAD);   // same fit rule as the GL camera
+    const ox = w / 2, oy = h / 2;
+    const sx = p => ox + p.x * k, sy = p => oy - p.y * k;
+
+    ctx.fillStyle = '#14161f';
+    ctx.beginPath();
+    ctx.arc(ox, oy, R * 0.988 * k, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#c3c6d6';
+    ctx.beginPath();
+    for (let i = 0; i < land.length; i++){
+      const p = view(land[i]);
+      if (p.z <= 0) continue;                       // far hemisphere
+      // foreshorten toward the limb so the disc does not end in a hard ring of full-size cells
+      const rr = HEX_R * k * (0.3 + 0.7 * p.z);
+      const px = sx(p), py = sy(p);
+      for (let a = 0; a < 6; a++){
+        const th = a * Math.PI / 3;
+        const qx = px + Math.cos(th) * rr, qy = py + Math.sin(th) * rr;
+        if (a === 0) ctx.moveTo(qx, qy); else ctx.lineTo(qx, qy);
+      }
+      ctx.closePath();
+    }
+    ctx.fill();
+
+    const stroke = (from, to, style, width) => {
+      ctx.strokeStyle = style; ctx.lineWidth = width; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      let pen = false;
+      for (let i = from; i <= to; i++){
+        const p = view(arc[i]);
+        if (p.z <= 0){ pen = false; continue; }     // behind the globe
+        const px = sx(p), py = sy(p);
+        if (pen) ctx.lineTo(px, py); else { ctx.moveTo(px, py); pen = true; }
+      }
+      ctx.stroke();
+    };
+    stroke(0, 180, 'rgba(198,139,255,.18)', 1.4);
+    stroke(0, Math.round(180 * progress), 'rgba(198,139,255,.95)', 1.8);
+
+    const dot = (v, style, rad) => {
+      const p = view(v);
+      if (p.z <= 0) return;
+      ctx.fillStyle = style;
+      ctx.beginPath(); ctx.arc(sx(p), sy(p), rad * k, 0, Math.PI * 2); ctx.fill();
+    };
+    const dp = view(dV);
+    if (dp.z > 0){
+      ctx.strokeStyle = 'rgba(255,122,224,.55)'; ctx.lineWidth = .012 * k;
+      ctx.beginPath(); ctx.arc(sx(dp), sy(dp), .034 * k, 0, Math.PI * 2); ctx.stroke();
+    }
+    dot(oV, '#ffffff', .015);
+    dot(dV, '#ff7ae0', .022);
+  }
+
+  paint();
+  addEventListener('resize', paint);
+  if (window.ResizeObserver) new ResizeObserver(paint).observe(host);
+  return { hexCount: land.length, flat: true };
+}
+
 window.XeroGlobe = function(host, canvas, opts){
   const origin   = opts.origin;
   const dest     = opts.dest;
   const progress = Math.max(.02, Math.min(1, opts.progress == null ? .5 : opts.progress));
+
+  if (!wantsWebGL()) return flatGlobe(host, canvas, origin, dest, progress);
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -54,11 +197,8 @@ window.XeroGlobe = function(host, canvas, opts){
   ocean.renderOrder = 0;
   world.add(ocean);
 
-  /* hexagon landmass */
-  const ROWS  = 118;
-  const STEP  = 180 / ROWS;
-  const HEX_R = (Math.PI / ROWS) * 0.60;
-
+  /* hexagon landmass (ROWS / STEP / HEX_R are module-level now - the flat renderer
+     above builds the same grid from them) */
   const geo  = new THREE.CircleGeometry(HEX_R, 6);
   const mats = [];
   const m = new THREE.Matrix4(), q = new THREE.Quaternion();
