@@ -29,26 +29,24 @@
     stage.js is pinned to the same version.
   {%- endcomment -%}
   {%- comment -%}
-    SELF-HOSTED three.js. Previously loaded from unpkg.com (a third-party CDN); on mobile
-    networks that dependency was slow or blocked, so the 3D bike never appeared. All three
-    modules now live on Shopify's own Files CDN (fast, same infrastructure as the store,
-    served with the correct text/javascript MIME + CORS). Minified build = ~half the size.
-    GLTFLoader's one relative import was rewired to the bare 'three/addons/utils/...'
-    specifier so it resolves through this map. Zero external CDNs at runtime.
-    To upgrade three: re-upload the four files to Files and swap the URLs (bump ?v=).
+    SELF-HOSTED three.js, bundled INTO THE THEME (assets/). Previously loaded from unpkg.com
+    (third-party CDN) which was slow/blocked on mobile so the 3D bike never appeared. Now the
+    four modules ship inside the theme itself and load via asset_url from whatever store the
+    theme is installed on - so the theme is portable to any account and depends on NO external
+    CDN. Minified build = ~half the size. GLTFLoader's one relative import was rewired to the
+    bare 'three/addons/utils/...' specifier so it resolves through this map.
+    (Not in {% raw %}: the URLs come from asset_url, which needs Liquid.)
   {%- endcomment -%}
-  {%- raw -%}
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/three.module.min.js?v=1787259569",
-      "three/addons/loaders/GLTFLoader.js": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/GLTFLoader.js?v=1787259699",
-      "three/addons/loaders/DRACOLoader.js": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/DRACOLoader.js?v=1787259699",
-      "three/addons/utils/BufferGeometryUtils.js": "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/BufferGeometryUtils.js?v=1787259698"
+      "three": "{{ 'three.module.min.js' | asset_url }}",
+      "three/addons/loaders/GLTFLoader.js": "{{ 'GLTFLoader.js' | asset_url }}",
+      "three/addons/loaders/DRACOLoader.js": "{{ 'DRACOLoader.js' | asset_url }}",
+      "three/addons/utils/BufferGeometryUtils.js": "{{ 'BufferGeometryUtils.js' | asset_url }}"
     }
   }
   </script>
-  {%- endraw -%}
 
   <script>
     /* Shopify serves assets from its CDN, so every path must come from Liquid.
@@ -122,10 +120,14 @@
     it is the cache key.
   {%- endcomment -%}
   <script>
+    /* GLB stays a CDN URL: Shopify does NOT allow .glb as a theme asset, so the 3D model
+       cannot travel inside the theme. On a NEW account, re-upload the GLB to that store's
+       Content > Files (or the product's 3D media) and paste its URL here. This URL is public
+       and will keep working as long as the original store's files exist. */
     window.XERO_MODEL_URL = "https://cdn.shopify.com/3d/models/o/ffa775409b18ef79/XERO_Chiron.glb";
-    /* Final edited skin, rebound onto the model's emissiveMap by xero-model.js.
-       Set to "" to fall back to the GLB's own baked map. */
-    window.XERO_TEXTURE_URL = "https://cdn.shopify.com/s/files/1/1011/2742/2336/files/xero-skin-final.jpg?v=1787239994";
+    /* Final edited skin - now bundled INTO THE THEME (assets/), so it is portable and needs
+       no external CDN. Set to "" to fall back to the GLB's own baked map. */
+    window.XERO_TEXTURE_URL = "{{ 'xero-skin-final.jpg' | asset_url }}";
   </script>
 </body>
 </html>
