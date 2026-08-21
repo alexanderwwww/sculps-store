@@ -19,10 +19,15 @@
     {%- comment -%} compact globe {%- endcomment -%}
     <div data-m="miniglobe" style="position:relative;width:100%;max-width:22rem;aspect-ratio:1/1;margin-inline:auto;">
       <canvas data-m="minicanvas" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
-      <div style="position:absolute;left:0;top:0;display:flex;align-items:center;gap:.45rem;padding:.34rem .7rem;border-radius:.9rem;background:rgba(14,14,20,.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);font:600 .62rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;color:#a9aab2;">
-        <span style="width:.4rem;height:.4rem;border-radius:50%;background:#c68bff;box-shadow:0 0 0 0 rgba(198,139,255,.7);animation:xmpulse 2s infinite;"></span> LIVE
-      </div>
-      <div style="position:absolute;left:0;bottom:0;font:600 .6rem/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:#6d6e77;">SHIPPING FROM<br><b style="color:#a9aab2;font-weight:600;">NEVADA, USA</b></div>
+      {%- comment -%}
+        The pulsing "LIVE" chip and the "SHIPPING FROM NEVADA, USA" label were both
+        removed, and they must not come back. The globe's arc is decoration drawn from
+        hardcoded coordinates - there is no live shipment behind it. Labelling static
+        artwork as live fulfilment activity on a store with no orders is fabricated
+        trading history, and naming a dispatch country the business does not operate
+        from is a KYC misrepresentation that fails payment underwriting outright.
+        If you ever want an origin label here, it has to be the real one.
+      {%- endcomment -%}
     </div>
 
     {%- comment -%} copy + fast track {%- endcomment -%}
@@ -112,8 +117,11 @@
       made = true; obs.disconnect();
       try{
         window.XeroGlobe(host, cv, {
-          origin: { lat: 39.53, lon: -119.81 },   // Nevada
-          dest:   { lat: 40.71, lon: -74.01 },    // representative US destination
+          // Decorative arc only. These two points and the progress value are not a
+          // shipment and must never be labelled as one in the markup above - see the
+          // comment where the origin caption used to be.
+          origin: { lat: 39.53, lon: -119.81 },
+          dest:   { lat: 40.71, lon: -74.01 },
           progress: 0.62
         });
       }catch(e){}

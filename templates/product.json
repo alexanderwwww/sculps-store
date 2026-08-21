@@ -21,10 +21,6 @@
       "type": "xero-breakdown",
       "settings": {}
     },
-    "reviews": {
-      "type": "xero-reviews",
-      "settings": {}
-    },
     "footer": {
       "type": "xero-footer",
       "settings": {}
@@ -34,7 +30,6 @@
     "hero",
     "gallery",
     "breakdown",
-    "reviews",
     "footer"
   ]
 }

@@ -146,13 +146,17 @@
     <h1 style="margin:0;font-size:2.94rem;font-weight:700;letter-spacing:-.032em;line-height:1.02;color:var(--txt,#0e0e0e);">{{ product.title | default: section.settings.title }}</h1>
     <p style="margin:.52rem 0 0;font-size:1.31rem;font-weight:400;letter-spacing:-.015em;color:var(--txt2,#55565c);">{{ section.settings.subtitle }}</p>
 
-    <div style="margin-top:.9rem;flex:0 0 auto;display:flex;align-items:center;gap:.85rem;font-size:.94rem;">
-      <span style="display:inline-flex;gap:.1em;font-size:1rem;line-height:1;color:var(--txt,#0e0e0e);">★★★★<span style="position:relative;display:inline-block;color:var(--txt3,#b7b8bd);">★<span style="position:absolute;left:0;top:0;width:50%;overflow:hidden;color:var(--txt,#0e0e0e);">★</span></span></span>
-      <a href="#reviews" data-act="goReviews" style="text-decoration:underline;text-underline-offset:.18em;color:var(--txt,#0e0e0e);font-weight:450;">42 reviews</a>
-      <span style="width:1px;height:.95rem;background:var(--hair,rgba(0,0,0,.12));"></span>
-      <span style="display:inline-flex;align-items:center;gap:.42rem;color:var(--txt,#0e0e0e);font-weight:450;"><span style="width:.5rem;height:.5rem;border-radius:50%;background:var(--ok,#2fb14e);"></span>In stock</span>
-    </div>
-    <p style="margin:.72rem 0 0;font-size:.94rem;color:var(--txt2,#55565c);">{{ section.settings.ships_in }}</p>
+    {%- comment -%}
+      A hardcoded 4.5-star rating, a "42 reviews" link and an "In stock" pip used to sit
+      here. All three were untrue and all three are the kind of thing a payment
+      underwriter opens the page specifically to look for: a store with no orders
+      showing an aggregate rating is fabricated social proof, and asserting on-hand
+      inventory of a machine that is built to order invites a demand for a supplier
+      invoice you cannot produce. The review link was also dead - the reviews section
+      is no longer on any template. Do not restore any of it without real orders and
+      real reviews behind it.
+    {%- endcomment -%}
+    <p style="margin:.9rem 0 0;font-size:.94rem;color:var(--txt2,#55565c);">{{ section.settings.ships_in }}</p>
 
     <div data-ref="priceRef" style="margin-top:.85rem;flex:0 0 auto;display:flex;align-items:flex-start;font-size:2.75rem;font-weight:700;letter-spacing:-.035em;line-height:1;color:var(--txt,#0e0e0e);">
       <span>$</span>
