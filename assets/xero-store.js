@@ -241,8 +241,17 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ items: items })
-    }).then(function () { location.href = R.checkout; })
-      .catch(function () { location.href = R.checkout; });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('cart/add failed: ' + r.status);
+      location.href = R.checkout;
+    })
+      /* Previously this navigated to checkout from the .catch as well, so a failed
+         cart/add sent the buyer to an empty or stale checkout with no idea their item
+         had not been added. On a $4,999 order that is the worst possible silent failure. */
+      .catch(function (err) {
+        console.error('[xero] could not start checkout', err);
+        alert('Sorry - we could not start your checkout just then. Please try again, or email us and we will take the order by hand.');
+      });
   }
 
   function renderCart() {

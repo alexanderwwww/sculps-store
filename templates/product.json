@@ -2,7 +2,15 @@
   "sections": {
     "hero": {
       "type": "xero-hero",
-      "settings": {}
+      "settings": {
+        "product": "xero-chiron",
+        "addon_key": "wireless-key-nfc-pebble",
+        "title": "XERO Chiron.",
+        "subtitle": "Design targets: 980 Nm · 120 km/h",
+        "ships_in": "Concept in development. Estimated first deliveries 4-6 weeks from order - an estimate, not a guaranteed date. Cancel any time before dispatch for a full refund.",
+        "finance_line": "",
+        "points": "Built to order and paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
+      }
     },
     "gallery": {
       "type": "xero-gallery",

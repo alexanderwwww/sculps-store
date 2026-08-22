@@ -27,7 +27,7 @@
       </span>
     </div>
     <div style="position:relative;z-index:1;width:1px;height:2.1rem;background:var(--hair,rgba(0,0,0,.1));flex:0 0 auto;"></div>
-    <button data-x="xh6 xh1" data-act="addToCart" style="position:relative;z-index:1;flex:0 0 auto;height:2.85rem;padding:0 1.4rem;border-radius:1.43rem;background:#3a82fb;color:#fff;font-size:.98rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Add to cart</button>
+    <button data-x="xh6 xh1" data-act="addToCart" style="position:relative;z-index:1;flex:0 0 auto;height:2.85rem;padding:0 1.4rem;border-radius:1.43rem;background:#3a82fb;color:#fff;font-size:.98rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Reserve</button>
     <button data-x="xh3 xh1" data-act="toggleCart" style="position:relative;flex:0 0 auto;width:2.85rem;height:2.85rem;border-radius:50%;background:linear-gradient(180deg,var(--gloss,rgba(255,255,255,.46)),rgba(255,255,255,0) 46%,var(--glow,rgba(255,255,255,.22))),var(--pill,rgba(255,255,255,.82));border:1px solid var(--pill-b,rgba(0,0,0,.05));box-shadow:inset 0 1px 0 var(--sheen,rgba(255,255,255,.88)),inset 0 -1px 0 var(--glow,rgba(255,255,255,.22));display:flex;align-items:center;justify-content:center;transition:transform .3s cubic-bezier(.28,.11,.32,1);" aria-label="Open cart">
       <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="var(--txt,#0e0e0e)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 6.2h6.8l.9 8.1H4.7l.9-8.1z"></path><path d="M6.9 6.2V4.6a2.1 2.1 0 0 1 4.2 0v1.6"></path></svg>
       <span style="position:absolute;top:-.1rem;right:-.1rem;min-width:1.15rem;height:1.15rem;padding:0 .28rem;border-radius:.6rem;background:#005df9;color:#fff;font-size:.66rem;font-weight:700;display:flex;align-items:center;justify-content:center;transform:scale(var(--badge,0));transition:transform .34s cubic-bezier(.28,.11,.32,1);"><span data-bind="cartCount"></span></span>
@@ -39,7 +39,7 @@
       <div style="font-size:1rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">XERO Chiron.</div>
       <div style="font-size:.88rem;color:var(--txt2,#55565c);"><span data-bind="selectedPriceText"></span></div>
     </div>
-    <button data-act="buyNow" style="height:2.9rem;padding:0 1.5rem;border-radius:1.45rem;background:#3a82fb;color:#fff;font-size:1rem;font-weight:600;">Buy now</button>
+    <button data-act="buyNow" style="height:2.9rem;padding:0 1.5rem;border-radius:1.45rem;background:#3a82fb;color:#fff;font-size:1rem;font-weight:600;">Reserve now</button>
   </div>
 
   <div data-act="closeAll" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.34);opacity:var(--scrim,0);pointer-events:var(--scrim-pe,none);transition:opacity .36s cubic-bezier(.28,.11,.32,1);"></div>
@@ -79,7 +79,15 @@
     </div>
     <div style="padding:1.2rem 1.4rem calc(1.4rem + env(safe-area-inset-bottom));border-top:1px solid var(--hair,rgba(0,0,0,.08));">
       <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:600;color:var(--txt,#0e0e0e);"><span>Subtotal</span><span><span data-bind="cartTotalText"></span></span></div>
-      <p style="margin:.3rem 0 .95rem;font-size:.82rem;color:var(--txt2,#55565c);">Taxes and duties calculated at checkout. Free shipping.</p>
+      <p style="margin:.3rem 0 .35rem;font-size:.82rem;color:var(--txt2,#55565c);">Taxes and duties calculated at checkout. Free shipping.</p>
+      {%- comment -%}
+        The lead time has to appear on the last screen before payment. It was stated in
+        the hero and nowhere else, and buyNow() goes straight from the mini bar to
+        Shopify checkout - so a buyer could reach the payment sheet having never seen
+        it. Disclosing a deferred delivery only on a page the buyer may skip is the
+        omission that turns a late shipment into a chargeback the merchant loses.
+      {%- endcomment -%}
+      <p style="margin:0 0 .95rem;font-size:.8rem;line-height:1.45;color:var(--txt2,#55565c);">The Chiron is a concept machine in development. Estimated first deliveries 4&ndash;6 weeks from order &mdash; an estimate, not a guaranteed date. Cancel any time before dispatch for a full refund.</p>
       <button data-x="xh1" data-act="buyNow" style="width:100%;height:3.3rem;border-radius:1.65rem;background:#3a82fb;color:#fff;font-size:1.08rem;font-weight:600;">Checkout</button>
     </div>
   </aside>

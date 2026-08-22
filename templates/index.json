@@ -36,8 +36,9 @@
         "addon_key": "wireless-key-nfc-pebble",
         "title": "XERO Chiron.",
         "subtitle": "Design targets: 980 Nm · 120 km/h",
-        "ships_in": "Concept in development · ships in 4-6 weeks",
-        "finance_line": ""
+        "ships_in": "Concept in development. Estimated first deliveries 4-6 weeks from order - an estimate, not a guaranteed date. Cancel any time before dispatch for a full refund.",
+        "finance_line": "",
+        "points": "Built to order and paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
       }
     },
     "gallery": {
@@ -74,18 +75,18 @@
       "type": "xero-antitheft",
       "settings": {
         "kicker": "SECURITY",
-        "heading": "Stealing it is easy. Riding it is impossible.",
-        "sub": "Anyone can lift a 104 kg bike into a van. Nobody can start one that has never met their phone.",
+        "heading": "Easy to lift. Designed to be useless to a thief.",
+        "sub": "Anyone can lift a 104 kg bike into a van. Design intent: the bike is claimed to one phone by your steel card and does not wake for any other device.",
         "lock1_title": "Paired to one phone",
         "lock1_body": "Your steel card claims the bike once, to you. From then on it wakes for your iPhone and refuses every other device.",
         "lock2_title": "No key to copy",
         "lock2_body": "There is no barrel, no blade and no fob to clone. There is nothing on the machine to pick, drill or hotwire.",
         "lock3_title": "Dead without you",
-        "lock3_body": "Cut the loom and it still will not move. The controller stays locked until it sees the paired device, exactly like your phone in a stranger's hand.",
-        "find_icon": "shopify://shop_images/icon_findmy.png",
-        "find_title": "And you always know where it is.",
-        "find_body": "Pair it once, the way you pair earbuds. The Chiron reports its position to your iPhone, so a stolen bike is a tracked bike.",
-        "payoff": "Take it. It will never be yours."
+        "lock3_body": "The design puts the lock in the controller rather than in a barrel, so cutting the loom is not intended to defeat it. Design intent for a machine in development, not a tested security rating.",
+        "find_icon": "",
+        "find_title": "Designed to tell you where it is.",
+        "find_body": "Planned: the Chiron reports its position to the companion app, so a stolen bike is a tracked bike. The app is in development and is not available at launch - location reporting is a design goal, not a feature you can use the day the bike arrives.",
+        "payoff": "Designed to be worthless to anyone but you."
       }
     },
     "box": {
@@ -136,8 +137,8 @@
         "s4_label": "0–60 KM/H (TARGET)",
         "s5_value": "104 kg",
         "s5_label": "ALL IN (TARGET)",
-        "s6_value": "0",
-        "s6_label": "SCHEDULED SERVICE (TARGET)"
+        "s6_value": "No oil or chain",
+        "s6_label": "BY DESIGN"
       }
     },
     "film2": {
@@ -153,7 +154,7 @@
         "eyebrow": "",
         "heading": "Out of the trailer. Into the night.",
         "vibe_a": "shopify://shop_images/hf_20260816_123238_efb42158-bd79-4626-9c3b-4359cbb14621.png",
-        "cap_a": "DELIVERED IN PERSON",
+        "cap_a": "OUT OF THE TRAILER",
         "vibe_b": "shopify://shop_images/vibe_ride.jpg",
         "cap_b": "FIRST RIDE"
       }
@@ -163,7 +164,7 @@
       "settings": {
         "kicker": "ALWAYS IN THE LOOP",
         "heading": "Updates and notifications at every step.",
-        "sub": "From the moment your card is etched to the minute the van turns into your street. Build, quality check, dispatch, and the driver three minutes out — it all lands on your phone."
+        "sub": "From the moment your card is etched to the day your bike arrives. Build, quality check, dispatch and delivery updates land on your phone."
       }
     },
     "ugc-faq": {
@@ -215,28 +216,28 @@
           "type": "qa",
           "settings": {
             "q": "What if someone tries to take it?",
-            "a": "It stays locked, the same way your phone does in somebody else's hand. Without the paired device it will not start, and you can see where it is from your iPhone."
+            "a": "It stays locked, the same way your phone does in somebody else's hand. Without the paired device it will not start, and you can see where it is from your iPhone. Location reporting is planned for the companion app and is not available yet."
           }
         },
         "q8": {
           "type": "qa",
           "settings": {
             "q": "What comes with it?",
-            "a": "The bike, its charger, the wireless key and your steel owner card. At checkout you can add a spare wireless key, and you can choose the configuration that includes ten years of replacement cover."
+            "a": "The bike, its charger, the wireless key and your steel owner card. At checkout you can add a spare wireless key, and you can choose the configuration that includes a ten-year replacement term."
           }
         },
         "q9": {
           "type": "qa",
           "settings": {
             "q": "What is 10-Year Replacement?",
-            "a": "A second configuration of the bike rather than an add-on. Choose it at checkout and for ten years from delivery we replace the whole machine rather than repair it. Full terms are on the refund and terms pages."
+            "a": "A second configuration of the bike rather than an add-on. Choose it at checkout and for ten years from delivery we replace the whole machine rather than repair it. Full terms are on the refund and terms pages. It is not insurance and is not underwritten by an insurer; it is an extended replacement term offered by us directly."
           }
         },
         "q10": {
           "type": "qa",
           "settings": {
             "q": "When does it ship?",
-            "a": "Four to six weeks. Your key case arrives days before the bike does, and you can follow the build the whole way from the tracking page."
+            "a": "An estimate, not a guaranteed date: four to six weeks. Your key case arrives days before the bike does, and you can cancel for a full refund any time before dispatch."
           }
         },
         "q11": {
@@ -250,7 +251,7 @@
           "type": "qa",
           "settings": {
             "q": "What servicing does it need?",
-            "a": "None scheduled. No oil, no chain, no filters, no valve clearances. Tyres and brake pads."
+            "a": "No oil, no chain, no filters and no valve clearances by design. A full service schedule will be published before the first deliveries; tyres, brake pads and battery care are the owner’s responsibility."
           }
         }
       },
@@ -335,9 +336,9 @@
       ],
       "settings": {
         "theme": "dark",
-        "kicker": "OWNERS",
-        "title": "From the camera roll.",
-        "subtitle": "",
+        "kicker": "THE CHIRON",
+        "title": "Concept imagery.",
+        "subtitle": "Design visualisations of a machine in development. Not photographs of a production bike or of a customer machine.",
         "show_dots": true,
         "scroll_span": 58
       }
@@ -358,7 +359,7 @@
         "sub": "Every Chiron is built to order and paired to your client ID before it leaves us. You can follow it from the day your card is etched to the day it arrives.",
         "f1_text": "Free shipping",
         "f2_text": "Delivered to your door",
-        "f3_text": "Tracked at every stage",
+        "f3_text": "Updates at every stage",
         "cta": "Track",
         "hint": "Enter the client ID etched on your steel card."
       }
@@ -367,7 +368,7 @@
       "type": "xero-footer",
       "settings": {
         "news_heading": "Get the launch drop.",
-        "news_body": "Build slots, ride days, and the first film. Nothing else.",
+        "news_body": "Launch updates, ride days, and the first film. Nothing else.",
         "ticker": "RIDE TO THE STARS",
         "socials": "",
         "tagline": "Designed on Earth. Tested elsewhere.",
