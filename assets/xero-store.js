@@ -208,7 +208,10 @@
 
   function fetchCart() {
     return fetch(R.cart, { headers: { 'Accept': 'application/json' } })
-      .then(function (r) { return r.json(); }).then(readCart)
+      .then(function (r) {
+        if (!r.ok) throw new Error('cart read ' + r.status);
+        return r.json();
+      }).then(readCart)
       .catch(function (e) { console.warn('[xero] cart read failed', e); });
   }
 
@@ -291,6 +294,10 @@
       .catch(function (e) {
         cartError('Could not add to cart: ' + (e && e.message ? e.message : 'unknown error') +
                   ' [variant ' + items[0].id + '] Please try again, or email us and we will take the order by hand.');
+        /* Show the cart as it actually is. If the refusal is because this item is
+           already in the cart at its limit, the drawer is the proof; if the cart is
+           truly empty, the mismatch is now visible instead of invisible. */
+        fetchCart().then(function () { S.cartOpen = true; paint(); });
       });
   }
 
@@ -299,8 +306,14 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ id: key, quantity: qty })
-    }).then(function (r) { return r.json(); }).then(readCart)
-      .catch(function (e) { console.warn('[xero] change failed', e); });
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (b) {
+        var d = null; try { d = JSON.parse(b); } catch (x) {}
+        throw new Error((d && (d.description || d.message)) || ('cart change ' + r.status));
+      });
+      return r.json();
+    }).then(readCart)
+      .catch(function (e) { cartError('Could not update the cart: ' + e.message); });
   }
 
   function buyNow() {
@@ -311,7 +324,10 @@
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ items: items })
     }).then(function (r) {
-      if (!r.ok) throw new Error('cart/add failed: ' + r.status);
+      if (!r.ok) return r.text().then(function (b) {
+        var d = null; try { d = JSON.parse(b); } catch (x) {}
+        throw new Error((d && (d.description || d.message)) || ('cart/add ' + r.status));
+      });
       location.href = R.checkout;
     })
       /* Previously this navigated to checkout from the .catch as well, so a failed
