@@ -123,7 +123,9 @@
     var payWrap = document.querySelector('[data-m="paybtn"]');
     if (payWrap) payWrap.style.opacity = anyAddon ? '.32' : '1';
     var note = document.querySelector('[data-ref="payNote"]');
-    if (note) note.hidden = !anyAddon;
+    /* Never hide a cart error - paint() runs on every state change and would swallow
+       the one message telling the shopper why nothing happened. */
+    if (note && !note.hasAttribute('data-cart-error')) note.hidden = !anyAddon;
     // overlays
     set('--cart', S.cartOpen ? '1' : '0');
     set('--cart-pe', S.cartOpen ? 'auto' : 'none');
@@ -213,13 +215,31 @@
   /* Surfaces a cart failure to the shopper instead of leaving them with a cart that
      silently stayed empty. Uses the buy box's own note element when it is on the page
      so the message lands where the shopper is already looking; falls back to alert. */
+  var NOTE_DEFAULT = null;
+
+  function noteEl() { return document.querySelector('[data-ref="payNote"]'); }
+
+  /* Clear any previous failure before a new attempt, so a stale message can never
+     outlive the problem it described. The original copy is captured once and put
+     back, because paint() owns this element the rest of the time. */
+  function cartErrorClear() {
+    var note = noteEl();
+    if (!note) return;
+    if (NOTE_DEFAULT === null) NOTE_DEFAULT = note.textContent;
+    note.textContent = NOTE_DEFAULT;
+    note.style.color = '';
+    note.removeAttribute('data-cart-error');
+  }
+
   function cartError(msg) {
     console.error('[xero] cart', msg);
-    var note = document.querySelector('[data-ref="payNote"]');
+    var note = noteEl();
     if (note) {
+      if (NOTE_DEFAULT === null) NOTE_DEFAULT = note.textContent;
       note.hidden = false;
       note.textContent = msg;
       note.style.color = '#e5484d';
+      note.setAttribute('data-cart-error', '1');
       return;
     }
     alert(msg);
@@ -232,6 +252,11 @@
       cartError('This product is not connected to the page yet. Assign a product to the stage section in the theme editor.');
       return;
     }
+    cartErrorClear();
+    /* Printed so a failure can be diagnosed from the console without guessing which
+       variant the page actually holds - a stale or wrong id looks identical to an
+       inventory problem from the outside. */
+    console.info('[xero] add to cart', JSON.stringify(items), 'route', R.cartAdd);
     flyToCart();
     fetch(R.cartAdd, {
       method: 'POST',
@@ -265,7 +290,7 @@
       .then(function () { S.cartOpen = true; paint(); })
       .catch(function (e) {
         cartError('Could not add to cart: ' + (e && e.message ? e.message : 'unknown error') +
-                  ' Please try again, or email us and we will take the order by hand.');
+                  ' [variant ' + items[0].id + '] Please try again, or email us and we will take the order by hand.');
       });
   }
 
