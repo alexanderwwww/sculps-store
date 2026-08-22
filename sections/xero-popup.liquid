@@ -1,389 +1,41 @@
 {%- comment -%}
-  xero-popup.liquid - the session-open banner.
+  XERO popup — DELIBERATELY EMPTY. Retired at the owner's request.
 
-  Opens once per browser session, 2s after load, desktop and mobile alike. The layout is
-  real HTML/CSS over a photo rather than a flat exported JPEG, so the type stays sharp at
-  every density, the copy is editable from the theme editor, and one image serves both
-  orientations instead of needing a separate desktop and mobile export.
+  This section rendered a full-screen entry banner over a photo, once per
+  browser session, with an auto-close timer. It is gone. Do not restore it
+  without being asked.
 
-  THE PHOTO. Two independent sources, in order:
-    1. `bg`          an image_picker, set from the theme editor. Preferred.
-    2. `bg_filename` the plain filename of something in Content > Files, resolved with
-                     file_url. This exists because a shopify:// reference written into
-                     templates/index.json by hand does not always resolve at render time,
-                     and when it comes back blank the card renders as black with white
-                     text and no picture - which is exactly what it did. file_url takes a
-                     literal filename and needs nothing to resolve, so it always works.
-  If both are empty the card still renders on its gradient; it just has no photo.
+  The file stays because the Admin API cannot delete theme files, only
+  overwrite them, and because `popup` is still listed in the homepage
+  template's section order - an empty section renders nothing and is
+  harmless there, whereas a missing section type is an error. The preset is
+  removed too, so it can no longer be added from the theme editor.
 
-  The image is loaded eagerly on purpose. It is a 2s-delayed overlay, so by the time it
-  is shown it must already be decoded - a lazy image inside a hidden container is exactly
-  the wrong trade here.
+  Two things about the old behaviour, recorded because they caused real
+  confusion and would cause it again:
 
-  CONTAINMENT: the root element is fixed-position and is the section's only child. See
-  FIX 1 in xero-fix.css - a .shopify-section wrapper with `contain:paint` becomes the
-  containing block AND the clipping box for fixed descendants, which collapses a section
-  like this one to nothing. Both the `#shopify-section-popup` id rule and the
-  `:has(> [data-xero-popup])` rule there cover it. Do not rename data-xero-popup.
+  1. In the THEME EDITOR the popup showed on every single reload and never
+     auto-closed. That was intentional - `window.Shopify.designMode` bypassed
+     both the once-per-session check and the auto-close timer so the card
+     could be styled. It made the popup look broken when it was not: on the
+     live storefront it appeared once per session and dismissed itself.
 
-  Bump `version` in the theme editor to re-show the popup to everyone whose session has
-  already seen it - the sessionStorage key carries the version string. While testing,
-  remember it is once per SESSION: a reload will not bring it back, a new tab will.
+  2. Its earlier failure to auto-close on phones was real and separate. A
+     pointerdown listener sat on the full-screen overlay and cleared the
+     auto-close timer, and because opening the popup locked page scroll, a
+     visitor's first instinct - to swipe - landed on that overlay and killed
+     the timer. Any future overlay in this theme must listen on the card, not
+     the scrim.
 
-  AUTO-CLOSE: once open it closes itself after `auto_close_ms` (default 3000). The visitor
-  can still dismiss it sooner with the X, the scrim, or Escape. In the theme editor it
-  never auto-closes so you can style it.
+  The full previous implementation is in git history if it is ever wanted.
 {%- endcomment -%}
-
-{%- assign v = section.settings.version | default: 'v1' -%}
-
-{%- assign bg_src = '' -%}
-{%- assign bg_srcset = '' -%}
-{%- if section.settings.bg != blank -%}
-  {%- assign bg_src = section.settings.bg | image_url: width: 2400 -%}
-  {%- capture bg_srcset -%}
-{{ section.settings.bg | image_url: width: 800 }} 800w, {{ section.settings.bg | image_url: width: 1200 }} 1200w, {{ section.settings.bg | image_url: width: 1600 }} 1600w, {{ section.settings.bg | image_url: width: 2400 }} 2400w
-  {%- endcapture -%}
-{%- elsif section.settings.bg_filename != blank -%}
-  {%- assign bg_src = section.settings.bg_filename | file_url -%}
-{%- endif -%}
-
-<style>
-  #shopify-section-{{ section.id }}{ contain: none !important; content-visibility: visible !important; }
-
-  /* `hidden` is a UA rule (display:none) and loses to any author display rule, so
-     .xp{display:flex} below would silently defeat it. Restate it with matching weight. */
-  .xp[hidden]{ display: none !important; }
-
-  .xp{
-    position: fixed; inset: 0; z-index: 200;
-    display: flex; align-items: center; justify-content: center;
-    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-    opacity: 0; pointer-events: none;
-    transition: opacity .42s cubic-bezier(.28,.11,.32,1);
-  }
-  .xp[data-open="1"]{ opacity: 1; pointer-events: auto; }
-  .xp-scrim{
-    position: absolute; inset: 0;
-    background: rgba(6,6,8,.62);
-    -webkit-backdrop-filter: blur(18px) saturate(150%);
-    backdrop-filter: blur(18px) saturate(150%);
-  }
-
-  .xp-card{
-    position: relative;
-    width: min(1120px, 100%);
-    aspect-ratio: 16 / 9;
-    max-height: min(86svh, 640px);
-    border-radius: 26px;
-    overflow: hidden;
-    background: #0b0b0d;
-    color: #fff;
-    box-shadow: 0 40px 120px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.09);
-    transform: translateY(18px) scale(.985);
-    transition: transform .5s cubic-bezier(.28,.11,.32,1);
-  }
-  .xp[data-open="1"] .xp-card{ transform: none; }
-
-  .xp-media{ position: absolute; inset: 0; }
-  .xp-media img{
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover; object-position: 72% 60%;
-    display: block;
-  }
-  /* the copy side has to stay readable, but the photo has to actually read as a photo -
-     this clears to fully transparent by the right edge instead of staying muddy */
-  .xp-veil{
-    position: absolute; inset: 0;
-    background:
-      linear-gradient(90deg, rgba(6,6,8,.94) 0%, rgba(6,6,8,.80) 30%, rgba(6,6,8,.20) 58%, rgba(6,6,8,0) 100%),
-      linear-gradient(0deg, rgba(6,6,8,.45) 0%, rgba(6,6,8,0) 42%);
-  }
-
-  .xp-copy{
-    position: relative; z-index: 2;
-    height: 100%;
-    width: min(62%, 640px);
-    padding: clamp(22px, 3.4vw, 52px);
-    display: flex; flex-direction: column; justify-content: center;
-    gap: clamp(8px, 1vw, 14px);
-  }
-  .xp-brand{
-    margin: 0;
-    font-size: clamp(30px, 4.6vw, 62px);
-    font-weight: 800; letter-spacing: -.028em; line-height: .95;
-    text-transform: uppercase;
-  }
-  .xp-lede{
-    margin: clamp(8px, 1.4vw, 20px) 0 0;
-    font-size: clamp(17px, 2.3vw, 34px);
-    font-weight: 500; letter-spacing: -.018em; line-height: 1.06;
-    text-transform: uppercase;
-  }
-  .xp-sub{
-    margin: 0;
-    font-size: clamp(12px, 1.15vw, 17px);
-    font-weight: 400; line-height: 1.4;
-    color: rgba(255,255,255,.88);
-  }
-  .xp-price{
-    margin: clamp(4px, .6vw, 10px) 0 0;
-    font-size: clamp(19px, 2.1vw, 31px);
-    font-weight: 400; letter-spacing: -.02em;
-  }
-  .xp-price b{ font-weight: 700; }
-  .xp-plabel{
-    margin: clamp(6px, .8vw, 14px) 0 0;
-    font-size: clamp(11px, 1.05vw, 15px);
-    color: rgba(255,255,255,.82);
-  }
-
-  .xp-partners{
-    margin: clamp(6px, .8vw, 12px) 0 0; padding: 0; list-style: none;
-    display: flex; flex-wrap: wrap; align-items: center;
-    gap: clamp(12px, 1.8vw, 30px);
-  }
-  .xp-partners li{
-    font-size: clamp(12px, 1.35vw, 20px);
-    font-weight: 700; letter-spacing: -.02em; line-height: 1;
-    color: #fff; white-space: nowrap;
-  }
-  .xp-shoppay{ display: inline-flex; align-items: center; gap: .34em; }
-  .xp-shoppay i{
-    font-style: normal; font-weight: 700;
-    background: #fff; color: #0b0b0d;
-    border-radius: .3em; padding: .12em .34em;
-    font-size: .82em;
-  }
-
-  .xp-made{
-    position: absolute; left: clamp(22px, 3.4vw, 52px); bottom: clamp(16px, 2vw, 28px); z-index: 3;
-    font-size: clamp(9px, .8vw, 12px); font-weight: 600;
-    letter-spacing: .22em; text-transform: uppercase;
-    color: rgba(255,255,255,.72);
-  }
-
-  .xp-go{
-    position: absolute; right: clamp(16px, 2vw, 30px); bottom: clamp(16px, 2vw, 30px); z-index: 3;
-    display: flex; align-items: center; justify-content: center;
-    width: clamp(44px, 4.4vw, 62px); height: clamp(44px, 4.4vw, 62px);
-    border-radius: 18px;
-    background: rgba(255,255,255,.14);
-    border: 1px solid rgba(255,255,255,.24);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 10px 30px rgba(0,0,0,.35);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    backdrop-filter: blur(22px) saturate(180%);
-    color: #fff; cursor: pointer;
-    transition: transform .3s cubic-bezier(.28,.11,.32,1), background .3s;
-  }
-  .xp-go:hover{ transform: translateY(-2px); background: rgba(255,255,255,.22); }
-
-  .xp-x{
-    position: absolute; top: 12px; right: 12px; z-index: 4;
-    width: 34px; height: 34px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.42);
-    border: 1px solid rgba(255,255,255,.18);
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-    color: #fff; cursor: pointer;
-  }
-
-  /* portrait: the card stands up, photo across the bottom, copy on the top */
-  @media (max-width: 749px){
-    .xp-card{ aspect-ratio: 3 / 4; max-height: 84svh; border-radius: 22px; }
-    .xp-media img{ object-position: 62% 78%; }
-    .xp-veil{
-      background:
-        linear-gradient(180deg, rgba(6,6,8,.94) 0%, rgba(6,6,8,.84) 38%, rgba(6,6,8,.22) 68%, rgba(6,6,8,0) 100%);
-    }
-    .xp-copy{
-      width: 100%; height: auto;
-      justify-content: flex-start;
-      padding: 26px 22px 0;
-    }
-    .xp-brand{ font-size: clamp(30px, 9vw, 46px); }
-    .xp-lede{ font-size: clamp(17px, 5vw, 26px); }
-    .xp-sub, .xp-plabel{ font-size: 13px; }
-    .xp-price{ font-size: clamp(20px, 6vw, 28px); }
-    .xp-partners{ gap: 14px; }
-    .xp-partners li{ font-size: 14px; }
-    .xp-made{ left: 22px; bottom: 20px; }
-    .xp-go{ right: 20px; bottom: 20px; }
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    .xp, .xp-card{ transition: none; }
-    .xp-card{ transform: none; }
-  }
-</style>
-
-<div class="xp" data-xero-popup data-delay="{{ section.settings.delay_ms | default: 2000 }}" data-autoclose="{{ section.settings.auto_close_ms | default: 3000 }}" data-key="xero.popup.{{ v }}" hidden>
-  <div class="xp-scrim" data-xp-close></div>
-
-  <div class="xp-card" role="dialog" aria-modal="true" aria-label="{{ section.settings.aria | escape }}">
-    <div class="xp-media">
-      {%- if bg_src != '' -%}
-        <img src="{{ bg_src }}"
-             {% if bg_srcset != '' %}srcset="{{ bg_srcset | strip }}" sizes="(max-width: 749px) 100vw, min(1120px, 100vw)"{% endif %}
-             alt="" loading="eager" fetchpriority="high" decoding="async">
-      {%- endif -%}
-      <div class="xp-veil"></div>
-    </div>
-
-    <div class="xp-copy">
-      <h2 class="xp-brand">{{ section.settings.brand | escape }}</h2>
-      {%- if section.settings.lede != blank -%}
-        <p class="xp-lede">{{ section.settings.lede | escape | newline_to_br }}</p>
-      {%- endif -%}
-      {%- if section.settings.sub != blank -%}
-        <p class="xp-sub">{{ section.settings.sub | escape }}</p>
-      {%- endif -%}
-      {%- comment -%}
-        Two payment claims stood here: "from $139/month", and a partner row listing affirm,
-        afterpay, Klarna and shopPay. No lender is behind the monthly figure and none of
-        the four providers are connected, so anyone who chose one reached a checkout that
-        had never heard of it - a false representation at the point of sale, plus use of
-        their wordmarks without an agreement.
-
-        Both were gated only by theme settings, and the monthly price was a schema DEFAULT,
-        so a fresh install or a settings reset put "$139/month" straight back on the first
-        thing every visitor sees. A setting is not protection for a claim like this. The
-        markup is gone. Restore only what is genuinely live at checkout, and let the
-        provider's own widget print the figure.
-      {%- endcomment -%}
-    </div>
-
-    <span class="xp-made">{{ section.settings.made_by | escape }}</span>
-
-    <a class="xp-go" data-xp-go href="{{ section.settings.cta_link | default: '#' }}" aria-label="{{ section.settings.cta_aria | escape }}">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="18" x2="18" y2="6"></line><polyline points="9 6 18 6 18 15"></polyline></svg>
-    </a>
-
-    <button class="xp-x" data-xp-close aria-label="Close">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
-    </button>
-  </div>
-</div>
-
-<script>
-(function(){
-  var host = document.getElementById('shopify-section-{{ section.id }}');
-  if(!host) return;
-  var root = host.querySelector('[data-xero-popup]');
-  if(!root || root.dataset.wired === '1') return;
-  root.dataset.wired = '1';
-
-  var key   = root.dataset.key || 'xero.popup.v1';
-  var delay = parseInt(root.dataset.delay, 10);
-  if(isNaN(delay)) delay = 2000;
-  var autoClose = parseInt(root.dataset.autoclose, 10);
-  if(isNaN(autoClose)) autoClose = 3000;
-
-  var editor = !!(window.Shopify && window.Shopify.designMode);
-
-  /* Once per session. A private-mode browser can throw on sessionStorage, in which case
-     the popup is simply not shown rather than shown on every navigation. */
-  var seen = false;
-  try { seen = !!sessionStorage.getItem(key); } catch(e){ seen = true; }
-  if(seen && !editor) return;
-
-  var timer = 0, autoTimer = 0, lastFocus = null, openedAt = 0, closed = false;
-
-  function open(){
-    lastFocus = document.activeElement;
-    root.hidden = false;
-    void root.offsetWidth;
-    root.dataset.open = '1';
-    openedAt = Date.now();
-    document.documentElement.style.overflow = 'hidden';
-    try { sessionStorage.setItem(key, '1'); } catch(e){}
-    var x = root.querySelector('.xp-x');
-    if(x) x.focus({ preventScroll: true });
-    /* auto-dismiss after autoClose ms - not in the editor, so it can be styled */
-    if(!editor && autoClose > 0){ autoTimer = setTimeout(close, autoClose); }
-  }
-
-  function close(){
-    if(closed) return;
-    closed = true;
-    clearTimeout(timer);
-    clearTimeout(autoTimer);
-    root.dataset.open = '0';
-    document.documentElement.style.overflow = '';
-    /* Stop the overlay swallowing taps immediately. It stays in the DOM for another
-       450ms so the fade-out can run, and without this the page is dead to touch for
-       that whole time - which reads as "the popup did not close". */
-    root.style.pointerEvents = 'none';
-    setTimeout(function(){ root.hidden = true; }, 450);
-    if(lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
-  }
-
-  /* Background tabs throttle setTimeout, so a visitor who switches away and comes back
-     can return to a popup whose auto-close never fired. Settle it on the way back in. */
-  document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState !== 'visible' || closed || !openedAt) return;
-    if(autoClose > 0 && Date.now() - openedAt >= autoClose) close();
-  });
-
-  root.addEventListener('click', function(e){
-    if(e.target.closest('[data-xp-close]')) { e.preventDefault(); close(); return; }
-    var go = e.target.closest('[data-xp-go]');
-    if(go){
-      var href = go.getAttribute('href') || '#';
-      if(href === '#' || href === ''){ e.preventDefault(); close(); }
-      else { close(); }
-    }
-  });
-
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && root.dataset.open === '1') close();
-  });
-
-  /* keep tab focus inside the dialog while it is up */
-  root.addEventListener('keydown', function(e){
-    if(e.key !== 'Tab' || root.dataset.open !== '1') return;
-    var f = root.querySelectorAll('a[href], button');
-    if(!f.length) return;
-    var first = f[0], last = f[f.length - 1];
-    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
-    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
-  });
-
-  /* There is deliberately NOTHING here that cancels the auto-close.
-     There used to be: a pointerdown listener on `root` cleared autoTimer so a visitor
-     reading the card would not have it yanked away. But `root` is the full-screen
-     overlay, and open() locks page scroll - so on a phone the visitor's first instinct
-     is to swipe, that swipe lands on the overlay as a pointerdown, the timer dies, and
-     the popup stays up until they find the X. Do not reintroduce it. If a "pause while
-     reading" behaviour is ever wanted again it must listen on the card only, never the
-     overlay, and it must re-arm on pointerup. */
-
-  if(editor){ open(); return; }
-  timer = setTimeout(open, delay);
-})();
-</script>
 
 {% schema %}
 {
-  "name": "XERO — session popup",
+  "name": "XERO popup (retired)",
+  "tag": "div",
   "settings": [
-    { "type": "image_picker", "id": "bg", "label": "Background photo", "info": "One landscape photo serves both layouts — it re-crops for portrait on mobile." },
-    { "type": "text", "id": "bg_filename", "label": "...or a filename from Content > Files", "info": "Fallback used only when no photo is picked above. Exact filename including the extension." },
-    { "type": "text", "id": "brand", "label": "Headline", "default": "XERO CHIRON" },
-    { "type": "textarea", "id": "lede", "label": "Sub-headline", "default": "UNIQUE ELECTRIC PERFORMANCE" },
-    { "type": "text", "id": "sub", "label": "Supporting line", "default": "Unlocks with your phone. Not a regular bike." },
-    { "type": "header", "content": "Financing partners" },
-    { "type": "header", "content": "Chrome" },
-    { "type": "text", "id": "made_by", "label": "Corner mark", "default": "MADE BY XERO" },
-    { "type": "url", "id": "cta_link", "label": "Arrow button link", "info": "Leave empty and the arrow just closes the popup." },
-    { "type": "text", "id": "cta_aria", "label": "Arrow button label", "default": "See the Chiron" },
-    { "type": "text", "id": "aria", "label": "Dialog label", "default": "XERO Chiron - a concept electric motorcycle" },
-    { "type": "header", "content": "Behaviour" },
-    { "type": "range", "id": "delay_ms", "min": 0, "max": 8000, "step": 250, "unit": "ms", "label": "Delay before opening", "default": 2000 },
-    { "type": "range", "id": "auto_close_ms", "min": 0, "max": 8000, "step": 500, "unit": "ms", "label": "Auto-close after", "default": 3000, "info": "How long it stays up before closing itself. 0 = never auto-close." },
-    { "type": "text", "id": "version", "label": "Version", "default": "v1", "info": "Change this to show the popup again to sessions that already dismissed it." }
-  ],
-  "presets": [{ "name": "XERO — session popup" }]
+    { "type": "paragraph", "content": "This section is retired and renders nothing. The entry popup was removed at the owner's request. Remove it from the page in the section list if you want it out of the template entirely." }
+  ]
 }
 {% endschema %}
