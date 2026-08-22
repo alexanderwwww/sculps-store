@@ -57,7 +57,7 @@
     <div data-m="specgroups" style="margin-top:4rem;display:flex;flex-direction:column;gap:3.2rem;">
       {%- for block in section.blocks -%}
         {%- if block.type == 'group' -%}
-          <div data-m="specgroup" {{ block.shopify_attributes }} style="opacity:0;transform:translateY(14px);transition:opacity .7s cubic-bezier(.28,.11,.32,1),transform .7s cubic-bezier(.28,.11,.32,1);">
+          <div data-m="specgroup" {{ block.shopify_attributes }}>
 
             <div style="display:flex;align-items:baseline;gap:1rem;padding-bottom:.9rem;border-bottom:1px solid var(--hair,rgba(255,255,255,.09));">
               <span style="font-size:.76rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">{{ block.settings.title }}</span>
@@ -93,7 +93,19 @@
 </section>
 
 <style>
-  #shopify-section-{{ uid }} [data-m="specgroup"].is-in{ opacity:1; transform:none; }
+  /* The sheet is visible by default. The hidden state is applied ONLY once the
+     script has set data-anim on the section, so a JS error, a blocked script or an
+     old browser leaves every number on screen instead of hiding all of them.
+
+     This must never go back to an inline style="opacity:0" on the group. An inline
+     style outranks any stylesheet rule that is not !important, so .is-in could not
+     override it and the entire sheet rendered invisible while looking correct in
+     the DOM - which is exactly the bug this replaced. */
+  #shopify-section-{{ uid }}[data-anim="1"] [data-m="specgroup"]{
+    opacity:0; transform:translateY(14px);
+    transition:opacity .7s cubic-bezier(.28,.11,.32,1), transform .7s cubic-bezier(.28,.11,.32,1);
+  }
+  #shopify-section-{{ uid }}[data-anim="1"] [data-m="specgroup"].is-in{ opacity:1; transform:none; }
   @media (prefers-reduced-motion: reduce){
     #shopify-section-{{ uid }} [data-m="specgroup"]{ opacity:1 !important; transform:none !important; transition:none !important; }
     #shopify-section-{{ uid }} [data-m="specmatrix"]{ display:none; }
@@ -158,9 +170,26 @@
   }
 
   var groups = root.querySelectorAll('[data-m="specgroup"]');
-  if (!('IntersectionObserver' in window)) {
+
+  function revealAll() {
     Array.prototype.forEach.call(groups, function (g) { g.classList.add('is-in'); });
+  }
+
+  if (!('IntersectionObserver' in window) || reduce) {
+    /* No observer, or the visitor asked for no motion: leave the sheet as authored,
+       fully visible. data-anim is never set, so nothing was ever hidden. */
+    return;
   } else {
+    /* Only now is it safe to hide the groups - the code that reveals them is
+       guaranteed to be running. */
+    root.setAttribute('data-anim', '1');
+
+    /* Backstop. If anything below throws, or a group somehow never intersects
+       (a collapsed ancestor, a zero-height parent, an editor quirk), the sheet
+       must not stay blank. Two and a half seconds is far longer than the reveal
+       needs and short enough that a visitor never sits looking at nothing. */
+    setTimeout(revealAll, 2500);
+
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;

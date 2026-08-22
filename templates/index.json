@@ -400,6 +400,38 @@
       "settings": {
         "mode": "bar"
       }
+    },
+    "reel": {
+      "type": "xero-reel",
+      "blocks": {
+        "c1": {
+          "type": "clip",
+          "settings": {
+            "youtube_id": "",
+            "credit": "Forest singletrack, first light"
+          }
+        },
+        "c2": {
+          "type": "clip",
+          "settings": {
+            "youtube_id": "",
+            "credit": "Wet roots, after rain"
+          }
+        },
+        "c3": {
+          "type": "clip",
+          "settings": {
+            "youtube_id": "",
+            "credit": "Fire road, after dark"
+          }
+        }
+      },
+      "block_order": [
+        "c1",
+        "c2",
+        "c3"
+      ],
+      "settings": {}
     }
   },
   "order": [
@@ -411,6 +443,7 @@
     "box",
     "astra",
     "specs",
+    "reel",
     "film2",
     "vibes",
     "network",

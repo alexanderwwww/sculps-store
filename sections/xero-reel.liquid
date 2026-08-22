@@ -1,0 +1,148 @@
+{%- comment -%}
+  XERO reel — vertical films, embedded from the brand's own YouTube channel.
+
+  READ THIS BEFORE CHANGING THE COPY.
+
+  This section is framed as XERO's own footage on purpose. It must NOT be captioned
+  or labelled as customer, owner or rider-submitted video unless the clip genuinely
+  came from a paying customer who agreed to it being published.
+
+  The reason is not squeamishness. Presenting footage the brand produced as if it
+  came from customers is fabricated social proof - the same category as the invented
+  review handles that were stripped out of xero-ugc, and a documented contributor to
+  store terminations. A store with no orders yet cannot have owner footage, and that
+  is checkable by anyone who looks at the order count. Brand-made film is honest and
+  sells just as well: "here is our machine being ridden" needs no borrowed credibility.
+
+  When real customers do send clips, add them with `attributed: true` on the block and
+  put the real handle in `credit` - and keep their written permission on file.
+
+  PERFORMANCE. Each tile is a facade, not a live iframe: a poster image plus a play
+  button, with the real YouTube embed swapped in only when the visitor clicks. Six
+  live iframes on a phone would each pull a player bundle before the visitor has
+  chosen to watch anything. The poster comes from YouTube's own thumbnail host so no
+  upload step is needed, and falls back to an uploaded image if one is set.
+
+  The video ID is the part after watch?v= (or the last path segment of a youtu.be or
+  /shorts/ link) - the ID ONLY, never the whole URL. Parsing every YouTube URL shape
+  in Liquid is brittle, so the setting takes the ID and the info text says so.
+{%- endcomment -%}
+
+{%- assign uid = section.id -%}
+
+<section class="xero-night" data-sec="reel" {% if section.settings.anchor != blank %}id="{{ section.settings.anchor }}"{% endif %}
+         style="position:relative;width:100%;background:var(--pg);padding:6.5rem 0 6rem;">
+
+  <div style="max-width:76rem;margin:0 auto;padding:0 2.06rem;">
+
+    <div style="max-width:44rem;">
+      {%- if section.settings.kicker != blank -%}
+        <div style="font-size:.78rem;font-weight:600;letter-spacing:.22em;color:var(--txt3,#7c7d85);">{{ section.settings.kicker }}</div>
+      {%- endif -%}
+      <h2 style="margin:.9rem 0 0;font-size:clamp(2.1rem,4.4vw,3.4rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:var(--txt,#f4f4f6);">{{ section.settings.heading }}</h2>
+      {%- if section.settings.sub != blank -%}
+        <p style="margin:1.05rem 0 0;font-size:1.02rem;line-height:1.55;color:var(--txt2,#a9aab1);text-wrap:pretty;">{{ section.settings.sub }}</p>
+      {%- endif -%}
+    </div>
+
+    <div data-m="reelgrid"
+         style="margin-top:3.4rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1.1rem;">
+      {%- for block in section.blocks -%}
+        {%- assign yt = block.settings.youtube_id | strip -%}
+        {%- if yt != blank -%}
+          <figure {{ block.shopify_attributes }} style="margin:0;">
+            <div data-m="reeltile" data-yt="{{ yt | escape }}"
+                 style="position:relative;aspect-ratio:9/16;border-radius:1rem;overflow:hidden;background:#0a0a0c;border:1px solid rgba(255,255,255,.09);cursor:pointer;">
+
+              {%- if block.settings.poster != blank -%}
+                <img src="{{ block.settings.poster | image_url: width: 720 }}" alt="" loading="lazy" decoding="async"
+                     style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+              {%- else -%}
+                <img src="https://i.ytimg.com/vi/{{ yt }}/hqdefault.jpg" alt="" loading="lazy" decoding="async"
+                     style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+              {%- endif -%}
+
+              <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,6,8,.62) 0%,rgba(6,6,8,0) 46%);"></div>
+
+              <button type="button" data-m="reelplay" aria-label="Play film"
+                      style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:3.6rem;height:3.6rem;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="#fff" aria-hidden="true"><path d="M5 3.2v9.6L13 8z"></path></svg>
+              </button>
+
+              {%- if block.settings.credit != blank -%}
+                <figcaption style="position:absolute;left:.85rem;right:.85rem;bottom:.8rem;font-size:.8rem;line-height:1.35;color:rgba(255,255,255,.9);">
+                  {{ block.settings.credit }}
+                </figcaption>
+              {%- endif -%}
+            </div>
+          </figure>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    {%- if section.settings.footnote != blank -%}
+      <p style="margin:2.4rem 0 0;font-size:.82rem;line-height:1.55;color:var(--txt3,#7c7d85);">{{ section.settings.footnote }}</p>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<script>
+(function () {
+  var root = document.getElementById('shopify-section-{{ uid }}');
+  if (!root) return;
+
+  root.addEventListener('click', function (e) {
+    var tile = e.target.closest('[data-m="reeltile"]');
+    if (!tile || tile.dataset.live === '1') return;
+    var id = tile.getAttribute('data-yt');
+    if (!id) return;
+    tile.dataset.live = '1';
+
+    var f = document.createElement('iframe');
+    /* autoplay is set because the visitor just clicked play - this is a response to
+       an explicit gesture, not an autoplaying video. nocookie keeps the embed out of
+       consent-banner territory. */
+    f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) +
+            '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
+    f.title = 'XERO film';
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; web-share';
+    f.setAttribute('allowfullscreen', '');
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    f.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
+    tile.innerHTML = '';
+    tile.appendChild(f);
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "XERO reel",
+  "tag": "div",
+  "settings": [
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "ON THE TRAIL" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "The machine, being ridden." },
+    { "type": "textarea", "id": "sub", "label": "Sub-line", "default": "Handheld footage from our own rides. Forest singletrack, rock, wet roots, after dark." },
+    { "type": "text", "id": "anchor", "label": "Anchor id", "info": "Optional. Lets a nav link point here." },
+    { "type": "textarea", "id": "footnote", "label": "Footnote", "info": "Say plainly whose footage this is. If it is XERO's own, say so - captioning brand footage as customer video is fabricated social proof.", "default": "Filmed by XERO. Not customer footage. Riding shown on private land by an experienced rider in full protective equipment." }
+  ],
+  "blocks": [
+    {
+      "type": "clip",
+      "name": "Clip",
+      "settings": [
+        { "type": "text", "id": "youtube_id", "label": "YouTube video ID", "info": "The ID only — the part after watch?v=, or the last segment of a youtu.be or /shorts/ link. Not the full URL." },
+        { "type": "text", "id": "credit", "label": "Caption" },
+        { "type": "image_picker", "id": "poster", "label": "Poster override", "info": "Optional. Defaults to the YouTube thumbnail." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "XERO reel",
+      "blocks": [{ "type": "clip" }, { "type": "clip" }, { "type": "clip" }]
+    }
+  ]
+}
+{% endschema %}
