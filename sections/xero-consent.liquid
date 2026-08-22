@@ -13,11 +13,11 @@
                      want the hardest possible paper trail; it will cost conversions,
                      and no card network or processor requires it.
 
-  Why this exists at all: the Chiron is not street legal, and it is a $4,999 vehicle
-  bought sight-unseen with a lead time. The three facts that a buyer could later claim
-  they were not told - not road legal, US-only, ships in a window - are put in front of
-  every visitor here, with the policies one click away, and the acknowledgement is
-  timestamped in the visitor's own browser.
+  Why this exists: a $4,999 vehicle is bought sight-unseen, so the policies are put
+  one click away and the acknowledgement is timestamped in the visitor's own browser.
+  This is a POLICIES acknowledgement only. Do not put product or legal facts in the
+  body copy - those live in the Terms of service, which is linked here and forms part
+  of the contract.
 
   The acknowledgement is stored in localStorage, so it is per-browser and never leaves
   the visitor's device. It is not a substitute for the terms checkbox at checkout, which
@@ -146,13 +146,13 @@
         { "value": "gate", "label": "Blocking overlay on entry" }
       ]
     },
-    { "type": "text", "id": "title", "label": "Kicker", "default": "BEFORE YOU RIDE" },
+    { "type": "text", "id": "title", "label": "Kicker", "default": "BEFORE YOU ORDER" },
     {
       "type": "textarea",
       "id": "body",
       "label": "Disclosure",
-      "info": "Keep the not-street-legal statement, the US-only statement and the lead time. These are the three things a buyer must not be able to say they were never told.",
-      "default": "The XERO Chiron is an off-road machine, sold for riding on private land and off-road terrain. It is not road homologated — check the rules where you ride. Riders must be 18 or over and protective equipment is required. By continuing you confirm you have read and accept our terms, refund and shipping policies."
+      "info": "Keep this to a plain policies acknowledgement. Product and legal facts belong in the Terms of service, not in a bar on every page.",
+      "default": "By continuing you confirm you have read and accept our terms of service, refund policy and privacy policy."
     },
     { "type": "text", "id": "accept_label", "label": "Accept button", "default": "I understand and accept" },
     { "type": "text", "id": "dismiss_label", "label": "Dismiss link (bar mode only)", "default": "Not now" },

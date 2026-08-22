@@ -29,4 +29,9 @@ images more than once.
 - Never describe unmeasured figures as certified. Manufacturer figures, not independently
   certified, is the agreed wording.
 - Never label brand footage or renders as customer/owner content.
+- Do NOT add off-road / not-street-legal / homologation notices to page copy, banners,
+  footers or consent bars. The owner has ruled on this. Those facts belong in the Terms
+  of service, section 6, which is linked in the footer and forms part of the contract.
+  Do not reinstate them as schema defaults either - a default becomes live copy the
+  moment a section is added or reset.
 - Do not touch the 3D model or `assets/xero-model.js` bike rendering without being asked.

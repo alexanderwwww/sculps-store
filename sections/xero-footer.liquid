@@ -101,10 +101,10 @@
       </div>
 
       {%- comment -%}
-        The standing disclosure. This is the one thing on the page that must never be
-        behind a click: what the machine is, what it is not, and when it arrives.
-        "Not street legal" belongs in front of every visitor, not only the ones who
-        open the terms.
+        Optional notice slot. Empty by default, renders nothing when blank.
+        Product and legal facts belong in the Terms of service - linked in the LEGAL
+        column above, and part of the contract - not in a banner on every page.
+        Do not reinstate a default here.
       {%- endcomment -%}
       {%- if section.settings.disclosure != blank -%}
         <div data-m="ftdisc" style="margin-top:3.2rem;padding:1.15rem 1.3rem;border:1px solid var(--hair,rgba(255,255,255,.10));border-radius:.7rem;background:rgba(255,255,255,.025);">
@@ -145,7 +145,7 @@
   "settings": [
     { "type": "text", "id": "news_heading", "label": "Newsletter heading", "default": "Get the launch drop." },
     { "type": "text", "id": "news_body", "label": "Newsletter body", "default": "Launch updates, ride days, and the first film. Nothing else." },
-    { "type": "textarea", "id": "disclosure", "label": "Standing disclosure", "info": "Shown in a bordered box above the copyright line, on every page. Keep the off-road / not-street-legal statement here.", "default": "The XERO Chiron is an off-road machine, sold for use on private land and off-road terrain. It is not road homologated. Check the rules where you ride before you ride. Riders must be 18 or over and protective equipment is required." },
+    { "type": "textarea", "id": "disclosure", "label": "Optional notice", "info": "Leave empty and nothing renders. Product and legal facts belong in the Terms of service, not in a banner on every page." },
     { "type": "text", "id": "ticker", "label": "Ticker text", "default": "RIDE TO THE STARS" },
     { "type": "textarea", "id": "socials", "label": "Social links", "info": "One per line as Label|https://url - leave empty to hide the row." },
     { "type": "text", "id": "tagline", "label": "Tagline", "default": "Designed on Earth. Tested elsewhere." },
