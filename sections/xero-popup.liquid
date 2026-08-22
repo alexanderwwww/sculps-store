@@ -288,13 +288,14 @@
   try { seen = !!sessionStorage.getItem(key); } catch(e){ seen = true; }
   if(seen && !editor) return;
 
-  var timer = 0, autoTimer = 0, lastFocus = null;
+  var timer = 0, autoTimer = 0, lastFocus = null, openedAt = 0, closed = false;
 
   function open(){
     lastFocus = document.activeElement;
     root.hidden = false;
     void root.offsetWidth;
     root.dataset.open = '1';
+    openedAt = Date.now();
     document.documentElement.style.overflow = 'hidden';
     try { sessionStorage.setItem(key, '1'); } catch(e){}
     var x = root.querySelector('.xp-x');
@@ -304,13 +305,26 @@
   }
 
   function close(){
+    if(closed) return;
+    closed = true;
     clearTimeout(timer);
     clearTimeout(autoTimer);
     root.dataset.open = '0';
     document.documentElement.style.overflow = '';
+    /* Stop the overlay swallowing taps immediately. It stays in the DOM for another
+       450ms so the fade-out can run, and without this the page is dead to touch for
+       that whole time - which reads as "the popup did not close". */
+    root.style.pointerEvents = 'none';
     setTimeout(function(){ root.hidden = true; }, 450);
     if(lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
+
+  /* Background tabs throttle setTimeout, so a visitor who switches away and comes back
+     can return to a popup whose auto-close never fired. Settle it on the way back in. */
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState !== 'visible' || closed || !openedAt) return;
+    if(autoClose > 0 && Date.now() - openedAt >= autoClose) close();
+  });
 
   root.addEventListener('click', function(e){
     if(e.target.closest('[data-xp-close]')) { e.preventDefault(); close(); return; }
@@ -336,9 +350,14 @@
     else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
   });
 
-  /* pointer/keyboard interaction with the card cancels the auto-close so a visitor who is
-     actually reading it is never yanked out from under. */
-  root.addEventListener('pointerdown', function(){ clearTimeout(autoTimer); });
+  /* There is deliberately NOTHING here that cancels the auto-close.
+     There used to be: a pointerdown listener on `root` cleared autoTimer so a visitor
+     reading the card would not have it yanked away. But `root` is the full-screen
+     overlay, and open() locks page scroll - so on a phone the visitor's first instinct
+     is to swipe, that swipe lands on the overlay as a pointerdown, the timer dies, and
+     the popup stays up until they find the X. Do not reintroduce it. If a "pause while
+     reading" behaviour is ever wanted again it must listen on the card only, never the
+     overlay, and it must re-arm on pointerup. */
 
   if(editor){ open(); return; }
   timer = setTimeout(open, delay);
