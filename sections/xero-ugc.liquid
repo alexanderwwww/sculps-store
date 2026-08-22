@@ -18,26 +18,24 @@
 {%- endcomment -%}
 
 {%- comment -%}
-  Only slides that actually have an image are carried - on the storefront AND in
-  the theme editor. A slide whose image was never set renders NOTHING at all.
-
-  An earlier version kept empty slides in the editor so the owner could click one
-  to fill it. That was the wrong trade: it left a grey placeholder card sitting in
-  the middle of the carousel every time the page was opened for editing, which
-  reads as a broken build. The block is still listed in the section's block list
-  in the sidebar, so an empty slide is still reachable and fillable there - it
-  just no longer occupies space in the carousel.
-
-  The `where` filter is guarded: if it returns nothing - genuinely no images set,
-  or the dotted path not resolving - we fall back to all blocks rather than
-  rendering an empty carousel.
+  Count the slides that actually have an image with a plain loop. The previous
+  version used `where: 'settings.image'`, and Liquid's where filter silently
+  matches NOTHING for a dotted path on section blocks - so the "filtered" list
+  was always empty, the fallback then rendered every block, and the empty grey
+  frame this was meant to remove stayed on screen. Proven on the live editor.
+  Never use `where` with a dotted path in this theme; loop and test instead.
 {%- endcomment -%}
-{%- assign shots = section.blocks -%}
-{%- assign with_image = section.blocks | where: 'settings.image' -%}
-{%- if with_image.size > 0 -%}
-  {%- assign shots = with_image -%}
+{%- assign count = 0 -%}
+{%- for b in section.blocks -%}
+  {%- if b.settings.image != blank -%}{%- assign count = count | plus: 1 -%}{%- endif -%}
+{%- endfor -%}
+{%- assign render_all = false -%}
+{%- if count == 0 -%}
+  {%- comment -%} nothing has an image yet (fresh preset): show the frames so the
+      section is visible to style, rather than rendering nothing at all {%- endcomment -%}
+  {%- assign render_all = true -%}
+  {%- assign count = section.blocks.size -%}
 {%- endif -%}
-{%- assign count = shots.size -%}
 
 <style>
   /* --- containment guard: sticky dies inside a contained ancestor --- */
@@ -230,8 +228,10 @@
 
       <div class="ugc-stage" data-ugc-stage>
         <div class="ugc-track" data-ugc-track>
-          {%- for block in shots -%}
-            <article class="ugc-card" data-ugc-card data-i="{{ forloop.index0 }}" {{ block.shopify_attributes }}>
+          {%- assign idx = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if render_all or block.settings.image != blank -%}
+            <article class="ugc-card" data-ugc-card data-i="{{ idx }}" {{ block.shopify_attributes }}>
               <div class="ugc-frame">
                 {%- if block.settings.image != blank -%}
                   {{
@@ -257,13 +257,15 @@
                 </div>
               {%- endif -%}
             </article>
+            {%- assign idx = idx | plus: 1 -%}
+            {%- endif -%}
           {%- endfor -%}
         </div>
       </div>
 
       {%- if section.settings.show_dots and count > 1 -%}
         <div class="ugc-dots" data-ugc-dots aria-hidden="true">
-          {%- for block in shots -%}<i></i>{%- endfor -%}
+          {%- for block in section.blocks -%}{%- if render_all or block.settings.image != blank -%}<i></i>{%- endif -%}{%- endfor -%}
         </div>
       {%- endif -%}
 
