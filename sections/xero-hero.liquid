@@ -188,7 +188,7 @@
       <span style="font-size:.82rem;font-weight:600;letter-spacing:.055em;color:var(--txt2,#55565c);">CHOOSE YOUR BUNDLE</span>
     </div>
     <div style="margin-top:.5rem;flex:0 0 auto;display:flex;flex-direction:column;gap:.55rem;">
-      <button data-x="xh4" data-act="pickVariant0" style="display:flex;align-items:center;gap:.9rem;height:4.4rem;padding:0 1.15rem;border-radius:1rem;background:linear-gradient(180deg,var(--gloss,rgba(255,255,255,.46)),rgba(255,255,255,0) 46%,var(--glow,rgba(255,255,255,.22))),var(--vbg0,rgba(255,255,255,.6));border:1.8px solid var(--vb0,#005df9);box-shadow:inset 0 1px 0 var(--sheen,rgba(255,255,255,.88));text-align:left;transition:border-color .35s,background .35s,transform .3s cubic-bezier(.28,.11,.32,1);">
+      <button data-x="xh4" data-act="pickVariant0" style="display:flex;align-items:center;gap:.9rem;min-height:4.4rem;padding:.85rem 1.15rem;border-radius:1rem;background:linear-gradient(180deg,var(--gloss,rgba(255,255,255,.46)),rgba(255,255,255,0) 46%,var(--glow,rgba(255,255,255,.22))),var(--vbg0,rgba(255,255,255,.6));border:1.8px solid var(--vb0,#005df9);box-shadow:inset 0 1px 0 var(--sheen,rgba(255,255,255,.88));text-align:left;transition:border-color .35s,background .35s,transform .3s cubic-bezier(.28,.11,.32,1);">
         <span style="flex:0 0 auto;width:1.32rem;height:1.32rem;border-radius:50%;border:1.8px solid var(--vr0,#005df9);display:flex;align-items:center;justify-content:center;transition:border-color .35s;"><span style="width:.66rem;height:.66rem;border-radius:50%;background:var(--vd0,#005df9);transition:background .35s,transform .3s cubic-bezier(.28,.11,.32,1);transform:scale(var(--vs0,1));"></span></span>
         <span style="flex:1;display:flex;flex-direction:column;gap:.14rem;">
           <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">Chiron</span>
@@ -196,19 +196,19 @@
         </span>
         <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--vp0,#005df9);transition:color .35s;">{{ product.variants[0].price | money }}</span>
       </button>
-      <button data-x="xh4" data-act="pickVariant1" style="display:flex;align-items:center;gap:.9rem;height:4.4rem;padding:0 1.15rem;border-radius:1rem;background:linear-gradient(180deg,var(--gloss,rgba(255,255,255,.46)),rgba(255,255,255,0) 46%,var(--glow,rgba(255,255,255,.22))),var(--vbg1,rgba(255,255,255,.6));border:1.8px solid var(--vb1,rgba(0,0,0,.06));box-shadow:inset 0 1px 0 var(--sheen,rgba(255,255,255,.88));text-align:left;transition:border-color .35s,background .35s,transform .3s cubic-bezier(.28,.11,.32,1);">
+      <button data-x="xh4" data-act="pickVariant1" style="display:flex;align-items:center;gap:.9rem;min-height:4.4rem;padding:.85rem 1.15rem;border-radius:1rem;background:linear-gradient(180deg,var(--gloss,rgba(255,255,255,.46)),rgba(255,255,255,0) 46%,var(--glow,rgba(255,255,255,.22))),var(--vbg1,rgba(255,255,255,.6));border:1.8px solid var(--vb1,rgba(0,0,0,.06));box-shadow:inset 0 1px 0 var(--sheen,rgba(255,255,255,.88));text-align:left;transition:border-color .35s,background .35s,transform .3s cubic-bezier(.28,.11,.32,1);">
         <span style="flex:0 0 auto;width:1.32rem;height:1.32rem;border-radius:50%;border:1.8px solid var(--vr1,#c3c4c9);display:flex;align-items:center;justify-content:center;transition:border-color .35s;"><span style="width:.66rem;height:.66rem;border-radius:50%;background:var(--vd1,transparent);transition:background .35s,transform .3s cubic-bezier(.28,.11,.32,1);transform:scale(var(--vs1,0));"></span></span>
         <span style="flex:1;display:flex;flex-direction:column;gap:.14rem;">
-          <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">Chiron + 10-Year Replacement</span>
+          <span style="font-size:1.02rem;font-weight:600;letter-spacing:-.024em;line-height:1.25;color:var(--txt,#0e0e0e);">Chiron + 10-Year Replacement</span>
           {%- comment -%}
             This qualifier must stay attached to the button. A paid ten-year promise to
             replace a vehicle reads as an insurance or service-contract product, and
             selling one without a licence is a named prohibited category. The FAQ and the
             terms both carry the disclaimer - but the buyer commits here, not there.
           {%- endcomment -%}
-          <span style="font-size:.82rem;color:var(--txt2,#55565c);">A ten-year replacement term offered directly by us. Not insurance and not underwritten by an insurer &mdash; see terms.</span>
+          <span style="font-size:.76rem;line-height:1.35;color:var(--txt2,#55565c);">A replacement term from us &mdash; not insurance. See terms.</span>
         </span>
-        <span style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
+        <span style="flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
           <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--vp1,var(--txt,#0e0e0e));transition:color .35s;">{{ product.variants[1].price | money }}</span>
           <span style="font-size:.82rem;font-weight:500;color:var(--txt2,#55565c);">+ {{ product.variants[1].price | minus: product.variants[0].price | money }}</span>
         </span>
