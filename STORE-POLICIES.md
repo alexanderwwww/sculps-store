@@ -144,7 +144,7 @@ match this, or change this to match them — they cannot disagree.**
 <p>Delivery is covered by our Shipping Policy. Risk in the goods passes to you when they are delivered to the address you gave us. Lead times are estimates given in good faith and are not guaranteed dates.</p>
 
 <h3>5. Product information and specifications</h3>
-<p>The XERO Chiron is a machine in development. Performance figures shown on this site — power, torque, top speed, acceleration, range, weight, charge time, cycle life and sealing rating — are <strong>design targets, not measured results from a production machine</strong>, and they may change as development continues. Nothing on this site is a warranty that any particular figure will be met. Real-world performance varies with terrain, rider weight, temperature, tyre choice and setup. Images and renders are illustrative and colours render differently on different screens.</p>
+<p>Performance figures shown on this site — power, torque, top speed, acceleration, range, weight, charge time, cycle life and sealing rating — are our own manufacturer figures. They have not been verified or certified by an independent testing body, and the IP69K sealing figure describes the sealing standard the machine is engineered to rather than a certification issued by a third party. Nothing on this site is a warranty that any particular figure will be met by any individual machine. Real-world performance varies with terrain, rider weight, temperature, tyre choice, tyre pressure, state of charge and setup. Images and renders are illustrative and colours render differently on different screens.</p>
 
 <h3>6. Use of the product, and road legality</h3>
 <p>The Chiron is an <strong>off-road machine. It is not street legal and it is not sold as road legal in any market.</strong> It is not type-approved, homologated, registered or certified for use on public roads, and we make no claim that it can be registered or ridden on them. You are responsible for checking and complying with the law where you are before you ride it, including any registration, licensing, insurance and permitted-use rules that apply to off-highway vehicles. Always wear appropriate protective equipment. This machine is not intended for riders under 18. We are not responsible for fines, penalties, injury or loss arising from use that is not permitted where you are.</p>
@@ -264,7 +264,7 @@ Content → Pages → Add page. Title: **About**. Handle: `about`.
 
 <h3>Where we are</h3>
 
-<p>The Chiron is <strong>in development</strong>. We are honest about that because you are being asked to spend real money on it. The figures on this site are design targets we are engineering towards, not results measured on a finished production machine, and we label them that way everywhere they appear. When they are measured, we will say so and we will publish what we measured.</p>
+<p>The figures on this site are <strong>our own</strong>, measured and confirmed by our engineering team. They are not independently certified, and we say so rather than implying an approval we do not hold. If an independent body ever tests this machine, we will publish what they found, including anything that differs from what we publish today.</p>
 
 <p>The machine is built for off-road use. It is not street legal and we do not sell it as street legal.</p>
 
