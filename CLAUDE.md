@@ -35,3 +35,22 @@ images more than once.
   Do not reinstate them as schema defaults either - a default becomes live copy the
   moment a section is added or reset.
 - Do not touch the 3D model or `assets/xero-model.js` bike rendering without being asked.
+
+## NEVER GUESS. Verify, then speak.
+
+The cart bug cost three wrong diagnoses in a row (password redirect, stale
+availability cache, editor cookies) because each was a theory offered before
+the facts were in. The rule, permanently:
+
+1. Every diagnostic claim must cite its evidence in the same breath - a query
+   result, a file read, a checksum, an error body. No evidence, no claim.
+2. When the storefront misbehaves, instrument it before explaining it: make the
+   code print what it posted and surface the server's own error text verbatim.
+   Shopify's reason string beats any inference about it.
+3. Admin API state and storefront state are different systems. Never assert the
+   storefront's view from an Admin query alone - say which one was checked.
+4. If the evidence is not reachable (blocked host, no browser), say exactly
+   that and give the user the one test that would settle it - do not fill the
+   gap with a plausible story.
+5. Being wrong once is data; repeating a diagnosis pattern that already failed
+   is guessing. Stop, re-read the code, and widen the search instead.
