@@ -4,7 +4,7 @@
       <div data-m="brand" style="font-size:2.45rem;font-weight:700;letter-spacing:-.028em;line-height:1;color:var(--txt,#0e0e0e);">{{ section.settings.brand }}</div>
     </a>
     <nav data-m="nav" style="position:absolute;left:30.5%;width:37%;height:3.62rem;top:50%;margin-top:-1.81rem;border-radius:1.81rem;background:linear-gradient(180deg,var(--gloss,rgba(255,255,255,.46)),rgba(255,255,255,0) 46%,var(--glow,rgba(255,255,255,.22))),var(--pill,rgba(255,255,255,.72));backdrop-filter:blur(14px) saturate(1.7);border:1px solid var(--pill-b,rgba(0,0,0,.05));display:flex;align-items:center;box-shadow:inset 0 1px 0 var(--sheen,rgba(255,255,255,.88)),inset 0 -1px 0 var(--glow,rgba(255,255,255,.22)),0 .3rem 1.4rem var(--shadow,rgba(0,0,0,.10));">
-      <a href="/#film" data-act="goFilm" style="flex:1;text-align:center;font-size:1.02rem;font-weight:450;color:var(--txt,#0e0e0e);white-space:nowrap;">{{ section.settings.label_film }}</a>
+      <a href="/#specs" data-act="goSpecs" style="flex:1;text-align:center;font-size:1.02rem;font-weight:450;color:var(--txt,#0e0e0e);white-space:nowrap;">{{ section.settings.label_specs }}</a>
       <div style="width:1px;height:1.5rem;background:var(--hair,rgba(0,0,0,.09));"></div>
       <a href="{{ section.settings.link_track | default: '/pages/track' }}" data-m="navtrack" style="flex:1;text-align:center;font-size:1.02rem;font-weight:450;color:var(--txt,#0e0e0e);white-space:nowrap;">{{ section.settings.label_track }}</a>
       <div style="width:1px;height:1.5rem;background:var(--hair,rgba(0,0,0,.09));"></div>
@@ -31,7 +31,7 @@
   "name": "XERO header",
   "settings": [
     { "type": "text", "id": "brand", "label": "Wordmark", "default": "XERO" },
-    { "type": "text", "id": "label_film", "label": "Link 1 label", "default": "Film" },
+    { "type": "text", "id": "label_specs", "label": "Link 1 label", "default": "Specs" },
     { "type": "text", "id": "label_track", "label": "Link 2 label", "default": "Track" },
     { "type": "url", "id": "link_track", "label": "Track page", "info": "Defaults to /pages/track" },
     { "type": "text", "id": "label_activate", "label": "Link 3 label", "default": "Activate" },

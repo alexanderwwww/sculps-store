@@ -422,7 +422,10 @@
     closeAll:    function () { S.cartOpen = false; S.menuOpen = false; paint(); },
     skipSplash:  closeSplash,
     goFilm:      function () { scrollTo('#film'); scrollTo('[data-sec="film"]'); },
-    goSpecs:     function () { scrollTo('[data-sec="breakdown"]'); }
+    /* xero-breakdown.liquid renders data-sec="motion", not "breakdown", so this selector
+       never matched anything and the Specs link silently did nothing. It now targets the
+       explicit #specs anchor on that section, with the real data-sec as the fallback. */
+    goSpecs:     function () { scrollTo('#specs') || scrollTo('[data-sec="motion"]'); }
   };
   // studio hotspots
   [['hotSeat','seat','Seat'],['hotTank','tank','Tank'],['hotPlate','plate','Front plate'],
@@ -472,8 +475,9 @@
     goPhotos();
   }
   function scrollTo(sel) {
-    var el = document.querySelector(sel); if (!el) return;
+    var el = document.querySelector(sel); if (!el) return false;
     window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 40, behavior: 'smooth' });
+    return true;
   }
   function closeSplash() {
     if (!S.splash) return;

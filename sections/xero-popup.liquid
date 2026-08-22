@@ -239,20 +239,19 @@
       {%- if section.settings.sub != blank -%}
         <p class="xp-sub">{{ section.settings.sub | escape }}</p>
       {%- endif -%}
-      {%- if section.settings.price_line != blank -%}
-        <p class="xp-price">from <b>{{ section.settings.price_line | escape }}</b>/month</p>
-      {%- endif -%}
-      {%- if section.settings.show_partners -%}
-        {%- if section.settings.partner_label != blank -%}
-          <p class="xp-plabel">{{ section.settings.partner_label | escape }}</p>
-        {%- endif -%}
-        <ul class="xp-partners">
-          <li>affirm</li>
-          <li>afterpay</li>
-          <li>Klarna.</li>
-          <li class="xp-shoppay">shop<i>Pay</i></li>
-        </ul>
-      {%- endif -%}
+      {%- comment -%}
+        Two payment claims stood here: "from $139/month", and a partner row listing affirm,
+        afterpay, Klarna and shopPay. No lender is behind the monthly figure and none of
+        the four providers are connected, so anyone who chose one reached a checkout that
+        had never heard of it - a false representation at the point of sale, plus use of
+        their wordmarks without an agreement.
+
+        Both were gated only by theme settings, and the monthly price was a schema DEFAULT,
+        so a fresh install or a settings reset put "$139/month" straight back on the first
+        thing every visitor sees. A setting is not protection for a claim like this. The
+        markup is gone. Restore only what is genuinely live at checkout, and let the
+        provider's own widget print the figure.
+      {%- endcomment -%}
     </div>
 
     <span class="xp-made">{{ section.settings.made_by | escape }}</span>
@@ -355,15 +354,12 @@
     { "type": "text", "id": "brand", "label": "Headline", "default": "XERO CHIRON" },
     { "type": "textarea", "id": "lede", "label": "Sub-headline", "default": "UNIQUE ELECTRIC PERFORMANCE" },
     { "type": "text", "id": "sub", "label": "Supporting line", "default": "Unlocks with your phone. Not a regular bike." },
-    { "type": "text", "id": "price_line", "label": "Monthly price", "default": "$139", "info": "Rendered as: from $139/month" },
     { "type": "header", "content": "Financing partners" },
-    { "type": "checkbox", "id": "show_partners", "label": "Show partner row", "default": true, "info": "Only turn this on once the matching providers are actually live in Settings > Payments." },
-    { "type": "text", "id": "partner_label", "label": "Partner line", "default": "No down payment with our partners:" },
     { "type": "header", "content": "Chrome" },
     { "type": "text", "id": "made_by", "label": "Corner mark", "default": "MADE BY XERO" },
     { "type": "url", "id": "cta_link", "label": "Arrow button link", "info": "Leave empty and the arrow just closes the popup." },
     { "type": "text", "id": "cta_aria", "label": "Arrow button label", "default": "See the Chiron" },
-    { "type": "text", "id": "aria", "label": "Dialog label", "default": "XERO Chiron - electric performance from $139 a month" },
+    { "type": "text", "id": "aria", "label": "Dialog label", "default": "XERO Chiron - a concept electric motorcycle" },
     { "type": "header", "content": "Behaviour" },
     { "type": "range", "id": "delay_ms", "min": 0, "max": 8000, "step": 250, "unit": "ms", "label": "Delay before opening", "default": 2000 },
     { "type": "range", "id": "auto_close_ms", "min": 0, "max": 8000, "step": 500, "unit": "ms", "label": "Auto-close after", "default": 3000, "info": "How long it stays up before closing itself. 0 = never auto-close." },

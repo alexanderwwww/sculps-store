@@ -148,7 +148,7 @@ img{max-width:100%}
   .shopify-section > section[data-sec="reviews"],
   .shopify-section > footer[data-sec="footer"]{padding-left:0 !important;padding-right:0 !important}
   [data-sec="gallery"]{padding-top:3.4rem !important}
-  [data-sec="iphone-key"],[data-sec="breakdown"],[data-sec="ugc-faq"],[data-sec="panel"],[data-sec="delivery"]{padding-top:3.6rem !important;padding-bottom:3.6rem !important}
+  [data-sec="iphone-key"],[data-sec="motion"],[data-sec="ugc-faq"],[data-sec="panel"],[data-sec="delivery"]{padding-top:3.6rem !important;padding-bottom:3.6rem !important}
   .shopify-section h2{font-size:2.05rem !important;letter-spacing:-.03em !important}
   [data-m="chapters"] button,[data-m="panelrow"]>div,[data-m="steprow"]>div,[data-m="dlvpair"]>div{flex:1 1 100% !important}
   [data-m="approw"]{gap:2.4rem !important}

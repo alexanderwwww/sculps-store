@@ -24,8 +24,9 @@
         "cta_link": "",
         "cta_aria": "See the Chiron",
         "aria": "XERO Chiron - a concept electric motorcycle",
-        "delay_ms": 2000,
-        "version": "v3"
+        "delay_ms": 1500,
+        "version": "v3",
+        "auto_close_ms": 1000
       }
     },
     "hero": {

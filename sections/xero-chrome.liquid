@@ -16,8 +16,14 @@
       <span style="font-size:.98rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);white-space:nowrap;"><span data-bind="selectedTitle"></span></span>
       <span style="display:flex;align-items:center;gap:.45rem;white-space:nowrap;">
         <span style="font-size:.92rem;font-weight:600;letter-spacing:-.015em;color:var(--txt,#0e0e0e);"><span data-bind="selectedPriceText"></span></span>
-        <span style="font-size:.82rem;color:var(--txt3,#8a8b91);">·</span>
-        <span style="font-size:.86rem;font-weight:600;color:#005df9;">$139/mo</span>
+        {%- comment -%}
+          A hardcoded "$139/mo" sat here, beside the live price, in the sticky bar that
+          follows the visitor down the whole page. No lender exists behind that number and
+          no instalment provider is connected, so it was a credit offer the checkout could
+          not honour - the same claim that was removed from the hero and the popup, hiding
+          in the one component that is on screen the entire time. Restore only when a
+          provider is genuinely live, and let that provider's widget print the figure.
+        {%- endcomment -%}
       </span>
     </div>
     <div style="position:relative;z-index:1;width:1px;height:2.1rem;background:var(--hair,rgba(0,0,0,.1));flex:0 0 auto;"></div>
@@ -81,7 +87,7 @@
   {%- comment -%} Burger menu. Specs removed — the whole page is the spec sheet.
       Track your build sits in its place. {%- endcomment -%}
   <div style="position:fixed;right:2.06rem;top:5.9rem;z-index:85;width:13rem;border-radius:1rem;background:var(--solid,rgb(247,247,249));border:1px solid var(--glass-b,rgba(0,0,0,.07));box-shadow:0 .8rem 2.4rem var(--shadow,rgba(0,0,0,.14));padding:.5rem;display:flex;flex-direction:column;transform-origin:100% 0;transform:scale(calc(.94 + var(--menu,0) * .06));opacity:var(--menu,0);pointer-events:var(--menu-pe,none);transition:opacity .3s cubic-bezier(.28,.11,.32,1),transform .3s cubic-bezier(.28,.11,.32,1);">
-    <a href="/#film" data-act="goFilm" style="padding:.66rem .8rem;border-radius:.6rem;font-size:1rem;color:var(--txt,#0e0e0e);">Film</a>
+    <a href="/#specs" data-act="goSpecs" style="padding:.66rem .8rem;border-radius:.6rem;font-size:1rem;color:var(--txt,#0e0e0e);">Specs</a>
     <a href="/pages/track" style="padding:.66rem .8rem;border-radius:.6rem;font-size:1rem;color:var(--txt,#0e0e0e);">Track your build</a>
     <a href="/pages/activate" style="padding:.66rem .8rem;border-radius:.6rem;font-size:1rem;color:var(--txt,#0e0e0e);">Activate a key</a>
     <button data-act="toggleCart" style="padding:.66rem .8rem;border-radius:.6rem;font-size:1rem;text-align:left;color:var(--txt,#0e0e0e);">Cart</button>
