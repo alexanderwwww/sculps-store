@@ -242,10 +242,15 @@
       </div>
       {%- comment -%}
         Express checkout posts one variant, so it cannot represent a basket that also has
-        add-ons in it. Rather than silently drop them, the button steps aside and says why.
+        add-ons in it. Rather than silently drop them - taking $4,999 and shipping no key -
+        Shopify's button dims itself and this note sends the shopper to Add to cart.
+
+        This is the whole reason a second checkout button used to sit here. It has been
+        removed so the only express path is Shopify's own licensed button. Do not remove
+        this note or the guard in store.js that dims the button: without them a shopper
+        who toggles an add-on can pay for the bike alone and never see the difference.
       {%- endcomment -%}
-      <p data-ref="payNote" hidden style="margin:.55rem 0 0;text-align:center;font-size:.82rem;line-height:1.4;color:var(--txt2,#55565c);">Express checkout covers the bike only &mdash; use Buy now to include your add-ons.</p>
-      <button data-x="xh1" data-act="buyNow" style="height:3.25rem;border-radius:1.63rem;background:var(--btnbg,#111116);color:var(--btnink,#f4f4f6);border:1px solid var(--btnb,rgba(255,255,255,.10));font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1),background .3s;">Buy now</button>
+      <p data-ref="payNote" hidden style="margin:.55rem 0 0;text-align:center;font-size:.82rem;line-height:1.4;color:var(--txt2,#55565c);">Express checkout covers the bike only &mdash; add to cart to include your add-ons.</p>
       <button data-x="xh1" data-act="addToCart" data-ref="addBtnRef" style="height:3.25rem;border-radius:1.63rem;background:transparent;border:1.6px solid var(--btn2b,rgba(140,142,152,.55));color:var(--txt,#0e0e0e);font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1),border-color .3s;">Add to cart</button>
       {%- comment -%}
         "Pay over time from $139/mo" over Affirm, Klarna, Shop Pay and Afterpay marks. None

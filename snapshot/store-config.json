@@ -1,0 +1,104 @@
+{
+  "_note": "Store configuration for xerochiron.com, pulled 2026-08-22. Reproduce these in Settings on a new store; none are set by the theme.",
+  "shop": {
+    "name": "XERO CHIRON WORKSHOP",
+    "name_todo": "Rename to XERO before launch - this prints on order confirmations and card statements",
+    "email": "xerochiron@gmail.com",
+    "myshopify_domain": "dmkwx2-8s.myshopify.com",
+    "primary_domain": "xerochiron.com",
+    "ssl": true,
+    "currency": "USD",
+    "timezone": "America/New_York",
+    "weight_unit": "POUNDS",
+    "taxes_included": false,
+    "billing_address": {
+      "address1": "505 W 162nd St",
+      "city": "New York",
+      "province": "NY",
+      "zip": "10032",
+      "country": "US",
+      "phone": "6464310447"
+    }
+  },
+  "market": {
+    "name": "United States",
+    "handle": "us",
+    "regions": [
+      "US"
+    ],
+    "primary": true
+  },
+  "location": {
+    "name": "XERO New York",
+    "address1": "505 W 162nd St",
+    "city": "New York",
+    "province": "NY",
+    "zip": "10032",
+    "country": "US"
+  },
+  "delivery": {
+    "profile": "General profile",
+    "zones": [
+      {
+        "name": "United States",
+        "countries": [
+          "US"
+        ],
+        "rates": [
+          {
+            "name": "Free delivery",
+            "price": "0.00",
+            "currency": "USD",
+            "active": true
+          }
+        ]
+      }
+    ]
+  },
+  "policies": {
+    "_source": "Full text lives in STORE-POLICIES.md at the repo root. Paste into Settings > Policies - the Admin API cannot write them (write_legal_policies is not granted).",
+    "set": [
+      "REFUND_POLICY",
+      "SHIPPING_POLICY",
+      "TERMS_OF_SERVICE",
+      "PRIVACY_POLICY",
+      "CONTACT_INFORMATION",
+      "LEGAL_NOTICE"
+    ]
+  },
+  "menus": {
+    "main-menu": [
+      {
+        "title": "Home",
+        "type": "FRONTPAGE",
+        "url": "/"
+      },
+      {
+        "title": "Catalog",
+        "type": "CATALOG",
+        "url": "/collections/all"
+      },
+      {
+        "title": "Contact",
+        "type": "PAGE",
+        "url": "/pages/contact"
+      }
+    ],
+    "footer": [
+      {
+        "title": "Search",
+        "type": "SEARCH",
+        "url": "/search"
+      },
+      {
+        "title": "Your Privacy Choices",
+        "type": "PAGE",
+        "url": "/pages/data-sharing-opt-out"
+      }
+    ]
+  },
+  "checkout": {
+    "customer_accounts": "OPTIONAL",
+    "login_required_at_checkout": false
+  }
+}

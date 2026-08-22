@@ -1,0 +1,45 @@
+{
+  "_note": "Pages for xerochiron.com, pulled 2026-08-22. Bodies for the policy pages are in STORE-POLICIES.md. activate and track are rendered by templates/page.activate.liquid and templates/page.track.liquid - their page bodies are intentionally empty.",
+  "pages": [
+    {
+      "title": "Contact",
+      "handle": "contact"
+    },
+    {
+      "title": "About",
+      "handle": "about"
+    },
+    {
+      "title": "Refund policy",
+      "handle": "refund-policy"
+    },
+    {
+      "title": "Shipping policy",
+      "handle": "shipping-policy"
+    },
+    {
+      "title": "Terms of service",
+      "handle": "terms-of-service"
+    },
+    {
+      "title": "Privacy policy",
+      "handle": "privacy-policy-full"
+    },
+    {
+      "title": "Legal notice",
+      "handle": "legal-notice"
+    },
+    {
+      "title": "Activate",
+      "handle": "activate",
+      "body": "",
+      "template": "page.activate"
+    },
+    {
+      "title": "Track",
+      "handle": "track",
+      "body": "",
+      "template": "page.track"
+    }
+  ]
+}

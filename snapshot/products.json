@@ -1,0 +1,87 @@
+{
+  "_note": "Products for xerochiron.com, pulled 2026-08-22. Prices in USD. Inventory is tracked with overselling OFF - restore that too, it is an underwriting signal.",
+  "products": [
+    {
+      "title": "XERO Chiron",
+      "handle": "xero-chiron",
+      "status": "ACTIVE",
+      "published_to": [
+        "Online Store",
+        "Shop"
+      ],
+      "description_html": "<p>An electric off-road motorcycle that unlocks with your phone. 980 Nm at the rear wheel, 120 km/h, 104 kg. Brushed aluminium bodywork over a single-piece frame that carries the pack.</p><p>Your steel owner card pairs the machine to you once. After that your iPhone lies flat in the tank pocket, charges while you ride, and is the only thing that wakes it.</p><p>Manufacturer figures, not independently certified. Real-world results vary with terrain, rider weight, temperature, tyre choice and setup.</p><p><strong>Off-road only — not street legal.</strong> Not homologated or registrable for road use in the United States. Sold for use on private land and off-road terrain. Riders must be 18 or over.</p>",
+      "option": {
+        "name": "Configuration",
+        "values": [
+          "Chiron",
+          "Chiron + 10-Year Replacement"
+        ]
+      },
+      "variants": [
+        {
+          "title": "Chiron",
+          "price": "4999.00",
+          "sku": "XC-CHIRON-STD",
+          "weight": 104,
+          "weight_unit": "KILOGRAMS",
+          "requires_shipping": true,
+          "inventory_policy": "DENY",
+          "tracked": true,
+          "quantity": 10
+        },
+        {
+          "title": "Chiron + 10-Year Replacement",
+          "price": "5598.00",
+          "sku": "XC-CHIRON-10YR",
+          "weight": 104,
+          "weight_unit": "KILOGRAMS",
+          "requires_shipping": true,
+          "inventory_policy": "DENY",
+          "tracked": true,
+          "quantity": 10
+        }
+      ],
+      "media_alts": [
+        "XERO Chiron electric off-road motorcycle, side profile, brushed aluminium bodywork",
+        "XERO Chiron front view",
+        "XERO Chiron three-quarter view",
+        "XERO Chiron detail",
+        "XERO Chiron detail view",
+        "XERO Chiron on terrain"
+      ]
+    },
+    {
+      "title": "Wireless key",
+      "handle": "wireless-key-nfc-pebble",
+      "status": "ACTIVE",
+      "published_to": [
+        "Online Store",
+        "Shop"
+      ],
+      "variants": [
+        {
+          "title": "Default Title",
+          "price": "99.00",
+          "sku": "XC-KEY-01",
+          "weight": 0.2,
+          "weight_unit": "KILOGRAMS",
+          "requires_shipping": true,
+          "inventory_policy": "DENY",
+          "tracked": true,
+          "quantity": 40
+        }
+      ],
+      "media_alts": [
+        "XERO wireless key and machined aluminium case",
+        "XERO steel owner card"
+      ]
+    }
+  ],
+  "collections": [
+    {
+      "title": "Home page",
+      "handle": "frontpage",
+      "_note": "Shopify default"
+    }
+  ]
+}
