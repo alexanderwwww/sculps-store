@@ -542,6 +542,10 @@
       paint();
     };
   })(v);
+  /* Drawer checkout: navigate only. This used to run buyNow, which ADDED another
+     bike to a cart that already held one before redirecting - a duplicate line on a
+     $4,999 item for anyone who reviewed their cart and then clicked Checkout. */
+  ACT.checkout = function () { location.href = R.checkout; };
   ACT.toggleKey = function () { toggleAddon(0); };
   ACT.toggleCharger = function () { toggleAddon(1); };
 
