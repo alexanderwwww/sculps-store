@@ -17,7 +17,25 @@
   pre-empts that for this section only.
 {%- endcomment -%}
 
+{%- comment -%}
+  On the storefront, only slides that actually have an image are carried. A slide
+  whose image was never set (or was removed) used to render a grey placeholder
+  card mid-carousel, which reads as a broken site rather than an empty slot.
+
+  In the theme editor every slide is kept, placeholder and all, so an empty one
+  stays visible and clickable for the owner to fill.
+
+  The `where` filter is guarded: if it returns nothing - genuinely no images set,
+  or the dotted path not resolving - we fall back to all blocks rather than
+  rendering an empty carousel.
+{%- endcomment -%}
 {%- assign shots = section.blocks -%}
+{%- unless request.design_mode -%}
+  {%- assign with_image = section.blocks | where: 'settings.image' -%}
+  {%- if with_image.size > 0 -%}
+    {%- assign shots = with_image -%}
+  {%- endif -%}
+{%- endunless -%}
 {%- assign count = shots.size -%}
 
 <style>
@@ -225,7 +243,8 @@
                       alt: block.settings.caption | default: block.settings.handle | default: 'XERO Chiron concept visualisation',
                       data-ugc-img: ''
                   }}
-                {%- else -%}
+                {%- elsif request.design_mode -%}
+                  {%- comment -%} editor only - never shown to a visitor {%- endcomment -%}
                   {{ 'image' | placeholder_svg_tag: 'ugc-ph' }}
                 {%- endif -%}
               </div>
