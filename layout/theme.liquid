@@ -68,6 +68,27 @@
   {%- endcomment -%}
   <link rel="stylesheet" href="{{ 'xero-pill.css' | asset_url }}">
 
+  {%- comment -%}
+    Button colours, set in Theme settings > Buttons.
+
+    These feed the whole checkout column at once: Buy now and Add to cart in the buy
+    box, and Shopify's own "Buy it now" dynamic checkout button, which paints itself
+    from Shopify's brand colour and can only be reached by CSS (see the override at
+    the end of xero-fix.css). Emitting them here rather than hardcoding means the
+    owner changes the buttons from the theme editor instead of editing code.
+
+    Last in the head so it wins over the stylesheets above.
+  {%- endcomment -%}
+  <style>
+    :root{
+      --btnbg:  {{ settings.btn_bg   | default: '#111116' }};
+      --btnbg-h:{{ settings.btn_bg_h | default: '#26272e' }};
+      --btnink: {{ settings.btn_ink  | default: '#f4f4f6' }};
+      --btnb:   {{ settings.btn_border | default: 'rgba(255,255,255,0.10)' }};
+      --btn2b:  {{ settings.btn2_border | default: 'rgba(140,142,152,0.55)' }};
+    }
+  </style>
+
   <script>
     /* Shopify serves assets from its CDN, so every path must come from Liquid.
        The stage can never build one by string concatenation. */

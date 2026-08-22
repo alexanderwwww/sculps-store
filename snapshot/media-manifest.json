@@ -1,0 +1,375 @@
+{
+  "_note": "Media manifest for xerochiron.com (dmkwx2-8s.myshopify.com), pulled 2026-08-22. Binaries are NOT in this repo - the build environment's network policy blocks cdn.shopify.com, so they could not be downloaded. These URLs are public and Shopify fetches them server-side during fileCreate, so a restore works without ever downloading them locally. They stay valid only while the source store lives: if this store may be closed, download these URLs from a normal browser and commit the files.",
+  "source_store": "dmkwx2-8s.myshopify.com",
+  "pulled": "2026-08-22",
+  "images": [
+    {
+      "filename": "hf_20260811_045930_e83462fb-f1bc-4676-b075-57a798e363f0.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260811_045930_e83462fb-f1bc-4676-b075-57a798e363f0.png?v=1787339793"
+    },
+    {
+      "filename": "hf_20260811_045930_2aece5fc-2dfa-41d4-b92d-5a51a5a6966c.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260811_045930_2aece5fc-2dfa-41d4-b92d-5a51a5a6966c.png?v=1787339864"
+    },
+    {
+      "filename": "hf_20260811_045930_4de5e7fc-d79f-4cff-a73d-d4c7e5bfc7a9.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260811_045930_4de5e7fc-d79f-4cff-a73d-d4c7e5bfc7a9.png?v=1787339869"
+    },
+    {
+      "filename": "hf_20260813_061727_eb4eeec2-1eeb-423c-a9d5-4ff855e44d1e.png",
+      "width": 1344,
+      "height": 752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260813_061727_eb4eeec2-1eeb-423c-a9d5-4ff855e44d1e.png?v=1787339893"
+    },
+    {
+      "filename": "hf_20260810_081538_0c1b7cf4-85a3-4f18-88a7-dd39d30d6134.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_081538_0c1b7cf4-85a3-4f18-88a7-dd39d30d6134.png?v=1787339972"
+    },
+    {
+      "filename": "hf_20260813_061722_e9160a82-caa3-4d2c-ac9f-a937ec968359.png",
+      "width": 1344,
+      "height": 752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260813_061722_e9160a82-caa3-4d2c-ac9f-a937ec968359.png?v=1787339973"
+    },
+    {
+      "filename": "hf_20260814_055017_f068445f-c20d-4d46-aa54-01aaaa64d44e.png",
+      "width": 752,
+      "height": 1344,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260814_055017_f068445f-c20d-4d46-aa54-01aaaa64d44e.png?v=1787339982"
+    },
+    {
+      "filename": "hf_20260810_081538_a18cd8b1-8271-4ceb-aaa5-9c1d9a3199d2.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_081538_a18cd8b1-8271-4ceb-aaa5-9c1d9a3199d2.png?v=1787339987"
+    },
+    {
+      "filename": "hf_20260810_081538_9f71a0c2-ae92-4ad4-a026-2f11aaaf10f6.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_081538_9f71a0c2-ae92-4ad4-a026-2f11aaaf10f6.png?v=1787340028"
+    },
+    {
+      "filename": "hf_20260810_081538_d6de6916-d10b-4877-a21e-c171c821fd64.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_081538_d6de6916-d10b-4877-a21e-c171c821fd64.png?v=1787394813"
+    },
+    {
+      "filename": "hf_20260810_081538_dec26593-aab4-4c64-a999-9f278d2d7926.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_081538_dec26593-aab4-4c64-a999-9f278d2d7926.png?v=1787340131"
+    },
+    {
+      "filename": "hf_20260816_094800_f48be241-17ed-44d0-839b-6e84c950f4c0.png",
+      "width": 2752,
+      "height": 1536,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260816_094800_f48be241-17ed-44d0-839b-6e84c950f4c0.png?v=1787340485"
+    },
+    {
+      "filename": "hf_20260810_031051_3aa3f71c-c5d9-466b-8808-3dc992309be1.png",
+      "width": 1760,
+      "height": 2018,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_031051_3aa3f71c-c5d9-466b-8808-3dc992309be1.png?v=1787385231"
+    },
+    {
+      "filename": "hf_20260810_041320_269332c9-1739-458a-b679-9599df13b8bf.png",
+      "width": 2048,
+      "height": 2048,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_041320_269332c9-1739-458a-b679-9599df13b8bf.png?v=1787340599"
+    },
+    {
+      "filename": "hf_20260818_025446_38445f44-39b6-4663-97c9-6fae394efeae.png",
+      "width": 1520,
+      "height": 2688,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_025446_38445f44-39b6-4663-97c9-6fae394efeae.png?v=1787340642"
+    },
+    {
+      "filename": "hf_20260816_123238_efb42158-bd79-4626-9c3b-4359cbb14621.png",
+      "width": 1536,
+      "height": 2752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260816_123238_efb42158-bd79-4626-9c3b-4359cbb14621.png?v=1787340725"
+    },
+    {
+      "filename": "hf_20260818_025507_2ed6750a-1ef2-44f2-8cb8-a7478ae63ca0.png",
+      "width": 1520,
+      "height": 2688,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_025507_2ed6750a-1ef2-44f2-8cb8-a7478ae63ca0.png?v=1787340731"
+    },
+    {
+      "filename": "hf_20260810_031051_89e38d6b-5726-4917-aca4-9a7c07d9d42d.png",
+      "width": 1760,
+      "height": 2090,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_031051_89e38d6b-5726-4917-aca4-9a7c07d9d42d.png?v=1787385150"
+    },
+    {
+      "filename": "hf_20260818_031144_a7f94903-17d9-4ef0-984d-5c7f74f28d03.png",
+      "width": 1536,
+      "height": 2752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_031144_a7f94903-17d9-4ef0-984d-5c7f74f28d03.png?v=1787340851"
+    },
+    {
+      "filename": "hf_20260818_025600_0e3ba07f-440b-46a9-941d-cc11fb529121.png",
+      "width": 1520,
+      "height": 2688,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_025600_0e3ba07f-440b-46a9-941d-cc11fb529121.png?v=1787340863"
+    },
+    {
+      "filename": "hf_20260818_031616_4f1172f0-e529-43c3-bdcf-142e4a79427a.png",
+      "width": 1536,
+      "height": 2752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_031616_4f1172f0-e529-43c3-bdcf-142e4a79427a.png?v=1787340883"
+    },
+    {
+      "filename": "hf_20260818_025632_55f7de91-154a-4455-8e1d-56108c9e617c.png",
+      "width": 1520,
+      "height": 2688,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_025632_55f7de91-154a-4455-8e1d-56108c9e617c.png?v=1787340896"
+    },
+    {
+      "filename": "hf_20260818_025430_eacc4e91-89c7-4ed2-9b50-bdfa017df427.png",
+      "width": 1520,
+      "height": 2688,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_025430_eacc4e91-89c7-4ed2-9b50-bdfa017df427.png?v=1787340935"
+    },
+    {
+      "filename": "hf_20260818_122057_1b6a0f88-575f-48fc-9456-daf69476f40b.png",
+      "width": 1536,
+      "height": 2752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_122057_1b6a0f88-575f-48fc-9456-daf69476f40b.png?v=1787340983"
+    },
+    {
+      "filename": "hf_20260818_025729_38890e22-5af4-4d6d-82cf-a16617594a7c.png",
+      "width": 1536,
+      "height": 2752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_025729_38890e22-5af4-4d6d-82cf-a16617594a7c.png?v=1787340986"
+    },
+    {
+      "filename": "hf_20260818_122304_8f50f520-5e2a-4157-b4ea-350c9f94cb52.png",
+      "width": 2752,
+      "height": 1536,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260818_122304_8f50f520-5e2a-4157-b4ea-350c9f94cb52.png?v=1787340986"
+    },
+    {
+      "filename": "hf_20260809_074319_4e887240-8364-4f79-b56f-77b0b4f2b57b.png",
+      "width": 880,
+      "height": 1168,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260809_074319_4e887240-8364-4f79-b56f-77b0b4f2b57b.png?v=1787385352"
+    },
+    {
+      "filename": "hf_20260822_074351_57a101db-1254-43bd-a6e6-9a3f4816e601.png",
+      "width": 4096,
+      "height": 4096,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260822_074351_57a101db-1254-43bd-a6e6-9a3f4816e601.png?v=1787385418"
+    },
+    {
+      "filename": "hf_20260822_080042_7a550075-876d-4d17-8ec0-64f2ea9f3367.png",
+      "width": 3520,
+      "height": 4704,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260822_080042_7a550075-876d-4d17-8ec0-64f2ea9f3367.png?v=1787386096"
+    },
+    {
+      "filename": "hf_20260809_071104_9a78b890-c126-4568-85ec-afb32c4458ab.png",
+      "width": 880,
+      "height": 1168,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260809_071104_9a78b890-c126-4568-85ec-afb32c4458ab.png?v=1787386775"
+    },
+    {
+      "filename": "b5f1aa4a-e330-410b-b042-a2797456cfc1_1.png",
+      "width": 1536,
+      "height": 1024,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/b5f1aa4a-e330-410b-b042-a2797456cfc1_1.png?v=1787386925"
+    },
+    {
+      "filename": "hf_20260822_074351_2c58049e-f312-431e-b04f-751776a53db0.png",
+      "width": 4096,
+      "height": 4096,
+      "alt": "XERO Chiron electric off-road motorcycle, side profile, brushed aluminium bodywork",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260822_074351_2c58049e-f312-431e-b04f-751776a53db0.png?v=1787390533"
+    },
+    {
+      "filename": "hf_20260822_080042_1f6cc134-753b-4007-baad-44c5a53c16b6.png",
+      "width": 3520,
+      "height": 4704,
+      "alt": "XERO Chiron front view",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260822_080042_1f6cc134-753b-4007-baad-44c5a53c16b6.png?v=1787390533"
+    },
+    {
+      "filename": "hf_20260810_041320_02914b30-c15b-4c8a-aa02-2e7a15825032.png",
+      "width": 2048,
+      "height": 2048,
+      "alt": "XERO Chiron three-quarter view",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_041320_02914b30-c15b-4c8a-aa02-2e7a15825032.png?v=1787390532"
+    },
+    {
+      "filename": "hf_20260809_071104_f4b546a2-909f-4bfa-b432-ed8e09d51fb6.png",
+      "width": 880,
+      "height": 1168,
+      "alt": "XERO Chiron detail",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260809_071104_f4b546a2-909f-4bfa-b432-ed8e09d51fb6.png?v=1787390531"
+    },
+    {
+      "filename": "hf_20260809_074319_8ecb3af4-2aec-4703-a76b-e0edac665a0f.png",
+      "width": 880,
+      "height": 1168,
+      "alt": "XERO Chiron detail view",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260809_074319_8ecb3af4-2aec-4703-a76b-e0edac665a0f.png?v=1787390531"
+    },
+    {
+      "filename": "hf_20260813_061727_d99b6558-44b8-422c-98ca-8eb09a3ad65a.png",
+      "width": 1344,
+      "height": 752,
+      "alt": "XERO Chiron on terrain",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260813_061727_d99b6558-44b8-422c-98ca-8eb09a3ad65a.png?v=1787390532"
+    },
+    {
+      "filename": "hf_20260810_031051_2fb183f8-d8c0-400a-b8ba-5ec2bb015211.png",
+      "width": 1760,
+      "height": 2018,
+      "alt": "XERO wireless key and machined aluminium case",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_031051_2fb183f8-d8c0-400a-b8ba-5ec2bb015211.png?v=1787394899"
+    },
+    {
+      "filename": "hf_20260810_031051_4fca011b-1020-4ac7-949a-01eaa85ba7fb.png",
+      "width": 1760,
+      "height": 1975,
+      "alt": "XERO steel owner card",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_031051_4fca011b-1020-4ac7-949a-01eaa85ba7fb.png?v=1787399626"
+    },
+    {
+      "filename": "b5f1aa4a-e330-410b-b042-a2797456cfc1_1_b1194d64-bdc6-42d7-b299-8246d6e6f95c.png",
+      "width": 562,
+      "height": 811,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/b5f1aa4a-e330-410b-b042-a2797456cfc1_1_b1194d64-bdc6-42d7-b299-8246d6e6f95c.png?v=1787394694"
+    },
+    {
+      "filename": "hf_20260822_082410_36e53783-ba1f-41f6-bc51-2b526f031a83.png",
+      "width": 3072,
+      "height": 3072,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260822_082410_36e53783-ba1f-41f6-bc51-2b526f031a83.png?v=1787394771"
+    },
+    {
+      "filename": "hf_20260822_074351_5c414caa-d72b-43bc-958c-764c5c0091f9.png",
+      "width": 4096,
+      "height": 4096,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260822_074351_5c414caa-d72b-43bc-958c-764c5c0091f9.png?v=1787394780"
+    },
+    {
+      "filename": "Screenshot_2026-08-21_at_18.59.29.png",
+      "width": 926,
+      "height": 1662,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/Screenshot_2026-08-21_at_18.59.29.png?v=1787395007"
+    },
+    {
+      "filename": "Screenshot_2026-08-16_at_12.41.15.png",
+      "width": 960,
+      "height": 1602,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/Screenshot_2026-08-16_at_12.41.15.png?v=1787395030"
+    },
+    {
+      "filename": "Screenshot_2026-08-16_at_12.40.39.png",
+      "width": 936,
+      "height": 1632,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/Screenshot_2026-08-16_at_12.40.39.png?v=1787395030"
+    },
+    {
+      "filename": "Screenshot_2026-08-22_at_13.38.03.png",
+      "width": 106,
+      "height": 98,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/Screenshot_2026-08-22_at_13.38.03.png?v=1787395091"
+    },
+    {
+      "filename": "hf_20260810_081538_5b3a02f0-8d4c-4b6e-869c-6286e1b1bae4.png",
+      "width": 1168,
+      "height": 880,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260810_081538_5b3a02f0-8d4c-4b6e-869c-6286e1b1bae4.png?v=1787395318"
+    },
+    {
+      "filename": "hf_20260811_051025_473a3e8f-da89-4ff0-9609-f774ebf8f73b.png",
+      "width": 1344,
+      "height": 752,
+      "alt": "",
+      "url": "https://cdn.shopify.com/s/files/1/1054/7075/5158/files/hf_20260811_051025_473a3e8f-da89-4ff0-9609-f774ebf8f73b.png?v=1787395717"
+    }
+  ],
+  "videos": [
+    {
+      "filename": "openart-cgt-20260822164612-kmbtb_1787388503750_c5f8a379.mp4",
+      "hd": "https://cdn.shopify.com/videos/c/vp/ba91616eb5ca431f81f68d2939e8474c/ba91616eb5ca431f81f68d2939e8474c.HD-720p-4.5Mbps-92321918.mp4",
+      "sd": "https://cdn.shopify.com/videos/c/vp/ba91616eb5ca431f81f68d2939e8474c/ba91616eb5ca431f81f68d2939e8474c.SD-480p-1.5Mbps-92321918.mp4",
+      "hls": "https://cdn.shopify.com/videos/c/vp/ba91616eb5ca431f81f68d2939e8474c/ba91616eb5ca431f81f68d2939e8474c.m3u8"
+    },
+    {
+      "filename": "hf_20260816_095855_8d124f22-050e-4ca4-a19a-6ca68ab39713.mp4",
+      "hd": "https://cdn.shopify.com/videos/c/vp/9ad6a7997b6b4b2e934432ee7ec8c310/9ad6a7997b6b4b2e934432ee7ec8c310.HD-720p-4.5Mbps-92322434.mp4",
+      "sd": "https://cdn.shopify.com/videos/c/vp/9ad6a7997b6b4b2e934432ee7ec8c310/9ad6a7997b6b4b2e934432ee7ec8c310.SD-480p-1.5Mbps-92322434.mp4",
+      "hls": "https://cdn.shopify.com/videos/c/vp/9ad6a7997b6b4b2e934432ee7ec8c310/9ad6a7997b6b4b2e934432ee7ec8c310.m3u8"
+    },
+    {
+      "filename": "hf_20260817_143535_dc2817e5-4f15-4d8f-b5bd-a0cb5855cb6d.mp4",
+      "hd": "https://cdn.shopify.com/videos/c/vp/91a6231521174c2f967c1fd64aa96e86/91a6231521174c2f967c1fd64aa96e86.HD-720p-4.5Mbps-92322578.mp4",
+      "sd": "https://cdn.shopify.com/videos/c/vp/91a6231521174c2f967c1fd64aa96e86/91a6231521174c2f967c1fd64aa96e86.SD-480p-1.5Mbps-92322578.mp4",
+      "hls": "https://cdn.shopify.com/videos/c/vp/91a6231521174c2f967c1fd64aa96e86/91a6231521174c2f967c1fd64aa96e86.m3u8"
+    },
+    {
+      "filename": "hf_20260816_054731_48980959-5389-4322-80b5-0d3e7b4913fe.mp4",
+      "hd": "https://cdn.shopify.com/videos/c/vp/59100ce0d5f14ae18731444ac27d6972/59100ce0d5f14ae18731444ac27d6972.HD-720p-4.5Mbps-92322672.mp4",
+      "sd": "https://cdn.shopify.com/videos/c/vp/59100ce0d5f14ae18731444ac27d6972/59100ce0d5f14ae18731444ac27d6972.SD-480p-1.5Mbps-92322672.mp4",
+      "hls": "https://cdn.shopify.com/videos/c/vp/59100ce0d5f14ae18731444ac27d6972/59100ce0d5f14ae18731444ac27d6972.m3u8"
+    },
+    {
+      "filename": "hf_20260816_054520_6d66faaa-3a63-4cd9-8282-a6ecbc8de5a2.mp4",
+      "hd": "https://cdn.shopify.com/videos/c/vp/c06901a34d804ec6980dd0fc4594b445/c06901a34d804ec6980dd0fc4594b445.HD-720p-4.5Mbps-92323035.mp4",
+      "sd": "https://cdn.shopify.com/videos/c/vp/c06901a34d804ec6980dd0fc4594b445/c06901a34d804ec6980dd0fc4594b445.SD-480p-1.5Mbps-92323035.mp4",
+      "hls": "https://cdn.shopify.com/videos/c/vp/c06901a34d804ec6980dd0fc4594b445/c06901a34d804ec6980dd0fc4594b445.m3u8"
+    }
+  ]
+}
