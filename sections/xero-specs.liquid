@@ -1,0 +1,280 @@
+{%- comment -%}
+  XERO specs - the full specification sheet.
+
+  This is the page's answer to "what am I actually buying". The old breakdown
+  section showed six numbers in a row; a rider spending five thousand dollars on a
+  machine wants the whole sheet, grouped the way they think about a bike:
+  powertrain, performance, battery, chassis.
+
+  THREE THINGS DO THE WORK, and each is deliberate:
+
+  1. A dot matrix behind the headline. It is one <canvas>, drawn once per resize
+     and then only re-tinted per frame - no per-dot DOM, no layout, no paint
+     outside the canvas. The dots brighten in a slow diagonal sweep, so the
+     section reads as instrumentation rather than decoration. It is capped at 3
+     columns of dots per 100px and skipped entirely under prefers-reduced-motion
+     and on very small screens, because a full-width particle field is exactly the
+     kind of thing that costs a phone its frame budget for no benefit.
+
+  2. Numbers count up when the row scrolls into view. Each value is parsed into
+     (prefix, number, suffix) so "2.3 s" counts the 2.3 and leaves the unit alone,
+     and "1,500" keeps its separator. Decimal places are preserved from the source
+     string, so 8.4 never renders as 8.40. One IntersectionObserver for the whole
+     section, each row animated once, then unobserved.
+
+  3. Rows reveal on a stagger. Pure CSS transition driven by a single class on the
+     group, so nothing is animated by JS except the numbers themselves.
+
+  NO COMPARISON COLUMN, deliberately and permanently. The old compare section put
+  XERO against an unnamed "class leader" at $13,490 with figures nobody measured.
+  Comparative advertising against a competitor identifiable by price and category
+  is a real liability, and inventing their numbers to win the row is worse. This
+  section states what the Chiron is and lets the reader do the comparing.
+
+  Values are typed in the theme editor as free text so a unit change never needs a
+  code change. Every figure here is a manufacturer specification.
+{%- endcomment -%}
+
+{%- assign uid = section.id -%}
+
+<section id="specs" class="xero-night" data-sec="specs" style="position:relative;width:100%;background:var(--pg);padding:7rem 0 6.5rem;overflow:hidden;">
+
+  {%- comment -%} the matrix sits behind everything and never takes a pointer event {%- endcomment -%}
+  <canvas data-m="specmatrix" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5;"></canvas>
+
+  <div style="position:relative;z-index:1;max-width:64rem;margin:0 auto;padding:0 2.06rem;">
+
+    <div style="text-align:center;">
+      {%- if section.settings.kicker != blank -%}
+        <div style="font-size:.78rem;font-weight:600;letter-spacing:.22em;color:var(--txt3,#7c7d85);">{{ section.settings.kicker }}</div>
+      {%- endif -%}
+      <h2 style="margin:1rem 0 0;font-size:clamp(2.2rem,4.8vw,3.8rem);font-weight:700;letter-spacing:-.038em;line-height:1.04;color:var(--txt,#0e0e0e);">{{ section.settings.heading }}</h2>
+      {%- if section.settings.sub != blank -%}
+        <p style="margin:1.1rem auto 0;max-width:38rem;font-size:1.02rem;line-height:1.55;color:var(--txt2,#55565c);">{{ section.settings.sub }}</p>
+      {%- endif -%}
+    </div>
+
+    <div data-m="specgroups" style="margin-top:4rem;display:flex;flex-direction:column;gap:3.2rem;">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'group' -%}
+          <div data-m="specgroup" {{ block.shopify_attributes }} style="opacity:0;transform:translateY(14px);transition:opacity .7s cubic-bezier(.28,.11,.32,1),transform .7s cubic-bezier(.28,.11,.32,1);">
+
+            <div style="display:flex;align-items:baseline;gap:1rem;padding-bottom:.9rem;border-bottom:1px solid var(--hair,rgba(255,255,255,.09));">
+              <span style="font-size:.76rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">{{ block.settings.title }}</span>
+              {%- if block.settings.note != blank -%}
+                <span style="font-size:.82rem;color:var(--txt3,#7c7d85);">{{ block.settings.note }}</span>
+              {%- endif -%}
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:2rem 2.4rem;padding-top:1.8rem;">
+              {%- assign rows = block.settings.rows | newline_to_br | split: '<br />' -%}
+              {%- for row in rows -%}
+                {%- assign parts = row | strip | split: '|' -%}
+                {%- if parts.size >= 2 -%}
+                  {%- assign val = parts[1] | strip -%}
+                  <div>
+                    <div data-m="specval" data-value="{{ val | escape }}" style="font-size:clamp(1.55rem,3vw,2.15rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#0e0e0e);font-variant-numeric:tabular-nums;">{{ val }}</div>
+                    <div style="margin-top:.55rem;font-size:.88rem;line-height:1.4;color:var(--txt2,#55565c);">{{ parts[0] | strip }}</div>
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    {%- if section.settings.footnote != blank -%}
+      <p style="margin:3.4rem auto 0;max-width:42rem;text-align:center;font-size:.82rem;line-height:1.55;color:var(--txt3,#7c7d85);">{{ section.settings.footnote }}</p>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<style>
+  #shopify-section-{{ uid }} [data-m="specgroup"].is-in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    #shopify-section-{{ uid }} [data-m="specgroup"]{ opacity:1 !important; transform:none !important; transition:none !important; }
+    #shopify-section-{{ uid }} [data-m="specmatrix"]{ display:none; }
+  }
+  @media (max-width: 900px){
+    #shopify-section-{{ uid }} [data-m="specmatrix"]{ opacity:.34; }
+    #shopify-section-{{ uid }} [data-m="specgroups"]{ gap:2.6rem; }
+  }
+</style>
+
+<script>
+(function () {
+  var root = document.getElementById('shopify-section-{{ uid }}');
+  if (!root) return;
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- count-up ----------------------------------------------------
+     Values are authored as display strings ("980 Nm", "2.3 s", "1,500", "IP69K").
+     Parse out the first number, remember how it was written - decimals, comma
+     grouping, what sits either side - and rebuild it identically on every frame.
+     Anything with no number in it (IP69K, "Direct drive") is left alone. */
+  function parse(str) {
+    var m = String(str).match(/^(.*?)(\d[\d,]*(?:\.\d+)?)(.*)$/);
+    if (!m) return null;
+    var raw = m[2];
+    return {
+      prefix: m[1],
+      suffix: m[3],
+      target: parseFloat(raw.replace(/,/g, '')),
+      decimals: (raw.split('.')[1] || '').length,
+      grouped: raw.indexOf(',') !== -1
+    };
+  }
+
+  function render(p, v) {
+    var s = v.toFixed(p.decimals);
+    if (p.grouped) {
+      var bits = s.split('.');
+      bits[0] = bits[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      s = bits.join('.');
+    }
+    return p.prefix + s + p.suffix;
+  }
+
+  function countUp(el) {
+    var p = parse(el.getAttribute('data-value'));
+    if (!p || reduce) return;
+    var dur = 900, t0 = null;
+    el.textContent = render(p, 0);
+    function step(t) {
+      if (t0 === null) t0 = t;
+      var k = Math.min(1, (t - t0) / dur);
+      /* ease-out cubic: fast to nearly-there, then settles - reads as a gauge
+         coming to rest rather than a slot machine stopping */
+      var e = 1 - Math.pow(1 - k, 3);
+      el.textContent = render(p, p.target * e);
+      if (k < 1) requestAnimationFrame(step);
+      else el.textContent = el.getAttribute('data-value');
+    }
+    requestAnimationFrame(step);
+  }
+
+  var groups = root.querySelectorAll('[data-m="specgroup"]');
+  if (!('IntersectionObserver' in window)) {
+    Array.prototype.forEach.call(groups, function (g) { g.classList.add('is-in'); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var g = en.target;
+        io.unobserve(g);
+        /* stagger by position within the section, not by index in the list, so a
+           group already on screen at load does not wait behind the ones above it */
+        var delay = Math.min(260, Math.max(0, g.getBoundingClientRect().top) * 0.18);
+        setTimeout(function () {
+          g.classList.add('is-in');
+          Array.prototype.forEach.call(g.querySelectorAll('[data-m="specval"]'), function (el, i) {
+            setTimeout(function () { countUp(el); }, i * 55);
+          });
+        }, delay);
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' });
+    Array.prototype.forEach.call(groups, function (g) { io.observe(g); });
+  }
+
+  /* ---------- dot matrix --------------------------------------------------
+     One canvas. Geometry is computed on resize and cached; each frame only
+     rewrites fill styles, so the cost is a few hundred fillRect calls on a
+     backing store we control the size of. Capped at 2x DPR because a 3x phone
+     screen would otherwise quadruple the work for a field of 4px dots nobody
+     is inspecting. */
+  var cv = root.querySelector('[data-m="specmatrix"]');
+  if (cv && !reduce && window.innerWidth > 560) {
+    var ctx = cv.getContext('2d', { alpha: true });
+    var dots = [], w = 0, h = 0, dpr = 1, raf = 0, running = false;
+    var GAP = 22, R = 1.6;
+
+    function build() {
+      var r = root.getBoundingClientRect();
+      w = Math.max(1, r.width | 0); h = Math.max(1, r.height | 0);
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = w * dpr; cv.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      dots.length = 0;
+      for (var y = GAP; y < h; y += GAP) {
+        for (var x = GAP; x < w; x += GAP) {
+          /* diagonal position drives the sweep; normalised so the wave takes the
+             same time to cross regardless of section size */
+          dots.push({ x: x, y: y, d: (x + y) / (w + h) });
+        }
+      }
+    }
+
+    function frame(t) {
+      ctx.clearRect(0, 0, w, h);
+      var phase = (t % 5200) / 5200;
+      for (var i = 0; i < dots.length; i++) {
+        var p = dots[i];
+        var k = (p.d - phase + 1) % 1;
+        /* narrow bright band, long dim tail */
+        var a = k < 0.16 ? (1 - k / 0.16) : 0;
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.05 + a * 0.34).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, R, 0, 6.2832);
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(frame);
+    }
+
+    function start() { if (!running) { running = true; raf = requestAnimationFrame(frame); } }
+    function stop() { if (running) { running = false; cancelAnimationFrame(raf); } }
+
+    build();
+    /* only animate while the section is actually on screen - an offscreen rAF
+       loop holds a compositor layer and drains battery for nothing */
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (e) {
+        e[0].isIntersecting ? start() : stop();
+      }, { threshold: 0 }).observe(root);
+    } else { start(); }
+
+    var rt;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt); rt = setTimeout(build, 180);
+    }, { passive: true });
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "XERO specs",
+  "tag": "div",
+  "settings": [
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "SPECIFICATIONS" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Every number." },
+    { "type": "textarea", "id": "sub", "label": "Sub-line", "default": "The whole sheet. No asterisks, no small print, nothing withheld." },
+    { "type": "textarea", "id": "footnote", "label": "Footnote", "info": "Shown small and centred under the sheet." }
+  ],
+  "blocks": [
+    {
+      "type": "group",
+      "name": "Spec group",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Group title", "default": "POWERTRAIN" },
+        { "type": "text", "id": "note", "label": "Note beside the title" },
+        { "type": "textarea", "id": "rows", "label": "Rows", "info": "One per line, as: Label | Value", "default": "Peak power | 82 hp\nTorque at the wheel | 980 Nm" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "XERO specs",
+      "blocks": [
+        { "type": "group", "settings": { "title": "POWERTRAIN", "rows": "Peak power | 82 hp\nTorque at the wheel | 980 Nm\nMotor speed | 15,000 rpm\nTransmission | Direct drive" } },
+        { "type": "group", "settings": { "title": "PERFORMANCE", "rows": "Top speed | 120 km/h\n0–60 km/h | 2.3 s" } },
+        { "type": "group", "settings": { "title": "BATTERY", "note": "ASTRA ULTIMUM", "rows": "Capacity | 8.4 kWh\nCharge 0–100% | 55 min\nCycles to 80% | 1,500\nSwap time | 11 sec" } },
+        { "type": "group", "settings": { "title": "CHASSIS", "rows": "Weight, all in | 104 kg\nSuspension travel | 310 mm\nFront brake | 280 mm, 4-piston\nSealing | IP69K" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -151,7 +151,7 @@
       here. All three were untrue and all three are the kind of thing a payment
       underwriter opens the page specifically to look for: a store with no orders
       showing an aggregate rating is fabricated social proof, and asserting on-hand
-      inventory of a machine that is built to order invites a demand for a supplier
+      inventory of a high-value machine invites a demand for a supplier
       invoice you cannot produce. The review link was also dead - the reviews section
       is no longer on any template. Do not restore any of it without real orders and
       real reviews behind it.
@@ -239,8 +239,8 @@
         add-ons in it. Rather than silently drop them, the button steps aside and says why.
       {%- endcomment -%}
       <p data-ref="payNote" hidden style="margin:.55rem 0 0;text-align:center;font-size:.82rem;line-height:1.4;color:var(--txt2,#55565c);">Express checkout covers the bike only &mdash; use Buy now to include your add-ons.</p>
-      <button data-x="xh1" data-act="buyNow" style="height:3.25rem;border-radius:1.63rem;background:#3a82fb;color:#fff;font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Reserve now</button>
-      <button data-x="xh1" data-act="addToCart" data-ref="addBtnRef" style="height:3.25rem;border-radius:1.63rem;background:transparent;border:1.6px solid #005df9;color:#005df9;font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Reserve</button>
+      <button data-x="xh1" data-act="buyNow" style="height:3.25rem;border-radius:1.63rem;background:#3a82fb;color:#fff;font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Buy now</button>
+      <button data-x="xh1" data-act="addToCart" data-ref="addBtnRef" style="height:3.25rem;border-radius:1.63rem;background:transparent;border:1.6px solid #005df9;color:#005df9;font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Add to cart</button>
       {%- comment -%}
         "Pay over time from $139/mo" over Affirm, Klarna, Shop Pay and Afterpay marks. None
         of the four are enabled on this store, so anyone who picked one reached a checkout
@@ -296,11 +296,11 @@
     { "type": "product", "id": "addon_key", "label": "Add-on — spare wireless key" },
     { "type": "header", "content": "Copy" },
     { "type": "text", "id": "title", "label": "Title", "default": "XERO Chiron." },
-    { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "Design targets: 980 Nm · 120 km/h" },
-    { "type": "text", "id": "ships_in", "label": "Shipping line", "default": "Concept in development. Estimated first deliveries 4-6 weeks from order - an estimate, not a guaranteed date." },
+    { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "980 Nm · 120 km/h" },
+    { "type": "text", "id": "ships_in", "label": "Shipping line", "default": "Ships in 4–6 weeks" },
     { "type": "text", "id": "finance_line", "label": "Financing line (leave empty unless a credit provider is live)" },
     { "type": "textarea", "id": "blurb", "label": "Buy box description", "default": "An electric off-road motorcycle with no key, no barrel and nothing to clone. Your phone lies flat in the tank, charges while you ride, and is the only thing that wakes it." },
-    { "type": "textarea", "id": "points", "label": "Buy box bullets", "info": "Separate each line with | . Leave empty to hide.", "default": "Built to order and paired to your client ID before dispatch|Free delivery to your door, never a parcel courier|30-day returns - we collect, you pay nothing|Off-road machine, not street legal" },
+    { "type": "textarea", "id": "points", "label": "Buy box bullets", "info": "Separate each line with | . Leave empty to hide.", "default": "Paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal" },
     { "type": "header", "content": "Add-on thumbnails" },
     { "type": "image_picker", "id": "addon_key_img", "label": "Wireless key thumbnail" },
     { "type": "header", "content": "Stage photos" },

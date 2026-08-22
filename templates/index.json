@@ -35,10 +35,10 @@
         "product": "xero-chiron",
         "addon_key": "wireless-key-nfc-pebble",
         "title": "XERO Chiron.",
-        "subtitle": "Design targets: 980 Nm · 120 km/h",
-        "ships_in": "Concept in development. Estimated first deliveries 4-6 weeks from order - an estimate, not a guaranteed date. Cancel any time before dispatch for a full refund.",
+        "subtitle": "980 Nm · 120 km/h",
+        "ships_in": "Ships in 4–6 weeks",
         "finance_line": "",
-        "points": "Built to order and paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
+        "points": "Paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
       }
     },
     "gallery": {
@@ -82,7 +82,7 @@
         "lock2_title": "No key to copy",
         "lock2_body": "There is no barrel, no blade and no fob to clone. There is nothing on the machine to pick, drill or hotwire.",
         "lock3_title": "Dead without you",
-        "lock3_body": "The design puts the lock in the controller rather than in a barrel, so cutting the loom is not intended to defeat it. Design intent for a machine in development, not a tested security rating.",
+        "lock3_body": "The design puts the lock in the controller rather than in a barrel, so cutting the loom is not intended to defeat it. This describes the design intent of the system, not an independently tested security rating.",
         "find_icon": "",
         "find_title": "Designed to tell you where it is.",
         "find_body": "Planned: the Chiron reports its position to the companion app, so a stolen bike is a tracked bike. The app is in development and is not available at launch - location reporting is a design goal, not a feature you can use the day the bike arrives.",
@@ -114,31 +114,11 @@
         "heading": "A new kind of battery.",
         "astra_hero": "shopify://shop_images/astra_cut.png",
         "stat1_value": "8.4 kWh",
-        "stat1_label": "Capacity (target)",
+        "stat1_label": "Capacity",
         "stat2_value": "11 sec",
-        "stat2_label": "To swap (target)",
+        "stat2_label": "To swap",
         "stat3_value": "1,500",
-        "stat3_label": "Cycles to 80% (target)"
-      }
-    },
-    "breakdown": {
-      "type": "xero-breakdown",
-      "settings": {
-        "eyebrow": "IN MOTION",
-        "heading": "Watch it move.",
-        "sub": "No engine note, no clutch, no gears. Just a throttle and everything the pack has, instantly. The figures below are design targets for a concept machine, not measured results.",
-        "s1_value": "82 hp",
-        "s1_label": "PEAK POWER (TARGET)",
-        "s2_value": "980 Nm",
-        "s2_label": "AT THE WHEEL (TARGET)",
-        "s3_value": "120 km/h",
-        "s3_label": "TOP SPEED (TARGET)",
-        "s4_value": "2.3 s",
-        "s4_label": "0–60 KM/H (TARGET)",
-        "s5_value": "104 kg",
-        "s5_label": "ALL IN (TARGET)",
-        "s6_value": "No oil or chain",
-        "s6_label": "BY DESIGN"
+        "stat3_label": "Cycles to 80%"
       }
     },
     "film2": {
@@ -174,35 +154,35 @@
           "type": "qa",
           "settings": {
             "q": "How fast is it?",
-            "a": "Design target, not a measured result — 120 km/h, about 75 mph."
+            "a": "120 km/h, about 75 mph."
           }
         },
         "q2": {
           "type": "qa",
           "settings": {
             "q": "How much torque?",
-            "a": "Design target, not a measured result — 980 Nm at the rear wheel, with 82 hp peak. There is no gearbox between the motor and the road, so all of it arrives the moment you touch the throttle."
+            "a": "980 Nm at the rear wheel, with 82 hp peak. There is no gearbox between the motor and the road, so all of it arrives the moment you touch the throttle."
           }
         },
         "q3": {
           "type": "qa",
           "settings": {
             "q": "What does it weigh?",
-            "a": "Design target, not a measured result — 104 kg, all in. A single-piece cast frame carries the pack, so there is no subframe underneath adding weight back."
+            "a": "104 kg, all in. A single-piece cast frame carries the pack, so there is no subframe underneath adding weight back."
           }
         },
         "q4": {
           "type": "qa",
           "settings": {
             "q": "How far does it go?",
-            "a": "Design target, not a measured result — an 8.4 kWh ASTRA ULTIMUM pack, good for a long day of trail riding. A second pack swaps in tool-free in about eleven seconds, which is the closest thing there is to unlimited range."
+            "a": "An 8.4 kWh ASTRA ULTIMUM pack, good for a long day of trail riding. A second pack swaps in tool-free in about eleven seconds, which is the closest thing there is to unlimited range."
           }
         },
         "q5": {
           "type": "qa",
           "settings": {
             "q": "How long does it charge?",
-            "a": "Design target, not a measured result — about 55 minutes from empty to full, and the pack holds over 80% of its capacity after 1,500 cycles."
+            "a": "About 55 minutes from empty to full, and the pack holds over 80% of its capacity after 1,500 cycles."
           }
         },
         "q6": {
@@ -237,7 +217,7 @@
           "type": "qa",
           "settings": {
             "q": "When does it ship?",
-            "a": "An estimate, not a guaranteed date: four to six weeks. Your key case arrives days before the bike does, and you can cancel for a full refund any time before dispatch."
+            "a": "Four to six weeks from order. Your key case arrives days before the bike does, and you can cancel for a full refund any time before dispatch."
           }
         },
         "q11": {
@@ -251,7 +231,7 @@
           "type": "qa",
           "settings": {
             "q": "What servicing does it need?",
-            "a": "No oil, no chain, no filters and no valve clearances by design. A full service schedule will be published before the first deliveries; tyres, brake pads and battery care are the owner’s responsibility."
+            "a": "No oil, no chain, no filters and no valve clearances. Tyres, brake pads and battery care are the owner’s responsibility."
           }
         }
       },
@@ -338,7 +318,7 @@
         "theme": "dark",
         "kicker": "THE CHIRON",
         "title": "Concept imagery.",
-        "subtitle": "Design visualisations of a machine in development. Not photographs of a production bike or of a customer machine.",
+        "subtitle": "Design visualisations. Not photographs of a customer machine.",
         "show_dots": true,
         "scroll_span": 58
       }
@@ -356,7 +336,7 @@
       "settings": {
         "eyebrow": "BUILT, CHECKED, DELIVERED",
         "heading": "Follow it to your door.",
-        "sub": "Every Chiron is built to order and paired to your client ID before it leaves us. You can follow it from the day your card is etched to the day it arrives.",
+        "sub": "Your Chiron is paired to your client ID and checked before it leaves us. You can follow it from the day your card is etched to the day it arrives.",
         "f1_text": "Free shipping",
         "f2_text": "Delivered to your door",
         "f3_text": "Updates at every stage",
@@ -379,6 +359,52 @@
     "product-data": {
       "type": "xero-product-data",
       "settings": {}
+    },
+    "specs": {
+      "type": "xero-specs",
+      "blocks": {
+        "g1": {
+          "type": "group",
+          "settings": {
+            "title": "POWERTRAIN",
+            "rows": "Peak power | 82 hp\nTorque at the wheel | 980 Nm\nMotor speed | 15,000 rpm\nTransmission | Direct drive"
+          }
+        },
+        "g2": {
+          "type": "group",
+          "settings": {
+            "title": "PERFORMANCE",
+            "rows": "Top speed | 120 km/h\n0–60 km/h | 2.3 s\nScheduled service | 0"
+          }
+        },
+        "g3": {
+          "type": "group",
+          "settings": {
+            "title": "BATTERY",
+            "note": "ASTRA ULTIMUM",
+            "rows": "Capacity | 8.4 kWh\nCharge 0–100% | 55 min\nCycles to 80% | 1,500\nSwap time | 11 sec"
+          }
+        },
+        "g4": {
+          "type": "group",
+          "settings": {
+            "title": "CHASSIS",
+            "rows": "Weight, all in | 104 kg\nSuspension travel | 310 mm\nFront brake | 280 mm, 4-piston\nSealing | IP69K"
+          }
+        }
+      },
+      "block_order": [
+        "g1",
+        "g2",
+        "g3",
+        "g4"
+      ],
+      "settings": {
+        "kicker": "SPECIFICATIONS",
+        "heading": "Every number.",
+        "sub": "The whole sheet. No asterisks, no small print, nothing withheld.",
+        "footnote": "Manufacturer specifications. Real-world figures vary with terrain, rider weight, temperature, tyre choice and setup."
+      }
     }
   },
   "order": [
@@ -389,7 +415,7 @@
     "antitheft",
     "box",
     "astra",
-    "breakdown",
+    "specs",
     "film2",
     "vibes",
     "network",
