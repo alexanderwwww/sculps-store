@@ -1,52 +1,156 @@
 {%- comment -%}
-  XERO watch — one plain film frame. "Watch it move."
+  XERO watch — the full-bleed film. "Watch it move."
 
-  Deliberately the simplest section in the theme: a heading and a single 16:9
-  YouTube embed. The owner pastes the video ID in the editor and places the
-  section wherever they want via Add section. This file writes nothing into
-  any template, so it can never disturb editor-owned content.
+  Edge to edge, near-full-viewport, no chrome. This is the one section that is
+  meant to stop the scroll, so it behaves like a title card rather than an
+  embed sitting in a box.
 
-  Renders nothing at all on the storefront while the ID is empty; in the
-  theme editor an empty state shows a hint instead, so the section stays
-  findable and never looks broken to a visitor.
+  TWO SOURCES, in order of preference:
+
+    1. `film`      a Shopify-hosted video, uploaded in Content > Files or set
+                   from the picker. STRONGLY PREFERRED for this section: it
+                   autoplays muted, loops seamlessly, fills the frame with
+                   object-fit:cover, and carries no player UI, no watermark,
+                   no related-video panel and no third-party cookies.
+    2. `youtube_id` a YouTube video ID. Falls back to a background embed with
+                   controls stripped. YouTube will still letterbox its own
+                   render inside the frame, so the iframe is scaled to cover
+                   using the 16:9 max(100%, 177.78vh) trick. Use this only if
+                   the film has to live on the channel.
+
+  A poster image is used as the first paint either way, so the section never
+  flashes black while the video is still loading.
+
+  AUTOPLAY. muted + playsinline are mandatory or mobile browsers refuse to
+  start. The film plays only while it is on screen and pauses when it leaves,
+  so a looping 4K file is not burning battery three sections further down.
+  A sound button unmutes on an explicit tap - never on load.
+
+  EMPTY STATE. With no film and no YouTube ID the section renders NOTHING on
+  the storefront. In the theme editor it renders a hint instead, so it stays
+  findable and can never look broken to a visitor.
 {%- endcomment -%}
 
+{%- assign uid = section.id -%}
 {%- assign yt = section.settings.youtube_id | strip -%}
+{%- assign film = section.settings.film -%}
+{%- assign has_media = false -%}
+{%- if film != blank or yt != blank -%}{%- assign has_media = true -%}{%- endif -%}
 
-{%- if yt != blank or request.design_mode -%}
-<section class="xero-night" data-sec="watch" style="position:relative;width:100%;background:var(--pg);padding:6rem 0 5.5rem;">
-  <div style="max-width:70rem;margin:0 auto;padding:0 2.06rem;">
+{%- if has_media or request.design_mode -%}
+<section class="xero-night" data-sec="watch" {% if section.settings.anchor != blank %}id="{{ section.settings.anchor }}"{% endif %}
+         style="position:relative;width:100%;background:#000;overflow:hidden;">
 
-    {%- if section.settings.kicker != blank -%}
-      <div style="display:flex;align-items:center;gap:.75rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.75rem;font-weight:500;letter-spacing:.2em;color:var(--txt3,#7c7d85);">
-        <span style="width:.46rem;height:.46rem;border-radius:50%;background:#8b7bff;box-shadow:0 0 9px rgba(139,123,255,.85);"></span>
-        <span>{{ section.settings.kicker }}</span>
+  <div data-m="watchframe" style="position:relative;width:100%;height:{{ section.settings.height }}vh;min-height:26rem;overflow:hidden;background:#000;">
+
+    {%- comment -%} poster underneath, so the first paint is never black {%- endcomment -%}
+    {%- if section.settings.poster != blank -%}
+      <img src="{{ section.settings.poster | image_url: width: 2400 }}"
+           srcset="{{ section.settings.poster | image_url: width: 900 }} 900w, {{ section.settings.poster | image_url: width: 1600 }} 1600w, {{ section.settings.poster | image_url: width: 2400 }} 2400w"
+           sizes="100vw" alt="" fetchpriority="high" decoding="async"
+           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+    {%- endif -%}
+
+    {%- if film != blank -%}
+      {{ film | video_tag:
+           image_size: '2000x',
+           playsinline: true,
+           muted: true,
+           loop: true,
+           autoplay: true,
+           controls: false,
+           preload: 'metadata',
+           style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'
+      }}
+
+    {%- elsif yt != blank -%}
+      {%- comment -%}
+        Background embed. The wrapper is the crop box; the iframe is sized to the
+        larger of 100% and the 16:9 equivalent of the frame, then centred, so the
+        video covers instead of letterboxing. pointer-events are off so the whole
+        frame stays scrollable and YouTube's own UI can never be reached.
+      {%- endcomment -%}
+      <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/{{ yt }}?autoplay=1&mute=1&loop=1&playlist={{ yt }}&controls=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1"
+          title="{{ section.settings.heading | default: 'XERO film' | escape }}"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          referrerpolicy="strict-origin-when-cross-origin"
+          style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max(100%,177.78vh);height:max(100%,56.25vw);border:0;"></iframe>
+      </div>
+
+    {%- else -%}
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:2rem;background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 12px,transparent 12px 24px);">
+        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.76rem;letter-spacing:.08em;color:var(--txt3,#8a8b91);text-align:center;max-width:26rem;line-height:1.6;">Upload a film, or paste a YouTube ID, in this section's settings. Nothing renders on the live site until you do.</span>
       </div>
     {%- endif -%}
 
-    {%- if section.settings.heading != blank -%}
-      <h2 style="margin:1rem 0 0;font-size:clamp(2rem,4.2vw,3.2rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:var(--txt,#f4f4f6);">{{ section.settings.heading }}</h2>
-    {%- endif -%}
+    {%- comment -%} scrim: keeps the type readable over any frame of any film {%- endcomment -%}
+    <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,6,8,.42) 0%,rgba(6,6,8,0) 26%,rgba(6,6,8,0) 52%,rgba(6,6,8,.72) 100%);"></div>
 
-    <div style="margin-top:2.2rem;position:relative;aspect-ratio:16/9;border-radius:1.1rem;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.08);">
-      {%- if yt != blank -%}
-        <iframe
-          src="https://www.youtube-nocookie.com/embed/{{ yt }}?rel=0&modestbranding=1&playsinline=1"
-          title="{{ section.settings.heading | default: 'XERO film' | escape }}"
-          loading="lazy"
-          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowfullscreen
-          referrerpolicy="strict-origin-when-cross-origin"
-          style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
-      {%- else -%}
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
-          <span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.75rem;letter-spacing:.08em;color:var(--txt3,#7c7d85);text-align:center;">Paste a YouTube video ID in the section settings. This section stays hidden on the live site until then.</span>
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(1.6rem,4vw,3.6rem);pointer-events:none;">
+      {%- if section.settings.kicker != blank -%}
+        <div style="display:flex;align-items:center;gap:.7rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;font-weight:500;letter-spacing:.2em;color:rgba(255,255,255,.72);">
+          <span style="width:.42rem;height:.42rem;border-radius:50%;background:#8b7bff;box-shadow:0 0 9px rgba(139,123,255,.9);"></span>
+          <span>{{ section.settings.kicker }}</span>
         </div>
+      {%- endif -%}
+      {%- if section.settings.heading != blank -%}
+        <h2 style="margin:.75rem 0 0;max-width:22ch;font-size:clamp(2.1rem,6vw,4.6rem);font-weight:700;letter-spacing:-.042em;line-height:.98;color:#fff;text-wrap:balance;">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+      {%- if section.settings.sub != blank -%}
+        <p style="margin:.9rem 0 0;max-width:34rem;font-size:clamp(.95rem,1.6vw,1.08rem);line-height:1.5;color:rgba(255,255,255,.82);text-wrap:pretty;">{{ section.settings.sub }}</p>
       {%- endif -%}
     </div>
 
+    {%- if film != blank -%}
+      <button data-m="watchsound" aria-label="Toggle sound"
+        style="position:absolute;right:clamp(1.1rem,3vw,2.2rem);bottom:clamp(1.1rem,3vw,2.2rem);z-index:3;width:2.9rem;height:2.9rem;border-radius:50%;background:rgba(14,14,20,.5);-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
+      </button>
+    {%- endif -%}
+
   </div>
 </section>
+
+<script>
+(function () {
+  var root = document.getElementById('shopify-section-{{ uid }}');
+  if (!root) return;
+  var v = root.querySelector('video');
+  if (!v) return;
+
+  /* Shopify's video_tag does not reliably emit all of these, and without them
+     iOS and Android refuse to autoplay. */
+  v.muted = true;
+  v.setAttribute('muted', '');
+  v.setAttribute('playsinline', '');
+  v.setAttribute('webkit-playsinline', '');
+  v.loop = true;
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (en) {
+      en.forEach(function (e) {
+        if (e.isIntersecting) { v.play().catch(function () {}); }
+        else if (!v.paused) { v.pause(); }
+      });
+    }, { threshold: 0.15 }).observe(v);
+  } else {
+    v.play().catch(function () {});
+  }
+
+  var btn = root.querySelector('[data-m="watchsound"]');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      v.muted = !v.muted;
+      var m = root.querySelector('[data-m="mute"]'), u = root.querySelector('[data-m="unmute"]');
+      if (m) m.style.display = v.muted ? '' : 'none';
+      if (u) u.style.display = v.muted ? 'none' : '';
+      if (v.paused) v.play().catch(function () {});
+    });
+  }
+})();
+</script>
 {%- endif -%}
 
 {% schema %}
@@ -54,9 +158,17 @@
   "name": "XERO watch",
   "tag": "div",
   "settings": [
+    { "type": "paragraph", "content": "Full-bleed film. Upload a video for the best result — it autoplays muted, loops, fills the frame and carries no player UI. A YouTube ID works too but YouTube renders its own branding." },
+    { "type": "video", "id": "film", "label": "Film", "info": "Preferred. Upload in Content > Files or pick here." },
+    { "type": "text", "id": "youtube_id", "label": "YouTube video ID", "info": "Fallback. The ID only — the part after watch?v=, or the last segment of a youtu.be or Shorts link. Not the full URL." },
+    { "type": "image_picker", "id": "poster", "label": "Poster", "info": "Shown instantly while the film loads. Use a still from the film." },
+    { "type": "header", "content": "Overlay" },
     { "type": "text", "id": "kicker", "label": "Kicker", "default": "IN MOTION" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "Watch it move." },
-    { "type": "text", "id": "youtube_id", "label": "YouTube video ID", "info": "Just the ID — the part after watch?v=, or the last segment of a youtu.be or Shorts link. Not the full URL." }
+    { "type": "textarea", "id": "sub", "label": "Sub-line" },
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "height", "min": 50, "max": 100, "step": 5, "unit": "vh", "label": "Frame height", "default": 90 },
+    { "type": "text", "id": "anchor", "label": "Anchor id", "info": "Optional. Lets a nav link point here." }
   ],
   "presets": [{ "name": "XERO watch" }]
 }
