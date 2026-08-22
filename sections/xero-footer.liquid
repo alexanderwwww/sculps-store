@@ -81,7 +81,36 @@
           {%- endif -%}
         </div>
 
+        {%- comment -%}
+          LEGAL column. These link the standalone pages, which always exist and always
+          carry the full text. The admin Settings > Policies objects are linked separately
+          in the bottom row - those are what checkout uses, and they are only rendered
+          once they actually have a body, so a policy never shows here as a dead link.
+          Both are listed on purpose: a reviewer looking for disclosures should find them
+          without hunting, and a customer should reach the same text from either route.
+        {%- endcomment -%}
+        <div style="flex:1 1 10rem;min-width:0;">
+          <div style="margin-bottom:.75rem;font-size:.74rem;font-weight:700;letter-spacing:.11em;color:var(--txt3,#7c7d85);">LEGAL</div>
+          <a data-x="xh7" href="/pages/refund-policy" style="display:block;padding:.2rem 0;font-size:.94rem;color:var(--txt2,#a9aab1);transition:color .25s;">Refunds &amp; returns</a>
+          <a data-x="xh7" href="/pages/shipping-policy" style="display:block;padding:.2rem 0;font-size:.94rem;color:var(--txt2,#a9aab1);transition:color .25s;">Shipping &amp; delivery</a>
+          <a data-x="xh7" href="/pages/terms-of-service" style="display:block;padding:.2rem 0;font-size:.94rem;color:var(--txt2,#a9aab1);transition:color .25s;">Terms of service</a>
+          <a data-x="xh7" href="/pages/privacy-policy-full" style="display:block;padding:.2rem 0;font-size:.94rem;color:var(--txt2,#a9aab1);transition:color .25s;">Privacy</a>
+          <a data-x="xh7" href="/pages/legal-notice" style="display:block;padding:.2rem 0;font-size:.94rem;color:var(--txt2,#a9aab1);transition:color .25s;">Legal notice</a>
+        </div>
+
       </div>
+
+      {%- comment -%}
+        The standing disclosure. This is the one thing on the page that must never be
+        behind a click: what the machine is, what it is not, and when it arrives.
+        "Not street legal" belongs in front of every visitor, not only the ones who
+        open the terms.
+      {%- endcomment -%}
+      {%- if section.settings.disclosure != blank -%}
+        <div data-m="ftdisc" style="margin-top:3.2rem;padding:1.15rem 1.3rem;border:1px solid var(--hair,rgba(255,255,255,.10));border-radius:.7rem;background:rgba(255,255,255,.025);">
+          <p style="margin:0;font-size:.85rem;line-height:1.62;color:var(--txt2,#a9aab1);">{{ section.settings.disclosure }}</p>
+        </div>
+      {%- endif -%}
     </div>
 
     <div style="margin-top:4.4rem;display:flex;flex-wrap:wrap;gap:.9rem 2rem;align-items:baseline;padding-bottom:3rem;">
@@ -115,7 +144,8 @@
   "tag": "div",
   "settings": [
     { "type": "text", "id": "news_heading", "label": "Newsletter heading", "default": "Get the launch drop." },
-    { "type": "text", "id": "news_body", "label": "Newsletter body", "default": "Build slots, ride days, and the first film. Nothing else." },
+    { "type": "text", "id": "news_body", "label": "Newsletter body", "default": "Launch updates, ride days, and the first film. Nothing else." },
+    { "type": "textarea", "id": "disclosure", "label": "Standing disclosure", "info": "Shown in a bordered box above the copyright line, on every page. Keep the off-road / not-street-legal statement here.", "default": "The XERO Chiron is an off-road machine and is not street legal. It is not homologated, type-approved or registrable for road use in the United States, and it is sold for use on private land and off-road terrain only. Riders must be 18 or over. Protective equipment is required. We ship within the United States only." },
     { "type": "text", "id": "ticker", "label": "Ticker text", "default": "RIDE TO THE STARS" },
     { "type": "textarea", "id": "socials", "label": "Social links", "info": "One per line as Label|https://url - leave empty to hide the row." },
     { "type": "text", "id": "tagline", "label": "Tagline", "default": "Designed on Earth. Tested elsewhere." },

@@ -413,9 +413,9 @@
   "settings": [
     { "type": "select", "id": "theme", "label": "Colour", "default": "dark",
       "options": [ { "value": "dark", "label": "Dark" }, { "value": "light", "label": "Light" } ] },
-    { "type": "text", "id": "kicker", "label": "Kicker", "default": "Owners" },
-    { "type": "text", "id": "title", "label": "Heading", "default": "From the camera roll." },
-    { "type": "text", "id": "subtitle", "label": "Subheading", "default": "" },
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "THE CHIRON" },
+    { "type": "text", "id": "title", "label": "Heading", "default": "Design visualisations." },
+    { "type": "text", "id": "subtitle", "label": "Subheading", "info": "Keep the disclosure that these are renders, not customer photographs.", "default": "Renders and design visualisations. Not photographs of a customer machine." },
     { "type": "checkbox", "id": "show_dots", "label": "Show progress dots", "default": true },
     { "type": "range", "id": "scroll_span", "min": 30, "max": 100, "step": 2, "unit": "vh",
       "label": "Scroll distance per shot", "default": 58,
@@ -434,14 +434,11 @@
   ],
   "presets": [
     {
-      "name": "XERO — UGC carousel",
+      "name": "XERO — image carousel",
       "blocks": [
-        { "type": "shot", "settings": { "handle": "@m.ferrante", "caption": "Day one. Garage smells like new bike." } },
-        { "type": "shot", "settings": { "handle": "@kaiwrx", "caption": "3am. Nobody heard a thing." } },
-        { "type": "shot", "settings": { "handle": "@dustandpine", "caption": "40 miles of fire road, still 3 bars." } },
-        { "type": "shot", "settings": { "handle": "@leviathan.j", "caption": "Parked between two SUVs. Guess which one people photographed." } },
-        { "type": "shot", "settings": { "handle": "@sofia.rides", "caption": "Coast run. Phone unlocked it before I got off the curb." } },
-        { "type": "shot", "settings": { "handle": "@northtrail", "caption": "Trailhead at 6am. It just goes." } }
+        { "type": "shot" },
+        { "type": "shot" },
+        { "type": "shot" }
       ]
     }
   ]

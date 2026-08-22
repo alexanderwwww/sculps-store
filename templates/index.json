@@ -17,13 +17,10 @@
         "brand": "XERO CHIRON",
         "lede": "UNIQUE ELECTRIC PERFORMANCE",
         "sub": "Unlocks with your phone. Not a regular bike.",
-        "price_line": "",
-        "show_partners": false,
-        "partner_label": "No down payment with our partners:",
         "made_by": "MADE BY XERO",
         "cta_link": "",
         "cta_aria": "See the Chiron",
-        "aria": "XERO Chiron - a concept electric motorcycle",
+        "aria": "XERO Chiron - electric off-road motorcycle",
         "delay_ms": 1500,
         "version": "v3",
         "auto_close_ms": 1000
@@ -36,9 +33,9 @@
         "addon_key": "wireless-key-nfc-pebble",
         "title": "XERO Chiron.",
         "subtitle": "980 Nm · 120 km/h",
-        "ships_in": "Ships in 4–6 weeks",
+        "ships_in": "Ships in 4–6 weeks from order — an estimate, not a guaranteed date. Cancel any time before dispatch for a full refund.",
         "finance_line": "",
-        "points": "Paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
+        "points": "Paired to your client ID before dispatch|Free delivery within the United States, to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
       }
     },
     "gallery": {
@@ -65,8 +62,8 @@
         "step3_img": "shopify://shop_images/key_step3_phone.jpg",
         "s3_title": "Drop your phone in",
         "s3_body": "It lies flat and flush, the magnet holds it, and it charges while you ride. From then on the bike wakes for that phone alone.",
-        "payoff": "Designed around iPhone.",
-        "payoff_sub": "The pocket, the magnet, the NFC handshake - every millimetre of it is designed around the iPhone you already carry. Your card and key ship days before the bike does, so you can register your ID the moment they land. XERO is not affiliated with or endorsed by Apple.",
+        "payoff": "Designed around the phone you already carry.",
+        "payoff_sub": "XERO is an independent company and is not affiliated with, endorsed by, or sponsored by Apple Inc. iPhone is a trademark of Apple Inc. The pocket, the magnet and the NFC handshake are designed around the iPhone you already carry. Your card and key ship days before the bike does, so you can register your ID the moment they land.",
         "cta": "Activate your ID",
         "cta_link": "/pages/activate"
       }
@@ -317,18 +314,10 @@
       "settings": {
         "theme": "dark",
         "kicker": "THE CHIRON",
-        "title": "Concept imagery.",
-        "subtitle": "Design visualisations. Not photographs of a customer machine.",
+        "title": "Design visualisations.",
+        "subtitle": "Renders and design visualisations. Not photographs of a customer machine.",
         "show_dots": true,
         "scroll_span": 58
-      }
-    },
-    "film1": {
-      "type": "xero-film",
-      "settings": {
-        "film": "",
-        "label": "full-bleed film — 16:9",
-        "anchor": "film"
       }
     },
     "track": {
@@ -337,7 +326,7 @@
         "eyebrow": "BUILT, CHECKED, DELIVERED",
         "heading": "Follow it to your door.",
         "sub": "Your Chiron is paired to your client ID and checked before it leaves us. You can follow it from the day your card is etched to the day it arrives.",
-        "f1_text": "Free shipping",
+        "f1_text": "Free delivery within the US",
         "f2_text": "Delivered to your door",
         "f3_text": "Updates at every stage",
         "cta": "Track",
@@ -405,6 +394,12 @@
         "sub": "The whole sheet. No asterisks, no small print, nothing withheld.",
         "footnote": "Manufacturer specifications. Real-world figures vary with terrain, rider weight, temperature, tyre choice and setup."
       }
+    },
+    "consent": {
+      "type": "xero-consent",
+      "settings": {
+        "mode": "bar"
+      }
     }
   },
   "order": [
@@ -421,9 +416,9 @@
     "network",
     "ugc-faq",
     "ugc",
-    "film1",
     "track",
     "footer",
-    "product-data"
+    "product-data",
+    "consent"
   ]
 }

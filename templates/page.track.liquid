@@ -230,10 +230,10 @@
   };
 
   var STAGES = [
-    { t:"Order confirmed",        b:"Your build slot is reserved and your ID is issued.",                 d:1 },
+    { t:"Order confirmed",        b:"Your order is confirmed and your client ID is issued.",                 d:1 },
     { t:"Preparing your order",   b:"Frame, pack and panel are being assembled and torqued by hand.",     d:6 },
     { t:"Your key is on its way", b:"The aluminium case with your key and steel card ships first.",       d:3 },
-    { t:"Final shakedown",        b:"Every Chiron is ridden before it leaves us. Yours is on the bench.", d:2 },
+    { t:"Final shakedown",        b:"Your machine is checked and prepared before it leaves us.", d:2 },
     { t:"Bike out for delivery",  b:"On its way to the address you gave us.",                            d:1 },
     { t:"Delivered",              b:"It is yours. Tap your card in and ride it.",                        d:0 }
   ];
@@ -301,7 +301,7 @@
     reset();
     err.textContent = '';
     input.classList.remove('bad');
-    msgBody.textContent = id + ' is not an active tracking code yet. Tracking switches on once your order is confirmed and your build slot is booked \u2014 usually within a day of ordering. If your steel card only just arrived, give it a few hours.';
+    msgBody.textContent = id + ' is not an active tracking code yet. Tracking switches on once your order is confirmed \u2014 usually within a day of ordering. If your steel card only just arrived, give it a few hours.';
     msg.classList.add('on');
   }
 

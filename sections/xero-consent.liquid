@@ -1,0 +1,163 @@
+{%- comment -%}
+  XERO consent — the standing disclosure the visitor has to acknowledge.
+
+  Two modes, set in the theme editor:
+
+    bar  (default) — a slim bar pinned to the bottom of the viewport. Non-blocking:
+                     the visitor can read and scroll the page while it is up. This is
+                     the recommended setting. It records the acknowledgement without
+                     costing you the visitor.
+
+    gate           — a full blocking overlay on first visit. Nothing on the page is
+                     reachable until the visitor clicks accept. Use this only if you
+                     want the hardest possible paper trail; it will cost conversions,
+                     and no card network or processor requires it.
+
+  Why this exists at all: the Chiron is not street legal, and it is a $4,999 vehicle
+  bought sight-unseen with a lead time. The three facts that a buyer could later claim
+  they were not told - not road legal, US-only, ships in a window - are put in front of
+  every visitor here, with the policies one click away, and the acknowledgement is
+  timestamped in the visitor's own browser.
+
+  The acknowledgement is stored in localStorage, so it is per-browser and never leaves
+  the visitor's device. It is not a substitute for the terms checkbox at checkout, which
+  is what actually binds the order - turn that on in Settings > Checkout.
+
+  IMPORTANT: never put a literal Liquid raw tag inside a Liquid comment anywhere in this
+  theme. Shopify's validator scans for those before it strips comments and will reject
+  the whole file with "tag was never closed".
+{%- endcomment -%}
+
+{%- assign mode = section.settings.mode -%}
+{%- assign key = section.settings.storage_key | default: 'xero_ack_v1' -%}
+
+<div data-xero-consent
+     data-mode="{{ mode }}"
+     data-key="{{ key }}"
+     hidden
+     style="position:fixed;inset:0;z-index:2147483000;display:none;">
+
+  {%- if mode == 'gate' -%}
+    <div data-el="scrim" style="position:absolute;inset:0;background:rgba(8,8,10,.82);backdrop-filter:blur(10px) saturate(1.2);"></div>
+  {%- endif -%}
+
+  <div data-el="panel"
+       role="dialog"
+       aria-modal="{% if mode == 'gate' %}true{% else %}false{% endif %}"
+       aria-labelledby="xero-consent-title"
+       style="position:absolute;left:50%;transform:translateX(-50%);width:min(46rem,calc(100% - 1.6rem));
+              {% if mode == 'gate' %}top:50%;margin-top:-1px;transform:translate(-50%,-50%);{% else %}bottom:1rem;{% endif %}
+              border-radius:1rem;border:1px solid rgba(255,255,255,.12);
+              background:rgba(18,18,22,.94);backdrop-filter:blur(20px) saturate(1.6);
+              box-shadow:0 1.4rem 4rem rgba(0,0,0,.5);
+              padding:1.35rem 1.5rem;color:#f2f2f5;">
+
+    <h2 id="xero-consent-title" style="margin:0 0 .55rem;font-size:.72rem;font-weight:700;letter-spacing:.13em;color:#8a8b93;">
+      {{ section.settings.title }}
+    </h2>
+
+    <p style="margin:0 0 .9rem;font-size:.93rem;line-height:1.6;color:#c9cad1;text-wrap:pretty;">
+      {{ section.settings.body }}
+    </p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:.35rem 1.1rem;margin-bottom:1.05rem;">
+      <a href="/pages/terms-of-service"  style="font-size:.83rem;color:#9aa0ff;text-decoration:underline;text-underline-offset:.16em;">Terms of service</a>
+      <a href="/pages/refund-policy"     style="font-size:.83rem;color:#9aa0ff;text-decoration:underline;text-underline-offset:.16em;">Refunds &amp; returns</a>
+      <a href="/pages/shipping-policy"   style="font-size:.83rem;color:#9aa0ff;text-decoration:underline;text-underline-offset:.16em;">Shipping</a>
+      <a href="/pages/privacy-policy-full" style="font-size:.83rem;color:#9aa0ff;text-decoration:underline;text-underline-offset:.16em;">Privacy</a>
+      <a href="/pages/legal-notice"      style="font-size:.83rem;color:#9aa0ff;text-decoration:underline;text-underline-offset:.16em;">Legal notice</a>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;">
+      <button data-el="accept" type="button"
+        style="appearance:none;border:0;cursor:pointer;border-radius:2rem;padding:.72rem 1.5rem;
+               font-size:.92rem;font-weight:600;color:#fff;background:#005df9;">
+        {{ section.settings.accept_label }}
+      </button>
+      {%- if mode != 'gate' -%}
+        <button data-el="dismiss" type="button"
+          style="appearance:none;border:0;background:none;cursor:pointer;padding:.72rem .4rem;font-size:.86rem;color:#8a8b93;">
+          {{ section.settings.dismiss_label }}
+        </button>
+      {%- endif -%}
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var root = document.currentScript && document.currentScript.previousElementSibling;
+  if (!root || !root.hasAttribute('data-xero-consent')) {
+    root = document.querySelector('[data-xero-consent]');
+  }
+  if (!root) return;
+
+  var KEY  = root.getAttribute('data-key') || 'xero_ack_v1';
+  var GATE = root.getAttribute('data-mode') === 'gate';
+
+  // localStorage throws outright in some embedded/preview contexts rather than
+  // returning null, so every read and write is guarded. If storage is unavailable
+  // the notice simply shows every visit, which is the safe direction to fail.
+  function read()  { try { return window.localStorage.getItem(KEY); } catch (e) { return null; } }
+  function write(v){ try { window.localStorage.setItem(KEY, v); } catch (e) {} }
+
+  // Never let the gate trap the theme editor - a merchant who cannot dismiss it
+  // cannot edit the page behind it.
+  var inEditor = !!(window.Shopify && window.Shopify.designMode);
+
+  if (read() || inEditor) return;
+
+  root.hidden = false;
+  root.style.display = 'block';
+  if (!GATE) root.style.pointerEvents = 'none';
+  var panel = root.querySelector('[data-el="panel"]');
+  if (panel) panel.style.pointerEvents = 'auto';
+  if (GATE) document.documentElement.style.overflow = 'hidden';
+
+  function close(persist) {
+    if (persist) write(new Date().toISOString());
+    root.style.display = 'none';
+    root.hidden = true;
+    document.documentElement.style.overflow = '';
+  }
+
+  var accept = root.querySelector('[data-el="accept"]');
+  if (accept) accept.addEventListener('click', function () { close(true); });
+
+  var dismiss = root.querySelector('[data-el="dismiss"]');
+  if (dismiss) dismiss.addEventListener('click', function () { close(false); });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "XERO consent",
+  "tag": "div",
+  "settings": [
+    {
+      "type": "select",
+      "id": "mode",
+      "label": "Display",
+      "info": "Bar is recommended. Gate blocks the whole page until the visitor accepts and will cost you conversions.",
+      "default": "bar",
+      "options": [
+        { "value": "bar",  "label": "Bar at the bottom (non-blocking)" },
+        { "value": "gate", "label": "Blocking overlay on entry" }
+      ]
+    },
+    { "type": "text", "id": "title", "label": "Kicker", "default": "BEFORE YOU RIDE" },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Disclosure",
+      "info": "Keep the not-street-legal statement, the US-only statement and the lead time. These are the three things a buyer must not be able to say they were never told.",
+      "default": "The XERO Chiron is an off-road machine and is not street legal. It is not homologated or registrable for road use in the United States and is sold for use on private land and off-road terrain only. Riders must be 18 or over. We ship within the United States only, and bikes ship in 4 to 6 weeks from order — an estimate, not a guaranteed date. By continuing you confirm you have read and accept our terms, refund and shipping policies."
+    },
+    { "type": "text", "id": "accept_label", "label": "Accept button", "default": "I understand and accept" },
+    { "type": "text", "id": "dismiss_label", "label": "Dismiss link (bar mode only)", "default": "Not now" },
+    { "type": "text", "id": "storage_key", "label": "Storage key", "info": "Change this to re-prompt every visitor after you materially change the disclosure.", "default": "xero_ack_v1" }
+  ],
+  "presets": [{ "name": "XERO consent" }]
+}
+{% endschema %}

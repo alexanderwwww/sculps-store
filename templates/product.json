@@ -7,9 +7,9 @@
         "addon_key": "wireless-key-nfc-pebble",
         "title": "XERO Chiron.",
         "subtitle": "980 Nm · 120 km/h",
-        "ships_in": "Ships in 4–6 weeks",
+        "ships_in": "Ships in 4–6 weeks from order — an estimate, not a guaranteed date. Cancel any time before dispatch for a full refund.",
         "finance_line": "",
-        "points": "Paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
+        "points": "Paired to your client ID before dispatch|Free delivery within the United States, to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal"
       }
     },
     "gallery": {
@@ -18,7 +18,11 @@
     },
     "breakdown": {
       "type": "xero-breakdown",
-      "settings": {}
+      "settings": {
+        "sub": "No engine note, no clutch, no gears. Manufacturer figures - real-world results vary with terrain, rider weight, temperature, tyre choice and setup.",
+        "s6_value": "No oil, chain or filters",
+        "s6_label": "ROUTINE SERVICE"
+      }
     },
     "footer": {
       "type": "xero-footer",

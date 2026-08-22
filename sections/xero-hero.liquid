@@ -5,7 +5,7 @@
 
   Two real variants of xero-chiron drive the bundle cards:
     [0] Chiron                        $4,999.00
-    [1] Chiron + 10-Year Replacement  $6,998.99   (+$1,999.99)
+    [1] Chiron + 10-Year Replacement  $5,598.00   (+$599.00)
   store.js maps pickVariant0/1 to XERO_PRODUCT.variants[0]/[1], so the order of the
   cards below must match the order of the variants on the product. There is one add-on,
   the spare wireless key; store.js maps toggleKey to XERO_ADDONS[0].
@@ -200,7 +200,13 @@
         <span style="flex:0 0 auto;width:1.32rem;height:1.32rem;border-radius:50%;border:1.8px solid var(--vr1,#c3c4c9);display:flex;align-items:center;justify-content:center;transition:border-color .35s;"><span style="width:.66rem;height:.66rem;border-radius:50%;background:var(--vd1,transparent);transition:background .35s,transform .3s cubic-bezier(.28,.11,.32,1);transform:scale(var(--vs1,0));"></span></span>
         <span style="flex:1;display:flex;flex-direction:column;gap:.14rem;">
           <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">Chiron + 10-Year Replacement</span>
-          <span style="font-size:.82rem;color:var(--txt2,#55565c);">We replace the whole bike. For ten years.</span>
+          {%- comment -%}
+            This qualifier must stay attached to the button. A paid ten-year promise to
+            replace a vehicle reads as an insurance or service-contract product, and
+            selling one without a licence is a named prohibited category. The FAQ and the
+            terms both carry the disclaimer - but the buyer commits here, not there.
+          {%- endcomment -%}
+          <span style="font-size:.82rem;color:var(--txt2,#55565c);">A ten-year replacement term offered directly by us. Not insurance and not underwritten by an insurer &mdash; see terms.</span>
         </span>
         <span style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
           <span style="font-size:1.14rem;font-weight:600;letter-spacing:-.02em;color:var(--vp1,var(--txt,#0e0e0e));transition:color .35s;">{{ product.variants[1].price | money }}</span>
@@ -299,7 +305,7 @@
     { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "980 Nm · 120 km/h" },
     { "type": "text", "id": "ships_in", "label": "Shipping line", "default": "Ships in 4–6 weeks" },
     { "type": "text", "id": "finance_line", "label": "Financing line (leave empty unless a credit provider is live)" },
-    { "type": "textarea", "id": "blurb", "label": "Buy box description", "default": "An electric off-road motorcycle with no key, no barrel and nothing to clone. Your phone lies flat in the tank, charges while you ride, and is the only thing that wakes it." },
+    { "type": "textarea", "id": "blurb", "label": "Buy box description", "default": "An electric off-road motorcycle designed to run without a key or a barrel. Your phone lies flat in the tank, charges while you ride, and the system is designed so that only your paired phone wakes the machine. Design intent, not an independently tested security rating." },
     { "type": "textarea", "id": "points", "label": "Buy box bullets", "info": "Separate each line with | . Leave empty to hide.", "default": "Paired to your client ID before dispatch|Free delivery to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal" },
     { "type": "header", "content": "Add-on thumbnails" },
     { "type": "image_picker", "id": "addon_key_img", "label": "Wireless key thumbnail" },
