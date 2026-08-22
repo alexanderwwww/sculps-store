@@ -210,19 +210,63 @@
       .catch(function (e) { console.warn('[xero] cart read failed', e); });
   }
 
+  /* Surfaces a cart failure to the shopper instead of leaving them with a cart that
+     silently stayed empty. Uses the buy box's own note element when it is on the page
+     so the message lands where the shopper is already looking; falls back to alert. */
+  function cartError(msg) {
+    console.error('[xero] cart', msg);
+    var note = document.querySelector('[data-ref="payNote"]');
+    if (note) {
+      note.hidden = false;
+      note.textContent = msg;
+      note.style.color = '#e5484d';
+      return;
+    }
+    alert(msg);
+  }
+
   function addToCart() {
     var items = [{ id: currentVariant().id, quantity: 1 }];
     addons().forEach(function (a) { if (S.addons[a.id]) items.push({ id: a.id, quantity: 1 }); });
-    if (!items[0].id) { console.warn('[xero] no variant id — assign a product to the stage section'); return; }
+    if (!items[0].id) {
+      cartError('This product is not connected to the page yet. Assign a product to the stage section in the theme editor.');
+      return;
+    }
     flyToCart();
     fetch(R.cartAdd, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ items: items })
-    }).then(function (r) { return r.json(); })
+    })
+      .then(function (r) {
+        /* THE BUG THIS REPLACES: the old code called r.json() straight away and never
+           looked at r.ok, so a 401/404/422 - or the HTML of a password page - resolved
+           or threw into a .catch that only wrote to the console. The fly-to-cart
+           animation had already played, so it looked like it worked and the cart stayed
+           empty with no explanation anywhere. Never swallow a cart failure. */
+        return r.text().then(function (body) {
+          var data = null;
+          try { data = JSON.parse(body); } catch (e) {}
+          if (!r.ok) {
+            var why = (data && (data.description || data.message)) ||
+                      (r.status === 422 ? 'That item is unavailable right now.' :
+                       'Cart error ' + r.status + '.');
+            throw new Error(why);
+          }
+          if (!data) {
+            /* Valid HTTP but not JSON: almost always a redirect to the storefront
+               password page, or an app intercepting the route. */
+            throw new Error('The store did not return a cart. If the storefront password is still on, turn it off and try again.');
+          }
+          return data;
+        });
+      })
       .then(function () { return fetchCart(); })
       .then(function () { S.cartOpen = true; paint(); })
-      .catch(function (e) { console.warn('[xero] add failed', e); });
+      .catch(function (e) {
+        cartError('Could not add to cart: ' + (e && e.message ? e.message : 'unknown error') +
+                  ' Please try again, or email us and we will take the order by hand.');
+      });
   }
 
   function changeLine(key, qty) {

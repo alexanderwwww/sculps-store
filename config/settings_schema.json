@@ -6,11 +6,44 @@
         "type": "paragraph",
         "content": "Controls the whole checkout column at once: Buy now, Add to cart, and Shopify's own Buy it now button. Shopify paints Buy it now from its brand colour and ignores the theme, so it is overridden here to match the other two — change these and all three stay in step."
       },
-      { "type": "color", "id": "btn_bg", "label": "Primary button", "default": "#111116" },
-      { "type": "color", "id": "btn_bg_h", "label": "Primary button, hover", "default": "#26272e" },
-      { "type": "color", "id": "btn_ink", "label": "Primary button text", "default": "#f4f4f6" },
-      { "type": "color", "id": "btn_border", "label": "Primary button rim", "info": "Set it the same as the button to hide the rim.", "default": "#2c2d34" },
-      { "type": "color", "id": "btn2_border", "label": "Add to cart border", "default": "#8c8e98" }
+      {
+        "type": "color",
+        "id": "btn_bg",
+        "label": "Primary button",
+        "default": "#111116"
+      },
+      {
+        "type": "color",
+        "id": "btn_bg_h",
+        "label": "Primary button, hover",
+        "default": "#26272e"
+      },
+      {
+        "type": "color",
+        "id": "btn_ink",
+        "label": "Primary button text",
+        "default": "#f4f4f6"
+      },
+      {
+        "type": "color",
+        "id": "btn_border",
+        "label": "Primary button rim",
+        "info": "Set it the same as the button to hide the rim.",
+        "default": "#2c2d34"
+      },
+      {
+        "type": "color",
+        "id": "btn2_border",
+        "label": "Add to cart border",
+        "default": "#8c8e98"
+      },
+      {
+        "type": "color",
+        "id": "cart_badge",
+        "label": "Cart count badge",
+        "info": "The number bubble on the cart icon. Kept loud on purpose - it is a state indicator, not brand chrome.",
+        "default": "#ff3b30"
+      }
     ]
   },
   {
