@@ -48,7 +48,7 @@
       <p style="margin:.9rem auto 0;max-width:32rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);">{{ section.settings.payoff_sub }}</p>
     {%- endif -%}
     {%- if section.settings.cta != blank -%}
-      <a href="{{ section.settings.cta_link | default: '/pages/activate' }}" style="display:inline-flex;align-items:center;gap:.45rem;margin-top:1.4rem;font-size:1.02rem;font-weight:600;color:#3a82fb;text-decoration:none;">
+      <a href="{{ section.settings.cta_link | default: '/pages/activate' }}" style="display:inline-flex;align-items:center;gap:.45rem;margin-top:1.4rem;font-size:1.02rem;font-weight:600;color:var(--acc,#111116);text-decoration:none;">
         {{ section.settings.cta }}
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M9 5l3 3-3 3"></path></svg>
       </a>
