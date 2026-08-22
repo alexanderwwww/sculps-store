@@ -39,7 +39,21 @@
       <div style="font-size:1rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">XERO Chiron.</div>
       <div style="font-size:.88rem;color:var(--txt2,#55565c);"><span data-bind="selectedPriceText"></span></div>
     </div>
-    <button data-act="buyNow" style="height:2.9rem;padding:0 1.5rem;border-radius:1.45rem;background:var(--btnbg,#111116);color:var(--btnink,#f4f4f6);border:1px solid var(--btnb,rgba(255,255,255,.10));font-size:1rem;font-weight:600;">Buy now</button>
+    {%- comment -%}
+      NATIVE buy now: Shopify's own product form, posting the selected variant with
+      return_to=/checkout, so Shopify adds the line and carries the shopper straight
+      into its checkout. No fetch, no JSON, none of this theme's JavaScript in the
+      request. The hidden id input shares data-ref="payVariant" with the buy box
+      form, so picking a bundle updates every native form on the page at once.
+    {%- endcomment -%}
+    {%- assign sticky_product = all_products[section.settings.product_handle] -%}
+    {%- if sticky_product != blank -%}
+      {%- form 'product', sticky_product, novalidate: 'novalidate' -%}
+        <input type="hidden" name="id" value="{{ sticky_product.selected_or_first_available_variant.id }}" data-ref="payVariant">
+        <input type="hidden" name="return_to" value="/checkout">
+        <button type="submit" name="add" style="height:2.9rem;padding:0 1.5rem;border-radius:1.45rem;background:var(--btnbg,#111116);color:var(--btnink,#f4f4f6);border:1px solid var(--btnb,rgba(255,255,255,.10));font-size:1rem;font-weight:600;">Buy now</button>
+      {%- endform -%}
+    {%- endif -%}
   </div>
 
   <div data-act="closeAll" style="position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.34);opacity:var(--scrim,0);pointer-events:var(--scrim-pe,none);transition:opacity .36s cubic-bezier(.28,.11,.32,1);"></div>
@@ -82,13 +96,13 @@
       <p style="margin:.3rem 0 .35rem;font-size:.82rem;color:var(--txt2,#55565c);">Taxes calculated at checkout. Free delivery within the United States.</p>
       {%- comment -%}
         The build time has to appear on the last screen before payment. It was stated in
-        the hero and nowhere else, and buyNow() goes straight from the mini bar to
+        the hero and nowhere else; the mini bar posts a native product form to
         Shopify checkout - so a buyer could reach the payment sheet having never seen
         it. Disclosing a deferred delivery only on a page the buyer may skip is the
         omission that turns a late shipment into a chargeback the merchant loses.
       {%- endcomment -%}
       <p style="margin:0 0 .95rem;font-size:.8rem;line-height:1.45;color:var(--txt2,#55565c);">Estimated delivery 4&ndash;6 weeks from order &mdash; an estimate, not a guaranteed date. Cancel any time before dispatch for a full refund.</p>
-      <button data-x="xh1" data-act="checkout" style="width:100%;height:3.3rem;border-radius:1.65rem;background:var(--btnbg,#111116);color:var(--btnink,#f4f4f6);border:1px solid var(--btnb,rgba(255,255,255,.10));font-size:1.08rem;font-weight:600;">Checkout</button>
+      <a data-x="xh1" href="{{ routes.cart_url }}/checkout" style="display:flex;align-items:center;justify-content:center;width:100%;height:3.3rem;border-radius:1.65rem;background:var(--btnbg,#111116);color:var(--btnink,#f4f4f6);border:1px solid var(--btnb,rgba(255,255,255,.10));font-size:1.08rem;font-weight:600;text-decoration:none;">Checkout</a>
     </div>
   </aside>
 
@@ -106,5 +120,7 @@
   </div>
 
 {% schema %}
-{ "name": "XERO chrome", "settings": [] }
+{ "name": "XERO chrome", "settings": [
+  { "type": "text", "id": "product_handle", "label": "Product for the sticky Buy now", "info": "The product handle the sticky bar sells. Must match the buy box product.", "default": "xero-chiron" }
+] }
 {% endschema %}

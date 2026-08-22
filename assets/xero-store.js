@@ -316,29 +316,6 @@
       .catch(function (e) { cartError('Could not update the cart: ' + e.message); });
   }
 
-  function buyNow() {
-    var items = [{ id: currentVariant().id, quantity: 1 }];
-    addons().forEach(function (a) { if (S.addons[a.id]) items.push({ id: a.id, quantity: 1 }); });
-    fetch(R.cartAdd, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ items: items })
-    }).then(function (r) {
-      if (!r.ok) return r.text().then(function (b) {
-        var d = null; try { d = JSON.parse(b); } catch (x) {}
-        throw new Error((d && (d.description || d.message)) || ('cart/add ' + r.status));
-      });
-      location.href = R.checkout;
-    })
-      /* Previously this navigated to checkout from the .catch as well, so a failed
-         cart/add sent the buyer to an empty or stale checkout with no idea their item
-         had not been added. On a $4,999 order that is the worst possible silent failure. */
-      .catch(function (err) {
-        console.error('[xero] could not start checkout', err);
-        alert('Sorry - we could not start your checkout just then. Please try again, or email us and we will take the order by hand.');
-      });
-  }
-
   function renderCart() {
     var host = document.querySelector('[data-list="cartLines"]');
     var tpl = document.querySelector('[data-tpl="cartLine"]');
@@ -509,8 +486,6 @@
     resetView:   function () { S.focus = null; S.spin = false; if (stage) { stage.reset(); if (stage.setSpin) stage.setSpin(false); } paint(); },
     toggleSpin:  function () { S.spin = !S.spin; if (stage && stage.setSpin) stage.setSpin(S.spin); paint(); },
     addToCart:   addToCart,
-    buyNow:      buyNow,
-    payNow:      buyNow,          // accelerated checkout — Shopify owns the payment sheet
     toggleCart:  function () { S.cartOpen = !S.cartOpen; S.menuOpen = false; paint(); },
     toggleMenu:  function () { S.menuOpen = !S.menuOpen; S.cartOpen = false; paint(); },
     closeAll:    function () { S.cartOpen = false; S.menuOpen = false; paint(); },
@@ -536,9 +511,14 @@
   for (var v = 0; v < 4; v++) (function (i) {
     ACT['pickVariant' + i] = function () {
       S.variant = i;
-      // keep Shopify's accelerated checkout button on the same variant
-      var hid = document.querySelector('[data-ref="payVariant"]');
-      if (hid && currentVariant().id) hid.value = currentVariant().id;
+      // keep every native form on the page - buy box AND sticky bar - on the
+      // same variant. querySelector (singular) here once meant the sticky form
+      // kept selling variant 0 regardless of the bundle picked.
+      if (currentVariant().id) {
+        document.querySelectorAll('[data-ref="payVariant"]').forEach(function (hid) {
+          hid.value = currentVariant().id;
+        });
+      }
       paint();
     };
   })(v);
