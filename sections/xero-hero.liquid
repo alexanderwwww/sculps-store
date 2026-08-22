@@ -231,7 +231,7 @@
           <span style="position:relative;flex:0 0 auto;width:2.3rem;height:2.3rem;border-radius:.55rem;overflow:hidden;background:var(--sub,rgba(255,255,255,.05));border:1px solid var(--hair,rgba(255,255,255,.085));">{% render 'xero-image', key: 'addon_key_img', label: "", radius: 8, circle: false %}</span>
           <span style="flex:1;text-align:left;font-size:.88rem;font-weight:450;color:var(--txt,#0e0e0e);">Spare wireless key (NFC pebble)</span>
           <span style="font-size:.88rem;color:var(--txt2,#55565c);">+ {{ key.price | money }}</span>
-          <button type="submit" name="add" data-x="xh1" style="flex:0 0 auto;height:2rem;padding:0 .95rem;border-radius:1rem;background:transparent;border:1.4px solid var(--btn2b,rgba(140,142,152,.55));color:var(--txt,#0e0e0e);font-size:.84rem;font-weight:600;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Add</button>
+          <button type="submit" name="add" data-x="xh1" data-m="addcart" style="flex:0 0 auto;height:2rem;padding:0 .95rem;border-radius:1rem;background:transparent;border:1.4px solid var(--btn2b,rgba(140,142,152,.55));color:var(--txt,#0e0e0e);font-size:.84rem;font-weight:600;transition:transform .3s cubic-bezier(.28,.11,.32,1);">Add</button>
         </div>
       {%- endform -%}
       {%- endif -%}
@@ -257,7 +257,7 @@
             and on the live site. The variant id above is kept in sync by the same
             pickVariant handler that serves the payment button.
           {%- endcomment -%}
-          <button type="submit" name="add" data-x="xh1" style="width:100%;margin-top:.55rem;height:3.25rem;border-radius:1.63rem;background:transparent;border:1.6px solid var(--btn2b,rgba(140,142,152,.55));color:var(--txt,#0e0e0e);font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1),border-color .3s;">Add to cart</button>
+          <button type="submit" name="add" data-x="xh1" data-m="addcart" style="width:100%;margin-top:.55rem;height:3.25rem;border-radius:1.63rem;background:transparent;border:1.6px solid var(--btn2b,rgba(140,142,152,.55));color:var(--txt,#0e0e0e);font-size:1.1rem;font-weight:600;letter-spacing:-.01em;transition:transform .3s cubic-bezier(.28,.11,.32,1),border-color .3s;">Add to cart</button>
         {%- endform -%}
       </div>
       {%- comment -%}

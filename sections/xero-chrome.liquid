@@ -51,7 +51,7 @@
       {%- form 'product', sticky_product, novalidate: 'novalidate' -%}
         <input type="hidden" name="id" value="{{ sticky_product.selected_or_first_available_variant.id }}" data-ref="payVariant">
         <input type="hidden" name="return_to" value="/checkout">
-        <button type="submit" name="add" style="height:2.9rem;padding:0 1.5rem;border-radius:1.45rem;background:var(--btnbg,#111116);color:var(--btnink,#f4f4f6);border:1px solid var(--btnb,rgba(255,255,255,.10));font-size:1rem;font-weight:600;">Buy now</button>
+        <button type="submit" name="add" data-m="addcart" style="height:2.9rem;padding:0 1.5rem;border-radius:1.45rem;background:var(--btnbg,#111116);color:var(--btnink,#f4f4f6);border:1px solid var(--btnb,rgba(255,255,255,.10));font-size:1rem;font-weight:600;">Buy now</button>
       {%- endform -%}
     {%- endif -%}
   </div>
