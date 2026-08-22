@@ -15,11 +15,6 @@
   - monospace kicker with a status dot and blinking cursor in the LED purple
   - numbered group panels; values count up on scroll; a purple rule draws
     itself under each value as its group reveals
-  - FIELD FOOTAGE row: up to three vertical clips. An uploaded video is
-    preferred and autoplays muted, loops and fills the tile with no player
-    UI; a YouTube id is a fallback and renders as a click-to-play facade.
-    An empty slot renders nothing on the live site (only a hint in the theme
-    editor), so it can never look broken.
 
   VISIBILITY CONTRACT - the fix for the invisible-sheet bug, keep it:
   The sheet is VISIBLE BY DEFAULT. The hidden pre-reveal state exists only
@@ -92,81 +87,6 @@
       {%- endfor -%}
     </div>
 
-    {%- comment -%} FIELD FOOTAGE - renders only when at least one clip id is set,
-        or in the theme editor where empty slots show as hints. {%- endcomment -%}
-    {%- assign any_clip = false -%}
-    {%- for i in (1..3) -%}
-      {%- capture vk -%}clip{{ i }}_vid{%- endcapture -%}
-      {%- capture ik -%}clip{{ i }}_id{%- endcapture -%}
-      {%- if section.settings[vk] != blank -%}{%- assign any_clip = true -%}{%- endif -%}
-      {%- assign iv = section.settings[ik] | strip -%}
-      {%- if iv != blank -%}{%- assign any_clip = true -%}{%- endif -%}
-    {%- endfor -%}
-
-    {%- if any_clip or request.design_mode -%}
-      <div data-m="specclips" style="margin-top:3.4rem;">
-        <div style="display:flex;align-items:center;gap:.75rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">
-          <span style="width:.46rem;height:.46rem;border-radius:50%;background:#8b7bff;box-shadow:0 0 9px rgba(139,123,255,.85);"></span>
-          <span>{{ section.settings.clips_label | default: 'FIELD FOOTAGE' }}</span>
-        </div>
-        <div style="margin-top:1.2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem;">
-          {%- for i in (1..3) -%}
-            {%- capture vidkey -%}clip{{ i }}_vid{%- endcapture -%}
-            {%- capture idkey -%}clip{{ i }}_id{%- endcapture -%}
-            {%- capture capkey -%}clip{{ i }}_cap{%- endcapture -%}
-            {%- assign cvid = section.settings[vidkey] -%}
-            {%- assign cid = section.settings[idkey] | strip -%}
-            {%- assign ccap = section.settings[capkey] -%}
-
-            {%- if cvid != blank -%}
-              {%- comment -%} uploaded video: autoplays muted, loops, tap to unmute {%- endcomment -%}
-              <figure style="margin:0;">
-                <div data-m="fclip" style="position:relative;aspect-ratio:9/16;border-radius:1rem;overflow:hidden;background:#0a0a0c;border:1px solid rgba(255,255,255,.08);cursor:pointer;">
-                  {{ cvid | video_tag:
-                       image_size: '900x',
-                       playsinline: true,
-                       muted: true,
-                       loop: true,
-                       autoplay: true,
-                       controls: false,
-                       preload: 'metadata',
-                       style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'
-                  }}
-                  <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(6,6,8,.6),rgba(6,6,8,0) 42%);"></div>
-                  <span aria-hidden="true" style="position:absolute;right:.65rem;top:.65rem;width:1.9rem;height:1.9rem;border-radius:50%;background:rgba(14,14,20,.5);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;pointer-events:none;">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
-                  </span>
-                  {%- if ccap != blank -%}
-                    <figcaption style="position:absolute;left:.8rem;right:.8rem;bottom:.75rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;letter-spacing:.06em;color:rgba(255,255,255,.88);pointer-events:none;">{{ ccap }}</figcaption>
-                  {%- endif -%}
-                </div>
-              </figure>
-
-            {%- elsif cid != blank -%}
-              {%- comment -%} youtube fallback: click-to-play facade {%- endcomment -%}
-              <figure style="margin:0;">
-                <div data-m="fclip" data-yt="{{ cid | escape }}" style="position:relative;aspect-ratio:9/16;border-radius:1rem;overflow:hidden;background:#0a0a0c;border:1px solid rgba(255,255,255,.08);cursor:pointer;">
-                  <img src="https://i.ytimg.com/vi/{{ cid }}/hqdefault.jpg" alt="" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
-                  <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,6,8,.6),rgba(6,6,8,0) 45%);"></div>
-                  <span aria-hidden="true" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:3.3rem;height:3.3rem;border-radius:50%;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);display:flex;align-items:center;justify-content:center;">
-                    <svg width="15" height="15" viewBox="0 0 16 16" fill="#fff"><path d="M5 3.2v9.6L13 8z"></path></svg>
-                  </span>
-                  {%- if ccap != blank -%}
-                    <figcaption style="position:absolute;left:.8rem;right:.8rem;bottom:.75rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;letter-spacing:.06em;color:rgba(255,255,255,.88);">{{ ccap }}</figcaption>
-                  {%- endif -%}
-                </div>
-              </figure>
-
-            {%- elsif request.design_mode -%}
-              <div style="position:relative;aspect-ratio:9/16;border-radius:1rem;border:1px dashed rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;padding:1rem;">
-                <span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;letter-spacing:.08em;color:var(--txt3,#7c7d85);text-align:center;line-height:1.6;">Clip {{ i }} — upload a video in the section settings. Hidden on the live site until filled.</span>
-              </div>
-            {%- endif -%}
-          {%- endfor -%}
-        </div>
-      </div>
-    {%- endif -%}
-
     {%- if section.settings.footnote != blank -%}
       <p style="margin:3rem 0 0;max-width:46rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;line-height:1.6;letter-spacing:.04em;color:var(--txt3,#7c7d85);">{{ section.settings.footnote }}</p>
     {%- endif -%}
@@ -215,59 +135,6 @@
   if (!root) return;
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---------- field footage ---------------------------------------------
-     Uploaded clips autoplay muted and loop, but only while on screen - three
-     vertical files playing behind the fold is how a phone loses its frame
-     budget. Tapping a tile toggles its sound. YouTube slots stay click-to-play
-     facades so they do not each pull a player bundle on load. */
-  var fvids = root.querySelectorAll('[data-m="fclip"] video');
-  Array.prototype.forEach.call(fvids, function (v) {
-    v.muted = true;
-    v.setAttribute('muted', '');
-    v.setAttribute('playsinline', '');
-    v.setAttribute('webkit-playsinline', '');
-    v.loop = true;
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (en) {
-        en.forEach(function (e) {
-          if (e.isIntersecting) { v.play().catch(function () {}); }
-          else if (!v.paused) { v.pause(); }
-        });
-      }, { threshold: 0.35 }).observe(v);
-    } else {
-      v.play().catch(function () {});
-    }
-  });
-
-  root.addEventListener('click', function (e) {
-    var tile = e.target.closest('[data-m="fclip"]');
-    if (!tile) return;
-
-    var uv = tile.querySelector('video');
-    if (uv) {
-      uv.muted = !uv.muted;
-      var mm = tile.querySelector('[data-m="mute"]'), uu = tile.querySelector('[data-m="unmute"]');
-      if (mm) mm.style.display = uv.muted ? '' : 'none';
-      if (uu) uu.style.display = uv.muted ? 'none' : '';
-      if (uv.paused) uv.play().catch(function () {});
-      return;
-    }
-
-    if (tile.dataset.live === '1') return;
-    var id = tile.getAttribute('data-yt');
-    if (!id) return;
-    tile.dataset.live = '1';
-    var f = document.createElement('iframe');
-    f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
-    f.title = 'XERO field footage';
-    f.allow = 'autoplay; encrypted-media; picture-in-picture; web-share';
-    f.setAttribute('allowfullscreen', '');
-    f.referrerPolicy = 'strict-origin-when-cross-origin';
-    f.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
-    tile.innerHTML = '';
-    tile.appendChild(f);
-  });
 
   /* ---------- count-up ----------------------------------------------------
      Values are authored display strings ("980 Nm", "2.3 s", "1,500", "IP69K").
@@ -409,21 +276,7 @@
     { "type": "text", "id": "kicker", "label": "Kicker", "default": "SPECIFICATIONS" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "Every number." },
     { "type": "textarea", "id": "sub", "label": "Sub-line", "default": "The whole sheet. No asterisks, no small print, nothing withheld." },
-    { "type": "textarea", "id": "footnote", "label": "Footnote", "info": "Shown small under the sheet." },
-    { "type": "header", "content": "Field footage" },
-    { "type": "paragraph", "content": "Up to three vertical video slots inside the sheet. Upload a video for each — it autoplays muted, loops, fills the tile and carries no player UI. An empty slot renders nothing on the live site." },
-    { "type": "text", "id": "clips_label", "label": "Row label", "default": "FIELD FOOTAGE" },
-    { "type": "video", "id": "clip1_vid", "label": "Clip 1 — video", "info": "Vertical 9:16 works best. Autoplays muted and loops; tap to unmute." },
-    { "type": "text", "id": "clip1_cap", "label": "Clip 1 — caption" },
-    { "type": "video", "id": "clip2_vid", "label": "Clip 2 — video" },
-    { "type": "text", "id": "clip2_cap", "label": "Clip 2 — caption" },
-    { "type": "video", "id": "clip3_vid", "label": "Clip 3 — video" },
-    { "type": "text", "id": "clip3_cap", "label": "Clip 3 — caption" },
-    { "type": "header", "content": "YouTube fallback" },
-    { "type": "paragraph", "content": "Only used for a slot that has no uploaded video above." },
-    { "type": "text", "id": "clip1_id", "label": "Clip 1 — YouTube ID" },
-    { "type": "text", "id": "clip2_id", "label": "Clip 2 — YouTube ID" },
-    { "type": "text", "id": "clip3_id", "label": "Clip 3 — YouTube ID" }
+    { "type": "textarea", "id": "footnote", "label": "Footnote", "info": "Shown small under the sheet." }
   ],
   "blocks": [
     {

@@ -1,204 +1,173 @@
 {%- comment -%}
-  XERO reel — vertical films.
+  XERO reel — one vertical film.
 
-  SOURCE, in order of preference:
+  Deliberately a single clip, not a carousel: one good reel sells better than
+  three mediocre ones, and one video is one decode instead of three on a phone.
 
-    1. `video`      an uploaded Shopify-hosted video. PREFERRED. It autoplays
-                    muted, loops, fills the 9:16 tile with object-fit:cover and
-                    carries no player UI, no watermark, no related-video panel
-                    and no third-party cookies. This is what a reel should be.
-    2. `youtube_id` a YouTube video ID, kept only as a fallback for a film that
-                    has to live on the channel. Rendered as a click-to-play
-                    facade so six tiles do not each pull a player bundle.
+  SOURCE: an uploaded Shopify-hosted video only. No URLs, no embed ids, no
+  third-party player. An uploaded file autoplays muted, loops, fills the 9:16
+  frame with object-fit:cover and carries no player UI, no watermark and no
+  related-video panel. Upload in Content > Files, then pick it here.
 
-  Uploaded clips autoplay muted and loop, TikTok-style, but ONLY while the tile
-  is on screen - three 4K vertical files playing behind the fold is exactly how
-  a phone loses its frame budget and its battery. Tapping a tile toggles sound.
+  LAYOUT. One component, two arrangements, no duplicated markup:
+    desktop  - reel on the left, copy beside it, vertically centred
+    mobile   - copy first, reel below, full width
+  Both come from a single flex container that wraps; nothing is hidden and
+  re-shown at a breakpoint, so there is only ever one <video> on the page.
 
-  READ THIS BEFORE CHANGING THE COPY.
+  PLAYBACK. muted + playsinline are forced in JS because Shopify's video_tag
+  does not reliably emit both, and without them iOS and Android refuse to
+  autoplay - the usual cause of a black tile on a phone. The clip plays only
+  while it is on screen and pauses when it leaves, so a 4K vertical file is not
+  burning battery three sections further down. Tapping the reel toggles sound;
+  it never starts unmuted.
 
-  This section is framed as XERO's own footage on purpose. It must NOT be
-  captioned or labelled as customer, owner or rider-submitted video unless the
-  clip genuinely came from a paying customer who agreed to it being published.
-  Presenting footage the brand produced as if it came from customers is
-  fabricated social proof - the same category as the invented review handles
-  that were stripped out of xero-ugc, and a documented contributor to store
-  terminations. A store with no orders yet cannot have owner footage, and that
-  is checkable by anyone who looks at the order count. Brand-made film is
-  honest and sells just as well.
+  FRAMING. Captioning brand footage as customer or owner video is fabricated
+  social proof - the same category as the invented review handles stripped out
+  of xero-ugc - and a store with no orders cannot have owner footage anyway.
+  Keep the footnote honest about whose film this is.
 
-  When real customers do send clips, put the real handle in `credit` - and keep
-  their written permission on file.
+  EMPTY STATE. With no video the section renders NOTHING on the storefront; the
+  theme editor shows a hint instead, so it stays findable and can never look
+  broken to a visitor.
 {%- endcomment -%}
 
 {%- assign uid = section.id -%}
+{%- assign clip = section.settings.video -%}
 
+{%- if clip != blank or request.design_mode -%}
 <section class="xero-night" data-sec="reel" {% if section.settings.anchor != blank %}id="{{ section.settings.anchor }}"{% endif %}
-         style="position:relative;width:100%;background:var(--pg);padding:6.5rem 0 6rem;">
+         style="position:relative;width:100%;background:var(--pg);padding:6rem 0 5.5rem;">
 
-  <div style="max-width:76rem;margin:0 auto;padding:0 2.06rem;">
+  <div style="max-width:70rem;margin:0 auto;padding:0 2.06rem;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(2rem,5vw,4rem);">
 
-    <div style="max-width:44rem;">
+    {%- comment -%}
+      Copy. order:2 on wide screens puts it to the right of the reel; on a
+      narrow screen the flex line wraps and the default order:1 in the media
+      query below floats it back above. One block of markup, both layouts.
+    {%- endcomment -%}
+    <div data-m="reelcopy" style="flex:1 1 20rem;min-width:0;">
       {%- if section.settings.kicker != blank -%}
         <div style="display:flex;align-items:center;gap:.7rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.74rem;font-weight:500;letter-spacing:.2em;color:var(--txt3,#7c7d85);">
           <span style="width:.44rem;height:.44rem;border-radius:50%;background:#8b7bff;box-shadow:0 0 9px rgba(139,123,255,.85);"></span>
           <span>{{ section.settings.kicker }}</span>
         </div>
       {%- endif -%}
-      <h2 style="margin:1rem 0 0;font-size:clamp(2.1rem,4.4vw,3.4rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:var(--txt,#f4f4f6);">{{ section.settings.heading }}</h2>
+      {%- if section.settings.heading != blank -%}
+        <h2 style="margin:1rem 0 0;font-size:clamp(2rem,4.4vw,3.2rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:var(--txt,#f4f4f6);text-wrap:balance;">{{ section.settings.heading }}</h2>
+      {%- endif -%}
       {%- if section.settings.sub != blank -%}
-        <p style="margin:1.05rem 0 0;font-size:1.02rem;line-height:1.55;color:var(--txt2,#a9aab1);text-wrap:pretty;">{{ section.settings.sub }}</p>
+        <p style="margin:1.05rem 0 0;max-width:30rem;font-size:1.02rem;line-height:1.55;color:var(--txt2,#a9aab1);text-wrap:pretty;">{{ section.settings.sub }}</p>
+      {%- endif -%}
+      {%- if section.settings.footnote != blank -%}
+        <p style="margin:1.6rem 0 0;max-width:30rem;font-size:.8rem;line-height:1.55;color:var(--txt3,#7c7d85);">{{ section.settings.footnote }}</p>
       {%- endif -%}
     </div>
 
-    <div data-m="reelgrid" style="margin-top:3.4rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1.1rem;">
-      {%- for block in section.blocks -%}
-        {%- assign clip = block.settings.video -%}
-        {%- assign yt = block.settings.youtube_id | strip -%}
-        {%- if clip != blank or yt != blank or request.design_mode -%}
-          <figure {{ block.shopify_attributes }} style="margin:0;">
-            <div data-m="reeltile" {% if yt != blank and clip == blank %}data-yt="{{ yt | escape }}"{% endif %}
-                 style="position:relative;aspect-ratio:9/16;border-radius:1rem;overflow:hidden;background:#0a0a0c;border:1px solid rgba(255,255,255,.09);{% if clip != blank or yt != blank %}cursor:pointer;{% endif %}">
+    <div data-m="reelmedia" style="flex:0 1 22rem;min-width:0;margin-inline:auto;">
+      <div data-m="reeltile" style="position:relative;width:100%;aspect-ratio:9/16;border-radius:1.25rem;overflow:hidden;background:#0a0a0c;border:1px solid rgba(255,255,255,.09);box-shadow:0 30px 60px -22px rgba(0,0,0,.65);{% if clip != blank %}cursor:pointer;{% endif %}">
 
-              {%- if clip != blank -%}
-                {{ clip | video_tag:
-                     image_size: '900x',
-                     playsinline: true,
-                     muted: true,
-                     loop: true,
-                     autoplay: true,
-                     controls: false,
-                     preload: 'metadata',
-                     style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'
-                }}
-                <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(6,6,8,.6),rgba(6,6,8,0) 42%);"></div>
-                <span data-m="reelsound" aria-hidden="true"
-                      style="position:absolute;right:.7rem;top:.7rem;width:2rem;height:2rem;border-radius:50%;background:rgba(14,14,20,.5);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;pointer-events:none;">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
-                </span>
+        {%- if clip != blank -%}
+          {{ clip | video_tag:
+               image_size: '1080x',
+               playsinline: true,
+               muted: true,
+               loop: true,
+               autoplay: true,
+               controls: false,
+               preload: 'metadata',
+               style: 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'
+          }}
 
-              {%- elsif yt != blank -%}
-                <img src="https://i.ytimg.com/vi/{{ yt }}/hqdefault.jpg" alt="" loading="lazy" decoding="async"
-                     style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
-                <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,6,8,.62),rgba(6,6,8,0) 46%);"></div>
-                <span aria-hidden="true"
-                      style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:3.4rem;height:3.4rem;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);display:flex;align-items:center;justify-content:center;">
-                  <svg width="15" height="15" viewBox="0 0 16 16" fill="#fff"><path d="M5 3.2v9.6L13 8z"></path></svg>
-                </span>
+          {%- if section.settings.caption != blank -%}
+            <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(6,6,8,.62),rgba(6,6,8,0) 40%);"></div>
+            <figcaption style="position:absolute;left:1rem;right:1rem;bottom:.95rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.75rem;letter-spacing:.05em;color:rgba(255,255,255,.9);pointer-events:none;">{{ section.settings.caption }}</figcaption>
+          {%- endif -%}
 
-              {%- else -%}
-                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1rem;border:1px dashed rgba(255,255,255,.16);border-radius:1rem;">
-                  <span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;letter-spacing:.06em;color:var(--txt3,#7c7d85);text-align:center;line-height:1.6;">Upload a video in this block. Hidden on the live site until you do.</span>
-                </div>
-              {%- endif -%}
+          <span data-m="reelsound" aria-hidden="true"
+                style="position:absolute;right:.8rem;top:.8rem;width:2.2rem;height:2.2rem;border-radius:50%;background:rgba(14,14,20,.5);-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;pointer-events:none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
+          </span>
 
-              {%- if block.settings.credit != blank -%}
-                <figcaption style="position:absolute;left:.85rem;right:.85rem;bottom:.8rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.74rem;letter-spacing:.05em;color:rgba(255,255,255,.9);pointer-events:none;">
-                  {{ block.settings.credit }}
-                </figcaption>
-              {%- endif -%}
-            </div>
-          </figure>
+        {%- else -%}
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 12px,transparent 12px 24px);">
+            <span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;letter-spacing:.06em;color:var(--txt3,#7c7d85);text-align:center;line-height:1.6;">Upload a vertical video in this section's settings. Nothing renders on the live site until you do.</span>
+          </div>
         {%- endif -%}
-      {%- endfor -%}
-    </div>
 
-    {%- if section.settings.footnote != blank -%}
-      <p style="margin:2.4rem 0 0;font-size:.82rem;line-height:1.55;color:var(--txt3,#7c7d85);">{{ section.settings.footnote }}</p>
-    {%- endif -%}
+      </div>
+    </div>
 
   </div>
 </section>
+
+<style>
+  /* Wide: reel left, copy right. The copy is second in the DOM so that on a
+     narrow screen it lands above the reel naturally - here it is pushed after. */
+  @media (min-width: 861px){
+    #shopify-section-{{ uid }} [data-m="reelcopy"]{ order:2; }
+    #shopify-section-{{ uid }} [data-m="reelmedia"]{ order:1; flex-basis:20rem; }
+  }
+  @media (max-width: 860px){
+    #shopify-section-{{ uid }} [data-m="reelmedia"]{ flex:1 1 100%; max-width:24rem; }
+  }
+</style>
 
 <script>
 (function () {
   var root = document.getElementById('shopify-section-{{ uid }}');
   if (!root) return;
+  var v = root.querySelector('[data-m="reeltile"] video');
+  if (!v) return;
 
-  /* ---- uploaded clips: autoplay muted, loop, but only while on screen ---- */
-  var vids = root.querySelectorAll('[data-m="reeltile"] video');
-  Array.prototype.forEach.call(vids, function (v) {
-    /* Shopify's video_tag does not reliably emit all of these, and without them
-       iOS and Android refuse to autoplay. */
-    v.muted = true;
-    v.setAttribute('muted', '');
-    v.setAttribute('playsinline', '');
-    v.setAttribute('webkit-playsinline', '');
-    v.loop = true;
+  /* Shopify's video_tag does not reliably emit all of these, and without them
+     iOS and Android refuse to autoplay - the usual cause of a black tile. */
+  v.muted = true;
+  v.setAttribute('muted', '');
+  v.setAttribute('playsinline', '');
+  v.setAttribute('webkit-playsinline', '');
+  v.loop = true;
 
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (en) {
-        en.forEach(function (e) {
-          if (e.isIntersecting) { v.play().catch(function () {}); }
-          else if (!v.paused) { v.pause(); }
-        });
-      }, { threshold: 0.35 }).observe(v);
-    } else {
-      v.play().catch(function () {});
-    }
-  });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (en) {
+      en.forEach(function (e) {
+        if (e.isIntersecting) { v.play().catch(function () {}); }
+        else if (!v.paused) { v.pause(); }
+      });
+    }, { threshold: 0.3 }).observe(v);
+  } else {
+    v.play().catch(function () {});
+  }
 
-  root.addEventListener('click', function (e) {
-    var tile = e.target.closest('[data-m="reeltile"]');
-    if (!tile) return;
-
-    /* uploaded clip: tap toggles sound */
-    var v = tile.querySelector('video');
-    if (v) {
+  var tile = root.querySelector('[data-m="reeltile"]');
+  if (tile) {
+    tile.addEventListener('click', function () {
       v.muted = !v.muted;
-      var m = tile.querySelector('[data-m="mute"]'), u = tile.querySelector('[data-m="unmute"]');
+      var m = root.querySelector('[data-m="mute"]'), u = root.querySelector('[data-m="unmute"]');
       if (m) m.style.display = v.muted ? '' : 'none';
       if (u) u.style.display = v.muted ? 'none' : '';
       if (v.paused) v.play().catch(function () {});
-      return;
-    }
-
-    /* youtube fallback: swap the facade for the real player on first tap */
-    if (tile.dataset.live === '1') return;
-    var id = tile.getAttribute('data-yt');
-    if (!id) return;
-    tile.dataset.live = '1';
-    var f = document.createElement('iframe');
-    f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) +
-            '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
-    f.title = 'XERO film';
-    f.allow = 'autoplay; encrypted-media; picture-in-picture; web-share';
-    f.setAttribute('allowfullscreen', '');
-    f.referrerPolicy = 'strict-origin-when-cross-origin';
-    f.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
-    tile.innerHTML = '';
-    tile.appendChild(f);
-  });
+    });
+  }
 })();
 </script>
+{%- endif -%}
 
 {% schema %}
 {
   "name": "XERO reel",
   "tag": "div",
   "settings": [
+    { "type": "paragraph", "content": "One vertical film. Upload the video in Content > Files, then pick it below. It autoplays muted, loops and fills the frame; tapping it turns sound on. Nothing renders on the live site until a video is set." },
+    { "type": "video", "id": "video", "label": "Video", "info": "Vertical 9:16 works best. A landscape file will be cropped to fit." },
+    { "type": "text", "id": "caption", "label": "Caption on the reel" },
+    { "type": "header", "content": "Copy" },
     { "type": "text", "id": "kicker", "label": "Kicker", "default": "ON THE TRAIL" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "The machine, being ridden." },
     { "type": "textarea", "id": "sub", "label": "Sub-line", "default": "Handheld footage from our own rides. Forest singletrack, rock, wet roots, after dark." },
-    { "type": "text", "id": "anchor", "label": "Anchor id", "info": "Optional. Lets a nav link point here." },
-    { "type": "textarea", "id": "footnote", "label": "Footnote", "info": "Say plainly whose footage this is. Captioning brand footage as customer video is fabricated social proof.", "default": "Filmed by XERO. Not customer footage. Riding shown on private land by an experienced rider in full protective equipment." }
+    { "type": "textarea", "id": "footnote", "label": "Footnote", "info": "Say plainly whose footage this is. Captioning brand footage as customer video is fabricated social proof.", "default": "Filmed by XERO. Not customer footage." },
+    { "type": "text", "id": "anchor", "label": "Anchor id", "info": "Optional. Lets a nav link point here." }
   ],
-  "blocks": [
-    {
-      "type": "clip",
-      "name": "Clip",
-      "settings": [
-        { "type": "video", "id": "video", "label": "Video", "info": "Upload in Content > Files or pick here. Vertical 9:16 works best. Autoplays muted and loops; tap to unmute." },
-        { "type": "text", "id": "credit", "label": "Caption" },
-        { "type": "text", "id": "youtube_id", "label": "YouTube ID (fallback)", "info": "Only used if no video is uploaded above. The ID only, not the full URL." }
-      ]
-    }
-  ],
-  "presets": [
-    {
-      "name": "XERO reel",
-      "blocks": [{ "type": "clip" }, { "type": "clip" }, { "type": "clip" }]
-    }
-  ]
+  "presets": [{ "name": "XERO reel" }]
 }
 {% endschema %}
