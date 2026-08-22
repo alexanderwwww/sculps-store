@@ -1,0 +1,469 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "popup": {
+      "type": "xero-popup",
+      "settings": {}
+    },
+    "hero": {
+      "type": "xero-hero",
+      "settings": {
+        "product": "xero-chiron",
+        "addon_key": "wireless-key-nfc-pebble",
+        "title": "XERO Chiron.",
+        "subtitle": "980 Nm · 120 km/h",
+        "ships_in": "Order · Quality and safety check · Delivered to your door",
+        "finance_line": "",
+        "blurb": "An electric off-road motorcycle designed to run without a key or a barrel. Your phone lies flat in the tank, charges while you ride, and the system is designed so that only your paired phone wakes the machine. Design intent, not an independently tested security rating.",
+        "points": "Paired to your client ID before dispatch|Free delivery within the United States, to your door on a tail-lift vehicle, never a parcel courier|30-day returns - we arrange and pay for collection|Off-road machine, not street legal",
+        "addon_key_img": "shopify://shop_images/b5f1aa4a-e330-410b-b042-a2797456cfc1_1_b1194d64-bdc6-42d7-b299-8246d6e6f95c.png",
+        "stage_ph_0": "shopify://shop_images/hf_20260810_081538_d6de6916-d10b-4877-a21e-c171c821fd64.png",
+        "stage_ph_1": "shopify://shop_images/hf_20260810_031051_2fb183f8-d8c0-400a-b8ba-5ec2bb015211.png",
+        "stage_ph_2": "shopify://shop_images/hf_20260810_031051_4fca011b-1020-4ac7-949a-01eaa85ba7fb.png",
+        "stage_ph_3": "shopify://shop_images/hf_20260811_045930_e83462fb-f1bc-4676-b075-57a798e363f0.png",
+        "stage_ph_4": "shopify://shop_images/hf_20260822_082410_36e53783-ba1f-41f6-bc51-2b526f031a83.png",
+        "stage_ph_5": "shopify://shop_images/hf_20260822_074351_5c414caa-d72b-43bc-958c-764c5c0091f9.png"
+      }
+    },
+    "gallery": {
+      "type": "xero-gallery",
+      "settings": {
+        "heading": "Every angle.",
+        "pg_hero": "shopify://shop_images/hf_20260810_041320_269332c9-1739-458a-b679-9599df13b8bf.png",
+        "pg_a": "shopify://shop_images/b5f1aa4a-e330-410b-b042-a2797456cfc1_1.png",
+        "pg_b": "shopify://shop_images/hf_20260809_071104_9a78b890-c126-4568-85ec-afb32c4458ab.png"
+      }
+    },
+    "iphone-key": {
+      "type": "xero-iphone-key",
+      "settings": {
+        "eyebrow": "NO KEYS. NO FOB HUNTING.",
+        "heading": "Your iPhone is the key.",
+        "sub": "Card in, card out, phone in. After that the bike knows your phone and nothing else will start it.",
+        "step1_img": "shopify://shop_images/Screenshot_2026-08-16_at_12.41.15.png",
+        "s1_title": "Cut for your phone",
+        "s1_body": "A pocket milled into the tank to the exact size and thickness of an iPhone, with the charging coil built into the floor of it. Nothing clips on. Nothing sticks out.",
+        "step2_img": "shopify://shop_images/Screenshot_2026-08-16_at_12.40.39.png",
+        "s2_title": "Tap your card once",
+        "s2_body": "Your steel card carries the bike's client ID and serial. Lay it in the pocket, the NFC reader picks it up, and the machine is claimed. Then take the card straight back out.",
+        "step3_img": "shopify://shop_images/Screenshot_2026-08-21_at_18.59.29.png",
+        "s3_title": "Drop your phone in",
+        "s3_body": "It lies flat and flush, the magnet holds it, and it charges while you ride. From then on the bike wakes for that phone alone.",
+        "payoff": "Designed around the phone you already carry.",
+        "payoff_sub": "XERO is an independent company and is not affiliated with, endorsed by, or sponsored by Apple Inc. iPhone is a trademark of Apple Inc. The pocket, the magnet and the NFC handshake are designed around the iPhone you already carry. Your card and key ship days before the bike does, so you can register your ID the moment they land.",
+        "cta": "Activate your ID",
+        "cta_link": "/pages/activate"
+      }
+    },
+    "xero_reel_gjEwGd": {
+      "type": "xero-reel",
+      "settings": {
+        "video": "shopify://files/videos/hf_20260817_143535_dc2817e5-4f15-4d8f-b5bd-a0cb5855cb6d.mp4",
+        "caption": "",
+        "kicker": "in the city",
+        "heading": "we made it with love",
+        "sub": "we build it like a spaceship",
+        "footnote": "Filmed by XERO. Not customer footage. Riding shown on private land by an experienced rider in full protective equipment.",
+        "anchor": ""
+      }
+    },
+    "specs": {
+      "type": "xero-specs",
+      "blocks": {
+        "g1": {
+          "type": "group",
+          "settings": {
+            "title": "POWERTRAIN",
+            "note": "",
+            "rows": "Peak power | 82 hp\nTorque at the wheel | 980 Nm\nMotor speed | 15,000 rpm\nTransmission | Direct drive"
+          }
+        },
+        "g2": {
+          "type": "group",
+          "settings": {
+            "title": "PERFORMANCE",
+            "note": "",
+            "rows": "Top speed | 120 km/h\n0–60 km/h | 2.3 s\nScheduled service | 0"
+          }
+        },
+        "g3": {
+          "type": "group",
+          "settings": {
+            "title": "BATTERY",
+            "note": "ASTRA ULTIMUM",
+            "rows": "Capacity | 8.4 kWh\nCharge 0–100% | 55 min\nCycles to 80% | 1,500\nSwap time | 11 sec"
+          }
+        },
+        "g4": {
+          "type": "group",
+          "settings": {
+            "title": "CHASSIS",
+            "note": "",
+            "rows": "Weight, all in | 104 kg\nSuspension travel | 310 mm\nFront brake | 280 mm, 4-piston\nSealing | IP69K"
+          }
+        }
+      },
+      "block_order": [
+        "g1",
+        "g2",
+        "g3",
+        "g4"
+      ],
+      "settings": {
+        "kicker": "SPECIFICATIONS",
+        "heading": "Every number.",
+        "sub": "The whole sheet. No asterisks, no small print, nothing withheld.",
+        "footnote": "Manufacturer specifications. Real-world figures vary with terrain, rider weight, temperature, tyre choice and setup."
+      }
+    },
+    "box": {
+      "type": "xero-box",
+      "settings": {
+        "kicker": "WHAT ARRIVES FIRST",
+        "heading": "The key lands before the bike.",
+        "sub": "A machined aluminium case arrives days ahead of delivery. Inside: your key and your card. Nothing else.",
+        "box_open": "shopify://shop_images/hf_20260813_061722_e9160a82-caa3-4d2c-ac9f-a937ec968359.png",
+        "box_card": "shopify://shop_images/hf_20260813_061727_d99b6558-44b8-422c-98ca-8eb09a3ad65a.png",
+        "card_kicker": "YOUR CARD",
+        "card_heading": "Milled steel. Your number on it.",
+        "card_body": "Every Chiron ships with a solid steel card carrying its serial and client ID, laser-etched. Tap it into the tank once and the bike is paired to you.",
+        "card_cta": "Track your build",
+        "card_link": "/pages/track",
+        "key_kicker": "THE KEY",
+        "key_heading": "Turn it over.",
+        "key_model_url": "https://cdn.shopify.com/3d/models/o/7dc0b18e2cac5e5e/XERO_KeyBox.glb"
+      }
+    },
+    "astra": {
+      "type": "xero-astra",
+      "settings": {
+        "kicker": "ASTRA ULTIMUM",
+        "heading": "A new kind of battery.",
+        "astra_hero": "shopify://shop_images/hf_20260811_051025_473a3e8f-da89-4ff0-9609-f774ebf8f73b.png",
+        "stat1_value": "8.4 kWh",
+        "stat1_label": "Capacity",
+        "stat2_value": "11 sec",
+        "stat2_label": "To swap",
+        "stat3_value": "1,500",
+        "stat3_label": "Cycles to 80%"
+      }
+    },
+    "reel": {
+      "type": "xero-reel",
+      "settings": {
+        "video": "shopify://files/videos/hf_20260816_095855_8d124f22-050e-4ca4-a19a-6ca68ab39713.mp4",
+        "caption": "",
+        "kicker": "ON THE TRAIL",
+        "heading": "watch it move",
+        "sub": "Handheld footage from our own rides. Forest singletrack, rock, wet roots, after dark.",
+        "footnote": "Filmed by XERO. Not customer footage. Riding shown on private land by an experienced rider in full protective equipment.",
+        "anchor": ""
+      }
+    },
+    "vibes": {
+      "type": "xero-vibes",
+      "settings": {
+        "eyebrow": "",
+        "heading": "Out of the trailer. Into the night.",
+        "vibe_a": "shopify://shop_images/hf_20260816_123238_efb42158-bd79-4626-9c3b-4359cbb14621.png",
+        "cap_a": "OUT OF THE TRAILER",
+        "vibe_b": "shopify://shop_images/hf_20260814_055017_f068445f-c20d-4d46-aa54-01aaaa64d44e.png",
+        "cap_b": "FIRST RIDE"
+      }
+    },
+    "ugc-faq": {
+      "type": "xero-ugc-faq",
+      "blocks": {
+        "q1": {
+          "type": "qa",
+          "settings": {
+            "q": "How fast is it?",
+            "a": "120 km/h, about 75 mph."
+          }
+        },
+        "q2": {
+          "type": "qa",
+          "settings": {
+            "q": "How much torque?",
+            "a": "980 Nm at the rear wheel, with 82 hp peak. There is no gearbox between the motor and the road, so all of it arrives the moment you touch the throttle."
+          }
+        },
+        "q3": {
+          "type": "qa",
+          "settings": {
+            "q": "What does it weigh?",
+            "a": "104 kg, all in. A single-piece cast frame carries the pack, so there is no subframe underneath adding weight back."
+          }
+        },
+        "q4": {
+          "type": "qa",
+          "settings": {
+            "q": "How far does it go?",
+            "a": "An 8.4 kWh ASTRA ULTIMUM pack, good for a long day of trail riding. A second pack swaps in tool-free in about eleven seconds, which is the closest thing there is to unlimited range."
+          }
+        },
+        "q5": {
+          "type": "qa",
+          "settings": {
+            "q": "How long does it charge?",
+            "a": "About 55 minutes from empty to full, and the pack holds over 80% of its capacity after 1,500 cycles."
+          }
+        },
+        "q6": {
+          "type": "qa",
+          "settings": {
+            "q": "How does the key work?",
+            "a": "There is no key. A steel card ships with the bike and pairs it to you once. After that your iPhone lies flat in the tank pocket, charges while you ride, and is the only thing that will wake the machine."
+          }
+        },
+        "q7": {
+          "type": "qa",
+          "settings": {
+            "q": "What if someone tries to take it?",
+            "a": "It stays locked, the same way your phone does in somebody else's hand. Without the paired device it will not start, and you can see where it is from your iPhone. Location reporting is planned for the companion app and is not available yet."
+          }
+        },
+        "q8": {
+          "type": "qa",
+          "settings": {
+            "q": "What comes with it?",
+            "a": "The bike, its charger, the wireless key and your steel owner card. At checkout you can add a spare wireless key, and you can choose the configuration that includes a ten-year replacement term."
+          }
+        },
+        "q9": {
+          "type": "qa",
+          "settings": {
+            "q": "What is 10-Year Replacement?",
+            "a": "A second configuration of the bike rather than an add-on. Choose it at checkout and for ten years from delivery we replace the whole machine rather than repair it. Full terms are on the refund and terms pages. It is not insurance and is not underwritten by an insurer; it is an extended replacement term offered by us directly."
+          }
+        },
+        "q10": {
+          "type": "qa",
+          "settings": {
+            "q": "When does it ship?",
+            "a": "Four to six weeks from order. Your key case arrives days before the bike does, and you can cancel for a full refund any time before dispatch."
+          }
+        },
+        "q11": {
+          "type": "qa",
+          "settings": {
+            "q": "How is it delivered?",
+            "a": "To your door on a tail-lift vehicle, by our own team or a specialist vehicle carrier we appoint - not a parcel courier. Nothing for you to collect, no freight terminal, and shipping is free."
+          }
+        },
+        "q12": {
+          "type": "qa",
+          "settings": {
+            "q": "What servicing does it need?",
+            "a": "No oil, no chain, no filters and no valve clearances. Tyres, brake pads and battery care are the owner’s responsibility."
+          }
+        }
+      },
+      "block_order": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q7",
+        "q8",
+        "q9",
+        "q10",
+        "q11",
+        "q12"
+      ],
+      "settings": {
+        "heading": "Questions.",
+        "ugc": "shopify://files/videos/openart-cgt-20260822164612-kmbtb_1787388503750_c5f8a379.mp4"
+      }
+    },
+    "xero_film_E4yzrV": {
+      "type": "xero-film",
+      "custom_css": [],
+      "settings": {
+        "youtube_id": "",
+        "film": "shopify://files/videos/hf_20260816_054731_48980959-5389-4322-80b5-0d3e7b4913fe.mp4",
+        "poster": "shopify://shop_images/hf_20260818_122304_8f50f520-5e2a-4157-b4ea-350c9f94cb52.png",
+        "anchor": "",
+        "label": "full-bleed film — 16:9"
+      }
+    },
+    "antitheft": {
+      "type": "xero-antitheft",
+      "settings": {
+        "kicker": "SECURITY",
+        "heading": "impossible to ride without you.",
+        "sub": "pairs with iphone find my app",
+        "lock1_title": "Paired to one phone",
+        "lock1_body": "Your steel card claims the bike once, to you. From then on it wakes for your iPhone and refuses every other device.",
+        "lock2_title": "No key to copy",
+        "lock2_body": "There is no barrel, no blade and no fob to clone. There is nothing on the machine to pick, drill or hotwire.",
+        "lock3_title": "Dead without you",
+        "lock3_body": "The design puts the lock in the controller rather than in a barrel, so cutting the loom is not intended to defeat it. This describes the design intent of the system, not an independently tested security rating.",
+        "find_icon": "shopify://shop_images/Screenshot_2026-08-22_at_13.38.03.png",
+        "find_title": "Designed to tell you where it is.",
+        "find_body": "Planned: the Chiron reports its position to the companion app, so a stolen bike is a tracked bike. The app is in development and is not available at launch - location reporting is a design goal, not a feature you can use the day the bike arrives.",
+        "payoff": "Designed to be worthless to anyone but you."
+      }
+    },
+    "film2": {
+      "type": "xero-film",
+      "settings": {
+        "youtube_id": "",
+        "film": "shopify://files/videos/hf_20260816_054520_6d66faaa-3a63-4cd9-8282-a6ecbc8de5a2.mp4",
+        "poster": "shopify://shop_images/hf_20260818_122304_8f50f520-5e2a-4157-b4ea-350c9f94cb52.png",
+        "anchor": "",
+        "label": "full-bleed film — 16:9"
+      }
+    },
+    "ugc": {
+      "type": "xero-ugc",
+      "blocks": {
+        "s1": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260818_025446_38445f44-39b6-4663-97c9-6fae394efeae.png",
+            "handle": "",
+            "caption": ""
+          }
+        },
+        "s2": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260818_025507_2ed6750a-1ef2-44f2-8cb8-a7478ae63ca0.png",
+            "handle": "",
+            "caption": ""
+          }
+        },
+        "s3": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260818_031144_a7f94903-17d9-4ef0-984d-5c7f74f28d03.png",
+            "handle": "",
+            "caption": ""
+          }
+        },
+        "s4": {
+          "type": "shot",
+          "settings": {
+            "handle": "",
+            "caption": ""
+          }
+        },
+        "s5": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260818_031616_4f1172f0-e529-43c3-bdcf-142e4a79427a.png",
+            "handle": "",
+            "caption": ""
+          }
+        },
+        "s6": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260818_025729_38890e22-5af4-4d6d-82cf-a16617594a7c.png",
+            "handle": "",
+            "caption": ""
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5",
+        "s6"
+      ],
+      "settings": {
+        "theme": "dark",
+        "kicker": "THE CHIRON",
+        "title": "Design visualisations.",
+        "subtitle": "Renders and design visualisations. Not photographs of a customer machine.",
+        "show_dots": true,
+        "scroll_span": 58
+      }
+    },
+    "network": {
+      "type": "xero-network",
+      "settings": {
+        "bg": "shopify://shop_images/hf_20260818_122304_8f50f520-5e2a-4157-b4ea-350c9f94cb52.png",
+        "kicker": "ALWAYS IN THE LOOP",
+        "heading": "Updates and notifications at every step.",
+        "sub": "From the moment your card is etched to the day your bike arrives. Build, quality check, dispatch and delivery updates land on your phone/email"
+      }
+    },
+    "track": {
+      "type": "xero-track",
+      "settings": {
+        "eyebrow": "BUILT, CHECKED, DELIVERED",
+        "heading": "Follow it to your door.",
+        "sub": "Your Chiron is paired to your client ID and checked before it leaves us. You can follow it from the day your card is etched to the day it arrives.",
+        "f1_text": "Free delivery within the US",
+        "f2_text": "Delivered to your door",
+        "f3_text": "Updates at every stage",
+        "cta": "Track",
+        "hint": "Enter the client ID etched on your steel card."
+      }
+    },
+    "footer": {
+      "type": "xero-footer",
+      "settings": {
+        "news_heading": "ride to the stars",
+        "news_body": "order-quality check-ship",
+        "disclosure": "",
+        "ticker": "RIDE TO THE STARS",
+        "socials": "",
+        "tagline": "Designed on Earth. Tested elsewhere.",
+        "wordmark": "XERO",
+        "signoff": "Ride to the stars."
+      }
+    },
+    "product-data": {
+      "type": "xero-product-data",
+      "settings": {}
+    },
+    "consent": {
+      "type": "xero-consent",
+      "settings": {
+        "mode": "bar",
+        "title": "BEFORE YOU RIDE",
+        "body": "The XERO Chiron is an off-road machine and is not street legal. It is not homologated or registrable for road use in the United States and is sold for use on private land and off-road terrain only. Riders must be 18 or over. We ship within the United States only, and bikes ship in 4 to 6 weeks from order — an estimate, not a guaranteed date. By continuing you confirm you have read and accept our terms, refund and shipping policies.",
+        "accept_label": "I understand and accept",
+        "dismiss_label": "Not now",
+        "storage_key": "xero_ack_v1"
+      }
+    }
+  },
+  "order": [
+    "popup",
+    "hero",
+    "gallery",
+    "iphone-key",
+    "xero_reel_gjEwGd",
+    "specs",
+    "box",
+    "astra",
+    "reel",
+    "vibes",
+    "ugc-faq",
+    "xero_film_E4yzrV",
+    "antitheft",
+    "film2",
+    "ugc",
+    "network",
+    "track",
+    "footer",
+    "product-data",
+    "consent"
+  ]
+}

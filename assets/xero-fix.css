@@ -318,3 +318,45 @@ html{ scroll-behavior: smooth; }
      page eating scroll — belt-and-braces alongside the JS pointer-events gates */
   .xp[hidden]{ pointer-events: none !important; }
 }
+
+/* ------------------------------------------------------------------
+   FIX: Shopify dynamic checkout button ("Buy it now")
+
+   This button is rendered by Shopify from {{ form | payment_button }}, not by
+   our markup, and it paints itself from the theme/checkout brand colour - so
+   none of the inline styles in xero-hero touch it. It came out in Shopify's
+   default blue next to our neutral Buy now / Add to cart pair.
+
+   Overridden here to match the pair exactly. !important is required: Shopify
+   injects its own stylesheet for this button after ours.
+
+   The "more payment options" link underneath is also brand-coloured and is
+   neutralised with it.
+   ------------------------------------------------------------------ */
+.shopify-payment-button__button,
+.shopify-payment-button__button--unbranded,
+.shopify-payment-button__button--unbranded:hover,
+.shopify-payment-button__button--unbranded:focus{
+  background: var(--btnbg, #111116) !important;
+  background-image: none !important;
+  background-color: var(--btnbg, #111116) !important;
+  color: var(--btnink, #f4f4f6) !important;
+  border: 1px solid var(--btnb, rgba(255,255,255,.10)) !important;
+  border-radius: 1.63rem !important;
+  min-height: 3.25rem !important;
+  height: 3.25rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -.01em !important;
+  box-shadow: none !important;
+  transition: transform .3s cubic-bezier(.28,.11,.32,1), background .3s !important;
+}
+.shopify-payment-button__button--unbranded:hover{
+  background: var(--btnbg-h, #22232a) !important;
+  background-color: var(--btnbg-h, #22232a) !important;
+}
+.shopify-payment-button__more-options,
+.shopify-payment-button__more-options:hover{
+  color: var(--txt2, #a9aab1) !important;
+  text-decoration-color: var(--txt3, #7c7d85) !important;
+}
