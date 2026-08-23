@@ -17,8 +17,11 @@
   #hbx-{{ sid }} .grid{display:flex !important;flex-wrap:wrap;gap:1px;background:#D5D9D9;
     border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
   #hbx-{{ sid }} .grid > *{flex:1 1 168px;min-width:0;}
-  #hbx-{{ sid }} .c{background:#fff;padding:20px 14px;text-align:center;}
-  #hbx-{{ sid }} .c .ic{font-size:26px;line-height:1;margin-bottom:9px;}
+  #hbx-{{ sid }} .c{background:#fff;padding:0 0 var(--sp-4,21px);text-align:center;}
+  #hbx-{{ sid }} .c .ph{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;
+    background:#F7FAFA;margin-bottom:var(--sp-3,13px);}
+  #hbx-{{ sid }} .c .ic{font-size:26px;line-height:1;padding-top:20px;margin-bottom:9px;}
+  #hbx-{{ sid }} .c .tx{padding-inline:14px;}
   #hbx-{{ sid }} .c .t{font-size:14px;font-weight:700;line-height:1.3;}
   #hbx-{{ sid }} .c .d{font-size:12.5px;color:#565959;line-height:1.45;margin-top:4px;}
   #hbx-{{ sid }} .note{font-size:12.5px;color:#565959;margin-top:14px;line-height:1.5;}
@@ -29,9 +32,16 @@
     <div class="grid">
       {%- for b in section.blocks -%}
         <div class="c" {{ b.shopify_attributes }}>
-          <div class="ic">{{ b.settings.icon }}</div>
-          <div class="t">{{ b.settings.title }}</div>
-          {%- if b.settings.note != blank -%}<div class="d">{{ b.settings.note }}</div>{%- endif -%}
+          {%- if b.settings.image != blank -%}
+            <img class="ph" src="{{ b.settings.image | image_url: width: 600 }}"
+                 alt="{{ b.settings.title | escape }}" loading="lazy">
+          {%- elsif b.settings.icon != blank -%}
+            <div class="ic">{{ b.settings.icon }}</div>
+          {%- endif -%}
+          <div class="tx">
+            <div class="t">{{ b.settings.title }}</div>
+            {%- if b.settings.note != blank -%}<div class="d">{{ b.settings.note }}</div>{%- endif -%}
+          </div>
         </div>
       {%- endfor -%}
     </div>
@@ -50,7 +60,8 @@
   ],
   "blocks": [
     { "type": "item", "name": "Item", "settings": [
-      { "type": "text", "id": "icon", "label": "Emoji", "default": "🛥️" },
+      { "type": "image_picker", "id": "image", "label": "Photo", "info": "Drop a real photo here. It replaces the emoji." },
+      { "type": "text", "id": "icon", "label": "Emoji fallback", "default": "🛥️" },
       { "type": "text", "id": "title", "label": "Title", "default": "The lounger" },
       { "type": "text", "id": "note", "label": "Detail" }
     ]}

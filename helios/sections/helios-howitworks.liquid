@@ -16,7 +16,11 @@
     border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
   #hw-{{ sid }} .grid > *{flex:1 1 240px;min-width:0;}
 
-  #hw-{{ sid }} .st{background:#fff;padding:22px 20px;}
+  #hw-{{ sid }} .st{background:#fff;padding:0 0 22px;}
+  #hw-{{ sid }} .st .ph{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
+    background:#F7FAFA;margin-bottom:var(--sp-3,13px);}
+  #hw-{{ sid }} .st .bd{padding:0 20px;}
+  #hw-{{ sid }} .st.noimg .bd{padding-top:22px;}
   #hw-{{ sid }} .n{width:26px;height:26px;border-radius:50%;background:#0F1111;color:#fff;
     font-size:13px;font-weight:700;display:grid;place-items:center;margin-bottom:11px;}
   #hw-{{ sid }} h3{font-size:15px;font-weight:700;margin:0 0 5px;line-height:1.35;}
@@ -30,7 +34,13 @@
     {%- for n in steps -%}
       {%- assign t = 'step' | append: n | append: '_title' -%}
       {%- assign d = 'step' | append: n | append: '_text' -%}
-      <div class="st"><div class="n">{{ n }}</div><h3>{{ s[t] }}</h3><p>{{ s[d] }}</p></div>
+      {%- assign im = 'step' | append: n | append: '_image' -%}
+      <div class="st{% if s[im] == blank %} noimg{% endif %}">
+        {%- if s[im] != blank -%}
+          <img class="ph" src="{{ s[im] | image_url: width: 800 }}" alt="{{ s[t] | escape }}" loading="lazy">
+        {%- endif -%}
+        <div class="bd"><div class="n">{{ n }}</div><h3>{{ s[t] }}</h3><p>{{ s[d] }}</p></div>
+      </div>
     {%- endfor -%}
   </div>
 </div>
@@ -42,10 +52,13 @@
   "settings": [
     { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "No tools, no assembly" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "Three steps. Then you're on the water." },
+    { "type": "image_picker", "id": "step1_image", "label": "Step 1 photo" },
     { "type": "text", "id": "step1_title", "label": "Step 1 title", "default": "Inflate it" },
     { "type": "textarea", "id": "step1_text", "label": "Step 1 text", "default": "About five minutes with the nozzle in the box." },
+    { "type": "image_picker", "id": "step2_image", "label": "Step 2 photo" },
     { "type": "text", "id": "step2_title", "label": "Step 2 title", "default": "Drop it in" },
     { "type": "textarea", "id": "step2_text", "label": "Step 2 text", "default": "Pool, lake, any calm water." },
+    { "type": "image_picker", "id": "step3_image", "label": "Step 3 photo" },
     { "type": "text", "id": "step3_title", "label": "Step 3 title", "default": "Grab the joysticks" },
     { "type": "textarea", "id": "step3_text", "label": "Step 3 text", "default": "The motors do the work. You steer." }
   ],
