@@ -1179,8 +1179,7 @@
 
   #hbg-globe .stage{position:relative;aspect-ratio:1/1;max-width:560px;margin-inline:auto;width:100%;}
   #hbg-globe canvas{width:100%;height:100%;display:block;}
-  #hbg-globe .ring{position:absolute;inset:0;border-radius:50%;pointer-events:none;
-    box-shadow:0 0 90px 10px rgba(0,110,255,.20) inset,0 0 70px rgba(0,90,220,.22);}
+  #hbg-globe .ring{display:none;}
 
   #hbg-globe .panel{margin-top:26px;background:#12171C;border:1px solid #2A333B;
     border-radius:12px;padding:20px;display:none;}
@@ -1192,6 +1191,12 @@
     background:rgba(6,125,98,.22);color:#5BE0B8;border-radius:999px;padding:5px 12px;}
   #hbg-globe .meta{margin-top:12px;display:grid;gap:4px;font-size:13.5px;color:#AEB6BE;}
   #hbg-globe .meta b{color:#fff;font-weight:700;}
+
+  /* Everything under the globe stays out of the way until a number is found. */
+  #hbg-globe .under{display:none;}
+  #hbg-globe .under.on{display:block;animation:hbgu-globe .45s both;}
+  @keyframes hbgu-globe{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce){#hbg-globe .under.on{animation:none;}}
 
   /* Motion-graphic status card. One animated glyph per stage, so the current
      step is legible before a word is read. */
@@ -1322,11 +1327,6 @@
             <span data-eta></span>
             <span data-carrier></span>
           </div>
-          <div class="mg" data-mg>
-            <span class="mg-ico" data-mgico></span>
-            <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
-          </div>
-          <div class="rail" data-rail aria-hidden="true"></div>
           <div class="tl" data-tl></div>
         </div><p class="foot"></p></div>
 
@@ -1334,6 +1334,14 @@
         <div class="stage">
           <canvas data-globe aria-hidden="true"></canvas>
           <span class="ring"></span>
+        </div>
+
+        <div class="under" data-under>
+          <div class="mg" data-mg>
+            <span class="mg-ico" data-mgico></span>
+            <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
+          </div>
+          <div class="rail" data-rail aria-hidden="true"></div>
         </div>
       </div>
     </div>

@@ -43,8 +43,7 @@
 
   #hbg-{{ section.id }} .stage{position:relative;aspect-ratio:1/1;max-width:560px;margin-inline:auto;width:100%;}
   #hbg-{{ section.id }} canvas{width:100%;height:100%;display:block;}
-  #hbg-{{ section.id }} .ring{position:absolute;inset:0;border-radius:50%;pointer-events:none;
-    box-shadow:0 0 90px 10px rgba(0,110,255,.20) inset,0 0 70px rgba(0,90,220,.22);}
+  #hbg-{{ section.id }} .ring{display:none;}
 
   #hbg-{{ section.id }} .panel{margin-top:26px;background:#12171C;border:1px solid #2A333B;
     border-radius:12px;padding:20px;display:none;}
@@ -56,6 +55,12 @@
     background:rgba(6,125,98,.22);color:#5BE0B8;border-radius:999px;padding:5px 12px;}
   #hbg-{{ section.id }} .meta{margin-top:12px;display:grid;gap:4px;font-size:13.5px;color:#AEB6BE;}
   #hbg-{{ section.id }} .meta b{color:#fff;font-weight:700;}
+
+  /* Everything under the globe stays out of the way until a number is found. */
+  #hbg-{{ section.id }} .under{display:none;}
+  #hbg-{{ section.id }} .under.on{display:block;animation:hbgu-{{ section.id }} .45s both;}
+  @keyframes hbgu-{{ section.id }}{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce){#hbg-{{ section.id }} .under.on{animation:none;}}
 
   /* Motion-graphic status card. One animated glyph per stage, so the current
      step is legible before a word is read. */
@@ -191,11 +196,6 @@
             <span data-eta></span>
             <span data-carrier></span>
           </div>
-          <div class="mg" data-mg>
-            <span class="mg-ico" data-mgico></span>
-            <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
-          </div>
-          <div class="rail" data-rail aria-hidden="true"></div>
           <div class="tl" data-tl></div>
         </div>
 
@@ -206,6 +206,14 @@
         <div class="stage">
           <canvas data-globe aria-hidden="true"></canvas>
           <span class="ring"></span>
+        </div>
+
+        <div class="under" data-under>
+          <div class="mg" data-mg>
+            <span class="mg-ico" data-mgico></span>
+            <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
+          </div>
+          <div class="rail" data-rail aria-hidden="true"></div>
         </div>
       </div>
     </div>
@@ -295,9 +303,9 @@
   }
   var DOTS=[];
   (function(){
-    for(var la=-78;la<=82;la+=2.6){
+    for(var la=-78;la<=82;la+=1.9){
       /* Constant spacing in kilometres, not degrees — otherwise the poles clot. */
-      var step=2.6/Math.max(Math.cos(la*Math.PI/180),0.18);
+      var step=1.9/Math.max(Math.cos(la*Math.PI/180),0.18);
       for(var lo=-180;lo<180;lo+=step){
         for(var k=0;k<LAND.length;k++){ if(inPoly(lo,la,LAND[k])){ DOTS.push([lo,la]); break; } }
       }
@@ -315,7 +323,11 @@
      rotates away from it — spin is pinned to the US centre longitude and only
      breathes a couple of degrees so it still feels alive. */
   var US_LON=-98, US_LAT=39;
-  var LOCK=-US_LON*Math.PI/180, LOCK_TILT=-US_LAT*Math.PI/180*0.72;
+  /* Derived from this projection, not guessed. toXYZ uses t=(lon+180), so after
+     rotY by `a` a point's depth is sin(a+t); it faces the viewer when a+t=90,
+     giving a = -90 - lon. rotX then puts it on the horizon line at tilt = lat.
+     At spin 8deg / tilt 39deg the whole lower 48 sits front and centre. */
+  var LOCK=(-90-US_LON)*Math.PI/180, LOCK_TILT=US_LAT*Math.PI/180;
   var W=0,H=0,R=0,spin=LOCK,tilt=LOCK_TILT,target=null,anim=0;
   function size(){
     var dpr=Math.min(window.devicePixelRatio||1,2), r=cv.getBoundingClientRect();
@@ -331,8 +343,14 @@
     ctx.clearRect(0,0,W,H);
     var cx=W/2, cy=H/2;
 
-    var g=ctx.createRadialGradient(cx-R*0.3,cy-R*0.35,R*0.1,cx,cy,R);
-    g.addColorStop(0,'#16324F'); g.addColorStop(1,'#0A1622');
+    /* Atmosphere: a soft halo just outside the sphere, drawn first so the
+       globe sits on top of it cleanly. */
+    var atm=ctx.createRadialGradient(cx,cy,R*0.96,cx,cy,R*1.16);
+    atm.addColorStop(0,'rgba(90,170,255,.22)'); atm.addColorStop(1,'rgba(90,170,255,0)');
+    ctx.beginPath(); ctx.arc(cx,cy,R*1.16,0,6.2832); ctx.fillStyle=atm; ctx.fill();
+
+    var g=ctx.createRadialGradient(cx-R*0.32,cy-R*0.36,R*0.08,cx,cy,R);
+    g.addColorStop(0,'#1B3E60'); g.addColorStop(0.65,'#123049'); g.addColorStop(1,'#08131E');
     ctx.beginPath(); ctx.arc(cx,cy,R,0,6.2832); ctx.fillStyle=g; ctx.fill();
 
     ctx.strokeStyle='rgba(90,150,220,.13)'; ctx.lineWidth=1;
@@ -351,9 +369,15 @@
 
     for(var i=0;i<DOTS.length;i++){
       var q=proj(DOTS[i][0],DOTS[i][1]); if(q.z<0)continue;
-      var a=0.28+q.z*0.62;
-      ctx.fillStyle='rgba(126,196,255,'+a.toFixed(3)+')';
-      ctx.fillRect(q.x-1.1, q.y-1.1, 2.2, 2.2);
+      var a=0.22+q.z*0.70, sz=1.5+q.z*1.1;
+      /* Warm the dots that fall inside the US bounding box so the shipping
+         country is the brightest thing on the sphere. */
+      var lo=DOTS[i][0], la2=DOTS[i][1];
+      if(lo>-126 && lo<-66 && la2>24 && la2<50)
+        ctx.fillStyle='rgba(198,230,255,'+Math.min(1,a+0.28).toFixed(3)+')';
+      else
+        ctx.fillStyle='rgba(118,180,240,'+a.toFixed(3)+')';
+      ctx.fillRect(q.x-sz/2, q.y-sz/2, sz, sz);
     }
 
     if(target){
@@ -521,6 +545,7 @@
     }
     tl.innerHTML=out;
     panel.classList.add('on');
+    root.querySelector('[data-under]').classList.add('on');
     err.textContent='';
 
     target={ a:[parseFloat(sh.flon)||0, parseFloat(sh.flat)||0],
@@ -535,7 +560,9 @@
     var n=norm(v);
     if(!n){ err.textContent='Enter your tracking number.'; panel.classList.remove('on'); return; }
     for(var i=0;i<SHIPS.length;i++){ if(norm(SHIPS[i].code)===n){ show(SHIPS[i]); return; } }
-    panel.classList.remove('on'); target=null;
+    panel.classList.remove('on');
+    root.querySelector('[data-under]').classList.remove('on');
+    target=null;
     err.textContent={{ s.not_found | default: 'We could not find that number yet. Numbers go live once the parcel is scanned, which can take up to 48 hours after your confirmation email.' | json }};
   }
   form.addEventListener('submit',function(e){ e.preventDefault(); lookup(input.value); });
