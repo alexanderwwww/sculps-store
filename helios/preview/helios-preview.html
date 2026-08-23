@@ -1242,38 +1242,41 @@
     #hbg-globe .g2::before{transform:rotateX(0);}
   }
 
-  /* Stage flow. Deliberately NOT the timeline again: the list below is the
-     record, this is the movement — a van running a filling track between five
-     markers, so progress is felt rather than re-read. */
-  #hbg-globe .flow{margin-top:var(--sp-4,21px);}
-  #hbg-globe .fl-track{position:relative;display:block;height:6px;border-radius:100px;
-    background:#1B2229;overflow:visible;}
-  #hbg-globe .fl-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:100px;
-    background:linear-gradient(90deg,var(--hb-blue,#0046BE),var(--hb-yellow,#FFE000));
-    transition:width 1.1s cubic-bezier(.33,1,.68,1);}
-  #hbg-globe .fl-van{position:absolute;top:50%;left:0;width:30px;height:17px;
-    margin:-15px 0 0 -15px;color:var(--hb-yellow,#FFE000);
-    transition:left 1.1s cubic-bezier(.33,1,.68,1);
-    filter:drop-shadow(0 3px 5px rgba(0,0,0,.5));}
-  #hbg-globe .fl-van svg{width:100%;height:100%;display:block;
-    animation:hbgvan-globe 1.1s ease-in-out infinite;}
-  @keyframes hbgvan-globe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+  /* Stage flow under the globe. Not the timeline again — the list below is
+     the record. This is one human sentence about where the order is, with a
+     package moving along a flowing arrow behind it. */
+  #hbg-globe .flow{margin-top:var(--sp-4,21px);
+    background:linear-gradient(180deg,#161C22,#11161B);border:1px solid #2A333B;
+    border-radius:var(--r-md,13px);padding:var(--sp-4,21px);}
+  #hbg-globe .fl-lane{position:relative;height:30px;margin-bottom:var(--sp-3,13px);}
+  /* The lane itself: chevrons drifting left to right, masked to a soft fade at
+     both ends so the motion has no visible start or stop. */
+  #hbg-globe .fl-arrow{position:absolute;inset:0;border-radius:100px;
+    background-image:repeating-linear-gradient(90deg,
+      rgba(255,224,0,.55) 0 2px, rgba(255,224,0,0) 2px 9px,
+      rgba(255,224,0,.28) 9px 11px, rgba(255,224,0,0) 11px 18px);
+    background-size:18px 100%;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+    mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+    animation:hbgfl-globe 1.1s linear infinite;opacity:.9;}
+  @keyframes hbgfl-globe{to{background-position:18px 0;}}
+  #hbg-globe .fl-pkg{position:absolute;top:50%;left:0;width:26px;height:24px;
+    margin:-13px 0 0 -13px;transition:left 1.2s cubic-bezier(.33,1,.68,1);
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.55));
+    animation:hbgbob-globe 1.6s ease-in-out infinite;}
+  #hbg-globe .fl-pkg svg{width:100%;height:100%;display:block;}
+  @keyframes hbgbob-globe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
-  #hbg-globe .fl-pts{display:flex;justify-content:space-between;margin-top:11px;}
-  #hbg-globe .fl-pts i{flex:1 1 0;display:flex;flex-direction:column;align-items:center;
-    gap:6px;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.05em;
-    text-transform:uppercase;color:#5D666E;text-align:center;line-height:1.2;}
-  #hbg-globe .fl-pts i::before{content:'';width:9px;height:9px;border-radius:50%;
-    background:#1B2229;box-shadow:0 0 0 2px #0E1319;transition:background .5s,box-shadow .5s;}
-  #hbg-globe .fl-pts i.done{color:#AEB6BE;}
-  #hbg-globe .fl-pts i.done::before{background:var(--hb-blue,#0046BE);}
-  #hbg-globe .fl-pts i.now{color:#fff;}
-  #hbg-globe .fl-pts i.now::before{background:var(--hb-yellow,#FFE000);
-    box-shadow:0 0 0 2px #0E1319,0 0 12px rgba(255,224,0,.8);}
-  @media(max-width:600px){#hbg-globe .fl-pts i{font-size:8px;letter-spacing:.02em;}}
+  #hbg-globe .fl-say b{display:block;font-size:var(--fs-base,16px);font-weight:800;
+    letter-spacing:-.015em;line-height:1.25;}
+  #hbg-globe .fl-say span{display:block;font-size:13px;color:#8C959D;
+    line-height:1.5;margin-top:3px;}
+  #hbg-globe .fl-say{animation:hbgsay-globe .5s both;}
+  @keyframes hbgsay-globe{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @media(prefers-reduced-motion:reduce){
-    #hbg-globe .fl-van svg{animation:none;}
-    #hbg-globe .fl-fill,#hbg-globe .fl-van{transition:none;}
+    #hbg-globe .fl-arrow,#hbg-globe .fl-pkg,
+    #hbg-globe .fl-say{animation:none;}
+    #hbg-globe .fl-pkg{transition:none;}
   }
 
   #hbg-globe .tl{margin-top:20px;display:grid;gap:0;}
@@ -1348,13 +1351,19 @@
             <span class="mg-ico" data-mgico></span>
             <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
           </div>
-          <div class="flow" data-flow aria-hidden="true">
-            <span class="fl-track"><span class="fl-fill" data-flfill></span>
-              <span class="fl-van" data-flvan>
-                <svg viewBox="0 0 32 18" aria-hidden="true"><path d="M1 3h17v10H1z" fill="currentColor"/><path d="M18 6h6l4 4v3h-10z" fill="currentColor"/><circle cx="7" cy="14.5" r="2.4" fill="#0E1319"/><circle cx="23" cy="14.5" r="2.4" fill="#0E1319"/></svg>
+          <div class="flow" data-flow>
+            <div class="fl-lane">
+              <span class="fl-arrow" data-flarrow></span>
+              <span class="fl-pkg" data-flpkg>
+                <svg viewBox="0 0 24 22" aria-hidden="true">
+                  <path d="M12 1 23 6.5 12 12 1 6.5z" fill="#E8B96B"/>
+                  <path d="M1 6.5 12 12v9L1 15.5z" fill="#B98C4A"/>
+                  <path d="M23 6.5 12 12v9l11-5.5z" fill="#CFA35C"/>
+                  <path d="M12 12v9" stroke="rgba(255,255,255,.55)" stroke-width="1"/>
+                </svg>
               </span>
-            </span>
-            <span class="fl-pts" data-flpts></span>
+            </div>
+            <div class="fl-say"><b data-flsay></b><span data-flsub></span></div>
           </div>
         </div>
       </div>

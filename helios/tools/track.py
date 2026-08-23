@@ -75,7 +75,7 @@ def cmd_add(a):
         key += "x"
     st = collections.OrderedDict([
         ("code", code.strip().upper()), ("stage", 1),
-        ("from", "Ontario, CA"), ("from_lon", "-117.61"), ("from_lat", "34.06"),
+        ("from", "New York, NY"), ("from_lon", "-74.006"), ("from_lat", "40.713"),
         ("to", to), ("to_lon", str(lon)), ("to_lat", str(lat)),
         ("eta", eta), ("carrier", "HELIOS Direct"),
         ("d1", ""), ("d2", ""), ("d3", ""), ("d4", ""), ("d5", ""),

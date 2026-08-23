@@ -54,7 +54,8 @@ image before video.
   handle `helios-super-glide-motorized-water-lounger`, inventory untracked
 - Variant IDs: 1-pack `53550115815690` $259.99 · 2-pack `53550115848458` $259.99 (1+1 FREE, default)
   · 3-pack `53550115946762` $349.99 · 4-pack `53550115881226` $459.99
-- Shipping: one US zone (all states), $0.00 USD "Free shipping", ships to US only
+- Shipping: one US zone (all states), $0.00 USD "Free shipping", ships to US only.
+  **The store is in New York City — every order ships from New York, NY (-74.006, 40.713).**
 - Discount: `HELIOS10` = 10% off, once per customer (`DiscountCodeNode/1621974778122`)
 - Pages: track `164524359946` · contact `164523213066` · refund-policy `164524392714`
   · shipping-policy `164524425482` · terms-of-service `164524458250`

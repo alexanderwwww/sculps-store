@@ -106,38 +106,41 @@
     #hbg-{{ section.id }} .g2::before{transform:rotateX(0);}
   }
 
-  /* Stage flow. Deliberately NOT the timeline again: the list below is the
-     record, this is the movement — a van running a filling track between five
-     markers, so progress is felt rather than re-read. */
-  #hbg-{{ section.id }} .flow{margin-top:var(--sp-4,21px);}
-  #hbg-{{ section.id }} .fl-track{position:relative;display:block;height:6px;border-radius:100px;
-    background:#1B2229;overflow:visible;}
-  #hbg-{{ section.id }} .fl-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:100px;
-    background:linear-gradient(90deg,var(--hb-blue,#0046BE),var(--hb-yellow,#FFE000));
-    transition:width 1.1s cubic-bezier(.33,1,.68,1);}
-  #hbg-{{ section.id }} .fl-van{position:absolute;top:50%;left:0;width:30px;height:17px;
-    margin:-15px 0 0 -15px;color:var(--hb-yellow,#FFE000);
-    transition:left 1.1s cubic-bezier(.33,1,.68,1);
-    filter:drop-shadow(0 3px 5px rgba(0,0,0,.5));}
-  #hbg-{{ section.id }} .fl-van svg{width:100%;height:100%;display:block;
-    animation:hbgvan-{{ section.id }} 1.1s ease-in-out infinite;}
-  @keyframes hbgvan-{{ section.id }}{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+  /* Stage flow under the globe. Not the timeline again — the list below is
+     the record. This is one human sentence about where the order is, with a
+     package moving along a flowing arrow behind it. */
+  #hbg-{{ section.id }} .flow{margin-top:var(--sp-4,21px);
+    background:linear-gradient(180deg,#161C22,#11161B);border:1px solid #2A333B;
+    border-radius:var(--r-md,13px);padding:var(--sp-4,21px);}
+  #hbg-{{ section.id }} .fl-lane{position:relative;height:30px;margin-bottom:var(--sp-3,13px);}
+  /* The lane itself: chevrons drifting left to right, masked to a soft fade at
+     both ends so the motion has no visible start or stop. */
+  #hbg-{{ section.id }} .fl-arrow{position:absolute;inset:0;border-radius:100px;
+    background-image:repeating-linear-gradient(90deg,
+      rgba(255,224,0,.55) 0 2px, rgba(255,224,0,0) 2px 9px,
+      rgba(255,224,0,.28) 9px 11px, rgba(255,224,0,0) 11px 18px);
+    background-size:18px 100%;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+    mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+    animation:hbgfl-{{ section.id }} 1.1s linear infinite;opacity:.9;}
+  @keyframes hbgfl-{{ section.id }}{to{background-position:18px 0;}}
+  #hbg-{{ section.id }} .fl-pkg{position:absolute;top:50%;left:0;width:26px;height:24px;
+    margin:-13px 0 0 -13px;transition:left 1.2s cubic-bezier(.33,1,.68,1);
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.55));
+    animation:hbgbob-{{ section.id }} 1.6s ease-in-out infinite;}
+  #hbg-{{ section.id }} .fl-pkg svg{width:100%;height:100%;display:block;}
+  @keyframes hbgbob-{{ section.id }}{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
-  #hbg-{{ section.id }} .fl-pts{display:flex;justify-content:space-between;margin-top:11px;}
-  #hbg-{{ section.id }} .fl-pts i{flex:1 1 0;display:flex;flex-direction:column;align-items:center;
-    gap:6px;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.05em;
-    text-transform:uppercase;color:#5D666E;text-align:center;line-height:1.2;}
-  #hbg-{{ section.id }} .fl-pts i::before{content:'';width:9px;height:9px;border-radius:50%;
-    background:#1B2229;box-shadow:0 0 0 2px #0E1319;transition:background .5s,box-shadow .5s;}
-  #hbg-{{ section.id }} .fl-pts i.done{color:#AEB6BE;}
-  #hbg-{{ section.id }} .fl-pts i.done::before{background:var(--hb-blue,#0046BE);}
-  #hbg-{{ section.id }} .fl-pts i.now{color:#fff;}
-  #hbg-{{ section.id }} .fl-pts i.now::before{background:var(--hb-yellow,#FFE000);
-    box-shadow:0 0 0 2px #0E1319,0 0 12px rgba(255,224,0,.8);}
-  @media(max-width:600px){#hbg-{{ section.id }} .fl-pts i{font-size:8px;letter-spacing:.02em;}}
+  #hbg-{{ section.id }} .fl-say b{display:block;font-size:var(--fs-base,16px);font-weight:800;
+    letter-spacing:-.015em;line-height:1.25;}
+  #hbg-{{ section.id }} .fl-say span{display:block;font-size:13px;color:#8C959D;
+    line-height:1.5;margin-top:3px;}
+  #hbg-{{ section.id }} .fl-say{animation:hbgsay-{{ section.id }} .5s both;}
+  @keyframes hbgsay-{{ section.id }}{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @media(prefers-reduced-motion:reduce){
-    #hbg-{{ section.id }} .fl-van svg{animation:none;}
-    #hbg-{{ section.id }} .fl-fill,#hbg-{{ section.id }} .fl-van{transition:none;}
+    #hbg-{{ section.id }} .fl-arrow,#hbg-{{ section.id }} .fl-pkg,
+    #hbg-{{ section.id }} .fl-say{animation:none;}
+    #hbg-{{ section.id }} .fl-pkg{transition:none;}
   }
 
   #hbg-{{ section.id }} .tl{margin-top:20px;display:grid;gap:0;}
@@ -220,13 +223,19 @@
             <span class="mg-ico" data-mgico></span>
             <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
           </div>
-          <div class="flow" data-flow aria-hidden="true">
-            <span class="fl-track"><span class="fl-fill" data-flfill></span>
-              <span class="fl-van" data-flvan>
-                <svg viewBox="0 0 32 18" aria-hidden="true"><path d="M1 3h17v10H1z" fill="currentColor"/><path d="M18 6h6l4 4v3h-10z" fill="currentColor"/><circle cx="7" cy="14.5" r="2.4" fill="#0E1319"/><circle cx="23" cy="14.5" r="2.4" fill="#0E1319"/></svg>
+          <div class="flow" data-flow>
+            <div class="fl-lane">
+              <span class="fl-arrow" data-flarrow></span>
+              <span class="fl-pkg" data-flpkg>
+                <svg viewBox="0 0 24 22" aria-hidden="true">
+                  <path d="M12 1 23 6.5 12 12 1 6.5z" fill="#E8B96B"/>
+                  <path d="M1 6.5 12 12v9L1 15.5z" fill="#B98C4A"/>
+                  <path d="M23 6.5 12 12v9l11-5.5z" fill="#CFA35C"/>
+                  <path d="M12 12v9" stroke="rgba(255,255,255,.55)" stroke-width="1"/>
+                </svg>
               </span>
-            </span>
-            <span class="fl-pts" data-flpts></span>
+            </div>
+            <div class="fl-say"><b data-flsay></b><span data-flsub></span></div>
           </div>
         </div>
       </div>
@@ -244,9 +253,9 @@
   {
     "code": {{ b.settings.code | strip | upcase | json }},
     "stage": {{ b.settings.stage | default: 3 }},
-    "from": {{ b.settings.from | default: 'Shenzhen, CN' | json }},
-    "flon": {{ b.settings.from_lon | default: 114.06 }},
-    "flat": {{ b.settings.from_lat | default: 22.54 }},
+    "from": {{ b.settings.from | default: 'New York, NY' | json }},
+    "flon": {{ b.settings.from_lon | default: -74.006 }},
+    "flat": {{ b.settings.from_lat | default: 40.713 }},
     "to": {{ b.settings.to | default: 'Los Angeles, US' | json }},
     "tlon": {{ b.settings.to_lon | default: -118.24 }},
     "tlat": {{ b.settings.to_lat | default: 34.05 }},
@@ -280,16 +289,16 @@
   ];
   /* Headline + line shown on the motion card, one per stage. */
   var NARR=[
-    {t:{{ s.n1_title | default: 'Order received' | json }},
-     l:{{ s.n1_line  | default: 'Payment confirmed. Your Super Glide is in the queue.' | json }}},
-    {t:{{ s.n2_title | default: 'We are packing your order' | json }},
-     l:{{ s.n2_line  | default: 'Boxed by hand and quality-checked before it leaves us.' | json }}},
-    {t:{{ s.n3_title | default: 'On the move' | json }},
-     l:{{ s.n3_line  | default: 'Your parcel is travelling across the country to your state.' | json }}},
-    {t:{{ s.n4_title | default: 'Out for delivery' | json }},
-     l:{{ s.n4_line  | default: 'We deliver personally. Someone from our team has it today.' | json }}},
+    {t:{{ s.n1_title | default: 'A human being has seen your order' | json }},
+     l:{{ s.n1_line  | default: 'Someone on our team in New York picked it up. It is in the queue.' | json }}},
+    {t:{{ s.n2_title | default: 'We are packing it by hand' | json }},
+     l:{{ s.n2_line  | default: 'Boxed and quality-checked by a person, not a machine.' | json }}},
+    {t:{{ s.n3_title | default: 'It has left New York' | json }},
+     l:{{ s.n3_line  | default: 'On the road and moving toward you right now.' | json }}},
+    {t:{{ s.n4_title | default: 'Out for delivery today' | json }},
+     l:{{ s.n4_line  | default: 'We deliver personally. One of us is bringing it to your door.' | json }}},
     {t:{{ s.n5_title | default: 'Delivered' | json }},
-     l:{{ s.n5_line  | default: 'Handed over. Get it on the water.' | json }}}
+     l:{{ s.n5_line  | default: 'Handed over. Go get it on the water.' | json }}}
   ];
 
   /* ---------- globe ---------- */
@@ -397,27 +406,20 @@
       ctx.stroke();
     }
 
-    /* Two batched passes: the world, then the US brighter. Hexagons shrink
-       toward the limb, which is what stops the disc ending in a hard ring of
-       full-size cells. */
-    function comb(inUS,style){
-      ctx.fillStyle=style; ctx.beginPath();
-      for(var i=0;i<CELLS.length;i++){
-        var lo=CELLS[i][0], la2=CELLS[i][1];
-        var us=(lo>-127 && lo<-65 && la2>24 && la2<50);
-        if(us!==inUS)continue;
-        var q=proj(lo,la2); if(q.z<=0.02)continue;
-        var rr=HEX_R*R*(0.30+0.70*q.z);
-        for(var a2=0;a2<6;a2++){
-          var th=a2*Math.PI/3, qx=q.x+Math.cos(th)*rr, qy=q.y+Math.sin(th)*rr;
-          a2===0?ctx.moveTo(qx,qy):ctx.lineTo(qx,qy);
-        }
-        ctx.closePath();
+    /* One uniform pass. No country is picked out — the route is the subject.
+       Hexagons shrink toward the limb, which stops the disc ending in a hard
+       ring of full-size cells. */
+    ctx.fillStyle='rgba(150,190,232,.72)'; ctx.beginPath();
+    for(var i=0;i<CELLS.length;i++){
+      var q=proj(CELLS[i][0],CELLS[i][1]); if(q.z<=0.02)continue;
+      var rr=HEX_R*R*(0.30+0.70*q.z);
+      for(var a2=0;a2<6;a2++){
+        var th=a2*Math.PI/3, qx=q.x+Math.cos(th)*rr, qy=q.y+Math.sin(th)*rr;
+        a2===0?ctx.moveTo(qx,qy):ctx.lineTo(qx,qy);
       }
-      ctx.fill();
+      ctx.closePath();
     }
-    comb(false,'rgba(122,166,214,.60)');
-    comb(true ,'rgba(214,238,255,.96)');
+    ctx.fill();
 
     if(target){
       var A=target.a, B=target.b, N=64, pts=[];
@@ -455,16 +457,30 @@
 
       mark(pts[0],'#7EC4FF'); mark(pts[N],'#5BE0B8');
 
-      /* Comet trail: a few fading dots just behind the parcel, so motion is
-         legible even in a still frame. */
-      if(!reduce && lim>3){
-        for(var tr2=1;tr2<=6;tr2++){
-          var ti=lim-tr2*2; if(ti<0)break;
-          var tp=pts[ti], fade=(1-tr2/7)*0.5;
-          ctx.beginPath(); ctx.arc(tp.x,tp.y,2.6-tr2*0.28,0,6.2832);
-          ctx.fillStyle='rgba(255,236,140,'+fade.toFixed(3)+')'; ctx.fill();
+      /* Chevrons streaming along the travelled leg — the flow reads as
+         direction, not just a coloured line. */
+      if(!reduce && lim>6){
+        for(var cvi=0;cvi<4;cvi++){
+          var cf=((pulse*0.55+cvi/4)%1);
+          var ci=Math.floor(cf*lim); if(ci<1||ci>=lim)continue;
+          var cp=pts[ci], cq=pts[ci-1];
+          var ca=Math.atan2(cp.y-cq.y, cp.x-cq.x);
+          var fade=Math.sin(cf*Math.PI)*0.75;
+          ctx.save(); ctx.translate(cp.x,cp.y); ctx.rotate(ca);
+          ctx.strokeStyle='rgba(255,240,160,'+fade.toFixed(3)+')';
+          ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.lineJoin='round';
+          ctx.beginPath(); ctx.moveTo(-4,-3.4); ctx.lineTo(1.5,0); ctx.lineTo(-4,3.4);
+          ctx.stroke(); ctx.restore();
         }
       }
+
+      /* A solid arrowhead sitting on the destination, so the route points. */
+      var dPrev=pts[N-1], dEnd=pts[N];
+      var da=Math.atan2(dEnd.y-dPrev.y, dEnd.x-dPrev.x);
+      ctx.save(); ctx.translate(dEnd.x,dEnd.y); ctx.rotate(da);
+      ctx.fillStyle='#5BE0B8'; ctx.beginPath();
+      ctx.moveTo(9,0); ctx.lineTo(-4.5,-5); ctx.lineTo(-2,0); ctx.lineTo(-4.5,5);
+      ctx.closePath(); ctx.fill(); ctx.restore();
 
       /* The parcel itself, riding the head of the route. */
       var head=pts[Math.min(lim,N)];
@@ -565,19 +581,16 @@
     /* Re-created rather than reclassed, so the glyph animation restarts. */
     root.querySelector('[data-mgico]').innerHTML='<i class="g'+st+'"></i>';
 
-    var SHORT=['Placed','Packed','In transit','Out','Delivered'];
-    var pts=root.querySelector('[data-flpts]'), pout='';
-    for(var r=0;r<5;r++){
-      var rc=r<st-1?'done':(r===st-1?'now':'');
-      pout+='<i class="'+rc+'">'+SHORT[r]+'</i>';
-    }
-    pts.innerHTML=pout;
-    /* Markers sit at the centre of each fifth, so the van parks on the dot. */
+    /* Package sits at the middle of the current fifth of the journey. */
+    var pkg=root.querySelector('[data-flpkg]');
     var pct=((st-0.5)/5*100).toFixed(2)+'%';
-    var fill=root.querySelector('[data-flfill]'), van=root.querySelector('[data-flvan]');
-    /* Next frame, so the transition runs from the previous value rather than
-       being collapsed into the same style recalculation. */
-    requestAnimationFrame(function(){ fill.style.width=pct; van.style.left=pct; });
+    requestAnimationFrame(function(){ pkg.style.left=pct; });
+
+    var say=root.querySelector('.fl-say');
+    root.querySelector('[data-flsay]').textContent=n.t;
+    root.querySelector('[data-flsub]').textContent=n.l;
+    /* Restart the entrance so a new lookup reads as a change, not a swap. */
+    say.style.animation='none'; void say.offsetWidth; say.style.animation='';
 
     var tl=root.querySelector('[data-tl]'), out='';
     for(var i=0;i<5;i++){
@@ -630,16 +643,16 @@
     { "type": "text", "id": "cta", "label": "Button", "default": "Track" },
     { "type": "textarea", "id": "not_found", "label": "Not-found message", "default": "We could not find that number yet. Numbers go live once the parcel is scanned, which can take up to 48 hours after your confirmation email." },
     { "type": "header", "content": "Stage messages" },
-    { "type": "text", "id": "n1_title", "label": "1 title", "default": "Order received" },
-    { "type": "text", "id": "n1_line", "label": "1 line", "default": "Payment confirmed. Your Super Glide is in the queue." },
-    { "type": "text", "id": "n2_title", "label": "2 title", "default": "We are packing your order" },
-    { "type": "text", "id": "n2_line", "label": "2 line", "default": "Boxed by hand and quality-checked before it leaves us." },
-    { "type": "text", "id": "n3_title", "label": "3 title", "default": "On the move" },
-    { "type": "text", "id": "n3_line", "label": "3 line", "default": "Your parcel is travelling across the country to your state." },
-    { "type": "text", "id": "n4_title", "label": "4 title", "default": "Out for delivery" },
-    { "type": "text", "id": "n4_line", "label": "4 line", "default": "We deliver personally. Someone from our team has it today." },
+    { "type": "text", "id": "n1_title", "label": "1 title", "default": "A human being has seen your order" },
+    { "type": "text", "id": "n1_line", "label": "1 line", "default": "Someone on our team in New York picked it up. It is in the queue." },
+    { "type": "text", "id": "n2_title", "label": "2 title", "default": "We are packing it by hand" },
+    { "type": "text", "id": "n2_line", "label": "2 line", "default": "Boxed and quality-checked by a person, not a machine." },
+    { "type": "text", "id": "n3_title", "label": "3 title", "default": "It has left New York" },
+    { "type": "text", "id": "n3_line", "label": "3 line", "default": "On the road and moving toward you right now." },
+    { "type": "text", "id": "n4_title", "label": "4 title", "default": "Out for delivery today" },
+    { "type": "text", "id": "n4_line", "label": "4 line", "default": "We deliver personally. One of us is bringing it to your door." },
     { "type": "text", "id": "n5_title", "label": "5 title", "default": "Delivered" },
-    { "type": "text", "id": "n5_line", "label": "5 line", "default": "Handed over. Get it on the water." },
+    { "type": "text", "id": "n5_line", "label": "5 line", "default": "Handed over. Go get it on the water." },
     { "type": "textarea", "id": "foot", "label": "Footnote", "default": "Questions about a delivery? Email helios.us.store@gmail.com with your order number." }
   ],
   "blocks": [{
@@ -649,9 +662,9 @@
       { "type": "text", "id": "code", "label": "Tracking number", "default": "HELIOS289471132" },
       { "type": "range", "id": "stage", "label": "Current stage", "min": 1, "max": 5, "step": 1, "default": 3,
         "info": "1 placed, 2 packed, 3 in transit, 4 out for delivery, 5 delivered" },
-      { "type": "text", "id": "from", "label": "From (city)", "default": "Shenzhen, CN" },
-      { "type": "text", "id": "from_lon", "label": "From longitude", "default": "114.06" },
-      { "type": "text", "id": "from_lat", "label": "From latitude", "default": "22.54" },
+      { "type": "text", "id": "from", "label": "From (city)", "default": "New York, NY" },
+      { "type": "text", "id": "from_lon", "label": "From longitude", "default": "-74.006" },
+      { "type": "text", "id": "from_lat", "label": "From latitude", "default": "40.713" },
       { "type": "text", "id": "to", "label": "To (city)", "default": "Los Angeles, US" },
       { "type": "text", "id": "to_lon", "label": "To longitude", "default": "-118.24" },
       { "type": "text", "id": "to_lat", "label": "To latitude", "default": "34.05" },
