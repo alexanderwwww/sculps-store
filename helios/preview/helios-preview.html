@@ -174,12 +174,17 @@
      query to get out of step with the real container width. */
   #hby-buy .grid{display:flex !important;flex-wrap:wrap;align-items:flex-start;
     gap:clamp(18px,2.4vw,40px);width:100% !important;}
-  #hby-buy .grid > .gal,#hby-buy .grid > .panel{flex:1 1 380px;min-width:0;max-width:100%;}
+  /* Bases are sized so the pair still fits side by side at 900px, the same
+     width where the mobile full-bleed styles below take over, and wrap just
+     under it. The gallery is capped so it cannot grow into an 800px square
+     that shoves the purchase panel off the row. */
+  #hby-buy .grid > .gal{flex:1 1 390px;min-width:0;max-width:560px;}
+  #hby-buy .grid > .panel{flex:1 1 430px;min-width:0;max-width:100%;}
 
   #hby-buy .main{position:relative;width:100%;aspect-ratio:1/1;background:#fff;
     border:1px solid #D5D9D9;border-radius:12px;overflow:hidden;cursor:pointer;}
   #hby-buy .main img{width:100%;height:100%;object-fit:cover;display:block;background:#fff;}
-  @media(max-width:899px){
+  @media(max-width:872px){
     #hby-buy .gal{margin:0 -16px;}
     #hby-buy .main{border:0;border-radius:0;}
     #hby-buy .thumbs{padding:0 16px;}
