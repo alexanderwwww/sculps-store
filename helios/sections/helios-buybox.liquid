@@ -367,6 +367,38 @@
   });
   paint();
 
+  /* Card-terminal confirm, synthesised with Web Audio: two quick rising tones
+     over a soft noise click. No audio file means nothing to host or preload.
+     The context is created inside the click handler because browsers only
+     allow audio to start from a user gesture, and it is created once and
+     resumed thereafter rather than leaking a context per press. */
+  var actx=null;
+  function chime(){
+    if(!{{ s.sound | default: true }})return;
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+      if(!actx)actx=new AC();
+      if(actx.state==='suspended')actx.resume();
+      var t=actx.currentTime;
+      [[880,0],[1320,0.085]].forEach(function(n){
+        var o=actx.createOscillator(), g=actx.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(n[0],t+n[1]);
+        g.gain.setValueAtTime(0.0001,t+n[1]);
+        g.gain.exponentialRampToValueAtTime(0.16,t+n[1]+0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+n[1]+0.13);
+        o.connect(g); g.connect(actx.destination);
+        o.start(t+n[1]); o.stop(t+n[1]+0.15);
+      });
+      /* Short filtered noise burst = the plastic click of the reader. */
+      var len=Math.floor(actx.sampleRate*0.03);
+      var buf=actx.createBuffer(1,len,actx.sampleRate), d=buf.getChannelData(0);
+      for(var i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len)*0.35;
+      var src=actx.createBufferSource(), bp=actx.createBiquadFilter(), ng=actx.createGain();
+      src.buffer=buf; bp.type='bandpass'; bp.frequency.value=2400; ng.gain.value=0.5;
+      src.connect(bp); bp.connect(ng); ng.connect(actx.destination); src.start(t);
+    }catch(e){ /* audio is a flourish; never let it break the cart */ }
+  }
+
   /* add to cart — a 4xx from /cart/add still resolves the fetch, so success is
      only claimed after checking the payload */
   function unlock(){[atc,bn].forEach(function(el){if(el)el.disabled=false;});}
@@ -394,7 +426,7 @@
       });
   }
   if(atc)atc.addEventListener('click',function(){
-    atc.disabled=true;
+    chime(); atc.disabled=true;
     add(function(){
       unlock(); atc.classList.add('hbb-ok'); atc.textContent='Added ✓';
       if(af)af.classList.add('hbb-on');
@@ -403,7 +435,7 @@
     });
   });
   if(bn)bn.addEventListener('click',function(){
-    bn.disabled=true;
+    chime(); bn.disabled=true;
     add(function(){window.location='/checkout';});
   });
 })();
@@ -448,7 +480,8 @@
     { "type": "text", "id": "t4", "label": "Trust 4", "default": "Secure checkout" },
     { "type": "text", "id": "badge_url", "label": "Badge image URL" },
     { "type": "text", "id": "badge_alt", "label": "Badge alt text" },
-    { "type": "range", "id": "badge_w", "label": "Badge width", "min": 120, "max": 400, "step": 20, "unit": "px", "default": 180 }
+    { "type": "range", "id": "badge_w", "label": "Badge width", "min": 120, "max": 400, "step": 20, "unit": "px", "default": 180 },
+    { "type": "checkbox", "id": "sound", "label": "Card sound on Add to Cart", "default": true, "info": "A short payment-terminal confirm when a buy button is pressed." }
   ],
   "blocks": [
     { "type": "bundle", "name": "Bundle option", "limit": 4, "settings": [
