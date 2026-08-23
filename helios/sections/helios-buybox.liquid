@@ -1,0 +1,456 @@
+{%- comment -%}
+  HELIOS — buy box, rebuilt from zero. sections/helios-buybox.liquid
+
+  Replaces helios-buy. That section named its wrapper .grid — and this theme is
+  a Horizon duplicate, whose global stylesheet also styles .grid (flex-wrap and
+  gap utilities). The theme's wrap+gap leaked in, 50% + 50% + gap overflowed
+  the line, and the purchase panel wrapped under the carousel on every deploy,
+  while a local render without Horizon's CSS looked perfect. Every class and id
+  here is prefixed hbb- so no parent-theme stylesheet can ever collide again.
+
+  Layout law: image left half, purchase panel right half, stated inline on the
+  elements (flex-basis 50% + max-width 50% + nowrap). Stacks under 700px via
+  !important media overrides — the only thing that outranks inline styles.
+
+  Setting and block IDs match helios-buy exactly, so the template carries over
+  by changing only the section type.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+{%- assign p = s.product -%}
+{%- if p == blank -%}{%- assign p = product -%}{%- endif -%}
+<section class="helios" id="hbb-{{ sid }}">
+<a id="{{ s.anchor | default: 'buy' }}"></a>
+<style>
+  #hbb-{{ sid }}{background:{{ s.bg | default: '#FFFFFF' }};color:#0F1111;overflow-x:clip;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+  #hbb-{{ sid }} *{box-sizing:border-box;min-width:0;}
+  #hbb-{{ sid }} .hbb-wrap{width:100%;max-width:{{ s.width | default: 1180 }}px;margin:0 auto;
+    padding:var(--sp-4,21px) var(--sp-3,13px) var(--sp-6,55px);}
+
+  /* ---------- left: carousel ---------- */
+  #hbb-{{ sid }} .hbb-stage{position:relative;width:100%;aspect-ratio:1/1;max-height:600px;
+    background:#fff;border:1px solid #D5D9D9;border-radius:var(--r-md,13px);overflow:hidden;}
+  #hbb-{{ sid }} .hbb-stage img{width:100%;height:100%;object-fit:cover;display:block;}
+  #hbb-{{ sid }} .hbb-arr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+    width:34px;height:34px;border:1px solid rgba(15,17,17,.12);border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:rgba(15,17,17,.6);padding:0;
+    background:rgba(255,255,255,.55);backdrop-filter:blur(10px) saturate(150%);
+    -webkit-backdrop-filter:blur(10px) saturate(150%);transition:color .15s,background .15s;}
+  #hbb-{{ sid }} .hbb-arr:hover{color:#0F1111;background:rgba(255,255,255,.85);}
+  #hbb-{{ sid }} .hbb-arr svg{width:15px;height:15px;display:block;}
+  #hbb-{{ sid }} .hbb-arr.hbb-l{left:12px;} #hbb-{{ sid }} .hbb-arr.hbb-r{right:12px;}
+  #hbb-{{ sid }} .hbb-dots{position:absolute;left:0;right:0;bottom:10px;display:flex;
+    justify-content:center;gap:5px;z-index:3;}
+  #hbb-{{ sid }} .hbb-dots i{width:6px;height:6px;border-radius:50%;background:rgba(15,17,17,.25);}
+  #hbb-{{ sid }} .hbb-dots i.hbb-on{background:#0F1111;}
+  #hbb-{{ sid }} .hbb-thumbs{display:flex;gap:var(--sp-2,8px);margin-top:var(--sp-2,8px);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  #hbb-{{ sid }} .hbb-thumbs::-webkit-scrollbar{display:none;}
+  #hbb-{{ sid }} .hbb-thumbs button{flex:0 0 60px;width:60px;height:60px;padding:0;
+    border:1px solid #D5D9D9;border-radius:var(--r-sm,8px);overflow:hidden;background:#fff;cursor:pointer;}
+  #hbb-{{ sid }} .hbb-thumbs button.hbb-on{border-color:#0F1111;border-width:2px;}
+  #hbb-{{ sid }} .hbb-thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  /* ---------- right: purchase panel ---------- */
+  #hbb-{{ sid }} h1{font-size:clamp(var(--fs-md,20.4px),2.6vw,var(--fs-lg,25.9px));font-weight:800;
+    line-height:var(--lh-tight,1.236);letter-spacing:-.02em;margin:0 0 var(--sp-2,8px);
+    overflow-wrap:break-word;}
+  #hbb-{{ sid }} .hbb-rate{display:flex;align-items:center;gap:var(--sp-2,8px);flex-wrap:wrap;
+    font-size:var(--fs-sm,14.1px);margin-bottom:var(--sp-3,13px);}
+  #hbb-{{ sid }} .hbb-rate .hbb-st{color:#F5A623;letter-spacing:1px;font-size:15px;}
+  #hbb-{{ sid }} .hbb-rate a{color:#007185;text-decoration:none;}
+  #hbb-{{ sid }} .hbb-price{display:flex;align-items:baseline;gap:var(--sp-2,8px);flex-wrap:wrap;
+    padding-bottom:var(--sp-2,8px);}
+  #hbb-{{ sid }} .hbb-price b{font-size:clamp(var(--fs-xl,32.9px),6.5vw,var(--fs-2xl,41.9px));
+    font-weight:800;letter-spacing:-.03em;line-height:1;}
+  #hbb-{{ sid }} .hbb-price s{font-size:var(--fs-base,16px);color:#565959;}
+  #hbb-{{ sid }} .hbb-price em{font-style:normal;background:#CC0C39;color:#fff;
+    font-size:var(--fs-xs,12.6px);font-weight:800;border-radius:5px;padding:4px 9px;}
+  #hbb-{{ sid }} .hbb-price .hbb-per{width:100%;font-size:var(--fs-xs,12.6px);color:#067D62;font-weight:700;}
+  #hbb-{{ sid }} .hbb-pay{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;
+    font-size:var(--fs-xs,12.6px);padding-bottom:var(--sp-3,13px);margin-bottom:var(--sp-3,13px);
+    border-bottom:1px solid #E7E9E9;}
+  #hbb-{{ sid }} .hbb-pay .hbb-lg{display:inline-flex;align-items:center;border-radius:5px;
+    padding:3px 8px;font-size:11px;font-weight:800;line-height:1;}
+  #hbb-{{ sid }} .hbb-pay .hbb-sp{background:#5A31F4;color:#fff;}
+  #hbb-{{ sid }} .hbb-pay .hbb-ap{background:#B2FCE4;color:#0F1111;}
+  #hbb-{{ sid }} .hbb-bl{margin:0 0 var(--sp-4,21px);padding:0;list-style:none;}
+  #hbb-{{ sid }} .hbb-bl li{display:flex;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);
+    line-height:var(--lh-body,1.618);align-items:flex-start;margin-bottom:var(--sp-2,8px);}
+  #hbb-{{ sid }} .hbb-bl .hbb-i{flex:0 0 17px;width:17px;height:17px;border-radius:50%;
+    background:#067D62;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;
+    justify-content:center;margin-top:3px;}
+
+  /* deal frame */
+  #hbb-{{ sid }} .hbb-frame{border:1px solid #D5D9D9;border-radius:var(--r-lg,21px);background:#fff;}
+  #hbb-{{ sid }} .hbb-fhead{background:#0F1111;color:#fff;display:flex;align-items:center;
+    justify-content:space-between;gap:var(--sp-1,5px) var(--sp-3,13px);flex-wrap:wrap;
+    padding:var(--sp-3,13px) var(--sp-4,21px);font-size:var(--fs-sm,14.1px);font-weight:800;
+    letter-spacing:.02em;border-radius:calc(var(--r-lg,21px) - 1px) calc(var(--r-lg,21px) - 1px) 0 0;}
+  #hbb-{{ sid }} .hbb-fhead .hbb-pop{color:#FFC531;font-size:var(--fs-xs,12.6px);}
+  #hbb-{{ sid }} .hbb-steps{display:flex;flex-wrap:wrap;gap:6px var(--sp-4,21px);
+    padding:var(--sp-2,8px) var(--sp-4,21px);background:#F7FAFA;border-bottom:1px solid #E7E9E9;
+    font-size:var(--fs-xs,12.6px);color:#565959;}
+  #hbb-{{ sid }} .hbb-steps b{color:#0F1111;font-weight:800;margin-right:3px;}
+  #hbb-{{ sid }} .hbb-opts{padding:var(--sp-3,13px);display:flex;flex-direction:column;gap:var(--sp-2,8px);}
+  #hbb-{{ sid }} .hbb-opt{position:relative;display:flex;align-items:center;gap:var(--sp-3,13px);
+    width:100%;text-align:left;border:1px solid #D5D9D9;border-radius:var(--r-md,13px);
+    background:#fff;color:#0F1111;padding:var(--sp-3,13px);cursor:pointer;font:inherit;
+    transition:border-color .12s,box-shadow .12s;overflow:visible;}
+  #hbb-{{ sid }} .hbb-opt:hover{border-color:#8d9698;}
+  #hbb-{{ sid }} .hbb-opt.hbb-on{border-color:#0F1111;border-width:2px;
+    padding:calc(var(--sp-3,13px) - 1px);box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
+  #hbb-{{ sid }} .hbb-opt.hbb-hastag{margin-top:10px;}
+  #hbb-{{ sid }} .hbb-tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
+    color:#0F1111;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    border-radius:100px;padding:4px 13px;white-space:nowrap;line-height:1.2;
+    box-shadow:0 0 14px rgba(255,224,0,.75),0 2px 8px rgba(0,0,0,.2);}
+  #hbb-{{ sid }} .hbb-radio{flex:0 0 18px;width:18px;height:18px;border-radius:50%;
+    border:1.6px solid #8d9698;display:flex;align-items:center;justify-content:center;}
+  #hbb-{{ sid }} .hbb-opt.hbb-on .hbb-radio{border-color:#0F1111;}
+  #hbb-{{ sid }} .hbb-opt.hbb-on .hbb-radio::after{content:'';width:9px;height:9px;
+    border-radius:50%;background:#0F1111;}
+  #hbb-{{ sid }} .hbb-om{flex:1 1 0;min-width:0;}
+  #hbb-{{ sid }} .hbb-om .hbb-t{display:block;font-size:var(--fs-base,16px);font-weight:800;
+    line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;}
+  #hbb-{{ sid }} .hbb-om .hbb-d{display:block;font-size:var(--fs-xs,12.6px);color:#565959;
+    margin-top:2px;line-height:1.35;}
+  #hbb-{{ sid }} .hbb-om .hbb-gift{display:inline-block;margin-top:6px;background:#E3F6EC;
+    color:#046B53;border:1px solid #B6E5CE;border-radius:100px;padding:3px 9px;
+    font-size:11px;font-weight:800;}
+  #hbb-{{ sid }} .hbb-op{flex:0 0 auto;width:104px;text-align:right;}
+  #hbb-{{ sid }} .hbb-op .hbb-sv{display:inline-block;background:#CC0C39;color:#fff;
+    font-size:10.5px;font-weight:800;border-radius:5px;padding:3px 7px;margin-bottom:4px;}
+  #hbb-{{ sid }} .hbb-op .hbb-n{font-size:var(--fs-md,20.4px);font-weight:800;
+    letter-spacing:-.02em;display:block;}
+  #hbb-{{ sid }} .hbb-op .hbb-o{font-size:var(--fs-xs,12.6px);color:#565959;
+    text-decoration:line-through;display:block;margin-top:2px;}
+
+  /* actions */
+  #hbb-{{ sid }} .hbb-atc{display:block;width:100%;background:#FFD814;color:#0F1111;
+    border:1px solid #FCD200;border-radius:100px;padding:var(--fs-base,16px);
+    font:inherit;font-size:var(--fs-base,16px);font-weight:800;cursor:pointer;
+    margin-top:var(--sp-4,21px);transition:background .15s;}
+  #hbb-{{ sid }} .hbb-atc:hover{background:#F7CA00;}
+  #hbb-{{ sid }} .hbb-atc.hbb-ok{background:#067D62;border-color:#067D62;color:#fff;}
+  #hbb-{{ sid }} .hbb-buynow{display:block;width:100%;background:#fff;color:#0F1111;
+    border:1.5px solid #0F1111;border-radius:100px;
+    padding:calc(var(--fs-base,16px) / var(--phi,1.618)) var(--sp-3,13px);
+    font:inherit;font-size:var(--fs-sm,14.1px);font-weight:800;cursor:pointer;
+    margin-top:var(--sp-2,8px);}
+  #hbb-{{ sid }} .hbb-buynow:hover{background:#F7FAFA;}
+  #hbb-{{ sid }} .hbb-after{display:none;margin-top:var(--sp-2,8px);}
+  #hbb-{{ sid }} .hbb-after.hbb-on{display:block;}
+  #hbb-{{ sid }} .hbb-after a{display:block;width:100%;text-align:center;background:#0F1111;
+    color:#fff;border-radius:100px;padding:var(--sp-3,13px);font-size:var(--fs-sm,14.1px);
+    font-weight:800;text-decoration:none;}
+  #hbb-{{ sid }} .hbb-gifted{display:none;margin-top:var(--sp-2,8px);background:#E3F6EC;
+    border:1px solid #B6E5CE;color:#046B53;border-radius:var(--r-sm,8px);
+    padding:var(--sp-2,8px) var(--sp-3,13px);font-size:13px;font-weight:700;text-align:center;}
+  #hbb-{{ sid }} .hbb-gifted.hbb-on{display:block;}
+  #hbb-{{ sid }} .hbb-msg{margin:var(--sp-2,8px) 0 0;font-size:13px;text-align:center;color:#565959;}
+  #hbb-{{ sid }} .hbb-msg:empty{display:none;}
+  #hbb-{{ sid }} .hbb-msg.hbb-err{color:#B3261E;font-weight:700;}
+  #hbb-{{ sid }} .hbb-ship{font-size:13px;color:#565959;line-height:1.65;margin-top:var(--sp-3,13px);}
+  #hbb-{{ sid }} .hbb-ship b{color:#0F1111;}
+  #hbb-{{ sid }} .hbb-trust{display:flex;flex-wrap:wrap;gap:1px;background:#D5D9D9;
+    border:1px solid #D5D9D9;border-radius:var(--r-sm,8px);overflow:hidden;margin-top:var(--sp-3,13px);}
+  #hbb-{{ sid }} .hbb-tc{flex:1 1 40%;background:#fff;padding:var(--sp-2,8px);text-align:center;
+    font-size:11.5px;font-weight:700;line-height:1.3;}
+  #hbb-{{ sid }} .hbb-badge{display:block;margin:var(--sp-3,13px) auto 0;width:100%;
+    max-width:{{ s.badge_w | default: 180 }}px;height:auto;}
+
+  /* ---------- stacking: phones only. !important outranks the inline styles. */
+  @media(max-width:699px){
+    #hbb-{{ sid }} .hbb-row{display:block !important;}
+    #hbb-{{ sid }} .hbb-left,#hbb-{{ sid }} .hbb-right{
+      flex:none !important;max-width:100% !important;padding:0 !important;}
+    #hbb-{{ sid }} .hbb-left{margin-bottom:var(--sp-4,21px);}
+    #hbb-{{ sid }} .hbb-stage{margin-inline:auto;}
+  }
+</style>
+  <div class="hbb-wrap">
+    <div class="hbb-row" style="display:flex;flex-wrap:nowrap;align-items:flex-start;width:100%">
+
+      <div class="hbb-left" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-right:21px">
+        <div class="hbb-stage" id="hbb-st-{{ sid }}">
+          {%- if p != blank and p.images.size > 0 -%}
+            <img id="hbb-img-{{ sid }}" src="{{ p.images[0] | image_url: width: 1200 }}"
+                 alt="{{ p.title | escape }}" loading="eager" fetchpriority="high">
+          {%- endif -%}
+          {%- if p != blank and p.images.size > 1 -%}
+            <button class="hbb-arr hbb-l" type="button" id="hbb-pv-{{ sid }}" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button class="hbb-arr hbb-r" type="button" id="hbb-nx-{{ sid }}" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="hbb-dots" id="hbb-dt-{{ sid }}"></div>
+          {%- endif -%}
+        </div>
+        {%- if p != blank and p.images.size > 1 -%}
+          <div class="hbb-thumbs" id="hbb-th-{{ sid }}">
+            {%- for img in p.images limit: 9 -%}
+              <button type="button" class="hbb-th{% if forloop.first %} hbb-on{% endif %}"
+                      data-src="{{ img | image_url: width: 1200 }}" aria-label="Image {{ forloop.index }}">
+                <img src="{{ img | image_url: width: 150 }}" alt="" loading="lazy">
+              </button>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div class="hbb-right" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-left:21px">
+        <h1>{{ s.title | default: p.title }}</h1>
+        <div class="hbb-rate">
+          <span class="hbb-st">★★★★★</span><span>{{ s.rating | default: '4.8' }}</span>
+          <a href="{{ s.reviews_anchor | default: '#reviews' }}">{{ s.review_count | default: '3,912' }} ratings</a>
+        </div>
+
+        <div class="hbb-price">
+          <b id="hbb-pr-{{ sid }}">{{ s.big_price | default: '$259.99' }}</b>
+          <s id="hbb-cm-{{ sid }}">{{ s.big_compare }}</s>
+          <em id="hbb-sv-{{ sid }}">{{ s.big_badge }}</em>
+          {%- if s.big_note != blank -%}<span class="hbb-per">{{ s.big_note }}</span>{%- endif -%}
+        </div>
+        <div class="hbb-pay">
+          <span>4 interest-free payments of <b id="hbb-in-{{ sid }}">$65.00</b> with</span>
+          <span class="hbb-lg hbb-sp">Shop Pay</span><span class="hbb-lg hbb-ap">afterpay</span>
+        </div>
+
+        <ul class="hbb-bl">
+          {%- if s.b1 != blank -%}<li><span class="hbb-i">✓</span><span>{{ s.b1 }}</span></li>{%- endif -%}
+          {%- if s.b2 != blank -%}<li><span class="hbb-i">✓</span><span>{{ s.b2 }}</span></li>{%- endif -%}
+          {%- if s.b3 != blank -%}<li><span class="hbb-i">✓</span><span>{{ s.b3 }}</span></li>{%- endif -%}
+        </ul>
+
+        <div class="hbb-frame">
+          <div class="hbb-fhead">
+            <span>{{ s.deal_name | default: '2-FOR-1 DEAL' }}</span>
+            {%- if s.pop_label != blank -%}<span class="hbb-pop">★ {{ s.pop_label }}</span>{%- endif -%}
+          </div>
+          <div class="hbb-steps">
+            {%- if s.step1 != blank -%}<span><b>1.</b>{{ s.step1 }}</span>{%- endif -%}
+            {%- if s.step2 != blank -%}<span><b>2.</b>{{ s.step2 }}</span>{%- endif -%}
+            {%- if s.step3 != blank -%}<span><b>3.</b>{{ s.step3 }}</span>{%- endif -%}
+          </div>
+          <div class="hbb-opts" id="hbb-opts-{{ sid }}">
+            {%- for b in section.blocks -%}
+              {%- if b.type == 'bundle' and b.settings.variant_id != blank -%}
+                <button type="button"
+                  class="hbb-opt{% if forloop.first %} hbb-on{% endif %}{% if b.settings.tag != blank %} hbb-hastag{% endif %}"
+                  data-id="{{ b.settings.variant_id }}" data-price="{{ b.settings.price }}"
+                  data-compare="{{ b.settings.compare }}" data-save="{{ b.settings.save }}"
+                  data-gift="{{ b.settings.gift_variant_id }}" data-giftname="{{ b.settings.gift }}"
+                  {{ b.shopify_attributes }}>
+                  {%- if b.settings.tag != blank -%}
+                    <span class="hbb-tag" style="background:{{ b.settings.tag_bg | default: '#FFE000' }}">{{ b.settings.tag }}</span>
+                  {%- endif -%}
+                  <span class="hbb-radio" aria-hidden="true"></span>
+                  {%- if p != blank and p.featured_image != blank -%}
+                    <span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
+                      <img src="{{ p.featured_image | image_url: width: 120 }}" alt="" loading="lazy"
+                           style="width:100%;height:100%;object-fit:contain;display:block"></span>
+                  {%- endif -%}
+                  <span class="hbb-om">
+                    <span class="hbb-t">{{ b.settings.label }}</span>
+                    {%- if b.settings.note != blank -%}<span class="hbb-d">{{ b.settings.note }}</span>{%- endif -%}
+                    {%- if b.settings.gift != blank -%}<span class="hbb-gift">{{ b.settings.gift }}</span>{%- endif -%}
+                  </span>
+                  <span class="hbb-op">
+                    {%- if b.settings.save != blank -%}<span class="hbb-sv">{{ b.settings.save }}</span>{%- endif -%}
+                    <span class="hbb-n">{{ b.settings.price }}</span>
+                    {%- if b.settings.compare != blank -%}<span class="hbb-o">{{ b.settings.compare }}</span>{%- endif -%}
+                  </span>
+                </button>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        </div>
+
+        <button type="button" class="hbb-atc" id="hbb-atc-{{ sid }}">{{ s.cta_text | default: 'Add to Cart' }}</button>
+        <button type="button" class="hbb-buynow" id="hbb-bn-{{ sid }}">{{ s.buynow_text | default: 'Buy now' }}</button>
+        <div class="hbb-after" id="hbb-af-{{ sid }}"><a href="/cart">{{ s.after_text | default: 'Go to cart' }}</a></div>
+        <div class="hbb-gifted" id="hbb-gf-{{ sid }}"></div>
+        <p class="hbb-msg" id="hbb-msg-{{ sid }}" role="status" aria-live="polite"></p>
+
+        {%- if s.ship_html != blank -%}<p class="hbb-ship">{{ s.ship_html }}</p>{%- endif -%}
+
+        <div class="hbb-trust">
+          {%- if s.t1 != blank -%}<div class="hbb-tc">🚚 {{ s.t1 }}</div>{%- endif -%}
+          {%- if s.t2 != blank -%}<div class="hbb-tc">↩️ {{ s.t2 }}</div>{%- endif -%}
+          {%- if s.t3 != blank -%}<div class="hbb-tc">📦 {{ s.t3 }}</div>{%- endif -%}
+          {%- if s.t4 != blank -%}<div class="hbb-tc">🔒 {{ s.t4 }}</div>{%- endif -%}
+        </div>
+
+        {%- if s.badge_url != blank -%}
+          <img class="hbb-badge" src="{{ s.badge_url }}" alt="{{ s.badge_alt | escape }}" loading="lazy">
+        {%- endif -%}
+      </div>
+
+    </div>
+  </div>
+
+<script>
+(function(){
+  var SID='{{ sid }}';
+  var root=document.getElementById('hbb-'+SID);
+  if(!root||root.dataset.ready==='1')return; root.dataset.ready='1';
+
+  /* carousel */
+  var img=document.getElementById('hbb-img-'+SID);
+  var thumbs=[].slice.call(root.querySelectorAll('.hbb-thumbs button'));
+  var dots=document.getElementById('hbb-dt-'+SID);
+  var at=0;
+  if(dots)thumbs.forEach(function(){dots.appendChild(document.createElement('i'));});
+  function go(n){
+    if(!thumbs.length||!img)return;
+    at=(n+thumbs.length)%thumbs.length;
+    img.src=thumbs[at].getAttribute('data-src');
+    thumbs.forEach(function(t,k){t.classList.toggle('hbb-on',k===at);});
+    if(dots)[].forEach.call(dots.children,function(d,k){d.classList.toggle('hbb-on',k===at);});
+    thumbs[at].scrollIntoView({block:'nearest',inline:'nearest'});
+  }
+  go(0);
+  thumbs.forEach(function(t,k){t.addEventListener('click',function(){go(k);});});
+  var pv=document.getElementById('hbb-pv-'+SID), nx=document.getElementById('hbb-nx-'+SID);
+  if(pv)pv.addEventListener('click',function(){go(at-1);});
+  if(nx)nx.addEventListener('click',function(){go(at+1);});
+  var stage=document.getElementById('hbb-st-'+SID), x0=null;
+  if(stage){
+    stage.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});
+    stage.addEventListener('touchend',function(e){
+      if(x0===null)return;
+      var dx=e.changedTouches[0].clientX-x0; x0=null;
+      if(Math.abs(dx)>40)go(dx<0?at+1:at-1);
+    },{passive:true});
+  }
+
+  /* bundles */
+  var opts=document.getElementById('hbb-opts-'+SID);
+  var sel=opts?opts.querySelector('.hbb-opt.hbb-on'):null;
+  var pr=document.getElementById('hbb-pr-'+SID), cm=document.getElementById('hbb-cm-'+SID),
+      sv=document.getElementById('hbb-sv-'+SID), ins=document.getElementById('hbb-in-'+SID),
+      gf=document.getElementById('hbb-gf-'+SID), msg=document.getElementById('hbb-msg-'+SID),
+      atc=document.getElementById('hbb-atc-'+SID), bn=document.getElementById('hbb-bn-'+SID),
+      af=document.getElementById('hbb-af-'+SID);
+  var atcLabel=atc?atc.textContent:'Add to Cart';
+  function paint(){
+    if(!sel)return;
+    var price=sel.getAttribute('data-price')||'';
+    if(pr)pr.textContent=price;
+    if(cm)cm.textContent=sel.getAttribute('data-compare')||'';
+    if(sv)sv.textContent=sel.getAttribute('data-save')||'';
+    if(ins){
+      var n=parseFloat(price.replace(/[^0-9.]/g,''));
+      if(n)ins.textContent='$'+(n/4).toFixed(2);
+    }
+    var gn=sel.getAttribute('data-giftname');
+    if(gf){gf.textContent=gn?('Includes your free gift: '+gn):'';gf.classList.toggle('hbb-on',!!gn);}
+    try{window.dispatchEvent(new CustomEvent('helios:variant',{detail:{
+      id:sel.getAttribute('data-id'),price:price,compare:sel.getAttribute('data-compare')}}));}catch(e){}
+  }
+  if(opts)opts.addEventListener('click',function(e){
+    var b=e.target.closest('.hbb-opt'); if(!b)return;
+    opts.querySelectorAll('.hbb-opt').forEach(function(o){o.classList.remove('hbb-on');});
+    b.classList.add('hbb-on'); sel=b; paint();
+  });
+  paint();
+
+  /* add to cart — a 4xx from /cart/add still resolves the fetch, so success is
+     only claimed after checking the payload */
+  function unlock(){[atc,bn].forEach(function(el){if(el)el.disabled=false;});}
+  function add(then){
+    if(!sel)return;
+    if(msg){msg.textContent='';msg.classList.remove('hbb-err');}
+    var items=[{id:parseInt(sel.getAttribute('data-id'),10),quantity:1}];
+    var gid=parseInt(sel.getAttribute('data-gift'),10);
+    if(gid)items.push({id:gid,quantity:1});
+    fetch('/cart/add.js',{method:'POST',
+      headers:{'Content-Type':'application/json',Accept:'application/json'},
+      body:JSON.stringify({items:items})})
+      .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
+      .then(function(res){
+        if(!res.ok||(res.data&&res.data.status&&res.data.status>=400)){
+          if(msg){msg.textContent=(res.data&&res.data.description)||'That could not be added. Please try again.';
+            msg.classList.add('hbb-err');}
+          unlock(); return;
+        }
+        then();
+      })
+      .catch(function(){
+        if(msg){msg.textContent='Network problem — please try again.';msg.classList.add('hbb-err');}
+        unlock();
+      });
+  }
+  if(atc)atc.addEventListener('click',function(){
+    atc.disabled=true;
+    add(function(){
+      unlock(); atc.classList.add('hbb-ok'); atc.textContent='Added ✓';
+      if(af)af.classList.add('hbb-on');
+      document.dispatchEvent(new CustomEvent('cart:refresh',{bubbles:true}));
+      setTimeout(function(){atc.classList.remove('hbb-ok');atc.textContent=atcLabel;},2400);
+    });
+  });
+  if(bn)bn.addEventListener('click',function(){
+    bn.disabled=true;
+    add(function(){window.location='/checkout';});
+  });
+})();
+</script>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Buy Box",
+  "tag": "section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Product" },
+    { "type": "range", "id": "width", "label": "Max width", "min": 900, "max": 1400, "step": 20, "unit": "px", "default": 1180 },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" },
+    { "type": "text", "id": "anchor", "label": "Anchor id", "default": "buy" },
+    { "type": "text", "id": "title", "label": "Title" },
+    { "type": "text", "id": "rating", "label": "Rating", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Review count", "default": "3,912" },
+    { "type": "text", "id": "reviews_anchor", "label": "Reviews link", "default": "#reviews" },
+    { "type": "header", "content": "Price" },
+    { "type": "text", "id": "big_price", "label": "Price", "default": "$259.99" },
+    { "type": "text", "id": "big_compare", "label": "Compare-at" },
+    { "type": "text", "id": "big_badge", "label": "Save badge" },
+    { "type": "text", "id": "big_note", "label": "Note under price" },
+    { "type": "header", "content": "Bullets" },
+    { "type": "text", "id": "b1", "label": "Bullet 1" },
+    { "type": "text", "id": "b2", "label": "Bullet 2" },
+    { "type": "text", "id": "b3", "label": "Bullet 3" },
+    { "type": "header", "content": "Deal frame" },
+    { "type": "text", "id": "deal_name", "label": "Deal name", "default": "2-FOR-1 DEAL" },
+    { "type": "text", "id": "pop_label", "label": "Accent label" },
+    { "type": "text", "id": "step1", "label": "Step 1", "default": "Pick your deal" },
+    { "type": "text", "id": "step2", "label": "Step 2", "default": "Tap Add to cart" },
+    { "type": "text", "id": "step3", "label": "Step 3", "default": "We ship it free" },
+    { "type": "header", "content": "Buttons and trust" },
+    { "type": "text", "id": "cta_text", "label": "Add to cart", "default": "Add to Cart" },
+    { "type": "text", "id": "buynow_text", "label": "Buy now", "default": "Buy now" },
+    { "type": "text", "id": "after_text", "label": "After add link", "default": "Go to cart" },
+    { "type": "html", "id": "ship_html", "label": "Shipping line" },
+    { "type": "text", "id": "t1", "label": "Trust 1", "default": "Free shipping" },
+    { "type": "text", "id": "t2", "label": "Trust 2", "default": "30-day returns" },
+    { "type": "text", "id": "t3", "label": "Trust 3", "default": "Tracked" },
+    { "type": "text", "id": "t4", "label": "Trust 4", "default": "Secure checkout" },
+    { "type": "text", "id": "badge_url", "label": "Badge image URL" },
+    { "type": "text", "id": "badge_alt", "label": "Badge alt text" },
+    { "type": "range", "id": "badge_w", "label": "Badge width", "min": 120, "max": 400, "step": 20, "unit": "px", "default": 180 }
+  ],
+  "blocks": [
+    { "type": "bundle", "name": "Bundle option", "limit": 4, "settings": [
+      { "type": "text", "id": "variant_id", "label": "Variant ID" },
+      { "type": "text", "id": "label", "label": "Label" },
+      { "type": "text", "id": "note", "label": "Note" },
+      { "type": "text", "id": "tag", "label": "Floating pill text", "info": "Shown above the option. Keep the background light — the text is dark." },
+      { "type": "color", "id": "tag_bg", "label": "Pill background", "default": "#FFE000" },
+      { "type": "text", "id": "gift", "label": "Free gift label" },
+      { "type": "text", "id": "gift_variant_id", "label": "Free gift variant ID" },
+      { "type": "text", "id": "save", "label": "Save badge" },
+      { "type": "text", "id": "price", "label": "Price" },
+      { "type": "text", "id": "compare", "label": "Compare-at" }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS Buy Box", "blocks": [{ "type": "bundle" }, { "type": "bundle" }, { "type": "bundle" }] }]
+}
+{% endschema %}

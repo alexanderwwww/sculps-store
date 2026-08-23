@@ -34,7 +34,7 @@
       }
     },
     "buy": {
-      "type": "helios-buy",
+      "type": "helios-buybox",
       "blocks": {
         "o1": {
           "type": "bundle",

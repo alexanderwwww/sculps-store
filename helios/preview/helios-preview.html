@@ -6,7 +6,7 @@
 
 /* ---- helios-nav ---- */
 
-/* ---- helios-buy ---- */
+/* ---- helios-buybox ---- */
 
 /* ---- helios-reviews-carousel ---- */
 
@@ -176,246 +176,243 @@
 </section>
 
 
-<!-- ===== buy :: helios-buy ===== -->
-<section class="helios" id="hby-buy">
+<!-- ===== buy :: helios-buybox ===== -->
+<section class="helios" id="hbb-buy">
 <a id="buy"></a>
 <style>
-  #hby-buy{background:#ffffff;color:#0F1111;overflow-x:clip;
+  #hbb-buy{background:#ffffff;color:#0F1111;overflow-x:clip;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hby-buy *{box-sizing:border-box;min-width:0;}
-  #hby-buy .wrap{width:100%;max-width:1180px;margin:0 auto;
+  #hbb-buy *{box-sizing:border-box;min-width:0;}
+  #hbb-buy .hbb-wrap{width:100%;max-width:1180px;margin:0 auto;
     padding:var(--sp-4,21px) var(--sp-3,13px) var(--sp-6,55px);}
-  /* Flex with an equal basis, not grid tracks and not a viewport breakpoint.
-     The fr tracks were being sized to their content by an ancestor rather than
-     stretched, so the gallery collapsed to about a third and the rail took the
-     rest. `flex:1 1 380px` gives both halves the same basis, splits the row
-     evenly whenever two fit, and stacks on its own when they do not — no media
-     query to get out of step with the real container width. */
-  #hby-buy .grid{display:flex !important;align-items:flex-start;width:100% !important;}
-  /* Half and half, stated as hard widths. flex:0 0 50% plus max-width:50%
-     means neither side can ever take more than half the row — not from a grow
-     factor, not from an intrinsic image size, not from anything an ancestor
-     does. Below 900px the grid is a plain block and the halves stack. */
-  #hby-buy .grid > .gal,
-  #hby-buy .grid > .panel{flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;}
-  #hby-buy .grid > .gal{padding-right:var(--sp-4,21px);}
-  #hby-buy .grid > .panel{padding-left:var(--sp-4,21px);}
-  @media(max-width:699px){
-    #hby-buy .grid{display:block !important;}
-    #hby-buy .grid > .gal,
-    #hby-buy .grid > .panel{max-width:100% !important;flex:none !important;padding:0 !important;}
-    #hby-buy .main{margin-inline:auto;}
-  }
 
-  #hby-buy .main{position:relative;width:100%;aspect-ratio:1/1;max-height:600px;background:#fff;
-    border:1px solid #D5D9D9;border-radius:var(--r-md,13px);overflow:hidden;cursor:pointer;}
-  #hby-buy .main img{width:100%;height:100%;object-fit:cover;display:block;background:#fff;}
-  @media(max-width:699px){
-    #hby-buy .gal{margin:0 -16px var(--sp-4,21px);}
-    #hby-buy .main{border:0;border-radius:0;}
-    #hby-buy .thumbs{padding:0 16px;}
-  }
-  #hby-buy .arr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:32px;height:32px;
-    border:1px solid rgba(15,17,17,.10);border-radius:50%;cursor:pointer;display:grid;place-items:center;
-    background:rgba(255,255,255,.10);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);
-    box-shadow:none;color:rgba(15,17,17,.55);padding:0;transition:color .15s,background .15s;}
-  #hby-buy .arr:hover{color:#0F1111;background:rgba(255,255,255,.30);}
-  #hby-buy .arr svg{width:14px;height:14px;display:block;}
-  #hby-buy .arr.l{left:12px;}
-  #hby-buy .arr.r{right:12px;}
-  #hby-buy .dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:5px;z-index:3;}
-  #hby-buy .dots i{width:6px;height:6px;border-radius:50%;background:rgba(15,17,17,.22);}
-  #hby-buy .dots i.on{background:#0F1111;}
-  #hby-buy .thumbs{display:flex;gap:8px;margin-top:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  #hby-buy .thumbs button{flex:0 0 58px;width:58px;height:58px;padding:0;border:1px solid #D5D9D9;
-    border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;}
-  #hby-buy .thumbs button.on{border-color:#0F1111;border-width:2px;}
-  #hby-buy .thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+  /* ---------- left: carousel ---------- */
+  #hbb-buy .hbb-stage{position:relative;width:100%;aspect-ratio:1/1;max-height:600px;
+    background:#fff;border:1px solid #D5D9D9;border-radius:var(--r-md,13px);overflow:hidden;}
+  #hbb-buy .hbb-stage img{width:100%;height:100%;object-fit:cover;display:block;}
+  #hbb-buy .hbb-arr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+    width:34px;height:34px;border:1px solid rgba(15,17,17,.12);border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:rgba(15,17,17,.6);padding:0;
+    background:rgba(255,255,255,.55);backdrop-filter:blur(10px) saturate(150%);
+    -webkit-backdrop-filter:blur(10px) saturate(150%);transition:color .15s,background .15s;}
+  #hbb-buy .hbb-arr:hover{color:#0F1111;background:rgba(255,255,255,.85);}
+  #hbb-buy .hbb-arr svg{width:15px;height:15px;display:block;}
+  #hbb-buy .hbb-arr.hbb-l{left:12px;} #hbb-buy .hbb-arr.hbb-r{right:12px;}
+  #hbb-buy .hbb-dots{position:absolute;left:0;right:0;bottom:10px;display:flex;
+    justify-content:center;gap:5px;z-index:3;}
+  #hbb-buy .hbb-dots i{width:6px;height:6px;border-radius:50%;background:rgba(15,17,17,.25);}
+  #hbb-buy .hbb-dots i.hbb-on{background:#0F1111;}
+  #hbb-buy .hbb-thumbs{display:flex;gap:var(--sp-2,8px);margin-top:var(--sp-2,8px);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  #hbb-buy .hbb-thumbs::-webkit-scrollbar{display:none;}
+  #hbb-buy .hbb-thumbs button{flex:0 0 60px;width:60px;height:60px;padding:0;
+    border:1px solid #D5D9D9;border-radius:var(--r-sm,8px);overflow:hidden;background:#fff;cursor:pointer;}
+  #hbb-buy .hbb-thumbs button.hbb-on{border-color:#0F1111;border-width:2px;}
+  #hbb-buy .hbb-thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
 
-  #hby-buy h1{font-size:clamp(var(--fs-md,20.4px),2.7vw,var(--fs-lg,25.9px));font-weight:800;
-    line-height:var(--lh-tight,1.236);margin:0 0 var(--sp-2,8px);letter-spacing:-.02em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-buy .rt{display:flex;align-items:center;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);margin-bottom:var(--sp-3,13px);flex-wrap:wrap;}
-  #hby-buy .rt .s{color:#F5A623;letter-spacing:1px;font-size:15px;}
-  #hby-buy .rt a{color:#007185;text-decoration:none;}
-
-  #hby-buy .price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:10px;}
-  #hby-buy .price b{font-size:clamp(var(--fs-xl,32.9px),7vw,var(--fs-2xl,41.9px));font-weight:800;letter-spacing:-.03em;line-height:1;color:#0F1111;}
-  #hby-buy .price s{font-size:16px;color:#565959;}
-  #hby-buy .price em{font-style:normal;background:#CC0C39;color:#fff;font-size:12px;font-weight:800;
-    border-radius:5px;padding:4px 9px;}
-  #hby-buy .price .per{width:100%;font-size:12.5px;color:#067D62;font-weight:700;}
-  #hby-buy .insta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:12.5px;color:#0F1111;
-    padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #E7E9E9;}
-  #hby-buy .insta .lg{display:inline-flex;align-items:center;border-radius:5px;padding:3px 8px;
-    font-size:11px;font-weight:800;letter-spacing:.01em;line-height:1;}
-  #hby-buy .insta .sp{background:#5A31F4;color:#fff;}
-  #hby-buy .insta .ap{background:#B2FCE4;color:#0F1111;}
-
-  #hby-buy .bl{margin:0 0 var(--sp-4,21px);padding:0;}
-  #hby-buy .bl li{list-style:none;display:flex;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);
+  /* ---------- right: purchase panel ---------- */
+  #hbb-buy h1{font-size:clamp(var(--fs-md,20.4px),2.6vw,var(--fs-lg,25.9px));font-weight:800;
+    line-height:var(--lh-tight,1.236);letter-spacing:-.02em;margin:0 0 var(--sp-2,8px);
+    overflow-wrap:break-word;}
+  #hbb-buy .hbb-rate{display:flex;align-items:center;gap:var(--sp-2,8px);flex-wrap:wrap;
+    font-size:var(--fs-sm,14.1px);margin-bottom:var(--sp-3,13px);}
+  #hbb-buy .hbb-rate .hbb-st{color:#F5A623;letter-spacing:1px;font-size:15px;}
+  #hbb-buy .hbb-rate a{color:#007185;text-decoration:none;}
+  #hbb-buy .hbb-price{display:flex;align-items:baseline;gap:var(--sp-2,8px);flex-wrap:wrap;
+    padding-bottom:var(--sp-2,8px);}
+  #hbb-buy .hbb-price b{font-size:clamp(var(--fs-xl,32.9px),6.5vw,var(--fs-2xl,41.9px));
+    font-weight:800;letter-spacing:-.03em;line-height:1;}
+  #hbb-buy .hbb-price s{font-size:var(--fs-base,16px);color:#565959;}
+  #hbb-buy .hbb-price em{font-style:normal;background:#CC0C39;color:#fff;
+    font-size:var(--fs-xs,12.6px);font-weight:800;border-radius:5px;padding:4px 9px;}
+  #hbb-buy .hbb-price .hbb-per{width:100%;font-size:var(--fs-xs,12.6px);color:#067D62;font-weight:700;}
+  #hbb-buy .hbb-pay{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;
+    font-size:var(--fs-xs,12.6px);padding-bottom:var(--sp-3,13px);margin-bottom:var(--sp-3,13px);
+    border-bottom:1px solid #E7E9E9;}
+  #hbb-buy .hbb-pay .hbb-lg{display:inline-flex;align-items:center;border-radius:5px;
+    padding:3px 8px;font-size:11px;font-weight:800;line-height:1;}
+  #hbb-buy .hbb-pay .hbb-sp{background:#5A31F4;color:#fff;}
+  #hbb-buy .hbb-pay .hbb-ap{background:#B2FCE4;color:#0F1111;}
+  #hbb-buy .hbb-bl{margin:0 0 var(--sp-4,21px);padding:0;list-style:none;}
+  #hbb-buy .hbb-bl li{display:flex;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);
     line-height:var(--lh-body,1.618);align-items:flex-start;margin-bottom:var(--sp-2,8px);}
-  #hby-buy .bl li span{overflow-wrap:break-word;}
-  #hby-buy .bl .i{flex:0 0 17px;width:17px;height:17px;border-radius:50%;background:#067D62;color:#fff;
-    font-size:10px;font-weight:900;display:grid;place-items:center;margin-top:1px;}
+  #hbb-buy .hbb-bl .hbb-i{flex:0 0 17px;width:17px;height:17px;border-radius:50%;
+    background:#067D62;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;
+    justify-content:center;margin-top:3px;}
 
-  #hby-buy .frame{border:1px solid #D5D9D9;border-radius:var(--r-lg,21px);background:#fff;}
-  #hby-buy .fhead{background:#0F1111;color:#fff;display:flex;align-items:center;justify-content:space-between;
-    gap:var(--sp-1,5px) var(--sp-3,13px);padding:var(--sp-3,13px) var(--sp-4,21px);font-size:var(--fs-sm,14.1px);font-weight:800;letter-spacing:.02em;flex-wrap:wrap;
-    border-radius:calc(var(--r-lg,21px) - 1px) calc(var(--r-lg,21px) - 1px) 0 0;}
-  #hby-buy .fhead .pop{color:#FFC531;font-size:12.5px;}
-  #hby-buy .steps{display:flex;flex-wrap:wrap;gap:6px 16px;padding:11px 16px;background:#F7FAFA;
-    border-bottom:1px solid #E7E9E9;font-size:12px;color:#565959;}
-  #hby-buy .steps b{color:#0F1111;font-weight:800;margin-right:3px;}
-  #hby-buy .opts{padding:var(--sp-3,13px);display:flex;flex-direction:column;gap:var(--sp-2,8px);}
-  #hby-buy .opt{position:relative;display:flex;align-items:center;gap:var(--sp-3,13px);width:100%;text-align:left;
-    border:1px solid #D5D9D9;border-radius:var(--r-md,13px);background:#fff;color:#0F1111;
-    padding:var(--sp-3,13px);cursor:pointer;
+  /* deal frame */
+  #hbb-buy .hbb-frame{border:1px solid #D5D9D9;border-radius:var(--r-lg,21px);background:#fff;}
+  #hbb-buy .hbb-fhead{background:#0F1111;color:#fff;display:flex;align-items:center;
+    justify-content:space-between;gap:var(--sp-1,5px) var(--sp-3,13px);flex-wrap:wrap;
+    padding:var(--sp-3,13px) var(--sp-4,21px);font-size:var(--fs-sm,14.1px);font-weight:800;
+    letter-spacing:.02em;border-radius:calc(var(--r-lg,21px) - 1px) calc(var(--r-lg,21px) - 1px) 0 0;}
+  #hbb-buy .hbb-fhead .hbb-pop{color:#FFC531;font-size:var(--fs-xs,12.6px);}
+  #hbb-buy .hbb-steps{display:flex;flex-wrap:wrap;gap:6px var(--sp-4,21px);
+    padding:var(--sp-2,8px) var(--sp-4,21px);background:#F7FAFA;border-bottom:1px solid #E7E9E9;
+    font-size:var(--fs-xs,12.6px);color:#565959;}
+  #hbb-buy .hbb-steps b{color:#0F1111;font-weight:800;margin-right:3px;}
+  #hbb-buy .hbb-opts{padding:var(--sp-3,13px);display:flex;flex-direction:column;gap:var(--sp-2,8px);}
+  #hbb-buy .hbb-opt{position:relative;display:flex;align-items:center;gap:var(--sp-3,13px);
+    width:100%;text-align:left;border:1px solid #D5D9D9;border-radius:var(--r-md,13px);
+    background:#fff;color:#0F1111;padding:var(--sp-3,13px);cursor:pointer;font:inherit;
     transition:border-color .12s,box-shadow .12s;overflow:visible;}
-  #hby-buy .opt:hover{border-color:#8d9698;}
-  #hby-buy .opt.on{border-color:#0F1111;border-width:2px;padding:calc(var(--sp-3,13px) - 1px);box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
-  #hby-buy .opt.hastag{margin-top:8px;}
-  #hby-buy .tagp{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
+  #hbb-buy .hbb-opt:hover{border-color:#8d9698;}
+  #hbb-buy .hbb-opt.hbb-on{border-color:#0F1111;border-width:2px;
+    padding:calc(var(--sp-3,13px) - 1px);box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
+  #hbb-buy .hbb-opt.hbb-hastag{margin-top:10px;}
+  #hbb-buy .hbb-tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
     color:#0F1111;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
     border-radius:100px;padding:4px 13px;white-space:nowrap;line-height:1.2;
-    box-shadow:0 0 14px rgba(255,224,0,.75),0 2px 8px rgba(0,0,0,.20);}
-  #hby-buy .dot{flex:0 0 18px;width:18px;height:18px;border-radius:50%;border:1.6px solid #8d9698;display:grid;place-items:center;}
-  #hby-buy .opt.on .dot{border-color:#0F1111;}
-  #hby-buy .opt.on .dot:after{content:'';width:9px;height:9px;border-radius:50%;background:#0F1111;}
-  #hby-buy .oim{flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
-  #hby-buy .oim img{width:100%;height:100%;object-fit:contain;display:block;}
-  #hby-buy .oi{flex:1 1 0;min-width:0;}
-  #hby-buy .oi .t{display:block;font-size:var(--fs-base,16px);font-weight:800;line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-buy .oi .d{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-    font-size:12px;color:#565959;margin-top:2px;line-height:1.35;overflow-wrap:break-word;}
-  #hby-buy .oi .gift{display:inline-block;margin-top:6px;background:#E3F6EC;color:#046B53;border:1px solid #B6E5CE;
-    border-radius:100px;padding:3px 9px;font-size:11px;font-weight:800;}
-  #hby-buy .op{flex:0 0 auto;width:104px;text-align:right;}
-  #hby-buy .op .sv{display:inline-block;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;
-    border-radius:5px;padding:3px 7px;margin-bottom:4px;}
-  #hby-buy .op .n{font-size:var(--fs-md,20.4px);font-weight:800;letter-spacing:-.02em;display:block;color:#0F1111;}
-  #hby-buy .op .o{font-size:12px;color:#565959;text-decoration:line-through;display:block;margin-top:2px;}
+    box-shadow:0 0 14px rgba(255,224,0,.75),0 2px 8px rgba(0,0,0,.2);}
+  #hbb-buy .hbb-radio{flex:0 0 18px;width:18px;height:18px;border-radius:50%;
+    border:1.6px solid #8d9698;display:flex;align-items:center;justify-content:center;}
+  #hbb-buy .hbb-opt.hbb-on .hbb-radio{border-color:#0F1111;}
+  #hbb-buy .hbb-opt.hbb-on .hbb-radio::after{content:'';width:9px;height:9px;
+    border-radius:50%;background:#0F1111;}
+  #hbb-buy .hbb-om{flex:1 1 0;min-width:0;}
+  #hbb-buy .hbb-om .hbb-t{display:block;font-size:var(--fs-base,16px);font-weight:800;
+    line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;}
+  #hbb-buy .hbb-om .hbb-d{display:block;font-size:var(--fs-xs,12.6px);color:#565959;
+    margin-top:2px;line-height:1.35;}
+  #hbb-buy .hbb-om .hbb-gift{display:inline-block;margin-top:6px;background:#E3F6EC;
+    color:#046B53;border:1px solid #B6E5CE;border-radius:100px;padding:3px 9px;
+    font-size:11px;font-weight:800;}
+  #hbb-buy .hbb-op{flex:0 0 auto;width:104px;text-align:right;}
+  #hbb-buy .hbb-op .hbb-sv{display:inline-block;background:#CC0C39;color:#fff;
+    font-size:10.5px;font-weight:800;border-radius:5px;padding:3px 7px;margin-bottom:4px;}
+  #hbb-buy .hbb-op .hbb-n{font-size:var(--fs-md,20.4px);font-weight:800;
+    letter-spacing:-.02em;display:block;}
+  #hbb-buy .hbb-op .hbb-o{font-size:var(--fs-xs,12.6px);color:#565959;
+    text-decoration:line-through;display:block;margin-top:2px;}
 
-  #hby-buy .atc{display:block;width:100%;background:#FFD814;color:#0F1111;border:1px solid #FCD200;
-    border-radius:100px;padding:var(--fs-base,16px);font-size:var(--fs-base,16px);font-weight:800;
-    cursor:pointer;margin-top:var(--sp-4,21px);transition:background .15s;}
-  #hby-buy .atc:hover{background:#F7CA00;}
-  #hby-buy .atc.ok{background:#067D62;border-color:#067D62;color:#fff;}
-  #hby-buy .xrow{display:flex;gap:var(--sp-2,8px);margin-top:var(--sp-2,8px);}
-  #hby-buy .xrow > *{flex:1 1 0;min-width:0;}
-  #hby-buy .xbtn{border-radius:100px;padding:calc(var(--fs-base,16px) / var(--phi,1.618)) var(--sp-3,13px);
-    font-size:var(--fs-sm,14.1px);font-weight:800;cursor:pointer;
-    text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
-  #hby-buy .buynow{background:#fff;color:#0F1111;border:1.5px solid #0F1111;}
-  #hby-buy .buynow:hover{background:#F7FAFA;}
-  #hby-buy .apay{background:#000;color:#fff;border:1.5px solid #000;}
-  #hby-buy .apay svg{width:15px;height:18px;display:block;}
-  #hby-buy .after{display:none;margin-top:9px;}
-  #hby-buy .after.on{display:block;}
-  #hby-buy .after a{display:block;width:100%;text-align:center;background:#0F1111;color:#fff;border-radius:100px;
-    padding:14px;font-size:15px;font-weight:800;text-decoration:none;}
-  #hby-buy .gifted{display:none;margin-top:9px;background:#E3F6EC;border:1px solid #B6E5CE;color:#046B53;
-    border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;text-align:center;}
-  #hby-buy .gifted.on{display:block;}
-  #hby-buy .ship{font-size:13px;color:#565959;line-height:1.65;margin-top:13px;}
-  #hby-buy .ship b{color:#0F1111;}
-  #hby-buy .tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#D5D9D9;
-    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;margin-top:14px;}
-  #hby-buy .trc{background:#fff;padding:11px 9px;text-align:center;}
-  #hby-buy .trc .i{font-size:16px;line-height:1;margin-bottom:4px;}
-  #hby-buy .trc .t{font-size:11.5px;font-weight:700;line-height:1.3;}
-  #hby-buy .b1s{display:block;margin:14px auto 0;width:100%;max-width:180px;height:auto;}
+  /* actions */
+  #hbb-buy .hbb-atc{display:block;width:100%;background:#FFD814;color:#0F1111;
+    border:1px solid #FCD200;border-radius:100px;padding:var(--fs-base,16px);
+    font:inherit;font-size:var(--fs-base,16px);font-weight:800;cursor:pointer;
+    margin-top:var(--sp-4,21px);transition:background .15s;}
+  #hbb-buy .hbb-atc:hover{background:#F7CA00;}
+  #hbb-buy .hbb-atc.hbb-ok{background:#067D62;border-color:#067D62;color:#fff;}
+  #hbb-buy .hbb-buynow{display:block;width:100%;background:#fff;color:#0F1111;
+    border:1.5px solid #0F1111;border-radius:100px;
+    padding:calc(var(--fs-base,16px) / var(--phi,1.618)) var(--sp-3,13px);
+    font:inherit;font-size:var(--fs-sm,14.1px);font-weight:800;cursor:pointer;
+    margin-top:var(--sp-2,8px);}
+  #hbb-buy .hbb-buynow:hover{background:#F7FAFA;}
+  #hbb-buy .hbb-after{display:none;margin-top:var(--sp-2,8px);}
+  #hbb-buy .hbb-after.hbb-on{display:block;}
+  #hbb-buy .hbb-after a{display:block;width:100%;text-align:center;background:#0F1111;
+    color:#fff;border-radius:100px;padding:var(--sp-3,13px);font-size:var(--fs-sm,14.1px);
+    font-weight:800;text-decoration:none;}
+  #hbb-buy .hbb-gifted{display:none;margin-top:var(--sp-2,8px);background:#E3F6EC;
+    border:1px solid #B6E5CE;color:#046B53;border-radius:var(--r-sm,8px);
+    padding:var(--sp-2,8px) var(--sp-3,13px);font-size:13px;font-weight:700;text-align:center;}
+  #hbb-buy .hbb-gifted.hbb-on{display:block;}
+  #hbb-buy .hbb-msg{margin:var(--sp-2,8px) 0 0;font-size:13px;text-align:center;color:#565959;}
+  #hbb-buy .hbb-msg:empty{display:none;}
+  #hbb-buy .hbb-msg.hbb-err{color:#B3261E;font-weight:700;}
+  #hbb-buy .hbb-ship{font-size:13px;color:#565959;line-height:1.65;margin-top:var(--sp-3,13px);}
+  #hbb-buy .hbb-ship b{color:#0F1111;}
+  #hbb-buy .hbb-trust{display:flex;flex-wrap:wrap;gap:1px;background:#D5D9D9;
+    border:1px solid #D5D9D9;border-radius:var(--r-sm,8px);overflow:hidden;margin-top:var(--sp-3,13px);}
+  #hbb-buy .hbb-tc{flex:1 1 40%;background:#fff;padding:var(--sp-2,8px);text-align:center;
+    font-size:11.5px;font-weight:700;line-height:1.3;}
+  #hbb-buy .hbb-badge{display:block;margin:var(--sp-3,13px) auto 0;width:100%;
+    max-width:180px;height:auto;}
+
+  /* ---------- stacking: phones only. !important outranks the inline styles. */
+  @media(max-width:699px){
+    #hbb-buy .hbb-row{display:block !important;}
+    #hbb-buy .hbb-left,#hbb-buy .hbb-right{
+      flex:none !important;max-width:100% !important;padding:0 !important;}
+    #hbb-buy .hbb-left{margin-bottom:var(--sp-4,21px);}
+    #hbb-buy .hbb-stage{margin-inline:auto;}
+  }
 </style>
-  <div class="wrap">
-    <div class="grid" style="display:flex;align-items:flex-start;width:100%">
-      <div class="gal" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-right:21px">
-        <div class="main" id="hby-mw-buy"><img id="hby-m-buy" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="HELIOS Super Glide" loading="eager"><button class="arr l" type="button" id="hby-pv-buy" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <button class="arr r" type="button" id="hby-nx-buy" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <div class="dots" id="hby-dt-buy"></div></div><div class="thumbs" id="hby-th-buy"><button type="button" class="th on" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" aria-label="Image 1">
+  <div class="hbb-wrap">
+    <div class="hbb-row" style="display:flex;flex-wrap:nowrap;align-items:flex-start;width:100%">
+
+      <div class="hbb-left" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-right:21px">
+        <div class="hbb-stage" id="hbb-st-buy"><img id="hbb-img-buy" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png"
+                 alt="HELIOS Super Glide" loading="eager" fetchpriority="high"><button class="hbb-arr hbb-l" type="button" id="hbb-pv-buy" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button class="hbb-arr hbb-r" type="button" id="hbb-nx-buy" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="hbb-dots" id="hbb-dt-buy"></div></div><div class="hbb-thumbs" id="hbb-th-buy"><button type="button" class="hbb-th hbb-on"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" aria-label="Image 1">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" aria-label="Image 2">
+              </button><button type="button" class="hbb-th"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" aria-label="Image 2">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" aria-label="Image 3">
+              </button><button type="button" class="hbb-th"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" aria-label="Image 3">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" aria-label="Image 4">
+              </button><button type="button" class="hbb-th"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" aria-label="Image 4">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" alt="" loading="lazy">
               </button></div></div>
 
-      <div class="panel" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-left:21px">
+      <div class="hbb-right" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-left:21px">
         <h1>HELIOS SUPERGLIDE 1+1 FREE</h1>
-        <div class="rt">
-          <span class="s">★★★★★</span><span>4.8</span>
+        <div class="hbb-rate">
+          <span class="hbb-st">★★★★★</span><span>4.8</span>
           <a href="#reviews">3,912 ratings</a>
         </div>
 
-        <div class="price">
-          <b>$259.99</b><s>$519.98</s><em>SAVE $259.99</em><span class="per">Two Super Glides for the price of one</span></div>
-        <div class="insta">
-          <span>4 interest-free payments of <b id="hby-in-buy">$65.00</b> with</span>
-          <span class="lg sp">Shop Pay</span>
-          <span class="lg ap">afterpay</span>
+        <div class="hbb-price">
+          <b id="hbb-pr-buy">$259.99</b>
+          <s id="hbb-cm-buy">$519.98</s>
+          <em id="hbb-sv-buy">SAVE $259.99</em><span class="hbb-per">Two Super Glides for the price of one</span></div>
+        <div class="hbb-pay">
+          <span>4 interest-free payments of <b id="hbb-in-buy">$65.00</b> with</span>
+          <span class="hbb-lg hbb-sp">Shop Pay</span><span class="hbb-lg hbb-ap">afterpay</span>
         </div>
 
-        <ul class="bl"><li><span class="i">✓</span><span>Twin motors move you. No paddling, no kicking, no effort</span></li><li><span class="i">✓</span><span>Holds 250-300 lb, padded headrest, dual cup holders</span></li><li><span class="i">✓</span><span>Ready in 5 minutes. Nozzle included, no pump to buy</span></li></ul>
+        <ul class="hbb-bl"><li><span class="hbb-i">✓</span><span>Twin motors move you. No paddling, no kicking, no effort</span></li><li><span class="hbb-i">✓</span><span>Holds 250-300 lb, padded headrest, dual cup holders</span></li><li><span class="hbb-i">✓</span><span>Ready in 5 minutes. Nozzle included, no pump to buy</span></li></ul>
 
-        <div class="frame">
-          <div class="fhead">
-            <span>2-FOR-1 DEAL</span><span class="pop">★ LIMITED STOCK</span></div>
-          <div class="steps">
-            <span><b>1.</b>Pick your deal</span>
-            <span><b>2.</b>Tap Add to cart</span>
-            <span><b>3.</b>We ship it free</span>
-          </div>
-          <div class="opts" id="hby-o-buy"><button type="button" class="opt on hastag"
-                      data-id="53550115848458"
-                      data-gift=""
-                      data-giftname=""
-                      data-price="$259.99"
-                      data-compare="$519.98"
-                      ><span class="tagp" style="background:#FFE000">1+1 FREE</span><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">2 Super Glides</span><span class="d">Buy one, the second is free</span></span>
-                <span class="op"><span class="sv">SAVE $259.99</span><span class="n">$259.99</span><span class="o">$519.98</span></span>
-              </button><button type="button" class="opt"
-                      data-id="53550115946762"
-                      data-gift=""
-                      data-giftname=""
-                      data-price="$349.99"
-                      data-compare="$779.97"
-                      ><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">3 Super Glides</span><span class="d">You plus two more seats</span></span>
-                <span class="op"><span class="sv">SAVE $429.98</span><span class="n">$349.99</span><span class="o">$779.97</span></span>
-              </button><button type="button" class="opt"
-                      data-id="53550115881226"
-                      data-gift=""
-                      data-giftname=""
-                      data-price="$459.99"
-                      data-compare="$1,039.96"
-                      ><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">2+2 FREE</span><span class="d">4 Super Glides. The whole crew</span></span>
-                <span class="op"><span class="sv">SAVE $579.97</span><span class="n">$459.99</span><span class="o">$1,039.96</span></span>
-              </button></div>
+        <div class="hbb-frame">
+          <div class="hbb-fhead">
+            <span>2-FOR-1 DEAL</span><span class="hbb-pop">★ LIMITED STOCK</span></div>
+          <div class="hbb-steps"><span><b>1.</b>Pick your deal</span><span><b>2.</b>Tap Add to cart</span><span><b>3.</b>We ship it free</span></div>
+          <div class="hbb-opts" id="hbb-opts-buy"><button type="button"
+                  class="hbb-opt hbb-on hbb-hastag"
+                  data-id="53550115848458" data-price="$259.99"
+                  data-compare="$519.98" data-save="SAVE $259.99"
+                  data-gift="" data-giftname=""
+                  ><span class="hbb-tag" style="background:#FFE000">1+1 FREE</span><span class="hbb-radio" aria-hidden="true"></span><span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
+                      <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy"
+                           style="width:100%;height:100%;object-fit:contain;display:block"></span><span class="hbb-om">
+                    <span class="hbb-t">2 Super Glides</span><span class="hbb-d">Buy one, the second is free</span></span>
+                  <span class="hbb-op"><span class="hbb-sv">SAVE $259.99</span><span class="hbb-n">$259.99</span><span class="hbb-o">$519.98</span></span>
+                </button><button type="button"
+                  class="hbb-opt"
+                  data-id="53550115946762" data-price="$349.99"
+                  data-compare="$779.97" data-save="SAVE $429.98"
+                  data-gift="" data-giftname=""
+                  ><span class="hbb-radio" aria-hidden="true"></span><span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
+                      <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy"
+                           style="width:100%;height:100%;object-fit:contain;display:block"></span><span class="hbb-om">
+                    <span class="hbb-t">3 Super Glides</span><span class="hbb-d">You plus two more seats</span></span>
+                  <span class="hbb-op"><span class="hbb-sv">SAVE $429.98</span><span class="hbb-n">$349.99</span><span class="hbb-o">$779.97</span></span>
+                </button><button type="button"
+                  class="hbb-opt"
+                  data-id="53550115881226" data-price="$459.99"
+                  data-compare="$1,039.96" data-save="SAVE $579.97"
+                  data-gift="" data-giftname=""
+                  ><span class="hbb-radio" aria-hidden="true"></span><span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
+                      <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy"
+                           style="width:100%;height:100%;object-fit:contain;display:block"></span><span class="hbb-om">
+                    <span class="hbb-t">2+2 FREE</span><span class="hbb-d">4 Super Glides. The whole crew</span></span>
+                  <span class="hbb-op"><span class="hbb-sv">SAVE $579.97</span><span class="hbb-n">$459.99</span><span class="hbb-o">$1,039.96</span></span>
+                </button></div>
         </div>
 
-        <button class="atc" type="button" id="hby-a-buy">Add to Cart</button>
-        <div class="xrow">
-          <button class="xbtn buynow" type="button" id="hby-bn-buy">Buy now</button>
-          <button class="xbtn apay" type="button" id="hby-ap-buy" aria-label="Apple Pay">
-            <svg viewBox="0 0 384 512" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
-            Pay
-          </button>
-        </div>
-        <div class="gifted" id="hby-gf-buy"></div>
-        <div class="after" id="hby-af-buy"><a href="/cart">Go to cart</a></div>
+        <button type="button" class="hbb-atc" id="hbb-atc-buy">Add to Cart</button>
+        <button type="button" class="hbb-buynow" id="hbb-bn-buy">Buy now</button>
+        <div class="hbb-after" id="hbb-af-buy"><a href="/cart">Go to cart</a></div>
+        <div class="hbb-gifted" id="hbb-gf-buy"></div>
+        <p class="hbb-msg" id="hbb-msg-buy" role="status" aria-live="polite"></p><p class="hbb-ship"><b>FREE delivery</b> in 7-10 business days, tracked<br>30-day returns, secure checkout</p><div class="hbb-trust"><div class="hbb-tc">🚚 Free shipping</div><div class="hbb-tc">↩️ 30-day returns</div><div class="hbb-tc">📦 Tracked</div><div class="hbb-tc">🔒 Secure checkout</div></div><img class="hbb-badge" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-small.png?v=1785731571" alt="No.1 seller badge, 21.622 units sold" loading="lazy"></div>
 
-        <div class="ship"><b>FREE delivery</b> in 7-10 business days, tracked<br>30-day returns, secure checkout</div>
-
-        <div class="tr">
-          <div class="trc"><div class="i">🚚</div><div class="t">Free shipping</div></div>
-          <div class="trc"><div class="i">↩️</div><div class="t">30-day returns</div></div>
-          <div class="trc"><div class="i">📦</div><div class="t">Tracked</div></div>
-          <div class="trc"><div class="i">🔒</div><div class="t">Secure checkout</div></div>
-        </div><img class="b1s" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-small.png?v=1785731571" alt="No.1 seller badge, 21.622 units sold" loading="lazy"></div>
     </div>
   </div>
+
 
 </section>
 

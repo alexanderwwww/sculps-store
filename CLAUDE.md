@@ -15,6 +15,15 @@ image before video.
 ## 🏗️ HELIOS STORE — permanent memory (read before touching anything)
 
 ### Hard rules, learned the expensive way
+0. **ROOT CAUSE of every buy-box collapse (found 23 Aug): the theme is a
+   Horizon duplicate, and Horizon's global stylesheet styles generic class
+   names — `.grid` gets flex-wrap/gap utilities, so 50%+50%+leaked-gap
+   overflowed the line and the panel wrapped under the carousel on the store
+   while the local render (no Horizon CSS) looked perfect. RULE: every class
+   and id in every custom section MUST be prefixed (hbb-, hft-, …). Never use
+   .grid, .wrap, .main, .price or any generic name. The buy box now lives in
+   sections/helios-buybox.liquid (type helios-buybox); helios-buy is deleted
+   from the repo and left unused on the theme (API cannot delete theme files).**
 1. **NEVER let the product image take the full row. The bundles live in the
    RIGHT half, beside the image, on desktop — always.** Enforced with INLINE
    `style="flex:0 0 50%;max-width:50%"` on `.gal`/`.panel` and inline
