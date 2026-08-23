@@ -8,11 +8,12 @@
 <section class="helios" id="hrv-{{ sid }}">
 <a id="reviews"></a>
 <style>
-  #hrv-{{ sid }}{background:{{ s.bg }};color:#050505;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding:clamp(46px,6vw,82px) 0;overflow:hidden;}
+  #hrv-{{ sid }}{background:{{ s.bg }};color:#050505;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding:clamp(var(--sp-6,55px),6vw,var(--sp-7,89px)) 0;overflow:hidden;}
   #hrv-{{ sid }} *{box-sizing:border-box;}
   #hrv-{{ sid }} .hd{max-width:1140px;margin:0 auto clamp(26px,4vw,42px);padding:0 22px;text-align:center;}
   #hrv-{{ sid }} .eb{font-size:13px;font-weight:800;letter-spacing:.05em;color:#F5A623;margin-bottom:9px;}
-  #hrv-{{ sid }} h2{font-size:clamp(27px,4.2vw,46px);font-weight:900;letter-spacing:-.025em;line-height:1.05;margin:0 0 22px;text-wrap:balance;}
+  #hrv-{{ sid }} h2{font-size:clamp(var(--fs-lg,25.9px),4.2vw,var(--fs-2xl,41.9px));font-weight:900;
+    letter-spacing:-.025em;line-height:1.05;margin:0 0 var(--sp-4,21px);text-wrap:balance;}
   #hrv-{{ sid }} .sumwrap{display:flex;flex-wrap:wrap;gap:26px;align-items:center;justify-content:center;max-width:660px;margin:0 auto;}
   #hrv-{{ sid }} .big{text-align:center;flex:0 0 auto;}
   #hrv-{{ sid }} .big b{display:block;font-size:52px;font-weight:900;letter-spacing:-.04em;line-height:1;}

@@ -7,7 +7,7 @@
 <style>
   #hbg-{{ sid }}{background:{{ s.bg | default: '#FFFFFF' }};overflow-x:clip;}
   #hbg-{{ sid }} *{box-sizing:border-box;min-width:0;}
-  #hbg-{{ sid }} .wrap{max-width:{{ s.width | default: 1000 }}px;margin:0 auto;padding:clamp(18px,2.6vw,36px) 16px;}
+  #hbg-{{ sid }} .wrap{max-width:{{ s.width | default: 1000 }}px;margin:0 auto;padding:clamp(var(--sp-4,21px),2.6vw,var(--sp-5,34px)) var(--sp-3,13px);}
   #hbg-{{ sid }} img{display:block;width:100%;max-width:100%;height:auto;border-radius:{{ s.radius | default: 12 }}px;}
 </style>
   <div class="wrap">

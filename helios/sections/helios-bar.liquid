@@ -3,10 +3,29 @@
 {%- assign s = section.settings -%}
 <section class="helios" id="hb2-{{ sid }}">
 <style>
+  /* HELIOS proportion system — everything on the page is derived from phi.
+     The bar is the first section on every template, so the tokens are declared
+     here. Every rule that uses one repeats a literal fallback, so deleting the
+     bar degrades the rhythm rather than collapsing the layout.
+
+     Type steps use sqrt(phi) = 1.272 so the scale has usable intermediate
+     sizes; the jump from body to a section heading is a full phi. Spacing is
+     Fibonacci, which converges on phi and lands on whole pixels. */
+  :root{
+    --phi:1.618;
+    --fs-xs:12.6px;   --fs-sm:14.1px;  --fs-base:16px;  --fs-md:20.4px;
+    --fs-lg:25.9px;   --fs-xl:32.9px;  --fs-2xl:41.9px;
+    --sp-1:5px;  --sp-2:8px;   --sp-3:13px;  --sp-4:21px;
+    --sp-5:34px; --sp-6:55px;  --sp-7:89px;
+    --lh-tight:1.236;  /* phi - 0.382 */
+    --lh-body:1.618;
+    --r-sm:8px; --r-md:13px; --r-lg:21px;
+  }
+  .helios{--phi:1.618;}
   #hb2-{{ sid }} .bar{background:{{ s.bg | default: '#0F1111' }};color:{{ s.fg | default: '#FFFFFF' }};
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    display:flex;align-items:center;justify-content:center;gap:8px 12px;flex-wrap:wrap;
-    padding:11px 42px 11px 16px;position:relative;font-size:13px;font-weight:600;line-height:1.35;text-align:center;}
+    display:flex;align-items:center;justify-content:center;gap:var(--sp-2,8px) var(--sp-3,13px);flex-wrap:wrap;
+    padding:var(--sp-3,13px) 42px var(--sp-3,13px) var(--sp-3,13px);position:relative;font-size:var(--fs-sm,14.1px);font-weight:600;line-height:1.35;text-align:center;}
   #hb2-{{ sid }} .bar b{font-weight:800;}
   #hb2-{{ sid }} .cd{display:inline-flex;align-items:center;gap:6px;
     background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);

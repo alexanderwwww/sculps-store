@@ -48,7 +48,7 @@
 {%- endif -%}
 
 {% stylesheet %}
-  .hg { background: var(--hg-page-bg, #fff); padding-block: 22px; }
+  .hg { background: var(--hg-page-bg, #fff); padding-block: var(--sp-4, 21px); }
   .hg__wrap { width: 100%; max-width: var(--hg-w, 1300px); margin-inline: auto; padding-inline: 16px; }
   .hg__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; }
   /* Flex on a percentage basis rather than fr tracks: an ancestor was sizing
@@ -61,7 +61,7 @@
     border-radius: var(--hg-radius, 8px); overflow: hidden; padding: var(--hg-pad-m, 0); }
   .hg__tile img { display: block; width: 100%; aspect-ratio: var(--hg-ratio-m, 1/1); object-fit: cover; }
   @media screen and (min-width: 750px) {
-    .hg { padding-block: 34px; }
+    .hg { padding-block: var(--sp-5, 34px); }
     .hg__grid > * { flex: 0 0 calc((100% - (var(--hg-cols, 2) - 1) * var(--hg-gap, 14px)) / var(--hg-cols, 2)); }
     .hg__tile { padding: var(--hg-pad, 0); }
     .hg__tile img { aspect-ratio: var(--hg-ratio, 1/1); }

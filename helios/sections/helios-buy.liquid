@@ -15,8 +15,8 @@
   #hby-{{ sid }}{background:{{ s.bg | default: '#FFFFFF' }};color:#0F1111;overflow-x:clip;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
   #hby-{{ sid }} *{box-sizing:border-box;min-width:0;}
-  #hby-{{ sid }} .wrap{width:100%;max-width:{{ s.width | default: 1240 }}px;margin:0 auto;
-    padding:clamp(14px,2vw,26px) 16px clamp(24px,3vw,40px);}
+  #hby-{{ sid }} .wrap{width:100%;max-width:{{ s.width | default: 1180 }}px;margin:0 auto;
+    padding:var(--sp-4,21px) var(--sp-3,13px) var(--sp-6,55px);}
   /* Flex with an equal basis, not grid tracks and not a viewport breakpoint.
      The fr tracks were being sized to their content by an ancestor rather than
      stretched, so the gallery collapsed to about a third and the rail took the
@@ -24,16 +24,20 @@
      evenly whenever two fit, and stacks on its own when they do not — no media
      query to get out of step with the real container width. */
   #hby-{{ sid }} .grid{display:flex !important;flex-wrap:wrap;align-items:flex-start;
-    gap:clamp(18px,2.4vw,40px);width:100% !important;}
-  /* Bases are sized so the pair still fits side by side at 900px, the same
-     width where the mobile full-bleed styles below take over, and wrap just
-     under it. The gallery is capped so it cannot grow into an 800px square
-     that shoves the purchase panel off the row. */
-  #hby-{{ sid }} .grid > .gal{flex:1 1 390px;min-width:0;max-width:560px;}
-  #hby-{{ sid }} .grid > .panel{flex:1 1 430px;min-width:0;max-width:100%;}
+    gap:var(--sp-5,34px);width:100% !important;}
+  /* Golden section: the gallery takes phi parts to the panel's one, so the
+     split is 61.8/38.2 rather than an arbitrary pair of pixel bases. Growth
+     from a zero basis is what makes the ratio exact at every width.
+     A pixel cap on the gallery would break the ratio at wide widths, so the
+     frame is a golden rectangle instead: at the full 1180 the gallery is
+     692 wide and 428 tall, which keeps the image calm without capping it.
+     The panel keeps a floor so the bundle rows never crush. */
+  #hby-{{ sid }} .grid > .gal{flex:var(--phi,1.618) 1 0;min-width:0;}
+  #hby-{{ sid }} .grid > .panel{flex:1 1 0;min-width:360px;max-width:100%;}
 
-  #hby-{{ sid }} .main{position:relative;width:100%;aspect-ratio:1/1;background:#fff;
-    border:1px solid #D5D9D9;border-radius:12px;overflow:hidden;cursor:pointer;}
+  /* Golden rectangle, not a square: a 1:1 frame this wide is a very tall image. */
+  #hby-{{ sid }} .main{position:relative;width:100%;aspect-ratio:var(--phi,1.618)/1;background:#fff;
+    border:1px solid #D5D9D9;border-radius:var(--r-md,13px);overflow:hidden;cursor:pointer;}
   #hby-{{ sid }} .main img{width:100%;height:100%;object-fit:cover;display:block;background:#fff;}
   @media(max-width:872px){
     #hby-{{ sid }} .gal{margin:0 -16px;}
@@ -57,13 +61,14 @@
   #hby-{{ sid }} .thumbs button.on{border-color:#0046BE;border-width:2px;}
   #hby-{{ sid }} .thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
 
-  #hby-{{ sid }} h1{font-size:clamp(21px,2.7vw,27px);font-weight:800;line-height:1.24;margin:0 0 8px;letter-spacing:-.02em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-{{ sid }} .rt{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:10px;flex-wrap:wrap;}
+  #hby-{{ sid }} h1{font-size:clamp(var(--fs-md,20.4px),2.7vw,var(--fs-lg,25.9px));font-weight:800;
+    line-height:var(--lh-tight,1.236);margin:0 0 var(--sp-2,8px);letter-spacing:-.02em;overflow-wrap:break-word;color:#0F1111;}
+  #hby-{{ sid }} .rt{display:flex;align-items:center;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);margin-bottom:var(--sp-3,13px);flex-wrap:wrap;}
   #hby-{{ sid }} .rt .s{color:#F5A623;letter-spacing:1px;font-size:15px;}
   #hby-{{ sid }} .rt a{color:#0046BE;text-decoration:none;}
 
   #hby-{{ sid }} .price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:10px;}
-  #hby-{{ sid }} .price b{font-size:clamp(32px,7vw,40px);font-weight:800;letter-spacing:-.03em;line-height:1;color:#0F1111;}
+  #hby-{{ sid }} .price b{font-size:clamp(var(--fs-xl,32.9px),7vw,var(--fs-2xl,41.9px));font-weight:800;letter-spacing:-.03em;line-height:1;color:#0F1111;}
   #hby-{{ sid }} .price s{font-size:16px;color:#565959;}
   #hby-{{ sid }} .price em{font-style:normal;background:#CC0C39;color:#fff;font-size:12px;font-weight:800;
     border-radius:5px;padding:4px 9px;}
@@ -75,26 +80,28 @@
   #hby-{{ sid }} .insta .sp{background:#5A31F4;color:#fff;}
   #hby-{{ sid }} .insta .ap{background:#B2FCE4;color:#0F1111;}
 
-  #hby-{{ sid }} .bl{margin:0 0 18px;padding:0;}
-  #hby-{{ sid }} .bl li{list-style:none;display:flex;gap:9px;font-size:13.5px;line-height:1.45;align-items:flex-start;margin-bottom:7px;}
+  #hby-{{ sid }} .bl{margin:0 0 var(--sp-4,21px);padding:0;}
+  #hby-{{ sid }} .bl li{list-style:none;display:flex;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);
+    line-height:var(--lh-body,1.618);align-items:flex-start;margin-bottom:var(--sp-2,8px);}
   #hby-{{ sid }} .bl li span{overflow-wrap:break-word;}
   #hby-{{ sid }} .bl .i{flex:0 0 17px;width:17px;height:17px;border-radius:50%;background:#067D62;color:#fff;
     font-size:10px;font-weight:900;display:grid;place-items:center;margin-top:1px;}
 
-  #hby-{{ sid }} .frame{border:1px solid #D5D9D9;border-radius:14px;background:#fff;}
+  #hby-{{ sid }} .frame{border:1px solid #D5D9D9;border-radius:var(--r-lg,21px);background:#fff;}
   #hby-{{ sid }} .fhead{background:#0046BE;color:#fff;display:flex;align-items:center;justify-content:space-between;
-    gap:6px 12px;padding:12px 16px;font-size:13.5px;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;
-    border-radius:13px 13px 0 0;}
+    gap:var(--sp-1,5px) var(--sp-3,13px);padding:var(--sp-3,13px) var(--sp-4,21px);font-size:var(--fs-sm,14.1px);font-weight:800;letter-spacing:.02em;flex-wrap:wrap;
+    border-radius:calc(var(--r-lg,21px) - 1px) calc(var(--r-lg,21px) - 1px) 0 0;}
   #hby-{{ sid }} .fhead .pop{color:#FFC531;font-size:12.5px;}
   #hby-{{ sid }} .steps{display:flex;flex-wrap:wrap;gap:6px 16px;padding:11px 16px;background:#F7FAFA;
     border-bottom:1px solid #E7E9E9;font-size:12px;color:#565959;}
   #hby-{{ sid }} .steps b{color:#0F1111;font-weight:800;margin-right:3px;}
-  #hby-{{ sid }} .opts{padding:12px;display:flex;flex-direction:column;gap:10px;}
-  #hby-{{ sid }} .opt{position:relative;display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    border:1px solid #D5D9D9;border-radius:12px;background:#fff;color:#0F1111;padding:12px 10px;cursor:pointer;
+  #hby-{{ sid }} .opts{padding:var(--sp-3,13px);display:flex;flex-direction:column;gap:var(--sp-2,8px);}
+  #hby-{{ sid }} .opt{position:relative;display:flex;align-items:center;gap:var(--sp-3,13px);width:100%;text-align:left;
+    border:1px solid #D5D9D9;border-radius:var(--r-md,13px);background:#fff;color:#0F1111;
+    padding:var(--sp-3,13px);cursor:pointer;
     transition:border-color .12s,box-shadow .12s;overflow:visible;}
   #hby-{{ sid }} .opt:hover{border-color:#8d9698;}
-  #hby-{{ sid }} .opt.on{border-color:#0046BE;border-width:2px;padding:11px 9px;box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
+  #hby-{{ sid }} .opt.on{border-color:#0046BE;border-width:2px;padding:calc(var(--sp-3,13px) - 1px);box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
   #hby-{{ sid }} .opt.hastag{margin-top:8px;}
   #hby-{{ sid }} .tagp{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
     color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
@@ -106,7 +113,7 @@
   #hby-{{ sid }} .oim{flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
   #hby-{{ sid }} .oim img{width:100%;height:100%;object-fit:contain;display:block;}
   #hby-{{ sid }} .oi{flex:1 1 0;min-width:0;}
-  #hby-{{ sid }} .oi .t{display:block;font-size:15px;font-weight:800;line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;color:#0F1111;}
+  #hby-{{ sid }} .oi .t{display:block;font-size:var(--fs-base,16px);font-weight:800;line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;color:#0F1111;}
   #hby-{{ sid }} .oi .d{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
     font-size:12px;color:#565959;margin-top:2px;line-height:1.35;overflow-wrap:break-word;}
   #hby-{{ sid }} .oi .gift{display:inline-block;margin-top:6px;background:#E3F6EC;color:#046B53;border:1px solid #B6E5CE;
@@ -114,15 +121,18 @@
   #hby-{{ sid }} .op{flex:0 0 auto;width:104px;text-align:right;}
   #hby-{{ sid }} .op .sv{display:inline-block;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;
     border-radius:5px;padding:3px 7px;margin-bottom:4px;}
-  #hby-{{ sid }} .op .n{font-size:18px;font-weight:800;letter-spacing:-.02em;display:block;color:#0F1111;}
+  #hby-{{ sid }} .op .n{font-size:var(--fs-md,20.4px);font-weight:800;letter-spacing:-.02em;display:block;color:#0F1111;}
   #hby-{{ sid }} .op .o{font-size:12px;color:#565959;text-decoration:line-through;display:block;margin-top:2px;}
 
   #hby-{{ sid }} .atc{display:block;width:100%;background:#FFE000;color:#1D252C;border:1px solid #EFD200;
-    border-radius:100px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;margin-top:16px;transition:background .15s;}
+    border-radius:100px;padding:var(--fs-base,16px);font-size:var(--fs-base,16px);font-weight:800;
+    cursor:pointer;margin-top:var(--sp-4,21px);transition:background .15s;}
   #hby-{{ sid }} .atc:hover{background:#F2D400;}
   #hby-{{ sid }} .atc.ok{background:#067D62;border-color:#067D62;color:#fff;}
-  #hby-{{ sid }} .xrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px;}
-  #hby-{{ sid }} .xbtn{border-radius:100px;padding:13px 10px;font-size:14.5px;font-weight:800;cursor:pointer;
+  #hby-{{ sid }} .xrow{display:flex;gap:var(--sp-2,8px);margin-top:var(--sp-2,8px);}
+  #hby-{{ sid }} .xrow > *{flex:1 1 0;min-width:0;}
+  #hby-{{ sid }} .xbtn{border-radius:100px;padding:calc(var(--fs-base,16px) / var(--phi,1.618)) var(--sp-3,13px);
+    font-size:var(--fs-sm,14.1px);font-weight:800;cursor:pointer;
     text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
   #hby-{{ sid }} .buynow{background:#0046BE;color:#fff;border:1.5px solid #0046BE;}
   #hby-{{ sid }} .buynow:hover{background:#00379B;}

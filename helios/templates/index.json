@@ -89,7 +89,7 @@
       ],
       "settings": {
         "product": "helios-super-glide-motorized-water-lounger",
-        "width": 1200,
+        "width": 1180,
         "bg": "#ffffff",
         "anchor": "buy",
         "title": "HELIOS SUPERGLIDE 1+1 FREE",
@@ -338,7 +338,35 @@
         "nl_sub": "Enter your email for 10% off, add your phone and get 15%.",
         "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
         "copyright": "© 2026 HELIOS"
-      }
+      },
+      "blocks": {
+        "m1": {
+          "type": "menu",
+          "settings": {
+            "heading": "Shop",
+            "links": "Super Glide | /products/helios-super-glide-motorized-water-lounger\nReviews | /#reviews\nQuestions | /#faq"
+          }
+        },
+        "m2": {
+          "type": "menu",
+          "settings": {
+            "heading": "Help",
+            "links": "Track your order | /pages/track\nContact us | /pages/contact\nShipping policy | /pages/shipping-policy"
+          }
+        },
+        "m3": {
+          "type": "menu",
+          "settings": {
+            "heading": "Legal",
+            "links": "Refund policy | /pages/refund-policy\nTerms of service | /pages/terms-of-service\nPrivacy policy | /policies/privacy-policy"
+          }
+        }
+      },
+      "block_order": [
+        "m1",
+        "m2",
+        "m3"
+      ]
     },
     "sticky": {
       "type": "helios-sticky-atc",
