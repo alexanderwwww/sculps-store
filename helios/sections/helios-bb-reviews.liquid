@@ -1,0 +1,189 @@
+{%- comment -%}
+  HELIOS — customer reviews, Best Buy layout.
+
+  Summary rail on the left (average, star distribution bars, count), review
+  wall on the right. Two marquee rows drifting in opposite directions, paused
+  on hover and disabled entirely under prefers-reduced-motion; the row content
+  is duplicated so the -50% translate loops seamlessly.
+
+  Deliberately carries NO invented engagement. The previous carousel generated
+  like counts, timestamps and reaction pills in Liquid, seeded from the
+  reviewer's name — those numbers were fabricated even when the review text
+  was real. Everything here comes from a block field or is not shown.
+
+  With no review blocks the section renders an honest empty state instead of
+  placeholder stars.
+{%- endcomment -%}
+{%- liquid
+  assign s = section.settings
+  assign sid = section.id
+  assign n = 0
+  assign total = 0
+  assign c5 = 0
+  assign c4 = 0
+  assign c3 = 0
+  assign c2 = 0
+  assign c1 = 0
+  for b in section.blocks
+    if b.settings.text != blank
+      assign n = n | plus: 1
+      assign r = b.settings.rating | plus: 0
+      assign total = total | plus: r
+      case r
+        when 5
+          assign c5 = c5 | plus: 1
+        when 4
+          assign c4 = c4 | plus: 1
+        when 3
+          assign c3 = c3 | plus: 1
+        when 2
+          assign c2 = c2 | plus: 1
+        else
+          assign c1 = c1 | plus: 1
+      endcase
+    endif
+  endfor
+  assign avg = 0
+  if n > 0
+    assign avg = total | times: 10 | divided_by: n
+  endif
+-%}
+<style>
+  #hbr-{{ sid }}{background:var(--hb-bg,#fff);padding-block:34px;overflow:hidden;}
+  #hbr-{{ sid }} .h{margin-bottom:18px;}
+  #hbr-{{ sid }} .lay{display:grid;gap:22px;}
+
+  /* summary rail */
+  #hbr-{{ sid }} .sum{border:1px solid var(--hb-line,#C5CBD5);border-radius:6px;padding:18px;background:#fff;}
+  #hbr-{{ sid }} .big{display:flex;align-items:baseline;gap:9px;}
+  #hbr-{{ sid }} .big b{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1;}
+  #hbr-{{ sid }} .big span{font-size:13px;color:var(--hb-muted,#5F6871);}
+  #hbr-{{ sid }} .stars{color:#F5A623;font-size:15px;letter-spacing:2px;margin-top:6px;}
+  #hbr-{{ sid }} .cnt{font-size:13px;color:var(--hb-muted,#5F6871);margin-top:4px;}
+  #hbr-{{ sid }} .dist{margin-top:16px;display:grid;gap:6px;}
+  #hbr-{{ sid }} .dr{display:grid;grid-template-columns:34px 1fr 26px;align-items:center;gap:8px;font-size:12px;color:var(--hb-muted,#5F6871);}
+  #hbr-{{ sid }} .bar{height:8px;border-radius:4px;background:var(--hb-soft,#F0F2F4);overflow:hidden;}
+  #hbr-{{ sid }} .bar i{display:block;height:100%;background:var(--hb-blue,#0046BE);border-radius:4px;}
+
+  /* wall */
+  #hbr-{{ sid }} .wall{overflow:hidden;}
+  #hbr-{{ sid }} .row{display:flex;width:max-content;gap:12px;padding-block:6px;will-change:transform;}
+  #hbr-{{ sid }} .row.a{animation:hbrL-{{ sid }} {{ s.speed | default: 64 }}s linear infinite;}
+  #hbr-{{ sid }} .row.b{animation:hbrR-{{ sid }} {{ s.speed | default: 64 }}s linear infinite;}
+  #hbr-{{ sid }} .wall:hover .row{animation-play-state:paused;}
+  @keyframes hbrL-{{ sid }}{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes hbrR-{{ sid }}{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+  @media(prefers-reduced-motion:reduce){
+    #hbr-{{ sid }} .row{animation:none;}
+    #hbr-{{ sid }} .wall{overflow-x:auto;}
+  }
+  #hbr-{{ sid }} .c{flex:0 0 auto;width:min(320px,78vw);border:1px solid var(--hb-line-soft,#E3E7EB);
+    border-radius:6px;padding:14px;background:#fff;}
+  #hbr-{{ sid }} .c .cs{color:#F5A623;font-size:12px;letter-spacing:1.5px;}
+  #hbr-{{ sid }} .c .ct{font-size:14px;line-height:1.45;margin-top:7px;}
+  #hbr-{{ sid }} .c img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:5px;margin-top:10px;
+    background:var(--hb-soft,#F0F2F4);}
+  #hbr-{{ sid }} .c .cw{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12px;
+    color:var(--hb-muted,#5F6871);}
+  #hbr-{{ sid }} .c .cw b{color:var(--hb-ink,#1D252C);font-weight:700;}
+  #hbr-{{ sid }} .vb{display:inline-flex;align-items:center;gap:4px;color:var(--hb-green,#067D62);font-weight:700;}
+  #hbr-{{ sid }} .vb svg{width:12px;height:12px;}
+
+  #hbr-{{ sid }} .empty{border:1px dashed var(--hb-line,#C5CBD5);border-radius:6px;padding:30px 20px;
+    text-align:center;background:#fff;}
+  #hbr-{{ sid }} .empty b{display:block;font-size:15px;font-weight:700;}
+  #hbr-{{ sid }} .empty p{margin-top:6px;font-size:13.5px;color:var(--hb-muted,#5F6871);line-height:1.55;
+    max-width:46ch;margin-inline:auto;}
+  @media(min-width:900px){ #hbr-{{ sid }} .lay{grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start;} }
+</style>
+
+<div class="hb" id="hbr-{{ sid }}">
+  <div class="hb-wrap">
+    {%- if s.heading != blank -%}<h2 class="hb-h2 h">{{ s.heading }}</h2>{%- endif -%}
+
+    {%- if n > 0 -%}
+      <div class="lay">
+        <div class="sum">
+          <div class="big"><b>{{ avg | divided_by: 10 }}.{{ avg | modulo: 10 }}</b><span>out of 5</span></div>
+          <div class="stars" aria-hidden="true">★★★★★</div>
+          <p class="cnt">Based on {{ n }} review{% if n != 1 %}s{% endif %}</p>
+          <div class="dist">
+            {%- assign counts = c5 | append: ',' | append: c4 | append: ',' | append: c3 | append: ',' | append: c2 | append: ',' | append: c1 | split: ',' -%}
+            {%- for cc in counts -%}
+              {%- assign stars = 5 | minus: forloop.index0 -%}
+              {%- assign pct = cc | times: 100 | divided_by: n -%}
+              <div class="dr">
+                <span>{{ stars }} star</span>
+                <span class="bar"><i style="width:{{ pct }}%"></i></span>
+                <span>{{ cc }}</span>
+              </div>
+            {%- endfor -%}
+          </div>
+        </div>
+
+        <div class="wall">
+          {%- capture cards -%}
+            {%- for b in section.blocks -%}
+              {%- if b.settings.text != blank -%}
+                <article class="c" {{ b.shopify_attributes }}>
+                  <div class="cs" aria-label="{{ b.settings.rating }} out of 5">
+                    {%- assign r = b.settings.rating | plus: 0 -%}
+                    {%- for i in (1..5) -%}{% if i <= r %}★{% else %}☆{% endif %}{%- endfor -%}
+                  </div>
+                  <p class="ct">{{ b.settings.text }}</p>
+                  {%- if b.settings.image != blank -%}
+                    <img src="{{ b.settings.image | image_url: width: 700 }}"
+                         alt="{{ b.settings.alt | default: 'Customer photo' | escape }}" loading="lazy">
+                  {%- endif -%}
+                  <div class="cw">
+                    <b>{{ b.settings.name }}</b>
+                    {%- if b.settings.location != blank -%}<span>· {{ b.settings.location }}</span>{%- endif -%}
+                    {%- if b.settings.date != blank -%}<span>· {{ b.settings.date }}</span>{%- endif -%}
+                    {%- if b.settings.verified -%}
+                      <span class="vb">
+                        <svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Verified purchase
+                      </span>
+                    {%- endif -%}
+                  </div>
+                </article>
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endcapture -%}
+          <div class="row a">{{ cards }}{{ cards }}</div>
+          {%- if n > 3 -%}<div class="row b">{{ cards }}{{ cards }}</div>{%- endif -%}
+        </div>
+      </div>
+    {%- else -%}
+      <div class="empty">
+        <b>{{ s.empty_title | default: 'No reviews yet.' }}</b>
+        <p>{{ s.empty_text }}</p>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "HELIOS reviews",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Customer reviews" },
+    { "type": "range", "id": "speed", "label": "Scroll time", "min": 30, "max": 120, "step": 5, "unit": "s", "default": 64 },
+    { "type": "header", "content": "Empty state" },
+    { "type": "text", "id": "empty_title", "label": "Title", "default": "No reviews yet." },
+    { "type": "textarea", "id": "empty_text", "label": "Text", "info": "Shown until real reviews are added. Do not replace this with invented ones — the average and the star bars are computed from the blocks below, so fake blocks produce a fake rating." }
+  ],
+  "blocks": [{ "type": "review", "name": "Review", "limit": 24, "settings": [
+    { "type": "text", "id": "name", "label": "Name" },
+    { "type": "text", "id": "location", "label": "Location" },
+    { "type": "text", "id": "date", "label": "Date", "info": "Free text, e.g. \"July 2026\". Leave empty to hide." },
+    { "type": "range", "id": "rating", "label": "Rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+    { "type": "textarea", "id": "text", "label": "Review", "info": "The customer's own words. Never write these yourself." },
+    { "type": "image_picker", "id": "image", "label": "Customer photo" },
+    { "type": "text", "id": "alt", "label": "Photo alt text" },
+    { "type": "checkbox", "id": "verified", "label": "Verified purchase", "info": "Only tick this for a review tied to a real order.", "default": false }
+  ]}],
+  "presets": [{ "name": "HELIOS reviews" }]
+}
+{% endschema %}

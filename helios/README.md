@@ -16,10 +16,26 @@ Page order:
 | 5 | `helios-bb-gallery` | lifestyle row — swipe on mobile, 3-up on desktop |
 | 6 | `helios-bb-specs` | dense two-column spec table in labelled groups |
 | 7 | `helios-bb-compare` | Super Glide vs pool float vs kayak |
-| 8 | `helios-bb-faq` | `<details>` accordion, works with JS off |
-| 9 | `helios-bb-guarantee` | dark closing band + CTA |
-| 10 | `helios-bb-footer` | policy links pulled from the store's real policies |
-| 11 | `helios-bb-sticky` | sticky buy bar — mirrors the selected pack via the `helios:variant` event |
+| 8 | `helios-bb-ugc` | UGC wall — each card takes an uploaded video, an .mp4 URL, a TikTok/IG embed, or a still. Autoplay muted, tap to unmute, only plays what's on screen |
+| 9 | `helios-bb-reviews` | review wall — summary rail with star-distribution bars + two marquee rows drifting opposite ways, customer photos, pause on hover |
+| 10 | `helios-bb-faq` | `<details>` accordion + optional explainer video, works with JS off |
+| 11 | `helios-bb-guarantee` | dark closing band + CTA |
+| 12 | `helios-bb-footer` | policy links pulled from the store's real policies |
+| 13 | `helios-bb-sticky` | sticky buy bar — mirrors the selected pack via the `helios:variant` event |
+
+### The hero image still carries the old claims
+The product hero (`#1 SELLING MOTORIZED WATER LOUNGER`, `21,622+ UNITS SOLD`,
+`21,622+ HAPPY CUSTOMERS`) has those claims **burned into the pixels**. Removing
+them from the Liquid did not remove them from that image. Replace or re-render
+the hero before this page goes anywhere — otherwise the claim is back, in
+position one, as the first thing anyone sees.
+
+### Reviews and UGC ship empty, on purpose
+`helios-bb-reviews` computes the average and the star bars from its blocks, so
+adding invented reviews produces an invented rating. It renders an honest empty
+state until real ones exist. The old carousel went further and *generated* like
+counts, timestamps and reaction pills in Liquid seeded from the reviewer's name
+— that is gone and must not come back.
 
 ### Before this can take an order
 The pack blocks in `helios-bb-pdp` have **empty `variant_id` fields**. Fill each

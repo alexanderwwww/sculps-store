@@ -181,7 +181,7 @@
           "settings": {
             "icon": "motor",
             "title": "Twin electric motors",
-            "text": "Joystick steering — forward, reverse and spin. No paddling."
+            "text": "360° joystick steering — forward, reverse and spin. No paddling."
           }
         },
         "h2": {
@@ -196,7 +196,7 @@
           "type": "item",
           "settings": {
             "icon": "weight",
-            "title": "Holds 250–300 lb",
+            "title": "Holds up to 300 lb",
             "text": "Heavy-duty PVC with a padded headrest and two cup holders."
           }
         },
@@ -205,7 +205,7 @@
           "settings": {
             "icon": "setup",
             "title": "Ready in 5 minutes",
-            "text": "Inflation nozzle included. No separate pump to buy."
+            "text": "Quick-inflate valve and nozzle included. No separate pump to buy."
           }
         }
       },
@@ -276,7 +276,7 @@
           "type": "spec",
           "settings": {
             "label": "Controls",
-            "value": "Joystick — forward, reverse, spin"
+            "value": "360° joystick — forward, reverse, spin"
           }
         },
         "s3": {
@@ -310,7 +310,7 @@
           "type": "spec",
           "settings": {
             "label": "Weight capacity",
-            "value": "250–300 lb"
+            "value": "Up to 300 lb"
           }
         },
         "s7": {
@@ -324,7 +324,7 @@
           "type": "spec",
           "settings": {
             "label": "Setup time",
-            "value": "About 5 minutes"
+            "value": "About 5 minutes (quick-inflate valve)"
           }
         },
         "gp3": {
@@ -408,7 +408,7 @@
           "type": "row",
           "settings": {
             "label": "Steering control",
-            "us": "Joystick",
+            "us": "360° joystick",
             "a": "None",
             "b": "Paddle"
           }
@@ -494,7 +494,7 @@
           "type": "qa",
           "settings": {
             "q": "What weight can it hold?",
-            "a": "<p>250–300 lb. Above that the lounger still floats but the motors lose noticeable push.</p>"
+            "a": "<p>Up to 300 lb. Above that the lounger still floats but the motors lose noticeable push.</p>"
           }
         },
         "q5": {
@@ -529,7 +529,9 @@
         "q7"
       ],
       "settings": {
-        "heading": "Questions"
+        "heading": "Questions",
+        "video_url": "",
+        "poster": ""
       }
     },
     "guarantee": {
@@ -610,6 +612,59 @@
         "note": "2 Super Glides",
         "cta_text": "Add to Cart"
       }
+    },
+    "reviews": {
+      "type": "helios-bb-reviews",
+      "blocks": {},
+      "block_order": [],
+      "settings": {
+        "heading": "Customer reviews",
+        "speed": 64,
+        "empty_title": "No reviews yet.",
+        "empty_text": "We would rather show you nothing than make some up. Every review here will come from a real order, with the buyer's own words and their own photo."
+      }
+    },
+    "ugc": {
+      "type": "helios-bb-ugc",
+      "blocks": {
+        "c1": {
+          "type": "clip",
+          "settings": {
+            "video_url": "",
+            "embed": "",
+            "caption": "",
+            "handle": ""
+          }
+        },
+        "c2": {
+          "type": "clip",
+          "settings": {
+            "video_url": "",
+            "embed": "",
+            "caption": "",
+            "handle": ""
+          }
+        },
+        "c3": {
+          "type": "clip",
+          "settings": {
+            "video_url": "",
+            "embed": "",
+            "caption": "",
+            "handle": ""
+          }
+        }
+      },
+      "block_order": [
+        "c1",
+        "c2",
+        "c3"
+      ],
+      "settings": {
+        "eyebrow": "Seen on your feed",
+        "heading": "Shot on a phone, not in a studio.",
+        "empty_text": "Upload a clip, paste a TikTok or Instagram embed, or drop in an .mp4 URL — each card takes any one of them."
+      }
     }
   },
   "order": [
@@ -620,6 +675,8 @@
     "gallery",
     "specs",
     "compare",
+    "ugc",
+    "reviews",
     "faq",
     "guarantee",
     "footer",
