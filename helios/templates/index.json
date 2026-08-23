@@ -46,9 +46,9 @@
             "tag_bg": "#39FF14",
             "gift": "",
             "gift_variant_id": "",
-            "save": "SAVE $259.99",
-            "price": "$259.99",
-            "compare": "$519.98"
+            "save": "SAVE $199.99",
+            "price": "$199.99",
+            "compare": "$399.98"
           }
         },
         "o2": {
@@ -61,9 +61,9 @@
             "tag_bg": "#0f1111",
             "gift": "",
             "gift_variant_id": "",
-            "save": "SAVE $429.98",
+            "save": "SAVE $249.98",
             "price": "$349.99",
-            "compare": "$779.97"
+            "compare": "$599.97"
           }
         },
         "o3": {
@@ -76,9 +76,9 @@
             "tag_bg": "#0f1111",
             "gift": "",
             "gift_variant_id": "",
-            "save": "SAVE $579.97",
+            "save": "SAVE $339.97",
             "price": "$459.99",
-            "compare": "$1,039.96"
+            "compare": "$799.96"
           }
         }
       },
@@ -96,9 +96,9 @@
         "rating": "4.8",
         "review_count": "3,912",
         "reviews_anchor": "#reviews",
-        "big_price": "$259.99",
-        "big_compare": "$519.98",
-        "big_badge": "SAVE $259.99",
+        "big_price": "$199.99",
+        "big_compare": "$399.98",
+        "big_badge": "SAVE $199.99",
         "big_note": "Two Super Glides for the price of one",
         "b1": "Twin motors move you. No paddling, no kicking, no effort",
         "b2": "Holds 250-300 lb, padded headrest, dual cup holders",
@@ -118,7 +118,8 @@
         "t4": "Secure checkout",
         "badge_url": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-small.png?v=1785731571",
         "badge_alt": "No.1 seller badge, 21.622 units sold",
-        "badge_w": 180
+        "badge_w": 180,
+        "finance": ""
       }
     },
     "reviewcarousel": {
@@ -446,7 +447,8 @@
         "featured_product": "helios-super-glide-motorized-water-lounger",
         "label": "Super Glide 1+1 FREE",
         "cta_text": "Add to Cart",
-        "scroll_trigger": 640
+        "scroll_trigger": 640,
+        "price": "$199.99"
       }
     }
   },
