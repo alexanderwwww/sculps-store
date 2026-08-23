@@ -10,6 +10,8 @@
 
 /* ---- helios-bb-highlights ---- */
 
+/* ---- helios-bb-features ---- */
+
 /* ---- helios-bb-gallery ---- */
 
 /* ---- helios-bb-specs ---- */
@@ -31,7 +33,7 @@
 </head><body>
 <div class='pv-bar'><b>HELIOS recovered theme — static preview</b><a href='#pg0'>Homepage</a></div>
 <div class='pv-note'>Static render of the recovered Liquid with your real saved settings. Product data, cart and JS are stubbed, so prices/variants show as placeholders and buttons do nothing. Images load from the old store's CDN and may not resolve.</div>
-<h2 id='pg0' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Homepage — 13 sections</h2>
+<h2 id='pg0' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Homepage — 14 sections</h2>
 
 <!-- ===== utility :: helios-bb-utility ===== -->
 <style>
@@ -275,6 +277,103 @@
   <div class="hb-wrap"><h2 class="hb-h2 hbhl__h">At a glance</h2><div class="hbhl__g"><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><b>Twin electric motors</b><span>360° joystick steering — forward, reverse and spin. No paddling.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="15" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M21 10.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="5.5" y="9.5" width="8" height="5" rx="1" fill="currentColor"/></svg><b>3–4 hours per charge</b><span>Rechargeable battery and charger included in the box.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1.6 12H6.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg><b>Holds up to 300 lb</b><span>Heavy-duty PVC with a padded headrest and two cup holders.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3.2 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ready in 5 minutes</b><span>Quick-inflate valve and nozzle included. No separate pump to buy.</span></div></div>
   </div>
 </div>
+
+<!-- ===== features :: helios-bb-features ===== -->
+<style>
+  #hbfe-features{background:var(--hb-bg,#fff);padding-block:34px;}
+  #hbfe-features .hd{margin-bottom:18px;}
+  #hbfe-features .e{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--hb-blue,#0046BE);}
+  #hbfe-features .sub{margin-top:8px;max-width:62ch;}
+  #hbfe-features .stage{position:relative;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:8px;
+    overflow:hidden;background:var(--hb-soft,#F0F2F4);}
+  #hbfe-features .stage img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block;}
+  #hbfe-features .pin{display:none;}
+  #hbfe-features .list{display:grid;gap:10px;margin-top:14px;}
+  #hbfe-features .li{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--hb-line-soft,#E3E7EB);
+    border-radius:6px;padding:12px;background:#fff;}
+  #hbfe-features .num{flex:none;width:22px;height:22px;border-radius:50%;background:var(--hb-blue,#0046BE);
+    color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;margin-top:1px;}
+  #hbfe-features .li b{display:block;font-size:14px;font-weight:700;line-height:1.25;}
+  #hbfe-features .li span{display:block;font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:3px;line-height:1.45;}
+
+  /* strip along the bottom, like the infographic's icon row */
+  #hbfe-features .strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;
+    background:var(--hb-line-soft,#E3E7EB);border:1px solid var(--hb-line-soft,#E3E7EB);
+    border-radius:6px;overflow:hidden;margin-top:16px;}
+  #hbfe-features .sc{background:#fff;padding:14px 12px;text-align:center;}
+  #hbfe-features .sc b{display:block;font-size:12.5px;font-weight:700;line-height:1.3;}
+  #hbfe-features .sc span{display:block;font-size:11.5px;color:var(--hb-muted,#5F6871);margin-top:3px;}
+
+  @media(min-width:900px){
+    #hbfe-features .lay{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:34px;align-items:start;}
+    #hbfe-features .list{margin-top:0;}
+    #hbfe-features .strip{grid-template-columns:repeat(5,minmax(0,1fr));}
+    /* pins track the image because they are positioned in percentages */
+    #hbfe-features .pin{display:block;position:absolute;transform:translate(-50%,-50%);z-index:2;}
+    #hbfe-features .dot{width:26px;height:26px;border-radius:50%;background:var(--hb-blue,#0046BE);
+      color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;
+      box-shadow:0 0 0 4px rgba(0,70,190,.18);cursor:default;}
+    #hbfe-features .lab{position:absolute;left:34px;top:50%;transform:translateY(-50%);
+      background:#fff;border:1px solid var(--hb-line,#C5CBD5);border-radius:5px;padding:7px 10px;
+      white-space:nowrap;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+    #hbfe-features .pin.l .lab{left:auto;right:34px;}
+  }
+</style>
+
+<div class="hb" id="hbfe-features">
+  <div class="hb-wrap">
+    <div class="hd"><p class="e">Feature map</p><h2 class="hb-h2" style="margin-top:7px">Every part, explained</h2><p class="hb-sub sub">The callouts below are live text, not baked into the image — so they stay sharp, resize on mobile and can be edited without re-rendering a JPEG.</p></div>
+
+    <div class="lay">
+      <div class="stage"><img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543"
+               srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 700w, https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 1400w"
+               sizes="(min-width:900px) 700px, 100vw"
+               alt="HELIOS Super Glide with the headrest, joystick, cup holders and twin motors labelled" loading="lazy"><div class="pin"
+                 style="left:22%;top:22%"
+                 >
+              <span class="dot">1</span>
+              <span class="lab">Padded headrest</span>
+            </div><div class="pin"
+                 style="left:58%;top:30%"
+                 >
+              <span class="dot">2</span>
+              <span class="lab">360° joystick</span>
+            </div><div class="pin l"
+                 style="left:38%;top:46%"
+                 >
+              <span class="dot">3</span>
+              <span class="lab">Dual cup holders</span>
+            </div><div class="pin l"
+                 style="left:26%;top:72%"
+                 >
+              <span class="dot">4</span>
+              <span class="lab">Twin thruster motors</span>
+            </div></div><div class="list"><div class="li">
+                <span class="num">1</span>
+                <span>
+                  <b>Padded headrest</b><span>Inflatable backrest and headrest — sit up or lie back.</span></span>
+              </div><div class="li">
+                <span class="num">2</span>
+                <span>
+                  <b>360° joystick</b><span>Forward, reverse and spin from one hand. No paddling.</span></span>
+              </div><div class="li">
+                <span class="num">3</span>
+                <span>
+                  <b>Dual cup holders</b><span>Two moulded holders either side of the seat.</span></span>
+              </div><div class="li">
+                <span class="num">4</span>
+                <span>
+                  <b>Twin thruster motors</b><span>Two electric thrusters mounted at the rear.</span></span>
+              </div></div></div><div class="strip"><div class="sc" >
+              <b>Ready in 5 minutes</b><span>Quick-inflate valve</span></div><div class="sc" >
+              <b>Holds up to 300 lb</b><span>Heavy-duty PVC</span></div><div class="sc" >
+              <b>3–4 hours per charge</b><span>Battery + charger included</span></div><div class="sc" >
+              <b>No assembly</b><span>Inflate and go</span></div><div class="sc" >
+              <b>Packs down small</b><span>Deflates into the bag</span></div></div></div>
+</div>
+
+
 
 <!-- ===== gallery :: helios-bb-gallery ===== -->
 <style>

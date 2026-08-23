@@ -1,0 +1,163 @@
+{%- comment -%}
+  HELIOS — annotated feature map.
+
+  Replaces the baked-text infographic. Same idea — product shot with callouts
+  pointing at the headrest, joystick, cup holders and motors — but built as
+  real HTML: pins are percentage-positioned so they track the image at any
+  width, and on narrow screens they collapse to a numbered list instead of
+  overlapping the product.
+
+  Text lives in block fields, so it can be edited, translated and read by
+  search engines. A flattened JPEG can do none of that, and any claim baked
+  into one cannot be removed without re-rendering the file.
+{%- endcomment -%}
+{%- liquid
+  assign s = section.settings
+  assign sid = section.id
+  assign pins = 0
+  for b in section.blocks
+    if b.type == 'pin'
+      assign pins = pins | plus: 1
+    endif
+  endfor
+-%}
+<style>
+  #hbfe-{{ sid }}{background:var(--hb-bg,#fff);padding-block:34px;}
+  #hbfe-{{ sid }} .hd{margin-bottom:18px;}
+  #hbfe-{{ sid }} .e{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--hb-blue,#0046BE);}
+  #hbfe-{{ sid }} .sub{margin-top:8px;max-width:62ch;}
+  #hbfe-{{ sid }} .stage{position:relative;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:8px;
+    overflow:hidden;background:var(--hb-soft,#F0F2F4);}
+  #hbfe-{{ sid }} .stage img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block;}
+  #hbfe-{{ sid }} .pin{display:none;}
+  #hbfe-{{ sid }} .list{display:grid;gap:10px;margin-top:14px;}
+  #hbfe-{{ sid }} .li{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--hb-line-soft,#E3E7EB);
+    border-radius:6px;padding:12px;background:#fff;}
+  #hbfe-{{ sid }} .num{flex:none;width:22px;height:22px;border-radius:50%;background:var(--hb-blue,#0046BE);
+    color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;margin-top:1px;}
+  #hbfe-{{ sid }} .li b{display:block;font-size:14px;font-weight:700;line-height:1.25;}
+  #hbfe-{{ sid }} .li span{display:block;font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:3px;line-height:1.45;}
+
+  /* strip along the bottom, like the infographic's icon row */
+  #hbfe-{{ sid }} .strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;
+    background:var(--hb-line-soft,#E3E7EB);border:1px solid var(--hb-line-soft,#E3E7EB);
+    border-radius:6px;overflow:hidden;margin-top:16px;}
+  #hbfe-{{ sid }} .sc{background:#fff;padding:14px 12px;text-align:center;}
+  #hbfe-{{ sid }} .sc b{display:block;font-size:12.5px;font-weight:700;line-height:1.3;}
+  #hbfe-{{ sid }} .sc span{display:block;font-size:11.5px;color:var(--hb-muted,#5F6871);margin-top:3px;}
+
+  @media(min-width:900px){
+    #hbfe-{{ sid }} .lay{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:34px;align-items:start;}
+    #hbfe-{{ sid }} .list{margin-top:0;}
+    #hbfe-{{ sid }} .strip{grid-template-columns:repeat(5,minmax(0,1fr));}
+    /* pins track the image because they are positioned in percentages */
+    #hbfe-{{ sid }} .pin{display:block;position:absolute;transform:translate(-50%,-50%);z-index:2;}
+    #hbfe-{{ sid }} .dot{width:26px;height:26px;border-radius:50%;background:var(--hb-blue,#0046BE);
+      color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;
+      box-shadow:0 0 0 4px rgba(0,70,190,.18);cursor:default;}
+    #hbfe-{{ sid }} .lab{position:absolute;left:34px;top:50%;transform:translateY(-50%);
+      background:#fff;border:1px solid var(--hb-line,#C5CBD5);border-radius:5px;padding:7px 10px;
+      white-space:nowrap;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+    #hbfe-{{ sid }} .pin.l .lab{left:auto;right:34px;}
+  }
+</style>
+
+<div class="hb" id="hbfe-{{ sid }}">
+  <div class="hb-wrap">
+    <div class="hd">
+      {%- if s.eyebrow != blank -%}<p class="e">{{ s.eyebrow }}</p>{%- endif -%}
+      {%- if s.heading != blank -%}<h2 class="hb-h2" style="margin-top:7px">{{ s.heading }}</h2>{%- endif -%}
+      {%- if s.sub != blank -%}<p class="hb-sub sub">{{ s.sub }}</p>{%- endif -%}
+    </div>
+
+    <div class="lay">
+      <div class="stage">
+        {%- if s.image != blank -%}
+          <img src="{{ s.image | image_url: width: 1400 }}"
+               srcset="{{ s.image | image_url: width: 700 }} 700w, {{ s.image | image_url: width: 1400 }} 1400w"
+               sizes="(min-width:900px) 700px, 100vw"
+               alt="{{ s.image_alt | escape }}" loading="lazy">
+        {%- endif -%}
+        {%- assign i = 0 -%}
+        {%- for b in section.blocks -%}
+          {%- if b.type == 'pin' -%}
+            {%- assign i = i | plus: 1 -%}
+            <div class="pin{% if b.settings.side == 'left' %} l{% endif %}"
+                 style="left:{{ b.settings.x | default: 50 }}%;top:{{ b.settings.y | default: 50 }}%"
+                 {{ b.shopify_attributes }}>
+              <span class="dot">{{ i }}</span>
+              <span class="lab">{{ b.settings.title }}</span>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+
+      {%- if pins > 0 -%}
+        <div class="list">
+          {%- assign j = 0 -%}
+          {%- for b in section.blocks -%}
+            {%- if b.type == 'pin' -%}
+              {%- assign j = j | plus: 1 -%}
+              <div class="li">
+                <span class="num">{{ j }}</span>
+                <span>
+                  <b>{{ b.settings.title }}</b>
+                  {%- if b.settings.text != blank -%}<span>{{ b.settings.text }}</span>{%- endif -%}
+                </span>
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- assign strip = 0 -%}
+    {%- for b in section.blocks -%}{%- if b.type == 'chip' -%}{%- assign strip = strip | plus: 1 -%}{%- endif -%}{%- endfor -%}
+    {%- if strip > 0 -%}
+      <div class="strip">
+        {%- for b in section.blocks -%}
+          {%- if b.type == 'chip' -%}
+            <div class="sc" {{ b.shopify_attributes }}>
+              <b>{{ b.settings.title }}</b>
+              {%- if b.settings.text != blank -%}<span>{{ b.settings.text }}</span>{%- endif -%}
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "HELIOS feature map",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Every part, explained" },
+    { "type": "textarea", "id": "sub", "label": "Sub-heading" },
+    { "type": "image_picker", "id": "image", "label": "Product image", "info": "Use a clean product shot with no text baked in — the callouts are added here." },
+    { "type": "text", "id": "image_alt", "label": "Image alt text" }
+  ],
+  "blocks": [
+    { "type": "pin", "name": "Callout", "limit": 8, "settings": [
+      { "type": "text", "id": "title", "label": "Title" },
+      { "type": "text", "id": "text", "label": "Text" },
+      { "type": "range", "id": "x", "label": "Position across", "min": 0, "max": 100, "step": 1, "unit": "%", "default": 50 },
+      { "type": "range", "id": "y", "label": "Position down", "min": 0, "max": 100, "step": 1, "unit": "%", "default": 50 },
+      { "type": "select", "id": "side", "label": "Label side", "options": [
+        { "value": "right", "label": "Right" }, { "value": "left", "label": "Left" }
+      ], "default": "right" }
+    ]},
+    { "type": "chip", "name": "Bottom strip item", "limit": 6, "settings": [
+      { "type": "text", "id": "title", "label": "Title" },
+      { "type": "text", "id": "text", "label": "Text" }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS feature map", "blocks": [
+    { "type": "pin" }, { "type": "pin" }, { "type": "pin" }, { "type": "pin" },
+    { "type": "chip" }, { "type": "chip" }, { "type": "chip" }
+  ]}]
+}
+{% endschema %}

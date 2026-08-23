@@ -665,6 +665,104 @@
         "heading": "Shot on a phone, not in a studio.",
         "empty_text": "Upload a clip, paste a TikTok or Instagram embed, or drop in an .mp4 URL — each card takes any one of them."
       }
+    },
+    "features": {
+      "type": "helios-bb-features",
+      "blocks": {
+        "p1": {
+          "type": "pin",
+          "settings": {
+            "title": "Padded headrest",
+            "text": "Inflatable backrest and headrest — sit up or lie back.",
+            "x": 22,
+            "y": 22,
+            "side": "right"
+          }
+        },
+        "p2": {
+          "type": "pin",
+          "settings": {
+            "title": "360° joystick",
+            "text": "Forward, reverse and spin from one hand. No paddling.",
+            "x": 58,
+            "y": 30,
+            "side": "right"
+          }
+        },
+        "p3": {
+          "type": "pin",
+          "settings": {
+            "title": "Dual cup holders",
+            "text": "Two moulded holders either side of the seat.",
+            "x": 38,
+            "y": 46,
+            "side": "left"
+          }
+        },
+        "p4": {
+          "type": "pin",
+          "settings": {
+            "title": "Twin thruster motors",
+            "text": "Two electric thrusters mounted at the rear.",
+            "x": 26,
+            "y": 72,
+            "side": "left"
+          }
+        },
+        "c1": {
+          "type": "chip",
+          "settings": {
+            "title": "Ready in 5 minutes",
+            "text": "Quick-inflate valve"
+          }
+        },
+        "c2": {
+          "type": "chip",
+          "settings": {
+            "title": "Holds up to 300 lb",
+            "text": "Heavy-duty PVC"
+          }
+        },
+        "c3": {
+          "type": "chip",
+          "settings": {
+            "title": "3–4 hours per charge",
+            "text": "Battery + charger included"
+          }
+        },
+        "c4": {
+          "type": "chip",
+          "settings": {
+            "title": "No assembly",
+            "text": "Inflate and go"
+          }
+        },
+        "c5": {
+          "type": "chip",
+          "settings": {
+            "title": "Packs down small",
+            "text": "Deflates into the bag"
+          }
+        }
+      },
+      "block_order": [
+        "p1",
+        "p2",
+        "p3",
+        "p4",
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5"
+      ],
+      "settings": {
+        "eyebrow": "Feature map",
+        "heading": "Every part, explained",
+        "sub": "The callouts below are live text, not baked into the image — so they stay sharp, resize on mobile and can be edited without re-rendering a JPEG.",
+        "image": "shopify://shop_images/helios-sg-detail-4.png",
+        "image_alt": "HELIOS Super Glide with the headrest, joystick, cup holders and twin motors labelled"
+      }
     }
   },
   "order": [
@@ -672,6 +770,7 @@
     "header",
     "buy",
     "highlights",
+    "features",
     "gallery",
     "specs",
     "compare",
