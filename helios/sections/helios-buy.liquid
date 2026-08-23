@@ -32,17 +32,17 @@
   #hby-{{ sid }} .grid > .panel{flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;}
   #hby-{{ sid }} .grid > .gal{padding-right:var(--sp-4,21px);}
   #hby-{{ sid }} .grid > .panel{padding-left:var(--sp-4,21px);}
-  @media(max-width:767px){
+  @media(max-width:699px){
     #hby-{{ sid }} .grid{display:block !important;}
     #hby-{{ sid }} .grid > .gal,
-    #hby-{{ sid }} .grid > .panel{max-width:100%;padding:0;}
+    #hby-{{ sid }} .grid > .panel{max-width:100% !important;flex:none !important;padding:0 !important;}
     #hby-{{ sid }} .main{margin-inline:auto;}
   }
 
   #hby-{{ sid }} .main{position:relative;width:100%;aspect-ratio:1/1;max-height:600px;background:#fff;
     border:1px solid #D5D9D9;border-radius:var(--r-md,13px);overflow:hidden;cursor:pointer;}
   #hby-{{ sid }} .main img{width:100%;height:100%;object-fit:cover;display:block;background:#fff;}
-  @media(max-width:767px){
+  @media(max-width:699px){
     #hby-{{ sid }} .gal{margin:0 -16px var(--sp-4,21px);}
     #hby-{{ sid }} .main{border:0;border-radius:0;}
     #hby-{{ sid }} .thumbs{padding:0 16px;}
@@ -158,8 +158,8 @@
   #hby-{{ sid }} .b1s{display:block;margin:14px auto 0;width:100%;max-width:{{ s.badge_w | default: 180 }}px;height:auto;}
 </style>
   <div class="wrap">
-    <div class="grid">
-      <div class="gal">
+    <div class="grid" style="display:flex;align-items:flex-start;width:100%">
+      <div class="gal" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-right:21px">
         <div class="main" id="hby-mw-{{ sid }}">
           {%- if p != blank and p.images.size > 0 -%}
             <img id="hby-m-{{ sid }}" src="{{ p.images[0] | image_url: width: 1200 }}" alt="{{ p.title | escape }}" loading="eager">
@@ -181,7 +181,7 @@
         {%- endif -%}
       </div>
 
-      <div class="panel">
+      <div class="panel" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-left:21px">
         <h1>{{ s.title }}</h1>
         <div class="rt">
           <span class="s">★★★★★</span><span>{{ s.rating | default: '4.8' }}</span>

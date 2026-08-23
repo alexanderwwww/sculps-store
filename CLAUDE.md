@@ -15,11 +15,15 @@ image before video.
 ## 🏗️ HELIOS STORE — permanent memory (read before touching anything)
 
 ### Hard rules, learned the expensive way
-1. **NEVER let the product image take the full row.** The buy box is HALF image /
-   HALF purchase panel on desktop, always. Enforced with `flex:0 0 50%` +
-   `max-width:50%` on both halves — hard widths only. NO `fr` grid tracks, NO
-   proportional grow factors, NO clever ratio math for column layout. Those
-   collapsed or exploded three separate times in this codebase.
+1. **NEVER let the product image take the full row. The bundles live in the
+   RIGHT half, beside the image, on desktop — always.** Enforced with INLINE
+   `style="flex:0 0 50%;max-width:50%"` on `.gal`/`.panel` and inline
+   `display:flex` on `.grid` in helios-buy.liquid, so no stylesheet, cache or
+   cascade can undo it; mobile stacking overrides inline via `!important` in
+   `@media(max-width:699px)`. Keep stack breakpoints ≤699px — the theme
+   editor's preview iframe is narrow and a 900px breakpoint made desktop
+   preview render the phone stack. NO `fr` tracks, NO grow-factor ratios for
+   columns. This broke four separate times; it is settled law.
 2. **Never guess — count and verify.** Before "fixing" a layout, inspect the
    actual DOM/markup (count `.grid` children, read the real CSS). After every
    theme upload, query the file back and compare byte size to the local file.
@@ -59,6 +63,8 @@ image before video.
   accent text; neon-yellow #FFE000 tag pill with glow ("1+1 FREE") and dark text;
   red #CC0C39 for savings; teal #007185 for the ratings link. Blue #0046BE stays
   only on the helios-bb-* tracking page.
+- Footer: ink #0F1111, trust strip, menu columns, real customer signup form,
+  yellow CTA — the animated navy "deep-navy edition" was rebuilt away 23 Aug.
 - Old-CDN risk: badge images, FAQ video, carousel review photos point at the dead
   helios-wins CDN (`/1/0808/6949/0929/` and `/1/0769/8320/6053/`) — if broken, user
   re-uploads to Files and we repoint.
