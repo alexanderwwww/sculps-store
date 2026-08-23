@@ -221,18 +221,12 @@
         "g3"
       ],
       "settings": {
-        "width": 1300,
-        "cols": 2,
-        "cols_m": "1",
-        "ratio": "1/1",
-        "ratio_m": "1/1",
-        "pad": 0,
-        "pad_m": 0,
-        "gap": 14,
-        "radius": 8,
-        "page_bg": "#ffffff",
-        "tile_bg": "#ffffff",
-        "border": "#d5d9d9"
+        "eyebrow": "The album",
+        "heading": "On the water.",
+        "width": 1180,
+        "gap": 6,
+        "radius": 10,
+        "page_bg": "#ffffff"
       }
     },
     "clearfaq": {

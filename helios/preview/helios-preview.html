@@ -14,25 +14,6 @@
 
 /* ---- helios-gallery ---- */
 
-  .hg { background: var(--hg-page-bg, #fff); padding-block: var(--sp-4, 21px); }
-  .hg__wrap { width: 100%; max-width: var(--hg-w, 1300px); margin-inline: auto; padding-inline: 16px; }
-  .hg__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; }
-  /* Flex on a percentage basis rather than fr tracks: an ancestor was sizing
-     these grids to their content instead of stretching them. calc keeps the
-     tiles exactly N-up while the gap stays honest. */
-  .hg__grid { display: flex; flex-wrap: wrap; gap: var(--hg-gap, 14px); width: 100%; }
-  .hg__grid > * { flex: 0 0 calc((100% - (var(--hg-cols-m, 1) - 1) * var(--hg-gap, 14px)) / var(--hg-cols-m, 1));
-    min-width: 0; }
-  .hg__tile { margin: 0; background: var(--hg-tile-bg, #fff); border: 1px solid var(--hg-border, #d5d9d9);
-    border-radius: var(--hg-radius, 8px); overflow: hidden; padding: var(--hg-pad-m, 0); }
-  .hg__tile img { display: block; width: 100%; aspect-ratio: var(--hg-ratio-m, 1/1); object-fit: cover; }
-  @media screen and (min-width: 750px) {
-    .hg { padding-block: var(--sp-5, 34px); }
-    .hg__grid > * { flex: 0 0 calc((100% - (var(--hg-cols, 2) - 1) * var(--hg-gap, 14px)) / var(--hg-cols, 2)); }
-    .hg__tile { padding: var(--hg-pad, 0); }
-    .hg__tile img { aspect-ratio: var(--hg-ratio, 1/1); }
-  }
-
 /* ---- helios-clear-faq ---- */
 
 /* ---- helios-tiktok ---- */
@@ -565,40 +546,105 @@
 
 
 <!-- ===== gallery :: helios-gallery ===== -->
-<div class="hg" id="hg-gallery"
-     style="--hg-w:1300px;
-            --hg-cols:2;
-            --hg-cols-m:1;
-            --hg-ratio:1/1;
-            --hg-ratio-m:1/1;
-            --hg-pad:0px;
-            --hg-pad-m:0px;
-            --hg-gap:14px;
-            --hg-radius:8px;
-            --hg-page-bg:#ffffff;
-            --hg-tile-bg:#ffffff;
-            --hg-border:#d5d9d9">
-  <div class="hg__wrap"><h2 class="hg__h"></h2><div class="hg__grid"><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 650px, 100vw"
-                 alt="HELIOS Super Glide, what arrives in the box" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 650px, 100vw"
-                 alt="HELIOS Super Glide product view" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 650px, 100vw"
-                 alt="HELIOS Super Glide on the water" loading="lazy">
-          </figure></div>
+<section class="helios" id="hgl-gallery">
+<style>
+  #hgl-gallery{background:#ffffff;color:#0F1111;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) 0;}
+  #hgl-gallery *{box-sizing:border-box;min-width:0;}
+  #hgl-gallery .hgl-wrap{width:100%;max-width:1180px;
+    margin:0 auto;padding:0 var(--sp-4,21px);}
+  #hgl-gallery .hgl-eb{font-size:var(--fs-xs,12.6px);font-weight:800;letter-spacing:.12em;
+    text-transform:uppercase;color:#565959;margin-bottom:var(--sp-2,8px);}
+  #hgl-gallery .hgl-h{font-size:clamp(var(--fs-lg,25.9px),3.2vw,var(--fs-xl,32.9px));
+    font-weight:800;letter-spacing:-.025em;line-height:var(--lh-tight,1.236);
+    margin:0 0 var(--sp-4,21px);}
+
+  /* Mosaic. Two rows of six columns; each count gets its own spans, so the
+     album is always flush with no ragged gap. */
+  #hgl-gallery .hgl-m{display:grid;grid-template-columns:repeat(6,1fr);
+    grid-auto-rows:1fr;gap:6px;}
+  #hgl-gallery .hgl-t{position:relative;margin:0;overflow:hidden;padding:0;border:0;
+    background:#EBEDF0;cursor:zoom-in;border-radius:10px;
+    aspect-ratio:1/1;display:block;width:100%;}
+  #hgl-gallery .hgl-t img{width:100%;height:100%;object-fit:cover;display:block;
+    transition:transform .35s ease;}
+  #hgl-gallery .hgl-t:hover img{transform:scale(1.04);}
+  #hgl-gallery .hgl-more{position:absolute;inset:0;background:rgba(15,17,17,.55);
+    color:#fff;font-size:clamp(22px,4vw,34px);font-weight:800;letter-spacing:-.02em;
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(1px);}
+
+  #hgl-gallery .hgl-m[data-n="1"] .hgl-t{grid-column:span 6;aspect-ratio:16/9;}
+  #hgl-gallery .hgl-m[data-n="2"] .hgl-t{grid-column:span 3;aspect-ratio:4/5;}
+  #hgl-gallery .hgl-m[data-n="3"] .hgl-t{grid-column:span 3;aspect-ratio:1/1;}
+  #hgl-gallery .hgl-m[data-n="3"] .hgl-t:first-child{grid-row:span 2;aspect-ratio:auto;}
+  #hgl-gallery .hgl-m[data-n="4"] .hgl-t{grid-column:span 2;aspect-ratio:1/1;}
+  #hgl-gallery .hgl-m[data-n="4"] .hgl-t:first-child{grid-column:span 6;aspect-ratio:16/9;}
+  #hgl-gallery .hgl-m[data-n="5"] .hgl-t{grid-column:span 3;aspect-ratio:1/1;}
+  #hgl-gallery .hgl-m[data-n="5"] .hgl-t:first-child,
+  #hgl-gallery .hgl-m[data-n="5"] .hgl-t:nth-child(2){grid-column:span 3;aspect-ratio:4/3;}
+  #hgl-gallery .hgl-m[data-n="5"] .hgl-t:nth-child(n+3){grid-column:span 2;}
+  @media(max-width:699px){
+    #hgl-gallery .hgl-m[data-n="3"] .hgl-t:first-child,
+    #hgl-gallery .hgl-m[data-n="4"] .hgl-t:first-child,
+    #hgl-gallery .hgl-m[data-n="5"] .hgl-t:first-child{grid-column:span 6;grid-row:auto;aspect-ratio:4/3;}
+    #hgl-gallery .hgl-m[data-n="5"] .hgl-t:nth-child(2){grid-column:span 6;}
+    #hgl-gallery .hgl-m[data-n="3"] .hgl-t,
+    #hgl-gallery .hgl-m[data-n="4"] .hgl-t,
+    #hgl-gallery .hgl-m[data-n="5"] .hgl-t{grid-column:span 3;aspect-ratio:1/1;}
+  }
+
+  /* Lightbox */
+  #hgl-gallery .hgl-lb{position:fixed;inset:0;z-index:9999;display:none;
+    background:rgba(8,10,12,.94);align-items:center;justify-content:center;}
+  #hgl-gallery .hgl-lb.hgl-on{display:flex;}
+  #hgl-gallery .hgl-lb img{max-width:92vw;max-height:86vh;object-fit:contain;
+    border-radius:6px;display:block;}
+  #hgl-gallery .hgl-x,#hgl-gallery .hgl-nav{position:absolute;border:0;cursor:pointer;
+    background:rgba(255,255,255,.12);color:#fff;border-radius:50%;width:44px;height:44px;
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+  #hgl-gallery .hgl-x:hover,#hgl-gallery .hgl-nav:hover{background:rgba(255,255,255,.24);}
+  #hgl-gallery .hgl-x{top:18px;right:18px;font-size:22px;line-height:1;}
+  #hgl-gallery .hgl-nav svg{width:20px;height:20px;}
+  #hgl-gallery .hgl-prev{left:18px;} #hgl-gallery .hgl-next{right:18px;}
+  #hgl-gallery .hgl-count{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+    color:rgba(255,255,255,.85);font-size:13px;font-weight:700;letter-spacing:.04em;}
+  @media(max-width:699px){
+    #hgl-gallery .hgl-nav{width:38px;height:38px;}
+    #hgl-gallery .hgl-prev{left:8px;} #hgl-gallery .hgl-next{right:8px;}
+  }
+</style>
+  <div class="hgl-wrap"><div class="hgl-eb">The album</div><h2 class="hgl-h">On the water.</h2><div class="hgl-m" data-n="3" id="hgl-m-gallery"><button type="button" class="hgl-t" data-i="1"
+                    aria-label="Open photo 1" >
+              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543"
+                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 600w,
+                           https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 1200w"
+                   sizes="(min-width:700px) 590px, 100vw"
+                   alt="HELIOS Super Glide, what arrives in the box" loading="lazy"></button><button type="button" class="hgl-t" data-i="2"
+                    aria-label="Open photo 2" >
+              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543"
+                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 600w,
+                           https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 1200w"
+                   sizes="(min-width:700px) 590px, 100vw"
+                   alt="HELIOS Super Glide product view" loading="lazy"></button><button type="button" class="hgl-t" data-i="3"
+                    aria-label="Open photo 3" >
+              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543"
+                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 600w,
+                           https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 1200w"
+                   sizes="(min-width:700px) 590px, 100vw"
+                   alt="HELIOS Super Glide on the water" loading="lazy"></button></div>
   </div>
-</div>
+
+  <div class="hgl-lb" id="hgl-lb-gallery" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <button type="button" class="hgl-x" data-close aria-label="Close">&times;</button>
+    <button type="button" class="hgl-nav hgl-prev" data-prev aria-label="Previous"><svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <img id="hgl-lbimg-gallery" src="" alt="">
+    <button type="button" class="hgl-nav hgl-next" data-next aria-label="Next"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <span class="hgl-count" id="hgl-c-gallery"></span>
+  </div>
+
+  
+</section>
 
 <!-- ===== clearfaq :: helios-clear-faq ===== -->
 <section class="helios" id="cfq-clearfaq">
