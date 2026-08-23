@@ -2,1447 +2,515 @@
 <meta name='viewport' content='width=device-width,initial-scale=1'>
 <title>HELIOS — recovered theme preview</title>
 <style>body{margin:0}img{max-width:100%}.pv-bar{position:sticky;top:0;z-index:99999;background:#0b0e11;color:#fff;font:600 12px/1.4 -apple-system,system-ui,sans-serif;padding:10px 14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}.pv-bar a{color:#7fb1d4;text-decoration:none}.pv-note{background:#fff8e1;border-bottom:1px solid #e8d9a0;padding:10px 14px;font:13px/1.5 -apple-system,system-ui,sans-serif;color:#5a4a1a}</style>
-<style>/* ---- helios-bar ---- */
+<style>/* ---- helios-bb-utility ---- */
 
-/* ---- helios-nav ---- */
+/* ---- helios-bb-header ---- */
 
-/* ---- helios-buy ---- */
+/* ---- helios-bb-pdp ---- */
 
-/* ---- helios-box ---- */
+/* ---- helios-bb-highlights ---- */
 
-/* ---- helios-gallery ---- */
+/* ---- helios-bb-gallery ---- */
 
-  .hg { background: var(--hg-page-bg, #fff); padding-block: 22px; }
-  .hg__wrap { width: 100%; max-width: var(--hg-w, 1300px); margin-inline: auto; padding-inline: 16px; }
-  .hg__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; }
-  .hg__grid { display: grid; grid-template-columns: repeat(var(--hg-cols-m, 1), minmax(0, 1fr)); gap: var(--hg-gap, 14px); }
-  .hg__tile { margin: 0; background: var(--hg-tile-bg, #fff); border: 1px solid var(--hg-border, #d5d9d9);
-    border-radius: var(--hg-radius, 8px); overflow: hidden; padding: var(--hg-pad-m, 0); }
-  .hg__tile img { display: block; width: 100%; aspect-ratio: var(--hg-ratio-m, 1/1); object-fit: cover; }
-  @media screen and (min-width: 750px) {
-    .hg { padding-block: 34px; }
-    .hg__grid { grid-template-columns: repeat(var(--hg-cols, 2), minmax(0, 1fr)); }
-    .hg__tile { padding: var(--hg-pad, 0); }
-    .hg__tile img { aspect-ratio: var(--hg-ratio, 1/1); }
-  }
+/* ---- helios-bb-specs ---- */
 
-/* ---- helios-clear-faq ---- */
+/* ---- helios-bb-compare ---- */
 
-/* ---- helios-tiktok ---- */
+/* ---- helios-bb-faq ---- */
 
-  .ht { background: #fff; padding-block: 26px 32px; overflow: hidden; }
-  .ht__wrap { width: 100%; max-width: 1300px; margin-inline: auto; padding-inline: 16px; margin-bottom: 16px; }
-  .ht__eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #6a7781; margin: 0; }
-  .ht__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 8px 0 0; }
-  .ht__vp { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .ht__vp::-webkit-scrollbar { display: none; }
-  .ht__track { display: flex; gap: 12px; list-style: none; margin: 0; padding-inline: 16px; width: max-content; }
-  .ht__card { flex: none; width: min(62vw, 260px); scroll-snap-align: center; }
-  .ht__screen { position: relative; width: 100%; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden;
-    background: #0b0e11; border: 1px solid rgba(11,14,17,.18); }
-  .ht__screen video { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .ht__cap { margin-top: 10px; font-size: 0.875rem; line-height: 1.45; }
-  .ht__by { margin-top: 3px; font-size: 0.75rem; color: #6a7781; }
-  @media screen and (min-width: 990px) {
-    .ht__track { padding-inline: max(16px, calc((100vw - 1300px) / 2)); gap: 14px; }
-  }
+/* ---- helios-bb-guarantee ---- */
 
-/* ---- helios-howitworks ---- */
+/* ---- helios-bb-footer ---- */
 
-/* ---- helios-guarantee ---- */
-
-/* ---- helios-footer ---- */
-
-/* ---- helios-sticky-atc ---- */
-</style>
-<style>/* ---- helios-bar ---- */
-
-/* ---- helios-nav ---- */
-
-/* ---- helios-buy ---- */
-
-/* ---- helios-box ---- */
-
-/* ---- helios-clear-faq ---- */
-
-/* ---- helios-tiktok ---- */
-
-  .ht { background: #fff; padding-block: 26px 32px; overflow: hidden; }
-  .ht__wrap { width: 100%; max-width: 1300px; margin-inline: auto; padding-inline: 16px; margin-bottom: 16px; }
-  .ht__eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #6a7781; margin: 0; }
-  .ht__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 8px 0 0; }
-  .ht__vp { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .ht__vp::-webkit-scrollbar { display: none; }
-  .ht__track { display: flex; gap: 12px; list-style: none; margin: 0; padding-inline: 16px; width: max-content; }
-  .ht__card { flex: none; width: min(62vw, 260px); scroll-snap-align: center; }
-  .ht__screen { position: relative; width: 100%; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden;
-    background: #0b0e11; border: 1px solid rgba(11,14,17,.18); }
-  .ht__screen video { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .ht__cap { margin-top: 10px; font-size: 0.875rem; line-height: 1.45; }
-  .ht__by { margin-top: 3px; font-size: 0.75rem; color: #6a7781; }
-  @media screen and (min-width: 990px) {
-    .ht__track { padding-inline: max(16px, calc((100vw - 1300px) / 2)); gap: 14px; }
-  }
-
-/* ---- helios-gallery ---- */
-
-  .hg { background: var(--hg-page-bg, #fff); padding-block: 22px; }
-  .hg__wrap { width: 100%; max-width: var(--hg-w, 1300px); margin-inline: auto; padding-inline: 16px; }
-  .hg__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; }
-  .hg__grid { display: grid; grid-template-columns: repeat(var(--hg-cols-m, 1), minmax(0, 1fr)); gap: var(--hg-gap, 14px); }
-  .hg__tile { margin: 0; background: var(--hg-tile-bg, #fff); border: 1px solid var(--hg-border, #d5d9d9);
-    border-radius: var(--hg-radius, 8px); overflow: hidden; padding: var(--hg-pad-m, 0); }
-  .hg__tile img { display: block; width: 100%; aspect-ratio: var(--hg-ratio-m, 1/1); object-fit: cover; }
-  @media screen and (min-width: 750px) {
-    .hg { padding-block: 34px; }
-    .hg__grid { grid-template-columns: repeat(var(--hg-cols, 2), minmax(0, 1fr)); }
-    .hg__tile { padding: var(--hg-pad, 0); }
-    .hg__tile img { aspect-ratio: var(--hg-ratio, 1/1); }
-  }
-
-/* ---- helios-howitworks ---- */
-
-/* ---- helios-guarantee ---- */
-
-/* ---- helios-faq ---- */
-
-/* ---- helios-footer ---- */
-
-/* ---- helios-sticky-atc ---- */
+/* ---- helios-bb-sticky ---- */
 </style>
 </head><body>
-<div class='pv-bar'><b>HELIOS recovered theme — static preview</b><a href='#pg0'>Homepage</a><a href='#pg1'>Product page</a></div>
+<div class='pv-bar'><b>HELIOS recovered theme — static preview</b><a href='#pg0'>Homepage</a></div>
 <div class='pv-note'>Static render of the recovered Liquid with your real saved settings. Product data, cart and JS are stubbed, so prices/variants show as placeholders and buttons do nothing. Images load from the old store's CDN and may not resolve.</div>
 <h2 id='pg0' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Homepage — 11 sections</h2>
 
-<!-- ===== bar :: helios-bar ===== -->
-<section class="helios" id="hb2-bar">
+<!-- ===== utility :: helios-bb-utility ===== -->
 <style>
-  #hb2-bar .bar{background:#0f1111;color:#ffffff;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    display:flex;align-items:center;justify-content:center;gap:8px 12px;flex-wrap:wrap;
-    padding:11px 42px 11px 16px;position:relative;font-size:13px;font-weight:600;line-height:1.35;text-align:center;}
-  #hb2-bar .bar b{font-weight:800;}
-  #hb2-bar .cd{display:inline-flex;align-items:center;gap:6px;
-    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);
-    backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);
-    border-radius:100px;padding:4px 13px;font-variant-numeric:tabular-nums;font-weight:800;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
-  #hb2-bar .cd .u{font-size:10.5px;font-weight:600;opacity:.65;letter-spacing:.02em;}
-  #hb2-bar a{color:inherit;text-decoration:underline;text-underline-offset:2px;}
-  #hb2-bar .x{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;
-    border:0;background:transparent;color:inherit;opacity:.6;font-size:16px;line-height:1;cursor:pointer;padding:0;}
-  #hb2-bar .x:hover{opacity:1;}
-  #hb2-bar .bar.gone{display:none;}
-</style>
-  <div class="bar" id="hb2-b-bar">
-    <span>1+1 FREE — buy one Super Glide, the second is on us</span><a href="#buy">Shop now</a><button class="x" type="button" aria-label="Dismiss">&times;</button></div>
-
-</section>
-
-
-<!-- ===== nav :: helios-nav ===== -->
-<section class="helios" id="hn-nav">
-<style>
-  #hn-nav{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hn-nav *{box-sizing:border-box;min-width:0;}
-  #hn-nav .nav{position:sticky;top:0;z-index:900;
-    background:#ffffff;border-bottom:1px solid #D5D9D9;}
-  #hn-nav .in{max-width:1200px;margin:0 auto;padding:0 14px;height:58px;
-    display:flex;align-items:center;gap:14px;}
-  #hn-nav .burger{display:grid;place-items:center;width:38px;height:38px;border:0;background:none;
-    color:#0f1111;cursor:pointer;padding:0;}
-  #hn-nav .burger svg{width:22px;height:22px;}
-  @media(min-width:760px){#hn-nav .burger{display:none;}}
-  #hn-nav .lg{font-size:19px;font-weight:800;letter-spacing:.16em;color:#0f1111;text-decoration:none;flex:0 0 auto;}
-  #hn-nav .lg img{height:26px;width:auto;display:block;}
-  #hn-nav .links{display:none;gap:22px;margin-left:8px;}
-  @media(min-width:760px){#hn-nav .links{display:flex;}}
-  #hn-nav .links a{font-size:14px;color:#0f1111;text-decoration:none;font-weight:500;}
-  #hn-nav .links a:hover{text-decoration:underline;}
-  #hn-nav .right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-  #hn-nav .cta{background:#FFD814;color:#0F1111;border:1px solid #FCD200;border-radius:100px;
-    padding:9px 20px;font-size:13.5px;font-weight:800;text-decoration:none;}
-  #hn-nav .cart{position:relative;display:grid;place-items:center;width:36px;height:36px;
-    color:#0f1111;text-decoration:none;}
-  #hn-nav .cart svg{width:21px;height:21px;}
-  #hn-nav .cnt{position:absolute;top:-2px;right:-3px;min-width:17px;height:17px;padding:0 4px;
-    border-radius:100px;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;}
-  /* mobile drawer */
-  #hn-nav .dw{display:none;background:#ffffff;border-bottom:1px solid #D5D9D9;}
-  #hn-nav .dw.open{display:block;}
-  @media(min-width:760px){#hn-nav .dw{display:none !important;}}
-  #hn-nav .dw a{display:block;padding:15px 18px;font-size:15px;font-weight:600;color:#0f1111;
-    text-decoration:none;border-top:1px solid #EFF1F1;}
-  #hn-nav .dw a:first-child{border-top:0;}
-</style>
-  <div class="nav">
-    <div class="in">
-      <button class="burger" type="button" id="hn-bg-nav" aria-label="Menu" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-      <a class="lg" href="/"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="HELIOS"></a>
-      <nav class="links"><a href="/">Super Glide</a><a href="/products/helios-wave-rider">Jet Ski</a><a href="#reviews">Reviews</a><a href="#faq">FAQ</a></nav>
-      <div class="right"><a class="cta" href="#buy">Shop now</a><a class="cart" href="/cart" aria-label="Cart">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.4 12.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg></a>
-      </div>
-    </div>
-    <div class="dw" id="hn-dw-nav"><a href="/">Super Glide</a><a href="/products/helios-wave-rider">Jet Ski</a><a href="#reviews">Reviews</a><a href="#faq">FAQ</a></div>
-  </div>
-
-</section>
-
-
-<!-- ===== buy :: helios-buy ===== -->
-<section class="helios" id="hby-buy">
-<a id="buy"></a>
-<style>
-  #hby-buy{background:#ffffff;color:#0F1111;overflow-x:clip;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hby-buy *{box-sizing:border-box;min-width:0;}
-  #hby-buy .wrap{max-width:1200px;margin:0 auto;padding:clamp(14px,2vw,26px) 16px clamp(24px,3vw,40px);}
-  #hby-buy .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(16px,2.2vw,32px);}
-  @media(min-width:900px){#hby-buy .grid{grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);align-items:start;}}
-
-  #hby-buy .main{position:relative;width:100%;aspect-ratio:1/1;background:#fff;
-    border:1px solid #D5D9D9;border-radius:12px;overflow:hidden;cursor:pointer;}
-  #hby-buy .main img{width:100%;height:100%;object-fit:cover;display:block;background:#fff;}
-  @media(max-width:899px){
-    #hby-buy .gal{margin:0 -16px;}
-    #hby-buy .main{border:0;border-radius:0;}
-    #hby-buy .thumbs{padding:0 16px;}
+  :root{
+    --hb-blue:#0046BE; --hb-blue-dark:#00379B; --hb-yellow:#FFE000;
+    --hb-ink:#1D252C; --hb-muted:#5F6871; --hb-line:#C5CBD5; --hb-line-soft:#E3E7EB;
+    --hb-bg:#FFFFFF; --hb-soft:#F0F2F4; --hb-green:#067D62;
+    --hb-maxw:1200px; --hb-gut:16px;
   }
-  #hby-buy .arr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:32px;height:32px;
-    border:1px solid rgba(15,17,17,.10);border-radius:50%;cursor:pointer;display:grid;place-items:center;
-    background:rgba(255,255,255,.10);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);
-    box-shadow:none;color:rgba(15,17,17,.55);padding:0;transition:color .15s,background .15s;}
-  #hby-buy .arr:hover{color:#0F1111;background:rgba(255,255,255,.30);}
-  #hby-buy .arr svg{width:14px;height:14px;display:block;}
-  #hby-buy .arr.l{left:12px;}
-  #hby-buy .arr.r{right:12px;}
-  #hby-buy .dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:5px;z-index:3;}
-  #hby-buy .dots i{width:6px;height:6px;border-radius:50%;background:rgba(15,17,17,.22);}
-  #hby-buy .dots i.on{background:#0F1111;}
-  #hby-buy .thumbs{display:flex;gap:8px;margin-top:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  #hby-buy .thumbs button{flex:0 0 58px;width:58px;height:58px;padding:0;border:1px solid #D5D9D9;
-    border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;}
-  #hby-buy .thumbs button.on{border-color:#0F1111;border-width:2px;}
-  #hby-buy .thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
+  @media(min-width:750px){ :root{ --hb-gut:24px; } }
+  .hb{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--hb-ink,#1D252C);-webkit-font-smoothing:antialiased;}
+  .hb *,.hb *::before,.hb *::after{box-sizing:border-box;min-width:0;}
+  .hb img{display:block;max-width:100%;}
+  .hb p{margin:0;}
+  .hb-wrap{width:100%;max-width:calc(var(--hb-maxw,1200px) + var(--hb-gut,16px)*2);
+    margin-inline:auto;padding-inline:var(--hb-gut,16px);}
+  .hb-h2{font-size:clamp(20px,3.4vw,26px);font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2;}
+  .hb-sub{font-size:14px;line-height:1.5;color:var(--hb-muted,#5F6871);}
 
-  #hby-buy h1{font-size:clamp(21px,2.7vw,27px);font-weight:800;line-height:1.24;margin:0 0 8px;letter-spacing:-.02em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-buy .rt{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:10px;flex-wrap:wrap;}
-  #hby-buy .rt .s{color:#F5A623;letter-spacing:1px;font-size:15px;}
-  #hby-buy .rt a{color:#007185;text-decoration:none;}
+  .hbu{background:var(--hb-ink,#1D252C);color:#fff;}
+  .hbu__row{display:flex;align-items:center;justify-content:center;gap:10px 26px;
+    flex-wrap:wrap;padding-block:9px;}
+  .hbu__i{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;letter-spacing:.01em;}
+  .hbu__i svg{width:15px;height:15px;flex:none;color:var(--hb-yellow,#FFE000);}
+</style><div class="hb hbu">
+  <div class="hb-wrap hbu__row"><span class="hbu__i" ><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.5h10.5v9H3zM13.5 10.5H17l4 3.2v2.8h-7.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/></svg>FREE US SHIPPING
+        </span><span class="hbu__i" ><svg viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-2.6-5.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 3.5V8h-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>30-DAY RETURNS
+        </span><span class="hbu__i" ><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.2v9.6L12 21l-8-4.2V7.2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M4 7.2l8 4.2 8-4.2M12 11.4V21" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>TRACKED DELIVERY
+        </span></div>
+</div>
 
-  #hby-buy .price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:10px;}
-  #hby-buy .price b{font-size:clamp(32px,7vw,40px);font-weight:800;letter-spacing:-.03em;line-height:1;color:#0F1111;}
-  #hby-buy .price s{font-size:16px;color:#565959;}
-  #hby-buy .price em{font-style:normal;background:#CC0C39;color:#fff;font-size:12px;font-weight:800;
-    border-radius:5px;padding:4px 9px;}
-  #hby-buy .price .per{width:100%;font-size:12.5px;color:#067D62;font-weight:700;}
-  #hby-buy .insta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:12.5px;color:#0F1111;
-    padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #E7E9E9;}
-  #hby-buy .insta .lg{display:inline-flex;align-items:center;border-radius:5px;padding:3px 8px;
-    font-size:11px;font-weight:800;letter-spacing:.01em;line-height:1;}
-  #hby-buy .insta .sp{background:#5A31F4;color:#fff;}
-  #hby-buy .insta .ap{background:#B2FCE4;color:#0F1111;}
-
-  #hby-buy .bl{margin:0 0 18px;padding:0;}
-  #hby-buy .bl li{list-style:none;display:flex;gap:9px;font-size:13.5px;line-height:1.45;align-items:flex-start;margin-bottom:7px;}
-  #hby-buy .bl li span{overflow-wrap:break-word;}
-  #hby-buy .bl .i{flex:0 0 17px;width:17px;height:17px;border-radius:50%;background:#067D62;color:#fff;
-    font-size:10px;font-weight:900;display:grid;place-items:center;margin-top:1px;}
-
-  #hby-buy .frame{border:1px solid #D5D9D9;border-radius:14px;background:#fff;}
-  #hby-buy .fhead{background:#0F1111;color:#fff;display:flex;align-items:center;justify-content:space-between;
-    gap:6px 12px;padding:12px 16px;font-size:13.5px;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;
-    border-radius:13px 13px 0 0;}
-  #hby-buy .fhead .pop{color:#FFC531;font-size:12.5px;}
-  #hby-buy .steps{display:flex;flex-wrap:wrap;gap:6px 16px;padding:11px 16px;background:#F7FAFA;
-    border-bottom:1px solid #E7E9E9;font-size:12px;color:#565959;}
-  #hby-buy .steps b{color:#0F1111;font-weight:800;margin-right:3px;}
-  #hby-buy .opts{padding:12px;display:flex;flex-direction:column;gap:10px;}
-  #hby-buy .opt{position:relative;display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    border:1px solid #D5D9D9;border-radius:12px;background:#fff;color:#0F1111;padding:12px 10px;cursor:pointer;
-    transition:border-color .12s,box-shadow .12s;overflow:visible;}
-  #hby-buy .opt:hover{border-color:#8d9698;}
-  #hby-buy .opt.on{border-color:#0F1111;border-width:2px;padding:11px 9px;box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
-  #hby-buy .opt.hastag{margin-top:8px;}
-  #hby-buy .tagp{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
-    color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-    border-radius:100px;padding:4px 13px;white-space:nowrap;line-height:1.2;
-    box-shadow:0 2px 8px rgba(0,0,0,.20);}
-  #hby-buy .dot{flex:0 0 18px;width:18px;height:18px;border-radius:50%;border:1.6px solid #8d9698;display:grid;place-items:center;}
-  #hby-buy .opt.on .dot{border-color:#0F1111;}
-  #hby-buy .opt.on .dot:after{content:'';width:9px;height:9px;border-radius:50%;background:#0F1111;}
-  #hby-buy .oim{flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
-  #hby-buy .oim img{width:100%;height:100%;object-fit:contain;display:block;}
-  #hby-buy .oi{flex:1 1 0;}
-  #hby-buy .oi .t{display:block;font-size:15px;font-weight:800;line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-buy .oi .d{display:block;font-size:12px;color:#565959;margin-top:2px;line-height:1.35;overflow-wrap:break-word;}
-  #hby-buy .oi .gift{display:inline-block;margin-top:6px;background:#E3F6EC;color:#046B53;border:1px solid #B6E5CE;
-    border-radius:100px;padding:3px 9px;font-size:11px;font-weight:800;}
-  #hby-buy .op{flex:0 0 auto;max-width:42%;text-align:right;}
-  #hby-buy .op .sv{display:inline-block;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;
-    border-radius:5px;padding:3px 7px;margin-bottom:4px;}
-  #hby-buy .op .n{font-size:18px;font-weight:800;letter-spacing:-.02em;display:block;color:#0F1111;}
-  #hby-buy .op .o{font-size:12px;color:#565959;text-decoration:line-through;display:block;margin-top:2px;}
-
-  #hby-buy .atc{display:block;width:100%;background:#FFD814;color:#0F1111;border:1px solid #FCD200;
-    border-radius:100px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;margin-top:16px;transition:background .15s;}
-  #hby-buy .atc:hover{background:#F7CA00;}
-  #hby-buy .atc.ok{background:#067D62;border-color:#067D62;color:#fff;}
-  #hby-buy .xrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px;}
-  #hby-buy .xbtn{border-radius:100px;padding:13px 10px;font-size:14.5px;font-weight:800;cursor:pointer;
-    text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
-  #hby-buy .buynow{background:#fff;color:#0F1111;border:1.5px solid #0F1111;}
-  #hby-buy .buynow:hover{background:#F7FAFA;}
-  #hby-buy .apay{background:#000;color:#fff;border:1.5px solid #000;}
-  #hby-buy .apay svg{width:15px;height:18px;display:block;}
-  #hby-buy .after{display:none;margin-top:9px;}
-  #hby-buy .after.on{display:block;}
-  #hby-buy .after a{display:block;width:100%;text-align:center;background:#0F1111;color:#fff;border-radius:100px;
-    padding:14px;font-size:15px;font-weight:800;text-decoration:none;}
-  #hby-buy .gifted{display:none;margin-top:9px;background:#E3F6EC;border:1px solid #B6E5CE;color:#046B53;
-    border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;text-align:center;}
-  #hby-buy .gifted.on{display:block;}
-  #hby-buy .ship{font-size:13px;color:#565959;line-height:1.65;margin-top:13px;}
-  #hby-buy .ship b{color:#0F1111;}
-  #hby-buy .tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#D5D9D9;
-    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;margin-top:14px;}
-  #hby-buy .trc{background:#fff;padding:11px 9px;text-align:center;}
-  #hby-buy .trc .i{font-size:16px;line-height:1;margin-bottom:4px;}
-  #hby-buy .trc .t{font-size:11.5px;font-weight:700;line-height:1.3;}
-  #hby-buy .b1s{display:block;margin:14px auto 0;width:100%;max-width:180px;height:auto;}
+<!-- ===== header :: helios-bb-header ===== -->
+<style>
+  .hbh{position:sticky;top:0;z-index:80;background:var(--hb-bg,#fff);
+    border-bottom:1px solid var(--hb-line,#C5CBD5);}
+  .hbh__row{display:flex;align-items:center;gap:16px;padding-block:12px;}
+  .hbh__logo{font-size:21px;font-weight:800;letter-spacing:-.02em;text-decoration:none;
+    color:var(--hb-ink,#1D252C);white-space:nowrap;}
+  .hbh__logo em{font-style:normal;color:var(--hb-blue,#0046BE);}
+  .hbh__nav{display:none;margin-inline:auto;gap:26px;}
+  .hbh__nav a{font-size:14px;font-weight:600;color:var(--hb-ink,#1D252C);text-decoration:none;}
+  .hbh__nav a:hover{color:var(--hb-blue,#0046BE);}
+  .hbh__cta{margin-left:auto;display:inline-flex;align-items:center;gap:8px;
+    background:var(--hb-blue,#0046BE);color:#fff;text-decoration:none;font-size:14px;font-weight:700;
+    padding:10px 18px;border-radius:4px;white-space:nowrap;}
+  .hbh__cta:hover{background:var(--hb-blue-dark,#00379B);}
+  .hbh__cta svg{width:16px;height:16px;}
+  @media(min-width:900px){ .hbh__nav{display:flex;} .hbh__cta{margin-left:0;} }
 </style>
-  <div class="wrap">
+
+<div class="hb hbh">
+  <div class="hb-wrap hbh__row">
+    <a class="hbh__logo" href="/">HELIOS<em>.</em></a>
+    <nav class="hbh__nav"><a href="#buy" >Overview</a><a href="#specs" >Specs</a><a href="#compare" >Compare</a><a href="#faq" >Questions</a></nav>
+    <a class="hbh__cta" href="#buy">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 5h2.2l2 10.2h10.4L20 8H6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="19" r="1.5" fill="currentColor"/><circle cx="17" cy="19" r="1.5" fill="currentColor"/></svg>
+      Shop now
+    </a>
+  </div>
+</div>
+
+
+
+
+<!-- ===== buy :: helios-bb-pdp ===== -->
+<style>
+  #hbp-buy{background:var(--hb-bg,#fff);padding-block:18px 34px;}
+  #hbp-buy .crumb{font-size:12px;color:var(--hb-muted,#5F6871);margin-bottom:14px;}
+  #hbp-buy .crumb a{color:inherit;text-decoration:none;}
+  #hbp-buy .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;}
+  #hbp-buy .title{font-size:clamp(21px,4.2vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.2;margin:0;}
+  #hbp-buy .model{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:6px;}
+
+  /* gallery */
+  #hbp-buy .main{position:relative;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:6px;
+    overflow:hidden;background:#fff;aspect-ratio:1/1;}
+  #hbp-buy .main img{width:100%;height:100%;object-fit:contain;}
+  #hbp-buy .flag{position:absolute;top:12px;left:12px;z-index:2;background:var(--hb-yellow,#FFE000);
+    color:var(--hb-ink,#1D252C);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:6px 11px;border-radius:3px;}
+  #hbp-buy .flag:empty{display:none;}
+  #hbp-buy .thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none;}
+  #hbp-buy .thumbs::-webkit-scrollbar{display:none;}
+  #hbp-buy .thumb{flex:0 0 62px;width:62px;height:62px;border:1px solid var(--hb-line,#C5CBD5);
+    border-radius:4px;overflow:hidden;background:#fff;padding:0;cursor:pointer;}
+  #hbp-buy .thumb.on{border-color:var(--hb-blue,#0046BE);border-width:2px;}
+  #hbp-buy .thumb img{width:100%;height:100%;object-fit:contain;}
+
+  /* purchase rail */
+  #hbp-buy .rail{border:1px solid var(--hb-line,#C5CBD5);border-radius:6px;padding:18px;background:#fff;}
+  #hbp-buy .prow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  #hbp-buy .price{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1;}
+  #hbp-buy .was{font-size:15px;color:var(--hb-muted,#5F6871);text-decoration:line-through;}
+  #hbp-buy .was:empty{display:none;}
+  #hbp-buy .save{background:#E7F4F0;color:var(--hb-green,#067D62);font-size:12.5px;font-weight:800;
+    padding:4px 9px;border-radius:3px;}
+  #hbp-buy .save:empty{display:none;}
+  #hbp-buy .perunit{font-size:13px;color:var(--hb-muted,#5F6871);margin-top:6px;}
+  #hbp-buy .fin{font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:8px;}
+  #hbp-buy .fin b{color:var(--hb-ink,#1D252C);}
+
+  #hbp-buy .opts{display:grid;gap:8px;margin-top:16px;}
+  #hbp-buy .optlab{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--hb-muted,#5F6871);}
+  #hbp-buy .opt{position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    border:1px solid var(--hb-line,#C5CBD5);border-radius:5px;background:#fff;color:inherit;
+    padding:12px;cursor:pointer;font:inherit;}
+  #hbp-buy .opt.on{border-color:var(--hb-blue,#0046BE);border-width:2px;padding:11px;background:#F5F8FF;}
+  #hbp-buy .opt .radio{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid #9AA3AC;
+    display:grid;place-items:center;}
+  #hbp-buy .opt.on .radio{border-color:var(--hb-blue,#0046BE);}
+  #hbp-buy .opt.on .radio::after{content:'';width:9px;height:9px;border-radius:50%;background:var(--hb-blue,#0046BE);}
+  #hbp-buy .opt .om{flex:1 1 0;}
+  #hbp-buy .opt .ol{display:block;font-size:14.5px;font-weight:700;line-height:1.2;}
+  #hbp-buy .opt .on2{display:block;font-size:12px;color:var(--hb-muted,#5F6871);margin-top:2px;}
+  #hbp-buy .opt .or{flex:none;text-align:right;}
+  #hbp-buy .opt .op{display:block;font-size:16px;font-weight:800;}
+  #hbp-buy .opt .oc{display:block;font-size:11.5px;color:var(--hb-muted,#5F6871);text-decoration:line-through;}
+  #hbp-buy .tag{position:absolute;top:-9px;right:10px;background:var(--hb-yellow,#FFE000);
+    color:var(--hb-ink,#1D252C);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:3px 8px;border-radius:3px;}
+
+  #hbp-buy .cta{display:block;width:100%;margin-top:14px;background:var(--hb-blue,#0046BE);color:#fff;
+    border:0;border-radius:4px;padding:15px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;}
+  #hbp-buy .cta:hover{background:var(--hb-blue-dark,#00379B);}
+  #hbp-buy .cta.ok{background:var(--hb-green,#067D62);}
+  #hbp-buy .cta2{display:block;width:100%;margin-top:8px;background:#fff;color:var(--hb-ink,#1D252C);
+    border:1px solid var(--hb-ink,#1D252C);border-radius:4px;padding:14px;font:inherit;font-size:15px;
+    font-weight:700;cursor:pointer;}
+  #hbp-buy .msg{margin-top:10px;font-size:13px;text-align:center;color:var(--hb-muted,#5F6871);}
+  #hbp-buy .msg:empty{display:none;}
+  #hbp-buy .msg.err{color:#B3261E;font-weight:700;}
+
+  #hbp-buy .deliv{margin-top:16px;border:1px solid var(--hb-line,#C5CBD5);border-radius:5px;
+    padding:14px;background:var(--hb-soft,#F0F2F4);display:grid;gap:10px;}
+  #hbp-buy .dl{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;}
+  #hbp-buy .dl svg{width:17px;height:17px;flex:none;margin-top:1px;color:var(--hb-blue,#0046BE);}
+  #hbp-buy .dl b{font-weight:700;}
+  #hbp-buy .pay{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+  #hbp-buy .pay span{height:22px;padding-inline:8px;border-radius:3px;display:grid;place-items:center;
+    font-size:10px;font-weight:800;letter-spacing:-.01em;}
+  #hbp-buy .pay .v{background:#1A1F71;color:#fff;} #hbp-buy .pay .m{background:#EB001B;color:#fff;}
+  #hbp-buy .pay .a{background:#006FCF;color:#fff;} #hbp-buy .pay .s{background:#5A31F4;color:#fff;}
+  #hbp-buy .pay .k{background:#FFB3C7;color:#17120F;} #hbp-buy .pay .p{background:#B2FCE4;color:#000;}
+
+  @media(min-width:900px){
+    #hbp-buy .grid{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:36px;}
+    #hbp-buy .rail{position:sticky;top:84px;}
+    #hbp-buy .head-d{display:block;} #hbp-buy .head-m{display:none;}
+  }
+  @media(max-width:899px){ #hbp-buy .head-d{display:none;} }
+</style>
+
+<div class="hb" id="hbp-buy">
+  <div class="hb-wrap"><p class="crumb">Water sports / Powered floats / Super Glide</p><div class="head-m" style="margin-bottom:14px">
+      <h1 class="title">HELIOS Super Glide — Motorized Water Lounger</h1><p class="model">Model: HLS-SG1 · SKU: HELIOS-SG</p></div>
+
     <div class="grid">
-      <div class="gal">
-        <div class="main" id="hby-mw-buy"><img id="hby-m-buy" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="HELIOS Super Glide" loading="eager"><button class="arr l" type="button" id="hby-pv-buy" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <button class="arr r" type="button" id="hby-nx-buy" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <div class="dots" id="hby-dt-buy"></div></div><div class="thumbs" id="hby-th-buy"><button type="button" class="th on" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" aria-label="Image 1">
+      <div>
+        <div class="main"><span class="flag">2 for 1</span><img id="hbp-hero-buy" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png"
+                 alt="HELIOS Super Glide — Motorized Water Lounger" loading="eager"></div><div class="thumbs"><button type="button" class="thumb on"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" aria-label="View image 1">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" aria-label="Image 2">
+              </button><button type="button" class="thumb"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" aria-label="View image 2">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" aria-label="Image 3">
+              </button><button type="button" class="thumb"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" aria-label="View image 3">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" aria-label="Image 4">
+              </button><button type="button" class="thumb"
+                      data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" aria-label="View image 4">
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" alt="" loading="lazy">
               </button></div></div>
 
-      <div class="panel">
-        <h1>HELIOS SUPERGLIDE 1+1 FREE</h1>
-        <div class="rt">
-          <span class="s">★★★★★</span><span>4.8</span>
-          <a href="#reviews">3,912 ratings</a>
+      <div class="rail" id="buy">
+        <div class="head-d" style="margin-bottom:14px">
+          <h1 class="title">HELIOS Super Glide — Motorized Water Lounger</h1><p class="model">Model: HLS-SG1 · SKU: HELIOS-SG</p></div>
+
+        <div class="prow">
+          <span class="price" data-price>$259.99</span>
+          <s class="was" data-was>$519.98</s>
+          <span class="save" data-save>Save $259.99</span>
         </div>
-
-        <div class="price">
-          <b>$259.99</b><s>$519.98</s><em>SAVE $259.99</em><span class="per">Two Super Glides for the price of one</span></div>
-        <div class="insta">
-          <span>4 interest-free payments of <b id="hby-in-buy">$65.00</b> with</span>
-          <span class="lg sp">Shop Pay</span>
-          <span class="lg ap">afterpay</span>
-        </div>
-
-        <ul class="bl"><li><span class="i">✓</span><span>Twin motors move you. No paddling, no kicking, no effort</span></li><li><span class="i">✓</span><span>Holds 250-300 lb, padded headrest, dual cup holders</span></li><li><span class="i">✓</span><span>Ready in 5 minutes. Nozzle included, no pump to buy</span></li></ul>
-
-        <div class="frame">
-          <div class="fhead">
-            <span>2-FOR-1 DEAL</span></div>
-          <div class="steps">
-            <span><b>1.</b>Pick your deal</span>
-            <span><b>2.</b>Tap Add to cart</span>
-            <span><b>3.</b>We ship it free</span>
-          </div>
-          <div class="opts" id="hby-o-buy"><button type="button" class="opt on"
-                      data-id="48443521106161"
-                      data-gift=""
-                      data-giftname=""
-                      data-price="$259.99"
-                      data-compare="$519.98"
-                      ><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">1+1 FREE</span><span class="d">2 Super Glides. Buy one, the second is free</span></span>
-                <span class="op"><span class="sv">SAVE $259.99</span><span class="n">$259.99</span><span class="o">$519.98</span></span>
+        <p class="perunit" data-per>$130 each · free shipping · 7–10 business days</p><p class="fin">or 4 interest-free payments of <b>$65.00</b></p><div class="opts" data-opts><span class="optlab">CHOOSE YOUR PACK</span><button type="button" class="opt"
+                data-id="" data-p="$259.99"
+                data-c="" data-s=""
+                data-l="Free shipping · arrives in 7–10 business days" ><span class="radio" aria-hidden="true"></span>
+                <span class="om">
+                  <span class="ol">1 Super Glide</span><span class="on2">One rider</span></span>
+                <span class="or">
+                  <span class="op">$259.99</span></span>
+              </button><button type="button" class="opt on"
+                data-id="" data-p="$259.99"
+                data-c="$519.98" data-s="Save $259.99"
+                data-l="$130 each · free shipping · 7–10 business days" ><span class="tag">Best value</span><span class="radio" aria-hidden="true"></span>
+                <span class="om">
+                  <span class="ol">2 Super Glides</span><span class="on2">Buy one, second is free</span></span>
+                <span class="or">
+                  <span class="op">$259.99</span><span class="oc">$519.98</span></span>
               </button><button type="button" class="opt"
-                      data-id="48443521138929"
-                      data-gift="48443522285809"
-                      data-giftname="+ FREE Jet Ski"
-                      data-price="$349.99"
-                      data-compare="$779.97"
-                      ><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">3 Super Glides</span><span class="d">You plus two more seats</span><span class="gift">+ FREE Jet Ski</span></span>
-                <span class="op"><span class="sv">SAVE $429.98</span><span class="n">$349.99</span><span class="o">$779.97</span></span>
-              </button><button type="button" class="opt"
-                      data-id="48443521171697"
-                      data-gift="48443522285809"
-                      data-giftname="+ FREE Jet Ski"
-                      data-price="$459.99"
-                      data-compare="$1,039.96"
-                      ><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">2+2 FREE</span><span class="d">4 Super Glides. The whole crew</span><span class="gift">+ FREE Jet Ski</span></span>
-                <span class="op"><span class="sv">SAVE $579.97</span><span class="n">$459.99</span><span class="o">$1,039.96</span></span>
+                data-id="" data-p="$459.99"
+                data-c="$1,039.96" data-s="Save $579.97"
+                data-l="$115 each · free shipping · 7–10 business days" ><span class="radio" aria-hidden="true"></span>
+                <span class="om">
+                  <span class="ol">4 Super Glides</span><span class="on2">The whole crew</span></span>
+                <span class="or">
+                  <span class="op">$459.99</span><span class="oc">$1,039.96</span></span>
               </button></div>
-        </div>
 
-        <button class="atc" type="button" id="hby-a-buy">Add to Cart</button>
-        <div class="xrow">
-          <button class="xbtn buynow" type="button" id="hby-bn-buy">Buy now</button>
-          <button class="xbtn apay" type="button" id="hby-ap-buy" aria-label="Apple Pay">
-            <svg viewBox="0 0 384 512" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
-            Pay
-          </button>
-        </div>
-        <div class="gifted" id="hby-gf-buy"></div>
-        <div class="after" id="hby-af-buy"><a href="/cart">Go to cart</a></div>
+        <button type="button" class="cta" data-add>Add to Cart</button>
+        <button type="button" class="cta2" data-buy>Buy now</button>
+        <p class="msg" data-msg role="status" aria-live="polite"></p>
 
-        <div class="ship"><b>FREE delivery</b> in 7-10 business days, tracked<br>30-day returns, secure checkout</div>
-
-        <div class="tr">
-          <div class="trc"><div class="i">🚚</div><div class="t">Free shipping</div></div>
-          <div class="trc"><div class="i">↩️</div><div class="t">30-day returns</div></div>
-          <div class="trc"><div class="i">📦</div><div class="t">Tracked</div></div>
-          <div class="trc"><div class="i">🔒</div><div class="t">Secure checkout</div></div>
-        </div></div>
-    </div>
-  </div>
-
-</section>
-
-
-<!-- ===== box :: helios-box ===== -->
-<section class="helios" id="hbx-box">
-<style>
-  #hbx-box{background:#ffffff;color:#0F1111;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:clamp(30px,4vw,52px) 0;}
-  #hbx-box *{box-sizing:border-box;}
-  #hbx-box .wrap{max-width:1000px;margin:0 auto;padding:0 18px;}
-  #hbx-box .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
-  #hbx-box h2{font-size:clamp(20px,2.6vw,25px);font-weight:700;letter-spacing:-.015em;line-height:1.3;margin:0 0 18px;}
-  #hbx-box .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#D5D9D9;
-    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  @media(min-width:760px){#hbx-box .grid{grid-template-columns:repeat(4,1fr);}}
-  #hbx-box .c{background:#fff;padding:20px 14px;text-align:center;}
-  #hbx-box .c .ic{font-size:26px;line-height:1;margin-bottom:9px;}
-  #hbx-box .c .t{font-size:14px;font-weight:700;line-height:1.3;}
-  #hbx-box .c .d{font-size:12.5px;color:#565959;line-height:1.45;margin-top:4px;}
-  #hbx-box .note{font-size:12.5px;color:#565959;margin-top:14px;line-height:1.5;}
-</style>
-  <div class="wrap"><div class="eb">No tools, nothing else to buy</div><h2>Everything in the box</h2>
-    <div class="grid"><div class="c" >
-          <div class="ic">🛥️</div>
-          <div class="t">The lounger</div><div class="d">Heavy-duty PVC, padded headrest, two cup holders</div></div><div class="c" >
-          <div class="ic">⚡</div>
-          <div class="t">Twin motors</div><div class="d">Joystick steering. Forward, reverse, spin</div></div><div class="c" >
-          <div class="ic">🔋</div>
-          <div class="t">Battery and charger</div><div class="d">Lasts 3-4 hours of use per charge</div></div><div class="c" >
-          <div class="ic">💨</div>
-          <div class="t">Inflation nozzle</div><div class="d">Ready in 5 minutes, no pump to buy</div></div></div><p class="note">Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s.</p></div>
-</section>
-
-
-<!-- ===== gallery :: helios-gallery ===== -->
-<div class="hg" id="hg-gallery"
-     style="--hg-w:1300px;
-            --hg-cols:2;
-            --hg-cols-m:1;
-            --hg-ratio:1/1;
-            --hg-ratio-m:1/1;
-            --hg-pad:0px;
-            --hg-pad-m:0px;
-            --hg-gap:14px;
-            --hg-radius:8px;
-            --hg-page-bg:#ffffff;
-            --hg-tile-bg:#ffffff;
-            --hg-border:#d5d9d9">
-  <div class="hg__wrap"><h2 class="hg__h"></h2><div class="hg__grid"><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 650px, 100vw"
-                 alt="HELIOS Super Glide, what arrives in the box" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 650px, 100vw"
-                 alt="HELIOS Super Glide product view" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 650px, 100vw"
-                 alt="HELIOS Super Glide on the water" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w,
-                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1400w"
-                 sizes="(min-width: 750px) 650px, 100vw"
-                 alt="HELIOS Super Glide detail" loading="lazy">
-          </figure></div>
-  </div>
-</div>
-
-<!-- ===== clearfaq :: helios-clear-faq ===== -->
-<section class="helios" id="cfq-clearfaq">
-<a id="faq"></a>
-<style>
-  #cfq-clearfaq{--ink:#0F1111;--mut:#565959;--line:#D5D9D9;--ok:#067D62;overflow-x:clip;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#ffffff;}
-  #cfq-clearfaq *{box-sizing:border-box;min-width:0;}
-  #cfq-clearfaq .wrap{max-width:1100px;margin:0 auto;padding:clamp(34px,5vw,58px) 18px;}
-  #cfq-clearfaq .head{text-align:center;margin:0 0 24px;}
-  #cfq-clearfaq .ey{font-size:12px;font-weight:700;color:var(--mut);}
-  #cfq-clearfaq h2{font-size:clamp(21px,2.8vw,27px);font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:6px 0 0;color:var(--ink);}
-  #cfq-clearfaq ['cols']{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;}
-  @media(min-width:860px){#cfq-clearfaq ['cols']{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;}}
-  #cfq-clearfaq .vid{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1117;aspect-ratio:9/12;}
-  @media(max-width:859px){#cfq-clearfaq .vid{aspect-ratio:4/3;}}
-  #cfq-clearfaq .vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
-  #cfq-clearfaq .faqs{display:grid;gap:10px;}
-  #cfq-clearfaq .fq{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;transition:border-color .25s;}
-  #cfq-clearfaq .fq.on{border-color:var(--ink);}
-  #cfq-clearfaq .fq.done{border-color:rgba(6,125,98,.45);}
-  #cfq-clearfaq .fq .q{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 15px;cursor:pointer;font-weight:700;font-size:14.5px;color:var(--ink);}
-  #cfq-clearfaq .fq .ico{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;transition:transform .3s,background .3s;}
-  #cfq-clearfaq .fq.on .ico{transform:rotate(135deg);}
-  #cfq-clearfaq .fq.done:not(.on) .ico{background:var(--ok);transform:none;}
-  #cfq-clearfaq .fq .p{max-height:0;overflow:hidden;transition:max-height .35s ease;}
-  #cfq-clearfaq .fq .p .in{padding:0 15px 14px;color:var(--mut);font-size:14px;line-height:1.6;}
-  @media(prefers-reduced-motion:reduce){#cfq-clearfaq .fq .p{transition:none}#cfq-clearfaq .fq .ico{transition:none}#cfq-clearfaq .vid video{display:none}}
-</style>
-<div class="wrap">
-  <div class="head"><div class="ey">Straight answers</div><h2>The things people actually ask.</h2></div>
-  <div class="cols">
-    <div class="vid">
-      <video src="https://cdn.shopify.com/videos/c/vp/5a4a60a7bc3946829bd78d5c914ad5f2/5a4a60a7bc3946829bd78d5c914ad5f2.HD-720p-1.6Mbps-89935160.mp4" poster="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/preview_images/5a4a60a7bc3946829bd78d5c914ad5f2.thumbnail.0000000000.jpg?v=1785074711" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
-    </div>
-    <div class="faqs" data-faqs>
-      <div class="fq on"><div class="q">Does it actually move on its own, or do I paddle?<span class="ico">+</span></div><div class="p"><div class="in">It moves itself. Twin electric thrusters push you forward and let you spin 360° with the joysticks, completely hands-free. No paddling, no gas.</div></div></div>
-      <div class="fq"><div class="q">Is it safe for kids?<span class="ico">+</span></div><div class="p"><div class="in">Yes. The thrusters are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent, life jackets on like any water toy.</div></div></div>
-      <div class="fq"><div class="q">Will it really hold an adult and the kids?<span class="ico">+</span></div><div class="p"><div class="in">Yes, rated up to 300 lb. Room for a parent and two kids, with a padded headrest and dual cup holders.</div></div></div>
-      <div class="fq"><div class="q">How long does the battery last?<span class="ico">+</span></div><div class="p"><div class="in">3-4 hours of use per charge, a whole afternoon on the water, and it recharges between sessions.</div></div></div>
-      <div class="fq"><div class="q">Is it durable, or will it pop?<span class="ico">+</span></div><div class="p"><div class="in">Heavy-duty reinforced PVC, thick material built to take a full summer of kids, docks and dragging. Not a flimsy pool toy.</div></div></div>
-      <div class="fq"><div class="q">How hard is it to set up?<span class="ico">+</span></div><div class="p"><div class="in">Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</div></div></div>
-      <div class="fq"><div class="q">What exactly do I get with the 1+1 deal?<span class="ico">+</span></div><div class="p"><div class="in">Two complete Super Glides, one for you and one free, plus free tracked shipping and the 30-day money-back guarantee.</div></div></div>
-      <div class="fq"><div class="q">What if I do not love it?<span class="ico">+</span></div><div class="p"><div class="in">Send it back within 30 days for a full refund. No restocking fee, no argument.</div></div></div>
+        <div class="deliv"><div class="dl" ><svg viewBox="0 0 24 24" fill="none"><path d="M3 7.5h10.5v9H3zM13.5 10.5H17l4 3.2v2.8h-7.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/></svg><span><p><b>Free delivery</b> — arrives in 7–10 business days, tracked</p></span>
+              </div><div class="dl" ><svg viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-2.6-5.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 3.5V8h-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span><p><b>30-day returns</b> — unused and in the box, we cover it</p></span>
+              </div><div class="dl" ><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 2.6v5.6c0 4.3-2.9 7.6-7 9.2-4.1-1.6-7-4.9-7-9.2V5.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12.2l2.1 2.1L15.4 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span><p><b>12-month warranty</b> on motors and battery</p></span>
+              </div></div><div class="pay" aria-label="Accepted payments">
+            <span class="v">VISA</span><span class="m">MC</span><span class="a">AMEX</span>
+            <span class="s">Shop&nbsp;Pay</span><span class="k">Klarna</span><span class="p">afterpay</span>
+          </div></div>
     </div>
   </div>
 </div>
 
-</section>
 
 
 
-<!-- ===== tiktok :: helios-tiktok ===== -->
-<div class="ht" id="ht-tiktok">
-  <div class="ht__wrap"><p class="ht__eyebrow">Real customers</p><h2 class="ht__h">See it on the water.</h2></div>
-  <div class="ht__vp">
-    <ul class="ht__track"><li class="ht__card" >
-            <div class="ht__screen">
-              <video muted loop playsinline poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" src=""></video>
-            </div></li><li class="ht__card" >
-            <div class="ht__screen">
-              <video muted loop playsinline poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" src=""></video>
-            </div></li><li class="ht__card" >
-            <div class="ht__screen">
-              <video muted loop playsinline poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" src=""></video>
-            </div></li></ul>
+
+<!-- ===== highlights :: helios-bb-highlights ===== -->
+<style>
+  .hbhl{background:var(--hb-soft,#F0F2F4);padding-block:30px;border-block:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbhl__h{margin-bottom:18px;}
+  .hbhl__g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .hbhl__c{background:#fff;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:6px;padding:16px 14px;}
+  .hbhl__c svg{width:26px;height:26px;color:var(--hb-blue,#0046BE);margin-bottom:10px;}
+  .hbhl__c b{display:block;font-size:14px;font-weight:700;line-height:1.25;}
+  .hbhl__c span{display:block;font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:4px;line-height:1.45;}
+  @media(min-width:750px){ .hbhl__g{grid-template-columns:repeat(4,minmax(0,1fr));} }
+</style><div class="hb hbhl">
+  <div class="hb-wrap"><h2 class="hb-h2 hbhl__h">At a glance</h2><div class="hbhl__g"><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><b>Twin electric motors</b><span>Joystick steering — forward, reverse and spin. No paddling.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="15" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M21 10.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="5.5" y="9.5" width="8" height="5" rx="1" fill="currentColor"/></svg><b>3–4 hours per charge</b><span>Rechargeable battery and charger included in the box.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1.6 12H6.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg><b>Holds 250–300 lb</b><span>Heavy-duty PVC with a padded headrest and two cup holders.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3.2 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ready in 5 minutes</b><span>Inflation nozzle included. No separate pump to buy.</span></div></div>
   </div>
 </div>
 
-<!-- ===== howitworks :: helios-howitworks ===== -->
-<section class="helios" id="hw-howitworks">
+<!-- ===== gallery :: helios-bb-gallery ===== -->
 <style>
-  #hw-howitworks{background:#fff;color:#0F1111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hw-howitworks *{box-sizing:border-box;}
-  #hw-howitworks .wrap{max-width:1000px;margin:0 auto;padding:clamp(30px,4vw,52px) 18px;}
-  #hw-howitworks .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
-  #hw-howitworks h2{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:0 0 18px;}
-  #hw-howitworks .grid{display:grid;grid-template-columns:1fr;gap:1px;background:#D5D9D9;border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  @media(min-width:700px){#hw-howitworks .grid{grid-template-columns:repeat(3,1fr);}}
-  #hw-howitworks .st{background:#fff;padding:22px 20px;}
-  #hw-howitworks .n{width:26px;height:26px;border-radius:50%;background:#0F1111;color:#fff;
-    font-size:13px;font-weight:700;display:grid;place-items:center;margin-bottom:11px;}
-  #hw-howitworks h3{font-size:15px;font-weight:700;margin:0 0 5px;line-height:1.35;}
-  #hw-howitworks p{font-size:14px;line-height:1.55;color:#565959;margin:0;}
-</style>
-<div class="wrap"><div class="eb">No tools, no assembly</div><h2>Three steps. Then you are on the water.</h2>
-  <div class="grid"><div class="st"><div class="n">1</div><h3>Inflate it</h3><p>About five minutes with the nozzle in the box. No compressor, no pump to buy.</p></div><div class="st"><div class="n">2</div><h3>Drop it in</h3><p>Pool, lake, any calm water. It sits high and stays steady when you climb on.</p></div><div class="st"><div class="n">3</div><h3>Grab the joysticks</h3><p>The motors do the work. You steer. Nothing to learn.</p></div></div>
-</div>
-</section>
-
-
-<!-- ===== guarantee :: helios-guarantee ===== -->
-<section class="helios" id="hg-guarantee">
-<style>
-  #hg-guarantee{background:#fff;color:#0F1111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hg-guarantee *{box-sizing:border-box;}
-  #hg-guarantee .wrap{max-width:1000px;margin:0 auto;padding:clamp(26px,4vw,44px) 18px;}
-  #hg-guarantee .band{background:#F7FAFA;border:1px solid #D5D9D9;border-radius:8px;padding:clamp(26px,4vw,40px) 26px;text-align:center;}
-  #hg-guarantee h2{font-size:clamp(19px,2.4vw,24px);font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:0;}
-  #hg-guarantee .tx{font-size:14px;line-height:1.6;color:#0F1111;margin:12px auto 0;max-width:620px;}
-  #hg-guarantee .tx p{margin:0 0 9px;}
-  #hg-guarantee .tx p:last-child{margin-bottom:0;}
-  #hg-guarantee a.btn{display:inline-block;margin-top:20px;background:#FFD814;color:#0F1111;border:1px solid #FCD200;
-    border-radius:8px;padding:11px 34px;font-size:14px;font-weight:600;text-decoration:none;}
-  #hg-guarantee a.btn:hover{background:#F7CA00;}
-</style>
-<div class="wrap">
-  <div class="band">
-    <h2>30-day money-back guarantee</h2>
-    <div class="tx"><p>Take it out for 30 days. If the Super Glide does not make summer better, send it back for a full refund. No restocking fee, no argument.</p></div><a class="btn" href="#buy">Get yours</a></div>
-</div>
-</section>
-
-
-<!-- ===== footer :: helios-footer ===== -->
-<section class="helios" id="hft-footer">
-<style>
-  #hft-footer footer{position:relative;background:#0A0E12;color:#E8EDF2;padding:0;overflow:hidden}
-  #hft-footer .wrap{max-width:1200px;margin:0 auto;padding:0 22px;position:relative;z-index:2}
-  #hft-footer .crest{height:5px;background:linear-gradient(90deg,transparent,#2A86C4,transparent);background-size:55% 100%;background-repeat:no-repeat;animation:hftwave 3.6s ease-in-out infinite alternate;opacity:.9}
-  @keyframes hftwave{from{background-position:-40% 0}to{background-position:140% 0}}
-  #hft-footer .bub{position:absolute;bottom:-40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(159,214,245,.26),rgba(42,134,196,.08));filter:blur(1px);animation:hftrise linear infinite;z-index:1;pointer-events:none}
-  @keyframes hftrise{to{transform:translateY(-120vh)}}
-  #hft-footer .badges{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 26px;padding:26px 22px;border-bottom:1px solid rgba(255,255,255,.08)}
-  #hft-footer .rank{display:inline-flex;align-items:center;gap:8px;font-family:'Archivo';font-weight:800;font-size:13px;letter-spacing:.02em;color:#fff;background:#0E6FA8;padding:7px 14px;border-radius:999px;box-shadow:0 10px 26px -10px rgba(42,134,196,.55)}
-  #hft-footer .rank svg{width:14px;height:14px;color:#fff}
-  #hft-footer .badge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:rgba(232,237,242,.75)}
-  #hft-footer .badge svg{width:16px;height:16px;flex-shrink:0;color:#7FC4EE;opacity:.9}
-  #hft-footer .badge .stars{color:#FFC531;display:inline-flex;gap:1px}
-  #hft-footer .badge .stars svg{color:#FFC531;width:13px;height:13px;opacity:1}
-  #hft-footer .top{display:grid;grid-template-columns:1.4fr repeat(3,1fr) 1.5fr;gap:40px;padding:46px 0 32px}
-  #hft-footer .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:#fff}
-  #hft-footer .brand p{color:rgba(232,237,242,.6);font-size:13.5px;margin-top:12px;max-width:250px;line-height:1.6}
-  #hft-footer .brand .pos{margin-top:14px;font-family:'Archivo';font-weight:800;font-size:13px;color:#7FC4EE}
-  #hft-footer h5{font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 14px;color:#fff;font-weight:800}
-  #hft-footer ul{list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.15}
-  #hft-footer ul a{color:rgba(232,237,242,.65);text-decoration:none;background-image:linear-gradient(90deg,#2A86C4,#2A86C4);background-size:0% 1.5px;background-repeat:no-repeat;background-position:0 100%;transition:background-size .25s ease,color .15s ease}
-  #hft-footer ul a:hover{color:#fff;background-size:100% 1.5px}
-  #hft-footer .nl .lead{font-family:'Archivo';font-weight:800;font-size:16px;color:#fff;line-height:1.25;margin-bottom:4px}
-  #hft-footer .nl .sub{font-size:12.5px;color:rgba(232,237,242,.6);margin-bottom:14px;line-height:1.5}
-  #hft-footer .nl-field{position:relative;margin-bottom:9px}
-  #hft-footer .nl-tag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;letter-spacing:.02em;background:rgba(42,134,196,.18);color:#7FC4EE;padding:3px 8px;border-radius:6px}
-  #hft-footer .nl input{width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:12px 78px 12px 13px;font-size:13.5px;background:rgba(255,255,255,.06);color:#fff}
-  #hft-footer .nl input::placeholder{color:rgba(232,237,242,.45)}
-  #hft-footer .nl input:focus{outline:none;border-color:#2A86C4}
-  #hft-footer .nl-btn{width:100%;border:none;border-radius:11px;padding:13px;background:#0E6FA8;color:#fff;font-family:'Archivo';font-weight:800;font-size:14px;cursor:pointer;margin-top:3px;box-shadow:0 14px 30px -10px rgba(42,134,196,.55);transition:transform .12s ease}
-  #hft-footer .nl-btn:hover{transform:translateY(-1px)}
-  #hft-footer .nl-note{font-size:11px;color:rgba(232,237,242,.4);margin-top:9px;line-height:1.5}
-  #hft-footer .nl-ok{font-size:13px;color:#7FC4EE;font-weight:700;margin-top:8px}
-  #hft-footer .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;border-top:1px solid rgba(255,255,255,.08);padding-top:22px;margin-top:8px}
-  #hft-footer .pays{display:flex;gap:7px;flex-wrap:wrap}
-  #hft-footer .pays span{font-size:10px;font-weight:800;letter-spacing:.02em;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:5px 9px;color:rgba(232,237,242,.6);background:rgba(255,255,255,.04)}
-  #hft-footer .copy{font-size:11.5px;color:rgba(232,237,242,.4)}
-  #hft-footer .mega{text-align:center;margin:36px 0 0;padding-bottom:10px;user-select:none;line-height:.86}
-  #hft-footer .mega b{font-family:'Archivo';font-weight:900;letter-spacing:.1em;font-size:clamp(62px,13.5vw,185px);background:linear-gradient(100deg,#0A3D66 0%,#2A86C4 30%,#9FD6F5 50%,#2A86C4 70%,#0A3D66 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:hftshim 7s linear infinite}
-  @keyframes hftshim{to{background-position:200% 0}}
-  #hft-footer .mega .tag{display:block;font-size:11px;font-weight:800;letter-spacing:.4em;text-transform:uppercase;color:rgba(232,237,242,.35);margin-bottom:10px}
-  @media(max-width:860px){
-    #hft-footer .top{grid-template-columns:1fr 1fr;gap:30px 24px;padding:36px 0 24px}
-    #hft-footer .brand{grid-column:1 / -1}
-    #hft-footer .nl{grid-column:1 / -1}
-    #hft-footer .foot{justify-content:center;text-align:center}
+  .hbg{background:var(--hb-bg,#fff);padding-block:34px;overflow:hidden;}
+  .hbg__h{margin-bottom:16px;}
+  .hbg__vp{overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;}
+  .hbg__vp::-webkit-scrollbar{display:none;}
+  .hbg__t{display:flex;gap:10px;list-style:none;margin:0;padding:0 var(--hb-gut,16px) 0 0;width:max-content;}
+  .hbg__c{flex:none;width:min(78vw,340px);scroll-snap-align:start;}
+  .hbg__c img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:var(--hb-soft,#F0F2F4);}
+  .hbg__c p{font-size:13px;color:var(--hb-muted,#5F6871);margin-top:8px;line-height:1.45;}
+  @media(min-width:900px){
+    .hbg__vp{overflow:visible;}
+    .hbg__t{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:auto;padding:0;}
+    .hbg__c{width:auto;}
   }
-  @media(prefers-reduced-motion:reduce){
-    #hft-footer .crest,#hft-footer .bub,#hft-footer .mega b{animation:none}
-  }
-</style>
-<footer>
-  <div class="crest"></div>
-  <span class="bub" style="left:8%;width:14px;height:14px;animation-duration:14s;animation-delay:0s"></span>
-  <span class="bub" style="left:26%;width:8px;height:8px;animation-duration:11s;animation-delay:3s"></span>
-  <span class="bub" style="left:55%;width:18px;height:18px;animation-duration:16s;animation-delay:1.5s"></span>
-  <span class="bub" style="left:74%;width:10px;height:10px;animation-duration:12s;animation-delay:5s"></span>
-  <span class="bub" style="left:90%;width:13px;height:13px;animation-duration:15s;animation-delay:2.5s"></span>
-  <div class="wrap">
-
-    <div class="badges">
-      <span class="rank">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-        HOLDS 250-300 LB, DUAL MOTORS, 3-4 HOURS PER CHARGE
-      </span>
-      <span class="badge">
-        <span class="stars">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-        </span>
-        4.8 from 3,912 verified riders
-      </span>
-      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>30-day money-back</span>
-      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>Free shipping</span>
-      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout</span>
-    </div>
-
-    <div class="top">
-      <div class="brand">
-        <span class="logo">HELIOS</span>
-        <p><p>Built for real backyards. Tracked shipping on every order, 30-day returns, and a person who actually answers your email.</p></p>
-        <div class="pos">Motorized water gear, made simple.</div>
-      </div><div class="nl">
-        <div class="lead">Get up to 15% off your first order</div>
-        <div class="sub">Enter your email for 10% off, add your phone and get 15%.</div>
-        <form><input type="hidden" name="contact[tags]" value="newsletter,footer-signup">
-          <div class="nl-field">
-            <input type="email" name="contact[email]" placeholder="Your email" required>
-            <span class="nl-tag">10% OFF</span>
-          </div>
-          <div class="nl-field">
-            <input type="tel" name="contact[phone]" placeholder="Your phone (optional)">
-            <span class="nl-tag">15% OFF</span>
-          </div>
-          <button type="submit" class="nl-btn">Unlock my discount</button>
-          <p class="nl-note">By signing up you agree to receive emails/texts. Unsubscribe anytime.</p>
-        </form>
-      </div>
-    </div>
-
-    <div class="foot">
-      <div class="copy">© 2026 HELIOS</div>
-      <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span><span>G PAY</span></div>
-    </div>
-
-    <div class="mega"><span class="tag">You only get so many summers</span><b>HELIOS</b></div>
-
-  </div>
-</footer>
-</section>
-
-
-
-<!-- ===== sticky :: helios-sticky-atc ===== -->
-<div class="helios" id="hs-sticky">
-<style>
-  #hs-sticky .bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;
-    background:rgba(255,255,255,.6);
-    backdrop-filter:blur(24px) saturate(190%);-webkit-backdrop-filter:blur(24px) saturate(190%);
-    border:1px solid rgba(255,255,255,.65);border-radius:22px;
-    box-shadow:0 18px 44px -14px rgba(6,30,46,.32), inset 0 1px 0 rgba(255,255,255,.75);
-    padding:10px 12px;display:flex;align-items:center;gap:12px;
-    transform:translateY(140%);transition:transform .45s cubic-bezier(.2,.8,.2,1);
-    max-width:720px;margin:0 auto;}
-  #hs-sticky .bar.show{transform:translateY(0);}
-  #hs-sticky *{box-sizing:border-box;min-width:0;}
-  #hs-sticky .info{display:flex;align-items:center;gap:11px;flex:1 1 0;}
-  #hs-sticky .thumb{width:44px;height:44px;flex-shrink:0;border-radius:12px;object-fit:cover;
-    border:1px solid rgba(255,255,255,.7);box-shadow:0 2px 8px rgba(6,30,46,.14);}
-  #hs-sticky .name{font-weight:800;font-size:14px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0F1111;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hs-sticky .price{font-size:13px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hs-sticky .price b{font-weight:800;color:#0F1111;}
-  #hs-sticky .price s{color:#565959;margin-left:5px;}
-  #hs-sticky .add{flex-shrink:0;background:#0F1111;color:#fff;border:none;border-radius:100px;
-    padding:13px 22px;font-weight:800;font-size:14.5px;cursor:pointer;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    box-shadow:0 10px 24px rgba(10,18,25,.3);}
-</style><form>
-    <input type="hidden" name="id" id="hs-vid-sticky" value="42424242">
-    <div class="bar" id="hs-bar-sticky">
-      <div class="info"><img class="thumb" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt=""><div style="min-width:0;">
-          <div class="name">Super Glide 1+1 FREE</div>
-          <div class="price"><b id="hs-price-sticky">$1,299.00</b><s id="hs-old-sticky">$1,799.00</s></div>
-        </div>
-      </div>
-      <button type="submit" name="add" class="add">Add to Cart</button>
-    </div>
-  </form>
-
-</div>
-
-
-<h2 id='pg1' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Product page — 12 sections</h2>
-
-<!-- ===== bar :: helios-bar ===== -->
-<section class="helios" id="hb2-bar">
-<style>
-  #hb2-bar .bar{background:#0f1111;color:#ffffff;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    display:flex;align-items:center;justify-content:center;gap:8px 12px;flex-wrap:wrap;
-    padding:11px 42px 11px 16px;position:relative;font-size:13px;font-weight:600;line-height:1.35;text-align:center;}
-  #hb2-bar .bar b{font-weight:800;}
-  #hb2-bar .cd{display:inline-flex;align-items:center;gap:6px;
-    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);
-    backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);
-    border-radius:100px;padding:4px 13px;font-variant-numeric:tabular-nums;font-weight:800;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
-  #hb2-bar .cd .u{font-size:10.5px;font-weight:600;opacity:.65;letter-spacing:.02em;}
-  #hb2-bar a{color:inherit;text-decoration:underline;text-underline-offset:2px;}
-  #hb2-bar .x{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;
-    border:0;background:transparent;color:inherit;opacity:.6;font-size:16px;line-height:1;cursor:pointer;padding:0;}
-  #hb2-bar .x:hover{opacity:1;}
-  #hb2-bar .bar.gone{display:none;}
-</style>
-  <div class="bar" id="hb2-b-bar">
-    <span>Summer sale. 1+1 Super Glide, get two and pay for one</span><a href="#buy">Shop now</a><button class="x" type="button" aria-label="Dismiss">&times;</button></div>
-
-</section>
-
-
-<!-- ===== nav :: helios-nav ===== -->
-<section class="helios" id="hn-nav">
-<style>
-  #hn-nav{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hn-nav *{box-sizing:border-box;min-width:0;}
-  #hn-nav .nav{position:sticky;top:0;z-index:900;
-    background:#ffffff;border-bottom:1px solid #D5D9D9;}
-  #hn-nav .in{max-width:1200px;margin:0 auto;padding:0 14px;height:58px;
-    display:flex;align-items:center;gap:14px;}
-  #hn-nav .burger{display:grid;place-items:center;width:38px;height:38px;border:0;background:none;
-    color:#0f1111;cursor:pointer;padding:0;}
-  #hn-nav .burger svg{width:22px;height:22px;}
-  @media(min-width:760px){#hn-nav .burger{display:none;}}
-  #hn-nav .lg{font-size:19px;font-weight:800;letter-spacing:.16em;color:#0f1111;text-decoration:none;flex:0 0 auto;}
-  #hn-nav .lg img{height:26px;width:auto;display:block;}
-  #hn-nav .links{display:none;gap:22px;margin-left:8px;}
-  @media(min-width:760px){#hn-nav .links{display:flex;}}
-  #hn-nav .links a{font-size:14px;color:#0f1111;text-decoration:none;font-weight:500;}
-  #hn-nav .links a:hover{text-decoration:underline;}
-  #hn-nav .right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-  #hn-nav .cta{background:#FFD814;color:#0F1111;border:1px solid #FCD200;border-radius:100px;
-    padding:9px 20px;font-size:13.5px;font-weight:800;text-decoration:none;}
-  #hn-nav .cart{position:relative;display:grid;place-items:center;width:36px;height:36px;
-    color:#0f1111;text-decoration:none;}
-  #hn-nav .cart svg{width:21px;height:21px;}
-  #hn-nav .cnt{position:absolute;top:-2px;right:-3px;min-width:17px;height:17px;padding:0 4px;
-    border-radius:100px;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;}
-  /* mobile drawer */
-  #hn-nav .dw{display:none;background:#ffffff;border-bottom:1px solid #D5D9D9;}
-  #hn-nav .dw.open{display:block;}
-  @media(min-width:760px){#hn-nav .dw{display:none !important;}}
-  #hn-nav .dw a{display:block;padding:15px 18px;font-size:15px;font-weight:600;color:#0f1111;
-    text-decoration:none;border-top:1px solid #EFF1F1;}
-  #hn-nav .dw a:first-child{border-top:0;}
-</style>
-  <div class="nav">
-    <div class="in">
-      <button class="burger" type="button" id="hn-bg-nav" aria-label="Menu" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-      <a class="lg" href="/"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="HELIOS"></a>
-      <nav class="links"><a href="#reviews">Reviews</a><a href="#faq">FAQ</a><a href="/"></a><a href="/"></a></nav>
-      <div class="right"><a class="cta" href="#buy">Shop now</a><a class="cart" href="/cart" aria-label="Cart">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.4 12.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg></a>
-      </div>
-    </div>
-    <div class="dw" id="hn-dw-nav"><a href="#reviews">Reviews</a><a href="#faq">FAQ</a><a href="/"></a><a href="/"></a></div>
-  </div>
-
-</section>
-
-
-<!-- ===== buy :: helios-buy ===== -->
-<section class="helios" id="hby-buy">
-<a id="buy"></a>
-<style>
-  #hby-buy{background:#ffffff;color:#0F1111;overflow-x:clip;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hby-buy *{box-sizing:border-box;min-width:0;}
-  #hby-buy .wrap{max-width:1200px;margin:0 auto;padding:clamp(14px,2vw,26px) 16px clamp(24px,3vw,40px);}
-  #hby-buy .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(16px,2.2vw,32px);}
-  @media(min-width:900px){#hby-buy .grid{grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);align-items:start;}}
-
-  #hby-buy .main{position:relative;width:100%;aspect-ratio:1/1;background:#fff;
-    border:1px solid #D5D9D9;border-radius:12px;overflow:hidden;cursor:pointer;}
-  #hby-buy .main img{width:100%;height:100%;object-fit:cover;display:block;background:#fff;}
-  @media(max-width:899px){
-    #hby-buy .gal{margin:0 -16px;}
-    #hby-buy .main{border:0;border-radius:0;}
-    #hby-buy .thumbs{padding:0 16px;}
-  }
-  #hby-buy .arr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:32px;height:32px;
-    border:1px solid rgba(15,17,17,.10);border-radius:50%;cursor:pointer;display:grid;place-items:center;
-    background:rgba(255,255,255,.10);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);
-    box-shadow:none;color:rgba(15,17,17,.55);padding:0;transition:color .15s,background .15s;}
-  #hby-buy .arr:hover{color:#0F1111;background:rgba(255,255,255,.30);}
-  #hby-buy .arr svg{width:14px;height:14px;display:block;}
-  #hby-buy .arr.l{left:12px;}
-  #hby-buy .arr.r{right:12px;}
-  #hby-buy .dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:5px;z-index:3;}
-  #hby-buy .dots i{width:6px;height:6px;border-radius:50%;background:rgba(15,17,17,.22);}
-  #hby-buy .dots i.on{background:#0F1111;}
-  #hby-buy .thumbs{display:flex;gap:8px;margin-top:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  #hby-buy .thumbs button{flex:0 0 58px;width:58px;height:58px;padding:0;border:1px solid #D5D9D9;
-    border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;}
-  #hby-buy .thumbs button.on{border-color:#0F1111;border-width:2px;}
-  #hby-buy .thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
-
-  #hby-buy h1{font-size:clamp(21px,2.7vw,27px);font-weight:800;line-height:1.24;margin:0 0 8px;letter-spacing:-.02em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-buy .rt{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:10px;flex-wrap:wrap;}
-  #hby-buy .rt .s{color:#F5A623;letter-spacing:1px;font-size:15px;}
-  #hby-buy .rt a{color:#007185;text-decoration:none;}
-
-  #hby-buy .price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:10px;}
-  #hby-buy .price b{font-size:clamp(32px,7vw,40px);font-weight:800;letter-spacing:-.03em;line-height:1;color:#0F1111;}
-  #hby-buy .price s{font-size:16px;color:#565959;}
-  #hby-buy .price em{font-style:normal;background:#CC0C39;color:#fff;font-size:12px;font-weight:800;
-    border-radius:5px;padding:4px 9px;}
-  #hby-buy .price .per{width:100%;font-size:12.5px;color:#067D62;font-weight:700;}
-  #hby-buy .insta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:12.5px;color:#0F1111;
-    padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #E7E9E9;}
-  #hby-buy .insta .lg{display:inline-flex;align-items:center;border-radius:5px;padding:3px 8px;
-    font-size:11px;font-weight:800;letter-spacing:.01em;line-height:1;}
-  #hby-buy .insta .sp{background:#5A31F4;color:#fff;}
-  #hby-buy .insta .ap{background:#B2FCE4;color:#0F1111;}
-
-  #hby-buy .bl{margin:0 0 18px;padding:0;}
-  #hby-buy .bl li{list-style:none;display:flex;gap:9px;font-size:13.5px;line-height:1.45;align-items:flex-start;margin-bottom:7px;}
-  #hby-buy .bl li span{overflow-wrap:break-word;}
-  #hby-buy .bl .i{flex:0 0 17px;width:17px;height:17px;border-radius:50%;background:#067D62;color:#fff;
-    font-size:10px;font-weight:900;display:grid;place-items:center;margin-top:1px;}
-
-  #hby-buy .frame{border:1px solid #D5D9D9;border-radius:14px;background:#fff;}
-  #hby-buy .fhead{background:#0F1111;color:#fff;display:flex;align-items:center;justify-content:space-between;
-    gap:6px 12px;padding:12px 16px;font-size:13.5px;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;
-    border-radius:13px 13px 0 0;}
-  #hby-buy .fhead .pop{color:#FFC531;font-size:12.5px;}
-  #hby-buy .steps{display:flex;flex-wrap:wrap;gap:6px 16px;padding:11px 16px;background:#F7FAFA;
-    border-bottom:1px solid #E7E9E9;font-size:12px;color:#565959;}
-  #hby-buy .steps b{color:#0F1111;font-weight:800;margin-right:3px;}
-  #hby-buy .opts{padding:12px;display:flex;flex-direction:column;gap:10px;}
-  #hby-buy .opt{position:relative;display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    border:1px solid #D5D9D9;border-radius:12px;background:#fff;color:#0F1111;padding:12px 10px;cursor:pointer;
-    transition:border-color .12s,box-shadow .12s;overflow:visible;}
-  #hby-buy .opt:hover{border-color:#8d9698;}
-  #hby-buy .opt.on{border-color:#0F1111;border-width:2px;padding:11px 9px;box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
-  #hby-buy .opt.hastag{margin-top:8px;}
-  #hby-buy .tagp{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
-    color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-    border-radius:100px;padding:4px 13px;white-space:nowrap;line-height:1.2;
-    box-shadow:0 2px 8px rgba(0,0,0,.20);}
-  #hby-buy .dot{flex:0 0 18px;width:18px;height:18px;border-radius:50%;border:1.6px solid #8d9698;display:grid;place-items:center;}
-  #hby-buy .opt.on .dot{border-color:#0F1111;}
-  #hby-buy .opt.on .dot:after{content:'';width:9px;height:9px;border-radius:50%;background:#0F1111;}
-  #hby-buy .oim{flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
-  #hby-buy .oim img{width:100%;height:100%;object-fit:contain;display:block;}
-  #hby-buy .oi{flex:1 1 0;}
-  #hby-buy .oi .t{display:block;font-size:15px;font-weight:800;line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-buy .oi .d{display:block;font-size:12px;color:#565959;margin-top:2px;line-height:1.35;overflow-wrap:break-word;}
-  #hby-buy .oi .gift{display:inline-block;margin-top:6px;background:#E3F6EC;color:#046B53;border:1px solid #B6E5CE;
-    border-radius:100px;padding:3px 9px;font-size:11px;font-weight:800;}
-  #hby-buy .op{flex:0 0 auto;max-width:42%;text-align:right;}
-  #hby-buy .op .sv{display:inline-block;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;
-    border-radius:5px;padding:3px 7px;margin-bottom:4px;}
-  #hby-buy .op .n{font-size:18px;font-weight:800;letter-spacing:-.02em;display:block;color:#0F1111;}
-  #hby-buy .op .o{font-size:12px;color:#565959;text-decoration:line-through;display:block;margin-top:2px;}
-
-  #hby-buy .atc{display:block;width:100%;background:#FFD814;color:#0F1111;border:1px solid #FCD200;
-    border-radius:100px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;margin-top:16px;transition:background .15s;}
-  #hby-buy .atc:hover{background:#F7CA00;}
-  #hby-buy .atc.ok{background:#067D62;border-color:#067D62;color:#fff;}
-  #hby-buy .xrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px;}
-  #hby-buy .xbtn{border-radius:100px;padding:13px 10px;font-size:14.5px;font-weight:800;cursor:pointer;
-    text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
-  #hby-buy .buynow{background:#fff;color:#0F1111;border:1.5px solid #0F1111;}
-  #hby-buy .buynow:hover{background:#F7FAFA;}
-  #hby-buy .apay{background:#000;color:#fff;border:1.5px solid #000;}
-  #hby-buy .apay svg{width:15px;height:18px;display:block;}
-  #hby-buy .after{display:none;margin-top:9px;}
-  #hby-buy .after.on{display:block;}
-  #hby-buy .after a{display:block;width:100%;text-align:center;background:#0F1111;color:#fff;border-radius:100px;
-    padding:14px;font-size:15px;font-weight:800;text-decoration:none;}
-  #hby-buy .gifted{display:none;margin-top:9px;background:#E3F6EC;border:1px solid #B6E5CE;color:#046B53;
-    border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;text-align:center;}
-  #hby-buy .gifted.on{display:block;}
-  #hby-buy .ship{font-size:13px;color:#565959;line-height:1.65;margin-top:13px;}
-  #hby-buy .ship b{color:#0F1111;}
-  #hby-buy .tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#D5D9D9;
-    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;margin-top:14px;}
-  #hby-buy .trc{background:#fff;padding:11px 9px;text-align:center;}
-  #hby-buy .trc .i{font-size:16px;line-height:1;margin-bottom:4px;}
-  #hby-buy .trc .t{font-size:11.5px;font-weight:700;line-height:1.3;}
-  #hby-buy .b1s{display:block;margin:14px auto 0;width:100%;max-width:180px;height:auto;}
-</style>
-  <div class="wrap">
-    <div class="grid">
-      <div class="gal">
-        <div class="main" id="hby-mw-buy"><img id="hby-m-buy" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="HELIOS Super Glide" loading="eager"><button class="arr l" type="button" id="hby-pv-buy" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <button class="arr r" type="button" id="hby-nx-buy" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <div class="dots" id="hby-dt-buy"></div></div><div class="thumbs" id="hby-th-buy"><button type="button" class="th on" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" aria-label="Image 1">
-                <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" aria-label="Image 2">
-                <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" aria-label="Image 3">
-                <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png" alt="" loading="lazy">
-              </button><button type="button" class="th" data-src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" aria-label="Image 4">
-                <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" alt="" loading="lazy">
-              </button></div></div>
-
-      <div class="panel">
-        <h1>A motorized water lounger, because summer memories do not make themselves.</h1>
-        <div class="rt">
-          <span class="s">★★★★★</span><span>4.8</span>
-          <a href="#reviews">3,912 ratings</a>
-        </div>
-
-        <div class="price">
-          <b>$259.99</b><s></s><em></em><span class="per"></span></div>
-        <div class="insta">
-          <span>4 interest-free payments of <b id="hby-in-buy">$65.00</b> with</span>
-          <span class="lg sp">Shop Pay</span>
-          <span class="lg ap">afterpay</span>
-        </div>
-
-        <ul class="bl"><li><span class="i">✓</span><span>Twin motors move you. No paddling, no kicking, no effort</span></li><li><span class="i">✓</span><span>Holds 250-300 lb, padded headrest, dual cup holders</span></li><li><span class="i">✓</span><span>Ready in 5 minutes. Nozzle included, no pump to buy</span></li></ul>
-
-        <div class="frame">
-          <div class="fhead">
-            <span>2-FOR-1 SUMMER DEAL</span><span class="pop">★ MOST POPULAR</span></div>
-          <div class="steps">
-            <span><b>1.</b>Pick your deal</span>
-            <span><b>2.</b>Tap Add to cart</span>
-            <span><b>3.</b>We ship it free</span>
-          </div>
-          <div class="opts" id="hby-o-buy"><button type="button" class="opt on hastag"
-                      data-id="48443521106161"
-                      data-gift=""
-                      data-giftname=""
-                      data-price="$259.99"
-                      data-compare="$519.98"
-                      ><span class="tagp" style="background:#0F1111"></span><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">2 Super Glides</span><span class="d">Buy one, the second is free</span></span>
-                <span class="op"><span class="sv">SAVE $259.99</span><span class="n">$259.99</span><span class="o">$519.98</span></span>
-              </button><button type="button" class="opt hastag"
-                      data-id="48443521138929"
-                      data-gift="48443522285809"
-                      data-giftname="+ FREE Jet Ski"
-                      data-price="$349.99"
-                      data-compare="$779.97"
-                      ><span class="tagp" style="background:#0F1111"></span><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">3 Super Glides</span><span class="d">You plus two more seats</span><span class="gift">+ FREE Jet Ski</span></span>
-                <span class="op"><span class="sv">SAVE $429.98</span><span class="n">$349.99</span><span class="o">$779.97</span></span>
-              </button><button type="button" class="opt hastag"
-                      data-id="48443521171697"
-                      data-gift="48443522285809"
-                      data-giftname="+ FREE Jet Ski"
-                      data-price="$459.99"
-                      data-compare="$1,039.96"
-                      ><span class="tagp" style="background:#0F1111"></span><span class="dot"></span><span class="oim"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span><span class="oi">
-                  <span class="t">4 Super Glides</span><span class="d">The whole crew</span><span class="gift">+ FREE Jet Ski</span></span>
-                <span class="op"><span class="sv">SAVE $579.97</span><span class="n">$459.99</span><span class="o">$1,039.96</span></span>
-              </button></div>
-        </div>
-
-        <button class="atc" type="button" id="hby-a-buy">Add to Cart</button>
-        <div class="xrow">
-          <button class="xbtn buynow" type="button" id="hby-bn-buy">Buy now</button>
-          <button class="xbtn apay" type="button" id="hby-ap-buy" aria-label="Apple Pay">
-            <svg viewBox="0 0 384 512" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
-            Pay
-          </button>
-        </div>
-        <div class="gifted" id="hby-gf-buy"></div>
-        <div class="after" id="hby-af-buy"><a href="/cart">Go to cart</a></div>
-
-        <div class="ship"><b>FREE delivery</b> in 7-10 business days, tracked<br>30-day returns, secure checkout</div>
-
-        <div class="tr">
-          <div class="trc"><div class="i">🚚</div><div class="t">Free shipping</div></div>
-          <div class="trc"><div class="i">↩️</div><div class="t">30-day returns</div></div>
-          <div class="trc"><div class="i">📦</div><div class="t">Tracked</div></div>
-          <div class="trc"><div class="i">🔒</div><div class="t">Secure checkout</div></div>
-        </div><img class="b1s" src="" alt="" loading="lazy"></div>
-    </div>
-  </div>
-
-</section>
-
-
-<!-- ===== box :: helios-box ===== -->
-<section class="helios" id="hbx-box">
-<style>
-  #hbx-box{background:#ffffff;color:#0F1111;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:clamp(30px,4vw,52px) 0;}
-  #hbx-box *{box-sizing:border-box;}
-  #hbx-box .wrap{max-width:1000px;margin:0 auto;padding:0 18px;}
-  #hbx-box .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
-  #hbx-box h2{font-size:clamp(20px,2.6vw,25px);font-weight:700;letter-spacing:-.015em;line-height:1.3;margin:0 0 18px;}
-  #hbx-box .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#D5D9D9;
-    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  @media(min-width:760px){#hbx-box .grid{grid-template-columns:repeat(4,1fr);}}
-  #hbx-box .c{background:#fff;padding:20px 14px;text-align:center;}
-  #hbx-box .c .ic{font-size:26px;line-height:1;margin-bottom:9px;}
-  #hbx-box .c .t{font-size:14px;font-weight:700;line-height:1.3;}
-  #hbx-box .c .d{font-size:12.5px;color:#565959;line-height:1.45;margin-top:4px;}
-  #hbx-box .note{font-size:12.5px;color:#565959;margin-top:14px;line-height:1.5;}
-</style>
-  <div class="wrap"><div class="eb">No tools, nothing else to buy</div><h2>Everything in the box</h2>
-    <div class="grid"><div class="c" >
-          <div class="ic">🛥️</div>
-          <div class="t">The lounger</div><div class="d">Heavy-duty PVC, padded headrest, two cup holders</div></div><div class="c" >
-          <div class="ic">⚡</div>
-          <div class="t">Twin motors</div><div class="d">Joystick steering. Forward, reverse, spin</div></div><div class="c" >
-          <div class="ic">🔋</div>
-          <div class="t">Battery and charger</div><div class="d">About 60 minutes per charge</div></div><div class="c" >
-          <div class="ic">💨</div>
-          <div class="t">Inflation nozzle</div><div class="d">Ready in 5 minutes, no pump to buy</div></div></div><p class="note">Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s.</p></div>
-</section>
-
-
-<!-- ===== helios_clear_faq_ftqD37 :: helios-clear-faq ===== -->
-<section class="helios" id="cfq-helios_clear_faq_ftqD37">
-<a id="faq"></a>
-<style>
-  #cfq-helios_clear_faq_ftqD37{--ink:#0F1111;--mut:#565959;--line:#D5D9D9;--ok:#067D62;overflow-x:clip;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#FFFFFF;}
-  #cfq-helios_clear_faq_ftqD37 *{box-sizing:border-box;min-width:0;}
-  #cfq-helios_clear_faq_ftqD37 .wrap{max-width:1100px;margin:0 auto;padding:clamp(34px,5vw,58px) 18px;}
-  #cfq-helios_clear_faq_ftqD37 .head{text-align:center;margin:0 0 24px;}
-  #cfq-helios_clear_faq_ftqD37 .ey{font-size:12px;font-weight:700;color:var(--mut);}
-  #cfq-helios_clear_faq_ftqD37 h2{font-size:clamp(21px,2.8vw,27px);font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:6px 0 0;color:var(--ink);}
-  #cfq-helios_clear_faq_ftqD37 ['cols']{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;}
-  @media(min-width:860px){#cfq-helios_clear_faq_ftqD37 ['cols']{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;}}
-  #cfq-helios_clear_faq_ftqD37 .vid{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1117;aspect-ratio:9/12;}
-  @media(max-width:859px){#cfq-helios_clear_faq_ftqD37 .vid{aspect-ratio:4/3;}}
-  #cfq-helios_clear_faq_ftqD37 .vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
-  #cfq-helios_clear_faq_ftqD37 .faqs{display:grid;gap:10px;}
-  #cfq-helios_clear_faq_ftqD37 .fq{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;transition:border-color .25s;}
-  #cfq-helios_clear_faq_ftqD37 .fq.on{border-color:var(--ink);}
-  #cfq-helios_clear_faq_ftqD37 .fq.done{border-color:rgba(6,125,98,.45);}
-  #cfq-helios_clear_faq_ftqD37 .fq .q{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 15px;cursor:pointer;font-weight:700;font-size:14.5px;color:var(--ink);}
-  #cfq-helios_clear_faq_ftqD37 .fq .ico{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;transition:transform .3s,background .3s;}
-  #cfq-helios_clear_faq_ftqD37 .fq.on .ico{transform:rotate(135deg);}
-  #cfq-helios_clear_faq_ftqD37 .fq.done:not(.on) .ico{background:var(--ok);transform:none;}
-  #cfq-helios_clear_faq_ftqD37 .fq .p{max-height:0;overflow:hidden;transition:max-height .35s ease;}
-  #cfq-helios_clear_faq_ftqD37 .fq .p .in{padding:0 15px 14px;color:var(--mut);font-size:14px;line-height:1.6;}
-  @media(prefers-reduced-motion:reduce){#cfq-helios_clear_faq_ftqD37 .fq .p{transition:none}#cfq-helios_clear_faq_ftqD37 .fq .ico{transition:none}#cfq-helios_clear_faq_ftqD37 .vid video{display:none}}
-</style>
-<div class="wrap">
-  <div class="head"><div class="ey">Straight answers</div><h2>The things people actually ask.</h2></div>
-  <div class="cols">
-    <div class="vid">
-      <video src="https://cdn.shopify.com/videos/c/vp/5a4a60a7bc3946829bd78d5c914ad5f2/5a4a60a7bc3946829bd78d5c914ad5f2.HD-720p-1.6Mbps-89935160.mp4" poster="" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
-    </div>
-    <div class="faqs" data-faqs>
-      <div class="fq on"><div class="q">Does it actually move on its own, or do I paddle?<span class="ico">+</span></div><div class="p"><div class="in">It moves itself. Twin electric thrusters push you forward and let you spin 360° with the joysticks, completely hands-free. No paddling, no gas.</div></div></div>
-      <div class="fq"><div class="q">Is it safe for kids?<span class="ico">+</span></div><div class="p"><div class="in">Yes. The thrusters are fully enclosed with no exposed blades, and it cruises at a gentle walking pace. Kids ride with a parent, life jackets on like any water toy.</div></div></div>
-      <div class="fq"><div class="q">Will it really hold an adult and the kids?<span class="ico">+</span></div><div class="p"><div class="in">Yes, rated up to 300 lb. Room for a parent and two kids, with a padded headrest and dual cup holders.</div></div></div>
-      <div class="fq"><div class="q">How long does the battery last?<span class="ico">+</span></div><div class="p"><div class="in">3-4 hours of use per charge, a whole afternoon on the water, and it recharges between sessions.</div></div></div>
-      <div class="fq"><div class="q">Is it durable, or will it pop?<span class="ico">+</span></div><div class="p"><div class="in">Heavy-duty reinforced PVC, thick material built to take a full summer of kids, docks and dragging. Not a flimsy pool toy.</div></div></div>
-      <div class="fq"><div class="q">How hard is it to set up?<span class="ico">+</span></div><div class="p"><div class="in">Inflate it in about 5 minutes with the included nozzle, drop it in, grab the joysticks and go. No tools.</div></div></div>
-      <div class="fq"><div class="q">What exactly do I get with the 1+1 deal?<span class="ico">+</span></div><div class="p"><div class="in">Two complete Super Glides, one for you and one free, plus free tracked shipping and the 30-day money-back guarantee.</div></div></div>
-      <div class="fq"><div class="q">What if I do not love it?<span class="ico">+</span></div><div class="p"><div class="in">Send it back within 30 days for a full refund. No restocking fee, no argument.</div></div></div>
+</style><div class="hb hbg">
+  <div class="hb-wrap"><h2 class="hb-h2 hbg__h">On the water</h2><div class="hbg__vp">
+      <ul class="hbg__t"><li class="hbg__c" >
+              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543"
+                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 500w, https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 1000w"
+                   sizes="(min-width:900px) 380px, 78vw"
+                   alt="HELIOS Super Glide, what arrives in the box" loading="lazy"><p>Everything in the box — lounger, battery, charger, nozzle.</p></li><li class="hbg__c" >
+              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543"
+                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 500w, https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 1000w"
+                   sizes="(min-width:900px) 380px, 78vw"
+                   alt="HELIOS Super Glide product view" loading="lazy"><p>Padded headrest and twin cup holders.</p></li><li class="hbg__c" >
+              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543"
+                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 500w, https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 1000w"
+                   sizes="(min-width:900px) 380px, 78vw"
+                   alt="HELIOS Super Glide on the water" loading="lazy"><p>Twin motors move you — no kicking, no effort.</p></li></ul>
     </div>
   </div>
 </div>
 
-</section>
+<!-- ===== specs :: helios-bb-specs ===== -->
+<style>
+  .hbsp{background:var(--hb-bg,#fff);padding-block:34px;}
+  .hbsp__h{margin-bottom:6px;}
+  .hbsp__lede{margin-bottom:18px;}
+  .hbsp__grid{display:grid;gap:26px;}
+  .hbsp__gt{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--hb-blue,#0046BE);padding-bottom:8px;border-bottom:2px solid var(--hb-blue,#0046BE);}
+  .hbsp__r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px;
+    padding:11px 2px;border-bottom:1px solid var(--hb-line-soft,#E3E7EB);font-size:13.5px;}
+  .hbsp__r dt{color:var(--hb-muted,#5F6871);margin:0;}
+  .hbsp__r dd{margin:0;font-weight:600;}
+  .hbsp__note{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:14px;line-height:1.5;}
+  @media(min-width:900px){ .hbsp__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 44px;} }
+</style><div class="hb hbsp">
+  <div class="hb-wrap"><h2 class="hb-h2 hbsp__h">Specifications</h2><p class="hb-sub hbsp__lede">Everything on this page is measured or listed by the manufacturer.</p><div class="hbsp__grid"><div ><p class="hbsp__gt">Performance</p><dl style="margin:0"><div class="hbsp__r" >
+            <dt>Motors</dt><dd>2 × electric thrusters</dd>
+          </div><div class="hbsp__r" >
+            <dt>Controls</dt><dd>Joystick — forward, reverse, spin</dd>
+          </div><div class="hbsp__r" >
+            <dt>Runtime</dt><dd>3–4 hours per charge</dd>
+          </div><div class="hbsp__r" >
+            <dt>Power source</dt><dd>Rechargeable battery (included)</dd>
+          </div></dl></div><div ><p class="hbsp__gt">Build</p><dl style="margin:0"><div class="hbsp__r" >
+            <dt>Material</dt><dd>Heavy-duty PVC</dd>
+          </div><div class="hbsp__r" >
+            <dt>Weight capacity</dt><dd>250–300 lb</dd>
+          </div><div class="hbsp__r" >
+            <dt>Comfort</dt><dd>Padded headrest, 2 cup holders</dd>
+          </div><div class="hbsp__r" >
+            <dt>Setup time</dt><dd>About 5 minutes</dd>
+          </div></dl></div><div ><p class="hbsp__gt">In the box</p><dl style="margin:0"><div class="hbsp__r" >
+            <dt>Included</dt><dd>Lounger, battery, charger, inflation nozzle</dd>
+          </div><div class="hbsp__r" >
+            <dt>Pump required</dt><dd>No — nozzle included</dd>
+          </div></dl></div><div ><p class="hbsp__gt">Warranty & returns</p><dl style="margin:0"><div class="hbsp__r" >
+            <dt>Warranty</dt><dd>12 months, motors and battery</dd>
+          </div><div class="hbsp__r" >
+            <dt>Returns</dt><dd>30 days, unused and in the box</dd>
+          </div></dl></div></div><p class="hbsp__note">Runtime varies with rider weight, water conditions and how hard you run the motors. Recreational leisure product — not a life-saving device. Adult supervision required for under-16s.</p></div>
+</div>
 
+<!-- ===== compare :: helios-bb-compare ===== -->
+<style>
+  .hbcp{background:var(--hb-soft,#F0F2F4);padding-block:34px;border-block:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbcp__h{margin-bottom:16px;}
+  .hbcp__sc{overflow-x:auto;background:#fff;border:1px solid var(--hb-line,#C5CBD5);border-radius:6px;}
+  .hbcp__t{width:100%;min-width:520px;border-collapse:collapse;font-size:13.5px;}
+  .hbcp__t th,.hbcp__t td{padding:12px 10px;text-align:center;border-bottom:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbcp__t thead th{font-size:12px;font-weight:700;color:var(--hb-muted,#5F6871);background:#FAFBFC;}
+  .hbcp__t thead th.me{color:#fff;background:var(--hb-blue,#0046BE);font-size:14px;}
+  .hbcp__t tbody th{text-align:left;font-weight:600;color:var(--hb-ink,#1D252C);}
+  .hbcp__t td.me{background:#F5F8FF;font-weight:700;}
+  .hbcp__y{color:var(--hb-green,#067D62);} .hbcp__n{color:#AEB6BE;}
+  .hbcp__y svg,.hbcp__n svg{width:18px;height:18px;display:inline-block;vertical-align:middle;}
+  .hbcp__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+  .hbcp__note{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:12px;line-height:1.5;}
+</style><div class="hb hbcp">
+  <div class="hb-wrap"><h2 class="hb-h2 hbcp__h">How it compares</h2><div class="hbcp__sc">
+      <table class="hbcp__t">
+        <thead><tr>
+          <th scope="col"><span class="hbcp__sr">Feature</span></th>
+          <th scope="col" class="me">Super Glide</th>
+          <th scope="col">Pool float</th>
+          <th scope="col">Kayak</th>
+        </tr></thead>
+        <tbody><tr >
+              <th scope="row">Moves you without effort</th><td class="hbcp__y me"><svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="hbcp__sr">Yes</span></td><td class="hbcp__n"><svg viewBox="0 0 20 20" fill="none"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="hbcp__sr">No</span></td><td class="hbcp__n"><svg viewBox="0 0 20 20" fill="none"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="hbcp__sr">No</span></td></tr><tr >
+              <th scope="row">Steering control</th><td class=" me">Joystick</td><td class="">None</td><td class="">Paddle</td></tr><tr >
+              <th scope="row">Lie back while moving</th><td class="hbcp__y me"><svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="hbcp__sr">Yes</span></td><td class="hbcp__y"><svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="hbcp__sr">Yes</span></td><td class="hbcp__n"><svg viewBox="0 0 20 20" fill="none"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="hbcp__sr">No</span></td></tr><tr >
+              <th scope="row">Setup time</th><td class=" me">~5 min</td><td class="">~5 min</td><td class="">Car rack</td></tr><tr >
+              <th scope="row">Packs down small</th><td class="hbcp__y me"><svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="hbcp__sr">Yes</span></td><td class="hbcp__y"><svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="hbcp__sr">Yes</span></td><td class="hbcp__n"><svg viewBox="0 0 20 20" fill="none"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="hbcp__sr">No</span></td></tr><tr >
+              <th scope="row">Cup holders</th><td class=" me">2</td><td class="">Sometimes</td><td class="hbcp__n"><svg viewBox="0 0 20 20" fill="none"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="hbcp__sr">No</span></td></tr></tbody>
+      </table>
+    </div><p class="hbcp__note">Comparison against a standard inflatable pool float and a recreational sit-on-top kayak.</p></div>
+</div>
 
-
-<!-- ===== tiktok :: helios-tiktok ===== -->
-<div class="ht" id="ht-tiktok">
-  <div class="ht__wrap"><p class="ht__eyebrow">Real customers</p><h2 class="ht__h">See it on the water.</h2></div>
-  <div class="ht__vp">
-    <ul class="ht__track"><li class="ht__card" >
-            <div class="ht__screen">
-              <video muted loop playsinline poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" src=""></video>
-            </div></li><li class="ht__card" >
-            <div class="ht__screen">
-              <video muted loop playsinline poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" src=""></video>
-            </div></li><li class="ht__card" >
-            <div class="ht__screen">
-              <video muted loop playsinline poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" src=""></video>
-            </div></li></ul>
+<!-- ===== faq :: helios-bb-faq ===== -->
+<style>
+  .hbfq{background:var(--hb-bg,#fff);padding-block:34px;}
+  .hbfq__h{margin-bottom:16px;}
+  .hbfq__l{border-top:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbfq__i{border-bottom:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbfq__i summary{list-style:none;cursor:pointer;padding:15px 0;display:flex;justify-content:space-between;
+    gap:16px;font-size:15px;font-weight:600;align-items:flex-start;}
+  .hbfq__i summary::-webkit-details-marker{display:none;}
+  .hbfq__i summary i{flex:none;position:relative;width:14px;height:14px;margin-top:4px;}
+  .hbfq__i summary i::before,.hbfq__i summary i::after{content:'';position:absolute;left:0;right:0;top:6px;
+    height:2px;border-radius:2px;background:var(--hb-blue,#0046BE);}
+  .hbfq__i summary i::after{transform:rotate(90deg);transition:transform .2s;}
+  .hbfq__i[open] summary i::after{transform:rotate(0);}
+  .hbfq__a{padding-bottom:16px;font-size:14px;line-height:1.6;color:var(--hb-muted,#5F6871);max-width:76ch;}
+  .hbfq__a p{margin:0 0 .6em;} .hbfq__a p:last-child{margin-bottom:0;}
+</style><div class="hb hbfq">
+  <div class="hb-wrap"><h2 class="hb-h2 hbfq__h">Questions</h2><div class="hbfq__l"><details class="hbfq__i" open >
+          <summary>How fast does it go?<i aria-hidden="true"></i></summary>
+          <div class="hbfq__a"><p>It is a cruising speed, not a jet ski — enough to move you across a pool or along a shoreline without paddling. The joystick gives you forward, reverse and spin.</p></div>
+        </details><details class="hbfq__i" >
+          <summary>How long does the battery last?<i aria-hidden="true"></i></summary>
+          <div class="hbfq__a"><p>3–4 hours of use per charge. Runtime depends on rider weight, water conditions and how continuously you run the motors. The charger is in the box.</p></div>
+        </details><details class="hbfq__i" >
+          <summary>Do I need a pump?<i aria-hidden="true"></i></summary>
+          <div class="hbfq__a"><p>No. The inflation nozzle is included and setup takes about five minutes.</p></div>
+        </details><details class="hbfq__i" >
+          <summary>What weight can it hold?<i aria-hidden="true"></i></summary>
+          <div class="hbfq__a"><p>250–300 lb. Above that the lounger still floats but the motors lose noticeable push.</p></div>
+        </details><details class="hbfq__i" >
+          <summary>Can I use it in the sea?<i aria-hidden="true"></i></summary>
+          <div class="hbfq__a"><p>Yes, in calm and sheltered water. Rinse it with fresh water afterwards so salt does not sit on the motors. It is not built for surf or open water.</p></div>
+        </details><details class="hbfq__i" >
+          <summary>When will it arrive?<i aria-hidden="true"></i></summary>
+          <div class="hbfq__a"><p>7–10 business days in the US, with tracking emailed to you when it ships.</p></div>
+        </details><details class="hbfq__i" >
+          <summary>What if I do not like it?<i aria-hidden="true"></i></summary>
+          <div class="hbfq__a"><p>Send it back within 30 days, unused and in the box, and we refund it. No forms and no return games.</p></div>
+        </details></div>
   </div>
 </div>
 
-<!-- ===== gallery :: helios-gallery ===== -->
-<div class="hg" id="hg-gallery"
-     style="--hg-w:1200px;
-            --hg-cols:3;
-            --hg-cols-m:1;
-            --hg-ratio:1/1;
-            --hg-ratio-m:1/1;
-            --hg-pad:0px;
-            --hg-pad-m:16px;
-            --hg-gap:14px;
-            --hg-radius:8px;
-            --hg-page-bg:#ffffff;
-            --hg-tile-bg:#f0f2f2;
-            --hg-border:#d5d9d9">
-  <div class="hg__wrap"><h2 class="hg__h"></h2><div class="hg__grid"><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 433px, 100vw"
-                 alt="HELIOS Super Glide" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 433px, 100vw"
-                 alt="HELIOS Super Glide product view" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 1400w"
-                 sizes="(min-width: 750px) 433px, 100vw"
-                 alt="HELIOS Super Glide on the water" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg"
-                 srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg 700w,
-                         https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg 1400w"
-                 sizes="(min-width: 750px) 433px, 100vw"
-                 alt="HELIOS Super Glide detail" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w,
-                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1400w"
-                 sizes="(min-width: 750px) 433px, 100vw"
-                 alt="HELIOS Super Glide detail" loading="lazy">
-          </figure><figure class="hg__tile" >
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w,
-                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1400w"
-                 sizes="(min-width: 750px) 433px, 100vw"
-                 alt="HELIOS Super Glide detail" loading="lazy">
-          </figure></div>
+<!-- ===== guarantee :: helios-bb-guarantee ===== -->
+<style>
+  .hbgu{background:var(--hb-ink,#1D252C);color:#fff;padding-block:40px;}
+  .hbgu__in{text-align:center;max-width:640px;margin-inline:auto;}
+  .hbgu__e{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--hb-yellow,#FFE000);}
+  .hbgu__h{font-size:clamp(22px,4.4vw,32px);font-weight:700;letter-spacing:-.02em;margin:10px 0 0;line-height:1.2;}
+  .hbgu__s{font-size:14.5px;line-height:1.6;color:#B9C1C8;margin-top:12px;}
+  .hbgu__b{display:inline-block;margin-top:20px;background:var(--hb-blue,#0046BE);color:#fff;text-decoration:none;
+    font-size:16px;font-weight:700;padding:15px 34px;border-radius:4px;}
+  .hbgu__b:hover{background:#0052D8;}
+  .hbgu__n{font-size:12px;color:#8D959D;margin-top:12px;}
+  .hbgu__row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:30px;
+    padding-top:26px;border-top:1px solid rgba(255,255,255,.14);}
+  .hbgu__i b{display:block;font-size:13.5px;font-weight:700;}
+  .hbgu__i span{display:block;font-size:12px;color:#8D959D;margin-top:3px;}
+  @media(min-width:750px){ .hbgu__row{grid-template-columns:repeat(4,minmax(0,1fr));} }
+</style>
+<div class="hb hbgu">
+  <div class="hb-wrap">
+    <div class="hbgu__in"><p class="hbgu__e">No risk</p><h2 class="hbgu__h">Try it for 30 days.</h2><p class="hbgu__s">Get it on the water. If it is not what you expected, send it back inside 30 days unused and in the box and we refund it.</p><a class="hbgu__b" href="#buy">Add to Cart</a><p class="hbgu__n">Free shipping · tracked · 12-month warranty</p></div><div class="hbgu__row"><div class="hbgu__i" >
+            <b>Free shipping</b><span>On every US order</span></div><div class="hbgu__i" >
+            <b>30-day returns</b><span>Unused, in the box</span></div><div class="hbgu__i" >
+            <b>12-month warranty</b><span>Motors and battery</span></div><div class="hbgu__i" >
+            <b>Tracked delivery</b><span>7–10 business days</span></div></div></div>
+</div>
+
+
+<!-- ===== footer :: helios-bb-footer ===== -->
+<style>
+  .hbf{background:#0F1418;color:#9AA3AB;padding-block:34px 26px;font-size:13px;}
+  .hbf__top{display:grid;gap:22px;}
+  .hbf__logo{font-size:19px;font-weight:800;letter-spacing:-.02em;color:#fff;}
+  .hbf__logo em{font-style:normal;color:var(--hb-blue,#0046BE);}
+  .hbf__tag{margin-top:9px;line-height:1.6;max-width:44ch;}
+  .hbf__cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;}
+  .hbf__c b{display:block;color:#fff;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;}
+  .hbf__c ul{list-style:none;margin:11px 0 0;padding:0;display:grid;gap:8px;}
+  .hbf__c a{color:#9AA3AB;text-decoration:none;}
+  .hbf__c a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px;}
+  .hbf__bar{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12);
+    display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:12px;color:#78818A;}
+  .hbf__bar .sp{margin-left:auto;}
+  .hbf__disc{margin-top:16px;font-size:11px;line-height:1.6;color:#68717A;max-width:92ch;}
+  @media(min-width:900px){ .hbf__top{grid-template-columns:1.1fr 1fr;gap:52px;} .hbf__cols{grid-template-columns:repeat(2,minmax(0,1fr));} }
+</style>
+<div class="hb hbf">
+  <div class="hb-wrap">
+    <div class="hbf__top">
+      <div>
+        <span class="hbf__logo">HELIOS<em>.</em></span><p class="hbf__tag">Motorized water loungers. Twin motors, joystick steering, ready in five minutes.</p></div>
+      <div class="hbf__cols"><nav class="hbf__c" >
+              <b>Shop</b>
+              <ul></ul>
+            </nav></div>
+    </div>
+    <div class="hbf__bar">
+      <span>&copy; 2026 HELIOS</span><span>helios.us.store@gmail.com</span><span class="sp">Ships from the US</span></div><div class="hbf__disc"><p>Recreational leisure product. Not a life-saving device or personal flotation device. Adult supervision required for users under 16. Use only in calm, supervised water and follow all local waterway rules.</p></div></div>
+</div>
+
+
+<!-- ===== sticky :: helios-bb-sticky ===== -->
+<style>
+  .hbst{position:fixed;left:0;right:0;bottom:0;z-index:90;background:#fff;
+    border-top:1px solid var(--hb-line,#C5CBD5);box-shadow:0 -4px 18px rgba(0,0,0,.1);
+    transform:translateY(110%);transition:transform .22s ease;}
+  .hbst.show{transform:translateY(0);}
+  .hbst__r{display:flex;align-items:center;gap:12px;padding-block:10px;}
+  .hbst__m{flex:1 1 0;min-width:0;}
+  .hbst__t{font-size:13px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hbst__p{font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:2px;}
+  .hbst__p b{color:var(--hb-ink,#1D252C);font-size:14px;}
+  .hbst__b{flex:none;background:var(--hb-blue,#0046BE);color:#fff;border:0;border-radius:4px;
+    padding:12px 22px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;}
+  .hbst__b:hover{background:var(--hb-blue-dark,#00379B);}
+  @media(max-width:600px){ .hbst__t{display:none;} }
+</style>
+<div class="hb hbst" id="hbst-sticky">
+  <div class="hb-wrap hbst__r">
+    <div class="hbst__m">
+      <div class="hbst__t" data-t>HELIOS Super Glide — Motorized Water Lounger</div>
+      <div class="hbst__p"><b data-p>$259.99</b> <span data-l>2 Super Glides</span></div>
+    </div>
+    <button type="button" class="hbst__b" data-go>Add to Cart</button>
   </div>
 </div>
 
-<!-- ===== howitworks :: helios-howitworks ===== -->
-<section class="helios" id="hw-howitworks">
-<style>
-  #hw-howitworks{background:#fff;color:#0F1111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hw-howitworks *{box-sizing:border-box;}
-  #hw-howitworks .wrap{max-width:1000px;margin:0 auto;padding:clamp(30px,4vw,52px) 18px;}
-  #hw-howitworks .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
-  #hw-howitworks h2{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:0 0 18px;}
-  #hw-howitworks .grid{display:grid;grid-template-columns:1fr;gap:1px;background:#D5D9D9;border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  @media(min-width:700px){#hw-howitworks .grid{grid-template-columns:repeat(3,1fr);}}
-  #hw-howitworks .st{background:#fff;padding:22px 20px;}
-  #hw-howitworks .n{width:26px;height:26px;border-radius:50%;background:#0F1111;color:#fff;
-    font-size:13px;font-weight:700;display:grid;place-items:center;margin-bottom:11px;}
-  #hw-howitworks h3{font-size:15px;font-weight:700;margin:0 0 5px;line-height:1.35;}
-  #hw-howitworks p{font-size:14px;line-height:1.55;color:#565959;margin:0;}
-</style>
-<div class="wrap"><div class="eb">No tools, no assembly</div><h2>Three steps. Then you are on the water.</h2>
-  <div class="grid"><div class="st"><div class="n">1</div><h3>Inflate it</h3><p>About five minutes with the nozzle in the box. No compressor, no pump to buy.</p></div><div class="st"><div class="n">2</div><h3>Drop it in</h3><p>Pool, lake, any calm water. It sits high and stays steady when you climb on.</p></div><div class="st"><div class="n">3</div><h3>Grab the joysticks</h3><p>The motors do the work. You steer. Nothing to learn.</p></div></div>
-</div>
-</section>
-
-
-<!-- ===== guarantee :: helios-guarantee ===== -->
-<section class="helios" id="hg-guarantee">
-<style>
-  #hg-guarantee{background:#fff;color:#0F1111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hg-guarantee *{box-sizing:border-box;}
-  #hg-guarantee .wrap{max-width:1000px;margin:0 auto;padding:clamp(26px,4vw,44px) 18px;}
-  #hg-guarantee .band{background:#F7FAFA;border:1px solid #D5D9D9;border-radius:8px;padding:clamp(26px,4vw,40px) 26px;text-align:center;}
-  #hg-guarantee h2{font-size:clamp(19px,2.4vw,24px);font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:0;}
-  #hg-guarantee .tx{font-size:14px;line-height:1.6;color:#0F1111;margin:12px auto 0;max-width:620px;}
-  #hg-guarantee .tx p{margin:0 0 9px;}
-  #hg-guarantee .tx p:last-child{margin-bottom:0;}
-  #hg-guarantee a.btn{display:inline-block;margin-top:20px;background:#FFD814;color:#0F1111;border:1px solid #FCD200;
-    border-radius:8px;padding:11px 34px;font-size:14px;font-weight:600;text-decoration:none;}
-  #hg-guarantee a.btn:hover{background:#F7CA00;}
-</style>
-<div class="wrap">
-  <div class="band">
-    <h2>30-day money-back guarantee</h2>
-    <div class="tx"><p>Take it out for 30 days. If the Super Glide does not make summer better, send it back for a full refund. No restocking fee, no argument.</p></div><a class="btn" href="#">Get yours</a></div>
-</div>
-</section>
-
-
-<!-- ===== faq :: helios-faq ===== -->
-<section class="helios" id="hf-faq">
-<style>
-  #hf-faq .wrap{max-width:760px;margin:0 auto;padding:clamp(40px,7vw,80px) 22px;}
-  #hf-faq .head{text-align:center;margin:0 auto 36px;}
-  #hf-faq .ey{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--helios-accd,#0A5E97);}
-  #hf-faq h2{font-family:'Archivo';font-weight:800;font-size:clamp(28px,4.2vw,46px);letter-spacing:-.02em;margin:12px 0 0;}
-  #hf-faq details{border-bottom:1px solid var(--helios-lins,rgba(12,26,36,.08));padding:18px 0;}
-  #hf-faq summary{list-style:none;font-family:'Archivo';font-weight:700;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;gap:14px;align-items:center;}
-  #hf-faq summary::-webkit-details-marker{display:none;}
-  #hf-faq summary .pm{color:var(--helios-accd,#0A5E97);font-size:22px;font-weight:400;transition:transform .2s;}
-  #hf-faq details[open] summary .pm{transform:rotate(45deg);}
-  #hf-faq .ans{font-size:14px;color:var(--helios-mut,#56636E);margin:12px 0 0;}
-</style>
-<div class="wrap" id="faq" style="scroll-margin-top:84px;">
-  <div class="head" data-reveal><div class="ey">FAQ</div><h2>Good to know.</h2>
-  </div><details open>
-        <summary>How long does the battery last?<span class="pm">+</span></summary>
-        <div class="ans">Around 60 minutes of continuous cruising per charge, then it recharges between sessions.</div>
-      </details><details >
-        <summary>How does it charge?<span class="pm">+</span></summary>
-        <div class="ans">The removable battery pack recharges via the included charger — top it up between outings.</div>
-      </details><details >
-        <summary>What's the weight limit?<span class="pm">+</span></summary>
-        <div class="ans">Up to 300 lb. Reinforced chambers keep adults riding high and stable.</div>
-      </details><details >
-        <summary>How fast does shipping take?<span class="pm">+</span></summary>
-        <div class="ans">Order today and it ships within 24h, arriving in about 5–8 days with free shipping.</div>
-      </details><details >
-        <summary>Is there a warranty?<span class="pm">+</span></summary>
-        <div class="ans">Yes — plus a 30-day money-back guarantee. Not for you? Send it back for a full refund.</div>
-      </details><details >
-        <summary>Pool or lake?<span class="pm">+</span></summary>
-        <div class="ans">Both — any calm water: pools, lakes and gentle rivers. It packs down to travel anywhere.</div>
-      </details></div>
-</section>
-
-
-<!-- ===== footer :: helios-footer ===== -->
-<section class="helios" id="hft-footer">
-<style>
-  #hft-footer footer{position:relative;background:#0A0E12;color:#E8EDF2;padding:0;overflow:hidden}
-  #hft-footer .wrap{max-width:1200px;margin:0 auto;padding:0 22px;position:relative;z-index:2}
-  #hft-footer .crest{height:5px;background:linear-gradient(90deg,transparent,#2A86C4,transparent);background-size:55% 100%;background-repeat:no-repeat;animation:hftwave 3.6s ease-in-out infinite alternate;opacity:.9}
-  @keyframes hftwave{from{background-position:-40% 0}to{background-position:140% 0}}
-  #hft-footer .bub{position:absolute;bottom:-40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(159,214,245,.26),rgba(42,134,196,.08));filter:blur(1px);animation:hftrise linear infinite;z-index:1;pointer-events:none}
-  @keyframes hftrise{to{transform:translateY(-120vh)}}
-  #hft-footer .badges{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 26px;padding:26px 22px;border-bottom:1px solid rgba(255,255,255,.08)}
-  #hft-footer .rank{display:inline-flex;align-items:center;gap:8px;font-family:'Archivo';font-weight:800;font-size:13px;letter-spacing:.02em;color:#fff;background:#0E6FA8;padding:7px 14px;border-radius:999px;box-shadow:0 10px 26px -10px rgba(42,134,196,.55)}
-  #hft-footer .rank svg{width:14px;height:14px;color:#fff}
-  #hft-footer .badge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:rgba(232,237,242,.75)}
-  #hft-footer .badge svg{width:16px;height:16px;flex-shrink:0;color:#7FC4EE;opacity:.9}
-  #hft-footer .badge .stars{color:#FFC531;display:inline-flex;gap:1px}
-  #hft-footer .badge .stars svg{color:#FFC531;width:13px;height:13px;opacity:1}
-  #hft-footer .top{display:grid;grid-template-columns:1.4fr repeat(3,1fr) 1.5fr;gap:40px;padding:46px 0 32px}
-  #hft-footer .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:#fff}
-  #hft-footer .brand p{color:rgba(232,237,242,.6);font-size:13.5px;margin-top:12px;max-width:250px;line-height:1.6}
-  #hft-footer .brand .pos{margin-top:14px;font-family:'Archivo';font-weight:800;font-size:13px;color:#7FC4EE}
-  #hft-footer h5{font-size:11px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 14px;color:#fff;font-weight:800}
-  #hft-footer ul{list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2.15}
-  #hft-footer ul a{color:rgba(232,237,242,.65);text-decoration:none;background-image:linear-gradient(90deg,#2A86C4,#2A86C4);background-size:0% 1.5px;background-repeat:no-repeat;background-position:0 100%;transition:background-size .25s ease,color .15s ease}
-  #hft-footer ul a:hover{color:#fff;background-size:100% 1.5px}
-  #hft-footer .nl .lead{font-family:'Archivo';font-weight:800;font-size:16px;color:#fff;line-height:1.25;margin-bottom:4px}
-  #hft-footer .nl .sub{font-size:12.5px;color:rgba(232,237,242,.6);margin-bottom:14px;line-height:1.5}
-  #hft-footer .nl-field{position:relative;margin-bottom:9px}
-  #hft-footer .nl-tag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;letter-spacing:.02em;background:rgba(42,134,196,.18);color:#7FC4EE;padding:3px 8px;border-radius:6px}
-  #hft-footer .nl input{width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:12px 78px 12px 13px;font-size:13.5px;background:rgba(255,255,255,.06);color:#fff}
-  #hft-footer .nl input::placeholder{color:rgba(232,237,242,.45)}
-  #hft-footer .nl input:focus{outline:none;border-color:#2A86C4}
-  #hft-footer .nl-btn{width:100%;border:none;border-radius:11px;padding:13px;background:#0E6FA8;color:#fff;font-family:'Archivo';font-weight:800;font-size:14px;cursor:pointer;margin-top:3px;box-shadow:0 14px 30px -10px rgba(42,134,196,.55);transition:transform .12s ease}
-  #hft-footer .nl-btn:hover{transform:translateY(-1px)}
-  #hft-footer .nl-note{font-size:11px;color:rgba(232,237,242,.4);margin-top:9px;line-height:1.5}
-  #hft-footer .nl-ok{font-size:13px;color:#7FC4EE;font-weight:700;margin-top:8px}
-  #hft-footer .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;border-top:1px solid rgba(255,255,255,.08);padding-top:22px;margin-top:8px}
-  #hft-footer .pays{display:flex;gap:7px;flex-wrap:wrap}
-  #hft-footer .pays span{font-size:10px;font-weight:800;letter-spacing:.02em;border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:5px 9px;color:rgba(232,237,242,.6);background:rgba(255,255,255,.04)}
-  #hft-footer .copy{font-size:11.5px;color:rgba(232,237,242,.4)}
-  #hft-footer .mega{text-align:center;margin:36px 0 0;padding-bottom:10px;user-select:none;line-height:.86}
-  #hft-footer .mega b{font-family:'Archivo';font-weight:900;letter-spacing:.1em;font-size:clamp(62px,13.5vw,185px);background:linear-gradient(100deg,#0A3D66 0%,#2A86C4 30%,#9FD6F5 50%,#2A86C4 70%,#0A3D66 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:hftshim 7s linear infinite}
-  @keyframes hftshim{to{background-position:200% 0}}
-  #hft-footer .mega .tag{display:block;font-size:11px;font-weight:800;letter-spacing:.4em;text-transform:uppercase;color:rgba(232,237,242,.35);margin-bottom:10px}
-  @media(max-width:860px){
-    #hft-footer .top{grid-template-columns:1fr 1fr;gap:30px 24px;padding:36px 0 24px}
-    #hft-footer .brand{grid-column:1 / -1}
-    #hft-footer .nl{grid-column:1 / -1}
-    #hft-footer .foot{justify-content:center;text-align:center}
-  }
-  @media(prefers-reduced-motion:reduce){
-    #hft-footer .crest,#hft-footer .bub,#hft-footer .mega b{animation:none}
-  }
-</style>
-<footer>
-  <div class="crest"></div>
-  <span class="bub" style="left:8%;width:14px;height:14px;animation-duration:14s;animation-delay:0s"></span>
-  <span class="bub" style="left:26%;width:8px;height:8px;animation-duration:11s;animation-delay:3s"></span>
-  <span class="bub" style="left:55%;width:18px;height:18px;animation-duration:16s;animation-delay:1.5s"></span>
-  <span class="bub" style="left:74%;width:10px;height:10px;animation-duration:12s;animation-delay:5s"></span>
-  <span class="bub" style="left:90%;width:13px;height:13px;animation-duration:15s;animation-delay:2.5s"></span>
-  <div class="wrap">
-
-    <div class="badges">
-      <span class="rank">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-        HOLDS 250-300 LB, DUAL MOTORS, 60 MIN PER CHARGE
-      </span>
-      <span class="badge">
-        <span class="stars">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.6-5.1 4.5 1.5 6.6L12 17l-6.1 3.5 1.5-6.6-5.1-4.5 6.8-.6z"/></svg>
-        </span>
-        4.8 from 3,912 verified riders
-      </span>
-      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>30-day money-back</span>
-      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>Free shipping</span>
-      <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout</span>
-    </div>
-
-    <div class="top">
-      <div class="brand">
-        <span class="logo">HELIOS</span>
-        <p><p>Built for real backyards. Tracked shipping on every order, 30-day returns, and a person who actually answers your email.</p></p>
-        <div class="pos">Motorized water gear, made simple.</div>
-      </div><div class="nl">
-        <div class="lead">Get up to 15% off your first order</div>
-        <div class="sub">Enter your email for 10% off, add your phone and get 15%.</div>
-        <form><input type="hidden" name="contact[tags]" value="newsletter,footer-signup">
-          <div class="nl-field">
-            <input type="email" name="contact[email]" placeholder="Your email" required>
-            <span class="nl-tag">10% OFF</span>
-          </div>
-          <div class="nl-field">
-            <input type="tel" name="contact[phone]" placeholder="Your phone (optional)">
-            <span class="nl-tag">15% OFF</span>
-          </div>
-          <button type="submit" class="nl-btn">Unlock my discount</button>
-          <p class="nl-note">By signing up you agree to receive emails/texts. Unsubscribe anytime.</p>
-        </form>
-      </div>
-    </div>
-
-    <div class="foot">
-      <div class="copy">© 2026 HELIOS</div>
-      <div class="pays"><span>VISA</span><span>MASTERCARD</span><span>AMEX</span><span>PAYPAL</span><span>APPLE PAY</span><span>SHOP PAY</span><span>G PAY</span></div>
-    </div>
-
-    <div class="mega"><span class="tag">You only get so many summers</span><b>HELIOS</b></div>
-
-  </div>
-</footer>
-</section>
-
-
-
-<!-- ===== sticky :: helios-sticky-atc ===== -->
-<div class="helios" id="hs-sticky">
-<style>
-  #hs-sticky .bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;
-    background:rgba(255,255,255,.6);
-    backdrop-filter:blur(24px) saturate(190%);-webkit-backdrop-filter:blur(24px) saturate(190%);
-    border:1px solid rgba(255,255,255,.65);border-radius:22px;
-    box-shadow:0 18px 44px -14px rgba(6,30,46,.32), inset 0 1px 0 rgba(255,255,255,.75);
-    padding:10px 12px;display:flex;align-items:center;gap:12px;
-    transform:translateY(140%);transition:transform .45s cubic-bezier(.2,.8,.2,1);
-    max-width:720px;margin:0 auto;}
-  #hs-sticky .bar.show{transform:translateY(0);}
-  #hs-sticky *{box-sizing:border-box;min-width:0;}
-  #hs-sticky .info{display:flex;align-items:center;gap:11px;flex:1 1 0;}
-  #hs-sticky .thumb{width:44px;height:44px;flex-shrink:0;border-radius:12px;object-fit:cover;
-    border:1px solid rgba(255,255,255,.7);box-shadow:0 2px 8px rgba(6,30,46,.14);}
-  #hs-sticky .name{font-weight:800;font-size:14px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0F1111;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hs-sticky .price{font-size:13px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hs-sticky .price b{font-weight:800;color:#0F1111;}
-  #hs-sticky .price s{color:#565959;margin-left:5px;}
-  #hs-sticky .add{flex-shrink:0;background:#0F1111;color:#fff;border:none;border-radius:100px;
-    padding:13px 22px;font-weight:800;font-size:14.5px;cursor:pointer;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    box-shadow:0 10px 24px rgba(10,18,25,.3);}
-</style><form>
-    <input type="hidden" name="id" id="hs-vid-sticky" value="42424242">
-    <div class="bar" id="hs-bar-sticky">
-      <div class="info"><img class="thumb" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt=""><div style="min-width:0;">
-          <div class="name">Super Glide</div>
-          <div class="price"><b id="hs-price-sticky">$1,299.00</b><s id="hs-old-sticky">$1,799.00</s></div>
-        </div>
-      </div>
-      <button type="submit" name="add" class="add">Add to Cart</button>
-    </div>
-  </form>
-
-</div>
 
 
 </body></html>

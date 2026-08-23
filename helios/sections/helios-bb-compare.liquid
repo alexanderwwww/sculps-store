@@ -1,0 +1,79 @@
+{%- comment -%}
+  HELIOS — comparison table. Cell values are free text; "yes" and "no" draw a
+  tick or a cross, anything else prints as written. Free text on purpose: an
+  unrecognised value degrades to plain text instead of breaking the section.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  .hbcp{background:var(--hb-soft,#F0F2F4);padding-block:34px;border-block:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbcp__h{margin-bottom:16px;}
+  .hbcp__sc{overflow-x:auto;background:#fff;border:1px solid var(--hb-line,#C5CBD5);border-radius:6px;}
+  .hbcp__t{width:100%;min-width:520px;border-collapse:collapse;font-size:13.5px;}
+  .hbcp__t th,.hbcp__t td{padding:12px 10px;text-align:center;border-bottom:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbcp__t thead th{font-size:12px;font-weight:700;color:var(--hb-muted,#5F6871);background:#FAFBFC;}
+  .hbcp__t thead th.me{color:#fff;background:var(--hb-blue,#0046BE);font-size:14px;}
+  .hbcp__t tbody th{text-align:left;font-weight:600;color:var(--hb-ink,#1D252C);}
+  .hbcp__t td.me{background:#F5F8FF;font-weight:700;}
+  .hbcp__y{color:var(--hb-green,#067D62);} .hbcp__n{color:#AEB6BE;}
+  .hbcp__y svg,.hbcp__n svg{width:18px;height:18px;display:inline-block;vertical-align:middle;}
+  .hbcp__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+  .hbcp__note{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:12px;line-height:1.5;}
+</style>
+{%- if section.blocks.size > 0 -%}
+<div class="hb hbcp">
+  <div class="hb-wrap">
+    {%- if s.heading != blank -%}<h2 class="hb-h2 hbcp__h">{{ s.heading }}</h2>{%- endif -%}
+    <div class="hbcp__sc">
+      <table class="hbcp__t">
+        <thead><tr>
+          <th scope="col"><span class="hbcp__sr">Feature</span></th>
+          <th scope="col" class="me">{{ s.col_us }}</th>
+          <th scope="col">{{ s.col_a }}</th>
+          <th scope="col">{{ s.col_b }}</th>
+        </tr></thead>
+        <tbody>
+          {%- for b in section.blocks -%}
+            <tr {{ b.shopify_attributes }}>
+              <th scope="row">{{ b.settings.label }}</th>
+              {%- assign cells = b.settings.us | append: '||' | append: b.settings.a | append: '||' | append: b.settings.b | split: '||' -%}
+              {%- for cell in cells -%}
+                {%- assign v = cell | strip | downcase -%}
+                {%- if forloop.first -%}{%- assign k = ' me' -%}{%- else -%}{%- assign k = '' -%}{%- endif -%}
+                {%- case v -%}
+                  {%- when 'yes' -%}
+                    <td class="hbcp__y{{ k }}"><svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="hbcp__sr">Yes</span></td>
+                  {%- when 'no' -%}
+                    <td class="hbcp__n{{ k }}"><svg viewBox="0 0 20 20" fill="none"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="hbcp__sr">No</span></td>
+                  {%- else -%}
+                    <td class="{{ k }}">{{ cell | strip }}</td>
+                {%- endcase -%}
+              {%- endfor -%}
+            </tr>
+          {%- endfor -%}
+        </tbody>
+      </table>
+    </div>
+    {%- if s.note != blank -%}<p class="hbcp__note">{{ s.note }}</p>{%- endif -%}
+  </div>
+</div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS comparison",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "How it compares" },
+    { "type": "text", "id": "col_us", "label": "Your column", "default": "Super Glide" },
+    { "type": "text", "id": "col_a", "label": "Column 2", "default": "Pool float" },
+    { "type": "text", "id": "col_b", "label": "Column 3", "default": "Kayak" },
+    { "type": "textarea", "id": "note", "label": "Footnote" }
+  ],
+  "blocks": [{ "type": "row", "name": "Row", "limit": 12, "settings": [
+    { "type": "text", "id": "label", "label": "Row label" },
+    { "type": "text", "id": "us", "label": "Your value", "info": "yes or no draws a tick/cross. Anything else prints as written." },
+    { "type": "text", "id": "a", "label": "Column 2 value" },
+    { "type": "text", "id": "b", "label": "Column 3 value" }
+  ]}],
+  "presets": [{ "name": "HELIOS comparison", "blocks": [{ "type": "row" }, { "type": "row" }, { "type": "row" }] }]
+}
+{% endschema %}

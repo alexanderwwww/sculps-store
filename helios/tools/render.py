@@ -130,7 +130,7 @@ def render_template(tpl_path, title):
         ctx = dict(GLOBALS)
         _set = dict(sec.get("settings", {}))
         if isinstance(_set.get("product"), str):
-            _set["product"] = PRODUCT if _set["product"] else None
+            _set["product"] = PRODUCT
         ctx["section"] = {"id": key, "settings": _set,
                           "blocks": blocks, "index": 0}
         try:
@@ -144,8 +144,7 @@ def render_template(tpl_path, title):
     return css_all, html_all, problems, data
 
 def main():
-    pages = [("templates/index.json", "Homepage"),
-             ("templates/product.helios-super-glide.json", "Product page")]
+    pages = [("templates/index.json", "Homepage")]
     parts, all_problems = [], []
     for rel, title in pages:
         css, body, probs, data = render_template(ROOT / rel, title)

@@ -1,0 +1,71 @@
+{%- comment -%}
+  HELIOS — utility bar (Best Buy style).
+
+  Also declares the shared design tokens for every helios-bb-* section. Keep
+  this section first on the page. Every other section repeats a literal
+  fallback in var(), so removing this bar degrades the palette rather than
+  breaking the layout.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  :root{
+    --hb-blue:#0046BE; --hb-blue-dark:#00379B; --hb-yellow:#FFE000;
+    --hb-ink:#1D252C; --hb-muted:#5F6871; --hb-line:#C5CBD5; --hb-line-soft:#E3E7EB;
+    --hb-bg:#FFFFFF; --hb-soft:#F0F2F4; --hb-green:#067D62;
+    --hb-maxw:1200px; --hb-gut:16px;
+  }
+  @media(min-width:750px){ :root{ --hb-gut:24px; } }
+  .hb{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--hb-ink,#1D252C);-webkit-font-smoothing:antialiased;}
+  .hb *,.hb *::before,.hb *::after{box-sizing:border-box;min-width:0;}
+  .hb img{display:block;max-width:100%;}
+  .hb p{margin:0;}
+  .hb-wrap{width:100%;max-width:calc(var(--hb-maxw,1200px) + var(--hb-gut,16px)*2);
+    margin-inline:auto;padding-inline:var(--hb-gut,16px);}
+  .hb-h2{font-size:clamp(20px,3.4vw,26px);font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2;}
+  .hb-sub{font-size:14px;line-height:1.5;color:var(--hb-muted,#5F6871);}
+
+  .hbu{background:var(--hb-ink,#1D252C);color:#fff;}
+  .hbu__row{display:flex;align-items:center;justify-content:center;gap:10px 26px;
+    flex-wrap:wrap;padding-block:9px;}
+  .hbu__i{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;letter-spacing:.01em;}
+  .hbu__i svg{width:15px;height:15px;flex:none;color:var(--hb-yellow,#FFE000);}
+</style>
+
+{%- if section.blocks.size > 0 -%}
+<div class="hb hbu">
+  <div class="hb-wrap hbu__row">
+    {%- for b in section.blocks -%}
+      {%- if b.settings.text != blank -%}
+        <span class="hbu__i" {{ b.shopify_attributes }}>
+          {%- assign ico = b.settings.icon | strip | downcase -%}
+          {%- case ico -%}
+            {%- when 'truck' -%}
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 7.5h10.5v9H3zM13.5 10.5H17l4 3.2v2.8h-7.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/></svg>
+            {%- when 'return' -%}
+              <svg viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-2.6-5.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 3.5V8h-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {%- when 'shield' -%}
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 2.6v5.6c0 4.3-2.9 7.6-7 9.2-4.1-1.6-7-4.9-7-9.2V5.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12.2l2.1 2.1L15.4 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {%- when 'box' -%}
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.2v9.6L12 21l-8-4.2V7.2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M4 7.2l8 4.2 8-4.2M12 11.4V21" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          {%- endcase -%}
+          {{ b.settings.text }}
+        </span>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "HELIOS utility bar",
+  "tag": "section",
+  "settings": [],
+  "blocks": [{ "type": "item", "name": "Item", "limit": 5, "settings": [
+    { "type": "text", "id": "icon", "label": "Icon", "info": "truck, return, shield or box", "default": "truck" },
+    { "type": "text", "id": "text", "label": "Text" }
+  ]}],
+  "presets": [{ "name": "HELIOS utility bar", "blocks": [{ "type": "item" }, { "type": "item" }, { "type": "item" }] }]
+}
+{% endschema %}

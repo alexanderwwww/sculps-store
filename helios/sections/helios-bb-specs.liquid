@@ -1,0 +1,66 @@
+{%- comment -%}
+  HELIOS — specification table. The Best Buy signature block: dense two-column
+  rows in labelled groups. Group blocks open a new group; spec blocks fall
+  under the most recent group.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  .hbsp{background:var(--hb-bg,#fff);padding-block:34px;}
+  .hbsp__h{margin-bottom:6px;}
+  .hbsp__lede{margin-bottom:18px;}
+  .hbsp__grid{display:grid;gap:26px;}
+  .hbsp__gt{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--hb-blue,#0046BE);padding-bottom:8px;border-bottom:2px solid var(--hb-blue,#0046BE);}
+  .hbsp__r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px;
+    padding:11px 2px;border-bottom:1px solid var(--hb-line-soft,#E3E7EB);font-size:13.5px;}
+  .hbsp__r dt{color:var(--hb-muted,#5F6871);margin:0;}
+  .hbsp__r dd{margin:0;font-weight:600;}
+  .hbsp__note{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:14px;line-height:1.5;}
+  @media(min-width:900px){ .hbsp__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 44px;} }
+</style>
+{%- if section.blocks.size > 0 -%}
+<div class="hb hbsp">
+  <div class="hb-wrap">
+    {%- if s.heading != blank -%}<h2 class="hb-h2 hbsp__h">{{ s.heading }}</h2>{%- endif -%}
+    {%- if s.lede != blank -%}<p class="hb-sub hbsp__lede">{{ s.lede }}</p>{%- endif -%}
+    <div class="hbsp__grid">
+      {%- assign open = false -%}
+      {%- for b in section.blocks -%}
+        {%- if b.type == 'group' -%}
+          {%- if open -%}</dl></div>{%- endif -%}
+          <div {{ b.shopify_attributes }}><p class="hbsp__gt">{{ b.settings.title }}</p><dl style="margin:0">
+          {%- assign open = true -%}
+        {%- elsif b.type == 'spec' -%}
+          {%- unless open -%}<div><dl style="margin:0">{%- assign open = true -%}{%- endunless -%}
+          <div class="hbsp__r" {{ b.shopify_attributes }}>
+            <dt>{{ b.settings.label }}</dt><dd>{{ b.settings.value }}</dd>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if open -%}</dl></div>{%- endif -%}
+    </div>
+    {%- if s.note != blank -%}<p class="hbsp__note">{{ s.note }}</p>{%- endif -%}
+  </div>
+</div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS specifications",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Specifications" },
+    { "type": "text", "id": "lede", "label": "Sub-heading" },
+    { "type": "textarea", "id": "note", "label": "Footnote", "info": "Cite where any measured figure comes from." }
+  ],
+  "blocks": [
+    { "type": "group", "name": "Group heading", "settings": [{ "type": "text", "id": "title", "label": "Title" }] },
+    { "type": "spec", "name": "Spec row", "settings": [
+      { "type": "text", "id": "label", "label": "Label" },
+      { "type": "text", "id": "value", "label": "Value" }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS specifications", "blocks": [
+    { "type": "group" }, { "type": "spec" }, { "type": "spec" }, { "type": "spec" }
+  ]}]
+}
+{% endschema %}

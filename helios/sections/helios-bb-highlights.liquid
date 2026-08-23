@@ -1,0 +1,57 @@
+{%- comment -%}
+  HELIOS — key features strip. Icon cards, Best Buy "At a glance" band.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  .hbhl{background:var(--hb-soft,#F0F2F4);padding-block:30px;border-block:1px solid var(--hb-line-soft,#E3E7EB);}
+  .hbhl__h{margin-bottom:18px;}
+  .hbhl__g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .hbhl__c{background:#fff;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:6px;padding:16px 14px;}
+  .hbhl__c svg{width:26px;height:26px;color:var(--hb-blue,#0046BE);margin-bottom:10px;}
+  .hbhl__c b{display:block;font-size:14px;font-weight:700;line-height:1.25;}
+  .hbhl__c span{display:block;font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:4px;line-height:1.45;}
+  @media(min-width:750px){ .hbhl__g{grid-template-columns:repeat(4,minmax(0,1fr));} }
+</style>
+{%- if section.blocks.size > 0 -%}
+<div class="hb hbhl">
+  <div class="hb-wrap">
+    {%- if s.heading != blank -%}<h2 class="hb-h2 hbhl__h">{{ s.heading }}</h2>{%- endif -%}
+    <div class="hbhl__g">
+      {%- for b in section.blocks -%}
+        <div class="hbhl__c" {{ b.shopify_attributes }}>
+          {%- assign ico = b.settings.icon | strip | downcase -%}
+          {%- case ico -%}
+            {%- when 'motor' -%}
+              <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            {%- when 'battery' -%}
+              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="15" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M21 10.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="5.5" y="9.5" width="8" height="5" rx="1" fill="currentColor"/></svg>
+            {%- when 'weight' -%}
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1.6 12H6.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
+            {%- when 'setup' -%}
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3.2 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {%- when 'wave' -%}
+              <svg viewBox="0 0 24 24" fill="none"><path d="M2 15c2.2 0 2.2-2 4.4-2s2.2 2 4.4 2 2.2-2 4.4-2 2.2 2 4.4 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2 9.5c2.2 0 2.2-2 4.4-2s2.2 2 4.4 2 2.2-2 4.4-2 2.2 2 4.4 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            {%- else -%}
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 12.2l2.4 2.4 4.6-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {%- endcase -%}
+          <b>{{ b.settings.title }}</b>
+          {%- if b.settings.text != blank -%}<span>{{ b.settings.text }}</span>{%- endif -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS highlights",
+  "tag": "section",
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "At a glance" }],
+  "blocks": [{ "type": "item", "name": "Highlight", "limit": 8, "settings": [
+    { "type": "text", "id": "icon", "label": "Icon", "info": "motor, battery, weight, setup or wave", "default": "motor" },
+    { "type": "text", "id": "title", "label": "Title" },
+    { "type": "text", "id": "text", "label": "Text" }
+  ]}],
+  "presets": [{ "name": "HELIOS highlights", "blocks": [{ "type": "item" }, { "type": "item" }, { "type": "item" }, { "type": "item" }] }]
+}
+{% endschema %}

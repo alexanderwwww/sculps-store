@@ -1,0 +1,72 @@
+{%- comment -%}
+  HELIOS — sticky buy bar. Appears once the main panel scrolls out of view and
+  mirrors whichever pack is selected, listening for the helios:variant event
+  the product panel dispatches. No variant of its own, so it can never add a
+  different item than the one on screen — the bug in the previous build.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  .hbst{position:fixed;left:0;right:0;bottom:0;z-index:90;background:#fff;
+    border-top:1px solid var(--hb-line,#C5CBD5);box-shadow:0 -4px 18px rgba(0,0,0,.1);
+    transform:translateY(110%);transition:transform .22s ease;}
+  .hbst.show{transform:translateY(0);}
+  .hbst__r{display:flex;align-items:center;gap:12px;padding-block:10px;}
+  .hbst__m{flex:1 1 0;min-width:0;}
+  .hbst__t{font-size:13px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hbst__p{font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:2px;}
+  .hbst__p b{color:var(--hb-ink,#1D252C);font-size:14px;}
+  .hbst__b{flex:none;background:var(--hb-blue,#0046BE);color:#fff;border:0;border-radius:4px;
+    padding:12px 22px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;}
+  .hbst__b:hover{background:var(--hb-blue-dark,#00379B);}
+  @media(max-width:600px){ .hbst__t{display:none;} }
+</style>
+<div class="hb hbst" id="hbst-{{ section.id }}">
+  <div class="hb-wrap hbst__r">
+    <div class="hbst__m">
+      <div class="hbst__t" data-t>{{ s.title }}</div>
+      <div class="hbst__p"><b data-p>{{ s.price }}</b> <span data-l>{{ s.note }}</span></div>
+    </div>
+    <button type="button" class="hbst__b" data-go>{{ s.cta_text | default: 'Add to Cart' }}</button>
+  </div>
+</div>
+<script>
+(function(){
+  var bar=document.getElementById('hbst-{{ section.id }}');
+  if(!bar||bar.dataset.ready==='1')return; bar.dataset.ready='1';
+  var t=bar.querySelector('[data-t]'),p=bar.querySelector('[data-p]'),
+      l=bar.querySelector('[data-l]'),go=bar.querySelector('[data-go]');
+
+  /* mirror the panel's selection — never hold a variant of its own */
+  document.addEventListener('helios:variant',function(e){
+    var d=e.detail||{};
+    if(p&&d.price)p.textContent=d.price;
+    if(l&&d.label)l.textContent=d.label;
+  });
+
+  var panel=document.querySelector('[id^="hbp-"]');
+  if(panel&&'IntersectionObserver' in window){
+    new IntersectionObserver(function(en){
+      en.forEach(function(x){ bar.classList.toggle('show',!x.isIntersecting&&x.boundingClientRect.top<0); });
+    },{threshold:0}).observe(panel);
+  } else { bar.classList.add('show'); }
+
+  if(go)go.addEventListener('click',function(){
+    var real=panel&&panel.querySelector('[data-add]');
+    if(real){ real.click(); real.scrollIntoView({behavior:'smooth',block:'center'}); }
+    else { window.location='#buy'; }
+  });
+})();
+</script>
+{% schema %}
+{
+  "name": "HELIOS sticky bar",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Product title" },
+    { "type": "text", "id": "price", "label": "Fallback price" },
+    { "type": "text", "id": "note", "label": "Fallback note" },
+    { "type": "text", "id": "cta_text", "label": "Button", "default": "Add to Cart" }
+  ],
+  "presets": [{ "name": "HELIOS sticky bar" }]
+}
+{% endschema %}

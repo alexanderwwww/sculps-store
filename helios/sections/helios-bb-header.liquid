@@ -1,0 +1,55 @@
+{%- comment -%}
+  HELIOS — header. Wordmark left, nav centre, cart right. Sticky on scroll.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  .hbh{position:sticky;top:0;z-index:80;background:var(--hb-bg,#fff);
+    border-bottom:1px solid var(--hb-line,#C5CBD5);}
+  .hbh__row{display:flex;align-items:center;gap:16px;padding-block:12px;}
+  .hbh__logo{font-size:21px;font-weight:800;letter-spacing:-.02em;text-decoration:none;
+    color:var(--hb-ink,#1D252C);white-space:nowrap;}
+  .hbh__logo em{font-style:normal;color:var(--hb-blue,#0046BE);}
+  .hbh__nav{display:none;margin-inline:auto;gap:26px;}
+  .hbh__nav a{font-size:14px;font-weight:600;color:var(--hb-ink,#1D252C);text-decoration:none;}
+  .hbh__nav a:hover{color:var(--hb-blue,#0046BE);}
+  .hbh__cta{margin-left:auto;display:inline-flex;align-items:center;gap:8px;
+    background:var(--hb-blue,#0046BE);color:#fff;text-decoration:none;font-size:14px;font-weight:700;
+    padding:10px 18px;border-radius:4px;white-space:nowrap;}
+  .hbh__cta:hover{background:var(--hb-blue-dark,#00379B);}
+  .hbh__cta svg{width:16px;height:16px;}
+  @media(min-width:900px){ .hbh__nav{display:flex;} .hbh__cta{margin-left:0;} }
+</style>
+
+<div class="hb hbh">
+  <div class="hb-wrap hbh__row">
+    <a class="hbh__logo" href="{{ routes.root_url }}">{{ s.logo_text | default: 'HELIOS' }}<em>.</em></a>
+    <nav class="hbh__nav">
+      {%- for b in section.blocks -%}
+        {%- if b.settings.label != blank -%}
+          <a href="{{ b.settings.link | default: '#' }}" {{ b.shopify_attributes }}>{{ b.settings.label }}</a>
+        {%- endif -%}
+      {%- endfor -%}
+    </nav>
+    <a class="hbh__cta" href="{{ s.cta_link | default: '#buy' }}">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 5h2.2l2 10.2h10.4L20 8H6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="19" r="1.5" fill="currentColor"/><circle cx="17" cy="19" r="1.5" fill="currentColor"/></svg>
+      {{ s.cta_text | default: 'Shop now' }}
+    </a>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "HELIOS header",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "logo_text", "label": "Wordmark", "default": "HELIOS" },
+    { "type": "text", "id": "cta_text", "label": "Button text", "default": "Shop now" },
+    { "type": "text", "id": "cta_link", "label": "Button link", "default": "#buy" }
+  ],
+  "blocks": [{ "type": "link", "name": "Nav link", "limit": 6, "settings": [
+    { "type": "text", "id": "label", "label": "Label" },
+    { "type": "text", "id": "link", "label": "Link" }
+  ]}],
+  "presets": [{ "name": "HELIOS header", "blocks": [{ "type": "link" }, { "type": "link" }, { "type": "link" }] }]
+}
+{% endschema %}

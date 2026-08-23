@@ -1,0 +1,62 @@
+{%- comment -%}
+  HELIOS — closing guarantee band + CTA.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  .hbgu{background:var(--hb-ink,#1D252C);color:#fff;padding-block:40px;}
+  .hbgu__in{text-align:center;max-width:640px;margin-inline:auto;}
+  .hbgu__e{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--hb-yellow,#FFE000);}
+  .hbgu__h{font-size:clamp(22px,4.4vw,32px);font-weight:700;letter-spacing:-.02em;margin:10px 0 0;line-height:1.2;}
+  .hbgu__s{font-size:14.5px;line-height:1.6;color:#B9C1C8;margin-top:12px;}
+  .hbgu__b{display:inline-block;margin-top:20px;background:var(--hb-blue,#0046BE);color:#fff;text-decoration:none;
+    font-size:16px;font-weight:700;padding:15px 34px;border-radius:4px;}
+  .hbgu__b:hover{background:#0052D8;}
+  .hbgu__n{font-size:12px;color:#8D959D;margin-top:12px;}
+  .hbgu__row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:30px;
+    padding-top:26px;border-top:1px solid rgba(255,255,255,.14);}
+  .hbgu__i b{display:block;font-size:13.5px;font-weight:700;}
+  .hbgu__i span{display:block;font-size:12px;color:#8D959D;margin-top:3px;}
+  @media(min-width:750px){ .hbgu__row{grid-template-columns:repeat(4,minmax(0,1fr));} }
+</style>
+<div class="hb hbgu">
+  <div class="hb-wrap">
+    <div class="hbgu__in">
+      {%- if s.eyebrow != blank -%}<p class="hbgu__e">{{ s.eyebrow }}</p>{%- endif -%}
+      <h2 class="hbgu__h">{{ s.heading }}</h2>
+      {%- if s.text != blank -%}<p class="hbgu__s">{{ s.text }}</p>{%- endif -%}
+      {%- if s.cta_text != blank -%}
+        <a class="hbgu__b" href="{{ s.cta_link | default: '#buy' }}">{{ s.cta_text }}</a>
+      {%- endif -%}
+      {%- if s.note != blank -%}<p class="hbgu__n">{{ s.note }}</p>{%- endif -%}
+    </div>
+    {%- if section.blocks.size > 0 -%}
+      <div class="hbgu__row">
+        {%- for b in section.blocks -%}
+          <div class="hbgu__i" {{ b.shopify_attributes }}>
+            <b>{{ b.settings.title }}</b>
+            {%- if b.settings.text != blank -%}<span>{{ b.settings.text }}</span>{%- endif -%}
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "HELIOS guarantee band",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Try it for 30 days." },
+    { "type": "textarea", "id": "text", "label": "Text" },
+    { "type": "text", "id": "cta_text", "label": "Button", "default": "Add to Cart" },
+    { "type": "text", "id": "cta_link", "label": "Button link", "default": "#buy" },
+    { "type": "text", "id": "note", "label": "Small print" }
+  ],
+  "blocks": [{ "type": "item", "name": "Cell", "limit": 4, "settings": [
+    { "type": "text", "id": "title", "label": "Title" },
+    { "type": "text", "id": "text", "label": "Text" }
+  ]}],
+  "presets": [{ "name": "HELIOS guarantee band", "blocks": [{ "type": "item" }, { "type": "item" }, { "type": "item" }, { "type": "item" }] }]
+}
+{% endschema %}

@@ -1,0 +1,325 @@
+{%- comment -%}
+  HELIOS — product panel, Best Buy PDP layout.
+
+  Gallery on the left with a thumbnail rail, sticky purchase rail on the right:
+  price block with a green Save callout, bundle radio cards, blue Add to Cart,
+  a bordered delivery panel, and payment marks.
+
+  Bundles are section blocks carrying a real variant ID, so this works on any
+  store without touching product metafields. Add-to-cart checks the response
+  before claiming success — a 4xx from /cart/add still resolves the promise,
+  so "then()" alone would show a false confirmation.
+{%- endcomment -%}
+{%- liquid
+  assign s = section.settings
+  assign sid = section.id
+  assign p = s.product
+  if p == blank
+    assign p = product
+  endif
+-%}
+<style>
+  #hbp-{{ sid }}{background:var(--hb-bg,#fff);padding-block:18px 34px;}
+  #hbp-{{ sid }} .crumb{font-size:12px;color:var(--hb-muted,#5F6871);margin-bottom:14px;}
+  #hbp-{{ sid }} .crumb a{color:inherit;text-decoration:none;}
+  #hbp-{{ sid }} .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;}
+  #hbp-{{ sid }} .title{font-size:clamp(21px,4.2vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.2;margin:0;}
+  #hbp-{{ sid }} .model{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:6px;}
+
+  /* gallery */
+  #hbp-{{ sid }} .main{position:relative;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:6px;
+    overflow:hidden;background:#fff;aspect-ratio:1/1;}
+  #hbp-{{ sid }} .main img{width:100%;height:100%;object-fit:contain;}
+  #hbp-{{ sid }} .flag{position:absolute;top:12px;left:12px;z-index:2;background:var(--hb-yellow,#FFE000);
+    color:var(--hb-ink,#1D252C);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:6px 11px;border-radius:3px;}
+  #hbp-{{ sid }} .flag:empty{display:none;}
+  #hbp-{{ sid }} .thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;scrollbar-width:none;}
+  #hbp-{{ sid }} .thumbs::-webkit-scrollbar{display:none;}
+  #hbp-{{ sid }} .thumb{flex:0 0 62px;width:62px;height:62px;border:1px solid var(--hb-line,#C5CBD5);
+    border-radius:4px;overflow:hidden;background:#fff;padding:0;cursor:pointer;}
+  #hbp-{{ sid }} .thumb.on{border-color:var(--hb-blue,#0046BE);border-width:2px;}
+  #hbp-{{ sid }} .thumb img{width:100%;height:100%;object-fit:contain;}
+
+  /* purchase rail */
+  #hbp-{{ sid }} .rail{border:1px solid var(--hb-line,#C5CBD5);border-radius:6px;padding:18px;background:#fff;}
+  #hbp-{{ sid }} .prow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  #hbp-{{ sid }} .price{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1;}
+  #hbp-{{ sid }} .was{font-size:15px;color:var(--hb-muted,#5F6871);text-decoration:line-through;}
+  #hbp-{{ sid }} .was:empty{display:none;}
+  #hbp-{{ sid }} .save{background:#E7F4F0;color:var(--hb-green,#067D62);font-size:12.5px;font-weight:800;
+    padding:4px 9px;border-radius:3px;}
+  #hbp-{{ sid }} .save:empty{display:none;}
+  #hbp-{{ sid }} .perunit{font-size:13px;color:var(--hb-muted,#5F6871);margin-top:6px;}
+  #hbp-{{ sid }} .fin{font-size:12.5px;color:var(--hb-muted,#5F6871);margin-top:8px;}
+  #hbp-{{ sid }} .fin b{color:var(--hb-ink,#1D252C);}
+
+  #hbp-{{ sid }} .opts{display:grid;gap:8px;margin-top:16px;}
+  #hbp-{{ sid }} .optlab{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--hb-muted,#5F6871);}
+  #hbp-{{ sid }} .opt{position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    border:1px solid var(--hb-line,#C5CBD5);border-radius:5px;background:#fff;color:inherit;
+    padding:12px;cursor:pointer;font:inherit;}
+  #hbp-{{ sid }} .opt.on{border-color:var(--hb-blue,#0046BE);border-width:2px;padding:11px;background:#F5F8FF;}
+  #hbp-{{ sid }} .opt .radio{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid #9AA3AC;
+    display:grid;place-items:center;}
+  #hbp-{{ sid }} .opt.on .radio{border-color:var(--hb-blue,#0046BE);}
+  #hbp-{{ sid }} .opt.on .radio::after{content:'';width:9px;height:9px;border-radius:50%;background:var(--hb-blue,#0046BE);}
+  #hbp-{{ sid }} .opt .om{flex:1 1 0;}
+  #hbp-{{ sid }} .opt .ol{display:block;font-size:14.5px;font-weight:700;line-height:1.2;}
+  #hbp-{{ sid }} .opt .on2{display:block;font-size:12px;color:var(--hb-muted,#5F6871);margin-top:2px;}
+  #hbp-{{ sid }} .opt .or{flex:none;text-align:right;}
+  #hbp-{{ sid }} .opt .op{display:block;font-size:16px;font-weight:800;}
+  #hbp-{{ sid }} .opt .oc{display:block;font-size:11.5px;color:var(--hb-muted,#5F6871);text-decoration:line-through;}
+  #hbp-{{ sid }} .tag{position:absolute;top:-9px;right:10px;background:var(--hb-yellow,#FFE000);
+    color:var(--hb-ink,#1D252C);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:3px 8px;border-radius:3px;}
+
+  #hbp-{{ sid }} .cta{display:block;width:100%;margin-top:14px;background:var(--hb-blue,#0046BE);color:#fff;
+    border:0;border-radius:4px;padding:15px;font:inherit;font-size:16px;font-weight:700;cursor:pointer;}
+  #hbp-{{ sid }} .cta:hover{background:var(--hb-blue-dark,#00379B);}
+  #hbp-{{ sid }} .cta.ok{background:var(--hb-green,#067D62);}
+  #hbp-{{ sid }} .cta2{display:block;width:100%;margin-top:8px;background:#fff;color:var(--hb-ink,#1D252C);
+    border:1px solid var(--hb-ink,#1D252C);border-radius:4px;padding:14px;font:inherit;font-size:15px;
+    font-weight:700;cursor:pointer;}
+  #hbp-{{ sid }} .msg{margin-top:10px;font-size:13px;text-align:center;color:var(--hb-muted,#5F6871);}
+  #hbp-{{ sid }} .msg:empty{display:none;}
+  #hbp-{{ sid }} .msg.err{color:#B3261E;font-weight:700;}
+
+  #hbp-{{ sid }} .deliv{margin-top:16px;border:1px solid var(--hb-line,#C5CBD5);border-radius:5px;
+    padding:14px;background:var(--hb-soft,#F0F2F4);display:grid;gap:10px;}
+  #hbp-{{ sid }} .dl{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;}
+  #hbp-{{ sid }} .dl svg{width:17px;height:17px;flex:none;margin-top:1px;color:var(--hb-blue,#0046BE);}
+  #hbp-{{ sid }} .dl b{font-weight:700;}
+  #hbp-{{ sid }} .pay{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+  #hbp-{{ sid }} .pay span{height:22px;padding-inline:8px;border-radius:3px;display:grid;place-items:center;
+    font-size:10px;font-weight:800;letter-spacing:-.01em;}
+  #hbp-{{ sid }} .pay .v{background:#1A1F71;color:#fff;} #hbp-{{ sid }} .pay .m{background:#EB001B;color:#fff;}
+  #hbp-{{ sid }} .pay .a{background:#006FCF;color:#fff;} #hbp-{{ sid }} .pay .s{background:#5A31F4;color:#fff;}
+  #hbp-{{ sid }} .pay .k{background:#FFB3C7;color:#17120F;} #hbp-{{ sid }} .pay .p{background:#B2FCE4;color:#000;}
+
+  @media(min-width:900px){
+    #hbp-{{ sid }} .grid{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:36px;}
+    #hbp-{{ sid }} .rail{position:sticky;top:84px;}
+    #hbp-{{ sid }} .head-d{display:block;} #hbp-{{ sid }} .head-m{display:none;}
+  }
+  @media(max-width:899px){ #hbp-{{ sid }} .head-d{display:none;} }
+</style>
+
+<div class="hb" id="hbp-{{ sid }}">
+  <div class="hb-wrap">
+    {%- if s.breadcrumb != blank -%}<p class="crumb">{{ s.breadcrumb }}</p>{%- endif -%}
+
+    <div class="head-m" style="margin-bottom:14px">
+      <h1 class="title">{{ s.title | default: p.title }}</h1>
+      {%- if s.model != blank -%}<p class="model">{{ s.model }}</p>{%- endif -%}
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="main">
+          {%- if s.flag != blank -%}<span class="flag">{{ s.flag }}</span>{%- endif -%}
+          {%- if p != blank and p.images.size > 0 -%}
+            <img id="hbp-hero-{{ sid }}" src="{{ p.images[0] | image_url: width: 1200 }}"
+                 alt="{{ s.title | default: p.title | escape }}" loading="eager">
+          {%- endif -%}
+        </div>
+        {%- if p != blank and p.images.size > 1 -%}
+          <div class="thumbs">
+            {%- for img in p.images -%}
+              <button type="button" class="thumb{% if forloop.first %} on{% endif %}"
+                      data-src="{{ img | image_url: width: 1200 }}" aria-label="View image {{ forloop.index }}">
+                <img src="{{ img | image_url: width: 160 }}" alt="" loading="lazy">
+              </button>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div class="rail" id="buy">
+        <div class="head-d" style="margin-bottom:14px">
+          <h1 class="title">{{ s.title | default: p.title }}</h1>
+          {%- if s.model != blank -%}<p class="model">{{ s.model }}</p>{%- endif -%}
+        </div>
+
+        <div class="prow">
+          <span class="price" data-price>{{ s.price }}</span>
+          <s class="was" data-was>{{ s.compare }}</s>
+          <span class="save" data-save>{{ s.save }}</span>
+        </div>
+        <p class="perunit" data-per>{{ s.per_line }}</p>
+        {%- if s.finance != blank -%}<p class="fin">{{ s.finance }}</p>{%- endif -%}
+
+        <div class="opts" data-opts>
+          {%- if s.options_label != blank -%}<span class="optlab">{{ s.options_label }}</span>{%- endif -%}
+          {%- assign i = 0 -%}
+          {%- for b in section.blocks -%}
+            {%- if b.type == 'bundle' -%}
+              {%- assign i = i | plus: 1 -%}
+              <button type="button" class="opt{% if i == s.default_option %} on{% endif %}"
+                data-id="{{ b.settings.variant_id }}" data-p="{{ b.settings.price }}"
+                data-c="{{ b.settings.compare }}" data-s="{{ b.settings.save }}"
+                data-l="{{ b.settings.per_line }}" {{ b.shopify_attributes }}>
+                {%- if b.settings.tag != blank -%}<span class="tag">{{ b.settings.tag }}</span>{%- endif -%}
+                <span class="radio" aria-hidden="true"></span>
+                <span class="om">
+                  <span class="ol">{{ b.settings.label }}</span>
+                  {%- if b.settings.note != blank -%}<span class="on2">{{ b.settings.note }}</span>{%- endif -%}
+                </span>
+                <span class="or">
+                  <span class="op">{{ b.settings.price }}</span>
+                  {%- if b.settings.compare != blank -%}<span class="oc">{{ b.settings.compare }}</span>{%- endif -%}
+                </span>
+              </button>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+
+        <button type="button" class="cta" data-add>{{ s.cta_text | default: 'Add to Cart' }}</button>
+        <button type="button" class="cta2" data-buy>{{ s.buy_text | default: 'Buy now' }}</button>
+        <p class="msg" data-msg role="status" aria-live="polite"></p>
+
+        <div class="deliv">
+          {%- for b in section.blocks -%}
+            {%- if b.type == 'deliv' and b.settings.text != blank -%}
+              <div class="dl" {{ b.shopify_attributes }}>
+                {%- assign ico = b.settings.icon | strip | downcase -%}
+                {%- case ico -%}
+                  {%- when 'truck' -%}
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M3 7.5h10.5v9H3zM13.5 10.5H17l4 3.2v2.8h-7.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="17.5" r="1.9" stroke="currentColor" stroke-width="1.7"/></svg>
+                  {%- when 'return' -%}
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-2.6-5.9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 3.5V8h-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  {%- else -%}
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 2.6v5.6c0 4.3-2.9 7.6-7 9.2-4.1-1.6-7-4.9-7-9.2V5.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12.2l2.1 2.1L15.4 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                {%- endcase -%}
+                <span>{{ b.settings.text }}</span>
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+
+        {%- if s.show_pay -%}
+          <div class="pay" aria-label="Accepted payments">
+            <span class="v">VISA</span><span class="m">MC</span><span class="a">AMEX</span>
+            <span class="s">Shop&nbsp;Pay</span><span class="k">Klarna</span><span class="p">afterpay</span>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var root=document.getElementById('hbp-{{ sid }}');
+  if(!root||root.dataset.ready==='1')return; root.dataset.ready='1';
+
+  var hero=document.getElementById('hbp-hero-{{ sid }}');
+  var thumbs=[].slice.call(root.querySelectorAll('.thumb'));
+  thumbs.forEach(function(t){t.addEventListener('click',function(){
+    if(hero)hero.src=t.getAttribute('data-src');
+    thumbs.forEach(function(o){o.classList.remove('on');}); t.classList.add('on');
+  });});
+
+  var opts=root.querySelector('[data-opts]');
+  var sel=opts?opts.querySelector('.opt.on'):null;
+  var price=root.querySelector('[data-price]'),was=root.querySelector('[data-was]'),
+      save=root.querySelector('[data-save]'),per=root.querySelector('[data-per]'),
+      cta=root.querySelector('[data-add]'),buy=root.querySelector('[data-buy]'),
+      msg=root.querySelector('[data-msg]');
+  var ctaLabel=cta?cta.textContent.trim():'Add to Cart';
+
+  function paint(){
+    if(!sel)return;
+    if(price)price.textContent=sel.getAttribute('data-p')||'';
+    if(was)was.textContent=sel.getAttribute('data-c')||'';
+    if(save)save.textContent=sel.getAttribute('data-s')||'';
+    if(per)per.textContent=sel.getAttribute('data-l')||'';
+    document.dispatchEvent(new CustomEvent('helios:variant',{detail:{
+      id:sel.getAttribute('data-id'),price:sel.getAttribute('data-p'),
+      compare:sel.getAttribute('data-c'),label:sel.querySelector('.ol').textContent}}));
+  }
+  if(opts)opts.addEventListener('click',function(e){
+    var b=e.target.closest('.opt'); if(!b)return;
+    opts.querySelectorAll('.opt').forEach(function(o){o.classList.remove('on');});
+    b.classList.add('on'); sel=b; paint();
+  });
+  paint();
+
+  function unlock(){[cta,buy].forEach(function(el){if(el)el.disabled=false;});}
+  function add(then){
+    if(!sel||!sel.getAttribute('data-id'))return;
+    if(msg){msg.textContent='';msg.classList.remove('err');}
+    fetch('{{ routes.cart_add_url }}.js',{method:'POST',
+      headers:{'Content-Type':'application/json',Accept:'application/json'},
+      body:JSON.stringify({items:[{id:parseInt(sel.getAttribute('data-id'),10),quantity:1}]})})
+      .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
+      .then(function(res){
+        /* a 4xx still resolves — never claim success without checking */
+        if(!res.ok||(res.data&&res.data.status&&res.data.status>=400)){
+          if(msg){msg.textContent=(res.data&&res.data.description)||'That could not be added. Please try again.';
+            msg.classList.add('err');}
+          unlock(); return;
+        }
+        then();
+      })
+      .catch(function(){ if(msg){msg.textContent='Network problem — please try again.';msg.classList.add('err');} unlock(); });
+  }
+  if(cta)cta.addEventListener('click',function(){
+    cta.disabled=true;
+    add(function(){ unlock(); cta.classList.add('ok');
+      cta.textContent='{{ s.added_text | default: "Added to cart" }}';
+      document.dispatchEvent(new CustomEvent('cart:refresh',{bubbles:true}));
+      setTimeout(function(){cta.classList.remove('ok');cta.textContent=ctaLabel;},2400); });
+  });
+  if(buy)buy.addEventListener('click',function(){ buy.disabled=true; add(function(){window.location='/checkout';}); });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "HELIOS product panel",
+  "tag": "section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Product" },
+    { "type": "text", "id": "breadcrumb", "label": "Breadcrumb" },
+    { "type": "text", "id": "title", "label": "Title" },
+    { "type": "text", "id": "model", "label": "Model / SKU line" },
+    { "type": "text", "id": "flag", "label": "Image flag" },
+    { "type": "header", "content": "Price" },
+    { "type": "text", "id": "price", "label": "Price" },
+    { "type": "text", "id": "compare", "label": "Compare-at" },
+    { "type": "text", "id": "save", "label": "Save badge" },
+    { "type": "text", "id": "per_line", "label": "Line under price" },
+    { "type": "text", "id": "finance", "label": "Financing line" },
+    { "type": "header", "content": "Options" },
+    { "type": "text", "id": "options_label", "label": "Options label", "default": "CHOOSE YOUR PACK" },
+    { "type": "range", "id": "default_option", "label": "Pre-selected", "min": 1, "max": 4, "step": 1, "default": 2 },
+    { "type": "header", "content": "Buttons" },
+    { "type": "text", "id": "cta_text", "label": "Add to cart", "default": "Add to Cart" },
+    { "type": "text", "id": "buy_text", "label": "Buy now", "default": "Buy now" },
+    { "type": "text", "id": "added_text", "label": "Confirmation", "default": "Added to cart" },
+    { "type": "checkbox", "id": "show_pay", "label": "Show payment marks", "default": true }
+  ],
+  "blocks": [
+    { "type": "bundle", "name": "Pack option", "limit": 4, "settings": [
+      { "type": "text", "id": "variant_id", "label": "Variant ID" },
+      { "type": "text", "id": "label", "label": "Label" },
+      { "type": "text", "id": "note", "label": "Note" },
+      { "type": "text", "id": "tag", "label": "Tag" },
+      { "type": "text", "id": "price", "label": "Price" },
+      { "type": "text", "id": "compare", "label": "Compare-at" },
+      { "type": "text", "id": "save", "label": "Save badge" },
+      { "type": "text", "id": "per_line", "label": "Line under price" }
+    ]},
+    { "type": "deliv", "name": "Delivery line", "limit": 4, "settings": [
+      { "type": "text", "id": "icon", "label": "Icon", "info": "truck, return or shield", "default": "truck" },
+      { "type": "richtext", "id": "text", "label": "Text" }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS product panel", "blocks": [
+    { "type": "bundle" }, { "type": "bundle" }, { "type": "bundle" },
+    { "type": "deliv" }, { "type": "deliv" }, { "type": "deliv" }
+  ]}]
+}
+{% endschema %}

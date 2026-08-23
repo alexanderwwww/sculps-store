@@ -1,53 +1,67 @@
-# HELIOS theme — recovered custom code
+# HELIOS theme
 
-Recovered from the build session transcript. This is the FINAL deployed state of every
-custom `helios-*` section plus the homepage and product templates.
+## `templates/index.json` — the current homepage (Best Buy retail layout)
 
-## What's here
-- `sections/helios-*.liquid` — all custom sections (hero, buy box, bundles, reviews,
-  FAQ, guarantee, footer, nav, sticky ATC, countdown bar, badge, etc.)
-- `templates/index.json` — homepage layout + all copy/settings
-- `templates/product.helios-super-glide.json` — product page layout + settings
+Single page, single product (Super Glide). No promo countdown, no other pages,
+no second product. Built with the `helios-bb-*` sections.
 
-## What is NOT here (and can't be)
-- The base theme (Impulse/Dawn parent files) — download a fresh copy of the same theme
-- `config/settings_data.json` — global theme settings: colors, fonts, logo
-- `assets/` — the base theme's CSS/JS
-- Product data, orders, customers, images
-- `helios-cart-recover.liquid` / `helios-welcome-popup.liquid` — uploaded via staged
-  upload, body not in the transcript. Both were non-essential add-ons.
+Page order:
 
-## Compliance cleanup — ALREADY APPLIED
+| # | Section | What it is |
+|---|---|---|
+| 1 | `helios-bb-utility` | black utility strip — shipping / returns / tracked. **Also declares the design tokens; keep it first.** |
+| 2 | `helios-bb-header` | sticky header, wordmark + nav + blue CTA |
+| 3 | `helios-bb-pdp` | product panel — gallery + thumb rail, sticky buy rail, price with Save callout, pack radios, blue Add to Cart, delivery panel, payment marks |
+| 4 | `helios-bb-highlights` | "At a glance" icon cards |
+| 5 | `helios-bb-gallery` | lifestyle row — swipe on mobile, 3-up on desktop |
+| 6 | `helios-bb-specs` | dense two-column spec table in labelled groups |
+| 7 | `helios-bb-compare` | Super Glide vs pool float vs kayak |
+| 8 | `helios-bb-faq` | `<details>` accordion, works with JS off |
+| 9 | `helios-bb-guarantee` | dark closing band + CTA |
+| 10 | `helios-bb-footer` | policy links pulled from the store's real policies |
+| 11 | `helios-bb-sticky` | sticky buy bar — mirrors the selected pack via the `helios:variant` event |
 
-The claims that made this store high-risk have been removed:
+### Before this can take an order
+The pack blocks in `helios-bb-pdp` have **empty `variant_id` fields**. Fill each
+one with the real numeric variant ID from the product, or Add to Cart does
+nothing. Everything else is wired.
 
-- **Expired birthday promo** — countdown deadline (2026-08-16) cleared, bar
-  message changed to the evergreen 1+1 offer, "2-FOR-1 BIRTHDAY DEAL" and
-  "ENDS AUG 16" labels replaced.
-- **"21.622 units sold" / "No.1 seller / merchant in America"** — badge images,
-  alt text and the whole badge section removed from both pages and from the
-  section defaults.
-- **Invented ratings and reviews** — "4.8", "3,912 verified reviews",
-  "★★★★★ Verified buyers" and 8 fabricated named reviews removed from both
-  templates and from the section default so they cannot come back via the
-  theme editor. Both review sections are dropped from the page order; the
-  section files remain, so add them back when you have real reviews.
+### Palette
+Best Buy-ish: blue `#0046BE`, yellow tag `#FFE000`, ink `#1D252C`, rule
+`#C5CBD5`, soft `#F0F2F4`, savings green `#067D62`. Tokens live in
+`helios-bb-utility`; every other section repeats a literal fallback in `var()`,
+so removing the bar degrades the palette instead of breaking the layout.
 
-The review and badge sections are still in `sections/` — nothing was deleted,
-only unpublished and emptied.
+### Preview
+Open `preview/helios-preview.html`. Regenerate after editing any section:
 
-## Remaining fixes
-1. **Remove the "21.622 UNITS SOLD" / "NO.1 SELLER IN AMERICA" claims.**
-   Locations: `templates/index.json` (badge_alt, badge section alt),
-   `sections/helios-badge.liquid`, `sections/helios-buy.liquid`.
-   These are unverifiable sales claims and are a real factor in platform reviews.
-2. **`★★★★★ Verified buyers`** eyebrows in `helios-reviews-carousel` and both templates —
-   only keep if the reviews are real and from real orders.
-3. **11 `cdn.shopify.com` image URLs** point at the restricted store. Re-upload the
-   images to the new host and replace the URLs, or they will 404.
-4. Fix the known funnel bugs before spending on ads: sticky-bar variant trap and the
-   unchecked add-to-cart response in `helios-buy.liquid` / `helios-sticky-atc.liquid`.
+```bash
+cd tools && pip install python-liquid && python3 render.py
+```
 
-## Install
-Upload the `sections/` and `templates/` files into a fresh copy of the same base theme,
-then set global colors/fonts/logo by hand.
+Images load from the old store's CDN and may not resolve.
+
+---
+
+## The previous build
+
+The earlier live sections (`helios-bar`, `helios-buy`, `helios-nav`,
+`helios-hero`, `helios-reviews`, `helios-badge`, …) are still in `sections/`
+and unused. The old homepage and product template are in git history before
+this commit. Kept for reference — the copy in them is still good.
+
+Note the previous build's product template (`product.helios-super-glide.json`)
+was removed from this page set; recover it from git history if you want it.
+
+### What was stripped and must not come back
+- "21.622 units sold" / "No.1 seller / merchant in America"
+- rating "4.8" and "3,912 verified reviews", "★★★★★ Verified buyers"
+- 8 invented named reviews
+- the expired birthday countdown
+
+None of it appears in the new build. Do not re-add any of it without real
+orders behind it — it is what got the store flagged.
+
+## Not included
+Base theme files, `config/settings_data.json` (colors/fonts/logo), and the
+product images — those live on the old store's CDN.

@@ -1,0 +1,76 @@
+{%- comment -%}
+  HELIOS — footer. Policy links come from the store's real policies, so it can
+  never advertise a policy page that does not exist.
+{%- endcomment -%}
+{%- liquid
+  assign s = section.settings
+  assign year = 'now' | date: '%Y'
+-%}
+<style>
+  .hbf{background:#0F1418;color:#9AA3AB;padding-block:34px 26px;font-size:13px;}
+  .hbf__top{display:grid;gap:22px;}
+  .hbf__logo{font-size:19px;font-weight:800;letter-spacing:-.02em;color:#fff;}
+  .hbf__logo em{font-style:normal;color:var(--hb-blue,#0046BE);}
+  .hbf__tag{margin-top:9px;line-height:1.6;max-width:44ch;}
+  .hbf__cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;}
+  .hbf__c b{display:block;color:#fff;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;}
+  .hbf__c ul{list-style:none;margin:11px 0 0;padding:0;display:grid;gap:8px;}
+  .hbf__c a{color:#9AA3AB;text-decoration:none;}
+  .hbf__c a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px;}
+  .hbf__bar{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12);
+    display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:12px;color:#78818A;}
+  .hbf__bar .sp{margin-left:auto;}
+  .hbf__disc{margin-top:16px;font-size:11px;line-height:1.6;color:#68717A;max-width:92ch;}
+  @media(min-width:900px){ .hbf__top{grid-template-columns:1.1fr 1fr;gap:52px;} .hbf__cols{grid-template-columns:repeat(2,minmax(0,1fr));} }
+</style>
+<div class="hb hbf">
+  <div class="hb-wrap">
+    <div class="hbf__top">
+      <div>
+        <span class="hbf__logo">{{ s.logo_text | default: 'HELIOS' }}<em>.</em></span>
+        {%- if s.tagline != blank -%}<p class="hbf__tag">{{ s.tagline }}</p>{%- endif -%}
+      </div>
+      <div class="hbf__cols">
+        {%- for b in section.blocks -%}
+          {%- if b.type == 'col' and b.settings.menu != blank -%}
+            <nav class="hbf__c" {{ b.shopify_attributes }}>
+              <b>{{ b.settings.title | default: b.settings.menu.title }}</b>
+              <ul>{%- for l in b.settings.menu.links -%}<li><a href="{{ l.url }}">{{ l.title }}</a></li>{%- endfor -%}</ul>
+            </nav>
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if shop.policies.size > 0 -%}
+          <nav class="hbf__c">
+            <b>{{ s.legal_title | default: 'Legal' }}</b>
+            <ul>{%- for p in shop.policies -%}<li><a href="{{ p.url }}">{{ p.title }}</a></li>{%- endfor -%}</ul>
+          </nav>
+        {%- endif -%}
+      </div>
+    </div>
+    <div class="hbf__bar">
+      <span>&copy; {{ year }} {{ shop.name }}</span>
+      {%- if s.contact != blank -%}<span>{{ s.contact }}</span>{%- endif -%}
+      {%- if s.note != blank -%}<span class="sp">{{ s.note }}</span>{%- endif -%}
+    </div>
+    {%- if s.disclaimer != blank -%}<div class="hbf__disc">{{ s.disclaimer }}</div>{%- endif -%}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "HELIOS footer",
+  "tag": "footer",
+  "settings": [
+    { "type": "text", "id": "logo_text", "label": "Wordmark", "default": "HELIOS" },
+    { "type": "textarea", "id": "tagline", "label": "Tagline" },
+    { "type": "text", "id": "legal_title", "label": "Policies column title", "default": "Legal" },
+    { "type": "text", "id": "contact", "label": "Contact line" },
+    { "type": "text", "id": "note", "label": "Note" },
+    { "type": "richtext", "id": "disclaimer", "label": "Disclaimer" }
+  ],
+  "blocks": [{ "type": "col", "name": "Link column", "limit": 2, "settings": [
+    { "type": "text", "id": "title", "label": "Heading" },
+    { "type": "link_list", "id": "menu", "label": "Menu" }
+  ]}],
+  "presets": [{ "name": "HELIOS footer", "blocks": [{ "type": "col" }] }]
+}
+{% endschema %}

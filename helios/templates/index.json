@@ -1,383 +1,626 @@
 /*
  * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
+ * HELIOS homepage — Best Buy style retail layout.
+ * Single product (Super Glide). No other pages, no promo countdown.
  * ------------------------------------------------------------
  */
 {
   "sections": {
-    "bar": {
-      "type": "helios-bar",
-      "settings": {
-        "message": "1+1 FREE — buy one Super Glide, the second is on us",
-        "deadline": "",
-        "link_text": "Shop now",
-        "link_url": "#buy",
-        "dismissible": true,
-        "bg": "#0f1111",
-        "fg": "#ffffff"
-      }
+    "utility": {
+      "type": "helios-bb-utility",
+      "blocks": {
+        "u1": {
+          "type": "item",
+          "settings": {
+            "icon": "truck",
+            "text": "FREE US SHIPPING"
+          }
+        },
+        "u2": {
+          "type": "item",
+          "settings": {
+            "icon": "return",
+            "text": "30-DAY RETURNS"
+          }
+        },
+        "u3": {
+          "type": "item",
+          "settings": {
+            "icon": "box",
+            "text": "TRACKED DELIVERY"
+          }
+        }
+      },
+      "block_order": [
+        "u1",
+        "u2",
+        "u3"
+      ],
+      "settings": {}
     },
-    "nav": {
-      "type": "helios-nav",
+    "header": {
+      "type": "helios-bb-header",
+      "blocks": {
+        "n1": {
+          "type": "link",
+          "settings": {
+            "label": "Overview",
+            "link": "#buy"
+          }
+        },
+        "n2": {
+          "type": "link",
+          "settings": {
+            "label": "Specs",
+            "link": "#specs"
+          }
+        },
+        "n3": {
+          "type": "link",
+          "settings": {
+            "label": "Compare",
+            "link": "#compare"
+          }
+        },
+        "n4": {
+          "type": "link",
+          "settings": {
+            "label": "Questions",
+            "link": "#faq"
+          }
+        }
+      },
+      "block_order": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
       "settings": {
         "logo_text": "HELIOS",
-        "logo_h": 26,
-        "height": 58,
-        "sticky": true,
-        "bg": "#ffffff",
-        "fg": "#0f1111",
-        "l1": "Super Glide",
-        "l1_url": "/",
-        "l2": "Jet Ski",
-        "l2_url": "/products/helios-wave-rider",
-        "l3": "Reviews",
-        "l3_url": "#reviews",
-        "l4": "FAQ",
-        "l4_url": "#faq",
         "cta_text": "Shop now",
-        "cta_url": "#buy"
+        "cta_link": "#buy"
       }
     },
     "buy": {
-      "type": "helios-buy",
+      "type": "helios-bb-pdp",
       "blocks": {
-        "o1": {
+        "b1": {
           "type": "bundle",
           "settings": {
-            "variant_id": "48443521106161",
-            "label": "1+1 FREE",
-            "note": "2 Super Glides. Buy one, the second is free",
+            "variant_id": "",
+            "label": "1 Super Glide",
+            "note": "One rider",
             "tag": "",
-            "tag_bg": "#0f1111",
-            "gift": "",
-            "gift_variant_id": "",
-            "save": "SAVE $259.99",
             "price": "$259.99",
-            "compare": "$519.98"
+            "compare": "",
+            "save": "",
+            "per_line": "Free shipping · arrives in 7–10 business days"
           }
         },
-        "o2": {
+        "b2": {
           "type": "bundle",
           "settings": {
-            "variant_id": "48443521138929",
-            "label": "3 Super Glides",
-            "note": "You plus two more seats",
-            "tag": "",
-            "tag_bg": "#0f1111",
-            "gift": "+ FREE Jet Ski",
-            "gift_variant_id": "48443522285809",
-            "save": "SAVE $429.98",
-            "price": "$349.99",
-            "compare": "$779.97"
+            "variant_id": "",
+            "label": "2 Super Glides",
+            "note": "Buy one, second is free",
+            "tag": "Best value",
+            "price": "$259.99",
+            "compare": "$519.98",
+            "save": "Save $259.99",
+            "per_line": "$130 each · free shipping · 7–10 business days"
           }
         },
-        "o3": {
+        "b3": {
           "type": "bundle",
           "settings": {
-            "variant_id": "48443521171697",
-            "label": "2+2 FREE",
-            "note": "4 Super Glides. The whole crew",
+            "variant_id": "",
+            "label": "4 Super Glides",
+            "note": "The whole crew",
             "tag": "",
-            "tag_bg": "#0f1111",
-            "gift": "+ FREE Jet Ski",
-            "gift_variant_id": "48443522285809",
-            "save": "SAVE $579.97",
             "price": "$459.99",
-            "compare": "$1,039.96"
+            "compare": "$1,039.96",
+            "save": "Save $579.97",
+            "per_line": "$115 each · free shipping · 7–10 business days"
+          }
+        },
+        "d1": {
+          "type": "deliv",
+          "settings": {
+            "icon": "truck",
+            "text": "<p><b>Free delivery</b> — arrives in 7–10 business days, tracked</p>"
+          }
+        },
+        "d2": {
+          "type": "deliv",
+          "settings": {
+            "icon": "return",
+            "text": "<p><b>30-day returns</b> — unused and in the box, we cover it</p>"
+          }
+        },
+        "d3": {
+          "type": "deliv",
+          "settings": {
+            "icon": "shield",
+            "text": "<p><b>12-month warranty</b> on motors and battery</p>"
           }
         }
       },
       "block_order": [
-        "o1",
-        "o2",
-        "o3"
+        "b1",
+        "b2",
+        "b3",
+        "d1",
+        "d2",
+        "d3"
       ],
       "settings": {
-        "product": "helios-super-glide-motorized-water-lounger",
-        "width": 1200,
-        "bg": "#ffffff",
-        "anchor": "buy",
-        "title": "HELIOS SUPERGLIDE 1+1 FREE",
-        "rating": "",
-        "review_count": "",
-        "reviews_anchor": "#reviews",
-        "big_price": "$259.99",
-        "big_compare": "$519.98",
-        "big_badge": "SAVE $259.99",
-        "big_note": "Two Super Glides for the price of one",
-        "b1": "Twin motors move you. No paddling, no kicking, no effort",
-        "b2": "Holds 250-300 lb, padded headrest, dual cup holders",
-        "b3": "Ready in 5 minutes. Nozzle included, no pump to buy",
-        "deal_name": "2-FOR-1 DEAL",
-        "pop_label": "",
-        "step1": "Pick your deal",
-        "step2": "Tap Add to cart",
-        "step3": "We ship it free",
+        "product": "",
+        "breadcrumb": "Water sports / Powered floats / Super Glide",
+        "title": "HELIOS Super Glide — Motorized Water Lounger",
+        "model": "Model: HLS-SG1 · SKU: HELIOS-SG",
+        "flag": "2 for 1",
+        "price": "$259.99",
+        "compare": "$519.98",
+        "save": "Save $259.99",
+        "per_line": "$130 each · free shipping · 7–10 business days",
+        "finance": "or 4 interest-free payments of <b>$65.00</b>",
+        "options_label": "CHOOSE YOUR PACK",
+        "default_option": 2,
         "cta_text": "Add to Cart",
-        "buynow_text": "Buy now",
-        "after_text": "Go to cart",
-        "ship_html": "<b>FREE delivery</b> in 7-10 business days, tracked<br>30-day returns, secure checkout",
-        "t1": "Free shipping",
-        "t2": "30-day returns",
-        "t3": "Tracked",
-        "t4": "Secure checkout",
-        "badge_url": "",
-        "badge_alt": "",
-        "badge_w": ""
+        "buy_text": "Buy now",
+        "added_text": "Added to cart",
+        "show_pay": true
       }
     },
-    "reviewcarousel": {
-      "type": "helios-reviews-carousel",
-      "settings": {
-        "eyebrow": "",
-        "heading": "Real photos from real backyards.",
-        "rating": "",
-        "review_count": "",
-        "speed": 60,
-        "bg": "#ffffff",
-        "card": "#ffffff",
-        "text": "#0f1111",
-        "bulk_reviews": "elena d. | 5 | My son will NOT get off this thing. literally he refuses :'). | June 23, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/a32ec115-3760-47bb-bbe3-083acc6fd039.png?v=1782882529\njenna.r. | 5 | this is what i come home to everyday... get it guys worth everything , you build happy memories after all worth the money 10000%(the dogs name is rollie). | June 3, 2025 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/fd83911c-aec4-43dc-ae97-646d6ecf8832.png?v=1782883492\nDea W. | 5 | Honestly thought it would feel cheap, it doesn't. Really well made, inflated in about 5 minutes. Works perfect and is fun. | June 27, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/ed800814-8280-4515-ab36-29f15996c019.png?v=1782882243\nChris Tes. | 5 | This thing is HUGE and so comfortable. Cup holders, headrest, the works. I nap on it more than the kids ride it lol. | June 22, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/1.png?v=1782882243\nmike L. | 5 | Arrived well packaged and everything was in the box super super fun. | June 18, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/359ded2c-3def-48f5-90fe-7b69429864fb.png?v=1782882243\npablo P. | 5 | Setup was stupid easy, pump it up, drop it in, grab the joysticks. Motors have real power. 10/10. | June 12, 2026 | https://cdn.shopify.com/s/files/1/0769/8320/6053/files/g_setup_6c508243-62c3-4e30-a179-7689e4937344.jpg?v=1782766099"
-      }
-    },
-    "box": {
-      "type": "helios-box",
+    "highlights": {
+      "type": "helios-bb-highlights",
       "blocks": {
-        "x1": {
+        "h1": {
           "type": "item",
           "settings": {
-            "icon": "🛥️",
-            "title": "The lounger",
-            "note": "Heavy-duty PVC, padded headrest, two cup holders"
+            "icon": "motor",
+            "title": "Twin electric motors",
+            "text": "Joystick steering — forward, reverse and spin. No paddling."
           }
         },
-        "x2": {
+        "h2": {
           "type": "item",
           "settings": {
-            "icon": "⚡",
-            "title": "Twin motors",
-            "note": "Joystick steering. Forward, reverse, spin"
+            "icon": "battery",
+            "title": "3–4 hours per charge",
+            "text": "Rechargeable battery and charger included in the box."
           }
         },
-        "x3": {
+        "h3": {
           "type": "item",
           "settings": {
-            "icon": "🔋",
-            "title": "Battery and charger",
-            "note": "Lasts 3-4 hours of use per charge"
+            "icon": "weight",
+            "title": "Holds 250–300 lb",
+            "text": "Heavy-duty PVC with a padded headrest and two cup holders."
           }
         },
-        "x4": {
+        "h4": {
           "type": "item",
           "settings": {
-            "icon": "💨",
-            "title": "Inflation nozzle",
-            "note": "Ready in 5 minutes, no pump to buy"
+            "icon": "setup",
+            "title": "Ready in 5 minutes",
+            "text": "Inflation nozzle included. No separate pump to buy."
           }
         }
       },
       "block_order": [
-        "x1",
-        "x2",
-        "x3",
-        "x4"
+        "h1",
+        "h2",
+        "h3",
+        "h4"
       ],
       "settings": {
-        "bg": "#ffffff",
-        "eyebrow": "No tools, nothing else to buy",
-        "heading": "Everything in the box",
-        "note": "Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s."
+        "heading": "At a glance"
       }
     },
     "gallery": {
-      "type": "helios-gallery",
+      "type": "helios-bb-gallery",
       "blocks": {
         "g1": {
           "type": "image",
           "settings": {
             "image": "shopify://shop_images/helios-sg-detail-3.png",
-            "alt": "HELIOS Super Glide, what arrives in the box"
+            "alt": "HELIOS Super Glide, what arrives in the box",
+            "caption": "Everything in the box — lounger, battery, charger, nozzle."
           }
         },
         "g2": {
           "type": "image",
           "settings": {
             "image": "shopify://shop_images/helios-sg-detail-4.png",
-            "alt": "HELIOS Super Glide product view"
+            "alt": "HELIOS Super Glide product view",
+            "caption": "Padded headrest and twin cup holders."
           }
         },
         "g3": {
           "type": "image",
           "settings": {
             "image": "shopify://shop_images/helios-sg-detail-6.png",
-            "alt": "HELIOS Super Glide on the water"
-          }
-        },
-        "g4": {
-          "type": "image",
-          "settings": {
-            "image": "shopify://shop_images/1078D214-90FC-487F-9F16-484BA9F309A0.png",
-            "alt": "HELIOS Super Glide detail"
+            "alt": "HELIOS Super Glide on the water",
+            "caption": "Twin motors move you — no kicking, no effort."
           }
         }
       },
       "block_order": [
         "g1",
         "g2",
-        "g3",
-        "g4"
+        "g3"
       ],
       "settings": {
-        "width": 1300,
-        "cols": 2,
-        "cols_m": "1",
-        "ratio": "1/1",
-        "ratio_m": "1/1",
-        "pad": 0,
-        "pad_m": 0,
-        "gap": 14,
-        "radius": 8,
-        "page_bg": "#ffffff",
-        "tile_bg": "#ffffff",
-        "border": "#d5d9d9"
+        "heading": "On the water"
       }
     },
-    "clearfaq": {
-      "type": "helios-clear-faq",
+    "specs": {
+      "type": "helios-bb-specs",
+      "blocks": {
+        "gp1": {
+          "type": "group",
+          "settings": {
+            "title": "Performance"
+          }
+        },
+        "s1": {
+          "type": "spec",
+          "settings": {
+            "label": "Motors",
+            "value": "2 × electric thrusters"
+          }
+        },
+        "s2": {
+          "type": "spec",
+          "settings": {
+            "label": "Controls",
+            "value": "Joystick — forward, reverse, spin"
+          }
+        },
+        "s3": {
+          "type": "spec",
+          "settings": {
+            "label": "Runtime",
+            "value": "3–4 hours per charge"
+          }
+        },
+        "s4": {
+          "type": "spec",
+          "settings": {
+            "label": "Power source",
+            "value": "Rechargeable battery (included)"
+          }
+        },
+        "gp2": {
+          "type": "group",
+          "settings": {
+            "title": "Build"
+          }
+        },
+        "s5": {
+          "type": "spec",
+          "settings": {
+            "label": "Material",
+            "value": "Heavy-duty PVC"
+          }
+        },
+        "s6": {
+          "type": "spec",
+          "settings": {
+            "label": "Weight capacity",
+            "value": "250–300 lb"
+          }
+        },
+        "s7": {
+          "type": "spec",
+          "settings": {
+            "label": "Comfort",
+            "value": "Padded headrest, 2 cup holders"
+          }
+        },
+        "s8": {
+          "type": "spec",
+          "settings": {
+            "label": "Setup time",
+            "value": "About 5 minutes"
+          }
+        },
+        "gp3": {
+          "type": "group",
+          "settings": {
+            "title": "In the box"
+          }
+        },
+        "s9": {
+          "type": "spec",
+          "settings": {
+            "label": "Included",
+            "value": "Lounger, battery, charger, inflation nozzle"
+          }
+        },
+        "s10": {
+          "type": "spec",
+          "settings": {
+            "label": "Pump required",
+            "value": "No — nozzle included"
+          }
+        },
+        "gp4": {
+          "type": "group",
+          "settings": {
+            "title": "Warranty & returns"
+          }
+        },
+        "s11": {
+          "type": "spec",
+          "settings": {
+            "label": "Warranty",
+            "value": "12 months, motors and battery"
+          }
+        },
+        "s12": {
+          "type": "spec",
+          "settings": {
+            "label": "Returns",
+            "value": "30 days, unused and in the box"
+          }
+        }
+      },
+      "block_order": [
+        "gp1",
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "gp2",
+        "s5",
+        "s6",
+        "s7",
+        "s8",
+        "gp3",
+        "s9",
+        "s10",
+        "gp4",
+        "s11",
+        "s12"
+      ],
       "settings": {
-        "eyebrow": "Straight answers",
-        "heading": "The things people actually ask.",
-        "bg": "#ffffff",
-        "video_url": "https://cdn.shopify.com/videos/c/vp/5a4a60a7bc3946829bd78d5c914ad5f2/5a4a60a7bc3946829bd78d5c914ad5f2.HD-720p-1.6Mbps-89935160.mp4",
-        "poster_url": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/preview_images/5a4a60a7bc3946829bd78d5c914ad5f2.thumbnail.0000000000.jpg?v=1785074711"
+        "heading": "Specifications",
+        "lede": "Everything on this page is measured or listed by the manufacturer.",
+        "note": "Runtime varies with rider weight, water conditions and how hard you run the motors. Recreational leisure product — not a life-saving device. Adult supervision required for under-16s."
       }
     },
-    "tiktok": {
-      "type": "helios-tiktok",
+    "compare": {
+      "type": "helios-bb-compare",
+      "blocks": {
+        "r1": {
+          "type": "row",
+          "settings": {
+            "label": "Moves you without effort",
+            "us": "yes",
+            "a": "no",
+            "b": "no"
+          }
+        },
+        "r2": {
+          "type": "row",
+          "settings": {
+            "label": "Steering control",
+            "us": "Joystick",
+            "a": "None",
+            "b": "Paddle"
+          }
+        },
+        "r3": {
+          "type": "row",
+          "settings": {
+            "label": "Lie back while moving",
+            "us": "yes",
+            "a": "yes",
+            "b": "no"
+          }
+        },
+        "r4": {
+          "type": "row",
+          "settings": {
+            "label": "Setup time",
+            "us": "~5 min",
+            "a": "~5 min",
+            "b": "Car rack"
+          }
+        },
+        "r5": {
+          "type": "row",
+          "settings": {
+            "label": "Packs down small",
+            "us": "yes",
+            "a": "yes",
+            "b": "no"
+          }
+        },
+        "r6": {
+          "type": "row",
+          "settings": {
+            "label": "Cup holders",
+            "us": "2",
+            "a": "Sometimes",
+            "b": "no"
+          }
+        }
+      },
+      "block_order": [
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5",
+        "r6"
+      ],
+      "settings": {
+        "heading": "How it compares",
+        "col_us": "Super Glide",
+        "col_a": "Pool float",
+        "col_b": "Kayak",
+        "note": "Comparison against a standard inflatable pool float and a recreational sit-on-top kayak."
+      }
+    },
+    "faq": {
+      "type": "helios-bb-faq",
+      "blocks": {
+        "q1": {
+          "type": "qa",
+          "settings": {
+            "q": "How fast does it go?",
+            "a": "<p>It is a cruising speed, not a jet ski — enough to move you across a pool or along a shoreline without paddling. The joystick gives you forward, reverse and spin.</p>"
+          }
+        },
+        "q2": {
+          "type": "qa",
+          "settings": {
+            "q": "How long does the battery last?",
+            "a": "<p>3–4 hours of use per charge. Runtime depends on rider weight, water conditions and how continuously you run the motors. The charger is in the box.</p>"
+          }
+        },
+        "q3": {
+          "type": "qa",
+          "settings": {
+            "q": "Do I need a pump?",
+            "a": "<p>No. The inflation nozzle is included and setup takes about five minutes.</p>"
+          }
+        },
+        "q4": {
+          "type": "qa",
+          "settings": {
+            "q": "What weight can it hold?",
+            "a": "<p>250–300 lb. Above that the lounger still floats but the motors lose noticeable push.</p>"
+          }
+        },
+        "q5": {
+          "type": "qa",
+          "settings": {
+            "q": "Can I use it in the sea?",
+            "a": "<p>Yes, in calm and sheltered water. Rinse it with fresh water afterwards so salt does not sit on the motors. It is not built for surf or open water.</p>"
+          }
+        },
+        "q6": {
+          "type": "qa",
+          "settings": {
+            "q": "When will it arrive?",
+            "a": "<p>7–10 business days in the US, with tracking emailed to you when it ships.</p>"
+          }
+        },
+        "q7": {
+          "type": "qa",
+          "settings": {
+            "q": "What if I do not like it?",
+            "a": "<p>Send it back within 30 days, unused and in the box, and we refund it. No forms and no return games.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q7"
+      ],
+      "settings": {
+        "heading": "Questions"
+      }
+    },
+    "guarantee": {
+      "type": "helios-bb-guarantee",
       "blocks": {
         "c1": {
-          "type": "clip",
+          "type": "item",
           "settings": {
-            "video": "shopify://files/videos/DownReels_20260627_044813.mp4",
-            "handle": "",
-            "caption": ""
+            "title": "Free shipping",
+            "text": "On every US order"
           }
         },
         "c2": {
-          "type": "clip",
+          "type": "item",
           "settings": {
-            "video": "shopify://files/videos/202607082326.mp4",
-            "handle": "",
-            "caption": ""
+            "title": "30-day returns",
+            "text": "Unused, in the box"
           }
         },
         "c3": {
-          "type": "clip",
+          "type": "item",
           "settings": {
-            "video": "shopify://files/videos/hf_20260723_121356_33745ebf-10ee-43fe-a809-116377684daa.mp4",
-            "handle": "",
-            "caption": ""
+            "title": "12-month warranty",
+            "text": "Motors and battery"
+          }
+        },
+        "c4": {
+          "type": "item",
+          "settings": {
+            "title": "Tracked delivery",
+            "text": "7–10 business days"
           }
         }
       },
       "block_order": [
         "c1",
         "c2",
-        "c3"
+        "c3",
+        "c4"
       ],
       "settings": {
-        "eyebrow": "Real customers",
-        "heading": "See it on the water."
-      }
-    },
-    "reviews": {
-      "type": "helios-reviews",
-      "settings": {
-        "eyebrow": "",
-        "heading": "Real photos from real backyards.",
-        "rating": "",
-        "review_count": "",
-        "bg": "#f7fafa",
-        "speed": 70,
-        "dist_5": 86,
-        "dist_4": 11,
-        "dist_3": 2,
-        "dist_2": 1,
-        "dist_1": 0,
-        "bulk": ""
-      }
-    },
-    "howitworks": {
-      "type": "helios-howitworks",
-      "settings": {
-        "eyebrow": "No tools, no assembly",
-        "heading": "Three steps. Then you are on the water.",
-        "step1_title": "Inflate it",
-        "step1_text": "About five minutes with the nozzle in the box. No compressor, no pump to buy.",
-        "step2_title": "Drop it in",
-        "step2_text": "Pool, lake, any calm water. It sits high and stays steady when you climb on.",
-        "step3_title": "Grab the joysticks",
-        "step3_text": "The motors do the work. You steer. Nothing to learn."
-      }
-    },
-    "guarantee": {
-      "type": "helios-guarantee",
-      "settings": {
-        "heading": "30-day money-back guarantee",
-        "text": "<p>Take it out for 30 days. If the Super Glide does not make summer better, send it back for a full refund. No restocking fee, no argument.</p>",
-        "cta_text": "Get yours",
-        "cta_link": "#buy"
-      }
-    },
-    "badge": {
-      "type": "helios-badge",
-      "settings": {
-        "image_url": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-big.png?v=1785731571",
-        "alt": "",
-        "width": 1000,
-        "radius": 12,
-        "bg": "#ffffff",
-        "image": "",
-        "url": ""
+        "eyebrow": "No risk",
+        "heading": "Try it for 30 days.",
+        "text": "Get it on the water. If it is not what you expected, send it back inside 30 days unused and in the box and we refund it.",
+        "cta_text": "Add to Cart",
+        "cta_link": "#buy",
+        "note": "Free shipping · tracked · 12-month warranty"
       }
     },
     "footer": {
-      "type": "helios-footer",
+      "type": "helios-bb-footer",
+      "blocks": {
+        "c1": {
+          "type": "col",
+          "settings": {
+            "title": "Shop",
+            "menu": "main-menu"
+          }
+        }
+      },
+      "block_order": [
+        "c1"
+      ],
       "settings": {
-        "brand": "HELIOS",
-        "tagline": "<p>Built for real backyards. Tracked shipping on every order, 30-day returns, and a person who actually answers your email.</p>",
-        "positioning": "Motorized water gear, made simple.",
-        "rank_text": "HOLDS 250-300 LB, DUAL MOTORS, 3-4 HOURS PER CHARGE",
-        "rating_text": "",
-        "nl_heading": "Get up to 15% off your first order",
-        "nl_sub": "Enter your email for 10% off, add your phone and get 15%.",
-        "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
-        "copyright": "© 2026 HELIOS"
+        "logo_text": "HELIOS",
+        "tagline": "Motorized water loungers. Twin motors, joystick steering, ready in five minutes.",
+        "legal_title": "Legal",
+        "contact": "helios.us.store@gmail.com",
+        "note": "Ships from the US",
+        "disclaimer": "<p>Recreational leisure product. Not a life-saving device or personal flotation device. Adult supervision required for users under 16. Use only in calm, supervised water and follow all local waterway rules.</p>"
       }
     },
     "sticky": {
-      "type": "helios-sticky-atc",
+      "type": "helios-bb-sticky",
       "settings": {
-        "featured_product": "helios-super-glide-motorized-water-lounger",
-        "label": "Super Glide 1+1 FREE",
-        "cta_text": "Add to Cart",
-        "scroll_trigger": 640
+        "title": "HELIOS Super Glide — Motorized Water Lounger",
+        "price": "$259.99",
+        "note": "2 Super Glides",
+        "cta_text": "Add to Cart"
       }
     }
   },
   "order": [
-    "bar",
-    "nav",
+    "utility",
+    "header",
     "buy",
-    "box",
+    "highlights",
     "gallery",
-    "clearfaq",
-    "tiktok",
-    "howitworks",
+    "specs",
+    "compare",
+    "faq",
     "guarantee",
     "footer",
     "sticky"

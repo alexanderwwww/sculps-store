@@ -1,0 +1,54 @@
+{%- comment -%}
+  HELIOS — lifestyle gallery. Full-bleed swipe row on mobile, grid on desktop.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  .hbg{background:var(--hb-bg,#fff);padding-block:34px;overflow:hidden;}
+  .hbg__h{margin-bottom:16px;}
+  .hbg__vp{overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;}
+  .hbg__vp::-webkit-scrollbar{display:none;}
+  .hbg__t{display:flex;gap:10px;list-style:none;margin:0;padding:0 var(--hb-gut,16px) 0 0;width:max-content;}
+  .hbg__c{flex:none;width:min(78vw,340px);scroll-snap-align:start;}
+  .hbg__c img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:var(--hb-soft,#F0F2F4);}
+  .hbg__c p{font-size:13px;color:var(--hb-muted,#5F6871);margin-top:8px;line-height:1.45;}
+  @media(min-width:900px){
+    .hbg__vp{overflow:visible;}
+    .hbg__t{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:auto;padding:0;}
+    .hbg__c{width:auto;}
+  }
+</style>
+{%- if section.blocks.size > 0 -%}
+<div class="hb hbg">
+  <div class="hb-wrap">
+    {%- if s.heading != blank -%}<h2 class="hb-h2 hbg__h">{{ s.heading }}</h2>{%- endif -%}
+    <div class="hbg__vp">
+      <ul class="hbg__t">
+        {%- for b in section.blocks -%}
+          {%- if b.settings.image != blank -%}
+            <li class="hbg__c" {{ b.shopify_attributes }}>
+              <img src="{{ b.settings.image | image_url: width: 1000 }}"
+                   srcset="{{ b.settings.image | image_url: width: 500 }} 500w, {{ b.settings.image | image_url: width: 1000 }} 1000w"
+                   sizes="(min-width:900px) 380px, 78vw"
+                   alt="{{ b.settings.alt | escape }}" loading="lazy">
+              {%- if b.settings.caption != blank -%}<p>{{ b.settings.caption }}</p>{%- endif -%}
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+  </div>
+</div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS gallery row",
+  "tag": "section",
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading", "default": "On the water" }],
+  "blocks": [{ "type": "image", "name": "Image", "limit": 9, "settings": [
+    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "text", "id": "alt", "label": "Alt text" },
+    { "type": "text", "id": "caption", "label": "Caption" }
+  ]}],
+  "presets": [{ "name": "HELIOS gallery row", "blocks": [{ "type": "image" }, { "type": "image" }, { "type": "image" }] }]
+}
+{% endschema %}
