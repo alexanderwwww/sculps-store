@@ -245,10 +245,21 @@
             {%- if s.step3 != blank -%}<span><b>3.</b>{{ s.step3 }}</span>{%- endif -%}
           </div>
           <div class="hbb-opts" id="hbb-opts-{{ sid }}">
+            {%- liquid
+              assign preset = 0
+              for b in section.blocks
+                if b.type == 'bundle' and b.settings.variant_id != blank and b.settings.is_default
+                  assign preset = forloop.index
+                  break
+                endif
+              endfor
+              assign shown = 0
+            -%}
             {%- for b in section.blocks -%}
               {%- if b.type == 'bundle' and b.settings.variant_id != blank -%}
+                {%- assign shown = shown | plus: 1 -%}
                 <button type="button"
-                  class="hbb-opt{% if forloop.first %} hbb-on{% endif %}{% if b.settings.tag != blank %} hbb-hastag{% endif %}"
+                  class="hbb-opt{% if preset == forloop.index or preset == 0 and shown == 1 %} hbb-on{% endif %}{% if b.settings.tag != blank %} hbb-hastag{% endif %}"
                   data-id="{{ b.settings.variant_id }}" data-price="{{ b.settings.price }}"
                   data-compare="{{ b.settings.compare }}" data-save="{{ b.settings.save }}"
                   data-gift="{{ b.settings.gift_variant_id }}" data-giftname="{{ b.settings.gift }}"
@@ -486,6 +497,7 @@
   "blocks": [
     { "type": "bundle", "name": "Bundle option", "limit": 4, "settings": [
       { "type": "text", "id": "variant_id", "label": "Variant ID" },
+      { "type": "checkbox", "id": "is_default", "label": "Pre-select this option", "default": false, "info": "The one highlighted when the page loads. If none is ticked, the first is used." },
       { "type": "text", "id": "label", "label": "Label" },
       { "type": "text", "id": "note", "label": "Note" },
       { "type": "text", "id": "tag", "label": "Floating pill text", "info": "Shown above the option. Keep the background light — the text is dark." },

@@ -3,8 +3,8 @@
     "bar": {
       "type": "helios-bar",
       "settings": {
-        "message": "1+1 FREE — buy one Super Glide, the second is on us",
-        "deadline": "",
+        "message": "🎂 HELIOS BIRTHDAY — 30% OFF EVERYTHING, TODAY ONLY. Applied automatically at checkout",
+        "deadline": "2026-08-24",
         "link_text": "Shop now",
         "link_url": "#buy",
         "dismissible": true,
@@ -36,10 +36,27 @@
     "buy": {
       "type": "helios-buybox",
       "blocks": {
+        "o0": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "53550115815690",
+            "is_default": false,
+            "label": "1 Super Glide",
+            "note": "Just the one",
+            "tag": "",
+            "tag_bg": "#0f1111",
+            "gift": "",
+            "gift_variant_id": "",
+            "save": "",
+            "price": "$199.99",
+            "compare": ""
+          }
+        },
         "o1": {
           "type": "bundle",
           "settings": {
             "variant_id": "53550115848458",
+            "is_default": true,
             "label": "2 Super Glides",
             "note": "Buy one, the second is free",
             "tag": "1+1 FREE",
@@ -55,6 +72,7 @@
           "type": "bundle",
           "settings": {
             "variant_id": "53550115946762",
+            "is_default": false,
             "label": "3 Super Glides",
             "note": "You plus two more seats",
             "tag": "",
@@ -70,8 +88,9 @@
           "type": "bundle",
           "settings": {
             "variant_id": "53550115881226",
-            "label": "2+2 FREE",
-            "note": "4 Super Glides. The whole crew",
+            "is_default": false,
+            "label": "4 Super Glides",
+            "note": "The whole crew",
             "tag": "",
             "tag_bg": "#0f1111",
             "gift": "",
@@ -83,6 +102,7 @@
         }
       },
       "block_order": [
+        "o0",
         "o1",
         "o2",
         "o3"
@@ -450,6 +470,20 @@
         "scroll_trigger": 640,
         "price": "$199.99"
       }
+    },
+    "cart": {
+      "type": "helios-cart",
+      "settings": {
+        "heading": "Your cart",
+        "ship_line": "Free US shipping on this order",
+        "save_label": "HELIOS birthday 30% off",
+        "subtotal_label": "Subtotal",
+        "note": "Taxes calculated at checkout. Shipping is free.",
+        "cta": "Checkout",
+        "cta_busy": "Taking you to checkout…",
+        "empty_title": "Your cart is empty",
+        "empty_text": "Add a Super Glide and it will show up here."
+      }
     }
   },
   "order": [
@@ -466,6 +500,7 @@
     "guarantee",
     "badge",
     "footer",
-    "sticky"
+    "sticky",
+    "cart"
   ]
 }

@@ -46,6 +46,8 @@
 /* ---- helios-footer ---- */
 
 /* ---- helios-sticky-atc ---- */
+
+/* ---- helios-cart ---- */
 </style>
 <style>/* ---- helios-bar ---- */
 
@@ -58,7 +60,7 @@
 </head><body>
 <div class='pv-bar'><b>HELIOS recovered theme — static preview</b><a href='#pg0'>Homepage</a><a href='#pg1'>Track</a></div>
 <div class='pv-note'>Static render of the recovered Liquid with your real saved settings. Product data, cart and JS are stubbed, so prices/variants show as placeholders and buttons do nothing. Images load from the old store's CDN and may not resolve.</div>
-<h2 id='pg0' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Homepage — 14 sections</h2>
+<h2 id='pg0' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Homepage — 15 sections</h2>
 
 <!-- ===== bar :: helios-bar ===== -->
 <section class="helios" id="hb2-bar">
@@ -104,7 +106,7 @@
   #hb2-bar .bar.gone{display:none;}
 </style>
   <div class="bar" id="hb2-b-bar">
-    <span>1+1 FREE — buy one Super Glide, the second is on us</span><a href="#buy">Shop now</a><button class="x" type="button" aria-label="Dismiss">&times;</button></div>
+    <span>🎂 HELIOS BIRTHDAY — 30% OFF EVERYTHING, TODAY ONLY. Applied automatically at checkout</span><span class="cd" id="hb2-c-bar" data-end="2026-08-24">--<span class="u">left</span></span><a href="#buy">Shop now</a><button class="x" type="button" aria-label="Dismiss">&times;</button></div>
 
 </section>
 
@@ -364,6 +366,16 @@
             <span>2-FOR-1 DEAL</span><span class="hbb-pop">★ LIMITED STOCK</span></div>
           <div class="hbb-steps"><span><b>1.</b>Pick your deal</span><span><b>2.</b>Tap Add to cart</span><span><b>3.</b>We ship it free</span></div>
           <div class="hbb-opts" id="hbb-opts-buy"><button type="button"
+                  class="hbb-opt"
+                  data-id="53550115815690" data-price="$199.99"
+                  data-compare="" data-save=""
+                  data-gift="" data-giftname=""
+                  ><span class="hbb-radio" aria-hidden="true"></span><span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
+                      <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy"
+                           style="width:100%;height:100%;object-fit:contain;display:block"></span><span class="hbb-om">
+                    <span class="hbb-t">1 Super Glide</span><span class="hbb-d">Just the one</span></span>
+                  <span class="hbb-op"><span class="hbb-n">$199.99</span></span>
+                </button><button type="button"
                   class="hbb-opt hbb-on hbb-hastag"
                   data-id="53550115848458" data-price="$199.99"
                   data-compare="$399.98" data-save="SAVE $199.99"
@@ -391,7 +403,7 @@
                   ><span class="hbb-radio" aria-hidden="true"></span><span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
                       <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy"
                            style="width:100%;height:100%;object-fit:contain;display:block"></span><span class="hbb-om">
-                    <span class="hbb-t">2+2 FREE</span><span class="hbb-d">4 Super Glides. The whole crew</span></span>
+                    <span class="hbb-t">4 Super Glides</span><span class="hbb-d">The whole crew</span></span>
                   <span class="hbb-op"><span class="hbb-sv">SAVE $339.97</span><span class="hbb-n">$459.99</span><span class="hbb-o">$799.96</span></span>
                 </button></div>
         </div>
@@ -1089,6 +1101,111 @@
   </form>
 
 </div>
+
+
+
+<!-- ===== cart :: helios-cart ===== -->
+<div class="helios" id="hcd-cart">
+<style>
+  #hcd-cart{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+  #hcd-cart *{box-sizing:border-box;min-width:0;}
+  #hcd-cart .hcd-veil{position:fixed;inset:0;z-index:9990;background:rgba(11,14,17,.55);
+    opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;backdrop-filter:blur(2px);}
+  #hcd-cart .hcd-veil.on{opacity:1;visibility:visible;}
+  #hcd-cart .hcd-panel{position:fixed;top:0;right:0;bottom:0;z-index:9991;width:min(420px,100%);
+    background:#fff;color:#0F1111;display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .34s cubic-bezier(.32,.72,0,1);
+    box-shadow:-14px 0 40px rgba(0,0,0,.18);}
+  #hcd-cart .hcd-panel.on{transform:none;}
+
+  #hcd-cart .hcd-top{display:flex;align-items:center;justify-content:space-between;
+    padding:var(--sp-4,21px);border-bottom:1px solid #E7E9E9;flex:none;}
+  #hcd-cart .hcd-title{font-size:var(--fs-base,16px);font-weight:800;letter-spacing:-.01em;}
+  #hcd-cart .hcd-x{width:34px;height:34px;border:0;background:#F0F2F2;border-radius:50%;
+    cursor:pointer;font-size:19px;line-height:1;color:#0F1111;display:flex;align-items:center;
+    justify-content:center;}
+  #hcd-cart .hcd-x:hover{background:#E1E5E5;}
+
+  #hcd-cart .hcd-ship{padding:var(--sp-3,13px) var(--sp-4,21px);background:#E3F6EC;
+    color:#046B53;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex:none;}
+  #hcd-cart .hcd-ship svg{width:16px;height:16px;flex:none;}
+
+  #hcd-cart .hcd-body{flex:1 1 auto;overflow-y:auto;padding:var(--sp-4,21px);}
+  #hcd-cart .hcd-line{display:flex;gap:var(--sp-3,13px);padding-bottom:var(--sp-4,21px);
+    margin-bottom:var(--sp-4,21px);border-bottom:1px solid #F0F2F2;}
+  #hcd-cart .hcd-line:last-child{border-bottom:0;margin-bottom:0;}
+  #hcd-cart .hcd-thumb{flex:0 0 72px;width:72px;height:72px;border-radius:var(--r-sm,8px);
+    overflow:hidden;background:#F7FAFA;border:1px solid #E7E9E9;}
+  #hcd-cart .hcd-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  #hcd-cart .hcd-info{flex:1 1 0;min-width:0;}
+  #hcd-cart .hcd-name{font-size:var(--fs-sm,14.1px);font-weight:700;line-height:1.3;}
+  #hcd-cart .hcd-var{font-size:12px;color:#565959;margin-top:2px;}
+  #hcd-cart .hcd-row{display:flex;align-items:center;justify-content:space-between;
+    gap:var(--sp-2,8px);margin-top:var(--sp-2,8px);}
+  #hcd-cart .hcd-qty{display:inline-flex;align-items:center;border:1px solid #D5D9D9;
+    border-radius:100px;overflow:hidden;}
+  #hcd-cart .hcd-qty button{width:30px;height:30px;border:0;background:#fff;cursor:pointer;
+    font-size:15px;line-height:1;color:#0F1111;}
+  #hcd-cart .hcd-qty button:hover:not([disabled]){background:#F0F2F2;}
+  #hcd-cart .hcd-qty button[disabled]{opacity:.4;cursor:default;}
+  #hcd-cart .hcd-qty span{min-width:26px;text-align:center;font-size:13.5px;font-weight:700;}
+  #hcd-cart .hcd-price{font-size:var(--fs-sm,14.1px);font-weight:800;white-space:nowrap;}
+  #hcd-cart .hcd-was{display:block;font-size:11.5px;color:#565959;text-decoration:line-through;
+    font-weight:400;}
+  #hcd-cart .hcd-del{background:none;border:0;padding:0;margin-top:5px;cursor:pointer;
+    font-size:11.5px;color:#565959;text-decoration:underline;}
+
+  #hcd-cart .hcd-empty{text-align:center;padding:var(--sp-7,89px) var(--sp-4,21px);color:#565959;}
+  #hcd-cart .hcd-empty b{display:block;font-size:var(--fs-md,20.4px);color:#0F1111;
+    margin-bottom:var(--sp-2,8px);letter-spacing:-.02em;}
+
+  #hcd-cart .hcd-foot{flex:none;border-top:1px solid #E7E9E9;padding:var(--sp-4,21px);
+    background:#fff;}
+  #hcd-cart .hcd-sub{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:var(--fs-sm,14.1px);margin-bottom:6px;}
+  #hcd-cart .hcd-sub b{font-size:var(--fs-md,20.4px);font-weight:800;letter-spacing:-.02em;}
+  #hcd-cart .hcd-save{display:flex;justify-content:space-between;font-size:12.5px;
+    color:#CC0C39;font-weight:700;margin-bottom:var(--sp-2,8px);}
+  #hcd-cart .hcd-note{font-size:11.5px;color:#565959;margin:0 0 var(--sp-3,13px);}
+  #hcd-cart .hcd-go{display:block;width:100%;background:#FFD814;color:#0F1111;
+    border:1px solid #FCD200;border-radius:100px;padding:16px;font:inherit;
+    font-size:16px;font-weight:800;cursor:pointer;text-align:center;}
+  #hcd-cart .hcd-go:hover:not([disabled]){background:#F7CA00;}
+  #hcd-cart .hcd-go[disabled]{opacity:.65;cursor:default;}
+  #hcd-cart .hcd-trust{display:flex;justify-content:center;gap:var(--sp-3,13px);
+    margin-top:var(--sp-3,13px);font-size:11px;color:#565959;flex-wrap:wrap;}
+  #hcd-cart .hcd-trust span{display:inline-flex;align-items:center;gap:5px;}
+  #hcd-cart .hcd-trust svg{width:13px;height:13px;color:#046B53;}
+  #hcd-cart .hcd-err{font-size:12.5px;color:#B3261E;font-weight:700;margin:0 0 var(--sp-2,8px);}
+  #hcd-cart .hcd-err:empty{display:none;}
+  @media(prefers-reduced-motion:reduce){
+    #hcd-cart .hcd-panel,#hcd-cart .hcd-veil{transition:none;}
+  }
+</style>
+
+  <div class="hcd-veil" data-veil></div>
+  <aside class="hcd-panel" data-panel role="dialog" aria-modal="true" aria-label="Your cart">
+    <div class="hcd-top">
+      <span class="hcd-title">Your cart <span data-count></span></span>
+      <button type="button" class="hcd-x" data-close aria-label="Close cart">&times;</button>
+    </div><div class="hcd-ship">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>
+        Free US shipping on this order
+      </div><div class="hcd-body" data-body></div>
+
+    <div class="hcd-foot" data-foot hidden>
+      <p class="hcd-err" data-err role="status" aria-live="polite"></p>
+      <div class="hcd-save" data-save hidden><span>HELIOS birthday 30% off</span><span data-saveamt></span></div>
+      <div class="hcd-sub"><span>Subtotal</span><b data-sub></b></div><p class="hcd-note">Taxes calculated at checkout. Shipping is free.</p><button type="button" class="hcd-go" data-go>Checkout</button>
+      <div class="hcd-trust">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3.5V8h-4.5"/></svg>30-day returns</span>
+      </div>
+    </div>
+  </aside>
+</div>
+
+
 
 
 <h2 id='pg1' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Track — 4 sections</h2>
