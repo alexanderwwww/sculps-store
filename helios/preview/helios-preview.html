@@ -1193,6 +1193,50 @@
   #hbg-globe .meta{margin-top:12px;display:grid;gap:4px;font-size:13.5px;color:#AEB6BE;}
   #hbg-globe .meta b{color:#fff;font-weight:700;}
 
+  /* Motion-graphic status card. One animated glyph per stage, so the current
+     step is legible before a word is read. */
+  #hbg-globe .mg{display:flex;align-items:center;gap:var(--sp-3,13px);
+    margin-top:var(--sp-4,21px);padding:var(--sp-3,13px) var(--sp-4,21px);
+    background:linear-gradient(180deg,#161C22,#12171C);border:1px solid #2A333B;
+    border-radius:var(--r-md,13px);}
+  #hbg-globe .mg-ico{flex:none;width:46px;height:46px;border-radius:12px;
+    background:#0E1319;border:1px solid #2A333B;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;}
+  #hbg-globe .mg-tx{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  #hbg-globe .mg-tx b{font-size:var(--fs-sm,14.1px);font-weight:800;letter-spacing:-.01em;}
+  #hbg-globe .mg-tx span{font-size:12.5px;color:#8C959D;line-height:1.45;}
+
+  /* glyph 1 — order lands in the queue */
+  #hbg-globe .g1{width:20px;height:20px;border-radius:5px;
+    border:2px solid var(--hb-blue,#0046BE);animation:g1a 1.8s ease-in-out infinite;}
+  @keyframes g1a{0%,100%{transform:scale(.85);opacity:.6}50%{transform:scale(1);opacity:1}}
+  /* glyph 2 — lid closing on the box */
+  #hbg-globe .g2{width:22px;height:15px;background:#B98C4A;border-radius:2px;position:relative;}
+  #hbg-globe .g2::before{content:'';position:absolute;left:-1px;right:-1px;top:-7px;height:7px;
+    background:#E8B96B;border-radius:2px;transform-origin:bottom center;animation:g2a 1.9s ease-in-out infinite;}
+  @keyframes g2a{0%,100%{transform:rotateX(70deg)}45%,65%{transform:rotateX(0)}}
+  /* glyph 3 — quality check sweep */
+  #hbg-globe .g3{width:22px;height:22px;border-radius:50%;
+    border:2px solid #2A333B;border-top-color:#5BE0B8;animation:g3a 1.1s linear infinite;}
+  @keyframes g3a{to{transform:rotate(360deg)}}
+  /* glyph 4 — van pulling away */
+  #hbg-globe .g4{width:24px;height:14px;background:var(--hb-yellow,#FFE000);
+    border-radius:3px 5px 3px 3px;position:relative;animation:g4a 1.6s ease-in-out infinite;}
+  #hbg-globe .g4::after{content:'';position:absolute;left:3px;right:3px;bottom:-4px;height:4px;
+    border-radius:50%;background:rgba(255,224,0,.3);}
+  @keyframes g4a{0%,100%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
+  /* glyph 5 — delivered tick */
+  #hbg-globe .g5{width:22px;height:22px;border-radius:50%;background:#067D62;
+    display:flex;align-items:center;justify-content:center;animation:g5a .5s ease-out;}
+  #hbg-globe .g5::after{content:'';width:9px;height:5px;border-left:2.4px solid #fff;
+    border-bottom:2.4px solid #fff;transform:rotate(-45deg) translate(1px,-1px);}
+  @keyframes g5a{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  @media(prefers-reduced-motion:reduce){
+    #hbg-globe .g1,#hbg-globe .g2::before,#hbg-globe .g3,
+    #hbg-globe .g4,#hbg-globe .g5{animation:none;}
+    #hbg-globe .g2::before{transform:rotateX(0);}
+  }
+
   /* Shopify-style horizontal stage rail: five nodes, a track that fills to the
      current stage, and the live node pulsing. */
   #hbg-globe .rail{margin-top:22px;padding-top:6px;display:flex;position:relative;}
@@ -1277,6 +1321,10 @@
             <span data-route></span>
             <span data-eta></span>
             <span data-carrier></span>
+          </div>
+          <div class="mg" data-mg>
+            <span class="mg-ico" data-mgico></span>
+            <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
           </div>
           <div class="rail" data-rail aria-hidden="true"></div>
           <div class="tl" data-tl></div>
