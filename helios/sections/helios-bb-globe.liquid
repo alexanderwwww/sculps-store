@@ -1,0 +1,388 @@
+{%- comment -%}
+  HELIOS — live tracking with a 3D globe.
+
+  Self-contained: a rotating dot-matrix Earth drawn on a canvas, no libraries and
+  no external requests. Continents are coarse polygons sampled onto a lat/lon
+  grid, projected to a sphere and depth-sorted, so it stays sharp at any size and
+  costs one small script instead of a 600KB globe library.
+
+  A visitor types a HELIOS number; if it matches a shipment block the globe
+  animates the route and the timeline fills in. Deep link: ?t=HELIOS289471132
+
+  PRIVACY NOTE: block data is rendered into the page, so anything you type into a
+  block is readable in the page source by anyone who looks. Keep it to status,
+  city and date — never a customer's full address, phone number or email.
+
+  The canvas is decorative: everything a visitor needs is in the text timeline,
+  and the animation is switched off under prefers-reduced-motion.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  #hbg-{{ section.id }}{background:var(--hb-ink,#1D252C);color:#fff;padding-block:40px 52px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  #hbg-{{ section.id }} *,#hbg-{{ section.id }} *::before{box-sizing:border-box;}
+  #hbg-{{ section.id }} .wrap{width:100%;max-width:calc(var(--hb-maxw,1440px) + 48px);
+    margin-inline:auto;padding-inline:var(--hb-gut,16px);}
+  #hbg-{{ section.id }} .lay{display:grid;gap:28px;align-items:start;}
+  #hbg-{{ section.id }} .eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--hb-yellow,#FFE000);margin:0 0 10px;}
+  #hbg-{{ section.id }} h1{font-size:clamp(24px,4vw,38px);font-weight:800;letter-spacing:-.025em;
+    line-height:1.1;margin:0;}
+  #hbg-{{ section.id }} .sub{margin-top:10px;font-size:14.5px;line-height:1.55;color:#AEB6BE;max-width:52ch;}
+
+  #hbg-{{ section.id }} .form{display:flex;gap:9px;margin-top:22px;flex-wrap:wrap;}
+  #hbg-{{ section.id }} input{flex:1 1 240px;min-width:0;background:#12171C;border:1px solid #38424B;
+    color:#fff;border-radius:6px;padding:14px 15px;font:inherit;font-size:15.5px;letter-spacing:.04em;}
+  #hbg-{{ section.id }} input:focus{outline:2px solid var(--hb-blue,#0046BE);outline-offset:1px;border-color:transparent;}
+  #hbg-{{ section.id }} input::placeholder{color:#6E7982;letter-spacing:.02em;}
+  #hbg-{{ section.id }} button.go{flex:0 0 auto;background:var(--hb-blue,#0046BE);color:#fff;border:0;
+    border-radius:6px;padding:14px 26px;font:inherit;font-size:15.5px;font-weight:700;cursor:pointer;}
+  #hbg-{{ section.id }} button.go:hover{background:#0052DE;}
+  #hbg-{{ section.id }} .err{margin-top:12px;font-size:13.5px;color:#FF9E96;min-height:1em;}
+  #hbg-{{ section.id }} .err:empty{display:none;}
+
+  #hbg-{{ section.id }} .stage{position:relative;aspect-ratio:1/1;max-width:560px;margin-inline:auto;width:100%;}
+  #hbg-{{ section.id }} canvas{width:100%;height:100%;display:block;}
+  #hbg-{{ section.id }} .ring{position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    box-shadow:0 0 90px 10px rgba(0,110,255,.20) inset,0 0 70px rgba(0,90,220,.22);}
+
+  #hbg-{{ section.id }} .panel{margin-top:26px;background:#12171C;border:1px solid #2A333B;
+    border-radius:12px;padding:20px;display:none;}
+  #hbg-{{ section.id }} .panel.on{display:block;}
+  #hbg-{{ section.id }} .pt{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    align-items:baseline;border-bottom:1px solid #2A333B;padding-bottom:14px;}
+  #hbg-{{ section.id }} .code{font-size:17px;font-weight:800;letter-spacing:.05em;}
+  #hbg-{{ section.id }} .pill{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    background:rgba(6,125,98,.22);color:#5BE0B8;border-radius:999px;padding:5px 12px;}
+  #hbg-{{ section.id }} .meta{margin-top:12px;display:grid;gap:4px;font-size:13.5px;color:#AEB6BE;}
+  #hbg-{{ section.id }} .meta b{color:#fff;font-weight:700;}
+
+  #hbg-{{ section.id }} .tl{margin-top:20px;display:grid;gap:0;}
+  #hbg-{{ section.id }} .st{display:grid;grid-template-columns:26px minmax(0,1fr);gap:14px;
+    padding-bottom:20px;position:relative;}
+  #hbg-{{ section.id }} .st:last-child{padding-bottom:0;}
+  #hbg-{{ section.id }} .st::before{content:'';position:absolute;left:12px;top:20px;bottom:-2px;width:2px;
+    background:#2A333B;}
+  #hbg-{{ section.id }} .st:last-child::before{display:none;}
+  #hbg-{{ section.id }} .st.done::before{background:var(--hb-blue,#0046BE);}
+  #hbg-{{ section.id }} .dot{width:26px;height:26px;border-radius:50%;border:2px solid #38424B;
+    display:grid;place-items:center;background:#12171C;position:relative;z-index:1;}
+  #hbg-{{ section.id }} .st.done .dot{border-color:var(--hb-blue,#0046BE);background:var(--hb-blue,#0046BE);}
+  #hbg-{{ section.id }} .st.done .dot::after{content:'';width:9px;height:5px;border-left:2px solid #fff;
+    border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);}
+  #hbg-{{ section.id }} .st.now .dot{border-color:var(--hb-yellow,#FFE000);
+    box-shadow:0 0 0 0 rgba(255,224,0,.55);animation:hbgp-{{ section.id }} 1.8s infinite;}
+  @keyframes hbgp-{{ section.id }}{70%{box-shadow:0 0 0 12px rgba(255,224,0,0);}100%{box-shadow:0 0 0 0 rgba(255,224,0,0);}}
+  #hbg-{{ section.id }} .sl{font-size:15px;font-weight:700;line-height:1.3;}
+  #hbg-{{ section.id }} .sd{font-size:13px;color:#8C959D;margin-top:3px;}
+  #hbg-{{ section.id }} .foot{margin-top:18px;font-size:12.5px;color:#8C959D;line-height:1.55;}
+
+  @media(min-width:900px){
+    #hbg-{{ section.id }} .lay{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;}
+    #hbg-{{ section.id }} .stage{max-width:none;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    #hbg-{{ section.id }} .st.now .dot{animation:none;}
+  }
+</style>
+
+<section id="hbg-{{ section.id }}">
+  <div class="wrap">
+    <div class="lay">
+      <div>
+        {%- if s.eyebrow != blank -%}<p class="eyebrow">{{ s.eyebrow }}</p>{%- endif -%}
+        <h1>{{ s.heading | default: 'Track your order' }}</h1>
+        {%- if s.sub != blank -%}<p class="sub">{{ s.sub }}</p>{%- endif -%}
+
+        <form class="form" data-form>
+          <label for="hbg-in-{{ section.id }}" style="position:absolute;left:-9999px">Tracking number</label>
+          <input id="hbg-in-{{ section.id }}" type="text" data-in autocomplete="off" spellcheck="false"
+                 placeholder="{{ s.placeholder | default: 'HELIOS289471132' | escape }}">
+          <button type="submit" class="go">{{ s.cta | default: 'Track' }}</button>
+        </form>
+        <p class="err" data-err role="status" aria-live="polite"></p>
+
+        <div class="panel" data-panel>
+          <div class="pt">
+            <span class="code" data-code></span>
+            <span class="pill" data-pill></span>
+          </div>
+          <div class="meta">
+            <span data-route></span>
+            <span data-eta></span>
+            <span data-carrier></span>
+          </div>
+          <div class="tl" data-tl></div>
+        </div>
+
+        {%- if s.foot != blank -%}<p class="foot">{{ s.foot }}</p>{%- endif -%}
+      </div>
+
+      <div>
+        <div class="stage">
+          <canvas data-globe aria-hidden="true"></canvas>
+          <span class="ring"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script type="application/json" data-ship-{{ section.id }}>
+[
+{%- assign n = 0 -%}
+{%- for b in section.blocks -%}
+  {%- if b.settings.code != blank -%}
+  {%- if n > 0 -%},{%- endif -%}
+  {%- assign n = n | plus: 1 -%}
+  {
+    "code": {{ b.settings.code | strip | upcase | json }},
+    "stage": {{ b.settings.stage | default: 3 }},
+    "from": {{ b.settings.from | default: 'Shenzhen, CN' | json }},
+    "flon": {{ b.settings.from_lon | default: 114.06 }},
+    "flat": {{ b.settings.from_lat | default: 22.54 }},
+    "to": {{ b.settings.to | default: 'Los Angeles, US' | json }},
+    "tlon": {{ b.settings.to_lon | default: -118.24 }},
+    "tlat": {{ b.settings.to_lat | default: 34.05 }},
+    "eta": {{ b.settings.eta | json }},
+    "carrier": {{ b.settings.carrier | json }},
+    "d1": {{ b.settings.d1 | json }}, "d2": {{ b.settings.d2 | json }},
+    "d3": {{ b.settings.d3 | json }}, "d4": {{ b.settings.d4 | json }},
+    "d5": {{ b.settings.d5 | json }}
+  }
+  {%- endif -%}
+{%- endfor -%}
+]
+</script>
+
+<script>
+(function(){
+  var ID='{{ section.id }}', root=document.getElementById('hbg-'+ID);
+  if(!root||root.dataset.on==='1')return; root.dataset.on='1';
+
+  var raw=document.querySelector('[data-ship-'+ID+']');
+  var SHIPS=[]; try{ SHIPS=JSON.parse(raw.textContent)||[]; }catch(e){ SHIPS=[]; }
+  /* A malformed block would break the parse above; a failed parse degrades to
+     "not found" instead of taking the page down. */
+
+  var STAGES=[
+    {k:'Order placed',   s:'Payment confirmed'},
+    {k:'Packed',         s:'Left our facility'},
+    {k:'In transit',     s:'Moving to your country'},
+    {k:'Out for delivery',s:'With the local courier'},
+    {k:'Delivered',      s:'Handed over'}
+  ];
+
+  /* ---------- globe ---------- */
+  var cv=root.querySelector('[data-globe]'), ctx=cv.getContext('2d');
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Coarse continent outlines in [lon,lat]. Not survey-grade — just enough that
+     the silhouette reads as Earth at 500px. */
+  var LAND=[
+   [[-168,65],[-160,71],[-140,70],[-125,70],[-100,74],[-80,73],[-60,70],[-55,52],[-65,45],[-70,42],[-75,35],[-81,25],[-97,26],[-105,20],[-115,30],[-125,40],[-130,55],[-150,60]],
+   [[-55,60],[-45,60],[-30,68],[-20,75],[-30,83],[-50,82],[-60,76]],
+   [[-80,10],[-60,12],[-50,0],[-35,-5],[-38,-15],[-48,-25],[-58,-35],[-62,-42],[-68,-55],[-73,-52],[-72,-40],[-70,-20],[-78,-5]],
+   [[-17,15],[-5,5],[9,4],[9,-1],[12,-6],[13,-17],[15,-28],[20,-35],[28,-33],[33,-26],[40,-16],[41,-2],[51,12],[43,12],[35,23],[32,31],[20,32],[10,37],[0,35],[-10,30]],
+   [[-10,36],[-9,43],[-2,48],[2,51],[5,53],[8,55],[11,58],[18,60],[24,60],[30,60],[40,60],[50,55],[48,45],[40,44],[30,45],[28,41],[24,40],[20,40],[14,38],[12,45],[3,42],[-3,36]],
+   [[50,55],[60,68],[75,73],[100,77],[120,74],[140,72],[160,68],[170,62],[160,55],[140,45],[130,42],[127,35],[120,30],[110,20],[105,10],[100,5],[95,15],[88,21],[80,10],[72,20],[65,25],[60,25],[55,30],[45,38],[48,45]],
+   [[114,-22],[122,-18],[130,-12],[142,-11],[146,-19],[153,-27],[150,-37],[140,-38],[130,-32],[120,-34]]
+  ];
+  function inPoly(x,y,p){
+    var i,j,c=false;
+    for(i=0,j=p.length-1;i<p.length;j=i++){
+      var xi=p[i][0],yi=p[i][1],xj=p[j][0],yj=p[j][1];
+      if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))c=!c;
+    }
+    return c;
+  }
+  var DOTS=[];
+  (function(){
+    for(var la=-78;la<=82;la+=2.6){
+      /* Constant spacing in kilometres, not degrees — otherwise the poles clot. */
+      var step=2.6/Math.max(Math.cos(la*Math.PI/180),0.18);
+      for(var lo=-180;lo<180;lo+=step){
+        for(var k=0;k<LAND.length;k++){ if(inPoly(lo,la,LAND[k])){ DOTS.push([lo,la]); break; } }
+      }
+    }
+  })();
+
+  function toXYZ(lon,lat){
+    var p=(90-lat)*Math.PI/180, t=(lon+180)*Math.PI/180;
+    return [ -Math.sin(p)*Math.cos(t), Math.cos(p), Math.sin(p)*Math.sin(t) ];
+  }
+  function rotY(v,a){var c=Math.cos(a),s=Math.sin(a);return [v[0]*c+v[2]*s, v[1], -v[0]*s+v[2]*c];}
+  function rotX(v,a){var c=Math.cos(a),s=Math.sin(a);return [v[0], v[1]*c-v[2]*s, v[1]*s+v[2]*c];}
+
+  var W=0,H=0,R=0,spin=0,tilt=-0.42,target=null,anim=0;
+  function size(){
+    var dpr=Math.min(window.devicePixelRatio||1,2), r=cv.getBoundingClientRect();
+    W=Math.max(1,Math.round(r.width)); H=Math.max(1,Math.round(r.height));
+    cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    R=Math.min(W,H)*0.42;
+  }
+  function proj(lon,lat){
+    var v=rotX(rotY(toXYZ(lon,lat),spin),tilt);
+    return { x:W/2+v[0]*R, y:H/2-v[1]*R, z:v[2] };
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var cx=W/2, cy=H/2;
+
+    var g=ctx.createRadialGradient(cx-R*0.3,cy-R*0.35,R*0.1,cx,cy,R);
+    g.addColorStop(0,'#16324F'); g.addColorStop(1,'#0A1622');
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,6.2832); ctx.fillStyle=g; ctx.fill();
+
+    ctx.strokeStyle='rgba(90,150,220,.13)'; ctx.lineWidth=1;
+    for(var la=-60;la<=60;la+=30){
+      ctx.beginPath(); var st=false;
+      for(var lo=-180;lo<=180;lo+=4){ var q=proj(lo,la);
+        if(q.z<0){st=false;continue;} if(!st){ctx.moveTo(q.x,q.y);st=true;} else ctx.lineTo(q.x,q.y); }
+      ctx.stroke();
+    }
+    for(var lo2=0;lo2<180;lo2+=30){
+      ctx.beginPath(); var st2=false;
+      for(var lb=-88;lb<=88;lb+=4){ var q2=proj(lo2,lb);
+        if(q2.z<0){st2=false;continue;} if(!st2){ctx.moveTo(q2.x,q2.y);st2=true;} else ctx.lineTo(q2.x,q2.y); }
+      ctx.stroke();
+    }
+
+    for(var i=0;i<DOTS.length;i++){
+      var q=proj(DOTS[i][0],DOTS[i][1]); if(q.z<0)continue;
+      var a=0.28+q.z*0.62;
+      ctx.fillStyle='rgba(126,196,255,'+a.toFixed(3)+')';
+      ctx.fillRect(q.x-1.1, q.y-1.1, 2.2, 2.2);
+    }
+
+    if(target){
+      var A=target.a, B=target.b, N=64, pts=[];
+      for(var t=0;t<=N;t++){
+        var f=t/N;
+        var lon=A[0]+shortest(A[0],B[0])*f, lat=A[1]+(B[1]-A[1])*f;
+        var pp=proj(lon,lat);
+        var lift=1+Math.sin(f*Math.PI)*0.22;
+        pp.x=cx+(pp.x-cx)*lift; pp.y=cy+(pp.y-cy)*lift;
+        pts.push(pp);
+      }
+      ctx.lineWidth=2; ctx.strokeStyle='rgba(255,224,0,.9)';
+      var lim=Math.max(1,Math.round(N*target.p));
+      ctx.beginPath();
+      for(var t2=0;t2<=lim;t2++){ t2===0?ctx.moveTo(pts[0].x,pts[0].y):ctx.lineTo(pts[t2].x,pts[t2].y); }
+      ctx.stroke();
+      mark(pts[0],'#7EC4FF'); mark(pts[N],'#5BE0B8');
+      var head=pts[Math.min(lim,N)];
+      ctx.beginPath(); ctx.arc(head.x,head.y,5,0,6.2832); ctx.fillStyle='#FFE000'; ctx.fill();
+    }
+  }
+  function mark(p,c){
+    ctx.beginPath(); ctx.arc(p.x,p.y,3.4,0,6.2832); ctx.fillStyle=c; ctx.fill();
+    ctx.beginPath(); ctx.arc(p.x,p.y,7.5,0,6.2832); ctx.strokeStyle=c; ctx.globalAlpha=.35;
+    ctx.lineWidth=1.5; ctx.stroke(); ctx.globalAlpha=1;
+  }
+  function shortest(a,b){ var d=b-a; while(d>180)d-=360; while(d<-180)d+=360; return d; }
+
+  var last=0, spinTo=null;
+  function loop(ts){
+    var dt=last?Math.min((ts-last)/1000,0.05):0.016; last=ts;
+    if(spinTo!==null){
+      var d=shortest(spin*180/Math.PI, spinTo)*Math.PI/180;
+      if(Math.abs(d)<0.005){spin=spinTo*Math.PI/180; spinTo=null;} else spin+=d*Math.min(dt*2.6,1);
+    } else if(!reduce){ spin+=dt*0.11; }
+    if(target&&target.p<target.pt) target.p=Math.min(target.pt, target.p+dt*0.55);
+    draw(); anim=requestAnimationFrame(loop);
+  }
+  size(); draw();
+  if(window.ResizeObserver) new ResizeObserver(function(){size();draw();}).observe(cv);
+  else window.addEventListener('resize',function(){size();draw();});
+  anim=requestAnimationFrame(loop);
+
+  /* ---------- lookup ---------- */
+  var form=root.querySelector('[data-form]'), input=root.querySelector('[data-in]'),
+      err=root.querySelector('[data-err]'), panel=root.querySelector('[data-panel]');
+
+  function norm(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function show(sh){
+    root.querySelector('[data-code]').textContent=sh.code;
+    var st=Math.max(1,Math.min(5,parseInt(sh.stage,10)||1));
+    root.querySelector('[data-pill]').textContent=STAGES[st-1].k;
+    root.querySelector('[data-route]').innerHTML='Route: <b>'+esc(sh.from)+'</b> &rarr; <b>'+esc(sh.to)+'</b>';
+    root.querySelector('[data-eta]').innerHTML=sh.eta?('Estimated delivery: <b>'+esc(sh.eta)+'</b>'):'';
+    root.querySelector('[data-carrier]').innerHTML=sh.carrier?('Carrier: <b>'+esc(sh.carrier)+'</b>'):'';
+
+    var tl=root.querySelector('[data-tl]'), out='';
+    for(var i=0;i<5;i++){
+      var cls=i<st-1?'done':(i===st-1?'now':'');
+      var when=sh['d'+(i+1)]||'';
+      out+='<div class="st '+cls+'"><span class="dot"></span><div><div class="sl">'+STAGES[i].k+'</div>'+
+           '<div class="sd">'+esc(when||STAGES[i].s)+'</div></div></div>';
+    }
+    tl.innerHTML=out;
+    panel.classList.add('on');
+    err.textContent='';
+
+    target={ a:[parseFloat(sh.flon)||0, parseFloat(sh.flat)||0],
+             b:[parseFloat(sh.tlon)||0, parseFloat(sh.tlat)||0], p:0, pt:(st-1)/4 };
+    if(target.pt===0) target.pt=0.04;
+    /* Face the middle of the route so both ends sit on the lit side. */
+    spinTo=-( target.a[0] + shortest(target.a[0],target.b[0])/2 );
+    tilt=-((target.a[1]+target.b[1])/2)*Math.PI/180*0.7;
+    panel.scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});
+  }
+
+  function lookup(v){
+    var n=norm(v);
+    if(!n){ err.textContent='Enter your tracking number.'; panel.classList.remove('on'); return; }
+    for(var i=0;i<SHIPS.length;i++){ if(norm(SHIPS[i].code)===n){ show(SHIPS[i]); return; } }
+    panel.classList.remove('on'); target=null;
+    err.textContent={{ s.not_found | default: 'We could not find that number yet. Numbers go live once the parcel is scanned, which can take up to 48 hours after your confirmation email.' | json }};
+  }
+  form.addEventListener('submit',function(e){ e.preventDefault(); lookup(input.value); });
+
+  try{
+    var qp=new URLSearchParams(window.location.search).get('t');
+    if(qp){ input.value=qp; lookup(qp); }
+  }catch(e){}
+})();
+</script>
+
+{% schema %}
+{
+  "name": "HELIOS tracking globe",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "HELIOS logistics" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Track your order" },
+    { "type": "textarea", "id": "sub", "label": "Sub", "default": "Enter the HELIOS number from your shipping email." },
+    { "type": "text", "id": "placeholder", "label": "Input placeholder", "default": "HELIOS289471132" },
+    { "type": "text", "id": "cta", "label": "Button", "default": "Track" },
+    { "type": "textarea", "id": "not_found", "label": "Not-found message", "default": "We could not find that number yet. Numbers go live once the parcel is scanned, which can take up to 48 hours after your confirmation email." },
+    { "type": "textarea", "id": "foot", "label": "Footnote", "default": "Questions about a delivery? Email helios.us.store@gmail.com with your order number." }
+  ],
+  "blocks": [{
+    "type": "ship", "name": "Shipment", "limit": 80,
+    "settings": [
+      { "type": "paragraph", "content": "Anything here is visible in the page source. Use city and status only, never a full address, phone or email." },
+      { "type": "text", "id": "code", "label": "Tracking number", "default": "HELIOS289471132" },
+      { "type": "range", "id": "stage", "label": "Current stage", "min": 1, "max": 5, "step": 1, "default": 3,
+        "info": "1 placed, 2 packed, 3 in transit, 4 out for delivery, 5 delivered" },
+      { "type": "text", "id": "from", "label": "From (city)", "default": "Shenzhen, CN" },
+      { "type": "text", "id": "from_lon", "label": "From longitude", "default": "114.06" },
+      { "type": "text", "id": "from_lat", "label": "From latitude", "default": "22.54" },
+      { "type": "text", "id": "to", "label": "To (city)", "default": "Los Angeles, US" },
+      { "type": "text", "id": "to_lon", "label": "To longitude", "default": "-118.24" },
+      { "type": "text", "id": "to_lat", "label": "To latitude", "default": "34.05" },
+      { "type": "text", "id": "eta", "label": "Estimated delivery" },
+      { "type": "text", "id": "carrier", "label": "Carrier" },
+      { "type": "text", "id": "d1", "label": "Date — order placed" },
+      { "type": "text", "id": "d2", "label": "Date — packed" },
+      { "type": "text", "id": "d3", "label": "Date — in transit" },
+      { "type": "text", "id": "d4", "label": "Date — out for delivery" },
+      { "type": "text", "id": "d5", "label": "Date — delivered" }
+    ]
+  }],
+  "presets": [{ "name": "HELIOS tracking globe", "blocks": [{ "type": "ship" }] }]
+}
+{% endschema %}

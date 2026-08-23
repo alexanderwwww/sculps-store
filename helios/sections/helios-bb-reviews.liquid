@@ -68,8 +68,8 @@
   /* wall */
   #hbr-{{ sid }} .wall{overflow:hidden;}
   #hbr-{{ sid }} .row{display:flex;width:max-content;gap:12px;padding-block:6px;will-change:transform;}
-  #hbr-{{ sid }} .row.a{animation:hbrL-{{ sid }} {{ s.speed | default: 64 }}s linear infinite;}
-  #hbr-{{ sid }} .row.b{animation:hbrR-{{ sid }} {{ s.speed | default: 64 }}s linear infinite;}
+  #hbr-{{ sid }} .row.a{animation:hbrL-{{ sid }} {{ s.speed | default: 65 }}s linear infinite;}
+  #hbr-{{ sid }} .row.b{animation:hbrR-{{ sid }} {{ s.speed | default: 65 }}s linear infinite;}
   #hbr-{{ sid }} .wall:hover .row{animation-play-state:paused;}
   @keyframes hbrL-{{ sid }}{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @keyframes hbrR-{{ sid }}{from{transform:translateX(-50%)}to{transform:translateX(0)}}
@@ -169,7 +169,7 @@
   "tag": "section",
   "settings": [
     { "type": "text", "id": "heading", "label": "Heading", "default": "Customer reviews" },
-    { "type": "range", "id": "speed", "label": "Scroll time", "min": 30, "max": 120, "step": 5, "unit": "s", "default": 64 },
+    { "type": "range", "id": "speed", "label": "Scroll time", "min": 30, "max": 120, "step": 5, "unit": "s", "default": 65 },
     { "type": "header", "content": "Empty state" },
     { "type": "text", "id": "empty_title", "label": "Title", "default": "No reviews yet." },
     { "type": "textarea", "id": "empty_text", "label": "Text", "info": "Shown until real reviews are added. Do not replace this with invented ones — the average and the star bars are computed from the blocks below, so fake blocks produce a fake rating." }

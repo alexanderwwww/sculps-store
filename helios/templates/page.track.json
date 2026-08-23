@@ -1,0 +1,136 @@
+{
+  "sections": {
+    "utility": {
+      "type": "helios-bb-utility",
+      "blocks": {
+        "u1": {
+          "type": "item",
+          "settings": {
+            "icon": "truck",
+            "text": "FREE US SHIPPING"
+          }
+        },
+        "u2": {
+          "type": "item",
+          "settings": {
+            "icon": "return",
+            "text": "30-DAY RETURNS"
+          }
+        },
+        "u3": {
+          "type": "item",
+          "settings": {
+            "icon": "box",
+            "text": "TRACKED DELIVERY"
+          }
+        }
+      },
+      "block_order": [
+        "u1",
+        "u2",
+        "u3"
+      ],
+      "settings": {}
+    },
+    "header": {
+      "type": "helios-bb-header",
+      "blocks": {
+        "n1": {
+          "type": "link",
+          "settings": {
+            "label": "Shop",
+            "link": "/"
+          }
+        },
+        "n2": {
+          "type": "link",
+          "settings": {
+            "label": "Track order",
+            "link": "/pages/track"
+          }
+        },
+        "n3": {
+          "type": "link",
+          "settings": {
+            "label": "Contact",
+            "link": "/pages/contact"
+          }
+        }
+      },
+      "block_order": [
+        "n1",
+        "n2",
+        "n3"
+      ],
+      "settings": {
+        "logo_text": "HELIOS",
+        "cta_text": "Shop now",
+        "cta_link": "/"
+      }
+    },
+    "globe": {
+      "type": "helios-bb-globe",
+      "blocks": {
+        "s1": {
+          "type": "ship",
+          "settings": {
+            "code": "HELIOS289471132",
+            "stage": 3,
+            "from": "Shenzhen, CN",
+            "from_lon": "114.06",
+            "from_lat": "22.54",
+            "to": "Los Angeles, CA",
+            "to_lon": "-118.24",
+            "to_lat": "34.05",
+            "eta": "Aug 29 – Sep 2",
+            "carrier": "HELIOS Direct",
+            "d1": "Aug 18 · Order placed",
+            "d2": "Aug 19 · Packed, Shenzhen",
+            "d3": "Aug 21 · Departed origin facility",
+            "d4": "",
+            "d5": ""
+          }
+        }
+      },
+      "block_order": [
+        "s1"
+      ],
+      "settings": {
+        "eyebrow": "HELIOS logistics",
+        "heading": "Track your order",
+        "sub": "Enter the HELIOS number from your shipping email.",
+        "placeholder": "HELIOS289471132",
+        "cta": "Track"
+      }
+    },
+    "footer": {
+      "type": "helios-bb-footer",
+      "blocks": {
+        "c1": {
+          "type": "col",
+          "settings": {
+            "title": "Help",
+            "menu": "footer"
+          }
+        }
+      },
+      "block_order": [
+        "c1"
+      ],
+      "settings": {
+        "logo_text": "HELIOS",
+        "tagline": "Motorized water loungers. Twin motors, joystick steering, ready in five minutes.",
+        "legal_title": "Legal",
+        "contact": "helios.us.store@gmail.com",
+        "note": "Ships from the US",
+        "disclaimer": "<p>Recreational leisure product. Not a life-saving device or personal flotation device. Adult supervision required for users under 16. Use only in calm, supervised water and follow all local waterway rules.</p>"
+      }
+    }
+  },
+  "order": [
+    "utility",
+    "header",
+    "globe",
+    "footer"
+  ]
+}

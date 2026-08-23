@@ -53,6 +53,7 @@ def build_env():
         "escape": f_escape, "money": f_money, "money_with_currency": f_money,
         "newline_to_br": f_newline_to_br, "video_tag": f_video_tag,
         "payment_type_svg_tag": f_payment_type_svg_tag, "t": f_t,
+        "json": lambda v: __import__("json").dumps(v), "upcase": lambda v: str(v or "").upper(),
         "handleize": f_handleize, "handle": f_handleize, "image_tag": f_img_tag,
         "stylesheet_tag": lambda v: "", "script_tag": lambda v: "",
     })
@@ -144,7 +145,7 @@ def render_template(tpl_path, title):
     return css_all, html_all, problems, data
 
 def main():
-    pages = [("templates/index.json", "Homepage")]
+    pages = [("templates/index.json", "Homepage"), ("templates/page.track.json", "Track")]
     parts, all_problems = [], []
     for rel, title in pages:
         css, body, probs, data = render_template(ROOT / rel, title)

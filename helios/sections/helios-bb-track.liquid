@@ -1,0 +1,208 @@
+{%- comment -%}
+  HELIOS — order tracking.
+
+  We deliver personally, so there is no carrier API to query. Each shipment is
+  a block you maintain: tracking number, current stage, estimated date and an
+  optional note. The visitor types their HELIOS number and the page renders a
+  Shopify-style status timeline for it.
+
+  PRIVACY NOTE: block data is rendered into the page, so anything you put in a
+  block is readable in the page source by anyone. Keep it to status, city and
+  date — never a customer's full address, phone or email.
+
+  Stages are fixed and ordered so the timeline cannot be inconsistent:
+  placed -> packed -> transit -> out -> delivered.
+{%- endcomment -%}
+{%- liquid
+  assign s = section.settings
+  assign sid = section.id
+-%}
+<style>
+  #hbt-{{ sid }}{background:var(--hb-bg,#fff);padding-block:34px 44px;}
+  #hbt-{{ sid }} .hd{max-width:640px;}
+  #hbt-{{ sid }} .e{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--hb-blue,#0046BE);}
+  #hbt-{{ sid }} .sub{margin-top:8px;}
+  #hbt-{{ sid }} form{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;max-width:520px;}
+  #hbt-{{ sid }} input{flex:1 1 240px;min-width:0;border:1px solid var(--hb-line,#C5CBD5);border-radius:4px;
+    padding:13px 14px;font:inherit;font-size:15px;letter-spacing:.04em;text-transform:uppercase;}
+  #hbt-{{ sid }} input:focus-visible{outline:2px solid var(--hb-blue,#0046BE);outline-offset:1px;}
+  #hbt-{{ sid }} button{flex:none;background:var(--hb-blue,#0046BE);color:#fff;border:0;border-radius:4px;
+    padding:13px 26px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;}
+  #hbt-{{ sid }} button:hover{background:var(--hb-blue-dark,#00379B);}
+
+  #hbt-{{ sid }} .res{margin-top:26px;max-width:760px;}
+  #hbt-{{ sid }} .card{border:1px solid var(--hb-line,#C5CBD5);border-radius:8px;overflow:hidden;}
+  #hbt-{{ sid }} .top{background:var(--hb-soft,#F0F2F4);padding:16px 18px;
+    border-bottom:1px solid var(--hb-line,#C5CBD5);display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline;}
+  #hbt-{{ sid }} .top .num{font-size:16px;font-weight:800;letter-spacing:.04em;}
+  #hbt-{{ sid }} .top .st{font-size:13px;font-weight:700;color:var(--hb-blue,#0046BE);}
+  #hbt-{{ sid }} .top .eta{font-size:13px;color:var(--hb-muted,#5F6871);margin-left:auto;}
+  #hbt-{{ sid }} .top .eta b{color:var(--hb-ink,#1D252C);}
+
+  /* progress rail */
+  #hbt-{{ sid }} .rail{padding:22px 18px 6px;}
+  #hbt-{{ sid }} .bar{position:relative;height:4px;border-radius:2px;background:var(--hb-line-soft,#E3E7EB);margin:0 6px 20px;}
+  #hbt-{{ sid }} .bar i{display:block;height:100%;border-radius:2px;background:var(--hb-blue,#0046BE);
+    transition:width .5s ease;}
+  #hbt-{{ sid }} .steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+  #hbt-{{ sid }} .sp{text-align:center;}
+  #hbt-{{ sid }} .dot{width:26px;height:26px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;
+    background:#fff;border:2px solid var(--hb-line,#C5CBD5);color:var(--hb-line,#C5CBD5);}
+  #hbt-{{ sid }} .dot svg{width:13px;height:13px;}
+  #hbt-{{ sid }} .sp.done .dot{background:var(--hb-blue,#0046BE);border-color:var(--hb-blue,#0046BE);color:#fff;}
+  #hbt-{{ sid }} .sp.now .dot{border-color:var(--hb-blue,#0046BE);color:var(--hb-blue,#0046BE);
+    box-shadow:0 0 0 4px rgba(0,70,190,.15);}
+  #hbt-{{ sid }} .sp b{display:block;font-size:11.5px;font-weight:700;line-height:1.25;}
+  #hbt-{{ sid }} .sp.done b,#hbt-{{ sid }} .sp.now b{color:var(--hb-ink,#1D252C);}
+  #hbt-{{ sid }} .sp b{color:var(--hb-muted,#5F6871);}
+
+  #hbt-{{ sid }} .note{padding:14px 18px 18px;font-size:13.5px;line-height:1.55;color:var(--hb-muted,#5F6871);
+    border-top:1px solid var(--hb-line-soft,#E3E7EB);margin-top:16px;}
+  #hbt-{{ sid }} .note b{color:var(--hb-ink,#1D252C);}
+  #hbt-{{ sid }} .miss{border:1px dashed var(--hb-line,#C5CBD5);border-radius:8px;padding:26px 20px;
+    text-align:center;font-size:14px;color:var(--hb-muted,#5F6871);line-height:1.6;}
+  #hbt-{{ sid }} .miss b{display:block;color:var(--hb-ink,#1D252C);font-size:15px;margin-bottom:6px;}
+  #hbt-{{ sid }} .hide{display:none;}
+  @media(max-width:600px){
+    #hbt-{{ sid }} .steps{grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;}
+    #hbt-{{ sid }} .sp b{font-size:10px;}
+  }
+</style>
+
+<div class="hb" id="hbt-{{ sid }}">
+  <div class="hb-wrap">
+    <div class="hd">
+      {%- if s.eyebrow != blank -%}<p class="e">{{ s.eyebrow }}</p>{%- endif -%}
+      <h1 class="hb-h2" style="margin-top:7px">{{ s.heading | default: 'Track your order' }}</h1>
+      {%- if s.sub != blank -%}<p class="hb-sub sub">{{ s.sub }}</p>{%- endif -%}
+
+      <form data-form autocomplete="off">
+        <label class="hide" for="hbt-in-{{ sid }}">Tracking number</label>
+        <input id="hbt-in-{{ sid }}" data-in type="text" inputmode="latin"
+               placeholder="{{ s.placeholder | default: 'HELIOS000000000' }}" required>
+        <button type="submit">{{ s.button | default: 'Track' }}</button>
+      </form>
+    </div>
+
+    <div class="res" data-res></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var root=document.getElementById('hbt-{{ sid }}');
+  if(!root||root.dataset.ready==='1')return; root.dataset.ready='1';
+
+  var STAGES=[
+    {k:'placed',   label:{{ s.l_placed   | default: 'Order placed'     | json }}},
+    {k:'packed',   label:{{ s.l_packed   | default: 'Packed'           | json }}},
+    {k:'transit',  label:{{ s.l_transit  | default: 'In transit'       | json }}},
+    {k:'out',      label:{{ s.l_out      | default: 'Out for delivery' | json }}},
+    {k:'delivered',label:{{ s.l_delivered| default: 'Delivered'        | json }}}
+  ];
+
+  var DATA={
+    {%- for b in section.blocks -%}
+      {%- if b.settings.number != blank -%}
+        {{ b.settings.number | upcase | strip | json }}:{
+          stage:{{ b.settings.stage | default: 'placed' | json }},
+          eta:{{ b.settings.eta | default: '' | json }},
+          note:{{ b.settings.note | default: '' | json }},
+          updated:{{ b.settings.updated | default: '' | json }}
+        }{%- unless forloop.last -%},{%- endunless -%}
+      {%- endif -%}
+    {%- endfor -%}
+  };
+
+  var TICK='<svg viewBox="0 0 20 20" fill="none"><path d="M4.5 10.5l3.6 3.6L15.5 6.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var DOT='<svg viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="10" r="4"/></svg>';
+
+  var form=root.querySelector('[data-form]'),
+      input=root.querySelector('[data-in]'),
+      res=root.querySelector('[data-res]');
+
+  function esc(t){var d=document.createElement('div');d.textContent=t==null?'':t;return d.innerHTML;}
+
+  function render(num){
+    var rec=DATA[num];
+    if(!rec){
+      res.innerHTML='<div class="miss"><b>'+esc({{ s.miss_title | default: 'We could not find that number.' | json }})+'</b>'
+        +esc({{ s.miss_text | default: 'Check the number and try again. If your order shipped in the last 24 hours it may not be live yet.' | json }})+'</div>';
+      return;
+    }
+    var idx=0;
+    for(var i=0;i<STAGES.length;i++){ if(STAGES[i].k===rec.stage){ idx=i; break; } }
+    var pct=STAGES.length>1?(idx/(STAGES.length-1))*100:0;
+
+    var steps='';
+    for(var j=0;j<STAGES.length;j++){
+      var cls=j<idx?'done':(j===idx?'now':'');
+      steps+='<div class="sp '+cls+'"><span class="dot">'+(j<idx?TICK:(j===idx?DOT:''))+'</span><b>'+esc(STAGES[j].label)+'</b></div>';
+    }
+
+    res.innerHTML=
+      '<div class="card">'
+      + '<div class="top">'
+      +   '<span class="num">'+esc(num)+'</span>'
+      +   '<span class="st">'+esc(STAGES[idx].label)+'</span>'
+      +   (rec.eta?'<span class="eta">Estimated delivery <b>'+esc(rec.eta)+'</b></span>':'')
+      + '</div>'
+      + '<div class="rail"><div class="bar"><i style="width:'+pct+'%"></i></div><div class="steps">'+steps+'</div></div>'
+      + ((rec.note||rec.updated)
+          ? '<div class="note">'+(rec.note?esc(rec.note):'')
+            +(rec.updated?(rec.note?'<br>':'')+'<b>Last update:</b> '+esc(rec.updated):'')+'</div>'
+          : '')
+      + '</div>';
+  }
+
+  function go(e){
+    if(e)e.preventDefault();
+    var v=(input.value||'').toUpperCase().replace(/\s+/g,'');
+    if(!v)return;
+    render(v);
+    if(history.replaceState) history.replaceState(null,'','?t='+encodeURIComponent(v));
+  }
+  form.addEventListener('submit',go);
+
+  /* deep link: /pages/track?t=HELIOS123 — so the number in an email just works */
+  var q=new URLSearchParams(location.search).get('t');
+  if(q){ input.value=q.toUpperCase(); render(input.value.replace(/\s+/g,'')); }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "HELIOS tracking",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Order status" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Track your order" },
+    { "type": "textarea", "id": "sub", "label": "Sub-heading" },
+    { "type": "text", "id": "placeholder", "label": "Input placeholder", "default": "HELIOS000000000" },
+    { "type": "text", "id": "button", "label": "Button", "default": "Track" },
+    { "type": "header", "content": "Stage labels" },
+    { "type": "text", "id": "l_placed", "label": "Stage 1", "default": "Order placed" },
+    { "type": "text", "id": "l_packed", "label": "Stage 2", "default": "Packed" },
+    { "type": "text", "id": "l_transit", "label": "Stage 3", "default": "In transit" },
+    { "type": "text", "id": "l_out", "label": "Stage 4", "default": "Out for delivery" },
+    { "type": "text", "id": "l_delivered", "label": "Stage 5", "default": "Delivered" },
+    { "type": "header", "content": "Not found" },
+    { "type": "text", "id": "miss_title", "label": "Title", "default": "We could not find that number." },
+    { "type": "textarea", "id": "miss_text", "label": "Text", "default": "Check the number and try again. If your order shipped in the last 24 hours it may not be live yet." }
+  ],
+  "blocks": [{ "type": "ship", "name": "Shipment", "limit": 50, "settings": [
+    { "type": "text", "id": "number", "label": "Tracking number", "info": "e.g. HELIOS289471132. Case is ignored." },
+    { "type": "select", "id": "stage", "label": "Current stage", "options": [
+      { "value": "placed", "label": "1 — Order placed" },
+      { "value": "packed", "label": "2 — Packed" },
+      { "value": "transit", "label": "3 — In transit" },
+      { "value": "out", "label": "4 — Out for delivery" },
+      { "value": "delivered", "label": "5 — Delivered" }
+    ], "default": "placed" },
+    { "type": "text", "id": "eta", "label": "Estimated delivery", "info": "Free text, e.g. \"Fri 29 Aug\"." },
+    { "type": "text", "id": "updated", "label": "Last update", "info": "Free text, e.g. \"23 Aug, 14:20\"." },
+    { "type": "textarea", "id": "note", "label": "Note", "info": "Visible to anyone with the number — status and city only, never an address or phone number." }
+  ]}],
+  "presets": [{ "name": "HELIOS tracking" }]
+}
+{% endschema %}
