@@ -1,0 +1,125 @@
+{%- comment -%}
+  HELIOS Hero — full-bleed video/image hero with a clean trust strip under it.
+  Bold on top, Amazon-clean below.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="hh-{{ sid }}">
+<style>
+  #hh-{{ sid }}{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#0F1111;}
+  #hh-{{ sid }} *{box-sizing:border-box;}
+  #hh-{{ sid }} .stage{position:relative;width:100%;min-height:{{ s.height | default: 78 }}vh;overflow:hidden;background:#0A0E12;
+    display:flex;align-items:flex-end;}
+  #hh-{{ sid }} .stage video,
+  #hh-{{ sid }} .stage img.bgi{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+  #hh-{{ sid }} .scrim{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(6,10,14,.30) 0%,rgba(6,10,14,.10) 35%,rgba(6,10,14,{{ s.overlay | default: 45 | divided_by: 100.0 }}) 72%,rgba(6,10,14,.92) 100%);}
+  #hh-{{ sid }} .inner{position:relative;z-index:2;width:100%;max-width:1100px;margin:0 auto;padding:0 20px clamp(30px,5vw,58px);color:#fff;}
+  #hh-{{ sid }} .eb{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:100px;padding:6px 14px;margin-bottom:14px;}
+  #hh-{{ sid }} h1{font-size:clamp(32px,6.2vw,66px);font-weight:900;letter-spacing:-.035em;line-height:.99;margin:0;
+    text-wrap:balance;text-shadow:0 6px 34px rgba(0,10,20,.45);max-width:16ch;}
+  #hh-{{ sid }} .sub{font-size:clamp(15px,1.9vw,19px);line-height:1.5;opacity:.94;margin:14px 0 0;max-width:44ch;}
+  #hh-{{ sid }} .rt{display:flex;align-items:center;gap:9px;margin-top:16px;font-size:13.5px;font-weight:700;}
+  #hh-{{ sid }} .rt .s{color:#F5A623;letter-spacing:1px;}
+  #hh-{{ sid }} .rt .c{opacity:.8;font-weight:600;}
+  #hh-{{ sid }} .prow{display:flex;align-items:baseline;gap:11px;margin-top:16px;}
+  #hh-{{ sid }} .prow b{font-size:clamp(28px,3.6vw,38px);font-weight:800;letter-spacing:-.03em;}
+  #hh-{{ sid }} .prow s{opacity:.6;font-size:16px;}
+  #hh-{{ sid }} .prow em{font-style:normal;background:#FFD814;color:#0F1111;font-size:12.5px;font-weight:800;
+    border-radius:5px;padding:4px 9px;}
+  #hh-{{ sid }} .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+  #hh-{{ sid }} .cta a{display:inline-block;border-radius:8px;padding:14px 34px;font-size:15px;font-weight:700;text-decoration:none;}
+  #hh-{{ sid }} .cta a.p{background:#FFD814;color:#0F1111;border:1px solid #FCD200;}
+  #hh-{{ sid }} .cta a.p:hover{background:#F7CA00;}
+  #hh-{{ sid }} .cta a.g{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.45);}
+
+  /* clean strip under the hero */
+  #hh-{{ sid }} .strip{background:#fff;border-bottom:1px solid #D5D9D9;}
+  #hh-{{ sid }} .sw{max-width:1100px;margin:0 auto;padding:0 20px;
+    display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#D5D9D9;}
+  @media(min-width:760px){#hh-{{ sid }} .sw{grid-template-columns:repeat(4,1fr);}}
+  #hh-{{ sid }} .sc{background:#fff;padding:15px 12px;text-align:center;}
+  #hh-{{ sid }} .sc .ic{font-size:19px;line-height:1;margin-bottom:5px;}
+  #hh-{{ sid }} .sc .t{font-size:12.5px;font-weight:700;line-height:1.3;}
+  #hh-{{ sid }} .sc .d{font-size:11.5px;color:#565959;margin-top:2px;line-height:1.4;}
+
+  @media(max-width:640px){
+    #hh-{{ sid }} .stage{min-height:{{ s.height_m | default: 70 }}vh;}
+    #hh-{{ sid }} .cta a{flex:1 1 100%;text-align:center;}
+  }
+  @media(prefers-reduced-motion:reduce){#hh-{{ sid }} .stage video{display:none;}}
+</style>
+
+  <div class="stage">
+    {%- if s.video_url != blank -%}
+      <video src="{{ s.video_url }}"{% if s.poster_url != blank %} poster="{{ s.poster_url }}"{% endif %}
+             autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
+    {%- elsif s.image != blank -%}
+      <img class="bgi" src="{{ s.image | image_url: width: 2000 }}" alt="" loading="eager">
+    {%- endif -%}
+    <div class="scrim"></div>
+    <div class="inner">
+      {%- if s.eyebrow != blank -%}<div class="eb">{{ s.eyebrow }}</div>{%- endif -%}
+      <h1>{{ s.heading | default: 'You bought the pool. Now use it.' }}</h1>
+      {%- if s.sub != blank -%}<p class="sub">{{ s.sub }}</p>{%- endif -%}
+      {%- if s.rating != blank -%}
+        <div class="rt"><span class="s">★★★★★</span><span>{{ s.rating }}</span><span class="c">{{ s.review_count }} ratings</span></div>
+      {%- endif -%}
+      {%- if s.price != blank -%}
+        <div class="prow"><b>{{ s.price }}</b>{% if s.compare != blank %}<s>{{ s.compare }}</s>{% endif %}{% if s.save_label != blank %}<em>{{ s.save_label }}</em>{% endif %}</div>
+      {%- endif -%}
+      <div class="cta">
+        <a class="p" href="{{ s.cta_link | default: '#buy' }}">{{ s.cta_text | default: 'Add to Cart' }}</a>
+        {%- if s.cta2_text != blank -%}<a class="g" href="{{ s.cta2_link | default: '#faq' }}">{{ s.cta2_text }}</a>{%- endif -%}
+      </div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div class="sw">
+      <div class="sc"><div class="ic">🚚</div><div class="t">{{ s.t1 | default: 'Free shipping' }}</div><div class="d">{{ s.t1d | default: '7–10 business days' }}</div></div>
+      <div class="sc"><div class="ic">↩️</div><div class="t">{{ s.t2 | default: '30-day returns' }}</div><div class="d">{{ s.t2d | default: 'No restocking fee' }}</div></div>
+      <div class="sc"><div class="ic">📦</div><div class="t">{{ s.t3 | default: 'Tracked' }}</div><div class="d">{{ s.t3d | default: 'Emailed on dispatch' }}</div></div>
+      <div class="sc"><div class="ic">🔒</div><div class="t">{{ s.t4 | default: 'Secure checkout' }}</div><div class="d">{{ s.t4d | default: 'Shop Pay, Visa, Amex' }}</div></div>
+    </div>
+  </div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Hero",
+  "tag": "section",
+  "settings": [
+    { "type": "header", "content": "Background" },
+    { "type": "text", "id": "video_url", "label": "Video URL", "default": "https://cdn.shopify.com/videos/c/vp/5a4a60a7bc3946829bd78d5c914ad5f2/5a4a60a7bc3946829bd78d5c914ad5f2.HD-720p-1.6Mbps-89935160.mp4", "info": "Plays muted on loop. Content > Files, click a video, copy its URL." },
+    { "type": "text", "id": "poster_url", "label": "Poster image URL", "default": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/preview_images/5a4a60a7bc3946829bd78d5c914ad5f2.thumbnail.0000000000.jpg?v=1785074711" },
+    { "type": "image_picker", "id": "image", "label": "Image (used if Video URL is empty)" },
+    { "type": "range", "id": "height", "label": "Height (desktop)", "min": 55, "max": 100, "step": 5, "unit": "vh", "default": 80 },
+    { "type": "range", "id": "height_m", "label": "Height (mobile)", "min": 50, "max": 95, "step": 5, "unit": "vh", "default": 70 },
+    { "type": "range", "id": "overlay", "label": "Overlay darkness", "min": 0, "max": 90, "step": 5, "unit": "%", "default": 45 },
+    { "type": "header", "content": "Copy" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "1+1 free · ends Aug 16" },
+    { "type": "text", "id": "heading", "label": "Headline", "default": "You bought the pool. Now use it." },
+    { "type": "textarea", "id": "sub", "label": "Subtext", "default": "Twin motors, joystick steering, and a seat that holds a grown adult. Sit down and go — no paddling, no kicking, no effort." },
+    { "type": "text", "id": "rating", "label": "Rating", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Rating count", "default": "3,912" },
+    { "type": "text", "id": "price", "label": "Price", "default": "$259.99" },
+    { "type": "text", "id": "compare", "label": "Compare-at price", "default": "$519.98" },
+    { "type": "text", "id": "save_label", "label": "Save badge", "default": "GET TWO, PAY FOR ONE" },
+    { "type": "text", "id": "cta_text", "label": "Primary button", "default": "Add to Cart" },
+    { "type": "text", "id": "cta_link", "label": "Primary link", "default": "#buy" },
+    { "type": "text", "id": "cta2_text", "label": "Secondary button", "default": "How it works" },
+    { "type": "text", "id": "cta2_link", "label": "Secondary link", "default": "#faq" },
+    { "type": "header", "content": "Trust strip" },
+    { "type": "text", "id": "t1", "label": "1 title", "default": "Free shipping" },
+    { "type": "text", "id": "t1d", "label": "1 detail", "default": "7–10 business days" },
+    { "type": "text", "id": "t2", "label": "2 title", "default": "30-day returns" },
+    { "type": "text", "id": "t2d", "label": "2 detail", "default": "No restocking fee" },
+    { "type": "text", "id": "t3", "label": "3 title", "default": "Tracked" },
+    { "type": "text", "id": "t3d", "label": "3 detail", "default": "Emailed on dispatch" },
+    { "type": "text", "id": "t4", "label": "4 title", "default": "Secure checkout" },
+    { "type": "text", "id": "t4d", "label": "4 detail", "default": "Shop Pay, Visa, Amex" }
+  ],
+  "presets": [{ "name": "HELIOS Hero" }]
+}
+{% endschema %}

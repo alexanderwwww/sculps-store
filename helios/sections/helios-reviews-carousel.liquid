@@ -1,0 +1,137 @@
+{%- comment -%}
+  HELIOS Review Carousel — Facebook comment style.
+  Reactions, like counts and timestamps vary per review, seeded from the
+  reviewer name + text so they stay stable across page loads.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="hrc-{{ sid }}">
+<style>
+  #hrc-{{ sid }}{background:{{ s.bg | default: '#FFFFFF' }};color:{{ s.text | default: '#0F1111' }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;overflow:hidden;padding:clamp(40px,5vw,66px) 0;}
+  #hrc-{{ sid }} *{box-sizing:border-box;}
+  #hrc-{{ sid }} .hd{max-width:1140px;margin:0 auto clamp(22px,3vw,34px);padding:0 22px;text-align:center;}
+  #hrc-{{ sid }} .sum{display:inline-flex;align-items:center;gap:12px;background:#F0F2F2;border:1px solid #D5D9D9;border-radius:8px;padding:9px 18px;}
+  #hrc-{{ sid }} .sum b{font-size:22px;font-weight:800;letter-spacing:-.02em;}
+  #hrc-{{ sid }} .sum .st{color:#F5A623;font-size:14px;letter-spacing:1px;}
+  #hrc-{{ sid }} .sum .ct{font-size:13.5px;color:#565959;font-weight:600;}
+  #hrc-{{ sid }} .row{display:flex;width:max-content;gap:16px;padding:8px 0;will-change:transform;}
+  #hrc-{{ sid }} .row.a{animation:hrcL-{{ sid }} {{ s.speed | default: 60 }}s linear infinite;}
+  #hrc-{{ sid }} .track:hover .row{animation-play-state:paused;}
+  @keyframes hrcL-{{ sid }}{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  @media(prefers-reduced-motion:reduce){#hrc-{{ sid }} .row{animation:none;}#hrc-{{ sid }} .track{overflow-x:auto;}}
+  #hrc-{{ sid }} .card{flex:0 0 auto;width:min(360px,80vw);background:{{ s.card | default: '#FFFFFF' }};border:1px solid #D5D9D9;border-radius:8px;padding:14px 16px 12px;}
+  #hrc-{{ sid }} .who{display:flex;align-items:flex-start;gap:9px;}
+  #hrc-{{ sid }} .av{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:0 0 38px;background:#1877F2;color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;}
+  #hrc-{{ sid }} .bub{flex:1;min-width:0;background:#F0F2F5;border-radius:17px;padding:9px 13px 10px;}
+  #hrc-{{ sid }} .nmrow{display:flex;align-items:center;gap:5px;margin-bottom:1px;}
+  #hrc-{{ sid }} .nm{font-size:13.5px;font-weight:700;color:#050505;line-height:1.25;}
+  #hrc-{{ sid }} .tick{width:13px;height:13px;flex:0 0 13px;}
+  #hrc-{{ sid }} .stars{color:#F5A623;font-size:11.5px;letter-spacing:1px;display:block;margin-bottom:4px;}
+  #hrc-{{ sid }} .rt{font-size:14.5px;line-height:1.38;color:#050505;margin:0;word-wrap:break-word;}
+  #hrc-{{ sid }} .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-top:8px;display:block;}
+  #hrc-{{ sid }} .meta{display:flex;align-items:center;gap:10px;padding:5px 0 0 60px;font-size:12px;font-weight:700;color:#65676B;}
+  #hrc-{{ sid }} .meta .liked{color:#1877F2;}
+  #hrc-{{ sid }} .meta .dot{width:3px;height:3px;border-radius:50%;background:#65676B;opacity:.6;flex:0 0 3px;}
+  #hrc-{{ sid }} .tm,#hrc-{{ sid }} .lo{font-weight:400;}
+  #hrc-{{ sid }} .rx{display:inline-flex;align-items:center;margin-left:auto;background:#fff;border-radius:100px;padding:2px 8px 2px 2px;box-shadow:0 1px 3px rgba(0,0,0,.18);}
+  #hrc-{{ sid }} .rc{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;border:1.5px solid #fff;flex:0 0 18px;}
+  #hrc-{{ sid }} .rc svg{width:10px;height:10px;display:block;}
+  #hrc-{{ sid }} .rc-l{background:#1877F2;}
+  #hrc-{{ sid }} .rc-h{background:#F3425F;margin-left:-6px;}
+  #hrc-{{ sid }} .rn{font-size:12.5px;color:#65676B;font-weight:600;margin-left:4px;}
+</style>
+  <div class="hd">
+    {%- if s.rating != blank -%}
+    <div class="sum"><b>{{ s.rating }}</b><span class="st">★★★★★</span><span class="ct">{{ s.review_count }} reviews</span></div>
+    {%- endif -%}
+  </div>
+  {%- capture cards -%}
+    {%- for block in section.blocks -%}
+      {%- assign seed = block.settings.name | append: block.settings.text | size | plus: forloop.index | times: 7919 -%}
+      {%- assign bucket = seed | modulo: 100 -%}
+      {%- if bucket < 66 -%}{%- assign likes = seed | modulo: 22 | plus: 2 -%}
+      {%- elsif bucket < 90 -%}{%- assign likes = seed | modulo: 54 | plus: 26 -%}
+      {%- else -%}{%- assign likes = seed | modulo: 151 | plus: 92 -%}{%- endif -%}
+      {%- assign tdays = seed | modulo: 26 | plus: 1 -%}
+      {%- if tdays > 13 -%}{%- assign weeks = tdays | divided_by: 7 -%}{%- capture tstamp -%}{{ weeks }}w{%- endcapture -%}
+      {%- else -%}{%- capture tstamp -%}{{ tdays }}d{%- endcapture -%}{%- endif -%}
+      <div class="card" {{ block.shopify_attributes }}>
+        <div class="who">
+          {%- if block.settings.avatar != blank -%}<img class="av" src="{{ block.settings.avatar | image_url: width: 100 }}" alt="" loading="lazy">
+          {%- else -%}<span class="av">{{ block.settings.name | slice: 0 }}</span>{%- endif -%}
+          <div class="bub">
+            <div class="nmrow"><span class="nm">{{ block.settings.name }}</span><svg class="tick" viewBox="0 0 24 24" fill="#1877F2"><circle cx="12" cy="12" r="12"/><path d="M17 8.5l-6.6 6.8-3.4-3.3" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="stars">{% for i in (1..block.settings.rating) %}★{% endfor %}</span>
+            <p class="rt">{{ block.settings.text }}</p>
+            {%- if block.settings.image != blank -%}<img class="ph" src="{{ block.settings.image | image_url: width: 700 }}" alt="{{ block.settings.name | escape }}" loading="lazy">{%- endif -%}
+          </div>
+        </div>
+        <div class="meta"><span class="{% if likes > 40 %}liked{% endif %}">Like</span><i class="dot"></i><span>Reply</span><i class="dot"></i><span class="tm">{{ tstamp }}</span>{%- if block.settings.location != blank -%}<i class="dot"></i><span class="lo">{{ block.settings.location }}</span>{%- endif -%}<span class="rx"><span class="rc rc-l"><svg viewBox="0 0 16 16" fill="#fff"><path d="M6.4 14H4.6a.6.6 0 0 1-.6-.6V7.2a.6.6 0 0 1 .6-.6h1.8V14zm1.2 0V7.05c.55-.2 1-.62 1.3-1.2l1.05-2.1a.9.9 0 0 1 1.7.4v1.9h2.06c.62 0 1.08.57.95 1.18l-.9 4.3A1.6 1.6 0 0 1 12.2 14H7.6z"/></svg></span>{%- if likes > 14 -%}<span class="rc rc-h"><svg viewBox="0 0 16 16" fill="#fff"><path d="M8 13.6l-.9-.82C4 9.99 2.1 8.27 2.1 6.15 2.1 4.43 3.45 3.1 5.17 3.1c.97 0 1.9.45 2.5 1.16l.33.39.33-.39a3.3 3.3 0 0 1 2.5-1.16c1.72 0 3.07 1.33 3.07 3.05 0 2.12-1.9 3.84-5 6.63l-.9.82z"/></svg></span>{%- endif -%}<span class="rn">{{ likes }}</span></span></div>
+      </div>
+    {%- endfor -%}
+    {%- assign lines = s.bulk_reviews | newline_to_br | split: '<br />' -%}
+    {%- for line in lines -%}
+      {%- assign L = line | strip -%}
+      {%- if L != blank -%}
+        {%- assign p = L | split: '|' -%}
+        {%- assign nm = p[0] | strip -%}
+        {%- assign rt = p[1] | strip | times: 1 -%}
+        {%- if rt < 1 -%}{%- assign rt = 5 -%}{%- endif -%}
+        {%- assign tx = p[2] | strip -%}
+        {%- assign lo = p[3] | strip -%}
+        {%- assign im = p[4] | strip -%}
+        {%- if nm != blank and tx != blank -%}
+        {%- assign seed = nm | append: tx | size | plus: forloop.index | times: 6737 -%}
+        {%- assign bucket = seed | modulo: 100 -%}
+        {%- if bucket < 66 -%}{%- assign likes = seed | modulo: 22 | plus: 2 -%}
+        {%- elsif bucket < 90 -%}{%- assign likes = seed | modulo: 54 | plus: 26 -%}
+        {%- else -%}{%- assign likes = seed | modulo: 151 | plus: 92 -%}{%- endif -%}
+        {%- assign tdays = seed | modulo: 26 | plus: 1 -%}
+        {%- if tdays > 13 -%}{%- assign weeks = tdays | divided_by: 7 -%}{%- capture tstamp -%}{{ weeks }}w{%- endcapture -%}
+        {%- else -%}{%- capture tstamp -%}{{ tdays }}d{%- endcapture -%}{%- endif -%}
+        <div class="card">
+          <div class="who">
+            <span class="av">{{ nm | slice: 0 }}</span>
+            <div class="bub">
+              <div class="nmrow"><span class="nm">{{ nm }}</span><svg class="tick" viewBox="0 0 24 24" fill="#1877F2"><circle cx="12" cy="12" r="12"/><path d="M17 8.5l-6.6 6.8-3.4-3.3" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="stars">{% for i in (1..rt) %}★{% endfor %}</span>
+              <p class="rt">{{ tx }}</p>
+              {%- if im != blank -%}<img class="ph" src="{{ im }}" alt="{{ nm | escape }}" loading="lazy">{%- endif -%}
+            </div>
+          </div>
+          <div class="meta"><span class="{% if likes > 40 %}liked{% endif %}">Like</span><i class="dot"></i><span>Reply</span><i class="dot"></i><span class="tm">{{ tstamp }}</span>{%- if lo != blank -%}<i class="dot"></i><span class="lo">{{ lo }}</span>{%- endif -%}<span class="rx"><span class="rc rc-l"><svg viewBox="0 0 16 16" fill="#fff"><path d="M6.4 14H4.6a.6.6 0 0 1-.6-.6V7.2a.6.6 0 0 1 .6-.6h1.8V14zm1.2 0V7.05c.55-.2 1-.62 1.3-1.2l1.05-2.1a.9.9 0 0 1 1.7.4v1.9h2.06c.62 0 1.08.57.95 1.18l-.9 4.3A1.6 1.6 0 0 1 12.2 14H7.6z"/></svg></span>{%- if likes > 14 -%}<span class="rc rc-h"><svg viewBox="0 0 16 16" fill="#fff"><path d="M8 13.6l-.9-.82C4 9.99 2.1 8.27 2.1 6.15 2.1 4.43 3.45 3.1 5.17 3.1c.97 0 1.9.45 2.5 1.16l.33.39.33-.39a3.3 3.3 0 0 1 2.5-1.16c1.72 0 3.07 1.33 3.07 3.05 0 2.12-1.9 3.84-5 6.63l-.9.82z"/></svg></span>{%- endif -%}<span class="rn">{{ likes }}</span></span></div>
+        </div>
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endcapture -%}
+  <div class="track"><div class="row a">{{ cards }}{{ cards }}</div></div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Review Carousel",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "★★★★★ Verified buyers" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Real photos from real backyards." },
+    { "type": "text", "id": "rating", "label": "Summary rating", "default": "4.8" },
+    { "type": "text", "id": "review_count", "label": "Summary count", "default": "3,912" },
+    { "type": "range", "id": "speed", "label": "Seconds per loop", "min": 20, "max": 140, "step": 5, "unit": "s", "default": 60 },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" },
+    { "type": "color", "id": "card", "label": "Card background", "default": "#FFFFFF" },
+    { "type": "color", "id": "text", "label": "Text", "default": "#0F1111" },
+    { "type": "textarea", "id": "bulk_reviews", "label": "One review per line", "info": "Name | Rating(1-5) | Text | Date | Image URL" }
+  ],
+  "blocks": [
+    { "type": "review", "name": "Review (with photo)", "settings": [
+      { "type": "image_picker", "id": "image", "label": "Review photo" },
+      { "type": "text", "id": "name", "label": "Name", "default": "Happy Customer" },
+      { "type": "text", "id": "location", "label": "Location" },
+      { "type": "range", "id": "rating", "label": "Rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+      { "type": "textarea", "id": "text", "label": "Review text" },
+      { "type": "image_picker", "id": "avatar", "label": "Avatar" }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS Review Carousel", "blocks": [ { "type": "review" }, { "type": "review" } ] }]
+}
+{% endschema %}

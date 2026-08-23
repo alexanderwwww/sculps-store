@@ -1,0 +1,120 @@
+{%- comment -%}
+  HELIOS Simple — Amazon-style product detail block.
+  White, system type, thin rules. About this item + spec table + trust row.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="hsp-{{ sid }}">
+<style>
+  #hsp-{{ sid }}{background:{{ s.bg | default: '#FFFFFF' }};color:#0F1111;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    padding:clamp(30px,4vw,52px) 0;}
+  #hsp-{{ sid }} *{box-sizing:border-box;}
+  #hsp-{{ sid }} .wrap{max-width:{{ s.width | default: 1000 }}px;margin:0 auto;padding:0 18px;}
+  #hsp-{{ sid }} h2{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:0 0 12px;}
+  #hsp-{{ sid }} .rule{height:1px;background:#D5D9D9;margin:26px 0 22px;}
+
+  #hsp-{{ sid }} ul.bul{list-style:none;margin:0;padding:0;}
+  #hsp-{{ sid }} ul.bul li{position:relative;padding:0 0 10px 20px;font-size:14px;line-height:1.55;color:#0F1111;}
+  #hsp-{{ sid }} ul.bul li:before{content:'';position:absolute;left:4px;top:8px;width:5px;height:5px;
+    border-radius:50%;background:#565959;}
+
+  #hsp-{{ sid }} table.spec{width:100%;border-collapse:collapse;font-size:14px;line-height:1.5;}
+  #hsp-{{ sid }} table.spec th,
+  #hsp-{{ sid }} table.spec td{text-align:left;padding:9px 12px;vertical-align:top;border-bottom:1px solid #E7E9E9;}
+  #hsp-{{ sid }} table.spec th{width:42%;font-weight:700;background:#F0F2F2;color:#0F1111;}
+  #hsp-{{ sid }} table.spec tr:last-child th,
+  #hsp-{{ sid }} table.spec tr:last-child td{border-bottom:0;}
+
+  #hsp-{{ sid }} .trust{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#D5D9D9;
+    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;margin-top:26px;}
+  @media(min-width:760px){#hsp-{{ sid }} .trust{grid-template-columns:repeat(4,1fr);}}
+  #hsp-{{ sid }} .tc{background:#fff;padding:16px 12px;text-align:center;}
+  #hsp-{{ sid }} .tc .ic{font-size:21px;line-height:1;margin-bottom:7px;}
+  #hsp-{{ sid }} .tc .t{font-size:13px;font-weight:700;line-height:1.3;}
+  #hsp-{{ sid }} .tc .d{font-size:12px;color:#565959;line-height:1.4;margin-top:3px;}
+
+  #hsp-{{ sid }} .note{font-size:12.5px;color:#565959;line-height:1.5;margin-top:16px;}
+</style>
+  <div class="wrap">
+    {%- if s.bullets_heading != blank -%}<h2>{{ s.bullets_heading | default: 'About this item' }}</h2>{%- endif -%}
+    <ul class="bul">
+      {%- if s.b1 != blank -%}<li>{{ s.b1 }}</li>{%- endif -%}
+      {%- if s.b2 != blank -%}<li>{{ s.b2 }}</li>{%- endif -%}
+      {%- if s.b3 != blank -%}<li>{{ s.b3 }}</li>{%- endif -%}
+      {%- if s.b4 != blank -%}<li>{{ s.b4 }}</li>{%- endif -%}
+      {%- if s.b5 != blank -%}<li>{{ s.b5 }}</li>{%- endif -%}
+    </ul>
+
+    <div class="rule"></div>
+
+    {%- if s.spec_heading != blank -%}<h2>{{ s.spec_heading | default: 'Product details' }}</h2>{%- endif -%}
+    <table class="spec">
+      {%- if s.k1 != blank -%}<tr><th>{{ s.k1 }}</th><td>{{ s.v1 }}</td></tr>{%- endif -%}
+      {%- if s.k2 != blank -%}<tr><th>{{ s.k2 }}</th><td>{{ s.v2 }}</td></tr>{%- endif -%}
+      {%- if s.k3 != blank -%}<tr><th>{{ s.k3 }}</th><td>{{ s.v3 }}</td></tr>{%- endif -%}
+      {%- if s.k4 != blank -%}<tr><th>{{ s.k4 }}</th><td>{{ s.v4 }}</td></tr>{%- endif -%}
+      {%- if s.k5 != blank -%}<tr><th>{{ s.k5 }}</th><td>{{ s.v5 }}</td></tr>{%- endif -%}
+      {%- if s.k6 != blank -%}<tr><th>{{ s.k6 }}</th><td>{{ s.v6 }}</td></tr>{%- endif -%}
+      {%- if s.k7 != blank -%}<tr><th>{{ s.k7 }}</th><td>{{ s.v7 }}</td></tr>{%- endif -%}
+      {%- if s.k8 != blank -%}<tr><th>{{ s.k8 }}</th><td>{{ s.v8 }}</td></tr>{%- endif -%}
+    </table>
+
+    <div class="trust">
+      <div class="tc"><div class="ic">🚚</div><div class="t">{{ s.t1 | default: 'Free shipping' }}</div><div class="d">{{ s.t1d | default: '7–10 business days' }}</div></div>
+      <div class="tc"><div class="ic">↩️</div><div class="t">{{ s.t2 | default: '30-day returns' }}</div><div class="d">{{ s.t2d | default: 'Money back, no restocking fee' }}</div></div>
+      <div class="tc"><div class="ic">📦</div><div class="t">{{ s.t3 | default: 'Tracked' }}</div><div class="d">{{ s.t3d | default: 'Number emailed on dispatch' }}</div></div>
+      <div class="tc"><div class="ic">🔒</div><div class="t">{{ s.t4 | default: 'Secure checkout' }}</div><div class="d">{{ s.t4d | default: 'Shop Pay, Visa, Mastercard, Amex' }}</div></div>
+    </div>
+
+    {%- if s.note != blank -%}<p class="note">{{ s.note }}</p>{%- endif -%}
+  </div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Simple Details",
+  "tag": "section",
+  "settings": [
+    { "type": "paragraph", "content": "Amazon-style detail block. Keep to 5 bullets — mobile shoppers read about 1.4 of them. Lead each with the benefit, then the spec." },
+    { "type": "range", "id": "width", "label": "Max width", "min": 700, "max": 1300, "step": 50, "unit": "px", "default": 1000 },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" },
+    { "type": "header", "content": "About this item" },
+    { "type": "text", "id": "bullets_heading", "label": "Heading", "default": "About this item" },
+    { "type": "textarea", "id": "b1", "label": "Bullet 1", "default": "MOVES YOU WITHOUT PADDLING — twin electric thrusters and joystick steering do the work, so you can cross the pool or lake without kicking, rowing or getting worn out." },
+    { "type": "textarea", "id": "b2", "label": "Bullet 2", "default": "HOLDS 250–300 LB — heavy-duty PVC with a padded headrest and dual cup holders. Built for adults, not a pool toy that folds under you." },
+    { "type": "textarea", "id": "b3", "label": "Bullet 3", "default": "READY IN ABOUT 5 MINUTES — inflates with the nozzle included in the box. No compressor, no pump to buy, no tools and no assembly." },
+    { "type": "textarea", "id": "b4", "label": "Bullet 4", "default": "ABOUT 60 MINUTES PER CHARGE — rechargeable battery and charger included. Enough for a full afternoon of drifting, and it recharges overnight." },
+    { "type": "textarea", "id": "b5", "label": "Bullet 5", "default": "EASY ENOUGH FOR ANYONE — two joysticks: forward, reverse, spin on the spot. Most people work it out in about ten seconds, grandkids included." },
+    { "type": "header", "content": "Product details" },
+    { "type": "text", "id": "spec_heading", "label": "Heading", "default": "Product details" },
+    { "type": "text", "id": "k1", "label": "Row 1 label", "default": "Weight capacity" },
+    { "type": "text", "id": "v1", "label": "Row 1 value", "default": "250–300 lb" },
+    { "type": "text", "id": "k2", "label": "Row 2 label", "default": "Propulsion" },
+    { "type": "text", "id": "v2", "label": "Row 2 value", "default": "Twin electric thrusters, joystick steering" },
+    { "type": "text", "id": "k3", "label": "Row 3 label", "default": "Battery life" },
+    { "type": "text", "id": "v3", "label": "Row 3 value", "default": "Approx. 60 minutes per charge" },
+    { "type": "text", "id": "k4", "label": "Row 4 label", "default": "Setup time" },
+    { "type": "text", "id": "v4", "label": "Row 4 value", "default": "Approx. 5 minutes, nozzle included" },
+    { "type": "text", "id": "k5", "label": "Row 5 label", "default": "Material" },
+    { "type": "text", "id": "v5", "label": "Row 5 value", "default": "Heavy-duty reinforced PVC" },
+    { "type": "text", "id": "k6", "label": "Row 6 label", "default": "In the box" },
+    { "type": "text", "id": "v6", "label": "Row 6 value", "default": "Lounger, twin motors, battery, charger, inflation nozzle" },
+    { "type": "text", "id": "k7", "label": "Row 7 label", "default": "Best used in" },
+    { "type": "text", "id": "v7", "label": "Row 7 value", "default": "Swimming pools and calm, enclosed water" },
+    { "type": "text", "id": "k8", "label": "Row 8 label", "default": "Ships from" },
+    { "type": "text", "id": "v8", "label": "Row 8 value", "default": "United States" },
+    { "type": "header", "content": "Trust row" },
+    { "type": "text", "id": "t1", "label": "1 title", "default": "Free shipping" },
+    { "type": "text", "id": "t1d", "label": "1 detail", "default": "7–10 business days" },
+    { "type": "text", "id": "t2", "label": "2 title", "default": "30-day returns" },
+    { "type": "text", "id": "t2d", "label": "2 detail", "default": "Money back, no restocking fee" },
+    { "type": "text", "id": "t3", "label": "3 title", "default": "Tracked" },
+    { "type": "text", "id": "t3d", "label": "3 detail", "default": "Number emailed on dispatch" },
+    { "type": "text", "id": "t4", "label": "4 title", "default": "Secure checkout" },
+    { "type": "text", "id": "t4d", "label": "4 detail", "default": "Shop Pay, Visa, Mastercard, Amex" },
+    { "type": "header", "content": "Footnote" },
+    { "type": "textarea", "id": "note", "label": "Small print", "default": "Recreational leisure product. Not a life-saving device or personal flotation device. Adult supervision required for under-16s. Use only in calm, enclosed water." }
+  ],
+  "presets": [{ "name": "HELIOS Simple Details" }]
+}
+{% endschema %}

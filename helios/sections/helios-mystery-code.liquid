@@ -1,0 +1,178 @@
+{%- comment -%}
+  HELIOS Mystery Code — first-visit new customer offer.
+  Same visual language as the cart recovery popup. Fires once per session.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+{%- assign code = s.code | default: 'MYSTERY30' -%}
+<section class="helios" id="hmc-{{ sid }}">
+<style>
+  #hmc-{{ sid }} .scrim{position:fixed;inset:0;z-index:9995;background:rgba(5,8,12,.66);backdrop-filter:blur(4px);
+    display:grid;place-items:center;padding:18px;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+  #hmc-{{ sid }} .scrim.on{opacity:1;visibility:visible;}
+  #hmc-{{ sid }} *{box-sizing:border-box;}
+  #hmc-{{ sid }} .card{position:relative;width:min(440px,100%);background:{{ s.bg | default: '#0B0F14' }};color:{{ s.text | default: '#FFFFFF' }};
+    border-radius:24px;padding:34px 28px 26px;text-align:center;overflow:hidden;
+    box-shadow:0 40px 90px -28px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.07) inset;
+    transform:translateY(22px) scale(.97);transition:transform .38s cubic-bezier(.2,.8,.2,1);}
+  #hmc-{{ sid }} .scrim.on .card{transform:none;}
+  #hmc-{{ sid }} .glow{position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:320px;height:320px;
+    background:radial-gradient(circle,{{ s.accent | default: '#3DDC84' }}33 0%,transparent 68%);pointer-events:none;}
+  #hmc-{{ sid }} .x{position:absolute;top:12px;right:12px;z-index:3;width:32px;height:32px;border:0;border-radius:50%;
+    background:rgba(255,255,255,.1);color:inherit;font-size:19px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;
+    transition:background .15s;}
+  #hmc-{{ sid }} .x:hover{background:rgba(255,255,255,.2);}
+  #hmc-{{ sid }} .kick{position:relative;display:inline-block;font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase;
+    color:{{ s.accent | default: '#3DDC84' }};border:1px solid {{ s.accent | default: '#3DDC84' }}55;border-radius:100px;padding:6px 14px;margin-bottom:16px;}
+  #hmc-{{ sid }} .off{position:relative;font-size:clamp(46px,13vw,60px);font-weight:900;letter-spacing:-.04em;line-height:.95;margin:0 0 6px;
+    background:linear-gradient(180deg,{{ s.text | default: '#FFFFFF' }} 30%,{{ s.accent | default: '#3DDC84' }});
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  #hmc-{{ sid }} .sub{position:relative;font-size:15px;line-height:1.5;opacity:.72;margin:0 0 20px;text-wrap:balance;}
+  #hmc-{{ sid }} .bag{position:relative;display:flex;align-items:center;gap:12px;text-align:left;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:12px 16px;margin-bottom:16px;}
+  #hmc-{{ sid }} .bag .n{font-size:13px;font-weight:800;line-height:1.3;}
+  #hmc-{{ sid }} .bag .v{font-size:12px;opacity:.6;margin-top:2px;}
+  #hmc-{{ sid }} .bag .tot{margin-left:auto;text-align:right;white-space:nowrap;}
+  #hmc-{{ sid }} .bag .tot s{display:block;font-size:12px;opacity:.45;font-weight:600;}
+  #hmc-{{ sid }} .bag .tot b{font-size:18px;font-weight:900;color:{{ s.accent | default: '#3DDC84' }};}
+  #hmc-{{ sid }} .code{position:relative;display:inline-flex;align-items:center;gap:10px;border:2px dashed {{ s.accent | default: '#3DDC84' }};
+    background:{{ s.accent | default: '#3DDC84' }}14;color:inherit;border-radius:12px;padding:11px 18px;margin:0 0 10px;cursor:pointer;
+    font-size:19px;font-weight:900;letter-spacing:.1em;transition:background .15s;}
+  #hmc-{{ sid }} .code:hover{background:{{ s.accent | default: '#3DDC84' }}22;}
+  #hmc-{{ sid }} .code .cp{font-size:10.5px;font-weight:800;letter-spacing:.02em;opacity:.6;}
+  #hmc-{{ sid }} .once{position:relative;font-size:11.5px;font-weight:800;letter-spacing:.02em;opacity:.55;margin-bottom:14px;line-height:1.5;}
+  #hmc-{{ sid }} .timer{position:relative;font-size:12.5px;font-weight:700;opacity:.7;margin-bottom:16px;}
+  #hmc-{{ sid }} .timer b{font-variant-numeric:tabular-nums;color:{{ s.accent | default: '#3DDC84' }};font-weight:900;}
+  #hmc-{{ sid }} .go{position:relative;display:block;width:100%;background:{{ s.accent | default: '#3DDC84' }};color:{{ s.btn_text | default: '#06301A' }};
+    text-decoration:none;font-size:16px;font-weight:900;padding:16px 20px;border-radius:13px;transition:transform .14s,filter .14s;}
+  #hmc-{{ sid }} .go:hover{transform:translateY(-1px);filter:brightness(1.07);}
+  #hmc-{{ sid }} .no{position:relative;background:none;border:0;color:inherit;opacity:.45;font-size:13px;font-weight:700;
+    cursor:pointer;padding:12px 6px 2px;text-decoration:underline;}
+  #hmc-{{ sid }} .trust{position:relative;font-size:11px;opacity:.42;margin-top:10px;line-height:1.5;}
+  @media(max-width:520px){
+    #hmc-{{ sid }} .scrim{place-items:end center;padding:0;}
+    #hmc-{{ sid }} .card{width:100%;border-radius:22px 22px 0 0;padding:30px 20px 22px;transform:translateY(100%);}
+  }
+  @media(prefers-reduced-motion:reduce){#hmc-{{ sid }} .scrim,#hmc-{{ sid }} .card{transition:none;}}
+</style>
+  <div class="scrim" id="hmc-s-{{ sid }}" role="dialog" aria-modal="true" aria-label="{{ s.kicker | escape }}">
+    <div class="card">
+      <div class="glow"></div>
+      <button class="x" type="button" aria-label="Close">&times;</button>
+
+      <div class="kick">{{ s.kicker | default: 'New customer · first visit only' }}</div>
+      <div class="off">{{ s.headline | default: '$30 OFF' }}</div>
+      <p class="sub">{{ s.sub | default: 'Your mystery code, unlocked because it&rsquo;s your first time here. One use, this visit only — it won&rsquo;t be here next time.' }}</p>
+
+      <div class="bag">
+        <div>
+          <div class="n">{{ s.item_title | default: 'HELIOS Super Glide 1+1 FREE' }}</div>
+          <div class="v">{{ s.item_note | default: 'With your mystery code applied' }}</div>
+        </div>
+        <div class="tot">
+          {%- if s.was_price != blank -%}<s>{{ s.was_price }}</s>{%- endif -%}
+          {%- if s.now_price != blank -%}<b>{{ s.now_price }}</b>{%- endif -%}
+        </div>
+      </div>
+
+      <button class="code" type="button" id="hmc-c-{{ sid }}" data-code="{{ code }}">
+        <span class="lbl">{{ code }}</span><span class="cp">tap to copy</span>
+      </button>
+      <div class="once">{{ s.once_note | default: 'Issued to you · one use per customer · new customers only' }}</div>
+
+      {%- if s.expiry_minutes > 0 -%}
+        <div class="timer" id="hmc-t-{{ sid }}">{{ s.timer_label | default: 'Reserved for' }} <b>--:--</b></div>
+      {%- endif -%}
+
+      <a class="go" href="{{ routes.root_url }}discount/{{ code }}?redirect={{ s.destination | default: '/cart' }}">{{ s.cta | default: 'Apply my code and shop' }}</a>
+      <button class="no" type="button">{{ s.decline | default: 'No thanks, I&rsquo;ll pay full price' }}</button>
+      <div class="trust">{{ s.trust | default: 'Secure checkout · Free shipping · 30-day money-back guarantee' }}</div>
+    </div>
+  </div>
+<script>
+(function(){
+  var root=document.getElementById('hmc-{{ sid }}');
+  if(!root||root.dataset.i)return;root.dataset.i='1';
+  var sc=document.getElementById('hmc-s-{{ sid }}'),
+      KEY='hmc_{{ sid }}',prev='',opened=false;
+
+  {%- if s.test_mode -%}var TEST=true;{%- else -%}var TEST=false;{%- endif -%}
+  try{ if(!TEST && sessionStorage.getItem(KEY)==='1') return; }catch(e){}
+
+  function open(){
+    if(opened)return;opened=true;
+    sc.classList.add('on');
+    prev=document.body.style.overflow;document.body.style.overflow='hidden';
+    try{sessionStorage.setItem(KEY,'1');}catch(e){}
+    startTimer();
+  }
+  function close(){sc.classList.remove('on');document.body.style.overflow=prev;}
+
+  sc.querySelector('.x').addEventListener('click',close);
+  sc.querySelector('.no').addEventListener('click',close);
+  sc.addEventListener('click',function(e){if(e.target===sc)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sc.classList.contains('on'))close();});
+
+  setTimeout(open,{{ s.delay | default: 5 | times: 1000 }});
+
+  {%- if s.expiry_minutes > 0 -%}
+  function startTimer(){
+    var el=document.getElementById('hmc-t-{{ sid }}');if(!el)return;
+    var b=el.querySelector('b'),left={{ s.expiry_minutes }}*60;
+    (function tick(){
+      var m=Math.floor(left/60),ss=left%60;
+      b.textContent=(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+      if(left>0){left--;setTimeout(tick,1000);}
+    })();
+  }
+  {%- else -%}
+  function startTimer(){}
+  {%- endif -%}
+
+  var cb=document.getElementById('hmc-c-{{ sid }}');
+  cb.addEventListener('click',function(){
+    var v=cb.getAttribute('data-code'),lbl=cb.querySelector('.lbl'),old=lbl.textContent;
+    function ok(){lbl.textContent='Copied!';setTimeout(function(){lbl.textContent=old;},1500);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(ok).catch(fb);}else{fb();}
+    function fb(){try{var t=document.createElement('textarea');t.value=v;t.style.position='fixed';t.style.opacity='0';
+      document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);ok();}catch(e){}}
+  });
+})();
+</script>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Mystery Code",
+  "tag": "section",
+  "settings": [
+    { "type": "paragraph", "content": "Fires once per session for every visitor. Same look as the cart recovery popup." },
+    { "type": "text", "id": "kicker", "label": "Eyebrow", "default": "New customer · first visit only" },
+    { "type": "text", "id": "headline", "label": "Headline", "default": "$30 OFF" },
+    { "type": "textarea", "id": "sub", "label": "Subtext", "default": "Your mystery code, unlocked because it's your first time here. One use, this visit only — it won't be here next time." },
+    { "type": "header", "content": "Price row" },
+    { "type": "text", "id": "item_title", "label": "Item title", "default": "HELIOS Super Glide 1+1 FREE" },
+    { "type": "text", "id": "item_note", "label": "Item note", "default": "With your mystery code applied" },
+    { "type": "text", "id": "was_price", "label": "Was price", "default": "$259.99" },
+    { "type": "text", "id": "now_price", "label": "Now price", "default": "$229.99" },
+    { "type": "header", "content": "The code" },
+    { "type": "text", "id": "code", "label": "Discount code", "default": "MYSTERY30", "info": "Must exist under Discounts as a $30 off code, limited to one use per customer." },
+    { "type": "text", "id": "once_note", "label": "Small print under the code", "default": "Issued to you · one use per customer · new customers only" },
+    { "type": "text", "id": "cta", "label": "Button text", "default": "Apply my code and shop" },
+    { "type": "text", "id": "destination", "label": "Where the button goes", "default": "/cart", "info": "A path on your store, e.g. /cart or /products/helios-super-glide-motorized-water-lounger" },
+    { "type": "text", "id": "decline", "label": "Decline text", "default": "No thanks, I'll pay full price" },
+    { "type": "text", "id": "trust", "label": "Trust line", "default": "Secure checkout · Free shipping · 30-day money-back guarantee" },
+    { "type": "header", "content": "Timing" },
+    { "type": "range", "id": "delay", "label": "Show after", "min": 0, "max": 30, "step": 1, "unit": "s", "default": 5 },
+    { "type": "text", "id": "timer_label", "label": "Timer label", "default": "Reserved for" },
+    { "type": "range", "id": "expiry_minutes", "label": "Countdown length", "min": 0, "max": 60, "step": 5, "unit": "min", "default": 15, "info": "0 = no countdown" },
+    { "type": "checkbox", "id": "test_mode", "label": "Test mode (show on every page load)", "default": false },
+    { "type": "header", "content": "Style" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#0B0F14" },
+    { "type": "color", "id": "text", "label": "Text", "default": "#FFFFFF" },
+    { "type": "color", "id": "accent", "label": "Accent / button", "default": "#3DDC84" },
+    { "type": "color", "id": "btn_text", "label": "Button text", "default": "#06301A" }
+  ],
+  "presets": [{ "name": "HELIOS Mystery Code" }]
+}
+{% endschema %}

@@ -1,0 +1,107 @@
+{%- comment -%}HELIOS Nav — sticky header with burger drawer on mobile.{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="hn-{{ sid }}">
+<style>
+  #hn-{{ sid }}{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+  #hn-{{ sid }} *{box-sizing:border-box;min-width:0;}
+  #hn-{{ sid }} .nav{position:{% if s.sticky %}sticky{% else %}relative{% endif %};top:0;z-index:900;
+    background:{{ s.bg | default: '#FFFFFF' }};border-bottom:1px solid #D5D9D9;}
+  #hn-{{ sid }} .in{max-width:1200px;margin:0 auto;padding:0 14px;height:{{ s.height | default: 58 }}px;
+    display:flex;align-items:center;gap:14px;}
+  #hn-{{ sid }} .burger{display:grid;place-items:center;width:38px;height:38px;border:0;background:none;
+    color:{{ s.fg | default: '#0F1111' }};cursor:pointer;padding:0;}
+  #hn-{{ sid }} .burger svg{width:22px;height:22px;}
+  @media(min-width:760px){#hn-{{ sid }} .burger{display:none;}}
+  #hn-{{ sid }} .lg{font-size:19px;font-weight:800;letter-spacing:.16em;color:{{ s.fg | default: '#0F1111' }};text-decoration:none;flex:0 0 auto;}
+  #hn-{{ sid }} .lg img{height:{{ s.logo_h | default: 26 }}px;width:auto;display:block;}
+  #hn-{{ sid }} .links{display:none;gap:22px;margin-left:8px;}
+  @media(min-width:760px){#hn-{{ sid }} .links{display:flex;}}
+  #hn-{{ sid }} .links a{font-size:14px;color:{{ s.fg | default: '#0F1111' }};text-decoration:none;font-weight:500;}
+  #hn-{{ sid }} .links a:hover{text-decoration:underline;}
+  #hn-{{ sid }} .right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+  #hn-{{ sid }} .cta{background:#FFD814;color:#0F1111;border:1px solid #FCD200;border-radius:100px;
+    padding:9px 20px;font-size:13.5px;font-weight:800;text-decoration:none;}
+  #hn-{{ sid }} .cart{position:relative;display:grid;place-items:center;width:36px;height:36px;
+    color:{{ s.fg | default: '#0F1111' }};text-decoration:none;}
+  #hn-{{ sid }} .cart svg{width:21px;height:21px;}
+  #hn-{{ sid }} .cnt{position:absolute;top:-2px;right:-3px;min-width:17px;height:17px;padding:0 4px;
+    border-radius:100px;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;}
+  /* mobile drawer */
+  #hn-{{ sid }} .dw{display:none;background:{{ s.bg | default: '#FFFFFF' }};border-bottom:1px solid #D5D9D9;}
+  #hn-{{ sid }} .dw.open{display:block;}
+  @media(min-width:760px){#hn-{{ sid }} .dw{display:none !important;}}
+  #hn-{{ sid }} .dw a{display:block;padding:15px 18px;font-size:15px;font-weight:600;color:{{ s.fg | default: '#0F1111' }};
+    text-decoration:none;border-top:1px solid #EFF1F1;}
+  #hn-{{ sid }} .dw a:first-child{border-top:0;}
+</style>
+  <div class="nav">
+    <div class="in">
+      <button class="burger" type="button" id="hn-bg-{{ sid }}" aria-label="Menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <a class="lg" href="{{ routes.root_url }}">
+        {%- if s.logo != blank -%}<img src="{{ s.logo | image_url: height: 60 }}" alt="{{ shop.name | escape }}">
+        {%- else -%}{{ s.logo_text | default: 'HELIOS' }}{%- endif -%}
+      </a>
+      <nav class="links">
+        {%- if s.l1 != blank -%}<a href="{{ s.l1_url | default: '/' }}">{{ s.l1 }}</a>{%- endif -%}
+        {%- if s.l2 != blank -%}<a href="{{ s.l2_url | default: '/' }}">{{ s.l2 }}</a>{%- endif -%}
+        {%- if s.l3 != blank -%}<a href="{{ s.l3_url | default: '/' }}">{{ s.l3 }}</a>{%- endif -%}
+        {%- if s.l4 != blank -%}<a href="{{ s.l4_url | default: '/' }}">{{ s.l4 }}</a>{%- endif -%}
+      </nav>
+      <div class="right">
+        {%- if s.cta_text != blank -%}<a class="cta" href="{{ s.cta_url | default: '#buy' }}">{{ s.cta_text }}</a>{%- endif -%}
+        <a class="cart" href="{{ routes.cart_url }}" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.4 12.2a1.6 1.6 0 0 0 1.6 1.3h8.6a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>
+          {%- if cart.item_count > 0 -%}<span class="cnt">{{ cart.item_count }}</span>{%- endif -%}
+        </a>
+      </div>
+    </div>
+    <div class="dw" id="hn-dw-{{ sid }}">
+      {%- if s.l1 != blank -%}<a href="{{ s.l1_url | default: '/' }}">{{ s.l1 }}</a>{%- endif -%}
+      {%- if s.l2 != blank -%}<a href="{{ s.l2_url | default: '/' }}">{{ s.l2 }}</a>{%- endif -%}
+      {%- if s.l3 != blank -%}<a href="{{ s.l3_url | default: '/' }}">{{ s.l3 }}</a>{%- endif -%}
+      {%- if s.l4 != blank -%}<a href="{{ s.l4_url | default: '/' }}">{{ s.l4 }}</a>{%- endif -%}
+    </div>
+  </div>
+<script>
+(function(){
+  var b=document.getElementById('hn-bg-{{ sid }}'),d=document.getElementById('hn-dw-{{ sid }}');
+  if(!b||!d||b.dataset.i)return;b.dataset.i='1';
+  b.addEventListener('click',function(){
+    var o=d.classList.toggle('open');
+    b.setAttribute('aria-expanded',o?'true':'false');
+  });
+  d.addEventListener('click',function(e){if(e.target.tagName==='A'){d.classList.remove('open');}});
+})();
+</script>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Nav",
+  "tag": "section",
+  "settings": [
+    { "type": "image_picker", "id": "logo", "label": "Logo image" },
+    { "type": "text", "id": "logo_text", "label": "Logo text", "default": "HELIOS" },
+    { "type": "range", "id": "logo_h", "label": "Logo height", "min": 16, "max": 48, "step": 2, "unit": "px", "default": 26 },
+    { "type": "range", "id": "height", "label": "Bar height", "min": 48, "max": 84, "step": 2, "unit": "px", "default": 58 },
+    { "type": "checkbox", "id": "sticky", "label": "Stick to top", "default": true },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" },
+    { "type": "color", "id": "fg", "label": "Text", "default": "#0F1111" },
+    { "type": "header", "content": "Links" },
+    { "type": "text", "id": "l1", "label": "Link 1", "default": "Super Glide" },
+    { "type": "text", "id": "l1_url", "label": "Link 1 URL", "default": "/" },
+    { "type": "text", "id": "l2", "label": "Link 2", "default": "Jet Ski" },
+    { "type": "text", "id": "l2_url", "label": "Link 2 URL", "default": "/products/helios-wave-rider" },
+    { "type": "text", "id": "l3", "label": "Link 3", "default": "Reviews" },
+    { "type": "text", "id": "l3_url", "label": "Link 3 URL", "default": "#reviews" },
+    { "type": "text", "id": "l4", "label": "Link 4", "default": "FAQ" },
+    { "type": "text", "id": "l4_url", "label": "Link 4 URL", "default": "#faq" },
+    { "type": "header", "content": "Button" },
+    { "type": "text", "id": "cta_text", "label": "Button text", "default": "Shop now" },
+    { "type": "text", "id": "cta_url", "label": "Button URL", "default": "#buy" }
+  ],
+  "presets": [{ "name": "HELIOS Nav" }]
+}
+{% endschema %}

@@ -1,0 +1,66 @@
+{%- comment -%}HELIOS Bar — one line, glass countdown chip, dismissible.{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="hb2-{{ sid }}">
+<style>
+  #hb2-{{ sid }} .bar{background:{{ s.bg | default: '#0F1111' }};color:{{ s.fg | default: '#FFFFFF' }};
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;gap:8px 12px;flex-wrap:wrap;
+    padding:11px 42px 11px 16px;position:relative;font-size:13px;font-weight:600;line-height:1.35;text-align:center;}
+  #hb2-{{ sid }} .bar b{font-weight:800;}
+  #hb2-{{ sid }} .cd{display:inline-flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);
+    backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);
+    border-radius:100px;padding:4px 13px;font-variant-numeric:tabular-nums;font-weight:800;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
+  #hb2-{{ sid }} .cd .u{font-size:10.5px;font-weight:600;opacity:.65;letter-spacing:.02em;}
+  #hb2-{{ sid }} a{color:inherit;text-decoration:underline;text-underline-offset:2px;}
+  #hb2-{{ sid }} .x{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;
+    border:0;background:transparent;color:inherit;opacity:.6;font-size:16px;line-height:1;cursor:pointer;padding:0;}
+  #hb2-{{ sid }} .x:hover{opacity:1;}
+  #hb2-{{ sid }} .bar.gone{display:none;}
+</style>
+  <div class="bar" id="hb2-b-{{ sid }}">
+    <span>{{ s.message | default: '🎂 It’s our birthday — that’s why the 1+1 Super Glide is on, until August 16' }}</span>
+    {%- if s.deadline != blank -%}<span class="cd" id="hb2-c-{{ sid }}" data-end="{{ s.deadline }}">--<span class="u">left</span></span>{%- endif -%}
+    {%- if s.link_text != blank -%}<a href="{{ s.link_url | default: '#buy' }}">{{ s.link_text }}</a>{%- endif -%}
+    {%- if s.dismissible -%}<button class="x" type="button" aria-label="Dismiss">&times;</button>{%- endif -%}
+  </div>
+<script>
+(function(){
+  var b=document.getElementById('hb2-b-{{ sid }}');if(!b||b.dataset.i)return;b.dataset.i='1';
+  var x=b.querySelector('.x'),K='hb2_{{ sid }}';
+  try{if(x&&sessionStorage.getItem(K)==='1'){b.classList.add('gone');}}catch(e){}
+  if(x)x.addEventListener('click',function(){b.classList.add('gone');try{sessionStorage.setItem(K,'1');}catch(e){}});
+  var c=document.getElementById('hb2-c-{{ sid }}');
+  if(c){
+    var end=new Date(c.getAttribute('data-end')+'T23:59:59').getTime();
+    if(!isNaN(end)){
+      (function t(){
+        var d=end-new Date().getTime();
+        if(d<=0){c.style.display='none';return;}
+        var dd=Math.floor(d/86400000),hh=Math.floor(d%86400000/3600000),mm=Math.floor(d%3600000/60000);
+        c.innerHTML=(dd>0?dd+'d ':'')+hh+'h '+mm+'m <span class="u">left</span>';
+        setTimeout(t,30000);
+      })();
+    } else { c.style.display='none'; }
+  }
+})();
+</script>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Bar",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "message", "label": "Message", "default": "🎂 It’s our birthday — that’s why the 1+1 Super Glide is on, until August 16" },
+    { "type": "text", "id": "deadline", "label": "Countdown to date", "default": "2026-08-16", "info": "YYYY-MM-DD. Empty = no countdown." },
+    { "type": "text", "id": "link_text", "label": "Link text", "default": "Shop now" },
+    { "type": "text", "id": "link_url", "label": "Link URL", "default": "#buy" },
+    { "type": "checkbox", "id": "dismissible", "label": "Allow dismiss", "default": true },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#0F1111" },
+    { "type": "color", "id": "fg", "label": "Text", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "HELIOS Bar" }]
+}
+{% endschema %}

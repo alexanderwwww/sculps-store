@@ -1,0 +1,112 @@
+{%- comment -%}
+  HELIOS Offer — value stack + risk reversal.
+  Hormozi structure: itemise everything included, anchor total value,
+  show the price, name the guarantee, state the deadline.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="ho-{{ sid }}">
+<style>
+  #ho-{{ sid }}{background:{{ s.bg | default: '#FFFFFF' }};color:#0F1111;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:clamp(30px,4vw,52px) 0;}
+  #ho-{{ sid }} *{box-sizing:border-box;}
+  #ho-{{ sid }} .wrap{max-width:{{ s.width | default: 760 }}px;margin:0 auto;padding:0 18px;}
+  #ho-{{ sid }} .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;text-align:center;}
+  #ho-{{ sid }} h2{font-size:clamp(20px,2.8vw,26px);font-weight:700;letter-spacing:-.015em;line-height:1.3;
+    margin:0 0 18px;text-align:center;text-wrap:balance;}
+  #ho-{{ sid }} .card{border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
+  #ho-{{ sid }} .r{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid #E7E9E9;font-size:14px;line-height:1.45;}
+  #ho-{{ sid }} .r .ck{flex:0 0 18px;width:18px;height:18px;border-radius:50%;background:#067D62;color:#fff;
+    font-size:11px;font-weight:800;display:grid;place-items:center;margin-top:1px;}
+  #ho-{{ sid }} .r .nm{flex:1;min-width:0;}
+  #ho-{{ sid }} .r .nm b{display:block;font-weight:700;}
+  #ho-{{ sid }} .r .nm span{display:block;color:#565959;font-size:13px;margin-top:2px;}
+  #ho-{{ sid }} .r .vl{flex:0 0 auto;font-weight:700;white-space:nowrap;font-size:13.5px;}
+  #ho-{{ sid }} .r .vl.free{color:#067D62;}
+  #ho-{{ sid }} .tot{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;
+    background:#F0F2F2;border-bottom:1px solid #E7E9E9;font-size:14px;font-weight:700;}
+  #ho-{{ sid }} .tot s{color:#565959;font-weight:600;}
+  #ho-{{ sid }} .pay{padding:18px 16px;text-align:center;background:#fff;}
+  #ho-{{ sid }} .pay .lb{font-size:13px;color:#565959;font-weight:600;}
+  #ho-{{ sid }} .pay .pr{font-size:clamp(30px,4.4vw,40px);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin:2px 0 4px;}
+  #ho-{{ sid }} .pay .sv{display:inline-block;background:#FFD814;border:1px solid #FCD200;border-radius:5px;
+    padding:4px 10px;font-size:12.5px;font-weight:800;}
+  #ho-{{ sid }} a.btn{display:block;margin:16px auto 0;max-width:420px;text-align:center;background:#FFD814;
+    color:#0F1111;border:1px solid #FCD200;border-radius:8px;padding:14px;font-size:15px;font-weight:700;text-decoration:none;}
+  #ho-{{ sid }} a.btn:hover{background:#F7CA00;}
+  #ho-{{ sid }} .dl{text-align:center;font-size:12.5px;color:#565959;margin-top:10px;font-weight:600;}
+  #ho-{{ sid }} .gtee{margin-top:18px;border:1px solid #D5D9D9;border-radius:8px;background:#F7FAFA;padding:18px 18px;}
+  #ho-{{ sid }} .gtee h3{font-size:15px;font-weight:700;margin:0 0 6px;}
+  #ho-{{ sid }} .gtee p{font-size:13.5px;line-height:1.6;color:#0F1111;margin:0 0 8px;}
+  #ho-{{ sid }} .gtee p:last-child{margin-bottom:0;}
+</style>
+  <div class="wrap">
+    {%- if s.eyebrow != blank -%}<div class="eb">{{ s.eyebrow }}</div>{%- endif -%}
+    <h2>{{ s.heading | default: 'Here is everything you get' }}</h2>
+
+    <div class="card">
+      {%- for b in section.blocks -%}
+        <div class="r" {{ b.shopify_attributes }}>
+          <span class="ck">✓</span>
+          <span class="nm"><b>{{ b.settings.title }}</b>{%- if b.settings.note != blank -%}<span>{{ b.settings.note }}</span>{%- endif -%}</span>
+          <span class="vl{% if b.settings.is_free %} free{% endif %}">{{ b.settings.value }}</span>
+        </div>
+      {%- endfor -%}
+
+      {%- if s.total_value != blank -%}
+        <div class="tot"><span>{{ s.total_label | default: 'Total value' }}</span><s>{{ s.total_value }}</s></div>
+      {%- endif -%}
+
+      <div class="pay">
+        <div class="lb">{{ s.pay_label | default: 'You pay today' }}</div>
+        <div class="pr">{{ s.price | default: '$259.99' }}</div>
+        {%- if s.save_label != blank -%}<span class="sv">{{ s.save_label }}</span>{%- endif -%}
+        <a class="btn" href="{{ s.cta_link | default: '#buy' }}">{{ s.cta_text | default: 'Add to Cart' }}</a>
+        {%- if s.deadline != blank -%}<div class="dl">{{ s.deadline }}</div>{%- endif -%}
+      </div>
+    </div>
+
+    {%- if s.g_heading != blank -%}
+      <div class="gtee">
+        <h3>{{ s.g_heading }}</h3>
+        <div>{{ s.g_text }}</div>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Offer",
+  "tag": "section",
+  "settings": [
+    { "type": "paragraph", "content": "Itemise everything included, anchor the total, then show the price. Only use values you can defend — inflated numbers cost more trust than they buy." },
+    { "type": "range", "id": "width", "label": "Max width", "min": 600, "max": 1100, "step": 20, "unit": "px", "default": 760 },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "The 1+1 offer" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Here is everything you get" },
+    { "type": "header", "content": "Totals" },
+    { "type": "text", "id": "total_label", "label": "Total label", "default": "Total value" },
+    { "type": "text", "id": "total_value", "label": "Total value", "default": "$519.98" },
+    { "type": "text", "id": "pay_label", "label": "Price label", "default": "You pay today" },
+    { "type": "text", "id": "price", "label": "Price", "default": "$259.99" },
+    { "type": "text", "id": "save_label", "label": "Save badge", "default": "You save $259.99 — the second one is free" },
+    { "type": "text", "id": "cta_text", "label": "Button text", "default": "Add to Cart" },
+    { "type": "text", "id": "cta_link", "label": "Button link", "default": "#buy" },
+    { "type": "text", "id": "deadline", "label": "Deadline line", "default": "Summer sale ends Aug 16 · Free shipping, tracked" },
+    { "type": "header", "content": "Guarantee" },
+    { "type": "text", "id": "g_heading", "label": "Guarantee name", "default": "The Best Summer Guarantee" },
+    { "type": "richtext", "id": "g_text", "label": "Guarantee text", "default": "<p>Use it for 30 days. If it doesn't earn its place in your summer, email us and send it back for a full refund — no restocking fee, no argument.</p><p>Arrives damaged? We replace it. Doesn't arrive at all? We reship or refund in full. You are not out of pocket either way.</p>" }
+  ],
+  "blocks": [
+    { "type": "item", "name": "Line item", "settings": [
+      { "type": "text", "id": "title", "label": "Item", "default": "HELIOS Super Glide" },
+      { "type": "text", "id": "note", "label": "Detail" },
+      { "type": "text", "id": "value", "label": "Value", "default": "$259.99" },
+      { "type": "checkbox", "id": "is_free", "label": "Show value in green", "default": false }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS Offer", "blocks": [
+    { "type": "item" }, { "type": "item" }, { "type": "item" }, { "type": "item" }, { "type": "item" }, { "type": "item" }
+  ]}]
+}
+{% endschema %}

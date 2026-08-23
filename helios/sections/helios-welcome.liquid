@@ -1,0 +1,150 @@
+{%- comment -%}
+  HELIOS Welcome — artwork email popup. No form submission, nothing posted.
+  Enter an email, the code is revealed instantly. Never full-screen.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+{%- assign code = s.code | default: 'MYSTERY30' -%}
+{%- if s.art != blank -%}
+  {%- assign art_src = s.art | image_url: width: 1200 -%}
+{%- else -%}
+  {%- assign art_src = s.art_url | default: 'https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-popup-art-v2.png?v=1785729955' -%}
+{%- endif -%}
+<section class="helios" id="hwn-{{ sid }}">
+<style>
+  #hwn-{{ sid }} .scrim{position:fixed;inset:0;z-index:9993;background:rgba(6,10,14,.6);backdrop-filter:blur(3px);
+    display:grid;place-items:center;padding:24px;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+  #hwn-{{ sid }} .scrim.on{opacity:1;visibility:visible;}
+  #hwn-{{ sid }} *{box-sizing:border-box;}
+  #hwn-{{ sid }} .card{position:relative;width:min({{ s.card_w | default: 380 }}px,88vw);max-height:84vh;
+    aspect-ratio:3/4;border-radius:16px;overflow:hidden;background:#EAF3FA;
+    box-shadow:0 30px 70px -22px rgba(0,0,0,.55);transform:translateY(14px) scale(.97);
+    transition:transform .36s cubic-bezier(.2,.8,.2,1);}
+  #hwn-{{ sid }} .scrim.on .card{transform:none;}
+  #hwn-{{ sid }} .card img.bgi{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+  #hwn-{{ sid }} .x{position:absolute;top:10px;right:10px;z-index:6;width:26px;height:26px;border:0;border-radius:50%;
+    background:rgba(255,255,255,.9);color:#12242E;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+  #hwn-{{ sid }} .band{position:absolute;left:0;right:0;top:{{ s.band_top | default: 33 }}%;z-index:4;padding:0 clamp(16px,6%,28px);}
+  #hwn-{{ sid }} .band input{width:100%;border:1px solid rgba(18,36,46,.2);background:rgba(255,255,255,.96);
+    color:#12242E;border-radius:100px;padding:12px 16px;font-size:16px;text-align:center;}
+  #hwn-{{ sid }} .band input:focus{outline:none;border-color:{{ s.brand | default: '#0E6FA8' }};
+    box-shadow:0 0 0 3px rgba(14,111,168,.16);}
+  #hwn-{{ sid }} .band .go{width:100%;border:0;background:{{ s.brand | default: '#0E6FA8' }};color:#fff;font-size:15px;
+    font-weight:800;padding:13px 16px;border-radius:100px;cursor:pointer;margin-top:8px;transition:filter .15s;}
+  #hwn-{{ sid }} .band .go:hover{filter:brightness(1.08);}
+  #hwn-{{ sid }} .band .no{display:block;width:100%;background:none;border:0;color:#12242E;opacity:.6;font-size:11.5px;
+    font-weight:600;cursor:pointer;padding:9px 4px 0;text-decoration:underline;}
+  #hwn-{{ sid }} .band .err{color:#B3261E;font-size:11.5px;font-weight:700;min-height:1px;margin-top:5px;text-align:center;}
+  #hwn-{{ sid }} .done{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:26px;background:rgba(250,246,236,.95);backdrop-filter:blur(2px);color:#12242E;}
+  #hwn-{{ sid }} .done.on{display:flex;}
+  #hwn-{{ sid }} .done h4{font-size:clamp(22px,6vw,28px);font-weight:900;letter-spacing:-.02em;margin:0 0 4px;}
+  #hwn-{{ sid }} .done p{font-size:13.5px;opacity:.7;margin:0;}
+  #hwn-{{ sid }} .code{display:inline-flex;align-items:center;gap:9px;border:2px dashed {{ s.brand | default: '#0E6FA8' }};
+    background:rgba(255,255,255,.85);color:#12242E;border-radius:100px;padding:11px 20px;margin:14px 0 10px;cursor:pointer;
+    font-size:18px;font-weight:900;letter-spacing:.1em;}
+  #hwn-{{ sid }} .code .cp{font-size:10px;font-weight:800;opacity:.55;letter-spacing:.02em;}
+  #hwn-{{ sid }} .done a.shop{display:block;width:100%;max-width:280px;background:{{ s.brand | default: '#0E6FA8' }};color:#fff;
+    font-size:15px;font-weight:800;padding:13px 16px;border-radius:100px;text-decoration:none;}
+  @media(prefers-reduced-motion:reduce){#hwn-{{ sid }} .scrim,#hwn-{{ sid }} .card{transition:none;}}
+</style>
+  <div class="scrim" id="hwn-s-{{ sid }}" role="dialog" aria-modal="true" aria-label="Get $30 off">
+    <div class="card">
+      <img class="bgi" src="{{ art_src }}" alt="" loading="eager">
+      <button class="x" type="button" aria-label="Close">&times;</button>
+
+      <div class="band" id="hwn-b-{{ sid }}">
+        <input type="email" id="hwn-i-{{ sid }}" placeholder="{{ s.placeholder | default: 'you@email.com' }}" autocomplete="email" aria-label="Email">
+        <button class="go" type="button" id="hwn-g-{{ sid }}">{{ s.cta | default: 'Claim my $30 off' }}</button>
+        <div class="err" id="hwn-e-{{ sid }}"></div>
+        <button class="no" type="button">{{ s.decline | default: 'No thanks, I don&rsquo;t like savings' }}</button>
+      </div>
+
+      <div class="done" id="hwn-d-{{ sid }}">
+        <h4>{{ s.done_title | default: 'You&rsquo;re in.' }}</h4>
+        <p>{{ s.done_sub | default: 'Here&rsquo;s your code — use it at checkout.' }}</p>
+        <button class="code" type="button" id="hwn-c-{{ sid }}" data-code="{{ code }}">
+          <span class="lbl">{{ code }}</span><span class="cp">tap to copy</span>
+        </button>
+        <a class="shop" href="{{ routes.root_url }}discount/{{ code }}?redirect={{ s.destination | default: '/cart' }}">{{ s.done_cta | default: 'Apply it and shop' }}</a>
+      </div>
+    </div>
+  </div>
+<script>
+(function(){
+  var sc=document.getElementById('hwn-s-{{ sid }}');
+  if(!sc||sc.dataset.i)return;sc.dataset.i='1';
+  var K='hwn_{{ sid }}',prev='';
+  {%- if s.test_mode -%}var TEST=true;{%- else -%}var TEST=false;{%- endif -%}
+  try{ if(!TEST && localStorage.getItem(K)==='1') return; }catch(e){}
+
+  function open(){sc.classList.add('on');prev=document.body.style.overflow;document.body.style.overflow='hidden';
+    try{localStorage.setItem(K,'1');}catch(e){}}
+  function close(){sc.classList.remove('on');document.body.style.overflow=prev;}
+  sc.querySelector('.x').addEventListener('click',close);
+  sc.querySelector('.no').addEventListener('click',close);
+  sc.addEventListener('click',function(e){if(e.target===sc)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sc.classList.contains('on'))close();});
+  setTimeout(open,{{ s.delay | default: 6 | times: 1000 }});
+
+  var inp=document.getElementById('hwn-i-{{ sid }}'),
+      btn=document.getElementById('hwn-g-{{ sid }}'),
+      bd=document.getElementById('hwn-b-{{ sid }}'),
+      dn=document.getElementById('hwn-d-{{ sid }}'),
+      er=document.getElementById('hwn-e-{{ sid }}');
+
+  function reveal(){
+    var em=(inp.value||'').trim();
+    if(!em || em.indexOf('@')<1 || em.indexOf('.')<em.indexOf('@')){
+      er.textContent='Please enter a valid email.';
+      inp.focus();
+      return;
+    }
+    er.textContent='';
+    try{localStorage.setItem('hwn_email_{{ sid }}',em);}catch(e){}
+    bd.style.display='none';
+    dn.classList.add('on');
+  }
+  btn.addEventListener('click',reveal);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();reveal();}});
+
+  var cb=document.getElementById('hwn-c-{{ sid }}');
+  cb.addEventListener('click',function(){
+    var v=cb.getAttribute('data-code'),l=cb.querySelector('.lbl'),o=l.textContent;
+    function ok(){l.textContent='Copied!';setTimeout(function(){l.textContent=o;},1500);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(ok).catch(fb);}else{fb();}
+    function fb(){try{var t=document.createElement('textarea');t.value=v;t.style.position='fixed';t.style.opacity='0';
+      document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);ok();}catch(e){}}
+  });
+})();
+</script>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Welcome",
+  "tag": "section",
+  "settings": [
+    { "type": "paragraph", "content": "Enter email, code appears instantly. Nothing is submitted or emailed." },
+    { "type": "image_picker", "id": "art", "label": "Popup artwork (override)" },
+    { "type": "text", "id": "art_url", "label": "Artwork URL (default)", "default": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-popup-art-v2.png?v=1785729955" },
+    { "type": "range", "id": "card_w", "label": "Card width", "min": 300, "max": 520, "step": 10, "unit": "px", "default": 380 },
+    { "type": "range", "id": "band_top", "label": "Form position", "min": 10, "max": 75, "step": 1, "unit": "%", "default": 33 },
+    { "type": "header", "content": "Form" },
+    { "type": "text", "id": "placeholder", "label": "Placeholder", "default": "you@email.com" },
+    { "type": "text", "id": "cta", "label": "Button text", "default": "Claim my $30 off" },
+    { "type": "text", "id": "decline", "label": "Decline text", "default": "No thanks, I don't like savings" },
+    { "type": "color", "id": "brand", "label": "Button colour", "default": "#0E6FA8" },
+    { "type": "header", "content": "After they enter the email" },
+    { "type": "text", "id": "code", "label": "Discount code", "default": "MYSTERY30" },
+    { "type": "text", "id": "done_title", "label": "Title", "default": "You're in." },
+    { "type": "text", "id": "done_sub", "label": "Subtext", "default": "Here's your code — use it at checkout." },
+    { "type": "text", "id": "done_cta", "label": "Button text", "default": "Apply it and shop" },
+    { "type": "text", "id": "destination", "label": "Where it goes", "default": "/cart" },
+    { "type": "header", "content": "Timing" },
+    { "type": "range", "id": "delay", "label": "Show after", "min": 2, "max": 60, "step": 1, "unit": "s", "default": 6 },
+    { "type": "checkbox", "id": "test_mode", "label": "Test mode (show every visit)", "default": false }
+  ],
+  "presets": [{ "name": "HELIOS Welcome" }]
+}
+{% endschema %}

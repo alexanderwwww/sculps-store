@@ -1,0 +1,101 @@
+{%- comment -%}
+  HELIOS — vertical clip row (the "See it on the water" TikTok-style strip).
+
+  Rebuilt to match the saved template settings exactly (the original body was
+  uploaded as a file, so only its settings survived in templates/index.json).
+  Setting and block IDs are identical, so the recovered homepage renders as-is.
+
+  Clips autoplay muted and looping, and pause when scrolled out of view so a row
+  of videos does not fight for bandwidth.
+
+  NOTE: the eyebrow reads "Real customers". Only keep that wording for footage
+  actually filmed by customers — otherwise change it to "On the water".
+{%- endcomment -%}
+{%- liquid
+  assign s = section.settings
+  assign filled = 0
+  for b in section.blocks
+    if b.settings.video != blank
+      assign filled = filled | plus: 1
+    endif
+  endfor
+-%}
+{%- if filled > 0 or request.design_mode -%}
+<div class="ht" id="ht-{{ section.id }}">
+  <div class="ht__wrap">
+    {%- if s.eyebrow != blank -%}<p class="ht__eyebrow">{{ s.eyebrow }}</p>{%- endif -%}
+    {%- if s.heading != blank -%}<h2 class="ht__h">{{ s.heading }}</h2>{%- endif -%}
+  </div>
+  <div class="ht__vp">
+    <ul class="ht__track">
+      {%- for b in section.blocks -%}
+        {%- if b.settings.video != blank -%}
+          <li class="ht__card" {{ b.shopify_attributes }}>
+            <div class="ht__screen">
+              {{ b.settings.video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, preload: 'none' }}
+            </div>
+            {%- if b.settings.caption != blank -%}<p class="ht__cap">{{ b.settings.caption }}</p>{%- endif -%}
+            {%- if b.settings.handle != blank -%}<p class="ht__by">{{ b.settings.handle }}</p>{%- endif -%}
+          </li>
+        {%- endif -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+</div>
+{%- endif -%}
+
+{% stylesheet %}
+  .ht { background: #fff; padding-block: 26px 32px; overflow: hidden; }
+  .ht__wrap { width: 100%; max-width: 1300px; margin-inline: auto; padding-inline: 16px; margin-bottom: 16px; }
+  .ht__eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #6a7781; margin: 0; }
+  .ht__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 8px 0 0; }
+  .ht__vp { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .ht__vp::-webkit-scrollbar { display: none; }
+  .ht__track { display: flex; gap: 12px; list-style: none; margin: 0; padding-inline: 16px; width: max-content; }
+  .ht__card { flex: none; width: min(62vw, 260px); scroll-snap-align: center; }
+  .ht__screen { position: relative; width: 100%; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden;
+    background: #0b0e11; border: 1px solid rgba(11,14,17,.18); }
+  .ht__screen video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ht__cap { margin-top: 10px; font-size: 0.875rem; line-height: 1.45; }
+  .ht__by { margin-top: 3px; font-size: 0.75rem; color: #6a7781; }
+  @media screen and (min-width: 990px) {
+    .ht__track { padding-inline: max(16px, calc((100vw - 1300px) / 2)); gap: 14px; }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    var root = document.getElementById('ht-{{ section.id }}');
+    if (!root || root.dataset.ready === '1') return;
+    root.dataset.ready = '1';
+    var vids = [].slice.call(root.querySelectorAll('video'));
+    if (!vids.length || !('IntersectionObserver' in window)) return;
+    /* Only play what is on screen — a row of autoplaying clips otherwise
+       saturates mobile bandwidth and stalls the whole page. */
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var v = e.target;
+        if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+        else { v.pause(); }
+      });
+    }, { threshold: 0.4 });
+    vids.forEach(function (v) { v.muted = true; v.setAttribute('playsinline', ''); io.observe(v); });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "HELIOS clips",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "info": "Only say 'Real customers' if customers actually filmed these." },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "See it on the water." }
+  ],
+  "blocks": [{ "type": "clip", "name": "Clip", "limit": 10, "settings": [
+    { "type": "video", "id": "video", "label": "Video" },
+    { "type": "text", "id": "handle", "label": "Credit / handle" },
+    { "type": "text", "id": "caption", "label": "Caption" }
+  ]}],
+  "presets": [{ "name": "HELIOS clips", "blocks": [{ "type": "clip" }, { "type": "clip" }, { "type": "clip" }] }]
+}
+{% endschema %}

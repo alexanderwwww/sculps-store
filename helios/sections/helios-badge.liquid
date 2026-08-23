@@ -1,0 +1,32 @@
+{%- comment -%}
+  HELIOS Badge Banner — single centered image banner. Mobile-safe.
+{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="hbg-{{ sid }}">
+<style>
+  #hbg-{{ sid }}{background:{{ s.bg | default: '#FFFFFF' }};overflow-x:clip;}
+  #hbg-{{ sid }} *{box-sizing:border-box;min-width:0;}
+  #hbg-{{ sid }} .wrap{max-width:{{ s.width | default: 1000 }}px;margin:0 auto;padding:clamp(18px,2.6vw,36px) 16px;}
+  #hbg-{{ sid }} img{display:block;width:100%;max-width:100%;height:auto;border-radius:{{ s.radius | default: 12 }}px;}
+</style>
+  <div class="wrap">
+    {%- if s.image_url != blank -%}
+      <img src="{{ s.image_url }}" alt="{{ s.alt | escape }}" loading="lazy">
+    {%- endif -%}
+  </div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Badge Banner",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "image_url", "label": "Image URL", "default": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-big.png?v=1785731571" },
+    { "type": "text", "id": "alt", "label": "Alt text", "default": "No.1 merchant in America" },
+    { "type": "range", "id": "width", "label": "Max width", "min": 600, "max": 1200, "step": 50, "unit": "px", "default": 1000 },
+    { "type": "range", "id": "radius", "label": "Corner radius", "min": 0, "max": 24, "step": 4, "unit": "px", "default": 12 },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#FFFFFF" }
+  ],
+  "presets": [{ "name": "HELIOS Badge Banner" }]
+}
+{% endschema %}

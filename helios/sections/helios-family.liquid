@@ -1,0 +1,63 @@
+{%- comment -%}HELIOS Family — Amazon-style image + copy row.{%- endcomment -%}
+{%- assign sid = section.id -%}
+{%- assign s = section.settings -%}
+<section class="helios" id="hf-{{ sid }}">
+<style>
+  #hf-{{ sid }}{background:#fff;color:#0F1111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+  #hf-{{ sid }} *{box-sizing:border-box;}
+  #hf-{{ sid }} .wrap{max-width:1000px;margin:0 auto;padding:clamp(30px,4vw,52px) 18px;}
+  #hf-{{ sid }} .row{display:grid;grid-template-columns:1fr;border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
+  @media(min-width:760px){#hf-{{ sid }} .row{grid-template-columns:1fr 1fr;}}
+  #hf-{{ sid }} .pic{position:relative;min-height:260px;background:#F0F2F2;}
+  #hf-{{ sid }} .pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+  #hf-{{ sid }} .badge{position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;gap:6px;
+    background:#fff;border:1px solid #D5D9D9;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:700;}
+  #hf-{{ sid }} .badge .st{color:#F5A623;letter-spacing:.5px;font-size:11px;}
+  #hf-{{ sid }} .body{padding:clamp(22px,3vw,34px);display:flex;flex-direction:column;justify-content:center;}
+  #hf-{{ sid }} .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
+  #hf-{{ sid }} h2{font-size:clamp(20px,2.6vw,26px);font-weight:700;letter-spacing:-.015em;line-height:1.28;margin:0 0 10px;}
+  #hf-{{ sid }} p.bd{font-size:14px;line-height:1.6;margin:0;}
+  #hf-{{ sid }} .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+  #hf-{{ sid }} .tags span{display:inline-flex;align-items:center;gap:6px;background:#F0F2F2;border:1px solid #D5D9D9;
+    border-radius:6px;padding:7px 11px;font-size:12.5px;font-weight:600;}
+  #hf-{{ sid }} a.btn{align-self:flex-start;display:inline-block;margin-top:20px;background:#FFD814;color:#0F1111;
+    border:1px solid #FCD200;border-radius:8px;padding:11px 30px;font-size:14px;font-weight:600;text-decoration:none;}
+  #hf-{{ sid }} a.btn:hover{background:#F7CA00;}
+</style>
+<div class="wrap">
+  <div class="row">
+    <div class="pic">
+      {%- if s.image != blank -%}<img src="{{ s.image | image_url: width: 1200 }}" alt="{{ s.heading | escape }}" loading="lazy">{%- endif -%}
+      {%- if s.badge != blank -%}<span class="badge"><span class="st">★★★★★</span>{{ s.badge }}</span>{%- endif -%}
+    </div>
+    <div class="body">
+      {%- if s.eyebrow != blank -%}<div class="eb">{{ s.eyebrow }}</div>{%- endif -%}
+      <h2>{{ s.heading }}</h2>
+      <p class="bd">{{ s.body }}</p>
+      <div class="tags">
+        {%- if s.tag1 != blank -%}<span>{{ s.tag1 }}</span>{%- endif -%}
+        {%- if s.tag2 != blank -%}<span>{{ s.tag2 }}</span>{%- endif -%}
+      </div>
+      {%- if s.cta_text != blank -%}<a class="btn" href="{{ s.cta_link | default: '#buy' }}">{{ s.cta_text }}</a>{%- endif -%}
+    </div>
+  </div>
+</div>
+</section>
+{% schema %}
+{
+  "name": "HELIOS Family",
+  "tag": "section",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Photo" },
+    { "type": "text", "id": "badge", "label": "Badge", "default": "Family approved" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Dad's throne" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "The whole family's favorite seat." },
+    { "type": "textarea", "id": "body", "label": "Body", "default": "Big enough for you and the kids, steady enough for snacks and drinks." },
+    { "type": "text", "id": "tag1", "label": "Tag 1", "default": "Cup holders for everyone" },
+    { "type": "text", "id": "tag2", "label": "Tag 2", "default": "Holds up to 300 lb" },
+    { "type": "text", "id": "cta_text", "label": "Button text", "default": "Make it yours" },
+    { "type": "url", "id": "cta_link", "label": "Button link" }
+  ],
+  "presets": [{ "name": "HELIOS Family" }]
+}
+{% endschema %}
