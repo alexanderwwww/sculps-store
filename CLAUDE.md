@@ -52,8 +52,12 @@ image before video.
 - Theme: `gid://shopify/OnlineStoreTheme/193327595786` "HELIOS Best Buy build" (UNPUBLISHED — user must publish; API blocked)
 - Product: `gid://shopify/Product/10598161154314` ACTIVE, published to Online Store + Shop,
   handle `helios-super-glide-motorized-water-lounger`, inventory untracked
-- Variant IDs: 1-pack `53550115815690` $259.99 · 2-pack `53550115848458` $259.99 (1+1 FREE, default)
+- Variant IDs: 1-pack `53550115815690` $199.99 · 2-pack `53550115848458` $199.99 (1+1 FREE, default)
   · 3-pack `53550115946762` $349.99 · 4-pack `53550115881226` $459.99
+  All variants: `inventoryPolicy: CONTINUE` + `tracked: false` — they can never read sold out.
+- **Markets: United States ONLY** (`gid://shopify/Market/97197621514`, primary, USD, no local
+  currencies). The old Greece market is deleted — it was the primary, so a US shopper had no
+  market to resolve to and the storefront showed the product unavailable.
 - Shipping: one US zone (all states), $0.00 USD "Free shipping", ships to US only.
   **The store is in New York City — every order ships from New York, NY (-74.006, 40.713).**
 - Discount: `HELIOS10` = 10% off, once per customer (`DiscountCodeNode/1621974778122`)
@@ -90,4 +94,7 @@ image before video.
 1. Publish the theme (Themes → HELIOS Best Buy build → Publish)
 2. Disable storefront password (Preferences)
 3. Paste policies into Settings → Policies (checkout only reads those)
-4. Set primary market to United States (currently Greece)
+4. ~~Primary market~~ — done: US is the only market, Greece deleted.
+5. **Live theme is a COPY.** `helios wins` (193327595786) holds all the work but is
+   UNPUBLISHED; `Copy of HELIOS Best Buy build` (193336574218) is MAIN. The API refuses
+   writes to a live theme, so nothing ships until the user publishes `helios wins`.
