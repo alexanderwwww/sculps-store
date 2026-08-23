@@ -143,7 +143,8 @@
           "settings": {
             "icon": "🛥️",
             "title": "The lounger",
-            "note": "Heavy-duty PVC, padded headrest, two cup holders"
+            "note": "Heavy-duty PVC, padded headrest, two cup holders",
+            "qty": "× 1"
           }
         },
         "x2": {
@@ -151,7 +152,8 @@
           "settings": {
             "icon": "⚡",
             "title": "Twin motors",
-            "note": "Joystick steering. Forward, reverse, spin"
+            "note": "Joystick steering. Forward, reverse, spin",
+            "qty": "× 2"
           }
         },
         "x3": {
@@ -159,7 +161,8 @@
           "settings": {
             "icon": "🔋",
             "title": "Battery and charger",
-            "note": "Lasts 3-4 hours of use per charge"
+            "note": "Lasts 3-4 hours of use per charge",
+            "qty": "× 1"
           }
         },
         "x4": {
@@ -167,7 +170,8 @@
           "settings": {
             "icon": "💨",
             "title": "Inflation nozzle",
-            "note": "Ready in 5 minutes, no pump to buy"
+            "note": "Ready in 5 minutes, no pump to buy",
+            "qty": "× 1"
           }
         }
       },
@@ -178,10 +182,12 @@
         "x4"
       ],
       "settings": {
-        "bg": "#ffffff",
+        "bg": "#f7fafa",
         "eyebrow": "No tools, nothing else to buy",
         "heading": "Everything in the box",
-        "note": "Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s."
+        "note": "Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s.",
+        "image_caption": "Exactly what ships",
+        "foot": "Nothing else to buy. Unbox it and go."
       }
     },
     "gallery": {
@@ -304,7 +310,8 @@
         "step2_title": "Drop it in",
         "step2_text": "Pool, lake, any calm water. It sits high and stays steady when you climb on.",
         "step3_title": "Grab the joysticks",
-        "step3_text": "The motors do the work. You steer. Nothing to learn."
+        "step3_text": "The motors do the work. You steer. Nothing to learn.",
+        "bg": "#ffffff"
       }
     },
     "guarantee": {

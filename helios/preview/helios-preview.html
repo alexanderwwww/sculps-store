@@ -490,43 +490,77 @@
 <!-- ===== box :: helios-box ===== -->
 <section class="helios" id="hbx-box">
 <style>
-  #hbx-box{background:#ffffff;color:#0F1111;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) 0;}
-  #hbx-box *{box-sizing:border-box;}
-  #hbx-box .wrap{max-width:1000px;margin:0 auto;padding:0 18px;}
-  #hbx-box .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
-  #hbx-box h2{font-size:clamp(var(--fs-md,20.4px),2.6vw,var(--fs-lg,25.9px));font-weight:700;
-    letter-spacing:-.015em;line-height:var(--lh-tight,1.236);margin:0 0 var(--sp-4,21px);}
-  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
-     was sizing these grids to their content instead of stretching them, which
-     collapsed columns to whatever text happened to be in them. A declared
-     basis splits the row evenly and wraps on its own. */
-  #hbx-box .grid{display:flex !important;flex-wrap:wrap;gap:1px;background:#D5D9D9;
-    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  #hbx-box .grid > *{flex:1 1 168px;min-width:0;}
-  #hbx-box .c{background:#fff;padding:0 0 var(--sp-4,21px);text-align:center;}
-  #hbx-box .c .ph{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;
-    background:#F7FAFA;margin-bottom:var(--sp-3,13px);}
-  #hbx-box .c .ic{font-size:26px;line-height:1;padding-top:20px;margin-bottom:9px;}
-  #hbx-box .c .tx{padding-inline:14px;}
-  #hbx-box .c .t{font-size:14px;font-weight:700;line-height:1.3;}
-  #hbx-box .c .d{font-size:12.5px;color:#565959;line-height:1.45;margin-top:4px;}
-  #hbx-box .note{font-size:12.5px;color:#565959;margin-top:14px;line-height:1.5;}
+  #hbx-box{background:#f7fafa;color:#0F1111;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) 0;}
+  #hbx-box *{box-sizing:border-box;min-width:0;}
+  #hbx-box .hbx-wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 var(--sp-4,21px);}
+  #hbx-box .hbx-eb{font-size:var(--fs-xs,12.6px);font-weight:800;letter-spacing:.12em;
+    text-transform:uppercase;color:#565959;margin-bottom:var(--sp-2,8px);}
+  #hbx-box .hbx-h{font-size:clamp(var(--fs-lg,25.9px),3.2vw,var(--fs-xl,32.9px));font-weight:800;
+    letter-spacing:-.025em;line-height:var(--lh-tight,1.236);margin:0 0 var(--sp-5,34px);}
+
+  #hbx-box .hbx-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--sp-5,34px);}
+  #hbx-box .hbx-fig{flex:1 1 380px;min-width:0;margin:0;position:relative;
+    border-radius:var(--r-md,13px);overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
+  #hbx-box .hbx-fig img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;}
+  #hbx-box .hbx-cnt{position:absolute;left:14px;bottom:14px;background:rgba(15,17,17,.86);
+    color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:6px 12px;border-radius:100px;backdrop-filter:blur(6px);}
+  #hbx-box .hbx-list{flex:1 1 380px;min-width:0;display:flex;flex-direction:column;}
+
+  #hbx-box .hbx-i{display:flex;align-items:center;gap:var(--sp-3,13px);
+    padding:var(--sp-3,13px) 0;border-bottom:1px solid #E1E5E5;}
+  #hbx-box .hbx-i:first-child{padding-top:0;}
+  #hbx-box .hbx-i:last-child{border-bottom:0;}
+  #hbx-box .hbx-th{flex:0 0 56px;width:56px;height:56px;border-radius:var(--r-sm,8px);
+    overflow:hidden;background:#fff;border:1px solid #E7E9E9;display:flex;
+    align-items:center;justify-content:center;font-size:24px;line-height:1;}
+  #hbx-box .hbx-th img{width:100%;height:100%;object-fit:cover;display:block;}
+  #hbx-box .hbx-tx{flex:1 1 0;min-width:0;}
+  #hbx-box .hbx-t{font-size:var(--fs-base,16px);font-weight:800;line-height:1.25;
+    letter-spacing:-.01em;}
+  #hbx-box .hbx-d{font-size:var(--fs-xs,12.6px);color:#565959;line-height:1.45;margin-top:3px;}
+  #hbx-box .hbx-q{flex:0 0 auto;font-size:12px;font-weight:800;color:#0F1111;
+    background:#fff;border:1px solid #D5D9D9;border-radius:100px;padding:4px 11px;white-space:nowrap;}
+
+  #hbx-box .hbx-foot{display:flex;align-items:center;gap:var(--sp-2,8px);
+    margin-top:var(--sp-4,21px);padding-top:var(--sp-3,13px);border-top:1px solid #E1E5E5;
+    font-size:var(--fs-sm,14.1px);font-weight:700;color:#046B53;}
+  #hbx-box .hbx-foot svg{width:17px;height:17px;flex:none;}
+  #hbx-box .hbx-note{font-size:11.5px;color:#8a9192;margin-top:var(--sp-4,21px);line-height:1.55;}
+
+  /* No photo set: the checklist takes the row in two columns instead of
+     leaving half the band empty. */
+  #hbx-box .hbx-row.hbx-nofig .hbx-list{flex:1 1 100%;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    column-gap:var(--sp-5,34px);}
+  @media(max-width:699px){
+    #hbx-box .hbx-row{gap:var(--sp-4,21px);}
+    #hbx-box .hbx-th{flex-basis:46px;width:46px;height:46px;font-size:20px;}
+  }
 </style>
-  <div class="wrap"><div class="eb">No tools, nothing else to buy</div><h2>Everything in the box</h2>
-    <div class="grid"><div class="c" ><img class="ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-                 alt="The lounger" loading="lazy"><div class="tx">
-            <div class="t">The lounger</div><div class="d">Heavy-duty PVC, padded headrest, two cup holders</div></div>
-        </div><div class="c" ><img class="ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-                 alt="Twin motors" loading="lazy"><div class="tx">
-            <div class="t">Twin motors</div><div class="d">Joystick steering. Forward, reverse, spin</div></div>
-        </div><div class="c" ><img class="ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-                 alt="Battery and charger" loading="lazy"><div class="tx">
-            <div class="t">Battery and charger</div><div class="d">Lasts 3-4 hours of use per charge</div></div>
-        </div><div class="c" ><img class="ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-                 alt="Inflation nozzle" loading="lazy"><div class="tx">
-            <div class="t">Inflation nozzle</div><div class="d">Ready in 5 minutes, no pump to buy</div></div>
-        </div></div><p class="note">Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s.</p></div>
+  <div class="hbx-wrap"><div class="hbx-eb">No tools, nothing else to buy</div><h2 class="hbx-h">Everything in the box</h2>
+
+    <div class="hbx-row"><figure class="hbx-fig">
+          <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+               alt="Everything in the box" loading="lazy"><span class="hbx-cnt">Exactly what ships</span></figure><div class="hbx-list"><div class="hbx-i" >
+            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
+            <span class="hbx-tx">
+              <span class="hbx-t">The lounger</span><span class="hbx-d">Heavy-duty PVC, padded headrest, two cup holders</span></span><span class="hbx-q">× 1</span></div><div class="hbx-i" >
+            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
+            <span class="hbx-tx">
+              <span class="hbx-t">Twin motors</span><span class="hbx-d">Joystick steering. Forward, reverse, spin</span></span><span class="hbx-q">× 2</span></div><div class="hbx-i" >
+            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
+            <span class="hbx-tx">
+              <span class="hbx-t">Battery and charger</span><span class="hbx-d">Lasts 3-4 hours of use per charge</span></span><span class="hbx-q">× 1</span></div><div class="hbx-i" >
+            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
+            <span class="hbx-tx">
+              <span class="hbx-t">Inflation nozzle</span><span class="hbx-d">Ready in 5 minutes, no pump to buy</span></span><span class="hbx-q">× 1</span></div></div>
+    </div><p class="hbx-foot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        Nothing else to buy. Unbox it and go.
+      </p><p class="hbx-note">Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s.</p></div>
 </section>
 
 
@@ -708,34 +742,68 @@
 <!-- ===== howitworks :: helios-howitworks ===== -->
 <section class="helios" id="hw-howitworks">
 <style>
-  #hw-howitworks{background:#fff;color:#0F1111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #hw-howitworks *{box-sizing:border-box;}
-  #hw-howitworks .wrap{max-width:1000px;margin:0 auto;padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) var(--sp-4,21px);}
-  #hw-howitworks .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
-  #hw-howitworks h2{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:0 0 18px;}
-  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
-     was sizing these grids to their content instead of stretching them, which
-     collapsed columns to whatever text happened to be in them. A declared
-     basis splits the row evenly and wraps on its own. */
-  #hw-howitworks .grid{display:flex !important;flex-wrap:wrap;gap:1px;background:#D5D9D9;
-    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  #hw-howitworks .grid > *{flex:1 1 240px;min-width:0;}
+  #hw-howitworks{background:#ffffff;color:#0F1111;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+  #hw-howitworks *{box-sizing:border-box;min-width:0;}
+  #hw-howitworks .hw-wrap{width:100%;max-width:1180px;margin:0 auto;
+    padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) var(--sp-4,21px);}
+  #hw-howitworks .hw-eb{font-size:var(--fs-xs,12.6px);font-weight:800;letter-spacing:.12em;
+    text-transform:uppercase;color:#565959;margin-bottom:var(--sp-2,8px);}
+  #hw-howitworks .hw-h{font-size:clamp(var(--fs-lg,25.9px),3.2vw,var(--fs-xl,32.9px));font-weight:800;
+    letter-spacing:-.025em;line-height:var(--lh-tight,1.236);margin:0 0 var(--sp-5,34px);max-width:22ch;}
 
-  #hw-howitworks .st{background:#fff;padding:0 0 22px;}
-  #hw-howitworks .st .ph{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
-    background:#F7FAFA;margin-bottom:var(--sp-3,13px);}
-  #hw-howitworks .st .bd{padding:0 20px;}
-  #hw-howitworks .st.noimg .bd{padding-top:22px;}
-  #hw-howitworks .n{width:26px;height:26px;border-radius:50%;background:#0F1111;color:#fff;
-    font-size:13px;font-weight:700;display:grid;place-items:center;margin-bottom:11px;}
-  #hw-howitworks h3{font-size:15px;font-weight:700;margin:0 0 5px;line-height:1.35;}
-  #hw-howitworks p{font-size:14px;line-height:1.55;color:#565959;margin:0;}
+  #hw-howitworks .hw-row{display:flex;flex-wrap:wrap;gap:var(--sp-4,21px);position:relative;}
+  #hw-howitworks .hw-c{flex:1 1 260px;min-width:0;position:relative;background:#fff;
+    border:1px solid #E1E5E5;border-radius:var(--r-md,13px);overflow:hidden;
+    box-shadow:0 1px 2px rgba(15,17,17,.04);}
+  #hw-howitworks .hw-ph{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:#F7FAFA;}
+  #hw-howitworks .hw-bd{position:relative;padding:var(--sp-4,21px);}
+  /* Ghost numeral sits behind the copy, so the sequence reads at a glance
+     without a numbered badge competing with the heading. */
+  #hw-howitworks .hw-ghost{position:absolute;top:2px;right:14px;font-size:64px;font-weight:900;
+    line-height:1;color:#0F1111;opacity:.07;letter-spacing:-.05em;pointer-events:none;}
+  #hw-howitworks .hw-step{display:inline-flex;align-items:center;gap:7px;font-size:11px;
+    font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#565959;
+    margin-bottom:var(--sp-2,8px);}
+  #hw-howitworks .hw-dot{width:20px;height:20px;border-radius:50%;background:#0F1111;color:#fff;
+    font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    letter-spacing:0;}
+  #hw-howitworks .hw-t{font-size:var(--fs-md,20.4px);font-weight:800;letter-spacing:-.02em;
+    line-height:1.2;margin:0 0 6px;position:relative;}
+  #hw-howitworks .hw-d{font-size:var(--fs-sm,14.1px);line-height:var(--lh-body,1.618);
+    color:#565959;margin:0;position:relative;}
+
+  /* Connector between cards — decorative, hidden once they stack. */
+  #hw-howitworks .hw-c::after{content:'';position:absolute;top:50%;right:calc(var(--sp-4,21px) * -1);
+    width:var(--sp-4,21px);height:2px;background:#E1E5E5;display:none;}
+  @media(min-width:860px){
+    #hw-howitworks .hw-c::after{display:block;}
+    #hw-howitworks .hw-c:last-child::after{display:none;}
+  }
+  @media(prefers-reduced-motion:reduce){#hw-howitworks .hw-c{box-shadow:none;}}
 </style>
-<div class="wrap"><div class="eb">No tools, no assembly</div><h2>Three steps. Then you are on the water.</h2>
-  <div class="grid"><div class="st"><img class="ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="Inflate it" loading="lazy"><div class="bd"><div class="n">1</div><h3>Inflate it</h3><p>About five minutes with the nozzle in the box. No compressor, no pump to buy.</p></div>
-      </div><div class="st"><img class="ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="Drop it in" loading="lazy"><div class="bd"><div class="n">2</div><h3>Drop it in</h3><p>Pool, lake, any calm water. It sits high and stays steady when you climb on.</p></div>
-      </div><div class="st"><img class="ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="Grab the joysticks" loading="lazy"><div class="bd"><div class="n">3</div><h3>Grab the joysticks</h3><p>The motors do the work. You steer. Nothing to learn.</p></div>
-      </div></div>
+<div class="hw-wrap"><div class="hw-eb">No tools, no assembly</div><h2 class="hw-h">Three steps. Then you are on the water.</h2><div class="hw-row"><div class="hw-c"><img class="hw-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 alt="Inflate it" loading="lazy"><div class="hw-bd">
+            <span class="hw-ghost" aria-hidden="true">1</span>
+            <span class="hw-step"><span class="hw-dot">1</span>Step 1</span>
+            <h3 class="hw-t">Inflate it</h3>
+            <p class="hw-d">About five minutes with the nozzle in the box. No compressor, no pump to buy.</p>
+          </div>
+        </div><div class="hw-c"><img class="hw-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 alt="Drop it in" loading="lazy"><div class="hw-bd">
+            <span class="hw-ghost" aria-hidden="true">2</span>
+            <span class="hw-step"><span class="hw-dot">2</span>Step 2</span>
+            <h3 class="hw-t">Drop it in</h3>
+            <p class="hw-d">Pool, lake, any calm water. It sits high and stays steady when you climb on.</p>
+          </div>
+        </div><div class="hw-c"><img class="hw-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 alt="Grab the joysticks" loading="lazy"><div class="hw-bd">
+            <span class="hw-ghost" aria-hidden="true">3</span>
+            <span class="hw-step"><span class="hw-dot">3</span>Step 3</span>
+            <h3 class="hw-t">Grab the joysticks</h3>
+            <p class="hw-d">The motors do the work. You steer. Nothing to learn.</p>
+          </div>
+        </div></div>
 </div>
 </section>
 
