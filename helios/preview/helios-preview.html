@@ -1242,32 +1242,39 @@
     #hbg-globe .g2::before{transform:rotateX(0);}
   }
 
-  /* Shopify-style horizontal stage rail: five nodes, a track that fills to the
-     current stage, and the live node pulsing. */
-  #hbg-globe .rail{margin-top:22px;padding-top:6px;display:flex;position:relative;}
-  #hbg-globe .rail .rn{flex:1 1 0;position:relative;display:flex;
-    flex-direction:column;align-items:center;gap:7px;min-width:0;}
-  #hbg-globe .rail .rb{width:100%;height:4px;border-radius:100px;background:#222B33;
-    overflow:hidden;}
-  #hbg-globe .rail .rb span{display:block;height:100%;width:0;border-radius:100px;
-    background:linear-gradient(90deg,var(--hb-blue,#0046BE),#7EC4FF);
-    transition:width .7s cubic-bezier(.4,0,.2,1);}
-  #hbg-globe .rail .rn.done .rb span,
-  #hbg-globe .rail .rn.now .rb span{width:100%;}
-  #hbg-globe .rail .rn.now .rb span{
-    background:linear-gradient(90deg,var(--hb-blue,#0046BE),var(--hb-yellow,#FFE000));}
-  #hbg-globe .rail .ri{width:22px;height:22px;border-radius:50%;background:#12171C;
-    border:2px solid #38424B;display:grid;place-items:center;transition:border-color .4s,background .4s;}
-  #hbg-globe .rail .rn.done .ri{background:var(--hb-blue,#0046BE);border-color:var(--hb-blue,#0046BE);}
-  #hbg-globe .rail .rn.done .ri::after{content:'';width:7px;height:4px;
-    border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);}
-  #hbg-globe .rail .rn.now .ri{border-color:var(--hb-yellow,#FFE000);
-    box-shadow:0 0 0 0 rgba(255,224,0,.5);animation:hbgr-globe 1.9s infinite;}
-  @keyframes hbgr-globe{70%{box-shadow:0 0 0 9px rgba(255,224,0,0);}100%{box-shadow:0 0 0 0 rgba(255,224,0,0);}}
-  #hbg-globe .rail .rl{font-size:9.5px;font-weight:800;letter-spacing:.05em;
-    text-transform:uppercase;color:#6E7982;text-align:center;line-height:1.25;}
-  #hbg-globe .rail .rn.done .rl,#hbg-globe .rail .rn.now .rl{color:#fff;}
-  @media(max-width:600px){ #hbg-globe .rail .rl{font-size:8.5px;letter-spacing:.02em;} }
+  /* Stage flow. Deliberately NOT the timeline again: the list below is the
+     record, this is the movement — a van running a filling track between five
+     markers, so progress is felt rather than re-read. */
+  #hbg-globe .flow{margin-top:var(--sp-4,21px);}
+  #hbg-globe .fl-track{position:relative;display:block;height:6px;border-radius:100px;
+    background:#1B2229;overflow:visible;}
+  #hbg-globe .fl-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:100px;
+    background:linear-gradient(90deg,var(--hb-blue,#0046BE),var(--hb-yellow,#FFE000));
+    transition:width 1.1s cubic-bezier(.33,1,.68,1);}
+  #hbg-globe .fl-van{position:absolute;top:50%;left:0;width:30px;height:17px;
+    margin:-15px 0 0 -15px;color:var(--hb-yellow,#FFE000);
+    transition:left 1.1s cubic-bezier(.33,1,.68,1);
+    filter:drop-shadow(0 3px 5px rgba(0,0,0,.5));}
+  #hbg-globe .fl-van svg{width:100%;height:100%;display:block;
+    animation:hbgvan-globe 1.1s ease-in-out infinite;}
+  @keyframes hbgvan-globe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+
+  #hbg-globe .fl-pts{display:flex;justify-content:space-between;margin-top:11px;}
+  #hbg-globe .fl-pts i{flex:1 1 0;display:flex;flex-direction:column;align-items:center;
+    gap:6px;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;color:#5D666E;text-align:center;line-height:1.2;}
+  #hbg-globe .fl-pts i::before{content:'';width:9px;height:9px;border-radius:50%;
+    background:#1B2229;box-shadow:0 0 0 2px #0E1319;transition:background .5s,box-shadow .5s;}
+  #hbg-globe .fl-pts i.done{color:#AEB6BE;}
+  #hbg-globe .fl-pts i.done::before{background:var(--hb-blue,#0046BE);}
+  #hbg-globe .fl-pts i.now{color:#fff;}
+  #hbg-globe .fl-pts i.now::before{background:var(--hb-yellow,#FFE000);
+    box-shadow:0 0 0 2px #0E1319,0 0 12px rgba(255,224,0,.8);}
+  @media(max-width:600px){#hbg-globe .fl-pts i{font-size:8px;letter-spacing:.02em;}}
+  @media(prefers-reduced-motion:reduce){
+    #hbg-globe .fl-van svg{animation:none;}
+    #hbg-globe .fl-fill,#hbg-globe .fl-van{transition:none;}
+  }
 
   #hbg-globe .tl{margin-top:20px;display:grid;gap:0;}
   /* Rows flow in one after another, so the history reads as it fills. */
@@ -1341,7 +1348,14 @@
             <span class="mg-ico" data-mgico></span>
             <span class="mg-tx"><b data-mgtitle></b><span data-mgline></span></span>
           </div>
-          <div class="rail" data-rail aria-hidden="true"></div>
+          <div class="flow" data-flow aria-hidden="true">
+            <span class="fl-track"><span class="fl-fill" data-flfill></span>
+              <span class="fl-van" data-flvan>
+                <svg viewBox="0 0 32 18" aria-hidden="true"><path d="M1 3h17v10H1z" fill="currentColor"/><path d="M18 6h6l4 4v3h-10z" fill="currentColor"/><circle cx="7" cy="14.5" r="2.4" fill="#0E1319"/><circle cx="23" cy="14.5" r="2.4" fill="#0E1319"/></svg>
+              </span>
+            </span>
+            <span class="fl-pts" data-flpts></span>
+          </div>
         </div>
       </div>
     </div>
