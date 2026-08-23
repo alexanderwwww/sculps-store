@@ -120,7 +120,7 @@
   #hn-nav .links a{font-size:14px;color:#0f1111;text-decoration:none;font-weight:500;}
   #hn-nav .links a:hover{text-decoration:underline;}
   #hn-nav .right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-  #hn-nav .cta{background:#FFD814;color:#0F1111;border:1px solid #FCD200;border-radius:100px;
+  #hn-nav .cta{background:#0046BE;color:#fff;border:1px solid #0046BE;border-radius:100px;
     padding:9px 20px;font-size:13.5px;font-weight:800;text-decoration:none;}
   #hn-nav .cart{position:relative;display:grid;place-items:center;width:36px;height:36px;
     color:#0f1111;text-decoration:none;}
@@ -159,9 +159,17 @@
   #hby-buy{background:#ffffff;color:#0F1111;overflow-x:clip;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
   #hby-buy *{box-sizing:border-box;min-width:0;}
-  #hby-buy .wrap{max-width:1200px;margin:0 auto;padding:clamp(14px,2vw,26px) 16px clamp(24px,3vw,40px);}
-  #hby-buy .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(16px,2.2vw,32px);}
-  @media(min-width:900px){#hby-buy .grid{grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);align-items:start;}}
+  #hby-buy .wrap{width:100%;max-width:1200px;margin:0 auto;
+    padding:clamp(14px,2vw,26px) 16px clamp(24px,3vw,40px);}
+  /* Flex with an equal basis, not grid tracks and not a viewport breakpoint.
+     The fr tracks were being sized to their content by an ancestor rather than
+     stretched, so the gallery collapsed to about a third and the rail took the
+     rest. `flex:1 1 380px` gives both halves the same basis, splits the row
+     evenly whenever two fit, and stacks on its own when they do not — no media
+     query to get out of step with the real container width. */
+  #hby-buy .grid{display:flex !important;flex-wrap:wrap;align-items:flex-start;
+    gap:clamp(18px,2.4vw,40px);width:100% !important;}
+  #hby-buy .grid > .gal,#hby-buy .grid > .panel{flex:1 1 380px;min-width:0;max-width:100%;}
 
   #hby-buy .main{position:relative;width:100%;aspect-ratio:1/1;background:#fff;
     border:1px solid #D5D9D9;border-radius:12px;overflow:hidden;cursor:pointer;}
@@ -181,17 +189,17 @@
   #hby-buy .arr.r{right:12px;}
   #hby-buy .dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:5px;z-index:3;}
   #hby-buy .dots i{width:6px;height:6px;border-radius:50%;background:rgba(15,17,17,.22);}
-  #hby-buy .dots i.on{background:#0F1111;}
+  #hby-buy .dots i.on{background:#0046BE;}
   #hby-buy .thumbs{display:flex;gap:8px;margin-top:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
   #hby-buy .thumbs button{flex:0 0 58px;width:58px;height:58px;padding:0;border:1px solid #D5D9D9;
     border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;}
-  #hby-buy .thumbs button.on{border-color:#0F1111;border-width:2px;}
+  #hby-buy .thumbs button.on{border-color:#0046BE;border-width:2px;}
   #hby-buy .thumbs img{width:100%;height:100%;object-fit:cover;display:block;}
 
   #hby-buy h1{font-size:clamp(21px,2.7vw,27px);font-weight:800;line-height:1.24;margin:0 0 8px;letter-spacing:-.02em;overflow-wrap:break-word;color:#0F1111;}
   #hby-buy .rt{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:10px;flex-wrap:wrap;}
   #hby-buy .rt .s{color:#F5A623;letter-spacing:1px;font-size:15px;}
-  #hby-buy .rt a{color:#007185;text-decoration:none;}
+  #hby-buy .rt a{color:#0046BE;text-decoration:none;}
 
   #hby-buy .price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:10px;}
   #hby-buy .price b{font-size:clamp(32px,7vw,40px);font-weight:800;letter-spacing:-.03em;line-height:1;color:#0F1111;}
@@ -213,7 +221,7 @@
     font-size:10px;font-weight:900;display:grid;place-items:center;margin-top:1px;}
 
   #hby-buy .frame{border:1px solid #D5D9D9;border-radius:14px;background:#fff;}
-  #hby-buy .fhead{background:#0F1111;color:#fff;display:flex;align-items:center;justify-content:space-between;
+  #hby-buy .fhead{background:#0046BE;color:#fff;display:flex;align-items:center;justify-content:space-between;
     gap:6px 12px;padding:12px 16px;font-size:13.5px;font-weight:800;letter-spacing:.02em;flex-wrap:wrap;
     border-radius:13px 13px 0 0;}
   #hby-buy .fhead .pop{color:#FFC531;font-size:12.5px;}
@@ -225,37 +233,38 @@
     border:1px solid #D5D9D9;border-radius:12px;background:#fff;color:#0F1111;padding:12px 10px;cursor:pointer;
     transition:border-color .12s,box-shadow .12s;overflow:visible;}
   #hby-buy .opt:hover{border-color:#8d9698;}
-  #hby-buy .opt.on{border-color:#0F1111;border-width:2px;padding:11px 9px;box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
+  #hby-buy .opt.on{border-color:#0046BE;border-width:2px;padding:11px 9px;box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
   #hby-buy .opt.hastag{margin-top:8px;}
   #hby-buy .tagp{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
     color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
     border-radius:100px;padding:4px 13px;white-space:nowrap;line-height:1.2;
     box-shadow:0 2px 8px rgba(0,0,0,.20);}
   #hby-buy .dot{flex:0 0 18px;width:18px;height:18px;border-radius:50%;border:1.6px solid #8d9698;display:grid;place-items:center;}
-  #hby-buy .opt.on .dot{border-color:#0F1111;}
-  #hby-buy .opt.on .dot:after{content:'';width:9px;height:9px;border-radius:50%;background:#0F1111;}
+  #hby-buy .opt.on .dot{border-color:#0046BE;}
+  #hby-buy .opt.on .dot:after{content:'';width:9px;height:9px;border-radius:50%;background:#0046BE;}
   #hby-buy .oim{flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
   #hby-buy .oim img{width:100%;height:100%;object-fit:contain;display:block;}
-  #hby-buy .oi{flex:1 1 0;}
+  #hby-buy .oi{flex:1 1 0;min-width:0;}
   #hby-buy .oi .t{display:block;font-size:15px;font-weight:800;line-height:1.22;letter-spacing:-.01em;overflow-wrap:break-word;color:#0F1111;}
-  #hby-buy .oi .d{display:block;font-size:12px;color:#565959;margin-top:2px;line-height:1.35;overflow-wrap:break-word;}
+  #hby-buy .oi .d{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    font-size:12px;color:#565959;margin-top:2px;line-height:1.35;overflow-wrap:break-word;}
   #hby-buy .oi .gift{display:inline-block;margin-top:6px;background:#E3F6EC;color:#046B53;border:1px solid #B6E5CE;
     border-radius:100px;padding:3px 9px;font-size:11px;font-weight:800;}
-  #hby-buy .op{flex:0 0 auto;max-width:42%;text-align:right;}
+  #hby-buy .op{flex:0 0 auto;width:104px;text-align:right;}
   #hby-buy .op .sv{display:inline-block;background:#CC0C39;color:#fff;font-size:10.5px;font-weight:800;
     border-radius:5px;padding:3px 7px;margin-bottom:4px;}
   #hby-buy .op .n{font-size:18px;font-weight:800;letter-spacing:-.02em;display:block;color:#0F1111;}
   #hby-buy .op .o{font-size:12px;color:#565959;text-decoration:line-through;display:block;margin-top:2px;}
 
-  #hby-buy .atc{display:block;width:100%;background:#FFD814;color:#0F1111;border:1px solid #FCD200;
+  #hby-buy .atc{display:block;width:100%;background:#FFE000;color:#1D252C;border:1px solid #EFD200;
     border-radius:100px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;margin-top:16px;transition:background .15s;}
-  #hby-buy .atc:hover{background:#F7CA00;}
+  #hby-buy .atc:hover{background:#F2D400;}
   #hby-buy .atc.ok{background:#067D62;border-color:#067D62;color:#fff;}
   #hby-buy .xrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px;}
   #hby-buy .xbtn{border-radius:100px;padding:13px 10px;font-size:14.5px;font-weight:800;cursor:pointer;
     text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;}
-  #hby-buy .buynow{background:#fff;color:#0F1111;border:1.5px solid #0F1111;}
-  #hby-buy .buynow:hover{background:#F7FAFA;}
+  #hby-buy .buynow{background:#0046BE;color:#fff;border:1.5px solid #0046BE;}
+  #hby-buy .buynow:hover{background:#00379B;}
   #hby-buy .apay{background:#000;color:#fff;border:1.5px solid #000;}
   #hby-buy .apay svg{width:15px;height:18px;display:block;}
   #hby-buy .after{display:none;margin-top:9px;}
@@ -661,9 +670,9 @@
   #hg-guarantee .tx{font-size:14px;line-height:1.6;color:#0F1111;margin:12px auto 0;max-width:620px;}
   #hg-guarantee .tx p{margin:0 0 9px;}
   #hg-guarantee .tx p:last-child{margin-bottom:0;}
-  #hg-guarantee a.btn{display:inline-block;margin-top:20px;background:#FFD814;color:#0F1111;border:1px solid #FCD200;
+  #hg-guarantee a.btn{display:inline-block;margin-top:20px;background:#FFE000;color:#1D252C;border:1px solid #EFD200;
     border-radius:8px;padding:11px 34px;font-size:14px;font-weight:600;text-decoration:none;}
-  #hg-guarantee a.btn:hover{background:#F7CA00;}
+  #hg-guarantee a.btn:hover{background:#F2D400;}
 </style>
 <div class="wrap">
   <div class="band">
@@ -891,7 +900,7 @@
   #hn-nav .links a{font-size:14px;color:#0f1111;text-decoration:none;font-weight:500;}
   #hn-nav .links a:hover{text-decoration:underline;}
   #hn-nav .right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-  #hn-nav .cta{background:#FFD814;color:#0F1111;border:1px solid #FCD200;border-radius:100px;
+  #hn-nav .cta{background:#0046BE;color:#fff;border:1px solid #0046BE;border-radius:100px;
     padding:9px 20px;font-size:13.5px;font-weight:800;text-decoration:none;}
   #hn-nav .cart{position:relative;display:grid;place-items:center;width:36px;height:36px;
     color:#0f1111;text-decoration:none;}
