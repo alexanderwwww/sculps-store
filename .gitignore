@@ -19,3 +19,6 @@ atelier_zip/
 *.webp
 *.svg
 *.zip
+
+# HELIOS recovered theme — keep the whole folder despite the blanket rules above
+!helios/**
