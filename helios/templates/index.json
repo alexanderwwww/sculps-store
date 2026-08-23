@@ -141,6 +141,7 @@
         "x1": {
           "type": "item",
           "settings": {
+            "image": "shopify://shop_images/hf_20260823_141821_7b744c1c-7964-4108-a5d3-00df714e3e53.png",
             "icon": "🛥️",
             "title": "The lounger",
             "note": "Heavy-duty PVC, padded headrest, two cup holders",
@@ -150,27 +151,60 @@
         "x2": {
           "type": "item",
           "settings": {
+            "image": "shopify://shop_images/hf_20260823_140726_6d794636-67f2-4fd1-bca4-7639c9fb4520.png",
             "icon": "⚡",
-            "title": "Twin motors",
-            "note": "Joystick steering. Forward, reverse, spin",
+            "title": "Twin electric motors",
+            "note": "Joystick steering — forward, reverse, spin",
             "qty": "× 2"
           }
         },
         "x3": {
           "type": "item",
           "settings": {
-            "icon": "🔋",
-            "title": "Battery and charger",
-            "note": "Lasts 3-4 hours of use per charge",
-            "qty": "× 1"
+            "image": "shopify://shop_images/hf_20260823_140726_b3a922c3-2d80-4110-ba93-124ba22e55da.png",
+            "icon": "🕹️",
+            "title": "360° joystick controls",
+            "note": "One on each armrest, thumb control",
+            "qty": "× 2"
           }
         },
         "x4": {
           "type": "item",
           "settings": {
+            "image": "shopify://shop_images/hf_20260823_140726_6370a57b-b74c-40b0-bbce-2b1ae7bf4320.png",
+            "icon": "🛌",
+            "title": "Padded headrest",
+            "note": "Plush and supportive, built in",
+            "qty": "× 1"
+          }
+        },
+        "x5": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260823_140726_c4832f2f-dab2-40e9-aabf-7946ccabd140.png",
+            "icon": "🥤",
+            "title": "Dual cup holders",
+            "note": "Keeps your drink where you can reach it",
+            "qty": "× 2"
+          }
+        },
+        "x6": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260823_141631_53a330f8-0601-4cc9-9353-62565c948067.png",
+            "icon": "🔋",
+            "title": "Battery and charger",
+            "note": "3–4 hours of use per charge",
+            "qty": "× 1"
+          }
+        },
+        "x7": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260823_141631_53a330f8-0601-4cc9-9353-62565c948067.png",
             "icon": "💨",
             "title": "Inflation nozzle",
-            "note": "Ready in 5 minutes, no pump to buy",
+            "note": "Ready in five minutes, no pump to buy",
             "qty": "× 1"
           }
         }
@@ -179,15 +213,17 @@
         "x1",
         "x2",
         "x3",
-        "x4"
+        "x4",
+        "x5",
+        "x6",
+        "x7"
       ],
       "settings": {
         "bg": "#f7fafa",
         "eyebrow": "No tools, nothing else to buy",
         "heading": "Everything in the box",
-        "note": "Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s.",
-        "image_caption": "Exactly what ships",
-        "foot": "Nothing else to buy. Unbox it and go."
+        "foot": "Nothing else to buy. Unbox it and go.",
+        "note": "Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s."
       }
     },
     "gallery": {
@@ -196,29 +232,61 @@
         "g1": {
           "type": "image",
           "settings": {
-            "image": "shopify://shop_images/helios-sg-detail-3.png",
-            "alt": "HELIOS Super Glide, what arrives in the box"
+            "image": "shopify://shop_images/hf_20260823_141821_7b744c1c-7964-4108-a5d3-00df714e3e53.png",
+            "alt": "HELIOS Super Glide floating on a pool"
           }
         },
         "g2": {
           "type": "image",
           "settings": {
-            "image": "shopify://shop_images/helios-sg-detail-4.png",
-            "alt": "HELIOS Super Glide product view"
+            "image": "shopify://shop_images/hf_20260823_141737_f3780daa-d733-4fc4-8f58-15446ffb1965.png",
+            "alt": "Relaxing on the Super Glide in the pool"
           }
         },
         "g3": {
           "type": "image",
           "settings": {
-            "image": "shopify://shop_images/helios-sg-detail-6.png",
-            "alt": "HELIOS Super Glide on the water"
+            "image": "shopify://shop_images/hf_20260823_142125_5cbffab8-c7fe-41cb-bb45-f5e2b9c75066.png",
+            "alt": "Three Super Glides together"
+          }
+        },
+        "g4": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260823_140726_6d794636-67f2-4fd1-bca4-7639c9fb4520.png",
+            "alt": "Twin motors leaving a wake"
+          }
+        },
+        "g5": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260823_140726_72632a51-7a3a-4a9c-9080-cd46810a9ac8.png",
+            "alt": "Steering with the joystick"
+          }
+        },
+        "g6": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260823_142008_b9245515-d60d-4914-827f-51b22a38aeeb.png",
+            "alt": "A set of Super Glides on the water"
+          }
+        },
+        "g7": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/hf_20260823_140726_510b59d5-4d6b-44cb-85bd-87115ad6af67.png",
+            "alt": "Super Glide three-quarter view on water"
           }
         }
       },
       "block_order": [
         "g1",
         "g2",
-        "g3"
+        "g3",
+        "g4",
+        "g5",
+        "g6",
+        "g7"
       ],
       "settings": {
         "eyebrow": "The album",
@@ -305,7 +373,10 @@
         "step2_text": "Pool, lake, any calm water. It sits high and stays steady when you climb on.",
         "step3_title": "Grab the joysticks",
         "step3_text": "The motors do the work. You steer. Nothing to learn.",
-        "bg": "#ffffff"
+        "bg": "#ffffff",
+        "step1_image": "shopify://shop_images/hf_20260823_141631_53a330f8-0601-4cc9-9353-62565c948067.png",
+        "step2_image": "shopify://shop_images/hf_20260823_141821_7b744c1c-7964-4108-a5d3-00df714e3e53.png",
+        "step3_image": "shopify://shop_images/hf_20260823_141737_f3780daa-d733-4fc4-8f58-15446ffb1965.png"
       }
     },
     "guarantee": {

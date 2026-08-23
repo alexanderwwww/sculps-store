@@ -1,14 +1,16 @@
 {%- comment -%}
-  HELIOS — what's in the box. sections/helios-box.liquid
+  HELIOS — what's in the box, as a carousel. sections/helios-box.liquid
 
-  Rebuilt. The old version was four emoji tiles in a hairline grid and used the
-  class names .wrap, .grid and .c — all of which Horizon's global stylesheet
-  also styles, so the theme's own utilities leaked in and flattened it. Every
-  class here is prefixed hbx- so nothing upstream can touch it.
+  The previous version was a static checklist beside one photo. This shows the
+  contents the way a buyer wants to see them: one card per item, swipeable, each
+  with its own photo, so the value of the bundle is looked at rather than read.
 
-  Layout: the kit photo carries the section, an itemised checklist sits beside
-  it with quantity chips. With no photo set the list goes full width in two
-  columns rather than leaving a hole.
+  Scroll-snap does the paging, so it drags natively on a phone with no library
+  and keeps working if the script never runs. The arrows and dots are
+  progressive enhancement on top.
+
+  All classes are prefixed hbx- so Horizon's global stylesheet, which styles
+  generic names like .grid and .wrap, cannot reach in.
 {%- endcomment -%}
 {%- assign sid = section.id -%}
 {%- assign s = section.settings -%}
@@ -16,86 +18,92 @@
 <style>
   #hbx-{{ sid }}{background:{{ s.bg | default: '#F7FAFA' }};color:#0F1111;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) 0;}
+    padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) 0;overflow:hidden;}
   #hbx-{{ sid }} *{box-sizing:border-box;min-width:0;}
   #hbx-{{ sid }} .hbx-wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 var(--sp-4,21px);}
+  #hbx-{{ sid }} .hbx-head{display:flex;align-items:flex-end;justify-content:space-between;
+    gap:var(--sp-4,21px);margin-bottom:var(--sp-4,21px);}
   #hbx-{{ sid }} .hbx-eb{font-size:var(--fs-xs,12.6px);font-weight:800;letter-spacing:.12em;
     text-transform:uppercase;color:#565959;margin-bottom:var(--sp-2,8px);}
   #hbx-{{ sid }} .hbx-h{font-size:clamp(var(--fs-lg,25.9px),3.2vw,var(--fs-xl,32.9px));font-weight:800;
-    letter-spacing:-.025em;line-height:var(--lh-tight,1.236);margin:0 0 var(--sp-5,34px);}
+    letter-spacing:-.025em;line-height:var(--lh-tight,1.236);margin:0;}
+  #hbx-{{ sid }} .hbx-nav{display:flex;gap:var(--sp-2,8px);flex:none;}
+  #hbx-{{ sid }} .hbx-nav button{width:40px;height:40px;border-radius:50%;cursor:pointer;
+    border:1px solid #C5CBD5;background:#fff;color:#0F1111;display:flex;align-items:center;
+    justify-content:center;padding:0;transition:border-color .15s,opacity .15s;}
+  #hbx-{{ sid }} .hbx-nav button:hover{border-color:#0F1111;}
+  #hbx-{{ sid }} .hbx-nav button[disabled]{opacity:.32;cursor:default;}
+  #hbx-{{ sid }} .hbx-nav svg{width:17px;height:17px;}
 
-  #hbx-{{ sid }} .hbx-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--sp-5,34px);}
-  #hbx-{{ sid }} .hbx-fig{flex:1 1 380px;min-width:0;margin:0;position:relative;
-    border-radius:var(--r-md,13px);overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
-  #hbx-{{ sid }} .hbx-fig img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;}
-  #hbx-{{ sid }} .hbx-cnt{position:absolute;left:14px;bottom:14px;background:rgba(15,17,17,.86);
-    color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-    padding:6px 12px;border-radius:100px;backdrop-filter:blur(6px);}
-  #hbx-{{ sid }} .hbx-list{flex:1 1 380px;min-width:0;display:flex;flex-direction:column;}
-
-  #hbx-{{ sid }} .hbx-i{display:flex;align-items:center;gap:var(--sp-3,13px);
-    padding:var(--sp-3,13px) 0;border-bottom:1px solid #E1E5E5;}
-  #hbx-{{ sid }} .hbx-i:first-child{padding-top:0;}
-  #hbx-{{ sid }} .hbx-i:last-child{border-bottom:0;}
-  #hbx-{{ sid }} .hbx-th{flex:0 0 56px;width:56px;height:56px;border-radius:var(--r-sm,8px);
-    overflow:hidden;background:#fff;border:1px solid #E7E9E9;display:flex;
-    align-items:center;justify-content:center;font-size:24px;line-height:1;}
-  #hbx-{{ sid }} .hbx-th img{width:100%;height:100%;object-fit:cover;display:block;}
-  #hbx-{{ sid }} .hbx-tx{flex:1 1 0;min-width:0;}
+  /* Native scroll-snap carousel. Padding on the rail plus a scroll-padding of
+     the same size keeps the first and last card flush with the page gutter. */
+  #hbx-{{ sid }} .hbx-rail{display:flex;gap:var(--sp-3,13px);overflow-x:auto;
+    scroll-snap-type:x mandatory;scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding-bottom:var(--sp-2,8px);margin-inline:calc(var(--sp-4,21px) * -1);
+    padding-inline:var(--sp-4,21px);scroll-padding-inline:var(--sp-4,21px);}
+  #hbx-{{ sid }} .hbx-rail::-webkit-scrollbar{display:none;}
+  #hbx-{{ sid }} .hbx-card{flex:0 0 auto;width:clamp(210px,26vw,268px);scroll-snap-align:start;
+    background:#fff;border:1px solid #E1E5E5;border-radius:var(--r-md,13px);overflow:hidden;
+    display:flex;flex-direction:column;}
+  #hbx-{{ sid }} .hbx-ph{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#EEF2F3;}
+  #hbx-{{ sid }} .hbx-ico{width:100%;aspect-ratio:1/1;background:#EEF2F3;display:flex;
+    align-items:center;justify-content:center;font-size:44px;line-height:1;}
+  #hbx-{{ sid }} .hbx-bd{padding:var(--sp-3,13px) var(--sp-3,13px) var(--sp-4,21px);
+    display:flex;flex-direction:column;gap:4px;flex:1 1 auto;}
+  #hbx-{{ sid }} .hbx-q{align-self:flex-start;font-size:11px;font-weight:800;letter-spacing:.04em;
+    color:#0F1111;background:#F0F2F2;border-radius:100px;padding:3px 9px;}
   #hbx-{{ sid }} .hbx-t{font-size:var(--fs-base,16px);font-weight:800;line-height:1.25;
-    letter-spacing:-.01em;}
-  #hbx-{{ sid }} .hbx-d{font-size:var(--fs-xs,12.6px);color:#565959;line-height:1.45;margin-top:3px;}
-  #hbx-{{ sid }} .hbx-q{flex:0 0 auto;font-size:12px;font-weight:800;color:#0F1111;
-    background:#fff;border:1px solid #D5D9D9;border-radius:100px;padding:4px 11px;white-space:nowrap;}
+    letter-spacing:-.01em;margin-top:2px;}
+  #hbx-{{ sid }} .hbx-d{font-size:var(--fs-xs,12.6px);color:#565959;line-height:1.45;}
+
+  #hbx-{{ sid }} .hbx-dots{display:flex;justify-content:center;gap:6px;margin-top:var(--sp-3,13px);}
+  #hbx-{{ sid }} .hbx-dots i{width:6px;height:6px;border-radius:50%;background:#C5CBD5;
+    transition:background .2s,width .2s;}
+  #hbx-{{ sid }} .hbx-dots i.on{background:#0F1111;width:18px;border-radius:100px;}
 
   #hbx-{{ sid }} .hbx-foot{display:flex;align-items:center;gap:var(--sp-2,8px);
-    margin-top:var(--sp-4,21px);padding-top:var(--sp-3,13px);border-top:1px solid #E1E5E5;
-    font-size:var(--fs-sm,14.1px);font-weight:700;color:#046B53;}
+    margin-top:var(--sp-4,21px);font-size:var(--fs-sm,14.1px);font-weight:700;color:#046B53;}
   #hbx-{{ sid }} .hbx-foot svg{width:17px;height:17px;flex:none;}
-  #hbx-{{ sid }} .hbx-note{font-size:11.5px;color:#8a9192;margin-top:var(--sp-4,21px);line-height:1.55;}
-
-  /* No photo set: the checklist takes the row in two columns instead of
-     leaving half the band empty. */
-  #hbx-{{ sid }} .hbx-row.hbx-nofig .hbx-list{flex:1 1 100%;
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-    column-gap:var(--sp-5,34px);}
+  #hbx-{{ sid }} .hbx-note{font-size:11.5px;color:#8a9192;margin-top:var(--sp-3,13px);line-height:1.55;}
   @media(max-width:699px){
-    #hbx-{{ sid }} .hbx-row{gap:var(--sp-4,21px);}
-    #hbx-{{ sid }} .hbx-th{flex-basis:46px;width:46px;height:46px;font-size:20px;}
+    #hbx-{{ sid }} .hbx-nav{display:none;}
+    #hbx-{{ sid }} .hbx-card{width:76vw;}
   }
+  @media(prefers-reduced-motion:reduce){#hbx-{{ sid }} .hbx-rail{scroll-behavior:auto;}}
 </style>
   <div class="hbx-wrap">
-    {%- if s.eyebrow != blank -%}<div class="hbx-eb">{{ s.eyebrow }}</div>{%- endif -%}
-    <h2 class="hbx-h">{{ s.heading | default: 'Everything in the box' }}</h2>
-
-    <div class="hbx-row{% if s.image == blank %} hbx-nofig{% endif %}">
-      {%- if s.image != blank -%}
-        <figure class="hbx-fig">
-          <img src="{{ s.image | image_url: width: 1000 }}"
-               alt="{{ s.heading | default: 'Everything in the box' | escape }}" loading="lazy">
-          {%- if s.image_caption != blank -%}<span class="hbx-cnt">{{ s.image_caption }}</span>{%- endif -%}
-        </figure>
-      {%- endif -%}
-
-      <div class="hbx-list">
-        {%- for b in section.blocks -%}
-          <div class="hbx-i" {{ b.shopify_attributes }}>
-            <span class="hbx-th">
-              {%- if b.settings.image != blank -%}
-                <img src="{{ b.settings.image | image_url: width: 160 }}" alt="" loading="lazy">
-              {%- else -%}
-                {{ b.settings.icon }}
-              {%- endif -%}
-            </span>
-            <span class="hbx-tx">
-              <span class="hbx-t">{{ b.settings.title }}</span>
-              {%- if b.settings.note != blank -%}<span class="hbx-d">{{ b.settings.note }}</span>{%- endif -%}
-            </span>
-            {%- if b.settings.qty != blank -%}<span class="hbx-q">{{ b.settings.qty }}</span>{%- endif -%}
-          </div>
-        {%- endfor -%}
+    <div class="hbx-head">
+      <div>
+        {%- if s.eyebrow != blank -%}<div class="hbx-eb">{{ s.eyebrow }}</div>{%- endif -%}
+        <h2 class="hbx-h">{{ s.heading | default: 'Everything in the box' }}</h2>
+      </div>
+      <div class="hbx-nav">
+        <button type="button" data-prev aria-label="Previous"><svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" data-next aria-label="Next"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
+
+    <div class="hbx-rail" data-rail>
+      {%- for b in section.blocks -%}
+        <article class="hbx-card" {{ b.shopify_attributes }}>
+          {%- if b.settings.image != blank -%}
+            <img class="hbx-ph" src="{{ b.settings.image | image_url: width: 700 }}"
+                 srcset="{{ b.settings.image | image_url: width: 400 }} 400w,
+                         {{ b.settings.image | image_url: width: 700 }} 700w"
+                 sizes="268px" alt="{{ b.settings.title | escape }}" loading="lazy">
+          {%- else -%}
+            <div class="hbx-ico" aria-hidden="true">{{ b.settings.icon }}</div>
+          {%- endif -%}
+          <div class="hbx-bd">
+            {%- if b.settings.qty != blank -%}<span class="hbx-q">{{ b.settings.qty }}</span>{%- endif -%}
+            <span class="hbx-t">{{ b.settings.title }}</span>
+            {%- if b.settings.note != blank -%}<span class="hbx-d">{{ b.settings.note }}</span>{%- endif -%}
+          </div>
+        </article>
+      {%- endfor -%}
+    </div>
+    <div class="hbx-dots" data-dots aria-hidden="true"></div>
 
     {%- if s.foot != blank -%}
       <p class="hbx-foot">
@@ -105,6 +113,44 @@
     {%- endif -%}
     {%- if s.note != blank -%}<p class="hbx-note">{{ s.note }}</p>{%- endif -%}
   </div>
+
+<script>
+(function(){
+  var root=document.getElementById('hbx-{{ sid }}');
+  if(!root||root.dataset.on==='1')return; root.dataset.on='1';
+  var rail=root.querySelector('[data-rail]'),
+      cards=[].slice.call(rail.children),
+      dots=root.querySelector('[data-dots]'),
+      prev=root.querySelector('[data-prev]'), next=root.querySelector('[data-next]');
+  if(!cards.length)return;
+
+  cards.forEach(function(){ dots.appendChild(document.createElement('i')); });
+
+  function step(){
+    /* One card plus the gap, measured rather than assumed, so the clamped card
+       width and the gap token can change without touching this. */
+    if(cards.length<2)return cards[0].offsetWidth;
+    return cards[1].offsetLeft-cards[0].offsetLeft;
+  }
+  function index(){ return Math.round(rail.scrollLeft/Math.max(step(),1)); }
+
+  function sync(){
+    var i=Math.max(0,Math.min(cards.length-1,index()));
+    [].forEach.call(dots.children,function(d,k){ d.classList.toggle('on',k===i); });
+    /* A couple of pixels of slack: sub-pixel scroll positions would otherwise
+       leave the end arrow enabled forever. */
+    if(prev)prev.disabled=rail.scrollLeft<=2;
+    if(next)next.disabled=rail.scrollLeft>=rail.scrollWidth-rail.clientWidth-2;
+  }
+  rail.addEventListener('scroll',function(){
+    window.requestAnimationFrame(sync);
+  },{passive:true});
+  if(prev)prev.addEventListener('click',function(){ rail.scrollLeft-=step(); });
+  if(next)next.addEventListener('click',function(){ rail.scrollLeft+=step(); });
+  if(window.ResizeObserver) new ResizeObserver(sync).observe(rail);
+  sync();
+})();
+</script>
 </section>
 {% schema %}
 {
@@ -114,14 +160,12 @@
     { "type": "color", "id": "bg", "label": "Background", "default": "#F7FAFA" },
     { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "No tools, no extras to buy" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "Everything in the box" },
-    { "type": "image_picker", "id": "image", "label": "Kit photo", "info": "One shot of everything laid out. Without it the checklist fills the row." },
-    { "type": "text", "id": "image_caption", "label": "Caption chip on the photo" },
     { "type": "text", "id": "foot", "label": "Closing line", "default": "Nothing else to buy. Unbox it and go." },
     { "type": "textarea", "id": "note", "label": "Small print", "default": "Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s." }
   ],
   "blocks": [
-    { "type": "item", "name": "Item", "settings": [
-      { "type": "image_picker", "id": "image", "label": "Photo", "info": "Replaces the emoji." },
+    { "type": "item", "name": "Item", "limit": 12, "settings": [
+      { "type": "image_picker", "id": "image", "label": "Photo", "info": "Replaces the emoji on this card." },
       { "type": "text", "id": "icon", "label": "Emoji fallback", "default": "📦" },
       { "type": "text", "id": "title", "label": "Title", "default": "The lounger" },
       { "type": "text", "id": "note", "label": "Detail" },

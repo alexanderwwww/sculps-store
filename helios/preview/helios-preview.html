@@ -473,75 +473,105 @@
 <style>
   #hbx-box{background:#f7fafa;color:#0F1111;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) 0;}
+    padding:clamp(var(--sp-5,34px),4vw,var(--sp-6,55px)) 0;overflow:hidden;}
   #hbx-box *{box-sizing:border-box;min-width:0;}
   #hbx-box .hbx-wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 var(--sp-4,21px);}
+  #hbx-box .hbx-head{display:flex;align-items:flex-end;justify-content:space-between;
+    gap:var(--sp-4,21px);margin-bottom:var(--sp-4,21px);}
   #hbx-box .hbx-eb{font-size:var(--fs-xs,12.6px);font-weight:800;letter-spacing:.12em;
     text-transform:uppercase;color:#565959;margin-bottom:var(--sp-2,8px);}
   #hbx-box .hbx-h{font-size:clamp(var(--fs-lg,25.9px),3.2vw,var(--fs-xl,32.9px));font-weight:800;
-    letter-spacing:-.025em;line-height:var(--lh-tight,1.236);margin:0 0 var(--sp-5,34px);}
+    letter-spacing:-.025em;line-height:var(--lh-tight,1.236);margin:0;}
+  #hbx-box .hbx-nav{display:flex;gap:var(--sp-2,8px);flex:none;}
+  #hbx-box .hbx-nav button{width:40px;height:40px;border-radius:50%;cursor:pointer;
+    border:1px solid #C5CBD5;background:#fff;color:#0F1111;display:flex;align-items:center;
+    justify-content:center;padding:0;transition:border-color .15s,opacity .15s;}
+  #hbx-box .hbx-nav button:hover{border-color:#0F1111;}
+  #hbx-box .hbx-nav button[disabled]{opacity:.32;cursor:default;}
+  #hbx-box .hbx-nav svg{width:17px;height:17px;}
 
-  #hbx-box .hbx-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--sp-5,34px);}
-  #hbx-box .hbx-fig{flex:1 1 380px;min-width:0;margin:0;position:relative;
-    border-radius:var(--r-md,13px);overflow:hidden;background:#fff;border:1px solid #E7E9E9;}
-  #hbx-box .hbx-fig img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;}
-  #hbx-box .hbx-cnt{position:absolute;left:14px;bottom:14px;background:rgba(15,17,17,.86);
-    color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-    padding:6px 12px;border-radius:100px;backdrop-filter:blur(6px);}
-  #hbx-box .hbx-list{flex:1 1 380px;min-width:0;display:flex;flex-direction:column;}
-
-  #hbx-box .hbx-i{display:flex;align-items:center;gap:var(--sp-3,13px);
-    padding:var(--sp-3,13px) 0;border-bottom:1px solid #E1E5E5;}
-  #hbx-box .hbx-i:first-child{padding-top:0;}
-  #hbx-box .hbx-i:last-child{border-bottom:0;}
-  #hbx-box .hbx-th{flex:0 0 56px;width:56px;height:56px;border-radius:var(--r-sm,8px);
-    overflow:hidden;background:#fff;border:1px solid #E7E9E9;display:flex;
-    align-items:center;justify-content:center;font-size:24px;line-height:1;}
-  #hbx-box .hbx-th img{width:100%;height:100%;object-fit:cover;display:block;}
-  #hbx-box .hbx-tx{flex:1 1 0;min-width:0;}
+  /* Native scroll-snap carousel. Padding on the rail plus a scroll-padding of
+     the same size keeps the first and last card flush with the page gutter. */
+  #hbx-box .hbx-rail{display:flex;gap:var(--sp-3,13px);overflow-x:auto;
+    scroll-snap-type:x mandatory;scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding-bottom:var(--sp-2,8px);margin-inline:calc(var(--sp-4,21px) * -1);
+    padding-inline:var(--sp-4,21px);scroll-padding-inline:var(--sp-4,21px);}
+  #hbx-box .hbx-rail::-webkit-scrollbar{display:none;}
+  #hbx-box .hbx-card{flex:0 0 auto;width:clamp(210px,26vw,268px);scroll-snap-align:start;
+    background:#fff;border:1px solid #E1E5E5;border-radius:var(--r-md,13px);overflow:hidden;
+    display:flex;flex-direction:column;}
+  #hbx-box .hbx-ph{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#EEF2F3;}
+  #hbx-box .hbx-ico{width:100%;aspect-ratio:1/1;background:#EEF2F3;display:flex;
+    align-items:center;justify-content:center;font-size:44px;line-height:1;}
+  #hbx-box .hbx-bd{padding:var(--sp-3,13px) var(--sp-3,13px) var(--sp-4,21px);
+    display:flex;flex-direction:column;gap:4px;flex:1 1 auto;}
+  #hbx-box .hbx-q{align-self:flex-start;font-size:11px;font-weight:800;letter-spacing:.04em;
+    color:#0F1111;background:#F0F2F2;border-radius:100px;padding:3px 9px;}
   #hbx-box .hbx-t{font-size:var(--fs-base,16px);font-weight:800;line-height:1.25;
-    letter-spacing:-.01em;}
-  #hbx-box .hbx-d{font-size:var(--fs-xs,12.6px);color:#565959;line-height:1.45;margin-top:3px;}
-  #hbx-box .hbx-q{flex:0 0 auto;font-size:12px;font-weight:800;color:#0F1111;
-    background:#fff;border:1px solid #D5D9D9;border-radius:100px;padding:4px 11px;white-space:nowrap;}
+    letter-spacing:-.01em;margin-top:2px;}
+  #hbx-box .hbx-d{font-size:var(--fs-xs,12.6px);color:#565959;line-height:1.45;}
+
+  #hbx-box .hbx-dots{display:flex;justify-content:center;gap:6px;margin-top:var(--sp-3,13px);}
+  #hbx-box .hbx-dots i{width:6px;height:6px;border-radius:50%;background:#C5CBD5;
+    transition:background .2s,width .2s;}
+  #hbx-box .hbx-dots i.on{background:#0F1111;width:18px;border-radius:100px;}
 
   #hbx-box .hbx-foot{display:flex;align-items:center;gap:var(--sp-2,8px);
-    margin-top:var(--sp-4,21px);padding-top:var(--sp-3,13px);border-top:1px solid #E1E5E5;
-    font-size:var(--fs-sm,14.1px);font-weight:700;color:#046B53;}
+    margin-top:var(--sp-4,21px);font-size:var(--fs-sm,14.1px);font-weight:700;color:#046B53;}
   #hbx-box .hbx-foot svg{width:17px;height:17px;flex:none;}
-  #hbx-box .hbx-note{font-size:11.5px;color:#8a9192;margin-top:var(--sp-4,21px);line-height:1.55;}
-
-  /* No photo set: the checklist takes the row in two columns instead of
-     leaving half the band empty. */
-  #hbx-box .hbx-row.hbx-nofig .hbx-list{flex:1 1 100%;
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-    column-gap:var(--sp-5,34px);}
+  #hbx-box .hbx-note{font-size:11.5px;color:#8a9192;margin-top:var(--sp-3,13px);line-height:1.55;}
   @media(max-width:699px){
-    #hbx-box .hbx-row{gap:var(--sp-4,21px);}
-    #hbx-box .hbx-th{flex-basis:46px;width:46px;height:46px;font-size:20px;}
+    #hbx-box .hbx-nav{display:none;}
+    #hbx-box .hbx-card{width:76vw;}
   }
+  @media(prefers-reduced-motion:reduce){#hbx-box .hbx-rail{scroll-behavior:auto;}}
 </style>
-  <div class="hbx-wrap"><div class="hbx-eb">No tools, nothing else to buy</div><h2 class="hbx-h">Everything in the box</h2>
+  <div class="hbx-wrap">
+    <div class="hbx-head">
+      <div><div class="hbx-eb">No tools, nothing else to buy</div><h2 class="hbx-h">Everything in the box</h2>
+      </div>
+      <div class="hbx-nav">
+        <button type="button" data-prev aria-label="Previous"><svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" data-next aria-label="Next"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
 
-    <div class="hbx-row"><figure class="hbx-fig">
-          <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
-               alt="Everything in the box" loading="lazy"><span class="hbx-cnt">Exactly what ships</span></figure><div class="hbx-list"><div class="hbx-i" >
-            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
-            <span class="hbx-tx">
-              <span class="hbx-t">The lounger</span><span class="hbx-d">Heavy-duty PVC, padded headrest, two cup holders</span></span><span class="hbx-q">× 1</span></div><div class="hbx-i" >
-            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
-            <span class="hbx-tx">
-              <span class="hbx-t">Twin motors</span><span class="hbx-d">Joystick steering. Forward, reverse, spin</span></span><span class="hbx-q">× 2</span></div><div class="hbx-i" >
-            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
-            <span class="hbx-tx">
-              <span class="hbx-t">Battery and charger</span><span class="hbx-d">Lasts 3-4 hours of use per charge</span></span><span class="hbx-q">× 1</span></div><div class="hbx-i" >
-            <span class="hbx-th"><img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>" alt="" loading="lazy"></span>
-            <span class="hbx-tx">
-              <span class="hbx-t">Inflation nozzle</span><span class="hbx-d">Ready in 5 minutes, no pump to buy</span></span><span class="hbx-q">× 1</span></div></div>
-    </div><p class="hbx-foot">
+    <div class="hbx-rail" data-rail><article class="hbx-card" ><img class="hbx-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 400w,
+                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w"
+                 sizes="268px" alt="The lounger" loading="lazy"><div class="hbx-bd"><span class="hbx-q">× 1</span><span class="hbx-t">The lounger</span><span class="hbx-d">Heavy-duty PVC, padded headrest, two cup holders</span></div>
+        </article><article class="hbx-card" ><img class="hbx-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 400w,
+                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w"
+                 sizes="268px" alt="Twin electric motors" loading="lazy"><div class="hbx-bd"><span class="hbx-q">× 2</span><span class="hbx-t">Twin electric motors</span><span class="hbx-d">Joystick steering — forward, reverse, spin</span></div>
+        </article><article class="hbx-card" ><img class="hbx-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 400w,
+                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w"
+                 sizes="268px" alt="360° joystick controls" loading="lazy"><div class="hbx-bd"><span class="hbx-q">× 2</span><span class="hbx-t">360° joystick controls</span><span class="hbx-d">One on each armrest, thumb control</span></div>
+        </article><article class="hbx-card" ><img class="hbx-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 400w,
+                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w"
+                 sizes="268px" alt="Padded headrest" loading="lazy"><div class="hbx-bd"><span class="hbx-q">× 1</span><span class="hbx-t">Padded headrest</span><span class="hbx-d">Plush and supportive, built in</span></div>
+        </article><article class="hbx-card" ><img class="hbx-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 400w,
+                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w"
+                 sizes="268px" alt="Dual cup holders" loading="lazy"><div class="hbx-bd"><span class="hbx-q">× 2</span><span class="hbx-t">Dual cup holders</span><span class="hbx-d">Keeps your drink where you can reach it</span></div>
+        </article><article class="hbx-card" ><img class="hbx-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 400w,
+                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w"
+                 sizes="268px" alt="Battery and charger" loading="lazy"><div class="hbx-bd"><span class="hbx-q">× 1</span><span class="hbx-t">Battery and charger</span><span class="hbx-d">3–4 hours of use per charge</span></div>
+        </article><article class="hbx-card" ><img class="hbx-ph" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                 srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 400w,
+                         data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 700w"
+                 sizes="268px" alt="Inflation nozzle" loading="lazy"><div class="hbx-bd"><span class="hbx-q">× 1</span><span class="hbx-t">Inflation nozzle</span><span class="hbx-d">Ready in five minutes, no pump to buy</span></div>
+        </article></div>
+    <div class="hbx-dots" data-dots aria-hidden="true"></div><p class="hbx-foot">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         Nothing else to buy. Unbox it and go.
       </p><p class="hbx-note">Recreational leisure product. Not a life-saving device. Adult supervision required for under-16s.</p></div>
+
+
 </section>
 
 
@@ -614,25 +644,37 @@
     #hgl-gallery .hgl-prev{left:8px;} #hgl-gallery .hgl-next{right:8px;}
   }
 </style>
-  <div class="hgl-wrap"><div class="hgl-eb">The album</div><h2 class="hgl-h">On the water.</h2><div class="hgl-m" data-n="3" id="hgl-m-gallery"><button type="button" class="hgl-t" data-i="1"
+  <div class="hgl-wrap"><div class="hgl-eb">The album</div><h2 class="hgl-h">On the water.</h2><div class="hgl-m" data-n="5" id="hgl-m-gallery"><button type="button" class="hgl-t" data-i="1"
                     aria-label="Open photo 1" >
-              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543"
-                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 600w,
-                           https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543 1200w"
+              <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                   srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 600w,
+                           data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1200w"
                    sizes="(min-width:700px) 590px, 100vw"
-                   alt="HELIOS Super Glide, what arrives in the box" loading="lazy"></button><button type="button" class="hgl-t" data-i="2"
+                   alt="HELIOS Super Glide floating on a pool" loading="lazy"></button><button type="button" class="hgl-t" data-i="2"
                     aria-label="Open photo 2" >
-              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543"
-                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 600w,
-                           https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-4.png?v=1785072543 1200w"
+              <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                   srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 600w,
+                           data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1200w"
                    sizes="(min-width:700px) 590px, 100vw"
-                   alt="HELIOS Super Glide product view" loading="lazy"></button><button type="button" class="hgl-t" data-i="3"
+                   alt="Relaxing on the Super Glide in the pool" loading="lazy"></button><button type="button" class="hgl-t" data-i="3"
                     aria-label="Open photo 3" >
-              <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543"
-                   srcset="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 600w,
-                           https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-6.png?v=1785072543 1200w"
+              <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                   srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 600w,
+                           data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1200w"
                    sizes="(min-width:700px) 590px, 100vw"
-                   alt="HELIOS Super Glide on the water" loading="lazy"></button></div>
+                   alt="Three Super Glides together" loading="lazy"></button><button type="button" class="hgl-t" data-i="4"
+                    aria-label="Open photo 4" >
+              <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                   srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 600w,
+                           data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1200w"
+                   sizes="(min-width:700px) 590px, 100vw"
+                   alt="Twin motors leaving a wake" loading="lazy"></button><button type="button" class="hgl-t" data-i="5"
+                    aria-label="Open photo 5" >
+              <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg>"
+                   srcset="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 600w,
+                           data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='%23eef2f4'/><text x='50%' y='50%' fill='%2390a0aa' font-family='sans-serif' font-size='30' text-anchor='middle'>image</text></svg> 1200w"
+                   sizes="(min-width:700px) 590px, 100vw"
+                   alt="Steering with the joystick" loading="lazy"><span class="hgl-more">+2</span></button></div>
   </div>
 
   <div class="hgl-lb" id="hgl-lb-gallery" role="dialog" aria-modal="true" aria-label="Photo viewer">
