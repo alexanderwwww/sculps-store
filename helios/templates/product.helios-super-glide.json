@@ -4,7 +4,7 @@
       "type": "helios-bar",
       "settings": {
         "message": "Summer sale. 1+1 Super Glide, get two and pay for one",
-        "deadline": "2026-08-16",
+        "deadline": "",
         "link_text": "Shop now",
         "link_url": "#buy",
         "dismissible": true,
@@ -32,19 +32,59 @@
     "buy": {
       "type": "helios-buy",
       "blocks": {
-        "o1": { "type": "bundle", "settings": { "variant_id": "48443521106161", "label": "2 Super Glides", "note": "Buy one, the second is free", "gift": "", "gift_variant_id": "", "save": "SAVE $259.99", "price": "$259.99", "compare": "$519.98" } },
-        "o2": { "type": "bundle", "settings": { "variant_id": "48443521138929", "label": "3 Super Glides", "note": "You plus two more seats", "gift": "+ FREE Jet Ski", "gift_variant_id": "48443522285809", "save": "SAVE $429.98", "price": "$349.99", "compare": "$779.97" } },
-        "o3": { "type": "bundle", "settings": { "variant_id": "48443521171697", "label": "4 Super Glides", "note": "The whole crew", "gift": "+ FREE Jet Ski", "gift_variant_id": "48443522285809", "save": "SAVE $579.97", "price": "$459.99", "compare": "$1,039.96" } }
+        "o1": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "48443521106161",
+            "label": "2 Super Glides",
+            "note": "Buy one, the second is free",
+            "gift": "",
+            "gift_variant_id": "",
+            "save": "SAVE $259.99",
+            "price": "$259.99",
+            "compare": "$519.98"
+          }
+        },
+        "o2": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "48443521138929",
+            "label": "3 Super Glides",
+            "note": "You plus two more seats",
+            "gift": "+ FREE Jet Ski",
+            "gift_variant_id": "48443522285809",
+            "save": "SAVE $429.98",
+            "price": "$349.99",
+            "compare": "$779.97"
+          }
+        },
+        "o3": {
+          "type": "bundle",
+          "settings": {
+            "variant_id": "48443521171697",
+            "label": "4 Super Glides",
+            "note": "The whole crew",
+            "gift": "+ FREE Jet Ski",
+            "gift_variant_id": "48443522285809",
+            "save": "SAVE $579.97",
+            "price": "$459.99",
+            "compare": "$1,039.96"
+          }
+        }
       },
-      "block_order": ["o1", "o2", "o3"],
+      "block_order": [
+        "o1",
+        "o2",
+        "o3"
+      ],
       "settings": {
         "product": "helios-super-glide-motorized-water-lounger",
         "width": 1200,
         "bg": "#ffffff",
         "anchor": "buy",
         "title": "A motorized water lounger, because summer memories do not make themselves.",
-        "rating": "4.8",
-        "review_count": "3,912",
+        "rating": "",
+        "review_count": "",
         "reviews_anchor": "#reviews",
         "b1": "Twin motors move you. No paddling, no kicking, no effort",
         "b2": "Holds 250-300 lb, padded headrest, dual cup holders",
@@ -66,12 +106,45 @@
     "box": {
       "type": "helios-box",
       "blocks": {
-        "x1": { "type": "item", "settings": { "icon": "🛥️", "title": "The lounger", "note": "Heavy-duty PVC, padded headrest, two cup holders" } },
-        "x2": { "type": "item", "settings": { "icon": "⚡", "title": "Twin motors", "note": "Joystick steering. Forward, reverse, spin" } },
-        "x3": { "type": "item", "settings": { "icon": "🔋", "title": "Battery and charger", "note": "About 60 minutes per charge" } },
-        "x4": { "type": "item", "settings": { "icon": "💨", "title": "Inflation nozzle", "note": "Ready in 5 minutes, no pump to buy" } }
+        "x1": {
+          "type": "item",
+          "settings": {
+            "icon": "🛥️",
+            "title": "The lounger",
+            "note": "Heavy-duty PVC, padded headrest, two cup holders"
+          }
+        },
+        "x2": {
+          "type": "item",
+          "settings": {
+            "icon": "⚡",
+            "title": "Twin motors",
+            "note": "Joystick steering. Forward, reverse, spin"
+          }
+        },
+        "x3": {
+          "type": "item",
+          "settings": {
+            "icon": "🔋",
+            "title": "Battery and charger",
+            "note": "About 60 minutes per charge"
+          }
+        },
+        "x4": {
+          "type": "item",
+          "settings": {
+            "icon": "💨",
+            "title": "Inflation nozzle",
+            "note": "Ready in 5 minutes, no pump to buy"
+          }
+        }
       },
-      "block_order": ["x1", "x2", "x3", "x4"],
+      "block_order": [
+        "x1",
+        "x2",
+        "x3",
+        "x4"
+      ],
       "settings": {
         "bg": "#ffffff",
         "eyebrow": "No tools, nothing else to buy",
@@ -81,15 +154,18 @@
     },
     "helios_clear_faq_ftqD37": {
       "type": "helios-clear-faq",
-      "settings": { "eyebrow": "Straight answers", "heading": "The things people actually ask." }
+      "settings": {
+        "eyebrow": "Straight answers",
+        "heading": "The things people actually ask."
+      }
     },
     "helios_reviews_carousel_9zVU7c": {
       "type": "helios-reviews-carousel",
       "settings": {
-        "eyebrow": "★★★★★ Verified buyers",
+        "eyebrow": "",
         "heading": "Real photos from real backyards.",
-        "rating": "4.8",
-        "review_count": "3,912",
+        "rating": "",
+        "review_count": "",
         "speed": 60,
         "bg": "#ffffff",
         "card": "#ffffff",
@@ -100,20 +176,48 @@
     "tiktok": {
       "type": "helios-tiktok",
       "blocks": {
-        "c1": { "type": "clip", "settings": { "video": "shopify://files/videos/DownReels_20260627_044813.mp4", "handle": "", "caption": "" } },
-        "c2": { "type": "clip", "settings": { "video": "shopify://files/videos/202607082326.mp4", "handle": "", "caption": "" } },
-        "c3": { "type": "clip", "settings": { "video": "shopify://files/videos/hf_20260723_121356_33745ebf-10ee-43fe-a809-116377684daa.mp4", "handle": "", "caption": "" } }
+        "c1": {
+          "type": "clip",
+          "settings": {
+            "video": "shopify://files/videos/DownReels_20260627_044813.mp4",
+            "handle": "",
+            "caption": ""
+          }
+        },
+        "c2": {
+          "type": "clip",
+          "settings": {
+            "video": "shopify://files/videos/202607082326.mp4",
+            "handle": "",
+            "caption": ""
+          }
+        },
+        "c3": {
+          "type": "clip",
+          "settings": {
+            "video": "shopify://files/videos/hf_20260723_121356_33745ebf-10ee-43fe-a809-116377684daa.mp4",
+            "handle": "",
+            "caption": ""
+          }
+        }
       },
-      "block_order": ["c1", "c2", "c3"],
-      "settings": { "eyebrow": "Real customers", "heading": "See it on the water." }
+      "block_order": [
+        "c1",
+        "c2",
+        "c3"
+      ],
+      "settings": {
+        "eyebrow": "Real customers",
+        "heading": "See it on the water."
+      }
     },
     "reviews": {
       "type": "helios-reviews",
       "settings": {
-        "eyebrow": "★ 4.8 average",
-        "heading": "3,912 verified reviews.",
-        "rating": "4.8",
-        "review_count": "3,912",
+        "eyebrow": "",
+        "heading": "Real photos from real backyards.",
+        "rating": "",
+        "review_count": "",
         "bg": "#f7fafa",
         "speed": 70,
         "dist_5": 86,
@@ -121,24 +225,76 @@
         "dist_3": 2,
         "dist_2": 1,
         "dist_1": 0,
-        "bulk": "Marcus T. | 5 | Spent the whole weekend racing these around the lake. The joysticks are actually responsive, spin, reverse, all of it. Everyone wanted a turn. | Tampa, FL | 34 | \nJenna R. | 5 | Got it for his birthday and he has not gotten out of the pool since. Glides smooth, holds him no problem. | Scottsdale, AZ | 51 | \nDevon W. | 5 | Skeptical a float could move you, but the dual motors have real power. Cruised across the whole lake and back on one charge. | Austin, TX | 28 | \nPriya S. | 4 | Super relaxing to drift around without paddling. Takes a few minutes with a pump, but the battery easily lasted an afternoon. | Orlando, FL | 19 | \nMarcus D. | 5 | Everyone at the BBQ lost their minds. Holds a grown man easily and the steering is more precise than I expected. | Las Vegas, NV | 42 | \nOlivia P. | 5 | I overthought this for a week. Do not. It is comfortable, it actually moves you, and it is the most fun thing in our backyard. | Naples, FL | 37 | \nRyan B. | 5 | Total head-turner on the lake. Stable, comfy, and surprisingly quick. | Lake Tahoe, CA | 25 | \nHannah G. | 5 | The sunshade makes it. Read floating in the shade all afternoon. | Dallas, TX | 31 |"
+        "bulk": ""
       }
     },
     "gallery": {
       "type": "helios-gallery",
       "blocks": {
-        "g1": { "type": "image", "settings": { "image": "shopify://shop_images/helios-sg-detail-3.png", "alt": "HELIOS Super Glide" } },
-        "g2": { "type": "image", "settings": { "image": "shopify://shop_images/helios-sg-detail-4.png", "alt": "HELIOS Super Glide product view" } },
-        "g3": { "type": "image", "settings": { "image": "shopify://shop_images/helios-sg-detail-6.png", "alt": "HELIOS Super Glide on the water" } },
-        "g4": { "type": "image", "settings": { "image": "shopify://shop_images/helios-sg-detail-1.jpg", "alt": "HELIOS Super Glide detail" } },
-        "g5": { "type": "image", "settings": { "image": "shopify://shop_images/helios-sg-detail-2.avif", "alt": "HELIOS Super Glide detail" } },
-        "g6": { "type": "image", "settings": { "image": "shopify://shop_images/helios-sg-detail-7.avif", "alt": "HELIOS Super Glide detail" } }
+        "g1": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/helios-sg-detail-3.png",
+            "alt": "HELIOS Super Glide"
+          }
+        },
+        "g2": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/helios-sg-detail-4.png",
+            "alt": "HELIOS Super Glide product view"
+          }
+        },
+        "g3": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/helios-sg-detail-6.png",
+            "alt": "HELIOS Super Glide on the water"
+          }
+        },
+        "g4": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/helios-sg-detail-1.jpg",
+            "alt": "HELIOS Super Glide detail"
+          }
+        },
+        "g5": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/helios-sg-detail-2.avif",
+            "alt": "HELIOS Super Glide detail"
+          }
+        },
+        "g6": {
+          "type": "image",
+          "settings": {
+            "image": "shopify://shop_images/helios-sg-detail-7.avif",
+            "alt": "HELIOS Super Glide detail"
+          }
+        }
       },
-      "block_order": ["g1", "g2", "g3", "g4", "g5", "g6"],
+      "block_order": [
+        "g1",
+        "g2",
+        "g3",
+        "g4",
+        "g5",
+        "g6"
+      ],
       "settings": {
-        "width": 1200, "cols": 3, "cols_m": "1", "ratio": "1/1", "ratio_m": "1/1",
-        "pad": 0, "pad_m": 16, "gap": 14, "radius": 8,
-        "page_bg": "#ffffff", "tile_bg": "#f0f2f2", "border": "#d5d9d9"
+        "width": 1200,
+        "cols": 3,
+        "cols_m": "1",
+        "ratio": "1/1",
+        "ratio_m": "1/1",
+        "pad": 0,
+        "pad_m": 16,
+        "gap": 14,
+        "radius": 8,
+        "page_bg": "#ffffff",
+        "tile_bg": "#f0f2f2",
+        "border": "#d5d9d9"
       }
     },
     "howitworks": {
@@ -165,7 +321,10 @@
     },
     "faq": {
       "type": "helios-faq",
-      "settings": { "eyebrow": "FAQ", "heading": "Good to know." }
+      "settings": {
+        "eyebrow": "FAQ",
+        "heading": "Good to know."
+      }
     },
     "footer": {
       "type": "helios-footer",
@@ -174,7 +333,7 @@
         "tagline": "<p>Built for real backyards. Tracked shipping on every order, 30-day returns, and a person who actually answers your email.</p>",
         "positioning": "Motorized water gear, made simple.",
         "rank_text": "HOLDS 250-300 LB, DUAL MOTORS, 60 MIN PER CHARGE",
-        "rating_text": "4.8 from 3,912 verified riders",
+        "rating_text": "",
         "nl_heading": "Get up to 15% off your first order",
         "nl_sub": "Enter your email for 10% off, add your phone and get 15%.",
         "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
@@ -197,9 +356,7 @@
     "buy",
     "box",
     "helios_clear_faq_ftqD37",
-    "helios_reviews_carousel_9zVU7c",
     "tiktok",
-    "reviews",
     "gallery",
     "howitworks",
     "guarantee",

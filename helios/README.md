@@ -17,7 +17,26 @@ custom `helios-*` section plus the homepage and product templates.
 - `helios-cart-recover.liquid` / `helios-welcome-popup.liquid` — uploaded via staged
   upload, body not in the transcript. Both were non-essential add-ons.
 
-## Before you reuse this anywhere — REQUIRED FIXES
+## Compliance cleanup — ALREADY APPLIED
+
+The claims that made this store high-risk have been removed:
+
+- **Expired birthday promo** — countdown deadline (2026-08-16) cleared, bar
+  message changed to the evergreen 1+1 offer, "2-FOR-1 BIRTHDAY DEAL" and
+  "ENDS AUG 16" labels replaced.
+- **"21.622 units sold" / "No.1 seller / merchant in America"** — badge images,
+  alt text and the whole badge section removed from both pages and from the
+  section defaults.
+- **Invented ratings and reviews** — "4.8", "3,912 verified reviews",
+  "★★★★★ Verified buyers" and 8 fabricated named reviews removed from both
+  templates and from the section default so they cannot come back via the
+  theme editor. Both review sections are dropped from the page order; the
+  section files remain, so add them back when you have real reviews.
+
+The review and badge sections are still in `sections/` — nothing was deleted,
+only unpublished and emptied.
+
+## Remaining fixes
 1. **Remove the "21.622 UNITS SOLD" / "NO.1 SELLER IN AMERICA" claims.**
    Locations: `templates/index.json` (badge_alt, badge section alt),
    `sections/helios-badge.liquid`, `sections/helios-buy.liquid`.

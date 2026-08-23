@@ -21,7 +21,7 @@
   #hb2-{{ sid }} .bar.gone{display:none;}
 </style>
   <div class="bar" id="hb2-b-{{ sid }}">
-    <span>{{ s.message | default: '🎂 It’s our birthday — that’s why the 1+1 Super Glide is on, until August 16' }}</span>
+    <span>{{ s.message | default: '1+1 FREE — buy one Super Glide, the second is on us' }}</span>
     {%- if s.deadline != blank -%}<span class="cd" id="hb2-c-{{ sid }}" data-end="{{ s.deadline }}">--<span class="u">left</span></span>{%- endif -%}
     {%- if s.link_text != blank -%}<a href="{{ s.link_url | default: '#buy' }}">{{ s.link_text }}</a>{%- endif -%}
     {%- if s.dismissible -%}<button class="x" type="button" aria-label="Dismiss">&times;</button>{%- endif -%}
@@ -53,8 +53,8 @@
   "name": "HELIOS Bar",
   "tag": "section",
   "settings": [
-    { "type": "text", "id": "message", "label": "Message", "default": "🎂 It’s our birthday — that’s why the 1+1 Super Glide is on, until August 16" },
-    { "type": "text", "id": "deadline", "label": "Countdown to date", "default": "2026-08-16", "info": "YYYY-MM-DD. Empty = no countdown." },
+    { "type": "text", "id": "message", "label": "Message", "default": "1+1 FREE — buy one Super Glide, the second is on us" },
+    { "type": "text", "id": "deadline", "label": "Countdown to date", "default": "", "info": "YYYY-MM-DD. Empty = no countdown." },
     { "type": "text", "id": "link_text", "label": "Link text", "default": "Shop now" },
     { "type": "text", "id": "link_url", "label": "Link URL", "default": "#buy" },
     { "type": "checkbox", "id": "dismissible", "label": "Allow dismiss", "default": true },

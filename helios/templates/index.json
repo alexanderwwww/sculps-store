@@ -12,8 +12,8 @@
     "bar": {
       "type": "helios-bar",
       "settings": {
-        "message": "🎂 It’s our birthday — that’s why we do 1+1 FREE, until August 16",
-        "deadline": "2026-08-16",
+        "message": "1+1 FREE — buy one Super Glide, the second is on us",
+        "deadline": "",
         "link_text": "Shop now",
         "link_url": "#buy",
         "dismissible": true,
@@ -102,8 +102,8 @@
         "bg": "#ffffff",
         "anchor": "buy",
         "title": "HELIOS SUPERGLIDE 1+1 FREE",
-        "rating": "4.8",
-        "review_count": "3,912",
+        "rating": "",
+        "review_count": "",
         "reviews_anchor": "#reviews",
         "big_price": "$259.99",
         "big_compare": "$519.98",
@@ -112,8 +112,8 @@
         "b1": "Twin motors move you. No paddling, no kicking, no effort",
         "b2": "Holds 250-300 lb, padded headrest, dual cup holders",
         "b3": "Ready in 5 minutes. Nozzle included, no pump to buy",
-        "deal_name": "2-FOR-1 BIRTHDAY DEAL",
-        "pop_label": "ENDS AUG 16",
+        "deal_name": "2-FOR-1 DEAL",
+        "pop_label": "",
         "step1": "Pick your deal",
         "step2": "Tap Add to cart",
         "step3": "We ship it free",
@@ -125,18 +125,18 @@
         "t2": "30-day returns",
         "t3": "Tracked",
         "t4": "Secure checkout",
-        "badge_url": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-small.png?v=1785731571",
-        "badge_alt": "No.1 seller badge, 21.622 units sold",
-        "badge_w": 180
+        "badge_url": "",
+        "badge_alt": "",
+        "badge_w": ""
       }
     },
     "reviewcarousel": {
       "type": "helios-reviews-carousel",
       "settings": {
-        "eyebrow": "★★★★★ Verified buyers",
+        "eyebrow": "",
         "heading": "Real photos from real backyards.",
-        "rating": "4.8",
-        "review_count": "3,912",
+        "rating": "",
+        "review_count": "",
         "speed": 60,
         "bg": "#ffffff",
         "card": "#ffffff",
@@ -297,10 +297,10 @@
     "reviews": {
       "type": "helios-reviews",
       "settings": {
-        "eyebrow": "★ 4.8 average",
-        "heading": "3,912 verified reviews.",
-        "rating": "4.8",
-        "review_count": "3,912",
+        "eyebrow": "",
+        "heading": "Real photos from real backyards.",
+        "rating": "",
+        "review_count": "",
         "bg": "#f7fafa",
         "speed": 70,
         "dist_5": 86,
@@ -308,7 +308,7 @@
         "dist_3": 2,
         "dist_2": 1,
         "dist_1": 0,
-        "bulk": "Marcus T. | 5 | Spent the whole weekend racing these around the lake. The joysticks are actually responsive. Everyone wanted a turn. | Tampa, FL | 34 | \nJenna R. | 5 | Got it for his birthday and he has not gotten out of the pool since. Glides smooth, holds him no problem. | Scottsdale, AZ | 51 | \nDevon W. | 5 | Skeptical a float could move you, but the dual motors have real power. Cruised across the whole lake and back on one charge. | Austin, TX | 28 | \nPriya S. | 4 | Super relaxing to drift around without paddling. The battery easily lasted an afternoon. | Orlando, FL | 19 | \nMarcus D. | 5 | Everyone at the BBQ lost their minds. Holds a grown man easily and the steering is more precise than I expected. | Las Vegas, NV | 42 | \nOlivia P. | 5 | I overthought this for a week. Do not. It is comfortable, it actually moves you, and it is the most fun thing in our backyard. | Naples, FL | 37 | \nRyan B. | 5 | Total head-turner on the lake. Stable, comfy, and surprisingly quick. | Lake Tahoe, CA | 25 | \nHannah G. | 5 | The sunshade makes it. Read floating in the shade all afternoon. | Dallas, TX | 31 |"
+        "bulk": ""
       }
     },
     "howitworks": {
@@ -337,10 +337,12 @@
       "type": "helios-badge",
       "settings": {
         "image_url": "https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-big.png?v=1785731571",
-        "alt": "No.1 merchant in America, 21.622 units sold",
+        "alt": "",
         "width": 1000,
         "radius": 12,
-        "bg": "#ffffff"
+        "bg": "#ffffff",
+        "image": "",
+        "url": ""
       }
     },
     "footer": {
@@ -350,7 +352,7 @@
         "tagline": "<p>Built for real backyards. Tracked shipping on every order, 30-day returns, and a person who actually answers your email.</p>",
         "positioning": "Motorized water gear, made simple.",
         "rank_text": "HOLDS 250-300 LB, DUAL MOTORS, 3-4 HOURS PER CHARGE",
-        "rating_text": "4.8 from 3,912 verified riders",
+        "rating_text": "",
         "nl_heading": "Get up to 15% off your first order",
         "nl_sub": "Enter your email for 10% off, add your phone and get 15%.",
         "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
@@ -371,15 +373,12 @@
     "bar",
     "nav",
     "buy",
-    "reviewcarousel",
     "box",
     "gallery",
     "clearfaq",
     "tiktok",
-    "reviews",
     "howitworks",
     "guarantee",
-    "badge",
     "footer",
     "sticky"
   ]
