@@ -1,71 +1,36 @@
 {
   "sections": {
-    "utility": {
-      "type": "helios-bb-utility",
-      "blocks": {
-        "u1": {
-          "type": "item",
-          "settings": {
-            "icon": "truck",
-            "text": "FREE US SHIPPING"
-          }
-        },
-        "u2": {
-          "type": "item",
-          "settings": {
-            "icon": "return",
-            "text": "30-DAY RETURNS"
-          }
-        },
-        "u3": {
-          "type": "item",
-          "settings": {
-            "icon": "box",
-            "text": "TRACKED DELIVERY"
-          }
-        }
-      },
-      "block_order": [
-        "u1",
-        "u2",
-        "u3"
-      ],
-      "settings": {}
+    "bar": {
+      "type": "helios-bar",
+      "settings": {
+        "message": "1+1 FREE — buy one Super Glide, the second is on us",
+        "deadline": "",
+        "link_text": "Shop now",
+        "link_url": "#buy",
+        "dismissible": true,
+        "bg": "#0f1111",
+        "fg": "#ffffff"
+      }
     },
-    "header": {
-      "type": "helios-bb-header",
-      "blocks": {
-        "n1": {
-          "type": "link",
-          "settings": {
-            "label": "Shop",
-            "link": "/"
-          }
-        },
-        "n2": {
-          "type": "link",
-          "settings": {
-            "label": "Track order",
-            "link": "/pages/track"
-          }
-        },
-        "n3": {
-          "type": "link",
-          "settings": {
-            "label": "Contact",
-            "link": "/pages/contact"
-          }
-        }
-      },
-      "block_order": [
-        "n1",
-        "n2",
-        "n3"
-      ],
+    "nav": {
+      "type": "helios-nav",
       "settings": {
         "logo_text": "HELIOS",
+        "logo_h": 26,
+        "height": 58,
+        "sticky": true,
+        "bg": "#ffffff",
+        "fg": "#0f1111",
+        "l1": "Super Glide",
+        "l1_url": "/",
+        "l2": "Track order",
+        "l2_url": "/pages/track",
+        "l3": "Reviews",
+        "l3_url": "/#reviews",
+        "l4": "FAQ",
+        "l4_url": "/#faq",
         "cta_text": "Shop now",
-        "cta_link": "/"
+        "cta_url": "/#buy"
       }
     },
     "map": {
@@ -193,32 +158,23 @@
       }
     },
     "footer": {
-      "type": "helios-bb-footer",
-      "blocks": {
-        "c1": {
-          "type": "col",
-          "settings": {
-            "title": "Help",
-            "menu": "footer"
-          }
-        }
-      },
-      "block_order": [
-        "c1"
-      ],
+      "type": "helios-footer",
       "settings": {
-        "logo_text": "HELIOS",
-        "tagline": "Motorized water loungers. Ready in five minutes.",
-        "legal_title": "Legal",
-        "contact": "helios.us.store@gmail.com",
-        "note": "Ships from the US",
-        "disclaimer": "<p>Recreational leisure product. Not a life-saving device or personal flotation device. Adult supervision required for users under 16. Use only in calm, supervised water and follow all local waterway rules.</p>"
+        "brand": "HELIOS",
+        "tagline": "<p>Built for real backyards. Tracked shipping on every order, 30-day returns, and a person who actually answers your email.</p>",
+        "positioning": "Motorized water gear, made simple.",
+        "rank_text": "HOLDS 250-300 LB, DUAL MOTORS, 3-4 HOURS PER CHARGE",
+        "rating_text": "4.8 from 3,912 verified riders",
+        "nl_heading": "Get up to 15% off your first order",
+        "nl_sub": "Enter your email for 10% off, add your phone and get 15%.",
+        "nl_note": "By signing up you agree to receive emails/texts. Unsubscribe anytime.",
+        "copyright": "© 2026 HELIOS"
       }
     }
   },
   "order": [
-    "utility",
-    "header",
+    "bar",
+    "nav",
     "map",
     "footer"
   ]
