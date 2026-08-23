@@ -508,17 +508,6 @@
         "cta_text": "Add to Cart"
       }
     },
-    "reviews": {
-      "type": "helios-bb-reviews",
-      "blocks": {},
-      "block_order": [],
-      "settings": {
-        "heading": "Customer reviews",
-        "speed": 65,
-        "empty_title": "No reviews yet.",
-        "empty_text": "Every review here comes from a real order."
-      }
-    },
     "ugc": {
       "type": "helios-bb-ugc",
       "blocks": {
@@ -668,6 +657,138 @@
         "eyebrow": "Up close",
         "heading": "See it properly."
       }
+    },
+    "offer": {
+      "type": "helios-bb-offer",
+      "blocks": {
+        "l1": {
+          "type": "line",
+          "settings": {
+            "title": "HELIOS Super Glide lounger",
+            "note": "Motorized, joystick-steered",
+            "worth": "$259.99"
+          }
+        },
+        "l2": {
+          "type": "line",
+          "settings": {
+            "title": "Second Super Glide",
+            "note": "Free on the 2-pack",
+            "worth": "$259.99"
+          }
+        },
+        "l3": {
+          "type": "line",
+          "settings": {
+            "title": "Twin electric motors + joystick",
+            "note": "Fitted, nothing to assemble",
+            "worth": ""
+          }
+        },
+        "l4": {
+          "type": "line",
+          "settings": {
+            "title": "Rechargeable battery and charger",
+            "note": "3–4 hours per charge",
+            "worth": ""
+          }
+        },
+        "l5": {
+          "type": "line",
+          "settings": {
+            "title": "Quick-inflate nozzle",
+            "note": "No separate pump to buy",
+            "worth": ""
+          }
+        },
+        "l6": {
+          "type": "line",
+          "settings": {
+            "title": "Patch and repair kit",
+            "note": "For punctures",
+            "worth": ""
+          }
+        },
+        "l7": {
+          "type": "line",
+          "settings": {
+            "title": "12-month warranty",
+            "note": "Motors and battery",
+            "worth": ""
+          }
+        },
+        "l8": {
+          "type": "line",
+          "settings": {
+            "title": "Free tracked US shipping",
+            "note": "7–10 business days",
+            "worth": ""
+          }
+        },
+        "l9": {
+          "type": "line",
+          "settings": {
+            "title": "30-day returns",
+            "note": "Unused and in the box",
+            "worth": ""
+          }
+        }
+      },
+      "block_order": [
+        "l1",
+        "l2",
+        "l3",
+        "l4",
+        "l5",
+        "l6",
+        "l7",
+        "l8",
+        "l9"
+      ],
+      "settings": {
+        "eyebrow": "In the box",
+        "heading": "Everything you get.",
+        "sub": "No add-ons, no separate pump, nothing else to buy before you can use it.",
+        "image": "shopify://shop_images/helios-sg-detail-3.png",
+        "total_label": "Bought separately",
+        "total": "$519.98",
+        "price_label": "You pay today",
+        "price": "$259.99",
+        "cta_text": "Add to Cart",
+        "cta_link": "#buy",
+        "note": "Free shipping on every US order · 30-day returns · 12-month warranty on motors and battery."
+      }
+    },
+    "fbreviews": {
+      "type": "helios-bb-fbreviews",
+      "blocks": {},
+      "block_order": [],
+      "settings": {
+        "eyebrow": "What buyers said",
+        "heading": "Real photos from real backyards.",
+        "rating": "",
+        "review_count": "",
+        "two_rows": true,
+        "speed": 70,
+        "empty_text": "Paste your reviews into this section — one per line, Name | Rating | Text | Location | Image URL | Likes | When.",
+        "bulk": ""
+      }
+    },
+    "popup": {
+      "type": "helios-bb-popup",
+      "settings": {
+        "enabled": true,
+        "code": "HELIOS10",
+        "kicker": "Welcome to HELIOS",
+        "headline": "10% OFF",
+        "sub": "Your first order, on top of the 2-for-1.",
+        "copy_text": "Copy",
+        "cta_text": "Shop now",
+        "cta_link": "#buy",
+        "decline": "No thanks",
+        "fine": "One use per customer. Apply at checkout.",
+        "delay": 6
+      }
     }
   },
   "order": [
@@ -676,13 +797,15 @@
     "buy",
     "split",
     "showcase",
+    "offer",
     "highlights",
+    "fbreviews",
     "ugc",
     "specs",
     "compare",
-    "reviews",
     "guarantee",
     "footer",
-    "sticky"
+    "sticky",
+    "popup"
   ]
 }

@@ -1,0 +1,138 @@
+{%- comment -%}
+  HELIOS — first-visit discount popup.
+
+  Shows once, then remembers via localStorage. Storage can throw (private
+  windows, blocked site data), so every read and write is wrapped: if storage
+  is unavailable the popup still works, it just cannot remember.
+
+  The code is revealed immediately — no email is collected and nothing is
+  posted anywhere, so there is no form to mishandle and no data to store.
+  If you later want emails, use a real email app rather than a fake input.
+
+  The code here must be a discount you actually created in Admin → Discounts.
+  A code that does not exist reads as a bait-and-switch at checkout.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- if s.enabled and s.code != blank -%}
+<style>
+  #hbpop-{{ section.id }}{position:fixed;inset:0;z-index:9998;display:none;
+    align-items:center;justify-content:center;padding:18px;
+    background:rgba(11,14,17,.62);backdrop-filter:blur(3px);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  #hbpop-{{ section.id }}.on{display:flex;}
+  #hbpop-{{ section.id }} *{box-sizing:border-box;}
+  #hbpop-{{ section.id }} .box{position:relative;width:100%;max-width:400px;background:#fff;
+    color:var(--hb-ink,#1D252C);border-radius:16px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);animation:hbpopIn-{{ section.id }} .22s ease-out;}
+  @keyframes hbpopIn-{{ section.id }}{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1}}
+  @media(prefers-reduced-motion:reduce){#hbpop-{{ section.id }} .box{animation:none;}}
+  #hbpop-{{ section.id }} .top{background:var(--hb-blue,#0046BE);color:#fff;padding:26px 24px 22px;
+    text-align:center;}
+  #hbpop-{{ section.id }} .kick{font-size:11px;font-weight:800;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--hb-yellow,#FFE000);margin:0 0 8px;}
+  #hbpop-{{ section.id }} .big{font-size:clamp(30px,9vw,42px);font-weight:800;letter-spacing:-.035em;
+    line-height:1;margin:0;}
+  #hbpop-{{ section.id }} .top p{margin:9px 0 0;font-size:14px;line-height:1.5;color:#D6E2FF;}
+  #hbpop-{{ section.id }} .body{padding:22px 24px 24px;text-align:center;}
+  #hbpop-{{ section.id }} .code{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    border:2px dashed var(--hb-line,#C5CBD5);border-radius:10px;padding:13px 15px;background:var(--hb-soft,#F0F2F4);}
+  #hbpop-{{ section.id }} .code b{font-size:19px;font-weight:800;letter-spacing:.09em;}
+  #hbpop-{{ section.id }} .copy{border:0;background:var(--hb-ink,#1D252C);color:#fff;border-radius:7px;
+    padding:9px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  #hbpop-{{ section.id }} .copy.ok{background:var(--hb-green,#067D62);}
+  #hbpop-{{ section.id }} .cta{display:block;margin-top:14px;text-align:center;text-decoration:none;
+    background:var(--hb-blue,#0046BE);color:#fff;border-radius:8px;padding:15px;
+    font-size:16px;font-weight:700;}
+  #hbpop-{{ section.id }} .cta:hover{background:var(--hb-blue-dark,#00379B);}
+  #hbpop-{{ section.id }} .fine{margin:13px 0 0;font-size:11.5px;line-height:1.5;color:var(--hb-muted,#5F6871);}
+  #hbpop-{{ section.id }} .no{margin-top:11px;background:none;border:0;font:inherit;font-size:12.5px;
+    color:var(--hb-muted,#5F6871);text-decoration:underline;cursor:pointer;padding:4px;}
+  #hbpop-{{ section.id }} .x{position:absolute;top:10px;right:10px;z-index:2;width:32px;height:32px;
+    border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:19px;line-height:1;
+    cursor:pointer;display:grid;place-items:center;}
+  #hbpop-{{ section.id }} .x:hover{background:rgba(255,255,255,.32);}
+</style>
+
+<div id="hbpop-{{ section.id }}" role="dialog" aria-modal="true" aria-label="{{ s.headline | escape }}">
+  <div class="box">
+    <button type="button" class="x" data-x aria-label="Close">&times;</button>
+    <div class="top">
+      {%- if s.kicker != blank -%}<p class="kick">{{ s.kicker }}</p>{%- endif -%}
+      <p class="big">{{ s.headline }}</p>
+      {%- if s.sub != blank -%}<p>{{ s.sub }}</p>{%- endif -%}
+    </div>
+    <div class="body">
+      <div class="code">
+        <b data-code>{{ s.code | upcase }}</b>
+        <button type="button" class="copy" data-copy>{{ s.copy_text | default: 'Copy' }}</button>
+      </div>
+      <a class="cta" href="{{ s.cta_link | default: '#buy' }}" data-go>{{ s.cta_text | default: 'Shop now' }}</a>
+      {%- if s.fine != blank -%}<p class="fine">{{ s.fine }}</p>{%- endif -%}
+      <button type="button" class="no" data-x>{{ s.decline | default: 'No thanks' }}</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var el=document.getElementById('hbpop-{{ section.id }}');
+  if(!el||el.dataset.on==='1')return; el.dataset.on='1';
+  var KEY='helios-pop-{{ section.id }}';
+  var design={{ request.design_mode | default: false }};
+
+  /* Storage throws outright in some contexts, so never let it reach the page. */
+  function seen(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
+  function mark(){ try{ localStorage.setItem(KEY,'1'); }catch(e){} }
+
+  function open(){ el.classList.add('on'); mark(); }
+  function close(){ el.classList.remove('on'); }
+
+  [].forEach.call(el.querySelectorAll('[data-x]'),function(b){ b.addEventListener('click',close); });
+  el.addEventListener('click',function(e){ if(e.target===el)close(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape')close(); });
+
+  var go=el.querySelector('[data-go]');
+  if(go)go.addEventListener('click',close);
+
+  var cp=el.querySelector('[data-copy]'), cd=el.querySelector('[data-code]');
+  if(cp&&cd)cp.addEventListener('click',function(){
+    var t=cd.textContent.trim(), done=function(){
+      cp.classList.add('ok'); cp.textContent='Copied';
+      setTimeout(function(){cp.classList.remove('ok');cp.textContent='{{ s.copy_text | default: "Copy" }}';},1800);
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done,function(){});
+    } else {
+      var i=document.createElement('textarea'); i.value=t; document.body.appendChild(i);
+      i.select(); try{ document.execCommand('copy'); done(); }catch(e){} document.body.removeChild(i);
+    }
+  });
+
+  /* In the theme editor show it every time, otherwise it is impossible to style. */
+  if(design){ el.classList.add('on'); return; }
+  if(seen())return;
+  setTimeout(open, {{ s.delay | default: 6 }} * 1000);
+})();
+</script>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS discount popup",
+  "tag": "div",
+  "settings": [
+    { "type": "checkbox", "id": "enabled", "label": "Enabled", "default": true },
+    { "type": "paragraph", "content": "The code below must be a real discount from Admin → Discounts. A code that does not work at checkout costs you the sale and the trust." },
+    { "type": "text", "id": "code", "label": "Discount code", "default": "HELIOS10" },
+    { "type": "text", "id": "kicker", "label": "Kicker", "default": "Welcome to HELIOS" },
+    { "type": "text", "id": "headline", "label": "Headline", "default": "10% OFF" },
+    { "type": "textarea", "id": "sub", "label": "Sub", "default": "Your first order, on top of the 2-for-1." },
+    { "type": "text", "id": "copy_text", "label": "Copy button", "default": "Copy" },
+    { "type": "text", "id": "cta_text", "label": "Button", "default": "Shop now" },
+    { "type": "text", "id": "cta_link", "label": "Button link", "default": "#buy" },
+    { "type": "text", "id": "decline", "label": "Decline link", "default": "No thanks" },
+    { "type": "textarea", "id": "fine", "label": "Fine print", "default": "One use per customer. Apply at checkout." },
+    { "type": "range", "id": "delay", "label": "Delay before it opens", "min": 0, "max": 30, "step": 1, "unit": "s", "default": 6 }
+  ],
+  "presets": [{ "name": "HELIOS discount popup" }]
+}
+{% endschema %}

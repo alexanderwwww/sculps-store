@@ -1,0 +1,136 @@
+{%- comment -%}
+  HELIOS — what you get, itemised.
+
+  A value stack: every line is something that actually ships or is actually
+  provided, with what it would cost separately. Keep the "worth" column honest —
+  if a line has no standalone price, leave it blank and it renders as "Included"
+  rather than inventing a number.
+
+  Set the total from the values you entered; the section does not compute one,
+  because a computed total from padded line items is how a value stack turns
+  into a lie.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+{%- if section.blocks.size > 0 -%}
+<style>
+  #hbo-{{ section.id }}{background:var(--hb-ink,#1D252C);color:#fff;padding-block:46px 52px;}
+  #hbo-{{ section.id }} .lay{display:flex;flex-wrap:wrap;align-items:flex-start;gap:0;}
+  #hbo-{{ section.id }} .col{flex:1 1 100%;max-width:100%;min-width:0;}
+  #hbo-{{ section.id }} .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--hb-yellow,#FFE000);margin:0 0 10px;}
+  #hbo-{{ section.id }} h2{font-size:clamp(23px,3.6vw,34px);font-weight:800;letter-spacing:-.025em;
+    line-height:1.12;margin:0;text-wrap:balance;}
+  #hbo-{{ section.id }} .sub{margin-top:11px;font-size:14.5px;line-height:1.55;color:#AEB6BE;max-width:46ch;}
+  #hbo-{{ section.id }} .fig{margin:22px 0;border-radius:12px;overflow:hidden;background:#12171C;}
+  #hbo-{{ section.id }} .fig img{width:100%;height:auto;display:block;}
+
+  #hbo-{{ section.id }} .stack{background:#12171C;border:1px solid #2A333B;border-radius:12px;padding:8px 20px;}
+  #hbo-{{ section.id }} .li{display:flex;gap:14px;align-items:flex-start;
+    padding:14px 0;border-bottom:1px solid #222B33;}
+  #hbo-{{ section.id }} .li:last-of-type{border-bottom:0;}
+  #hbo-{{ section.id }} .tick{flex:none;width:20px;height:20px;border-radius:50%;
+    background:rgba(6,125,98,.24);display:grid;place-items:center;margin-top:1px;}
+  #hbo-{{ section.id }} .tick::after{content:'';width:8px;height:4px;border-left:2px solid #5BE0B8;
+    border-bottom:2px solid #5BE0B8;transform:rotate(-45deg) translate(1px,-1px);}
+  #hbo-{{ section.id }} .lt{flex:1 1 auto;min-width:0;}
+  #hbo-{{ section.id }} .ln{font-size:15px;font-weight:700;line-height:1.3;}
+  #hbo-{{ section.id }} .ld{font-size:13px;color:#8C959D;margin-top:2px;line-height:1.45;}
+  #hbo-{{ section.id }} .lw{flex:none;font-size:13.5px;color:#8C959D;text-align:right;white-space:nowrap;
+    padding-top:1px;}
+  #hbo-{{ section.id }} .lw.inc{color:#5BE0B8;font-weight:700;}
+
+  #hbo-{{ section.id }} .tot{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
+    border-top:1px solid #2A333B;padding:16px 0 6px;font-size:14px;color:#AEB6BE;}
+  #hbo-{{ section.id }} .tot b{color:#fff;font-size:16px;}
+  #hbo-{{ section.id }} .tot s{color:#8C959D;}
+  #hbo-{{ section.id }} .pay{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
+    padding:2px 0 16px;}
+  #hbo-{{ section.id }} .pay span{font-size:14px;color:#AEB6BE;}
+  #hbo-{{ section.id }} .pay b{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--hb-yellow,#FFE000);}
+  #hbo-{{ section.id }} .cta{display:block;text-align:center;text-decoration:none;
+    background:var(--hb-blue,#0046BE);color:#fff;border-radius:6px;padding:16px;font-size:16.5px;
+    font-weight:700;margin-bottom:18px;}
+  #hbo-{{ section.id }} .cta:hover{background:#0052DE;}
+  #hbo-{{ section.id }} .note{font-size:12.5px;color:#8C959D;line-height:1.55;padding-bottom:18px;}
+  @media(min-width:900px){
+    #hbo-{{ section.id }} .col{flex:0 0 50%;max-width:50%;}
+    #hbo-{{ section.id }} .col.a{padding-right:48px;}
+    #hbo-{{ section.id }} .fig{margin-bottom:0;}
+  }
+</style>
+<div class="hb" id="hbo-{{ section.id }}">
+  <div class="hb-wrap">
+    <div class="lay">
+      <div class="col a">
+        {%- if s.eyebrow != blank -%}<p class="eyebrow">{{ s.eyebrow }}</p>{%- endif -%}
+        <h2>{{ s.heading }}</h2>
+        {%- if s.sub != blank -%}<p class="sub">{{ s.sub }}</p>{%- endif -%}
+        {%- if s.image != blank -%}
+          <figure class="fig"><img src="{{ s.image | image_url: width: 1200 }}"
+            alt="{{ s.heading | escape }}" loading="lazy"></figure>
+        {%- endif -%}
+      </div>
+
+      <div class="col">
+        <div class="stack">
+        {%- for b in section.blocks -%}
+          {%- if b.settings.title != blank -%}
+            <div class="li" {{ b.shopify_attributes }}>
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">{{ b.settings.title }}</span>
+                {%- if b.settings.note != blank -%}<span class="ld">{{ b.settings.note }}</span>{%- endif -%}
+              </span>
+              {%- if b.settings.worth != blank -%}
+                <span class="lw">{{ b.settings.worth }}</span>
+              {%- else -%}
+                <span class="lw inc">Included</span>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+
+        {%- if s.total != blank -%}
+          <div class="tot"><span>{{ s.total_label | default: 'Bought separately' }}</span>
+            <b><s>{{ s.total }}</s></b></div>
+        {%- endif -%}
+        {%- if s.price != blank -%}
+          <div class="pay"><span>{{ s.price_label | default: 'You pay today' }}</span>
+            <b>{{ s.price }}</b></div>
+        {%- endif -%}
+        {%- if s.cta_text != blank -%}
+          <a class="cta" href="{{ s.cta_link | default: '#buy' }}">{{ s.cta_text }}</a>
+        {%- endif -%}
+        {%- if s.note != blank -%}<p class="note">{{ s.note }}</p>{%- endif -%}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{%- endif -%}
+{% schema %}
+{
+  "name": "HELIOS what you get",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "In the box" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Everything you get." },
+    { "type": "textarea", "id": "sub", "label": "Sub" },
+    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "header", "content": "Totals" },
+    { "type": "text", "id": "total_label", "label": "Total label", "default": "Bought separately" },
+    { "type": "text", "id": "total", "label": "Total value", "info": "Type it yourself, from the values above. Nothing is computed." },
+    { "type": "text", "id": "price_label", "label": "Price label", "default": "You pay today" },
+    { "type": "text", "id": "price", "label": "Price" },
+    { "type": "text", "id": "cta_text", "label": "Button", "default": "Add to Cart" },
+    { "type": "text", "id": "cta_link", "label": "Button link", "default": "#buy" },
+    { "type": "textarea", "id": "note", "label": "Note under the button" }
+  ],
+  "blocks": [{ "type": "line", "name": "Line item", "limit": 12, "settings": [
+    { "type": "text", "id": "title", "label": "Item" },
+    { "type": "text", "id": "note", "label": "Detail" },
+    { "type": "text", "id": "worth", "label": "Worth", "info": "Leave blank to show Included." }
+  ]}],
+  "presets": [{ "name": "HELIOS what you get", "blocks": [{ "type": "line" }, { "type": "line" }, { "type": "line" }] }]
+}
+{% endschema %}

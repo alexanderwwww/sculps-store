@@ -1,0 +1,192 @@
+{%- comment -%}
+  HELIOS — reviews in a Facebook-comment carousel.
+
+  Two rows drifting opposite ways, paused on hover and switched off under
+  prefers-reduced-motion, where the rows become plain horizontal scrollers.
+
+  Every value on a card comes from what you enter. The earlier version of this
+  section generated the like count, the timestamp and the reaction icons from a
+  hash of the reviewer's name, so a real review still carried invented
+  engagement. Those are now fields: fill them in and they show, leave them
+  blank and the card simply omits them.
+
+  Bulk entry, one review per line:
+    Name | Rating 1-5 | Text | Location | Image URL | Likes | When
+  Only Name and Text are required; the rest can be left empty between pipes.
+{%- endcomment -%}
+{%- assign s = section.settings -%}
+<style>
+  #hbr-{{ section.id }}{background:var(--hb-bg,#fff);padding-block:42px 48px;overflow:hidden;}
+  #hbr-{{ section.id }} .hd{text-align:center;margin-bottom:26px;}
+  #hbr-{{ section.id }} .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--hb-muted,#5F6871);margin:0 0 8px;}
+  #hbr-{{ section.id }} .sum{display:inline-flex;align-items:center;gap:11px;
+    background:var(--hb-soft,#F0F2F4);border:1px solid var(--hb-line,#C5CBD5);border-radius:8px;
+    padding:9px 16px;margin-top:14px;}
+  #hbr-{{ section.id }} .sum b{font-size:21px;font-weight:800;letter-spacing:-.02em;}
+  #hbr-{{ section.id }} .sum .st{color:#F5A623;font-size:14px;letter-spacing:1.5px;}
+  #hbr-{{ section.id }} .sum .ct{font-size:13px;color:var(--hb-muted,#5F6871);font-weight:600;}
+
+  #hbr-{{ section.id }} .track{overflow:hidden;}
+  #hbr-{{ section.id }} .row{display:flex;width:max-content;gap:14px;padding:7px 0;will-change:transform;}
+  #hbr-{{ section.id }} .row.a{animation:hbrA-{{ section.id }} {{ s.speed | default: 70 }}s linear infinite;}
+  #hbr-{{ section.id }} .row.b{animation:hbrB-{{ section.id }} {{ s.speed | default: 70 }}s linear infinite;}
+  #hbr-{{ section.id }} .track:hover .row{animation-play-state:paused;}
+  @keyframes hbrA-{{ section.id }}{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes hbrB-{{ section.id }}{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+  @media(prefers-reduced-motion:reduce){
+    #hbr-{{ section.id }} .row{animation:none;}
+    #hbr-{{ section.id }} .track{overflow-x:auto;}
+  }
+
+  #hbr-{{ section.id }} .card{flex:0 0 auto;width:min(360px,80vw);background:#fff;
+    border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:10px;padding:14px 16px 12px;}
+  #hbr-{{ section.id }} .who{display:flex;align-items:flex-start;gap:9px;}
+  #hbr-{{ section.id }} .av{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:0 0 38px;
+    background:var(--hb-blue,#0046BE);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;}
+  #hbr-{{ section.id }} .bub{flex:1;min-width:0;background:#F0F2F5;border-radius:17px;padding:9px 13px 10px;}
+  #hbr-{{ section.id }} .nm{font-size:13.5px;font-weight:700;color:#050505;line-height:1.25;}
+  #hbr-{{ section.id }} .stars{color:#F5A623;font-size:11.5px;letter-spacing:1px;display:block;margin:2px 0 4px;}
+  #hbr-{{ section.id }} .rt{font-size:14.5px;line-height:1.4;color:#050505;margin:0;overflow-wrap:break-word;}
+  #hbr-{{ section.id }} .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;
+    margin-top:9px;display:block;}
+  #hbr-{{ section.id }} .meta{display:flex;align-items:center;gap:9px;padding:6px 0 0 60px;
+    font-size:12px;font-weight:700;color:#65676B;}
+  #hbr-{{ section.id }} .meta .dot{width:3px;height:3px;border-radius:50%;background:#65676B;
+    opacity:.6;flex:0 0 3px;}
+  #hbr-{{ section.id }} .meta .tm,#hbr-{{ section.id }} .meta .lo{font-weight:400;}
+  #hbr-{{ section.id }} .rx{display:inline-flex;align-items:center;margin-left:auto;background:#fff;
+    border-radius:100px;padding:2px 8px 2px 2px;box-shadow:0 1px 3px rgba(0,0,0,.18);}
+  #hbr-{{ section.id }} .rc{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+    border:1.5px solid #fff;flex:0 0 18px;background:#1877F2;}
+  #hbr-{{ section.id }} .rc svg{width:10px;height:10px;display:block;}
+  #hbr-{{ section.id }} .rn{font-size:12.5px;color:#65676B;font-weight:600;margin-left:4px;}
+  #hbr-{{ section.id }} .empty{text-align:center;color:var(--hb-muted,#5F6871);font-size:14px;
+    border:1px dashed var(--hb-line,#C5CBD5);border-radius:10px;padding:26px;max-width:640px;
+    margin-inline:auto;}
+</style>
+
+{%- capture cards -%}
+  {%- for b in section.blocks -%}
+    {%- if b.settings.name != blank and b.settings.text != blank -%}
+      <div class="card" {{ b.shopify_attributes }}>
+        <div class="who">
+          {%- if b.settings.avatar != blank -%}
+            <img class="av" src="{{ b.settings.avatar | image_url: width: 100 }}" alt="" loading="lazy">
+          {%- else -%}
+            <span class="av">{{ b.settings.name | slice: 0 | upcase }}</span>
+          {%- endif -%}
+          <div class="bub">
+            <span class="nm">{{ b.settings.name }}</span>
+            <span class="stars">{% for i in (1..b.settings.rating) %}★{% endfor %}</span>
+            <p class="rt">{{ b.settings.text }}</p>
+            {%- if b.settings.image != blank -%}
+              <img class="ph" src="{{ b.settings.image | image_url: width: 800 }}"
+                   alt="{{ b.settings.name | escape }}" loading="lazy">
+            {%- endif -%}
+          </div>
+        </div>
+        <div class="meta">
+          <span>Like</span><i class="dot"></i><span>Reply</span>
+          {%- if b.settings.when != blank -%}<i class="dot"></i><span class="tm">{{ b.settings.when }}</span>{%- endif -%}
+          {%- if b.settings.location != blank -%}<i class="dot"></i><span class="lo">{{ b.settings.location }}</span>{%- endif -%}
+          {%- if b.settings.likes != blank -%}
+            <span class="rx"><span class="rc"><svg viewBox="0 0 16 16" fill="#fff"><path d="M6.4 14H4.6a.6.6 0 0 1-.6-.6V7.2a.6.6 0 0 1 .6-.6h1.8V14zm1.2 0V7.05c.55-.2 1-.62 1.3-1.2l1.05-2.1a.9.9 0 0 1 1.7.4v1.9h2.06c.62 0 1.08.57.95 1.18l-.9 4.3A1.6 1.6 0 0 1 12.2 14H7.6z"/></svg></span><span class="rn">{{ b.settings.likes }}</span></span>
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- assign lines = s.bulk | newline_to_br | split: '<br />' -%}
+  {%- for line in lines -%}
+    {%- assign L = line | strip -%}
+    {%- if L != blank -%}
+      {%- assign f = L | split: '|' -%}
+      {%- assign nm = f[0] | strip -%}
+      {%- assign rt = f[1] | strip | times: 1 -%}
+      {%- if rt < 1 or rt > 5 -%}{%- assign rt = 5 -%}{%- endif -%}
+      {%- assign tx = f[2] | strip -%}
+      {%- assign lo = f[3] | strip -%}
+      {%- assign im = f[4] | strip -%}
+      {%- assign lk = f[5] | strip -%}
+      {%- assign wn = f[6] | strip -%}
+      {%- if nm != blank and tx != blank -%}
+        <div class="card">
+          <div class="who">
+            <span class="av">{{ nm | slice: 0 | upcase }}</span>
+            <div class="bub">
+              <span class="nm">{{ nm }}</span>
+              <span class="stars">{% for i in (1..rt) %}★{% endfor %}</span>
+              <p class="rt">{{ tx }}</p>
+              {%- if im != blank -%}<img class="ph" src="{{ im }}" alt="{{ nm | escape }}" loading="lazy">{%- endif -%}
+            </div>
+          </div>
+          <div class="meta">
+            <span>Like</span><i class="dot"></i><span>Reply</span>
+            {%- if wn != blank -%}<i class="dot"></i><span class="tm">{{ wn }}</span>{%- endif -%}
+            {%- if lo != blank -%}<i class="dot"></i><span class="lo">{{ lo }}</span>{%- endif -%}
+            {%- if lk != blank -%}
+              <span class="rx"><span class="rc"><svg viewBox="0 0 16 16" fill="#fff"><path d="M6.4 14H4.6a.6.6 0 0 1-.6-.6V7.2a.6.6 0 0 1 .6-.6h1.8V14zm1.2 0V7.05c.55-.2 1-.62 1.3-1.2l1.05-2.1a.9.9 0 0 1 1.7.4v1.9h2.06c.62 0 1.08.57.95 1.18l-.9 4.3A1.6 1.6 0 0 1 12.2 14H7.6z"/></svg></span><span class="rn">{{ lk }}</span></span>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+<div class="hb" id="hbr-{{ section.id }}">
+  <div class="hb-wrap hd">
+    {%- if s.eyebrow != blank -%}<p class="eyebrow">{{ s.eyebrow }}</p>{%- endif -%}
+    {%- if s.heading != blank -%}<h2 class="hb-h2">{{ s.heading }}</h2>{%- endif -%}
+    {%- if s.rating != blank -%}
+      <div class="sum">
+        <b>{{ s.rating }}</b><span class="st">★★★★★</span>
+        {%- if s.review_count != blank -%}<span class="ct">{{ s.review_count }} reviews</span>{%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- assign trimmed = cards | strip -%}
+  {%- if trimmed == blank -%}
+    <div class="hb-wrap"><p class="empty">{{ s.empty_text }}</p></div>
+  {%- else -%}
+    <div class="track"><div class="row a">{{ cards }}{{ cards }}</div></div>
+    {%- if s.two_rows -%}
+      <div class="track"><div class="row b">{{ cards }}{{ cards }}</div></div>
+    {%- endif -%}
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "HELIOS review carousel",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "What buyers said" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Real photos from real backyards." },
+    { "type": "text", "id": "rating", "label": "Summary rating", "info": "Leave blank to hide the summary. It should match the reviews below." },
+    { "type": "text", "id": "review_count", "label": "Summary count" },
+    { "type": "checkbox", "id": "two_rows", "label": "Second row, drifting the other way", "default": true },
+    { "type": "range", "id": "speed", "label": "Seconds per loop", "min": 20, "max": 140, "step": 5, "unit": "s", "default": 70 },
+    { "type": "textarea", "id": "empty_text", "label": "Empty state", "default": "Reviews appear here as customers send them in." },
+    { "type": "header", "content": "Bulk entry" },
+    { "type": "textarea", "id": "bulk", "label": "One review per line",
+      "info": "Name | Rating 1-5 | Text | Location | Image URL | Likes | When. Only name and text are required." }
+  ],
+  "blocks": [
+    { "type": "review", "name": "Review", "settings": [
+      { "type": "text", "id": "name", "label": "Name" },
+      { "type": "range", "id": "rating", "label": "Rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+      { "type": "textarea", "id": "text", "label": "Review text" },
+      { "type": "image_picker", "id": "image", "label": "Review photo" },
+      { "type": "image_picker", "id": "avatar", "label": "Avatar" },
+      { "type": "text", "id": "location", "label": "Location" },
+      { "type": "text", "id": "likes", "label": "Like count", "info": "Blank hides the reaction pill entirely." },
+      { "type": "text", "id": "when", "label": "When", "info": "e.g. 3d, 2w" }
+    ]}
+  ],
+  "presets": [{ "name": "HELIOS review carousel", "blocks": [{ "type": "review" }, { "type": "review" }] }]
+}
+{% endschema %}

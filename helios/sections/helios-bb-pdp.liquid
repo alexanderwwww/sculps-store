@@ -1,10 +1,10 @@
 {%- comment -%}
   HELIOS — product panel, Best Buy PDP layout.
 
-  Layout note: the rail is a fixed-width track, not a fraction. A fractional
-  rail collapsed to ~250px whenever an ancestor sized the grid to its content,
-  which wrapped the title onto five lines and broke every option row. A fixed
-  track cannot do that: the gallery absorbs the slack instead.
+  Layout note: the desktop split is flex with an explicit 50% basis on each
+  side, not grid tracks. Grid tracks here were being sized to their content by
+  an ancestor rather than stretched, which crushed the gallery to the width of
+  a thumbnail and let the rail take everything. A declared basis holds.
 
   Bundles are section blocks carrying a real variant ID, so this works on any
   store without touching product metafields. Add-to-cart checks the response
@@ -23,14 +23,21 @@
   #hbp-{{ sid }}{display:block;width:100%;background:var(--hb-bg,#fff);padding-block:16px 36px;}
   #hbp-{{ sid }} .hb-wrap{width:100%;}
   #hbp-{{ sid }} .crumb{font-size:12px;color:var(--hb-muted,#5F6871);margin-bottom:12px;}
-  #hbp-{{ sid }} .grid{display:grid;width:100%;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start;}
+  /* Flex with an explicit 50% basis, not grid tracks. A grid here was being
+     sized to its content by an ancestor, which crushed the gallery to the width
+     of one thumbnail and let the rail eat the rest. A declared basis cannot be
+     talked out of its width, and !important keeps a stale or inherited rule
+     from putting it back. */
+  #hbp-{{ sid }} .grid{display:flex !important;flex-wrap:wrap;width:100% !important;
+    align-items:flex-start;gap:0;}
+  #hbp-{{ sid }} .gal,#hbp-{{ sid }} .rail{flex:1 1 100%;max-width:100%;min-width:0;}
+  #hbp-{{ sid }} .gal{margin-bottom:24px;}
   #hbp-{{ sid }} .title{font-size:clamp(22px,3.2vw,32px);font-weight:700;letter-spacing:-.025em;
     line-height:1.15;margin:0;text-wrap:balance;overflow-wrap:break-word;}
   #hbp-{{ sid }} .model{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:6px;}
 
   /* ---------- gallery ---------- */
-  #hbp-{{ sid }} .gal{min-width:0;}
-  #hbp-{{ sid }} .main{position:relative;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:10px;
+  #hbp-{{ sid }} .main{position:relative;width:100%;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:10px;
     overflow:hidden;background:#fff;aspect-ratio:1/1;}
   #hbp-{{ sid }} .main img{width:100%;height:100%;object-fit:contain;}
   #hbp-{{ sid }} .flag{position:absolute;top:14px;left:14px;z-index:2;background:var(--hb-yellow,#FFE000);
@@ -116,16 +123,18 @@
   #hbp-{{ sid }} .pay .k{background:#FFB3C7;color:#17120F;} #hbp-{{ sid }} .pay .p{background:#B2FCE4;color:#000;}
 
   #hbp-{{ sid }} .head-d{display:none;}
-  /* A fixed rail track, so the panel can never be squeezed into a column that
-     wraps "1 Super Glide" onto three lines. */
+  /* Half the screen each on desktop: carousel left, packs right. */
   @media(min-width:1000px){
-    #hbp-{{ sid }} .grid{grid-template-columns:minmax(0,1fr) 400px;gap:40px;}
-    #hbp-{{ sid }} .rail{position:sticky;top:84px;padding:24px;}
+    #hbp-{{ sid }} .gal{flex:0 0 50% !important;max-width:50% !important;
+      padding-right:26px;margin-bottom:0;}
+    #hbp-{{ sid }} .rail{flex:0 0 50% !important;max-width:50% !important;
+      position:sticky;top:84px;padding:26px;}
     #hbp-{{ sid }} .head-d{display:block;} #hbp-{{ sid }} .head-m{display:none;}
     #hbp-{{ sid }} .main{border-radius:12px;}
   }
   @media(min-width:1280px){
-    #hbp-{{ sid }} .grid{grid-template-columns:minmax(0,1fr) 440px;gap:52px;}
+    #hbp-{{ sid }} .gal{padding-right:40px;}
+    #hbp-{{ sid }} .rail{padding:30px;}
   }
 </style>
 

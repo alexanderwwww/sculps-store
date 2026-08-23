@@ -12,7 +12,11 @@
 
 /* ---- helios-bb-showcase ---- */
 
+/* ---- helios-bb-offer ---- */
+
 /* ---- helios-bb-highlights ---- */
+
+/* ---- helios-bb-fbreviews ---- */
 
 /* ---- helios-bb-ugc ---- */
 
@@ -20,26 +24,26 @@
 
 /* ---- helios-bb-compare ---- */
 
-/* ---- helios-bb-reviews ---- */
-
 /* ---- helios-bb-guarantee ---- */
 
 /* ---- helios-bb-footer ---- */
 
 /* ---- helios-bb-sticky ---- */
+
+/* ---- helios-bb-popup ---- */
 </style>
 <style>/* ---- helios-bb-utility ---- */
 
 /* ---- helios-bb-header ---- */
 
-/* ---- helios-bb-globe ---- */
+/* ---- helios-bb-usmap ---- */
 
 /* ---- helios-bb-footer ---- */
 </style>
 </head><body>
 <div class='pv-bar'><b>HELIOS recovered theme — static preview</b><a href='#pg0'>Homepage</a><a href='#pg1'>Track</a></div>
 <div class='pv-note'>Static render of the recovered Liquid with your real saved settings. Product data, cart and JS are stubbed, so prices/variants show as placeholders and buttons do nothing. Images load from the old store's CDN and may not resolve.</div>
-<h2 id='pg0' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Homepage — 13 sections</h2>
+<h2 id='pg0' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Homepage — 15 sections</h2>
 
 <!-- ===== utility :: helios-bb-utility ===== -->
 <style>
@@ -110,14 +114,21 @@
   #hbp-buy{display:block;width:100%;background:var(--hb-bg,#fff);padding-block:16px 36px;}
   #hbp-buy .hb-wrap{width:100%;}
   #hbp-buy .crumb{font-size:12px;color:var(--hb-muted,#5F6871);margin-bottom:12px;}
-  #hbp-buy .grid{display:grid;width:100%;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start;}
+  /* Flex with an explicit 50% basis, not grid tracks. A grid here was being
+     sized to its content by an ancestor, which crushed the gallery to the width
+     of one thumbnail and let the rail eat the rest. A declared basis cannot be
+     talked out of its width, and !important keeps a stale or inherited rule
+     from putting it back. */
+  #hbp-buy .grid{display:flex !important;flex-wrap:wrap;width:100% !important;
+    align-items:flex-start;gap:0;}
+  #hbp-buy .gal,#hbp-buy .rail{flex:1 1 100%;max-width:100%;min-width:0;}
+  #hbp-buy .gal{margin-bottom:24px;}
   #hbp-buy .title{font-size:clamp(22px,3.2vw,32px);font-weight:700;letter-spacing:-.025em;
     line-height:1.15;margin:0;text-wrap:balance;overflow-wrap:break-word;}
   #hbp-buy .model{font-size:12px;color:var(--hb-muted,#5F6871);margin-top:6px;}
 
   /* ---------- gallery ---------- */
-  #hbp-buy .gal{min-width:0;}
-  #hbp-buy .main{position:relative;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:10px;
+  #hbp-buy .main{position:relative;width:100%;border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:10px;
     overflow:hidden;background:#fff;aspect-ratio:1/1;}
   #hbp-buy .main img{width:100%;height:100%;object-fit:contain;}
   #hbp-buy .flag{position:absolute;top:14px;left:14px;z-index:2;background:var(--hb-yellow,#FFE000);
@@ -203,16 +214,18 @@
   #hbp-buy .pay .k{background:#FFB3C7;color:#17120F;} #hbp-buy .pay .p{background:#B2FCE4;color:#000;}
 
   #hbp-buy .head-d{display:none;}
-  /* A fixed rail track, so the panel can never be squeezed into a column that
-     wraps "1 Super Glide" onto three lines. */
+  /* Half the screen each on desktop: carousel left, packs right. */
   @media(min-width:1000px){
-    #hbp-buy .grid{grid-template-columns:minmax(0,1fr) 400px;gap:40px;}
-    #hbp-buy .rail{position:sticky;top:84px;padding:24px;}
+    #hbp-buy .gal{flex:0 0 50% !important;max-width:50% !important;
+      padding-right:26px;margin-bottom:0;}
+    #hbp-buy .rail{flex:0 0 50% !important;max-width:50% !important;
+      position:sticky;top:84px;padding:26px;}
     #hbp-buy .head-d{display:block;} #hbp-buy .head-m{display:none;}
     #hbp-buy .main{border-radius:12px;}
   }
   @media(min-width:1280px){
-    #hbp-buy .grid{grid-template-columns:minmax(0,1fr) 440px;gap:52px;}
+    #hbp-buy .gal{padding-right:40px;}
+    #hbp-buy .rail{padding:30px;}
   }
 </style>
 
@@ -443,6 +456,95 @@
   </div>
 </div>
 
+<!-- ===== offer :: helios-bb-offer ===== -->
+<style>
+  #hbo-offer{background:var(--hb-ink,#1D252C);color:#fff;padding-block:46px 52px;}
+  #hbo-offer .lay{display:flex;flex-wrap:wrap;align-items:flex-start;gap:0;}
+  #hbo-offer .col{flex:1 1 100%;max-width:100%;min-width:0;}
+  #hbo-offer .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--hb-yellow,#FFE000);margin:0 0 10px;}
+  #hbo-offer h2{font-size:clamp(23px,3.6vw,34px);font-weight:800;letter-spacing:-.025em;
+    line-height:1.12;margin:0;text-wrap:balance;}
+  #hbo-offer .sub{margin-top:11px;font-size:14.5px;line-height:1.55;color:#AEB6BE;max-width:46ch;}
+  #hbo-offer .fig{margin:22px 0;border-radius:12px;overflow:hidden;background:#12171C;}
+  #hbo-offer .fig img{width:100%;height:auto;display:block;}
+
+  #hbo-offer .stack{background:#12171C;border:1px solid #2A333B;border-radius:12px;padding:8px 20px;}
+  #hbo-offer .li{display:flex;gap:14px;align-items:flex-start;
+    padding:14px 0;border-bottom:1px solid #222B33;}
+  #hbo-offer .li:last-of-type{border-bottom:0;}
+  #hbo-offer .tick{flex:none;width:20px;height:20px;border-radius:50%;
+    background:rgba(6,125,98,.24);display:grid;place-items:center;margin-top:1px;}
+  #hbo-offer .tick::after{content:'';width:8px;height:4px;border-left:2px solid #5BE0B8;
+    border-bottom:2px solid #5BE0B8;transform:rotate(-45deg) translate(1px,-1px);}
+  #hbo-offer .lt{flex:1 1 auto;min-width:0;}
+  #hbo-offer .ln{font-size:15px;font-weight:700;line-height:1.3;}
+  #hbo-offer .ld{font-size:13px;color:#8C959D;margin-top:2px;line-height:1.45;}
+  #hbo-offer .lw{flex:none;font-size:13.5px;color:#8C959D;text-align:right;white-space:nowrap;
+    padding-top:1px;}
+  #hbo-offer .lw.inc{color:#5BE0B8;font-weight:700;}
+
+  #hbo-offer .tot{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
+    border-top:1px solid #2A333B;padding:16px 0 6px;font-size:14px;color:#AEB6BE;}
+  #hbo-offer .tot b{color:#fff;font-size:16px;}
+  #hbo-offer .tot s{color:#8C959D;}
+  #hbo-offer .pay{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
+    padding:2px 0 16px;}
+  #hbo-offer .pay span{font-size:14px;color:#AEB6BE;}
+  #hbo-offer .pay b{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--hb-yellow,#FFE000);}
+  #hbo-offer .cta{display:block;text-align:center;text-decoration:none;
+    background:var(--hb-blue,#0046BE);color:#fff;border-radius:6px;padding:16px;font-size:16.5px;
+    font-weight:700;margin-bottom:18px;}
+  #hbo-offer .cta:hover{background:#0052DE;}
+  #hbo-offer .note{font-size:12.5px;color:#8C959D;line-height:1.55;padding-bottom:18px;}
+  @media(min-width:900px){
+    #hbo-offer .col{flex:0 0 50%;max-width:50%;}
+    #hbo-offer .col.a{padding-right:48px;}
+    #hbo-offer .fig{margin-bottom:0;}
+  }
+</style>
+<div class="hb" id="hbo-offer">
+  <div class="hb-wrap">
+    <div class="lay">
+      <div class="col a"><p class="eyebrow">In the box</p><h2>Everything you get.</h2><p class="sub">No add-ons, no separate pump, nothing else to buy before you can use it.</p><figure class="fig"><img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png?v=1785072543"
+            alt="Everything you get." loading="lazy"></figure></div>
+
+      <div class="col">
+        <div class="stack"><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">HELIOS Super Glide lounger</span><span class="ld">Motorized, joystick-steered</span></span><span class="lw">$259.99</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">Second Super Glide</span><span class="ld">Free on the 2-pack</span></span><span class="lw">$259.99</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">Twin electric motors + joystick</span><span class="ld">Fitted, nothing to assemble</span></span><span class="lw inc">Included</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">Rechargeable battery and charger</span><span class="ld">3–4 hours per charge</span></span><span class="lw inc">Included</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">Quick-inflate nozzle</span><span class="ld">No separate pump to buy</span></span><span class="lw inc">Included</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">Patch and repair kit</span><span class="ld">For punctures</span></span><span class="lw inc">Included</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">12-month warranty</span><span class="ld">Motors and battery</span></span><span class="lw inc">Included</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">Free tracked US shipping</span><span class="ld">7–10 business days</span></span><span class="lw inc">Included</span></div><div class="li" >
+              <span class="tick" aria-hidden="true"></span>
+              <span class="lt">
+                <span class="ln">30-day returns</span><span class="ld">Unused and in the box</span></span><span class="lw inc">Included</span></div><div class="tot"><span>Bought separately</span>
+            <b><s>$519.98</s></b></div><div class="pay"><span>You pay today</span>
+            <b>$259.99</b></div><a class="cta" href="#buy">Add to Cart</a><p class="note">Free shipping on every US order · 30-day returns · 12-month warranty on motors and battery.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== highlights :: helios-bb-highlights ===== -->
 <style>
   .hbhl{background:var(--hb-soft,#F0F2F4);padding-block:30px;border-block:1px solid var(--hb-line-soft,#E3E7EB);}
@@ -457,6 +559,61 @@
   <div class="hb-wrap"><h2 class="hb-h2 hbhl__h">At a glance</h2><div class="hbhl__g"><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><b>Twin electric motors</b><span>360° joystick steering — forward, reverse and spin. No paddling.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="15" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M21 10.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="5.5" y="9.5" width="8" height="5" rx="1" fill="currentColor"/></svg><b>3–4 hours per charge</b><span>Rechargeable battery and charger included in the box.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1.6 12H6.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg><b>Holds up to 300 lb</b><span>Heavy-duty PVC with a padded headrest and two cup holders.</span></div><div class="hbhl__c" ><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3.2 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Ready in 5 minutes</b><span>Quick-inflate valve and nozzle included. No separate pump to buy.</span></div></div>
   </div>
 </div>
+
+<!-- ===== fbreviews :: helios-bb-fbreviews ===== -->
+<style>
+  #hbr-fbreviews{background:var(--hb-bg,#fff);padding-block:42px 48px;overflow:hidden;}
+  #hbr-fbreviews .hd{text-align:center;margin-bottom:26px;}
+  #hbr-fbreviews .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--hb-muted,#5F6871);margin:0 0 8px;}
+  #hbr-fbreviews .sum{display:inline-flex;align-items:center;gap:11px;
+    background:var(--hb-soft,#F0F2F4);border:1px solid var(--hb-line,#C5CBD5);border-radius:8px;
+    padding:9px 16px;margin-top:14px;}
+  #hbr-fbreviews .sum b{font-size:21px;font-weight:800;letter-spacing:-.02em;}
+  #hbr-fbreviews .sum .st{color:#F5A623;font-size:14px;letter-spacing:1.5px;}
+  #hbr-fbreviews .sum .ct{font-size:13px;color:var(--hb-muted,#5F6871);font-weight:600;}
+
+  #hbr-fbreviews .track{overflow:hidden;}
+  #hbr-fbreviews .row{display:flex;width:max-content;gap:14px;padding:7px 0;will-change:transform;}
+  #hbr-fbreviews .row.a{animation:hbrA-fbreviews 70s linear infinite;}
+  #hbr-fbreviews .row.b{animation:hbrB-fbreviews 70s linear infinite;}
+  #hbr-fbreviews .track:hover .row{animation-play-state:paused;}
+  @keyframes hbrA-fbreviews{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes hbrB-fbreviews{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+  @media(prefers-reduced-motion:reduce){
+    #hbr-fbreviews .row{animation:none;}
+    #hbr-fbreviews .track{overflow-x:auto;}
+  }
+
+  #hbr-fbreviews .card{flex:0 0 auto;width:min(360px,80vw);background:#fff;
+    border:1px solid var(--hb-line-soft,#E3E7EB);border-radius:10px;padding:14px 16px 12px;}
+  #hbr-fbreviews .who{display:flex;align-items:flex-start;gap:9px;}
+  #hbr-fbreviews .av{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:0 0 38px;
+    background:var(--hb-blue,#0046BE);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;}
+  #hbr-fbreviews .bub{flex:1;min-width:0;background:#F0F2F5;border-radius:17px;padding:9px 13px 10px;}
+  #hbr-fbreviews .nm{font-size:13.5px;font-weight:700;color:#050505;line-height:1.25;}
+  #hbr-fbreviews .stars{color:#F5A623;font-size:11.5px;letter-spacing:1px;display:block;margin:2px 0 4px;}
+  #hbr-fbreviews .rt{font-size:14.5px;line-height:1.4;color:#050505;margin:0;overflow-wrap:break-word;}
+  #hbr-fbreviews .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;
+    margin-top:9px;display:block;}
+  #hbr-fbreviews .meta{display:flex;align-items:center;gap:9px;padding:6px 0 0 60px;
+    font-size:12px;font-weight:700;color:#65676B;}
+  #hbr-fbreviews .meta .dot{width:3px;height:3px;border-radius:50%;background:#65676B;
+    opacity:.6;flex:0 0 3px;}
+  #hbr-fbreviews .meta .tm,#hbr-fbreviews .meta .lo{font-weight:400;}
+  #hbr-fbreviews .rx{display:inline-flex;align-items:center;margin-left:auto;background:#fff;
+    border-radius:100px;padding:2px 8px 2px 2px;box-shadow:0 1px 3px rgba(0,0,0,.18);}
+  #hbr-fbreviews .rc{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+    border:1.5px solid #fff;flex:0 0 18px;background:#1877F2;}
+  #hbr-fbreviews .rc svg{width:10px;height:10px;display:block;}
+  #hbr-fbreviews .rn{font-size:12.5px;color:#65676B;font-weight:600;margin-left:4px;}
+  #hbr-fbreviews .empty{text-align:center;color:var(--hb-muted,#5F6871);font-size:14px;
+    border:1px dashed var(--hb-line,#C5CBD5);border-radius:10px;padding:26px;max-width:640px;
+    margin-inline:auto;}
+</style><div class="hb" id="hbr-fbreviews">
+  <div class="hb-wrap hd"><p class="eyebrow">What buyers said</p><h2 class="hb-h2">Real photos from real backyards.</h2></div><div class="hb-wrap"><p class="empty">Paste your reviews into this section — one per line, Name | Rating | Text | Location | Image URL | Likes | When.</p></div></div>
+
+
 
 <!-- ===== ugc :: helios-bb-ugc ===== -->
 <style>
@@ -586,65 +743,6 @@
     </div></div>
 </div>
 
-<!-- ===== reviews :: helios-bb-reviews ===== -->
-<style>
-  #hbr-reviews{background:var(--hb-bg,#fff);padding-block:34px;overflow:hidden;}
-  #hbr-reviews .h{margin-bottom:18px;}
-  #hbr-reviews .lay{display:grid;gap:22px;}
-
-  /* summary rail */
-  #hbr-reviews .sum{border:1px solid var(--hb-line,#C5CBD5);border-radius:6px;padding:18px;background:#fff;}
-  #hbr-reviews .big{display:flex;align-items:baseline;gap:9px;}
-  #hbr-reviews .big b{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1;}
-  #hbr-reviews .big span{font-size:13px;color:var(--hb-muted,#5F6871);}
-  #hbr-reviews .stars{color:#F5A623;font-size:15px;letter-spacing:2px;margin-top:6px;}
-  #hbr-reviews .cnt{font-size:13px;color:var(--hb-muted,#5F6871);margin-top:4px;}
-  #hbr-reviews .dist{margin-top:16px;display:grid;gap:6px;}
-  #hbr-reviews .dr{display:grid;grid-template-columns:34px 1fr 26px;align-items:center;gap:8px;font-size:12px;color:var(--hb-muted,#5F6871);}
-  #hbr-reviews .bar{height:8px;border-radius:4px;background:var(--hb-soft,#F0F2F4);overflow:hidden;}
-  #hbr-reviews .bar i{display:block;height:100%;background:var(--hb-blue,#0046BE);border-radius:4px;}
-
-  /* wall */
-  #hbr-reviews .wall{overflow:hidden;}
-  #hbr-reviews .row{display:flex;width:max-content;gap:12px;padding-block:6px;will-change:transform;}
-  #hbr-reviews .row.a{animation:hbrL-reviews 65s linear infinite;}
-  #hbr-reviews .row.b{animation:hbrR-reviews 65s linear infinite;}
-  #hbr-reviews .wall:hover .row{animation-play-state:paused;}
-  @keyframes hbrL-reviews{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  @keyframes hbrR-reviews{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-  @media(prefers-reduced-motion:reduce){
-    #hbr-reviews .row{animation:none;}
-    #hbr-reviews .wall{overflow-x:auto;}
-  }
-  #hbr-reviews .c{flex:0 0 auto;width:min(320px,78vw);border:1px solid var(--hb-line-soft,#E3E7EB);
-    border-radius:6px;padding:14px;background:#fff;}
-  #hbr-reviews .c .cs{color:#F5A623;font-size:12px;letter-spacing:1.5px;}
-  #hbr-reviews .c .ct{font-size:14px;line-height:1.45;margin-top:7px;}
-  #hbr-reviews .c img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:5px;margin-top:10px;
-    background:var(--hb-soft,#F0F2F4);}
-  #hbr-reviews .c .cw{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12px;
-    color:var(--hb-muted,#5F6871);}
-  #hbr-reviews .c .cw b{color:var(--hb-ink,#1D252C);font-weight:700;}
-  #hbr-reviews .vb{display:inline-flex;align-items:center;gap:4px;color:var(--hb-green,#067D62);font-weight:700;}
-  #hbr-reviews .vb svg{width:12px;height:12px;}
-
-  #hbr-reviews .empty{border:1px dashed var(--hb-line,#C5CBD5);border-radius:6px;padding:30px 20px;
-    text-align:center;background:#fff;}
-  #hbr-reviews .empty b{display:block;font-size:15px;font-weight:700;}
-  #hbr-reviews .empty p{margin-top:6px;font-size:13.5px;color:var(--hb-muted,#5F6871);line-height:1.55;
-    max-width:46ch;margin-inline:auto;}
-  @media(min-width:900px){ #hbr-reviews .lay{grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start;} }
-</style>
-
-<div class="hb" id="hbr-reviews">
-  <div class="hb-wrap"><h2 class="hb-h2 h">Customer reviews</h2><div class="empty">
-        <b>No reviews yet.</b>
-        <p>Every review here comes from a real order.</p>
-      </div></div>
-</div>
-
-
-
 <!-- ===== guarantee :: helios-bb-guarantee ===== -->
 <style>
   .hbgu{background:var(--hb-ink,#1D252C);color:#fff;padding-block:40px;}
@@ -733,6 +831,60 @@
 
 
 
+
+<!-- ===== popup :: helios-bb-popup ===== -->
+<style>
+  #hbpop-popup{position:fixed;inset:0;z-index:9998;display:none;
+    align-items:center;justify-content:center;padding:18px;
+    background:rgba(11,14,17,.62);backdrop-filter:blur(3px);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  #hbpop-popup.on{display:flex;}
+  #hbpop-popup *{box-sizing:border-box;}
+  #hbpop-popup .box{position:relative;width:100%;max-width:400px;background:#fff;
+    color:var(--hb-ink,#1D252C);border-radius:16px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);animation:hbpopIn-popup .22s ease-out;}
+  @keyframes hbpopIn-popup{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1}}
+  @media(prefers-reduced-motion:reduce){#hbpop-popup .box{animation:none;}}
+  #hbpop-popup .top{background:var(--hb-blue,#0046BE);color:#fff;padding:26px 24px 22px;
+    text-align:center;}
+  #hbpop-popup .kick{font-size:11px;font-weight:800;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--hb-yellow,#FFE000);margin:0 0 8px;}
+  #hbpop-popup .big{font-size:clamp(30px,9vw,42px);font-weight:800;letter-spacing:-.035em;
+    line-height:1;margin:0;}
+  #hbpop-popup .top p{margin:9px 0 0;font-size:14px;line-height:1.5;color:#D6E2FF;}
+  #hbpop-popup .body{padding:22px 24px 24px;text-align:center;}
+  #hbpop-popup .code{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    border:2px dashed var(--hb-line,#C5CBD5);border-radius:10px;padding:13px 15px;background:var(--hb-soft,#F0F2F4);}
+  #hbpop-popup .code b{font-size:19px;font-weight:800;letter-spacing:.09em;}
+  #hbpop-popup .copy{border:0;background:var(--hb-ink,#1D252C);color:#fff;border-radius:7px;
+    padding:9px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  #hbpop-popup .copy.ok{background:var(--hb-green,#067D62);}
+  #hbpop-popup .cta{display:block;margin-top:14px;text-align:center;text-decoration:none;
+    background:var(--hb-blue,#0046BE);color:#fff;border-radius:8px;padding:15px;
+    font-size:16px;font-weight:700;}
+  #hbpop-popup .cta:hover{background:var(--hb-blue-dark,#00379B);}
+  #hbpop-popup .fine{margin:13px 0 0;font-size:11.5px;line-height:1.5;color:var(--hb-muted,#5F6871);}
+  #hbpop-popup .no{margin-top:11px;background:none;border:0;font:inherit;font-size:12.5px;
+    color:var(--hb-muted,#5F6871);text-decoration:underline;cursor:pointer;padding:4px;}
+  #hbpop-popup .x{position:absolute;top:10px;right:10px;z-index:2;width:32px;height:32px;
+    border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:19px;line-height:1;
+    cursor:pointer;display:grid;place-items:center;}
+  #hbpop-popup .x:hover{background:rgba(255,255,255,.32);}
+</style>
+
+<div id="hbpop-popup" role="dialog" aria-modal="true" aria-label="10% OFF">
+  <div class="box">
+    <button type="button" class="x" data-x aria-label="Close">&times;</button>
+    <div class="top"><p class="kick">Welcome to HELIOS</p><p class="big">10% OFF</p><p>Your first order, on top of the 2-for-1.</p></div>
+    <div class="body">
+      <div class="code">
+        <b data-code>HELIOS10</b>
+        <button type="button" class="copy" data-copy>Copy</button>
+      </div>
+      <a class="cta" href="#buy" data-go>Shop now</a><p class="fine">One use per customer. Apply at checkout.</p><button type="button" class="no" data-x>No thanks</button>
+    </div>
+  </div>
+</div>
 <h2 id='pg1' style="font:700 15px -apple-system,system-ui,sans-serif;background:#eef2f4;margin:0;padding:12px 14px">Track — 4 sections</h2>
 
 <!-- ===== utility :: helios-bb-utility ===== -->
@@ -799,82 +951,95 @@
 
 
 
-<!-- ===== globe :: helios-bb-globe ===== -->
+<!-- ===== map :: helios-bb-usmap ===== -->
 <style>
-  #hbg-globe{background:var(--hb-ink,#1D252C);color:#fff;padding-block:40px 52px;
+  #hbm-map{background:var(--hb-ink,#1D252C);color:#fff;padding-block:40px 52px;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
-  #hbg-globe *,#hbg-globe *::before{box-sizing:border-box;}
-  #hbg-globe .wrap{width:100%;max-width:calc(var(--hb-maxw,1440px) + 48px);
+  #hbm-map *,#hbm-map *::before{box-sizing:border-box;}
+  #hbm-map .wrap{width:100%;max-width:calc(var(--hb-maxw,1440px) + 48px);
     margin-inline:auto;padding-inline:var(--hb-gut,16px);}
-  #hbg-globe .lay{display:grid;gap:28px;align-items:start;}
-  #hbg-globe .eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;
+  #hbm-map .lay{display:flex;flex-wrap:wrap;gap:0;align-items:flex-start;}
+  #hbm-map .col{flex:1 1 100%;max-width:100%;min-width:0;}
+  #hbm-map .eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;
     text-transform:uppercase;color:var(--hb-yellow,#FFE000);margin:0 0 10px;}
-  #hbg-globe h1{font-size:clamp(24px,4vw,38px);font-weight:800;letter-spacing:-.025em;
+  #hbm-map h1{font-size:clamp(24px,4vw,38px);font-weight:800;letter-spacing:-.025em;
     line-height:1.1;margin:0;}
-  #hbg-globe .sub{margin-top:10px;font-size:14.5px;line-height:1.55;color:#AEB6BE;max-width:52ch;}
+  #hbm-map .sub{margin-top:10px;font-size:14.5px;line-height:1.55;color:#AEB6BE;max-width:52ch;}
 
-  #hbg-globe .form{display:flex;gap:9px;margin-top:22px;flex-wrap:wrap;}
-  #hbg-globe input{flex:1 1 240px;min-width:0;background:#12171C;border:1px solid #38424B;
+  #hbm-map .form{display:flex;gap:9px;margin-top:22px;flex-wrap:wrap;}
+  #hbm-map input{flex:1 1 240px;min-width:0;background:#12171C;border:1px solid #38424B;
     color:#fff;border-radius:6px;padding:14px 15px;font:inherit;font-size:15.5px;letter-spacing:.04em;}
-  #hbg-globe input:focus{outline:2px solid var(--hb-blue,#0046BE);outline-offset:1px;border-color:transparent;}
-  #hbg-globe input::placeholder{color:#6E7982;letter-spacing:.02em;}
-  #hbg-globe button.go{flex:0 0 auto;background:var(--hb-blue,#0046BE);color:#fff;border:0;
+  #hbm-map input:focus{outline:2px solid var(--hb-blue,#0046BE);outline-offset:1px;
+    border-color:transparent;}
+  #hbm-map input::placeholder{color:#6E7982;letter-spacing:.02em;}
+  #hbm-map button.go{flex:0 0 auto;background:var(--hb-blue,#0046BE);color:#fff;border:0;
     border-radius:6px;padding:14px 26px;font:inherit;font-size:15.5px;font-weight:700;cursor:pointer;}
-  #hbg-globe button.go:hover{background:#0052DE;}
-  #hbg-globe .err{margin-top:12px;font-size:13.5px;color:#FF9E96;min-height:1em;}
-  #hbg-globe .err:empty{display:none;}
+  #hbm-map button.go:hover{background:#0052DE;}
+  #hbm-map .err{margin-top:12px;font-size:13.5px;color:#FF9E96;}
+  #hbm-map .err:empty{display:none;}
 
-  #hbg-globe .stage{position:relative;aspect-ratio:1/1;max-width:560px;margin-inline:auto;width:100%;}
-  #hbg-globe canvas{width:100%;height:100%;display:block;}
-  #hbg-globe .ring{position:absolute;inset:0;border-radius:50%;pointer-events:none;
-    box-shadow:0 0 90px 10px rgba(0,110,255,.20) inset,0 0 70px rgba(0,90,220,.22);}
+  #hbm-map .stage{background:#0E1319;border:1px solid #2A333B;border-radius:14px;
+    padding:12px;}
+  #hbm-map svg.map{display:block;width:100%;height:auto;}
+  #hbm-map .st-fill{fill:#1B2530;stroke:#2E3A47;stroke-width:.7;
+    stroke-linejoin:round;vector-effect:non-scaling-stroke;transition:fill .3s;}
+  #hbm-map .st-fill.hit{fill:var(--hb-blue,#0046BE);stroke:#7EC4FF;}
+  #hbm-map .route{fill:none;stroke:var(--hb-yellow,#FFE000);stroke-width:2.4;
+    stroke-linecap:round;vector-effect:non-scaling-stroke;}
+  #hbm-map .pin-o{fill:#7EC4FF;} #hbm-map .pin-d{fill:#5BE0B8;}
+  #hbm-map .pin-r{fill:none;stroke-width:1.4;vector-effect:non-scaling-stroke;opacity:.4;}
+  #hbm-map .head{fill:var(--hb-yellow,#FFE000);}
+  #hbm-map .head-r{fill:var(--hb-yellow,#FFE000);opacity:.35;
+    animation:hbmP-map 1.9s ease-out infinite;transform-origin:center;transform-box:fill-box;}
+  @keyframes hbmP-map{0%{transform:scale(.7);opacity:.5}70%{transform:scale(2.6);opacity:0}100%{opacity:0}}
 
-  #hbg-globe .panel{margin-top:26px;background:#12171C;border:1px solid #2A333B;
+  #hbm-map .panel{margin-top:26px;background:#12171C;border:1px solid #2A333B;
     border-radius:12px;padding:20px;display:none;}
-  #hbg-globe .panel.on{display:block;}
-  #hbg-globe .pt{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  #hbm-map .panel.on{display:block;}
+  #hbm-map .pt{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
     align-items:baseline;border-bottom:1px solid #2A333B;padding-bottom:14px;}
-  #hbg-globe .code{font-size:17px;font-weight:800;letter-spacing:.05em;}
-  #hbg-globe .pill{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
-    background:rgba(6,125,98,.22);color:#5BE0B8;border-radius:999px;padding:5px 12px;}
-  #hbg-globe .meta{margin-top:12px;display:grid;gap:4px;font-size:13.5px;color:#AEB6BE;}
-  #hbg-globe .meta b{color:#fff;font-weight:700;}
+  #hbm-map .code{font-size:17px;font-weight:800;letter-spacing:.05em;}
+  #hbm-map .pill{font-size:11.5px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;background:rgba(6,125,98,.22);color:#5BE0B8;border-radius:999px;padding:5px 12px;}
+  #hbm-map .meta{margin-top:12px;display:grid;gap:4px;font-size:13.5px;color:#AEB6BE;}
+  #hbm-map .meta b{color:#fff;font-weight:700;}
+  #hbm-map .meta span:empty{display:none;}
 
-  #hbg-globe .tl{margin-top:20px;display:grid;gap:0;}
-  #hbg-globe .st{display:grid;grid-template-columns:26px minmax(0,1fr);gap:14px;
+  #hbm-map .tl{margin-top:20px;display:grid;}
+  #hbm-map .stp{display:grid;grid-template-columns:26px minmax(0,1fr);gap:14px;
     padding-bottom:20px;position:relative;}
-  #hbg-globe .st:last-child{padding-bottom:0;}
-  #hbg-globe .st::before{content:'';position:absolute;left:12px;top:20px;bottom:-2px;width:2px;
-    background:#2A333B;}
-  #hbg-globe .st:last-child::before{display:none;}
-  #hbg-globe .st.done::before{background:var(--hb-blue,#0046BE);}
-  #hbg-globe .dot{width:26px;height:26px;border-radius:50%;border:2px solid #38424B;
+  #hbm-map .stp:last-child{padding-bottom:0;}
+  #hbm-map .stp::before{content:'';position:absolute;left:12px;top:20px;bottom:-2px;
+    width:2px;background:#2A333B;}
+  #hbm-map .stp:last-child::before{display:none;}
+  #hbm-map .stp.done::before{background:var(--hb-blue,#0046BE);}
+  #hbm-map .dot{width:26px;height:26px;border-radius:50%;border:2px solid #38424B;
     display:grid;place-items:center;background:#12171C;position:relative;z-index:1;}
-  #hbg-globe .st.done .dot{border-color:var(--hb-blue,#0046BE);background:var(--hb-blue,#0046BE);}
-  #hbg-globe .st.done .dot::after{content:'';width:9px;height:5px;border-left:2px solid #fff;
+  #hbm-map .stp.done .dot{border-color:var(--hb-blue,#0046BE);background:var(--hb-blue,#0046BE);}
+  #hbm-map .stp.done .dot::after{content:'';width:9px;height:5px;border-left:2px solid #fff;
     border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);}
-  #hbg-globe .st.now .dot{border-color:var(--hb-yellow,#FFE000);
-    box-shadow:0 0 0 0 rgba(255,224,0,.55);animation:hbgp-globe 1.8s infinite;}
-  @keyframes hbgp-globe{70%{box-shadow:0 0 0 12px rgba(255,224,0,0);}100%{box-shadow:0 0 0 0 rgba(255,224,0,0);}}
-  #hbg-globe .sl{font-size:15px;font-weight:700;line-height:1.3;}
-  #hbg-globe .sd{font-size:13px;color:#8C959D;margin-top:3px;}
-  #hbg-globe .foot{margin-top:18px;font-size:12.5px;color:#8C959D;line-height:1.55;}
+  #hbm-map .stp.now .dot{border-color:var(--hb-yellow,#FFE000);
+    box-shadow:0 0 0 0 rgba(255,224,0,.55);animation:hbmD-map 1.8s infinite;}
+  @keyframes hbmD-map{70%{box-shadow:0 0 0 12px rgba(255,224,0,0)}100%{box-shadow:0 0 0 0 rgba(255,224,0,0)}}
+  #hbm-map .sl{font-size:15px;font-weight:700;line-height:1.3;}
+  #hbm-map .sd{font-size:13px;color:#8C959D;margin-top:3px;}
+  #hbm-map .foot{margin-top:18px;font-size:12.5px;color:#8C959D;line-height:1.55;}
 
-  @media(min-width:900px){
-    #hbg-globe .lay{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;}
-    #hbg-globe .stage{max-width:none;}
+  @media(min-width:1000px){
+    #hbm-map .col{flex:0 0 50%;max-width:50%;}
+    #hbm-map .col.a{padding-right:28px;}
   }
   @media(prefers-reduced-motion:reduce){
-    #hbg-globe .st.now .dot{animation:none;}
+    #hbm-map .stp.now .dot,#hbm-map .head-r{animation:none;}
   }
 </style>
 
-<section id="hbg-globe">
+<section id="hbm-map">
   <div class="wrap">
     <div class="lay">
-      <div><p class="eyebrow">HELIOS logistics</p><h1>Track your order</h1><p class="sub">Enter the HELIOS number from your shipping email.</p><form class="form" data-form>
-          <label for="hbg-in-globe" style="position:absolute;left:-9999px">Tracking number</label>
-          <input id="hbg-in-globe" type="text" data-in autocomplete="off" spellcheck="false"
+      <div class="col a"><p class="eyebrow">HELIOS logistics</p><h1>Track your order</h1><p class="sub">Enter the HELIOS number from your shipping email. We ship inside the US only.</p><form class="form" data-form>
+          <label for="hbm-in-map" style="position:absolute;left:-9999px">Tracking number</label>
+          <input id="hbm-in-map" type="text" data-in autocomplete="off" spellcheck="false"
                  placeholder="HELIOS289471132">
           <button type="submit" class="go">Track</button>
         </form>
@@ -886,17 +1051,18 @@
             <span class="pill" data-pill></span>
           </div>
           <div class="meta">
-            <span data-route></span>
-            <span data-eta></span>
-            <span data-carrier></span>
+            <span data-route></span><span data-eta></span><span data-carrier></span>
           </div>
           <div class="tl" data-tl></div>
         </div><p class="foot"></p></div>
 
-      <div>
+      <div class="col">
         <div class="stage">
-          <canvas data-globe aria-hidden="true"></canvas>
-          <span class="ring"></span>
+          <svg class="map" viewBox="0 0 960 520" role="img"
+               aria-label="Map of the United States showing the delivery route">
+            <g data-states><path d="M620 314L646 311L657 350L661 358L661 360L663 361L660 364L660 369L662 375L661 380L664 385L623 389L622 392L626 395L626 398L627 399L625 402L623 403L619 400L618 396L616 395L615 402L611 402L607 373L609 317L607 315Z" data-s="Alabama"/><path d="M231 468L233 468L236 470L239 473L240 476L236 475L237 476L237 477L234 475L235 473L232 471ZM232 473L234 473L233 474ZM229 465L228 464L231 463L234 466L231 467ZM229 468L227 466L228 465L230 467L230 471ZM227 470L224 467L222 464L222 462L225 463ZM224 457L225 457L227 459L226 460L228 462L227 465ZM221 464L223 465L222 466ZM218 459L220 458L221 460L223 459L225 462L222 462L222 463L221 464L218 461ZM172 388L180 389L183 387L188 389L200 449L203 449L206 448L206 449L212 454L213 456L216 453L216 450L218 448L229 456L236 464L244 466L246 470L245 475L242 472L243 471L241 472L239 472L239 470L238 471L237 469L236 470L235 469L235 465L230 463L228 459L222 456L220 452L222 458L219 458L218 455L215 455L219 458L217 459L211 455L205 454L205 450L203 453L195 452L191 453L188 450L187 452L184 450L182 452L182 451L184 449L182 449L181 447L177 449L177 448L176 449L178 454L173 455L168 460L166 461L165 460L165 459L168 457L165 457L167 453L167 450L170 448L172 448L169 447L164 451L161 457L158 459L158 461L161 463L158 467L150 472L149 475L143 478L142 481L139 482L138 483L137 482L132 484L130 482L128 486L127 486L126 484L126 486L124 485L125 486L123 487L124 488L117 489L119 486L123 485L123 486L130 481L133 480L133 482L135 482L134 480L135 479L142 476L142 474L145 471L147 465L148 464L148 463L144 464L143 462L142 465L139 462L138 462L137 460L132 463L132 458L133 457L132 453L126 454L122 448L123 445L122 445L121 441L126 435L127 433L129 432L132 433L134 431L138 431L139 429L138 424L139 424L139 422L134 425L133 424L133 425L131 423L127 424L124 422L124 417L121 415L131 410L133 411L132 414L137 415L139 414L136 410L137 409L139 412L139 408L134 407L133 403L128 398L129 395L134 395L136 394L141 387L143 387L146 384L149 385L153 381L155 383L154 385L156 383L158 385L162 385L162 386L165 388L168 386ZM162 468L161 468L163 465L165 467ZM158 471L159 471L159 470L160 470L161 468L163 468L164 471L165 471L158 477L156 473L158 471ZM134 485L135 485L133 486L133 484ZM119 449L121 450L119 453L115 450ZM111 490L110 492L112 492L110 493L105 493L109 492L108 490ZM101 494L105 492L102 495ZM108 424L110 426L112 425L116 429L112 431L110 427L107 426ZM78 493L79 494L78 495L75 494ZM69 493L69 494L67 494L68 492ZM63 491L64 492L63 492ZM33 469L32 470L26 467L28 466Z" data-s="Alaska"/><path d="M297 269L282 375L250 370L196 338L198 334L201 334L202 332L202 329L200 328L201 321L204 319L205 312L213 306L210 303L207 294L209 290L210 271L216 272L217 274L219 275L221 272L224 257Z" data-s="Arizona"/><path d="M511 291L576 289L577 292L573 298L582 298L582 301L580 303L580 306L577 309L578 313L576 317L575 317L576 319L571 325L572 328L569 330L566 334L567 336L564 339L562 345L565 347L564 349L565 353L564 355L519 357L519 347L517 346L514 347L512 345L512 312L509 291Z" data-s="Arkansas"/><path d="M119 134L161 146L147 201L208 292L207 294L210 303L213 306L205 312L204 319L201 321L200 328L202 329L202 332L201 334L161 330L159 327L160 318L159 314L150 303L148 304L146 303L147 301L145 297L142 297L136 293L136 290L132 286L119 282L117 279L120 270L117 266L117 262L113 257L107 243L108 237L109 238L111 234L110 231L108 230L105 224L106 214L109 214L110 207L108 208L107 211L104 211L101 207L102 203L101 199L95 187L96 186L96 180L98 177L99 171L94 161L94 158L100 151L104 141L105 136L104 134L106 131Z" data-s="California"/><path d="M322 196L404 204L399 279L328 273L297 269L307 194Z" data-s="Colorado"/><path d="M802 149L818 145L821 156L821 158L807 162L805 166L798 170L797 168L800 166L798 164L796 150Z" data-s="Connecticut"/><path d="M779 198L777 202L778 205L781 207L782 211L786 215L788 215L790 221L780 223L774 200L776 198Z" data-s="Delaware"/><path d="M759 217L762 219L760 221L759 219Z" data-s="District of Columbia"/><path d="M656 386L664 385L667 390L709 387L710 391L712 390L711 383L713 382L721 383L726 399L733 410L742 422L741 423L743 429L755 451L757 470L755 471L754 476L755 477L753 481L751 481L743 484L741 483L741 480L736 472L733 471L731 473L727 465L723 461L722 455L720 454L720 456L719 457L710 446L714 438L710 439L709 441L706 438L707 428L707 419L703 415L700 414L693 409L692 406L690 406L688 403L681 400L676 401L677 404L675 404L669 408L662 410L662 407L660 405L644 399L639 399L625 402L627 399L626 398L626 395L622 392L623 389Z" data-s="Florida"/><path d="M684 307L681 313L687 316L688 316L695 325L706 333L706 335L709 338L714 340L716 347L718 348L721 352L722 356L726 357L723 364L722 373L720 375L721 383L713 382L711 383L712 390L710 391L709 387L667 390L661 380L662 375L660 369L660 364L663 361L661 360L661 358L657 350L646 311Z" data-s="Georgia"/><path d="M338 495L333 493L333 487L330 480L334 475L333 472L333 470L344 475L347 478L347 480L352 484L349 487L340 491ZM321 456L323 459L325 458L331 460L330 463L323 464L323 461L320 460L319 458ZM314 453L312 455L308 455L309 453ZM297 444L299 448L298 451L294 451L292 446ZM270 434L272 434L273 436L273 439L271 440L265 438L266 435Z" data-s="Hawaii"/><path d="M242 31L238 50L241 56L240 61L244 65L248 74L251 76L251 78L254 78L250 89L251 92L248 94L248 98L250 100L255 96L257 99L257 104L260 109L259 113L260 115L263 115L264 122L265 123L267 122L271 122L274 121L276 122L279 122L279 123L282 123L286 120L290 126L282 171L201 156L209 122L212 117L211 115L209 114L208 111L212 106L216 103L216 101L223 91L223 89L220 87L219 76L230 28Z" data-s="Idaho"/><path d="M562 176L601 174L601 177L606 188L610 232L608 236L611 243L607 253L605 253L605 262L603 265L605 268L599 270L599 272L600 275L599 276L591 274L589 278L590 279L588 279L584 274L585 272L583 266L578 262L577 263L571 257L573 245L568 243L567 245L564 237L555 229L552 220L553 213L557 211L557 208L559 206L559 203L557 200L557 197L563 196L567 193L567 190L569 189L569 183L566 181Z" data-s="Illinois"/><path d="M627 185L643 183L649 233L648 234L650 239L645 241L641 241L641 245L639 246L638 249L636 250L635 255L634 256L630 255L629 253L626 256L627 258L624 259L623 257L619 259L618 261L614 259L612 260L611 258L610 260L606 260L605 262L605 253L607 253L611 243L608 236L610 232L606 188L607 189L611 189L615 186Z" data-s="Indiana"/><path d="M551 158L553 158L553 161L556 163L554 165L556 172L561 174L566 181L569 183L569 185L567 193L563 196L557 197L557 200L559 203L559 206L557 208L557 211L553 213L553 217L549 213L492 214L490 212L491 207L490 198L487 197L487 188L485 187L483 179L480 175L483 167L481 165L481 160Z" data-s="Iowa"/><path d="M405 223L498 225L500 227L505 229L501 234L506 240L509 241L509 282L399 279L403 223Z" data-s="Kansas"/><path d="M663 238L666 240L668 238L674 239L677 236L678 239L682 242L683 247L685 251L689 255L694 257L689 263L684 266L682 271L679 272L679 274L671 278L609 284L606 283L607 287L586 288L587 286L589 286L589 278L591 274L599 276L600 275L599 272L599 270L605 268L603 265L606 260L610 260L611 258L612 260L614 259L618 261L619 259L623 257L624 259L627 258L626 256L629 253L630 255L634 256L635 255L636 250L638 249L639 246L641 245L641 241L645 241L650 239L648 234L649 233L654 232L658 237Z" data-s="Kentucky"/><path d="M526 357L564 355L565 358L564 358L564 362L567 364L567 370L566 374L562 377L561 382L560 381L560 388L558 388L559 392L558 393L588 392L587 398L593 407L588 410L588 411L592 412L594 409L597 412L597 414L595 416L592 415L591 419L594 421L599 422L603 425L600 428L597 428L595 425L589 423L589 420L586 421L585 427L583 427L581 424L577 425L576 427L574 428L569 427L566 422L561 421L560 417L555 418L555 415L551 418L552 419L549 421L534 417L524 419L522 417L526 411L525 407L526 405L525 402L528 396L528 392L523 384L523 380L520 376L519 357Z" data-s="Louisiana"/><path d="M828 123L823 118L812 83L817 79L816 78L819 73L818 72L820 70L818 67L818 62L819 60L819 55L824 38L827 38L828 41L830 42L837 36L844 40L851 65L856 65L856 67L858 69L857 71L860 73L862 71L867 77L865 81L863 80L862 82L860 83L861 84L858 85L856 90L854 87L853 88L854 90L852 93L850 90L849 92L846 93L845 90L843 92L844 99L842 102L840 102L836 107L834 108L833 106L831 110L832 112L830 113Z" data-s="Maine"/><path d="M723 210L774 200L780 223L790 221L789 230L780 234L779 231L778 230L779 228L776 226L776 227L773 228L771 224L772 224L772 218L770 212L770 209L773 207L772 204L771 205L771 206L768 210L767 220L769 224L771 227L773 233L769 230L764 230L762 227L759 230L758 228L762 219L759 217L759 219L753 217L753 214L749 213L746 208L744 209L741 208L740 209L738 210L737 212L733 211L731 214L729 214L724 220Z" data-s="Maryland"/><path d="M826 126L827 126L829 129L827 135L828 138L831 137L836 145L840 145L844 142L844 145L838 149L836 150L834 149L830 152L826 148L824 144L796 150L796 137L822 131Z" data-s="Massachusetts"/><path d="M662 181L643 185L643 183L615 186L618 184L621 176L622 167L621 162L616 152L617 147L615 143L618 137L618 131L620 130L620 127L623 125L625 122L626 128L627 129L628 125L628 119L632 116L631 113L633 109L635 108L639 110L642 110L644 113L652 114L655 118L654 120L657 126L657 133L654 135L654 138L651 140L650 145L651 146L654 147L659 139L663 137L667 141L673 156L672 163L670 165L670 162L668 163L667 169L665 171L665 176ZM625 110L626 113L624 113L624 110ZM599 125L597 123L598 120L595 120L596 114L591 110L586 109L584 109L565 104L563 101L561 100L565 98L568 96L573 94L578 91L588 82L591 83L585 91L586 94L588 92L592 92L596 93L599 98L601 99L604 98L609 99L615 94L623 93L629 91L630 96L635 95L636 96L638 94L641 93L642 100L644 102L647 103L647 101L649 101L651 102L650 104L643 104L639 105L636 103L635 107L631 104L625 104L623 106L616 107L614 110L610 112L610 110L608 110L608 112L604 114ZM579 73L575 76L575 74L582 69L581 72Z" data-s="Michigan"/><path d="M540 99L539 98L536 100L537 111L532 113L529 117L529 120L533 123L531 125L531 136L534 139L537 139L539 141L543 143L544 145L550 149L553 153L553 158L483 160L483 126L477 120L481 116L481 107L478 101L478 83L474 73L475 63L473 57L499 57L499 50L502 50L503 52L505 61L511 64L516 64L516 66L523 63L526 64L530 65L531 67L532 67L534 71L535 69L538 68L539 70L542 71L543 72L544 74L553 70L555 72L562 71L566 73L569 73L565 77L555 81L539 97Z" data-s="Minnesota"/><path d="M603 315L607 315L609 317L607 373L611 402L605 403L604 402L593 407L587 398L588 392L558 393L559 392L558 388L560 388L560 381L561 382L562 377L566 374L567 370L567 364L564 362L564 358L565 358L564 355L565 353L564 349L565 347L562 345L564 339L567 336L566 334L569 330L572 328L571 325L576 319L575 317Z" data-s="Mississippi"/><path d="M547 213L549 213L553 217L552 223L555 229L564 237L565 244L567 245L568 243L573 245L571 257L577 263L578 262L583 266L585 272L584 274L588 279L590 279L589 286L587 286L586 288L585 288L585 293L582 298L573 298L577 292L576 289L509 291L509 241L506 240L501 234L505 229L500 227L492 214Z" data-s="Missouri"/><path d="M389 53L383 127L291 116L290 126L286 120L282 123L279 123L279 122L276 122L274 121L271 122L267 122L265 123L264 122L263 115L260 115L259 113L260 109L257 104L257 99L255 96L250 100L248 98L248 94L251 92L250 89L254 78L251 78L251 76L248 74L244 65L240 61L241 56L238 50L242 31L322 45Z" data-s="Montana"/><path d="M389 165L455 169L462 173L464 171L472 172L479 175L480 178L483 179L485 187L487 188L487 197L490 198L491 207L490 212L498 225L403 223L404 204L376 202L379 164Z" data-s="Nebraska"/><path d="M201 156L242 164L221 272L219 275L217 274L216 272L210 271L209 290L208 292L147 201L161 146Z" data-s="Nevada"/><path d="M812 83L823 118L828 123L827 126L823 129L822 131L806 135L805 133L804 131L805 129L804 119L806 109L805 104L808 101L810 98L808 95L809 85L812 85Z" data-s="New Hampshire"/><path d="M790 169L795 171L794 177L792 178L792 181L796 182L797 194L791 211L789 208L785 207L779 204L778 201L779 198L782 195L786 188L781 185L781 183L779 183L778 181L780 177L778 175L782 167Z" data-s="New Jersey"/><path d="M320 272L385 278L377 372L322 367L321 369L323 371L296 368L295 376L282 375L297 269Z" data-s="New Mexico"/><path d="M785 96L786 103L788 106L788 114L790 119L790 120L792 123L796 137L795 150L798 164L800 166L797 168L798 170L804 170L805 169L813 167L816 163L817 165L819 165L805 176L796 179L794 177L795 171L782 166L779 166L776 163L776 161L771 157L711 169L710 164L718 157L721 152L718 149L716 144L724 140L734 139L737 140L748 136L751 132L753 132L753 123L749 122L750 119L754 115L760 105L765 100Z" data-s="New York"/><path d="M711 273L786 259L789 266L785 266L779 271L776 271L776 273L785 270L787 271L789 270L791 274L791 277L789 277L786 282L781 284L781 287L786 290L784 296L781 296L773 299L766 309L765 315L761 315L756 317L736 302L719 305L719 303L716 300L715 301L714 299L696 301L684 307L665 309L665 305L668 304L669 301L672 297L676 297L680 293L683 292L688 286L689 287L694 283L697 283L698 280L701 278L701 274Z" data-s="North Carolina"/><path d="M473 57L475 63L474 73L478 83L478 101L481 107L481 114L384 110L389 53Z" data-s="North Dakota"/><path d="M701 171L705 196L703 197L705 202L704 214L699 221L697 222L696 221L695 224L693 224L691 232L689 229L687 234L688 237L686 238L686 241L682 242L678 239L677 236L674 239L668 238L666 240L663 238L658 237L654 232L649 233L643 185L662 181L669 185L671 183L676 186L682 183L686 183L695 174Z" data-s="Ohio"/><path d="M428 281L509 282L509 291L512 312L512 345L506 343L505 341L501 339L500 341L496 341L495 340L491 342L490 341L486 342L483 344L479 341L476 341L474 339L471 343L469 341L468 342L463 339L460 341L459 339L457 338L455 336L452 335L450 337L449 335L440 334L439 330L432 330L429 327L428 327L429 290L385 288L385 278Z" data-s="Oklahoma"/><path d="M141 60L144 62L144 70L150 74L156 73L160 74L163 76L163 77L171 76L176 78L193 77L219 83L220 87L223 89L223 91L216 101L216 103L212 106L208 111L209 114L211 115L212 117L209 122L201 156L148 143L106 131L104 128L107 118L106 114L116 98L126 75L130 61L131 58L137 57L139 59Z" data-s="Oregon"/><path d="M711 164L711 169L771 157L776 161L776 163L782 167L778 175L780 177L778 181L781 185L786 188L786 190L782 194L782 195L779 198L776 198L774 200L708 213L701 171Z" data-s="Pennsylvania"/><path d="M822 144L824 144L826 148L828 149L826 149L826 156L821 158L819 146Z" data-s="Rhode Island"/><path d="M689 305L696 301L714 299L715 301L716 300L719 303L719 305L736 302L756 317L751 322L748 327L748 331L746 335L743 335L743 338L738 344L735 345L726 357L722 356L721 352L718 348L716 347L714 340L709 338L706 335L706 333L695 325L688 316L687 316L681 313L684 307Z" data-s="South Carolina"/><path d="M384 110L481 114L481 116L477 120L483 126L483 160L481 160L481 165L483 167L480 175L483 179L480 178L479 175L472 172L464 171L462 173L455 169L379 164Z" data-s="South Dakota"/><path d="M607 287L606 283L658 279L701 274L701 278L698 280L697 283L694 283L689 287L688 286L683 292L680 293L676 297L672 297L669 301L668 304L665 305L665 309L575 317L576 317L578 313L577 309L580 306L580 303L582 301L582 298L585 293L585 288Z" data-s="Tennessee"/><path d="M402 289L429 290L428 327L429 327L432 330L439 330L440 334L449 335L450 337L452 335L455 336L457 338L459 339L460 341L463 339L468 342L469 341L471 343L474 339L476 341L479 341L483 344L486 342L490 341L491 342L495 340L496 341L500 341L501 339L514 347L517 346L519 347L520 376L523 380L523 384L528 392L528 396L525 402L526 405L525 407L526 411L522 417L524 419L513 422L510 421L509 417L507 420L505 419L505 422L506 423L507 426L499 435L489 440L488 439L485 440L485 439L481 440L479 437L478 438L482 443L479 444L476 443L475 447L472 450L465 463L463 463L463 465L465 464L462 472L464 474L464 479L466 481L468 488L463 490L461 487L451 487L447 483L444 483L435 477L434 472L431 468L431 460L429 457L424 453L424 450L418 444L412 429L406 422L403 420L401 416L390 414L386 413L385 415L381 415L378 419L376 425L372 428L370 428L356 420L351 414L346 396L345 394L339 390L331 380L327 377L325 372L321 369L322 367L377 372L384 288Z" data-s="Texas"/><path d="M267 169L282 171L279 190L307 194L297 269L224 257L242 164Z" data-s="Utah"/><path d="M808 90L808 95L810 98L808 101L805 104L806 109L804 119L805 129L804 131L805 133L806 135L796 137L792 123L790 120L790 119L788 114L788 106L786 103L785 96Z" data-s="Vermont"/><path d="M786 231L789 230L786 235L784 247L782 249L781 246L781 241L783 233ZM739 212L748 217L749 213L751 213L753 214L753 217L759 219L760 221L757 228L758 230L762 229L763 232L769 232L771 234L775 235L774 241L777 245L775 247L776 249L778 250L776 253L773 251L772 252L775 254L782 253L786 259L733 270L671 278L679 274L679 272L682 271L684 266L689 263L694 257L696 261L699 262L701 262L703 259L705 261L709 259L718 253L717 250L724 236L724 232L729 234L732 225L734 227L740 218Z" data-s="Virginia"/><path d="M230 28L219 76L219 83L193 77L176 78L171 76L163 77L163 76L160 74L156 73L150 74L144 70L145 65L142 60L139 59L137 57L135 55L133 56L131 54L132 51L134 51L133 46L134 27L133 24L133 18L136 15L142 21L149 24L152 24L153 26L156 27L157 31L158 32L157 42L158 42L159 33L162 30L161 28L163 16L160 13L161 11ZM158 23L160 23L159 26L157 24ZM156 17L158 15L159 19L157 21L155 19Z" data-s="Washington"/><path d="M705 196L708 213L723 210L724 220L729 214L731 214L733 211L737 212L738 210L740 209L741 208L744 209L746 208L749 213L748 217L739 212L740 218L734 227L732 225L729 234L724 232L724 236L717 250L718 253L709 259L705 261L703 259L701 262L699 262L696 261L694 257L689 255L685 251L683 247L682 242L686 241L686 238L688 237L687 234L689 229L691 232L693 224L695 224L696 221L697 222L699 221L704 214L705 202L703 197Z" data-s="West Virginia"/><path d="M561 100L563 101L565 104L584 109L586 109L591 110L596 114L595 120L598 120L597 123L599 125L599 127L596 128L594 135L596 136L599 130L602 128L604 123L606 122L606 124L602 135L601 142L599 148L600 151L598 160L601 168L601 174L562 176L561 174L556 172L554 165L556 163L553 161L553 153L550 149L544 145L543 143L539 141L537 139L534 139L531 136L531 125L533 123L529 120L529 117L532 113L537 111L536 100L539 98L543 99L555 93L556 95L554 97Z" data-s="Wisconsin"/><path d="M317 120L383 127L376 202L322 196L279 190L291 116Z" data-s="Wyoming"/></g>
+            <g data-route></g>
+          </svg>
         </div>
       </div>
     </div>
@@ -931,7 +1097,7 @@
   <div class="hb-wrap">
     <div class="hbf__top">
       <div>
-        <span class="hbf__logo">HELIOS<em>.</em></span><p class="hbf__tag">Motorized water loungers. Twin motors, joystick steering, ready in five minutes.</p></div>
+        <span class="hbf__logo">HELIOS<em>.</em></span><p class="hbf__tag">Motorized water loungers. Ready in five minutes.</p></div>
       <div class="hbf__cols"><nav class="hbf__c" >
               <b>Help</b>
               <ul></ul>

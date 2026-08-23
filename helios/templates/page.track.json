@@ -68,25 +68,26 @@
         "cta_link": "/"
       }
     },
-    "globe": {
-      "type": "helios-bb-globe",
+    "map": {
+      "type": "helios-bb-usmap",
       "blocks": {
         "s1": {
           "type": "ship",
           "settings": {
-            "code": "HELIOS289471132",
-            "stage": 3,
-            "from": "Shenzhen, CN",
-            "from_lon": "114.06",
-            "from_lat": "22.54",
-            "to": "Los Angeles, CA",
-            "to_lon": "-118.24",
-            "to_lat": "34.05",
-            "eta": "Aug 29 – Sep 2",
+            "code": "HELIOS104778251",
+            "stage": 1,
+            "from": "Ontario, CA",
+            "from_lon": "-117.61",
+            "from_lat": "34.06",
+            "to": "Dallas, TX",
+            "to_lon": "-96.80",
+            "to_lat": "32.78",
+            "state": "Texas",
+            "eta": "Aug 30 – Sep 3",
             "carrier": "HELIOS Direct",
-            "d1": "Aug 18 · Order placed",
-            "d2": "Aug 19 · Packed, Shenzhen",
-            "d3": "Aug 21 · Departed origin facility",
+            "d1": "Aug 23 · Order placed, payment confirmed",
+            "d2": "",
+            "d3": "",
             "d4": "",
             "d5": ""
           }
@@ -94,18 +95,19 @@
         "s2": {
           "type": "ship",
           "settings": {
-            "code": "HELIOS104778251",
-            "stage": 1,
-            "from": "Shenzhen, CN",
-            "from_lon": "114.06",
-            "from_lat": "22.54",
-            "to": "Dallas, TX",
-            "to_lon": "-96.80",
-            "to_lat": "32.78",
-            "eta": "Sep 1 – Sep 5",
+            "code": "HELIOS336920418",
+            "stage": 2,
+            "from": "Ontario, CA",
+            "from_lon": "-117.61",
+            "from_lat": "34.06",
+            "to": "Chicago, IL",
+            "to_lon": "-87.63",
+            "to_lat": "41.88",
+            "state": "Illinois",
+            "eta": "Aug 29 – Sep 2",
             "carrier": "HELIOS Direct",
-            "d1": "Aug 23 · Order placed",
-            "d2": "",
+            "d1": "Aug 21 · Order placed",
+            "d2": "Aug 22 · Packed, Ontario CA",
             "d3": "",
             "d4": "",
             "d5": ""
@@ -114,19 +116,20 @@
         "s3": {
           "type": "ship",
           "settings": {
-            "code": "HELIOS336920418",
-            "stage": 2,
-            "from": "Shenzhen, CN",
-            "from_lon": "114.06",
-            "from_lat": "22.54",
-            "to": "Chicago, IL",
-            "to_lon": "-87.63",
-            "to_lat": "41.88",
-            "eta": "Aug 31 – Sep 4",
+            "code": "HELIOS289471132",
+            "stage": 3,
+            "from": "Ontario, CA",
+            "from_lon": "-117.61",
+            "from_lat": "34.06",
+            "to": "Tampa, FL",
+            "to_lon": "-82.46",
+            "to_lat": "27.95",
+            "state": "Florida",
+            "eta": "Aug 28 – Sep 1",
             "carrier": "HELIOS Direct",
-            "d1": "Aug 21 · Order placed",
-            "d2": "Aug 22 · Packed, Shenzhen",
-            "d3": "",
+            "d1": "Aug 18 · Order placed",
+            "d2": "Aug 19 · Packed, Ontario CA",
+            "d3": "Aug 21 · In transit, Phoenix AZ",
             "d4": "",
             "d5": ""
           }
@@ -136,18 +139,19 @@
           "settings": {
             "code": "HELIOS775013964",
             "stage": 4,
-            "from": "Shenzhen, CN",
-            "from_lon": "114.06",
-            "from_lat": "22.54",
-            "to": "Miami, FL",
-            "to_lon": "-80.19",
-            "to_lat": "25.76",
+            "from": "Ontario, CA",
+            "from_lon": "-117.61",
+            "from_lat": "34.06",
+            "to": "Phoenix, AZ",
+            "to_lon": "-112.07",
+            "to_lat": "33.45",
+            "state": "Arizona",
             "eta": "Aug 23",
             "carrier": "HELIOS Direct",
-            "d1": "Aug 12 · Order placed",
-            "d2": "Aug 13 · Packed, Shenzhen",
-            "d3": "Aug 15 · Departed origin facility",
-            "d4": "Aug 23 · Out for delivery, Miami",
+            "d1": "Aug 17 · Order placed",
+            "d2": "Aug 18 · Packed, Ontario CA",
+            "d3": "Aug 20 · In transit",
+            "d4": "Aug 23 · Out for delivery, Phoenix",
             "d5": ""
           }
         },
@@ -156,19 +160,20 @@
           "settings": {
             "code": "HELIOS512846077",
             "stage": 5,
-            "from": "Shenzhen, CN",
-            "from_lon": "114.06",
-            "from_lat": "22.54",
-            "to": "New York, NY",
-            "to_lon": "-74.01",
-            "to_lat": "40.71",
+            "from": "Ontario, CA",
+            "from_lon": "-117.61",
+            "from_lat": "34.06",
+            "to": "Brooklyn, NY",
+            "to_lon": "-73.94",
+            "to_lat": "40.68",
+            "state": "New York",
             "eta": "Delivered Aug 20",
             "carrier": "HELIOS Direct",
             "d1": "Aug 8 · Order placed",
-            "d2": "Aug 9 · Packed, Shenzhen",
-            "d3": "Aug 11 · Departed origin facility",
+            "d2": "Aug 9 · Packed, Ontario CA",
+            "d3": "Aug 12 · In transit, Denver CO",
             "d4": "Aug 20 · Out for delivery, Brooklyn",
-            "d5": "Aug 20 · Delivered"
+            "d5": "Aug 20 · Delivered, left with resident"
           }
         }
       },
@@ -182,7 +187,7 @@
       "settings": {
         "eyebrow": "HELIOS logistics",
         "heading": "Track your order",
-        "sub": "Enter the HELIOS number from your shipping email.",
+        "sub": "Enter the HELIOS number from your shipping email. We ship inside the US only.",
         "placeholder": "HELIOS289471132",
         "cta": "Track"
       }
@@ -203,7 +208,7 @@
       ],
       "settings": {
         "logo_text": "HELIOS",
-        "tagline": "Motorized water loungers. Twin motors, joystick steering, ready in five minutes.",
+        "tagline": "Motorized water loungers. Ready in five minutes.",
         "legal_title": "Legal",
         "contact": "helios.us.store@gmail.com",
         "note": "Ships from the US",
@@ -214,7 +219,7 @@
   "order": [
     "utility",
     "header",
-    "globe",
+    "map",
     "footer"
   ]
 }
