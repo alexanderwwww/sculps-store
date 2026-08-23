@@ -51,13 +51,18 @@
   .hg { background: var(--hg-page-bg, #fff); padding-block: 22px; }
   .hg__wrap { width: 100%; max-width: var(--hg-w, 1300px); margin-inline: auto; padding-inline: 16px; }
   .hg__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; }
-  .hg__grid { display: grid; grid-template-columns: repeat(var(--hg-cols-m, 1), minmax(0, 1fr)); gap: var(--hg-gap, 14px); }
+  /* Flex on a percentage basis rather than fr tracks: an ancestor was sizing
+     these grids to their content instead of stretching them. calc keeps the
+     tiles exactly N-up while the gap stays honest. */
+  .hg__grid { display: flex; flex-wrap: wrap; gap: var(--hg-gap, 14px); width: 100%; }
+  .hg__grid > * { flex: 0 0 calc((100% - (var(--hg-cols-m, 1) - 1) * var(--hg-gap, 14px)) / var(--hg-cols-m, 1));
+    min-width: 0; }
   .hg__tile { margin: 0; background: var(--hg-tile-bg, #fff); border: 1px solid var(--hg-border, #d5d9d9);
     border-radius: var(--hg-radius, 8px); overflow: hidden; padding: var(--hg-pad-m, 0); }
   .hg__tile img { display: block; width: 100%; aspect-ratio: var(--hg-ratio-m, 1/1); object-fit: cover; }
   @media screen and (min-width: 750px) {
     .hg { padding-block: 34px; }
-    .hg__grid { grid-template-columns: repeat(var(--hg-cols, 2), minmax(0, 1fr)); }
+    .hg__grid > * { flex: 0 0 calc((100% - (var(--hg-cols, 2) - 1) * var(--hg-gap, 14px)) / var(--hg-cols, 2)); }
     .hg__tile { padding: var(--hg-pad, 0); }
     .hg__tile img { aspect-ratio: var(--hg-ratio, 1/1); }
   }

@@ -17,13 +17,18 @@
   .hg { background: var(--hg-page-bg, #fff); padding-block: 22px; }
   .hg__wrap { width: 100%; max-width: var(--hg-w, 1300px); margin-inline: auto; padding-inline: 16px; }
   .hg__h { font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; }
-  .hg__grid { display: grid; grid-template-columns: repeat(var(--hg-cols-m, 1), minmax(0, 1fr)); gap: var(--hg-gap, 14px); }
+  /* Flex on a percentage basis rather than fr tracks: an ancestor was sizing
+     these grids to their content instead of stretching them. calc keeps the
+     tiles exactly N-up while the gap stays honest. */
+  .hg__grid { display: flex; flex-wrap: wrap; gap: var(--hg-gap, 14px); width: 100%; }
+  .hg__grid > * { flex: 0 0 calc((100% - (var(--hg-cols-m, 1) - 1) * var(--hg-gap, 14px)) / var(--hg-cols-m, 1));
+    min-width: 0; }
   .hg__tile { margin: 0; background: var(--hg-tile-bg, #fff); border: 1px solid var(--hg-border, #d5d9d9);
     border-radius: var(--hg-radius, 8px); overflow: hidden; padding: var(--hg-pad-m, 0); }
   .hg__tile img { display: block; width: 100%; aspect-ratio: var(--hg-ratio-m, 1/1); object-fit: cover; }
   @media screen and (min-width: 750px) {
     .hg { padding-block: 34px; }
-    .hg__grid { grid-template-columns: repeat(var(--hg-cols, 2), minmax(0, 1fr)); }
+    .hg__grid > * { flex: 0 0 calc((100% - (var(--hg-cols, 2) - 1) * var(--hg-gap, 14px)) / var(--hg-cols, 2)); }
     .hg__tile { padding: var(--hg-pad, 0); }
     .hg__tile img { aspect-ratio: var(--hg-ratio, 1/1); }
   }
@@ -446,9 +451,13 @@
   #hbx-box .wrap{max-width:1000px;margin:0 auto;padding:0 18px;}
   #hbx-box .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
   #hbx-box h2{font-size:clamp(20px,2.6vw,25px);font-weight:700;letter-spacing:-.015em;line-height:1.3;margin:0 0 18px;}
-  #hbx-box .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#D5D9D9;
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #hbx-box .grid{display:flex !important;flex-wrap:wrap;gap:1px;background:#D5D9D9;
     border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  @media(min-width:760px){#hbx-box .grid{grid-template-columns:repeat(4,1fr);}}
+  #hbx-box .grid > *{flex:1 1 168px;min-width:0;}
   #hbx-box .c{background:#fff;padding:20px 14px;text-align:center;}
   #hbx-box .c .ic{font-size:26px;line-height:1;margin-bottom:9px;}
   #hbx-box .c .t{font-size:14px;font-weight:700;line-height:1.3;}
@@ -515,8 +524,13 @@
   #cfq-clearfaq .head{text-align:center;margin:0 0 24px;}
   #cfq-clearfaq .ey{font-size:12px;font-weight:700;color:var(--mut);}
   #cfq-clearfaq h2{font-size:clamp(21px,2.8vw,27px);font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:6px 0 0;color:var(--ink);}
-  #cfq-clearfaq ['cols']{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;}
-  @media(min-width:860px){#cfq-clearfaq ['cols']{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;}}
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #cfq-clearfaq ['cols']{display:flex !important;flex-wrap:wrap;align-items:flex-start;
+    gap:clamp(18px,2.4vw,38px);width:100% !important;}
+  #cfq-clearfaq ['cols'] > *{flex:1 1 340px;min-width:0;max-width:100%;}
   #cfq-clearfaq .vid{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1117;aspect-ratio:9/12;}
   @media(max-width:859px){#cfq-clearfaq .vid{aspect-ratio:4/3;}}
   #cfq-clearfaq .vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
@@ -645,8 +659,14 @@
   #hw-howitworks .wrap{max-width:1000px;margin:0 auto;padding:clamp(30px,4vw,52px) 18px;}
   #hw-howitworks .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
   #hw-howitworks h2{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin:0 0 18px;}
-  #hw-howitworks .grid{display:grid;grid-template-columns:1fr;gap:1px;background:#D5D9D9;border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  @media(min-width:700px){#hw-howitworks .grid{grid-template-columns:repeat(3,1fr);}}
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #hw-howitworks .grid{display:flex !important;flex-wrap:wrap;gap:1px;background:#D5D9D9;
+    border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
+  #hw-howitworks .grid > *{flex:1 1 240px;min-width:0;}
+
   #hw-howitworks .st{background:#fff;padding:22px 20px;}
   #hw-howitworks .n{width:26px;height:26px;border-radius:50%;background:#0F1111;color:#fff;
     font-size:13px;font-weight:700;display:grid;place-items:center;margin-bottom:11px;}
@@ -710,7 +730,14 @@
   #hft-footer .badge svg{width:16px;height:16px;flex-shrink:0;color:#7FC4EE;opacity:.9}
   #hft-footer .badge .stars{color:#FFC531;display:inline-flex;gap:1px}
   #hft-footer .badge .stars svg{color:#FFC531;width:13px;height:13px;opacity:1}
-  #hft-footer .top{display:grid;grid-template-columns:1.4fr repeat(3,1fr) 1.5fr;gap:40px;padding:46px 0 32px}
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #hft-footer .top{display:flex !important;flex-wrap:wrap;gap:32px 40px;padding:46px 0 32px;width:100% !important}
+  #hft-footer .top > *{flex:1 1 200px;min-width:0}
+  #hft-footer .top > *:first-child{flex:1 1 280px}
+  #hft-footer .top > *:last-child{flex:1 1 280px}
   #hft-footer .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:#fff}
   #hft-footer .brand p{color:rgba(232,237,242,.6);font-size:13.5px;margin-top:12px;max-width:250px;line-height:1.6}
   #hft-footer .brand .pos{margin-top:14px;font-family:'Archivo';font-weight:800;font-size:13px;color:#7FC4EE}
@@ -738,7 +765,7 @@
   @keyframes hftshim{to{background-position:200% 0}}
   #hft-footer .mega .tag{display:block;font-size:11px;font-weight:800;letter-spacing:.4em;text-transform:uppercase;color:rgba(232,237,242,.35);margin-bottom:10px}
   @media(max-width:860px){
-    #hft-footer .top{grid-template-columns:1fr 1fr;gap:30px 24px;padding:36px 0 24px}
+    #hft-footer .top{gap:26px 24px;padding:36px 0 24px}
     #hft-footer .brand{grid-column:1 / -1}
     #hft-footer .nl{grid-column:1 / -1}
     #hft-footer .foot{justify-content:center;text-align:center}
@@ -1072,7 +1099,14 @@
   #hft-footer .badge svg{width:16px;height:16px;flex-shrink:0;color:#7FC4EE;opacity:.9}
   #hft-footer .badge .stars{color:#FFC531;display:inline-flex;gap:1px}
   #hft-footer .badge .stars svg{color:#FFC531;width:13px;height:13px;opacity:1}
-  #hft-footer .top{display:grid;grid-template-columns:1.4fr repeat(3,1fr) 1.5fr;gap:40px;padding:46px 0 32px}
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #hft-footer .top{display:flex !important;flex-wrap:wrap;gap:32px 40px;padding:46px 0 32px;width:100% !important}
+  #hft-footer .top > *{flex:1 1 200px;min-width:0}
+  #hft-footer .top > *:first-child{flex:1 1 280px}
+  #hft-footer .top > *:last-child{flex:1 1 280px}
   #hft-footer .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:#fff}
   #hft-footer .brand p{color:rgba(232,237,242,.6);font-size:13.5px;margin-top:12px;max-width:250px;line-height:1.6}
   #hft-footer .brand .pos{margin-top:14px;font-family:'Archivo';font-weight:800;font-size:13px;color:#7FC4EE}
@@ -1100,7 +1134,7 @@
   @keyframes hftshim{to{background-position:200% 0}}
   #hft-footer .mega .tag{display:block;font-size:11px;font-weight:800;letter-spacing:.4em;text-transform:uppercase;color:rgba(232,237,242,.35);margin-bottom:10px}
   @media(max-width:860px){
-    #hft-footer .top{grid-template-columns:1fr 1fr;gap:30px 24px;padding:36px 0 24px}
+    #hft-footer .top{gap:26px 24px;padding:36px 0 24px}
     #hft-footer .brand{grid-column:1 / -1}
     #hft-footer .nl{grid-column:1 / -1}
     #hft-footer .foot{justify-content:center;text-align:center}

@@ -17,7 +17,14 @@
   #hft-{{ sid }} .badge svg{width:16px;height:16px;flex-shrink:0;color:#7FC4EE;opacity:.9}
   #hft-{{ sid }} .badge .stars{color:#FFC531;display:inline-flex;gap:1px}
   #hft-{{ sid }} .badge .stars svg{color:#FFC531;width:13px;height:13px;opacity:1}
-  #hft-{{ sid }} .top{display:grid;grid-template-columns:1.4fr repeat(3,1fr) 1.5fr;gap:40px;padding:46px 0 32px}
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #hft-{{ sid }} .top{display:flex !important;flex-wrap:wrap;gap:32px 40px;padding:46px 0 32px;width:100% !important}
+  #hft-{{ sid }} .top > *{flex:1 1 200px;min-width:0}
+  #hft-{{ sid }} .top > *:first-child{flex:1 1 280px}
+  #hft-{{ sid }} .top > *:last-child{flex:1 1 280px}
   #hft-{{ sid }} .logo{font-family:'Archivo';font-weight:900;font-size:23px;letter-spacing:.14em;color:#fff}
   #hft-{{ sid }} .brand p{color:rgba(232,237,242,.6);font-size:13.5px;margin-top:12px;max-width:250px;line-height:1.6}
   #hft-{{ sid }} .brand .pos{margin-top:14px;font-family:'Archivo';font-weight:800;font-size:13px;color:#7FC4EE}
@@ -45,7 +52,7 @@
   @keyframes hftshim{to{background-position:200% 0}}
   #hft-{{ sid }} .mega .tag{display:block;font-size:11px;font-weight:800;letter-spacing:.4em;text-transform:uppercase;color:rgba(232,237,242,.35);margin-bottom:10px}
   @media(max-width:860px){
-    #hft-{{ sid }} .top{grid-template-columns:1fr 1fr;gap:30px 24px;padding:36px 0 24px}
+    #hft-{{ sid }} .top{gap:26px 24px;padding:36px 0 24px}
     #hft-{{ sid }} .brand{grid-column:1 / -1}
     #hft-{{ sid }} .nl{grid-column:1 / -1}
     #hft-{{ sid }} .foot{justify-content:center;text-align:center}

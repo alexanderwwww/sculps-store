@@ -11,8 +11,13 @@
   #cfq-{{ sid }} .head{text-align:center;margin:0 0 24px;}
   #cfq-{{ sid }} .ey{font-size:12px;font-weight:700;color:var(--mut);}
   #cfq-{{ sid }} h2{font-size:clamp(21px,2.8vw,27px);font-weight:800;letter-spacing:-.015em;line-height:1.2;margin:6px 0 0;color:var(--ink);}
-  #cfq-{{ sid }} .cols{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;}
-  @media(min-width:860px){#cfq-{{ sid }} .cols{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;}}
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #cfq-{{ sid }} .cols{display:flex !important;flex-wrap:wrap;align-items:flex-start;
+    gap:clamp(18px,2.4vw,38px);width:100% !important;}
+  #cfq-{{ sid }} .cols > *{flex:1 1 340px;min-width:0;max-width:100%;}
   #cfq-{{ sid }} .vid{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1117;aspect-ratio:9/12;}
   @media(max-width:859px){#cfq-{{ sid }} .vid{aspect-ratio:4/3;}}
   #cfq-{{ sid }} .vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}

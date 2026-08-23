@@ -9,9 +9,13 @@
   #hbx-{{ sid }} .wrap{max-width:1000px;margin:0 auto;padding:0 18px;}
   #hbx-{{ sid }} .eb{font-size:12.5px;font-weight:700;color:#565959;margin-bottom:6px;}
   #hbx-{{ sid }} h2{font-size:clamp(20px,2.6vw,25px);font-weight:700;letter-spacing:-.015em;line-height:1.3;margin:0 0 18px;}
-  #hbx-{{ sid }} .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#D5D9D9;
+  /* Equal flex basis rather than fr tracks behind a breakpoint: an ancestor
+     was sizing these grids to their content instead of stretching them, which
+     collapsed columns to whatever text happened to be in them. A declared
+     basis splits the row evenly and wraps on its own. */
+  #hbx-{{ sid }} .grid{display:flex !important;flex-wrap:wrap;gap:1px;background:#D5D9D9;
     border:1px solid #D5D9D9;border-radius:8px;overflow:hidden;}
-  @media(min-width:760px){#hbx-{{ sid }} .grid{grid-template-columns:repeat(4,1fr);}}
+  #hbx-{{ sid }} .grid > *{flex:1 1 168px;min-width:0;}
   #hbx-{{ sid }} .c{background:#fff;padding:20px 14px;text-align:center;}
   #hbx-{{ sid }} .c .ic{font-size:26px;line-height:1;margin-bottom:9px;}
   #hbx-{{ sid }} .c .t{font-size:14px;font-weight:700;line-height:1.3;}
