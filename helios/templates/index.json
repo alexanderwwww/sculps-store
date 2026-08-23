@@ -47,9 +47,9 @@
             "tag_bg": "#0f1111",
             "gift": "",
             "gift_variant_id": "",
-            "save": "",
-            "price": "$199.99",
-            "compare": ""
+            "save": "SAVE $60",
+            "price": "$139.99",
+            "compare": "$199.99"
           }
         },
         "o1": {
@@ -63,9 +63,9 @@
             "tag_bg": "#39FF14",
             "gift": "",
             "gift_variant_id": "",
-            "save": "SAVE $199.99",
-            "price": "$199.99",
-            "compare": "$399.98"
+            "save": "SAVE $60 + 1 FREE",
+            "price": "$139.99",
+            "compare": "$199.99"
           }
         },
         "o2": {
@@ -79,9 +79,9 @@
             "tag_bg": "#0f1111",
             "gift": "",
             "gift_variant_id": "",
-            "save": "SAVE $249.98",
-            "price": "$349.99",
-            "compare": "$599.97"
+            "save": "SAVE $105",
+            "price": "$244.99",
+            "compare": "$349.99"
           }
         },
         "o3": {
@@ -95,9 +95,9 @@
             "tag_bg": "#0f1111",
             "gift": "",
             "gift_variant_id": "",
-            "save": "SAVE $339.97",
-            "price": "$459.99",
-            "compare": "$799.96"
+            "save": "SAVE $138",
+            "price": "$321.99",
+            "compare": "$459.99"
           }
         }
       },
@@ -116,15 +116,15 @@
         "rating": "4.8",
         "review_count": "3,912",
         "reviews_anchor": "#reviews",
-        "big_price": "$199.99",
-        "big_compare": "$399.98",
-        "big_badge": "SAVE $199.99",
-        "big_note": "Two Super Glides for the price of one",
+        "big_price": "$139.99",
+        "big_compare": "$199.99",
+        "big_badge": "30% OFF TODAY",
+        "big_note": "Birthday price. Two Super Glides for the price of one.",
         "b1": "Twin motors move you. No paddling, no kicking, no effort",
         "b2": "Holds 250-300 lb, padded headrest, dual cup holders",
         "b3": "Ready in 5 minutes. Nozzle included, no pump to buy",
-        "deal_name": "2-FOR-1 DEAL",
-        "pop_label": "LIMITED STOCK",
+        "deal_name": "🎂 BIRTHDAY 30% OFF",
+        "pop_label": "TODAY ONLY",
         "step1": "Pick your deal",
         "step2": "Tap Add to cart",
         "step3": "We ship it free",
@@ -468,7 +468,7 @@
         "label": "Super Glide 1+1 FREE",
         "cta_text": "Add to Cart",
         "scroll_trigger": 640,
-        "price": "$199.99"
+        "price": "$139.99"
       }
     },
     "cart": {
