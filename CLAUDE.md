@@ -52,8 +52,13 @@ image before video.
 - Track page: bar, nav, map (`helios-bb-usmap` — US states SVG, Albers, merchant-
   entered shipment blocks; demo numbers HELIOS104778251/336920418/289471132/775013964/512846077 = stages 1-5)
 - Design tokens live in `helios-bar.liquid` (`--phi`, `--fs-*`, `--sp-*` Fibonacci,
-  `--r-*`); every use carries a literal fallback. Palette: Best Buy blue #0046BE
-  for interactive/selected, yellow #FFE000 ONLY for Add to Cart, red #CC0C39 for savings.
+  `--r-*`); every use carries a literal fallback.
+- PALETTE (the user's original identity — do NOT blue-wash it again): ink #0F1111
+  for the bundle frame header, selection borders, radios, dots; Amazon yellow
+  #FFD814/#FCD200 for Add to Cart / nav / guarantee CTAs; #FFC531 for the frame's
+  accent text; neon-yellow #FFE000 tag pill with glow ("1+1 FREE") and dark text;
+  red #CC0C39 for savings; teal #007185 for the ratings link. Blue #0046BE stays
+  only on the helios-bb-* tracking page.
 - Old-CDN risk: badge images, FAQ video, carousel review photos point at the dead
   helios-wins CDN (`/1/0808/6949/0929/` and `/1/0769/8320/6053/`) — if broken, user
   re-uploads to Files and we repoint.
