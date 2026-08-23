@@ -200,7 +200,7 @@
         </div>
         {%- if p != blank and p.images.size > 1 -%}
           <div class="hbb-thumbs" id="hbb-th-{{ sid }}">
-            {%- for img in p.images limit: 9 -%}
+            {%- for img in p.images limit: 16 -%}
               <button type="button" class="hbb-th{% if forloop.first %} hbb-on{% endif %}"
                       data-src="{{ img | image_url: width: 1200 }}" aria-label="Image {{ forloop.index }}">
                 <img src="{{ img | image_url: width: 150 }}" alt="" loading="lazy">
