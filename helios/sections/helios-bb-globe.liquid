@@ -112,10 +112,23 @@
   #hbg-{{ section.id }} .flow{margin-top:var(--sp-4,21px);
     background:linear-gradient(180deg,#161C22,#11161B);border:1px solid #2A333B;
     border-radius:var(--r-md,13px);padding:var(--sp-4,21px);}
-  #hbg-{{ section.id }} .fl-lane{position:relative;height:30px;margin-bottom:var(--sp-3,13px);}
+  #hbg-{{ section.id }} .fl-lane{position:relative;height:44px;margin-bottom:var(--sp-3,13px);
+    padding:0 26px;}
+  /* The lane physically runs from us to the customer: a dot at New York, the
+     home marker at their end, package travelling between. */
+  #hbg-{{ section.id }} .fl-from,#hbg-{{ section.id }} .fl-to{position:absolute;top:50%;
+    transform:translateY(-50%);z-index:2;}
+  #hbg-{{ section.id }} .fl-from{left:0;width:11px;height:11px;border-radius:50%;
+    background:#7EC4FF;box-shadow:0 0 0 3px rgba(126,196,255,.18);}
+  #hbg-{{ section.id }} .fl-to{right:0;width:22px;height:22px;color:#5D666E;
+    transition:color .5s;}
+  #hbg-{{ section.id }} .fl-to svg{width:100%;height:100%;display:block;}
+  #hbg-{{ section.id }} .fl-to.here{color:#5BE0B8;
+    filter:drop-shadow(0 0 8px rgba(91,224,184,.7));}
   /* The lane itself: chevrons drifting left to right, masked to a soft fade at
      both ends so the motion has no visible start or stop. */
-  #hbg-{{ section.id }} .fl-arrow{position:absolute;inset:0;border-radius:100px;
+  #hbg-{{ section.id }} .fl-arrow{position:absolute;left:22px;right:26px;top:50%;height:6px;
+    margin-top:-3px;border-radius:100px;
     background-image:repeating-linear-gradient(90deg,
       rgba(255,224,0,.55) 0 2px, rgba(255,224,0,0) 2px 9px,
       rgba(255,224,0,.28) 9px 11px, rgba(255,224,0,0) 11px 18px);
@@ -124,8 +137,8 @@
     mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
     animation:hbgfl-{{ section.id }} 1.1s linear infinite;opacity:.9;}
   @keyframes hbgfl-{{ section.id }}{to{background-position:18px 0;}}
-  #hbg-{{ section.id }} .fl-pkg{position:absolute;top:50%;left:0;width:26px;height:24px;
-    margin:-13px 0 0 -13px;transition:left 1.2s cubic-bezier(.33,1,.68,1);
+  #hbg-{{ section.id }} .fl-pkg{position:absolute;top:50%;left:0;width:42px;height:39px;
+    margin:-21px 0 0 -21px;z-index:3;transition:left 1.2s cubic-bezier(.33,1,.68,1);
     filter:drop-shadow(0 4px 6px rgba(0,0,0,.55));
     animation:hbgbob-{{ section.id }} 1.6s ease-in-out infinite;}
   #hbg-{{ section.id }} .fl-pkg svg{width:100%;height:100%;display:block;}
@@ -136,6 +149,13 @@
   #hbg-{{ section.id }} .fl-say span{display:block;font-size:13px;color:#8C959D;
     line-height:1.5;margin-top:3px;}
   #hbg-{{ section.id }} .fl-say{animation:hbgsay-{{ section.id }} .5s both;}
+  /* Where it is going and who it is for, on every stage. */
+  #hbg-{{ section.id }} .fl-dest{display:flex;flex-wrap:wrap;gap:6px 16px;
+    margin-top:var(--sp-3,13px);padding-top:var(--sp-3,13px);border-top:1px solid #222B33;
+    font-size:12.5px;color:#8C959D;}
+  #hbg-{{ section.id }} .fl-dest span{display:inline-flex;align-items:center;gap:6px;}
+  #hbg-{{ section.id }} .fl-dest b{color:#fff;font-weight:700;}
+  #hbg-{{ section.id }} .fl-dest svg{width:13px;height:13px;flex:none;color:#5D666E;}
   @keyframes hbgsay-{{ section.id }}{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @media(prefers-reduced-motion:reduce){
     #hbg-{{ section.id }} .fl-arrow,#hbg-{{ section.id }} .fl-pkg,
@@ -225,6 +245,7 @@
           </div>
           <div class="flow" data-flow>
             <div class="fl-lane">
+              <span class="fl-from" title="New York"></span>
               <span class="fl-arrow" data-flarrow></span>
               <span class="fl-pkg" data-flpkg>
                 <svg viewBox="0 0 24 22" aria-hidden="true">
@@ -234,8 +255,12 @@
                   <path d="M12 12v9" stroke="rgba(255,255,255,.55)" stroke-width="1"/>
                 </svg>
               </span>
+              <span class="fl-to" data-flto>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="currentColor"/></svg>
+              </span>
             </div>
             <div class="fl-say"><b data-flsay></b><span data-flsub></span></div>
+            <div class="fl-dest" data-fldest></div>
           </div>
         </div>
       </div>
@@ -261,6 +286,7 @@
     "tlat": {{ b.settings.to_lat | default: 34.05 }},
     "eta": {{ b.settings.eta | json }},
     "carrier": {{ b.settings.carrier | json }},
+    "customer": {{ b.settings.customer | json }},
     "d1": {{ b.settings.d1 | json }}, "d2": {{ b.settings.d2 | json }},
     "d3": {{ b.settings.d3 | json }}, "d4": {{ b.settings.d4 | json }},
     "d5": {{ b.settings.d5 | json }}
@@ -496,7 +522,7 @@
   function box(p,ang,arrived,moving,land){
     var t=reduce?0:Math.sin(pulse*Math.PI*2)*1.6;
     /* Pop on landing, then settle. */
-    var S=(arrived?7:8)*(1+(land||0)*0.35);
+    var S=(arrived?11:12.5)*(1+(land||0)*0.30);
     ctx.save();
     ctx.translate(p.x, p.y-(arrived?0:t)-S*0.9);
     /* Bank into the direction of travel — subtle, so it reads as flight, not
@@ -586,6 +612,17 @@
     var pct=((st-0.5)/5*100).toFixed(2)+'%';
     requestAnimationFrame(function(){ pkg.style.left=pct; });
 
+    /* Destination and, if the merchant filled it, who it is for. */
+    var PIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>';
+    var CAL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+    var PER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>';
+    var dest=root.querySelector('[data-fldest]'), drow='';
+    drow+='<span>'+PIN+'Delivering to <b>'+esc(sh.to)+'</b></span>';
+    if(sh.eta) drow+='<span>'+CAL+(st>=5?'Delivered ':'Arrives ')+'<b>'+esc(sh.eta)+'</b></span>';
+    if(sh.customer) drow+='<span>'+PER+'For <b>'+esc(sh.customer)+'</b></span>';
+    dest.innerHTML=drow;
+    root.querySelector('[data-flto]').classList.toggle('here', st>=5);
+
     var say=root.querySelector('.fl-say');
     root.querySelector('[data-flsay]').textContent=n.t;
     root.querySelector('[data-flsub]').textContent=n.l;
@@ -670,6 +707,7 @@
       { "type": "text", "id": "to_lat", "label": "To latitude", "default": "34.05" },
       { "type": "text", "id": "eta", "label": "Estimated delivery" },
       { "type": "text", "id": "carrier", "label": "Carrier" },
+      { "type": "text", "id": "customer", "label": "For (customer label)", "info": "Optional and PUBLIC — this renders into the page source. Use initials or a first name only, never a full name, address, phone or email." },
       { "type": "text", "id": "d1", "label": "Date — order placed" },
       { "type": "text", "id": "d2", "label": "Date — packed" },
       { "type": "text", "id": "d3", "label": "Date — in transit" },

@@ -7,7 +7,7 @@ schema traps that have bitten this repo before.
 
     python3 tools/track.py list
     python3 tools/track.py stage HELIOS289471132 4 "Aug 24 - Out for delivery, Tampa"
-    python3 tools/track.py add HELIOS551204893 "Denver, CO" -104.99 39.74 --eta "Sep 2 - Sep 6"
+    python3 tools/track.py add HELIOS551204893 "Denver, CO" -104.99 39.74 --eta "Sep 2 - Sep 6" --for "S. M."
     python3 tools/track.py remove HELIOS551204893
 
 After any change: run render.py, commit, push, then upload the template.
@@ -64,9 +64,9 @@ def cmd_stage(a):
 
 def cmd_add(a):
     code, to, lon, lat = a[0], a[1], a[2], a[3]
-    eta = ""
-    if "--eta" in a:
-        eta = a[a.index("--eta") + 1]
+    eta = a[a.index("--eta") + 1] if "--eta" in a else ""
+    # Public: renders into page source. Initials or a first name, never more.
+    cust = a[a.index("--for") + 1] if "--for" in a else ""
     d, g = load()
     if find(g, code)[0]:
         sys.exit(f"{code} already exists")
@@ -77,7 +77,7 @@ def cmd_add(a):
         ("code", code.strip().upper()), ("stage", 1),
         ("from", "New York, NY"), ("from_lon", "-74.006"), ("from_lat", "40.713"),
         ("to", to), ("to_lon", str(lon)), ("to_lat", str(lat)),
-        ("eta", eta), ("carrier", "HELIOS Direct"),
+        ("eta", eta), ("carrier", "HELIOS Direct"), ("customer", cust),
         ("d1", ""), ("d2", ""), ("d3", ""), ("d4", ""), ("d5", ""),
     ])
     g["blocks"][key] = collections.OrderedDict([("type", "ship"), ("settings", st)])

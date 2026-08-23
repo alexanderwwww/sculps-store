@@ -1248,10 +1248,23 @@
   #hbg-globe .flow{margin-top:var(--sp-4,21px);
     background:linear-gradient(180deg,#161C22,#11161B);border:1px solid #2A333B;
     border-radius:var(--r-md,13px);padding:var(--sp-4,21px);}
-  #hbg-globe .fl-lane{position:relative;height:30px;margin-bottom:var(--sp-3,13px);}
+  #hbg-globe .fl-lane{position:relative;height:44px;margin-bottom:var(--sp-3,13px);
+    padding:0 26px;}
+  /* The lane physically runs from us to the customer: a dot at New York, the
+     home marker at their end, package travelling between. */
+  #hbg-globe .fl-from,#hbg-globe .fl-to{position:absolute;top:50%;
+    transform:translateY(-50%);z-index:2;}
+  #hbg-globe .fl-from{left:0;width:11px;height:11px;border-radius:50%;
+    background:#7EC4FF;box-shadow:0 0 0 3px rgba(126,196,255,.18);}
+  #hbg-globe .fl-to{right:0;width:22px;height:22px;color:#5D666E;
+    transition:color .5s;}
+  #hbg-globe .fl-to svg{width:100%;height:100%;display:block;}
+  #hbg-globe .fl-to.here{color:#5BE0B8;
+    filter:drop-shadow(0 0 8px rgba(91,224,184,.7));}
   /* The lane itself: chevrons drifting left to right, masked to a soft fade at
      both ends so the motion has no visible start or stop. */
-  #hbg-globe .fl-arrow{position:absolute;inset:0;border-radius:100px;
+  #hbg-globe .fl-arrow{position:absolute;left:22px;right:26px;top:50%;height:6px;
+    margin-top:-3px;border-radius:100px;
     background-image:repeating-linear-gradient(90deg,
       rgba(255,224,0,.55) 0 2px, rgba(255,224,0,0) 2px 9px,
       rgba(255,224,0,.28) 9px 11px, rgba(255,224,0,0) 11px 18px);
@@ -1260,8 +1273,8 @@
     mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
     animation:hbgfl-globe 1.1s linear infinite;opacity:.9;}
   @keyframes hbgfl-globe{to{background-position:18px 0;}}
-  #hbg-globe .fl-pkg{position:absolute;top:50%;left:0;width:26px;height:24px;
-    margin:-13px 0 0 -13px;transition:left 1.2s cubic-bezier(.33,1,.68,1);
+  #hbg-globe .fl-pkg{position:absolute;top:50%;left:0;width:42px;height:39px;
+    margin:-21px 0 0 -21px;z-index:3;transition:left 1.2s cubic-bezier(.33,1,.68,1);
     filter:drop-shadow(0 4px 6px rgba(0,0,0,.55));
     animation:hbgbob-globe 1.6s ease-in-out infinite;}
   #hbg-globe .fl-pkg svg{width:100%;height:100%;display:block;}
@@ -1272,6 +1285,13 @@
   #hbg-globe .fl-say span{display:block;font-size:13px;color:#8C959D;
     line-height:1.5;margin-top:3px;}
   #hbg-globe .fl-say{animation:hbgsay-globe .5s both;}
+  /* Where it is going and who it is for, on every stage. */
+  #hbg-globe .fl-dest{display:flex;flex-wrap:wrap;gap:6px 16px;
+    margin-top:var(--sp-3,13px);padding-top:var(--sp-3,13px);border-top:1px solid #222B33;
+    font-size:12.5px;color:#8C959D;}
+  #hbg-globe .fl-dest span{display:inline-flex;align-items:center;gap:6px;}
+  #hbg-globe .fl-dest b{color:#fff;font-weight:700;}
+  #hbg-globe .fl-dest svg{width:13px;height:13px;flex:none;color:#5D666E;}
   @keyframes hbgsay-globe{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @media(prefers-reduced-motion:reduce){
     #hbg-globe .fl-arrow,#hbg-globe .fl-pkg,
@@ -1353,6 +1373,7 @@
           </div>
           <div class="flow" data-flow>
             <div class="fl-lane">
+              <span class="fl-from" title="New York"></span>
               <span class="fl-arrow" data-flarrow></span>
               <span class="fl-pkg" data-flpkg>
                 <svg viewBox="0 0 24 22" aria-hidden="true">
@@ -1362,8 +1383,12 @@
                   <path d="M12 12v9" stroke="rgba(255,255,255,.55)" stroke-width="1"/>
                 </svg>
               </span>
+              <span class="fl-to" data-flto>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="currentColor"/></svg>
+              </span>
             </div>
             <div class="fl-say"><b data-flsay></b><span data-flsub></span></div>
+            <div class="fl-dest" data-fldest></div>
           </div>
         </div>
       </div>

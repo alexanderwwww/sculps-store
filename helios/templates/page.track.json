@@ -53,7 +53,8 @@
             "d2": "",
             "d3": "",
             "d4": "",
-            "d5": ""
+            "d5": "",
+            "customer": "J. R."
           }
         },
         "s2": {
@@ -73,7 +74,8 @@
             "d2": "Aug 22 · Packed, New York NY",
             "d3": "",
             "d4": "",
-            "d5": ""
+            "d5": "",
+            "customer": "M. T."
           }
         },
         "s3": {
@@ -93,7 +95,8 @@
             "d2": "Aug 19 · Packed, New York NY",
             "d3": "Aug 21 · In transit, Phoenix AZ",
             "d4": "",
-            "d5": ""
+            "d5": "",
+            "customer": "D. W."
           }
         },
         "s4": {
@@ -113,7 +116,8 @@
             "d2": "Aug 18 · Packed, New York NY",
             "d3": "Aug 20 · In transit",
             "d4": "Aug 23 · Out for delivery, Phoenix",
-            "d5": ""
+            "d5": "",
+            "customer": "P. S."
           }
         },
         "s5": {
@@ -133,7 +137,8 @@
             "d2": "Aug 9 · Packed, New York NY",
             "d3": "Aug 12 · In transit, Denver CO",
             "d4": "Aug 20 · Out for delivery, Brooklyn",
-            "d5": "Aug 20 · Delivered, left with resident"
+            "d5": "Aug 20 · Delivered, left with resident",
+            "customer": "A. G."
           }
         }
       },
