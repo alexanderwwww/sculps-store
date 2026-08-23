@@ -67,7 +67,9 @@ image before video.
 - PALETTE (the user's original identity — do NOT blue-wash it again): ink #0F1111
   for the bundle frame header, selection borders, radios, dots; Amazon yellow
   #FFD814/#FCD200 for Add to Cart / nav / guarantee CTAs; #FFC531 for the frame's
-  accent text; neon-yellow #FFE000 tag pill with glow ("1+1 FREE") and dark text;
+  accent text; neon-green #39FF14 tag pill ("1+1 FREE") pinned to the card's RIGHT side,
+  green glow, dark text (user killed the yellow pill and afterpay 23 Aug —
+  installments row shows Shop Pay only);
   red #CC0C39 for savings; teal #007185 for the ratings link. Blue #0046BE stays
   only on the helios-bb-* tracking page.
 - Footer: ink #0F1111, trust strip, menu columns, real customer signup form,

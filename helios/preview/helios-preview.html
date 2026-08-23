@@ -101,6 +101,10 @@
     --r-sm:8px; --r-md:13px; --r-lg:21px;
   }
   .helios{--phi:1.618;}
+  /* Anchor jumps (#buy, #reviews, #faq) land under the sticky nav without this. */
+  #buy,#reviews,#faq{scroll-margin-top:80px;}
+  html{scroll-behavior:smooth;}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
   #hb2-bar .bar{background:#0f1111;color:#ffffff;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
     display:flex;align-items:center;justify-content:center;gap:var(--sp-2,8px) var(--sp-3,13px);flex-wrap:wrap;
@@ -232,7 +236,6 @@
   #hbb-buy .hbb-pay .hbb-lg{display:inline-flex;align-items:center;border-radius:5px;
     padding:3px 8px;font-size:11px;font-weight:800;line-height:1;}
   #hbb-buy .hbb-pay .hbb-sp{background:#5A31F4;color:#fff;}
-  #hbb-buy .hbb-pay .hbb-ap{background:#B2FCE4;color:#0F1111;}
   #hbb-buy .hbb-bl{margin:0 0 var(--sp-4,21px);padding:0;list-style:none;}
   #hbb-buy .hbb-bl li{display:flex;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);
     line-height:var(--lh-body,1.618);align-items:flex-start;margin-bottom:var(--sp-2,8px);}
@@ -260,10 +263,10 @@
   #hbb-buy .hbb-opt.hbb-on{border-color:#0F1111;border-width:2px;
     padding:calc(var(--sp-3,13px) - 1px);box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
   #hbb-buy .hbb-opt.hbb-hastag{margin-top:10px;}
-  #hbb-buy .hbb-tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
+  #hbb-buy .hbb-tag{position:absolute;top:-10px;right:14px;z-index:2;
     color:#0F1111;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
     border-radius:100px;padding:4px 13px;white-space:nowrap;line-height:1.2;
-    box-shadow:0 0 14px rgba(255,224,0,.75),0 2px 8px rgba(0,0,0,.2);}
+    box-shadow:0 0 14px rgba(57,255,20,.6),0 2px 8px rgba(0,0,0,.2);}
   #hbb-buy .hbb-radio{flex:0 0 18px;width:18px;height:18px;border-radius:50%;
     border:1.6px solid #8d9698;display:flex;align-items:center;justify-content:center;}
   #hbb-buy .hbb-opt.hbb-on .hbb-radio{border-color:#0F1111;}
@@ -314,8 +317,10 @@
   #hbb-buy .hbb-ship b{color:#0F1111;}
   #hbb-buy .hbb-trust{display:flex;flex-wrap:wrap;gap:1px;background:#D5D9D9;
     border:1px solid #D5D9D9;border-radius:var(--r-sm,8px);overflow:hidden;margin-top:var(--sp-3,13px);}
-  #hbb-buy .hbb-tc{flex:1 1 40%;background:#fff;padding:var(--sp-2,8px);text-align:center;
+  #hbb-buy .hbb-tc{flex:1 1 40%;background:#fff;padding:var(--sp-2,8px);
+    display:flex;align-items:center;justify-content:center;gap:6px;
     font-size:11.5px;font-weight:700;line-height:1.3;}
+  #hbb-buy .hbb-tc svg{width:15px;height:15px;flex:none;color:#0F1111;}
   #hbb-buy .hbb-badge{display:block;margin:var(--sp-3,13px) auto 0;width:100%;
     max-width:180px;height:auto;}
 
@@ -368,7 +373,7 @@
           <em id="hbb-sv-buy">SAVE $259.99</em><span class="hbb-per">Two Super Glides for the price of one</span></div>
         <div class="hbb-pay">
           <span>4 interest-free payments of <b id="hbb-in-buy">$65.00</b> with</span>
-          <span class="hbb-lg hbb-sp">Shop Pay</span><span class="hbb-lg hbb-ap">afterpay</span>
+          <span class="hbb-lg hbb-sp">Shop Pay</span>
         </div>
 
         <ul class="hbb-bl"><li><span class="hbb-i">✓</span><span>Twin motors move you. No paddling, no kicking, no effort</span></li><li><span class="hbb-i">✓</span><span>Holds 250-300 lb, padded headrest, dual cup holders</span></li><li><span class="hbb-i">✓</span><span>Ready in 5 minutes. Nozzle included, no pump to buy</span></li></ul>
@@ -382,7 +387,7 @@
                   data-id="53550115848458" data-price="$259.99"
                   data-compare="$519.98" data-save="SAVE $259.99"
                   data-gift="" data-giftname=""
-                  ><span class="hbb-tag" style="background:#FFE000">1+1 FREE</span><span class="hbb-radio" aria-hidden="true"></span><span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
+                  ><span class="hbb-tag" style="background:#39FF14">1+1 FREE</span><span class="hbb-radio" aria-hidden="true"></span><span style="flex:0 0 54px;width:54px;height:54px;border-radius:8px;overflow:hidden;border:1px solid #E7E9E9;background:#fff">
                       <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png" alt="" loading="lazy"
                            style="width:100%;height:100%;object-fit:contain;display:block"></span><span class="hbb-om">
                     <span class="hbb-t">2 Super Glides</span><span class="hbb-d">Buy one, the second is free</span></span>
@@ -414,7 +419,7 @@
         <button type="button" class="hbb-buynow" id="hbb-bn-buy">Buy now</button>
         <div class="hbb-after" id="hbb-af-buy"><a href="/cart">Go to cart</a></div>
         <div class="hbb-gifted" id="hbb-gf-buy"></div>
-        <p class="hbb-msg" id="hbb-msg-buy" role="status" aria-live="polite"></p><p class="hbb-ship"><b>FREE delivery</b> in 7-10 business days, tracked<br>30-day returns, secure checkout</p><div class="hbb-trust"><div class="hbb-tc">🚚 Free shipping</div><div class="hbb-tc">↩️ 30-day returns</div><div class="hbb-tc">📦 Tracked</div><div class="hbb-tc">🔒 Secure checkout</div></div><img class="hbb-badge" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-small.png?v=1785731571" alt="No.1 seller badge, 21.622 units sold" loading="lazy"></div>
+        <p class="hbb-msg" id="hbb-msg-buy" role="status" aria-live="polite"></p><p class="hbb-ship"><b>FREE delivery</b> in 7-10 business days, tracked<br>30-day returns, secure checkout</p><div class="hbb-trust"><div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>Free shipping</div><div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3.5V8h-4.5"/></svg>30-day returns</div><div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l8 4.2v9.6L12 21l-8-4.2V7.2z"/><path d="M4 7.2l8 4.2 8-4.2M12 11.4V21"/></svg>Tracked</div><div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout</div></div><img class="hbb-badge" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-badge-small.png?v=1785731571" alt="No.1 seller badge, 21.622 units sold" loading="lazy"></div>
 
     </div>
   </div>
@@ -940,6 +945,10 @@
     --r-sm:8px; --r-md:13px; --r-lg:21px;
   }
   .helios{--phi:1.618;}
+  /* Anchor jumps (#buy, #reviews, #faq) land under the sticky nav without this. */
+  #buy,#reviews,#faq{scroll-margin-top:80px;}
+  html{scroll-behavior:smooth;}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
   #hb2-bar .bar{background:#0f1111;color:#ffffff;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
     display:flex;align-items:center;justify-content:center;gap:var(--sp-2,8px) var(--sp-3,13px);flex-wrap:wrap;

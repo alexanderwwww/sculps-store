@@ -74,7 +74,6 @@
   #hbb-{{ sid }} .hbb-pay .hbb-lg{display:inline-flex;align-items:center;border-radius:5px;
     padding:3px 8px;font-size:11px;font-weight:800;line-height:1;}
   #hbb-{{ sid }} .hbb-pay .hbb-sp{background:#5A31F4;color:#fff;}
-  #hbb-{{ sid }} .hbb-pay .hbb-ap{background:#B2FCE4;color:#0F1111;}
   #hbb-{{ sid }} .hbb-bl{margin:0 0 var(--sp-4,21px);padding:0;list-style:none;}
   #hbb-{{ sid }} .hbb-bl li{display:flex;gap:var(--sp-2,8px);font-size:var(--fs-sm,14.1px);
     line-height:var(--lh-body,1.618);align-items:flex-start;margin-bottom:var(--sp-2,8px);}
@@ -102,10 +101,10 @@
   #hbb-{{ sid }} .hbb-opt.hbb-on{border-color:#0F1111;border-width:2px;
     padding:calc(var(--sp-3,13px) - 1px);box-shadow:0 2px 10px -4px rgba(0,0,0,.18);}
   #hbb-{{ sid }} .hbb-opt.hbb-hastag{margin-top:10px;}
-  #hbb-{{ sid }} .hbb-tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);z-index:2;
+  #hbb-{{ sid }} .hbb-tag{position:absolute;top:-10px;right:14px;z-index:2;
     color:#0F1111;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
     border-radius:100px;padding:4px 13px;white-space:nowrap;line-height:1.2;
-    box-shadow:0 0 14px rgba(255,224,0,.75),0 2px 8px rgba(0,0,0,.2);}
+    box-shadow:0 0 14px rgba(57,255,20,.6),0 2px 8px rgba(0,0,0,.2);}
   #hbb-{{ sid }} .hbb-radio{flex:0 0 18px;width:18px;height:18px;border-radius:50%;
     border:1.6px solid #8d9698;display:flex;align-items:center;justify-content:center;}
   #hbb-{{ sid }} .hbb-opt.hbb-on .hbb-radio{border-color:#0F1111;}
@@ -156,8 +155,10 @@
   #hbb-{{ sid }} .hbb-ship b{color:#0F1111;}
   #hbb-{{ sid }} .hbb-trust{display:flex;flex-wrap:wrap;gap:1px;background:#D5D9D9;
     border:1px solid #D5D9D9;border-radius:var(--r-sm,8px);overflow:hidden;margin-top:var(--sp-3,13px);}
-  #hbb-{{ sid }} .hbb-tc{flex:1 1 40%;background:#fff;padding:var(--sp-2,8px);text-align:center;
+  #hbb-{{ sid }} .hbb-tc{flex:1 1 40%;background:#fff;padding:var(--sp-2,8px);
+    display:flex;align-items:center;justify-content:center;gap:6px;
     font-size:11.5px;font-weight:700;line-height:1.3;}
+  #hbb-{{ sid }} .hbb-tc svg{width:15px;height:15px;flex:none;color:#0F1111;}
   #hbb-{{ sid }} .hbb-badge{display:block;margin:var(--sp-3,13px) auto 0;width:100%;
     max-width:{{ s.badge_w | default: 180 }}px;height:auto;}
 
@@ -224,7 +225,7 @@
         </div>
         <div class="hbb-pay">
           <span>4 interest-free payments of <b id="hbb-in-{{ sid }}">$65.00</b> with</span>
-          <span class="hbb-lg hbb-sp">Shop Pay</span><span class="hbb-lg hbb-ap">afterpay</span>
+          <span class="hbb-lg hbb-sp">Shop Pay</span>
         </div>
 
         <ul class="hbb-bl">
@@ -286,10 +287,10 @@
         {%- if s.ship_html != blank -%}<p class="hbb-ship">{{ s.ship_html }}</p>{%- endif -%}
 
         <div class="hbb-trust">
-          {%- if s.t1 != blank -%}<div class="hbb-tc">🚚 {{ s.t1 }}</div>{%- endif -%}
-          {%- if s.t2 != blank -%}<div class="hbb-tc">↩️ {{ s.t2 }}</div>{%- endif -%}
-          {%- if s.t3 != blank -%}<div class="hbb-tc">📦 {{ s.t3 }}</div>{%- endif -%}
-          {%- if s.t4 != blank -%}<div class="hbb-tc">🔒 {{ s.t4 }}</div>{%- endif -%}
+          {%- if s.t1 != blank -%}<div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>{{ s.t1 }}</div>{%- endif -%}
+          {%- if s.t2 != blank -%}<div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3.5V8h-4.5"/></svg>{{ s.t2 }}</div>{%- endif -%}
+          {%- if s.t3 != blank -%}<div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l8 4.2v9.6L12 21l-8-4.2V7.2z"/><path d="M4 7.2l8 4.2 8-4.2M12 11.4V21"/></svg>{{ s.t3 }}</div>{%- endif -%}
+          {%- if s.t4 != blank -%}<div class="hbb-tc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>{{ s.t4 }}</div>{%- endif -%}
         </div>
 
         {%- if s.badge_url != blank -%}
@@ -455,7 +456,7 @@
       { "type": "text", "id": "label", "label": "Label" },
       { "type": "text", "id": "note", "label": "Note" },
       { "type": "text", "id": "tag", "label": "Floating pill text", "info": "Shown above the option. Keep the background light — the text is dark." },
-      { "type": "color", "id": "tag_bg", "label": "Pill background", "default": "#FFE000" },
+      { "type": "color", "id": "tag_bg", "label": "Pill background", "default": "#39FF14" },
       { "type": "text", "id": "gift", "label": "Free gift label" },
       { "type": "text", "id": "gift_variant_id", "label": "Free gift variant ID" },
       { "type": "text", "id": "save", "label": "Save badge" },
