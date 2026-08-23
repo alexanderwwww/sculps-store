@@ -33,8 +33,8 @@
         "cta_url": "/#buy"
       }
     },
-    "map": {
-      "type": "helios-bb-usmap",
+    "globe": {
+      "type": "helios-bb-globe",
       "blocks": {
         "s1": {
           "type": "ship",
@@ -47,7 +47,6 @@
             "to": "Dallas, TX",
             "to_lon": "-96.80",
             "to_lat": "32.78",
-            "state": "Texas",
             "eta": "Aug 30 – Sep 3",
             "carrier": "HELIOS Direct",
             "d1": "Aug 23 · Order placed, payment confirmed",
@@ -68,7 +67,6 @@
             "to": "Chicago, IL",
             "to_lon": "-87.63",
             "to_lat": "41.88",
-            "state": "Illinois",
             "eta": "Aug 29 – Sep 2",
             "carrier": "HELIOS Direct",
             "d1": "Aug 21 · Order placed",
@@ -89,7 +87,6 @@
             "to": "Tampa, FL",
             "to_lon": "-82.46",
             "to_lat": "27.95",
-            "state": "Florida",
             "eta": "Aug 28 – Sep 1",
             "carrier": "HELIOS Direct",
             "d1": "Aug 18 · Order placed",
@@ -110,7 +107,6 @@
             "to": "Phoenix, AZ",
             "to_lon": "-112.07",
             "to_lat": "33.45",
-            "state": "Arizona",
             "eta": "Aug 23",
             "carrier": "HELIOS Direct",
             "d1": "Aug 17 · Order placed",
@@ -131,7 +127,6 @@
             "to": "Brooklyn, NY",
             "to_lon": "-73.94",
             "to_lat": "40.68",
-            "state": "New York",
             "eta": "Delivered Aug 20",
             "carrier": "HELIOS Direct",
             "d1": "Aug 8 · Order placed",
@@ -152,7 +147,7 @@
       "settings": {
         "eyebrow": "HELIOS logistics",
         "heading": "Track your order",
-        "sub": "Enter the HELIOS number from your shipping email. We ship inside the US only.",
+        "sub": "Enter the HELIOS number from your shipping email and watch it move.",
         "placeholder": "HELIOS289471132",
         "cta": "Track"
       }
@@ -203,7 +198,7 @@
   "order": [
     "bar",
     "nav",
-    "map",
+    "globe",
     "footer"
   ]
 }

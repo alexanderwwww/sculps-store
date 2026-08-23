@@ -57,7 +57,42 @@
   #hbg-{{ section.id }} .meta{margin-top:12px;display:grid;gap:4px;font-size:13.5px;color:#AEB6BE;}
   #hbg-{{ section.id }} .meta b{color:#fff;font-weight:700;}
 
+  /* Shopify-style horizontal stage rail: five nodes, a track that fills to the
+     current stage, and the live node pulsing. */
+  #hbg-{{ section.id }} .rail{margin-top:22px;padding-top:6px;display:flex;position:relative;}
+  #hbg-{{ section.id }} .rail .rn{flex:1 1 0;position:relative;display:flex;
+    flex-direction:column;align-items:center;gap:7px;min-width:0;}
+  #hbg-{{ section.id }} .rail .rb{width:100%;height:4px;border-radius:100px;background:#222B33;
+    overflow:hidden;}
+  #hbg-{{ section.id }} .rail .rb span{display:block;height:100%;width:0;border-radius:100px;
+    background:linear-gradient(90deg,var(--hb-blue,#0046BE),#7EC4FF);
+    transition:width .7s cubic-bezier(.4,0,.2,1);}
+  #hbg-{{ section.id }} .rail .rn.done .rb span,
+  #hbg-{{ section.id }} .rail .rn.now .rb span{width:100%;}
+  #hbg-{{ section.id }} .rail .rn.now .rb span{
+    background:linear-gradient(90deg,var(--hb-blue,#0046BE),var(--hb-yellow,#FFE000));}
+  #hbg-{{ section.id }} .rail .ri{width:22px;height:22px;border-radius:50%;background:#12171C;
+    border:2px solid #38424B;display:grid;place-items:center;transition:border-color .4s,background .4s;}
+  #hbg-{{ section.id }} .rail .rn.done .ri{background:var(--hb-blue,#0046BE);border-color:var(--hb-blue,#0046BE);}
+  #hbg-{{ section.id }} .rail .rn.done .ri::after{content:'';width:7px;height:4px;
+    border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);}
+  #hbg-{{ section.id }} .rail .rn.now .ri{border-color:var(--hb-yellow,#FFE000);
+    box-shadow:0 0 0 0 rgba(255,224,0,.5);animation:hbgr-{{ section.id }} 1.9s infinite;}
+  @keyframes hbgr-{{ section.id }}{70%{box-shadow:0 0 0 9px rgba(255,224,0,0);}100%{box-shadow:0 0 0 0 rgba(255,224,0,0);}}
+  #hbg-{{ section.id }} .rail .rl{font-size:9.5px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;color:#6E7982;text-align:center;line-height:1.25;}
+  #hbg-{{ section.id }} .rail .rn.done .rl,#hbg-{{ section.id }} .rail .rn.now .rl{color:#fff;}
+  @media(max-width:600px){ #hbg-{{ section.id }} .rail .rl{font-size:8.5px;letter-spacing:.02em;} }
+
   #hbg-{{ section.id }} .tl{margin-top:20px;display:grid;gap:0;}
+  /* Rows flow in one after another, so the history reads as it fills. */
+  #hbg-{{ section.id }} .tl .st{animation:hbgin-{{ section.id }} .45s both;}
+  @keyframes hbgin-{{ section.id }}{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce){
+    #hbg-{{ section.id }} .tl .st{animation:none;}
+    #hbg-{{ section.id }} .rail .rn.now .ri{animation:none;}
+    #hbg-{{ section.id }} .rail .rb span{transition:none;}
+  }
   #hbg-{{ section.id }} .st{display:grid;grid-template-columns:26px minmax(0,1fr);gap:14px;
     padding-bottom:20px;position:relative;}
   #hbg-{{ section.id }} .st:last-child{padding-bottom:0;}
@@ -112,6 +147,7 @@
             <span data-eta></span>
             <span data-carrier></span>
           </div>
+          <div class="rail" data-rail aria-hidden="true"></div>
           <div class="tl" data-tl></div>
         </div>
 
@@ -264,14 +300,70 @@
         pp.x=cx+(pp.x-cx)*lift; pp.y=cy+(pp.y-cy)*lift;
         pts.push(pp);
       }
-      ctx.lineWidth=2; ctx.strokeStyle='rgba(255,224,0,.9)';
+      /* Remaining leg first, faint and dashed, so the parcel visibly still has
+         road ahead of it. */
       var lim=Math.max(1,Math.round(N*target.p));
+      ctx.save();
+      ctx.setLineDash([4,6]); ctx.lineWidth=1.4; ctx.strokeStyle='rgba(255,224,0,.22)';
+      ctx.beginPath();
+      for(var tr=lim;tr<=N;tr++){ tr===lim?ctx.moveTo(pts[tr].x,pts[tr].y):ctx.lineTo(pts[tr].x,pts[tr].y); }
+      ctx.stroke(); ctx.restore();
+
+      /* Completed leg, solid. */
+      ctx.lineWidth=2.4; ctx.strokeStyle='rgba(255,224,0,.95)'; ctx.lineCap='round';
       ctx.beginPath();
       for(var t2=0;t2<=lim;t2++){ t2===0?ctx.moveTo(pts[0].x,pts[0].y):ctx.lineTo(pts[t2].x,pts[t2].y); }
       ctx.stroke();
+
+      /* A light pulse running the finished leg — the sense of an active route
+         rather than a static line. */
+      if(!reduce && lim>2){
+        var pf=(pulse%1)*lim, pi=Math.floor(pf), pp2=pts[Math.min(pi,lim)];
+        var glow=ctx.createRadialGradient(pp2.x,pp2.y,0,pp2.x,pp2.y,16);
+        glow.addColorStop(0,'rgba(255,255,255,.5)'); glow.addColorStop(1,'rgba(255,224,0,0)');
+        ctx.beginPath(); ctx.arc(pp2.x,pp2.y,16,0,6.2832); ctx.fillStyle=glow; ctx.fill();
+      }
+
       mark(pts[0],'#7EC4FF'); mark(pts[N],'#5BE0B8');
+
+      /* The parcel itself, riding the head of the route. */
       var head=pts[Math.min(lim,N)];
-      ctx.beginPath(); ctx.arc(head.x,head.y,5,0,6.2832); ctx.fillStyle='#FFE000'; ctx.fill();
+      var prev=pts[Math.max(0,Math.min(lim,N)-1)];
+      var ang=Math.atan2(head.y-prev.y, head.x-prev.x);
+      box(head, ang, target.p>=1);
+    }
+  }
+
+  /* Isometric parcel: three faces plus tape, drawn in canvas so it needs no
+     asset and stays crisp at any DPR. Bobs gently while it is still moving. */
+  function box(p,ang,arrived){
+    var t=reduce?0:Math.sin(pulse*Math.PI*2)*1.6;
+    var S=arrived?7:8;
+    ctx.save();
+    ctx.translate(p.x, p.y-(arrived?0:t)-S*0.9);
+    ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+
+    ctx.beginPath();                       /* top face */
+    ctx.moveTo(0,-S); ctx.lineTo(S,-S*0.5); ctx.lineTo(0,0); ctx.lineTo(-S,-S*0.5);
+    ctx.closePath(); ctx.fillStyle='#E8B96B'; ctx.fill();
+    ctx.shadowColor='transparent';
+
+    ctx.beginPath();                       /* left face */
+    ctx.moveTo(-S,-S*0.5); ctx.lineTo(0,0); ctx.lineTo(0,S*0.85); ctx.lineTo(-S,S*0.35);
+    ctx.closePath(); ctx.fillStyle='#B98C4A'; ctx.fill();
+
+    ctx.beginPath();                       /* right face */
+    ctx.moveTo(S,-S*0.5); ctx.lineTo(0,0); ctx.lineTo(0,S*0.85); ctx.lineTo(S,S*0.35);
+    ctx.closePath(); ctx.fillStyle='#CFA35C'; ctx.fill();
+
+    ctx.beginPath();                       /* tape seam */
+    ctx.moveTo(0,-S); ctx.lineTo(0,0); ctx.lineTo(0,S*0.85);
+    ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=1.2; ctx.stroke();
+    ctx.restore();
+
+    if(arrived){                           /* landed: a soft ring on the target */
+      ctx.beginPath(); ctx.arc(p.x,p.y,10+Math.sin(pulse*6)*2,0,6.2832);
+      ctx.strokeStyle='rgba(91,224,184,.5)'; ctx.lineWidth=1.6; ctx.stroke();
     }
   }
   function mark(p,c){
@@ -281,14 +373,19 @@
   }
   function shortest(a,b){ var d=b-a; while(d>180)d-=360; while(d<-180)d+=360; return d; }
 
-  var last=0, spinTo=null;
+  var last=0, spinTo=null, pulse=0;
   function loop(ts){
     var dt=last?Math.min((ts-last)/1000,0.05):0.016; last=ts;
+    pulse+=dt*0.45;
     if(spinTo!==null){
       var d=shortest(spin*180/Math.PI, spinTo)*Math.PI/180;
       if(Math.abs(d)<0.005){spin=spinTo*Math.PI/180; spinTo=null;} else spin+=d*Math.min(dt*2.6,1);
     } else if(!reduce){ spin+=dt*0.11; }
-    if(target&&target.p<target.pt) target.p=Math.min(target.pt, target.p+dt*0.55);
+    if(target&&target.p<target.pt){
+      /* Ease out: the parcel leaves quickly and settles onto its stage. */
+      var gap=target.pt-target.p;
+      target.p=Math.min(target.pt, target.p+Math.max(gap*dt*2.2, dt*0.12));
+    }
     draw(); anim=requestAnimationFrame(loop);
   }
   size(); draw();
@@ -312,11 +409,21 @@
     root.querySelector('[data-eta]').innerHTML=sh.eta?('Estimated delivery: <b>'+esc(sh.eta)+'</b>'):'';
     root.querySelector('[data-carrier]').innerHTML=sh.carrier?('Carrier: <b>'+esc(sh.carrier)+'</b>'):'';
 
+    var SHORT=['Placed','Packed','In transit','Out','Delivered'];
+    var rail=root.querySelector('[data-rail]'), rout='';
+    for(var r=0;r<5;r++){
+      var rc=r<st-1?'done':(r===st-1?'now':'');
+      rout+='<div class="rn '+rc+'"><span class="rb"><span></span></span>'+
+            '<span class="ri"></span><span class="rl">'+SHORT[r]+'</span></div>';
+    }
+    rail.innerHTML=rout;
+
     var tl=root.querySelector('[data-tl]'), out='';
     for(var i=0;i<5;i++){
       var cls=i<st-1?'done':(i===st-1?'now':'');
       var when=sh['d'+(i+1)]||'';
-      out+='<div class="st '+cls+'"><span class="dot"></span><div><div class="sl">'+STAGES[i].k+'</div>'+
+      out+='<div class="st '+cls+'" style="animation-delay:'+(i*0.07).toFixed(2)+'s">'+
+           '<span class="dot"></span><div><div class="sl">'+STAGES[i].k+'</div>'+
            '<div class="sd">'+esc(when||STAGES[i].s)+'</div></div></div>';
     }
     tl.innerHTML=out;

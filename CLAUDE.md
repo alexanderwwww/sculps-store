@@ -60,8 +60,15 @@ image before video.
   · shipping-policy `164524425482` · terms-of-service `164524458250`
 - Homepage = 14 sections in order: bar, nav, buy, reviewcarousel, box, gallery,
   clearfaq, tiktok, reviews, howitworks, guarantee, badge, footer, sticky
-- Track page: bar, nav, map (`helios-bb-usmap` — US states SVG, Albers, merchant-
-  entered shipment blocks; demo numbers HELIOS104778251/336920418/289471132/775013964/512846077 = stages 1-5)
+- Track page: bar, nav, **globe** (`helios-bb-globe` — canvas Earth, dot-matrix
+  continents, animated route arc with an isometric parcel riding the head, a
+  travelling light pulse, and a Shopify-style 5-node stage rail above the
+  timeline). `helios-bb-usmap` still exists on the theme but is UNUSED.
+  Demo numbers HELIOS104778251/336920418/289471132/775013964/512846077 = stages 1-5.
+- **Updating a tracking number is my job.** Use `python3 helios/tools/track.py`:
+  `list` · `stage <CODE> <1-5> "<note>"` · `add <CODE> "<City, ST>" <lon> <lat> [--eta "..."]`
+  · `remove <CODE>`. Then render.py, commit, push, and upload templates/page.track.json
+  by raw URL. Shipment data is rendered into page source — city/status/date only.
 - Design tokens live in `helios-bar.liquid` (`--phi`, `--fs-*`, `--sp-*` Fibonacci,
   `--r-*`); every use carries a literal fallback.
 - PALETTE (the user's original identity — do NOT blue-wash it again): ink #0F1111
