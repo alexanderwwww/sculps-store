@@ -191,24 +191,26 @@
      rest. `flex:1 1 380px` gives both halves the same basis, splits the row
      evenly whenever two fit, and stacks on its own when they do not — no media
      query to get out of step with the real container width. */
-  #hby-buy .grid{display:flex !important;flex-wrap:wrap;align-items:flex-start;
-    gap:var(--sp-5,34px);width:100% !important;}
-  /* Golden section: the gallery takes phi parts to the panel's one, so the
-     split is 61.8/38.2 rather than an arbitrary pair of pixel bases. Growth
-     from a zero basis is what makes the ratio exact at every width.
-     A pixel cap on the gallery would break the ratio at wide widths, so the
-     frame is a golden rectangle instead: at the full 1180 the gallery is
-     692 wide and 428 tall, which keeps the image calm without capping it.
-     The panel keeps a floor so the bundle rows never crush. */
-  #hby-buy .grid > .gal{flex:var(--phi,1.618) 1 0;min-width:0;}
-  #hby-buy .grid > .panel{flex:1 1 0;min-width:360px;max-width:100%;}
+  #hby-buy .grid{display:flex !important;align-items:flex-start;width:100% !important;}
+  /* Half and half, stated as hard widths. flex:0 0 50% plus max-width:50%
+     means neither side can ever take more than half the row — not from a grow
+     factor, not from an intrinsic image size, not from anything an ancestor
+     does. Below 900px the grid is a plain block and the halves stack. */
+  #hby-buy .grid > .gal,
+  #hby-buy .grid > .panel{flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;}
+  #hby-buy .grid > .gal{padding-right:var(--sp-4,21px);}
+  #hby-buy .grid > .panel{padding-left:var(--sp-4,21px);}
+  @media(max-width:899px){
+    #hby-buy .grid{display:block !important;}
+    #hby-buy .grid > .gal,
+    #hby-buy .grid > .panel{max-width:100%;padding:0;}
+  }
 
-  /* Golden rectangle, not a square: a 1:1 frame this wide is a very tall image. */
-  #hby-buy .main{position:relative;width:100%;aspect-ratio:var(--phi,1.618)/1;background:#fff;
+  #hby-buy .main{position:relative;width:100%;aspect-ratio:1/1;max-height:600px;background:#fff;
     border:1px solid #D5D9D9;border-radius:var(--r-md,13px);overflow:hidden;cursor:pointer;}
   #hby-buy .main img{width:100%;height:100%;object-fit:cover;display:block;background:#fff;}
-  @media(max-width:872px){
-    #hby-buy .gal{margin:0 -16px;}
+  @media(max-width:899px){
+    #hby-buy .gal{margin:0 -16px var(--sp-4,21px);}
     #hby-buy .main{border:0;border-radius:0;}
     #hby-buy .thumbs{padding:0 16px;}
   }
