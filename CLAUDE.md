@@ -24,15 +24,13 @@ image before video.
    .grid, .wrap, .main, .price or any generic name. The buy box now lives in
    sections/helios-buybox.liquid (type helios-buybox); helios-buy is deleted
    from the repo and left unused on the theme (API cannot delete theme files).**
-1. **NEVER let the product image take the full row. The bundles live in the
-   RIGHT half, beside the image, on desktop — always.** Enforced with INLINE
-   `style="flex:0 0 50%;max-width:50%"` on `.gal`/`.panel` and inline
-   `display:flex` on `.grid` in helios-buy.liquid, so no stylesheet, cache or
-   cascade can undo it; mobile stacking overrides inline via `!important` in
-   `@media(max-width:699px)`. Keep stack breakpoints ≤699px — the theme
-   editor's preview iframe is narrow and a 900px breakpoint made desktop
-   preview render the phone stack. NO `fr` tracks, NO grow-factor ratios for
-   columns. This broke four separate times; it is settled law.
+1. **NEVER let the product image take the full row. The bundles live on the
+   RIGHT, beside the image, on desktop — always.** helios-buybox.liquid: image
+   61.8% / bundles 38.2% (phi), INLINE on `.hbb-left`/`.hbb-right`, image is
+   `position:sticky;top:70px` so it scrolls with the long bundle panel.
+   Tiers: phi ≥900px · 50/50 at 700–899 (`!important` overrides the inline phi)
+   · stacked ≤699. Keep the stack tier ≤699px — the editor preview iframe is
+   narrow. NO `fr` tracks, NO grow-factor ratios for columns. Settled law.
 2. **Never guess — count and verify.** Before "fixing" a layout, inspect the
    actual DOM/markup (count `.grid` children, read the real CSS). After every
    theme upload, query the file back and compare byte size to the local file.

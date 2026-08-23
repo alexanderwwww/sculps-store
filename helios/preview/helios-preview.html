@@ -187,7 +187,7 @@
     padding:var(--sp-4,21px) var(--sp-3,13px) var(--sp-6,55px);}
 
   /* ---------- left: carousel ---------- */
-  #hbb-buy .hbb-stage{position:relative;width:100%;aspect-ratio:1/1;max-height:600px;
+  #hbb-buy .hbb-stage{position:relative;width:100%;aspect-ratio:1/1;max-height:640px;
     background:#fff;border:1px solid #D5D9D9;border-radius:var(--r-md,13px);overflow:hidden;}
   #hbb-buy .hbb-stage img{width:100%;height:100%;object-fit:cover;display:block;}
   #hbb-buy .hbb-arr{position:absolute;top:50%;transform:translateY(-50%);z-index:3;
@@ -220,7 +220,7 @@
   #hbb-buy .hbb-rate a{color:#007185;text-decoration:none;}
   #hbb-buy .hbb-price{display:flex;align-items:baseline;gap:var(--sp-2,8px);flex-wrap:wrap;
     padding-bottom:var(--sp-2,8px);}
-  #hbb-buy .hbb-price b{font-size:clamp(var(--fs-xl,32.9px),6.5vw,var(--fs-2xl,41.9px));
+  #hbb-buy .hbb-price b{font-size:clamp(var(--fs-lg,25.9px),5.5vw,var(--fs-xl,32.9px));
     font-weight:800;letter-spacing:-.03em;line-height:1;}
   #hbb-buy .hbb-price s{font-size:var(--fs-base,16px);color:#565959;}
   #hbb-buy .hbb-price em{font-style:normal;background:#CC0C39;color:#fff;
@@ -319,19 +319,25 @@
   #hbb-buy .hbb-badge{display:block;margin:var(--sp-3,13px) auto 0;width:100%;
     max-width:180px;height:auto;}
 
+  /* Between 700 and 899 the 38.2% panel falls under ~330px and the bundle rows
+     crush, so the split relaxes to half and half there. !important because the
+     phi widths are inline. */
+  @media(max-width:899px){
+    #hbb-buy .hbb-left{flex:0 0 50% !important;max-width:50% !important;padding-right:16px !important;}
+    #hbb-buy .hbb-right{flex:0 0 50% !important;max-width:50% !important;}
+  }
   /* ---------- stacking: phones only. !important outranks the inline styles. */
   @media(max-width:699px){
     #hbb-buy .hbb-row{display:block !important;}
     #hbb-buy .hbb-left,#hbb-buy .hbb-right{
-      flex:none !important;max-width:100% !important;padding:0 !important;}
+      flex:none !important;max-width:100% !important;padding:0 !important;
+      position:static !important;}
     #hbb-buy .hbb-left{margin-bottom:var(--sp-4,21px);}
     #hbb-buy .hbb-stage{margin-inline:auto;}
   }
 </style>
   <div class="hbb-wrap">
-    <div class="hbb-row" style="display:flex;flex-wrap:nowrap;align-items:flex-start;width:100%">
-
-      <div class="hbb-left" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-right:21px">
+    <div class="hbb-row" style="display:flex;flex-wrap:nowrap;align-items:flex-start;width:100%"><div class="hbb-left" style="flex:0 0 61.8%;max-width:61.8%;min-width:0;box-sizing:border-box;padding-right:26px;position:sticky;top:70px">
         <div class="hbb-stage" id="hbb-st-buy"><img id="hbb-img-buy" src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-3.png"
                  alt="HELIOS Super Glide" loading="eager" fetchpriority="high"><button class="hbb-arr hbb-l" type="button" id="hbb-pv-buy" aria-label="Previous image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <button class="hbb-arr hbb-r" type="button" id="hbb-nx-buy" aria-label="Next image"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -349,7 +355,7 @@
                 <img src="https://cdn.shopify.com/s/files/1/0808/6949/0929/files/helios-sg-detail-1.jpg" alt="" loading="lazy">
               </button></div></div>
 
-      <div class="hbb-right" style="flex:0 0 50%;max-width:50%;min-width:0;box-sizing:border-box;padding-left:21px">
+      <div class="hbb-right" style="flex:0 0 38.2%;max-width:38.2%;min-width:0;box-sizing:border-box;padding-left:0">
         <h1>HELIOS SUPERGLIDE 1+1 FREE</h1>
         <div class="hbb-rate">
           <span class="hbb-st">★★★★★</span><span>4.8</span>
