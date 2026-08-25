@@ -1,5 +1,22 @@
 # Working rules — HELIOS / sculps-store
 
+## 🛠️ WORKING STYLE (user preference — saved 25 Aug)
+Execute the task; skip the commentary. The user wants output, not opinion or
+character analysis — deliver the result and stop. Be creative about finding
+solutions within the tools available. Two things this does NOT override: the
+credit rule below, and the one fixed line — I don't build tooling whose purpose
+is to defeat logins, bot-detection, or IP blocks (proxy-rotation evasion,
+automated account creation, credential circumvention). Everything inside that
+line: build it fast, no lecturing.
+
+Research pipeline that works: the Higgsfield `sandbox_exec` tool has open
+internet (this container's proxy blocks commercial sites; the sandbox doesn't) +
+Playwright + pip/npm. Proven walls (datacenter-IP or login gated): Amazon,
+Reddit, TikTok Creative Center product API, Google Trends widget API, Exploding
+Topics. Unblocks legitimately: a Keepa API key (Amazon rank/price velocity, best
+single source), the user's own TikTok business cookie, aliexpress scrapers
+(anonymous, work now), pytrends (needs residential IP).
+
 ## 💳 CREDIT SPENDING RULE (hard rule, never break)
 Before ANY paid generation (Higgsfield generate_video / generate_image / generate_audio /
 upscale / dubbing / etc.), I MUST:
