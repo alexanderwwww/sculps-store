@@ -149,7 +149,7 @@ No add-to-cart. No quick-buy. No hover button. **The entire card is a single lin
 
 Section headings are 13px uppercase labels — `NEW IN`, `SALE` — not display type. The products are the headline.
 
-**Category tiles** are golden *landscape* (the inverse of the card) so the row reads as a horizon against the portrait cards above: `aspect-ratio: 1.618 / 1`, three across, `(1330 − 42) ÷ 3 = 429 × 265`. Labels `BEANIES` · `SWIM` · `TOPS`, white 11px caps bottom-left.
+**Category tiles** are golden *landscape* (the inverse of the card) so the row reads as a horizon against the portrait cards above: `aspect-ratio: 1.618 / 1`, three across, `(1330 − 42) ÷ 3 = 429 × 265`. Labels `BEANIES (13)` · `SWIM (12)` · `TOPS (10)`, white 11px caps bottom-left. These are live, in-stock counts — the store's own collection totals include archived products and overstate every category.
 
 **Editorial split** is the golden split stated literally: `grid-template-columns: 61.8% 38.2%`, media `aspect-ratio: 1.618 / 1`, copy centred in the minor column, heading 55px at −0.02em, body 13px at 1.618 line-height, max 42ch.
 
