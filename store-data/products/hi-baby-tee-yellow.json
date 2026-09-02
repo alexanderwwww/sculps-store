@@ -1,0 +1,180 @@
+{
+  "id": "gid://shopify/Product/7273161359518",
+  "handle": "hi-baby-tee-yellow",
+  "title": "Hi Baby Tee Yellow",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-07-25T21:34:15Z",
+  "updatedAt": "2026-06-11T16:25:08Z",
+  "publishedAt": null,
+  "totalInventory": 30,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+      "altText": "",
+      "width": 2384,
+      "height": 4240
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/26277908054174",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+          "altText": "",
+          "width": 2384,
+          "height": 4240
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Extra Small"
+        },
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        },
+        {
+          "name": "X-Large"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41896866611358",
+        "title": "Extra Small",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/41896866644126",
+        "title": "Small",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 22,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/41896866676894",
+        "title": "Medium",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/41896866709662",
+        "title": "Large",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547520405662",
+        "title": "X-Large",
+        "sku": "",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

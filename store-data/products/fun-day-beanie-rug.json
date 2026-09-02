@@ -1,0 +1,89 @@
+{
+  "id": "gid://shopify/Product/7273171878046",
+  "handle": "fun-day-beanie-rug",
+  "title": "Fun Day Beanie Rug",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-07-25T21:56:26Z",
+  "updatedAt": "2024-05-07T23:40:43Z",
+  "publishedAt": null,
+  "totalInventory": -3,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/favicon.png?v=1658786188",
+      "altText": "",
+      "width": 250,
+      "height": 250
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/26277992530078",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/favicon.png?v=1658786188",
+          "altText": "",
+          "width": 250,
+          "height": 250
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "450.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "450.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41896896331934",
+        "title": "Default Title",
+        "sku": "",
+        "price": "450.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": -3,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

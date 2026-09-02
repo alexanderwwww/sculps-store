@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7291607482526",
+  "handle": "mea-culpa-fun-day-beanie-candy",
+  "title": "Mea Culpa Fun Day Beanie - Blue and Pink",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"UTF-8\">\n<p> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-07-31T13:09:28Z",
+  "updatedAt": "2026-06-11T20:43:29Z",
+  "publishedAt": null,
+  "totalInventory": 438,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/PINKPURP.png?v=1659272982",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/26339543908510",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/PINKPURP.png?v=1659272982",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41925243338910",
+        "title": "Default Title",
+        "sku": "qaz-clo-54",
+        "price": "72.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 438,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

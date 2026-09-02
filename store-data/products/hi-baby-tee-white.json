@@ -1,0 +1,362 @@
+{
+  "id": "gid://shopify/Product/7273161162910",
+  "handle": "hi-baby-tee-white",
+  "title": "Hi Baby Tee",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p><span>Elevate your style with our Hi Baby Tee. With our signature \"MC\" chenille logo patch on front, this fitted baby tee merges playfulness and comfort. </span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/hi-baby-tee-white",
+  "createdAt": "2022-07-25T21:33:42Z",
+  "updatedAt": "2026-07-14T20:52:52Z",
+  "publishedAt": "2022-07-25T21:33:42Z",
+  "totalInventory": 72,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30546927911070",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30547155878046",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibbypp2.png?v=1720544611",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30547076186270",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabybw2.png?v=1720543953",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30547144343710",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabypinkpink.png?v=1720544463",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Extra Small"
+        },
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        },
+        {
+          "name": "X-Large"
+        }
+      ]
+    },
+    {
+      "name": "Color",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "White & Black"
+        },
+        {
+          "name": "Hot Pink & Pink"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43768196530334",
+        "title": "Extra Small / White & Black",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Small"
+          },
+          {
+            "name": "Color",
+            "value": "White & Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768196628638",
+        "title": "Extra Small / Hot Pink & Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Small"
+          },
+          {
+            "name": "Color",
+            "value": "Hot Pink & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibbypp2.png?v=1720544611",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768196661406",
+        "title": "Small / White & Black",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 25,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          },
+          {
+            "name": "Color",
+            "value": "White & Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768196759710",
+        "title": "Small / Hot Pink & Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 21,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          },
+          {
+            "name": "Color",
+            "value": "Hot Pink & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibbypp2.png?v=1720544611",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768196792478",
+        "title": "Medium / White & Black",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          },
+          {
+            "name": "Color",
+            "value": "White & Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768196890782",
+        "title": "Medium / Hot Pink & Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 11,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          },
+          {
+            "name": "Color",
+            "value": "Hot Pink & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibbypp2.png?v=1720544611",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768196923550",
+        "title": "Large / White & Black",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 3,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          },
+          {
+            "name": "Color",
+            "value": "White & Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768197021854",
+        "title": "Large / Hot Pink & Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          },
+          {
+            "name": "Color",
+            "value": "Hot Pink & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibbypp2.png?v=1720544611",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768197054622",
+        "title": "X-Large / White & Black",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 3,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Large"
+          },
+          {
+            "name": "Color",
+            "value": "White & Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768197152926",
+        "title": "X-Large / Hot Pink & Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Large"
+          },
+          {
+            "name": "Color",
+            "value": "Hot Pink & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibbypp2.png?v=1720544611",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

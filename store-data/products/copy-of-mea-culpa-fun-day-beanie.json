@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7291605811358",
+  "handle": "copy-of-mea-culpa-fun-day-beanie",
+  "title": "Mea Culpa Fun Day Beanie",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"UTF-8\">\n<p> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-07-31T13:01:42Z",
+  "updatedAt": "2026-06-11T16:12:12Z",
+  "publishedAt": null,
+  "totalInventory": 1,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RED_619cacae-36b9-40e1-a9c6-1ee120e5b0f3.png?v=1659272536",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/26339517104286",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RED_619cacae-36b9-40e1-a9c6-1ee120e5b0f3.png?v=1659272536",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41925238980766",
+        "title": "Default Title",
+        "sku": "yui-oip-bcu",
+        "price": "72.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

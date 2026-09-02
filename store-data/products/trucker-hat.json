@@ -1,0 +1,132 @@
+{
+  "id": "gid://shopify/Product/7273175646366",
+  "handle": "trucker-hat",
+  "title": "Trucker Hat",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-07-25T22:02:35Z",
+  "updatedAt": "2026-06-12T19:39:03Z",
+  "publishedAt": null,
+  "totalInventory": 191,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/mctrucker-min.png?v=1658786557",
+      "altText": "",
+      "width": 2624,
+      "height": 3936
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/26278010945694",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/mctrucker-min.png?v=1658786557",
+          "altText": "",
+          "width": 2624,
+          "height": 3936
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/26285101449374",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/green_pnk_trucker.png?v=1658852254",
+          "altText": "",
+          "width": 1500,
+          "height": 1500
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/26285102137502",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/green_on_green_trucker.png?v=1658852260",
+          "altText": "",
+          "width": 1500,
+          "height": 1500
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Black + White"
+        },
+        {
+          "name": "Green + Pink"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42547517456542",
+        "title": "Black + White",
+        "sku": "TRUCKER01",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 97,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black + White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/mctrucker-min.png?v=1658786557",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547517489310",
+        "title": "Green + Pink",
+        "sku": "TRUCKER02",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 94,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Green + Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/green_pnk_trucker.png?v=1658852254",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7142624624798",
+  "handle": "mea-culpa-fun-day-beanie-22",
+  "title": "Mea Culpa Fun Day Beanie",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>Mea Culpa Fun Day Beanie<br data-mce-fragment=\"1\">The red cotton beanie is adorned with a contrasting \"Mea Culpa\" in orange. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.<br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\"> <br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\">Red on orange cotton knit<br data-mce-fragment=\"1\">Composition: 100% Cotton<br data-mce-fragment=\"1\"></p>\n<p>  </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-03-05T21:26:50Z",
+  "updatedAt": "2024-05-07T23:40:44Z",
+  "publishedAt": null,
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/peachandorange.jpg?v=1646515612",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/25057421131934",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/peachandorange.jpg?v=1646515612",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41464585912478",
+        "title": "Default Title",
+        "sku": "jj-ro-day-05",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

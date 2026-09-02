@@ -1,0 +1,1004 @@
+{
+  "id": "gid://shopify/Product/7142641172638",
+  "handle": "fun-day-beanie",
+  "title": "Fun Day Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day"
+  ],
+  "descriptionHtml": "<p class=\"p1\">Get ready to rock your day with our \"Fun Day\" beanie! Made from comfy cotton and featuring our iconic \"Mea Culpa\" logo, it's the perfect accessory to pair with with your favorite cozy outfits.</p>\n<p class=\"p1\"><meta charset=\"utf-8\"><span style=\"font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\">100% cotton.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie",
+  "createdAt": "2022-03-05T22:03:16Z",
+  "updatedAt": "2026-08-28T21:31:27Z",
+  "publishedAt": "2024-03-25T02:34:20Z",
+  "totalInventory": 5933,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pruduct1.jpg?v=1775602703",
+      "altText": "",
+      "width": 2000,
+      "height": 2500
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/34230468640926",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pruduct1.jpg?v=1775602703",
+          "altText": "",
+          "width": 2000,
+          "height": 2500
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30100448510110",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fundaybp0.png?v=1775602703",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083279716510",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greenonpink.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083280502942",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/orange_on_green.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083280961694",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonred.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083282174110",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blueonpink.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083283517598",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/purponpink.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083285254302",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mustard_on_green.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083286532254",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pinkonpink.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083287056542",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonwhite.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083290595486",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/yellowandblackk.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083296395422",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greyonblue.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083306487966",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/brownand_pink.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083301900446",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonblue.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083308650654",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blue_on_blue.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083314417822",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blueandorange.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083321397406",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/whiteonblack.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083327099038",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blackandwhiteoriginal.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083350986910",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greyongrey.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083352264862",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greenonpurple.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083358458014",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redoutline.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083358982302",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonpink.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083361276062",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/purponyellow.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083364126878",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/limegreen.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083365011614",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greyonpink.jpg?v=1775602703",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Green & Pink"
+        },
+        {
+          "name": "Orange & Green"
+        },
+        {
+          "name": "Red & Red"
+        },
+        {
+          "name": "Seahawks: Blue & Teal"
+        },
+        {
+          "name": "Blue & Pink"
+        },
+        {
+          "name": "Purple & Pink"
+        },
+        {
+          "name": "Chartreuse & Forrest Green"
+        },
+        {
+          "name": "Pink & Pink"
+        },
+        {
+          "name": "Red & White"
+        },
+        {
+          "name": "Yellow & Black"
+        },
+        {
+          "name": "Grey & Blue"
+        },
+        {
+          "name": "Brown & Light Pink"
+        },
+        {
+          "name": "Red & Blue"
+        },
+        {
+          "name": "Royal Blue & Blue"
+        },
+        {
+          "name": "Blue & Orange"
+        },
+        {
+          "name": "White & Black"
+        },
+        {
+          "name": "Black & White"
+        },
+        {
+          "name": "Grey & Grey"
+        },
+        {
+          "name": "Forrest Green & Eggplant Purple"
+        },
+        {
+          "name": "Forrest Green & Gold"
+        },
+        {
+          "name": "Purple & Purple"
+        },
+        {
+          "name": "Hot Pink & White OUTLINE"
+        },
+        {
+          "name": "Red & Light Pink"
+        },
+        {
+          "name": "Cream & Forrest Green"
+        },
+        {
+          "name": "Eggplant Purple & Yellow"
+        },
+        {
+          "name": "Grey & LightPink"
+        },
+        {
+          "name": "Mustard Yellow"
+        },
+        {
+          "name": "Brisk: Blue & Yellow"
+        },
+        {
+          "name": "Kelly Green"
+        },
+        {
+          "name": "Neon: Green & Green"
+        },
+        {
+          "name": "Black & Grey"
+        },
+        {
+          "name": "Brown & Cream"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43377387634846",
+        "title": "Green & Pink",
+        "sku": "jj-bg-day-012",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 323,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Green & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greenonpink.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377398775966",
+        "title": "Orange & Green",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 611,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Orange & Green"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/orange_on_green.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768084922526",
+        "title": "Red & Red",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 120,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Red & Red"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonred.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768084955294",
+        "title": "Seahawks: Blue & Teal",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 34,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Seahawks: Blue & Teal"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blueongreen.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768084988062",
+        "title": "Blue & Pink",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 391,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blueonpink.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377387503774",
+        "title": "Purple & Pink",
+        "sku": "jj-bg-day-08",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Purple & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/purponpink.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085020830",
+        "title": "Chartreuse & Forrest Green",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 376,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Chartreuse & Forrest Green"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mustard_on_green.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377387667614",
+        "title": "Pink & Pink",
+        "sku": "jj-bg-day-013",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pinkonpink.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377387438238",
+        "title": "Red & White",
+        "sku": "jj-bg-day-06",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Red & White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonwhite.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085053598",
+        "title": "Yellow & Black",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 137,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow & Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/yellowandblackk.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085086366",
+        "title": "Grey & Blue",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Grey & Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greyonblue.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085119134",
+        "title": "Brown & Light Pink",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Brown & Light Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/brownand_pink.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085151902",
+        "title": "Red & Blue",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 535,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Red & Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonblue.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768089084062",
+        "title": "Royal Blue & Blue",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 42,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Royal Blue & Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blue_on_blue.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085184670",
+        "title": "Blue & Orange",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 155,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue & Orange"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blueandorange.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085217438",
+        "title": "White & Black",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 138,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White & Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/whiteonblack.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377387536542",
+        "title": "Black & White",
+        "sku": "jj-bg-day-09",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black & White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blackandwhiteoriginal.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377387471006",
+        "title": "Grey & Grey",
+        "sku": "jj-bg-day-07",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Grey & Grey"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greyongrey.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085250206",
+        "title": "Forrest Green & Eggplant Purple",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 255,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Forrest Green & Eggplant Purple"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greenonpurple.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085282974",
+        "title": "Forrest Green & Gold",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 275,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Forrest Green & Gold"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greenonyello.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085315742",
+        "title": "Purple & Purple",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 298,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Purple & Purple"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/purponpurp.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085348510",
+        "title": "Hot Pink & White OUTLINE",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 184,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Hot Pink & White OUTLINE"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redoutline.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085381278",
+        "title": "Red & Light Pink",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 367,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Red & Light Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/redonpink.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085414046",
+        "title": "Cream & Forrest Green",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 20,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Cream & Forrest Green"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greenandtan.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085446814",
+        "title": "Eggplant Purple & Yellow",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 203,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Eggplant Purple & Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/purponyellow.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377387700382",
+        "title": "Grey & LightPink",
+        "sku": "jj-bg-day-014",
+        "price": "45.50",
+        "compareAtPrice": "0.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Grey & LightPink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greyonpink.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085479582",
+        "title": "Mustard Yellow",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 322,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Mustard Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/yellonyell.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085512350",
+        "title": "Brisk: Blue & Yellow",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 449,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Brisk: Blue & Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blueandyellow.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085545118",
+        "title": "Kelly Green",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 320,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Kelly Green"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greenonblack.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085577886",
+        "title": "Neon: Green & Green",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 379,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Neon: Green & Green"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/limegreen.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377387405470",
+        "title": "Black & Grey",
+        "sku": "jj-bg-day-05",
+        "price": "45.50",
+        "compareAtPrice": "0.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black & Grey"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blacongrey.jpg?v=1775602703",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43768085610654",
+        "title": "Brown & Cream",
+        "sku": "",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Brown & Cream"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/browntan.jpg?v=1775602703",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "mar7th-drop",
+        "title": "LATEST ARRIVALS"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}
