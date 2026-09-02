@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7142095978654",
+  "handle": "mea-culpa-fun-day-beanie-9",
+  "title": "Mea Culpa Fun Day Beanie - GREEN & PINK",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The green cotton beanie is adorned with a contrasting \"Mea Culpa\" in a lighter pink. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.<br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\"> <br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\">Green on pink cotton knit<br data-mce-fragment=\"1\">Composition: 100% Cotton</p>\n<p> </p>\n<p><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-03-04T19:55:03Z",
+  "updatedAt": "2026-06-11T06:19:37Z",
+  "publishedAt": null,
+  "totalInventory": 389,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/hatgreenandpinkbstroy.png?v=1646423708",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/25046259531934",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/hatgreenandpinkbstroy.png?v=1646423708",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41461737554078",
+        "title": "Default Title",
+        "sku": "jj-gpb-day-04",
+        "price": "72.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 389,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+[
+  {
+    "handle": "about-us",
+    "title": "About Us",
+    "id": "gid://shopify/Page/87641391262",
+    "templateSuffix": "",
+    "resolvedTemplate": "templates/page.json",
+    "isPublished": true,
+    "publishedAt": "2021-12-20T00:07:35Z",
+    "updatedAt": "2021-12-20T00:12:47Z",
+    "bodySummary": "Finding Inspiration in Every Turn Mea Culpa is a clothing brand based out of Philadelphia. Established in 2020, we push the boundaries to deliver c...",
+    "status": "ok",
+    "linkedFrom": ["policy menu"]
+  },
+  {
+    "handle": "fun-day-bikini-sizing-chart",
+    "title": "Fun Day Bikini Sizing Chart",
+    "id": "gid://shopify/Page/100166238366",
+    "templateSuffix": "",
+    "resolvedTemplate": "templates/page.json",
+    "isPublished": true,
+    "publishedAt": "2024-05-23T16:50:33Z",
+    "updatedAt": "2024-05-24T16:35:03Z",
+    "bodySummary": "XS S M L XL Bra Height (cm) 15 15.5 16 16.5 17 Underbust Length (cm) 13.2 14.2 15.2 16.2 17.2 Bottom Front Width (cm) 14 16 18 20 22 Bottom Back Wi...",
+    "status": "ok",
+    "linkedFrom": [],
+    "note": "Real measurement data. Referenced by the PDP 'Size Chart' collapsible tab, which is disabled — so no product page shows it."
+  },
+  {
+    "handle": "hoodie-size-chart",
+    "title": "Hoodie Size Chart",
+    "id": "gid://shopify/Page/108160254110",
+    "templateSuffix": "page",
+    "resolvedTemplate": "templates/page.page.json",
+    "isPublished": true,
+    "publishedAt": "2025-03-07T18:51:02Z",
+    "updatedAt": "2025-03-07T18:51:03Z",
+    "bodySummary": "",
+    "status": "broken",
+    "problems": ["template templates/page.page.json does not exist in the ALEXANDER theme", "page body is empty"]
+  },
+  {
+    "handle": "sweatpants-size-chart",
+    "title": "Sweatpants Size Chart",
+    "id": "gid://shopify/Page/108160385182",
+    "templateSuffix": "page",
+    "resolvedTemplate": "templates/page.page.json",
+    "isPublished": true,
+    "publishedAt": "2025-03-07T18:51:29Z",
+    "updatedAt": "2025-03-07T18:51:41Z",
+    "bodySummary": "",
+    "status": "broken",
+    "problems": ["template templates/page.page.json does not exist in the ALEXANDER theme", "page body is empty"]
+  },
+  {
+    "handle": "early-access",
+    "title": "Early Access",
+    "id": "gid://shopify/Page/114668929182",
+    "templateSuffix": "pf-1b74b8f9",
+    "resolvedTemplate": "templates/page.pf-1b74b8f9.json",
+    "isPublished": true,
+    "publishedAt": "2025-08-24T01:17:19Z",
+    "updatedAt": "2025-08-24T01:17:20Z",
+    "bodySummary": "",
+    "status": "ok",
+    "note": "PageFly-built page; content lives in PageFly, not in the page body."
+  },
+  {
+    "handle": "mc-ice-bundle",
+    "title": "MC ICE BUNDLE",
+    "id": "gid://shopify/Page/115772260510",
+    "templateSuffix": "MaxBundle",
+    "resolvedTemplate": "templates/page.MaxBundle.json",
+    "isPublished": true,
+    "publishedAt": "2025-09-19T21:07:55Z",
+    "updatedAt": "2025-09-19T21:07:55Z",
+    "bodySummary": "",
+    "status": "broken",
+    "problems": ["template templates/page.MaxBundle.json does not exist in the ALEXANDER theme", "page body is empty"]
+  }
+]

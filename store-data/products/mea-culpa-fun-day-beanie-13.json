@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7142098043038",
+  "handle": "mea-culpa-fun-day-beanie-13",
+  "title": "Mea Culpa Fun Day Beanie - Grey & Blue",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The grey cotton beanie is adorned with a contrasting \"Mea Culpa\" in blue. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.<br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\"> <br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\">Grey on blue cotton knit<br data-mce-fragment=\"1\">Composition: 100% Cotton<br data-mce-fragment=\"1\"></p>\n<p> </p>\n<p><meta charset=\"utf-8\"><span> </span></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-03-04T20:06:22Z",
+  "updatedAt": "2026-06-09T20:30:24Z",
+  "publishedAt": null,
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/GreyandBlue.jpg?v=1646424383",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/25046346530974",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/GreyandBlue.jpg?v=1646424383",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41461744566430",
+        "title": "Default Title",
+        "sku": "jj-gb-day-04",
+        "price": "72.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

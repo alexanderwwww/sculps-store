@@ -1,0 +1,81 @@
+[
+  {
+    "handle": "main-menu",
+    "title": "Main menu",
+    "id": "gid://shopify/Menu/183242621086",
+    "wiredInto": "header",
+    "items": [
+      { "title": "new in", "type": "COLLECTION", "url": "/collections/new-arrivals", "resourceId": "gid://shopify/Collection/281944686750", "productCount": 11 },
+      { "title": "shop", "type": "COLLECTION", "url": "/collections/mar7th-drop", "resourceId": "gid://shopify/Collection/319164022942", "productCount": 7 },
+      { "title": "search", "type": "SEARCH", "url": "/search" }
+    ]
+  },
+  {
+    "handle": "footer",
+    "title": "Footer menu",
+    "id": "gid://shopify/Menu/183242653854",
+    "wiredInto": null,
+    "note": "Footer menu block is disabled in group-footer.json, so this never renders.",
+    "items": [
+      { "title": "Search", "type": "SEARCH", "url": "/search" }
+    ]
+  },
+  {
+    "handle": "menu",
+    "title": "menu",
+    "id": "gid://shopify/Menu/193123221662",
+    "wiredInto": null,
+    "items": [
+      { "title": "Home", "type": "FRONTPAGE", "url": "/" },
+      {
+        "title": "New Arrivals ",
+        "type": "FRONTPAGE",
+        "url": "/",
+        "note": "Parent links to homepage, not to a collection.",
+        "items": [
+          { "title": "New Arrivals", "type": "COLLECTION", "url": "/collections/new-arrivals", "resourceId": "gid://shopify/Collection/281944686750" }
+        ]
+      }
+    ]
+  },
+  {
+    "handle": "policy",
+    "title": "policy",
+    "id": "gid://shopify/Menu/193150124190",
+    "wiredInto": null,
+    "note": "Built but never referenced by any menu block. This is the missing footer navigation.",
+    "items": [
+      { "title": "Shipping policy", "type": "SHOP_POLICY", "url": "/policies/shipping-policy", "resourceId": "gid://shopify/ShopPolicy/25350701214" },
+      { "title": "Refund Policy ", "type": "SHOP_POLICY", "url": "/policies/refund-policy", "resourceId": "gid://shopify/ShopPolicy/25350602910" },
+      { "title": "Privacy Policy", "type": "SHOP_POLICY", "url": "/policies/privacy-policy", "resourceId": "gid://shopify/ShopPolicy/25350635678" },
+      { "title": "Terms of Service", "type": "SHOP_POLICY", "url": "/policies/terms-of-service", "resourceId": "gid://shopify/ShopPolicy/25350668446" },
+      { "title": "About Us", "type": "PAGE", "url": "/pages/about-us", "resourceId": "gid://shopify/Page/87641391262" }
+    ]
+  },
+  {
+    "handle": "shop-all",
+    "title": "shop all",
+    "id": "gid://shopify/Menu/205144326302",
+    "wiredInto": "collection template 'suggested links' only",
+    "items": [
+      { "title": "beanies", "type": "COLLECTION", "url": "/collections/beanies/hat", "tags": ["hat"], "resourceId": "gid://shopify/Collection/282723975326", "productCount": 90 },
+      { "title": "Sets", "type": "COLLECTION", "url": "/collections/sets-1", "resourceId": "gid://shopify/Collection/333613367454", "productCount": 3 },
+      { "title": "Sweatsuits", "type": "COLLECTION", "url": "/collections/sweatsuits", "resourceId": "gid://shopify/Collection/319187943582", "productCount": 0, "broken": "empty collection" },
+      { "title": "tops", "type": "COLLECTION", "url": "/collections/t-shirts", "resourceId": "gid://shopify/Collection/281941999774", "productCount": 10 },
+      { "title": "dresses", "type": "COLLECTION", "url": "/collections/dresses/dress", "tags": ["dress"], "resourceId": "gid://shopify/Collection/281942392990", "productCount": 4 },
+      { "title": "accessories", "type": "COLLECTION", "url": "/collections/accessories", "resourceId": "gid://shopify/Collection/303531655326", "productCount": 3 },
+      { "title": "swim", "type": "COLLECTION", "url": "/collections/swim", "resourceId": "gid://shopify/Collection/304443523230", "productCount": 21 },
+      { "title": "mystery boxes", "type": "COLLECTION", "url": "/collections/mystery-boxes", "resourceId": "gid://shopify/Collection/314298728606", "productCount": 0, "broken": "empty collection" }
+    ]
+  },
+  {
+    "handle": "customer-account-main-menu",
+    "title": "Customer account main menu",
+    "id": "gid://shopify/Menu/214357049502",
+    "wiredInto": "customer account area",
+    "items": [
+      { "title": "Orders", "type": "CUSTOMER_ACCOUNT_PAGE", "url": "https://shopify.com/56391073950/account/orders" },
+      { "title": "Profile", "type": "CUSTOMER_ACCOUNT_PAGE", "url": "https://shopify.com/56391073950/account/profile" }
+    ]
+  }
+]

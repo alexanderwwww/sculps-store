@@ -1,0 +1,110 @@
+{
+  "_source": "config/settings_data.json -> current, from theme ALEXANDER (gid://shopify/OnlineStoreTheme/159112102046)",
+  "_note": "Preset definitions (Default, Midnight, Vision, Khaki) ship with the Bullet theme and are omitted here; only the active 'current' settings are recorded.",
+
+  "layout": {
+    "boxedLayoutWidth": 1200,
+    "globalBorderWidth": 1,
+    "globalBorderRadius": 0,
+    "BorderRadiusGlobal": "0",
+    "globalImgRadius": "0",
+    "imgPadding": "--none",
+    "iconsStroke": "1",
+    "iconsTrue": true
+  },
+
+  "color": {
+    "bgColor": "#FFFFFF",
+    "color": "#000000",
+    "colorHeadings": "#000000",
+    "linkColor": "#000000",
+    "linkHover": "#e65cc4",
+    "globalBorderColor": "#000000",
+    "buttonBgColor": "#e65cc4",
+    "buttonColor": "#FFFFFF",
+    "buttonBorderColor": "#000000",
+    "buttonBorderHover": "#000000",
+    "buyButtonBgColor": "#e65cc4",
+    "buyButtonColor": "#FFFFFF",
+    "buyButtonBorderColor": "#000000",
+    "buyButtonBorderHover": "#000000",
+    "boxBgColor": "#FFFFFF",
+    "boxColor": "#000000",
+    "boxBorderColor": "#000000",
+    "boxBorderColorGlobal": true,
+    "boxBorderHover": "#000000",
+    "primary": "#000000",
+    "accent": "#000000",
+    "newsletterpopupBg": "#FFFFFF",
+    "newsletterpopupColor": "#000000"
+  },
+
+  "typography": {
+    "bodyFontFamily": "anonymous_pro_n4",
+    "headingsFontFamily": "ff_tisa_sans_n4",
+    "hSize": 100,
+    "_note": "Monospace body paired with a serif-ish sans heading from an unrelated family."
+  },
+
+  "identity": {
+    "favicon": "shopify://shop_images/CULPA0200202.png",
+    "faviconUrl": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/CULPA0200202.png?v=1714871646",
+    "corpNameSEO": "Mea Culpa",
+    "corpLogoSEO": "shopify://shop_images/CULPA0200202.png",
+    "siteTitleSEO": "MEA CULPA",
+    "siteDescSEO": "Discover the latest collections from Mea Culpa. Shipping worldwide.",
+    "socialInstagram": "https://instagram.com/meaculpa.co",
+    "socialTiktok": "https://www.tiktok.com/@meaculpa.co",
+    "showBreadcrumbs": false
+  },
+
+  "cart": {
+    "cart_type": "drawer",
+    "_conflict": "The AMP Slide Cart Drawer app embed is also active, so two cart drawers load on every page."
+  },
+
+  "productCards": {
+    "cardGridCol": "3",
+    "cardGridCol-m": "3",
+    "cardGridCol-s": "2",
+    "cardTypeOf": "base",
+    "cardRatio": "portrait",
+    "cardImgCrop": "wide",
+    "cardHoverImg": true,
+    "cardImgRadius": false,
+    "cardImgPadding": false,
+    "cardQuickBuy": true,
+    "cardHoverQuickBuy": true,
+    "cardQuickBuyButtonPrice": true,
+    "cardQuickBuySelectPrice": true,
+    "cardBg": "rgba(0,0,0,0)",
+    "cardColor": "#000000",
+    "cardTextBg": "rgba(0,0,0,0)"
+  },
+
+  "passwordPageSections": {
+    "password-header": {
+      "logo": "shopify://shop_images/CULPA0200202.png",
+      "logoImageSize": 55,
+      "alignment": "center"
+    },
+    "password-footer": {
+      "social": false,
+      "password": true,
+      "heading": "Enter store using password",
+      "custom_css": [
+        ".password-form-wrapper {display: flex; flex-direction: column-reverse; }",
+        "#enter {margin-bottom: 20px; }"
+      ]
+    }
+  },
+
+  "appEmbeds": [
+    { "app": "Swatch King", "handle": "swatch-king-variants-options", "enabled": true, "settings": { "alignment": "left", "swatch_location": "After image", "switch_on_hover": true, "preselect_variant": false } },
+    { "app": "Klaviyo Email Marketing & SMS", "handle": "klaviyo-email-marketing-sms", "enabled": true },
+    { "app": "PageFly Page Builder", "handle": "pagefly-page-builder", "enabled": true },
+    { "app": "Bundler", "handle": "bundler", "enabled": true, "note": "Also places a custom-bundle block on the product template." },
+    { "app": "AMP Slide Cart Drawer", "handle": "amp-slide-cart-drawer", "enabled": true, "note": "Duplicates the theme's native drawer cart." },
+    { "app": "GSC Countdown Timer", "handle": "gsc-countdown-timer", "enabled": true, "note": "Embed active, but every placed countdown block in the theme is disabled." }
+  ]
+}

@@ -1,0 +1,352 @@
+{
+  "id": "gid://shopify/Product/7127105372318",
+  "handle": "mc-socks-1",
+  "title": "Mid Height Socks",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"UTF-8\">\n<ul>\n<li>Cotton</li>\n<li>Ribbed cuffs </li>\n<li>knit logo </li>\n</ul>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mc-socks-1",
+  "createdAt": "2022-02-14T21:42:43Z",
+  "updatedAt": "2026-07-17T10:50:46Z",
+  "publishedAt": "2022-02-14T23:19:08Z",
+  "totalInventory": 123,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/49934934943.jpg?v=1714969736",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/28197854576798",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/49934934943.jpg?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197849235614",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/2r99r9924949.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197849301150",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/323993.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197849333918",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/998890.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197849366686",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/93999449.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197849399454",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/488484848.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197849432222",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/e929e9e29.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197852250270",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/r939r93r9r3.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28197852283038",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/SOCK4.png?v=1714969736",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Purple + Orange"
+        },
+        {
+          "name": "Black + White"
+        },
+        {
+          "name": "Pink + Pink"
+        },
+        {
+          "name": "Red + Yellow"
+        },
+        {
+          "name": "Purple + Yellow"
+        },
+        {
+          "name": "White + Black"
+        },
+        {
+          "name": "Brown + Pink"
+        },
+        {
+          "name": "Red + Green"
+        },
+        {
+          "name": "Yellow + Pink"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "15.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "15.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41401913606302",
+        "title": "Purple + Orange",
+        "sku": null,
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Purple + Orange"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/SOCK4.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607306398",
+        "title": "Black + White",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black + White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/r939r93r9r3.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607339166",
+        "title": "Pink + Pink",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink + Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/e929e9e29.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607371934",
+        "title": "Red + Yellow",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 42,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Red + Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/323993.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607404702",
+        "title": "Purple + Yellow",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 44,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Purple + Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/2r99r9924949.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607437470",
+        "title": "White + Black",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White + Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/998890.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607470238",
+        "title": "Brown + Pink",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 38,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Brown + Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/93999449.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607503006",
+        "title": "Red + Green",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Red + Green"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/488484848.png?v=1714969736",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547607535774",
+        "title": "Yellow + Pink",
+        "sku": "",
+        "price": "15.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow + Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/49934934943.jpg?v=1714969736",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "socks",
+        "title": "Socks"
+      },
+      {
+        "handle": "accessories",
+        "title": "accessories"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

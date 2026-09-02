@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7142097944734",
+  "handle": "mea-culpa-fun-day-beanie-12",
+  "title": "Mea Culpa Fun Day Beanie",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The grey cotton beanie is adorned with a contrasting \"Mea Culpa\" in a lighter pink. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.<br data-mce-fragment=\"1\"></p>\n<p><strong>Preorder - please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p><br data-mce-fragment=\"1\">Grey on pink cotton knit<br data-mce-fragment=\"1\">Composition: 100% Cotton<br data-mce-fragment=\"1\"></p>\n<p> </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-03-04T20:05:21Z",
+  "updatedAt": "2026-06-11T00:37:52Z",
+  "publishedAt": null,
+  "totalInventory": 17,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/GreyanPink.jpg?v=1646424323",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/25046338371742",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/GreyanPink.jpg?v=1646424323",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41461744271518",
+        "title": "Default Title",
+        "sku": "jj-gp-day-04",
+        "price": "72.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 17,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7081546317982",
+  "handle": "mea-culpa-fun-day-beanie-1",
+  "title": "Mea Culpa Fun Day Beanie - Pink on Pink",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"UTF-8\">\n<p>The pink cotton beanie is adorned with a contrasting \"Mea Culpa\" in a lighter pink. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</p>\n<p><strong> Preorder - please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p> </p>\n<ul>\n<li>Pink on pink cotton knit</li>\n<li>Composition: 100% Cotton</li>\n</ul>\n<p> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2021-12-18T21:56:34Z",
+  "updatedAt": "2026-06-11T21:39:42Z",
+  "publishedAt": null,
+  "totalInventory": 23,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/ADD5A.png?v=1639864596",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/24282920452254",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/ADD5A.png?v=1639864596",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41217914634398",
+        "title": "Default Title",
+        "sku": "pi-be-ao",
+        "price": "72.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 23,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

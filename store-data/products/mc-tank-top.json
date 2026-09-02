@@ -1,0 +1,164 @@
+{
+  "id": "gid://shopify/Product/7081559851166",
+  "handle": "mc-tank-top",
+  "title": "MC Tank Top",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"UTF-8\">\n<ul data-mce-fragment=\"1\">\n<li data-mce-fragment=\"1\">Sleeveless tank top in white.</li>\n<li data-mce-fragment=\"1\">100% cotton</li>\n<li data-mce-fragment=\"1\">Ribbed stretched fabric</li>\n<li data-mce-fragment=\"1\">Logo printed right chest </li>\n<li data-mce-fragment=\"1\">Sewn patch</li>\n</ul>",
+  "onlineStoreUrl": null,
+  "createdAt": "2021-12-19T00:37:44Z",
+  "updatedAt": "2024-10-25T20:14:11Z",
+  "publishedAt": null,
+  "totalInventory": 70,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/DSC03315.jpg?v=1639874266",
+      "altText": "",
+      "width": 1200,
+      "height": 1800
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/24283392049310",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/DSC03315.jpg?v=1639874266",
+          "altText": "",
+          "width": 1200,
+          "height": 1800
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/24283392082078",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/DSC03316.jpg?v=1639874266",
+          "altText": "",
+          "width": 1200,
+          "height": 1800
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/24283392114846",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/DSC03310.jpg?v=1639874266",
+          "altText": "",
+          "width": 1200,
+          "height": 1800
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        },
+        {
+          "name": "XL"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41250290860190",
+        "title": "S",
+        "sku": "",
+        "price": "45.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 13,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/41250290892958",
+        "title": "M",
+        "sku": "",
+        "price": "45.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 19,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/41250290925726",
+        "title": "L",
+        "sku": "",
+        "price": "45.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 23,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/41250290958494",
+        "title": "XL",
+        "sku": "",
+        "price": "45.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

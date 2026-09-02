@@ -1,55 +1,50 @@
 # sculps-store
 
-Rebuild of the storefront. This repo holds a full snapshot of the existing
-Shopify store (theme code + content data) so the new store can be built from a
-known baseline instead of guesswork.
+Rebuild workspace for the **Mea Culpa** storefront (`meaculpa-co.myshopify.com` / www.meaculpa.us).
+
+The current store is being remade. This repo holds a complete map of what exists today —
+which section pulls which content, and the exact Shopify CDN URL behind every image — so the
+new build can re-point each slot deliberately instead of guessing.
+
+## Start here
+
+**[`docs/STORE-MAP.md`](docs/STORE-MAP.md)** — the full map. Every section of every template,
+what content it pulls, whether it actually renders, and what is broken. Sections 11 and 12 are
+the working list: what's broken, ranked, and the reusable CDN asset library.
 
 ## Layout
 
 ```
-theme/          Theme code pulled from the live/copy theme
-  layout/       theme.liquid, checkout.liquid
-  templates/    JSON + liquid templates
-  sections/     Section liquid files
-  blocks/       Theme blocks (Online Store 2.0)
-  snippets/     Reusable snippets
-  assets/       CSS, JS, images, fonts
-  config/       settings_schema.json, settings_data.json
-  locales/      Translation files
+docs/
+  STORE-MAP.md        Section-by-section content map — the main reference
+  theme-manifest.md   ALEXANDER theme file inventory and the app/theme stack
 
-store-data/     Content exported from the Admin API (JSON)
-  products/     Full product records incl. variants, media, options
-  collections/  Manual + smart collections and their rules
-  pages/        Online store pages
-  blogs/        Blogs and articles
-  navigation/   Menus / link lists
-  metafields/   Metafield + metaobject definitions and values
-  settings/     Shop settings, policies, markets, shipping zones
-
-docs/           Notes: brand direction, rebuild plan, ad prompts
+store-data/           Content exported from the Shopify Admin API
+  products/           One JSON per product (167) + _index.json for slot-filling
+  collections/        _index.json — all 20 collections with counts, rules, images
+  pages/              _index.json — all 6 pages with template resolution + breakage
+  navigation/         menus.json — all 6 menus and what each is wired into
+  settings/           theme-settings.json — colour, type, cards, app embeds
+  blogs/  metafields/ (not yet exported)
 ```
 
-## Snapshot workflow
+Theme code itself is not stored here — it lives in the ALEXANDER theme on the store.
+`docs/theme-manifest.md` records its file inventory.
 
-The store is reached through the Shopify MCP connector. Nothing is fetched with
-a hard-coded API token, so there are no credentials in this repo.
+## Snapshot source
 
-1. Authorize the Shopify connector (see below).
-2. Pull the theme named `ALEXANDER` (the working copy, not the live theme) into
-   `theme/`.
-3. Export products, collections, pages, blogs, menus, metafields and shop
-   settings into `store-data/`.
-4. Commit the snapshot as its own commit so the "before" state stays diffable.
-5. Rebuild on top of it.
+- Store: **Mea Culpa**, Shopify plan, USD, EDT, US
+- Theme mapped: **ALEXANDER** — `gid://shopify/OnlineStoreTheme/159112102046`, unpublished, preview `/t/19`
+- Base theme: Bullet (Krown) + PageFly
+- Snapshot date: 2026-09-02
+- 167 products, 20 collections, 6 pages, 6 menus
 
-### Reauthorizing the connector
-
-The connector's token expires. When it does, reconnect it from
-claude.ai → Settings → Connectors → Shopify, or run `/mcp` in an interactive
-Claude Code session. Automated sessions can't complete the OAuth flow.
+Everything is read through the Shopify MCP connector, so no API tokens live in this repo.
+If the connector's token expires, reconnect it from claude.ai → Settings → Connectors → Shopify.
 
 ## Rules
 
-- No API tokens, passwords, or customer PII committed to this repo.
-- Customer and order data stays out of `store-data/` — the snapshot is for
-  content and configuration only.
+- No API tokens, passwords, or customer PII in this repo.
+- No customer or order data — the snapshot covers content and configuration only.
+- Shopify CDN URLs are recorded verbatim, query string included; they are the live asset
+  references the rebuild will use.

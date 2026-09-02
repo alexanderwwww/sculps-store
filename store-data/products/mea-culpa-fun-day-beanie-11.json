@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7142096765086",
+  "handle": "mea-culpa-fun-day-beanie-11",
+  "title": "Mea Culpa Fun Day Beanie - Pink Rhinestone",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The black cotton beanie is adorned with a contrasting \"Mea Culpa\" in baby pink with rhinestones. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.<br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\"> <br data-mce-fragment=\"1\"><br data-mce-fragment=\"1\">Composition: 100% Cotton<br data-mce-fragment=\"1\"></p>\n<p> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-03-04T19:59:09Z",
+  "updatedAt": "2026-06-11T13:17:24Z",
+  "publishedAt": null,
+  "totalInventory": -6,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.46.08AM.png?v=1700840775",
+      "altText": "",
+      "width": 312,
+      "height": 442
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/28995777462430",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.46.08AM.png?v=1700840775",
+          "altText": "",
+          "width": 312,
+          "height": 442
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "150.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "150.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41461740470430",
+        "title": "Default Title",
+        "sku": "jj-rp-day-04",
+        "price": "150.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": -6,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7127122280606",
+  "handle": "mea-culpa-fun-day-beanie-8",
+  "title": "Mea Culpa Fun Day Beanie - Red & White",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The Red cotton beanie is adorned with a contrasting \"Mea Culpa\" in White. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</p>\n<p><strong>Preorder - please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p>Composition: 100% Cotton</p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-02-14T23:11:25Z",
+  "updatedAt": "2026-06-12T09:48:38Z",
+  "publishedAt": null,
+  "totalInventory": -4,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/image_b986fe48-ce77-4e87-a3df-f1cddea99cb1.jpg?v=1644880290",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/24829775347870",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/image_b986fe48-ce77-4e87-a3df-f1cddea99cb1.jpg?v=1644880290",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "72.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/41402035241118",
+        "title": "Default Title",
+        "sku": "jikh-hkm-gbp",
+        "price": "72.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": -4,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}
