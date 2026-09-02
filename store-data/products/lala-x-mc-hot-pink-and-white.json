@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7458887008414",
+  "handle": "lala-x-mc-hot-pink-and-white",
+  "title": "LALA X MC HOT PINK AND WHITE",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The hot pink cotton beanie is adorned with a contrasting \"Mea Culpa\" in white. The \"L\" and \"A\" is outlined to highlight the LALA collaboration. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</p>\n<p><strong>Please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p> </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-03-17T13:11:42Z",
+  "updatedAt": "2026-06-12T05:34:12Z",
+  "publishedAt": null,
+  "totalInventory": -11,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Screenshot2023-03-17at7.34.07AM.png?v=1679058722",
+      "altText": "",
+      "width": 330,
+      "height": 366
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/28078728511646",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Screenshot2023-03-17at7.34.07AM.png?v=1679058722",
+          "altText": "",
+          "width": 330,
+          "height": 366
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "50.4",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "50.4",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42500163010718",
+        "title": "Default Title",
+        "sku": "LALAMC023",
+        "price": "50.40",
+        "compareAtPrice": "72.00",
+        "availableForSale": false,
+        "inventoryQuantity": -11,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

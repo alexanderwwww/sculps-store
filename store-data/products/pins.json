@@ -1,0 +1,72 @@
+{
+  "id": "gid://shopify/Product/7475210387614",
+  "handle": "pins",
+  "title": "Pins",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-04-16T02:23:34Z",
+  "updatedAt": "2026-06-09T19:33:57Z",
+  "publishedAt": null,
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "2.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "2.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42547622936734",
+        "title": "Default Title",
+        "sku": "PIN1",
+        "price": "2.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

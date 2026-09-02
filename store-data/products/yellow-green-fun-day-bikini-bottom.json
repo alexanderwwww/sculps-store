@@ -1,0 +1,196 @@
+{
+  "id": "gid://shopify/Product/7514272596126",
+  "handle": "yellow-green-fun-day-bikini-bottom",
+  "title": "Yellow + Green Fun Day Bikini Bottom",
+  "status": "ARCHIVED",
+  "productType": "Swim",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day",
+    "summer 24"
+  ],
+  "descriptionHtml": "<div class=\"edit-mode unstyled align-left frame-theme-1huag10 eidf37h0\" data-block=\"true\" data-editor=\"13k0c\" data-offset-key=\"4v2bn-0-0\" data-mce-fragment=\"1\">\n<div class=\"frame-theme-khvkv7 eidf37h0\" data-mce-fragment=\"1\">\n<div class=\"editor-block-wrapper frame-theme-66lcku eidf37h0\" data-mce-fragment=\"1\">\n<div data-offset-key=\"4v2bn-0-0\" class=\"public-DraftStyleDefault-block public-DraftStyleDefault-ltr\" data-mce-fragment=\"1\"><span data-offset-key=\"4v2bn-0-0\" data-mce-fragment=\"1\">- GREEN BIKINI WITH YELLOW LETTTERING</span></div>\n</div>\n</div>\n</div>\n<div class=\"edit-mode unstyled align-left frame-theme-1huag10 eidf37h0\" data-block=\"true\" data-editor=\"13k0c\" data-offset-key=\"f84r1-0-0\" data-mce-fragment=\"1\">\n<div class=\"frame-theme-khvkv7 eidf37h0\" data-mce-fragment=\"1\">\n<div class=\"frame-theme-1l4xwsv eidf37h0\" data-mce-fragment=\"1\" contenteditable=\"false\">\n<div class=\"frame-theme-14jrueg eidf37h0\" data-mce-fragment=\"1\">\n<div class=\"frame-theme-1a2uvu eidf37h0\" data-mce-fragment=\"1\"><br></div>\n</div>\n</div>\n<div class=\"editor-block-wrapper frame-theme-66lcku eidf37h0\" data-mce-fragment=\"1\">\n<div data-offset-key=\"f84r1-0-0\" class=\"public-DraftStyleDefault-block public-DraftStyleDefault-ltr\" data-mce-fragment=\"1\"><span data-offset-key=\"f84r1-0-0\" data-mce-fragment=\"1\">- METAL AND PEARL BEADS DETAILING</span></div>\n</div>\n</div>\n</div>\n<div class=\"edit-mode unstyled align-left frame-theme-1huag10 eidf37h0\" data-block=\"true\" data-editor=\"13k0c\" data-offset-key=\"c83dn-0-0\" data-mce-fragment=\"1\">\n<div class=\"frame-theme-khvkv7 eidf37h0\" data-mce-fragment=\"1\">\n<div class=\"frame-theme-1l4xwsv eidf37h0\" data-mce-fragment=\"1\" contenteditable=\"false\">\n<div class=\"frame-theme-14jrueg eidf37h0\" data-mce-fragment=\"1\">\n<div class=\"frame-theme-1a2uvu eidf37h0\" data-mce-fragment=\"1\"><br></div>\n</div>\n</div>\n<div class=\"editor-block-wrapper frame-theme-66lcku eidf37h0\" data-mce-fragment=\"1\">\n<div data-offset-key=\"c83dn-0-0\" class=\"public-DraftStyleDefault-block public-DraftStyleDefault-ltr\" data-mce-fragment=\"1\"><span data-offset-key=\"c83dn-0-0\" data-mce-fragment=\"1\">- MC DOG CHAIN</span></div>\n</div>\n</div>\n</div>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-07-22T22:28:49Z",
+  "updatedAt": "2026-06-11T02:45:30Z",
+  "publishedAt": null,
+  "totalInventory": 7,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_1_39b87679-4917-471e-9247-1a1d2b551438.png?v=1716482000",
+      "altText": "",
+      "width": 3124,
+      "height": 4643
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30214578241694",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_1_39b87679-4917-471e-9247-1a1d2b551438.png?v=1716482000",
+          "altText": "",
+          "width": 3124,
+          "height": 4643
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/28545183383710",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_3.png?v=1716482000",
+          "altText": "",
+          "width": 3070,
+          "height": 2456
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XX-Small"
+        },
+        {
+          "name": "X-Small"
+        },
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42674129633438",
+        "title": "XX-Small",
+        "sku": "YGBTM1",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XX-Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_3.png?v=1716482000",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674129666206",
+        "title": "X-Small",
+        "sku": "YGBTM2",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_3.png?v=1716482000",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674129698974",
+        "title": "Small",
+        "sku": "YGBTM3",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_3.png?v=1716482000",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674129731742",
+        "title": "Medium",
+        "sku": "YGBTM4",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_3.png?v=1716482000",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674129764510",
+        "title": "Large",
+        "sku": "YGBTM5",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 6,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_3.png?v=1716482000",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "swim",
+        "title": "swim"
+      }
+    ]
+  }
+}

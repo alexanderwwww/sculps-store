@@ -1,0 +1,136 @@
+{
+  "id": "gid://shopify/Product/7475204161694",
+  "handle": "mc-world-tee",
+  "title": "MC World Tee",
+  "status": "ARCHIVED",
+  "productType": "T-Shirt",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-04-16T01:21:48Z",
+  "updatedAt": "2026-05-28T17:00:47Z",
+  "publishedAt": null,
+  "totalInventory": 11,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/imageedit_3_8519880859.png?v=1681608110",
+      "altText": "",
+      "width": 1056,
+      "height": 1056
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/28197829640350",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/imageedit_3_8519880859.png?v=1681608110",
+          "altText": "",
+          "width": 1056,
+          "height": 1056
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42547571196062",
+        "title": "Small",
+        "sku": "MCWORLDTEE1",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 11,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/imageedit_3_8519880859.png?v=1681608110",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547571228830",
+        "title": "Medium",
+        "sku": "MCWORLDTEE2",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/imageedit_3_8519880859.png?v=1681608110",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42547571261598",
+        "title": "Large",
+        "sku": "MCWORLDTEE3",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/imageedit_3_8519880859.png?v=1681608110",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

@@ -1,0 +1,701 @@
+{
+  "id": "gid://shopify/Product/7514270400670",
+  "handle": "yellow-green-fun-day-bikini-top",
+  "title": "Fun Day Bikini Top",
+  "status": "DRAFT",
+  "productType": "Swim",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day",
+    "summer 24"
+  ],
+  "descriptionHtml": "<div data-draftjs-conductor-fragment='{\"blocks\":[{\"key\":\"9c57n\",\"text\":\"- GREEN BIKINI WITH YELLOW LETTTERING\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[{\"offset\":0,\"length\":37,\"style\":\"FONT_FAMILY;Roboto\"},{\"offset\":0,\"length\":37,\"style\":\"FONT_WEIGHT;500\"},{\"offset\":0,\"length\":37,\"style\":\"FONT_STYLE;normal\"},{\"offset\":0,\"length\":37,\"style\":\"COLOR;00000064\"},{\"offset\":0,\"length\":37,\"style\":\"FONT_SIZE;7\"}],\"entityRanges\":[],\"data\":{\"lineHeight\":9,\"align\":\"align-left\",\"sizesLinkedStatus\":true}},{\"key\":\"80v4b\",\"text\":\"- METAL AND PEARL BEADS DETAILING\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[{\"offset\":0,\"length\":33,\"style\":\"FONT_FAMILY;Roboto\"},{\"offset\":0,\"length\":33,\"style\":\"FONT_WEIGHT;500\"},{\"offset\":0,\"length\":33,\"style\":\"FONT_STYLE;normal\"},{\"offset\":0,\"length\":33,\"style\":\"COLOR;00000064\"},{\"offset\":0,\"length\":33,\"style\":\"FONT_SIZE;7\"}],\"entityRanges\":[],\"data\":{\"lineHeight\":9,\"align\":\"align-left\",\"sizesLinkedStatus\":true}},{\"key\":\"8io6m\",\"text\":\"- MC DOG CHAIN\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[{\"offset\":0,\"length\":14,\"style\":\"FONT_FAMILY;Roboto\"},{\"offset\":0,\"length\":14,\"style\":\"FONT_WEIGHT;500\"},{\"offset\":0,\"length\":14,\"style\":\"FONT_STYLE;normal\"},{\"offset\":0,\"length\":14,\"style\":\"COLOR;00000064\"},{\"offset\":0,\"length\":14,\"style\":\"FONT_SIZE;7\"}],\"entityRanges\":[],\"data\":{\"lineHeight\":9,\"align\":\"align-left\",\"sizesLinkedStatus\":true}}],\"entityMap\":{}}'>\n<div class=\"edit-mode unstyled align-left frame-theme-1huag10 eidf37h0\" data-block=\"true\" data-editor=\"13k0c\" data-offset-key=\"4v2bn-0-0\">\n<div class=\"frame-theme-khvkv7 eidf37h0\">\n<div class=\"editor-block-wrapper frame-theme-66lcku eidf37h0\">\n<div data-offset-key=\"4v2bn-0-0\" class=\"public-DraftStyleDefault-block public-DraftStyleDefault-ltr\">\n<p>Make a splash this summer in our Fun Day Bikini! Featuring our signature logo and dog tag hardware with beads and pearls, this statement piece is sure to turn heads.</p>\n<p><meta charset=\"utf-8\"><span>Fits true to size.</span></p>\n<p>Bottoms available for purchase separately. </p>\n</div>\n</div>\n</div>\n</div>\n</div>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-07-22T22:15:06Z",
+  "updatedAt": "2026-06-10T16:46:43Z",
+  "publishedAt": null,
+  "totalInventory": 123,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/P_Y_5_2b3dbe9a-1f78-48b7-9a43-69dfb83ad79f.png?v=1716573687",
+      "altText": "",
+      "width": 1429,
+      "height": 2000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30222005371038",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/P_Y_5_2b3dbe9a-1f78-48b7-9a43-69dfb83ad79f.png?v=1716573687",
+          "altText": "",
+          "width": 1429,
+          "height": 2000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30221735231646",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat2x.png?v=1716573687",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30221735264414",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat3x.png?v=1716573687",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30221735297182",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat4x.png?v=1716573687",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30221735624862",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat1x.png?v=1716573687",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "X-Small"
+        },
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        },
+        {
+          "name": "Extra Large"
+        },
+        {
+          "name": "XX-Large"
+        }
+      ]
+    },
+    {
+      "name": "Color",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "Pink/Pink"
+        },
+        {
+          "name": "Green/Yellow"
+        },
+        {
+          "name": "Yellow/Pink"
+        },
+        {
+          "name": "Yellow/Black"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "28.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "28.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42674125275294",
+        "title": "X-Small / Pink/Pink",
+        "sku": "BIKINI002",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": -4,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Small"
+          },
+          {
+            "name": "Color",
+            "value": "Pink/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat3x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862129868958",
+        "title": "X-Small / Green/Yellow",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": -2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Small"
+          },
+          {
+            "name": "Color",
+            "value": "Green/Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat4x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131212446",
+        "title": "X-Small / Yellow/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Small"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat2x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131245214",
+        "title": "X-Small / Yellow/Black",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Small"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat1x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674125308062",
+        "title": "Small / Pink/Pink",
+        "sku": "BIKINI003",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": -2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          },
+          {
+            "name": "Color",
+            "value": "Pink/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat3x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862129901726",
+        "title": "Small / Green/Yellow",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          },
+          {
+            "name": "Color",
+            "value": "Green/Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat4x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131277982",
+        "title": "Small / Yellow/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": -3,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat2x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131310750",
+        "title": "Small / Yellow/Black",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat1x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674125340830",
+        "title": "Medium / Pink/Pink",
+        "sku": "BIKINI004",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          },
+          {
+            "name": "Color",
+            "value": "Pink/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat3x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862129934494",
+        "title": "Medium / Green/Yellow",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          },
+          {
+            "name": "Color",
+            "value": "Green/Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat4x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131343518",
+        "title": "Medium / Yellow/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat2x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131376286",
+        "title": "Medium / Yellow/Black",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat1x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674125373598",
+        "title": "Large / Pink/Pink",
+        "sku": "BIKINI005",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 37,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          },
+          {
+            "name": "Color",
+            "value": "Pink/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat3x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862129967262",
+        "title": "Large / Green/Yellow",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 8,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          },
+          {
+            "name": "Color",
+            "value": "Green/Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat4x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131409054",
+        "title": "Large / Yellow/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 34,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat2x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862131441822",
+        "title": "Large / Yellow/Black",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat1x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862141468830",
+        "title": "Extra Large / Pink/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Large"
+          },
+          {
+            "name": "Color",
+            "value": "Pink/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat3x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862141501598",
+        "title": "Extra Large / Green/Yellow",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 9,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Large"
+          },
+          {
+            "name": "Color",
+            "value": "Green/Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat4x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862141534366",
+        "title": "Extra Large / Yellow/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 3,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Large"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat2x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43862141567134",
+        "title": "Extra Large / Yellow/Black",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Large"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat1x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44094474223774",
+        "title": "XX-Large / Pink/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 16,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XX-Large"
+          },
+          {
+            "name": "Color",
+            "value": "Pink/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat3x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44094474256542",
+        "title": "XX-Large / Green/Yellow",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XX-Large"
+          },
+          {
+            "name": "Color",
+            "value": "Green/Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat4x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44094474289310",
+        "title": "XX-Large / Yellow/Pink",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XX-Large"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat2x.png?v=1716573687",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44094474322078",
+        "title": "XX-Large / Yellow/Black",
+        "sku": "",
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XX-Large"
+          },
+          {
+            "name": "Color",
+            "value": "Yellow/Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/fdflat1x.png?v=1716573687",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "swim",
+        "title": "swim"
+      }
+    ]
+  }
+}
