@@ -1,0 +1,110 @@
+{
+  "id": "gid://shopify/Product/7427535372446",
+  "handle": "copy-of-mc-teddy-beanie-2",
+  "title": "Three Girls Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p><meta charset=\"utf-8\"><span style=\"font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\">100% cotton.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/copy-of-mc-teddy-beanie-2",
+  "createdAt": "2023-01-29T04:20:00Z",
+  "updatedAt": "2026-08-02T23:53:33Z",
+  "publishedAt": "2023-01-29T04:23:43Z",
+  "totalInventory": 187,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/ggr00.png?v=1715205371",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30102578331806",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/ggr00.png?v=1715205371",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102089793694",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thrreg0.png?v=1715205370",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42371469672606",
+        "title": "Default Title",
+        "sku": "JAN0001",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 187,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "mar7th-drop",
+        "title": "LATEST ARRIVALS"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

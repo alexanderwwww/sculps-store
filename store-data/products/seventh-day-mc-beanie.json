@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7427535765662",
+  "handle": "seventh-day-mc-beanie",
+  "title": "Seventh Day MC Beanie",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"UTF-8\">\n<p><strong>Preorder - please allow 14-21 business days for cut and sew items to be produced and shipped.</strong> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-01-29T04:27:20Z",
+  "updatedAt": "2026-06-12T20:38:58Z",
+  "publishedAt": null,
+  "totalInventory": 188,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/05.png?v=1674966453",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/27781240127646",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/05.png?v=1674966453",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42371471868062",
+        "title": "Default Title",
+        "sku": "JAN0005",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 188,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7411269107870",
+  "handle": "copy-of-mea-culpa-fun-day-beanie-2",
+  "title": "Copy of Mea Culpa Fun Day Beanie",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"utf-8\">\n<p data-mce-fragment=\"1\">The Black cotton beanie is adorned with a contrasting \"Mea Culpa\" in White mohair. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</p>\n<p data-mce-fragment=\"1\"><br></p>\n<p><strong>Preorder - please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p> </p>\n<ul data-mce-fragment=\"1\">\n<li data-mce-fragment=\"1\">Black and White cotton knit</li>\n<li data-mce-fragment=\"1\">Composition: 100% Cotton</li>\n</ul>\n<p> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-12-25T03:45:32Z",
+  "updatedAt": "2024-05-07T23:40:43Z",
+  "publishedAt": null,
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3298.png?v=1671939956",
+      "altText": "",
+      "width": 1024,
+      "height": 1024
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/27581236445342",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3298.png?v=1671939956",
+          "altText": "",
+          "width": 1024,
+          "height": 1024
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "105.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "105.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42318716272798",
+        "title": "Default Title",
+        "sku": null,
+        "price": "105.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "id": "gid://shopify/Product/7411259015326",
+  "handle": "copy-of-hi-baby-tee-black",
+  "title": "Hi Baby Tee White / Black",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2022-12-25T02:44:23Z",
+  "updatedAt": "2026-06-11T23:10:55Z",
+  "publishedAt": null,
+  "totalInventory": 42,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt.png?v=1671936281",
+      "altText": "",
+      "width": 1500,
+      "height": 2100
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/27581023944862",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt.png?v=1671936281",
+          "altText": "",
+          "width": 1500,
+          "height": 2100
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/27581024141470",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt_51584c02-0a09-41e0-be9d-8cce12be8119.png?v=1671936290",
+          "altText": "",
+          "width": 1500,
+          "height": 2100
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Extra Small"
+        },
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        },
+        {
+          "name": "X-Large"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42318678458526",
+        "title": "Extra Small",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Extra Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt_51584c02-0a09-41e0-be9d-8cce12be8119.png?v=1671936290",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42318678491294",
+        "title": "Small",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 12,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt.png?v=1671936281",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42318678524062",
+        "title": "Medium",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 19,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt.png?v=1671936281",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42318678556830",
+        "title": "Large",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt.png?v=1671936281",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42318678589598",
+        "title": "X-Large",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt.png?v=1671936281",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

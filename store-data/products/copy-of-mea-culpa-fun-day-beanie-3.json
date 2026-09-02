@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7427530260638",
+  "handle": "copy-of-mea-culpa-fun-day-beanie-3",
+  "title": "MC Teddy Beanie",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"UTF-8\">\n<p><strong>Preorder - please allow 14-21 business days for cut and sew items to be produced and shipped.</strong> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-01-29T03:46:13Z",
+  "updatedAt": "2026-06-11T05:40:27Z",
+  "publishedAt": null,
+  "totalInventory": 136,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/01.png?v=1674964502",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/27781153620126",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/01.png?v=1674964502",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42371437559966",
+        "title": "Default Title",
+        "sku": "JAN0002",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 136,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}
