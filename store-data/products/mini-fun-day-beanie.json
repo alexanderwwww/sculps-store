@@ -1,0 +1,112 @@
+{
+  "id": "gid://shopify/Product/8539948187806",
+  "handle": "mini-fun-day-beanie",
+  "title": "Mini Fun Day Beanie",
+  "status": "ACTIVE",
+  "productType": "beanies",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day"
+  ],
+  "descriptionHtml": "<p><meta charset=\"utf-8\">Keep your little ones cozy in our Mini Fun Day Beanie! This pint-sized version is perfect for kids who want to match their grown-ups. <meta charset=\"utf-8\">Made from comfy cotton and featuring our iconic<em> </em>Mea Culpa logo, it’s the perfect accessory to pair with their coziest outfits.</p>\n<p>For ages 4-12.</p>\n<p>100% cotton.</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mini-fun-day-beanie",
+  "createdAt": "2025-12-03T02:59:33Z",
+  "updatedAt": "2026-07-16T12:42:21Z",
+  "publishedAt": "2025-12-03T02:59:33Z",
+  "totalInventory": 147,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Black/White"
+        },
+        {
+          "name": "Blue/Orange"
+        },
+        {
+          "name": "Pink"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "31.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "31.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46250294444190",
+        "title": "Black/White",
+        "sku": null,
+        "price": "31.50",
+        "compareAtPrice": "45.00",
+        "availableForSale": true,
+        "inventoryQuantity": 34,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black/White"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294476958",
+        "title": "Blue/Orange",
+        "sku": null,
+        "price": "31.50",
+        "compareAtPrice": "45.00",
+        "availableForSale": true,
+        "inventoryQuantity": 81,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue/Orange"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294509726",
+        "title": "Pink",
+        "sku": null,
+        "price": "31.50",
+        "compareAtPrice": "45.00",
+        "availableForSale": true,
+        "inventoryQuantity": 32,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

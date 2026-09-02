@@ -1,0 +1,187 @@
+{
+  "id": "gid://shopify/Product/7612042248350",
+  "handle": "mea-world-baby-tee",
+  "title": "Mea World Baby Tee",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "world"
+  ],
+  "descriptionHtml": "<p><br data-mce-fragment=\"1\"></p>\n<p>  </p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mea-world-baby-tee",
+  "createdAt": "2023-11-27T15:04:34Z",
+  "updatedAt": "2026-07-16T12:57:49Z",
+  "publishedAt": "2023-11-27T15:05:57Z",
+  "totalInventory": 40,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEA_CULPA3987.jpg?v=1729895935",
+      "altText": "",
+      "width": 2443,
+      "height": 3257
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056795009182",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEA_CULPA3987.jpg?v=1729895935",
+          "altText": "",
+          "width": 2443,
+          "height": 3257
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056794943646",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEA_CULPA3988.jpg?v=1729895934",
+          "altText": "",
+          "width": 2443,
+          "height": 3257
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056794910878",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEA_CULPA3990.jpg?v=1729895934",
+          "altText": "",
+          "width": 2443,
+          "height": 3257
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056794976414",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEA_CULPA3989.jpg?v=1729895934",
+          "altText": "",
+          "width": 2443,
+          "height": 3257
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42975983599774",
+        "title": "XS",
+        "sku": "MEAWORLD001",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975983632542",
+        "title": "S",
+        "sku": "MEAWORLD002",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 22,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975983665310",
+        "title": "M",
+        "sku": "MEAWORLD003",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 9,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975983698078",
+        "title": "L",
+        "sku": "MEAWORLD004",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

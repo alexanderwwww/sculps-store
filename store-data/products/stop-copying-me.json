@@ -1,0 +1,160 @@
+{
+  "id": "gid://shopify/Product/8539948482718",
+  "handle": "stop-copying-me",
+  "title": "Stop Copying Me Baby Tee",
+  "status": "ACTIVE",
+  "productType": "T-Shirt",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/stop-copying-me",
+  "createdAt": "2025-12-03T03:00:04Z",
+  "updatedAt": "2026-07-16T05:35:59Z",
+  "publishedAt": "2025-12-03T03:00:04Z",
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "White"
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "46.4",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "46.4",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46250295853214",
+        "title": "White / XS",
+        "sku": null,
+        "price": "46.40",
+        "compareAtPrice": "58.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295885982",
+        "title": "White / S",
+        "sku": null,
+        "price": "46.40",
+        "compareAtPrice": "58.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295918750",
+        "title": "White / M",
+        "sku": null,
+        "price": "46.40",
+        "compareAtPrice": "58.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295951518",
+        "title": "White / L",
+        "sku": null,
+        "price": "46.40",
+        "compareAtPrice": "58.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      }
+    ]
+  }
+}

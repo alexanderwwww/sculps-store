@@ -1,0 +1,158 @@
+{
+  "id": "gid://shopify/Product/7612045459614",
+  "handle": "mc-dress-white",
+  "title": "MC Dress - White",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p><br data-mce-fragment=\"1\"></p>\n<p>  </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-11-27T15:06:26Z",
+  "updatedAt": "2026-06-11T17:27:26Z",
+  "publishedAt": null,
+  "totalInventory": 75,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.09PM.png?v=1701097601",
+      "altText": "",
+      "width": 578,
+      "height": 1070
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/29007018066078",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.09PM.png?v=1701097601",
+          "altText": "",
+          "width": 578,
+          "height": 1070
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "85.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "85.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42975990186142",
+        "title": "XS",
+        "sku": "MCDRESS001",
+        "price": "85.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.09PM.png?v=1701097601",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975990218910",
+        "title": "S",
+        "sku": "MCDRESS002",
+        "price": "85.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 44,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.09PM.png?v=1701097601",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975990251678",
+        "title": "M",
+        "sku": "MCDRESS003",
+        "price": "85.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 21,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.09PM.png?v=1701097601",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975990317214",
+        "title": "L",
+        "sku": "MCDRESS004",
+        "price": "85.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 10,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.09PM.png?v=1701097601",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

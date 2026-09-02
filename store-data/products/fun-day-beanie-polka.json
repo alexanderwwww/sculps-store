@@ -1,0 +1,89 @@
+{
+  "id": "gid://shopify/Product/8534707011742",
+  "handle": "fun-day-beanie-polka",
+  "title": "Fun day beanie polka",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p class=\"p1\">Get ready to rock your day with our \"Fun Day\" beanie! Made from comfy cotton and featuring our iconic \"Mea Culpa\" logo, it's the perfect accessory to pair with with your favorite cozy outfits.</p>\n<p class=\"p1\"><meta charset=\"utf-8\"><span style=\"font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\">100% cotton.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-polka",
+  "createdAt": "2025-11-29T06:11:00Z",
+  "updatedAt": "2026-07-17T09:43:00Z",
+  "publishedAt": "2025-11-29T06:11:00Z",
+  "totalInventory": 185,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC08119.jpg?v=1764400640",
+      "altText": "",
+      "width": 4000,
+      "height": 6000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/33468305047710",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC08119.jpg?v=1764400640",
+          "altText": "",
+          "width": 4000,
+          "height": 6000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46237202317470",
+        "title": "Default Title",
+        "sku": null,
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 185,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

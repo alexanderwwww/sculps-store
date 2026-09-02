@@ -1,0 +1,99 @@
+{
+  "id": "gid://shopify/Product/7735551787166",
+  "handle": "pin-party-beanie",
+  "title": "Pin Party Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "pins"
+  ],
+  "descriptionHtml": "<p><meta charset=\"utf-8\"><span>The Pin Party Beanie is made from soft cotton and embellished with an array of metal pin buttons with eye-catching graphics. This beanie has you covered with adding a pop of personality to a casual outfit or standing out from the crowd.</span><span></span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/pin-party-beanie",
+  "createdAt": "2024-03-31T14:08:29Z",
+  "updatedAt": "2026-08-15T20:15:37Z",
+  "publishedAt": "2024-03-31T14:09:36Z",
+  "totalInventory": 60,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pins0.png?v=1715197743",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30101826011294",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pins0.png?v=1715197743",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "57.6",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "57.6",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43419121320094",
+        "title": "Default Title",
+        "sku": "pins001",
+        "price": "57.60",
+        "compareAtPrice": "72.00",
+        "availableForSale": true,
+        "inventoryQuantity": 60,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

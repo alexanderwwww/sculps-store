@@ -1,0 +1,72 @@
+{
+  "id": "gid://shopify/Product/8534708125854",
+  "handle": "fun-day-beanie-wild-panther",
+  "title": "Fun Day Beanie Wild Panther",
+  "status": "DRAFT",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2025-11-29T06:15:14Z",
+  "updatedAt": "2025-11-29T19:16:22Z",
+  "publishedAt": null,
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46237206053022",
+        "title": "Default Title",
+        "sku": null,
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

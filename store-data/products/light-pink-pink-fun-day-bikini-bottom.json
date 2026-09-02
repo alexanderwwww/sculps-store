@@ -1,0 +1,184 @@
+{
+  "id": "gid://shopify/Product/7514274726046",
+  "handle": "light-pink-pink-fun-day-bikini-bottom",
+  "title": "Pink & Pink Fun Day Bikini Bottom",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-07-22T22:45:57Z",
+  "updatedAt": "2026-06-11T22:27:42Z",
+  "publishedAt": null,
+  "totalInventory": 229,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+      "altText": "",
+      "width": 3608,
+      "height": 4509
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/28545204453534",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+          "altText": "",
+          "width": 3608,
+          "height": 4509
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XX-Small"
+        },
+        {
+          "name": "X-Small"
+        },
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "50.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42674134319262",
+        "title": "XX-Small",
+        "sku": "LPPFDB",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 46,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XX-Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674134352030",
+        "title": "X-Small",
+        "sku": "LPPFDB-2",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 95,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "X-Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674134384798",
+        "title": "Small",
+        "sku": "LPPFDB-3",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 76,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674134417566",
+        "title": "Medium",
+        "sku": "LPPFDB-4",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42674134450334",
+        "title": "Large",
+        "sku": "LPPFDB-5",
+        "price": "50.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 11,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "swim",
+        "title": "swim"
+      }
+    ]
+  }
+}

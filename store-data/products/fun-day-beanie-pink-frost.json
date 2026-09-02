@@ -1,0 +1,106 @@
+{
+  "id": "gid://shopify/Product/8534707044510",
+  "handle": "fun-day-beanie-pink-frost",
+  "title": "Fun day beanie pink frost",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-pink-frost",
+  "createdAt": "2025-11-29T06:11:04Z",
+  "updatedAt": "2026-08-03T15:40:27Z",
+  "publishedAt": "2026-04-07T23:59:54Z",
+  "totalInventory": 213,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Product_3.jpg?v=1775605139",
+      "altText": "",
+      "width": 2000,
+      "height": 2500
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/34230612983966",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Product_3.jpg?v=1775605139",
+          "altText": "",
+          "width": 2000,
+          "height": 2500
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/33468309045406",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC08131.jpg?v=1775605139",
+          "altText": "",
+          "width": 4000,
+          "height": 6000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46237202350238",
+        "title": "Default Title",
+        "sku": null,
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 213,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

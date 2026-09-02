@@ -1,0 +1,188 @@
+{
+  "id": "gid://shopify/Product/8539947761822",
+  "handle": "fun-day-bikini-option-1",
+  "title": "Yellow & Pink Fun Day Bikini Bottom",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>Make a splash this summer in our Fun Day Bikini! Featuring our signature logo and dog tag hardware with beads and pearls, this statement piece is sure to turn heads.</p>\n<p>Size up for more coverage.</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-bikini-option-1",
+  "createdAt": "2025-12-03T02:53:38Z",
+  "updatedAt": "2026-08-28T16:02:46Z",
+  "publishedAt": "2025-12-03T02:53:38Z",
+  "totalInventory": 97,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00612_c4fa89be-e503-46cd-91e7-b8dabf5e7e41.jpg?v=1775609995",
+      "altText": "",
+      "width": 4000,
+      "height": 6000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/34230972645534",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00612_c4fa89be-e503-46cd-91e7-b8dabf5e7e41.jpg?v=1775609995",
+          "altText": "",
+          "width": 4000,
+          "height": 6000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        },
+        {
+          "name": "XL"
+        },
+        {
+          "name": "XXL"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "28.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "28.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46250293395614",
+        "title": "XS",
+        "sku": null,
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 42,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250293428382",
+        "title": "S",
+        "sku": null,
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 31,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250293461150",
+        "title": "M",
+        "sku": null,
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250293493918",
+        "title": "L",
+        "sku": null,
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250293526686",
+        "title": "XL",
+        "sku": null,
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250293559454",
+        "title": "XXL",
+        "sku": null,
+        "price": "28.00",
+        "compareAtPrice": "40.00",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XXL"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "swim",
+        "title": "swim"
+      }
+    ]
+  }
+}

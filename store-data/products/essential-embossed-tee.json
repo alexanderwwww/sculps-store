@@ -1,0 +1,360 @@
+{
+  "id": "gid://shopify/Product/7735550017694",
+  "handle": "essential-embossed-tee",
+  "title": "Embossed Baby Tee",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "embossed",
+    "fall24"
+  ],
+  "descriptionHtml": "<p><span>Elevate your style with our Essential Embossed Tee. Adorned with our \"Mea Culpa\" Fun Day logo, this baby tee merges playfulness and comfort. Available in bubblegum pink and white.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/essential-embossed-tee",
+  "createdAt": "2024-03-31T14:00:29Z",
+  "updatedAt": "2026-07-18T08:44:11Z",
+  "publishedAt": "2024-03-31T14:03:34Z",
+  "totalInventory": 154,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5243.jpg?v=1729891675",
+      "altText": "",
+      "width": 2289,
+      "height": 3051
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056703848606",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5243.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056703946910",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5246.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056703881374",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5244.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056703914142",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5245.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056703979678",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5264.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056704077982",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5267.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056704012446",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5265.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056704045214",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5266.jpg?v=1729891675",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        },
+        {
+          "name": "XL"
+        }
+      ]
+    },
+    {
+      "name": "Color",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "White"
+        },
+        {
+          "name": "Pink"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43419096580254",
+        "title": "S / White",
+        "sku": null,
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5243.jpg?v=1729891675",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419105296542",
+        "title": "S / Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5264.jpg?v=1729891675",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419096613022",
+        "title": "M / White",
+        "sku": null,
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 34,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5243.jpg?v=1729891675",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419105329310",
+        "title": "M / Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 34,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5264.jpg?v=1729891675",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419096645790",
+        "title": "L / White",
+        "sku": null,
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 29,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5243.jpg?v=1729891675",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419105362078",
+        "title": "L / Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 24,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5264.jpg?v=1729891675",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419105394846",
+        "title": "XL / White",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 14,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5243.jpg?v=1729891675",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419105427614",
+        "title": "XL / Pink",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 19,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5264.jpg?v=1729891675",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

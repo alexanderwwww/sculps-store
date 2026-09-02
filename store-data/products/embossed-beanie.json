@@ -1,0 +1,137 @@
+{
+  "id": "gid://shopify/Product/7735547855006",
+  "handle": "embossed-beanie",
+  "title": "Embossed Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "embossed"
+  ],
+  "descriptionHtml": "<p class=\"p1\">This beanie is adorned with our \"Mea Culpa\" limited edition embossed logo along the bottom edge.</p>\n<p class=\"p1\"><meta charset=\"utf-8\"><span style=\"font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\">100% cotton.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/embossed-beanie",
+  "createdAt": "2024-03-31T13:52:21Z",
+  "updatedAt": "2026-07-17T00:33:12Z",
+  "publishedAt": "2024-03-31T13:53:58Z",
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/embossyp0.png?v=1715185072",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30100280672414",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/embossyp0.png?v=1715185072",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30100280639646",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/embossyb0.png?v=1715185072",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Black"
+        },
+        {
+          "name": "Pink"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "38.75",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "38.75",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43419070922910",
+        "title": "Black",
+        "sku": "",
+        "price": "38.75",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/embossyb0.png?v=1715185072",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419070955678",
+        "title": "Pink",
+        "sku": "",
+        "price": "38.75",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/embossyp0.png?v=1715185072",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "mar7th-drop",
+        "title": "LATEST ARRIVALS"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

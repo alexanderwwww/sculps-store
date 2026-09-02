@@ -1,0 +1,254 @@
+{
+  "id": "gid://shopify/Product/8110936031390",
+  "handle": "rhinestone-airbrush-baby-tee",
+  "title": "Paradise Airbrush Baby Tee",
+  "status": "ACTIVE",
+  "productType": "T-Shirt",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "<p><meta charset=\"utf-8\">Bring a little paradise wherever you go. This baby tee showcases sunset scene adding a pop of pastel to your wardrobe. Adorned with \"Mea Culpa Fun Day Crew\" in rhinestones over top.</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/rhinestone-airbrush-baby-tee",
+  "createdAt": "2024-10-25T21:33:06Z",
+  "updatedAt": "2026-07-17T07:09:17Z",
+  "publishedAt": "2024-10-26T15:32:59Z",
+  "totalInventory": 29,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+      "altText": "",
+      "width": 2289,
+      "height": 3051
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056727802014",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056727900318",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5452.jpg?v=1729891958",
+          "altText": "",
+          "width": 2224,
+          "height": 2966
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056727834782",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5450.jpg?v=1729891958",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056727867550",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5451.jpg?v=1729891958",
+          "altText": "",
+          "width": 2309,
+          "height": 3079
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Blue"
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        },
+        {
+          "name": "Extra large"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44450450669726",
+        "title": "Blue / XS",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451054878878",
+        "title": "Blue / S",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 13,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451054911646",
+        "title": "Blue / M",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 6,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451054944414",
+        "title": "Blue / L",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 8,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451054977182",
+        "title": "Blue / Extra large",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 2,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue"
+          },
+          {
+            "name": "Size",
+            "value": "Extra large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

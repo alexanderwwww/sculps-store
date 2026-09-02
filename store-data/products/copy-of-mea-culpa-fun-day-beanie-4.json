@@ -1,0 +1,158 @@
+{
+  "id": "gid://shopify/Product/7611980152990",
+  "handle": "copy-of-mea-culpa-fun-day-beanie-4",
+  "title": "Mea Culpa Raglan Baby Tee - Yellow & Blue",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p><br data-mce-fragment=\"1\"></p>\n<p>  </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-11-27T14:28:17Z",
+  "updatedAt": "2026-06-10T12:40:46Z",
+  "publishedAt": null,
+  "totalInventory": 7,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.26PM.png?v=1701096254",
+      "altText": "",
+      "width": 326,
+      "height": 526
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/29006912684190",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.26PM.png?v=1701096254",
+          "altText": "",
+          "width": 326,
+          "height": 526
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "55.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "55.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42975841091742",
+        "title": "XS",
+        "sku": "RAGBT001",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.26PM.png?v=1701096254",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975841124510",
+        "title": "S",
+        "sku": "RAGBT002",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.26PM.png?v=1701096254",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975841157278",
+        "title": "M",
+        "sku": "RAGBT003",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 3,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.26PM.png?v=1701096254",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975841190046",
+        "title": "L",
+        "sku": "RAGBT004",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.26PM.png?v=1701096254",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

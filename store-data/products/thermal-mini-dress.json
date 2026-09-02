@@ -1,0 +1,168 @@
+{
+  "id": "gid://shopify/Product/8110926069918",
+  "handle": "thermal-mini-dress",
+  "title": "Thermal Mini Dress",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/thermal-mini-dress",
+  "createdAt": "2024-10-25T20:11:41Z",
+  "updatedAt": "2026-07-16T18:40:35Z",
+  "publishedAt": "2024-10-26T15:32:57Z",
+  "totalInventory": 72,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5350.jpg?v=1729887081",
+      "altText": "",
+      "width": 2289,
+      "height": 3051
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056316825758",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5350.jpg?v=1729887081",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056316858526",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5351.jpg?v=1729887081",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056316891294",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5352.jpg?v=1729887081",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "64.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "64.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44451056943262",
+        "title": "S",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 39,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5350.jpg?v=1729887081",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451056976030",
+        "title": "M",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 24,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5350.jpg?v=1729887081",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451057008798",
+        "title": "L",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 9,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5350.jpg?v=1729887081",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

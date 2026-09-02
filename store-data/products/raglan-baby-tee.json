@@ -1,0 +1,395 @@
+{
+  "id": "gid://shopify/Product/7612017541278",
+  "handle": "raglan-baby-tee",
+  "title": "Raglan Baby Tee",
+  "status": "DRAFT",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p><br data-mce-fragment=\"1\"></p>\n<p>  </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-11-27T14:49:34Z",
+  "updatedAt": "2026-06-09T20:13:25Z",
+  "publishedAt": null,
+  "totalInventory": 73,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanpy0.png?v=1715199002",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30101942730910",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanpy0.png?v=1715199002",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102571712670",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bbpurp00.png?v=1715205325",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101942763678",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanb0.png?v=1715205325",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    },
+    {
+      "name": "Color",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "Pink"
+        },
+        {
+          "name": "Blue"
+        },
+        {
+          "name": "Purple"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "44.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "44.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42975888638110",
+        "title": "XS / Pink",
+        "sku": "RAGBT009",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanpy0.png?v=1715199002",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207443614",
+        "title": "XS / Blue",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanb0.png?v=1715205325",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207476382",
+        "title": "XS / Purple",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "Purple"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bbpurp00.png?v=1715205325",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975888670878",
+        "title": "S / Pink",
+        "sku": "RAGBT010",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 21,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanpy0.png?v=1715199002",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207509150",
+        "title": "S / Blue",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 13,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanb0.png?v=1715205325",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207541918",
+        "title": "S / Purple",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Purple"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bbpurp00.png?v=1715205325",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975888703646",
+        "title": "M / Pink",
+        "sku": "RAGBT011",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 8,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanpy0.png?v=1715199002",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207574686",
+        "title": "M / Blue",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 10,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanb0.png?v=1715205325",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207607454",
+        "title": "M / Purple",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "Purple"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bbpurp00.png?v=1715205325",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975888736414",
+        "title": "L / Pink",
+        "sku": "RAGBT012",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanpy0.png?v=1715199002",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207640222",
+        "title": "L / Blue",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 2,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanb0.png?v=1715205325",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377207672990",
+        "title": "L / Purple",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "Purple"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bbpurp00.png?v=1715205325",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

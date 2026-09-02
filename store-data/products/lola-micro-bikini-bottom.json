@@ -1,0 +1,120 @@
+{
+  "id": "gid://shopify/Product/8534723756190",
+  "handle": "lola-micro-bikini-bottom",
+  "title": "Lola Micro Bikini Bottom",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>For the girl who wants just enough coverage with maximum confidence. This micro triangle bikini keeps it minimal with adjustable ties, a center MC emblem, and a cheeky high cut fit that shows off your shape. <meta charset=\"utf-8\">Made with buttery soft fabric and a daring fit that turns heads wherever you take her.</p>\n<p>Model Mia wears a size medium bikini top and size large bottom</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/lola-micro-bikini-bottom",
+  "createdAt": "2025-11-29T06:55:24Z",
+  "updatedAt": "2026-07-18T19:53:37Z",
+  "publishedAt": "2025-11-29T06:55:24Z",
+  "totalInventory": 128,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini12_1_7216854b-d394-42e5-92c7-4ab9e80fe0ba.jpg?v=1775619155",
+      "altText": "",
+      "width": 3150,
+      "height": 3900
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/34238094770334",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini12_1_7216854b-d394-42e5-92c7-4ab9e80fe0ba.jpg?v=1775619155",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/34237989257374",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MC_E_COM_Bikini_10.jpg?v=1775619043",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/34238010785950",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MC_E_COM_Bikini_11.jpg?v=1775619060",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/34238001119390",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MC_E_COM_Bikini_9.jpg?v=1775619052",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "S"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "21.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "21.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46237291774110",
+        "title": "S",
+        "sku": null,
+        "price": "21.00",
+        "compareAtPrice": "35.00",
+        "availableForSale": true,
+        "inventoryQuantity": 128,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "swim",
+        "title": "swim"
+      }
+    ]
+  }
+}

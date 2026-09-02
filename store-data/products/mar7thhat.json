@@ -1,0 +1,72 @@
+{
+  "id": "gid://shopify/Product/8539948155038",
+  "handle": "mar7thhat",
+  "title": "7 Cap",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<ul>\n<li>Embrodiered Mea Culpa and seven</li>\n<li>rear touch-strap fastening</li>\n<li>\n<meta charset=\"utf-8\">\n<p>curved peak</p>\n</li>\n<li>\n<meta charset=\"utf-8\">This item is available for preorder and will be shipped out within 14-21 business days. Thank you for your patience as we prepare your order. We’ll notify you once it’s on its way!</li>\n</ul>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mar7thhat",
+  "createdAt": "2025-12-03T02:59:30Z",
+  "updatedAt": "2026-07-18T01:40:58Z",
+  "publishedAt": "2025-12-03T02:59:30Z",
+  "totalInventory": 5,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46250294411422",
+        "title": "Default Title",
+        "sku": null,
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

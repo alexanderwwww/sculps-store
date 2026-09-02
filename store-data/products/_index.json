@@ -1,0 +1,3123 @@
+[
+  {
+    "handle": "afro-glow-beanie",
+    "title": "Afro Glow Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 102,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "all-over-beanie",
+    "title": "All Over Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 234,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "barbie-oversized-tee",
+    "title": "Barbie Oversized Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/barbie-oversized-tee",
+    "price": "40.0",
+    "compareAtPrice": "50.00",
+    "totalInventory": 4,
+    "variantCount": 4,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3740.jpg?v=1729892709",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "camo-fun-day-beanie",
+    "title": "Camo Fun Day Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "fun day"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/camo-fun-day-beanie",
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": -3,
+    "variantCount": 3,
+    "imageCount": 6,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camogreen0.png?v=1715182911",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "mar7th-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "central-micro-bikini-bottom",
+    "title": "Central Micro Bikini Bottom",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/central-micro-bikini-bottom",
+    "price": "21.0",
+    "compareAtPrice": "35.00",
+    "totalInventory": 142,
+    "variantCount": 1,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini8_1_7604e4ae-c2ed-472e-83dc-5ce7bd8d6ea3.jpg?v=1775618901",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "central-micro-bikini-top",
+    "title": "Central Micro Bikini Top",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/central-micro-bikini-top",
+    "price": "21.0",
+    "compareAtPrice": "35.00",
+    "totalInventory": 141,
+    "variantCount": 1,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini8_1.jpg?v=1775618790",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "circle-logo-baby-tee",
+    "title": "Circle Logo Baby Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/circle-logo-baby-tee",
+    "price": "44.0",
+    "compareAtPrice": "55.00",
+    "totalInventory": 130,
+    "variantCount": 32,
+    "imageCount": 8,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5371.jpg?v=1729892111",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "cleazy-cap",
+    "title": "Cleazy Cap",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "mohair"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/cleazy-cap",
+    "price": "45.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/cleazyfrrront.png?v=1715183062",
+    "collections": [
+      "beanies",
+      "accessories",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "coin-baby-tee",
+    "title": "Coin Baby Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/coin-baby-tee",
+    "price": "44.0",
+    "compareAtPrice": "55.00",
+    "totalInventory": 40,
+    "variantCount": 8,
+    "imageCount": 8,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3713.jpg?v=1729892619",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "copy-of-hi-baby-tee-black",
+    "title": "Hi Baby Tee White / Black",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 42,
+    "variantCount": 5,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/whiteblackmcshirt.png?v=1671936281",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-lala-x-mc-blue-and-navy-blue",
+    "title": "LALA X MC RED AND LIGHT RED",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -19,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT9.png?v=1679055598",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-lala-x-mc-green-and-yellow",
+    "title": "LALA X MC GREEN AND YELLOW",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -8,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT7.png?v=1678999733",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mc-teddy-beanie-1",
+    "title": "Thermal Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "92.0",
+    "compareAtPrice": null,
+    "totalInventory": -9,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/03.png?v=1674965733",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mc-teddy-beanie-2",
+    "title": "Three Girls Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/copy-of-mc-teddy-beanie-2",
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 187,
+    "variantCount": 1,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/ggr00.png?v=1715205371",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "mar7th-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "copy-of-mc-teddy-beanie-3",
+    "title": "MC Teddy Twins Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": -15,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/07.png?v=1674967351",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mc-teddy-beanie-4",
+    "title": "Yellow Camo Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -1,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/08.png?v=1674967682",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mc-teddy-beanie",
+    "title": "Spotted Camo Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": -3,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/02.png?v=1674965058",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mc-world-tee",
+    "title": "MC Grillz Tee",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 3,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/imageedit_1_7382527646.png?v=1681608201",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-1",
+    "title": "Mea Culpa Fun Day Beanie - Mohair",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "105.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3299.png?v=1671939877",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-2",
+    "title": "Copy of Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "105.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3298.png?v=1671939956",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-3",
+    "title": "MC Teddy Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 136,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/01.png?v=1674964502",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-4",
+    "title": "Mea Culpa Raglan Baby Tee - Yellow & Blue",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "55.0",
+    "compareAtPrice": null,
+    "totalInventory": 7,
+    "variantCount": 4,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.26PM.png?v=1701096254",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-brisk",
+    "title": "Mea Culpa Fun Day Beanie - Blue & Yellow",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 482,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/blueyellow.png?v=1659272707",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-mohair-2",
+    "title": "Mea Culpa Fun Day Beanie - Mohair | Blue & Orange",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "73.5",
+    "compareAtPrice": "105.00",
+    "totalInventory": 102,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3449.jpg?v=1675549162",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-mohair-3",
+    "title": "Mea Culpa Fun Day Beanie - Mohair | Pink & Purple",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "73.5",
+    "compareAtPrice": "105.00",
+    "totalInventory": 16,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3450.jpg?v=1675549237",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-mohair-4",
+    "title": "Mea Culpa Fun Day Beanie - Mohair | Brown",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "73.5",
+    "compareAtPrice": "105.00",
+    "totalInventory": 22,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3452.jpg?v=1675549283",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-mohair",
+    "title": "Mea Culpa Fun Day Beanie - Mohair",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "105.0",
+    "compareAtPrice": null,
+    "totalInventory": -1,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3298_087eabfe-34f5-4d10-b299-2f4ec1514d87.png?v=1671940522",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie-outline",
+    "title": "Mea Culpa Fun Day Beanie - Outline",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 214,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/outline.png?v=1659272743",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "copy-of-mea-culpa-fun-day-beanie",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 1,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RED_619cacae-36b9-40e1-a9c6-1ee120e5b0f3.png?v=1659272536",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "embossed-beanie",
+    "title": "Embossed Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "embossed"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/embossed-beanie",
+    "price": "38.75",
+    "compareAtPrice": "50.00",
+    "totalInventory": 0,
+    "variantCount": 2,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/embossyp0.png?v=1715185072",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "mar7th-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "essential-embossed-tee",
+    "title": "Embossed Baby Tee",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "embossed",
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/essential-embossed-tee",
+    "price": "52.0",
+    "compareAtPrice": "65.00",
+    "totalInventory": 154,
+    "variantCount": 8,
+    "imageCount": 8,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5243.jpg?v=1729891675",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "fantasy-airbrush-baby-tee",
+    "title": "Fantasy Airbrush Baby Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fantasy-airbrush-baby-tee",
+    "price": "52.0",
+    "compareAtPrice": "65.00",
+    "totalInventory": 2,
+    "variantCount": 5,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-cocoa-cheetah",
+    "title": "Fun Day Beanie Cocoa Cheetah",
+    "status": "DRAFT",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 98,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-lush-panther",
+    "title": "Fun Day Beanie Lush Panther",
+    "status": "DRAFT",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 95,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC08180.jpg?v=1764400587",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-midnight",
+    "title": "Fun day beanie midnight",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-midnight",
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/product4.jpg?v=1775608419",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-mohair",
+    "title": "Mohair Fun Day Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "fun day",
+      "mohair"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-mohair",
+    "price": "73.5",
+    "compareAtPrice": "105.00",
+    "totalInventory": 1591,
+    "variantCount": 5,
+    "imageCount": 10,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mohairogpp0.png?v=1715194122",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "mar7th-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-pink-frost",
+    "title": "Fun day beanie pink frost",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-pink-frost",
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 213,
+    "variantCount": 1,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Product_3.jpg?v=1775605139",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-polka",
+    "title": "Fun day beanie polka",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-polka",
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 185,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC08119.jpg?v=1764400640",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-rug",
+    "title": "Fun Day Beanie Rug",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "450.0",
+    "compareAtPrice": null,
+    "totalInventory": -3,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/favicon.png?v=1658786188",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie-wild-panther",
+    "title": "Fun Day Beanie Wild Panther",
+    "status": "DRAFT",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "fun-day-beanie",
+    "title": "Fun Day Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "fun day"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie",
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 5933,
+    "variantCount": 32,
+    "imageCount": 25,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pruduct1.jpg?v=1775602703",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "mar7th-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "fun-day-bikini-bottoms",
+    "title": "Fun Day Bikini Bottoms",
+    "status": "DRAFT",
+    "productType": "Swim",
+    "tags": [
+      "fun day",
+      "summer 24"
+    ],
+    "onlineStoreUrl": null,
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 114,
+    "variantCount": 24,
+    "imageCount": 5,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Facetune_24-05-2024-13-47-05_2.jpg?v=1716573226",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "fun-day-bikini-option-1",
+    "title": "Yellow & Pink Fun Day Bikini Bottom",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-bikini-option-1",
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 97,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00612_c4fa89be-e503-46cd-91e7-b8dabf5e7e41.jpg?v=1775609995",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "fun-day-bikini-option-2-copy",
+    "title": "Green & Yellow Fun Day Bikini Bottom",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-bikini-option-2-copy",
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 52,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00217_1.jpg?v=1775610209",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "fun-day-bikini-option-2",
+    "title": "Pink on Pink Fun Day Bikini Bottom",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-bikini-option-2",
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 150,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00367_1.jpg?v=1775609653",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "fun-day-bikini-top-option-1",
+    "title": "Yellow & Pink Fun Day Bikini Top",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-bikini-top-option-1",
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 70,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00579_2_d0f32ab7-2e66-4aac-97f1-de9c2239f3fe.jpg?v=1775609895",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "fun-day-bikini-top-option-2",
+    "title": "Pink on Pink Fun Day Bikini Top",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-bikini-top-option-2",
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 146,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00355_2.jpg?v=1775609307",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "fun-day-bikini-top-option-3",
+    "title": "Green & Yellow Fun Day Bikini Top",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-bikini-top-option-3",
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 40,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC00213_2.jpg?v=1775610137",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "fun-day-one-piece",
+    "title": "Fun Day One Piece",
+    "status": "ACTIVE",
+    "productType": "Swim",
+    "tags": [
+      "fun day"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-one-piece",
+    "price": "32.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 0,
+    "variantCount": 5,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+    "collections": [
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "fur-heel",
+    "title": "Furmosa Mule",
+    "status": "ACTIVE",
+    "productType": "shoe",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/fur-heel",
+    "price": "160.0",
+    "compareAtPrice": "200.00",
+    "totalInventory": 88,
+    "variantCount": 12,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "furmosa-mule-black",
+    "title": "Furmosa Mule Black",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/furmosa-mule-black",
+    "price": "160.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/meaculpalifestyle-655_1.jpg?v=1775600227",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "furmosa-mule-pink",
+    "title": "Furmosa Mule Pink",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/furmosa-mule-pink",
+    "price": "160.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 6,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/meaculpalifestyle-650_1.jpg?v=1775600032",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "hi-baby-tee-pink",
+    "title": "Hi Baby Tee Pink",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 4,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW000387.47.04PM.png?v=1658784005",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "hi-baby-tee-white",
+    "title": "Hi Baby Tee",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/hi-baby-tee-white",
+    "price": "52.0",
+    "compareAtPrice": "65.00",
+    "totalInventory": 72,
+    "variantCount": 10,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/hibabyblack_white.png?v=1720542285",
+    "collections": [
+      "t-shirts",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "hi-baby-tee-yellow",
+    "title": "Hi Baby Tee Yellow",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 30,
+    "variantCount": 5,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/RAW00038.jpg?v=1658784882",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-black-and-grey",
+    "title": "LALA X MC BLACK AND GREY",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT12.png?v=1679000658",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-black-and-white",
+    "title": "LALA X MC BLACK AND WHITE",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT6.png?v=1678998367",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-blue-and-pink",
+    "title": "LALA X MC BLUE AND PINK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -9,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Screenshot2023-03-17at7.34.11AM.png?v=1679058806",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-brown-and-cream",
+    "title": "LALA X MC BROWN AND CREAM",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -10,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/hat17.png?v=1678999148",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-brown-and-pink",
+    "title": "LALA X MC BROWN AND PINK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -24,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT1.png?v=1678999565",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-dark-blue-and-navy-blue",
+    "title": "LALA X MC BLUE AND NAVY BLUE",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -9,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT5.png?v=1679001614",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-dark-purple-and-light-purple",
+    "title": "LALA X MC DARK PURPLE AND LIGHT PURPLE",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -14,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT3.png?v=1679001516",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-green-and-dark-green",
+    "title": "LALA X MC GREEN AND DARK GREEN",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -11,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT2.png?v=1679001535",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-green-and-pink",
+    "title": "LALA X MC GREEN AND PINK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -15,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT18.png?v=1679058102",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-grey-and-blue",
+    "title": "LALA X MC GREY AND BLUE",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -18,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT21.png?v=1678998955",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-grey-and-grey",
+    "title": "LALA X MC GREY AND GREY",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -34,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT10.png?v=1678999044",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-grey-and-pink",
+    "title": "LALA X MC GREY AND PINK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -15,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT16.png?v=1678998796",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-hot-pink-and-white",
+    "title": "LALA X MC HOT PINK AND WHITE",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -11,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Screenshot2023-03-17at7.34.07AM.png?v=1679058722",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-light-brown-and-dark-brown",
+    "title": "LALA X MC LIGHT BROWN AND DARK BROWN",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -15,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/hat8.png?v=1679056508",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-mint-and-dark-mint",
+    "title": "LALA X MC MINT AND DARK MINT",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -3,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT14.png?v=1679056861",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-navy-blue-and-blue",
+    "title": "LALA X MC NAVY BLUE AND BLUE",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": 1,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/MCHAT13.png?v=1678999244",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-navy-blue-and-green",
+    "title": "LALA X MC NAVY BLUE AND GREEN",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -4,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT20.png?v=1678998731",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-pastel-pinks",
+    "title": "LALA X MC PASTEL PINKS",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -26,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Screenshot2023-03-17at9.00.54AM.png?v=1679058178",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-pink-and-pink",
+    "title": "LALA X MC PINK AND PINK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -8,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT15.png?v=1678999791",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-red-and-light-red",
+    "title": "LALA X MC PURPLE AND PINK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT11.png?v=1679055736",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-white-and-black",
+    "title": "LALA X MC WHITE AND BLACK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/hat4.png?v=1679056200",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "lala-x-mc-yellow-and-army-green",
+    "title": "LALA X MC CREAM AND ARMY GREEN",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.4",
+    "compareAtPrice": "72.00",
+    "totalInventory": -6,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT22.png?v=1679058557",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "light-pink-pink-fun-day-bikini-bottom",
+    "title": "Pink & Pink Fun Day Bikini Bottom",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 229,
+    "variantCount": 5,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3_3e5eca8e-ead3-4fc0-a8e5-767886ed3742.png?v=1690065977",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "light-pink-pink-fun-day-bikini-top",
+    "title": "Pink & Pink Fun Day Bikini Top",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 232,
+    "variantCount": 5,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Y_3.png?v=1690065812",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "lola-micro-bikini-bottom",
+    "title": "Lola Micro Bikini Bottom",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/lola-micro-bikini-bottom",
+    "price": "21.0",
+    "compareAtPrice": "35.00",
+    "totalInventory": 128,
+    "variantCount": 1,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini12_1_7216854b-d394-42e5-92c7-4ab9e80fe0ba.jpg?v=1775619155",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "lola-micro-bikini-top",
+    "title": "Lola Micro Bikini Top",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/lola-micro-bikini-top",
+    "price": "21.0",
+    "compareAtPrice": "35.00",
+    "totalInventory": 127,
+    "variantCount": 1,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini12_1.jpg?v=1775619017",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "mar7thhat",
+    "title": "7 Cap",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mar7thhat",
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 5,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mc-dress-pink",
+    "title": "Hi Baby Dress",
+    "status": "ACTIVE",
+    "productType": "Dress",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mc-dress-pink",
+    "price": "68.0",
+    "compareAtPrice": "85.00",
+    "totalInventory": 14,
+    "variantCount": 8,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/image-8d1c7201-9f18-4a02-92d1-0a7cc60cda7b_png.webp?v=1714971468",
+    "collections": [
+      "dresses",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "mc-dress-white",
+    "title": "MC Dress - White",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "85.0",
+    "compareAtPrice": null,
+    "totalInventory": 75,
+    "variantCount": 4,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.09PM.png?v=1701097601",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mc-logo-ring",
+    "title": "MC Emblem Ring",
+    "status": "ACTIVE",
+    "productType": "ring",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mc-logo-ring",
+    "price": "66.5",
+    "compareAtPrice": "95.00",
+    "totalInventory": 122,
+    "variantCount": 5,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "mc-ribbed-tank-dress",
+    "title": "MC Ribbed Tank Dress",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "115.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 3,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_8775-2.jpg?v=1639871995",
+    "collections": [
+      "dresses",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mc-socks-1",
+    "title": "Mid Height Socks",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mc-socks-1",
+    "price": "15.0",
+    "compareAtPrice": null,
+    "totalInventory": 123,
+    "variantCount": 9,
+    "imageCount": 9,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/49934934943.jpg?v=1714969736",
+    "collections": [
+      "socks",
+      "accessories",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "mc-tank-ribbed-dress",
+    "title": "Mc Tank Ribbed dress",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "115.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 3,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/DSC_9746copy.jpg?v=1639871516",
+    "collections": [
+      "dresses",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mc-tank-top",
+    "title": "MC Tank Top",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "45.0",
+    "compareAtPrice": null,
+    "totalInventory": 70,
+    "variantCount": 4,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/DSC03315.jpg?v=1639874266",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mc-world-tee",
+    "title": "MC World Tee",
+    "status": "ARCHIVED",
+    "productType": "T-Shirt",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 11,
+    "variantCount": 3,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/imageedit_3_8519880859.png?v=1681608110",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-airbrush-tank",
+    "title": "MEA Airbrush Tank",
+    "status": "ARCHIVED",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 20,
+    "variantCount": 4,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-1",
+    "title": "Mea Culpa Fun Day Beanie - Pink on Pink",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 23,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/ADD5A.png?v=1639864596",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-10",
+    "title": "Mea Culpa Fun Day Beanie - Blue and Orange",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 183,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/BlueandOrange.jpg?v=1646423808",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-11",
+    "title": "Mea Culpa Fun Day Beanie - Pink Rhinestone",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "150.0",
+    "compareAtPrice": null,
+    "totalInventory": -6,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.46.08AM.png?v=1700840775",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-12",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 17,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/GreyanPink.jpg?v=1646424323",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-13",
+    "title": "Mea Culpa Fun Day Beanie - Grey & Blue",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/GreyandBlue.jpg?v=1646424383",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-14",
+    "title": "Mea Culpa Fun Day Beanie - Cream & Green",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 199,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Oliveandgreen.png?v=1646424494",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-15",
+    "title": "Mea Culpa Fun Day Beanie - Seahawks",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 96,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/stoupp.jpg?v=1646429873",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-16",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/99999.jpg?v=1646513784",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-17",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/pinkandgreen.jpg?v=1646514088",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-18",
+    "title": "Mea Culpa Fun Day Beanie - Brown & Cream",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 2,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/brownandcream.jpg?v=1646514384",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-19",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Rams2.jpg?v=1646514642",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-2",
+    "title": "Mea Culpa Fun Day Beanie - Black & Yellow",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 203,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/yellowblack45.png?v=1643004453",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-20",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Bottegapinkweb.jpg?v=1646514985",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-21",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": -1,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/Aquaweb.jpg?v=1646515174",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-22",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/peachandorange.jpg?v=1646515612",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-3",
+    "title": "Mea Culpa Fun Day Beanie - Black & White",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 50,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/blkk.png?v=1643005086",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-4",
+    "title": "Mea Culpa Fun Day Beanie - Brown & Pink",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [
+      "Brown on pink"
+    ],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/pinkbrown.png?v=1643005442",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-5",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/olive.png?v=1643005962",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-6",
+    "title": "Mea Culpa Fun Day Beanie - Green & Yellow",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 333,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/shoor.png?v=1643006181",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-6lack",
+    "title": "Mea Culpa Fun Day Beanie - Black & Grey",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/blk_75ae8284-0491-4333-b4e5-436fa0dcc210.png?v=1659272650",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-7",
+    "title": "Mea Culpa Fun Day Beanie - Grey on Grey",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 9,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/image_dc4cb671-2985-49a4-ade5-7d6436ab1d89.jpg?v=1671478721",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-76ers",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 1,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_4699.jpg?v=1659273006",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-8",
+    "title": "Mea Culpa Fun Day Beanie - Red & White",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": -4,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/image_b986fe48-ce77-4e87-a3df-f1cddea99cb1.jpg?v=1644880290",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-9",
+    "title": "Mea Culpa Fun Day Beanie - GREEN & PINK",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 389,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/hatgreenandpinkbstroy.png?v=1646423708",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-adore",
+    "title": "Mea Culpa Fun Day Beanie - Green and purple",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 254,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/2023ADORE662.jpg?v=1659272675",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-blue-rhinestone",
+    "title": "Rhinestone Fun Day Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "fun day",
+      "rhinestone"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mea-culpa-fun-day-beanie-blue-rhinestone",
+    "price": "68.0",
+    "compareAtPrice": "150.00",
+    "totalInventory": 382,
+    "variantCount": 2,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/rhinestonep0.png?v=1715199317",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "mar7th-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-blueberry",
+    "title": "Mea Culpa Fun Day Beanie - Blue on Blue",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 57,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_4693.jpg?v=1659272931",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-candy",
+    "title": "Mea Culpa Fun Day Beanie - Blue and Pink",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 438,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/PINKPURP.png?v=1659272982",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-code",
+    "title": "Mea Culpa Fun Day Beanie - Kelly Green",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 362,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/GREENBLK.png?v=1659272906",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-knicks",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": -1,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/hatbottegainspo.png?v=1659279608",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-lakers",
+    "title": "Mea Culpa Fun Day Beanie - Purple & Yellow",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 214,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/VIOL.png?v=1659272835",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-mohair",
+    "title": "Mea Culpa Fun Day Beanie - Mohair | Pink on Pink",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "73.5",
+    "compareAtPrice": "105.00",
+    "totalInventory": 12,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3448.jpg?v=1675549077",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-nickelodeon",
+    "title": "Mea Culpa Fun Day Beanie - Orange and Green",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 635,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/ORNG.png?v=1659272884",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-purple-ape",
+    "title": "Mea Culpa Fun Day Beanie - Purple on Purple",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 351,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/2023STUDIO.jpg?v=1659272609",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-simpson",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": -21,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_4695.jpg?v=1659272955",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-six",
+    "title": "Mea Culpa Fun Day Beanie - Red",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 251,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_4696.jpg?v=1659272854",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-slime",
+    "title": "Mea Culpa Fun Day Beanie - Neon",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 374,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/SLIME.png?v=1659272773",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie-zebra",
+    "title": "Mea Culpa Fun Day Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/WB.png?v=1659272805",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-fun-day-beanie",
+    "title": "Mea Culpa Fun Day Beanie - Purple & Pink",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "72.0",
+    "compareAtPrice": null,
+    "totalInventory": 30,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/6664.png?v=1639863963",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-raglan-baby-tee-purple-yellow",
+    "title": "Mea Culpa Raglan Baby Tee - Purple & Yellow",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "55.0",
+    "compareAtPrice": null,
+    "totalInventory": 57,
+    "variantCount": 4,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.14PM.png?v=1701096379",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-culpa-ribbed-tank-dress",
+    "title": "Mea culpa Ribbed Tank dress",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "115.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/pose1browndress.jpg?v=1639873407",
+    "collections": [
+      "dresses",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mea-hearts-you-tank",
+    "title": "Mea Hearts You Tank",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mea-hearts-you-tank",
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 48,
+    "variantCount": 4,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "mea-world-baby-tee",
+    "title": "Mea World Baby Tee",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "world"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mea-world-baby-tee",
+    "price": "52.0",
+    "compareAtPrice": "65.00",
+    "totalInventory": 40,
+    "variantCount": 4,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEA_CULPA3987.jpg?v=1729895935",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "mea-world-ring-copy",
+    "title": "Lips Ring",
+    "status": "ACTIVE",
+    "productType": "ring",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mea-world-ring-copy",
+    "price": "140.0",
+    "compareAtPrice": "200.00",
+    "totalInventory": 77,
+    "variantCount": 5,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "mea-world-ring",
+    "title": "Mea World Ring",
+    "status": "ACTIVE",
+    "productType": "ring",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mea-world-ring",
+    "price": "66.5",
+    "compareAtPrice": "95.00",
+    "totalInventory": 119,
+    "variantCount": 5,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "mesh-tank-dress",
+    "title": "Mesh Tank Dress",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mesh-tank-dress",
+    "price": "64.0",
+    "compareAtPrice": "80.00",
+    "totalInventory": 115,
+    "variantCount": 12,
+    "imageCount": 9,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5176.jpg?v=1729886387",
+    "collections": [
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "micro-bikini-bottom",
+    "title": "Micro Bikini Bottom",
+    "status": "ARCHIVED",
+    "productType": "Swim",
+    "tags": [
+      "summer 24"
+    ],
+    "onlineStoreUrl": null,
+    "price": "35.0",
+    "compareAtPrice": null,
+    "totalInventory": 692,
+    "variantCount": 12,
+    "imageCount": 7,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MC_BIKINI_RETOUCH___COMMERCE_3.jpg?v=1723502956",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "micro-bikini-top",
+    "title": "Micro Bikini Top",
+    "status": "ARCHIVED",
+    "productType": "Swim",
+    "tags": [
+      "summer 24"
+    ],
+    "onlineStoreUrl": null,
+    "price": "35.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 12,
+    "imageCount": 9,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE3.jpg?v=1723503120",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "mini-fun-day-beanie",
+    "title": "Mini Fun Day Beanie",
+    "status": "ACTIVE",
+    "productType": "beanies",
+    "tags": [
+      "fun day"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mini-fun-day-beanie",
+    "price": "31.5",
+    "compareAtPrice": "45.00",
+    "totalInventory": 147,
+    "variantCount": 3,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "mohair-headband",
+    "title": "Mohair Headband",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/mohair-headband",
+    "price": "28.0",
+    "compareAtPrice": "35.00",
+    "totalInventory": 326,
+    "variantCount": 3,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/product_headband.jpg?v=1775597939",
+    "collections": [
+      "beanies",
+      "accessories",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "my-girl-tank",
+    "title": "My Girl Tank",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/my-girl-tank",
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 6,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "not-my-fault-baby-tee",
+    "title": "Not My Fault Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/not-my-fault-baby-tee",
+    "price": "52.0",
+    "compareAtPrice": "65.00",
+    "totalInventory": 33,
+    "variantCount": 4,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3654.jpg?v=1729893182",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "pin-baby-tee",
+    "title": "Pin Baby Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/pin-baby-tee",
+    "price": "36.0",
+    "compareAtPrice": "45.00",
+    "totalInventory": 0,
+    "variantCount": 4,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3835.jpg?v=1729892806",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "pin-party-beanie",
+    "title": "Pin Party Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "pins"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/pin-party-beanie",
+    "price": "57.6",
+    "compareAtPrice": "72.00",
+    "totalInventory": 60,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pins0.png?v=1715197743",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "pink-yellow-fun-day-bikini-bottom",
+    "title": "Pink + Yellow Fun Day Bikini Bottom",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 16,
+    "variantCount": 5,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/P_Y_5_c6196a8b-928a-4c92-99ee-738899690d5d.png?v=1690065567",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "pink-yellow-fun-day-bikini-top",
+    "title": "Pink + Yellow Fun Day Bikini Top",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 15,
+    "variantCount": 5,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/P_Y_5.png?v=1690065407",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "pins-cap",
+    "title": "Pin Party Cap",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/pins-cap",
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC08191.jpg?v=1764731455",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "pins",
+    "title": "Pins",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "2.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "raglan-baby-tee",
+    "title": "Raglan Baby Tee",
+    "status": "DRAFT",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "44.0",
+    "compareAtPrice": "55.00",
+    "totalInventory": 73,
+    "variantCount": 12,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/raglanpy0.png?v=1715199002",
+    "collections": [
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "rhinestone-airbrush-baby-tee",
+    "title": "Paradise Airbrush Baby Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/rhinestone-airbrush-baby-tee",
+    "price": "52.0",
+    "compareAtPrice": "65.00",
+    "totalInventory": 29,
+    "variantCount": 5,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5449.jpg?v=1729891958",
+    "collections": [
+      "t-shirts",
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "seventh-day-mc-beanie",
+    "title": "Seventh Day MC Beanie",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 188,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/05.png?v=1674966453",
+    "collections": [
+      "beanies",
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "star-camo-beanie",
+    "title": "Star Camo Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "45.5",
+    "compareAtPrice": "65.00",
+    "totalInventory": 97,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "stop-copying-me-baby-tee-copy",
+    "title": "Hard to Please Baby Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/stop-copying-me-baby-tee-copy",
+    "price": "52.0",
+    "compareAtPrice": "65.00",
+    "totalInventory": 42,
+    "variantCount": 4,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "stop-copying-me",
+    "title": "Stop Copying Me Baby Tee",
+    "status": "ACTIVE",
+    "productType": "T-Shirt",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/stop-copying-me",
+    "price": "46.4",
+    "compareAtPrice": "58.00",
+    "totalInventory": 0,
+    "variantCount": 4,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": [
+      "shop-all",
+      "fall-drop"
+    ]
+  },
+  {
+    "handle": "striped-beanie",
+    "title": "Striped Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "stripe"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/striped-beanie",
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 282,
+    "variantCount": 3,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/stripebw0.png?v=1715200313",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "sucura-set",
+    "title": "Sucura Set",
+    "status": "ACTIVE",
+    "productType": "Set",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/sucura-set",
+    "price": "94.5",
+    "compareAtPrice": "105.00",
+    "totalInventory": 643,
+    "variantCount": 50,
+    "imageCount": 15,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Product5.jpg?v=1775620104",
+    "collections": [
+      "shop-all",
+      "fall-drop",
+      "70-off-sale",
+      "sets",
+      "sets-1"
+    ]
+  },
+  {
+    "handle": "sucura-short-set-bottom",
+    "title": "Sucura Shorts Set Bottom",
+    "status": "ACTIVE",
+    "productType": "Set",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/sucura-short-set-bottom",
+    "price": "42.5",
+    "compareAtPrice": "50.00",
+    "totalInventory": 1,
+    "variantCount": 18,
+    "imageCount": 5,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/whitw_whitw_2_2_ee8c8cb3-ba9a-40ad-b9a7-26e73101794f.png?v=1764389606",
+    "collections": [
+      "shop-all",
+      "sets-1"
+    ]
+  },
+  {
+    "handle": "sucura-short-set-top",
+    "title": "Sucura Shorts Set Top",
+    "status": "ACTIVE",
+    "productType": "Set",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/sucura-short-set-top",
+    "price": "42.5",
+    "compareAtPrice": "50.00",
+    "totalInventory": 8,
+    "variantCount": 18,
+    "imageCount": 7,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8dc5f4e0-b48d-4678-b942-6a0658be6e8c.png?v=1764389238",
+    "collections": [
+      "shop-all",
+      "fall-drop",
+      "sets-1"
+    ]
+  },
+  {
+    "handle": "sun-kissed-micro-bikini-bottom",
+    "title": "Sun-kissed Micro Bikini Bottom",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/sun-kissed-micro-bikini-bottom",
+    "price": "21.0",
+    "compareAtPrice": "35.00",
+    "totalInventory": 126,
+    "variantCount": 1,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini1_1.jpg?v=1775618584",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "sun-kissed-micro-bikini-top",
+    "title": "Sun-kissed Micro Bikini Top",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/sun-kissed-micro-bikini-top",
+    "price": "21.0",
+    "compareAtPrice": "35.00",
+    "totalInventory": 129,
+    "variantCount": 1,
+    "imageCount": 1,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCECOMBikini1_1.jpg?v=1775618584",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "thermal-beanie",
+    "title": "Thermal Beanie",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "fun day",
+      "thermal"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/thermal-beanie",
+    "price": "52.2",
+    "compareAtPrice": "72.00",
+    "totalInventory": 640,
+    "variantCount": 4,
+    "imageCount": 4,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermy0.png?v=1715199834",
+    "collections": [
+      "beanies",
+      "shop-all",
+      "mar7th-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "thermal-mini-dress",
+    "title": "Thermal Mini Dress",
+    "status": "ACTIVE",
+    "productType": "",
+    "tags": [
+      "fall24"
+    ],
+    "onlineStoreUrl": "https://www.meaculpa.us/products/thermal-mini-dress",
+    "price": "64.0",
+    "compareAtPrice": "80.00",
+    "totalInventory": 72,
+    "variantCount": 3,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5350.jpg?v=1729887081",
+    "collections": [
+      "new-arrivals",
+      "shop-all",
+      "fall-drop",
+      "70-off-sale"
+    ]
+  },
+  {
+    "handle": "trucker-hat",
+    "title": "Trucker Hat",
+    "status": "ARCHIVED",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "65.0",
+    "compareAtPrice": null,
+    "totalInventory": 191,
+    "variantCount": 2,
+    "imageCount": 3,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/mctrucker-min.png?v=1658786557",
+    "collections": [
+      "shop-all"
+    ]
+  },
+  {
+    "handle": "untitled-jan1_11-49",
+    "title": "Untitled Jan1_11:49",
+    "status": "DRAFT",
+    "productType": "",
+    "tags": [],
+    "onlineStoreUrl": null,
+    "price": "0.0",
+    "compareAtPrice": null,
+    "totalInventory": 0,
+    "variantCount": 1,
+    "imageCount": 0,
+    "featuredImage": null,
+    "collections": []
+  },
+  {
+    "handle": "yellow-green-fun-day-bikini-bottom",
+    "title": "Yellow + Green Fun Day Bikini Bottom",
+    "status": "ARCHIVED",
+    "productType": "Swim",
+    "tags": [
+      "fun day",
+      "summer 24"
+    ],
+    "onlineStoreUrl": null,
+    "price": "50.0",
+    "compareAtPrice": null,
+    "totalInventory": 7,
+    "variantCount": 5,
+    "imageCount": 2,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/G_Y_1_39b87679-4917-471e-9247-1a1d2b551438.png?v=1716482000",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  },
+  {
+    "handle": "yellow-green-fun-day-bikini-top",
+    "title": "Fun Day Bikini Top",
+    "status": "DRAFT",
+    "productType": "Swim",
+    "tags": [
+      "fun day",
+      "summer 24"
+    ],
+    "onlineStoreUrl": null,
+    "price": "28.0",
+    "compareAtPrice": "40.00",
+    "totalInventory": 123,
+    "variantCount": 24,
+    "imageCount": 5,
+    "featuredImage": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/P_Y_5_2b3dbe9a-1f78-48b7-9a43-69dfb83ad79f.png?v=1716573687",
+    "collections": [
+      "shop-all",
+      "swim"
+    ]
+  }
+]

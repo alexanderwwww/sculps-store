@@ -1,0 +1,154 @@
+{
+  "id": "gid://shopify/Product/8539948286110",
+  "handle": "mea-world-ring-copy",
+  "title": "Lips Ring",
+  "status": "ACTIVE",
+  "productType": "ring",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "<ul>\n<li>925 Silver</li>\n<li>Mea Culpa beanie logo enamel on front teeth </li>\n<li>Gem stones zircon 5A grade </li>\n<li>Circle logo engraved on inside of ring</li>\n<li>Mea Culpa beane logo engrave on inside of ring </li>\n</ul>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mea-world-ring-copy",
+  "createdAt": "2025-12-03T02:59:44Z",
+  "updatedAt": "2026-07-09T16:59:42Z",
+  "publishedAt": "2025-12-03T02:59:44Z",
+  "totalInventory": 77,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Ring size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "6"
+        },
+        {
+          "name": "7"
+        },
+        {
+          "name": "8"
+        },
+        {
+          "name": "9"
+        },
+        {
+          "name": "10"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "140.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "140.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46250295099550",
+        "title": "6",
+        "sku": null,
+        "price": "140.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 13,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "6"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295132318",
+        "title": "7",
+        "sku": null,
+        "price": "140.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "7"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295165086",
+        "title": "8",
+        "sku": null,
+        "price": "140.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 21,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "8"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295197854",
+        "title": "9",
+        "sku": null,
+        "price": "140.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 20,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "9"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295230622",
+        "title": "10",
+        "sku": null,
+        "price": "140.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 23,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "10"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      }
+    ]
+  }
+}

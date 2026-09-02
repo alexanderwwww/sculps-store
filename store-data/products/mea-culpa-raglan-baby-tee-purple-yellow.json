@@ -1,0 +1,158 @@
+{
+  "id": "gid://shopify/Product/7612011610270",
+  "handle": "mea-culpa-raglan-baby-tee-purple-yellow",
+  "title": "Mea Culpa Raglan Baby Tee - Purple & Yellow",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p><br data-mce-fragment=\"1\"></p>\n<p>  </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-11-27T14:45:50Z",
+  "updatedAt": "2026-06-12T06:07:41Z",
+  "publishedAt": null,
+  "totalInventory": 57,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.14PM.png?v=1701096379",
+      "altText": "",
+      "width": 320,
+      "height": 506
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/29006921203870",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.14PM.png?v=1701096379",
+          "altText": "",
+          "width": 320,
+          "height": 506
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "55.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "55.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42975849775262",
+        "title": "XS",
+        "sku": "RAGBT005",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 10,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.14PM.png?v=1701096379",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975849808030",
+        "title": "S",
+        "sku": "RAGBT006",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 28,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.14PM.png?v=1701096379",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975849840798",
+        "title": "M",
+        "sku": "RAGBT007",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 14,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.14PM.png?v=1701096379",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975849873566",
+        "title": "L",
+        "sku": "RAGBT008",
+        "price": "55.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.21.14PM.png?v=1701096379",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

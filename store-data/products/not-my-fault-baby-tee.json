@@ -1,0 +1,207 @@
+{
+  "id": "gid://shopify/Product/8110939308190",
+  "handle": "not-my-fault-baby-tee",
+  "title": "Not My Fault Tee",
+  "status": "ACTIVE",
+  "productType": "T-Shirt",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/not-my-fault-baby-tee",
+  "createdAt": "2024-10-25T21:52:39Z",
+  "updatedAt": "2026-07-16T04:45:37Z",
+  "publishedAt": "2024-10-26T15:33:09Z",
+  "totalInventory": 33,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3654.jpg?v=1729893182",
+      "altText": "",
+      "width": 2555,
+      "height": 3407
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056775610526",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3654.jpg?v=1729893182",
+          "altText": "",
+          "width": 2555,
+          "height": 3407
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056775676062",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3656.jpg?v=1729893182",
+          "altText": "",
+          "width": 2619,
+          "height": 3492
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056775643294",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3655.jpg?v=1729893182",
+          "altText": "",
+          "width": 2619,
+          "height": 3492
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "White"
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44450466594974",
+        "title": "White / XS",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 5,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451054321822",
+        "title": "White / S",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 16,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451054354590",
+        "title": "White / M",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 8,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451054387358",
+        "title": "White / L",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

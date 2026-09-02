@@ -1,0 +1,459 @@
+{
+  "id": "gid://shopify/Product/8110925447326",
+  "handle": "mesh-tank-dress",
+  "title": "Mesh Tank Dress",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mesh-tank-dress",
+  "createdAt": "2024-10-25T20:06:43Z",
+  "updatedAt": "2026-07-25T15:03:26Z",
+  "publishedAt": "2024-10-26T15:32:56Z",
+  "totalInventory": 115,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5176.jpg?v=1729886387",
+      "altText": "",
+      "width": 2289,
+      "height": 3051
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056261939358",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5176.jpg?v=1729886387",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056261972126",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5177.jpg?v=1729886387",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056262004894",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5179.jpg?v=1729886387",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056277700766",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSION_TWO5132.jpg?v=1729886770",
+          "altText": "",
+          "width": 1973,
+          "height": 2958
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056277635230",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSION_TWO5134.jpg?v=1729886639",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056277667998",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSION_TWO5145.jpg?v=1729886639",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056285171870",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5249.jpg?v=1729886700",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056285204638",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5250.jpg?v=1729886700",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056285237406",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5251.jpg?v=1729886700",
+          "altText": "",
+          "width": 2289,
+          "height": 3051
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Pink"
+        },
+        {
+          "name": "White"
+        },
+        {
+          "name": "Black"
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "64.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "64.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44450388574366",
+        "title": "Pink / XS",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5176.jpg?v=1729886387",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053174942",
+        "title": "Pink / S",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 13,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5176.jpg?v=1729886387",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053207710",
+        "title": "Pink / M",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5176.jpg?v=1729886387",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053240478",
+        "title": "Pink / L",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5176.jpg?v=1729886387",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44450388607134",
+        "title": "White / XS",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 6,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5249.jpg?v=1729886700",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053273246",
+        "title": "White / S",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 26,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5249.jpg?v=1729886700",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053306014",
+        "title": "White / M",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 12,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5249.jpg?v=1729886700",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053338782",
+        "title": "White / L",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSIONTWO5249.jpg?v=1729886700",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44450388639902",
+        "title": "Black / XS",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 8,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSION_TWO5132.jpg?v=1729886770",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053371550",
+        "title": "Black / S",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 25,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSION_TWO5132.jpg?v=1729886770",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053404318",
+        "title": "Black / M",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 13,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSION_TWO5132.jpg?v=1729886770",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451053437086",
+        "title": "Black / L",
+        "sku": "",
+        "price": "64.00",
+        "compareAtPrice": "80.00",
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/SESSION_TWO5132.jpg?v=1729886770",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

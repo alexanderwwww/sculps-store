@@ -1,0 +1,175 @@
+{
+  "id": "gid://shopify/Product/7735555391646",
+  "handle": "mohair-headband",
+  "title": "Mohair Headband",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p class=\"p1\">This cozy mohair headband is adorned with our signature \"Mea Culpa\" logo across the front.</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mohair-headband",
+  "createdAt": "2024-03-31T14:16:19Z",
+  "updatedAt": "2026-07-14T21:40:59Z",
+  "publishedAt": "2024-03-31T14:18:25Z",
+  "totalInventory": 326,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/product_headband.jpg?v=1775597939",
+      "altText": "",
+      "width": 2000,
+      "height": 2500
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/34230180282526",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/product_headband.jpg?v=1775597939",
+          "altText": "",
+          "width": 2000,
+          "height": 2500
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101794979998",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/headb0_aecf239d-07df-4380-a9f2-9630a34aa8ff.png?v=1775597939",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101799010462",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/headp0.png?v=1775597939",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101794947230",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/headw0.png?v=1775597939",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Black"
+        },
+        {
+          "name": "Pink"
+        },
+        {
+          "name": "White"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "28.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "28.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43419166277790",
+        "title": "Black",
+        "sku": "headband001",
+        "price": "28.00",
+        "compareAtPrice": "35.00",
+        "availableForSale": true,
+        "inventoryQuantity": 132,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/headb0_aecf239d-07df-4380-a9f2-9630a34aa8ff.png?v=1775597939",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419166310558",
+        "title": "Pink",
+        "sku": "headband002",
+        "price": "28.00",
+        "compareAtPrice": "35.00",
+        "availableForSale": true,
+        "inventoryQuantity": 161,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/headp0.png?v=1775597939",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419166343326",
+        "title": "White",
+        "sku": "headband003",
+        "price": "28.00",
+        "compareAtPrice": "35.00",
+        "availableForSale": true,
+        "inventoryQuantity": 33,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/headw0.png?v=1775597939",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "accessories",
+        "title": "accessories"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

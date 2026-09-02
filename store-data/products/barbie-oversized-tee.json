@@ -1,0 +1,228 @@
+{
+  "id": "gid://shopify/Product/8110937899166",
+  "handle": "barbie-oversized-tee",
+  "title": "Barbie Oversized Tee",
+  "status": "ACTIVE",
+  "productType": "T-Shirt",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "<ul>\n<li>95$ cotton, 5% elastane</li>\n</ul>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/barbie-oversized-tee",
+  "createdAt": "2024-10-25T21:45:37Z",
+  "updatedAt": "2026-08-13T04:30:41Z",
+  "publishedAt": "2024-10-26T15:33:03Z",
+  "totalInventory": 4,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3740.jpg?v=1729892709",
+      "altText": "",
+      "width": 2652,
+      "height": 3976
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056767418526",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3740.jpg?v=1729892709",
+          "altText": "",
+          "width": 2652,
+          "height": 3976
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056767320222",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3729.jpg?v=1729892709",
+          "altText": "",
+          "width": 2605,
+          "height": 3256
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056767385758",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3731.jpg?v=1729892709",
+          "altText": "",
+          "width": 2605,
+          "height": 3256
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056767352990",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3730.jpg?v=1729892709",
+          "altText": "",
+          "width": 2605,
+          "height": 3256
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Black"
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "40.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "40.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44450458894494",
+        "title": "Black / XS",
+        "sku": "",
+        "price": "40.00",
+        "compareAtPrice": "50.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3740.jpg?v=1729892709",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451044360350",
+        "title": "Black / S",
+        "sku": "",
+        "price": "40.00",
+        "compareAtPrice": "50.00",
+        "availableForSale": true,
+        "inventoryQuantity": 3,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3740.jpg?v=1729892709",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451044393118",
+        "title": "Black / M",
+        "sku": "",
+        "price": "40.00",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3740.jpg?v=1729892709",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451044425886",
+        "title": "Black / L",
+        "sku": "",
+        "price": "40.00",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3740.jpg?v=1729892709",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

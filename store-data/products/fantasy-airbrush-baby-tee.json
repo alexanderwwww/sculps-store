@@ -1,0 +1,225 @@
+{
+  "id": "gid://shopify/Product/8110935900318",
+  "handle": "fantasy-airbrush-baby-tee",
+  "title": "Fantasy Airbrush Baby Tee",
+  "status": "ACTIVE",
+  "productType": "T-Shirt",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "<p><meta charset=\"utf-8\">Let your heart do the talking with this playful cropped baby tee! Featuring a vibrant, oversized heart design, it’s the perfect blend of flirty fun and everyday comfort.</p>\n<ul>\n<li>91% cotton, 9% elastane</li>\n<li>Fantasy airbrush design printed with stone layered on top.</li>\n</ul>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fantasy-airbrush-baby-tee",
+  "createdAt": "2024-10-25T21:31:19Z",
+  "updatedAt": "2026-07-14T18:28:10Z",
+  "publishedAt": "2024-10-26T15:32:58Z",
+  "totalInventory": 2,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+      "altText": "",
+      "width": 2628,
+      "height": 3503
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056719642782",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+          "altText": "",
+          "width": 2628,
+          "height": 3503
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056719708318",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3841.jpg?v=1729891873",
+          "altText": "",
+          "width": 2628,
+          "height": 3503
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056719675550",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3840.jpg?v=1729891872",
+          "altText": "",
+          "width": 2628,
+          "height": 3503
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056719741086",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3842.jpg?v=1729891872",
+          "altText": "",
+          "width": 2628,
+          "height": 3503
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        },
+        {
+          "name": "XL"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "52.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44451051274398",
+        "title": "XS",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451051307166",
+        "title": "S",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451051339934",
+        "title": "M",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451051372702",
+        "title": "L",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451051405470",
+        "title": "XL",
+        "sku": "",
+        "price": "52.00",
+        "compareAtPrice": "65.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3839.jpg?v=1729891872",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

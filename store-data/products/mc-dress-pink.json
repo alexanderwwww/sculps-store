@@ -1,0 +1,295 @@
+{
+  "id": "gid://shopify/Product/7612047687838",
+  "handle": "mc-dress-pink",
+  "title": "Hi Baby Dress",
+  "status": "ACTIVE",
+  "productType": "Dress",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p><br data-mce-fragment=\"1\"></p>\n<p>  </p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mc-dress-pink",
+  "createdAt": "2023-11-27T15:07:45Z",
+  "updatedAt": "2026-07-16T19:11:52Z",
+  "publishedAt": "2023-11-27T15:08:50Z",
+  "totalInventory": 14,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/image-8d1c7201-9f18-4a02-92d1-0a7cc60cda7b_png.webp?v=1714971468",
+      "altText": "",
+      "width": 1243,
+      "height": 1743
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/29651691569310",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/image-8d1c7201-9f18-4a02-92d1-0a7cc60cda7b_png.webp?v=1714971468",
+          "altText": "",
+          "width": 1243,
+          "height": 1743
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/29007024586910",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.02PM.png?v=1714971468",
+          "altText": "",
+          "width": 600,
+          "height": 1024
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    },
+    {
+      "name": "Color",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "Pink"
+        },
+        {
+          "name": "White"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "68.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "68.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42975995691166",
+        "title": "XS / Pink",
+        "sku": "MCDRESS005",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.02PM.png?v=1714971468",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377331765406",
+        "title": "XS / White",
+        "sku": "",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/image-8d1c7201-9f18-4a02-92d1-0a7cc60cda7b_png.webp?v=1714971468",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975995723934",
+        "title": "S / Pink",
+        "sku": "MCDRESS006",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": true,
+        "inventoryQuantity": 11,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.02PM.png?v=1714971468",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377331798174",
+        "title": "S / White",
+        "sku": "",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/image-8d1c7201-9f18-4a02-92d1-0a7cc60cda7b_png.webp?v=1714971468",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975995756702",
+        "title": "M / Pink",
+        "sku": "MCDRESS007",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": true,
+        "inventoryQuantity": 3,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.02PM.png?v=1714971468",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377331830942",
+        "title": "M / White",
+        "sku": "",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/image-8d1c7201-9f18-4a02-92d1-0a7cc60cda7b_png.webp?v=1714971468",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/42975995789470",
+        "title": "L / Pink",
+        "sku": "MCDRESS008",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Screenshot2023-11-24at10.22.02PM.png?v=1714971468",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377331863710",
+        "title": "L / White",
+        "sku": "",
+        "price": "68.00",
+        "compareAtPrice": "85.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/image-8d1c7201-9f18-4a02-92d1-0a7cc60cda7b_png.webp?v=1714971468",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "dresses",
+        "title": "Dresses"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

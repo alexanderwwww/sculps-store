@@ -1,0 +1,451 @@
+{
+  "id": "gid://shopify/Product/8029278044318",
+  "handle": "micro-bikini-top",
+  "title": "Micro Bikini Top",
+  "status": "ARCHIVED",
+  "productType": "Swim",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "summer 24"
+  ],
+  "descriptionHtml": "<p>Get ready to shine in our Micro Bikini Top with its stunning silver hardware logo plaque. The strings tie at the neck and back for a perfect fit. Plus, it's great for tanning, making it a must-have for your beach or pool days. Show off your style with this playful piece!</p>\n<!---->",
+  "onlineStoreUrl": null,
+  "createdAt": "2024-08-03T19:56:39Z",
+  "updatedAt": "2026-06-10T15:52:44Z",
+  "publishedAt": null,
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE3.jpg?v=1723503120",
+      "altText": "",
+      "width": 3150,
+      "height": 3900
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30714643284126",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE3.jpg?v=1723503120",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30714643316894",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE4.jpg?v=1723503120",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30714643251358",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE2.jpg?v=1723503120",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30714643218590",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE1.jpg?v=1723503120",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30714643382430",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE6.jpg?v=1723503119",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30714643349662",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MCBIKINIRETOUCH_COMMERCE5.jpg?v=1723503119",
+          "altText": "",
+          "width": 3150,
+          "height": 3900
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30675517997214",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1274copy.png?v=1722714914",
+          "altText": "",
+          "width": 1620,
+          "height": 850
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30675518095518",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1277.png?v=1722714914",
+          "altText": "",
+          "width": 1620,
+          "height": 850
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30675518128286",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Untitled_Artworkcopy.png?v=1722714913",
+          "altText": "",
+          "width": 1620,
+          "height": 850
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Orange/Orange"
+        },
+        {
+          "name": "Yellow/Pink"
+        },
+        {
+          "name": "White/Black"
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        },
+        {
+          "name": "XL"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "35.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "35.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44186581631134",
+        "title": "Orange/Orange / S",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Orange/Orange"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1277.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581663902",
+        "title": "Orange/Orange / M",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Orange/Orange"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1277.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581696670",
+        "title": "Orange/Orange / L",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Orange/Orange"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1277.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581729438",
+        "title": "Orange/Orange / XL",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Orange/Orange"
+          },
+          {
+            "name": "Size",
+            "value": "XL"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1277.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581794974",
+        "title": "Yellow/Pink / S",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1274copy.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581827742",
+        "title": "Yellow/Pink / M",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1274copy.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581860510",
+        "title": "Yellow/Pink / L",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1274copy.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581893278",
+        "title": "Yellow/Pink / XL",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow/Pink"
+          },
+          {
+            "name": "Size",
+            "value": "XL"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/IMG_1274copy.png?v=1722714914",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581958814",
+        "title": "White/Black / S",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White/Black"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Untitled_Artworkcopy.png?v=1722714913",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186581991582",
+        "title": "White/Black / M",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White/Black"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Untitled_Artworkcopy.png?v=1722714913",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186582024350",
+        "title": "White/Black / L",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White/Black"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Untitled_Artworkcopy.png?v=1722714913",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44186582057118",
+        "title": "White/Black / XL",
+        "sku": "",
+        "price": "35.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "White/Black"
+          },
+          {
+            "name": "Size",
+            "value": "XL"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/Untitled_Artworkcopy.png?v=1722714913",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "swim",
+        "title": "swim"
+      }
+    ]
+  }
+}

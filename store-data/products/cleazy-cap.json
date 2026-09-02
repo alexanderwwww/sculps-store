@@ -1,0 +1,112 @@
+{
+  "id": "gid://shopify/Product/7735554506910",
+  "handle": "cleazy-cap",
+  "title": "Cleazy Cap",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "mohair"
+  ],
+  "descriptionHtml": "<p class=\"p1\"><span>Stay cozy in our Cleazy Cap! Made from soft pink mohair, this ski cap effortlessly blends warmth with style. Featuring our iconic \"Mea Culpa\" rubber logo on the front and magnetic closures beneath the chin.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/cleazy-cap",
+  "createdAt": "2024-03-31T14:14:48Z",
+  "updatedAt": "2026-07-18T00:55:17Z",
+  "publishedAt": "2024-05-07T20:59:11Z",
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/cleazyfrrront.png?v=1715183062",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30100059226270",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/cleazyfrrront.png?v=1715183062",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30100059259038",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/cleazybaack.png?v=1715183063",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43419152580766",
+        "title": "Default Title",
+        "sku": "pinkfurrrr001",
+        "price": "45.00",
+        "compareAtPrice": null,
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "accessories",
+        "title": "accessories"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

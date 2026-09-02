@@ -1,0 +1,359 @@
+{
+  "id": "gid://shopify/Product/8110937178270",
+  "handle": "coin-baby-tee",
+  "title": "Coin Baby Tee",
+  "status": "ACTIVE",
+  "productType": "T-Shirt",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "<ul>\n<li><span>Logo graphic printed at chest</span></li>\n<li><span>91% cotton</span></li>\n<li><span>9% elastane</span></li>\n<li>This baby cropped tee offers a comfortable fit. We recommend sizing up made with fabric with minimal stretch.</li>\n</ul>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/coin-baby-tee",
+  "createdAt": "2024-10-25T21:44:12Z",
+  "updatedAt": "2026-08-25T21:50:16Z",
+  "publishedAt": "2024-10-26T15:33:02Z",
+  "totalInventory": 40,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3713.jpg?v=1729892619",
+      "altText": "",
+      "width": 2652,
+      "height": 3976
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/31056761749662",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3713.jpg?v=1729892619",
+          "altText": "",
+          "width": 2652,
+          "height": 3976
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056761651358",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3710.jpg?v=1729892619",
+          "altText": "",
+          "width": 2619,
+          "height": 3492
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056761716894",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3712.jpg?v=1729892619",
+          "altText": "",
+          "width": 2619,
+          "height": 3492
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056761684126",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3711.jpg?v=1729892619",
+          "altText": "",
+          "width": 2539,
+          "height": 3386
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056764174494",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4005.jpg?v=1729892629",
+          "altText": "",
+          "width": 2506,
+          "height": 3341
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056764207262",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4006.jpg?v=1729892629",
+          "altText": "",
+          "width": 2506,
+          "height": 3341
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056764272798",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4008.jpg?v=1729892629",
+          "altText": "",
+          "width": 2306,
+          "height": 3075
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/31056764240030",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4007.jpg?v=1729892629",
+          "altText": "",
+          "width": 2409,
+          "height": 3212
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Yellow"
+        },
+        {
+          "name": "Pink"
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "44.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "44.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44450456797342",
+        "title": "Yellow / XS",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3713.jpg?v=1729892619",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451048882334",
+        "title": "Yellow / S",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 9,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3713.jpg?v=1729892619",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451048915102",
+        "title": "Yellow / M",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": -1,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3713.jpg?v=1729892619",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451048947870",
+        "title": "Yellow / L",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA3713.jpg?v=1729892619",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44450456830110",
+        "title": "Pink / XS",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "XS"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4005.jpg?v=1729892629",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451048980638",
+        "title": "Pink / S",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 20,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4005.jpg?v=1729892629",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451049013406",
+        "title": "Pink / M",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": true,
+        "inventoryQuantity": 11,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4005.jpg?v=1729892629",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44451049046174",
+        "title": "Pink / L",
+        "sku": "",
+        "price": "44.00",
+        "compareAtPrice": "55.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/MEACULPA4005.jpg?v=1729892629",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "t-shirts",
+        "title": "tops"
+      },
+      {
+        "handle": "new-arrivals",
+        "title": "new arrivals"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

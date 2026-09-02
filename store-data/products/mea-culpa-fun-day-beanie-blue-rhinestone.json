@@ -1,0 +1,156 @@
+{
+  "id": "gid://shopify/Product/7609437388958",
+  "handle": "mea-culpa-fun-day-beanie-blue-rhinestone",
+  "title": "Rhinestone Fun Day Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day",
+    "rhinestone"
+  ],
+  "descriptionHtml": "<p class=\"p1\">This limited edition cotton beanie is adorned with our signature \"Mea Culpa\" logo in Swarovski crystals. </p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mea-culpa-fun-day-beanie-blue-rhinestone",
+  "createdAt": "2023-11-24T15:49:09Z",
+  "updatedAt": "2026-07-16T10:55:52Z",
+  "publishedAt": "2023-11-24T15:50:07Z",
+  "totalInventory": 382,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/rhinestonep0.png?v=1715199317",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30101980709022",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/rhinestonep0.png?v=1715199317",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102568861854",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/rhiib000.png?v=1715205262",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083411148958",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bluerhinestone.jpg?v=1714966183",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083411509406",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pinkrhinestone.jpg?v=1714966192",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Blue"
+        },
+        {
+          "name": "Pink"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "68.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "68.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43377289167006",
+        "title": "Blue",
+        "sku": "bluerhin132",
+        "price": "68.00",
+        "compareAtPrice": "150.00",
+        "availableForSale": true,
+        "inventoryQuantity": 301,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bluerhinestone.jpg?v=1714966183",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377289199774",
+        "title": "Pink",
+        "sku": "bluerhin133",
+        "price": "68.00",
+        "compareAtPrice": "150.00",
+        "availableForSale": true,
+        "inventoryQuantity": 81,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pinkrhinestone.jpg?v=1714966192",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "mar7th-drop",
+        "title": "LATEST ARRIVALS"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

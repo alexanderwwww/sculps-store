@@ -1,0 +1,204 @@
+{
+  "id": "gid://shopify/Product/7990015131806",
+  "handle": "fun-day-one-piece",
+  "title": "Fun Day One Piece",
+  "status": "ACTIVE",
+  "productType": "Swim",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day"
+  ],
+  "descriptionHtml": "",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-one-piece",
+  "createdAt": "2024-07-12T19:14:05Z",
+  "updatedAt": "2026-07-15T23:06:46Z",
+  "publishedAt": "2024-07-12T19:14:05Z",
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30565188337822",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30565188305054",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/backonepc.png?v=1720812293",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30565188436126",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/sideonepc.png?v=1720812295",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Small"
+        },
+        {
+          "name": "Medium"
+        },
+        {
+          "name": "Large"
+        },
+        {
+          "name": "XL"
+        },
+        {
+          "name": "XXL"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "32.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "32.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/44094437589150",
+        "title": "Small",
+        "sku": "",
+        "price": "32.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Small"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44094437621918",
+        "title": "Medium",
+        "sku": "",
+        "price": "32.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Medium"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44094437654686",
+        "title": "Large",
+        "sku": "",
+        "price": "32.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "Large"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44112396288158",
+        "title": "XL",
+        "sku": "",
+        "price": "32.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/44112396320926",
+        "title": "XXL",
+        "sku": "",
+        "price": "32.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XXL"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/frontonepc.png?v=1720812294",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

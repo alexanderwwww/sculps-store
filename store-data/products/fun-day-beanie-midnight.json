@@ -1,0 +1,106 @@
+{
+  "id": "gid://shopify/Product/8534707110046",
+  "handle": "fun-day-beanie-midnight",
+  "title": "Fun day beanie midnight",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-midnight",
+  "createdAt": "2025-11-29T06:11:09Z",
+  "updatedAt": "2026-07-18T05:58:44Z",
+  "publishedAt": "2025-11-29T06:11:09Z",
+  "totalInventory": 0,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/product4.jpg?v=1775608419",
+      "altText": "",
+      "width": 2000,
+      "height": 2500
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/34230774562974",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/product4.jpg?v=1775608419",
+          "altText": "",
+          "width": 2000,
+          "height": 2500
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/34230781509790",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/DSC08126_1.jpg?v=1775608471",
+          "altText": "",
+          "width": 4000,
+          "height": 6000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46237202415774",
+        "title": "Default Title",
+        "sku": null,
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

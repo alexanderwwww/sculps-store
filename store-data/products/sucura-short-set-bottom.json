@@ -1,0 +1,539 @@
+{
+  "id": "gid://shopify/Product/8534641475742",
+  "handle": "sucura-short-set-bottom",
+  "title": "Sucura Shorts Set Bottom",
+  "status": "ACTIVE",
+  "productType": "Set",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>Slip into comfort with our “Mea” Logo Shorts Set!<br>This body-hugging duo was made for movement and style. Featuring high-waisted shorts with our bold logo across the back and a matching zip-up jacket, this set brings a sporty edge to your everyday look. Crafted from a soft, stretchy nylon-spandex blend, it keeps you comfy while showing off your curves.</p>\n<p>Perfect for lounging, errands, or a casual day out — this is athleisure done right.</p>\n<p>Fabric: 75% Nylon / 25% Spandex</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/sucura-short-set-bottom",
+  "createdAt": "2025-11-29T00:55:05Z",
+  "updatedAt": "2026-07-17T14:59:17Z",
+  "publishedAt": "2025-11-29T00:55:05Z",
+  "totalInventory": 1,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/whitw_whitw_2_2_ee8c8cb3-ba9a-40ad-b9a7-26e73101794f.png?v=1764389606",
+      "altText": "",
+      "width": 2400,
+      "height": 3600
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/33468027928734",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/whitw_whitw_2_2_ee8c8cb3-ba9a-40ad-b9a7-26e73101794f.png?v=1764389606",
+          "altText": "",
+          "width": 2400,
+          "height": 3600
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/33468027961502",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09860_1_0c0154dd-49a5-49e1-b0fb-92f9d7fc9ea0.heic?v=1764389605",
+          "altText": "",
+          "width": 1366,
+          "height": 2048
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/33468027994270",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09862_1a9f8f34-e293-448c-b9dc-cdf9b5fbaab1.heic?v=1764389605",
+          "altText": "",
+          "width": 1366,
+          "height": 2048
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/33468028027038",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09867_87821f19-0285-430f-b5ee-1cd30ec1fbfe.heic?v=1764389605",
+          "altText": "",
+          "width": 1366,
+          "height": 2048
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/33468025372830",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8d26ad71-2fe4-4d5c-876e-8a326374884a.png?v=1764389298",
+          "altText": "",
+          "width": 2400,
+          "height": 3600
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "XS"
+        },
+        {
+          "name": "S"
+        },
+        {
+          "name": "M"
+        },
+        {
+          "name": "L"
+        },
+        {
+          "name": "XL"
+        },
+        {
+          "name": "XXL"
+        }
+      ]
+    },
+    {
+      "name": "Color",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "Blue"
+        },
+        {
+          "name": "Black"
+        },
+        {
+          "name": "White"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "42.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "42.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46236890202270",
+        "title": "XS / Blue",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8d26ad71-2fe4-4d5c-876e-8a326374884a.png?v=1764389298",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890235038",
+        "title": "XS / Black",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09860_1_0c0154dd-49a5-49e1-b0fb-92f9d7fc9ea0.heic?v=1764389605",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890267806",
+        "title": "XS / White",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XS"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890300574",
+        "title": "S / Blue",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8d26ad71-2fe4-4d5c-876e-8a326374884a.png?v=1764389298",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890333342",
+        "title": "S / Black",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09860_1_0c0154dd-49a5-49e1-b0fb-92f9d7fc9ea0.heic?v=1764389605",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890366110",
+        "title": "S / White",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890398878",
+        "title": "M / Blue",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8d26ad71-2fe4-4d5c-876e-8a326374884a.png?v=1764389298",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890431646",
+        "title": "M / Black",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09860_1_0c0154dd-49a5-49e1-b0fb-92f9d7fc9ea0.heic?v=1764389605",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890464414",
+        "title": "M / White",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890497182",
+        "title": "L / Blue",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8d26ad71-2fe4-4d5c-876e-8a326374884a.png?v=1764389298",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890529950",
+        "title": "L / Black",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09860_1_0c0154dd-49a5-49e1-b0fb-92f9d7fc9ea0.heic?v=1764389605",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890562718",
+        "title": "L / White",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890595486",
+        "title": "XL / Blue",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8d26ad71-2fe4-4d5c-876e-8a326374884a.png?v=1764389298",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890628254",
+        "title": "XL / Black",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09860_1_0c0154dd-49a5-49e1-b0fb-92f9d7fc9ea0.heic?v=1764389605",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890661022",
+        "title": "XL / White",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XL"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890693790",
+        "title": "XXL / Blue",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XXL"
+          },
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/final_blue__2_8d26ad71-2fe4-4d5c-876e-8a326374884a.png?v=1764389298",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890726558",
+        "title": "XXL / Black",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XXL"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/RUS09860_1_0c0154dd-49a5-49e1-b0fb-92f9d7fc9ea0.heic?v=1764389605",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46236890759326",
+        "title": "XXL / White",
+        "sku": null,
+        "price": "42.50",
+        "compareAtPrice": "50.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Size",
+            "value": "XXL"
+          },
+          {
+            "name": "Color",
+            "value": "White"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "sets-1",
+        "title": "SETS"
+      }
+    ]
+  }
+}

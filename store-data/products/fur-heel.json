@@ -1,0 +1,329 @@
+{
+  "id": "gid://shopify/Product/8539948220574",
+  "handle": "fur-heel",
+  "title": "Furmosa Mule",
+  "status": "ACTIVE",
+  "productType": "shoe",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "<p>Step into playful luxury with our signature furry heels. Wrapped in plush pink faux fur, they bring a touch of cozy glamour to any outfit. Perfect for nights out or just lounging in style.</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fur-heel",
+  "createdAt": "2025-12-03T02:59:37Z",
+  "updatedAt": "2026-07-15T03:19:31Z",
+  "publishedAt": "2025-12-03T02:59:37Z",
+  "totalInventory": 88,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Shoe size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "5"
+        },
+        {
+          "name": "6"
+        },
+        {
+          "name": "7"
+        },
+        {
+          "name": "8"
+        },
+        {
+          "name": "9"
+        },
+        {
+          "name": "10"
+        }
+      ]
+    },
+    {
+      "name": "Color",
+      "position": 2,
+      "optionValues": [
+        {
+          "name": "Pink"
+        },
+        {
+          "name": "Black"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "160.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "160.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46250294542494",
+        "title": "5 / Pink",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "5"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294575262",
+        "title": "5 / Black",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "5"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294608030",
+        "title": "6 / Pink",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "6"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294640798",
+        "title": "6 / Black",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 4,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "6"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294673566",
+        "title": "7 / Pink",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 6,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "7"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294706334",
+        "title": "7 / Black",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 9,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "7"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294739102",
+        "title": "8 / Pink",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 10,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "8"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294771870",
+        "title": "8 / Black",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 14,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "8"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294804638",
+        "title": "9 / Pink",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 11,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "9"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294837406",
+        "title": "9 / Black",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 15,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "9"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294870174",
+        "title": "10 / Pink",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 8,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "10"
+          },
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294902942",
+        "title": "10 / Black",
+        "sku": null,
+        "price": "160.00",
+        "compareAtPrice": "200.00",
+        "availableForSale": true,
+        "inventoryQuantity": 10,
+        "selectedOptions": [
+          {
+            "name": "Shoe size",
+            "value": "10"
+          },
+          {
+            "name": "Color",
+            "value": "Black"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      }
+    ]
+  }
+}

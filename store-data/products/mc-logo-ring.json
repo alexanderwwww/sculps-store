@@ -1,0 +1,154 @@
+{
+  "id": "gid://shopify/Product/8539948253342",
+  "handle": "mc-logo-ring",
+  "title": "MC Emblem Ring",
+  "status": "ACTIVE",
+  "productType": "ring",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fall24"
+  ],
+  "descriptionHtml": "<ul>\n<li>925 Silver</li>\n<li>\n<meta charset=\"utf-8\">Mea Culpa circle logo engraved</li>\n</ul>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/mc-logo-ring",
+  "createdAt": "2025-12-03T02:59:41Z",
+  "updatedAt": "2026-07-09T16:59:42Z",
+  "publishedAt": "2025-12-03T02:59:41Z",
+  "totalInventory": 122,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": null,
+  "media": {
+    "nodes": []
+  },
+  "options": [
+    {
+      "name": "Ring size",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "6"
+        },
+        {
+          "name": "7"
+        },
+        {
+          "name": "8"
+        },
+        {
+          "name": "9"
+        },
+        {
+          "name": "10"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "66.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "66.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/46250294935710",
+        "title": "6",
+        "sku": null,
+        "price": "66.50",
+        "compareAtPrice": "95.00",
+        "availableForSale": true,
+        "inventoryQuantity": 24,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "6"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250294968478",
+        "title": "7",
+        "sku": null,
+        "price": "66.50",
+        "compareAtPrice": "95.00",
+        "availableForSale": true,
+        "inventoryQuantity": 24,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "7"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295001246",
+        "title": "8",
+        "sku": null,
+        "price": "66.50",
+        "compareAtPrice": "95.00",
+        "availableForSale": true,
+        "inventoryQuantity": 24,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "8"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295034014",
+        "title": "9",
+        "sku": null,
+        "price": "66.50",
+        "compareAtPrice": "95.00",
+        "availableForSale": true,
+        "inventoryQuantity": 25,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "9"
+          }
+        ],
+        "image": null
+      },
+      {
+        "id": "gid://shopify/ProductVariant/46250295066782",
+        "title": "10",
+        "sku": null,
+        "price": "66.50",
+        "compareAtPrice": "95.00",
+        "availableForSale": true,
+        "inventoryQuantity": 25,
+        "selectedOptions": [
+          {
+            "name": "Ring size",
+            "value": "10"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "fall-drop",
+        "title": "FALL DROP"
+      }
+    ]
+  }
+}

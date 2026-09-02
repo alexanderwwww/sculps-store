@@ -1,0 +1,200 @@
+{
+  "id": "gid://shopify/Product/7735544578206",
+  "handle": "thermal-beanie",
+  "title": "Thermal Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day",
+    "thermal"
+  ],
+  "descriptionHtml": "<p><span style=\"font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\">This cotton beanie is adorned with our signature \"Mea Culpa\" logo in a limited edition thermal print lettering. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</span><br></p>\n<p><span style=\"font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\">100% cotton.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/thermal-beanie",
+  "createdAt": "2024-03-31T13:39:46Z",
+  "updatedAt": "2026-07-30T21:14:13Z",
+  "publishedAt": "2024-03-31T13:42:19Z",
+  "totalInventory": 640,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermy0.png?v=1715199834",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30102030024862",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermy0.png?v=1715199834",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102030057630",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermpp0.png?v=1715199834",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102030090398",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermp0.png?v=1715199834",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102030123166",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermb0.png?v=1715199834",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Pink"
+        },
+        {
+          "name": "Yellow"
+        },
+        {
+          "name": "Purple"
+        },
+        {
+          "name": "Blue"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "52.2",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "52.2",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43419035271326",
+        "title": "Pink",
+        "sku": "thermal2024001",
+        "price": "52.20",
+        "compareAtPrice": "72.00",
+        "availableForSale": true,
+        "inventoryQuantity": 141,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermp0.png?v=1715199834",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419035304094",
+        "title": "Yellow",
+        "sku": "thermal2024002",
+        "price": "52.20",
+        "compareAtPrice": "72.00",
+        "availableForSale": true,
+        "inventoryQuantity": 183,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermy0.png?v=1715199834",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419035336862",
+        "title": "Purple",
+        "sku": "thermal2024003",
+        "price": "52.20",
+        "compareAtPrice": "72.00",
+        "availableForSale": true,
+        "inventoryQuantity": 160,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Purple"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermpp0.png?v=1715199834",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43419041202334",
+        "title": "Blue",
+        "sku": "thermal2024004",
+        "price": "52.20",
+        "compareAtPrice": "72.00",
+        "availableForSale": true,
+        "inventoryQuantity": 156,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/thermb0.png?v=1715199834",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "mar7th-drop",
+        "title": "LATEST ARRIVALS"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}
