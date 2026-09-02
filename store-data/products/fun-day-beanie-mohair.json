@@ -1,0 +1,276 @@
+{
+  "id": "gid://shopify/Product/7437003751582",
+  "handle": "fun-day-beanie-mohair",
+  "title": "Mohair Fun Day Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day",
+    "mohair"
+  ],
+  "descriptionHtml": "<p><meta charset=\"utf-8\"><span>Get ready to rock your day with our \"Fun Day\" beanie! Made from comfy cotton and featuring our iconic \"Mea Culpa\" logo, it's the perfect accessory to pair with with your favorite cozy outfits.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/fun-day-beanie-mohair",
+  "createdAt": "2023-02-04T22:12:50Z",
+  "updatedAt": "2026-07-18T08:14:25Z",
+  "publishedAt": "2023-02-05T00:38:31Z",
+  "totalInventory": 1591,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mohairogpp0.png?v=1715194122",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30101411758238",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mohairogpp0.png?v=1715194122",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101411659934",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mohairogbw0.png?v=1715194122",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101411791006",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mohairogbo0.png?v=1715194122",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101421490334",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mohairogppp0.png?v=1715194122",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30101411692702",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/mohairogbro0.png?v=1715194122",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083407151262",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blackmohaiir.jpg?v=1714966111",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083407708318",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pinkmohaiir.jpg?v=1714966121",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083408396446",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/purpmohaiir.jpg?v=1714966130",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083408658590",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bluemohair.jpg?v=1714966139",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083409182878",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/brownmohair.jpg?v=1714966147",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Black & White"
+        },
+        {
+          "name": "Pink & Pink"
+        },
+        {
+          "name": "Purple & Hot Pink"
+        },
+        {
+          "name": "Blue & Orange"
+        },
+        {
+          "name": "Brown & Cream"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "73.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "73.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43377319248030",
+        "title": "Black & White",
+        "sku": "MOHAIRFEB001",
+        "price": "73.50",
+        "compareAtPrice": "105.00",
+        "availableForSale": true,
+        "inventoryQuantity": 1422,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black & White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/blackmohaiir.jpg?v=1714966111",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377319280798",
+        "title": "Pink & Pink",
+        "sku": "MOHAIRFEB002",
+        "price": "73.50",
+        "compareAtPrice": "105.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Pink & Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/pinkmohaiir.jpg?v=1714966121",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377319313566",
+        "title": "Purple & Hot Pink",
+        "sku": "MOHAIRFEB003",
+        "price": "73.50",
+        "compareAtPrice": "105.00",
+        "availableForSale": true,
+        "inventoryQuantity": 9,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Purple & Hot Pink"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/purpmohaiir.jpg?v=1714966130",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377319346334",
+        "title": "Blue & Orange",
+        "sku": "MOHAIRFEB004",
+        "price": "73.50",
+        "compareAtPrice": "105.00",
+        "availableForSale": true,
+        "inventoryQuantity": 72,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Blue & Orange"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/bluemohair.jpg?v=1714966139",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377319379102",
+        "title": "Brown & Cream",
+        "sku": "MOHAIRFEB005",
+        "price": "73.50",
+        "compareAtPrice": "105.00",
+        "availableForSale": true,
+        "inventoryQuantity": 88,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Brown & Cream"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/brownmohair.jpg?v=1714966147",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "mar7th-drop",
+        "title": "LATEST ARRIVALS"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "id": "gid://shopify/Product/7427537764510",
+  "handle": "camo-fun-day-beanie",
+  "title": "Camo Fun Day Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "fun day"
+  ],
+  "descriptionHtml": "<p class=\"p1\">This beanie is adorned with our signature \"Mea Culpa\" logo in a limited edition camouflage print.</p>\n<p class=\"p1\"><meta charset=\"utf-8\"><span style=\"font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\">100% cotton.</span></p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/camo-fun-day-beanie",
+  "createdAt": "2023-01-29T04:51:39Z",
+  "updatedAt": "2026-07-17T23:39:54Z",
+  "publishedAt": "2023-01-29T04:52:14Z",
+  "totalInventory": -3,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camogreen0.png?v=1715182911",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30100041072798",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camogreen0.png?v=1715182911",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30100041138334",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camoyello0.png?v=1715182911",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30100041105566",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camooorange0.png?v=1715182911",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083404464286",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greencamo.jpg?v=1714966053",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083405807774",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camowityelllow_words.jpg?v=1714966082",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30083617423518",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camowithorangewords.jpg?v=1715182911",
+          "altText": "",
+          "width": 1000,
+          "height": 1000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Orange"
+        },
+        {
+          "name": "Green"
+        },
+        {
+          "name": "Yellow"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "45.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43377304928414",
+        "title": "Orange",
+        "sku": "JAN0004",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": -3,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Orange"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camowithorangewords.jpg?v=1715182911",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377304961182",
+        "title": "Green",
+        "sku": "JAN0005",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Green"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/greencamo.jpg?v=1714966053",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377304993950",
+        "title": "Yellow",
+        "sku": "JAN0006",
+        "price": "45.50",
+        "compareAtPrice": "65.00",
+        "availableForSale": false,
+        "inventoryQuantity": 0,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/camowityelllow_words.jpg?v=1714966082",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "mar7th-drop",
+        "title": "LATEST ARRIVALS"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

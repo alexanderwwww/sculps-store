@@ -1,0 +1,164 @@
+{
+  "id": "gid://shopify/Product/7427536027806",
+  "handle": "striped-beanie",
+  "title": "Striped Beanie",
+  "status": "ACTIVE",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [
+    "stripe"
+  ],
+  "descriptionHtml": "<p class=\"p1\">This cozy cotton beanie has a horizontal stripe pattern with our \"Mea Culpa\" logo lettering along the bottom edge.</p>",
+  "onlineStoreUrl": "https://www.meaculpa.us/products/striped-beanie",
+  "createdAt": "2023-01-29T04:31:14Z",
+  "updatedAt": "2026-08-24T06:54:13Z",
+  "publishedAt": "2023-01-29T04:36:03Z",
+  "totalInventory": 282,
+  "seo": {
+    "title": null,
+    "description": "This cozy cotton beanie has a horizontal stripe pattern with our \"Mea Culpa\" logo lettering along the bottom edge."
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/stripebw0.png?v=1715200313",
+      "altText": "",
+      "width": 2184,
+      "height": 2933
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/30102072524958",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/stripebw0.png?v=1715200313",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102072557726",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/striperb0.png?v=1715200312",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      },
+      {
+        "id": "gid://shopify/MediaImage/30102072590494",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/stripey0.png?v=1715200312",
+          "altText": "",
+          "width": 2184,
+          "height": 2933
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Color",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Black & White"
+        },
+        {
+          "name": "Red & Blue"
+        },
+        {
+          "name": "Yellow & Red"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "65.0",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/43377300897950",
+        "title": "Black & White",
+        "sku": "JAN0009",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 48,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Black & White"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/stripebw0.png?v=1715200313",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377300832414",
+        "title": "Red & Blue",
+        "sku": "JAN0007",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 101,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Red & Blue"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/striperb0.png?v=1715200312",
+          "altText": null
+        }
+      },
+      {
+        "id": "gid://shopify/ProductVariant/43377300865182",
+        "title": "Yellow & Red",
+        "sku": "JAN0008",
+        "price": "65.00",
+        "compareAtPrice": null,
+        "availableForSale": true,
+        "inventoryQuantity": 133,
+        "selectedOptions": [
+          {
+            "name": "Color",
+            "value": "Yellow & Red"
+          }
+        ],
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/files/stripey0.png?v=1715200312",
+          "altText": null
+        }
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      },
+      {
+        "handle": "70-off-sale",
+        "title": "70% OFF SALE"
+      }
+    ]
+  }
+}

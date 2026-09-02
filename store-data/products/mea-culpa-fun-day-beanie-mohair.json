@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7437004931230",
+  "handle": "mea-culpa-fun-day-beanie-mohair",
+  "title": "Mea Culpa Fun Day Beanie - Mohair | Pink on Pink",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<meta charset=\"utf-8\">\n<p data-mce-fragment=\"1\">The light pink mohair beanie is adorned with a contrasting \"Mea Culpa\" in hot pink mohair. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</p>\n<p data-mce-fragment=\"1\"><br></p>\n<p><strong>Preorder - please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p> </p>\n<p><meta charset=\"utf-8\"><br></p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-02-04T22:17:39Z",
+  "updatedAt": "2026-06-10T17:49:11Z",
+  "publishedAt": null,
+  "totalInventory": 12,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3448.jpg?v=1675549077",
+      "altText": "",
+      "width": 2048,
+      "height": 2048
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/27832070996126",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/IMG_3448.jpg?v=1675549077",
+          "altText": "",
+          "width": 2048,
+          "height": 2048
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "73.5",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "73.5",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42424056873118",
+        "title": "Default Title",
+        "sku": "MOHAIRFEB002",
+        "price": "73.50",
+        "compareAtPrice": "105.00",
+        "availableForSale": true,
+        "inventoryQuantity": 12,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}
