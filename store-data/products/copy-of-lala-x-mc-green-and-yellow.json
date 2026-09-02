@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7458708357278",
+  "handle": "copy-of-lala-x-mc-green-and-yellow",
+  "title": "LALA X MC GREEN AND YELLOW",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The green cotton beanie is adorned with a contrasting \"Mea Culpa\" in yellow. The \"L\" and \"A\" is outlined to highlight the LALA collaborations. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</p>\n<p><strong>Please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p> </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-03-16T20:48:32Z",
+  "updatedAt": "2026-06-12T19:20:45Z",
+  "publishedAt": null,
+  "totalInventory": -8,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT7.png?v=1678999733",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/28076816892062",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT7.png?v=1678999733",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "50.4",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "50.4",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42499433693342",
+        "title": "Default Title",
+        "sku": "LALAMC010",
+        "price": "50.40",
+        "compareAtPrice": "72.00",
+        "availableForSale": false,
+        "inventoryQuantity": -8,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}

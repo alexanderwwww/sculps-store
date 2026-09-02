@@ -1,0 +1,93 @@
+{
+  "id": "gid://shopify/Product/7458707374238",
+  "handle": "lala-x-mc-brown-and-pink",
+  "title": "LALA X MC BROWN AND PINK",
+  "status": "ARCHIVED",
+  "productType": "",
+  "vendor": "Mea Culpa",
+  "tags": [],
+  "descriptionHtml": "<p>The brown cotton beanie is adorned with a contrasting \"Mea Culpa\" in pink. The \"L\" and \"A\" is outlined to highlight the LALA collaborations. The warm and comfortable design will coordinate with other collection styles for a relaxed look. Can be paired with relaxed &amp; cozy fits.</p>\n<p><strong>Please allow 14-21 business days for cut and sew items to be produced and shipped.</strong></p>\n<p> </p>",
+  "onlineStoreUrl": null,
+  "createdAt": "2023-03-16T20:45:32Z",
+  "updatedAt": "2026-06-10T00:28:13Z",
+  "publishedAt": null,
+  "totalInventory": -24,
+  "seo": {
+    "title": null,
+    "description": null
+  },
+  "featuredMedia": {
+    "image": {
+      "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT1.png?v=1678999565",
+      "altText": "",
+      "width": 3000,
+      "height": 3000
+    }
+  },
+  "media": {
+    "nodes": [
+      {
+        "id": "gid://shopify/MediaImage/28076809715870",
+        "image": {
+          "url": "https://cdn.shopify.com/s/files/1/0563/9107/3950/products/HAT1.png?v=1678999565",
+          "altText": "",
+          "width": 3000,
+          "height": 3000
+        }
+      }
+    ]
+  },
+  "options": [
+    {
+      "name": "Title",
+      "position": 1,
+      "optionValues": [
+        {
+          "name": "Default Title"
+        }
+      ]
+    }
+  ],
+  "priceRangeV2": {
+    "minVariantPrice": {
+      "amount": "50.4",
+      "currencyCode": "USD"
+    },
+    "maxVariantPrice": {
+      "amount": "50.4",
+      "currencyCode": "USD"
+    }
+  },
+  "variants": {
+    "nodes": [
+      {
+        "id": "gid://shopify/ProductVariant/42499430776990",
+        "title": "Default Title",
+        "sku": "LALAMC008",
+        "price": "50.40",
+        "compareAtPrice": "72.00",
+        "availableForSale": false,
+        "inventoryQuantity": -24,
+        "selectedOptions": [
+          {
+            "name": "Title",
+            "value": "Default Title"
+          }
+        ],
+        "image": null
+      }
+    ]
+  },
+  "collections": {
+    "nodes": [
+      {
+        "handle": "beanies",
+        "title": "beanies"
+      },
+      {
+        "handle": "shop-all",
+        "title": "shop all"
+      }
+    ]
+  }
+}
