@@ -1,0 +1,14 @@
+# Secrets — never commit store credentials
+.env
+.env.*
+*.token
+.shopify/
+
+# Dependencies / build output
+node_modules/
+dist/
+.cache/
+
+# OS noise
+.DS_Store
+Thumbs.db
