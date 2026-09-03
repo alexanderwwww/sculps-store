@@ -1,0 +1,67 @@
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1a1b1f">
+  <link rel="canonical" href="/"><link rel="icon" href=""><title>XERO Chiron</title><script type="importmap">
+  {
+    "imports": {
+      "three": "js/three.module.min.js",
+      "three/addons/loaders/GLTFLoader.js": "js/GLTFLoader.js",
+      "three/addons/loaders/DRACOLoader.js": "js/DRACOLoader.js",
+      "three/addons/utils/BufferGeometryUtils.js": "js/BufferGeometryUtils.js",
+      "three/addons/environments/RoomEnvironment.js": "js/RoomEnvironment.js"
+    }
+  }
+  </script>
+
+  
+
+  <link rel="stylesheet" href="css/xero-theme.css"><link rel="stylesheet" href="css/xero-fix.css"><link rel="stylesheet" href="css/xero-pill.css"><style>
+    :root{
+      --btnbg:  ;
+      --btnbg-h:;
+      --btnink: ;
+      --btnb:   ;
+      --btn2b:  ;
+      --cartbadge: ;
+    }
+  </style>
+
+  <script>
+    /* Shopify serves assets from its CDN, so every path must come from Liquid.
+       The stage can never build one by string concatenation. */
+    /* Only City and Mars are photographic. Studio is drawn as geometry by the stage and
+       has no image files, so including it here produced empty asset_url strings. */
+    window.XERO_ASSETS = {
+      worlds: {"city-day": {
+            "1600": "img/xero/city-day-1600.webp",
+            "900":  "img/xero/city-day-900.webp"
+          },"city-night": {
+            "1600": "img/xero/city-night-1600.webp",
+            "900":  "img/xero/city-night-900.webp"
+          },"mars-day": {
+            "1600": "img/xero/mars-day-1600.webp",
+            "900":  "img/xero/mars-day-900.webp"
+          },"mars-night": {
+            "1600": "img/xero/mars-night-1600.webp",
+            "900":  "img/xero/mars-night-900.webp"
+          }},
+      bikeDay:   "img/xero/bike-day.webp",
+      bikeNight: "img/xero/bike-night.webp",
+      bikeSeam:  "img/xero/bike-seam.webp"
+    };
+    window.XERO_ROUTES = {
+      cartAdd:    ".js",
+      cartChange: ".js",
+      cart:       "/cart.php.js",
+      checkout:   "/cart.php/checkout"
+    };
+    window.XERO_MONEY_FORMAT = ;
+    window.XERO_SETTINGS = {
+      splash:   false,
+      splashMs: 0
+    };
+  </script>
+
+  <script src="js/xero-stage.js" defer></script>
+  <script src="js/xero-store.js" defer></script><script src="js/xero-model.js" defer></script>
