@@ -559,8 +559,9 @@ const money = n => '$' + n.toFixed(2);
 
 /* ---------- cutoff countdown ---------- */
 const clockEl = $('#clock');
+// Format in the store's own timezone so every visitor sees the same date.
 const cutoffLabel = new Intl.DateTimeFormat('en-US',
-  { weekday:'long', month:'long', day:'numeric' }).format(CUTOFF);
+  { weekday:'long', month:'long', day:'numeric', timeZone:'America/New_York' }).format(CUTOFF);
 
 $('#cutoff-date').textContent  = cutoffLabel;
 $('#deliver-date').textContent = cutoffLabel;
