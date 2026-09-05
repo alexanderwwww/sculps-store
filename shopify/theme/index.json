@@ -1,0 +1,133 @@
+{
+  "sections": {
+    "hero_main": {
+      "type": "hero",
+      "blocks": {
+        "text_head": { "type": "text", "settings": {
+          "text": "<p>The neighbors are going to lose it.</p>",
+          "text_color": "#FFFFFF", "alignment": "left", "type_preset": "h1",
+          "font": "var(--font-heading--family)", "font_size": "4rem", "wrap": "balance" } },
+        "text_sub": { "type": "text", "settings": {
+          "text": "<p>Three pieces that turn an ordinary front yard into the one people stop walking for. Solar where it can be, plugged in where it has to be. All of it up in under an hour.</p>",
+          "text_color": "#E4E4E0", "alignment": "left", "type_preset": "rte", "max_width": "narrow" } },
+        "button_shop": { "type": "button", "settings": {
+          "label": "Shop all three", "link": "shopify://collections/halloween-2026",
+          "style_class": "button-custom", "custom_button_background": "#F5C518",
+          "custom_button_text": "#191400", "custom_button_border": "#F5C518" } }
+      },
+      "block_order": ["text_head", "text_sub", "button_shop"],
+      "settings": {
+        "media_type_1": "image",
+        "image_1": "shopify://shop_images/hf_20260905_230322_89981275-08e8-429d-8c40-5d9d4002483d.png",
+        "image": "shopify://shop_images/hf_20260905_230322_89981275-08e8-429d-8c40-5d9d4002483d.png",
+        "content_direction": "column",
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "flex-end",
+        "section_width": "full-width", "section_height": "large",
+        "background_color": "#0D0D0F", "toggle_overlay": true,
+        "overlay_color": "#0D0D0F80", "overlay_style": "gradient",
+        "gradient_direction": "to bottom",
+        "padding-block-start": 120, "padding-block-end": 72, "gap": 20
+      }
+    },
+
+    "product_list_main": {
+      "type": "product-list",
+      "blocks": {
+        "static-header": {
+          "type": "_product-list-content", "static": true,
+          "settings": { "content_direction": "row", "horizontal_alignment": "space-between", "gap": 12 },
+          "blocks": {
+            "list_title": { "type": "_product-list-text", "settings": {
+              "text": "<h3>Three products. That's the entire store.</h3>",
+              "alignment": "left", "type_preset": "h3",
+              "font": "var(--font-heading--family)", "wrap": "balance" } }
+          },
+          "block_order": ["list_title"]
+        },
+        "static-product-card": {
+          "type": "_product-card", "static": true,
+          "settings": { "product_card_gap": 6, "border": "solid", "border_width": 1, "border_opacity": 12, "border_radius": 8 },
+          "blocks": {
+            "card_gallery": { "type": "_product-card-gallery", "settings": { "image_ratio": "square" } },
+            "card_title": { "type": "product-title", "settings": {
+              "alignment": "left", "type_preset": "h6", "font": "var(--font-heading--family)",
+              "font_size": "1.125rem", "padding-block-start": 12,
+              "padding-inline-start": 12, "padding-inline-end": 12 } },
+            "card_price": { "type": "price", "settings": {
+              "alignment": "left", "type_preset": "rte", "font_size": "1rem",
+              "padding-block-end": 14, "padding-inline-start": 12, "padding-inline-end": 12 } }
+          },
+          "block_order": ["card_gallery", "card_title", "card_price"]
+        }
+      },
+      "settings": {
+        "collection": "halloween-2026", "layout_type": "grid",
+        "max_products": 3, "columns": 3, "mobile_columns": "1",
+        "columns_gap": 20, "rows_gap": 24, "section_width": "page-width",
+        "gap": 32, "padding-block-start": 72, "padding-block-end": 72
+      }
+    },
+
+    "hero_bundle": {
+      "type": "hero",
+      "blocks": {
+        "bundle_head": { "type": "text", "settings": {
+          "text": "<p>Souls on the lawn. Shadows on the house.</p>",
+          "text_color": "#FFFFFF", "alignment": "left", "type_preset": "h2",
+          "font": "var(--font-heading--family)", "font_size": "2.75rem", "wrap": "balance" } },
+        "bundle_sub": { "type": "text", "settings": {
+          "text": "<p>Two reapers and the projector together for 199.99, down from 349.97. The reapers hold the ground, the projector takes the wall. You save 150.</p>",
+          "text_color": "#E4E4E0", "alignment": "left", "type_preset": "rte", "max_width": "narrow" } },
+        "bundle_btn": { "type": "button", "settings": {
+          "label": "Get the bundle", "link": "shopify://products/the-black-reaper",
+          "style_class": "button-custom", "custom_button_background": "#F5C518",
+          "custom_button_text": "#191400", "custom_button_border": "#F5C518" } }
+      },
+      "block_order": ["bundle_head", "bundle_sub", "bundle_btn"],
+      "settings": {
+        "media_type_1": "image",
+        "image_1": "shopify://shop_images/hf_20260905_230322_c4a5dff6-6d99-40b2-a8ee-25584ff4e5a0.png",
+        "image": "shopify://shop_images/hf_20260905_230322_c4a5dff6-6d99-40b2-a8ee-25584ff4e5a0.png",
+        "content_direction": "column",
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "section_width": "full-width", "section_height": "medium",
+        "background_color": "#0D0D0F", "toggle_overlay": true,
+        "overlay_color": "#0D0D0FA6", "overlay_style": "solid",
+        "padding-block-start": 96, "padding-block-end": 96, "gap": 18
+      }
+    },
+
+    "hero_closer": {
+      "type": "hero",
+      "blocks": {
+        "closer_head": { "type": "text", "settings": {
+          "text": "<p>Halloween is on a Saturday this year.</p>",
+          "text_color": "#FFFFFF", "alignment": "center", "type_preset": "h2",
+          "font": "var(--font-heading--family)", "font_size": "2.5rem", "wrap": "balance" } },
+        "closer_sub": { "type": "text", "settings": {
+          "text": "<p>Which means the whole street will be out walking. Put something in the yard worth stopping for. Order by Tuesday, October 20 for delivery before the 31st.</p>",
+          "text_color": "#B9B9B2", "alignment": "center", "type_preset": "rte", "max_width": "narrow" } },
+        "closer_btn": { "type": "button", "settings": {
+          "label": "Shop all three", "link": "shopify://collections/halloween-2026",
+          "style_class": "button-custom", "custom_button_background": "#F5C518",
+          "custom_button_text": "#191400", "custom_button_border": "#F5C518" } }
+      },
+      "block_order": ["closer_head", "closer_sub", "closer_btn"],
+      "settings": {
+        "media_type_1": "image",
+        "image_1": "shopify://shop_images/hf_20260905_230322_5c65efea-4d97-4fc1-b69e-3f076fac8761.png",
+        "image": "shopify://shop_images/hf_20260905_230322_5c65efea-4d97-4fc1-b69e-3f076fac8761.png",
+        "content_direction": "column",
+        "horizontal_alignment_flex_direction_column": "center",
+        "vertical_alignment_flex_direction_column": "center",
+        "section_width": "full-width", "section_height": "medium",
+        "background_color": "#0D0D0F", "toggle_overlay": true,
+        "overlay_color": "#0D0D0FBF", "overlay_style": "solid",
+        "padding-block-start": 96, "padding-block-end": 96, "gap": 18
+      }
+    }
+  },
+  "order": ["hero_main", "product_list_main", "hero_bundle", "hero_closer"]
+}
