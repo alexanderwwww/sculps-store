@@ -4,31 +4,37 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Black Reaper — Solar Soul Lantern</title>
-<meta name="description" content="A solar reaper that spills a stream of glowing souls across your lawn. Stake it in, no cords, lights itself at dusk. Ships before Halloween.">
+<meta name="description" content="A solar reaper that pours a stream of glowing souls across your lawn. Stake it in, no cords, lights itself at dusk. Ships before Halloween.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* =========================================================
-   SWAPPABLE VALUES ARE AT THE TOP OF THE <script> BELOW.
+   PRICES ARE IN THE HTML (visible without JS).
+   CUTOFF DATE + SHOPIFY VARIANT IDS ARE AT THE TOP OF <script>.
    Media slots are marked  <!-- ASSET: ... -->  throughout.
    ========================================================= */
 
 :root{
-  --paper:#FAF8F4;      /* page ground */
+  --paper:#F5F2EC;
   --card:#FFFFFF;
-  --sand:#F2EDE5;       /* quiet fill */
-  --ink:#171310;        /* body text */
-  --ink-2:#5B534C;      /* secondary text */
-  --ink-3:#8C837A;      /* captions */
-  --rule:#E2DAD0;
-  --rule-2:#CFC4B7;
-  --orange:#D9541B;     /* the one accent */
-  --orange-dk:#B4400F;
-  --orange-soft:#FDF0E8;
-  --green:#1E6E45;      /* verification / in-stock only */
+  --sand:#EDE8DF;
+  --ink:#14121A;
+  --ink-2:#544E5C;
+  --ink-3:#877F91;
+  --plum:#241A2E;        /* premium dark bands */
+  --plum-2:#3A2B47;
+  --rule:#E2DBD1;
+  --rule-2:#CBC1B4;
+  --orange:#D64A15;
+  --orange-dk:#AF3809;
+  --orange-soft:#FBEDE4;
+  --green:#1D6B45;
+
+  --display:"Bricolage Grotesque",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,sans-serif;
   --sans:"Libre Franklin",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
   --pad:clamp(18px,4vw,48px);
   --maxw:1180px;
 }
@@ -46,48 +52,50 @@ button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
 .wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding-inline:var(--pad)}
-h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.15;text-wrap:balance}
-h2{font-size:clamp(25px,3.2vw,36px)}
-h3{font-size:18px;letter-spacing:-.01em}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:700;line-height:1.1;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:clamp(27px,3.4vw,40px)}
+h3{font-size:19px}
 p{margin:0}
-.lede{color:var(--ink-2);max-width:62ch;font-size:clamp(15.5px,1.4vw,17px)}
+.lede{color:var(--ink-2);max-width:60ch;font-size:clamp(15.5px,1.4vw,17px);font-family:var(--sans)}
 .eyebrow{
-  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--orange);margin:0 0 12px;font-weight:500;
 }
-.section{padding:clamp(44px,6vw,80px) 0;border-top:1px solid var(--rule)}
+.section{padding:clamp(46px,6.5vw,86px) 0;border-top:1px solid var(--rule)}
 
-/* placeholder media slot */
 .slot{
   position:relative;width:100%;background:var(--sand);
   border:1px dashed var(--rule-2);display:grid;place-items:center;text-align:center;
   color:var(--ink-3);font-family:var(--mono);font-size:11px;line-height:1.7;
-  letter-spacing:.06em;padding:20px;min-height:150px;
+  letter-spacing:.05em;padding:20px;min-height:150px;
 }
 .slot span{max-width:28ch}
 
-/* ---------- announcement bar ---------- */
-.bar{background:var(--ink);color:#F6F1EA}
+/* ============ ANNOUNCEMENT ============ */
+.bar{background:var(--plum);color:#EDE6F2}
 .bar-in{
   display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:center;
-  padding:9px var(--pad);text-align:center;font-size:13.5px;
+  padding:10px var(--pad);text-align:center;font-size:13.5px;
 }
-.bar b{color:#FFB07A;font-weight:600}
-.clock{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;color:#FFB07A}
+.bar b{color:#FFA672;font-weight:600}
+.clock{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:#FFA672}
 
-/* ---------- header ---------- */
+/* ============ HEADER ============ */
 .hdr{background:var(--paper);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:50}
-.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:18px;height:62px}
-.logo{font-weight:800;font-size:17px;letter-spacing:-.02em;text-decoration:none;white-space:nowrap}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:18px;height:64px}
+.logo{
+  font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.03em;
+  text-decoration:none;white-space:nowrap;
+}
 .logo i{font-style:normal;color:var(--orange)}
 .hdr-links{display:none;gap:26px;font-size:14px;color:var(--ink-2)}
 .hdr-links a{text-decoration:none}
 .hdr-links a:hover{color:var(--orange)}
-@media(min-width:880px){.hdr-links{display:flex}}
-.hdr-note{font-size:12.5px;color:var(--ink-3);display:none}
-@media(min-width:620px){.hdr-note{display:block}}
+@media(min-width:900px){.hdr-links{display:flex}}
+.hdr-note{display:none;font-size:12.5px;color:var(--ink-3)}
+@media(min-width:640px){.hdr-note{display:block}}
 
-/* ---------- buttons ---------- */
+/* ============ BUTTONS ============ */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:16px 30px;border:0;border-radius:4px;text-decoration:none;
@@ -96,41 +104,36 @@ p{margin:0}
 }
 .btn:hover{background:var(--orange-dk)}
 .btn-block{width:100%;padding:19px 24px;font-size:17px}
-.btn-ghost{background:var(--card);color:var(--ink);border:1px solid var(--rule-2)}
-.btn-ghost:hover{background:var(--sand)}
+.btn-plum{background:var(--plum)}
+.btn-plum:hover{background:var(--plum-2)}
 
-/* ================= PDP (above the fold) ================= */
-.pdp{padding:clamp(24px,3.5vw,44px) 0 clamp(40px,5vw,64px)}
+/* ============ PDP ============ */
+.pdp{padding:clamp(22px,3.4vw,42px) 0 clamp(40px,5vw,64px)}
 .pdp-grid{display:grid;gap:clamp(26px,4vw,52px)}
-@media(min-width:980px){.pdp-grid{grid-template-columns:minmax(0,1.1fr) minmax(400px,.9fr);align-items:start}}
+@media(min-width:980px){.pdp-grid{grid-template-columns:minmax(0,1.08fr) minmax(410px,.92fr);align-items:start}}
 
 .gallery{display:grid;gap:10px}
-@media(min-width:980px){.gallery{position:sticky;top:82px}}
-.gal-main{aspect-ratio:1;background:var(--card);border:1px solid var(--rule);overflow:hidden;border-radius:4px}
+@media(min-width:980px){.gallery{position:sticky;top:84px}}
+.gal-main{aspect-ratio:1;background:var(--card);border:1px solid var(--rule);border-radius:5px;overflow:hidden}
 .gal-main .slot{height:100%;border:0;background:var(--card)}
 .gal-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .gal-thumbs button{
-  aspect-ratio:1;background:var(--card);border:1px solid var(--rule);border-radius:4px;
+  aspect-ratio:1;background:var(--card);border:1px solid var(--rule);border-radius:5px;
   padding:6px;font-family:var(--mono);font-size:9.5px;line-height:1.4;color:var(--ink-3);
 }
 .gal-thumbs button[aria-selected="true"]{border-color:var(--ink);color:var(--ink)}
 
-.buy h1{font-size:clamp(26px,3vw,34px);margin-bottom:10px}
+.buy h1{font-size:clamp(28px,3.4vw,40px);margin-bottom:10px}
 .buy-sub{color:var(--ink-2);font-size:15.5px;max-width:46ch}
-.stock{
-  display:inline-flex;align-items:center;gap:7px;margin-top:14px;
-  font-size:13px;font-weight:600;color:var(--green);
-}
+.stock{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:13px;font-weight:600;color:var(--green)}
 .stock::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
 
-.pick-label{
-  margin:26px 0 10px;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-2);
-}
+.pick-label{margin:26px 0 10px;font-size:13px;font-weight:600;color:var(--ink-2)}
 .tiers{display:grid;gap:9px}
 .tier{
-  display:grid;grid-template-columns:20px 1fr auto;gap:14px;align-items:center;width:100%;
-  text-align:left;padding:15px 16px;background:var(--card);
-  border:1px solid var(--rule);border-radius:5px;transition:border-color .15s,box-shadow .15s;
+  position:relative;display:grid;grid-template-columns:20px 1fr auto;gap:14px;align-items:center;
+  width:100%;text-align:left;padding:16px;background:var(--card);
+  border:1px solid var(--rule);border-radius:6px;transition:border-color .15s,box-shadow .15s;
 }
 .tier:hover{border-color:var(--rule-2)}
 .tier[aria-checked="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange);background:var(--orange-soft)}
@@ -138,83 +141,98 @@ p{margin:0}
 .tier[aria-checked="true"] .dot{border-color:var(--orange)}
 .tier[aria-checked="true"] .dot::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--orange)}
 .tier-name{font-size:15.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tier-unit{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.tier-unit{font-size:12.5px;color:var(--ink-3);margin-top:3px}
 .tier-price{text-align:right;font-variant-numeric:tabular-nums}
-.tier-now{font-size:16.5px;font-weight:700}
+.tier-now{font-size:17px;font-weight:700}
 .tier-was{font-size:12.5px;color:var(--ink-3);text-decoration:line-through;margin-left:6px;font-weight:400}
-.tier-save{display:block;font-size:12px;font-weight:600;color:var(--orange);margin-top:2px}
+.tier-save{display:block;font-size:12px;font-weight:700;color:var(--orange);margin-top:2px}
+
+/* the bundle gets the premium treatment, not a third radio button */
+.tier-special{background:var(--plum);border-color:var(--plum);color:#F1EBF5;padding-top:22px;margin-top:9px}
+.tier-special:hover{border-color:var(--plum-2)}
+.tier-special .dot{background:transparent;border-color:rgba(241,235,245,.45)}
+.tier-special .tier-unit{color:#B6A8C4}
+.tier-special .tier-was{color:#9C8DAC}
+.tier-special .tier-save{color:#FFA672}
+.tier-special[aria-checked="true"]{background:var(--plum-2);border-color:#FFA672;box-shadow:inset 0 0 0 1px #FFA672}
+.tier-special[aria-checked="true"] .dot{border-color:#FFA672}
+.tier-special[aria-checked="true"] .dot::after{background:#FFA672}
+.ribbon{
+  position:absolute;top:-1px;left:16px;transform:translateY(-50%);
+  font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+  background:#FFA672;color:var(--plum);padding:3px 9px;border-radius:3px;
+}
 .flag{
   font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   padding:3px 7px;border-radius:3px;background:var(--orange);color:#fff;
 }
-.flag-alt{background:var(--sand);color:var(--ink-2)}
 
 .checkout{margin-top:20px;display:grid;gap:12px}
 .total-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:14px;color:var(--ink-2)}
-.total-row b{font-size:24px;color:var(--ink);font-variant-numeric:tabular-nums}
-.pay{
-  display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;
-  font-size:12px;color:var(--ink-3);
-}
+.total-row b{font-family:var(--display);font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
+.pay{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;color:var(--ink-3)}
 .ship-note{
   display:flex;gap:10px;padding:13px 15px;border-radius:5px;
-  background:var(--orange-soft);border:1px solid #F3D9C6;font-size:13.5px;color:#7A3A14;
+  background:var(--orange-soft);border:1px solid #F2D8C7;font-size:13.5px;color:#78310F;
 }
 .ship-note b{color:var(--orange-dk)}
 
-.assure{margin-top:22px;display:grid;gap:0;border:1px solid var(--rule);border-radius:5px;background:var(--card)}
+.assure{margin-top:22px;border:1px solid var(--rule);border-radius:6px;background:var(--card)}
 .assure div{display:flex;gap:12px;padding:14px 16px;font-size:13.5px;color:var(--ink-2);border-bottom:1px solid var(--rule)}
 .assure div:last-child{border-bottom:0}
 .assure b{color:var(--ink);font-weight:600}
-.assure .ic{
-  flex:none;width:20px;height:20px;border-radius:50%;background:var(--sand);color:var(--ink);
-  display:grid;place-items:center;font-size:11px;font-weight:700;margin-top:1px;
-}
+.assure .ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--sand);
+  display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--ink);margin-top:1px}
 
-/* ---------- trust strip ---------- */
+/* ============ TRUST STRIP ============ */
 .strip{background:var(--sand);border-block:1px solid var(--rule)}
-.strip-in{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:22px;
-  padding:24px 0;font-size:13.5px;color:var(--ink-2);
-}
-.strip b{display:block;color:var(--ink);font-weight:600;font-size:14.5px;margin-bottom:3px}
+.strip-in{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:22px;padding:26px 0;font-size:13.5px;color:var(--ink-2)}
+.strip b{display:block;font-family:var(--display);color:var(--ink);font-weight:700;font-size:15px;margin-bottom:3px;letter-spacing:-.01em}
 
-/* ---------- how it works ---------- */
-.steps{display:grid;gap:clamp(20px,3vw,30px);margin-top:34px}
+/* ============ STEPS ============ */
+.steps{display:grid;gap:clamp(18px,2.6vw,26px);margin-top:34px}
 @media(min-width:800px){.steps{grid-template-columns:repeat(3,1fr)}}
-.step{background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:22px;display:grid;gap:14px;align-content:start}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:7px;padding:22px;display:grid;gap:13px;align-content:start}
 .step .slot{aspect-ratio:4/3;min-height:0;border-radius:4px}
-.step-n{font-family:var(--mono);font-size:11.5px;color:var(--orange);letter-spacing:.1em}
+.step-n{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--orange)}
 .step p{font-size:14.5px;color:var(--ink-2)}
 
-/* ---------- reactions ---------- */
+/* ============ REACTIONS ============ */
 .react-grid{display:grid;gap:12px;margin-top:34px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .react-grid .slot{aspect-ratio:9/16;min-height:0;border-radius:5px}
 
-/* ---------- multi-unit ---------- */
-.multi-grid{display:grid;gap:clamp(24px,4vw,48px);align-items:center;margin-top:8px}
-@media(min-width:900px){.multi-grid{grid-template-columns:1fr 1fr}}
-.multi-grid .slot{aspect-ratio:4/3;border-radius:6px;min-height:0}
-.tally{display:grid;gap:0;margin:26px 0;border-top:1px solid var(--rule)}
-.tally div{display:grid;grid-template-columns:40px 1fr;gap:14px;align-items:baseline;
-  padding:13px 0;border-bottom:1px solid var(--rule)}
-.tally b{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
-.tally span{font-size:14.5px;color:var(--ink-2)}
+/* ============ THE BUNDLE (dark premium band) ============ */
+.deal{background:var(--plum);color:#EFE9F3;border-block:1px solid var(--plum)}
+.deal .eyebrow{color:#FFA672}
+.deal h2{color:#fff}
+.deal .lede{color:#BCAECA}
+.deal-grid{display:grid;gap:clamp(28px,4vw,54px);align-items:center;padding:clamp(46px,6.5vw,86px) 0}
+@media(min-width:940px){.deal-grid{grid-template-columns:1.05fr .95fr}}
+.deal .slot{background:#1B1324;border-color:rgba(239,233,243,.22);color:#9A8DA8;aspect-ratio:4/3;min-height:0;border-radius:7px}
+.deal-list{display:grid;gap:0;margin:26px 0 28px;border-top:1px solid rgba(239,233,243,.16)}
+.deal-list div{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:baseline;
+  padding:14px 0;border-bottom:1px solid rgba(239,233,243,.16);font-size:15px}
+.deal-list .qty{font-family:var(--mono);font-size:12.5px;color:#FFA672}
+.deal-list .val{font-family:var(--mono);font-size:13px;color:#9A8DA8;font-variant-numeric:tabular-nums}
+.deal-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px}
+.deal-sum b{font-family:var(--display);font-size:34px;color:#fff;letter-spacing:-.02em}
+.deal-sum s{color:#9A8DA8;font-size:17px}
+.deal-sum em{font-style:normal;font-weight:700;color:#FFA672;font-size:14px}
 
-/* ---------- specs ---------- */
-.spec-note{margin-top:14px;font-size:13px;color:var(--orange-dk);font-family:var(--mono)}
-.spec-table{width:100%;margin-top:28px;border-collapse:collapse;background:var(--card);
-  border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+/* ============ SPECS ============ */
+.spec-note{margin-top:14px;font-size:12.5px;color:var(--orange-dk);font-family:var(--mono)}
+.spec-wrap{display:grid;gap:26px;margin-top:30px}
+@media(min-width:900px){.spec-wrap{grid-template-columns:1fr 1fr;align-items:start}}
+.spec-h{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+.spec-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--rule);border-radius:7px;overflow:hidden}
 .spec-table tr{border-bottom:1px solid var(--rule)}
 .spec-table tr:last-child{border-bottom:0}
-.spec-table th{text-align:left;font-weight:500;font-size:14px;color:var(--ink-2);
-  padding:14px 18px;width:44%;vertical-align:top;background:#FCFAF7}
-.spec-table td{padding:14px 18px;font-size:14.5px}
-.fill{font-family:var(--mono);font-size:12.5px;color:var(--orange-dk);background:var(--orange-soft);
-  padding:2px 6px;border-radius:3px}
+.spec-table th{text-align:left;font-weight:500;font-size:13.5px;color:var(--ink-2);padding:13px 16px;width:46%;vertical-align:top;background:#FBF9F6}
+.spec-table td{padding:13px 16px;font-size:14px}
+.fill{font-family:var(--mono);font-size:12px;color:var(--orange-dk);background:var(--orange-soft);padding:2px 6px;border-radius:3px}
 
-/* ---------- faq ---------- */
-.faq-list{margin-top:30px;background:var(--card);border:1px solid var(--rule);border-radius:6px}
+/* ============ FAQ ============ */
+.faq-list{margin-top:30px;background:var(--card);border:1px solid var(--rule);border-radius:7px}
 .faq-item{border-bottom:1px solid var(--rule)}
 .faq-item:last-child{border-bottom:0}
 .faq-q{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;width:100%;
@@ -225,21 +243,20 @@ p{margin:0}
 .faq-a{display:none;padding:0 20px 20px;color:var(--ink-2);font-size:14.5px;max-width:72ch}
 .faq-a.open{display:block}
 
-/* ---------- footer ---------- */
-.foot{background:var(--ink);color:#D8D0C7;padding:44px 0 110px;margin-top:0}
+/* ============ FOOTER ============ */
+.foot{background:var(--plum);color:#C9BDD6;padding:46px 0 110px}
 .foot-in{display:flex;flex-wrap:wrap;gap:22px 44px;justify-content:space-between;align-items:flex-start}
 .foot .logo{color:#fff}
-.foot small{display:block;font-size:12.5px;color:#A79C90;margin-top:10px;max-width:46ch;line-height:1.7}
+.foot small{display:block;font-size:12.5px;color:#9A8DA8;margin-top:10px;max-width:46ch;line-height:1.7}
 .foot-links{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13.5px}
-.foot-links a{text-decoration:none;color:#D8D0C7}
-.foot-links a:hover{color:#FFB07A}
+.foot-links a{text-decoration:none;color:#C9BDD6}
+.foot-links a:hover{color:#FFA672}
 
-/* ---------- sticky mobile bar ---------- */
+/* ============ STICKY MOBILE BAR ============ */
 .mbar{
   position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:12px;align-items:center;
   padding:10px var(--pad) calc(10px + env(safe-area-inset-bottom));
-  background:var(--card);border-top:1px solid var(--rule-2);
-  box-shadow:0 -4px 18px rgba(23,19,16,.07);
+  background:var(--card);border-top:1px solid var(--rule-2);box-shadow:0 -4px 18px rgba(20,18,26,.08);
   transform:translateY(115%);transition:transform .25s ease;
 }
 .mbar.show{transform:translateY(0)}
@@ -254,7 +271,6 @@ p{margin:0}
 </head>
 <body>
 
-<!-- ============ ANNOUNCEMENT ============ -->
 <div class="bar">
   <div class="bar-in">
     <span>Order by <b id="cutoff-date">—</b> to get it before Halloween.</span>
@@ -262,13 +278,13 @@ p{margin:0}
   </div>
 </div>
 
-<!-- ============ HEADER ============ -->
 <header class="hdr">
   <div class="wrap hdr-in">
     <a class="logo" href="#top">THE BLACK <i>REAPER</i></a>
     <nav class="hdr-links">
       <a href="#how">How it works</a>
       <a href="#reactions">See it running</a>
+      <a href="#bundle">The bundle</a>
       <a href="#specs">Specs</a>
       <a href="#faq">FAQ</a>
     </nav>
@@ -276,13 +292,13 @@ p{margin:0}
   </div>
 </header>
 
-<!-- ============ PDP — GALLERY + BUY, ABOVE THE FOLD ============ -->
+<!-- ============ PDP ============ -->
 <main class="wrap pdp" id="top">
   <div class="pdp-grid">
 
     <div class="gallery">
       <div class="gal-main">
-        <!-- ASSET: main media. First item should be the real night video, autoplay muted loop.
+        <!-- ASSET: main media. First item is the real night video.
              <video src="assets/night-loop.mp4" poster="assets/night-poster.jpg" autoplay muted loop playsinline></video> -->
         <div class="slot"><span id="gal-label">Night video — the unit running, real footage, 8–12s loop</span></div>
       </div>
@@ -297,12 +313,13 @@ p{margin:0}
     <div class="buy" id="buy">
       <p class="eyebrow">Solar Soul Lantern</p>
       <h1>The Black Reaper</h1>
-      <p class="buy-sub">A hooded reaper holds up a lantern and a stream of glowing souls pours out across your lawn. Solar powered. Stake it in and walk away.</p>
+      <p class="buy-sub">A hooded reaper lifts a lantern and a stream of glowing souls pours out across your lawn. Solar powered. Stake it in and walk away.</p>
       <p class="stock">In stock · ships within 24 hours</p>
 
-      <p class="pick-label">Choose how many:</p>
-      <div class="tiers" role="radiogroup" aria-label="Choose quantity">
-        <button class="tier" role="radio" aria-checked="false" data-qty="1" data-price="129.99" data-save="0">
+      <p class="pick-label">Choose your setup:</p>
+      <div class="tiers" role="radiogroup" aria-label="Choose your setup">
+
+        <button class="tier" role="radio" aria-checked="false" data-qty="1" data-price="129.99" data-label="1 Reaper" data-sub="">
           <span class="dot"></span>
           <span>
             <span class="tier-name">1 Reaper</span>
@@ -311,33 +328,35 @@ p{margin:0}
           <span class="tier-price"><span class="tier-now">$129.99</span></span>
         </button>
 
-        <button class="tier" role="radio" aria-checked="true" data-qty="2" data-price="219.99" data-save="40">
+        <button class="tier" role="radio" aria-checked="true" data-qty="2" data-price="159.99" data-label="2 Reapers" data-sub="Save $100">
           <span class="dot"></span>
           <span>
             <span class="tier-name">2 Reapers <em class="flag">Most people pick this</em></span>
-            <span class="tier-unit">$110.00 each · one on each side of the drive</span>
+            <span class="tier-unit">$80.00 each · one on each side of the drive</span>
           </span>
           <span class="tier-price">
-            <span class="tier-now">$219.99</span><span class="tier-was">$259.98</span>
-            <span class="tier-save">You save $40</span>
+            <span class="tier-now">$159.99</span><span class="tier-was">$259.98</span>
+            <span class="tier-save">You save $100</span>
           </span>
         </button>
 
-        <button class="tier" role="radio" aria-checked="false" data-qty="3" data-price="299.99" data-save="90">
+        <button class="tier tier-special" role="radio" aria-checked="false" data-qty="bundle" data-price="199.99" data-label="Haunted Yard Bundle" data-sub="Save $150">
+          <span class="ribbon">Halloween Special</span>
           <span class="dot"></span>
           <span>
-            <span class="tier-name">3 Reapers <em class="flag flag-alt">Best value</em></span>
-            <span class="tier-unit">$100.00 each · covers the whole front yard</span>
+            <span class="tier-name">2 Reapers + Haunted Projector</span>
+            <span class="tier-unit">Souls on the lawn, shadows on the house</span>
           </span>
           <span class="tier-price">
-            <span class="tier-now">$299.99</span><span class="tier-was">$389.97</span>
-            <span class="tier-save">You save $90</span>
+            <span class="tier-now">$199.99</span><span class="tier-was">$349.97</span>
+            <span class="tier-save">You save $150</span>
           </span>
         </button>
+
       </div>
 
       <div class="checkout">
-        <div class="total-row"><span>Total today</span><b id="total">$219.99</b></div>
+        <div class="total-row"><span>Total today</span><b id="total">$159.99</b></div>
         <button class="btn btn-block" id="add">Add to cart — <span id="add-qty">2 Reapers</span></button>
         <p class="pay">Apple&nbsp;Pay · Google&nbsp;Pay · Shop&nbsp;Pay · Visa · Mastercard · Amex</p>
         <div class="ship-note">
@@ -355,11 +374,10 @@ p{margin:0}
   </div>
 </main>
 
-<!-- ============ TRUST STRIP ============ -->
 <div class="strip">
   <div class="wrap strip-in">
     <div><b>4 minutes to set up</b>Push the stake in the ground. That's it.</div>
-    <div><b>Charges itself</b>Sun by day, lights up at dusk, off by morning.</div>
+    <div><b>Charges itself</b>Sun by day, lights at dusk, off by morning.</div>
     <div><b>Silent</b>No motor, no speaker, nothing to fail.</div>
     <div><b>Built for outdoors</b>Rated <span class="fill">[ IP RATING ]</span> for autumn weather.</div>
   </div>
@@ -371,7 +389,6 @@ p{margin:0}
     <p class="eyebrow">Setup</p>
     <h2>Stake it in. That's the whole setup.</h2>
     <p class="lede" style="margin-top:12px">No outlet, no extension cord, no timer to program, no tools.</p>
-
     <div class="steps">
       <article class="step">
         <!-- ASSET: short clip, hands pushing the stake into grass -->
@@ -414,24 +431,27 @@ p{margin:0}
   </div>
 </section>
 
-<!-- ============ MULTI-UNIT ============ -->
-<section class="section" id="multi">
-  <div class="wrap">
-    <div class="multi-grid">
-      <div>
-        <p class="eyebrow">Why most people order two</p>
-        <h2>One is creepy. Three is a haunted yard.</h2>
-        <p class="lede" style="margin-top:12px">A single reaper is something people notice. Two facing each other make a gate you have to walk through. Three spread out and the streams cross the whole lawn.</p>
-        <div class="tally">
-          <div><b>1</b><span>A figure people stop and look at</span></div>
-          <div><b>2</b><span>A gate across the driveway — <strong>save $40</strong></span></div>
-          <div><b>3</b><span>The whole front yard — <strong>save $90</strong></span></div>
-        </div>
-        <a class="btn" href="#buy">Pick your quantity</a>
+<!-- ============ THE BUNDLE ============ -->
+<section class="deal" id="bundle">
+  <div class="wrap deal-grid">
+    <div>
+      <p class="eyebrow">The Halloween Special</p>
+      <h2>Souls on the lawn.<br>Shadows on the house.</h2>
+      <p class="lede" style="margin-top:14px">The reapers own the ground. The projector takes the wall — figures moving across the brick, across the door, across the windows. Together the whole property is the decoration, not one object in the middle of it.</p>
+
+      <div class="deal-list">
+        <div><span class="qty">×2</span><span>The Black Reaper, solar soul lantern</span><span class="val">$259.98</span></div>
+        <div><span class="qty">×1</span><span>Haunted Projector, plug-in, auto-focus</span><span class="val">$89.99</span></div>
       </div>
-      <!-- ASSET: wide night photo, three units in one yard -->
-      <div class="slot"><span>Wide night photo — three units in one yard</span></div>
+
+      <div class="deal-sum">
+        <b>$199.99</b><s>$349.97</s><em>You save $150</em>
+      </div>
+      <p style="color:#9A8DA8;font-size:13px;margin-top:10px">Ships together in one box. Same 30-day return.</p>
+      <a class="btn" href="#buy" style="margin-top:24px">Get the bundle</a>
     </div>
+    <!-- ASSET: night photo — two reapers on the lawn, projection on the house behind -->
+    <div class="slot"><span>Night photo — two reapers on the lawn, projection across the house</span></div>
   </div>
 </section>
 
@@ -440,22 +460,41 @@ p{margin:0}
   <div class="wrap">
     <p class="eyebrow">Specifications</p>
     <h2>The honest numbers.</h2>
-    <p class="spec-note">▲ Highlighted values are placeholders — fill from the supplier spec sheet before launch.</p>
-    <table class="spec-table">
-      <tbody>
-        <tr><th scope="row">Height, staked in the ground</th><td><span class="fill">[ HEIGHT CM / IN ]</span></td></tr>
-        <tr><th scope="row">Width across the arms</th><td><span class="fill">[ WIDTH CM / IN ]</span></td></tr>
-        <tr><th scope="row">Length of the soul stream</th><td><span class="fill">[ STREAM LENGTH ]</span></td></tr>
-        <tr><th scope="row">Materials</th><td><span class="fill">[ FABRIC / FRAME / LANTERN ]</span></td></tr>
-        <tr><th scope="row">Power</th><td>Built-in solar panel on the stake. No mains power, no batteries to buy.</td></tr>
-        <tr><th scope="row">Runtime on a full charge</th><td><span class="fill">[ HOURS ]</span></td></tr>
-        <tr><th scope="row">Turns on</th><td>By itself at dusk, using a light sensor. Off by morning.</td></tr>
-        <tr><th scope="row">Stake depth</th><td><span class="fill">[ STAKE LENGTH ]</span></td></tr>
-        <tr><th scope="row">Weather rating</th><td><span class="fill">[ IP RATING ]</span></td></tr>
-        <tr><th scope="row">What's in the box</th><td><span class="fill">[ PACKING LIST ]</span></td></tr>
-        <tr><th scope="row">Assembly</th><td>About four minutes. No tools needed.</td></tr>
-      </tbody>
-    </table>
+    <p class="spec-note">▲ Highlighted values are placeholders — fill from the supplier spec sheets before launch.</p>
+
+    <div class="spec-wrap">
+      <div>
+        <p class="spec-h">The Black Reaper</p>
+        <table class="spec-table"><tbody>
+          <tr><th scope="row">Height, staked</th><td><span class="fill">[ HEIGHT ]</span></td></tr>
+          <tr><th scope="row">Width across the arms</th><td><span class="fill">[ WIDTH ]</span></td></tr>
+          <tr><th scope="row">Soul stream length</th><td><span class="fill">[ STREAM LENGTH ]</span></td></tr>
+          <tr><th scope="row">Materials</th><td><span class="fill">[ FABRIC / FRAME / LANTERN ]</span></td></tr>
+          <tr><th scope="row">Power</th><td>Built-in solar panel on the stake. No mains power, no batteries.</td></tr>
+          <tr><th scope="row">Runtime, full charge</th><td><span class="fill">[ HOURS ]</span></td></tr>
+          <tr><th scope="row">Turns on</th><td>By itself at dusk via light sensor. Off by morning.</td></tr>
+          <tr><th scope="row">Stake depth</th><td><span class="fill">[ STAKE LENGTH ]</span></td></tr>
+          <tr><th scope="row">Weather rating</th><td><span class="fill">[ IP RATING ]</span></td></tr>
+          <tr><th scope="row">Assembly</th><td>About four minutes. No tools.</td></tr>
+        </tbody></table>
+      </div>
+
+      <div>
+        <p class="spec-h">Haunted Projector <span style="color:var(--ink-3)">— bundle only</span></p>
+        <table class="spec-table"><tbody>
+          <tr><th scope="row">Throw distance</th><td><span class="fill">[ MIN–MAX DISTANCE ]</span></td></tr>
+          <tr><th scope="row">Image size at 3m</th><td><span class="fill">[ IMAGE SIZE ]</span></td></tr>
+          <tr><th scope="row">Resolution</th><td><span class="fill">[ NATIVE RESOLUTION ]</span></td></tr>
+          <tr><th scope="row">Brightness</th><td><span class="fill">[ LUMENS ]</span></td></tr>
+          <tr><th scope="row">Focus</th><td>Auto-focus. Point it at the wall and it sharpens itself.</td></tr>
+          <tr><th scope="row">Power</th><td>Mains powered. <span class="fill">[ CABLE LENGTH ]</span></td></tr>
+          <tr><th scope="row">Included scenes</th><td><span class="fill">[ SCENE LIST / COUNT ]</span></td></tr>
+          <tr><th scope="row">Indoor or outdoor</th><td><span class="fill">[ CONFIRM — RATING ]</span></td></tr>
+          <tr><th scope="row">Dimensions</th><td><span class="fill">[ W × D × H ]</span></td></tr>
+          <tr><th scope="row">Setup</th><td>Place it, plug it in, pick a scene.</td></tr>
+        </tbody></table>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -473,7 +512,7 @@ p{margin:0}
 
       <div class="faq-item">
         <button class="faq-q" aria-expanded="false"><span>Can it stay outside in the rain?</span><span class="pm">+</span></button>
-        <div class="faq-a">Yes. It's built for outdoor use and rated <span class="fill">[ IP RATING ]</span>. Rain is fine. Standing water, snow and freezing conditions are not — bring it in ahead of a hard storm.</div>
+        <div class="faq-a">Yes. The reaper is built for outdoor use and rated <span class="fill">[ IP RATING ]</span>. Rain is fine. Standing water, snow and freezing conditions are not — bring it in ahead of a hard storm. The projector in the bundle is <span class="fill">[ CONFIRM INDOOR / OUTDOOR ]</span>.</div>
       </div>
 
       <div class="faq-item">
@@ -482,8 +521,13 @@ p{margin:0}
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>How long does it take to set up?</span><span class="pm">+</span></button>
-        <div class="faq-a">About four minutes. Unfold it, push the stake in, aim the lantern arm. Nothing to plug in and nothing to program.</div>
+        <button class="faq-q" aria-expanded="false"><span>How long does setup take?</span><span class="pm">+</span></button>
+        <div class="faq-a">About four minutes for a reaper — unfold it, push the stake in, aim the lantern arm. The projector is faster: set it down, plug it in, pick a scene.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false"><span>Does the projector need to be plugged in?</span><span class="pm">+</span></button>
+        <div class="faq-a">Yes. The reapers are solar and need nothing. The projector runs on mains power with a <span class="fill">[ CABLE LENGTH ]</span> cable, so it wants a porch outlet or an outdoor extension lead.</div>
       </div>
 
       <div class="faq-item">
@@ -492,8 +536,8 @@ p{margin:0}
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>Does it move or make noise?</span><span class="pm">+</span></button>
-        <div class="faq-a">No. It's completely silent and it doesn't animate. The whole effect is light. That's on purpose — there's no motor to break and nothing waking the street at 2am.</div>
+        <button class="faq-q" aria-expanded="false"><span>Does the reaper move or make noise?</span><span class="pm">+</span></button>
+        <div class="faq-a">No. It's completely silent and it doesn't animate. The whole effect is light. That's on purpose — no motor to break and nothing waking the street at 2am.</div>
       </div>
 
       <div class="faq-item">
@@ -515,9 +559,10 @@ p{margin:0}
   <div class="wrap foot-in">
     <div>
       <a class="logo" href="#top">THE BLACK <i>REAPER</i></a>
-      <small>One product, one season. We build it, we ship it, and on November 1st we go quiet until next year.</small>
+      <small>One season, done properly. We build it, we ship it, and on November 1st we go quiet until next year.</small>
     </div>
     <nav class="foot-links">
+      <a href="#bundle">The bundle</a>
       <a href="#specs">Specs</a>
       <a href="#faq">FAQ</a>
       <a href="/pages/shipping">Shipping</a>
@@ -527,39 +572,38 @@ p{margin:0}
   </div>
 </footer>
 
-<!-- ============ STICKY MOBILE BAR ============ -->
 <div class="mbar" id="mbar">
   <div class="mbar-info">
-    <b id="mbar-price">$219.99</b>
-    <span id="mbar-qty">2 Reapers · Save $40</span>
+    <b id="mbar-price">$159.99</b>
+    <span id="mbar-qty">2 Reapers · Save $100</span>
   </div>
   <button class="btn" id="mbar-add">Add to cart</button>
 </div>
 
 <script>
 /* =====================================================================
-   EDIT THESE THREE THINGS. Nothing else needs touching to go live.
+   EDIT THESE TWO THINGS. Prices live in the HTML above so the page is
+   correct before JavaScript runs.
    ===================================================================== */
 
 // Real shipping cutoff. Never reset it to fake urgency.
 const CUTOFF = new Date('2026-10-20T23:59:59-04:00');
 
-// Shopify variant ID per quantity tier.
+// Shopify variant / bundle IDs per option.
 const VARIANTS = {
-  1: 'REPLACE_WITH_VARIANT_ID_1PK',
-  2: 'REPLACE_WITH_VARIANT_ID_2PK',
-  3: 'REPLACE_WITH_VARIANT_ID_3PK'
+  '1':      'REPLACE_WITH_VARIANT_ID_1_REAPER',
+  '2':      'REPLACE_WITH_VARIANT_ID_2_REAPERS',
+  'bundle': 'REPLACE_WITH_VARIANT_ID_BUNDLE'
 };
 
 /* ===================================================================== */
 
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const money = n => '$' + n.toFixed(2);
 
 /* ---------- cutoff countdown ---------- */
 const clockEl = $('#clock');
-// Format in the store's own timezone so every visitor sees the same date.
+// Formatted in the store's timezone so every visitor sees the same date.
 const cutoffLabel = new Intl.DateTimeFormat('en-US',
   { weekday:'long', month:'long', day:'numeric', timeZone:'America/New_York' }).format(CUTOFF);
 
@@ -590,7 +634,7 @@ function tick(){
 tick();
 setInterval(tick, 1000);
 
-/* ---------- quantity tiers ---------- */
+/* ---------- options ---------- */
 const tiers = $$('.tier');
 let selected = tiers.find(t => t.getAttribute('aria-checked') === 'true') || tiers[1];
 
@@ -598,15 +642,14 @@ function select(tier){
   selected = tier;
   tiers.forEach(t => t.setAttribute('aria-checked', String(t === tier)));
 
-  const qty   = +tier.dataset.qty;
-  const price = +tier.dataset.price;
-  const save  = +tier.dataset.save;
-  const label = qty === 1 ? '1 Reaper' : `${qty} Reapers`;
+  const label = tier.dataset.label;
+  const sub   = tier.dataset.sub;
+  const price = '$' + (+tier.dataset.price).toFixed(2);
 
-  $('#total').textContent      = money(price);
+  $('#total').textContent      = price;
   $('#add-qty').textContent    = label;
-  $('#mbar-price').textContent = money(price);
-  $('#mbar-qty').textContent   = save ? `${label} · Save $${save}` : label;
+  $('#mbar-price').textContent = price;
+  $('#mbar-qty').textContent   = sub ? `${label} · ${sub}` : label;
 }
 
 tiers.forEach(t => {
@@ -624,11 +667,10 @@ select(selected);
 
 /* ---------- add to cart ---------- */
 function addToCart(){
-  const qty = +selected.dataset.qty;
-  const id  = VARIANTS[qty];
+  const id = VARIANTS[selected.dataset.qty];
 
   if (!id || String(id).startsWith('REPLACE_')){
-    console.warn('Set VARIANTS[' + qty + '] to a real Shopify variant ID.');
+    console.warn('Set VARIANTS["' + selected.dataset.qty + '"] to a real Shopify variant ID.');
     location.hash = '#buy';
     return;
   }
