@@ -9,11 +9,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* =========================================================
-   PRICES ARE IN THE HTML (visible without JS).
-   CUTOFF DATE + SHOPIFY VARIANT IDS ARE AT THE TOP OF <script>.
+/* =========================================================================
+   THE BLACK REAPER — single-file storefront
+   Prices live in the HTML so the page is right before JS runs.
+   CUTOFF, VARIANTS and REVIEWS are at the top of the <script> at the foot.
    Media slots are marked  <!-- ASSET: ... -->  throughout.
-   ========================================================= */
+   ========================================================================= */
 
 :root{
   --paper:#F5F2EC;
@@ -22,13 +23,13 @@
   --ink:#14121A;
   --ink-2:#544E5C;
   --ink-3:#877F91;
-  --night:#0D0D0F;       /* dark bands */
+  --night:#0D0D0F;
   --night-2:#26262A;
   --rule:#E2DBD1;
   --rule-2:#CBC1B4;
   --accent:#F5C518;      /* yellow — only ever a fill, with black type on it */
-  --accent-ink:#191400;  /* type that sits on the yellow */
-  --accent-dark:#8A6A00; /* yellow-derived type that stays legible on paper */
+  --accent-ink:#191400;
+  --accent-dark:#8A6A00; /* the one yellow-derived type colour safe on paper */
   --accent-soft:#FCF6E0;
   --green:#1D6B45;
 
@@ -57,129 +58,138 @@ h1,h2,h3{margin:0;font-family:var(--display);font-weight:700;line-height:1.1;let
 h2{font-size:clamp(27px,3.4vw,40px)}
 h3{font-size:19px}
 p{margin:0}
-.lede{color:var(--ink-2);max-width:60ch;font-size:clamp(15.5px,1.4vw,17px);font-family:var(--sans)}
-.eyebrow{
-  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--accent-dark);margin:0 0 12px;font-weight:500;
-}
+.lede{color:var(--ink-2);max-width:60ch;font-size:clamp(15.5px,1.4vw,17px)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent-dark);margin:0 0 12px;font-weight:500}
 .section{padding:clamp(46px,6.5vw,86px) 0;border-top:1px solid var(--rule)}
+.sec-head{display:flex;flex-wrap:wrap;gap:14px 40px;align-items:flex-end;justify-content:space-between}
 
 .slot{
   position:relative;width:100%;background:var(--sand);
   border:1px dashed var(--rule-2);display:grid;place-items:center;text-align:center;
   color:var(--ink-3);font-family:var(--mono);font-size:11px;line-height:1.7;
-  letter-spacing:.05em;padding:20px;min-height:150px;
+  letter-spacing:.05em;padding:20px;min-height:140px;
 }
 .slot span{max-width:28ch}
 
 /* ============ ANNOUNCEMENT ============ */
 .bar{background:var(--night);color:#EFEFEC}
-.bar-in{
-  display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:center;
-  padding:10px var(--pad);text-align:center;font-size:13.5px;
-}
-.bar b{color:#F5C518;font-weight:600}
-.clock{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:#F5C518}
+.bar-in{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:center;
+  padding:10px var(--pad);text-align:center;font-size:13.5px}
+.bar b{color:var(--accent);font-weight:600}
+.clock{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--accent)}
 
 /* ============ HEADER ============ */
 .hdr{background:var(--paper);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:50}
 .hdr-in{display:flex;align-items:center;justify-content:space-between;gap:18px;height:64px}
-.logo{
-  font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.03em;
-  text-decoration:none;white-space:nowrap;
-}
+.logo{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.03em;
+  text-decoration:none;white-space:nowrap}
 .logo i{font-style:normal;color:var(--accent-dark)}
 .hdr-links{display:none;gap:26px;font-size:14px;color:var(--ink-2)}
 .hdr-links a{text-decoration:none}
 .hdr-links a:hover{color:var(--accent-dark)}
-@media(min-width:900px){.hdr-links{display:flex}}
+@media(min-width:960px){.hdr-links{display:flex}}
 .hdr-note{display:none;font-size:12.5px;color:var(--ink-3)}
 @media(min-width:640px){.hdr-note{display:block}}
 
 /* ============ BUTTONS ============ */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:16px 30px;border:0;border-radius:4px;text-decoration:none;
   font-size:16px;font-weight:700;letter-spacing:-.01em;
-  background:var(--night);color:#fff;transition:background .15s;
-}
+  background:var(--night);color:#fff;transition:background .15s}
 .btn:hover{background:var(--night-2)}
-.btn-block{width:100%;padding:19px 24px;font-size:17px}
+.btn-block{width:100%;padding:20px 24px;font-size:17px}
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
 .btn-accent:hover{background:#FFD22E}
+.btn-line{background:transparent;color:var(--ink);border:1px solid var(--rule-2)}
+.btn-line:hover{background:var(--sand)}
 
 /* ============ PDP ============ */
 .pdp{padding:clamp(22px,3.4vw,42px) 0 clamp(40px,5vw,64px)}
 .pdp-grid{display:grid;gap:clamp(26px,4vw,52px)}
-@media(min-width:980px){.pdp-grid{grid-template-columns:minmax(0,1.08fr) minmax(410px,.92fr);align-items:start}}
+@media(min-width:1000px){.pdp-grid{grid-template-columns:minmax(0,1.06fr) minmax(420px,.94fr);align-items:start}}
 
 .gallery{display:grid;gap:10px}
-@media(min-width:980px){.gallery{position:sticky;top:84px}}
+@media(min-width:1000px){.gallery{position:sticky;top:84px}}
 .gal-main{aspect-ratio:1;background:var(--card);border:1px solid var(--rule);border-radius:5px;overflow:hidden}
 .gal-main .slot{height:100%;border:0;background:var(--card)}
-.gal-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.gal-thumbs button{
-  aspect-ratio:1;background:var(--card);border:1px solid var(--rule);border-radius:5px;
-  padding:6px;font-family:var(--mono);font-size:9.5px;line-height:1.4;color:var(--ink-3);
-}
+.gal-thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.gal-thumbs button{aspect-ratio:1;background:var(--card);border:1px solid var(--rule);border-radius:5px;
+  padding:5px;font-family:var(--mono);font-size:9px;line-height:1.4;color:var(--ink-3)}
 .gal-thumbs button[aria-selected="true"]{border-color:var(--ink);color:var(--ink)}
 
-.buy h1{font-size:clamp(28px,3.4vw,40px);margin-bottom:10px}
+.buy h1{font-size:clamp(29px,3.5vw,42px);margin-bottom:8px}
 .buy-sub{color:var(--ink-2);font-size:15.5px;max-width:46ch}
-.stock{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:13px;font-weight:600;color:var(--green)}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-top:14px;font-size:13px}
+.stock{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--green)}
 .stock::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.meta-sep{color:var(--rule-2)}
+.meta-row .lite{color:var(--ink-3)}
 
-.pick-label{margin:26px 0 10px;font-size:13px;font-weight:600;color:var(--ink-2)}
+/* --- options --- */
+.pick-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:26px 0 10px}
+.pick-head p{font-size:13.5px;font-weight:700}
+.pick-head span{font-size:12.5px;color:var(--ink-3)}
 .tiers{display:grid;gap:9px}
-.tier{
-  position:relative;display:grid;grid-template-columns:20px 1fr auto;gap:14px;align-items:center;
+.tier{position:relative;display:grid;grid-template-columns:20px 1fr auto;gap:14px;
   width:100%;text-align:left;padding:16px;background:var(--card);
-  border:1px solid var(--rule);border-radius:6px;transition:border-color .15s,box-shadow .15s;
-}
+  border:1px solid var(--rule);border-radius:6px;transition:border-color .15s,box-shadow .15s}
 .tier:hover{border-color:var(--rule-2)}
 .tier[aria-checked="true"]{border-color:var(--night);box-shadow:inset 0 0 0 1px var(--night);background:var(--accent-soft)}
-.tier .dot{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--rule-2);display:grid;place-items:center;background:#fff}
+.tier .dot{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--rule-2);
+  display:grid;place-items:center;background:#fff;margin-top:2px}
 .tier[aria-checked="true"] .dot{border-color:var(--night)}
 .tier[aria-checked="true"] .dot::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--night)}
-.tier-name{font-size:15.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tier-name{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tier-unit{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+.tier-inc{display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--rule);
+  font-size:12.5px;color:var(--ink-2);line-height:1.65}
+.tier[aria-checked="true"] .tier-inc{display:block}
+.tier-inc b{font-weight:600;color:var(--ink)}
 .tier-price{text-align:right;font-variant-numeric:tabular-nums}
-.tier-now{font-size:17px;font-weight:700}
-.tier-was{font-size:12.5px;color:var(--ink-3);text-decoration:line-through;margin-left:6px;font-weight:400}
-.tier-save{display:block;font-size:12px;font-weight:700;color:var(--accent-dark);margin-top:2px}
+.tier-now{font-size:17px;font-weight:700;white-space:nowrap}
+.tier-was{display:block;font-size:12.5px;color:var(--ink-3);text-decoration:line-through;font-weight:400;margin-top:1px}
+.tier-save{display:inline-block;font-size:11px;font-weight:700;margin-top:5px;
+  background:var(--accent);color:var(--accent-ink);padding:2px 7px;border-radius:3px;white-space:nowrap}
+.flag{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 7px;border-radius:3px;background:var(--accent);color:var(--accent-ink)}
 
-/* the bundle gets the premium treatment, not a third radio button */
 .tier-special{background:var(--night);border-color:var(--night);color:#F2F2EF;padding-top:22px;margin-top:9px}
 .tier-special:hover{border-color:var(--night-2)}
-.tier-special .dot{background:transparent;border-color:rgba(241,235,245,.45)}
+.tier-special .dot{background:transparent;border-color:rgba(240,240,237,.45)}
 .tier-special .tier-unit{color:#9C9C95}
 .tier-special .tier-was{color:#83837C}
-.tier-special .tier-save{color:#F5C518}
+.tier-special .tier-inc{border-top-color:rgba(240,240,237,.18);color:#B9B9B2}
+.tier-special .tier-inc b{color:#fff}
 .tier-special[aria-checked="true"]{background:var(--night-2);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .tier-special[aria-checked="true"] .dot{border-color:var(--accent)}
 .tier-special[aria-checked="true"] .dot::after{background:var(--accent)}
-.ribbon{
-  position:absolute;top:-1px;left:16px;transform:translateY(-50%);
+.ribbon{position:absolute;top:-1px;left:16px;transform:translateY(-50%);
   font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
-  background:var(--accent);color:var(--accent-ink);padding:3px 9px;border-radius:3px;
-}
-.flag{
-  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  padding:3px 7px;border-radius:3px;background:var(--accent);color:var(--accent-ink);
-}
+  background:var(--accent);color:var(--accent-ink);padding:3px 9px;border-radius:3px}
 
-.checkout{margin-top:20px;display:grid;gap:12px}
-.total-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:14px;color:var(--ink-2)}
-.total-row b{font-family:var(--display);font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
+/* --- order summary + checkout --- */
+.summary{margin-top:20px;border:1px solid var(--rule);border-radius:6px;background:var(--card);overflow:hidden}
+.summary .row{display:flex;justify-content:space-between;gap:16px;padding:11px 16px;font-size:13.5px;
+  color:var(--ink-2);border-bottom:1px solid var(--rule)}
+.summary .row span:last-child{font-variant-numeric:tabular-nums;color:var(--ink)}
+.summary .row.free span:last-child{color:var(--green);font-weight:600}
+.summary .row.save span:last-child{font-weight:700}
+.summary .row.total{border-bottom:0;background:#FBF9F6;padding:15px 16px;align-items:baseline}
+.summary .row.total span:first-child{font-weight:700;color:var(--ink);font-size:15px}
+.summary .row.total b{font-family:var(--display);font-size:26px;letter-spacing:-.02em}
+
+.checkout{margin-top:14px;display:grid;gap:11px}
 .pay{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;color:var(--ink-3)}
-.ship-note{
-  display:flex;gap:10px;padding:13px 15px;border-radius:5px;
-  background:var(--accent-soft);border:1px solid #EBDCA4;font-size:13.5px;color:#5A4600;
-}
+.ship-note{display:flex;gap:10px;padding:13px 15px;border-radius:5px;
+  background:var(--accent-soft);border:1px solid #EBDCA4;font-size:13.5px;color:#5A4600}
 .ship-note b{color:var(--accent-dark)}
+.eta{display:flex;gap:10px;align-items:baseline;padding:13px 15px;border-radius:5px;
+  background:var(--sand);font-size:13.5px;color:var(--ink-2)}
+.eta b{color:var(--ink);font-weight:700}
 
-.assure{margin-top:22px;border:1px solid var(--rule);border-radius:6px;background:var(--card)}
-.assure div{display:flex;gap:12px;padding:14px 16px;font-size:13.5px;color:var(--ink-2);border-bottom:1px solid var(--rule)}
+.assure{margin-top:20px;border:1px solid var(--rule);border-radius:6px;background:var(--card)}
+.assure div{display:flex;gap:12px;padding:13px 16px;font-size:13.5px;color:var(--ink-2);border-bottom:1px solid var(--rule)}
 .assure div:last-child{border-bottom:0}
 .assure b{color:var(--ink);font-weight:600}
 .assure .ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--sand);
@@ -187,8 +197,10 @@ p{margin:0}
 
 /* ============ TRUST STRIP ============ */
 .strip{background:var(--sand);border-block:1px solid var(--rule)}
-.strip-in{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:22px;padding:26px 0;font-size:13.5px;color:var(--ink-2)}
-.strip b{display:block;font-family:var(--display);color:var(--ink);font-weight:700;font-size:15px;margin-bottom:3px;letter-spacing:-.01em}
+.strip-in{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:22px;padding:26px 0;
+  font-size:13.5px;color:var(--ink-2)}
+.strip b{display:block;font-family:var(--display);color:var(--ink);font-weight:700;font-size:15px;
+  margin-bottom:3px;letter-spacing:-.01em}
 
 /* ============ STEPS ============ */
 .steps{display:grid;gap:clamp(18px,2.6vw,26px);margin-top:34px}
@@ -202,23 +214,83 @@ p{margin:0}
 .react-grid{display:grid;gap:12px;margin-top:34px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .react-grid .slot{aspect-ratio:9/16;min-height:0;border-radius:5px}
 
-/* ============ THE BUNDLE (dark premium band) ============ */
-.deal{background:var(--night);color:#F0F0ED;border-block:1px solid var(--night)}
-.deal .eyebrow{color:#F5C518}
+/* ============ BUNDLE BAND ============ */
+.deal{background:var(--night);color:#F0F0ED}
+.deal .eyebrow{color:var(--accent)}
 .deal h2{color:#fff}
 .deal .lede{color:#A6A69F}
 .deal-grid{display:grid;gap:clamp(28px,4vw,54px);align-items:center;padding:clamp(46px,6.5vw,86px) 0}
 @media(min-width:940px){.deal-grid{grid-template-columns:1.05fr .95fr}}
 .deal .slot{background:#141416;border-color:rgba(240,240,237,.22);color:#87877F;aspect-ratio:4/3;min-height:0;border-radius:7px}
-.deal-list{display:grid;gap:0;margin:26px 0 28px;border-top:1px solid rgba(240,240,237,.16)}
+.deal-list{margin:26px 0 28px;border-top:1px solid rgba(240,240,237,.16)}
 .deal-list div{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:baseline;
   padding:14px 0;border-bottom:1px solid rgba(240,240,237,.16);font-size:15px}
-.deal-list .qty{font-family:var(--mono);font-size:12.5px;color:#F5C518}
+.deal-list .qty{font-family:var(--mono);font-size:12.5px;color:var(--accent)}
 .deal-list .val{font-family:var(--mono);font-size:13px;color:#87877F;font-variant-numeric:tabular-nums}
 .deal-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px}
 .deal-sum b{font-family:var(--display);font-size:34px;color:#fff;letter-spacing:-.02em}
 .deal-sum s{color:#87877F;font-size:17px}
-.deal-sum em{font-style:normal;font-weight:700;color:#F5C518;font-size:14px}
+.deal-sum em{font-style:normal;font-weight:700;background:var(--accent);color:var(--accent-ink);
+  padding:3px 9px;border-radius:3px;font-size:13px}
+
+/* ============ DETAIL: CLOSE-UPS + WHAT'S IN THE BOX ============ */
+.detail-grid{display:grid;gap:clamp(26px,4vw,48px);margin-top:36px;align-items:start}
+@media(min-width:940px){.detail-grid{grid-template-columns:1.25fr .75fr}}
+.closeups{display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}
+.closeups figure{margin:0;display:grid;gap:8px}
+.closeups .slot{aspect-ratio:1;min-height:0;border-radius:6px}
+.closeups figcaption{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+.closeups figcaption b{display:block;color:var(--ink);font-weight:600;font-size:13.5px}
+.closeups .wide{grid-column:1 / -1}
+.closeups .wide .slot{aspect-ratio:16/9}
+
+.box{background:var(--card);border:1px solid var(--rule);border-radius:7px;padding:22px;position:sticky;top:84px}
+.box h3{margin-bottom:4px}
+.box .sub{font-size:13px;color:var(--ink-3);margin-bottom:16px}
+.box ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.box li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline;
+  padding:12px 0;border-bottom:1px solid var(--rule);font-size:14px}
+.box .n{font-family:var(--mono);font-size:12px;color:var(--accent-dark)}
+.box li small{display:block;color:var(--ink-3);font-size:12.5px;margin-top:2px}
+.box .foot-note{margin-top:16px;font-size:12.5px;color:var(--ink-3);line-height:1.6}
+
+/* ============ REVIEWS ============ */
+.rev-summary{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;margin-top:14px}
+.stars{display:inline-flex;gap:2px;color:var(--accent-dark);font-size:15px;letter-spacing:1px}
+.rev-count{font-size:13.5px;color:var(--ink-3)}
+.rev-grid{display:grid;gap:14px;margin-top:32px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.rev{background:var(--card);border:1px solid var(--rule);border-radius:7px;overflow:hidden;display:flex;flex-direction:column}
+.rev .shot{aspect-ratio:4/3;background:var(--sand)}
+.rev .shot img{width:100%;height:100%;object-fit:cover}
+.rev .body{padding:16px;display:grid;gap:9px}
+.rev .stars{font-size:13px}
+.rev p{font-size:14px;color:var(--ink-2);line-height:1.6}
+.rev .who{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12.5px;color:var(--ink-3);
+  border-top:1px solid var(--rule);padding-top:10px}
+.rev .who b{color:var(--ink);font-weight:600;font-size:13px}
+.verified{display:inline-flex;align-items:center;gap:4px;color:var(--green);font-weight:600}
+.rev-empty{margin-top:30px;border:1px dashed var(--rule-2);border-radius:7px;background:var(--sand);
+  padding:34px 24px;text-align:center;color:var(--ink-3);font-family:var(--mono);font-size:12px;line-height:1.9}
+.rev-empty b{display:block;font-family:var(--sans);font-size:15px;color:var(--ink);margin-bottom:8px;font-weight:600}
+
+/* ============ FAQ + UGC ============ */
+.faq-grid{display:grid;gap:clamp(24px,4vw,44px);margin-top:36px;align-items:start}
+@media(min-width:940px){.faq-grid{grid-template-columns:minmax(280px,.72fr) 1.28fr}}
+.faq-media{display:grid;gap:12px}
+@media(min-width:940px){.faq-media{position:sticky;top:84px}}
+.faq-media .slot{aspect-ratio:9/16;min-height:0;border-radius:7px}
+.faq-cap{font-size:12.5px;color:var(--ink-3);line-height:1.6}
+.faq-cap b{color:var(--ink);font-weight:600}
+.faq-list{background:var(--card);border:1px solid var(--rule);border-radius:7px}
+.faq-item{border-bottom:1px solid var(--rule)}
+.faq-item:last-child{border-bottom:0}
+.faq-q{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;width:100%;
+  background:none;border:0;padding:18px 20px;text-align:left;font-size:15.5px;font-weight:600}
+.faq-q:hover{color:var(--accent-dark)}
+.faq-q .pm{color:var(--accent-dark);flex:none;font-weight:700;transition:transform .18s}
+.faq-q[aria-expanded="true"] .pm{transform:rotate(45deg)}
+.faq-a{display:none;padding:0 20px 20px;color:var(--ink-2);font-size:14.5px;max-width:72ch}
+.faq-a.open{display:block}
 
 /* ============ SPECS ============ */
 .spec-note{margin-top:14px;font-size:12.5px;color:var(--accent-dark);font-family:var(--mono)}
@@ -232,40 +304,33 @@ p{margin:0}
 .spec-table td{padding:13px 16px;font-size:14px}
 .fill{font-family:var(--mono);font-size:12px;color:var(--accent-dark);background:var(--accent-soft);padding:2px 6px;border-radius:3px}
 
-/* ============ FAQ ============ */
-.faq-list{margin-top:30px;background:var(--card);border:1px solid var(--rule);border-radius:7px}
-.faq-item{border-bottom:1px solid var(--rule)}
-.faq-item:last-child{border-bottom:0}
-.faq-q{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;width:100%;
-  background:none;border:0;padding:18px 20px;text-align:left;font-size:15.5px;font-weight:600}
-.faq-q:hover{color:var(--accent-dark)}
-.faq-q .pm{color:var(--accent-dark);flex:none;font-weight:700;transition:transform .18s}
-.faq-q[aria-expanded="true"] .pm{transform:rotate(45deg)}
-.faq-a{display:none;padding:0 20px 20px;color:var(--ink-2);font-size:14.5px;max-width:72ch}
-.faq-a.open{display:block}
+/* ============ CLOSER ============ */
+.closer{background:var(--night);color:#F0F0ED;text-align:center;padding:clamp(52px,7vw,92px) 0}
+.closer h2{color:#fff;max-width:18ch;margin:0 auto}
+.closer p{color:#A6A69F;max-width:52ch;margin:16px auto 0}
+.closer .btn{margin-top:28px}
+.closer small{display:block;margin-top:16px;color:#87877F;font-size:12.5px}
 
 /* ============ FOOTER ============ */
-.foot{background:var(--night);color:#C2C2BB;padding:46px 0 110px}
-.foot-in{display:flex;flex-wrap:wrap;gap:22px 44px;justify-content:space-between;align-items:flex-start}
+.foot{background:var(--night);color:#C2C2BB;padding:0 0 110px;border-top:1px solid rgba(240,240,237,.14)}
+.foot-in{display:flex;flex-wrap:wrap;gap:22px 44px;justify-content:space-between;align-items:flex-start;padding-top:44px}
 .foot .logo{color:#fff}
 .foot small{display:block;font-size:12.5px;color:#87877F;margin-top:10px;max-width:46ch;line-height:1.7}
 .foot-links{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13.5px}
 .foot-links a{text-decoration:none;color:#C2C2BB}
-.foot-links a:hover{color:#F5C518}
+.foot-links a:hover{color:var(--accent)}
 
 /* ============ STICKY MOBILE BAR ============ */
-.mbar{
-  position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:12px;align-items:center;
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:12px;align-items:center;
   padding:10px var(--pad) calc(10px + env(safe-area-inset-bottom));
   background:var(--card);border-top:1px solid var(--rule-2);box-shadow:0 -4px 18px rgba(13,13,15,.10);
-  transform:translateY(115%);transition:transform .25s ease;
-}
+  transform:translateY(115%);transition:transform .25s ease}
 .mbar.show{transform:translateY(0)}
 .mbar-info{flex:1;min-width:0}
 .mbar-info b{display:block;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
 .mbar-info span{display:block;font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mbar .btn{flex:none;padding:14px 22px;font-size:15px}
-@media(min-width:980px){.mbar{display:none}}
+@media(min-width:1000px){.mbar{display:none}}
 
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -286,7 +351,8 @@ p{margin:0}
       <a href="#how">How it works</a>
       <a href="#reactions">See it running</a>
       <a href="#bundle">The bundle</a>
-      <a href="#specs">Specs</a>
+      <a href="#detail">In the box</a>
+      <a href="#reviews">Reviews</a>
       <a href="#faq">FAQ</a>
     </nav>
     <span class="hdr-note">Free US shipping · 30-day returns</span>
@@ -299,13 +365,14 @@ p{margin:0}
 
     <div class="gallery">
       <div class="gal-main">
-        <!-- ASSET: main media. First item is the real night video.
+        <!-- ASSET: main media. Item 1 is the real night video.
              <video src="assets/night-loop.mp4" poster="assets/night-poster.jpg" autoplay muted loop playsinline></video> -->
         <div class="slot"><span id="gal-label">Night video — the unit running, real footage, 8–12s loop</span></div>
       </div>
       <div class="gal-thumbs" role="tablist" aria-label="Product media">
         <button role="tab" aria-selected="true"  data-label="Night video — the unit running, real footage, 8–12s loop">Video</button>
-        <button role="tab" aria-selected="false" data-label="Photo — lantern and hood, close up at night">Close up</button>
+        <button role="tab" aria-selected="false" data-label="Photo — lantern and hood, close up at night">Lantern</button>
+        <button role="tab" aria-selected="false" data-label="Photo — the soul stream across the grass">Souls</button>
         <button role="tab" aria-selected="false" data-label="Photo — the unit in daylight, unlit, exactly as it arrives">Daylight</button>
         <button role="tab" aria-selected="false" data-label="Photo — beside a person, for scale">Scale</button>
       </div>
@@ -315,51 +382,75 @@ p{margin:0}
       <p class="eyebrow">Solar Soul Lantern</p>
       <h1>The Black Reaper</h1>
       <p class="buy-sub">A hooded reaper lifts a lantern and a stream of glowing souls pours out across your lawn. Solar powered. Stake it in and walk away.</p>
-      <p class="stock">In stock · ships within 24 hours</p>
 
-      <p class="pick-label">Choose your setup:</p>
+      <div class="meta-row">
+        <span class="stock">In stock</span>
+        <span class="meta-sep">·</span><span class="lite">Ships within 24 hours</span>
+        <span class="meta-sep">·</span><span class="lite">Free US shipping</span>
+      </div>
+
+      <div class="pick-head">
+        <p>Choose your setup</p>
+        <span>All options ship free</span>
+      </div>
+
       <div class="tiers" role="radiogroup" aria-label="Choose your setup">
 
-        <button class="tier" role="radio" aria-checked="false" data-qty="1" data-price="129.99" data-label="1 Reaper" data-sub="">
+        <button class="tier" role="radio" aria-checked="false"
+                data-key="1" data-price="129.99" data-compare="129.99" data-save="0" data-label="1 Reaper">
           <span class="dot"></span>
           <span>
             <span class="tier-name">1 Reaper</span>
             <span class="tier-unit">One figure by the walkway</span>
+            <span class="tier-inc"><b>You get:</b> 1 reaper figure · 1 ground stake with solar panel · 1 soul stream</span>
           </span>
           <span class="tier-price"><span class="tier-now">$129.99</span></span>
         </button>
 
-        <button class="tier" role="radio" aria-checked="true" data-qty="2" data-price="159.99" data-label="2 Reapers" data-sub="Save $100">
+        <button class="tier" role="radio" aria-checked="true"
+                data-key="2" data-price="159.99" data-compare="259.98" data-save="99.99" data-label="2 Reapers">
           <span class="dot"></span>
           <span>
             <span class="tier-name">2 Reapers <em class="flag">Most people pick this</em></span>
             <span class="tier-unit">$80.00 each · one on each side of the drive</span>
+            <span class="tier-inc"><b>You get:</b> 2 reaper figures · 2 ground stakes with solar panels · 2 soul streams</span>
           </span>
           <span class="tier-price">
-            <span class="tier-now">$159.99</span><span class="tier-was">$259.98</span>
-            <span class="tier-save">You save $100</span>
+            <span class="tier-now">$159.99</span>
+            <span class="tier-was">$259.98</span>
+            <span class="tier-save">Save $100</span>
           </span>
         </button>
 
-        <button class="tier tier-special" role="radio" aria-checked="false" data-qty="bundle" data-price="199.99" data-label="Haunted Yard Bundle" data-sub="Save $150">
+        <button class="tier tier-special" role="radio" aria-checked="false"
+                data-key="bundle" data-price="199.99" data-compare="349.97" data-save="149.98" data-label="Haunted Yard Bundle">
           <span class="ribbon">Halloween Special</span>
           <span class="dot"></span>
           <span>
             <span class="tier-name">2 Reapers + Haunted Projector</span>
             <span class="tier-unit">Souls on the lawn, shadows on the house</span>
+            <span class="tier-inc"><b>You get:</b> everything in the 2-pack · 1 haunted projector with auto-focus · power cable</span>
           </span>
           <span class="tier-price">
-            <span class="tier-now">$199.99</span><span class="tier-was">$349.97</span>
-            <span class="tier-save">You save $150</span>
+            <span class="tier-now">$199.99</span>
+            <span class="tier-was">$349.97</span>
+            <span class="tier-save">Save $150</span>
           </span>
         </button>
 
       </div>
 
+      <div class="summary">
+        <div class="row"><span id="sum-label">2 Reapers</span><span id="sum-sub">$259.98</span></div>
+        <div class="row save" id="sum-save-row"><span>Bundle discount</span><span id="sum-save">−$99.99</span></div>
+        <div class="row free"><span>Shipping</span><span>Free</span></div>
+        <div class="row total"><span>Total</span><b id="total">$159.99</b></div>
+      </div>
+
       <div class="checkout">
-        <div class="total-row"><span>Total today</span><b id="total">$159.99</b></div>
         <button class="btn btn-block" id="add">Add to cart — <span id="add-qty">2 Reapers</span></button>
         <p class="pay">Apple&nbsp;Pay · Google&nbsp;Pay · Shop&nbsp;Pay · Visa · Mastercard · Amex</p>
+        <div class="eta"><span>Delivery</span><span>Ordered today, it leaves the warehouse <b>within 24 hours</b> and lands <b id="eta-window">—</b>.</span></div>
         <div class="ship-note">
           <span>Order within <b id="deliver-left">—</b> and it arrives before the 31st. After <b id="deliver-date">—</b> we stop promising Halloween delivery.</span>
         </div>
@@ -432,7 +523,7 @@ p{margin:0}
   </div>
 </section>
 
-<!-- ============ THE BUNDLE ============ -->
+<!-- ============ BUNDLE BAND ============ -->
 <section class="deal" id="bundle">
   <div class="wrap deal-grid">
     <div>
@@ -445,14 +536,156 @@ p{margin:0}
         <div><span class="qty">×1</span><span>Haunted Projector, plug-in, auto-focus</span><span class="val">$89.99</span></div>
       </div>
 
-      <div class="deal-sum">
-        <b>$199.99</b><s>$349.97</s><em>You save $150</em>
-      </div>
+      <div class="deal-sum"><b>$199.99</b><s>$349.97</s><em>Save $150</em></div>
       <p style="color:#87877F;font-size:13px;margin-top:10px">Ships together in one box. Same 30-day return.</p>
-      <a class="btn" href="#buy" style="margin-top:24px">Get the bundle</a>
+      <a class="btn btn-accent" href="#buy" style="margin-top:24px">Get the bundle</a>
     </div>
     <!-- ASSET: night photo — two reapers on the lawn, projection on the house behind -->
     <div class="slot"><span>Night photo — two reapers on the lawn, projection across the house</span></div>
+  </div>
+</section>
+
+<!-- ============ CLOSE-UPS + WHAT'S IN THE BOX ============ -->
+<section class="section" id="detail">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Up close</p>
+        <h2>What you're actually getting.</h2>
+      </div>
+      <p class="lede" style="max-width:38ch">Shot in the yard, not in a studio. If it has a seam, you'll see the seam.</p>
+    </div>
+
+    <div class="detail-grid">
+      <div class="closeups">
+        <!-- ASSET: product close-ups. Macro, natural light, no retouching. -->
+        <figure class="wide">
+          <div class="slot"><span>Placement — the reaper at the end of a real front walk, dusk</span></div>
+          <figcaption><b>Where it goes</b>Open sky above the panel, soil soft enough to take the stake.</figcaption>
+        </figure>
+        <figure>
+          <div class="slot"><span>Close-up — the lantern housing and glass</span></div>
+          <figcaption><b>The lantern</b>Where the stream starts.</figcaption>
+        </figure>
+        <figure>
+          <div class="slot"><span>Close-up — hood, shoulders, hand detail</span></div>
+          <figcaption><b>The figure</b>Layered fabric over a shaped frame.</figcaption>
+        </figure>
+        <figure>
+          <div class="slot"><span>Close-up — solar panel and stake joint</span></div>
+          <figcaption><b>The stake</b>Panel mounts above the soil line.</figcaption>
+        </figure>
+        <figure>
+          <div class="slot"><span>Close-up — a single soul face lit, held in hand</span></div>
+          <figcaption><b>The souls</b>Individually lit, not a printed strip.</figcaption>
+        </figure>
+      </div>
+
+      <aside class="box">
+        <h3>What's in the box</h3>
+        <p class="sub">Per reaper. The bundle adds the projector kit.</p>
+        <ul>
+          <li><span class="n">01</span><span>Reaper figure, folded<small>Shake it out, it holds its shape</small></span></li>
+          <li><span class="n">02</span><span>Ground stake with solar panel<small><span class="fill">[ STAKE LENGTH ]</span> below the soil line</small></span></li>
+          <li><span class="n">03</span><span>Lantern with soul stream attached<small>Pre-wired, nothing to connect</small></span></li>
+          <li><span class="n">04</span><span>Lantern arm<small>Clips on, aims where you point it</small></span></li>
+          <li><span class="n">05</span><span>Setup card<small>Four steps, one side</small></span></li>
+        </ul>
+        <p class="foot-note">No batteries, no adapter, no app. The reaper is solar and needs nothing you don't already have in the yard.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REVIEWS ============ -->
+<section class="section" id="reviews">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Reviews</p>
+        <h2>From people with it in the ground.</h2>
+        <div class="rev-summary" id="rev-summary" hidden>
+          <span class="stars" id="rev-stars"></span>
+          <span class="rev-count" id="rev-count"></span>
+        </div>
+      </div>
+      <p class="lede" style="max-width:36ch">Verified orders only. We don't seed reviews and we don't remove the bad ones.</p>
+    </div>
+    <div class="rev-grid" id="rev-grid" hidden></div>
+    <div class="rev-empty" id="rev-empty">
+      <b>No reviews yet — this is the first season.</b>
+      Add real ones to the REVIEWS array at the top of the script<br>and this block is replaced by the grid automatically.
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ + UGC ============ -->
+<section class="section" id="faq">
+  <div class="wrap">
+    <p class="eyebrow">Questions</p>
+    <h2>Everything people ask before ordering.</h2>
+
+    <div class="faq-grid">
+      <div class="faq-media">
+        <!-- ASSET: vertical UGC clip, someone setting it up and talking to camera -->
+        <div class="slot"><span>UGC video — setup and first light, vertical, real customer</span></div>
+        <p class="faq-cap"><b>Setup, start to finish.</b> Unedited, one take, from box to lit. If you only watch one thing on this page, watch this.</p>
+      </div>
+
+      <div class="faq-list">
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="true"><span>How long does it stay lit on one day of sun?</span><span class="pm">+</span></button>
+          <div class="faq-a open"><span class="fill">[ RUNTIME HOURS ]</span> on a full charge in clear conditions. An overcast day gives you a shorter night — put it where the panel gets direct afternoon sun.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Can it stay outside in the rain?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes. The reaper is built for outdoor use and rated <span class="fill">[ IP RATING ]</span>. Rain is fine. Standing water, snow and freezing conditions are not — bring it in ahead of a hard storm. The projector in the bundle is <span class="fill">[ CONFIRM INDOOR / OUTDOOR ]</span>.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will it blow over?</span><span class="pm">+</span></button>
+          <div class="faq-a">The stake goes <span class="fill">[ STAKE LENGTH ]</span> into soil, which holds through normal autumn wind. In an exposed yard or before a storm, pull it out and re-stake afterwards.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Can I put it in mulch, gravel or a planter?</span><span class="pm">+</span></button>
+          <div class="faq-a">Soil and lawn hold best. Mulch and loose gravel work if you can reach firm ground underneath. For a hard surface you'll need a weighted base — the stake alone won't hold it on concrete.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>How long does setup take?</span><span class="pm">+</span></button>
+          <div class="faq-a">About four minutes for a reaper — shake it out, push the stake in, clip on the lantern arm. The projector is faster: set it down, plug it in, pick a scene.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Does the projector need to be plugged in?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes. The reapers are solar and need nothing. The projector runs on mains power with a <span class="fill">[ CABLE LENGTH ]</span> cable, so it wants a porch outlet or an outdoor extension lead.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will it arrive before Halloween?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes if you order by <b class="js-cutoff">—</b>. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st — we'd rather tell you no than take your money on a maybe.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Does the reaper move or make noise?</span><span class="pm">+</span></button>
+          <div class="faq-a">No. It's completely silent and it doesn't animate. The whole effect is light. That's on purpose — no motor to break and nothing waking the street at 2am.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Can I store it and use it again next year?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes. Pull the stake, fold the figure, keep it dry and out of direct sun. It packs back into the box it arrived in.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What if it doesn't look like the video?</span><span class="pm">+</span></button>
+          <div class="faq-a">Send it back within 30 days and we refund you. Every clip on this page is the actual product filmed at night — no renders, no composites, no enhancement.</div>
+        </div>
+
+      </div>
+    </div>
   </div>
 </section>
 
@@ -499,62 +732,15 @@ p{margin:0}
   </div>
 </section>
 
-<!-- ============ FAQ ============ -->
-<section class="section" id="faq">
+<!-- ============ CLOSER ============ -->
+<section class="closer">
   <div class="wrap">
-    <p class="eyebrow">Questions</p>
-    <h2>Everything people ask before ordering.</h2>
-    <div class="faq-list">
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>How long does it stay lit on one day of sun?</span><span class="pm">+</span></button>
-        <div class="faq-a"><span class="fill">[ RUNTIME HOURS ]</span> on a full charge in clear conditions. An overcast day gives you a shorter night — put it where the panel gets direct afternoon sun.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>Can it stay outside in the rain?</span><span class="pm">+</span></button>
-        <div class="faq-a">Yes. The reaper is built for outdoor use and rated <span class="fill">[ IP RATING ]</span>. Rain is fine. Standing water, snow and freezing conditions are not — bring it in ahead of a hard storm. The projector in the bundle is <span class="fill">[ CONFIRM INDOOR / OUTDOOR ]</span>.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>Will it blow over?</span><span class="pm">+</span></button>
-        <div class="faq-a">The stake goes <span class="fill">[ STAKE LENGTH ]</span> into soil, which holds through normal autumn wind. In an exposed yard or before a storm, pull it out and re-stake afterwards.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>How long does setup take?</span><span class="pm">+</span></button>
-        <div class="faq-a">About four minutes for a reaper — unfold it, push the stake in, aim the lantern arm. The projector is faster: set it down, plug it in, pick a scene.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>Does the projector need to be plugged in?</span><span class="pm">+</span></button>
-        <div class="faq-a">Yes. The reapers are solar and need nothing. The projector runs on mains power with a <span class="fill">[ CABLE LENGTH ]</span> cable, so it wants a porch outlet or an outdoor extension lead.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>Will it arrive before Halloween?</span><span class="pm">+</span></button>
-        <div class="faq-a">Yes if you order by <b class="js-cutoff">—</b>. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st — we'd rather tell you no than take your money on a maybe.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>Does the reaper move or make noise?</span><span class="pm">+</span></button>
-        <div class="faq-a">No. It's completely silent and it doesn't animate. The whole effect is light. That's on purpose — no motor to break and nothing waking the street at 2am.</div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" aria-expanded="false"><span>What if it doesn't look like the video?</span><span class="pm">+</span></button>
-        <div class="faq-a">Send it back within 30 days and we refund you. Every clip on this page is the actual product filmed at night — no renders, no composites, no enhancement.</div>
-      </div>
-
-    </div>
+    <h2>Halloween is on a Saturday this year.</h2>
+    <p>Which means the whole street will be out walking. Put something in the yard worth stopping for.</p>
+    <a class="btn btn-accent" href="#buy">Choose your setup</a>
+    <small>Free US shipping · 30-day returns · Order by <span class="js-cutoff">—</span> for Halloween delivery</small>
   </div>
 </section>
-
-<!--
-  ============ REVIEWS ============
-  Deliberately not in v1. Turn on only when real verified orders come back
-  with real reviews. Do not seed it.
--->
 
 <footer class="foot">
   <div class="wrap foot-in">
@@ -564,6 +750,7 @@ p{margin:0}
     </div>
     <nav class="foot-links">
       <a href="#bundle">The bundle</a>
+      <a href="#detail">In the box</a>
       <a href="#specs">Specs</a>
       <a href="#faq">FAQ</a>
       <a href="/pages/shipping">Shipping</a>
@@ -582,35 +769,46 @@ p{margin:0}
 </div>
 
 <script>
-/* =====================================================================
-   EDIT THESE TWO THINGS. Prices live in the HTML above so the page is
-   correct before JavaScript runs.
-   ===================================================================== */
+/* =========================================================================
+   EDIT THESE THREE BLOCKS. Everything else runs off them.
+   ========================================================================= */
 
-// Real shipping cutoff. Never reset it to fake urgency.
+// 1. The real shipping cutoff. Never reset it to manufacture urgency.
 const CUTOFF = new Date('2026-10-20T23:59:59-04:00');
 
-// Shopify variant / bundle IDs per option.
+// 2. Shopify variant / bundle IDs, keyed to data-key on each option.
 const VARIANTS = {
   '1':      'REPLACE_WITH_VARIANT_ID_1_REAPER',
   '2':      'REPLACE_WITH_VARIANT_ID_2_REAPERS',
   'bundle': 'REPLACE_WITH_VARIANT_ID_BUNDLE'
 };
 
-/* ===================================================================== */
+// 3. Reviews. REAL ONES ONLY — verified orders, their own words, their own photos.
+//    Leave empty and the section shows a placeholder instead of the grid.
+//    Shape:
+//    { stars: 5, text: "...", name: "First L.", place: "Ohio", verified: true, photo: "assets/reviews/01.jpg" }
+const REVIEWS = [];
+
+/* ========================================================================= */
 
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const money = n => '$' + n.toFixed(2);
 
 /* ---------- cutoff countdown ---------- */
 const clockEl = $('#clock');
-// Formatted in the store's timezone so every visitor sees the same date.
-const cutoffLabel = new Intl.DateTimeFormat('en-US',
-  { weekday:'long', month:'long', day:'numeric', timeZone:'America/New_York' }).format(CUTOFF);
+// Formatted in the store's own timezone so every visitor sees the same date.
+const fmt = o => new Intl.DateTimeFormat('en-US', { ...o, timeZone:'America/New_York' });
+const cutoffLabel = fmt({ weekday:'long', month:'long', day:'numeric' }).format(CUTOFF);
 
 $('#cutoff-date').textContent  = cutoffLabel;
 $('#deliver-date').textContent = cutoffLabel;
 $$('.js-cutoff').forEach(el => el.textContent = cutoffLabel);
+
+// Honest delivery window: dispatch next day, then a 3–7 day transit band.
+const dayFmt = fmt({ month:'short', day:'numeric' });
+const addDays = n => new Date(Date.now() + n * 864e5);
+$('#eta-window').textContent = `${dayFmt.format(addDays(4))} – ${dayFmt.format(addDays(8))}`;
 
 function tick(){
   const ms = CUTOFF - Date.now();
@@ -635,22 +833,31 @@ function tick(){
 tick();
 setInterval(tick, 1000);
 
-/* ---------- options ---------- */
+/* ---------- options + order summary ---------- */
 const tiers = $$('.tier');
-let selected = tiers.find(t => t.getAttribute('aria-checked') === 'true') || tiers[1];
+let selected = tiers.find(t => t.getAttribute('aria-checked') === 'true') || tiers[0];
 
 function select(tier){
   selected = tier;
   tiers.forEach(t => t.setAttribute('aria-checked', String(t === tier)));
 
-  const label = tier.dataset.label;
-  const sub   = tier.dataset.sub;
-  const price = '$' + (+tier.dataset.price).toFixed(2);
+  const { label, price, compare, save } = tier.dataset;
+  const p = +price, c = +compare, sv = +save;
 
-  $('#total').textContent      = price;
+  $('#sum-label').textContent  = label;
+  $('#sum-sub').textContent    = money(c);
+  $('#total').textContent      = money(p);
   $('#add-qty').textContent    = label;
-  $('#mbar-price').textContent = price;
-  $('#mbar-qty').textContent   = sub ? `${label} · ${sub}` : label;
+  $('#mbar-price').textContent = money(p);
+
+  // The discount row only exists when there is a discount.
+  $('#sum-save-row').hidden = sv <= 0;
+  if (sv > 0){
+    $('#sum-save').textContent  = '−' + money(sv);
+    $('#mbar-qty').textContent  = `${label} · Save $${Math.round(sv)}`;
+  } else {
+    $('#mbar-qty').textContent  = label;
+  }
 }
 
 tiers.forEach(t => {
@@ -668,10 +875,10 @@ select(selected);
 
 /* ---------- add to cart ---------- */
 function addToCart(){
-  const id = VARIANTS[selected.dataset.qty];
+  const id = VARIANTS[selected.dataset.key];
 
   if (!id || String(id).startsWith('REPLACE_')){
-    console.warn('Set VARIANTS["' + selected.dataset.qty + '"] to a real Shopify variant ID.');
+    console.warn('Set VARIANTS["' + selected.dataset.key + '"] to a real Shopify variant ID.');
     location.hash = '#buy';
     return;
   }
@@ -687,6 +894,44 @@ thumbs.forEach(b => b.addEventListener('click', () => {
   // ASSET: swap the real media source here. The placeholder swaps its caption.
   $('#gal-label').textContent = b.dataset.label;
 }));
+
+/* ---------- reviews ---------- */
+const starRow = n => '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
+
+if (REVIEWS.length){
+  const grid = $('#rev-grid');
+  const avg  = REVIEWS.reduce((a, r) => a + r.stars, 0) / REVIEWS.length;
+
+  grid.innerHTML = REVIEWS.map(r => `
+    <article class="rev">
+      ${r.photo ? `<div class="shot"><img src="${r.photo}" alt="" loading="lazy"></div>` : ''}
+      <div class="body">
+        <span class="stars" aria-label="${r.stars} out of 5">${starRow(r.stars)}</span>
+        <p></p>
+        <div class="who">
+          <b></b>
+          ${r.place ? `<span></span>` : ''}
+          ${r.verified ? '<span class="verified">✓ Verified order</span>' : ''}
+        </div>
+      </div>
+    </article>`).join('');
+
+  // Customer words are set as text, never as markup.
+  $$('.rev', grid).forEach((el, i) => {
+    $('p', el).textContent = REVIEWS[i].text;
+    $('.who b', el).textContent = REVIEWS[i].name;
+    const place = $('.who span:not(.verified)', el);
+    if (place) place.textContent = REVIEWS[i].place;
+  });
+
+  $('#rev-stars').textContent = starRow(Math.round(avg));
+  $('#rev-count').textContent =
+    `${avg.toFixed(1)} out of 5 · ${REVIEWS.length} verified review${REVIEWS.length === 1 ? '' : 's'}`;
+
+  $('#rev-summary').hidden = false;
+  grid.hidden = false;
+  $('#rev-empty').hidden = true;
+}
 
 /* ---------- faq ---------- */
 $$('.faq-q').forEach(q => q.addEventListener('click', () => {
