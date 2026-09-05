@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lighted Ghost Swing — The Black Reaper</title>
+<meta name="description" content="A glowing ghost on a rope swing with a lit jack-o-lantern in its arms. Hangs from any branch in about a minute. Ships before Halloween.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/store.css">
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <span>Order by <b id="cutoff-date">—</b> to get it before Halloween.</span>
+    <span class="clock" id="clock"></span>
+  </div>
+</div>
+
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="index.html">THE BLACK <i>REAPER</i></a>
+    <nav class="hdr-links">
+      <a href="index.html">The Reaper</a>
+      <a href="projector.html">The Projector</a>
+      <a href="ghost-swing.html">The Ghost Swing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <span class="hdr-note">Free US shipping · 30-day returns</span>
+  </div>
+</header>
+
+<main class="wrap pdp" id="top">
+  <div class="pdp-grid">
+
+    <div class="gallery">
+      <div class="gal-main">
+        <img src="assets/img/ghost-swing.png" alt="A glowing white ghost sitting on a rope swing hung from a tree branch, holding a lit jack-o-lantern, at dusk">
+      </div>
+      <div class="gal-thumbs" role="tablist" aria-label="Product media">
+        <button role="tab" aria-selected="true"  data-label="Hanging from a branch at dusk">Hanging</button>
+        <button role="tab" aria-selected="false" data-label="Video — swinging gently in the wind, lit, 10s loop">Video</button>
+        <button role="tab" aria-selected="false" data-label="Close-up — the lit pumpkin and the face">Close up</button>
+        <button role="tab" aria-selected="false" data-label="Daylight — unlit, exactly as it arrives">Daylight</button>
+        <button role="tab" aria-selected="false" data-label="Beside a hand, for scale">Scale</button>
+      </div>
+    </div>
+
+    <div class="buy" id="buy">
+      <p class="eyebrow">Lighted Ghost Swing</p>
+      <h1>The one that gets the "aww".</h1>
+      <p class="buy-sub">A small glowing ghost sits on a rope swing with a lit jack-o-lantern in its arms, turning slowly in the wind. Hang it from a branch and it does the rest.</p>
+
+      <div class="meta-row">
+        <span class="stock">In stock</span>
+        <span class="meta-sep">·</span><span class="lite">Ships within 24 hours</span>
+        <span class="meta-sep">·</span><span class="lite">Free US shipping</span>
+      </div>
+
+      <div class="pick-head">
+        <p>Choose how many</p>
+        <span>All options ship free</span>
+      </div>
+
+      <div class="tiers" role="radiogroup" aria-label="Choose how many">
+
+        <button class="tier" role="radio" aria-checked="false"
+                data-key="1" data-price="49.99" data-compare="49.99" data-save="0" data-label="1 Ghost Swing">
+          <span class="dot"></span>
+          <span>
+            <span class="tier-name">1 Ghost Swing</span>
+            <span class="tier-unit">One branch, one ghost</span>
+            <span class="tier-inc"><b>You get:</b> 1 lighted ghost · wooden swing seat · rope cords · lit pumpkin</span>
+          </span>
+          <span class="tier-price"><span class="tier-now">$49.99</span></span>
+        </button>
+
+        <button class="tier" role="radio" aria-checked="true"
+                data-key="2" data-price="79.99" data-compare="99.98" data-save="19.99" data-label="2 Ghost Swings">
+          <span class="dot"></span>
+          <span>
+            <span class="tier-name">2 Ghost Swings <em class="flag">Most people pick this</em></span>
+            <span class="tier-unit">$40.00 each · they read as a pair from the street</span>
+            <span class="tier-inc"><b>You get:</b> 2 lighted ghosts · 2 swing seats · 2 sets of rope cords · 2 lit pumpkins</span>
+          </span>
+          <span class="tier-price">
+            <span class="tier-now">$79.99</span>
+            <span class="tier-was">$99.98</span>
+            <span class="tier-save">Save $20</span>
+          </span>
+        </button>
+
+        <button class="tier" role="radio" aria-checked="false"
+                data-key="3" data-price="109.99" data-compare="149.97" data-save="39.98" data-label="3 Ghost Swings">
+          <span class="dot"></span>
+          <span>
+            <span class="tier-name">3 Ghost Swings <em class="flag">Best value</em></span>
+            <span class="tier-unit">$36.66 each · fills a whole tree</span>
+            <span class="tier-inc"><b>You get:</b> 3 lighted ghosts · 3 swing seats · 3 sets of rope cords · 3 lit pumpkins</span>
+          </span>
+          <span class="tier-price">
+            <span class="tier-now">$109.99</span>
+            <span class="tier-was">$149.97</span>
+            <span class="tier-save">Save $40</span>
+          </span>
+        </button>
+
+      </div>
+
+      <div class="addons">
+        <div class="addons-head">
+          <p>Finish the yard</p>
+          <span>Bundle price · added to this order</span>
+        </div>
+        <button class="addon" role="checkbox" aria-checked="false"
+                data-key="reaper" data-price="109.99" data-compare="129.99" data-label="The Black Reaper">
+          <span class="tick">✓</span>
+          <span class="thumb"><img src="assets/img/reaper-night.png" alt=""></span>
+          <span>
+            <span class="name">Add a Black Reaper</span>
+            <span class="why">The ground-level anchor. Souls across the lawn.</span>
+          </span>
+          <span class="cost"><b>+$109.99</b><s>$129.99</s><em>Save $20</em></span>
+        </button>
+        <button class="addon" role="checkbox" aria-checked="false"
+                data-key="projector" data-price="69.99" data-compare="89.99" data-label="Haunted Projector">
+          <span class="tick">✓</span>
+          <span class="thumb"><img src="assets/img/projector-house.png" alt=""></span>
+          <span>
+            <span class="name">Add the Haunted Projector</span>
+            <span class="why">Takes the house behind the tree.</span>
+          </span>
+          <span class="cost"><b>+$69.99</b><s>$89.99</s><em>Save $20</em></span>
+        </button>
+      </div>
+
+      <div class="summary">
+        <div class="row"><span id="sum-label">2 Ghost Swings</span><span id="sum-sub">$99.98</span></div>
+        <div class="row save" id="sum-save-row"><span>Bundle discount</span><span id="sum-save">−$19.99</span></div>
+        <div class="row free"><span>Shipping</span><span>Free</span></div>
+        <div class="row total"><span>Total</span><b id="total">$79.99</b></div>
+      </div>
+
+      <div class="checkout">
+        <button class="btn btn-block" id="add">Add to cart — <span id="add-qty">2 Ghost Swings</span></button>
+        <p class="pay">Apple&nbsp;Pay · Google&nbsp;Pay · Shop&nbsp;Pay · Visa · Mastercard · Amex</p>
+        <div class="eta"><span>Delivery</span><span>Ordered today, it leaves the warehouse <b>within 24 hours</b> and lands <b id="eta-window">—</b>.</span></div>
+        <div class="ship-note">
+          <span>Order within <b id="deliver-left">—</b> and it arrives before the 31st. After <b id="deliver-date">—</b> we stop promising Halloween delivery.</span>
+        </div>
+      </div>
+
+      <div class="assure">
+        <div><span class="ic">✓</span><span><b>30-day returns.</b> Doesn't look how you hoped? Send it back, we refund it.</span></div>
+        <div><span class="ic">✓</span><span><b>Ships from the US.</b> Tracked, out the door within 24 hours of ordering.</span></div>
+        <div><span class="ic">✓</span><span><b>Hangs anywhere.</b> A branch, a porch beam, a shepherd's hook.</span></div>
+        <div><span class="ic">✓</span><span><b>Real footage only.</b> Every image on this page is the actual unit.</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="strip">
+  <div class="wrap strip-in">
+    <div><b>About a minute</b>Loop the rope over a branch. Done.</div>
+    <div><b>110cm tall</b>37cm wide. Reads clearly from the sidewalk.</div>
+    <div><b>Lights from within</b>Ghost and pumpkin both glow. <span class="fill">[ POWER: SOLAR / BATTERY ]</span></div>
+    <div><b>Light enough for a branch</b><span class="fill">[ WEIGHT ]</span></div>
+  </div>
+</div>
+
+<section class="section" id="how">
+  <div class="wrap">
+    <p class="eyebrow">Setup</p>
+    <h2>Find a branch. That's the hard part.</h2>
+    <p class="lede" style="margin-top:12px">No stake, no outlet, no tools. It weighs almost nothing.</p>
+    <div class="steps">
+      <article class="step">
+        <div class="slot"><span>Photo — hands looping the rope over a branch</span></div>
+        <p class="step-n">STEP 1</p>
+        <h3>Loop the rope over</h3>
+        <p>Any branch that will hold a few pounds. A porch beam or a shepherd's hook works just as well.</p>
+      </article>
+      <article class="step">
+        <div class="slot"><span>Photo — adjusting the height so it hangs at eye level</span></div>
+        <p class="step-n">STEP 2</p>
+        <h3>Set the height</h3>
+        <p>Hang it around eye level from where people walk. Low enough to read, high enough to swing free.</p>
+      </article>
+      <article class="step">
+        <div class="slot"><span>Clip — dusk, ghost and pumpkin lighting up, swinging</span></div>
+        <p class="step-n">STEP 3</p>
+        <h3>It lights at dark</h3>
+        <p>The ghost glows from inside and the pumpkin lights with it. Wind does the rest.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="reactions">
+  <div class="wrap">
+    <p class="eyebrow">See it running</p>
+    <h2>The soft one in a yard full of hard ones.</h2>
+    <p class="lede" style="margin-top:12px">Every yard needs one thing that isn't trying to scare a six-year-old. This is it — and it's the one people photograph.</p>
+    <div class="react-grid">
+      <div class="slot"><span>Clip 01 — swinging in the wind at night</span></div>
+      <div class="slot"><span>Clip 02 — a small kid reaching up at it</span></div>
+      <div class="slot"><span>Clip 03 — three hanging together in one tree</span></div>
+      <div class="slot"><span>Clip 04 — with the reapers on the lawn behind</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="deal" id="bundle">
+  <div class="wrap deal-grid">
+    <div>
+      <p class="eyebrow">Why people buy all three</p>
+      <h2>Ground, air<br>and the house.</h2>
+      <p class="lede" style="margin-top:14px">The reapers hold the lawn. The swings fill the trees. The projector takes the wall. A yard with all three levels working doesn't look decorated — it looks staged.</p>
+      <div class="deal-list">
+        <div><span class="qty">Ground</span><span>The Black Reaper, solar soul lantern</span><span class="val">$129.99</span></div>
+        <div><span class="qty">Air</span><span>Lighted Ghost Swing</span><span class="val">$49.99</span></div>
+        <div><span class="qty">House</span><span>Haunted Projector</span><span class="val">$89.99</span></div>
+      </div>
+      <p style="color:#87877F;font-size:13px;margin-top:10px">Add either of the other two to this order above and you get the bundle price on them.</p>
+      <a class="btn btn-accent" href="#buy" style="margin-top:24px">Build the yard</a>
+    </div>
+    <div class="slot"><span>Night photo — swings in the tree, reapers on the lawn, projection on the house</span></div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="wrap">
+    <p class="eyebrow">Questions</p>
+    <h2>Everything people ask before ordering.</h2>
+    <div class="faq-grid">
+      <div class="faq-media">
+        <div class="slot"><span>UGC video — hanging it from a tree and switching it on, vertical</span></div>
+        <p class="faq-cap"><b>Branch to glowing, one take.</b> Unedited. About as long as it actually takes.</p>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="true"><span>How big is it?</span><span class="pm">+</span></button>
+          <div class="faq-a">110cm tall including the rope, 37cm wide across the swing seat. Big enough to read from the sidewalk, small enough for an ordinary branch.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>How is it powered?</span><span class="pm">+</span></button>
+          <div class="faq-a"><span class="fill">[ POWER: SOLAR / BATTERY — CONFIRM ]</span>. Runtime on a full charge is <span class="fill">[ HOURS ]</span>.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Can it stay out in the rain?</span><span class="pm">+</span></button>
+          <div class="faq-a">It is rated <span class="fill">[ IP RATING ]</span>. Light rain is fine. It is fabric, so bring it in before a heavy storm or it will take a long time to dry out.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What if I don't have a tree?</span><span class="pm">+</span></button>
+          <div class="faq-a">A porch beam, a pergola, a shepherd's hook, or the corner of a gutter bracket. Anything that gives it a foot or two of clear swing.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will it blow away?</span><span class="pm">+</span></button>
+          <div class="faq-a">It's tied on, not hooked, so it swings rather than lifts. In real wind it will spin — take it down ahead of a storm.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Is it scary or friendly?</span><span class="pm">+</span></button>
+          <div class="faq-a">Friendly. It's the one in the yard small kids walk up to instead of away from. That's deliberate.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will it arrive before Halloween?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes if you order by <b class="js-cutoff">—</b>. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="specs">
+  <div class="wrap">
+    <p class="eyebrow">Specifications</p>
+    <h2>The honest numbers.</h2>
+    <p class="spec-note">▲ Highlighted values are placeholders — fill from the supplier spec sheet before launch.</p>
+    <div class="spec-wrap">
+      <div>
+        <p class="spec-h">Lighted Ghost Swing</p>
+        <table class="spec-table"><tbody>
+          <tr><th scope="row">Height, hanging</th><td>110 cm / 43.3 in</td></tr>
+          <tr><th scope="row">Width</th><td>37 cm / 14.6 in</td></tr>
+          <tr><th scope="row">Materials</th><td><span class="fill">[ FABRIC / SEAT / ROPE ]</span></td></tr>
+          <tr><th scope="row">Power</th><td><span class="fill">[ SOLAR / BATTERY — CONFIRM ]</span></td></tr>
+          <tr><th scope="row">Runtime</th><td><span class="fill">[ HOURS ]</span></td></tr>
+          <tr><th scope="row">Turns on</th><td><span class="fill">[ AUTO AT DUSK / MANUAL SWITCH ]</span></td></tr>
+          <tr><th scope="row">Weather rating</th><td><span class="fill">[ IP RATING ]</span></td></tr>
+          <tr><th scope="row">Weight</th><td><span class="fill">[ WEIGHT ]</span></td></tr>
+          <tr><th scope="row">Assembly</th><td>None. It arrives assembled.</td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <p class="spec-h">In the box</p>
+        <table class="spec-table"><tbody>
+          <tr><th scope="row">Lighted ghost figure</th><td>×1</td></tr>
+          <tr><th scope="row">Wooden swing seat</th><td>×1</td></tr>
+          <tr><th scope="row">Rope cords, knotted</th><td>×2</td></tr>
+          <tr><th scope="row">Lit jack-o-lantern</th><td>×1 · attached</td></tr>
+          <tr><th scope="row">Batteries</th><td><span class="fill">[ INCLUDED? — CONFIRM ]</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="closer">
+  <div class="wrap">
+    <h2>Halloween is on a Saturday this year.</h2>
+    <p>The whole street will be walking. Give them something to walk past.</p>
+    <a class="btn btn-accent" href="#buy">Choose how many</a>
+    <small>Free US shipping · 30-day returns · Order by <span class="js-cutoff">—</span> for Halloween delivery</small>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <a class="logo" href="index.html">THE BLACK <i>REAPER</i></a>
+      <small>One season, done properly. We build it, we ship it, and on November 1st we go quiet until next year.</small>
+    </div>
+    <nav class="foot-links">
+      <a href="index.html">The Reaper</a>
+      <a href="projector.html">The Projector</a>
+      <a href="ghost-swing.html">The Ghost Swing</a>
+      <a href="/pages/shipping">Shipping</a>
+      <a href="/pages/returns">Returns</a>
+      <a href="/pages/contact">Contact</a>
+    </nav>
+  </div>
+</footer>
+
+<div class="mbar" id="mbar">
+  <div class="mbar-info">
+    <b id="mbar-price">$79.99</b>
+    <span id="mbar-qty">2 Ghost Swings · Save $20</span>
+  </div>
+  <button class="btn" id="mbar-add">Add to cart</button>
+</div>
+
+<script>
+// ---- page config ----------------------------------------------------------
+const CUTOFF = new Date('2026-10-20T23:59:59-04:00');
+const VARIANTS = {
+  '1':         'REPLACE_WITH_VARIANT_ID_1_SWING',
+  '2':         'REPLACE_WITH_VARIANT_ID_2_SWINGS',
+  '3':         'REPLACE_WITH_VARIANT_ID_3_SWINGS',
+  'reaper':    'REPLACE_WITH_VARIANT_ID_1_REAPER',    // add-on
+  'projector': 'REPLACE_WITH_VARIANT_ID_PROJECTOR'    // add-on
+};
+const REVIEWS = [];
+</script>
+<script src="assets/store.js"></script>
+</body>
+</html>

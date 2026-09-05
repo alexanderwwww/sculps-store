@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Haunted Projector — The Black Reaper</title>
+<meta name="description" content="Throws drifting ghosts across the whole front of your house. Set it down, plug it in, pick a scene. Ships before Halloween.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/store.css">
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <span>Order by <b id="cutoff-date">—</b> to get it before Halloween.</span>
+    <span class="clock" id="clock"></span>
+  </div>
+</div>
+
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="index.html">THE BLACK <i>REAPER</i></a>
+    <nav class="hdr-links">
+      <a href="index.html">The Reaper</a>
+      <a href="projector.html">The Projector</a>
+      <a href="ghost-swing.html">The Ghost Swing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <span class="hdr-note">Free US shipping · 30-day returns</span>
+  </div>
+</header>
+
+<main class="wrap pdp" id="top">
+  <div class="pdp-grid">
+
+    <div class="gallery">
+      <div class="gal-main">
+        <img src="assets/img/projector-house.png" alt="A projector on a porch step throwing drifting ghosts across the front of a brick house at night">
+      </div>
+      <div class="gal-thumbs" role="tablist" aria-label="Product media">
+        <button role="tab" aria-selected="true"  data-label="Ghosts across the whole house front">House</button>
+        <button role="tab" aria-selected="false" data-label="Video — the scene moving, real footage, 10s loop">Video</button>
+        <button role="tab" aria-selected="false" data-label="The unit itself on a porch step, cable running out">Unit</button>
+        <button role="tab" aria-selected="false" data-label="Close-up — lens and focus ring">Lens</button>
+        <button role="tab" aria-selected="false" data-label="Projection across a garage door and windows">Garage</button>
+      </div>
+    </div>
+
+    <div class="buy" id="buy">
+      <p class="eyebrow">Haunted Projector</p>
+      <h1>Take the whole house.</h1>
+      <p class="buy-sub">Drifting figures move across your brick, your door and your windows. One small box on a porch step does all of it. Set it down, plug it in, pick a scene.</p>
+
+      <div class="meta-row">
+        <span class="stock">In stock</span>
+        <span class="meta-sep">·</span><span class="lite">Ships within 24 hours</span>
+        <span class="meta-sep">·</span><span class="lite">Free US shipping</span>
+      </div>
+
+      <div class="pick-head">
+        <p>Choose your setup</p>
+        <span>All options ship free</span>
+      </div>
+
+      <div class="tiers" role="radiogroup" aria-label="Choose your setup">
+
+        <button class="tier" role="radio" aria-checked="true"
+                data-key="projector" data-price="89.99" data-compare="89.99" data-save="0" data-label="1 Projector">
+          <span class="dot"></span>
+          <span>
+            <span class="tier-name">Projector only</span>
+            <span class="tier-unit">Everything you need for the house</span>
+            <span class="tier-inc"><b>You get:</b> 1 haunted projector · power cable · remote · <span class="fill">[ SCENE COUNT ]</span> scenes</span>
+          </span>
+          <span class="tier-price"><span class="tier-now">$89.99</span></span>
+        </button>
+
+        <button class="tier tier-special" role="radio" aria-checked="false"
+                data-key="bundle" data-price="199.99" data-compare="349.97" data-save="149.98" data-label="Haunted Yard Bundle">
+          <span class="ribbon">Halloween Special</span>
+          <span class="dot"></span>
+          <span>
+            <span class="tier-name">Projector + 2 Black Reapers</span>
+            <span class="tier-unit">Shadows on the house, souls on the lawn</span>
+            <span class="tier-inc"><b>You get:</b> the projector kit · 2 reaper figures · 2 solar ground stakes · 2 soul streams</span>
+          </span>
+          <span class="tier-price">
+            <span class="tier-now">$199.99</span>
+            <span class="tier-was">$349.97</span>
+            <span class="tier-save">Save $150</span>
+          </span>
+        </button>
+
+      </div>
+
+      <div class="addons">
+        <div class="addons-head">
+          <p>Finish the yard</p>
+          <span>Bundle price · added to this order</span>
+        </div>
+        <button class="addon" role="checkbox" aria-checked="false"
+                data-key="reaper" data-price="109.99" data-compare="129.99" data-label="The Black Reaper">
+          <span class="tick">✓</span>
+          <span class="thumb"><img src="assets/img/reaper-night.png" alt=""></span>
+          <span>
+            <span class="name">Add a Black Reaper</span>
+            <span class="why">One more figure. The streams cross.</span>
+          </span>
+          <span class="cost">
+            <b>+$109.99</b><s>$129.99</s>
+            <em>Save $20</em>
+          </span>
+        </button>
+        <button class="addon" role="checkbox" aria-checked="false"
+                data-key="swing" data-price="39.99" data-compare="49.99" data-label="Lighted Ghost Swing">
+          <span class="tick">✓</span>
+          <span class="thumb"><img src="assets/img/ghost-swing.png" alt=""></span>
+          <span>
+            <span class="name">Add the Ghost Swing</span>
+            <span class="why">Hangs from a branch. Fills the empty half of the yard.</span>
+          </span>
+          <span class="cost">
+            <b>+$39.99</b><s>$49.99</s>
+            <em>Save $10</em>
+          </span>
+        </button>
+      </div>
+
+      <div class="summary">
+        <div class="row"><span id="sum-label">1 Projector</span><span id="sum-sub">$89.99</span></div>
+        <div class="row save" id="sum-save-row" hidden><span>Bundle discount</span><span id="sum-save">—</span></div>
+        <div class="row free"><span>Shipping</span><span>Free</span></div>
+        <div class="row total"><span>Total</span><b id="total">$89.99</b></div>
+      </div>
+
+      <div class="checkout">
+        <button class="btn btn-block" id="add">Add to cart — <span id="add-qty">1 Projector</span></button>
+        <p class="pay">Apple&nbsp;Pay · Google&nbsp;Pay · Shop&nbsp;Pay · Visa · Mastercard · Amex</p>
+        <div class="eta"><span>Delivery</span><span>Ordered today, it leaves the warehouse <b>within 24 hours</b> and lands <b id="eta-window">—</b>.</span></div>
+        <div class="ship-note">
+          <span>Order within <b id="deliver-left">—</b> and it arrives before the 31st. After <b id="deliver-date">—</b> we stop promising Halloween delivery.</span>
+        </div>
+      </div>
+
+      <div class="assure">
+        <div><span class="ic">✓</span><span><b>30-day returns.</b> Doesn't look how you hoped? Send it back, we refund it.</span></div>
+        <div><span class="ic">✓</span><span><b>Ships from the US.</b> Tracked, out the door within 24 hours of ordering.</span></div>
+        <div><span class="ic">✓</span><span><b>Auto-focus.</b> Point it at the wall. It sharpens itself.</span></div>
+        <div><span class="ic">✓</span><span><b>Real footage only.</b> Every image on this page is the actual unit, shot at night.</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="strip">
+  <div class="wrap strip-in">
+    <div><b>Under a minute</b>Place it, plug it in, pick a scene.</div>
+    <div><b>Auto-focus</b>No focus wheel to fight with in the dark.</div>
+    <div><b>Covers a whole facade</b><span class="fill">[ IMAGE SIZE ]</span> at <span class="fill">[ DISTANCE ]</span>.</div>
+    <div><b>Needs an outlet</b>Mains powered, <span class="fill">[ CABLE LENGTH ]</span> cable.</div>
+  </div>
+</div>
+
+<section class="section" id="how">
+  <div class="wrap">
+    <p class="eyebrow">Setup</p>
+    <h2>Three moves and the house is haunted.</h2>
+    <p class="lede" style="margin-top:12px">The projector is the one thing here that does need power. Everything else about it is instant.</p>
+    <div class="steps">
+      <article class="step">
+        <div class="slot"><span>Photo — projector set down on a porch step</span></div>
+        <p class="step-n">STEP 1</p>
+        <h3>Put it where it can see the wall</h3>
+        <p>A porch step, a planter, the top of a bin. Anywhere with a clear line to the front of the house.</p>
+      </article>
+      <article class="step">
+        <div class="slot"><span>Photo — cable running to an outdoor outlet</span></div>
+        <p class="step-n">STEP 2</p>
+        <h3>Plug it in</h3>
+        <p>A porch outlet or an outdoor extension lead. <span class="fill">[ CABLE LENGTH ]</span> of cable in the box.</p>
+      </article>
+      <article class="step">
+        <div class="slot"><span>Clip — cycling through scenes with the remote</span></div>
+        <p class="step-n">STEP 3</p>
+        <h3>Pick a scene</h3>
+        <p><span class="fill">[ SCENE COUNT ]</span> scenes on the remote. It focuses itself as soon as it's pointed.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="reactions">
+  <div class="wrap">
+    <p class="eyebrow">See it running</p>
+    <h2>It reads from the street.</h2>
+    <p class="lede" style="margin-top:12px">That's the whole test for a projector. If it washes out at twenty feet it's a toy. Filmed from the sidewalk, no enhancement.</p>
+    <div class="react-grid">
+      <div class="slot"><span>Clip 01 — from the sidewalk, full facade</span></div>
+      <div class="slot"><span>Clip 02 — figures crossing the front door</span></div>
+      <div class="slot"><span>Clip 03 — trick-or-treaters walking through the beam</span></div>
+      <div class="slot"><span>Clip 04 — the same house before and after</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="deal" id="bundle">
+  <div class="wrap deal-grid">
+    <div>
+      <p class="eyebrow">The Halloween Special</p>
+      <h2>The house and the lawn,<br>not one or the other.</h2>
+      <p class="lede" style="margin-top:14px">The projector owns the wall. The reapers own the ground. Run them together and there is no part of the property that isn't doing something.</p>
+      <div class="deal-list">
+        <div><span class="qty">×1</span><span>Haunted Projector, plug-in, auto-focus</span><span class="val">$89.99</span></div>
+        <div><span class="qty">×2</span><span>The Black Reaper, solar soul lantern</span><span class="val">$259.98</span></div>
+      </div>
+      <div class="deal-sum"><b>$199.99</b><s>$349.97</s><em>Save $150</em></div>
+      <p style="color:#87877F;font-size:13px;margin-top:10px">Ships together in one box. Same 30-day return.</p>
+      <a class="btn btn-accent" href="#buy" style="margin-top:24px">Get the bundle</a>
+    </div>
+    <div class="slot"><span>Night photo — two reapers on the lawn, projection across the house</span></div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="wrap">
+    <p class="eyebrow">Questions</p>
+    <h2>Everything people ask before ordering.</h2>
+    <div class="faq-grid">
+      <div class="faq-media">
+        <div class="slot"><span>UGC video — setting it up on a porch and switching it on, vertical</span></div>
+        <p class="faq-cap"><b>Porch to projection, one take.</b> Unedited. This is the whole setup, in real time.</p>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="true"><span>How far back does it need to be?</span><span class="pm">+</span></button>
+          <div class="faq-a open">Between <span class="fill">[ MIN–MAX DISTANCE ]</span>. At <span class="fill">[ DISTANCE ]</span> the image is roughly <span class="fill">[ IMAGE SIZE ]</span>, which covers a typical two-storey facade.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Can it live outside in the rain?</span><span class="pm">+</span></button>
+          <div class="faq-a">It is rated <span class="fill">[ CONFIRM INDOOR / OUTDOOR ]</span>. Keep it under a porch roof or in a covered spot. It is not a unit to leave in the open through a storm.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Does it need Wi-Fi or an app?</span><span class="pm">+</span></button>
+          <div class="faq-a">No. Scenes are on the unit and you change them with the remote. Nothing to pair, nothing to sign into.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will it work on light-coloured siding?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes, and it looks best on a flat, pale wall. Dark brick eats some brightness — move it closer to keep the image tight and bright.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Does it make sound?</span><span class="pm">+</span></button>
+          <div class="faq-a"><span class="fill">[ CONFIRM — SPEAKER / SILENT ]</span></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will it arrive before Halloween?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes if you order by <b class="js-cutoff">—</b>. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Can I use it indoors the rest of the year?</span><span class="pm">+</span></button>
+          <div class="faq-a">Yes. It is an ordinary projector with Halloween scenes loaded. Point it at a wall inside and it works the same.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="specs">
+  <div class="wrap">
+    <p class="eyebrow">Specifications</p>
+    <h2>The honest numbers.</h2>
+    <p class="spec-note">▲ Highlighted values are placeholders — fill from the supplier spec sheet before launch.</p>
+    <div class="spec-wrap">
+      <div>
+        <p class="spec-h">Haunted Projector</p>
+        <table class="spec-table"><tbody>
+          <tr><th scope="row">Throw distance</th><td><span class="fill">[ MIN–MAX DISTANCE ]</span></td></tr>
+          <tr><th scope="row">Image size at 3m</th><td><span class="fill">[ IMAGE SIZE ]</span></td></tr>
+          <tr><th scope="row">Resolution</th><td><span class="fill">[ NATIVE RESOLUTION ]</span></td></tr>
+          <tr><th scope="row">Brightness</th><td><span class="fill">[ LUMENS ]</span></td></tr>
+          <tr><th scope="row">Focus</th><td>Auto-focus.</td></tr>
+          <tr><th scope="row">Power</th><td>Mains. <span class="fill">[ CABLE LENGTH ]</span> cable.</td></tr>
+          <tr><th scope="row">Scenes included</th><td><span class="fill">[ SCENE LIST / COUNT ]</span></td></tr>
+          <tr><th scope="row">Weather rating</th><td><span class="fill">[ CONFIRM — RATING ]</span></td></tr>
+          <tr><th scope="row">Dimensions</th><td><span class="fill">[ W × D × H ]</span></td></tr>
+          <tr><th scope="row">Weight</th><td><span class="fill">[ WEIGHT ]</span></td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <p class="spec-h">In the box</p>
+        <table class="spec-table"><tbody>
+          <tr><th scope="row">Projector unit</th><td>×1</td></tr>
+          <tr><th scope="row">Power cable</th><td>×1 · <span class="fill">[ CABLE LENGTH ]</span></td></tr>
+          <tr><th scope="row">Remote</th><td><span class="fill">[ CONFIRM — INCLUDED? ]</span></td></tr>
+          <tr><th scope="row">Mounting bracket</th><td><span class="fill">[ CONFIRM — INCLUDED? ]</span></td></tr>
+          <tr><th scope="row">Setup card</th><td>×1</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="closer">
+  <div class="wrap">
+    <h2>Halloween is on a Saturday this year.</h2>
+    <p>The whole street will be walking. Give them something to walk past.</p>
+    <a class="btn btn-accent" href="#buy">Choose your setup</a>
+    <small>Free US shipping · 30-day returns · Order by <span class="js-cutoff">—</span> for Halloween delivery</small>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <a class="logo" href="index.html">THE BLACK <i>REAPER</i></a>
+      <small>One season, done properly. We build it, we ship it, and on November 1st we go quiet until next year.</small>
+    </div>
+    <nav class="foot-links">
+      <a href="index.html">The Reaper</a>
+      <a href="projector.html">The Projector</a>
+      <a href="ghost-swing.html">The Ghost Swing</a>
+      <a href="/pages/shipping">Shipping</a>
+      <a href="/pages/returns">Returns</a>
+      <a href="/pages/contact">Contact</a>
+    </nav>
+  </div>
+</footer>
+
+<div class="mbar" id="mbar">
+  <div class="mbar-info">
+    <b id="mbar-price">$89.99</b>
+    <span id="mbar-qty">1 Projector</span>
+  </div>
+  <button class="btn" id="mbar-add">Add to cart</button>
+</div>
+
+<script>
+// ---- page config ----------------------------------------------------------
+const CUTOFF = new Date('2026-10-20T23:59:59-04:00');
+const VARIANTS = {
+  'projector': 'REPLACE_WITH_VARIANT_ID_PROJECTOR',
+  'bundle':    'REPLACE_WITH_VARIANT_ID_BUNDLE',
+  'reaper':    'REPLACE_WITH_VARIANT_ID_1_REAPER',    // add-on
+  'swing':     'REPLACE_WITH_VARIANT_ID_SWING'        // add-on
+};
+const REVIEWS = [];
+</script>
+<script src="assets/store.js"></script>
+</body>
+</html>
