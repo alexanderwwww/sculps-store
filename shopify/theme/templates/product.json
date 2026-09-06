@@ -1,0 +1,470 @@
+{
+  "sections": {
+    "main": {
+      "type": "tbr-product",
+      "settings": {
+        "cutoff_iso": "2026-10-20T23:59:59-04:00",
+        "cutoff_label": "Tuesday, October 20",
+        "pick_label": "Choose your setup"
+      }
+    },
+    "below": {
+      "type": "tbr-product-below",
+      "blocks": {
+        "step_1": {
+          "type": "step",
+          "settings": {
+            "heading": "Push the stake into the grass",
+            "text": "Pick a spot with open sky. Step on the crossbar until the base sits flush with the lawn.",
+            "placeholder": "Clip: staking it in"
+          }
+        },
+        "step_2": {
+          "type": "step",
+          "settings": {
+            "heading": "The sun charges it all day",
+            "text": "The panel sits on the stake. Nothing to plug in, nothing to switch on, nothing to remember.",
+            "placeholder": "Photo: solar panel in sunlight"
+          }
+        },
+        "step_3": {
+          "type": "step",
+          "settings": {
+            "heading": "It comes on by itself at dusk",
+            "text": "Light drops, the lantern catches, the souls start moving. It shuts off by morning and does it again.",
+            "placeholder": "Clip: dusk, the moment it lights"
+          }
+        },
+        "reaction_1": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 01: trick-or-treaters at the curb"
+          }
+        },
+        "reaction_2": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 02: neighbor walking up the drive"
+          }
+        },
+        "reaction_3": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 03: first look from the porch"
+          }
+        },
+        "reaction_4": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 04: car slowing down to look"
+          }
+        },
+        "closeup_1": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Placement: the reaper at the end of a real front walk, dusk",
+            "title": "Where it goes",
+            "caption": "Open sky above the panel, soil soft enough to take the stake."
+          }
+        },
+        "closeup_2": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Close-up: the lantern housing and glass",
+            "title": "The lantern",
+            "caption": "Where the stream starts."
+          }
+        },
+        "closeup_3": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Close-up: hood, shoulders, hand detail",
+            "title": "The figure",
+            "caption": "Layered fabric over a shaped frame."
+          }
+        },
+        "closeup_4": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Close-up: solar panel and stake joint",
+            "title": "The stake",
+            "caption": "Panel mounts above the soil line."
+          }
+        },
+        "closeup_5": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Close-up: a single soul face lit, held in hand",
+            "title": "The souls",
+            "caption": "Individually lit, not a printed strip."
+          }
+        },
+        "box_1": {
+          "type": "box_item",
+          "settings": {
+            "name": "Reaper figure, folded",
+            "note": "Shake it out, it holds its shape"
+          }
+        },
+        "box_2": {
+          "type": "box_item",
+          "settings": {
+            "name": "Ground stake with solar panel",
+            "note": "[ STAKE LENGTH ] below the soil line"
+          }
+        },
+        "box_3": {
+          "type": "box_item",
+          "settings": {
+            "name": "Lantern with soul stream attached",
+            "note": "Pre-wired, nothing to connect"
+          }
+        },
+        "box_4": {
+          "type": "box_item",
+          "settings": {
+            "name": "Lantern arm",
+            "note": "Clips on, aims where you point it"
+          }
+        },
+        "box_5": {
+          "type": "box_item",
+          "settings": {
+            "name": "Setup card",
+            "note": "Four steps, one side"
+          }
+        },
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "How long does it stay lit on one day of sun?",
+            "answer": "[ RUNTIME HOURS ] on a full charge in clear conditions. An overcast day gives you a shorter night. Put it where the panel gets direct afternoon sun."
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "Can it stay outside in the rain?",
+            "answer": "Yes. The reaper is built for outdoor use and rated [ IP RATING ]. Rain is fine. Standing water, snow and freezing conditions are not. Bring it in ahead of a hard storm. The projector in the bundle is [ CONFIRM INDOOR / OUTDOOR ]."
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "Will it blow over?",
+            "answer": "The stake goes [ STAKE LENGTH ] into soil, which holds through normal autumn wind. In an exposed yard or before a storm, pull it out and re-stake afterwards."
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I put it in mulch, gravel or a planter?",
+            "answer": "Soil and lawn hold best. Mulch and loose gravel work if you can reach firm ground underneath. For a hard surface you'll need a weighted base. The stake alone won't hold it on concrete."
+          }
+        },
+        "faq_5": {
+          "type": "faq",
+          "settings": {
+            "question": "How long does setup take?",
+            "answer": "About four minutes for a reaper. Shake it out, push the stake in, clip on the lantern arm. The projector is faster: set it down, plug it in, pick a scene."
+          }
+        },
+        "faq_6": {
+          "type": "faq",
+          "settings": {
+            "question": "Does the projector need to be plugged in?",
+            "answer": "Yes. The reapers are solar and need nothing. The projector runs on mains power with a [ CABLE LENGTH ] cable, so it wants a porch outlet or an outdoor extension lead."
+          }
+        },
+        "faq_7": {
+          "type": "faq",
+          "settings": {
+            "question": "Will it arrive before Halloween?",
+            "answer": "Yes if you order by [[cutoff]]. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st. We'd rather tell you no than take your money on a maybe."
+          }
+        },
+        "faq_8": {
+          "type": "faq",
+          "settings": {
+            "question": "Does the reaper move or make noise?",
+            "answer": "No. It's completely silent and it doesn't animate. The whole effect is light. That's on purpose. No motor to break and nothing waking the street at 2am."
+          }
+        },
+        "faq_9": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I store it and use it again next year?",
+            "answer": "Yes. Pull the stake, fold the figure, keep it dry and out of direct sun. It packs back into the box it arrived in."
+          }
+        },
+        "faq_10": {
+          "type": "faq",
+          "settings": {
+            "question": "What if it doesn't look like the video?",
+            "answer": "Send it back within 30 days and we refund you. Every clip on this page is the actual product filmed at night. No renders, no composites, no enhancement."
+          }
+        },
+        "spec_1": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Height, staked",
+            "value": ""
+          }
+        },
+        "spec_2": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Width across the arms",
+            "value": ""
+          }
+        },
+        "spec_3": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Soul stream length",
+            "value": ""
+          }
+        },
+        "spec_4": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Materials",
+            "value": "[ FABRIC / FRAME / LANTERN ]"
+          }
+        },
+        "spec_5": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Power",
+            "value": "Built-in solar panel on the stake. No mains power, no batteries."
+          }
+        },
+        "spec_6": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Runtime, full charge",
+            "value": ""
+          }
+        },
+        "spec_7": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Turns on",
+            "value": "By itself at dusk via light sensor. Off by morning."
+          }
+        },
+        "spec_8": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Stake depth",
+            "value": ""
+          }
+        },
+        "spec_9": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Weather rating",
+            "value": ""
+          }
+        },
+        "spec_10": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Assembly",
+            "value": "About four minutes. No tools."
+          }
+        },
+        "spec_11": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Throw distance",
+            "value": ""
+          }
+        },
+        "spec_12": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Image size at 3m",
+            "value": ""
+          }
+        },
+        "spec_13": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Resolution",
+            "value": ""
+          }
+        },
+        "spec_14": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Brightness",
+            "value": ""
+          }
+        },
+        "spec_15": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Focus",
+            "value": "Auto-focus. Point it at the wall and it sharpens itself."
+          }
+        },
+        "spec_16": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Power",
+            "value": "Mains powered. [ CABLE LENGTH ]"
+          }
+        },
+        "spec_17": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Included scenes",
+            "value": ""
+          }
+        },
+        "spec_18": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Indoor or outdoor",
+            "value": ""
+          }
+        },
+        "spec_19": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Dimensions",
+            "value": ""
+          }
+        },
+        "spec_20": {
+          "type": "spec",
+          "settings": {
+            "group": "projector",
+            "label": "Setup",
+            "value": "Place it, plug it in, pick a scene."
+          }
+        }
+      },
+      "block_order": [
+        "step_1",
+        "step_2",
+        "step_3",
+        "reaction_1",
+        "reaction_2",
+        "reaction_3",
+        "reaction_4",
+        "closeup_1",
+        "closeup_2",
+        "closeup_3",
+        "closeup_4",
+        "closeup_5",
+        "box_1",
+        "box_2",
+        "box_3",
+        "box_4",
+        "box_5",
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4",
+        "faq_5",
+        "faq_6",
+        "faq_7",
+        "faq_8",
+        "faq_9",
+        "faq_10",
+        "spec_1",
+        "spec_2",
+        "spec_3",
+        "spec_4",
+        "spec_5",
+        "spec_6",
+        "spec_7",
+        "spec_8",
+        "spec_9",
+        "spec_10",
+        "spec_11",
+        "spec_12",
+        "spec_13",
+        "spec_14",
+        "spec_15",
+        "spec_16",
+        "spec_17",
+        "spec_18",
+        "spec_19",
+        "spec_20"
+      ],
+      "settings": {
+        "cutoff": "Tuesday, October 20",
+        "strip_1_title": "4 minutes to set up",
+        "strip_1_text": "Push the stake in the ground. That's it.",
+        "strip_2_title": "Charges itself",
+        "strip_2_text": "Sun by day, lights at dusk, off by morning.",
+        "strip_3_title": "Silent",
+        "strip_3_text": "No motor, no speaker, nothing to fail.",
+        "strip_4_title": "Built for outdoors",
+        "strip_4_text": "Rated [ IP RATING ] for autumn weather.",
+        "how_eyebrow": "Setup",
+        "how_heading": "Stake it in. That's the whole setup.",
+        "how_text": "No outlet, no extension cord, no timer to program, no tools.",
+        "react_eyebrow": "See it running",
+        "react_heading": "The neighbors are going to lose it.",
+        "react_text": "Real footage from real yards. Nothing here is a render and nothing is enhanced. What you see is what shows up on your lawn.",
+        "deal_eyebrow": "The Halloween Special",
+        "deal_heading": "Souls on the lawn.\nShadows on the house.",
+        "deal_text": "The reapers own the ground. The projector takes the wall. Together the whole property is the decoration, not one object in the middle of it.",
+        "deal_show_prices": true,
+        "deal_note": "Ships together in one box. Same 30-day return.",
+        "deal_button": "Get the bundle",
+        "detail_eyebrow": "Up close",
+        "detail_heading": "What you're actually getting.",
+        "detail_text": "Shot in the yard, not in a studio. If it has a seam, you'll see the seam.",
+        "box_heading": "What's in the box",
+        "box_sub": "Per reaper. The bundle adds the projector kit.",
+        "box_foot": "No batteries, no adapter, no app. The reaper is solar and needs nothing you don't already have in the yard.",
+        "rev_eyebrow": "Reviews",
+        "rev_heading": "From people with it in the ground.",
+        "rev_text": "Verified orders only. We don't seed reviews and we don't remove the bad ones.",
+        "faq_eyebrow": "Questions",
+        "faq_heading": "Everything people ask before ordering.",
+        "faq_media_placeholder": "UGC video: setup and first light, vertical, real customer",
+        "faq_media_caption": "Setup, start to finish. Unedited, one take, from box to lit. If you only watch one thing on this page, watch this.",
+        "faq_link_label": "Read the full FAQ",
+        "faq_link": "/pages/faq",
+        "spec_eyebrow": "Specifications",
+        "spec_heading": "The honest numbers.",
+        "spec_note": "Gold values are placeholders. Fill them from the supplier spec sheet before launch.",
+        "spec_group_a": "The Black Reaper",
+        "spec_group_b": "Haunted Projector, bundle only",
+        "closer_heading": "Halloween is on a Saturday this year.",
+        "closer_text": "Which means the whole street will be out walking. Put something in the yard worth stopping for.",
+        "closer_button": "Choose your setup",
+        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "below"
+  ]
+}

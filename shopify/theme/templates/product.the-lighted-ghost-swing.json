@@ -1,0 +1,357 @@
+{
+  "sections": {
+    "main": {
+      "type": "tbr-product",
+      "settings": {
+        "cutoff_iso": "2026-10-20T23:59:59-04:00",
+        "cutoff_label": "Tuesday, October 20",
+        "pick_label": "Choose how many",
+        "why_reaper": "The ground-level anchor. Souls across the lawn.",
+        "why_projector": "Takes the house behind the tree."
+      }
+    },
+    "below": {
+      "type": "tbr-product-below",
+      "blocks": {
+        "step_1": {
+          "type": "step",
+          "settings": {
+            "heading": "Loop the rope over",
+            "text": "Any branch that will hold a few pounds. A porch beam or a shepherd's hook works just as well.",
+            "placeholder": "Photo: hands looping the rope over a branch"
+          }
+        },
+        "step_2": {
+          "type": "step",
+          "settings": {
+            "heading": "Set the height",
+            "text": "Hang it around eye level from where people walk. Low enough to read, high enough to swing free.",
+            "placeholder": "Photo: adjusting the height so it hangs at eye level"
+          }
+        },
+        "step_3": {
+          "type": "step",
+          "settings": {
+            "heading": "It lights at dark",
+            "text": "The ghost glows from inside and the pumpkin lights with it. Wind does the rest.",
+            "placeholder": "Clip: dusk, ghost and pumpkin lighting up, swinging"
+          }
+        },
+        "reaction_1": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 01: swinging in the wind at night"
+          }
+        },
+        "reaction_2": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 02: a small kid reaching up at it"
+          }
+        },
+        "reaction_3": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 03: three hanging together in one tree"
+          }
+        },
+        "reaction_4": {
+          "type": "reaction",
+          "settings": {
+            "caption": "Clip 04: with the reapers on the lawn behind"
+          }
+        },
+        "closeup_1": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Placement: one swing hanging from a front-yard branch, dusk",
+            "title": "Where it goes",
+            "caption": "A branch, a beam or a hook with a foot or two of clear swing."
+          }
+        },
+        "closeup_2": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Close-up: the ghost face, lit",
+            "title": "The ghost",
+            "caption": "Glows from inside. Soft, not sharp."
+          }
+        },
+        "closeup_3": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Close-up: the jack-o-lantern in its arms",
+            "title": "The pumpkin",
+            "caption": "Lit with the ghost. Attached, not loose."
+          }
+        },
+        "closeup_4": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Close-up: the wooden seat and knotted rope",
+            "title": "The swing",
+            "caption": "Wood seat, knotted cords. Tied on, not hooked."
+          }
+        },
+        "closeup_5": {
+          "type": "closeup",
+          "settings": {
+            "placeholder": "Photo: in daylight, hanging still",
+            "title": "In daylight",
+            "caption": "Reads as a ghost by day too."
+          }
+        },
+        "box_1": {
+          "type": "box_item",
+          "settings": {
+            "name": "Lighted ghost figure",
+            "note": "Arrives assembled"
+          }
+        },
+        "box_2": {
+          "type": "box_item",
+          "settings": {
+            "name": "Wooden swing seat",
+            "note": "Ghost sits on it"
+          }
+        },
+        "box_3": {
+          "type": "box_item",
+          "settings": {
+            "name": "Rope cords, knotted",
+            "note": "Two, one each side"
+          }
+        },
+        "box_4": {
+          "type": "box_item",
+          "settings": {
+            "name": "Lit jack-o-lantern",
+            "note": "Attached to the ghost"
+          }
+        },
+        "box_5": {
+          "type": "box_item",
+          "settings": {
+            "name": "Batteries",
+            "note": "[ INCLUDED? CONFIRM ]"
+          }
+        },
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "How big is it?",
+            "answer": "110 cm tall including the rope, 37 cm wide across the swing seat. Big enough to read from the sidewalk, small enough for an ordinary branch."
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "How is it powered?",
+            "answer": "[ POWER: SOLAR / BATTERY, CONFIRM ]. Runtime on a full charge is [ HOURS ]."
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "Can it stay out in the rain?",
+            "answer": "It is rated [ IP RATING ]. Light rain is fine. It is fabric, so bring it in before a heavy storm or it will take a long time to dry out."
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "What if I don't have a tree?",
+            "answer": "A porch beam, a pergola, a shepherd's hook, or the corner of a gutter bracket. Anything that gives it a foot or two of clear swing."
+          }
+        },
+        "faq_5": {
+          "type": "faq",
+          "settings": {
+            "question": "Will it blow away?",
+            "answer": "It's tied on, not hooked, so it swings rather than lifts. In real wind it will spin. Take it down ahead of a storm."
+          }
+        },
+        "faq_6": {
+          "type": "faq",
+          "settings": {
+            "question": "Is it scary or friendly?",
+            "answer": "Friendly. It's the one in the yard small kids walk up to instead of away from. That's deliberate."
+          }
+        },
+        "faq_7": {
+          "type": "faq",
+          "settings": {
+            "question": "Will it arrive before Halloween?",
+            "answer": "Yes if you order by [[cutoff]]. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st. We'd rather tell you no than take your money on a maybe."
+          }
+        },
+        "faq_8": {
+          "type": "faq",
+          "settings": {
+            "question": "What if it doesn't look like the video?",
+            "answer": "Send it back within 30 days and we refund you. Every clip on this page is the actual product. No renders, no composites, no enhancement."
+          }
+        },
+        "spec_1": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Height, hanging",
+            "value": "110 cm / 43.3 in"
+          }
+        },
+        "spec_2": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Width",
+            "value": "37 cm / 14.6 in"
+          }
+        },
+        "spec_3": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Materials",
+            "value": "[ FABRIC / SEAT / ROPE ]"
+          }
+        },
+        "spec_4": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Power",
+            "value": "[ SOLAR / BATTERY, CONFIRM ]"
+          }
+        },
+        "spec_5": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Runtime",
+            "value": ""
+          }
+        },
+        "spec_6": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Turns on",
+            "value": "[ AUTO AT DUSK / MANUAL SWITCH ]"
+          }
+        },
+        "spec_7": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Weather rating",
+            "value": ""
+          }
+        },
+        "spec_8": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Weight",
+            "value": ""
+          }
+        },
+        "spec_9": {
+          "type": "spec",
+          "settings": {
+            "group": "reaper",
+            "label": "Assembly",
+            "value": "None. It arrives assembled."
+          }
+        }
+      },
+      "block_order": [
+        "step_1",
+        "step_2",
+        "step_3",
+        "reaction_1",
+        "reaction_2",
+        "reaction_3",
+        "reaction_4",
+        "closeup_1",
+        "closeup_2",
+        "closeup_3",
+        "closeup_4",
+        "closeup_5",
+        "box_1",
+        "box_2",
+        "box_3",
+        "box_4",
+        "box_5",
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4",
+        "faq_5",
+        "faq_6",
+        "faq_7",
+        "faq_8",
+        "spec_1",
+        "spec_2",
+        "spec_3",
+        "spec_4",
+        "spec_5",
+        "spec_6",
+        "spec_7",
+        "spec_8",
+        "spec_9"
+      ],
+      "settings": {
+        "cutoff": "Tuesday, October 20",
+        "strip_1_title": "About a minute",
+        "strip_1_text": "Loop the rope over a branch. Done.",
+        "strip_2_title": "110 cm tall",
+        "strip_2_text": "37 cm wide. Reads clearly from the sidewalk.",
+        "strip_3_title": "Lights from within",
+        "strip_3_text": "Ghost and pumpkin both glow. [ POWER: SOLAR / BATTERY ]",
+        "strip_4_title": "Light enough for a branch",
+        "strip_4_text": "[ WEIGHT ]",
+        "how_eyebrow": "Setup",
+        "how_heading": "Find a branch. That's the hard part.",
+        "how_text": "No stake, no outlet, no tools. It weighs almost nothing.",
+        "react_eyebrow": "See it running",
+        "react_heading": "The soft one in a yard full of hard ones.",
+        "react_text": "Every yard needs one thing that isn't trying to scare a six-year-old. This is it, and it's the one people photograph.",
+        "deal_eyebrow": "Why people buy all three",
+        "deal_heading": "Ground, air and the house.",
+        "deal_text": "The reapers hold the lawn. The swings fill the trees. The projector takes the wall. A yard with all three levels working doesn't look decorated. It looks staged.",
+        "deal_show_prices": true,
+        "deal_note": "Same free shipping, same 30-day return on all three.",
+        "deal_button": "Build the yard",
+        "detail_eyebrow": "Up close",
+        "detail_heading": "What you're actually getting.",
+        "detail_text": "Shot in a real tree, not in a studio. Fabric, rope, seat, pumpkin.",
+        "box_heading": "What's in the box",
+        "box_sub": "Per swing.",
+        "box_foot": "Arrives assembled. Nothing to build, nothing to plug in.",
+        "rev_eyebrow": "Reviews",
+        "rev_heading": "From people with it in the tree.",
+        "rev_text": "Verified orders only. We don't seed reviews and we don't remove the bad ones.",
+        "faq_eyebrow": "Questions",
+        "faq_heading": "Everything people ask before ordering.",
+        "faq_media_placeholder": "UGC video: hanging it from a tree and switching it on, vertical",
+        "faq_media_caption": "Branch to glowing, one take. Unedited. About as long as it actually takes.",
+        "faq_link_label": "Read the full FAQ",
+        "faq_link": "/pages/faq",
+        "spec_eyebrow": "Specifications",
+        "spec_heading": "The honest numbers.",
+        "spec_note": "Gold values are placeholders. Fill them from the supplier spec sheet before launch.",
+        "spec_group_a": "Lighted Ghost Swing",
+        "spec_group_b": "",
+        "closer_heading": "Halloween is on a Saturday this year.",
+        "closer_text": "The whole street will be walking. Give them something to walk past.",
+        "closer_button": "Choose how many",
+        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "below"
+  ]
+}

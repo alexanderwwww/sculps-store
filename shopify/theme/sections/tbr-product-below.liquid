@@ -1,0 +1,1029 @@
+{%- liquid
+  assign s = section.settings
+  assign reaper = all_products['the-black-reaper']
+  assign projector = all_products['the-haunted-projector']
+  assign swing = all_products['the-lighted-ghost-swing']
+  assign coll = collections['halloween-2026']
+  assign handle = product.handle
+  assign design = request.design_mode
+  assign fill_open = '<span class="tbr-fill">[ '
+  assign fill_close = ' ]</span>'
+
+  comment
+    Cutoff. Real deadline. past_cutoff is computed exactly as tbr-product.liquid does it.
+  endcomment
+  assign cutoff_ts = s.cutoff_iso | date: '%s' | plus: 0
+  assign now_ts = 'now' | date: '%s' | plus: 0
+  assign past_cutoff = false
+  if cutoff_ts > 0 and now_ts > cutoff_ts
+    assign past_cutoff = true
+  endif
+  assign cutoff = s.cutoff_label | default: 'Tuesday, October 20'
+
+  comment
+    Per-product defaults. One template serves all three products, so nothing
+    Reaper-specific may live in the schema defaults. Anything left blank in the
+    editor falls back to the copy for the product being viewed. A product that
+    is none of the three gets no strip and no how-it-works copy.
+  endcomment
+  assign d_strip = ''
+  assign d_how_eyebrow = ''
+  assign d_how_heading = ''
+  assign d_how_text = ''
+  assign d_react_eyebrow = ''
+  assign d_react_heading = ''
+  assign d_react_text = ''
+  assign d_deal_eyebrow = ''
+  assign d_deal_heading = ''
+  assign d_deal_text = ''
+  assign d_deal_button = ''
+  assign d_box_sub = ''
+  assign d_box_foot = ''
+  assign d_spec_a = product.title
+  assign d_spec_b = ''
+  assign d_faq_cap = ''
+
+  case handle
+  when 'the-black-reaper'
+    assign d_strip = "4 minutes to set up|Push the stake in the ground. That's it.||Charges itself|Sun by day, lights at dusk, off by morning.||Silent|No motor, no speaker, nothing to fail.||Built for outdoors|Rated [ IP RATING ] for autumn weather."
+    assign d_how_eyebrow = 'Setup'
+    assign d_how_heading = "Stake it in. That's the whole setup."
+    assign d_how_text = 'No outlet, no extension cord, no timer to program, no tools.'
+    assign d_react_eyebrow = 'See it running'
+    assign d_react_heading = 'The neighbors are going to lose it.'
+    assign d_react_text = 'Real footage from real yards. Nothing here is a render and nothing is enhanced. What you see is what shows up on your lawn.'
+    assign d_deal_eyebrow = 'The Halloween Special'
+    assign d_deal_heading = 'Souls on the lawn.|Shadows on the house.'
+    assign d_deal_text = 'The reapers own the ground. The projector takes the wall. Together the whole property is the decoration, not one object in the middle of it.'
+    assign d_deal_button = 'Get the bundle'
+    assign d_box_sub = 'Per reaper. The bundle adds the projector kit.'
+    assign d_box_foot = "No batteries, no adapter, no app. The reaper is solar and needs nothing you don't already have in the yard."
+    assign d_spec_a = 'The Black Reaper'
+    assign d_spec_b = 'Haunted Projector, bundle only'
+    assign d_faq_cap = 'Setup, start to finish. Unedited, one take, from box to lit. If you only watch one thing on this page, watch this.'
+  when 'the-haunted-projector'
+    assign d_strip = 'Under a minute|Place it, plug it in, pick a scene.||Auto-focus|No focus wheel to fight with in the dark.||Covers a whole facade|[ IMAGE SIZE ] at [ DISTANCE ].||Needs an outlet|Mains powered, [ CABLE LENGTH ] cable.'
+    assign d_how_eyebrow = 'Setup'
+    assign d_how_heading = 'Three moves and the house is haunted.'
+    assign d_how_text = 'The projector is the one thing here that does need power. Everything else about it is instant.'
+    assign d_react_eyebrow = 'See it running'
+    assign d_react_heading = 'It reads from the street.'
+    assign d_react_text = "That's the whole test for a projector. If it washes out at twenty feet it's a toy. Filmed from the sidewalk, no enhancement."
+    assign d_deal_eyebrow = 'The Halloween Special'
+    assign d_deal_heading = 'The house and the lawn,|not one or the other.'
+    assign d_deal_text = "The projector owns the wall. The reapers own the ground. Run them together and there is no part of the property that isn't doing something."
+    assign d_deal_button = 'Get the bundle'
+    assign d_box_sub = 'Per projector.'
+    assign d_spec_a = 'Haunted Projector'
+    assign d_faq_cap = 'Porch to projection, one take. Unedited. This is the whole setup, in real time.'
+  when 'the-lighted-ghost-swing'
+    assign d_strip = 'About a minute|Loop the rope over a branch. Done.||110 cm tall|37 cm wide. Reads clearly from the sidewalk.||Lights from within|Ghost and pumpkin both glow. [ POWER: SOLAR / BATTERY ]||Light enough for a branch|[ WEIGHT ]'
+    assign d_how_eyebrow = 'Setup'
+    assign d_how_heading = "Find a branch. That's the hard part."
+    assign d_how_text = 'No stake, no outlet, no tools. It weighs almost nothing.'
+    assign d_react_eyebrow = 'See it running'
+    assign d_react_heading = 'The soft one in a yard full of hard ones.'
+    assign d_react_text = "Every yard needs one thing that isn't trying to scare a six-year-old. This is it, and it's the one people photograph."
+    assign d_deal_eyebrow = 'Why people buy all three'
+    assign d_deal_heading = 'Ground, air and the house.'
+    assign d_deal_text = "The reapers hold the lawn. The swings fill the trees. The projector takes the wall. A yard with all three levels working doesn't look decorated. It looks staged."
+    assign d_deal_button = 'See all three'
+    assign d_box_sub = 'Per swing.'
+    assign d_spec_a = 'Lighted Ghost Swing'
+    assign d_faq_cap = 'Branch to lit, one take. Unedited.'
+  endcase
+
+  assign strip_defaults = d_strip | split: '||'
+  assign how_eyebrow = s.how_eyebrow | default: d_how_eyebrow
+  assign how_heading = s.how_heading | default: d_how_heading
+  assign how_text = s.how_text | default: d_how_text
+  assign react_eyebrow = s.react_eyebrow | default: d_react_eyebrow
+  assign react_heading = s.react_heading | default: d_react_heading
+  assign react_text = s.react_text | default: d_react_text
+  assign deal_eyebrow = s.deal_eyebrow | default: d_deal_eyebrow
+  assign deal_text = s.deal_text | default: d_deal_text
+  assign deal_button = s.deal_button | default: d_deal_button
+  assign box_sub = s.box_sub | default: d_box_sub
+  assign box_foot = s.box_foot | default: d_box_foot
+  assign spec_group_a = s.spec_group_a | default: d_spec_a
+  assign spec_group_b = s.spec_group_b | default: d_spec_b
+  assign faq_media_caption = s.faq_media_caption | default: d_faq_cap
+  if s.deal_heading != blank
+    assign deal_heading = s.deal_heading | newline_to_br
+  else
+    assign deal_heading = d_deal_heading | replace: '|', '<br>'
+  endif
+
+  comment
+    Count the blocks that apply to this product, and whether any of them carries media.
+    Blocks carry a shown_on setting: 'all' or a product handle.
+  endcomment
+  assign step_n = 0
+  assign step_media = false
+  assign react_n = 0
+  assign react_media = false
+  assign closeup_n = 0
+  assign closeup_media = false
+  assign box_n = 0
+  assign review_n = 0
+  assign faq_n = 0
+  assign spec_n = 0
+  assign spec_blank = false
+  assign spec_has_a = false
+  assign spec_has_b = false
+  for block in section.blocks
+    assign b = block.settings
+    if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle
+      continue
+    endif
+    assign has_media = false
+    if b.video != blank or b.video_url != blank or b.image != blank
+      assign has_media = true
+    endif
+    case block.type
+    when 'step'
+      assign step_n = step_n | plus: 1
+      if has_media
+        assign step_media = true
+      endif
+    when 'reaction'
+      assign react_n = react_n | plus: 1
+      if has_media
+        assign react_media = true
+      endif
+    when 'closeup'
+      assign closeup_n = closeup_n | plus: 1
+      if has_media
+        assign closeup_media = true
+      endif
+    when 'box_item'
+      assign box_n = box_n | plus: 1
+    when 'review'
+      assign review_n = review_n | plus: 1
+    when 'faq'
+      assign faq_n = faq_n | plus: 1
+    when 'spec'
+      assign spec_n = spec_n | plus: 1
+      if b.value == blank
+        assign spec_blank = true
+      endif
+      if b.group == 'projector'
+        assign spec_has_b = true
+      else
+        assign spec_has_a = true
+      endif
+    endcase
+  endfor
+
+  assign faq_has_media = false
+  if s.faq_video != blank or s.faq_video_url != blank or s.faq_image != blank
+    assign faq_has_media = true
+  endif
+
+  comment
+    The bundle variant is the only place the bundle saving exists. Link to it, not near it.
+  endcomment
+  assign bundle_variant = blank
+  for v in reaper.variants
+    if v.title contains 'Projector'
+      assign bundle_variant = v
+    endif
+  endfor
+  assign two_reapers = reaper.price_min | times: 2
+
+  assign deal_select = blank
+  if s.deal_url != blank
+    assign deal_href = s.deal_url
+  elsif handle == 'the-black-reaper'
+    assign deal_href = '#tbr-product-form'
+    if bundle_variant != blank
+      assign deal_select = bundle_variant.id
+    endif
+  elsif handle == 'the-lighted-ghost-swing'
+    assign deal_href = coll.url | default: '/collections/all'
+  elsif bundle_variant != blank
+    assign deal_href = reaper.url | append: '?variant=' | append: bundle_variant.id
+  else
+    assign deal_href = reaper.url
+  endif
+-%}
+
+<div class="tbr tbr-pb">
+
+  {%- comment -%} 1. Trust strip. Only renders for a product that has strip copy. {%- endcomment -%}
+  {%- assign strip_count = 0 -%}
+  {%- capture strip_html -%}
+    {%- for i in (1..4) -%}
+      {%- assign k_title = 'strip_' | append: i | append: '_title' -%}
+      {%- assign k_text = 'strip_' | append: i | append: '_text' -%}
+      {%- assign st_title = s[k_title] -%}
+      {%- assign st_text = s[k_text] -%}
+      {%- if st_title == blank -%}
+        {%- assign pair = strip_defaults[forloop.index0] | split: '|' -%}
+        {%- assign st_title = pair[0] -%}
+        {%- assign st_text = pair[1] -%}
+      {%- endif -%}
+      {%- if st_title != blank -%}
+        {%- assign strip_count = strip_count | plus: 1 -%}
+        <div><b>{{ st_title }}</b>{{ st_text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</div>
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endcapture -%}
+  {%- if strip_count > 0 -%}
+  <section class="tbr-strip">
+    <div class="tbr-wrap tbr-strip__in">{{ strip_html }}</div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 2. How it works. Steps keep their text; the media slot only shows with media, or in the editor. {%- endcomment -%}
+  {%- if step_n > 0 -%}
+  <section class="tbr-sec tbr-sec--alt" id="how">
+    <div class="tbr-wrap">
+      {%- if how_eyebrow != blank -%}<p class="tbr-eyebrow">{{ how_eyebrow }}</p>{%- endif -%}
+      {%- if how_heading != blank -%}<h2 class="tbr-h2">{{ how_heading }}</h2>{%- endif -%}
+      {%- if how_text != blank -%}<p class="tbr-lede tbr-lede--block">{{ how_text }}</p>{%- endif -%}
+      <div class="tbr-steps">
+        {%- assign step_i = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'step' -%}{%- continue -%}{%- endif -%}
+          {%- assign b = block.settings -%}
+          {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+          {%- assign step_i = step_i | plus: 1 -%}
+          {%- assign has_media = false -%}
+          {%- if b.video != blank or b.video_url != blank or b.image != blank -%}{%- assign has_media = true -%}{%- endif -%}
+          <article class="tbr-step" {{ block.shopify_attributes }}>
+            {%- if has_media or design -%}
+            <div class="tbr-slot tbr-slot--43{% unless has_media %} tbr-slot--empty{% endunless %}">
+              {%- if b.video != blank -%}
+                {{ b.video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, class: 'tbr-slot__media' }}
+              {%- elsif b.video_url != blank -%}
+                {%- if b.video_url.type == 'youtube' -%}
+                  <iframe class="tbr-slot__media" src="https://www.youtube.com/embed/{{ b.video_url.id }}?autoplay=1&mute=1&loop=1&playlist={{ b.video_url.id }}&controls=0&playsinline=1&rel=0" title="{{ b.heading | escape }}" loading="lazy" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                {%- else -%}
+                  <iframe class="tbr-slot__media" src="https://player.vimeo.com/video/{{ b.video_url.id }}?autoplay=1&muted=1&loop=1&background=1" title="{{ b.heading | escape }}" loading="lazy" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                {%- endif -%}
+              {%- elsif b.image != blank -%}
+                <img class="tbr-slot__media" src="{{ b.image | image_url: width: 1200 }}" alt="{{ b.image.alt | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy">
+              {%- else -%}
+                <span>{{ b.placeholder | default: 'Add a clip or photo' }}</span>
+              {%- endif -%}
+            </div>
+            {%- endif -%}
+            <span class="tbr-step__n">Step {{ step_i | prepend: '0' | slice: -2, 2 }}</span>
+            <h3>{{ b.heading }}</h3>
+            <p>{{ b.text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+          </article>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 3. See it running. Hidden on the storefront until at least one clip is real. {%- endcomment -%}
+  {%- if react_media or design and react_n > 0 -%}
+  <section class="tbr-sec" id="reactions">
+    <div class="tbr-wrap">
+      {%- if react_eyebrow != blank -%}<p class="tbr-eyebrow">{{ react_eyebrow }}</p>{%- endif -%}
+      {%- if react_heading != blank -%}<h2 class="tbr-h2">{{ react_heading }}</h2>{%- endif -%}
+      {%- if react_text != blank -%}<p class="tbr-lede tbr-lede--block">{{ react_text }}</p>{%- endif -%}
+      <div class="tbr-react">
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'reaction' -%}{%- continue -%}{%- endif -%}
+          {%- assign b = block.settings -%}
+          {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+          {%- assign has_media = false -%}
+          {%- if b.video != blank or b.video_url != blank or b.image != blank -%}{%- assign has_media = true -%}{%- endif -%}
+          {%- if has_media == false and design == false -%}{%- continue -%}{%- endif -%}
+          <figure class="tbr-react__item" {{ block.shopify_attributes }}>
+            <div class="tbr-slot tbr-slot--916{% unless has_media %} tbr-slot--empty{% endunless %}">
+              {%- if b.video != blank -%}
+                {{ b.video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, class: 'tbr-slot__media' }}
+              {%- elsif b.video_url != blank -%}
+                {%- if b.video_url.type == 'youtube' -%}
+                  <iframe class="tbr-slot__media" src="https://www.youtube.com/embed/{{ b.video_url.id }}?autoplay=1&mute=1&loop=1&playlist={{ b.video_url.id }}&controls=0&playsinline=1&rel=0" title="{{ b.caption | escape }}" loading="lazy" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                {%- else -%}
+                  <iframe class="tbr-slot__media" src="https://player.vimeo.com/video/{{ b.video_url.id }}?autoplay=1&muted=1&loop=1&background=1" title="{{ b.caption | escape }}" loading="lazy" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                {%- endif -%}
+              {%- elsif b.image != blank -%}
+                <img class="tbr-slot__media" src="{{ b.image | image_url: width: 900 }}" alt="{{ b.image.alt | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy">
+              {%- else -%}
+                <span>{{ b.caption | default: 'Add a vertical clip' }}</span>
+              {%- endif -%}
+            </div>
+            {%- if has_media and b.caption != blank -%}
+              <figcaption>{{ b.caption }}</figcaption>
+            {%- endif -%}
+          </figure>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 4. Bundle band. On the swing page it is a three-product band, not a bundle: no bundle exists for it. {%- endcomment -%}
+  {%- if deal_button != blank -%}
+  <section class="tbr-deal" id="bundle">
+    {%- if s.deal_image != blank -%}
+      <img class="tbr-deal__img" src="{{ s.deal_image | image_url: width: 2000 }}" alt="" width="{{ s.deal_image.width }}" height="{{ s.deal_image.height }}" loading="lazy">
+    {%- elsif projector.featured_image -%}
+      <img class="tbr-deal__img" src="{{ projector.featured_image | image_url: width: 2000 }}" alt="" width="2000" height="2000" loading="lazy">
+    {%- endif -%}
+    <div class="tbr-deal__shade"></div>
+    <div class="tbr-wrap tbr-deal__in">
+      <div class="tbr-deal__copy">
+        {%- if deal_eyebrow != blank -%}<p class="tbr-eyebrow tbr-eyebrow--light">{{ deal_eyebrow }}</p>{%- endif -%}
+        {%- if deal_heading != blank -%}<h2 class="tbr-h2 tbr-h2--light">{{ deal_heading }}</h2>{%- endif -%}
+        {%- if deal_text != blank -%}<p class="tbr-deal__p">{{ deal_text }}</p>{%- endif -%}
+
+        {%- if s.deal_show_prices -%}
+          {%- if handle == 'the-lighted-ghost-swing' -%}
+            <div class="tbr-deal__list">
+              <div><span>Ground</span><span>{{ reaper.title }}</span><span>{{ reaper.price_min | money }}</span></div>
+              <div><span>Air</span><span>{{ swing.title }}</span><span>{{ swing.price_min | money }}</span></div>
+              <div><span>House</span><span>{{ projector.title }}</span><span>{{ projector.price_min | money }}</span></div>
+            </div>
+          {%- else -%}
+            <div class="tbr-deal__list">
+              <div><span>&times;2</span><span>{{ reaper.title }}, solar soul lantern</span><span>{{ two_reapers | money }}</span></div>
+              <div><span>&times;1</span><span>{{ projector.title }}, plug-in, auto-focus</span><span>{{ projector.price_min | money }}</span></div>
+            </div>
+            {%- if bundle_variant != blank -%}
+              <div class="tbr-deal__sum">
+                <b>{{ bundle_variant.price | money }}</b>
+                {%- if bundle_variant.compare_at_price > bundle_variant.price -%}
+                  <s>{{ bundle_variant.compare_at_price | money }}</s>
+                  <em>Save {{ bundle_variant.compare_at_price | minus: bundle_variant.price | money_without_trailing_zeros }}</em>
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+          {%- endif -%}
+        {%- endif -%}
+
+        {%- if s.deal_note != blank -%}<p class="tbr-deal__note">{{ s.deal_note }}</p>{%- endif -%}
+        <a class="tbr-btn tbr-btn--accent" href="{{ deal_href }}"{% if deal_select != blank %} data-tbr-select="{{ deal_select }}"{% endif %}>{{ deal_button }}</a>
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 5. Close-ups + What's in the box {%- endcomment -%}
+  {%- assign show_closeups = false -%}
+  {%- if closeup_media -%}{%- assign show_closeups = true -%}{%- endif -%}
+  {%- if design and closeup_n > 0 -%}{%- assign show_closeups = true -%}{%- endif -%}
+  {%- if show_closeups or box_n > 0 -%}
+  <section class="tbr-sec" id="detail">
+    <div class="tbr-wrap">
+      <div class="tbr-head">
+        <div>
+          <p class="tbr-eyebrow">{{ s.detail_eyebrow }}</p>
+          <h2 class="tbr-h2">{{ s.detail_heading }}</h2>
+        </div>
+        {%- if s.detail_text != blank -%}<p class="tbr-lede">{{ s.detail_text }}</p>{%- endif -%}
+      </div>
+
+      <div class="tbr-detail{% if box_n == 0 %} tbr-detail--solo{% endif %}{% unless show_closeups %} tbr-detail--boxonly{% endunless %}">
+        {%- if show_closeups -%}
+        <div class="tbr-closeups">
+          {%- assign closeup_i = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'closeup' -%}{%- continue -%}{%- endif -%}
+            {%- assign b = block.settings -%}
+            {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+            {%- if b.image == blank and design == false -%}{%- continue -%}{%- endif -%}
+            {%- assign closeup_i = closeup_i | plus: 1 -%}
+            <figure class="tbr-closeups__fig{% if closeup_i == 1 %} tbr-closeups__fig--wide{% endif %}" {{ block.shopify_attributes }}>
+              <div class="tbr-slot{% if closeup_i == 1 %} tbr-slot--169{% else %} tbr-slot--11{% endif %}{% if b.image == blank %} tbr-slot--empty{% endif %}">
+                {%- if b.image != blank -%}
+                  <img class="tbr-slot__media" src="{{ b.image | image_url: width: 1400 }}" alt="{{ b.image.alt | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy">
+                {%- else -%}
+                  <span>{{ b.placeholder | default: 'Add a photo' }}</span>
+                {%- endif -%}
+              </div>
+              {%- if b.title != blank or b.caption != blank -%}
+                <figcaption>{%- if b.title != blank -%}<b>{{ b.title }}</b>{%- endif -%}{{ b.caption | replace: '[ ', fill_open | replace: ' ]', fill_close }}</figcaption>
+              {%- endif -%}
+            </figure>
+          {%- endfor -%}
+        </div>
+        {%- endif -%}
+
+        {%- if box_n > 0 -%}
+        <aside class="tbr-box">
+          <h3>{{ s.box_heading }}</h3>
+          {%- if box_sub != blank -%}<p class="tbr-box__sub">{{ box_sub }}</p>{%- endif -%}
+          <ul>
+            {%- assign box_i = 0 -%}
+            {%- for block in section.blocks -%}
+              {%- if block.type != 'box_item' -%}{%- continue -%}{%- endif -%}
+              {%- assign b = block.settings -%}
+              {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+              {%- assign box_i = box_i | plus: 1 -%}
+              <li {{ block.shopify_attributes }}>
+                <span class="tbr-box__n">{{ box_i | prepend: '0' | slice: -2, 2 }}</span>
+                <span>{{ b.name }}{%- if b.note != blank -%}<small>{{ b.note | replace: '[ ', fill_open | replace: ' ]', fill_close }}</small>{%- endif -%}</span>
+              </li>
+            {%- endfor -%}
+          </ul>
+          {%- if box_foot != blank -%}<p class="tbr-box__foot">{{ box_foot }}</p>{%- endif -%}
+        </aside>
+        {%- endif -%}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 6. Reviews. Nothing renders unless real review blocks exist for this product. {%- endcomment -%}
+  {%- if review_n > 0 -%}
+  <section class="tbr-sec tbr-sec--alt" id="reviews">
+    <div class="tbr-wrap">
+      <div class="tbr-head">
+        <div>
+          <p class="tbr-eyebrow">{{ s.rev_eyebrow }}</p>
+          <h2 class="tbr-h2">{{ s.rev_heading }}</h2>
+        </div>
+        {%- if s.rev_text != blank -%}<p class="tbr-lede">{{ s.rev_text }}</p>{%- endif -%}
+      </div>
+      <div class="tbr-rev">
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'review' -%}{%- continue -%}{%- endif -%}
+          {%- assign b = block.settings -%}
+          {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+          {%- assign stars = b.stars | plus: 0 -%}
+          <article class="tbr-rev__card" {{ block.shopify_attributes }}>
+            {%- if b.photo != blank -%}
+              <img class="tbr-rev__photo" src="{{ b.photo | image_url: width: 800 }}" alt="{{ b.photo.alt | escape }}" width="{{ b.photo.width }}" height="{{ b.photo.height }}" loading="lazy">
+            {%- endif -%}
+            <div class="tbr-rev__body">
+              <span class="tbr-rev__stars" aria-label="{{ stars }} out of 5">
+                {%- for i in (1..5) -%}<i{% if i <= stars %} class="on"{% endif %}></i>{%- endfor -%}
+              </span>
+              <p class="tbr-rev__text">{{ b.text }}</p>
+              <p class="tbr-rev__who">
+                <b>{{ b.name }}</b>
+                {%- if b.place != blank -%}<span>{{ b.place }}</span>{%- endif -%}
+                {%- if b.verified -%}<em>Verified order</em>{%- endif -%}
+              </p>
+            </div>
+          </article>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 7. FAQ + UGC. The media column only exists once there is media, or in the editor. {%- endcomment -%}
+  {%- if faq_n > 0 -%}
+  {%- assign show_faq_media = false -%}
+  {%- if faq_has_media or design -%}{%- assign show_faq_media = true -%}{%- endif -%}
+  <section class="tbr-sec" id="faq">
+    <div class="tbr-wrap">
+      <p class="tbr-eyebrow">{{ s.faq_eyebrow }}</p>
+      <h2 class="tbr-h2">{{ s.faq_heading }}</h2>
+
+      <div class="tbr-faqgrid{% unless show_faq_media %} tbr-faqgrid--nomedia{% endunless %}">
+        {%- if show_faq_media -%}
+        <div class="tbr-faqgrid__media">
+          <div class="tbr-slot tbr-slot--916{% unless faq_has_media %} tbr-slot--empty{% endunless %}">
+            {%- if s.faq_video != blank -%}
+              {{ s.faq_video | video_tag: autoplay: true, loop: true, muted: true, controls: true, playsinline: true, class: 'tbr-slot__media' }}
+            {%- elsif s.faq_video_url != blank -%}
+              {%- if s.faq_video_url.type == 'youtube' -%}
+                <iframe class="tbr-slot__media" src="https://www.youtube.com/embed/{{ s.faq_video_url.id }}?playsinline=1&rel=0" title="{{ s.faq_media_placeholder | escape }}" loading="lazy" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+              {%- else -%}
+                <iframe class="tbr-slot__media" src="https://player.vimeo.com/video/{{ s.faq_video_url.id }}" title="{{ s.faq_media_placeholder | escape }}" loading="lazy" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+              {%- endif -%}
+            {%- elsif s.faq_image != blank -%}
+              <img class="tbr-slot__media" src="{{ s.faq_image | image_url: width: 900 }}" alt="{{ s.faq_image.alt | escape }}" width="{{ s.faq_image.width }}" height="{{ s.faq_image.height }}" loading="lazy">
+            {%- else -%}
+              <span>{{ s.faq_media_placeholder }}</span>
+            {%- endif -%}
+          </div>
+          {%- if faq_has_media and faq_media_caption != blank -%}<p class="tbr-faqgrid__cap">{{ faq_media_caption }}</p>{%- endif -%}
+        </div>
+        {%- endif -%}
+
+        <div class="tbr-faq">
+          {%- assign faq_i = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'faq' -%}{%- continue -%}{%- endif -%}
+            {%- assign b = block.settings -%}
+            {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+            {%- assign faq_i = faq_i | plus: 1 -%}
+            {%- assign answer = b.answer -%}
+            {%- if past_cutoff and answer contains '[[cutoff]]' -%}
+              {%- assign answer = s.faq_after_cutoff -%}
+            {%- endif -%}
+            <details {% if faq_i == 1 %}open{% endif %} {{ block.shopify_attributes }}>
+              <summary>{{ b.question }}<i></i></summary>
+              <p>{{ answer | replace: '[[cutoff]]', cutoff | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+            </details>
+          {%- endfor -%}
+        </div>
+      </div>
+      {%- if s.faq_link_label != blank -%}
+        <a class="tbr-btn tbr-btn--dark" href="{{ s.faq_link | default: '/pages/faq' }}">{{ s.faq_link_label }}</a>
+      {%- endif -%}
+    </div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 8. Specs {%- endcomment -%}
+  {%- if spec_n > 0 -%}
+  <section class="tbr-sec tbr-sec--alt" id="specs">
+    <div class="tbr-wrap">
+      <p class="tbr-eyebrow">{{ s.spec_eyebrow }}</p>
+      <h2 class="tbr-h2">{{ s.spec_heading }}</h2>
+      {%- if spec_blank and s.spec_note != blank -%}<p class="tbr-spec__note">{{ s.spec_note }}</p>{%- endif -%}
+
+      <div class="tbr-spec{% if spec_has_a == false or spec_has_b == false %} tbr-spec--solo{% endif %}">
+        {%- if spec_has_a -%}
+        <div>
+          {%- if spec_group_a != blank -%}<p class="tbr-spec__h">{{ spec_group_a }}</p>{%- endif -%}
+          <table class="tbr-spec__table"><tbody>
+            {%- for block in section.blocks -%}
+              {%- if block.type != 'spec' -%}{%- continue -%}{%- endif -%}
+              {%- assign b = block.settings -%}
+              {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+              {%- if b.group == 'projector' -%}{%- continue -%}{%- endif -%}
+              <tr {{ block.shopify_attributes }}>
+                <th scope="row">{{ b.label }}</th>
+                <td>{%- if b.value != blank -%}{{ b.value | replace: '[ ', fill_open | replace: ' ]', fill_close }}{%- else -%}<span class="tbr-fill">[ FILL ]</span>{%- endif -%}</td>
+              </tr>
+            {%- endfor -%}
+          </tbody></table>
+        </div>
+        {%- endif -%}
+
+        {%- if spec_has_b -%}
+        <div>
+          {%- if spec_group_b != blank -%}<p class="tbr-spec__h">{{ spec_group_b }}</p>{%- endif -%}
+          <table class="tbr-spec__table"><tbody>
+            {%- for block in section.blocks -%}
+              {%- if block.type != 'spec' -%}{%- continue -%}{%- endif -%}
+              {%- assign b = block.settings -%}
+              {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
+              {%- if b.group != 'projector' -%}{%- continue -%}{%- endif -%}
+              <tr {{ block.shopify_attributes }}>
+                <th scope="row">{{ b.label }}</th>
+                <td>{%- if b.value != blank -%}{{ b.value | replace: '[ ', fill_open | replace: ' ]', fill_close }}{%- else -%}<span class="tbr-fill">[ FILL ]</span>{%- endif -%}</td>
+              </tr>
+            {%- endfor -%}
+          </tbody></table>
+        </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+
+  {%- comment -%} 9. Closer {%- endcomment -%}
+  <section class="tbr-closer">
+    {%- if s.closer_image != blank -%}
+      <img class="tbr-closer__img" src="{{ s.closer_image | image_url: width: 2000 }}" alt="" width="{{ s.closer_image.width }}" height="{{ s.closer_image.height }}" loading="lazy">
+    {%- elsif product.featured_image -%}
+      <img class="tbr-closer__img" src="{{ product.featured_image | image_url: width: 2000 }}" alt="" width="2000" height="2000" loading="lazy">
+    {%- endif -%}
+    <div class="tbr-closer__shade"></div>
+    <div class="tbr-wrap tbr-closer__in">
+      <h2 class="tbr-h2 tbr-h2--light">{{ s.closer_heading }}</h2>
+      <p>{{ s.closer_text }}</p>
+      <a class="tbr-btn tbr-btn--accent" href="{{ s.closer_url | default: '#tbr-product-form' }}">{{ s.closer_button }}</a>
+      {%- if past_cutoff -%}
+        <small>{{ s.closer_note_after }}</small>
+      {%- else -%}
+        <small>{{ s.closer_note | replace: '[[cutoff]]', cutoff }}</small>
+      {%- endif -%}
+    </div>
+  </section>
+
+</div>
+
+{% stylesheet %}
+.tbr-pb .tbr-slot{position:relative;width:100%;overflow:hidden;border-radius:6px;background:var(--paper);display:grid;place-items:center;text-align:center;color:var(--dim);font-size:11px;line-height:1.7;letter-spacing:.05em;text-transform:uppercase;padding:0}
+.tbr-pb .tbr-slot--empty{border:1px dashed #CFCAC2;padding:20px}
+.tbr-pb .tbr-slot--empty span{max-width:26ch}
+.tbr-pb .tbr-slot--43{aspect-ratio:4/3}
+.tbr-pb .tbr-slot--916{aspect-ratio:9/16}
+.tbr-pb .tbr-slot--169{aspect-ratio:16/9}
+.tbr-pb .tbr-slot--11{aspect-ratio:1}
+.tbr-pb .tbr-slot__media,.tbr-pb .tbr-slot video,.tbr-pb .tbr-slot iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;display:block}
+.tbr-pb .tbr-fill{color:var(--gold);border:1px dashed var(--gold);background:var(--paper);padding:1px 6px;border-radius:3px;font-size:.88em;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+
+.tbr-pb .tbr-step .tbr-slot{border-radius:5px}
+
+.tbr-pb .tbr-react{display:grid;gap:12px;margin-top:34px;grid-template-columns:repeat(2,1fr)}
+@media(min-width:760px){.tbr-pb .tbr-react{grid-template-columns:repeat(4,1fr)} }
+.tbr-pb .tbr-react__item{margin:0;display:grid;gap:8px}
+.tbr-pb .tbr-react__item figcaption{font-size:12.5px;color:var(--dim)}
+
+.tbr-pb .tbr-deal__note{color:#96948E;font-size:13px;margin:-8px 0 22px}
+
+.tbr-pb .tbr-detail{display:grid;gap:clamp(26px,4vw,48px);margin-top:36px;align-items:start}
+@media(min-width:940px){.tbr-pb .tbr-detail{grid-template-columns:1.25fr .75fr}.tbr-pb .tbr-detail--solo{grid-template-columns:1fr}.tbr-pb .tbr-detail--boxonly{grid-template-columns:1fr;max-width:560px} }
+.tbr-pb .tbr-detail--boxonly .tbr-box{position:static}
+.tbr-pb .tbr-closeups{display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}
+.tbr-pb .tbr-closeups__fig{margin:0;display:grid;gap:8px}
+.tbr-pb .tbr-closeups__fig--wide{grid-column:1 / -1}
+.tbr-pb .tbr-closeups figcaption{font-size:12.5px;color:var(--dim);line-height:1.5}
+.tbr-pb .tbr-closeups figcaption b{display:block;color:var(--ink);font-weight:700;font-size:13.5px}
+
+.tbr-pb .tbr-box{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:24px;position:sticky;top:96px}
+.tbr-pb .tbr-box h3{font-size:19px;margin:0 0 4px;letter-spacing:-.01em;font-weight:700}
+.tbr-pb .tbr-box__sub{font-size:13px;color:var(--dim);margin:0 0 16px}
+.tbr-pb .tbr-box ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.tbr-pb .tbr-box li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--rule);font-size:14.5px;font-weight:600}
+.tbr-pb .tbr-box__n{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.06em}
+.tbr-pb .tbr-box li small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px;font-weight:400}
+.tbr-pb .tbr-box__foot{margin:16px 0 0;font-size:12.5px;color:var(--dim);line-height:1.6}
+
+.tbr-pb .tbr-rev{display:grid;gap:14px;margin-top:32px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.tbr-pb .tbr-rev__card{background:#fff;border:1px solid var(--rule);border-radius:10px;overflow:hidden;display:grid;align-content:start}
+.tbr-pb .tbr-rev__photo{width:100%;aspect-ratio:4/3;object-fit:cover}
+.tbr-pb .tbr-rev__body{padding:18px 20px 20px;display:grid;gap:10px}
+.tbr-pb .tbr-rev__stars{display:inline-flex;gap:3px}
+.tbr-pb .tbr-rev__stars i{width:14px;height:14px;background:var(--rule);clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.tbr-pb .tbr-rev__stars i.on{background:var(--ink)}
+.tbr-pb .tbr-rev__text{margin:0;font-size:14.5px;color:var(--ink);line-height:1.55}
+.tbr-pb .tbr-rev__who{margin:0;font-size:12.5px;color:var(--dim);display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.tbr-pb .tbr-rev__who b{color:var(--ink)}
+.tbr-pb .tbr-rev__who em{font-style:normal;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+
+.tbr-pb .tbr-faqgrid{display:grid;gap:clamp(24px,4vw,44px);margin-top:36px;align-items:start}
+@media(min-width:940px){.tbr-pb .tbr-faqgrid{grid-template-columns:minmax(260px,.68fr) 1.32fr}.tbr-pb .tbr-faqgrid--nomedia{grid-template-columns:1fr}.tbr-pb .tbr-faqgrid__media{position:sticky;top:96px} }
+.tbr-pb .tbr-faqgrid__media{display:grid;gap:12px}
+.tbr-pb .tbr-faqgrid__media .tbr-slot{border-radius:10px}
+.tbr-pb .tbr-faqgrid__cap{margin:0;font-size:13.5px;color:var(--dim);line-height:1.55}
+.tbr-pb .tbr-faqgrid__cap b{color:var(--ink)}
+.tbr-pb .tbr-faqgrid .tbr-faq{margin-top:0}
+
+.tbr-pb .tbr-spec__note{margin:14px 0 0;font-size:12.5px;color:var(--gold);font-weight:600}
+.tbr-pb .tbr-spec{display:grid;gap:26px;margin-top:30px}
+@media(min-width:900px){.tbr-pb .tbr-spec{grid-template-columns:1fr 1fr;align-items:start}.tbr-pb .tbr-spec--solo{grid-template-columns:1fr;max-width:680px} }
+.tbr-pb .tbr-spec__h{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:0 0 10px;font-weight:700}
+.tbr-pb .tbr-spec__table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.tbr-pb .tbr-spec__table tr+tr th,.tbr-pb .tbr-spec__table tr+tr td{border-top:1px solid var(--rule)}
+.tbr-pb .tbr-spec__table th{text-align:left;font-weight:500;font-size:13.5px;color:var(--dim);padding:13px 16px;width:46%;vertical-align:top;background:var(--paper)}
+.tbr-pb .tbr-spec__table td{padding:13px 16px;font-size:14px;color:var(--ink)}
+
+.tbr-pb .tbr-closer__in{position:relative}
+{% endstylesheet %}
+
+{% javascript %}
+/* "Get the bundle" on the Reaper page: jump to the buy box AND pick the bundle tier.
+   The tier radios in tbr-product listen for 'change', so firing it re-renders the box. */
+document.addEventListener('click', function (e) {
+  var a = e.target.closest ? e.target.closest('[data-tbr-select]') : null;
+  if (!a) return;
+  var id = a.getAttribute('data-tbr-select');
+  var r = document.querySelector('[data-tbr-tier][value="' + id + '"]');
+  if (r && !r.disabled && !r.checked) {
+    r.checked = true;
+    r.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+});
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Black Reaper product below",
+  "enabled_on": { "templates": ["product"] },
+  "settings": [
+    { "type": "paragraph", "content": "One template serves all three products. Leave a field blank and it uses the copy written for the product being viewed. Type in a field and it overrides that copy on every product, so only do that if it is true for all three." },
+
+    { "type": "header", "content": "Dates" },
+    { "type": "text", "id": "cutoff_iso", "label": "Cutoff instant (ISO 8601 with offset)", "default": "2026-10-20T23:59:59-04:00", "info": "Real deadline. Must match the one in the header and the buy box. After this instant the closer and the delivery FAQ switch to the after-cutoff wording. Do not move it to make urgency." },
+    { "type": "text", "id": "cutoff_label", "label": "Cutoff, as words", "default": "Tuesday, October 20", "info": "Used wherever [[cutoff]] appears. Kept as words so the shop's timezone cannot shift the date." },
+
+    { "type": "header", "content": "Trust strip" },
+    { "type": "paragraph", "content": "Blank = the strip written for this product. Anything written as [ LIKE THIS ] shows as a gold placeholder until you replace it." },
+    { "type": "text", "id": "strip_1_title", "label": "Item 1 title" },
+    { "type": "text", "id": "strip_1_text", "label": "Item 1 text" },
+    { "type": "text", "id": "strip_2_title", "label": "Item 2 title" },
+    { "type": "text", "id": "strip_2_text", "label": "Item 2 text" },
+    { "type": "text", "id": "strip_3_title", "label": "Item 3 title" },
+    { "type": "text", "id": "strip_3_text", "label": "Item 3 text" },
+    { "type": "text", "id": "strip_4_title", "label": "Item 4 title" },
+    { "type": "text", "id": "strip_4_text", "label": "Item 4 text" },
+
+    { "type": "header", "content": "How it works" },
+    { "type": "text", "id": "how_eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "how_heading", "label": "Heading" },
+    { "type": "text", "id": "how_text", "label": "Lede" },
+
+    { "type": "header", "content": "See it running" },
+    { "type": "paragraph", "content": "Hidden on the live store until at least one Reaction clip for this product has media. Empty slots only show in the editor." },
+    { "type": "text", "id": "react_eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "react_heading", "label": "Heading" },
+    { "type": "textarea", "id": "react_text", "label": "Lede" },
+
+    { "type": "header", "content": "Bundle band" },
+    { "type": "paragraph", "content": "Reaper and Projector pages: the 2 Reapers + Projector bundle, priced from the bundle variant. Ghost Swing page: all three products, no bundle, because no three-product bundle exists." },
+    { "type": "text", "id": "deal_eyebrow", "label": "Eyebrow" },
+    { "type": "textarea", "id": "deal_heading", "label": "Heading (line breaks kept)" },
+    { "type": "textarea", "id": "deal_text", "label": "Text" },
+    { "type": "checkbox", "id": "deal_show_prices", "label": "Show the price list", "default": true, "info": "Prices come from the products, never typed here." },
+    { "type": "text", "id": "deal_note", "label": "Small note", "info": "Only write this if the bundle physically ships as one parcel and you have confirmed it with fulfilment." },
+    { "type": "text", "id": "deal_button", "label": "Button" },
+    { "type": "url", "id": "deal_url", "label": "Button link", "info": "Leave blank: Reaper page selects the bundle in the buy box. Projector page opens the Reaper with the bundle preselected. Swing page opens the collection." },
+    { "type": "image_picker", "id": "deal_image", "label": "Background photo", "info": "Night photo: two reapers on the lawn, projection across the house. Falls back to the projector image." },
+
+    { "type": "header", "content": "Up close" },
+    { "type": "text", "id": "detail_eyebrow", "label": "Eyebrow", "default": "Up close" },
+    { "type": "text", "id": "detail_heading", "label": "Heading", "default": "What you're actually getting." },
+    { "type": "text", "id": "detail_text", "label": "Lede", "default": "Shot in the yard, not in a studio. If it has a seam, you'll see the seam." },
+    { "type": "text", "id": "box_heading", "label": "Box list heading", "default": "What's in the box" },
+    { "type": "text", "id": "box_sub", "label": "Box list sub" },
+    { "type": "textarea", "id": "box_foot", "label": "Box list footnote" },
+
+    { "type": "header", "content": "Reviews" },
+    { "type": "paragraph", "content": "This block renders nothing until you add Review blocks. Verified orders only. Never write one yourself." },
+    { "type": "text", "id": "rev_eyebrow", "label": "Eyebrow", "default": "Reviews" },
+    { "type": "text", "id": "rev_heading", "label": "Heading", "default": "From people with it in the yard." },
+    { "type": "text", "id": "rev_text", "label": "Lede", "default": "Verified orders only. We don't seed reviews and we don't remove the bad ones." },
+
+    { "type": "header", "content": "FAQ" },
+    { "type": "text", "id": "faq_eyebrow", "label": "Eyebrow", "default": "Questions" },
+    { "type": "text", "id": "faq_heading", "label": "Heading", "default": "Everything people ask before ordering." },
+    { "type": "video", "id": "faq_video", "label": "UGC video (uploaded)" },
+    { "type": "video_url", "id": "faq_video_url", "label": "UGC video (YouTube or Vimeo)", "accept": ["youtube", "vimeo"] },
+    { "type": "image_picker", "id": "faq_image", "label": "UGC still (if no video yet)" },
+    { "type": "text", "id": "faq_media_placeholder", "label": "Empty slot label (editor only)", "default": "UGC video: setup and first light, vertical, real customer" },
+    { "type": "textarea", "id": "faq_media_caption", "label": "Caption under the video", "info": "Blank = the caption written for this product. Only shows once there is media." },
+    { "type": "textarea", "id": "faq_after_cutoff", "label": "Delivery answer after the cutoff", "default": "The Halloween delivery cutoff has passed. Orders still ship tracked from inside the US within 24 hours, but we can no longer promise it arrives before the 31st.", "info": "Replaces any FAQ answer containing [[cutoff]] once the cutoff instant has passed." },
+    { "type": "text", "id": "faq_link_label", "label": "Link text", "default": "Read the full FAQ" },
+    { "type": "url", "id": "faq_link", "label": "Link", "default": "/pages/faq" },
+
+    { "type": "header", "content": "Specs" },
+    { "type": "text", "id": "spec_eyebrow", "label": "Eyebrow", "default": "Specifications" },
+    { "type": "text", "id": "spec_heading", "label": "Heading", "default": "The honest numbers." },
+    { "type": "text", "id": "spec_note", "label": "Note shown while any value is blank", "default": "Figures in gold are still being confirmed with the factory. We will not print a number we have not measured.", "info": "Customers see this. Fill every blank value from the supplier spec sheet before launch and it disappears." },
+    { "type": "text", "id": "spec_group_a", "label": "Main table title", "info": "Blank = this product's name." },
+    { "type": "text", "id": "spec_group_b", "label": "Second table title", "info": "Blank on the Reaper page = 'Haunted Projector, bundle only'." },
+
+    { "type": "header", "content": "Closer" },
+    { "type": "text", "id": "closer_heading", "label": "Heading", "default": "Halloween is on a Saturday this year." },
+    { "type": "textarea", "id": "closer_text", "label": "Text", "default": "Which means the whole street will be out walking. Put something in the yard worth stopping for." },
+    { "type": "text", "id": "closer_button", "label": "Button", "default": "Choose your setup" },
+    { "type": "url", "id": "closer_url", "label": "Button link", "info": "Leave blank to jump back to the buy box." },
+    { "type": "text", "id": "closer_note", "label": "Small print", "default": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery" },
+    { "type": "text", "id": "closer_note_after", "label": "Small print after the cutoff", "default": "Free US shipping · 30-day returns · The Halloween delivery cutoff has passed" },
+    { "type": "image_picker", "id": "closer_image", "label": "Background photo", "info": "Falls back to the product's featured image." }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "How it works step",
+      "limit": 9,
+      "settings": [
+        { "type": "select", "id": "shown_on", "label": "Shown on", "default": "all", "options": [
+          { "value": "all", "label": "Every product" },
+          { "value": "the-black-reaper", "label": "The Black Reaper" },
+          { "value": "the-haunted-projector", "label": "The Haunted Projector" },
+          { "value": "the-lighted-ghost-swing", "label": "The Lighted Ghost Swing" }
+        ] },
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "textarea", "id": "text", "label": "Text" },
+        { "type": "video", "id": "video", "label": "Clip (uploaded)" },
+        { "type": "video_url", "id": "video_url", "label": "Clip (YouTube or Vimeo)", "accept": ["youtube", "vimeo"] },
+        { "type": "image_picker", "id": "image", "label": "Photo" },
+        { "type": "text", "id": "placeholder", "label": "Empty slot label (editor only)", "info": "Live, a step with no media shows text only." }
+      ]
+    },
+    {
+      "type": "reaction",
+      "name": "Reaction clip",
+      "limit": 12,
+      "settings": [
+        { "type": "select", "id": "shown_on", "label": "Shown on", "default": "all", "options": [
+          { "value": "all", "label": "Every product" },
+          { "value": "the-black-reaper", "label": "The Black Reaper" },
+          { "value": "the-haunted-projector", "label": "The Haunted Projector" },
+          { "value": "the-lighted-ghost-swing", "label": "The Lighted Ghost Swing" }
+        ] },
+        { "type": "text", "id": "caption", "label": "Caption", "info": "Doubles as the empty-slot label in the editor. Live, a clip with no media is skipped." },
+        { "type": "video", "id": "video", "label": "Vertical clip (uploaded)" },
+        { "type": "video_url", "id": "video_url", "label": "Vertical clip (YouTube or Vimeo)", "accept": ["youtube", "vimeo"] },
+        { "type": "image_picker", "id": "image", "label": "Vertical photo" }
+      ]
+    },
+    {
+      "type": "closeup",
+      "name": "Close-up",
+      "limit": 15,
+      "settings": [
+        { "type": "select", "id": "shown_on", "label": "Shown on", "default": "all", "options": [
+          { "value": "all", "label": "Every product" },
+          { "value": "the-black-reaper", "label": "The Black Reaper" },
+          { "value": "the-haunted-projector", "label": "The Haunted Projector" },
+          { "value": "the-lighted-ghost-swing", "label": "The Lighted Ghost Swing" }
+        ] },
+        { "type": "image_picker", "id": "image", "label": "Photo", "info": "Live, a close-up with no photo is skipped." },
+        { "type": "text", "id": "placeholder", "label": "Empty slot label (editor only)" },
+        { "type": "text", "id": "title", "label": "Caption title" },
+        { "type": "text", "id": "caption", "label": "Caption" }
+      ]
+    },
+    {
+      "type": "box_item",
+      "name": "In the box item",
+      "limit": 24,
+      "settings": [
+        { "type": "select", "id": "shown_on", "label": "Shown on", "default": "all", "options": [
+          { "value": "all", "label": "Every product" },
+          { "value": "the-black-reaper", "label": "The Black Reaper" },
+          { "value": "the-haunted-projector", "label": "The Haunted Projector" },
+          { "value": "the-lighted-ghost-swing", "label": "The Lighted Ghost Swing" }
+        ] },
+        { "type": "text", "id": "name", "label": "Item" },
+        { "type": "text", "id": "note", "label": "Note" }
+      ]
+    },
+    {
+      "type": "review",
+      "name": "Review (verified order only)",
+      "settings": [
+        { "type": "paragraph", "content": "Real customers, their words. Never write one yourself." },
+        { "type": "select", "id": "shown_on", "label": "About which product", "default": "all", "options": [
+          { "value": "all", "label": "Every product" },
+          { "value": "the-black-reaper", "label": "The Black Reaper" },
+          { "value": "the-haunted-projector", "label": "The Haunted Projector" },
+          { "value": "the-lighted-ghost-swing", "label": "The Lighted Ghost Swing" }
+        ] },
+        { "type": "select", "id": "stars", "label": "Stars", "default": "5", "options": [
+          { "value": "5", "label": "5" },
+          { "value": "4", "label": "4" },
+          { "value": "3", "label": "3" },
+          { "value": "2", "label": "2" },
+          { "value": "1", "label": "1" }
+        ] },
+        { "type": "textarea", "id": "text", "label": "Their words" },
+        { "type": "text", "id": "name", "label": "Name (First L.)" },
+        { "type": "text", "id": "place", "label": "Place" },
+        { "type": "checkbox", "id": "verified", "label": "Verified order", "default": false, "info": "Tick only when you can match this review to an order number." },
+        { "type": "image_picker", "id": "photo", "label": "Their photo" }
+      ]
+    },
+    {
+      "type": "faq",
+      "name": "FAQ",
+      "settings": [
+        { "type": "select", "id": "shown_on", "label": "Shown on", "default": "all", "options": [
+          { "value": "all", "label": "Every product" },
+          { "value": "the-black-reaper", "label": "The Black Reaper" },
+          { "value": "the-haunted-projector", "label": "The Haunted Projector" },
+          { "value": "the-lighted-ghost-swing", "label": "The Lighted Ghost Swing" }
+        ] },
+        { "type": "text", "id": "question", "label": "Question" },
+        { "type": "textarea", "id": "answer", "label": "Answer", "info": "[[cutoff]] becomes the cutoff date, and the whole answer swaps to the after-cutoff wording once it passes. [ LIKE THIS ] shows as a gold placeholder." }
+      ]
+    },
+    {
+      "type": "spec",
+      "name": "Spec row",
+      "settings": [
+        { "type": "select", "id": "shown_on", "label": "Shown on", "default": "all", "options": [
+          { "value": "all", "label": "Every product" },
+          { "value": "the-black-reaper", "label": "The Black Reaper" },
+          { "value": "the-haunted-projector", "label": "The Haunted Projector" },
+          { "value": "the-lighted-ghost-swing", "label": "The Lighted Ghost Swing" }
+        ] },
+        { "type": "select", "id": "group", "label": "Table", "default": "reaper", "options": [
+          { "value": "reaper", "label": "Main table (this product)" },
+          { "value": "projector", "label": "Second table (bundled product)" }
+        ] },
+        { "type": "text", "id": "label", "label": "Label" },
+        { "type": "text", "id": "value", "label": "Value", "info": "Leave blank and it shows [ FILL ] in gold. Do not guess a number." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Black Reaper product below",
+      "blocks": [
+        { "type": "step", "settings": { "shown_on": "the-black-reaper", "heading": "Push the stake into the grass", "text": "Pick a spot with open sky. Step on the crossbar until the base sits flush with the lawn.", "placeholder": "Clip: staking it in" } },
+        { "type": "step", "settings": { "shown_on": "the-black-reaper", "heading": "The sun charges it all day", "text": "The panel sits on the stake. Nothing to plug in, nothing to switch on, nothing to remember.", "placeholder": "Photo: solar panel in sunlight" } },
+        { "type": "step", "settings": { "shown_on": "the-black-reaper", "heading": "It comes on by itself at dusk", "text": "Light drops, the lantern catches, the souls light up. It shuts off by morning and does it again.", "placeholder": "Clip: dusk, the moment it lights" } },
+        { "type": "step", "settings": { "shown_on": "the-haunted-projector", "heading": "Put it where it can see the wall", "text": "A porch step, a planter, the top of a bin. Anywhere with a clear line to the front of the house.", "placeholder": "Photo: projector set down on a porch step" } },
+        { "type": "step", "settings": { "shown_on": "the-haunted-projector", "heading": "Plug it in", "text": "A porch outlet or an outdoor extension lead. [ CABLE LENGTH ] of cable in the box.", "placeholder": "Photo: cable running to a porch outlet" } },
+        { "type": "step", "settings": { "shown_on": "the-haunted-projector", "heading": "Pick a scene", "text": "[ SCENE COUNT ] scenes on the remote. It focuses itself as soon as it's pointed.", "placeholder": "Clip: cycling through scenes with the remote" } },
+        { "type": "step", "settings": { "shown_on": "the-lighted-ghost-swing", "heading": "Loop the rope over", "text": "Any branch that will hold a few pounds. A porch beam or a shepherd's hook works just as well.", "placeholder": "Photo: hands looping the rope over a branch" } },
+        { "type": "step", "settings": { "shown_on": "the-lighted-ghost-swing", "heading": "Set the height", "text": "Hang it around eye level from where people walk. Low enough to read, high enough to swing free.", "placeholder": "Photo: adjusting the height so it hangs at eye level" } },
+        { "type": "step", "settings": { "shown_on": "the-lighted-ghost-swing", "heading": "It lights at dark", "text": "The ghost glows from inside and the pumpkin lights with it. Wind does the rest.", "placeholder": "Clip: dusk, ghost and pumpkin lighting up, swinging" } },
+
+        { "type": "reaction", "settings": { "shown_on": "the-black-reaper", "caption": "Clip 01: trick-or-treaters at the curb" } },
+        { "type": "reaction", "settings": { "shown_on": "the-black-reaper", "caption": "Clip 02: neighbor walking up the drive" } },
+        { "type": "reaction", "settings": { "shown_on": "the-black-reaper", "caption": "Clip 03: first look from the porch" } },
+        { "type": "reaction", "settings": { "shown_on": "the-black-reaper", "caption": "Clip 04: car slowing down to look" } },
+        { "type": "reaction", "settings": { "shown_on": "the-haunted-projector", "caption": "Clip 01: full facade from the sidewalk" } },
+        { "type": "reaction", "settings": { "shown_on": "the-haunted-projector", "caption": "Clip 02: walking up the drive" } },
+        { "type": "reaction", "settings": { "shown_on": "the-haunted-projector", "caption": "Clip 03: kids at the door under the scene" } },
+        { "type": "reaction", "settings": { "shown_on": "the-haunted-projector", "caption": "Clip 04: car slowing down to look" } },
+        { "type": "reaction", "settings": { "shown_on": "the-lighted-ghost-swing", "caption": "Clip 01: swinging at dusk" } },
+        { "type": "reaction", "settings": { "shown_on": "the-lighted-ghost-swing", "caption": "Clip 02: a kid walking up to it" } },
+        { "type": "reaction", "settings": { "shown_on": "the-lighted-ghost-swing", "caption": "Clip 03: from the sidewalk" } },
+        { "type": "reaction", "settings": { "shown_on": "the-lighted-ghost-swing", "caption": "Clip 04: wind, spinning" } },
+
+        { "type": "closeup", "settings": { "shown_on": "the-black-reaper", "placeholder": "Placement: the reaper at the end of a real front walk, dusk", "title": "Where it goes", "caption": "Open sky above the panel, soil soft enough to take the stake." } },
+        { "type": "closeup", "settings": { "shown_on": "the-black-reaper", "placeholder": "Close-up: the lantern housing and glass", "title": "The lantern", "caption": "Where the stream starts." } },
+        { "type": "closeup", "settings": { "shown_on": "the-black-reaper", "placeholder": "Close-up: hood, shoulders, hand detail", "title": "The figure", "caption": "Layered fabric over a shaped frame." } },
+        { "type": "closeup", "settings": { "shown_on": "the-black-reaper", "placeholder": "Close-up: solar panel and stake joint", "title": "The stake", "caption": "Panel mounts above the soil line." } },
+        { "type": "closeup", "settings": { "shown_on": "the-black-reaper", "placeholder": "Close-up: a single soul face lit, held in hand", "title": "The souls", "caption": "Individually lit, not a printed strip." } },
+        { "type": "closeup", "settings": { "shown_on": "the-haunted-projector", "placeholder": "Placement: the unit on a porch step, cable running out, dusk", "title": "Where it goes", "caption": "A porch step, a planter or a bin lid, with a clear line to the wall." } },
+        { "type": "closeup", "settings": { "shown_on": "the-haunted-projector", "placeholder": "Close-up: the lens", "title": "The lens", "caption": "Auto-focus. No wheel to fight with in the dark." } },
+        { "type": "closeup", "settings": { "shown_on": "the-haunted-projector", "placeholder": "Close-up: the remote in hand", "title": "The remote", "caption": "Scenes and power. Nothing to pair." } },
+        { "type": "closeup", "settings": { "shown_on": "the-haunted-projector", "placeholder": "Close-up: cable and plug", "title": "The cable", "caption": "[ CABLE LENGTH ] to the nearest outlet." } },
+        { "type": "closeup", "settings": { "shown_on": "the-lighted-ghost-swing", "placeholder": "Placement: the swing hanging from a real branch, dusk", "title": "Where it goes", "caption": "Any branch or beam with a foot or two of clear swing." } },
+        { "type": "closeup", "settings": { "shown_on": "the-lighted-ghost-swing", "placeholder": "Close-up: the ghost, lit from inside", "title": "The ghost", "caption": "Fabric over a shaped form, lit from inside." } },
+        { "type": "closeup", "settings": { "shown_on": "the-lighted-ghost-swing", "placeholder": "Close-up: the seat and knotted rope", "title": "The seat", "caption": "Wooden seat, knotted rope." } },
+        { "type": "closeup", "settings": { "shown_on": "the-lighted-ghost-swing", "placeholder": "Close-up: the pumpkin, lit", "title": "The pumpkin", "caption": "Attached. Lights with the ghost." } },
+
+        { "type": "box_item", "settings": { "shown_on": "the-black-reaper", "name": "Reaper figure, folded", "note": "Shake it out, it holds its shape" } },
+        { "type": "box_item", "settings": { "shown_on": "the-black-reaper", "name": "Ground stake with solar panel", "note": "[ STAKE LENGTH ] below the soil line" } },
+        { "type": "box_item", "settings": { "shown_on": "the-black-reaper", "name": "Lantern with soul stream attached", "note": "Pre-wired, nothing to connect" } },
+        { "type": "box_item", "settings": { "shown_on": "the-black-reaper", "name": "Lantern arm", "note": "Clips on, aims where you point it" } },
+        { "type": "box_item", "settings": { "shown_on": "the-black-reaper", "name": "Setup card", "note": "Four steps, one side" } },
+        { "type": "box_item", "settings": { "shown_on": "the-haunted-projector", "name": "Projector unit", "note": "" } },
+        { "type": "box_item", "settings": { "shown_on": "the-haunted-projector", "name": "Power cable", "note": "[ CABLE LENGTH ]" } },
+        { "type": "box_item", "settings": { "shown_on": "the-haunted-projector", "name": "Remote", "note": "[ CONFIRM INCLUDED ]" } },
+        { "type": "box_item", "settings": { "shown_on": "the-haunted-projector", "name": "Mounting bracket", "note": "[ CONFIRM INCLUDED ]" } },
+        { "type": "box_item", "settings": { "shown_on": "the-haunted-projector", "name": "Setup card", "note": "One side" } },
+        { "type": "box_item", "settings": { "shown_on": "the-lighted-ghost-swing", "name": "Lighted ghost figure", "note": "" } },
+        { "type": "box_item", "settings": { "shown_on": "the-lighted-ghost-swing", "name": "Wooden swing seat", "note": "" } },
+        { "type": "box_item", "settings": { "shown_on": "the-lighted-ghost-swing", "name": "Rope cords, knotted", "note": "Two" } },
+        { "type": "box_item", "settings": { "shown_on": "the-lighted-ghost-swing", "name": "Lit jack-o-lantern", "note": "Attached" } },
+        { "type": "box_item", "settings": { "shown_on": "the-lighted-ghost-swing", "name": "Batteries", "note": "[ CONFIRM INCLUDED ]" } },
+
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "How long does it stay lit on one day of sun?", "answer": "[ RUNTIME HOURS ] on a full charge in clear conditions. An overcast day gives you a shorter night. Put it where the panel gets direct afternoon sun." } },
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "Can it stay outside in the rain?", "answer": "Yes. The reaper is built for outdoor use and rated [ IP RATING ]. Rain is fine. Standing water, snow and freezing conditions are not. Bring it in ahead of a hard storm. The projector in the bundle is [ CONFIRM INDOOR / OUTDOOR ]." } },
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "Will it blow over?", "answer": "The stake goes [ STAKE LENGTH ] into soil, which holds through normal autumn wind. In an exposed yard or before a storm, pull it out and re-stake afterwards." } },
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "Can I put it in mulch, gravel or a planter?", "answer": "Soil and lawn hold best. Mulch and loose gravel work if you can reach firm ground underneath. For a hard surface you'll need a weighted base. The stake alone won't hold it on concrete." } },
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "How long does setup take?", "answer": "About four minutes for a reaper. Shake it out, push the stake in, clip on the lantern arm. The projector is faster: set it down, plug it in, pick a scene." } },
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "Does the projector need to be plugged in?", "answer": "Yes. The reapers are solar and need nothing. The projector runs on mains power with a [ CABLE LENGTH ] cable, so it wants a porch outlet or an outdoor extension lead." } },
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "Does the reaper move or make noise?", "answer": "No. It's completely silent and it doesn't animate. The whole effect is light. That's on purpose. No motor to break and nothing waking the street at 2am." } },
+        { "type": "faq", "settings": { "shown_on": "the-black-reaper", "question": "Can I store it and use it again next year?", "answer": "Yes. Pull the stake, fold the figure, keep it dry and out of direct sun. It packs back into the box it arrived in." } },
+
+        { "type": "faq", "settings": { "shown_on": "the-haunted-projector", "question": "How far back does it need to be?", "answer": "Between [ MIN-MAX DISTANCE ]. At [ DISTANCE ] the image is roughly [ IMAGE SIZE ], which covers a typical two-storey facade." } },
+        { "type": "faq", "settings": { "shown_on": "the-haunted-projector", "question": "Can it live outside in the rain?", "answer": "It is rated [ CONFIRM INDOOR / OUTDOOR ]. Keep it under a porch roof or in a covered spot. It is not a unit to leave in the open through a storm." } },
+        { "type": "faq", "settings": { "shown_on": "the-haunted-projector", "question": "Does it need Wi-Fi or an app?", "answer": "No. Scenes are on the unit and you change them with the remote. Nothing to pair, nothing to sign into." } },
+        { "type": "faq", "settings": { "shown_on": "the-haunted-projector", "question": "Will it work on light-coloured siding?", "answer": "Yes, and it looks best on a flat, pale wall. Dark brick eats some brightness. Move it closer to keep the image tight and bright." } },
+        { "type": "faq", "settings": { "shown_on": "the-haunted-projector", "question": "Does it make sound?", "answer": "[ CONFIRM: SPEAKER / SILENT ]" } },
+        { "type": "faq", "settings": { "shown_on": "the-haunted-projector", "question": "Can I use it indoors the rest of the year?", "answer": "Yes. It is an ordinary projector with Halloween scenes loaded. Point it at a wall inside and it works the same." } },
+
+        { "type": "faq", "settings": { "shown_on": "the-lighted-ghost-swing", "question": "How big is it?", "answer": "110 cm tall including the rope, 37 cm wide across the swing seat. Big enough to read from the sidewalk, small enough for an ordinary branch." } },
+        { "type": "faq", "settings": { "shown_on": "the-lighted-ghost-swing", "question": "How is it powered?", "answer": "[ POWER: SOLAR / BATTERY ]. Runtime on a full charge is [ HOURS ]." } },
+        { "type": "faq", "settings": { "shown_on": "the-lighted-ghost-swing", "question": "Can it stay out in the rain?", "answer": "It is rated [ IP RATING ]. Light rain is fine. It is fabric, so bring it in before a heavy storm or it will take a long time to dry out." } },
+        { "type": "faq", "settings": { "shown_on": "the-lighted-ghost-swing", "question": "What if I don't have a tree?", "answer": "A porch beam, a pergola, a shepherd's hook, or the corner of a gutter bracket. Anything that gives it a foot or two of clear swing." } },
+        { "type": "faq", "settings": { "shown_on": "the-lighted-ghost-swing", "question": "Will it blow away?", "answer": "It's tied on, not hooked, so it swings rather than lifts. In real wind it will spin. Take it down ahead of a storm." } },
+        { "type": "faq", "settings": { "shown_on": "the-lighted-ghost-swing", "question": "Is it scary or friendly?", "answer": "Friendly. It's the one in the yard small kids walk up to instead of away from. That's deliberate." } },
+
+        { "type": "faq", "settings": { "shown_on": "all", "question": "Will it arrive before Halloween?", "answer": "Yes if you order by [[cutoff]]. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st. We'd rather tell you no than take your money on a maybe." } },
+        { "type": "faq", "settings": { "shown_on": "all", "question": "What if it doesn't look like the video?", "answer": "Send it back within 30 days and we refund you. Every clip on this page is the actual product filmed at night. No renders, no composites, no enhancement." } },
+
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Height, staked", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Width across the arms", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Soul stream length", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Materials", "value": "[ FABRIC / FRAME / LANTERN ]" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Power", "value": "Built-in solar panel on the stake. No mains power, no batteries." } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Runtime, full charge", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Turns on", "value": "By itself at dusk via light sensor. Off by morning." } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Stake depth", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Weather rating", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "reaper", "label": "Assembly", "value": "About four minutes. No tools." } },
+
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Throw distance", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Image size at 3m", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Resolution", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Brightness", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Focus", "value": "Auto-focus. Point it at the wall and it sharpens itself." } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Power", "value": "Mains powered. [ CABLE LENGTH ]" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Included scenes", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Indoor or outdoor", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Dimensions", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-black-reaper", "group": "projector", "label": "Setup", "value": "Place it, plug it in, pick a scene." } },
+
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Throw distance", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Image size at 3m", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Resolution", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Brightness", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Focus", "value": "Auto-focus. Point it at the wall and it sharpens itself." } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Power", "value": "Mains powered. [ CABLE LENGTH ] cable." } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Included scenes", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Weather rating", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Dimensions", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Weight", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-haunted-projector", "group": "reaper", "label": "Setup", "value": "Place it, plug it in, pick a scene." } },
+
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Height, hanging", "value": "110 cm / 43.3 in" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Width", "value": "37 cm / 14.6 in" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Materials", "value": "[ FABRIC / SEAT / ROPE ]" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Power", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Runtime", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Turns on", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Weather rating", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Weight", "value": "" } },
+        { "type": "spec", "settings": { "shown_on": "the-lighted-ghost-swing", "group": "reaper", "label": "Assembly", "value": "None. It arrives assembled." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

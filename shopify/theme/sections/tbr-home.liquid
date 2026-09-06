@@ -3,6 +3,17 @@
   assign reaper = all_products['the-black-reaper']
   assign projector = all_products['the-haunted-projector']
   assign swing = all_products['the-lighted-ghost-swing']
+
+  comment
+    The bundle variant is the only place the bundle saving exists. Read it, never retype it.
+  endcomment
+  assign bundle_variant = blank
+  for v in reaper.variants
+    if v.title contains 'Projector'
+      assign bundle_variant = v
+    endif
+  endfor
+  assign two_reapers = reaper.price_min | times: 2
 -%}
 
 <div class="tbr">
@@ -44,11 +55,17 @@
 
       <div class="tbr-cards">
         {%- for product in coll.products limit: 3 -%}
-          {%- assign v = product.variants | first -%}
           <a class="tbr-card" href="{{ product.url }}">
             <div class="tbr-card__pic">
-              {%- if product.compare_at_price_max > product.price_min -%}
-                <span class="tbr-pill">Save up to {{ product.compare_at_price_max | minus: product.price_min | money_without_trailing_zeros }}</span>
+              {%- assign max_save = 0 -%}
+              {%- for v in product.variants -%}
+                {%- if v.compare_at_price > v.price -%}
+                  {%- assign d = v.compare_at_price | minus: v.price -%}
+                  {%- if d > max_save -%}{%- assign max_save = d -%}{%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- if max_save > 0 -%}
+                <span class="tbr-pill">Save up to {{ max_save | money_without_trailing_zeros }}</span>
               {%- endif -%}
               {%- if product.featured_image -%}
                 <img src="{{ product.featured_image | image_url: width: 900 }}" alt="{{ product.featured_image.alt | escape }}" width="900" height="900" loading="lazy">
@@ -109,16 +126,22 @@
         <p class="tbr-deal__p">The reapers own the ground. The projector takes the wall. Together the whole property is the decoration, not one object in the middle of it.</p>
 
         <div class="tbr-deal__list">
-          <div><span>&times;2</span><span>The Black Reaper, solar soul lantern</span><span>{{ 25998 | money }}</span></div>
-          <div><span>&times;1</span><span>Haunted Projector, plug-in, auto-focus</span><span>{{ 8999 | money }}</span></div>
+          <div><span>&times;2</span><span>{{ reaper.title }}, solar soul lantern</span><span>{{ two_reapers | money }}</span></div>
+          <div><span>&times;1</span><span>{{ projector.title }}, plug-in, auto-focus</span><span>{{ projector.price_min | money }}</span></div>
         </div>
 
-        <div class="tbr-deal__sum">
-          <b>{{ 19999 | money }}</b>
-          <s>{{ 34997 | money }}</s>
-          <em>Save {{ 14998 | money_without_trailing_zeros }}</em>
-        </div>
-        <a class="tbr-btn tbr-btn--accent" href="{{ reaper.url }}">Get the bundle</a>
+        {%- if bundle_variant != blank -%}
+          <div class="tbr-deal__sum">
+            <b>{{ bundle_variant.price | money }}</b>
+            {%- if bundle_variant.compare_at_price > bundle_variant.price -%}
+              <s>{{ bundle_variant.compare_at_price | money }}</s>
+              <em>Save {{ bundle_variant.compare_at_price | minus: bundle_variant.price | money_without_trailing_zeros }}</em>
+            {%- endif -%}
+          </div>
+          <a class="tbr-btn tbr-btn--accent" href="{{ reaper.url }}?variant={{ bundle_variant.id }}">Get the bundle</a>
+        {%- else -%}
+          <a class="tbr-btn tbr-btn--accent" href="{{ reaper.url }}">Get the bundle</a>
+        {%- endif -%}
       </div>
     </div>
   </section>

@@ -1,0 +1,117 @@
+{%- comment -%}
+  THE BLACK REAPER — footer. Night band. Ported from reaper.html (.foot).
+{%- endcomment -%}
+
+{%- liquid
+  assign menu = linklists[section.settings.link_list]
+
+  assign wm = section.settings.wordmark | default: 'THE BLACK REAPER' | strip
+  assign wm_parts = wm | split: ' '
+  assign wm_last = wm_parts | last
+  assign wm_n = wm_parts.size | minus: 1
+  assign wm_head = wm_parts | slice: 0, wm_n | join: ' '
+
+  assign legal = section.settings.legal_name | default: 'The Black Reaper'
+-%}
+
+{{ 'tbr.css' | asset_url | stylesheet_tag }}
+
+<div class="tbr tbr-foot-sec">
+  <footer class="tbr-foot">
+    <div class="tbr-wrap tbr-foot__in">
+
+      <div class="tbr-foot__brand">
+        <a class="tbr-foot__logo" href="{{ routes.root_url }}">
+          {%- if wm_head != blank %}{{ wm_head | escape }} {% endif -%}<i>{{ wm_last | escape }}</i>
+        </a>
+        {%- if section.settings.statement != blank -%}
+          <p>{{ section.settings.statement | escape }}</p>
+        {%- endif -%}
+      </div>
+
+      <nav class="tbr-foot__links" aria-label="Footer">
+        {%- if menu.links.size > 0 -%}
+          {%- for link in menu.links -%}
+            <a href="{{ link.url }}">{{ link.title | escape }}</a>
+          {%- endfor -%}
+        {%- else -%}
+          <a href="{{ routes.root_url }}pages/shipping">Shipping</a>
+          <a href="{{ routes.root_url }}pages/returns">Returns</a>
+          <a href="{{ routes.root_url }}pages/faq">FAQ</a>
+        {%- endif -%}
+        {%- if section.settings.contact_url != blank -%}
+          <a href="{{ section.settings.contact_url }}">Contact</a>
+        {%- elsif section.settings.contact_email != blank -%}
+          <a href="mailto:{{ section.settings.contact_email | escape }}">Contact</a>
+        {%- endif -%}
+      </nav>
+
+    </div>
+
+    <div class="tbr-wrap tbr-foot__bottom">
+      <small class="tbr-foot__legal">&copy; {{ 'now' | date: '%Y' }} {{ legal | escape }}.</small>
+
+      {%- assign has_policy = false -%}
+      {%- for policy in shop.policies -%}
+        {%- if policy.body != blank -%}{%- assign has_policy = true -%}{%- endif -%}
+      {%- endfor -%}
+      {%- if has_policy -%}
+        <nav class="tbr-foot__policies" aria-label="Policies">
+          {%- for policy in shop.policies -%}
+            {%- if policy.body != blank -%}
+              <a href="{{ policy.url }}">{{ policy.title | escape }}</a>
+            {%- endif -%}
+          {%- endfor -%}
+        </nav>
+      {%- elsif request.design_mode -%}
+        <span class="tbr-foot__policies tbr-foot__todo">[ ADD POLICIES IN SETTINGS &gt; POLICIES ]</span>
+      {%- endif -%}
+
+      {%- if section.settings.show_payment and shop.enabled_payment_types.size > 0 -%}
+        <div class="tbr-foot__pay" aria-label="Payment methods">
+          {%- for type in shop.enabled_payment_types -%}
+            {{ type | payment_type_svg_tag: class: 'tbr-foot__icon' }}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </footer>
+</div>
+
+{% stylesheet %}
+.tbr-foot-sec{--night:#0D0D0F}
+.tbr-foot-sec .tbr-foot{background:var(--night);color:#C2C2BB;border-top:1px solid rgba(240,240,237,.14);padding:44px 0 calc(40px + env(safe-area-inset-bottom))}
+.tbr-foot-sec .tbr-foot__in{display:flex;flex-wrap:wrap;gap:24px 44px;justify-content:space-between;align-items:flex-start}
+.tbr-foot-sec .tbr-foot__logo{font-weight:800;font-size:18px;letter-spacing:-.03em;text-decoration:none;color:#fff;white-space:nowrap}
+.tbr-foot-sec .tbr-foot__logo i{font-style:normal;color:var(--accent)}
+.tbr-foot-sec .tbr-foot__brand p{margin:10px 0 0;font-size:12.5px;color:#87877F;max-width:46ch;line-height:1.7}
+.tbr-foot-sec .tbr-foot__links{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:13.5px;margin:0;padding:0}
+.tbr-foot-sec .tbr-foot__links a{text-decoration:none;color:#C2C2BB}
+.tbr-foot-sec .tbr-foot__links a:hover{color:var(--accent)}
+.tbr-foot-sec .tbr-foot__bottom{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justify-content:space-between;margin-top:34px;padding-top:20px;border-top:1px solid rgba(240,240,237,.12);font-size:12px;color:#87877F}
+.tbr-foot-sec .tbr-foot__legal{font-size:12px}
+.tbr-foot-sec .tbr-foot__policies{display:flex;flex-wrap:wrap;gap:6px 18px}
+.tbr-foot-sec .tbr-foot__policies a{color:#87877F;text-decoration:none}
+.tbr-foot-sec .tbr-foot__policies a:hover{color:var(--accent)}
+.tbr-foot-sec .tbr-foot__todo{background:var(--accent);color:#191400;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.02em}
+.tbr-foot-sec .tbr-foot__pay{display:flex;flex-wrap:wrap;gap:6px}
+.tbr-foot-sec .tbr-foot__icon{width:38px;height:24px;border-radius:3px}
+@media(prefers-reduced-motion:reduce){.tbr-foot-sec *{transition:none!important}}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Black Reaper footer",
+  "class": "tbr-foot-wrap",
+  "settings": [
+    { "type": "text", "id": "wordmark", "label": "Wordmark", "default": "THE BLACK REAPER", "info": "The last word is set in yellow. Not tied to the shop name." },
+    { "type": "textarea", "id": "statement", "label": "One-line brand statement", "default": "One season, done properly. We ship until the last week of October and stand behind every order for 30 days after it lands." },
+    { "type": "link_list", "id": "link_list", "label": "Footer menu", "default": "footer", "info": "If the menu is empty, Shipping, Returns and FAQ links are shown instead." },
+    { "type": "url", "id": "contact_url", "label": "Contact link", "info": "A contact page or form. Rendered as \"Contact\" in the footer menu." },
+    { "type": "text", "id": "contact_email", "label": "Contact email", "info": "Used only if no contact link is set." },
+    { "type": "paragraph", "content": "Legal links come from Settings > Policies. Fill in Privacy, Refund, Terms of service, Shipping and Contact information there. Until at least one is written, the editor shows a yellow [ ADD POLICIES ] flag in this slot and the live footer shows nothing." },
+    { "type": "text", "id": "legal_name", "label": "Name in the copyright line", "default": "The Black Reaper" },
+    { "type": "checkbox", "id": "show_payment", "label": "Show payment icons", "default": true }
+  ]
+}
+{% endschema %}

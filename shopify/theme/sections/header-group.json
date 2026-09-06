@@ -1,0 +1,20 @@
+{
+  "type": "header",
+  "name": "t:names.header",
+  "sections": {
+    "tbr_header": {
+      "type": "tbr-header",
+      "settings": {
+        "wordmark": "THE BLACK REAPER",
+        "link_list": "main-menu",
+        "note": "Free US shipping · 30-day returns",
+        "show_bar": true,
+        "cutoff_iso": "2026-10-20T23:59:59-04:00",
+        "cutoff_label": "Tuesday, October 20",
+        "perks": "Free US shipping · Ships within 24 hours · 30-day returns",
+        "bar_after": "Halloween delivery cutoff has passed — still shipping in 24h"
+      }
+    }
+  },
+  "order": ["tbr_header"]
+}

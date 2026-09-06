@@ -1,0 +1,17 @@
+{
+  "type": "footer",
+  "name": "t:names.footer",
+  "sections": {
+    "tbr_footer": {
+      "type": "tbr-footer",
+      "settings": {
+        "wordmark": "THE BLACK REAPER",
+        "statement": "One season, done properly. We build it, we ship it, and on November 1st we go quiet until next year.",
+        "link_list": "footer",
+        "legal_name": "The Black Reaper",
+        "show_payment": true
+      }
+    }
+  },
+  "order": ["tbr_footer"]
+}

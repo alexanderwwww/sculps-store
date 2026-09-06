@@ -1,0 +1,884 @@
+{%- comment -%}
+  THE BLACK REAPER — main product section (above the fold).
+  Works for all three products: one radio card per variant, cross-sell
+  add-ons at their real price, live order summary, cutoff countdown.
+  Ported from reaper.html + assets/store.js.
+
+  Metafields the lead can set per product (both optional):
+    custom.eyebrow   — short line above the h1, e.g. "Solar Soul Lantern". Falls back to product type.
+    custom.subtitle  — one-sentence subtitle. Falls back to the section setting, then the first paragraph.
+{%- endcomment -%}
+
+{%- liquid
+  assign variants = product.variants
+  assign vcount = variants.size
+
+  comment
+    Preselect: URL ?variant= wins, else the 2nd card when there are 3, else the first available.
+  endcomment
+  if product.selected_variant
+    assign selected = product.selected_variant
+  elsif vcount == 3 and variants[1].available
+    assign selected = variants[1]
+  else
+    assign selected = product.selected_or_first_available_variant
+  endif
+  if selected == blank
+    assign selected = variants | first
+  endif
+
+  assign eyebrow = product.metafields.custom.eyebrow | default: product.type
+
+  assign subtitle = product.metafields.custom.subtitle
+  if subtitle == blank and section.settings.subtitle != blank
+    assign subtitle = section.settings.subtitle
+  endif
+  if subtitle == blank
+    assign subtitle = product.description | split: '</p>' | first | strip_html | strip
+  endif
+
+  assign coll = collections['halloween-2026']
+
+  assign cutoff_ts = section.settings.cutoff_iso | date: '%s' | plus: 0
+  assign now_ts = 'now' | date: '%s' | plus: 0
+  assign past_cutoff = false
+  if cutoff_ts > 0 and now_ts > cutoff_ts
+    assign past_cutoff = true
+  endif
+
+  comment
+    Delivery window only renders when the operator has typed carrier numbers,
+    and never after the cutoff. JS also hides it when the window crosses Oct 31.
+  endcomment
+  assign eta_min = section.settings.eta_min_days | strip | plus: 0
+  assign eta_max = section.settings.eta_max_days | strip | plus: 0
+  assign show_eta = false
+  if section.settings.show_eta and eta_min > 0 and eta_max >= eta_min and past_cutoff == false and selected.available
+    assign show_eta = true
+  endif
+
+  assign sel_title = selected.title
+  if sel_title == 'Default Title'
+    assign sel_title = product.title
+  endif
+
+  assign sel_save = 0
+  if selected.compare_at_price > selected.price
+    assign sel_save = selected.compare_at_price | minus: selected.price
+  endif
+  assign sel_sub = selected.price
+  if selected.compare_at_price > selected.price
+    assign sel_sub = selected.compare_at_price
+  endif
+-%}
+
+{{ 'tbr.css' | asset_url | stylesheet_tag }}
+
+<div class="tbr tbr-product" data-tbr-product data-section-id="{{ section.id }}">
+  <div class="tbr-wrap tbr-product__grid">
+
+    {%- comment -%} ============ GALLERY ============ {%- endcomment -%}
+    <div class="tbr-gal">
+      <div class="tbr-gal__main">
+        {%- if product.media.size > 0 -%}
+          {%- for media in product.media -%}
+            {%- assign is_first = false -%}
+            {%- if selected.featured_media -%}
+              {%- if media.id == selected.featured_media.id -%}{%- assign is_first = true -%}{%- endif -%}
+            {%- elsif forloop.first -%}
+              {%- assign is_first = true -%}
+            {%- endif -%}
+            <div class="tbr-gal__slide" data-media-id="{{ media.id }}" {% unless is_first %}hidden{% endunless %}>
+              {%- case media.media_type -%}
+                {%- when 'video' -%}
+                  {{ media | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, image_size: '1200x' }}
+                {%- when 'external_video' -%}
+                  {{ media | external_video_tag }}
+                {%- when 'model' -%}
+                  {{ media | model_viewer_tag }}
+                {%- else -%}
+                  <img
+                    src="{{ media | image_url: width: 1400 }}"
+                    srcset="{{ media | image_url: width: 700 }} 700w, {{ media | image_url: width: 1000 }} 1000w, {{ media | image_url: width: 1400 }} 1400w"
+                    sizes="(min-width: 1000px) 55vw, 100vw"
+                    alt="{{ media.alt | default: product.title | escape }}"
+                    width="{{ media.width | default: 1400 }}" height="{{ media.height | default: 1400 }}"
+                    {% unless is_first %}loading="lazy"{% endunless %}>
+              {%- endcase -%}
+            </div>
+          {%- endfor -%}
+        {%- else -%}
+          <div class="tbr-gal__empty">Add product photos in Shopify.</div>
+        {%- endif -%}
+      </div>
+
+      {%- if product.media.size > 1 -%}
+        <div class="tbr-gal__thumbs" role="tablist" aria-label="Product media">
+          {%- for media in product.media -%}
+            {%- assign is_first = false -%}
+            {%- if selected.featured_media -%}
+              {%- if media.id == selected.featured_media.id -%}{%- assign is_first = true -%}{%- endif -%}
+            {%- elsif forloop.first -%}
+              {%- assign is_first = true -%}
+            {%- endif -%}
+            <button type="button" class="tbr-gal__thumb" role="tab" aria-selected="{{ is_first }}" data-media-id="{{ media.id }}" aria-label="{{ media.alt | default: product.title | escape }}">
+              <img src="{{ media.preview_image | image_url: width: 160 }}" alt="" width="160" height="160" loading="lazy">
+              {%- if media.media_type == 'video' or media.media_type == 'external_video' -%}<span class="tbr-gal__play" aria-hidden="true"></span>{%- endif -%}
+            </button>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} ============ BUY COLUMN ============ {%- endcomment -%}
+    <div class="tbr-buy" data-tbr-buy>
+      {%- if eyebrow != blank -%}<p class="tbr-eyebrow">{{ eyebrow }}</p>{%- endif -%}
+      <h1 class="tbr-buy__h1">{{ product.title }}</h1>
+      <p class="tbr-buy__price">
+        <b data-tbr-hero-price>{{ selected.price | money }}</b>
+        {%- if vcount == 3 and variants[1].available -%}
+          <span>&middot; {{ variants[1].title }} for {{ variants[1].price | money }}</span>
+        {%- endif -%}
+      </p>
+      {%- if subtitle != blank -%}<p class="tbr-buy__sub">{{ subtitle }}</p>{%- endif -%}
+
+      <div class="tbr-meta">
+        {%- if selected.available -%}
+          <span class="tbr-meta__stock">{{ section.settings.stock_text }}</span>
+        {%- else -%}
+          <span class="tbr-meta__stock tbr-meta__stock--out">Sold out</span>
+        {%- endif -%}
+        <span class="tbr-meta__sep">&middot;</span><span>{{ section.settings.ships_text }}</span>
+        <span class="tbr-meta__sep">&middot;</span><span>{{ section.settings.free_text }}</span>
+      </div>
+
+      {%- form 'product', product, id: 'tbr-product-form', class: 'tbr-form', data-tbr-form: '' -%}
+        <input type="hidden" name="id" value="{{ selected.id }}" data-tbr-variant-id>
+
+        <div class="tbr-pick">
+          <p>{{ section.settings.pick_label }}</p>
+        </div>
+
+        <div class="tbr-tiers" role="radiogroup" aria-label="{{ section.settings.pick_label | escape }}">
+          {%- for variant in variants -%}
+            {%- liquid
+              assign pos = forloop.index
+              assign vtitle = variant.title
+              if vtitle == 'Default Title'
+                assign vtitle = product.title
+              endif
+              assign is_sel = false
+              if variant.id == selected.id
+                assign is_sel = true
+              endif
+
+              assign is_bundle = false
+              if variant.title contains '+'
+                assign is_bundle = true
+              endif
+              assign special = false
+              if vcount >= 3 and pos == 3 and is_bundle
+                assign special = true
+              endif
+
+              comment
+                Card flags come from settings only. No popularity claims: first season, no data.
+              endcomment
+              assign flag = ''
+              if vcount == 3 and pos == 2
+                assign flag = section.settings.flag_2
+              elsif vcount == 3 and pos == 3
+                assign flag = section.settings.flag_3
+              endif
+
+              comment
+                Which other product this variant already contains, so the add-on box can hide it.
+              endcomment
+              assign includes = ''
+              if variant.title contains 'Projector'
+                assign includes = 'the-haunted-projector'
+              endif
+
+              assign save = 0
+              if variant.compare_at_price > variant.price
+                assign save = variant.compare_at_price | minus: variant.price
+              endif
+
+              comment
+                Per-unit hint: leading number in the title ("2 Reapers") gives the count.
+              endcomment
+              assign n = variant.title | split: ' ' | first | plus: 0
+              assign each = ''
+              if n > 1 and is_bundle == false
+                assign each = variant.price | divided_by: n | money
+              endif
+
+              comment
+                Hint + "You get" from blocks (optional product scope), else per-product fallback.
+              endcomment
+              assign hint = ''
+              assign inc = ''
+              assign inc_attrs = ''
+              for block in section.blocks
+                if block.type != 'included'
+                  continue
+                endif
+                assign bpos = block.settings.position | plus: 0
+                if bpos != pos
+                  continue
+                endif
+                if block.settings.only_for != blank and block.settings.only_for.handle != product.handle
+                  continue
+                endif
+                assign hint = block.settings.hint
+                assign inc = block.settings.text
+                assign inc_attrs = block.shopify_attributes
+                break
+              endfor
+
+              if inc == blank
+                case product.handle
+                  when 'the-black-reaper'
+                    case pos
+                      when 1
+                        assign hint = hint | default: 'One figure by the walkway'
+                        assign inc = '1 reaper figure · 1 ground stake with solar panel · 1 soul stream'
+                      when 2
+                        assign hint = hint | default: 'one on each side of the drive'
+                        assign inc = '2 reaper figures · 2 ground stakes with solar panels · 2 soul streams'
+                      when 3
+                        assign hint = hint | default: 'Souls on the lawn, shadows on the house'
+                        assign inc = 'everything in the 2-pack · 1 haunted projector with auto-focus · power cable'
+                    endcase
+                  when 'the-haunted-projector'
+                    assign hint = hint | default: 'Everything you need for the house'
+                    assign inc = '1 haunted projector · power cable · [ REMOTE — CONFIRM ] · [ SCENE COUNT ] scenes'
+                  when 'the-lighted-ghost-swing'
+                    case pos
+                      when 1
+                        assign hint = hint | default: 'One branch, one ghost'
+                        assign inc = '1 lighted ghost · wooden swing seat · rope cords · lit pumpkin'
+                      when 2
+                        assign hint = hint | default: 'they read as a pair from the street'
+                        assign inc = '2 lighted ghosts · 2 swing seats · 2 sets of rope cords · 2 lit pumpkins'
+                      when 3
+                        assign hint = hint | default: 'fills a whole tree'
+                        assign inc = '3 lighted ghosts · 3 swing seats · 3 sets of rope cords · 3 lit pumpkins'
+                    endcase
+                endcase
+              endif
+
+              assign unit_line = hint
+              if each != blank and hint != blank
+                assign unit_line = each | append: ' each · ' | append: hint
+              elsif each != blank
+                assign unit_line = each | append: ' each'
+              endif
+
+              assign inc_html = inc | escape | replace: '[ ', '<span class="tbr-fill">[ ' | replace: ' ]', ' ]</span>'
+            -%}
+
+            <label class="tbr-tier{% if special %} tbr-tier--special{% endif %}{% if is_sel %} is-selected{% endif %}{% unless variant.available %} is-soldout{% endunless %}">
+              <input
+                type="radio"
+                class="tbr-tier__input"
+                name="tbr-variant"
+                value="{{ variant.id }}"
+                data-tbr-tier
+                data-price="{{ variant.price }}"
+                data-compare="{{ variant.compare_at_price | default: variant.price }}"
+                data-label="{{ vtitle | escape }}"
+                data-media-id="{{ variant.featured_media.id }}"
+                data-includes="{{ includes }}"
+                {% if is_sel %}checked{% endif %}
+                {% unless variant.available %}disabled{% endunless %}>
+              {%- if special -%}<span class="tbr-ribbon">Halloween Special</span>{%- endif -%}
+              <span class="tbr-tier__dot" aria-hidden="true"></span>
+              <span class="tbr-tier__body">
+                <span class="tbr-tier__name">
+                  {{ vtitle }}
+                  {%- if flag != blank %} <em class="tbr-flag">{{ flag }}</em>{% endif -%}
+                  {%- unless variant.available %} <em class="tbr-flag tbr-flag--out">Sold out</em>{% endunless -%}
+                </span>
+                {%- if unit_line != blank -%}<span class="tbr-tier__unit">{{ unit_line }}</span>{%- endif -%}
+                {%- if inc != blank -%}
+                  <span class="tbr-tier__inc" {{ inc_attrs }}><b>You get:</b> {{ inc_html }}</span>
+                {%- endif -%}
+              </span>
+              <span class="tbr-tier__price">
+                <span class="tbr-tier__now">{{ variant.price | money }}</span>
+                {%- if save > 0 -%}
+                  <span class="tbr-tier__was">{{ variant.compare_at_price | money }}</span>
+                  <span class="tbr-tier__save">Save {{ save | money_without_trailing_zeros }}</span>
+                {%- endif -%}
+              </span>
+            </label>
+          {%- endfor -%}
+        </div>
+
+        {%- comment -%} ============ ADD-ONS: the other two products, real price ============ {%- endcomment -%}
+        {%- assign addon_count = 0 -%}
+        {%- capture addon_html -%}
+          {%- for p in coll.products -%}
+            {%- if p.handle == product.handle -%}{%- continue -%}{%- endif -%}
+            {%- assign av = p.selected_or_first_available_variant -%}
+            {%- if av == blank -%}{%- continue -%}{%- endif -%}
+            {%- assign addon_count = addon_count | plus: 1 -%}
+            {%- liquid
+              case p.handle
+                when 'the-black-reaper'
+                  assign why = section.settings.why_reaper
+                when 'the-haunted-projector'
+                  assign why = section.settings.why_projector
+                when 'the-lighted-ghost-swing'
+                  assign why = section.settings.why_swing
+                else
+                  assign why = p.type
+              endcase
+            -%}
+            <label class="tbr-addon">
+              <input type="checkbox" class="tbr-addon__input" value="{{ av.id }}" data-tbr-addon data-addon-handle="{{ p.handle }}" data-price="{{ av.price }}" data-label="{{ p.title | escape }}">
+              <span class="tbr-addon__tick" aria-hidden="true"></span>
+              <span class="tbr-addon__thumb">
+                {%- if p.featured_image -%}
+                  <img src="{{ p.featured_image | image_url: width: 120 }}" alt="" width="120" height="120" loading="lazy">
+                {%- endif -%}
+              </span>
+              <span class="tbr-addon__body">
+                <span class="tbr-addon__name">Add the {{ p.title | remove_first: 'The ' }}</span>
+                {%- if why != blank -%}<span class="tbr-addon__why">{{ why }}</span>{%- endif -%}
+              </span>
+              <span class="tbr-addon__cost"><b>+{{ av.price | money }}</b></span>
+            </label>
+          {%- endfor -%}
+        {%- endcapture -%}
+
+        {%- if addon_count > 0 -%}
+          <div class="tbr-addons">
+            <div class="tbr-addons__head">
+              <p>Finish the yard</p>
+              <span>Added to this order</span>
+            </div>
+            {{ addon_html }}
+          </div>
+        {%- endif -%}
+
+        {%- comment -%} ============ ORDER SUMMARY ============ {%- endcomment -%}
+        <div class="tbr-sum" data-tbr-summary>
+          <div class="tbr-sum__row"><span data-tbr-sum-label>{{ sel_title }}</span><span data-tbr-sum-sub>{{ sel_sub | money }}</span></div>
+          <div class="tbr-sum__row tbr-sum__row--save" data-tbr-save-row {% if sel_save <= 0 %}hidden{% endif %}><span>Bundle discount</span><span data-tbr-sum-save>&minus;{{ sel_save | money }}</span></div>
+          <div class="tbr-sum__row tbr-sum__row--free"><span>US shipping</span><span>Free</span></div>
+          <div class="tbr-sum__row tbr-sum__row--total"><span>Subtotal</span><b data-tbr-total>{{ selected.price | money }}</b></div>
+        </div>
+
+        {%- comment -%} ============ CHECKOUT ============ {%- endcomment -%}
+        <div class="tbr-checkout">
+          <button type="submit" class="tbr-btn tbr-btn--block tbr-btn--dark" data-tbr-add {% unless selected.available %}disabled{% endunless %}>
+            {%- if selected.available -%}
+              Add to cart <span data-tbr-add-label>&mdash; {{ sel_title }}</span>
+            {%- else -%}
+              Sold out
+            {%- endif -%}
+          </button>
+
+          {%- if shop.enabled_payment_types.size > 0 -%}
+            <div class="tbr-pay" aria-label="Accepted payment methods">
+              {%- for type in shop.enabled_payment_types -%}
+                {{ type | payment_type_svg_tag: class: 'tbr-pay__icon' }}
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          <div class="tbr-eta" data-tbr-eta-row {% unless show_eta %}hidden{% endunless %}><span>Delivery</span><span>Ordered today, it leaves the warehouse <b>within 24 hours</b> and lands <b data-tbr-eta>&mdash;</b>.</span></div>
+
+          <div class="tbr-note" data-tbr-note>
+            {%- if past_cutoff -%}
+              <span>The Halloween delivery cutoff has passed. Orders still ship within 24 hours, but we can no longer promise it arrives before the 31st.</span>
+            {%- else -%}
+              <span>Order within <b data-tbr-left>&mdash;</b> and it arrives before the 31st. After <b>{{ section.settings.cutoff_label }}</b> we stop promising Halloween delivery.</span>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endform -%}
+
+      {%- comment -%} ============ ASSURANCE ============ {%- endcomment -%}
+      {%- assign assure_count = 0 -%}
+      {%- capture assure_html -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'assurance' -%}{%- continue -%}{%- endif -%}
+          {%- if block.settings.only_for != blank and block.settings.only_for.handle != product.handle -%}{%- continue -%}{%- endif -%}
+          {%- assign assure_count = assure_count | plus: 1 -%}
+          <div {{ block.shopify_attributes }}><span class="tbr-assure__ic" aria-hidden="true"></span><span><b>{{ block.settings.title }}</b> {{ block.settings.text }}</span></div>
+        {%- endfor -%}
+      {%- endcapture -%}
+      <div class="tbr-assure">
+        {%- if assure_count > 0 -%}
+          {{ assure_html }}
+        {%- else -%}
+          <div><span class="tbr-assure__ic" aria-hidden="true"></span><span><b>30-day returns.</b> Doesn't look how you hoped? Send it back, we refund it.</span></div>
+          <div><span class="tbr-assure__ic" aria-hidden="true"></span><span><b>Ships from the US.</b> Tracked, out the door within 24 hours of ordering.</span></div>
+          {%- case product.handle -%}
+            {%- when 'the-haunted-projector' -%}
+              <div><span class="tbr-assure__ic" aria-hidden="true"></span><span><b>Auto-focus.</b> Point it at the wall. It sharpens itself.</span></div>
+            {%- when 'the-lighted-ghost-swing' -%}
+              <div><span class="tbr-assure__ic" aria-hidden="true"></span><span><b>Hangs anywhere.</b> A branch, a porch beam, a shepherd's hook.</span></div>
+            {%- else -%}
+              <div><span class="tbr-assure__ic" aria-hidden="true"></span><span><b>No batteries, no cords.</b> The solar panel is built into the stake.</span></div>
+          {%- endcase -%}
+        {%- endif -%}
+        {%- if section.settings.real_footage_confirmed -%}
+          <div><span class="tbr-assure__ic" aria-hidden="true"></span><span><b>Real footage only.</b> Every image and clip on this page is the actual unit.</span></div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+
+  {%- comment -%} ============ STICKY MOBILE BAR ============ {%- endcomment -%}
+  <div class="tbr-mbar" data-tbr-mbar>
+    <div class="tbr-mbar__info">
+      <b data-tbr-mbar-price>{{ selected.price | money }}</b>
+      <span data-tbr-mbar-label>{{ sel_title }}</span>
+    </div>
+    <button type="submit" form="tbr-product-form" class="tbr-btn tbr-btn--dark" {% unless selected.available %}disabled{% endunless %}>Add to cart</button>
+  </div>
+
+  <script type="application/json" data-tbr-config>
+    {
+      "moneyFormat": {{ shop.money_format | json }},
+      "cutoffIso": {{ section.settings.cutoff_iso | json }},
+      "cartAddUrl": {{ routes.cart_add_url | json }},
+      "cartUrl": {{ routes.cart_url | json }},
+      "showEta": {{ show_eta | json }},
+      "etaMin": {{ eta_min | json }},
+      "etaMax": {{ eta_max | json }},
+      "selectedId": {{ selected.id | json }},
+      "variants": {{ variants | json }}
+    }
+  </script>
+</div>
+
+{% stylesheet %}
+.tbr-product{--night:#0D0D0F;--soft:rgba(245,197,24,.14);--soft-rule:rgba(138,106,0,.28);color:var(--ink);padding:clamp(22px,3.4vw,42px) 0 clamp(40px,5vw,64px)}
+.tbr-product p{margin:0}
+.tbr-product .tbr-product__grid{display:grid;gap:clamp(26px,4vw,52px)}
+@media(min-width:1000px){.tbr-product .tbr-product__grid{grid-template-columns:minmax(0,1.06fr) minmax(420px,.94fr);align-items:start}}
+
+/* gallery */
+.tbr-product .tbr-gal{display:grid;gap:10px}
+@media(min-width:1000px){.tbr-product .tbr-gal{position:sticky;top:84px}}
+.tbr-product .tbr-gal__main{aspect-ratio:1;background:#fff;border:1px solid var(--rule);border-radius:8px;overflow:hidden;position:relative}
+.tbr-product .tbr-gal__slide{position:absolute;inset:0}
+.tbr-product .tbr-gal__slide img,.tbr-product .tbr-gal__slide video,.tbr-product .tbr-gal__slide iframe,.tbr-product .tbr-gal__slide model-viewer{width:100%;height:100%;object-fit:cover;display:block}
+.tbr-product .tbr-gal__empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;font-size:12px;letter-spacing:.05em;color:var(--dim);border:1px dashed var(--rule)}
+.tbr-product .tbr-gal__thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,88px));justify-content:start;gap:8px}
+.tbr-product .tbr-gal__thumb{position:relative;aspect-ratio:1;padding:0;background:#fff;border:1px solid var(--rule);border-radius:8px;overflow:hidden;cursor:pointer}
+.tbr-product .tbr-gal__thumb img{width:100%;height:100%;object-fit:cover}
+.tbr-product .tbr-gal__thumb[aria-selected="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.tbr-product .tbr-gal__play{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(13,13,15,.75)}
+.tbr-product .tbr-gal__play::after{content:"";position:absolute;left:9px;top:6px;border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent}
+@media(max-width:999px){
+  .tbr-product .tbr-gal__main{aspect-ratio:4/3}
+  .tbr-product .tbr-gal__thumbs{display:flex;overflow-x:auto;scrollbar-width:thin}
+  .tbr-product .tbr-gal__thumb{flex:0 0 56px;width:56px}
+}
+
+/* buy column */
+.tbr-product .tbr-buy__h1{font-size:clamp(30px,3.8vw,46px);line-height:1.1;letter-spacing:-.02em;margin:0 0 8px;font-weight:700;text-wrap:balance}
+.tbr-product .tbr-buy__price{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 8px;margin:0 0 10px;font-variant-numeric:tabular-nums}
+.tbr-product .tbr-buy__price b{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.tbr-product .tbr-buy__price span{font-size:13.5px;color:var(--dim)}
+.tbr-product .tbr-buy__sub{color:var(--dim);font-size:15.5px;max-width:46ch;line-height:1.55}
+.tbr-product .tbr-meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:14px;font-size:13px;color:var(--dim)}
+.tbr-product .tbr-meta__stock{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink)}
+.tbr-product .tbr-meta__stock::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.tbr-product .tbr-meta__stock--out{color:var(--dim)}
+.tbr-product .tbr-meta__stock--out::before{background:var(--dim)}
+.tbr-product .tbr-meta__sep{color:var(--rule)}
+.tbr-product .tbr-form{display:block}
+
+/* variant cards */
+.tbr-product .tbr-pick{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:26px 0 10px}
+.tbr-product .tbr-pick p{font-size:13.5px;font-weight:700}
+.tbr-product .tbr-tiers{display:grid;gap:9px}
+.tbr-product .tbr-tier{position:relative;display:grid;grid-template-columns:20px 1fr auto;gap:14px;padding:16px;background:#fff;border:1px solid var(--rule);border-radius:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.tbr-product .tbr-tier:hover{border-color:#CFCAC2}
+.tbr-product .tbr-tier__input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.tbr-product .tbr-tier:has(.tbr-tier__input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.tbr-product .tbr-tier.is-selected{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--soft)}
+.tbr-product .tbr-tier.is-soldout{opacity:.55;cursor:not-allowed}
+.tbr-product .tbr-tier__dot{width:17px;height:17px;border-radius:50%;border:1.5px solid #CFCAC2;display:grid;place-items:center;background:#fff;margin-top:2px}
+.tbr-product .tbr-tier.is-selected .tbr-tier__dot{border-color:var(--ink)}
+.tbr-product .tbr-tier.is-selected .tbr-tier__dot::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--ink)}
+.tbr-product .tbr-tier__body{min-width:0}
+.tbr-product .tbr-tier__name{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.3}
+.tbr-product .tbr-tier__unit{display:block;font-size:12.5px;color:var(--dim);margin-top:3px}
+.tbr-product .tbr-tier__inc{display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--dim);line-height:1.65}
+.tbr-product .tbr-tier.is-selected .tbr-tier__inc{display:block}
+.tbr-product .tbr-tier__inc b{font-weight:600;color:var(--ink)}
+.tbr-product .tbr-tier__price{text-align:right;font-variant-numeric:tabular-nums}
+.tbr-product .tbr-tier__now{font-size:17px;font-weight:700;white-space:nowrap}
+.tbr-product .tbr-tier__was{display:block;font-size:12.5px;color:var(--dim);text-decoration:line-through;margin-top:1px}
+.tbr-product .tbr-tier__save{display:inline-block;font-size:11px;font-weight:700;margin-top:5px;background:var(--accent);color:var(--accent-ink);padding:2px 7px;border-radius:3px;white-space:nowrap}
+.tbr-product .tbr-flag{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:3px;background:var(--accent);color:var(--accent-ink)}
+.tbr-product .tbr-flag--out{background:var(--rule);color:var(--dim)}
+/* same placeholder chip as tbr-product-below */
+.tbr-product .tbr-fill{color:var(--gold);border:1px dashed var(--gold);background:var(--paper);padding:1px 6px;border-radius:3px;font-size:.88em;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+
+.tbr-product .tbr-tier--special{background:var(--night);border-color:var(--night);color:#F2F2EF;padding-top:22px;margin-top:9px}
+.tbr-product .tbr-tier--special:hover{border-color:#2A2A2E}
+.tbr-product .tbr-tier--special .tbr-tier__dot{background:transparent;border-color:rgba(240,240,237,.45)}
+.tbr-product .tbr-tier--special .tbr-tier__unit{color:#A9A9A2}
+.tbr-product .tbr-tier--special .tbr-tier__was{color:#8A8A83}
+.tbr-product .tbr-tier--special .tbr-tier__inc{border-top-color:rgba(240,240,237,.18);color:#C4C4BD}
+.tbr-product .tbr-tier--special .tbr-tier__inc b{color:#fff}
+.tbr-product .tbr-tier--special .tbr-fill{color:var(--accent);border-color:var(--accent);background:rgba(245,197,24,.12)}
+.tbr-product .tbr-tier--special.is-selected{background:#1A1A1E;border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tbr-product .tbr-tier--special.is-selected .tbr-tier__dot{border-color:var(--accent)}
+.tbr-product .tbr-tier--special.is-selected .tbr-tier__dot::after{background:var(--accent)}
+.tbr-product .tbr-ribbon{position:absolute;top:-1px;left:16px;transform:translateY(-50%);font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:3px 9px;border-radius:3px}
+
+/* add-ons */
+.tbr-product .tbr-addons{margin-top:22px;border:1px solid var(--rule);border-radius:8px;background:#fff;overflow:hidden}
+.tbr-product .tbr-addons__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:13px 16px;background:var(--paper);border-bottom:1px solid var(--rule)}
+.tbr-product .tbr-addons__head p{font-size:13.5px;font-weight:700}
+.tbr-product .tbr-addons__head span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.tbr-product .tbr-addon{position:relative;display:grid;grid-template-columns:20px 54px 1fr auto;gap:13px;align-items:center;padding:13px 16px;background:#fff;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s}
+.tbr-product .tbr-addon:last-child{border-bottom:0}
+.tbr-product .tbr-addon:hover{background:var(--paper)}
+.tbr-product .tbr-addon.is-on{background:var(--soft)}
+.tbr-product .tbr-addon__input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.tbr-product .tbr-addon:has(.tbr-addon__input:focus-visible){outline:2px solid var(--ink);outline-offset:-2px}
+.tbr-product .tbr-addon__tick{width:17px;height:17px;border-radius:3px;border:1.5px solid #CFCAC2;background:#fff;position:relative}
+.tbr-product .tbr-addon.is-on .tbr-addon__tick{background:var(--ink);border-color:var(--ink)}
+.tbr-product .tbr-addon.is-on .tbr-addon__tick::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.tbr-product .tbr-addon__thumb{width:54px;height:54px;border-radius:4px;background:var(--paper);overflow:hidden;border:1px solid var(--rule)}
+.tbr-product .tbr-addon__thumb img{width:100%;height:100%;object-fit:cover}
+.tbr-product .tbr-addon__name{display:block;font-size:14.5px;font-weight:600;line-height:1.3}
+.tbr-product .tbr-addon__why{display:block;font-size:12.5px;color:var(--dim);margin-top:2px}
+.tbr-product .tbr-addon__cost{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbr-product .tbr-addon__cost b{display:block;font-size:15px;font-weight:700}
+
+/* summary */
+.tbr-product .tbr-sum{margin-top:20px;border:1px solid var(--rule);border-radius:8px;background:#fff;overflow:hidden}
+.tbr-product .tbr-sum__row{display:flex;justify-content:space-between;gap:16px;padding:11px 16px;font-size:13.5px;color:var(--dim);border-bottom:1px solid var(--rule)}
+.tbr-product .tbr-sum__row span:last-child{font-variant-numeric:tabular-nums;color:var(--ink)}
+.tbr-product .tbr-sum__row--addon span:first-child{padding-left:12px;position:relative}
+.tbr-product .tbr-sum__row--addon span:first-child::before{content:"+";position:absolute;left:0;color:var(--dim)}
+.tbr-product .tbr-sum__row--free span:last-child{color:var(--gold);font-weight:600}
+.tbr-product .tbr-sum__row--save span:last-child{font-weight:700}
+.tbr-product .tbr-sum__row--total{border-bottom:0;background:var(--paper);padding:15px 16px;align-items:baseline}
+.tbr-product .tbr-sum__row--total span:first-child{font-weight:700;color:var(--ink);font-size:15px}
+.tbr-product .tbr-sum__row--total b{font-size:26px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+/* checkout */
+.tbr-product .tbr-checkout{margin-top:14px;display:grid;gap:11px}
+.tbr-product .tbr-btn--block{display:block;width:100%;padding:20px 24px;font-size:17px;line-height:1.3;text-align:center;cursor:pointer}
+.tbr-product .tbr-btn--dark{margin-top:0}
+.tbr-product .tbr-btn[disabled]{opacity:.5;cursor:not-allowed;filter:none}
+@media(max-width:479px){.tbr-product [data-tbr-add-label]{display:none}}
+.tbr-product .tbr-pay{display:flex;flex-wrap:wrap;gap:6px 8px;justify-content:center}
+.tbr-product .tbr-pay__icon{height:22px;width:auto;display:block}
+.tbr-product .tbr-eta{display:flex;gap:10px;align-items:baseline;padding:13px 15px;border-radius:8px;background:#fff;border:1px solid var(--rule);font-size:13.5px;color:var(--dim)}
+.tbr-product .tbr-eta b{color:var(--ink);font-weight:700}
+.tbr-product .tbr-note{display:flex;gap:10px;padding:13px 15px;border-radius:8px;background:var(--soft);border:1px solid var(--soft-rule);font-size:13.5px;color:var(--ink)}
+.tbr-product .tbr-note b{color:var(--gold)}
+
+/* assurance */
+.tbr-product .tbr-assure{margin-top:20px;border:1px solid var(--rule);border-radius:8px;background:#fff}
+.tbr-product .tbr-assure>div{display:flex;gap:12px;padding:13px 16px;font-size:13.5px;color:var(--dim);border-bottom:1px solid var(--rule)}
+.tbr-product .tbr-assure>div:last-child{border-bottom:0}
+.tbr-product .tbr-assure b{color:var(--ink);font-weight:600}
+.tbr-product .tbr-assure__ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--paper);position:relative;margin-top:1px}
+.tbr-product .tbr-assure__ic::after{content:"";position:absolute;left:7px;top:4px;width:4px;height:8px;border:solid var(--ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+/* sticky mobile bar */
+.tbr-product .tbr-mbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:12px;align-items:center;padding:10px var(--pad) calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--rule);box-shadow:0 -4px 18px rgba(13,13,15,.10);transform:translateY(115%);transition:transform .25s ease}
+.tbr-product .tbr-mbar.is-shown{transform:translateY(0)}
+.tbr-product .tbr-mbar__info{flex:1;min-width:0}
+.tbr-product .tbr-mbar__info b{display:block;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.tbr-product .tbr-mbar__info span{display:block;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbr-product .tbr-mbar .tbr-btn{flex:none;padding:14px 22px;font-size:15px;margin-top:0;cursor:pointer}
+@media(min-width:1000px){.tbr-product .tbr-mbar{display:none}}
+/* reserve room so the fixed bar never covers the footer's last row */
+@media(max-width:999px){body:has(.tbr-product [data-tbr-mbar]){padding-bottom:calc(72px + env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){.tbr-product *{transition:none!important}}
+{% endstylesheet %}
+
+{% javascript %}
+(function () {
+  function formatMoney(cents, format) {
+    format = (format || '{' + '{amount}' + '}').replace(/<[^>]+>/g, '');
+    var re = new RegExp('\\{\\{\\s*(\\w+)\\s*\\}\\}');
+    var m = format.match(re);
+    var key = m ? m[1] : 'amount';
+    function num(n, precision, thousands, decimal) {
+      var s = (Math.abs(n) / 100).toFixed(precision).split('.');
+      s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousands);
+      return (n < 0 ? '-' : '') + (s[1] ? s[0] + decimal + s[1] : s[0]);
+    }
+    var v;
+    switch (key) {
+      case 'amount_no_decimals': v = num(cents, 0, ',', '.'); break;
+      case 'amount_with_comma_separator': v = num(cents, 2, '.', ','); break;
+      case 'amount_no_decimals_with_comma_separator': v = num(cents, 0, '.', ','); break;
+      case 'amount_with_apostrophe_separator': v = num(cents, 2, "'", '.'); break;
+      case 'amount_no_decimals_with_space_separator': v = num(cents, 0, ' ', '.'); break;
+      case 'amount_with_space_separator': v = num(cents, 2, ' ', ','); break;
+      case 'amount_with_period_and_space_separator': v = num(cents, 2, ' ', '.'); break;
+      default: v = num(cents, 2, ',', '.');
+    }
+    return format.replace(re, v);
+  }
+
+  function init(root) {
+    var cfgEl = root.querySelector('[data-tbr-config]');
+    var cfg = {};
+    try { cfg = JSON.parse(cfgEl.textContent); } catch (e) { cfg = {}; }
+    var money = function (c) { return formatMoney(c, cfg.moneyFormat); };
+    var $ = function (s) { return root.querySelector(s); };
+    var $$ = function (s) { return Array.prototype.slice.call(root.querySelectorAll(s)); };
+    var setText = function (s, t) { var el = $(s); if (el) el.textContent = t; };
+
+    var form = $('[data-tbr-form]');
+    var idInput = $('[data-tbr-variant-id]');
+    var tiers = $$('[data-tbr-tier]');
+    var addons = $$('[data-tbr-addon]');
+    var addBtn = $('[data-tbr-add]');
+    var mbar = $('[data-tbr-mbar]');
+    var mbarBtn = mbar ? mbar.querySelector('button') : null;
+    var etaRow = $('[data-tbr-eta-row]');
+
+    /* ---------- gallery ---------- */
+    var slides = $$('.tbr-gal__slide');
+    var thumbs = $$('.tbr-gal__thumb');
+    function showMedia(id) {
+      if (!id) return;
+      var found = false;
+      slides.forEach(function (s) { if (s.dataset.mediaId === String(id)) found = true; });
+      if (!found) return;
+      slides.forEach(function (s) {
+        var on = s.dataset.mediaId === String(id);
+        s.hidden = !on;
+        var vid = s.querySelector('video');
+        if (vid) { if (on) { vid.play && vid.play().catch(function () {}); } else { vid.pause && vid.pause(); } }
+      });
+      thumbs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.mediaId === String(id))); });
+    }
+    thumbs.forEach(function (t) { t.addEventListener('click', function () { showMedia(t.dataset.mediaId); }); });
+
+    /* ---------- dates: delivery window + cutoff ---------- */
+    var fmt = function (o) { return new Intl.DateTimeFormat('en-US', Object.assign({ timeZone: 'America/New_York' }, o)); };
+    var dayFmt = fmt({ month: 'short', day: 'numeric' });
+    var addDays = function (n) { return new Date(Date.now() + n * 864e5); };
+    var cutoff = cfg.cutoffIso ? new Date(cfg.cutoffIso) : null;
+    if (cutoff && isNaN(cutoff)) cutoff = null;
+    var etaOk = false;
+    if (cfg.showEta && cfg.etaMin > 0 && cfg.etaMax >= cfg.etaMin) {
+      var last = addDays(cfg.etaMax);
+      /* Oct 31 of the cutoff's year, end of day, New York. Hide when the window runs past it or the cutoff has passed. */
+      var year = cutoff ? cutoff.getFullYear() : new Date().getFullYear();
+      var halloweenEnd = new Date(year + '-11-01T04:00:00Z'); /* 00:00 Nov 1 ET (EDT, UTC-4) */
+      var pastCutoff = cutoff ? Date.now() > cutoff.getTime() : false;
+      etaOk = !pastCutoff && last < halloweenEnd;
+      if (etaOk) setText('[data-tbr-eta]', dayFmt.format(addDays(cfg.etaMin)) + ' – ' + dayFmt.format(last));
+    }
+
+    /* ---------- selection + summary ---------- */
+    function selectedTier() {
+      for (var i = 0; i < tiers.length; i++) if (tiers[i].checked) return tiers[i];
+      return tiers[0] || null;
+    }
+    function chosenAddons() { return addons.filter(function (a) { return a.checked && !a.closest('.tbr-addon').hidden; }); }
+
+    function render() {
+      var sel = selectedTier();
+      if (!sel) return;
+      var price = +sel.dataset.price, compare = +sel.dataset.compare || price;
+      var label = sel.dataset.label;
+      var saved = Math.max(0, compare - price);
+
+      tiers.forEach(function (t) { t.closest('.tbr-tier').classList.toggle('is-selected', t === sel); });
+
+      /* hide an add-on the selected bundle already contains, so nobody pays for two */
+      addons.forEach(function (a) {
+        var dup = (sel.dataset.includes || '').indexOf(a.dataset.addonHandle) > -1;
+        if (dup) a.checked = false;
+        a.closest('.tbr-addon').hidden = dup;
+      });
+      addons.forEach(function (a) { a.closest('.tbr-addon').classList.toggle('is-on', a.checked); });
+
+      var picked = chosenAddons();
+      var extra = picked.reduce(function (s, a) { return s + (+a.dataset.price); }, 0);
+      var total = price + extra;
+
+      if (idInput) idInput.value = sel.value;
+      setText('[data-tbr-hero-price]', money(price));
+      setText('[data-tbr-sum-label]', label);
+      setText('[data-tbr-sum-sub]', money(compare));
+      setText('[data-tbr-total]', money(total));
+      setText('[data-tbr-mbar-price]', money(total));
+
+      var saveRow = $('[data-tbr-save-row]');
+      $$('.tbr-sum__row--addon').forEach(function (el) { el.remove(); });
+      if (saveRow) {
+        picked.forEach(function (a) {
+          var row = document.createElement('div');
+          row.className = 'tbr-sum__row tbr-sum__row--addon';
+          var l = document.createElement('span'); l.textContent = a.dataset.label;
+          var r = document.createElement('span'); r.textContent = money(+a.dataset.price);
+          row.appendChild(l); row.appendChild(r);
+          saveRow.parentNode.insertBefore(row, saveRow);
+        });
+        saveRow.hidden = saved <= 0;
+      }
+      setText('[data-tbr-sum-save]', '−' + money(saved));
+
+      var cartLabel = picked.length
+        ? label + ' + ' + picked.length + ' extra' + (picked.length === 1 ? '' : 's')
+        : label;
+      setText('[data-tbr-add-label]', '— ' + cartLabel);
+      setText('[data-tbr-mbar-label]', saved > 0 ? cartLabel + ' · Save ' + money(saved) : cartLabel);
+
+      var soldout = sel.disabled;
+      if (addBtn) {
+        addBtn.disabled = soldout;
+        if (soldout) addBtn.textContent = 'Sold out';
+        else if (!addBtn.querySelector('[data-tbr-add-label]')) {
+          addBtn.textContent = 'Add to cart ';
+          var sp = document.createElement('span'); sp.setAttribute('data-tbr-add-label', ''); sp.textContent = '— ' + cartLabel;
+          addBtn.appendChild(sp);
+        }
+      }
+      if (mbarBtn) mbarBtn.disabled = soldout;
+      if (etaRow) etaRow.hidden = soldout || !etaOk;
+
+      showMedia(sel.dataset.mediaId);
+    }
+
+    tiers.forEach(function (t) { t.addEventListener('change', render); });
+    addons.forEach(function (a) { a.addEventListener('change', render); });
+    render();
+
+    /* ---------- add to cart: main line + add-ons in one call ---------- */
+    var cartUrl = cfg.cartUrl || '/cart';
+    var cartAddUrl = (cfg.cartAddUrl || '/cart/add') + '.js';
+    if (form && window.fetch) {
+      form.addEventListener('submit', function (e) {
+        var sel = selectedTier();
+        if (!sel || sel.disabled) { e.preventDefault(); return; }
+        var items = [{ id: +sel.value, quantity: 1 }].concat(chosenAddons().map(function (a) { return { id: +a.value, quantity: 1 }; }));
+        e.preventDefault();
+        if (addBtn) addBtn.disabled = true;
+        if (mbarBtn) mbarBtn.disabled = true;
+        fetch(cartAddUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ items: items })
+        }).then(function (r) {
+          if (!r.ok) throw new Error('cart');
+          return r.json();
+        }).then(function () {
+          window.location.href = cartUrl;
+        }).catch(function () {
+          /* cart permalink carries every line, so add-ons are never silently dropped */
+          window.location.href = cartUrl + '/' + items.map(function (i) { return i.id + ':' + i.quantity; }).join(',');
+        });
+      });
+    }
+
+    /* ---------- cutoff countdown ---------- */
+    var note = $('[data-tbr-note]');
+    var timer = null;
+    function tick() {
+      if (!cutoff) return;
+      var ms = cutoff - Date.now();
+      if (ms <= 0) {
+        if (note) note.innerHTML = '<span>The Halloween delivery cutoff has passed. Orders still ship within 24 hours, but we can no longer promise it arrives before the 31st.</span>';
+        if (etaRow) etaRow.hidden = true;
+        if (timer) clearInterval(timer);
+        return;
+      }
+      var d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4);
+      setText('[data-tbr-left]', d > 0 ? d + (d === 1 ? ' day' : ' days') : h > 0 ? h + (h === 1 ? ' hour' : ' hours') : m + (m === 1 ? ' minute' : ' minutes'));
+    }
+    tick();
+    timer = setInterval(tick, 60000);
+
+    /* ---------- sticky mobile bar: up whenever the real button is off-screen ---------- */
+    if (mbar && addBtn && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        var en = entries[0];
+        var r = en.boundingClientRect;
+        mbar.classList.toggle('is-shown', !en.isIntersecting && (r.top > window.innerHeight || r.bottom < 0) && window.scrollY > 200);
+      }, { threshold: 0 }).observe(addBtn);
+    }
+  }
+
+  function boot() {
+    Array.prototype.slice.call(document.querySelectorAll('[data-tbr-product]')).forEach(function (root) {
+      if (root.dataset.tbrReady) return;
+      root.dataset.tbrReady = '1';
+      init(root);
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  document.addEventListener('shopify:section:load', boot);
+})();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Black Reaper product",
+  "tag": "section",
+  "class": "tbr-product-section",
+  "enabled_on": { "templates": ["product"] },
+  "settings": [
+    { "type": "header", "content": "Shipping cutoff" },
+    { "type": "text", "id": "cutoff_iso", "label": "Cutoff instant (ISO 8601 with offset)", "default": "2026-10-20T23:59:59-04:00", "info": "Real deadline. The countdown runs to this exact moment. Do not move it to make urgency." },
+    { "type": "text", "id": "cutoff_label", "label": "Cutoff, as words", "default": "Tuesday, October 20" },
+    { "type": "header", "content": "Delivery window" },
+    { "type": "checkbox", "id": "show_eta", "label": "Show delivery window", "default": false, "info": "Only tick once the carrier has given you transit times. The row hides itself after the cutoff, when the window runs past Oct 31, and on sold-out options." },
+    { "type": "text", "id": "eta_min_days", "label": "Fastest transit, days", "info": "Confirm with the carrier. Whole number." },
+    { "type": "text", "id": "eta_max_days", "label": "Slowest transit, days", "info": "Confirm with the carrier. Whole number." },
+    { "type": "header", "content": "Copy" },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle fallback", "info": "Used only when the product has no custom.subtitle metafield. Leave blank to use the first paragraph of the description." },
+    { "type": "text", "id": "pick_label", "label": "Options label", "default": "Choose your setup" },
+    { "type": "text", "id": "flag_2", "label": "Flag on the 2nd option", "default": "Our pick", "info": "An opinion, not a statistic. No 'most popular' or 'bestseller' until there is order data to back it." },
+    { "type": "text", "id": "flag_3", "label": "Flag on the 3rd option", "info": "Leave blank. The Halloween Special ribbon and the Save pill already do the job." },
+    { "type": "text", "id": "stock_text", "label": "Stock line", "default": "In stock", "info": "Keep this to In stock. Do not type quantities or urgency; availability comes from Shopify." },
+    { "type": "text", "id": "ships_text", "label": "Dispatch line", "default": "Ships within 24 hours" },
+    { "type": "text", "id": "free_text", "label": "Shipping line", "default": "Free US shipping" },
+    { "type": "checkbox", "id": "real_footage_confirmed", "label": "Show the 'Real footage only' row", "default": false, "info": "Tick only when every image and clip on the page is an unedited photo or video of the shipped unit." },
+    { "type": "header", "content": "Add-ons: one line each" },
+    { "type": "text", "id": "why_reaper", "label": "Why add the Reaper", "default": "One more figure. The streams cross." },
+    { "type": "text", "id": "why_projector", "label": "Why add the Projector", "default": "Takes the house while the reapers take the lawn." },
+    { "type": "text", "id": "why_swing", "label": "Why add the Ghost Swing", "default": "Hangs from a branch. Fills the empty half of the yard." }
+  ],
+  "blocks": [
+    {
+      "type": "included",
+      "name": "You get (per variant)",
+      "settings": [
+        { "type": "select", "id": "position", "label": "Variant position", "default": "1", "options": [
+          { "value": "1", "label": "1st variant" },
+          { "value": "2", "label": "2nd variant" },
+          { "value": "3", "label": "3rd variant" }
+        ] },
+        { "type": "product", "id": "only_for", "label": "Only for this product", "info": "Leave empty to apply to every product using this template." },
+        { "type": "text", "id": "hint", "label": "Short hint under the title", "info": "The per-unit price is added in front automatically for multi-packs." },
+        { "type": "text", "id": "text", "label": "You get", "info": "Separate items with a middle dot. Unknown values in [ BRACKETS ] are highlighted as placeholders." }
+      ]
+    },
+    {
+      "type": "assurance",
+      "name": "Assurance row",
+      "settings": [
+        { "type": "product", "id": "only_for", "label": "Only for this product" },
+        { "type": "text", "id": "title", "label": "Bold lead", "default": "30-day returns." },
+        { "type": "text", "id": "text", "label": "Text", "default": "Doesn't look how you hoped? Send it back, we refund it." }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Black Reaper product" }]
+}
+{% endschema %}

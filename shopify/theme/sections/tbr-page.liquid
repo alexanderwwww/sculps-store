@@ -1,0 +1,51 @@
+{{ 'tbr.css' | asset_url | stylesheet_tag }}
+
+<div class="tbr tbr-page">
+  <article class="tbr-wrap tbr-page__in">
+    {%- if section.settings.eyebrow != blank -%}
+      <p class="tbr-eyebrow">{{ section.settings.eyebrow }}</p>
+    {%- endif -%}
+    <h1 class="tbr-page__h1">{{ page.title }}</h1>
+    <div class="tbr-page__body">
+      {{ page.content }}
+    </div>
+    {%- if section.settings.show_back -%}
+      <p class="tbr-page__back"><a href="{{ routes.root_url }}">&larr; Back to the store</a></p>
+    {%- endif -%}
+  </article>
+</div>
+
+{% stylesheet %}
+.tbr-page .tbr-page__in{max-width:68ch;padding-block:clamp(44px,6vw,80px)}
+.tbr-page__h1{font-size:clamp(30px,4vw,46px);line-height:1.06;letter-spacing:-.03em;margin:0 0 22px;text-wrap:balance;font-weight:800;color:var(--ink)}
+.tbr-page__body{color:var(--dim);font-size:clamp(15px,1.4vw,16.5px);line-height:1.6}
+.tbr-page__body p{margin:0 0 16px}
+.tbr-page__body h2{color:var(--ink);font-size:clamp(20px,2.2vw,24px);line-height:1.2;letter-spacing:-.02em;font-weight:700;margin:40px 0 12px}
+.tbr-page__body h3{color:var(--ink);font-size:17px;letter-spacing:-.01em;font-weight:700;margin:28px 0 8px}
+.tbr-page__body h2:first-child,.tbr-page__body h3:first-child{margin-top:0}
+.tbr-page__body ul,.tbr-page__body ol{margin:0 0 18px;padding-left:1.4em}
+.tbr-page__body li{margin:0 0 8px}
+.tbr-page__body li::marker{color:var(--gold);font-weight:700}
+.tbr-page__body a{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
+.tbr-page__body strong,.tbr-page__body b{color:var(--ink)}
+.tbr-page__body hr{border:0;border-top:1px solid var(--rule);margin:32px 0}
+.tbr-page__body blockquote{margin:0 0 18px;padding:14px 18px;border-left:3px solid var(--accent);background:var(--paper);border-radius:0 8px 8px 0}
+.tbr-page__body table{width:100%;border-collapse:collapse;font-size:14.5px;margin:0 0 20px}
+.tbr-page__body th,.tbr-page__body td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+.tbr-page__body th{color:var(--ink);font-weight:700}
+.tbr-page__body img{border-radius:8px;margin:8px 0 18px}
+.tbr-page__back{margin:40px 0 0;padding-top:22px;border-top:1px solid var(--rule);font-size:14px}
+.tbr-page__back a{color:var(--ink);font-weight:700;text-decoration:none}
+.tbr-page__back a:hover{text-decoration:underline}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Black Reaper page",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "The Black Reaper" },
+    { "type": "checkbox", "id": "show_back", "label": "Show back-to-store link", "default": true }
+  ],
+  "presets": [{ "name": "Black Reaper page" }]
+}
+{% endschema %}

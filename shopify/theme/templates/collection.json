@@ -1,0 +1,6 @@
+{
+  "sections": {
+    "main": { "type": "tbr-collection", "settings": {} }
+  },
+  "order": ["main"]
+}

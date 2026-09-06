@@ -1,0 +1,112 @@
+{{ 'tbr.css' | asset_url | stylesheet_tag }}
+
+<div class="tbr tbr-collection">
+
+  <section class="tbr-collection__head">
+    <div class="tbr-wrap">
+      <p class="tbr-eyebrow">{{ section.settings.eyebrow }}</p>
+      <h1 class="tbr-collection__h1">{{ collection.title }}</h1>
+      {%- if collection.description != blank -%}
+        <div class="tbr-collection__desc">{{ collection.description }}</div>
+      {%- elsif section.settings.fallback_text != blank -%}
+        <p class="tbr-collection__desc">{{ section.settings.fallback_text }}</p>
+      {%- endif -%}
+    </div>
+  </section>
+
+  <section class="tbr-collection__grid">
+    <div class="tbr-wrap">
+      {%- paginate collection.products by 12 -%}
+        {%- if collection.products.size > 0 -%}
+          <div class="tbr-cards">
+            {%- for product in collection.products -%}
+              <a class="tbr-card" href="{{ product.url | within: collection }}">
+                <div class="tbr-card__pic">
+                  {%- assign max_save = 0 -%}
+                  {%- for v in product.variants -%}
+                    {%- if v.compare_at_price > v.price -%}
+                      {%- assign d = v.compare_at_price | minus: v.price -%}
+                      {%- if d > max_save -%}{%- assign max_save = d -%}{%- endif -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  {%- if max_save > 0 -%}
+                    <span class="tbr-pill">Save up to {{ max_save | money_without_trailing_zeros }}</span>
+                  {%- endif -%}
+                  {%- if product.featured_image -%}
+                    <img src="{{ product.featured_image | image_url: width: 900 }}" alt="{{ product.featured_image.alt | escape }}" width="900" height="900" loading="lazy">
+                  {%- endif -%}
+                </div>
+                <div class="tbr-card__txt">
+                  <span class="tbr-role">{{ product.metafields.custom.level | default: product.type }}</span>
+                  <h3 class="tbr-card__h">{{ product.title }}</h3>
+                  <p class="tbr-card__p">{{ product.description | strip_html | truncatewords: 22 }}</p>
+                  <div class="tbr-card__price">
+                    <b>{{ product.price_min | money }}</b>
+                    {%- if product.variants.size > 1 -%}
+                      <span>{{ product.variants.size }} ways to buy</span>
+                    {%- endif -%}
+                  </div>
+                  <span class="tbr-go">See it</span>
+                </div>
+              </a>
+            {%- endfor -%}
+          </div>
+        {%- else -%}
+          <p class="tbr-collection__empty">Nothing in this collection yet.</p>
+        {%- endif -%}
+
+        {%- if paginate.pages > 1 -%}
+          <nav class="tbr-collection__pages" aria-label="Pages">
+            {%- if paginate.previous -%}<a href="{{ paginate.previous.url }}">&larr; Previous</a>{%- endif -%}
+            <span>Page {{ paginate.current_page }} of {{ paginate.pages }}</span>
+            {%- if paginate.next -%}<a href="{{ paginate.next.url }}">Next &rarr;</a>{%- endif -%}
+          </nav>
+        {%- endif -%}
+      {%- endpaginate -%}
+    </div>
+  </section>
+
+  <section class="tbr-strip">
+    <div class="tbr-wrap tbr-strip__in">
+      {%- if section.settings.trust_1_head != blank -%}<div><b>{{ section.settings.trust_1_head }}</b>{{ section.settings.trust_1_text }}</div>{%- endif -%}
+      {%- if section.settings.trust_2_head != blank -%}<div><b>{{ section.settings.trust_2_head }}</b>{{ section.settings.trust_2_text }}</div>{%- endif -%}
+      {%- if section.settings.trust_3_head != blank -%}<div><b>{{ section.settings.trust_3_head }}</b>{{ section.settings.trust_3_text }}</div>{%- endif -%}
+      {%- if section.settings.trust_4_head != blank -%}<div><b>{{ section.settings.trust_4_head }}</b>{{ section.settings.trust_4_text }}</div>{%- endif -%}
+    </div>
+  </section>
+
+</div>
+
+{% stylesheet %}
+.tbr-collection__head{padding:clamp(40px,5.5vw,72px) 0 clamp(8px,1.5vw,16px)}
+.tbr-collection__h1{font-size:clamp(32px,4.4vw,52px);line-height:1.04;letter-spacing:-.03em;margin:0;text-wrap:balance;font-weight:800;color:var(--ink)}
+.tbr-collection__desc{color:var(--dim);max-width:58ch;margin:14px 0 0;font-size:clamp(15px,1.4vw,16.5px)}
+.tbr-collection__desc p{margin:0 0 10px}
+.tbr-collection__desc p:last-child{margin-bottom:0}
+.tbr-collection__grid{padding:0 0 clamp(48px,6.5vw,86px)}
+.tbr-collection__grid .tbr-cards{margin-top:clamp(24px,3vw,36px)}
+.tbr-collection__empty{color:var(--dim);margin:40px 0;font-size:15px}
+.tbr-collection__pages{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px 24px;margin-top:36px;font-size:13.5px;color:var(--dim)}
+.tbr-collection__pages a{color:var(--ink);font-weight:700;text-decoration:none}
+.tbr-collection__pages a:hover{text-decoration:underline}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Black Reaper collection",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Halloween 2026" },
+    { "type": "textarea", "id": "fallback_text", "label": "Intro text (used when the collection has no description)", "default": "Three products. That's the entire store. Each one does a different level of the yard." },
+    { "type": "header", "content": "Trust strip" },
+    { "type": "text", "id": "trust_1_head", "label": "Item 1 heading", "default": "Ships in 24 hours" },
+    { "type": "text", "id": "trust_1_text", "label": "Item 1 text", "default": "Tracked, from a US warehouse." },
+    { "type": "text", "id": "trust_2_head", "label": "Item 2 heading", "default": "Free US shipping" },
+    { "type": "text", "id": "trust_2_text", "label": "Item 2 text", "default": "On every order, no minimum." },
+    { "type": "text", "id": "trust_3_head", "label": "Item 3 heading", "default": "30-day returns" },
+    { "type": "text", "id": "trust_3_text", "label": "Item 3 text", "default": "Didn't land the way you hoped? Send it back." },
+    { "type": "text", "id": "trust_4_head", "label": "Item 4 heading", "default": "Real footage only" },
+    { "type": "text", "id": "trust_4_text", "label": "Item 4 text", "default": "No renders. No composites." }
+  ],
+  "presets": [{ "name": "Black Reaper collection" }]
+}
+{% endschema %}
