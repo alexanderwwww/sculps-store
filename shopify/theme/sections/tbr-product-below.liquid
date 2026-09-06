@@ -252,7 +252,7 @@
           {%- assign has_media = false -%}
           {%- if b.video != blank or b.video_url != blank or b.image != blank -%}{%- assign has_media = true -%}{%- endif -%}
           <article class="tbr-step" {{ block.shopify_attributes }}>
-            {%- if has_media or design -%}
+            {%- if true -%}
             <div class="tbr-slot tbr-slot--43{% unless has_media %} tbr-slot--empty{% endunless %}">
               {%- if b.video != blank -%}
                 {{ b.video | video_tag: autoplay: true, loop: true, muted: true, controls: false, playsinline: true, class: 'tbr-slot__media' }}
@@ -280,7 +280,7 @@
   {%- endif -%}
 
   {%- comment -%} 3. See it running. Hidden on the storefront until at least one clip is real. {%- endcomment -%}
-  {%- if react_media or design and react_n > 0 -%}
+  {%- if react_n > 0 -%}
   <section class="tbr-sec" id="reactions">
     <div class="tbr-wrap">
       {%- if react_eyebrow != blank -%}<p class="tbr-eyebrow">{{ react_eyebrow }}</p>{%- endif -%}
@@ -293,7 +293,7 @@
           {%- if b.shown_on != blank and b.shown_on != 'all' and b.shown_on != handle -%}{%- continue -%}{%- endif -%}
           {%- assign has_media = false -%}
           {%- if b.video != blank or b.video_url != blank or b.image != blank -%}{%- assign has_media = true -%}{%- endif -%}
-          {%- if has_media == false and design == false -%}{%- continue -%}{%- endif -%}
+          
           <figure class="tbr-react__item" {{ block.shopify_attributes }}>
             <div class="tbr-slot tbr-slot--916{% unless has_media %} tbr-slot--empty{% endunless %}">
               {%- if b.video != blank -%}
@@ -474,7 +474,7 @@
   {%- comment -%} 7. FAQ + UGC. The media column only exists once there is media, or in the editor. {%- endcomment -%}
   {%- if faq_n > 0 -%}
   {%- assign show_faq_media = false -%}
-  {%- if faq_has_media or design -%}{%- assign show_faq_media = true -%}{%- endif -%}
+  {%- assign show_faq_media = true -%}
   <section class="tbr-sec" id="faq">
     <div class="tbr-wrap">
       <p class="tbr-eyebrow">{{ s.faq_eyebrow }}</p>
@@ -666,6 +666,8 @@
 .tbr-pb .tbr-spec__table td{padding:13px 16px;font-size:14px;color:var(--ink)}
 
 .tbr-pb .tbr-closer__in{position:relative}
+.tbr-pb #specs,.tbr-pb #detail{display:none}
+.tbr-pb .tbr-slot--empty{border-style:solid;border-color:rgba(255,120,30,.35);background:linear-gradient(160deg,var(--panel-2),var(--panel));font-family:var(--font-heading--family);font-size:16px;letter-spacing:.06em;color:var(--dim)}
 {% endstylesheet %}
 
 {% javascript %}

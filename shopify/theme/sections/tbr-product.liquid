@@ -79,7 +79,7 @@
 
     {%- comment -%} ============ GALLERY ============ {%- endcomment -%}
     <div class="tbr-gal">
-      <div class="tbr-gal__main">
+      <div class="tbr-gal__main" data-tbr-track>
         {%- if product.media.size > 0 -%}
           {%- for media in product.media -%}
             {%- assign is_first = false -%}
@@ -107,12 +107,22 @@
               {%- endcase -%}
             </div>
           {%- endfor -%}
+          {%- assign ph_captions = 'Night, from the sidewalk|The lantern, close|Souls across the grass|Daylight, as it arrives|Beside a person, for scale' | split: '|' -%}
+          {%- assign ph_pad = 5 | minus: product.media.size -%}
+          {%- if ph_pad > 0 -%}
+            {%- for i in (1..ph_pad) -%}
+              {%- assign ph_i = product.media.size | plus: i | minus: 1 | modulo: 5 -%}
+              <div class="tbr-gal__slide tbr-gal__slide--ph" data-media-id="ph{{ i }}"><span>{{ ph_captions[ph_i] }}</span></div>
+            {%- endfor -%}
+          {%- endif -%}
         {%- else -%}
           <div class="tbr-gal__empty">Add product photos in Shopify.</div>
         {%- endif -%}
       </div>
 
-      {%- if product.media.size > 1 -%}
+      <button type="button" class="tbr-gal__arrow tbr-gal__arrow--prev" data-tbr-prev aria-label="Previous photo">&#8249;</button>
+      <button type="button" class="tbr-gal__arrow tbr-gal__arrow--next" data-tbr-next aria-label="Next photo">&#8250;</button>
+      {%- if product.media.size > 0 -%}
         <div class="tbr-gal__thumbs" role="tablist" aria-label="Product media">
           {%- for media in product.media -%}
             {%- assign is_first = false -%}
@@ -126,6 +136,11 @@
               {%- if media.media_type == 'video' or media.media_type == 'external_video' -%}<span class="tbr-gal__play" aria-hidden="true"></span>{%- endif -%}
             </button>
           {%- endfor -%}
+          {%- if ph_pad > 0 -%}
+            {%- for i in (1..ph_pad) -%}
+              <button type="button" class="tbr-gal__thumb tbr-gal__thumb--ph" role="tab" aria-selected="false" data-media-id="ph{{ i }}" aria-label="Photo coming"><span>{{ forloop.index | plus: product.media.size }}</span></button>
+            {%- endfor -%}
+          {%- endif -%}
         </div>
       {%- endif -%}
     </div>
@@ -609,6 +624,29 @@
 .tbr-product .tbr-tier.is-selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 22px rgba(255,106,0,.25)}
 .tbr-product .tbr-ribbon{transform:translateY(-50%) rotate(-3deg);font-weight:900}
 .tbr-product .tbr-tier__save{transform:rotate(-3deg);font-weight:900;box-shadow:0 2px 0 rgba(0,0,0,.35)}
+
+/* ---- carousel: every slide in a snap track, thumbs scroll to it ---- */
+.tbr-product .tbr-gal{position:relative}
+.tbr-product .tbr-gal__main{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tbr-product .tbr-gal__main::-webkit-scrollbar{display:none}
+.tbr-product .tbr-gal__slide{position:relative;flex:0 0 100%;scroll-snap-align:start;aspect-ratio:1}
+.tbr-product .tbr-gal__slide[hidden]{display:block!important}
+.tbr-product .tbr-gal__slide--ph{display:grid;place-items:center;text-align:center;padding:24px;background:linear-gradient(160deg,var(--panel-2),var(--panel));color:var(--dim);font-family:var(--font-heading--family);font-size:22px;text-transform:uppercase;letter-spacing:.06em}
+.tbr-product .tbr-gal__slide--ph span{max-width:14ch;opacity:.85}
+.tbr-product .tbr-gal__arrow{position:absolute;top:calc(50% - 60px);width:44px;height:44px;border-radius:50%;border:0;background:rgba(14,8,24,.72);color:var(--ink);font-size:30px;line-height:1;display:grid;place-items:center;cursor:pointer;z-index:3}
+.tbr-product .tbr-gal__arrow--prev{left:12px}.tbr-product .tbr-gal__arrow--next{right:12px}
+.tbr-product .tbr-gal__arrow:hover{background:var(--accent);color:var(--accent-ink)}
+.tbr-product .tbr-gal__thumbs{grid-template-columns:repeat(5,1fr)}
+.tbr-product .tbr-gal__thumb--ph{display:grid;place-items:center;font-family:var(--font-heading--family);font-size:14px;color:var(--dim);background:var(--panel-2)}
+.tbr-product .tbr-gal__thumb[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+@media(max-width:999px){.tbr-product .tbr-gal__main{aspect-ratio:auto}.tbr-product .tbr-gal__slide{aspect-ratio:4/3}.tbr-product .tbr-gal__arrow{top:calc(38% - 22px)}}
+
+/* ---- simpler buy box: fewer words, nothing shifts ---- */
+.tbr-product .tbr-buy__sub,.tbr-product .tbr-meta,.tbr-product .tbr-sum,.tbr-product .tbr-eta,.tbr-product .tbr-pick span{display:none!important}
+.tbr-product .tbr-tier__inc{display:block!important}
+.tbr-product .tbr-tier{min-height:104px}
+.tbr-product .tbr-assure>div:nth-child(n+4){display:none}
+.tbr-product .tbr-pick{margin-top:18px}
 {% endstylesheet %}
 
 {% javascript %}
@@ -850,6 +888,36 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   document.addEventListener('shopify:section:load', boot);
 })();
+
+    /* carousel */
+    var track = document.querySelector('[data-tbr-track]');
+    if (track) {
+      var slidesAll = Array.prototype.slice.call(track.querySelectorAll('.tbr-gal__slide'));
+      var thumbsAll = Array.prototype.slice.call(document.querySelectorAll('.tbr-gal__thumb'));
+      function goTo(i) {
+        i = (i + slidesAll.length) % slidesAll.length;
+        track.scrollTo({ left: track.clientWidth * i, behavior: 'smooth' });
+      }
+      function current() { return Math.round(track.scrollLeft / Math.max(1, track.clientWidth)); }
+      var prev = document.querySelector('[data-tbr-prev]'), next = document.querySelector('[data-tbr-next]');
+      if (prev) prev.addEventListener('click', function () { goTo(current() - 1); });
+      if (next) next.addEventListener('click', function () { goTo(current() + 1); });
+      thumbsAll.forEach(function (t) {
+        t.addEventListener('click', function () {
+          var id = t.getAttribute('data-media-id');
+          var idx = slidesAll.findIndex(function (sl) { return sl.getAttribute('data-media-id') === id; });
+          if (idx > -1) goTo(idx);
+        });
+      });
+      var syncing;
+      track.addEventListener('scroll', function () {
+        clearTimeout(syncing);
+        syncing = setTimeout(function () {
+          var i = current();
+          thumbsAll.forEach(function (t, k) { t.setAttribute('aria-selected', String(k === i)); });
+        }, 80);
+      });
+    }
 {% endjavascript %}
 
 {% schema %}
