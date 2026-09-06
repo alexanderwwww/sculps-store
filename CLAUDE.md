@@ -62,3 +62,11 @@ Theme: **Horizon**, currently an unpublished draft. Rename it and build on it.
 - `dark-cinematic.html` — an earlier dark direction, kept for reference
 
 These are the reference build. The real target is the Shopify theme.
+
+## Store 2 — GARDEN BUDDY (Sept 2026, sells now)
+
+Foldable kneeler seat for 55+ US gardeners. Competitor: aimerlallc.com (clear but fake-social-proof heavy).
+Store `aj1wt0-dg.myshopify.com`, theme GARDEN BUDDY (unpublished Horizon copy). Files in `shopify/garden-buddy/`.
+Palette: faded white / stone / light tree brown / baby lettuce green / light sky blue / tan / vintage orange CTAs.
+One product, Pack 1/2/3 × Blue/Brown. Prices assumed 64.99 / 109.99 / 149.99 until the operator confirms.
+Specs (weight, capacity, pad, dimensions, delivery window) are [ PLACEHOLDERS ] until confirmed.

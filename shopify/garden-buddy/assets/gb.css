@@ -1,0 +1,47 @@
+/* GARDEN BUDDY — shared design tokens. Every gb-* section wraps its markup in .gb and uses ONLY these tokens. */
+.gb{
+  --paper:#FBF7EE;      /* faded white, page ground */
+  --stone:#EDE7DA;      /* stone, alt section ground and cards */
+  --stone-2:#E2DACA;    /* rules on stone */
+  --bark:#8A6A4B;       /* light tree brown, eyebrows and secondary text on light */
+  --bark-2:#5E4630;     /* deep bark, headings on tan bands */
+  --lettuce:#CFE7A6;    /* baby lettuce green, soft fills and save pills */
+  --leaf:#4F8A2E;       /* leaf green, checkmarks and pill text */
+  --sky:#CFE6F6;        /* light sky blue, soft info fills */
+  --tan:#F3D3B3;        /* orange-skin tan, warm band */
+  --accent:#D9641C;     /* vintage orange, primary buttons (white text passes AA) */
+  --accent-2:#BF5314;   /* hover */
+  --ink:#2B2419;        /* body text */
+  --dim:#6B6255;        /* secondary text */
+  --rule:rgba(43,36,25,.12);
+  --radius:14px;
+  --pad:clamp(18px,4vw,48px);
+  background:var(--paper);color:var(--ink);
+  font-size:17px;line-height:1.5;   /* boomer-friendly: bigger base type */
+}
+.gb *{box-sizing:border-box}
+.gb img{display:block;max-width:100%}
+.gb-wrap{width:100%;max-width:1180px;margin:0 auto;padding-inline:var(--pad)}
+.gb-eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin:0 0 12px;font-weight:800}
+.gb-h1{font-size:clamp(34px,5vw,56px);line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:800;text-wrap:balance}
+.gb-h2{font-size:clamp(28px,3.4vw,40px);line-height:1.1;letter-spacing:-.015em;margin:0;font-weight:800;text-wrap:balance}
+.gb-lede{color:var(--dim);max-width:44ch;margin:12px 0 0;font-size:clamp(16px,1.4vw,18px)}
+.gb-sec{padding:clamp(48px,6.5vw,86px) 0;border-top:1px solid var(--rule)}
+.gb-sec--stone{background:var(--stone)}
+.gb-sec--tan{background:var(--tan)}
+.gb-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 30px;border-radius:999px;text-decoration:none;font-size:18px;font-weight:800;border:0;cursor:pointer;transition:background .15s,transform .05s}
+.gb-btn--accent{background:var(--accent);color:#fff}
+.gb-btn--accent:hover{background:var(--accent-2)}
+.gb-btn--ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.gb-btn:active{transform:translateY(1px)}
+.gb-btn[disabled]{opacity:.55;cursor:not-allowed}
+.gb-pill{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--lettuce);color:#2F5A17;padding:6px 11px;border-radius:999px}
+.gb-pill--orange{background:var(--accent);color:#fff}
+.gb-card{background:#fff;border:1px solid var(--rule);border-radius:var(--radius)}
+.gb-check{display:flex;gap:12px;align-items:flex-start;font-weight:600}
+.gb-check::before{content:"";flex:0 0 22px;width:22px;height:22px;margin-top:3px;border-radius:50%;background:var(--leaf) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>") center/14px no-repeat}
+/* Placeholder tile for any empty image slot. Looks designed, not broken. */
+.gb-ph{display:grid;place-items:center;background:repeating-linear-gradient(135deg,var(--stone) 0 12px,#F4EFE3 12px 24px);color:var(--bark);font-size:13px;font-weight:700;text-align:center;padding:16px;border-radius:inherit}
+.gb-ph small{display:block;font-weight:500;color:var(--dim);margin-top:4px}
+.gb-fill{background:var(--sky);color:#1F4B66;padding:0 6px;border-radius:4px;font-weight:700;white-space:nowrap}
+@media(max-width:640px){.gb{font-size:16px}.gb-btn{width:100%}}
