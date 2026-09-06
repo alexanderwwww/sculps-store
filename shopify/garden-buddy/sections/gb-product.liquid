@@ -139,35 +139,7 @@
         </div>
       </div>
 
-      {%- assign usp_n = 0 -%}
-      {%- for block in section.blocks -%}{%- if block.type == 'usp' -%}{%- assign usp_n = usp_n | plus: 1 -%}{%- endif -%}{%- endfor -%}
-      {%- if usp_n > 0 -%}
-        <ul class="gb-usps">
-          {%- assign shown = 0 -%}
-          {%- for block in section.blocks -%}
-            {%- if block.type != 'usp' -%}{%- continue -%}{%- endif -%}
-            {%- assign shown = shown | plus: 1 -%}
-            {%- if shown > 5 -%}{%- break -%}{%- endif -%}
-            <li class="gb-usp" {{ block.shopify_attributes }}>
-              <span class="gb-usp__ring" aria-hidden="true">
-                {%- case block.settings.icon -%}
-                  {%- when 'shield' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8.1-7 10-4-1.9-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
-                  {%- when 'cushion' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="4"/><path d="M3 12.5h18"/><path d="M7 8V6.5M17 8V6.5"/></svg>
-                  {%- when 'tools' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a3.5 3.5 0 004.8 4.5l-9 9a2.1 2.1 0 01-3-3l9-9a3.5 3.5 0 00-1.8-1.5z"/><path d="M5 5l4 4"/></svg>
-                  {%- when 'carry' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M9 9V6.5A3 3 0 0115 6.5V9"/></svg>
-                  {%- else -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v6a5 5 0 005 5h5"/><path d="M17 12l3 3-3 3"/><path d="M5 20h4"/></svg>
-                {%- endcase -%}
-              </span>
-              <span class="gb-usp__label">{{ block.settings.label | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
-            </li>
-          {%- endfor -%}
-        </ul>
-      {%- endif -%}
+
     </div>
 
     {%- comment -%} ============ BUY COLUMN ============ {%- endcomment -%}
@@ -191,8 +163,20 @@
         <p class="gb-buy__sub">{{ subtitle | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
       {%- endif -%}
 
+      {%- liquid
+        assign hero_save = 0
+        if selected.compare_at_price > selected.price
+          assign hero_save = selected.compare_at_price | minus: selected.price | times: 100 | divided_by: selected.compare_at_price
+        endif
+      -%}
+      <p class="gb-price" data-gb-hero>
+        <span class="gb-price__now" data-gb-hero-now>{{ selected.price | money }}</span>
+        <s class="gb-price__was" data-gb-hero-was {% if hero_save <= 0 %}hidden{% endif %}>{{ selected.compare_at_price | money }}</s>
+        <span class="gb-price__off" data-gb-hero-off {% if hero_save <= 0 %}hidden{% endif %}>{{ hero_save }}% off</span>
+      </p>
+
       <ul class="gb-buy__bullets">
-        {%- for i in (1..5) -%}
+        {%- for i in (1..3) -%}
           {%- assign key = 'bullet_' | append: i -%}
           {%- assign line = s[key] -%}
           {%- if line != blank -%}
@@ -265,9 +249,9 @@
                 endif
                 assign incl = pack
                 if n > 1
-                  assign incl = n | append: ' kneeler seats'
+                  assign incl = n | append: ' Garden Buddies'
                 else
-                  assign incl = '1 kneeler seat'
+                  assign incl = '1 Garden Buddy'
                 endif
                 if has_set
                   assign incl = incl | append: ' + the tool set'
@@ -335,6 +319,36 @@
           </div>
         {%- endif -%}
       {%- endform -%}
+
+      {%- assign usp_n = 0 -%}
+      {%- for block in section.blocks -%}{%- if block.type == 'usp' -%}{%- assign usp_n = usp_n | plus: 1 -%}{%- endif -%}{%- endfor -%}
+      {%- if usp_n > 0 -%}
+        <ul class="gb-usps">
+          {%- assign shown = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'usp' -%}{%- continue -%}{%- endif -%}
+            {%- assign shown = shown | plus: 1 -%}
+            {%- if shown > 5 -%}{%- break -%}{%- endif -%}
+            <li class="gb-usp" {{ block.shopify_attributes }}>
+              <span class="gb-usp__ring" aria-hidden="true">
+                {%- case block.settings.icon -%}
+                  {%- when 'shield' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8.1-7 10-4-1.9-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+                  {%- when 'cushion' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="4"/><path d="M3 12.5h18"/><path d="M7 8V6.5M17 8V6.5"/></svg>
+                  {%- when 'tools' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a3.5 3.5 0 004.8 4.5l-9 9a2.1 2.1 0 01-3-3l9-9a3.5 3.5 0 00-1.8-1.5z"/><path d="M5 5l4 4"/></svg>
+                  {%- when 'carry' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M9 9V6.5A3 3 0 0115 6.5V9"/></svg>
+                  {%- else -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v6a5 5 0 005 5h5"/><path d="M17 12l3 3-3 3"/><path d="M5 20h4"/></svg>
+                {%- endcase -%}
+              </span>
+              <span class="gb-usp__label">{{ block.settings.label | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
     </div>
   </div>
 
@@ -404,6 +418,12 @@
 .gb-product .gb-gal__thumb:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
 @media(max-width:999px){.gb-product .gb-gal__frame{margin-inline:calc(-1 * var(--pad));border-radius:0}}
 
+.gb-product .gb-price{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0}
+.gb-product .gb-price__now{font-family:var(--font-h);font-weight:700;font-size:clamp(34px,4.4vw,46px);line-height:1;letter-spacing:-.02em;color:var(--brown)}
+.gb-product .gb-price__was{font-size:21px;font-weight:600;color:var(--dim)}
+.gb-product .gb-price__off{background:var(--lime);color:var(--lime-ink);font-size:15px;font-weight:800;letter-spacing:.03em;padding:6px 13px;border-radius:999px}
+.gb-product .gb-price__was[hidden],.gb-product .gb-price__off[hidden]{display:none}
+.gb-product .gb-usps{margin-top:6px}
 /* usp row */
 .gb-product .gb-usps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:12px}
 .gb-product .gb-usp{display:grid;justify-items:center;gap:8px;text-align:center}
@@ -540,6 +560,7 @@
     var addBtn = $('[data-gb-add]');
     var addLabel = $('[data-gb-add-label]');
     var addPrice = $('[data-gb-add-price]');
+    var heroNow = $('[data-gb-hero-now]'), heroWas = $('[data-gb-hero-was]'), heroOff = $('[data-gb-hero-off]');
     var swatches = $$('[data-gb-color]');
     var packs = $$('[data-gb-pack]');
     var colorName = $('[data-gb-color-name]');
@@ -592,6 +613,11 @@
       if (addBtn) addBtn.disabled = !v.available;
       if (addLabel) addLabel.textContent = v.available ? 'Add to cart' : 'Sold out';
       if (addPrice) addPrice.textContent = money(v.price);
+      if (heroNow) heroNow.textContent = money(v.price);
+      var off = (v.compare_at_price && v.compare_at_price > v.price)
+        ? Math.round((v.compare_at_price - v.price) * 100 / v.compare_at_price) : 0;
+      if (heroWas) { heroWas.hidden = !off; heroWas.textContent = off ? money(v.compare_at_price) : ''; }
+      if (heroOff) { heroOff.hidden = !off; heroOff.textContent = off ? off + '% off' : ''; }
       try {
         var url = new URL(window.location.href);
         url.searchParams.set('variant', v.id);

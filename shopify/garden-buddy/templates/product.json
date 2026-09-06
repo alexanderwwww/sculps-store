@@ -70,8 +70,8 @@
         "step_1": {
           "type": "step",
           "settings": {
-            "heading": "Kneel on the thick pad",
-            "text": "Foam between you and the ground. Gravel, a wet lawn, a paved path, it makes no difference.",
+            "heading": "Kneel",
+            "text": "Thick foam between your knees and the ground.",
             "image": "shopify://shop_images/gb-gif-kneel.gif",
             "placeholder": "Clip: kneeling down onto the pad"
           }
@@ -79,8 +79,8 @@
         "step_2": {
           "type": "step",
           "settings": {
-            "heading": "Push up on the handles",
-            "text": "The handles sit near hip height when you kneel, so your arms do the work. Then it comes with you to the next spot.",
+            "heading": "Get up",
+            "text": "Push on the handles. Your arms do the work, not your knees.",
             "image": "shopify://shop_images/gb-gif-move.gif",
             "placeholder": "Clip: standing up and moving down the path"
           }
@@ -88,8 +88,8 @@
         "step_3": {
           "type": "step",
           "settings": {
-            "heading": "Flip it and sit",
-            "text": "Same frame, upside down. The handles become the legs and a snap-lock holds it shut.",
+            "heading": "Sit",
+            "text": "Flip it over. The snap-lock clicks and it is a seat.",
             "image": "shopify://shop_images/gb-gif-sit.gif",
             "placeholder": "Clip: sitting on it at a raised bed"
           }
@@ -350,41 +350,6 @@
             "placeholder": "The Garden Buddy"
           }
         },
-        "spec_1": {
-          "type": "spec",
-          "settings": {
-            "label": "Frame",
-            "value": "Steel, one piece, snap-lock"
-          }
-        },
-        "spec_2": {
-          "type": "spec",
-          "settings": {
-            "label": "Pad",
-            "value": "Detachable foam"
-          }
-        },
-        "spec_3": {
-          "type": "spec",
-          "settings": {
-            "label": "Colour",
-            "value": "Blue"
-          }
-        },
-        "spec_4": {
-          "type": "spec",
-          "settings": {
-            "label": "Assembly",
-            "value": "None. It arrives ready to use."
-          }
-        },
-        "spec_5": {
-          "type": "spec",
-          "settings": {
-            "label": "Folds",
-            "value": "Flat, for a shed wall or the boot of a car"
-          }
-        },
         "box_item_1": {
           "type": "box_item",
           "settings": {
@@ -461,6 +426,48 @@
             "question": "What if it is not for me?",
             "answer": "Send it back within 30 days and we refund you."
           }
+        },
+        "spec_1": {
+          "type": "spec",
+          "settings": {
+            "label": "Open size",
+            "value": "59 \u00d7 25 \u00d7 49 cm  (23.2 \u00d7 9.8 \u00d7 19.3 in)"
+          }
+        },
+        "spec_2": {
+          "type": "spec",
+          "settings": {
+            "label": "Folded thickness",
+            "value": "11 cm  (4.3 in)"
+          }
+        },
+        "spec_3": {
+          "type": "spec",
+          "settings": {
+            "label": "Frame",
+            "value": "Steel, one piece, snap-lock"
+          }
+        },
+        "spec_4": {
+          "type": "spec",
+          "settings": {
+            "label": "Pad",
+            "value": "Detachable foam"
+          }
+        },
+        "spec_5": {
+          "type": "spec",
+          "settings": {
+            "label": "Colour",
+            "value": "Blue"
+          }
+        },
+        "spec_6": {
+          "type": "spec",
+          "settings": {
+            "label": "Assembly",
+            "value": "None. It arrives ready to use."
+          }
         }
       },
       "block_order": [
@@ -513,7 +520,8 @@
         "spec_2",
         "spec_3",
         "spec_4",
-        "spec_5"
+        "spec_5",
+        "spec_6"
       ],
       "settings": {
         "strip_1_title": "2-5 Day Shipping",
@@ -528,7 +536,7 @@
         "ben_heading": "Kneel. Flip. Sit.",
         "ben_text": "One frame does the whole job. Pad side up to kneel, flipped over to sit.",
         "ben_placeholder": "Photo: the kneeler in use",
-        "how_eyebrow": "See it in use",
+        "how_eyebrow": "Three moves",
         "how_heading": "Kneel. Get up. Sit.",
         "set_eyebrow": "Everything in one set",
         "set_heading": "Everything you need, in one set.",
@@ -564,8 +572,10 @@
         "pf_image": "shopify://shop_images/gb-feature-2.png",
         "ugc_eyebrow": "See it for yourself",
         "ugc_heading": "Watch it in a real garden.",
-        "ugc_text": "One take, no edit. Kneeling down, standing back up on the handles, then flipping it over into a seat.",
-        "ugc_placeholder": "UGC clip: kneeling down, standing up, flipping it into a seat"
+        "ugc_text": "Three clips, no edit. Kneeling down, standing back up on the handles, and flipping it over into a seat.",
+        "ugc_video_1": "shopify://videos/62090598023507",
+        "ugc_video_2": "shopify://videos/62090598056275",
+        "ugc_video_3": "shopify://videos/62090598089043"
       }
     }
   },

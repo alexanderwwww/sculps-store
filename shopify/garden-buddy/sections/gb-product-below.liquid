@@ -59,16 +59,23 @@
       </div>
 
       <div class="gb-ugc__grid">
-        <figure class="gb-ugc__media">
-          {%- if s.ugc_video != blank -%}
-            {{ s.ugc_video | video_tag: image_size: '900x', controls: true, playsinline: true, preload: 'metadata', class: 'gb-ugc__vid' }}
-          {%- elsif s.ugc_video_url != blank -%}
-            <div class="gb-ugc__frame">{{ s.ugc_video_url | external_video_tag: class: 'gb-ugc__vid' }}</div>
-          {%- else -%}
-            <div class="gb-ph gb-ugc__ph"><span>{{ s.ugc_placeholder }}<small>Upload a vertical clip in the theme editor</small></span></div>
-          {%- endif -%}
-          {%- if s.ugc_caption != blank -%}<figcaption>{{ s.ugc_caption | escape }}</figcaption>{%- endif -%}
-        </figure>
+        <div class="gb-ugc__vids">
+          {%- for i in (1..3) -%}
+            {%- liquid
+              assign vkey = 'ugc_video_' | append: i
+              assign ckey = 'ugc_caption_' | append: i
+              assign pkey = 'ugc_ph_' | append: i
+            -%}
+            <figure class="gb-ugc__media">
+              {%- if s[vkey] != blank -%}
+                {{ s[vkey] | video_tag: image_size: '700x', controls: true, playsinline: true, preload: 'metadata', class: 'gb-ugc__vid' }}
+              {%- else -%}
+                <div class="gb-ph gb-ugc__ph"><span>{{ s[pkey] }}<small>Upload a clip in the theme editor</small></span></div>
+              {%- endif -%}
+              {%- if s[ckey] != blank -%}<figcaption>{{ s[ckey] | escape }}</figcaption>{%- endif -%}
+            </figure>
+          {%- endfor -%}
+        </div>
 
       <div class="gb-faq" id="faq">
         {%- if s.faq_heading != blank -%}<h3 class="gb-faq__h">{{ s.faq_heading }}</h3>{%- endif -%}
@@ -160,42 +167,47 @@
     </div>
   </section>
 
-  {%- comment -%} 3. How you use it — full-width alternating explainer rows {%- endcomment -%}
+  {%- comment -%} 3. How you use it — compact three-step strip {%- endcomment -%}
   {%- if step_n > 0 -%}
-  <div class="gb-how" id="how">
-    {%- if s.how_heading != blank or s.how_eyebrow != blank -%}
-      <section class="gb-sec gb-how__head">
-        <div class="gb-wrap">
-          <div class="gb-head gb-head--center gb-head--tight">
-            {%- if s.how_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.how_eyebrow }}</p>{%- endif -%}
-            <h2 class="gb-h2">{{ s.how_heading }}</h2>
-          </div>
-        </div>
-      </section>
-    {%- endif -%}
-    {%- assign k = 0 -%}
-    {%- for block in section.blocks -%}
-      {%- if block.type != 'step' -%}{%- continue -%}{%- endif -%}
-      {%- assign b = block.settings -%}
-      {%- assign k = k | plus: 1 -%}
-      {%- assign mod = k | modulo: 2 -%}
-      <section class="gb-sec gb-step{% if mod == 0 %} gb-sec--sand gb-step--flip{% endif %}" {{ block.shopify_attributes }}>
-        <div class="gb-wrap gb-step__in">
-          <div class="gb-step__body">
-            <h2 class="gb-h2">{{ b.heading | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</h2>
-            <p class="gb-lede">{{ b.text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
-          </div>
-          <div class="gb-step__shot gb-rise">
-            {%- if b.image != blank -%}
-              <img src="{{ b.image | image_url: width: 1400 }}" alt="{{ b.image.alt | default: b.heading | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy" decoding="async">
-            {%- else -%}
-              <div class="gb-ph"><span>{{ b.placeholder | default: 'Add a photo' }}</span></div>
-            {%- endif -%}
-          </div>
-        </div>
-      </section>
-    {%- endfor -%}
-  </div>
+  <section class="gb-sec gb-sec--sand gb-steps" id="how">
+    <div class="gb-wrap">
+      <div class="gb-steps__head">
+        {%- if s.how_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.how_eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.how_heading }}</h2>
+      </div>
+      <ol class="gb-steps__list">
+        {%- assign sn = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'step' -%}{%- continue -%}{%- endif -%}
+          {%- assign b = block.settings -%}
+          {%- assign sn = sn | plus: 1 -%}
+          <li class="gb-step" {{ block.shopify_attributes }}>
+            <div class="gb-step__media">
+              {%- if b.image != blank -%}
+                {%- liquid
+                  assign is_gif = false
+                  if b.image.src contains '.gif'
+                    assign is_gif = true
+                  endif
+                  if is_gif
+                    assign step_src = b.image | image_url
+                  else
+                    assign step_src = b.image | image_url: width: 700
+                  endif
+                -%}
+                <img src="{{ step_src }}" alt="{{ b.image.alt | default: b.heading | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy" decoding="async">
+              {%- else -%}
+                <div class="gb-ph"><span>{{ b.placeholder }}</span></div>
+              {%- endif -%}
+              <span class="gb-step__n" aria-hidden="true">{{ sn }}</span>
+            </div>
+            <h3 class="gb-step__h">{{ b.heading }}</h3>
+            <p class="gb-step__p">{{ b.text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+          </li>
+        {%- endfor -%}
+      </ol>
+    </div>
+  </section>
   {%- endif -%}
 
   {%- comment -%} 4. Benefits — photo left, three items right {%- endcomment -%}
@@ -641,17 +653,31 @@
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F6EEE2' stroke-width='3' stroke-linecap='round'><path d='M7 7l10 10M17 7L7 17'/></svg>")}
 
 /* ——— FAQ ——— */
+.gb-pb .gb-steps{padding-block:clamp(40px,5vw,68px)}
+.gb-pb .gb-steps__head{text-align:center;margin-bottom:clamp(24px,3vw,36px)}
+.gb-pb .gb-steps__head .gb-h2{font-size:clamp(24px,3vw,34px)}
+.gb-pb .gb-steps__list{list-style:none;margin:0;padding:0;display:grid;gap:clamp(20px,3vw,32px)}
+@media(min-width:760px){.gb-pb .gb-steps__list{grid-template-columns:repeat(3,1fr)}}
+.gb-pb .gb-step{display:grid;gap:12px;justify-items:center;text-align:center}
+.gb-pb .gb-step__media{position:relative;width:100%;max-width:260px;aspect-ratio:1;border-radius:16px;overflow:hidden;background:var(--paper);box-shadow:0 6px 20px rgba(42,29,17,.12)}
+.gb-pb .gb-step__media img{width:100%;height:100%;object-fit:cover;display:block}
+.gb-pb .gb-step__media .gb-ph{width:100%;height:100%}
+.gb-pb .gb-step__n{position:absolute;top:10px;left:10px;width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-weight:700;font-size:17px;display:grid;place-items:center}
+.gb-pb .gb-step__h{font-family:var(--font-h);font-size:20px;font-weight:700;margin:2px 0 0;color:var(--brown)}
+.gb-pb .gb-step__p{margin:0;font-size:16.5px;color:var(--dim);max-width:34ch}
 .gb-pb .gb-faq{width:100%;max-width:940px;margin:0 auto}
 .gb-pb .gb-ugc__head{text-align:center;max-width:56ch;margin:0 auto clamp(28px,4vw,48px)}
 .gb-pb .gb-ugc__head .gb-lede{margin-inline:auto}
 .gb-pb .gb-ugc__grid{display:grid;gap:clamp(28px,4vw,56px);align-items:start}
-@media(min-width:940px){.gb-pb .gb-ugc__grid{grid-template-columns:minmax(0,380px) minmax(0,1fr)}}
-.gb-pb .gb-ugc__media{margin:0;display:grid;gap:14px;justify-self:center;width:100%;max-width:380px}
-.gb-pb .gb-ugc__media video,.gb-pb .gb-ugc__frame,.gb-pb .gb-ugc__ph{width:100%;aspect-ratio:9/16;border-radius:20px;overflow:hidden;background:var(--sand);box-shadow:0 14px 40px rgba(42,29,17,.18)}
+
+.gb-pb .gb-ugc__vids{display:grid;gap:clamp(16px,2.4vw,28px);grid-template-columns:1fr}
+@media(min-width:760px){.gb-pb .gb-ugc__vids{grid-template-columns:repeat(3,1fr)}}
+.gb-pb .gb-ugc__media{margin:0;display:grid;gap:12px;width:100%}
+.gb-pb .gb-ugc__media video,.gb-pb .gb-ugc__ph{width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:var(--sand);box-shadow:0 14px 40px rgba(42,29,17,.18)}
 .gb-pb .gb-ugc__media video{object-fit:cover;display:block}
 .gb-pb .gb-ugc__frame iframe{width:100%;height:100%;border:0;display:block}
 .gb-pb .gb-ugc__media figcaption{font-size:16px;color:var(--dim);text-align:center}
-.gb-pb .gb-ugc .gb-faq{max-width:none;margin:0}
+.gb-pb .gb-ugc .gb-faq{max-width:940px;margin:clamp(40px,5vw,72px) auto 0}
 .gb-pb .gb-faq__h{font-family:var(--font-h);font-size:clamp(24px,2.6vw,32px);font-weight:800;
   text-transform:uppercase;color:var(--brown);margin:0 0 18px}
 .gb-pb .gb-faq__list{display:grid;gap:12px}
@@ -777,10 +803,15 @@
     { "type": "text", "id": "ugc_eyebrow", "label": "Eyebrow", "default": "See it for yourself" },
     { "type": "text", "id": "ugc_heading", "label": "Heading", "default": "Watch it in a real garden." },
     { "type": "textarea", "id": "ugc_text", "label": "Text", "default": "One take, no edit. Kneeling down, standing back up, and flipping it over into a seat." },
-    { "type": "video", "id": "ugc_video", "label": "Video", "info": "A vertical customer clip. Upload it here." },
-    { "type": "video_url", "id": "ugc_video_url", "label": "Or a video link", "accept": ["youtube", "vimeo"], "info": "Used only when no video is uploaded above." },
-    { "type": "text", "id": "ugc_placeholder", "label": "Placeholder caption", "default": "UGC clip: setting it down, kneeling, standing up on the handles" },
-    { "type": "text", "id": "ugc_caption", "label": "Caption under the video" },
+    { "type": "video", "id": "ugc_video_1", "label": "Video 1" },
+    { "type": "text", "id": "ugc_caption_1", "label": "Caption 1" },
+    { "type": "text", "id": "ugc_ph_1", "label": "Placeholder 1", "default": "Clip 1" },
+    { "type": "video", "id": "ugc_video_2", "label": "Video 2" },
+    { "type": "text", "id": "ugc_caption_2", "label": "Caption 2" },
+    { "type": "text", "id": "ugc_ph_2", "label": "Placeholder 2", "default": "Clip 2" },
+    { "type": "video", "id": "ugc_video_3", "label": "Video 3" },
+    { "type": "text", "id": "ugc_caption_3", "label": "Caption 3" },
+    { "type": "text", "id": "ugc_ph_3", "label": "Placeholder 3", "default": "Clip 3" },
     { "type": "header", "content": "Trust strip" },
     { "type": "text", "id": "strip_1_title", "label": "Item 1", "default": "2-5 Day Shipping" },
     { "type": "text", "id": "strip_1_text", "label": "Item 1 note", "default": "Fast and reliable delivery" },
