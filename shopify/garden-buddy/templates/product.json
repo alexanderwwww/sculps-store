@@ -3,8 +3,6 @@
     "main": {
       "type": "gb-product",
       "settings": {
-        "hero_script": "Sit. Kneel. Garden. Enjoy.",
-        "hero_badge": "ALL-IN-ONE GARDEN SET",
         "bullet_1": "Reduces knee and back strain",
         "bullet_2": "Thick, comfortable cushioning",
         "bullet_3": "Foldable and lightweight design",
@@ -624,7 +622,7 @@
           "type": "spec",
           "settings": {
             "label": "Open size",
-            "value": "59 × 25 × 49 cm  (23.2 × 9.8 × 19.3 in)"
+            "value": "59 \u00d7 25 \u00d7 49 cm  (23.2 \u00d7 9.8 \u00d7 19.3 in)"
           }
         },
         "spec_2": {
