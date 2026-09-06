@@ -10,7 +10,8 @@
         "flag_2": "Our pick",
         "trust_1": "Free US shipping",
         "trust_2": "30-day returns",
-        "trust_3": "Ships within [ DISPATCH TIME ]"
+        "trust_3": "Ships within [ DISPATCH TIME ]",
+        "set_blurb": "A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer."
       }
     },
     "below": {
@@ -231,8 +232,8 @@
         "faq_8": {
           "type": "faq",
           "settings": {
-            "question": "What if it is not for me?",
-            "answer": "Send it back within 30 days for a refund."
+            "question": "The tool set has a stool too. Do I need both?",
+            "answer": "They do different jobs. The kneeler is padded, has handles to push up on, and flips between kneeling and sitting. The stool in the tool set is a light canvas seat that carries the tool bag out to the bed. Plenty of people run both, which is what the bundles are for."
           }
         },
         "spec_1": {
@@ -290,6 +291,13 @@
             "label": "Assembly",
             "value": "None"
           }
+        },
+        "faq_9": {
+          "type": "faq",
+          "settings": {
+            "question": "What if it is not for me?",
+            "answer": "Send it back within 30 days for a refund."
+          }
         }
       },
       "block_order": [
@@ -320,6 +328,7 @@
         "faq_6",
         "faq_7",
         "faq_8",
+        "faq_9",
         "spec_1",
         "spec_2",
         "spec_3",

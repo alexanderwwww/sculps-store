@@ -210,7 +210,7 @@
                   {%- if has_set -%}
                     <span class="gb-pack__extra">
                       {%- if tool_set.featured_image -%}<img src="{{ tool_set.featured_image | image_url: width: 120 }}" alt="{{ tool_set.title | escape }}" width="60" height="60" loading="lazy">{%- else -%}<span class="gb-pack__extra-ph" aria-hidden="true"></span>{%- endif -%}
-                      <span><b>+ {{ tool_set.title | default: 'Garden Tool Set' }}</b> {{ s.set_blurb | default: 'The canvas bag with the hand tools, pruners, gloves and sprayer in it. Hangs off the kneeler.' }}</span>
+                      <span><b>+ {{ tool_set.title | default: 'Garden Tool Set' }}</b> {{ s.set_blurb | default: 'A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer.' }}</span>
                     </span>
                   {%- endif -%}
                 </span>
@@ -558,7 +558,7 @@
       "default": "Our pick",
       "info": "Our opinion only. No bestseller or popularity claims."
     },
-    { "type": "text", "id": "set_blurb", "label": "Tool set line on bundle cards", "default": "The canvas bag with the hand tools, pruners, gloves and sprayer in it. Hangs off the kneeler." },
+    { "type": "text", "id": "set_blurb", "label": "Tool set line on bundle cards", "default": "A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer." },
     {
       "type": "header",
       "content": "Trust row"
