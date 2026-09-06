@@ -31,3 +31,18 @@ Palette: background `#0D0D0F`, text `#F2F0EA`, accent `#F5C518` (yellow fills, b
 - Currency is EUR. Prices were written as US numbers, so they render as €129.99.
   Switch to USD in Settings → Store details if the market is the US.
 - Remove the storefront password once ready to take traffic
+
+## Team build (Sept 6)
+
+Custom sections replace every stock Horizon surface on the draft theme:
+`tbr-header`, `tbr-footer`, `tbr-home`, `tbr-product` (buy box), `tbr-product-below`,
+`tbr-collection`, `tbr-page`. Per-product templates: `product.json` (reaper),
+`product.the-haunted-projector.json`, `product.the-lighted-ghost-swing.json`.
+
+Uploads go by public raw GitHub URL (`body.type: URL`) — push first, then upsert.
+Shopify rejects silently on URL uploads; when a file does not land, upload it as
+TEXT to read the error. Limits hit so far: section/block/preset `name` ≤ 25 chars,
+preset ≤ 50 blocks, no relative-path default on `url` settings.
+
+Leftovers that cannot be deleted through the API (harmless, unused):
+`sections/zz-probe-video.liquid`, `sections/zz-probe-js.liquid`, `templates/page.schema-test.json`.
