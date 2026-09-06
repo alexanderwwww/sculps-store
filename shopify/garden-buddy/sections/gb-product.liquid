@@ -323,32 +323,27 @@
 
       {%- assign usp_n = 0 -%}
       {%- for block in section.blocks -%}{%- if block.type == 'usp' -%}{%- assign usp_n = usp_n | plus: 1 -%}{%- endif -%}{%- endfor -%}
-      {%- if usp_n > 0 -%}
-        <ul class="gb-usps">
-          {%- assign shown = 0 -%}
-          {%- for block in section.blocks -%}
-            {%- if block.type != 'usp' -%}{%- continue -%}{%- endif -%}
-            {%- assign shown = shown | plus: 1 -%}
-            {%- if shown > 5 -%}{%- break -%}{%- endif -%}
-            <li class="gb-usp" {{ block.shopify_attributes }}>
-              <span class="gb-usp__ring" aria-hidden="true">
-                {%- case block.settings.icon -%}
-                  {%- when 'shield' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8.1-7 10-4-1.9-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
-                  {%- when 'cushion' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="4"/><path d="M3 12.5h18"/><path d="M7 8V6.5M17 8V6.5"/></svg>
-                  {%- when 'tools' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a3.5 3.5 0 004.8 4.5l-9 9a2.1 2.1 0 01-3-3l9-9a3.5 3.5 0 00-1.8-1.5z"/><path d="M5 5l4 4"/></svg>
-                  {%- when 'carry' -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M9 9V6.5A3 3 0 0115 6.5V9"/></svg>
-                  {%- else -%}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v6a5 5 0 005 5h5"/><path d="M17 12l3 3-3 3"/><path d="M5 20h4"/></svg>
-                {%- endcase -%}
-              </span>
-              <span class="gb-usp__label">{{ block.settings.label | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
-            </li>
-          {%- endfor -%}
-        </ul>
+      {%- if usp_n > 0 or s.brand_logo != blank -%}
+        <div class="gb-brand">
+          <div class="gb-brand__mark">
+            {%- if s.brand_logo != blank -%}
+              <img src="{{ s.brand_logo | image_url: width: 460 }}" alt="{{ shop.name | escape }}" width="230" height="auto" loading="lazy">
+            {%- else -%}
+              <span class="gb-brand__word">Garden Buddy</span>
+            {%- endif -%}
+          </div>
+          {%- if usp_n > 0 -%}
+            <ul class="gb-brand__list">
+              {%- for block in section.blocks -%}
+                {%- if block.type != 'usp' -%}{%- continue -%}{%- endif -%}
+                <li {{ block.shopify_attributes }}>{{ block.settings.label | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+          {%- if s.brand_line != blank -%}
+            <p class="gb-brand__line gb-script">{{ s.brand_line }}</p>
+          {%- endif -%}
+        </div>
       {%- endif -%}
     </div>
   </div>
@@ -419,13 +414,13 @@
 .gb-product .gb-price__was{font-size:21px;font-weight:600;color:var(--dim)}
 .gb-product .gb-price__off{background:var(--lime);color:var(--lime-ink);font-size:15px;font-weight:800;letter-spacing:.03em;padding:6px 13px;border-radius:999px}
 .gb-product .gb-price__was[hidden],.gb-product .gb-price__off[hidden]{display:none}
-.gb-product .gb-usps{margin-top:6px}
-/* usp row */
-.gb-product .gb-usps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:12px}
-.gb-product .gb-usp{display:grid;justify-items:center;gap:8px;text-align:center}
-.gb-product .gb-usp__ring{width:56px;height:56px;border-radius:50%;border:2px solid var(--rule);display:grid;place-items:center;color:var(--leaf)}
-.gb-product .gb-usp__ring svg{width:28px;height:28px}
-.gb-product .gb-usp__label{font-size:11.5px;font-weight:800;line-height:1.25;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);max-width:14ch}
+.gb-product .gb-brand{margin-top:14px;background:var(--night);border-radius:16px;padding:22px 24px;display:grid;gap:14px;justify-items:center;text-align:center;border-bottom:5px solid var(--yellow)}
+.gb-product .gb-brand__mark img{width:min(230px,60%);height:auto}
+.gb-product .gb-brand__word{font-family:var(--font-h);font-weight:700;font-size:26px;color:var(--yellow)}
+.gb-product .gb-brand__list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px}
+.gb-product .gb-brand__list li{display:flex;align-items:center;gap:9px;color:var(--night-ink);font-size:15.5px;font-weight:600}
+.gb-product .gb-brand__list li::before{content:"";flex:0 0 18px;width:18px;height:18px;border-radius:50%;background:var(--lime) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2312290C' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>") center/11px no-repeat}
+.gb-product .gb-brand__line{margin:0;color:var(--yellow);font-size:23px}
 
 /* ===== buy column ===== */
 .gb-product .gb-buy{display:grid;gap:12px;align-content:start}
@@ -738,6 +733,9 @@
     { "type": "header", "content": "Bundles" },
     { "type": "text", "id": "pick_label", "label": "Heading above cards", "default": "Choose Your Bundle" },
     { "type": "text", "id": "flag_2", "label": "Flag on the 2nd card", "default": "Our pick", "info": "Our opinion only. No bestseller or popularity claims." },
+    { "type": "header", "content": "Brand block under the buy box" },
+    { "type": "image_picker", "id": "brand_logo", "label": "Logo" },
+    { "type": "text", "id": "brand_line", "label": "Handwritten line", "default": "A happier garden starts here." },
     { "type": "checkbox", "id": "show_buy_now", "label": "Show Buy Now button", "default": true, "info": "Shopify's own express checkout. It shows Shop Pay, Apple Pay or Google Pay depending on the visitor." },
     { "type": "header", "content": "Bundle card images" },
     { "type": "image_picker", "id": "pack_img_1", "label": "Bundle 1 image" },

@@ -20,7 +20,9 @@
         "subtitle": "",
         "pack_img_1": "shopify://shop_images/6e4b6aa0-e691-45aa-86e0-a4241d2a4a9e.png",
         "pack_img_2": "shopify://shop_images/f3e327ba-8e32-47ca-aa2b-9ebf53fe31b2_1.png",
-        "pack_img_3": "shopify://shop_images/cde75283-9d46-485b-b759-0f17e4654576.png"
+        "pack_img_3": "shopify://shop_images/cde75283-9d46-485b-b759-0f17e4654576.png",
+        "brand_logo": "shopify://shop_images/f70cfb36-00ec-44bf-939c-5af7445d7a9e.png",
+        "brand_line": "A happier garden starts here."
       },
       "blocks": {
         "usp_1": {

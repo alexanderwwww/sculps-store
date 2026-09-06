@@ -16,7 +16,7 @@
     Default handle assembled in parts so the store's legacy slug never has to be
     typed into copy. Merchants can override it in the section settings.
   endcomment
-  assign gb_handle = 'foldable-' | append: 'knee' | append: 'ler' | append: '-seat'
+  assign gb_handle = 'foldable-kneeler-seat'
   assign gb_handle = s.product_handle | default: gb_handle
 
   assign product = s.product
@@ -304,7 +304,7 @@
       "content": "One job: send people to the product page. Anything written as [ LIKE THIS ] shows as a placeholder until you replace it."
     },
     { "type": "product", "id": "product", "label": "Product", "info": "Leave empty to use the handle below." },
-    { "type": "text", "id": "product_handle", "label": "Product handle", "info": "Fallback when no product is picked." },
+    { "type": "text", "id": "product_handle", "label": "Product handle", "default": "foldable-kneeler-seat", "info": "The Shopify handle. Fallback when no product is picked." },
     { "type": "header", "content": "Hero" },
     { "type": "text", "id": "hero_kicker", "label": "Script kicker", "default": "Say hello to" },
     { "type": "text", "id": "hero_heading", "label": "Heading", "default": "The Garden Buddy" },
