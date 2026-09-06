@@ -3,131 +3,1256 @@
     "hero_main": {
       "type": "hero",
       "blocks": {
-        "text_head": { "type": "text", "settings": {
-          "text": "<p>The neighbors are going to lose it.</p>",
-          "text_color": "#FFFFFF", "alignment": "left", "type_preset": "h1",
-          "font": "var(--font-heading--family)", "font_size": "4rem", "wrap": "balance" } },
-        "text_sub": { "type": "text", "settings": {
-          "text": "<p>Three pieces that turn an ordinary front yard into the one people stop walking for. Solar where it can be, plugged in where it has to be. All of it up in under an hour.</p>",
-          "text_color": "#E4E4E0", "alignment": "left", "type_preset": "rte", "max_width": "narrow" } },
-        "button_shop": { "type": "button", "settings": {
-          "label": "Shop all three", "link": "shopify://collections/halloween-2026",
-          "style_class": "button-custom", "custom_button_background": "#F5C518",
-          "custom_button_text": "#191400", "custom_button_border": "#F5C518" } }
+        "h": {
+          "type": "text",
+          "settings": {
+            "text": "<p>The neighbors are going to lose it.</p>",
+            "alignment": "left",
+            "type_preset": "h1",
+            "width": "fit-content",
+            "font": "var(--font-heading--family)",
+            "font_size": "4rem",
+            "text_color": "#FFFFFF"
+          }
+        },
+        "s": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Three pieces that turn an ordinary front yard into the one people stop walking for. Solar where it can be, plugged in where it has to be. All of it up in under an hour.</p>",
+            "alignment": "left",
+            "type_preset": "rte",
+            "width": "fit-content",
+            "max_width": "narrow",
+            "font": "var(--font-body--family)",
+            "padding-block-end": 8,
+            "font_size": "1.0625rem",
+            "text_color": "#EDEDEA"
+          }
+        },
+        "b": {
+          "type": "button",
+          "settings": {
+            "label": "Shop all three",
+            "link": "shopify://collections/halloween-2026",
+            "style_class": "button-custom",
+            "custom_button_background": "#F5C518",
+            "custom_button_text": "#191400",
+            "custom_button_border": "#F5C518",
+            "width": "fit-content"
+          }
+        }
       },
-      "block_order": ["text_head", "text_sub", "button_shop"],
+      "block_order": [
+        "h",
+        "s",
+        "b"
+      ],
       "settings": {
         "media_type_1": "image",
         "image_1": "shopify://shop_images/hf_20260905_230322_89981275-08e8-429d-8c40-5d9d4002483d.png",
         "image": "shopify://shop_images/hf_20260905_230322_89981275-08e8-429d-8c40-5d9d4002483d.png",
-        "content_direction": "column",
         "horizontal_alignment_flex_direction_column": "flex-start",
         "vertical_alignment_flex_direction_column": "flex-end",
-        "section_width": "full-width", "section_height": "large",
-        "background_color": "#0D0D0F", "toggle_overlay": true,
-        "overlay_color": "#0D0D0F80", "overlay_style": "gradient",
-        "gradient_direction": "to bottom",
-        "padding-block-start": 120, "padding-block-end": 72, "gap": 20
+        "section_width": "full-width",
+        "section_height": "large",
+        "background_color": "#121212",
+        "toggle_overlay": true,
+        "overlay_color": "#12121280",
+        "overlay_style": "gradient",
+        "padding-block-start": 100,
+        "padding-block-end": 72,
+        "gap": 18
       }
     },
-
+    "trust_strip": {
+      "type": "section",
+      "settings": {
+        "section_width": "page-width",
+        "horizontal_alignment": "flex-start",
+        "gap": 24,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "padding-block-start": 28,
+        "padding-block-end": 28,
+        "background_color": "#F7F5F1"
+      },
+      "blocks": {
+        "row": {
+          "type": "group",
+          "settings": {
+            "content_direction": "row",
+            "horizontal_alignment": "flex-start",
+            "gap": 24,
+            "horizontal_alignment_flex_direction_column": "flex-start"
+          },
+          "blocks": {
+            "a": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 4,
+                "horizontal_alignment_flex_direction_column": "flex-start"
+              },
+              "blocks": {
+                "t": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Ships in 24 hours</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "0.95rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Tracked, from a US warehouse.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.875rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "t",
+                "b"
+              ]
+            },
+            "b": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 4,
+                "horizontal_alignment_flex_direction_column": "flex-start"
+              },
+              "blocks": {
+                "t": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Free US shipping</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "0.95rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>On every order, no minimum.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.875rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "t",
+                "b"
+              ]
+            },
+            "c": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 4,
+                "horizontal_alignment_flex_direction_column": "flex-start"
+              },
+              "blocks": {
+                "t": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>30-day returns</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "0.95rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Didn't land? Send it back.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.875rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "t",
+                "b"
+              ]
+            },
+            "d": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 4,
+                "horizontal_alignment_flex_direction_column": "flex-start"
+              },
+              "blocks": {
+                "t": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Real footage only</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "0.95rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>No renders. No composites.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.875rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "t",
+                "b"
+              ]
+            }
+          },
+          "block_order": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        }
+      },
+      "block_order": [
+        "row"
+      ]
+    },
     "product_list_main": {
       "type": "product-list",
       "blocks": {
         "static-header": {
-          "type": "_product-list-content", "static": true,
-          "settings": { "content_direction": "row", "horizontal_alignment": "space-between", "gap": 12 },
-          "blocks": {
-            "list_title": { "type": "_product-list-text", "settings": {
-              "text": "<h3>Three products. That's the entire store.</h3>",
-              "alignment": "left", "type_preset": "h3",
-              "font": "var(--font-heading--family)", "wrap": "balance" } }
+          "type": "_product-list-content",
+          "static": true,
+          "settings": {
+            "content_direction": "row",
+            "horizontal_alignment": "space-between",
+            "gap": 12
           },
-          "block_order": ["list_title"]
+          "blocks": {
+            "t": {
+              "type": "_product-list-text",
+              "settings": {
+                "text": "<h3>Three products. That's the entire store.</h3>",
+                "alignment": "left",
+                "type_preset": "h3",
+                "font": "var(--font-heading--family)",
+                "wrap": "balance"
+              }
+            }
+          },
+          "block_order": [
+            "t"
+          ]
         },
         "static-product-card": {
-          "type": "_product-card", "static": true,
-          "settings": { "product_card_gap": 6, "border": "solid", "border_width": 1, "border_opacity": 12, "border_radius": 8 },
-          "blocks": {
-            "card_gallery": { "type": "_product-card-gallery", "settings": { "image_ratio": "square" } },
-            "card_title": { "type": "product-title", "settings": {
-              "alignment": "left", "type_preset": "h6", "font": "var(--font-heading--family)",
-              "font_size": "1.125rem", "padding-block-start": 12,
-              "padding-inline-start": 12, "padding-inline-end": 12 } },
-            "card_price": { "type": "price", "settings": {
-              "alignment": "left", "type_preset": "rte", "font_size": "1rem",
-              "padding-block-end": 14, "padding-inline-start": 12, "padding-inline-end": 12 } }
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 6,
+            "border": "solid",
+            "border_radius": 8
           },
-          "block_order": ["card_gallery", "card_title", "card_price"]
+          "blocks": {
+            "g": {
+              "type": "_product-card-gallery",
+              "settings": {
+                "image_ratio": "square"
+              }
+            },
+            "t": {
+              "type": "product-title",
+              "settings": {
+                "alignment": "left",
+                "type_preset": "h6",
+                "font": "var(--font-heading--family)",
+                "font_size": "1.125rem",
+                "padding-block-start": 14,
+                "padding-inline-start": 14,
+                "padding-inline-end": 14
+              }
+            },
+            "p": {
+              "type": "price",
+              "settings": {
+                "alignment": "left",
+                "type_preset": "rte",
+                "font_size": "1rem",
+                "show_sale_price_first": true,
+                "padding-block-end": 16,
+                "padding-inline-start": 14,
+                "padding-inline-end": 14
+              }
+            }
+          },
+          "block_order": [
+            "g",
+            "t",
+            "p"
+          ]
         }
       },
       "settings": {
-        "collection": "halloween-2026", "layout_type": "grid",
-        "max_products": 3, "columns": 3, "mobile_columns": "1",
-        "columns_gap": 20, "rows_gap": 24, "section_width": "page-width",
-        "gap": 32, "padding-block-start": 72, "padding-block-end": 72
+        "collection": "halloween-2026",
+        "layout_type": "grid",
+        "max_products": 3,
+        "columns": 3,
+        "mobile_columns": "1",
+        "columns_gap": 20,
+        "rows_gap": 24,
+        "section_width": "page-width",
+        "gap": 28,
+        "padding-block-start": 64,
+        "padding-block-end": 64
       }
     },
-
+    "how_it_works": {
+      "type": "section",
+      "settings": {
+        "section_width": "page-width",
+        "horizontal_alignment": "flex-start",
+        "gap": 24,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "padding-block-start": 64,
+        "padding-block-end": 64
+      },
+      "blocks": {
+        "head": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Stake it in. That's the whole setup.</p>",
+            "alignment": "left",
+            "type_preset": "h2",
+            "width": "fit-content",
+            "font": "var(--font-heading--family)",
+            "font_size": "2.25rem"
+          }
+        },
+        "sub": {
+          "type": "text",
+          "settings": {
+            "text": "<p>No outlet, no extension cord, no timer to program, no tools. Four minutes a piece.</p>",
+            "alignment": "left",
+            "type_preset": "rte",
+            "width": "fit-content",
+            "max_width": "narrow",
+            "font": "var(--font-body--family)",
+            "padding-block-end": 8,
+            "font_size": "1rem",
+            "text_color": "#5B5B5B"
+          }
+        },
+        "row": {
+          "type": "group",
+          "settings": {
+            "content_direction": "row",
+            "horizontal_alignment": "flex-start",
+            "gap": 20,
+            "horizontal_alignment_flex_direction_column": "flex-start"
+          },
+          "blocks": {
+            "a": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 8,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 22,
+                "padding-block-end": 22,
+                "padding-inline-start": 22,
+                "padding-inline-end": 22
+              },
+              "blocks": {
+                "n": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>STEP 01</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-subheading--family)",
+                    "font_size": "0.75rem",
+                    "text_color": "#8A6A00"
+                  }
+                },
+                "h": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Push the stake into the grass</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.25rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Pick a spot with open sky. Step on the crossbar until the base sits flush with the lawn.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "n",
+                "h",
+                "b"
+              ]
+            },
+            "b": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 8,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 22,
+                "padding-block-end": 22,
+                "padding-inline-start": 22,
+                "padding-inline-end": 22
+              },
+              "blocks": {
+                "n": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>STEP 02</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-subheading--family)",
+                    "font_size": "0.75rem",
+                    "text_color": "#8A6A00"
+                  }
+                },
+                "h": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>The sun charges it all day</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.25rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>The panel sits on the stake. Nothing to plug in, nothing to switch on, nothing to remember.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "n",
+                "h",
+                "b"
+              ]
+            },
+            "c": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 8,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 22,
+                "padding-block-end": 22,
+                "padding-inline-start": 22,
+                "padding-inline-end": 22
+              },
+              "blocks": {
+                "n": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>STEP 03</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-subheading--family)",
+                    "font_size": "0.75rem",
+                    "text_color": "#8A6A00"
+                  }
+                },
+                "h": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>It comes on by itself at dusk</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.25rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Light drops, the lantern catches, the souls start moving. Off by morning, then it does it again.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "n",
+                "h",
+                "b"
+              ]
+            }
+          },
+          "block_order": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      },
+      "block_order": [
+        "head",
+        "sub",
+        "row"
+      ]
+    },
     "hero_bundle": {
       "type": "hero",
       "blocks": {
-        "bundle_head": { "type": "text", "settings": {
-          "text": "<p>Souls on the lawn. Shadows on the house.</p>",
-          "text_color": "#FFFFFF", "alignment": "left", "type_preset": "h2",
-          "font": "var(--font-heading--family)", "font_size": "2.75rem", "wrap": "balance" } },
-        "bundle_sub": { "type": "text", "settings": {
-          "text": "<p>Two reapers and the projector together for 199.99, down from 349.97. The reapers hold the ground, the projector takes the wall. You save 150.</p>",
-          "text_color": "#E4E4E0", "alignment": "left", "type_preset": "rte", "max_width": "narrow" } },
-        "bundle_btn": { "type": "button", "settings": {
-          "label": "Get the bundle", "link": "shopify://products/the-black-reaper",
-          "style_class": "button-custom", "custom_button_background": "#F5C518",
-          "custom_button_text": "#191400", "custom_button_border": "#F5C518" } }
+        "h": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Souls on the lawn. Shadows on the house.</p>",
+            "alignment": "left",
+            "type_preset": "h2",
+            "width": "fit-content",
+            "font": "var(--font-heading--family)",
+            "font_size": "2.75rem",
+            "text_color": "#FFFFFF"
+          }
+        },
+        "s": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Two reapers and the projector together for 199.99, down from 349.97. The reapers hold the ground, the projector takes the wall. You save 150.</p>",
+            "alignment": "left",
+            "type_preset": "rte",
+            "width": "fit-content",
+            "max_width": "narrow",
+            "font": "var(--font-body--family)",
+            "padding-block-end": 8,
+            "font_size": "1.0625rem",
+            "text_color": "#EDEDEA"
+          }
+        },
+        "b": {
+          "type": "button",
+          "settings": {
+            "label": "Get the bundle",
+            "link": "shopify://products/the-black-reaper",
+            "style_class": "button-custom",
+            "custom_button_background": "#F5C518",
+            "custom_button_text": "#191400",
+            "custom_button_border": "#F5C518",
+            "width": "fit-content"
+          }
+        }
       },
-      "block_order": ["bundle_head", "bundle_sub", "bundle_btn"],
+      "block_order": [
+        "h",
+        "s",
+        "b"
+      ],
       "settings": {
         "media_type_1": "image",
         "image_1": "shopify://shop_images/hf_20260905_230322_c4a5dff6-6d99-40b2-a8ee-25584ff4e5a0.png",
         "image": "shopify://shop_images/hf_20260905_230322_c4a5dff6-6d99-40b2-a8ee-25584ff4e5a0.png",
-        "content_direction": "column",
         "horizontal_alignment_flex_direction_column": "flex-start",
         "vertical_alignment_flex_direction_column": "center",
-        "section_width": "full-width", "section_height": "medium",
-        "background_color": "#0D0D0F", "toggle_overlay": true,
-        "overlay_color": "#0D0D0FA6", "overlay_style": "solid",
-        "padding-block-start": 96, "padding-block-end": 96, "gap": 18
+        "section_width": "full-width",
+        "section_height": "medium",
+        "background_color": "#121212",
+        "toggle_overlay": true,
+        "overlay_color": "#121212A6",
+        "overlay_style": "solid",
+        "padding-block-start": 90,
+        "padding-block-end": 90,
+        "gap": 18
       }
     },
-
+    "three_levels": {
+      "type": "section",
+      "settings": {
+        "section_width": "page-width",
+        "horizontal_alignment": "flex-start",
+        "gap": 24,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "padding-block-start": 64,
+        "padding-block-end": 64,
+        "background_color": "#F7F5F1"
+      },
+      "blocks": {
+        "head": {
+          "type": "text",
+          "settings": {
+            "text": "<p>A yard people stop for works on three levels.</p>",
+            "alignment": "left",
+            "type_preset": "h2",
+            "width": "fit-content",
+            "font": "var(--font-heading--family)",
+            "font_size": "2.25rem"
+          }
+        },
+        "sub": {
+          "type": "text",
+          "settings": {
+            "text": "<p>One decoration in the middle of a lawn is a decoration. Ground, air and the house all doing something at once is a scene &mdash; and a scene is what gets photographed.</p>",
+            "alignment": "left",
+            "type_preset": "rte",
+            "width": "fit-content",
+            "max_width": "narrow",
+            "font": "var(--font-body--family)",
+            "padding-block-end": 8,
+            "font_size": "1rem",
+            "text_color": "#5B5B5B"
+          }
+        },
+        "row": {
+          "type": "group",
+          "settings": {
+            "content_direction": "row",
+            "horizontal_alignment": "flex-start",
+            "gap": 24,
+            "horizontal_alignment_flex_direction_column": "flex-start"
+          },
+          "blocks": {
+            "a": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 8,
+                "horizontal_alignment_flex_direction_column": "flex-start"
+              },
+              "blocks": {
+                "t": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>GROUND</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-subheading--family)",
+                    "font_size": "0.75rem",
+                    "text_color": "#8A6A00"
+                  }
+                },
+                "h": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>The reapers hold the lawn</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.1875rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Staked where people have to walk past them, streams of souls crossing the grass at ankle height.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "t",
+                "h",
+                "b"
+              ]
+            },
+            "b": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 8,
+                "horizontal_alignment_flex_direction_column": "flex-start"
+              },
+              "blocks": {
+                "t": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>AIR</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-subheading--family)",
+                    "font_size": "0.75rem",
+                    "text_color": "#8A6A00"
+                  }
+                },
+                "h": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>The swings fill the trees</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.1875rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Hung at eye level off a branch, glowing and turning. They stop the yard reading as flat.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "t",
+                "h",
+                "b"
+              ]
+            },
+            "c": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 8,
+                "horizontal_alignment_flex_direction_column": "flex-start"
+              },
+              "blocks": {
+                "t": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>THE HOUSE</p>",
+                    "alignment": "left",
+                    "type_preset": "h6",
+                    "width": "fit-content",
+                    "font": "var(--font-subheading--family)",
+                    "font_size": "0.75rem",
+                    "text_color": "#8A6A00"
+                  }
+                },
+                "h": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>The projector takes the wall</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.1875rem"
+                  }
+                },
+                "b": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Figures moving across the whole facade behind everything else. It is what makes it read from the street.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "t",
+                "h",
+                "b"
+              ]
+            }
+          },
+          "block_order": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      },
+      "block_order": [
+        "head",
+        "sub",
+        "row"
+      ]
+    },
+    "faq_home": {
+      "type": "section",
+      "settings": {
+        "section_width": "page-width",
+        "horizontal_alignment": "flex-start",
+        "gap": 16,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "padding-block-start": 64,
+        "padding-block-end": 64
+      },
+      "blocks": {
+        "head": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Everything people ask before ordering.</p>",
+            "alignment": "left",
+            "type_preset": "h2",
+            "width": "fit-content",
+            "font": "var(--font-heading--family)",
+            "padding-block-end": 8,
+            "font_size": "2.25rem"
+          }
+        },
+        "row1": {
+          "type": "group",
+          "settings": {
+            "content_direction": "row",
+            "horizontal_alignment": "flex-start",
+            "gap": 16,
+            "horizontal_alignment_flex_direction_column": "flex-start"
+          },
+          "blocks": {
+            "a": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 6,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 20,
+                "padding-block-end": 20,
+                "padding-inline-start": 20,
+                "padding-inline-end": 20
+              },
+              "blocks": {
+                "q": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Will it arrive before Halloween?</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.0625rem"
+                  }
+                },
+                "a": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Yes if you order by Tuesday, October 20. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st &mdash; we would rather tell you no than take your money on a maybe.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "q",
+                "a"
+              ]
+            },
+            "b": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 6,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 20,
+                "padding-block-end": 20,
+                "padding-inline-start": 20,
+                "padding-inline-end": 20
+              },
+              "blocks": {
+                "q": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Does any of it need an outlet?</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.0625rem"
+                  }
+                },
+                "a": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>The reapers are solar and need nothing at all. The ghost swings light themselves. The projector is the only piece that plugs in.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "q",
+                "a"
+              ]
+            }
+          },
+          "block_order": [
+            "a",
+            "b"
+          ]
+        },
+        "row2": {
+          "type": "group",
+          "settings": {
+            "content_direction": "row",
+            "horizontal_alignment": "flex-start",
+            "gap": 16,
+            "horizontal_alignment_flex_direction_column": "flex-start"
+          },
+          "blocks": {
+            "a": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 6,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 20,
+                "padding-block-end": 20,
+                "padding-inline-start": 20,
+                "padding-inline-end": 20
+              },
+              "blocks": {
+                "q": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>How long does setup take?</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.0625rem"
+                  }
+                },
+                "a": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>About four minutes per reaper, about a minute per swing, under a minute for the projector. A full three-level yard is well under an hour, with no tools.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "q",
+                "a"
+              ]
+            },
+            "b": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 6,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 20,
+                "padding-block-end": 20,
+                "padding-inline-start": 20,
+                "padding-inline-end": 20
+              },
+              "blocks": {
+                "q": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Does the reaper move or make noise?</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.0625rem"
+                  }
+                },
+                "a": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>No. It is completely silent and it does not animate. The whole effect is light &mdash; no motor to break and nothing waking the street at 2am.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "q",
+                "a"
+              ]
+            }
+          },
+          "block_order": [
+            "a",
+            "b"
+          ]
+        },
+        "row3": {
+          "type": "group",
+          "settings": {
+            "content_direction": "row",
+            "horizontal_alignment": "flex-start",
+            "gap": 16,
+            "horizontal_alignment_flex_direction_column": "flex-start"
+          },
+          "blocks": {
+            "a": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 6,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 20,
+                "padding-block-end": 20,
+                "padding-inline-start": 20,
+                "padding-inline-end": 20
+              },
+              "blocks": {
+                "q": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Can it stay out in the rain?</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.0625rem"
+                  }
+                },
+                "a": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>The reapers handle rain. Standing water, snow and freezing conditions they do not. The swings are fabric, so light rain only. Keep the projector under a porch roof.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "q",
+                "a"
+              ]
+            },
+            "b": {
+              "type": "group",
+              "settings": {
+                "horizontal_alignment": "flex-start",
+                "gap": 6,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "border": "solid",
+                "border_radius": 8,
+                "padding-block-start": 20,
+                "padding-block-end": 20,
+                "padding-inline-start": 20,
+                "padding-inline-end": 20
+              },
+              "blocks": {
+                "q": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Do you have reviews?</p>",
+                    "alignment": "left",
+                    "type_preset": "h4",
+                    "width": "fit-content",
+                    "font": "var(--font-heading--family)",
+                    "font_size": "1.0625rem"
+                  }
+                },
+                "a": {
+                  "type": "text",
+                  "settings": {
+                    "text": "<p>Not yet. This is our first season and we would rather show you nothing than show you reviews we wrote ourselves. Every review that appears here will be from a verified order.</p>",
+                    "alignment": "left",
+                    "type_preset": "rte",
+                    "width": "fit-content",
+                    "font": "var(--font-body--family)",
+                    "font_size": "0.9375rem",
+                    "text_color": "#5B5B5B"
+                  }
+                }
+              },
+              "block_order": [
+                "q",
+                "a"
+              ]
+            }
+          },
+          "block_order": [
+            "a",
+            "b"
+          ]
+        },
+        "btn": {
+          "type": "button",
+          "settings": {
+            "label": "Read the full FAQ",
+            "link": "shopify://pages/faq",
+            "style_class": "button-custom",
+            "custom_button_background": "#121212",
+            "custom_button_text": "#FFFFFF",
+            "custom_button_border": "#121212",
+            "width": "fit-content"
+          }
+        }
+      },
+      "block_order": [
+        "head",
+        "row1",
+        "row2",
+        "row3",
+        "btn"
+      ]
+    },
     "hero_closer": {
       "type": "hero",
       "blocks": {
-        "closer_head": { "type": "text", "settings": {
-          "text": "<p>Halloween is on a Saturday this year.</p>",
-          "text_color": "#FFFFFF", "alignment": "center", "type_preset": "h2",
-          "font": "var(--font-heading--family)", "font_size": "2.5rem", "wrap": "balance" } },
-        "closer_sub": { "type": "text", "settings": {
-          "text": "<p>Which means the whole street will be out walking. Put something in the yard worth stopping for. Order by Tuesday, October 20 for delivery before the 31st.</p>",
-          "text_color": "#B9B9B2", "alignment": "center", "type_preset": "rte", "max_width": "narrow" } },
-        "closer_btn": { "type": "button", "settings": {
-          "label": "Shop all three", "link": "shopify://collections/halloween-2026",
-          "style_class": "button-custom", "custom_button_background": "#F5C518",
-          "custom_button_text": "#191400", "custom_button_border": "#F5C518" } }
+        "h": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Halloween is on a Saturday this year.</p>",
+            "alignment": "center",
+            "type_preset": "h2",
+            "font": "var(--font-heading--family)",
+            "font_size": "2.5rem",
+            "text_color": "#FFFFFF"
+          }
+        },
+        "s": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Which means the whole street will be out walking. Put something in the yard worth stopping for. Order by Tuesday, October 20 for delivery before the 31st.</p>",
+            "alignment": "center",
+            "type_preset": "rte",
+            "max_width": "narrow",
+            "font": "var(--font-body--family)",
+            "padding-block-end": 8,
+            "font_size": "1rem",
+            "text_color": "#D8D6D0"
+          }
+        },
+        "b": {
+          "type": "button",
+          "settings": {
+            "label": "Shop all three",
+            "link": "shopify://collections/halloween-2026",
+            "style_class": "button-custom",
+            "custom_button_background": "#F5C518",
+            "custom_button_text": "#191400",
+            "custom_button_border": "#F5C518",
+            "width": "fit-content"
+          }
+        }
       },
-      "block_order": ["closer_head", "closer_sub", "closer_btn"],
+      "block_order": [
+        "h",
+        "s",
+        "b"
+      ],
       "settings": {
         "media_type_1": "image",
         "image_1": "shopify://shop_images/hf_20260905_230322_5c65efea-4d97-4fc1-b69e-3f076fac8761.png",
         "image": "shopify://shop_images/hf_20260905_230322_5c65efea-4d97-4fc1-b69e-3f076fac8761.png",
-        "content_direction": "column",
         "horizontal_alignment_flex_direction_column": "center",
         "vertical_alignment_flex_direction_column": "center",
-        "section_width": "full-width", "section_height": "medium",
-        "background_color": "#0D0D0F", "toggle_overlay": true,
-        "overlay_color": "#0D0D0FBF", "overlay_style": "solid",
-        "padding-block-start": 96, "padding-block-end": 96, "gap": 18
+        "section_width": "full-width",
+        "section_height": "medium",
+        "background_color": "#121212",
+        "toggle_overlay": true,
+        "overlay_color": "#121212BF",
+        "overlay_style": "solid",
+        "padding-block-start": 88,
+        "padding-block-end": 88,
+        "gap": 18
       }
     }
   },
-  "order": ["hero_main", "product_list_main", "hero_bundle", "hero_closer"]
+  "order": [
+    "hero_main",
+    "trust_strip",
+    "product_list_main",
+    "how_it_works",
+    "hero_bundle",
+    "three_levels",
+    "faq_home",
+    "hero_closer"
+  ]
 }
