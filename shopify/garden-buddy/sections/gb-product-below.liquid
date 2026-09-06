@@ -49,6 +49,47 @@
 
 <div class="gb gb-pb">
 
+  {%- comment -%} 0. UGC video + the FAQ. First thing under the buy box. {%- endcomment -%}
+  <section class="gb-sec gb-ugc" id="watch">
+    <div class="gb-wrap">
+      <div class="gb-ugc__head">
+        {%- if s.ugc_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.ugc_eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.ugc_heading }}</h2>
+        {%- if s.ugc_text != blank -%}<p class="gb-lede">{{ s.ugc_text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>{%- endif -%}
+      </div>
+
+      <div class="gb-ugc__grid">
+        <figure class="gb-ugc__media">
+          {%- if s.ugc_video != blank -%}
+            {{ s.ugc_video | video_tag: image_size: '900x', controls: true, playsinline: true, preload: 'metadata', class: 'gb-ugc__vid' }}
+          {%- elsif s.ugc_video_url != blank -%}
+            <div class="gb-ugc__frame">{{ s.ugc_video_url | external_video_tag: class: 'gb-ugc__vid' }}</div>
+          {%- else -%}
+            <div class="gb-ph gb-ugc__ph"><span>{{ s.ugc_placeholder }}<small>Upload a vertical clip in the theme editor</small></span></div>
+          {%- endif -%}
+          {%- if s.ugc_caption != blank -%}<figcaption>{{ s.ugc_caption | escape }}</figcaption>{%- endif -%}
+        </figure>
+
+      <div class="gb-faq" id="faq">
+        {%- if s.faq_heading != blank -%}<h3 class="gb-faq__h">{{ s.faq_heading }}</h3>{%- endif -%}
+        <div class="gb-faq__list">
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'faq' -%}{%- continue -%}{%- endif -%}
+            {%- assign b = block.settings -%}
+            <details class="gb-faq__item" {{ block.shopify_attributes }}>
+              <summary>
+                <span>{{ b.question | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
+                <i aria-hidden="true"></i>
+              </summary>
+              <p>{{ b.answer | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+            </details>
+          {%- endfor -%}
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
   {%- comment -%} 1. The tool set — first thing under the buy box {%- endcomment -%}
   {%- if s.set_heading != blank or tool_n > 0 -%}
   <section class="gb-sec gb-set" id="tool-set">
@@ -265,7 +306,7 @@
   {%- endif -%}
 
   {%- comment -%} 6. What makes it better — the comparison table, then the FAQ {%- endcomment -%}
-  {%- if compare_n > 0 or faq_n > 0 -%}
+  {%- if compare_n > 0 -%}
   <section class="gb-sec gb-better" id="compare">
     <div class="gb-wrap">
       <div class="gb-head gb-head--center">
@@ -310,24 +351,6 @@
         </div>
         {%- endif -%}
 
-        {%- if faq_n > 0 -%}
-        <div class="gb-faq" id="faq">
-          {%- if s.faq_heading != blank -%}<h3 class="gb-faq__h">{{ s.faq_heading }}</h3>{%- endif -%}
-          <div class="gb-faq__list">
-            {%- for block in section.blocks -%}
-              {%- if block.type != 'faq' -%}{%- continue -%}{%- endif -%}
-              {%- assign b = block.settings -%}
-              <details class="gb-faq__item" {{ block.shopify_attributes }}>
-                <summary>
-                  <span>{{ b.question | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
-                  <i aria-hidden="true"></i>
-                </summary>
-                <p>{{ b.answer | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
-              </details>
-            {%- endfor -%}
-          </div>
-        </div>
-        {%- endif -%}
       </div>
     </div>
   </section>
@@ -619,6 +642,16 @@
 
 /* ——— FAQ ——— */
 .gb-pb .gb-faq{width:100%;max-width:940px;margin:0 auto}
+.gb-pb .gb-ugc__head{text-align:center;max-width:56ch;margin:0 auto clamp(28px,4vw,48px)}
+.gb-pb .gb-ugc__head .gb-lede{margin-inline:auto}
+.gb-pb .gb-ugc__grid{display:grid;gap:clamp(28px,4vw,56px);align-items:start}
+@media(min-width:940px){.gb-pb .gb-ugc__grid{grid-template-columns:minmax(0,380px) minmax(0,1fr)}}
+.gb-pb .gb-ugc__media{margin:0;display:grid;gap:14px;justify-self:center;width:100%;max-width:380px}
+.gb-pb .gb-ugc__media video,.gb-pb .gb-ugc__frame,.gb-pb .gb-ugc__ph{width:100%;aspect-ratio:9/16;border-radius:20px;overflow:hidden;background:var(--sand);box-shadow:0 14px 40px rgba(42,29,17,.18)}
+.gb-pb .gb-ugc__media video{object-fit:cover;display:block}
+.gb-pb .gb-ugc__frame iframe{width:100%;height:100%;border:0;display:block}
+.gb-pb .gb-ugc__media figcaption{font-size:16px;color:var(--dim);text-align:center}
+.gb-pb .gb-ugc .gb-faq{max-width:none;margin:0}
 .gb-pb .gb-faq__h{font-family:var(--font-h);font-size:clamp(24px,2.6vw,32px);font-weight:800;
   text-transform:uppercase;color:var(--brown);margin:0 0 18px}
 .gb-pb .gb-faq__list{display:grid;gap:12px}
@@ -740,6 +773,14 @@
       "type": "paragraph",
       "content": "Anything written as [ LIKE THIS ] shows as a placeholder until you replace it. Numbers we do not have yet stay as placeholders. Nothing here is invented."
     },
+    { "type": "header", "content": "UGC video + FAQ" },
+    { "type": "text", "id": "ugc_eyebrow", "label": "Eyebrow", "default": "See it for yourself" },
+    { "type": "text", "id": "ugc_heading", "label": "Heading", "default": "Watch it in a real garden." },
+    { "type": "textarea", "id": "ugc_text", "label": "Text", "default": "One take, no edit. Kneeling down, standing back up, and flipping it over into a seat." },
+    { "type": "video", "id": "ugc_video", "label": "Video", "info": "A vertical customer clip. Upload it here." },
+    { "type": "video_url", "id": "ugc_video_url", "label": "Or a video link", "accept": ["youtube", "vimeo"], "info": "Used only when no video is uploaded above." },
+    { "type": "text", "id": "ugc_placeholder", "label": "Placeholder caption", "default": "UGC clip: setting it down, kneeling, standing up on the handles" },
+    { "type": "text", "id": "ugc_caption", "label": "Caption under the video" },
     { "type": "header", "content": "Trust strip" },
     { "type": "text", "id": "strip_1_title", "label": "Item 1", "default": "2-5 Day Shipping" },
     { "type": "text", "id": "strip_1_text", "label": "Item 1 note", "default": "Fast and reliable delivery" },
