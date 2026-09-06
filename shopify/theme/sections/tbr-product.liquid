@@ -647,6 +647,35 @@
 .tbr-product .tbr-tier{min-height:104px}
 .tbr-product .tbr-assure>div:nth-child(n+4){display:none}
 .tbr-product .tbr-pick{margin-top:18px}
+
+/* ---- over-clarity pass: big full-bleed gallery, tiny thumbs, three plain price cards ---- */
+.tbr-product .tbr-wrap.tbr-product__grid{max-width:none;padding-inline:0;gap:0}
+@media(min-width:1000px){
+  .tbr-product .tbr-product__grid{grid-template-columns:minmax(0,1.45fr) minmax(400px,.75fr);align-items:stretch}
+  .tbr-product .tbr-gal{position:sticky;top:0;align-self:start}
+  .tbr-product .tbr-buy{padding:clamp(28px,4vw,56px) clamp(24px,4vw,64px) clamp(28px,4vw,56px) clamp(24px,3vw,44px)}
+}
+.tbr-product .tbr-gal{gap:0}
+.tbr-product .tbr-gal__main{border:0;border-radius:0;aspect-ratio:auto}
+.tbr-product .tbr-gal__slide{aspect-ratio:4/5}
+@media(min-width:1000px){.tbr-product .tbr-gal__slide{aspect-ratio:auto;height:min(92vh,980px)}}
+@media(max-width:999px){.tbr-product .tbr-gal__slide{aspect-ratio:1}.tbr-product .tbr-buy{padding:22px var(--pad) 28px}}
+.tbr-product .tbr-gal__thumbs{display:flex;gap:6px;justify-content:center;padding:10px var(--pad) 0;grid-template-columns:none}
+.tbr-product .tbr-gal__thumb,.tbr-product .tbr-gal__thumb--ph{flex:0 0 44px;width:44px;height:44px;border-radius:6px;font-size:11px;opacity:.75}
+.tbr-product .tbr-gal__thumb[aria-selected="true"]{opacity:1}
+.tbr-product .tbr-gal__arrow{top:calc(50% - 22px)}
+.tbr-product .tbr-buy__h1{font-size:clamp(34px,4.2vw,54px);line-height:1;margin-bottom:6px}
+.tbr-product .tbr-buy__price b{font-size:32px}
+
+/* cards: name, price, save. Nothing else. */
+.tbr-product .tbr-tier{grid-template-columns:22px 1fr auto;align-items:center;min-height:0;padding:18px 18px}
+.tbr-product .tbr-tier__unit,.tbr-product .tbr-tier__inc,.tbr-product .tbr-flag{display:none!important}
+.tbr-product .tbr-tier__name{font-family:var(--font-heading--family);font-size:22px;text-transform:uppercase;letter-spacing:.02em;line-height:1.1}
+.tbr-product .tbr-tier__now{font-size:24px}
+.tbr-product .tbr-tier__was{font-size:13px}
+.tbr-product .tbr-tier__save{font-size:12px;margin-top:6px}
+.tbr-product .tbr-ribbon{font-size:10px}
+.tbr-product .tbr-pick p{font-family:var(--font-heading--family);font-size:18px;text-transform:uppercase;letter-spacing:.04em}
 {% endstylesheet %}
 
 {% javascript %}
