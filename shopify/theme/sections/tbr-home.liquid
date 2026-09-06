@@ -1,0 +1,185 @@
+{%- liquid
+  assign coll = collections['halloween-2026']
+  assign reaper = all_products['the-black-reaper']
+  assign projector = all_products['the-haunted-projector']
+  assign swing = all_products['the-lighted-ghost-swing']
+-%}
+
+<div class="tbr">
+
+  <section class="tbr-hero">
+    {%- if reaper.featured_image -%}
+      <img class="tbr-hero__img" src="{{ reaper.featured_image | image_url: width: 2400 }}" alt="{{ reaper.featured_image.alt | escape }}" width="2400" height="2400">
+    {%- endif -%}
+    <div class="tbr-hero__shade"></div>
+    <div class="tbr-wrap tbr-hero__copy">
+      <p class="tbr-eyebrow tbr-eyebrow--light">{{ section.settings.eyebrow }}</p>
+      <h1 class="tbr-hero__h1">{{ section.settings.hero_heading }}</h1>
+      <p class="tbr-hero__sub">{{ section.settings.hero_text }}</p>
+      <div class="tbr-hero__cta">
+        <a class="tbr-btn tbr-btn--accent" href="{{ coll.url | default: '/collections/all' }}">{{ section.settings.hero_button }}</a>
+        <span class="tbr-hero__note">{{ section.settings.hero_note }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="tbr-strip">
+    <div class="tbr-wrap tbr-strip__in">
+      <div><b>Ships in 24 hours</b>Tracked, from a US warehouse.</div>
+      <div><b>Free US shipping</b>On every order, no minimum.</div>
+      <div><b>30-day returns</b>Didn't land the way you hoped? Send it back.</div>
+      <div><b>Real footage only</b>No renders. No composites.</div>
+    </div>
+  </section>
+
+  <section class="tbr-sec" id="shop">
+    <div class="tbr-wrap">
+      <div class="tbr-head">
+        <div>
+          <p class="tbr-eyebrow">The whole range</p>
+          <h2 class="tbr-h2">Three products. That's the entire store.</h2>
+        </div>
+        <p class="tbr-lede">We sell one season's worth of things and nothing else. Each one does a different level of the yard.</p>
+      </div>
+
+      <div class="tbr-cards">
+        {%- for product in coll.products limit: 3 -%}
+          {%- assign v = product.variants | first -%}
+          <a class="tbr-card" href="{{ product.url }}">
+            <div class="tbr-card__pic">
+              {%- if product.compare_at_price_max > product.price_min -%}
+                <span class="tbr-pill">Save up to {{ product.compare_at_price_max | minus: product.price_min | money_without_trailing_zeros }}</span>
+              {%- endif -%}
+              {%- if product.featured_image -%}
+                <img src="{{ product.featured_image | image_url: width: 900 }}" alt="{{ product.featured_image.alt | escape }}" width="900" height="900" loading="lazy">
+              {%- endif -%}
+            </div>
+            <div class="tbr-card__txt">
+              <span class="tbr-role">{{ product.metafields.custom.level | default: product.type }}</span>
+              <h3 class="tbr-card__h">{{ product.title }}</h3>
+              <p class="tbr-card__p">{{ product.description | strip_html | truncatewords: 22 }}</p>
+              <div class="tbr-card__price">
+                <b>{{ product.price_min | money }}</b>
+                {%- if product.variants.size > 1 -%}
+                  <span>{{ product.variants.size }} bundle options</span>
+                {%- endif -%}
+              </div>
+              <span class="tbr-go">See it</span>
+            </div>
+          </a>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+
+  <section class="tbr-sec tbr-sec--alt">
+    <div class="tbr-wrap">
+      <p class="tbr-eyebrow">Setup</p>
+      <h2 class="tbr-h2">Stake it in. That's the whole setup.</h2>
+      <p class="tbr-lede tbr-lede--block">No outlet, no extension cord, no timer to program, no tools.</p>
+      <div class="tbr-steps">
+        <article class="tbr-step">
+          <span class="tbr-step__n">Step 01</span>
+          <h3>Push the stake into the grass</h3>
+          <p>Pick a spot with open sky. Step on the crossbar until the base sits flush with the lawn.</p>
+        </article>
+        <article class="tbr-step">
+          <span class="tbr-step__n">Step 02</span>
+          <h3>The sun charges it all day</h3>
+          <p>The panel sits on the stake. Nothing to plug in, nothing to switch on, nothing to remember.</p>
+        </article>
+        <article class="tbr-step">
+          <span class="tbr-step__n">Step 03</span>
+          <h3>It comes on by itself at dusk</h3>
+          <p>Light drops, the lantern catches, the souls start moving. Off by morning, then it does it again.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="tbr-deal">
+    {%- if projector.featured_image -%}
+      <img class="tbr-deal__img" src="{{ projector.featured_image | image_url: width: 2000 }}" alt="" width="2000" height="2000" loading="lazy">
+    {%- endif -%}
+    <div class="tbr-deal__shade"></div>
+    <div class="tbr-wrap tbr-deal__in">
+      <div class="tbr-deal__copy">
+        <p class="tbr-eyebrow tbr-eyebrow--light">The Halloween Special</p>
+        <h2 class="tbr-h2 tbr-h2--light">Souls on the lawn.<br>Shadows on the house.</h2>
+        <p class="tbr-deal__p">The reapers own the ground. The projector takes the wall. Together the whole property is the decoration, not one object in the middle of it.</p>
+
+        <div class="tbr-deal__list">
+          <div><span>&times;2</span><span>The Black Reaper, solar soul lantern</span><span>{{ 25998 | money }}</span></div>
+          <div><span>&times;1</span><span>Haunted Projector, plug-in, auto-focus</span><span>{{ 8999 | money }}</span></div>
+        </div>
+
+        <div class="tbr-deal__sum">
+          <b>{{ 19999 | money }}</b>
+          <s>{{ 34997 | money }}</s>
+          <em>Save {{ 14998 | money_without_trailing_zeros }}</em>
+        </div>
+        <a class="tbr-btn tbr-btn--accent" href="{{ reaper.url }}">Get the bundle</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="tbr-sec">
+    <div class="tbr-wrap">
+      <p class="tbr-eyebrow">How they work together</p>
+      <h2 class="tbr-h2">A yard people stop for works on three levels.</h2>
+      <p class="tbr-lede tbr-lede--block">One decoration in the middle of a lawn is a decoration. Ground, air and the house all doing something at once is a scene &mdash; and a scene is what gets photographed.</p>
+      <div class="tbr-levels">
+        <div><b>Ground</b><h3>The reapers hold the lawn</h3><p>Staked where people have to walk past them, streams of souls crossing the grass at ankle height.</p></div>
+        <div><b>Air</b><h3>The swings fill the trees</h3><p>Hung at eye level off a branch, glowing and turning. They stop the yard reading as flat.</p></div>
+        <div><b>The house</b><h3>The projector takes the wall</h3><p>Figures moving across the whole facade behind everything else. It is what makes it read from the street.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tbr-sec tbr-sec--alt">
+    <div class="tbr-wrap">
+      <p class="tbr-eyebrow">Questions</p>
+      <h2 class="tbr-h2">Everything people ask before ordering.</h2>
+      <div class="tbr-faq">
+        <details open><summary>Will it arrive before Halloween?<i></i></summary><p>Yes if you order by {{ section.settings.cutoff }}. We ship tracked from inside the US within 24 hours. After that date we keep shipping but we stop promising the 31st &mdash; we would rather tell you no than take your money on a maybe.</p></details>
+        <details><summary>Does any of it need an outlet?<i></i></summary><p>The reapers are solar and need nothing at all. The ghost swings light themselves. The projector is the only piece that plugs in.</p></details>
+        <details><summary>How long does the whole yard take to set up?<i></i></summary><p>About four minutes per reaper, about a minute per swing, under a minute for the projector. A full three-level yard is well under an hour, with no tools.</p></details>
+        <details><summary>Does the reaper move or make noise?<i></i></summary><p>No. It is completely silent and it does not animate. The whole effect is light &mdash; no motor to break and nothing waking the street at 2am.</p></details>
+        <details><summary>Can it stay out in the rain?<i></i></summary><p>The reapers handle rain. Standing water, snow and freezing conditions they do not. The swings are fabric, so light rain only. Keep the projector under a porch roof.</p></details>
+        <details><summary>Do you have reviews?<i></i></summary><p>Not yet. This is our first season and we would rather show you nothing than show you reviews we wrote ourselves. Every review that appears here will be from a verified order.</p></details>
+      </div>
+      <a class="tbr-btn tbr-btn--dark" href="/pages/faq">Read the full FAQ</a>
+    </div>
+  </section>
+
+  <section class="tbr-closer">
+    {%- if swing.featured_image -%}
+      <img class="tbr-closer__img" src="{{ swing.featured_image | image_url: width: 2000 }}" alt="" width="2000" height="2000" loading="lazy">
+    {%- endif -%}
+    <div class="tbr-closer__shade"></div>
+    <div class="tbr-wrap tbr-closer__in">
+      <h2 class="tbr-h2 tbr-h2--light">Halloween is on a Saturday this year.</h2>
+      <p>Which means the whole street will be out walking. Put something in the yard worth stopping for.</p>
+      <a class="tbr-btn tbr-btn--accent" href="{{ coll.url | default: '/collections/all' }}">Shop all three</a>
+      <small>Free US shipping &middot; 30-day returns &middot; Order by {{ section.settings.cutoff }}</small>
+    </div>
+  </section>
+
+</div>
+
+{{ 'tbr.css' | asset_url | stylesheet_tag }}
+
+{% schema %}
+{
+  "name": "Black Reaper home",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Halloween 2026" },
+    { "type": "text", "id": "hero_heading", "label": "Hero heading", "default": "The neighbors are going to lose it." },
+    { "type": "textarea", "id": "hero_text", "label": "Hero text", "default": "Three pieces that turn an ordinary front yard into the one people stop walking for. Solar where it can be, plugged in where it has to be. All of it up in under an hour." },
+    { "type": "text", "id": "hero_button", "label": "Hero button", "default": "Shop all three" },
+    { "type": "text", "id": "hero_note", "label": "Hero note", "default": "Free US shipping · Ships within 24 hours" },
+    { "type": "text", "id": "cutoff", "label": "Shipping cutoff date", "default": "Tuesday, October 20" }
+  ],
+  "presets": [{ "name": "Black Reaper home" }]
+}
+{% endschema %}

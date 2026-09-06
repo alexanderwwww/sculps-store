@@ -1,0 +1,12 @@
+{
+  "sections": {
+    "home": { "type": "tbr-home", "settings": {
+      "eyebrow": "Halloween 2026",
+      "hero_heading": "The neighbors are going to lose it.",
+      "hero_text": "Three pieces that turn an ordinary front yard into the one people stop walking for. Solar where it can be, plugged in where it has to be. All of it up in under an hour.",
+      "hero_button": "Shop all three",
+      "hero_note": "Free US shipping · Ships within 24 hours",
+      "cutoff": "Tuesday, October 20" } }
+  },
+  "order": ["home"]
+}
