@@ -210,11 +210,11 @@
             <div class="gb-swatches" role="group" aria-label="Color">
               {%- for c in colors -%}
                 {%- assign cl = c | downcase -%}
-                {%- assign hex = '#B9B1A2' -%}
+                {%- assign hex = 'var(--dim)' -%}
                 {%- if cl contains 'blue' -%}{%- assign hex = '#1F3A6E' -%}
                 {%- elsif cl contains 'brown' -%}{%- assign hex = '#6B4F35' -%}
-                {%- elsif cl contains 'green' -%}{%- assign hex = '#4F8A2E' -%}
-                {%- elsif cl contains 'black' -%}{%- assign hex = '#2B2419' -%}
+                {%- elsif cl contains 'green' -%}{%- assign hex = 'var(--leaf)' -%}
+                {%- elsif cl contains 'black' -%}{%- assign hex = 'var(--ink)' -%}
                 {%- endif -%}
                 <button type="button" class="gb-swatch" data-gb-color="{{ c | escape }}" aria-pressed="{% if c == sel_color %}true{% else %}false{% endif %}" aria-label="{{ c | escape }}">
                   <span class="gb-swatch__chip" style="background:{{ hex }}" aria-hidden="true"><span class="gb-swatch__tick"></span></span>
@@ -466,7 +466,7 @@
 
 .gb-product .gb-pack__extra{display:flex;gap:12px;align-items:center;padding:12px;background:var(--sand);border:1px solid var(--sand-2);border-radius:10px;font-size:14.5px;line-height:1.45;color:rgba(246,238,226,.8)}
 .gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 60px;width:60px;height:60px;border-radius:8px;object-fit:cover;background:var(--paper)}
-.gb-product .gb-pack__extra-ph{background:repeating-linear-gradient(135deg,var(--sand-2) 0 8px,#F7F2E8 8px 16px);box-shadow:inset 0 0 0 2px var(--brown)26,.25);display:block}
+.gb-product .gb-pack__extra-ph{background:repeating-linear-gradient(135deg,var(--sand-2) 0 8px,var(--sand) 8px 16px);box-shadow:inset 0 0 0 2px var(--brown)26,.25);display:block}
 .gb-product .gb-pack__extra b{display:block;font-family:var(--font-h);font-weight:700;color:var(--brown);font-size:16px}
 
 /* add to cart */

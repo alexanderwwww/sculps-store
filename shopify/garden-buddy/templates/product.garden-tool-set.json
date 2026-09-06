@@ -154,7 +154,7 @@
           "type": "faq",
           "settings": {
             "question": "Is this stool the same as the kneeler?",
-            "answer": "No, and they do different jobs. This stool is a light canvas seat that carries the tool bag. The Garden Buddy kneeler is padded, has handles to push up on, and flips between kneeling and sitting. A lot of people run both."
+            "answer": "No, and they do different jobs. This stool is a light canvas seat that carries the tool bag. The Garden Buddy is padded, has handles to push up on, and flips between kneeling and sitting. A lot of people run both."
           }
         },
         "faq_3": {
@@ -174,7 +174,7 @@
         "faq_5": {
           "type": "faq",
           "settings": {
-            "question": "Can I put the bag on my kneeler instead?",
+            "question": "Can I put the bag on my Garden Buddy instead?",
             "answer": "It carries by its own handles and sits on the ground fine. It is cut for this stool frame, so it will not clip onto the kneeler."
           }
         },
@@ -367,8 +367,8 @@
         "faq_heading": "Things people ask before they buy.",
         "spec_eyebrow": "Sizes",
         "spec_heading": "Every piece, measured.",
-        "closer_heading": "Add it to the kneeler and pay less.",
-        "closer_text": "The kneeler and this set cost less bought together. Both bundles are on the kneeler page.",
+        "closer_heading": "Add it to the Garden Buddy and pay less.",
+        "closer_text": "The Garden Buddy and this set cost less bought together. Both bundles are on its page.",
         "closer_button": "See the bundles",
         "closer_url": "shopify://products/foldable-kneeler-seat"
       }
