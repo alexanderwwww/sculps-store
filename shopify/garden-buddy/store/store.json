@@ -1,0 +1,109 @@
+{
+  "_note": "Snapshot of the GARDEN BUDDY Shopify store. Everything needed to rebuild it from an empty shop. Regenerate with the queries in REBUILD.md.",
+  "shop": { "name": "GARDEN BUDDY", "domain": "aj1wt0-dg.myshopify.com", "currency": "USD", "timezone": "Europe/Athens" },
+  "theme": { "name": "GARDEN BUDDY", "id": 206497710419, "base": "Horizon", "role": "unpublished" },
+  "location": "gid://shopify/Location/126543364435",
+
+  "products": [
+    {
+      "handle": "foldable-kneeler-seat",
+      "title": "The Garden Buddy",
+      "status": "ACTIVE",
+      "vendor": "Garden Buddy",
+      "productType": "Garden Kneeler",
+      "descriptionHtml": "<p>The all-in-one kneeler, seat and tool set for a happier, easier time in the garden.</p><p>Kneel on the thick pad. Push up on the handles when you are done. Flip the whole frame over and it is a stool for potting and pruning. It arrives assembled and folds flat for the shed.</p><p>Add the 10-piece tool set in a bundle and the bag, the stool, the tools, the gloves and the sprayer come with it.</p>",
+      "seo": {
+        "title": "The Garden Buddy — Foldable Garden Kneeler Seat with Handles",
+        "description": "A padded garden kneeler that flips into a stool, with handles that help you stand back up. Arrives assembled, folds flat. Free US shipping, 30-day returns."
+      },
+      "options": [{ "name": "Bundle", "values": ["1 Garden Buddy", "Garden Buddy + Tool Set", "2 Garden Buddies + Tool Set"] }],
+      "variants": [
+        { "option": "1 Garden Buddy",              "sku": "GB-1",   "price": "69.99",  "compareAtPrice": "99.99",  "qty": 500, "inventoryPolicy": "DENY", "variantImage": "86f53337-make-gardening-easier" },
+        { "option": "Garden Buddy + Tool Set",     "sku": "GB-1S",  "price": "99.99",  "compareAtPrice": "159.98", "qty": 500, "inventoryPolicy": "DENY", "variantImage": "5065143a-complete-bundle" },
+        { "option": "2 Garden Buddies + Tool Set", "sku": "GB-2S",  "price": "129.99", "compareAtPrice": "259.97", "qty": 500, "inventoryPolicy": "DENY", "variantImage": "eca52aa4-sit-kneel-garden-enjoy" }
+      ],
+      "_pricingLogic": "Compare-at is real arithmetic, never invented. Garden Buddy lists at 99.99 and the tool set at 59.99, so: 69.99 = 30% off, 99.99 off 159.98 = 37% off, 129.99 off 259.97 = 50% off."
+    },
+    {
+      "handle": "garden-tool-set",
+      "title": "Garden Buddy 10-Piece Tool Set",
+      "status": "DRAFT",
+      "_why": "Deliberately draft. It is bundle-only and must never have a storefront page of its own. Its 59.99 price exists so the bundle compare-at maths is honest.",
+      "vendor": "Garden Buddy",
+      "productType": "Garden Tools",
+      "descriptionHtml": "<p>Ten pieces: a folding stool, a bag that holds everything, six steel hand tools, claw gloves and a sprayer.</p><p>The bag hangs on the stool frame. Carry the whole thing out to the bed in one hand, sit down, and every tool is already at your side instead of back in the shed.</p><p>Tools are stainless heads on rubber-grip handles with a hanging hole in the end. The stool is a black steel frame with a canvas seat and it folds flat.</p>",
+      "options": [{ "name": "Pack", "values": ["1 Set"] }],
+      "variants": [{ "option": "1 Set", "sku": "GB-TS-1", "price": "59.99", "qty": 250, "inventoryPolicy": "DENY" }]
+    }
+  ],
+
+  "collections": [
+    { "handle": "garden-kneelers", "title": "Garden Kneelers", "descriptionHtml": "<p>Everything we make for people who would rather be in the garden than on the ground.</p>", "products": ["foldable-kneeler-seat"] }
+  ],
+
+  "menus": [
+    { "handle": "main-menu", "title": "Main menu", "items": [
+      { "title": "The Garden Buddy", "url": "/products/foldable-kneeler-seat" },
+      { "title": "Bundles", "url": "/products/foldable-kneeler-seat#gb-buy" },
+      { "title": "FAQ", "url": "/pages/faq" },
+      { "title": "Contact", "url": "/pages/contact" } ] },
+    { "handle": "footer", "title": "Footer menu", "items": [
+      { "title": "Shipping", "url": "/pages/shipping" },
+      { "title": "Returns", "url": "/pages/returns" },
+      { "title": "FAQ", "url": "/pages/faq" },
+      { "title": "Contact", "url": "/pages/contact" } ] }
+  ],
+
+  "media": {
+    "logo": "f70cfb36-00ec-44bf-939c-5af7445d7a9e.png",
+    "brandCreatives": [
+      "86f53337-9df6-40ba-8574-6f7d24958c6b.png",
+      "1033f0ca-26f7-4c80-a115-2da9e9e4f865.png",
+      "20b83552-a6ff-4987-ba8c-7ae5746c1b53.png",
+      "5065143a-8db4-48ca-90ea-54c04e6013f3.png",
+      "6aa422d1-f5e0-4ca5-a60a-d7bf10429c82.png",
+      "d537cb9c-10f3-426a-a40a-bfa3ae8a6c19.png",
+      "eca52aa4-96df-49a6-a58e-c1d571e27a56.png"
+    ],
+    "toolSetTiles": [
+      "gb-tool-stool.png","gb-tool-bag.png","gb-tool-trowel.png","gb-tool-transplanter.png","gb-tool-weeder.png",
+      "gb-tool-cultivator.png","gb-tool-rake.png","gb-tool-shears.png","gb-tool-gloves.png","gb-tool-sprayer.png"
+    ],
+    "gifs": ["gb-gif-kneel.gif","gb-gif-move.gif","gb-gif-sit.gif"],
+    "videos": [
+      "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4",
+      "https://cdn.shopify.com/videos/c/vp/41cbbac02a0a4e4e9edacab6fe41014c/41cbbac02a0a4e4e9edacab6fe41014c.SD-480p-1.5Mbps-93649943.mp4",
+      "https://cdn.shopify.com/videos/c/vp/8086622583cf4a63a9abdb2e08ee0ce4/8086622583cf4a63a9abdb2e08ee0ce4.HD-720p-4.5Mbps-93649942.mp4"
+    ],
+    "socialPosts": [
+      "39147928-57e4-4e9d-b4b8-14e6e52e8510.png","48e5d3f0-9a99-4fae-8683-3f8bfea0c049.png",
+      "54a32ccc-85bf-487d-8e19-242197ab357d.png","89786781-ff2d-4c7a-8cba-b30ee748a866.png",
+      "e2dfa7bc-93de-45a6-a520-9bb3a514ef39.png"
+    ],
+    "_socialPostsNote": "Operator-supplied Facebook-style posts. NOT wired into the carousel: the shop has zero orders, so presenting them as customer reviews would be fabricated social proof. The carousel section exists and is empty; the operator decides."
+  },
+
+  "confirmedSpecs": {
+    "openSize": "59 × 25 × 49 cm (23.2 × 9.8 × 19.3 in)",
+    "foldedThickness": "11 cm (4.3 in)",
+    "frame": "Steel, one piece, snap-lock",
+    "pad": "Detachable foam",
+    "colour": "Blue",
+    "assembly": "None",
+    "toolSizes": {
+      "trowel": "12 in", "transplanter": "11.8 in, depth marks", "weeder": "11.8 in",
+      "cultivatorFork": "11 in", "handRake": "11.4 in", "pruningShears": "7.5 in",
+      "clawGloves": "4.1 in across", "handSprayer": "9 in",
+      "foldingStool": "15.4 × 11.5 × 14.2 in"
+    }
+  },
+
+  "stillUnconfirmed": ["weight", "weight capacity", "pad thickness", "dispatch time", "delivery window"],
+
+  "openTasks": [
+    "Pages /pages/shipping and /pages/faq still contain [ PLACEHOLDER ] text. Rewrite them once the numbers are confirmed.",
+    "Storefront password is still on.",
+    "Theme is unpublished.",
+    "Plan is trial — it must be upgraded before the store can sell."
+  ]
+}
