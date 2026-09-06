@@ -103,29 +103,37 @@
       </div>
 
       <div class="gb-ugc__grid">
-        <div class="gb-ugc__vids">
+        <div class="gb-ugc__rows">
           {%- for i in (1..3) -%}
             {%- liquid
-              assign vkey = 'ugc_video_' | append: i
-              assign ckey = 'ugc_caption_' | append: i
-              assign pkey = 'ugc_ph_' | append: i
+              assign vkey  = 'ugc_video_' | append: i
+              assign skey  = 'ugc_src_' | append: i
+              assign pskey = 'ugc_poster_' | append: i
+              assign tkey  = 'ugc_title_' | append: i
+              assign ckey  = 'ugc_caption_' | append: i
+              assign pkey  = 'ugc_ph_' | append: i
+              assign flip  = i | modulo: 2
             -%}
-            <figure class="gb-ugc__media">
-              {%- liquid
-                assign skey = 'ugc_src_' | append: i
-                assign pskey = 'ugc_poster_' | append: i
-              -%}
-              {%- if s[vkey] != blank -%}
-                {{ s[vkey] | video_tag: image_size: '700x', controls: true, playsinline: true, preload: 'metadata', class: 'gb-ugc__vid' }}
-              {%- elsif s[skey] != blank -%}
-                <video class="gb-ugc__vid" controls playsinline preload="metadata"{% if s[pskey] != blank %} poster="{{ s[pskey] | image_url: width: 700 }}"{% endif %}>
-                  <source src="{{ s[skey] }}" type="video/mp4">
-                </video>
-              {%- else -%}
-                <div class="gb-ph gb-ugc__ph"><span>{{ s[pkey] }}<small>Upload a clip in the theme editor</small></span></div>
-              {%- endif -%}
-              {%- if s[ckey] != blank -%}<figcaption>{{ s[ckey] | escape }}</figcaption>{%- endif -%}
-            </figure>
+            {%- if s[vkey] != blank or s[skey] != blank or s[pkey] != blank -%}
+            <div class="gb-ugc__row{% if flip == 0 %} gb-ugc__row--flip{% endif %}">
+              <figure class="gb-ugc__media">
+                {%- if s[vkey] != blank -%}
+                  {{ s[vkey] | video_tag: image_size: '900x', autoplay: true, loop: true, muted: true, playsinline: true, controls: true, class: 'gb-ugc__vid' }}
+                {%- elsif s[skey] != blank -%}
+                  <video class="gb-ugc__vid" autoplay loop muted playsinline controls preload="metadata"{% if s[pskey] != blank %} poster="{{ s[pskey] | image_url: width: 900 }}"{% endif %}>
+                    <source src="{{ s[skey] }}" type="video/mp4">
+                  </video>
+                {%- else -%}
+                  <div class="gb-ph gb-ugc__ph"><span>{{ s[pkey] }}<small>Upload a clip in the theme editor</small></span></div>
+                {%- endif -%}
+              </figure>
+              <div class="gb-ugc__say">
+                <span class="gb-ugc__n" aria-hidden="true">{{ i }}</span>
+                {%- if s[tkey] != blank -%}<p class="gb-ugc__title">{{ s[tkey] | escape }}</p>{%- endif -%}
+                {%- if s[ckey] != blank -%}<p class="gb-ugc__cap">{{ s[ckey] | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>{%- endif -%}
+              </div>
+            </div>
+            {%- endif -%}
           {%- endfor -%}
         </div>
 
@@ -735,13 +743,18 @@
 .gb-pb .gb-ugc__head .gb-lede{margin-inline:auto}
 .gb-pb .gb-ugc__grid{display:grid;gap:clamp(28px,4vw,56px);align-items:start}
 
-.gb-pb .gb-ugc__vids{display:grid;gap:clamp(16px,2.4vw,28px);grid-template-columns:1fr}
-@media(min-width:760px){.gb-pb .gb-ugc__vids{grid-template-columns:repeat(3,1fr)}}
-.gb-pb .gb-ugc__media{margin:0;display:grid;gap:12px;width:100%}
-.gb-pb .gb-ugc__media video,.gb-pb .gb-ugc__ph{width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:var(--sand);box-shadow:0 14px 40px rgba(42,29,17,.18)}
-.gb-pb .gb-ugc__media video{object-fit:cover;display:block}
-.gb-pb .gb-ugc__frame iframe{width:100%;height:100%;border:0;display:block}
-.gb-pb .gb-ugc__media figcaption{font-size:16px;color:var(--dim);text-align:center}
+.gb-pb .gb-ugc__rows{display:grid;gap:clamp(36px,5vw,72px)}
+.gb-pb .gb-ugc__row{display:grid;gap:clamp(20px,3vw,48px);align-items:center}
+@media(min-width:860px){
+  .gb-pb .gb-ugc__row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .gb-pb .gb-ugc__row--flip .gb-ugc__media{order:2}
+}
+.gb-pb .gb-ugc__media{margin:0;width:100%}
+.gb-pb .gb-ugc__media video,.gb-pb .gb-ugc__ph{width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:var(--sand);box-shadow:0 14px 40px rgba(42,29,17,.18);object-fit:cover;display:block}
+.gb-pb .gb-ugc__say{display:grid;gap:12px;justify-items:start}
+.gb-pb .gb-ugc__n{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-weight:700;font-size:21px}
+.gb-pb .gb-ugc__title{margin:0;font-family:var(--font-h);font-weight:700;font-size:clamp(28px,3.6vw,44px);line-height:1.1;letter-spacing:-.02em;color:var(--brown);text-wrap:balance}
+.gb-pb .gb-ugc__cap{margin:0;font-size:clamp(17px,1.6vw,20px);line-height:1.6;color:var(--dim);max-width:40ch}
 .gb-pb .gb-ugc .gb-faq{max-width:940px;margin:clamp(40px,5vw,72px) auto 0}
 .gb-pb .gb-faq__h{font-family:var(--font-h);font-size:clamp(24px,2.6vw,32px);font-weight:800;
   text-transform:uppercase;color:var(--brown);margin:0 0 18px}
@@ -885,17 +898,20 @@
     { "type": "text", "id": "ugc_heading", "label": "Heading", "default": "Watch it in a real garden." },
     { "type": "textarea", "id": "ugc_text", "label": "Text", "default": "One take, no edit. Kneeling down, standing back up, and flipping it over into a seat." },
     { "type": "video", "id": "ugc_video_1", "label": "Video 1" },
-    { "type": "text", "id": "ugc_caption_1", "label": "Caption 1" },
+    { "type": "text", "id": "ugc_title_1", "label": "Big caption 1" },
+    { "type": "textarea", "id": "ugc_caption_1", "label": "Supporting line 1" },
     { "type": "text", "id": "ugc_src_1", "label": "Video 1 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
     { "type": "image_picker", "id": "ugc_poster_1", "label": "Video 1 poster" },
     { "type": "text", "id": "ugc_ph_1", "label": "Placeholder 1", "default": "Clip 1" },
     { "type": "video", "id": "ugc_video_2", "label": "Video 2" },
-    { "type": "text", "id": "ugc_caption_2", "label": "Caption 2" },
+    { "type": "text", "id": "ugc_title_2", "label": "Big caption 2" },
+    { "type": "textarea", "id": "ugc_caption_2", "label": "Supporting line 2" },
     { "type": "text", "id": "ugc_src_2", "label": "Video 2 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
     { "type": "image_picker", "id": "ugc_poster_2", "label": "Video 2 poster" },
     { "type": "text", "id": "ugc_ph_2", "label": "Placeholder 2", "default": "Clip 2" },
     { "type": "video", "id": "ugc_video_3", "label": "Video 3" },
-    { "type": "text", "id": "ugc_caption_3", "label": "Caption 3" },
+    { "type": "text", "id": "ugc_title_3", "label": "Big caption 3" },
+    { "type": "textarea", "id": "ugc_caption_3", "label": "Supporting line 3" },
     { "type": "text", "id": "ugc_src_3", "label": "Video 3 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
     { "type": "image_picker", "id": "ugc_poster_3", "label": "Video 3 poster" },
     { "type": "text", "id": "ugc_ph_3", "label": "Placeholder 3", "default": "Clip 3" },

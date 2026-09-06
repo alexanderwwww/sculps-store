@@ -346,7 +346,7 @@
           "settings": {
             "name": "The Garden Buddy",
             "size": "Kneeler and seat in one",
-            "image": "shopify://shop_images/hf_20260906_162251_8743e9c6-6572-48e7-a019-c915b4564640.png",
+            "image": "shopify://shop_images/hf_20260906_162251_505ab291-7da3-49a1-9fff-fc32d74b9291.png",
             "placeholder": "The Garden Buddy"
           }
         },
@@ -572,10 +572,16 @@
         "pf_image": "shopify://shop_images/gb-feature-2.png",
         "ugc_eyebrow": "See it for yourself",
         "ugc_heading": "Watch it in a real garden.",
-        "ugc_text": "Three clips, no edit. Kneeling down, standing back up on the handles, and flipping it over into a seat.",
+        "ugc_text": "Three clips, no edit.",
         "ugc_src_1": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4",
         "ugc_src_2": "https://cdn.shopify.com/videos/c/vp/41cbbac02a0a4e4e9edacab6fe41014c/41cbbac02a0a4e4e9edacab6fe41014c.SD-480p-1.5Mbps-93649943.mp4",
-        "ugc_src_3": "https://cdn.shopify.com/videos/c/vp/8086622583cf4a63a9abdb2e08ee0ce4/8086622583cf4a63a9abdb2e08ee0ce4.HD-720p-4.5Mbps-93649942.mp4"
+        "ugc_src_3": "https://cdn.shopify.com/videos/c/vp/8086622583cf4a63a9abdb2e08ee0ce4/8086622583cf4a63a9abdb2e08ee0ce4.HD-720p-4.5Mbps-93649942.mp4",
+        "ugc_title_1": "Kneel on the thick pad.",
+        "ugc_caption_1": "Foam between your knees and the ground, so gravel and wet grass stop mattering.",
+        "ugc_title_2": "Push up on the handles.",
+        "ugc_caption_2": "Getting down was never the problem. The handles sit at hip height so your arms do the standing.",
+        "ugc_title_3": "Flip it. Now it is a seat.",
+        "ugc_caption_3": "Same frame upside down. The snap-lock clicks and you can sit through the whole job."
       }
     }
   },
