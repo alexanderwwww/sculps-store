@@ -298,6 +298,86 @@
             "question": "What if it is not for me?",
             "answer": "Send it back within 30 days for a refund."
           }
+        },
+        "tool_1": {
+          "type": "tool",
+          "settings": {
+            "name": "Folding stool",
+            "size": "15.4 \u00d7 11.5 \u00d7 14.2 in",
+            "placeholder": "Folding stool"
+          }
+        },
+        "tool_2": {
+          "type": "tool",
+          "settings": {
+            "name": "Storage bag",
+            "size": "Lifts off the frame",
+            "placeholder": "Storage bag"
+          }
+        },
+        "tool_3": {
+          "type": "tool",
+          "settings": {
+            "name": "Trowel",
+            "size": "12 in",
+            "placeholder": "Trowel"
+          }
+        },
+        "tool_4": {
+          "type": "tool",
+          "settings": {
+            "name": "Transplanter",
+            "size": "11.8 in, depth marks",
+            "placeholder": "Transplanter"
+          }
+        },
+        "tool_5": {
+          "type": "tool",
+          "settings": {
+            "name": "Weeder",
+            "size": "11.8 in",
+            "placeholder": "Weeder"
+          }
+        },
+        "tool_6": {
+          "type": "tool",
+          "settings": {
+            "name": "Cultivator fork",
+            "size": "11 in",
+            "placeholder": "Cultivator fork"
+          }
+        },
+        "tool_7": {
+          "type": "tool",
+          "settings": {
+            "name": "Hand rake",
+            "size": "11.4 in",
+            "placeholder": "Hand rake"
+          }
+        },
+        "tool_8": {
+          "type": "tool",
+          "settings": {
+            "name": "Pruning shears",
+            "size": "7.5 in",
+            "placeholder": "Pruning shears"
+          }
+        },
+        "tool_9": {
+          "type": "tool",
+          "settings": {
+            "name": "Claw gloves",
+            "size": "4.1 in across",
+            "placeholder": "Claw gloves"
+          }
+        },
+        "tool_10": {
+          "type": "tool",
+          "settings": {
+            "name": "Hand sprayer",
+            "size": "9 in",
+            "placeholder": "Hand sprayer"
+          }
         }
       },
       "block_order": [
@@ -307,6 +387,16 @@
         "feature_1",
         "feature_2",
         "feature_3",
+        "tool_1",
+        "tool_2",
+        "tool_3",
+        "tool_4",
+        "tool_5",
+        "tool_6",
+        "tool_7",
+        "tool_8",
+        "tool_9",
+        "tool_10",
         "compare_1",
         "compare_2",
         "compare_3",
@@ -369,7 +459,13 @@
         "spec_heading": "The numbers.",
         "closer_heading": "Your knees will notice by Saturday.",
         "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
-        "closer_button": "Pick your bundle"
+        "closer_button": "Pick your bundle",
+        "set_eyebrow": "Only in the bundles",
+        "set_heading": "Ten pieces that come with it.",
+        "set_text": "You cannot buy the tool set on its own. It comes with the two bundle options above: a folding stool, a bag that holds everything, six steel hand tools, claw gloves and a sprayer.",
+        "set_note": "Sizes are the manufacturer's published measurements.",
+        "set_button": "Add the set to your kneeler",
+        "set_placeholder": "Photo: the whole set laid out on a path"
       }
     }
   },
