@@ -130,7 +130,18 @@
           <figure class="gb-feat__media">
             <div class="gb-feat__frame">
               {%- if b.image != blank -%}
-                <img src="{{ b.image | image_url: width: 1000 }}" alt="{{ b.image.alt | default: b.heading | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy" decoding="async">
+                {%- liquid
+                  assign is_gif = false
+                  if b.image.src contains '.gif'
+                    assign is_gif = true
+                  endif
+                  if is_gif
+                    assign feat_src = b.image | image_url
+                  else
+                    assign feat_src = b.image | image_url: width: 1000
+                  endif
+                -%}
+                <img src="{{ feat_src }}" alt="{{ b.image.alt | default: b.heading | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy" decoding="async">
               {%- else -%}
                 <div class="gb-ph"><span>{{ b.placeholder | default: 'Add a photo or GIF' }}<small>Square, animated GIF works here</small></span></div>
               {%- endif -%}
