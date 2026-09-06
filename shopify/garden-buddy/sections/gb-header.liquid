@@ -1,47 +1,38 @@
 {%- comment -%}
-  GARDEN BUDDY — announcement bar + sticky header.
-  Big tap targets, 17px+ text. Mobile menu is a plain details/summary, no JS needed.
+  GARDEN BUDDY — trust bar + sticky main header.
+  Big tap targets, 16px+ text. Mobile menu is a plain details/summary.
 {%- endcomment -%}
 
 {%- liquid
   assign menu = linklists[section.settings.link_list]
   assign wordmark = section.settings.wordmark | default: 'GARDEN BUDDY'
+  assign cta_label = section.settings.cta_label | default: 'Order Now'
+  assign cta_url = section.settings.cta_url | default: routes.all_products_collection_url
 -%}
 
-{{ 'gb.css' | asset_url | stylesheet_tag }}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap">
+{{ 'gb.css' | asset_url | stylesheet_tag }}
 
 <div class="gb gb-hdr-sec">
 
-  {%- liquid
-    assign bar_items = ''
-    for i in (1..3)
-      assign key = 'bar_text_' | append: i
-      if section.settings[key] != blank
-        assign bar_items = bar_items | append: section.settings[key] | append: '||'
-      endif
-    endfor
-    assign bar_items = bar_items | split: '||'
-  -%}
-  {%- if section.settings.show_bar and bar_items.size > 0 -%}
-    <div class="gb-bar gb-bar--{{ section.settings.bar_style }}{% if section.settings.bar_scroll %} is-scrolling{% endif %}" data-gb-bar>
-      {%- if section.settings.bar_scroll -%}
-        <div class="gb-bar__track" aria-label="{{ bar_items | join: '. ' | escape }}">
-          {%- for pass in (1..2) -%}
-            <ul class="gb-bar__run"{% if pass == 2 %} aria-hidden="true"{% endif %}>
-              {%- for n in (1..3) -%}
-                {%- for item in bar_items -%}
-                  <li>{{ item | escape }}<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21c0-6 3.6-10 9-11-1 6-4.4 9.6-9 11zM12 21c0-6-3.6-10-9-11 1 6 4.4 9.6 9 11z" fill="currentColor"/></svg></li>
-                {%- endfor -%}
-              {%- endfor -%}
-            </ul>
-          {%- endfor -%}
-        </div>
-      {%- else -%}
-        <p class="gb-wrap gb-bar__static">{{ bar_items | join: '  ·  ' | escape }}</p>
-      {%- endif -%}
+  {%- if section.settings.show_bar -%}
+    <div class="gb-tbar">
+      <ul class="gb-wrap gb-tbar__row">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M1.5 6.5h11v9h-11z"/><path d="M12.5 9.5h4.6l2.9 3v3h-7.5z"/><circle cx="6" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/></svg>
+          <span>{{ section.settings.bar_text_1 | escape }}</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2.5l7.5 3v6c0 4.6-3.1 8.4-7.5 10-4.4-1.6-7.5-5.4-7.5-10v-6z"/><path d="M8.6 11.8l2.4 2.4 4.4-4.6"/></svg>
+          <span>{{ section.settings.bar_text_2 | escape }}</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 14v-2.5a7.5 7.5 0 0 1 15 0V14"/><path d="M4.5 12.5h2V18h-2a1.5 1.5 0 0 1-1.5-1.5v-2.5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M19.5 12.5h-2V18h2a1.5 1.5 0 0 0 1.5-1.5v-2.5a1.5 1.5 0 0 0-1.5-1.5z"/><path d="M19 18v.8a2.7 2.7 0 0 1-2.7 2.7H13"/></svg>
+          <span>{{ section.settings.bar_text_3 | escape }}</span>
+        </li>
+      </ul>
     </div>
   {%- endif -%}
 
@@ -52,7 +43,6 @@
         <summary class="gb-hdr__burger" aria-label="Menu">
           <svg class="gb-hdr__ico gb-hdr__ico--open" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
           <svg class="gb-hdr__ico gb-hdr__ico--close" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-          <span class="gb-hdr__burger-txt">Menu</span>
         </summary>
         <nav class="gb-hdr__mnav" aria-label="Main, mobile">
           {%- for link in menu.links -%}
@@ -66,16 +56,8 @@
 
       <a class="gb-hdr__logo" href="{{ routes.root_url }}">
         {%- if section.settings.logo != blank -%}
-          {{ section.settings.logo | image_url: width: 400 | image_tag: alt: shop.name, class: 'gb-hdr__logo-img', loading: 'eager', widths: '200, 300, 400' }}
+          {{ section.settings.logo | image_url: width: 600 | image_tag: alt: shop.name, class: 'gb-hdr__logo-img', loading: 'eager', widths: '200, 300, 460, 600' }}
         {%- else -%}
-          <span class="gb-hdr__mark" aria-hidden="true">
-            <svg viewBox="0 0 44 44" focusable="false">
-              <circle cx="22" cy="22" r="22" fill="var(--brown)"/>
-              <path d="M22 34c0-9 5.4-14.6 13.4-16C34 27 29.2 32.6 22 34z" fill="var(--yellow)"/>
-              <path d="M22 34c0-9-5.4-14.6-13.4-16C10 27 14.8 32.6 22 34z" fill="var(--lettuce)"/>
-              <path d="M22 34.5V22" stroke="var(--yellow)" stroke-width="2.6" stroke-linecap="round"/>
-            </svg>
-          </span>
           <span class="gb-hdr__wordmark">{{ wordmark | escape }}</span>
         {%- endif -%}
       </a>
@@ -94,8 +76,10 @@
         {%- endif -%}
         <a class="gb-hdr__cart" href="{{ routes.cart_url }}" aria-label="Cart, {{ cart.item_count }} items">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l1 14H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
-          <span class="gb-hdr__cart-txt">Cart</span>
           <span class="gb-hdr__count" data-gb-count{% if cart.item_count == 0 %} hidden{% endif %}>{{ cart.item_count }}</span>
+        </a>
+        <a class="gb-hdr__cta" href="{{ cta_url }}">
+          <span class="gb-hdr__cta-txt">{{ cta_label | escape }}</span>
         </a>
       </div>
 
@@ -105,62 +89,54 @@
 
 {% stylesheet %}
 .shopify-section:has(> .gb-hdr-sec){position:sticky;top:0;z-index:50}
-/* announcement bar */
-.gb-hdr-sec .gb-bar{overflow:hidden}
-.gb-hdr-sec .gb-bar--lettuce{background:var(--lettuce);color:#2F5A17}
-.gb-hdr-sec .gb-bar--brown{background:var(--brown-2);color:var(--yellow)}
-.gb-hdr-sec .gb-bar--yellow{background:var(--yellow);color:var(--yellow-ink)}
-.gb-hdr-sec .gb-bar__static{margin:0;padding-block:11px;text-align:center;font-size:15.5px;font-weight:700;line-height:1.4}
-.gb-hdr-sec .gb-bar__track{display:flex;width:max-content}
-.gb-hdr-sec .gb-bar__run{display:flex;align-items:center;gap:0;list-style:none;margin:0;padding:11px 0;white-space:nowrap}
-.gb-hdr-sec .gb-bar__run li{display:inline-flex;align-items:center;gap:18px;padding-right:18px;font-size:15.5px;font-weight:700;letter-spacing:.01em}
-.gb-hdr-sec .gb-bar__run svg{width:15px;height:15px;flex:0 0 15px;opacity:.75}
-.gb-hdr-sec .gb-bar.is-scrolling .gb-bar__track{animation:gb-ticker 38s linear infinite}
-.gb-hdr-sec .gb-bar.is-scrolling:hover .gb-bar__track,.gb-hdr-sec .gb-bar.is-scrolling:focus-within .gb-bar__track{animation-play-state:paused}
-@keyframes gb-ticker{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
-@media(prefers-reduced-motion:reduce){
-  .gb-hdr-sec .gb-bar.is-scrolling .gb-bar__track{animation:none;width:100%;justify-content:center}
-  .gb-hdr-sec .gb-bar.is-scrolling .gb-bar__run:nth-child(2){display:none}
-  .gb-hdr-sec .gb-bar.is-scrolling .gb-bar__run{overflow:hidden}
+.gb-hdr-sec :focus-visible{outline:3px solid var(--lime);outline-offset:2px;border-radius:6px}
+/* trust bar */
+.gb-hdr-sec .gb-tbar{background:var(--night);color:var(--night-ink)}
+.gb-hdr-sec .gb-tbar__row{list-style:none;margin:0;display:flex;align-items:center;justify-content:space-between;gap:22px;padding-block:10px}
+.gb-hdr-sec .gb-tbar__row li{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;line-height:1.2}
+.gb-hdr-sec .gb-tbar__row svg{width:19px;height:19px;flex:0 0 19px;color:var(--lime)}
+@media(max-width:860px){
+  .gb-hdr-sec .gb-tbar__row{justify-content:flex-start;gap:26px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .gb-hdr-sec .gb-tbar__row::-webkit-scrollbar{display:none}
+  .gb-hdr-sec .gb-tbar__row li{font-size:13px}
 }
-/* logo */
-.gb-hdr-sec .gb-hdr__mark{display:inline-grid;place-items:center;width:38px;height:38px;flex:0 0 38px;margin-right:10px}
-.gb-hdr-sec .gb-hdr__mark svg{width:100%;height:100%;display:block}
+/* main header */
 .gb-hdr-sec .gb-hdr{position:relative;background:var(--paper);border-bottom:1px solid var(--rule)}
-.gb-hdr-sec .gb-hdr__in{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;min-height:68px}
-@media(min-width:960px){.gb-hdr-sec .gb-hdr__in{grid-template-columns:auto 1fr auto;min-height:76px;gap:32px}}
-
+.gb-hdr-sec .gb-hdr__in{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;min-height:70px}
+@media(min-width:960px){.gb-hdr-sec .gb-hdr__in{min-height:84px;gap:28px}}
+/* logo */
 .gb-hdr-sec .gb-hdr__logo{display:inline-flex;align-items:center;min-height:48px;text-decoration:none;color:var(--ink);justify-self:center}
 @media(min-width:960px){.gb-hdr-sec .gb-hdr__logo{justify-self:start;order:-1}}
-.gb-hdr-sec .gb-hdr__wordmark{font-family:var(--font-h);font-weight:900;font-variation-settings:"SOFT" 30,"WONK" 1,"opsz" 60;font-size:clamp(21px,2.2vw,27px);letter-spacing:-.005em;line-height:1;white-space:nowrap;color:var(--brown)}
-.gb-hdr-sec .gb-hdr__logo-img{height:40px;width:auto}
-
-.gb-hdr-sec .gb-hdr__nav{display:none;gap:30px;justify-content:center;font-size:17px;font-weight:700}
+.gb-hdr-sec .gb-hdr__logo-img{height:38px;width:auto}
+@media(min-width:960px){.gb-hdr-sec .gb-hdr__logo-img{height:46px}}
+.gb-hdr-sec .gb-hdr__wordmark{font-family:var(--font-h);font-weight:800;font-size:clamp(20px,2.2vw,26px);letter-spacing:-.01em;line-height:1;white-space:nowrap;color:var(--ink)}
+/* nav */
+.gb-hdr-sec .gb-hdr__nav{display:none;gap:32px;justify-content:center;font-size:16px;font-weight:600}
 .gb-hdr-sec .gb-hdr__nav a{display:inline-flex;align-items:center;min-height:48px;text-decoration:none;color:var(--ink);border-bottom:3px solid transparent}
-.gb-hdr-sec .gb-hdr__nav a:hover,.gb-hdr-sec .gb-hdr__nav a[aria-current]{border-bottom-color:var(--yellow)}
+.gb-hdr-sec .gb-hdr__nav a:hover,.gb-hdr-sec .gb-hdr__nav a[aria-current]{border-bottom-color:var(--lime)}
 @media(min-width:960px){.gb-hdr-sec .gb-hdr__nav{display:flex}}
-
+/* right actions */
 .gb-hdr-sec .gb-hdr__right{display:flex;align-items:center;gap:6px;justify-self:end}
-.gb-hdr-sec .gb-hdr__icon-link,.gb-hdr-sec .gb-hdr__cart{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:48px;min-height:48px;padding:0 8px;border-radius:12px;text-decoration:none;color:var(--ink);font-size:17px;font-weight:700}
-.gb-hdr-sec .gb-hdr__icon-link:hover,.gb-hdr-sec .gb-hdr__cart:hover{background:var(--stone)}
-.gb-hdr-sec .gb-hdr__cart-txt{display:none}
-@media(min-width:640px){.gb-hdr-sec .gb-hdr__cart-txt{display:inline}}
-.gb-hdr-sec .gb-hdr__count{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 7px;border-radius:12px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;line-height:1}
+.gb-hdr-sec .gb-hdr__icon-link,.gb-hdr-sec .gb-hdr__cart{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:48px;min-height:48px;border-radius:12px;text-decoration:none;color:var(--ink)}
+.gb-hdr-sec .gb-hdr__icon-link:hover,.gb-hdr-sec .gb-hdr__cart:hover{background:var(--sand)}
+.gb-hdr-sec .gb-hdr__count{position:absolute;top:4px;right:2px;display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;padding:0 6px;border-radius:11px;background:var(--lime);color:var(--lime-ink);font-size:12.5px;font-weight:800;line-height:1}
 .gb-hdr-sec .gb-hdr__count[hidden]{display:none}
-
+.gb-hdr-sec .gb-hdr__cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;min-width:48px;padding:0 22px;margin-left:6px;border-radius:999px;background:var(--lime);color:var(--lime-ink);font-family:var(--font-b);font-size:16px;font-weight:700;text-decoration:none;white-space:nowrap}
+.gb-hdr-sec .gb-hdr__cta:hover{background:var(--lime-2)}
+.gb-hdr-sec .gb-hdr__cta:active{transform:translateY(1px)}
+@media(max-width:400px){.gb-hdr-sec .gb-hdr__cta{padding:0;width:48px}.gb-hdr-sec .gb-hdr__cta-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .gb-hdr-sec .gb-hdr__cta::after{content:"";width:20px;height:20px;background:var(--lime-ink);-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14M13 6l6 6-6 6'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14M13 6l6 6-6 6'/></svg>") center/contain no-repeat}}
 /* mobile menu: details/summary */
 .gb-hdr-sec .gb-hdr__menu{position:static}
-.gb-hdr-sec .gb-hdr__burger{display:inline-flex;align-items:center;gap:8px;min-width:48px;min-height:48px;padding:0 8px;margin-left:-8px;border-radius:12px;cursor:pointer;list-style:none;font-size:17px;font-weight:700;color:var(--ink)}
+.gb-hdr-sec .gb-hdr__burger{display:inline-flex;align-items:center;justify-content:center;min-width:48px;min-height:48px;margin-left:-8px;border-radius:12px;cursor:pointer;list-style:none;color:var(--ink)}
 .gb-hdr-sec .gb-hdr__burger::-webkit-details-marker{display:none}
-.gb-hdr-sec .gb-hdr__burger:hover{background:var(--stone)}
-.gb-hdr-sec .gb-hdr__burger-txt{display:none}
-@media(min-width:480px){.gb-hdr-sec .gb-hdr__burger-txt{display:inline}}
+.gb-hdr-sec .gb-hdr__burger:hover{background:var(--sand)}
 .gb-hdr-sec .gb-hdr__ico--close{display:none}
 .gb-hdr-sec .gb-hdr__menu[open] .gb-hdr__ico--open{display:none}
 .gb-hdr-sec .gb-hdr__menu[open] .gb-hdr__ico--close{display:block}
-.gb-hdr-sec .gb-hdr__mnav{position:absolute;left:0;right:0;top:100%;display:grid;padding:6px var(--pad) 18px;background:var(--paper);border-bottom:1px solid var(--rule);box-shadow:0 14px 30px rgba(43,36,25,.12)}
-.gb-hdr-sec .gb-hdr__mnav a{display:flex;align-items:center;min-height:56px;border-bottom:1px solid var(--rule);text-decoration:none;color:var(--ink);font-size:19px;font-weight:700}
-.gb-hdr-sec .gb-hdr__mnav a[aria-current]{color:var(--accent)}
+.gb-hdr-sec .gb-hdr__mnav{position:absolute;left:0;right:0;top:100%;z-index:2;display:grid;padding:6px var(--pad) 18px;background:var(--paper);border-bottom:1px solid var(--rule);box-shadow:0 14px 30px rgba(15,42,24,.16)}
+.gb-hdr-sec .gb-hdr__mnav a{display:flex;align-items:center;min-height:56px;border-bottom:1px solid var(--rule);text-decoration:none;color:var(--ink);font-size:18px;font-weight:600}
+.gb-hdr-sec .gb-hdr__mnav a[aria-current]{box-shadow:inset 3px 0 0 var(--lime);padding-left:12px}
 @media(min-width:960px){.gb-hdr-sec .gb-hdr__menu{display:none}}
 {% endstylesheet %}
 
@@ -200,23 +176,20 @@
 {
   "name": "Garden Buddy header",
   "settings": [
-    { "type": "header", "content": "Announcement bar" },
-    { "type": "checkbox", "id": "show_bar", "label": "Show the bar", "default": true },
-    { "type": "checkbox", "id": "bar_scroll", "label": "Scroll the bar", "default": true, "info": "Pauses on hover. Holds still for visitors who ask for reduced motion." },
-    { "type": "select", "id": "bar_style", "label": "Bar colour", "default": "brown", "options": [
-      { "value": "brown", "label": "Dark brown, yellow text" },
-      { "value": "yellow", "label": "Vibrant yellow, brown text" },
-      { "value": "lettuce", "label": "Lettuce green" }
-    ] },
-    { "type": "text", "id": "bar_text_1", "label": "Bar line 1", "default": "Free US shipping on every order" },
-    { "type": "text", "id": "bar_text_2", "label": "Bar line 2", "default": "30 days to send it back" },
-    { "type": "text", "id": "bar_text_3", "label": "Bar line 3", "default": "Arrives assembled, folds flat" },
+    { "type": "header", "content": "Trust bar" },
+    { "type": "checkbox", "id": "show_bar", "label": "Show the trust bar", "default": true },
+    { "type": "text", "id": "bar_text_1", "label": "Item 1 (truck)", "default": "Free Shipping" },
+    { "type": "text", "id": "bar_text_2", "label": "Item 2 (shield)", "default": "30-Day Money Back Guarantee" },
+    { "type": "text", "id": "bar_text_3", "label": "Item 3 (headset)", "default": "24/7 Support" },
     { "type": "header", "content": "Logo" },
-    { "type": "text", "id": "wordmark", "label": "Wordmark text", "default": "GARDEN BUDDY", "info": "Used when no logo image is set." },
     { "type": "image_picker", "id": "logo", "label": "Logo image" },
+    { "type": "text", "id": "wordmark", "label": "Wordmark text", "default": "GARDEN BUDDY", "info": "Used when no logo image is set." },
     { "type": "header", "content": "Menu" },
     { "type": "link_list", "id": "link_list", "label": "Menu", "default": "main-menu" },
-    { "type": "checkbox", "id": "show_search", "label": "Show search icon", "default": false }
+    { "type": "checkbox", "id": "show_search", "label": "Show search icon", "default": false },
+    { "type": "header", "content": "Order button" },
+    { "type": "text", "id": "cta_label", "label": "Button label", "default": "Order Now" },
+    { "type": "url", "id": "cta_url", "label": "Button link" }
   ]
 }
 {% endschema %}
