@@ -171,7 +171,8 @@
           "settings": {
             "name": "Folding stool",
             "size": "15.4 x 11.5 x 14.2 in",
-            "placeholder": "Photo: folding stool"
+            "placeholder": "Photo: folding stool",
+            "image": "shopify://shop_images/gb-tool-stool.png"
           }
         },
         "tool_2": {
@@ -179,7 +180,8 @@
           "settings": {
             "name": "Storage bag",
             "size": "Lifts off the frame",
-            "placeholder": "Photo: storage bag"
+            "placeholder": "Photo: storage bag",
+            "image": "shopify://shop_images/gb-tool-bag.png"
           }
         },
         "tool_3": {
@@ -187,7 +189,8 @@
           "settings": {
             "name": "Trowel",
             "size": "12 in",
-            "placeholder": "Photo: trowel"
+            "placeholder": "Photo: trowel",
+            "image": "shopify://shop_images/gb-tool-trowel.png"
           }
         },
         "tool_4": {
@@ -195,7 +198,8 @@
           "settings": {
             "name": "Transplanter",
             "size": "11.8 in, depth marks",
-            "placeholder": "Photo: transplanter"
+            "placeholder": "Photo: transplanter",
+            "image": "shopify://shop_images/gb-tool-transplanter.png"
           }
         },
         "tool_5": {
@@ -203,7 +207,8 @@
           "settings": {
             "name": "Weeder",
             "size": "11.8 in",
-            "placeholder": "Photo: weeder"
+            "placeholder": "Photo: weeder",
+            "image": "shopify://shop_images/gb-tool-weeder.png"
           }
         },
         "tool_6": {
@@ -211,7 +216,8 @@
           "settings": {
             "name": "Cultivator fork",
             "size": "11 in",
-            "placeholder": "Photo: cultivator fork"
+            "placeholder": "Photo: cultivator fork",
+            "image": "shopify://shop_images/gb-tool-cultivator.png"
           }
         },
         "tool_7": {
@@ -219,7 +225,8 @@
           "settings": {
             "name": "Hand rake",
             "size": "11.4 in",
-            "placeholder": "Photo: hand rake"
+            "placeholder": "Photo: hand rake",
+            "image": "shopify://shop_images/gb-tool-rake.png"
           }
         },
         "tool_8": {
@@ -227,7 +234,8 @@
           "settings": {
             "name": "Pruning shears",
             "size": "7.5 in",
-            "placeholder": "Photo: pruning shears"
+            "placeholder": "Photo: pruning shears",
+            "image": "shopify://shop_images/gb-tool-shears.png"
           }
         },
         "tool_9": {
@@ -235,7 +243,8 @@
           "settings": {
             "name": "Claw gloves",
             "size": "4.1 in across",
-            "placeholder": "Photo: claw gloves"
+            "placeholder": "Photo: claw gloves",
+            "image": "shopify://shop_images/gb-tool-gloves.png"
           }
         },
         "tool_10": {
@@ -243,7 +252,8 @@
           "settings": {
             "name": "Hand sprayer",
             "size": "9 in",
-            "placeholder": "Photo: hand sprayer"
+            "placeholder": "Photo: hand sprayer",
+            "image": "shopify://shop_images/gb-tool-sprayer.png"
           }
         },
         "compare_1": {
