@@ -65,8 +65,37 @@ These are the reference build. The real target is the Shopify theme.
 
 ## Store 2 — GARDEN BUDDY (Sept 2026, sells now)
 
-Foldable kneeler seat for 55+ US gardeners. Competitor: aimerlallc.com (clear but fake-social-proof heavy).
-Store `aj1wt0-dg.myshopify.com`, theme GARDEN BUDDY (unpublished Horizon copy). Files in `shopify/garden-buddy/`.
-Palette: faded white / stone / light tree brown / baby lettuce green / light sky blue / tan / vintage orange CTAs.
-One product, Pack 1/2/3 × Blue/Brown. Prices assumed 64.99 / 109.99 / 149.99 until the operator confirms.
-Specs (weight, capacity, pad, dimensions, delivery window) are [ PLACEHOLDERS ] until confirmed.
+Foldable kneeler seat for 55+ US gardeners. Competitor: aimerlallc.com.
+Store `aj1wt0-dg.myshopify.com`, theme GARDEN BUDDY id 206497710419 (unpublished Horizon copy).
+Files in `shopify/garden-buddy/`. Upload by raw.githubusercontent URL via `themeFilesUpsert`.
+
+### PALETTE — LOCKED. The operator approved this exact combination. Do not drift.
+
+| Token | Value | Use |
+|---|---|---|
+| `--night` | `#2A1D11` | deepest brown: trust bar, footer CTA band |
+| `--night-2` | `#1C1309` | footer proper |
+| `--brown` | `#3B2A1B` | review band, card frames, headings on white |
+| `--lime` | `#A8F32A` | NEON green. Every CTA, icon, eyebrow on brown |
+| `--lime-ink` | `#12290C` | the only text colour allowed on lime |
+| `--sand` | `#F4EEE2` | warm section ground |
+| `--paper` | `#FFFFFF` | cards, page ground |
+| `--leaf` | `#5C8C1E` | olive check circles on light grounds |
+| `--yellow` | `#FFC72C` | the logo's yellow, save stamps only |
+
+Logo: `shopify://shop_images/f70cfb36-00ec-44bf-939c-5af7445d7a9e.png` — yellow wordmark,
+brown outline, sunflower with a green cap. Already in the header and both footer slots.
+
+Fonts, loaded from Google in `gb-header.liquid`: Poppins headings, Inter body,
+**Caveat** for the handwritten accent lines. Never swap these without being asked.
+
+### Structure
+One product, `foldable-kneeler-seat`, Pack × Color (Blue/Brown):
+1 Kneeler 69.99 · Kneeler + Tool Set 99.99 (was 109.98) · 2 Kneelers + Tool Set 129.99 (was 179.97).
+Bundle cards are WHITE with a 3px brown frame and a neon ring when selected. Not brown cards.
+The 10-piece tool set is product `garden-tool-set`, kept DRAFT: bundle-only, no page of its own.
+
+### Still open
+- Specs (weight, capacity, pad thickness, delivery window) are `[ PLACEHOLDERS ]` until confirmed.
+- Reviews ship empty with an honest placeholder. Zero orders — never invent one.
+- The five branded ad creatives need uploading to Shopify Files before the gallery is finished.
