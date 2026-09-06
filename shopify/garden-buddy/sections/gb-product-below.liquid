@@ -108,17 +108,20 @@
             {%- liquid
               assign vkey  = 'ugc_video_' | append: i
               assign skey  = 'ugc_src_' | append: i
+              assign ukey  = 'ugc_url_' | append: i
               assign pskey = 'ugc_poster_' | append: i
               assign tkey  = 'ugc_title_' | append: i
               assign ckey  = 'ugc_caption_' | append: i
               assign pkey  = 'ugc_ph_' | append: i
               assign flip  = i | modulo: 2
             -%}
-            {%- if s[vkey] != blank or s[skey] != blank or s[pkey] != blank -%}
+            {%- if s[vkey] != blank or s[ukey] != blank or s[skey] != blank or s[pkey] != blank -%}
             <div class="gb-ugc__row{% if flip == 0 %} gb-ugc__row--flip{% endif %}">
               <figure class="gb-ugc__media">
                 {%- if s[vkey] != blank -%}
                   {{ s[vkey] | video_tag: image_size: '900x', autoplay: true, loop: true, muted: true, playsinline: true, controls: true, class: 'gb-ugc__vid' }}
+                {%- elsif s[ukey] != blank -%}
+                  <div class="gb-ugc__frame">{{ s[ukey] | external_video_tag: class: 'gb-ugc__vid', loading: 'lazy' }}</div>
                 {%- elsif s[skey] != blank -%}
                   <video class="gb-ugc__vid" autoplay loop muted playsinline controls preload="metadata"{% if s[pskey] != blank %} poster="{{ s[pskey] | image_url: width: 900 }}"{% endif %}>
                     <source src="{{ s[skey] }}" type="video/mp4">
@@ -750,6 +753,8 @@
   .gb-pb .gb-ugc__row--flip .gb-ugc__media{order:2}
 }
 .gb-pb .gb-ugc__media{margin:0;width:100%}
+.gb-pb .gb-ugc__frame{position:relative;width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:var(--sand);box-shadow:0 14px 40px rgba(42,29,17,.18)}
+.gb-pb .gb-ugc__frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .gb-pb .gb-ugc__media video,.gb-pb .gb-ugc__ph{width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:var(--sand);box-shadow:0 14px 40px rgba(42,29,17,.18);object-fit:cover;display:block}
 .gb-pb .gb-ugc__say{display:grid;gap:12px;justify-items:start}
 .gb-pb .gb-ugc__n{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-weight:700;font-size:21px}
@@ -900,18 +905,21 @@
     { "type": "video", "id": "ugc_video_1", "label": "Video 1" },
     { "type": "text", "id": "ugc_title_1", "label": "Big caption 1" },
     { "type": "textarea", "id": "ugc_caption_1", "label": "Supporting line 1" },
+    { "type": "video_url", "id": "ugc_url_1", "label": "Video 1 link", "accept": ["youtube", "vimeo"] },
     { "type": "text", "id": "ugc_src_1", "label": "Video 1 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
     { "type": "image_picker", "id": "ugc_poster_1", "label": "Video 1 poster" },
     { "type": "text", "id": "ugc_ph_1", "label": "Placeholder 1", "default": "Clip 1" },
     { "type": "video", "id": "ugc_video_2", "label": "Video 2" },
     { "type": "text", "id": "ugc_title_2", "label": "Big caption 2" },
     { "type": "textarea", "id": "ugc_caption_2", "label": "Supporting line 2" },
+    { "type": "video_url", "id": "ugc_url_2", "label": "Video 2 link", "accept": ["youtube", "vimeo"] },
     { "type": "text", "id": "ugc_src_2", "label": "Video 2 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
     { "type": "image_picker", "id": "ugc_poster_2", "label": "Video 2 poster" },
     { "type": "text", "id": "ugc_ph_2", "label": "Placeholder 2", "default": "Clip 2" },
     { "type": "video", "id": "ugc_video_3", "label": "Video 3" },
     { "type": "text", "id": "ugc_title_3", "label": "Big caption 3" },
     { "type": "textarea", "id": "ugc_caption_3", "label": "Supporting line 3" },
+    { "type": "video_url", "id": "ugc_url_3", "label": "Video 3 link", "accept": ["youtube", "vimeo"] },
     { "type": "text", "id": "ugc_src_3", "label": "Video 3 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
     { "type": "image_picker", "id": "ugc_poster_3", "label": "Video 3 poster" },
     { "type": "text", "id": "ugc_ph_3", "label": "Placeholder 3", "default": "Clip 3" },
