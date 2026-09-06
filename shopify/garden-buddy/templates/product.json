@@ -256,54 +256,6 @@
             "image": "shopify://shop_images/gb-tool-sprayer.png"
           }
         },
-        "compare_1": {
-          "type": "compare",
-          "settings": {
-            "label": "Kneel and sit",
-            "v1": "yes",
-            "v2": "no"
-          }
-        },
-        "compare_2": {
-          "type": "compare",
-          "settings": {
-            "label": "Handles to stand up",
-            "v1": "yes",
-            "v2": "no"
-          }
-        },
-        "compare_3": {
-          "type": "compare",
-          "settings": {
-            "label": "Steel frame",
-            "v1": "yes",
-            "v2": "no"
-          }
-        },
-        "compare_4": {
-          "type": "compare",
-          "settings": {
-            "label": "Folds flat",
-            "v1": "yes",
-            "v2": "yes"
-          }
-        },
-        "compare_5": {
-          "type": "compare",
-          "settings": {
-            "label": "Arrives assembled",
-            "v1": "yes",
-            "v2": "no"
-          }
-        },
-        "compare_6": {
-          "type": "compare",
-          "settings": {
-            "label": "Detachable pad",
-            "v1": "yes",
-            "v2": "no"
-          }
-        },
         "who_1": {
           "type": "who",
           "settings": {
@@ -461,6 +413,70 @@
             "label": "Assembly",
             "value": "None"
           }
+        },
+        "compare_1": {
+          "type": "compare",
+          "settings": {
+            "label": "Kneels and sits",
+            "v1": "yes",
+            "v2": "no"
+          }
+        },
+        "compare_2": {
+          "type": "compare",
+          "settings": {
+            "label": "Handles to push up on",
+            "v1": "yes",
+            "v2": "no"
+          }
+        },
+        "compare_3": {
+          "type": "compare",
+          "settings": {
+            "label": "10-piece tool set included",
+            "v1": "yes",
+            "v2": "no"
+          }
+        },
+        "compare_4": {
+          "type": "compare",
+          "settings": {
+            "label": "Folding stool included",
+            "v1": "yes",
+            "v2": "no"
+          }
+        },
+        "compare_5": {
+          "type": "compare",
+          "settings": {
+            "label": "Tool bag with pockets",
+            "v1": "yes",
+            "v2": "no"
+          }
+        },
+        "compare_6": {
+          "type": "compare",
+          "settings": {
+            "label": "Arrives assembled",
+            "v1": "yes",
+            "v2": "no"
+          }
+        },
+        "compare_7": {
+          "type": "compare",
+          "settings": {
+            "label": "Detachable pad",
+            "v1": "yes",
+            "v2": "no"
+          }
+        },
+        "compare_8": {
+          "type": "compare",
+          "settings": {
+            "label": "Folds flat for storage",
+            "v1": "yes",
+            "v2": "yes"
+          }
         }
       },
       "block_order": [
@@ -492,6 +508,8 @@
         "compare_4",
         "compare_5",
         "compare_6",
+        "compare_7",
+        "compare_8",
         "who_1",
         "who_2",
         "who_3",
