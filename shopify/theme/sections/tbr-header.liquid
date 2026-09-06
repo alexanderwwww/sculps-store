@@ -94,12 +94,12 @@
 </div>
 
 {% stylesheet %}
-.tbr-hdr-sec{--night:#0D0D0F;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.tbr-hdr-sec{--night:var(--night);--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .tbr-hdr-wrap,.shopify-section:has(> .tbr-hdr-sec){position:sticky;top:calc(-1 * var(--tbr-bar-h,0px));z-index:50}
 .tbr-hdr-sec .tbr-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* announcement bar */
-.tbr-hdr-sec .tbr-bar{background:var(--night);color:#EDEBE5;overflow:hidden}
+.tbr-hdr-sec .tbr-bar{background:var(--night);color:var(--ink);overflow:hidden}
 .tbr-hdr-sec .tbr-bar__in{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;justify-content:center;padding:10px var(--pad);text-align:center;font-size:13.5px;line-height:1.4}
 .tbr-hdr-sec .tbr-bar__in b{color:var(--accent);font-weight:600}
 .tbr-hdr-sec .tbr-bar__clock{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:.02em}
