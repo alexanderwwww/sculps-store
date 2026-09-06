@@ -49,6 +49,50 @@
 
 <div class="gb gb-pb">
 
+  {%- comment -%} 0a. Social proof carousel. Slides come from `social` blocks; empty until real ones exist. {%- endcomment -%}
+  {%- assign social_n = 0 -%}
+  {%- for block in section.blocks -%}{%- if block.type == 'social' -%}{%- assign social_n = social_n | plus: 1 -%}{%- endif -%}{%- endfor -%}
+  {%- if social_n > 0 -%}
+  <section class="gb-sec gb-sec--brown gb-social" id="social">
+    <div class="gb-wrap">
+      <div class="gb-social__head">
+        {%- if s.social_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.social_eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.social_heading }}</h2>
+        {%- if s.social_text != blank -%}<p class="gb-lede">{{ s.social_text | escape }}</p>{%- endif -%}
+      </div>
+
+      <div class="gb-social__rail">
+        <button type="button" class="gb-social__nav gb-social__nav--prev" data-gb-social-prev aria-label="Previous">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <ul class="gb-social__track" data-gb-social-track>
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'social' -%}{%- continue -%}{%- endif -%}
+            {%- assign b = block.settings -%}
+            <li class="gb-social__slide" {{ block.shopify_attributes }}>
+              {%- if b.image != blank -%}
+                {%- if b.image_mobile != blank -%}
+                  <picture>
+                    <source media="(max-width: 699px)" srcset="{{ b.image_mobile | image_url: width: 900 }}">
+                    <img src="{{ b.image | image_url: width: 1200 }}" alt="{{ b.alt | escape }}" loading="lazy" decoding="async">
+                  </picture>
+                {%- else -%}
+                  <img src="{{ b.image | image_url: width: 1200 }}" alt="{{ b.alt | escape }}" loading="lazy" decoding="async">
+                {%- endif -%}
+              {%- else -%}
+                <div class="gb-ph"><span>{{ b.placeholder | default: 'Add a screenshot' }}</span></div>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+        <button type="button" class="gb-social__nav gb-social__nav--next" data-gb-social-next aria-label="Next">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+
   {%- comment -%} 0. UGC video + the FAQ. First thing under the buy box. {%- endcomment -%}
   <section class="gb-sec gb-ugc" id="watch">
     <div class="gb-wrap">
@@ -653,6 +697,19 @@
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F6EEE2' stroke-width='3' stroke-linecap='round'><path d='M7 7l10 10M17 7L7 17'/></svg>")}
 
 /* ——— FAQ ——— */
+.gb-pb .gb-social__head{text-align:center;max-width:56ch;margin:0 auto clamp(26px,3.5vw,44px)}
+.gb-pb .gb-social__head .gb-lede{margin-inline:auto}
+.gb-pb .gb-social__rail{position:relative;display:flex;align-items:center;gap:10px}
+.gb-pb .gb-social__track{list-style:none;margin:0;padding:4px;display:flex;gap:clamp(14px,2vw,22px);overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;flex:1}
+.gb-pb .gb-social__track::-webkit-scrollbar{display:none}
+.gb-pb .gb-social__slide{flex:0 0 min(420px,84vw);scroll-snap-align:center;border-radius:16px;overflow:hidden;background:var(--paper);box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.gb-pb .gb-social__slide img{width:100%;height:auto;display:block}
+.gb-pb .gb-social__slide .gb-ph{aspect-ratio:1.1;width:100%}
+.gb-pb .gb-social__nav{flex:0 0 48px;width:48px;height:48px;border-radius:50%;border:0;display:none;place-items:center;cursor:pointer;background:var(--lime);color:var(--lime-ink)}
+.gb-pb .gb-social__nav svg{width:24px;height:24px}
+.gb-pb .gb-social__nav:hover{background:var(--lime-2)}
+@media(min-width:900px){.gb-pb .gb-social__nav{display:grid}}
+@media(prefers-reduced-motion:reduce){.gb-pb .gb-social__track{scroll-behavior:auto}}
 .gb-pb .gb-steps{padding-block:clamp(40px,5vw,68px)}
 .gb-pb .gb-steps__head{text-align:center;margin-bottom:clamp(24px,3vw,36px)}
 .gb-pb .gb-steps__head .gb-h2{font-size:clamp(24px,3vw,34px)}
@@ -789,6 +846,18 @@
   })();
 </script>
 
+{% javascript %}
+  (function () {
+    var rail = document.querySelector('#social [data-gb-social-track]');
+    if (!rail) return;
+    var step = function () { var el = rail.querySelector('.gb-social__slide'); return el ? el.offsetWidth + 20 : 320; };
+    var go = function (d) { rail.scrollBy({ left: d * step(), behavior: 'smooth' }); };
+    var p = document.querySelector('[data-gb-social-prev]'), n = document.querySelector('[data-gb-social-next]');
+    if (p) p.addEventListener('click', function () { go(-1); });
+    if (n) n.addEventListener('click', function () { go(1); });
+  }());
+{% endjavascript %}
+
 {% schema %}
 {
   "name": "Garden Buddy below",
@@ -799,6 +868,10 @@
       "type": "paragraph",
       "content": "Anything written as [ LIKE THIS ] shows as a placeholder until you replace it. Numbers we do not have yet stay as placeholders. Nothing here is invented."
     },
+    { "type": "header", "content": "Social proof carousel" },
+    { "type": "text", "id": "social_eyebrow", "label": "Eyebrow", "default": "From real gardens" },
+    { "type": "text", "id": "social_heading", "label": "Heading", "default": "People who own one." },
+    { "type": "textarea", "id": "social_text", "label": "Text" },
     { "type": "header", "content": "UGC video + FAQ" },
     { "type": "text", "id": "ugc_eyebrow", "label": "Eyebrow", "default": "See it for yourself" },
     { "type": "text", "id": "ugc_heading", "label": "Heading", "default": "Watch it in a real garden." },
@@ -884,6 +957,16 @@
     { "type": "url", "id": "closer_url", "label": "Button link", "info": "Leave empty to scroll to the buy box." }
   ],
   "blocks": [
+    {
+      "type": "social",
+      "name": "Social post",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Desktop image" },
+        { "type": "image_picker", "id": "image_mobile", "label": "Mobile image", "info": "Optional. Used under 700px." },
+        { "type": "text", "id": "alt", "label": "Alt text" },
+        { "type": "text", "id": "placeholder", "label": "Placeholder caption", "default": "Social post" }
+      ]
+    },
     {
       "type": "benefit",
       "name": "Benefit",
