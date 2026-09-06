@@ -190,7 +190,7 @@
           "type": "faq",
           "settings": {
             "question": "What if it doesn't look like the video?",
-            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee. No renders, no composites, no enhancement."
+            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee."
           }
         },
         "spec_1": {
@@ -335,7 +335,7 @@
         "how_text": "The projector is the one thing here that does need power. Everything else about it is instant.",
         "react_eyebrow": "See it running",
         "react_heading": "It reads from the street.",
-        "react_text": "That's the whole test for a projector. If it washes out at twenty feet it's a toy. Filmed from the sidewalk, no enhancement.",
+        "react_text": "That's the whole test for a projector. If it washes out at twenty feet it's a toy.",
         "deal_eyebrow": "The Halloween Special",
         "deal_heading": "The house and the lawn,\nnot one or the other.",
         "deal_text": "The projector owns the wall. The reapers own the ground. Run them together and there is no part of the property that isn't doing something.",
@@ -344,7 +344,7 @@
         "deal_button": "Get the bundle",
         "detail_eyebrow": "Up close",
         "detail_heading": "What you're actually getting.",
-        "detail_text": "Shot on a real porch, not in a studio. The unit, the cable, the remote.",
+        "detail_text": "The unit, the cable, the remote.",
         "box_heading": "What's in the box",
         "box_sub": "Per projector. The bundle adds two reapers.",
         "box_foot": "Needs a mains outlet. No app, no Wi-Fi, nothing to pair.",

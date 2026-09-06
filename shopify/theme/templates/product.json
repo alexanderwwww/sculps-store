@@ -208,7 +208,7 @@
           "type": "faq",
           "settings": {
             "question": "What if it doesn't look like the video?",
-            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee. No renders, no composites, no enhancement."
+            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee."
           }
         },
         "spec_1": {
@@ -445,7 +445,7 @@
         "deal_button": "Get the bundle",
         "detail_eyebrow": "Up close",
         "detail_heading": "What you're actually getting.",
-        "detail_text": "Shot in the yard, not in a studio. If it has a seam, you'll see the seam.",
+        "detail_text": "If it has a seam, you'll see the seam.",
         "box_heading": "What's in the box",
         "box_sub": "Per reaper. The bundle adds the projector kit.",
         "box_foot": "No batteries, no adapter, no app. The reaper is solar and needs nothing you don't already have in the yard.",

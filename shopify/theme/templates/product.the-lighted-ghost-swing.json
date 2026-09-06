@@ -192,7 +192,7 @@
           "type": "faq",
           "settings": {
             "question": "What if it doesn't look like the video?",
-            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee. No renders, no composites, no enhancement."
+            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee."
           }
         },
         "spec_1": {
@@ -328,7 +328,7 @@
         "deal_button": "Build the yard",
         "detail_eyebrow": "Up close",
         "detail_heading": "What you're actually getting.",
-        "detail_text": "Shot in a real tree, not in a studio. Fabric, rope, seat, pumpkin.",
+        "detail_text": "Fabric, rope, seat, pumpkin.",
         "box_heading": "What's in the box",
         "box_sub": "Per swing.",
         "box_foot": "Arrives assembled. Nothing to build, nothing to plug in.",
