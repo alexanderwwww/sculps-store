@@ -16,7 +16,11 @@
         "trust_3": "Secure Checkout",
         "rating_text": "",
         "rating_count": "",
-        "set_thumb": "shopify://shop_images/5065143a-8db4-48ca-90ea-54c04e6013f3_5b06395c-7ba1-43fa-bcf9-c9b7de59a3ad.png"
+        "set_thumb": "shopify://shop_images/5065143a-8db4-48ca-90ea-54c04e6013f3_5b06395c-7ba1-43fa-bcf9-c9b7de59a3ad.png",
+        "subtitle": "",
+        "pack_img_1": "shopify://shop_images/6e4b6aa0-e691-45aa-86e0-a4241d2a4a9e.png",
+        "pack_img_2": "shopify://shop_images/f3e327ba-8e32-47ca-aa2b-9ebf53fe31b2_1.png",
+        "pack_img_3": "shopify://shop_images/cde75283-9d46-485b-b759-0f17e4654576.png"
       },
       "blocks": {
         "usp_1": {
@@ -64,7 +68,61 @@
       ]
     },
     "social": {
-      "type": "gb-social"
+      "type": "gb-social",
+      "settings": {
+        "social_eyebrow": "From real gardens",
+        "social_heading": "People who own one.",
+        "social_text": ""
+      },
+      "blocks": {
+        "social_1": {
+          "type": "social",
+          "settings": {
+            "image": "shopify://shop_images/39147928-57e4-4e9d-b4b8-14e6e52e8510.png",
+            "alt": "Facebook post from Patricia S.",
+            "placeholder": "Social post 1"
+          }
+        },
+        "social_2": {
+          "type": "social",
+          "settings": {
+            "image": "shopify://shop_images/48e5d3f0-9a99-4fae-8683-3f8bfea0c049.png",
+            "alt": "Facebook post from Lyn P.",
+            "placeholder": "Social post 2"
+          }
+        },
+        "social_3": {
+          "type": "social",
+          "settings": {
+            "image": "shopify://shop_images/54a32ccc-85bf-487d-8e19-242197ab357d.png",
+            "alt": "Facebook post from Dennis K.",
+            "placeholder": "Social post 3"
+          }
+        },
+        "social_4": {
+          "type": "social",
+          "settings": {
+            "image": "shopify://shop_images/89786781-ff2d-4c7a-8cba-b30ee748a866.png",
+            "alt": "Facebook post from Robert M.",
+            "placeholder": "Social post 4"
+          }
+        },
+        "social_5": {
+          "type": "social",
+          "settings": {
+            "image": "shopify://shop_images/e2dfa7bc-93de-45a6-a520-9bb3a514ef39.png",
+            "alt": "Facebook post from Margaret L.",
+            "placeholder": "Social post 5"
+          }
+        }
+      },
+      "block_order": [
+        "social_1",
+        "social_2",
+        "social_3",
+        "social_4",
+        "social_5"
+      ]
     },
     "video": {
       "type": "gb-video",
@@ -79,8 +137,14 @@
         "ugc_caption_1": "Foam between your knees and the ground, so gravel and wet grass stop mattering.",
         "ugc_title_2": "Push up on the handles.",
         "ugc_caption_2": "Getting down was never the problem. The handles sit at hip height so your arms do the standing.",
-        "ugc_title_3": "Flip it. Now it is a seat.",
-        "ugc_caption_3": "Same frame upside down. The snap-lock clicks and you can sit through the whole job."
+        "ugc_title_3": "fold unfold",
+        "ugc_caption_3": "Same frame upside down. The snap-lock clicks and you can sit through the whole job.",
+        "ugc_url_1": "",
+        "ugc_ph_1": "Clip 1",
+        "ugc_url_2": "",
+        "ugc_ph_2": "Clip 2",
+        "ugc_url_3": "",
+        "ugc_ph_3": "Clip 3"
       }
     },
     "faq": {
@@ -180,7 +244,7 @@
           "settings": {
             "name": "The Garden Buddy",
             "size": "Kneeler and seat in one",
-            "image": "shopify://shop_images/hf_20260906_162251_505ab291-7da3-49a1-9fff-fc32d74b9291.png",
+            "image": "shopify://shop_images/6e4b6aa0-e691-45aa-86e0-a4241d2a4a9e.png",
             "placeholder": "The Garden Buddy"
           }
         },
@@ -675,7 +739,8 @@
       "settings": {
         "closer_heading": "Your knees will notice by Saturday.",
         "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
-        "closer_button": "Pick your bundle"
+        "closer_button": "Pick your bundle",
+        "closer_url": ""
       }
     }
   },
