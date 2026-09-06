@@ -151,7 +151,7 @@
                 {%- elsif cl contains 'black' -%}{%- assign hex = '#2B2419' -%}
                 {%- endif -%}
                 <button type="button" class="gb-swatch" data-gb-color="{{ c | escape }}" aria-pressed="{% if c == sel_color %}true{% else %}false{% endif %}">
-                  <span class="gb-swatch__dot" style="background:{{ hex }}" aria-hidden="true"></span>
+                  <span class="gb-swatch__chip" style="background:{{ hex }}" aria-hidden="true"><span class="gb-swatch__tick"></span></span>
                   <span class="gb-swatch__name">{{ c }}</span>
                 </button>
               {%- endfor -%}
@@ -200,26 +200,26 @@
               -%}
               <label class="gb-pack{% if is_sel %} is-selected{% endif %}{% unless avail %} is-soldout{% endunless %}" data-gb-pack="{{ pack | escape }}" data-units="{{ n }}" data-variant-id="{{ pv.id }}">
                 <input type="radio" name="gb-pack" value="{{ pack | escape }}" {% if is_sel %}checked{% endif %} class="gb-pack__radio">
-                <span class="gb-pack__mark" aria-hidden="true"></span>
-                <span class="gb-pack__body">
-                  <span class="gb-pack__top">
+                {%- if flag != blank -%}<span class="gb-pack__flag">{{ flag }}</span>{%- endif -%}
+                <span class="gb-pack__head">
+                  <span class="gb-pack__mark" aria-hidden="true"></span>
+                  <span class="gb-pack__body">
                     <span class="gb-pack__name">{{ pack }}</span>
-                    {%- if flag != blank -%}<span class="gb-pill gb-pill--orange gb-pack__flag">{{ flag }}</span>{%- endif -%}
+                    <span class="gb-pack__each" data-gb-each>{% if n > 1 and pv != blank %}{{ pv.price | divided_by: n | money }} each{% endif %}</span>
                   </span>
-                  <span class="gb-pack__each" data-gb-each>{% if n > 1 and pv != blank %}{{ pv.price | divided_by: n | money }} each{% endif %}</span>
-                  {%- if has_set -%}
-                    <span class="gb-pack__extra">
-                      {%- if tool_set.featured_image -%}<img src="{{ tool_set.featured_image | image_url: width: 120 }}" alt="{{ tool_set.title | escape }}" width="60" height="60" loading="lazy">{%- else -%}<span class="gb-pack__extra-ph" aria-hidden="true"></span>{%- endif -%}
-                      <span><b>+ {{ tool_set.title | default: 'Garden Tool Set' }}</b> {{ s.set_blurb | default: 'A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer.' }}</span>
-                    </span>
-                  {%- endif -%}
+                  <span class="gb-pack__price">
+                    <span class="gb-pack__now" data-gb-now>{% if pv != blank %}{{ pv.price | money }}{% endif %}</span>
+                    <s class="gb-pack__was" data-gb-was {% if save <= 0 %}hidden{% endif %}>{% if save > 0 %}{{ pv.compare_at_price | money }}{% endif %}</s>
+                    <span class="gb-pill gb-pack__save" data-gb-save {% if save <= 0 %}hidden{% endif %}>{% if save > 0 %}Save {{ save | money }}{% endif %}</span>
+                    <span class="gb-pack__so" data-gb-so {% if avail %}hidden{% endif %}>Sold out</span>
+                  </span>
                 </span>
-                <span class="gb-pack__price">
-                  <span class="gb-pack__now" data-gb-now>{% if pv != blank %}{{ pv.price | money }}{% endif %}</span>
-                  <s class="gb-pack__was" data-gb-was {% if save <= 0 %}hidden{% endif %}>{% if save > 0 %}{{ pv.compare_at_price | money }}{% endif %}</s>
-                  <span class="gb-pill gb-pack__save" data-gb-save {% if save <= 0 %}hidden{% endif %}>{% if save > 0 %}Save {{ save | money }}{% endif %}</span>
-                  <span class="gb-pack__so" data-gb-so {% if avail %}hidden{% endif %}>Sold out</span>
-                </span>
+                {%- if has_set -%}
+                  <span class="gb-pack__extra">
+                    {%- if tool_set.featured_image -%}<img src="{{ tool_set.featured_image | image_url: width: 160 }}" alt="{{ tool_set.title | escape }}" width="72" height="72" loading="lazy">{%- else -%}<span class="gb-pack__extra-ph" aria-hidden="true"></span>{%- endif -%}
+                    <span class="gb-pack__extra-txt"><b>+ {{ tool_set.title | default: 'Garden Tool Set' }}</b> {{ s.set_blurb | default: 'A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer.' }}</span>
+                  </span>
+                {%- endif -%}
               </label>
             {%- endfor -%}
           </div>
@@ -304,40 +304,66 @@
 .gb-product .gb-field__label{font-weight:800;font-size:15px;letter-spacing:.02em}
 .gb-product .gb-field__label b{font-weight:600;color:var(--dim)}
 
-.gb-product .gb-swatches{display:flex;gap:10px;flex-wrap:wrap}
-.gb-product .gb-swatch{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 18px 0 12px;border-radius:999px;border:2px solid var(--stone-2);background:#fff;color:var(--ink);font:inherit;font-weight:700;font-size:16px;cursor:pointer}
-.gb-product .gb-swatch__dot{width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)}
-.gb-product .gb-swatch[aria-pressed="true"]{border-color:var(--ink)}
-.gb-product .gb-swatch[aria-pressed="true"] .gb-swatch__name::after{content:" \2713";color:var(--leaf)}
-.gb-product .gb-swatch:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.gb-product .gb-swatches{display:flex;gap:12px;flex-wrap:wrap}
+.gb-product .gb-swatch{display:inline-flex;align-items:center;gap:12px;min-height:56px;padding:0 20px 0 12px;border-radius:999px;border:3px solid var(--stone-2);background:#fff;color:var(--ink);font-family:var(--font-h);font-weight:800;font-size:17px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.gb-product .gb-swatch__chip{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.45),0 1px 2px rgba(43,36,25,.35)}
+.gb-product .gb-swatch__tick{width:18px;height:18px;background:no-repeat center/18px url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>");opacity:0}
+.gb-product .gb-swatch[aria-pressed="true"]{border-color:var(--brown);box-shadow:0 2px 0 var(--brown)}
+.gb-product .gb-swatch[aria-pressed="true"] .gb-swatch__tick{opacity:1}
+.gb-product .gb-swatch:focus-visible{outline:3px solid var(--brown);outline-offset:3px}
 
-.gb-product .gb-packs{display:grid;gap:10px}
-.gb-product .gb-pack{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:16px 18px;background:#fff;border:2px solid var(--stone-2);border-radius:var(--radius);cursor:pointer;transition:border-color .12s}
-.gb-product .gb-pack.is-selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.gb-product .gb-pack.is-soldout{opacity:.6}
+/* ===== bundle cards: deep brown ground, yellow money ===== */
+.gb-product .gb-packs{display:grid;gap:14px}
+.gb-product .gb-pack{position:relative;display:grid;gap:12px;padding:20px 20px 18px;background:var(--brown-2);color:var(--brown-ink);border:3px solid rgba(246,238,226,.16);border-radius:16px;cursor:pointer;box-shadow:0 6px 18px rgba(43,36,25,.22);transition:border-color .15s,box-shadow .15s,transform .1s}
+.gb-product .gb-pack::before{content:"";position:absolute;inset:0;border-radius:13px;background:rgba(251,247,238,.16);pointer-events:none;transition:opacity .15s}
+.gb-product .gb-pack.is-selected::before{opacity:0}
+.gb-product .gb-pack.is-selected{border-color:var(--yellow);box-shadow:0 0 0 6px rgba(255,199,44,.28),0 10px 26px rgba(43,36,25,.3)}
+.gb-product .gb-pack:hover{border-color:rgba(255,199,44,.6)}
+.gb-product .gb-pack > *{position:relative;z-index:1}
+
+.gb-product .gb-pack__flag{position:absolute;z-index:2;top:-14px;left:18px;background:var(--yellow);color:var(--yellow-ink);font-family:var(--font-h);font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:8px;box-shadow:0 3px 0 var(--yellow-2)}
+
 .gb-product .gb-pack__radio{position:absolute;opacity:0;width:1px;height:1px;margin:0}
-.gb-product .gb-pack__radio:focus-visible ~ .gb-pack__mark{outline:3px solid var(--sky);outline-offset:2px}
-.gb-product .gb-pack__mark{width:24px;height:24px;border-radius:50%;border:2px solid var(--bark);display:grid;place-items:center}
-.gb-product .gb-pack.is-selected .gb-pack__mark{border-color:var(--accent)}
-.gb-product .gb-pack.is-selected .gb-pack__mark::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--accent)}
-.gb-product .gb-pack__body{display:grid;gap:3px;min-width:0}
-.gb-product .gb-pack__top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.gb-product .gb-pack__name{font-weight:800;font-size:18px}
-.gb-product .gb-pack__each{color:var(--dim);font-size:14px;min-height:1em}
+.gb-product .gb-pack__radio:focus-visible ~ .gb-pack__head .gb-pack__mark{outline:3px solid var(--yellow);outline-offset:3px}
+.gb-product .gb-pack__head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;min-height:48px}
+.gb-product .gb-pack__mark{width:28px;height:28px;border-radius:50%;border:3px solid rgba(246,238,226,.6);display:grid;place-items:center}
+.gb-product .gb-pack.is-selected .gb-pack__mark{border-color:var(--yellow)}
+.gb-product .gb-pack.is-selected .gb-pack__mark::after{content:"";width:14px;height:14px;border-radius:50%;background:var(--yellow)}
+.gb-product .gb-pack__body{display:grid;gap:2px;min-width:0}
+.gb-product .gb-pack__name{font-family:var(--font-h);font-weight:800;font-size:20px;line-height:1.2;color:var(--brown-ink)}
+.gb-product .gb-pack__each{color:#D9CBB8;font-size:15px}
 .gb-product .gb-pack__each:empty{display:none}
-.gb-product .gb-pack__extra{display:flex;gap:10px;align-items:center;margin-top:8px;padding:8px 10px;background:var(--stone);border-radius:10px;font-size:14px;color:var(--dim);line-height:1.35}
-.gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 52px;width:52px;height:52px;border-radius:8px;object-fit:cover;background:var(--lettuce)}
-.gb-product .gb-pack__extra b{color:var(--ink)}
-.gb-product .gb-pack__price{display:grid;justify-items:end;gap:3px;text-align:right}
-.gb-product .gb-pack__now{font-weight:800;font-size:20px}
-.gb-product .gb-pack__was{color:var(--dim);font-size:14px}
-.gb-product .gb-pack__so{font-size:13px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
 
-.gb-product .gb-buy__add{width:100%;min-height:62px;font-size:19px}
-.gb-product .gb-buy__dot{opacity:.7}
+.gb-product .gb-pack__price{display:grid;justify-items:end;gap:4px;text-align:right}
+.gb-product .gb-pack__now{font-family:var(--font-h);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.01em;color:var(--yellow)}
+.gb-product .gb-pack__was{color:#C9BAA6;font-size:15px;font-weight:600}
+.gb-product .gb-pack__save{background:var(--yellow);color:var(--yellow-ink);font-size:13px;font-weight:800;letter-spacing:.04em;padding:5px 12px;border-radius:6px;transform:rotate(-2deg);box-shadow:0 2px 0 var(--yellow-2)}
+.gb-product .gb-pack__so{font-family:var(--font-h);font-size:14px;font-weight:800;color:var(--brown-ink);text-transform:uppercase;letter-spacing:.08em}
+.gb-product .gb-pack.is-soldout .gb-pack__now{text-decoration:line-through;color:#D9CBB8}
+.gb-product .gb-pack.is-soldout{cursor:not-allowed;box-shadow:none}
+.gb-product .gb-pack.is-soldout::before{opacity:1}
+
+.gb-product .gb-pack__extra{display:flex;gap:12px;align-items:center;padding:12px;background:#3E2C1B;border:1px solid rgba(246,238,226,.14);border-radius:12px;font-size:15px;line-height:1.4;color:#E4D7C6}
+.gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 60px;width:60px;height:60px;border-radius:10px;object-fit:cover}
+.gb-product .gb-pack__extra-ph{background:repeating-linear-gradient(135deg,#4A3623 0 8px,#3E2C1B 8px 16px);box-shadow:inset 0 0 0 2px var(--yellow);display:block}
+.gb-product .gb-pack__extra b{display:block;font-family:var(--font-h);font-weight:800;color:var(--yellow);font-size:16px}
+
 .gb-product .gb-trust{list-style:none;margin:0;padding:0;display:flex;gap:6px 18px;flex-wrap:wrap;color:var(--dim);font-size:15px;font-weight:600}
 .gb-product .gb-trust li{display:flex;gap:8px;align-items:center}
 .gb-product .gb-trust li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--leaf);flex:0 0 8px}
+
+@media(max-width:520px){
+  .gb-product .gb-pack__head{grid-template-columns:auto 1fr;row-gap:10px}
+  .gb-product .gb-pack__price{grid-column:1 / -1;justify-items:start;text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+  .gb-product .gb-pack,.gb-product .gb-swatch,.gb-product .gb-pack::before,.gb-product .gb-buy__add{transition:none}
+  .gb-product .gb-pack__save{transform:none}
+}
+
+.gb-product .gb-buy__add{width:100%;min-height:60px;font-family:var(--font-h);font-size:20px;font-weight:800;letter-spacing:.01em;box-shadow:0 4px 0 var(--accent-2)}
+.gb-product .gb-buy__add:focus-visible{outline:3px solid var(--brown);outline-offset:3px}
+.gb-product .gb-buy__dot{opacity:.7}
 {% endstylesheet %}
 
 {% javascript %}
