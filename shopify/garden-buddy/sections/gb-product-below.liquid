@@ -104,33 +104,58 @@
   </section>
   {%- endif -%}
 
-  {%- comment -%} c. Feature rows {%- endcomment -%}
+  {%- comment -%} c. Feature rows — the GIF explainer. Full-bleed alternating bands. {%- endcomment -%}
   {%- if feature_n > 0 -%}
-  <section class="gb-sec gb-sec--stone" id="features">
-    <div class="gb-wrap gb-features">
-      {%- assign k = 0 -%}
-      {%- for block in section.blocks -%}
-        {%- if block.type != 'feature' -%}{%- continue -%}{%- endif -%}
-        {%- assign b = block.settings -%}
-        {%- assign k = k | plus: 1 -%}
-        {%- assign flip = k | modulo: 2 -%}
-        <div class="gb-feature{% if flip == 0 %} gb-feature--flip{% endif %}" {{ block.shopify_attributes }}>
-          <div class="gb-slot gb-slot--square">
-            {%- if b.image != blank -%}
-              <img class="gb-slot__media" src="{{ b.image | image_url: width: 1200 }}" alt="{{ b.image.alt | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy">
-            {%- else -%}
-              <div class="gb-ph gb-slot__media"><span>{{ b.placeholder | default: 'Add a photo' }}<small>Photo</small></span></div>
+  <div id="features">
+    {%- assign k = 0 -%}
+    {%- for block in section.blocks -%}
+      {%- if block.type != 'feature' -%}{%- continue -%}{%- endif -%}
+      {%- liquid
+        assign b = block.settings
+        assign k = k | plus: 1
+        assign tone = k | modulo: 3
+        case tone
+          when 1
+            assign band = 'gb-sec--stone'
+          when 2
+            assign band = 'gb-sec--brown'
+          else
+            assign band = 'gb-sec--lettuce'
+        endcase
+        assign flip = k | modulo: 2
+        assign num = k | prepend: '0' | slice: -2, 2
+      -%}
+      <section class="gb-sec gb-feat {{ band }}{% if flip == 0 %} gb-feat--flip{% endif %}" {{ block.shopify_attributes }}>
+        <div class="gb-wrap gb-feat__in">
+          <figure class="gb-feat__media">
+            <div class="gb-feat__frame">
+              {%- if b.image != blank -%}
+                <img src="{{ b.image | image_url: width: 1000 }}" alt="{{ b.image.alt | default: b.heading | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy" decoding="async">
+              {%- else -%}
+                <div class="gb-ph"><span>{{ b.placeholder | default: 'Add a photo or GIF' }}<small>Square, animated GIF works here</small></span></div>
+              {%- endif -%}
+            </div>
+            {%- if b.caption != blank -%}
+              <figcaption>{{ b.caption | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</figcaption>
             {%- endif -%}
-          </div>
-          <div class="gb-feature__body">
-            {%- if b.eyebrow != blank -%}<p class="gb-eyebrow">{{ b.eyebrow }}</p>{%- endif -%}
+          </figure>
+          <div class="gb-feat__body">
+            <p class="gb-feat__n"><span>{{ num }}</span>{% if b.eyebrow != blank %}{{ b.eyebrow }}{% endif %}</p>
             <h2 class="gb-h2">{{ b.heading }}</h2>
             <p class="gb-lede">{{ b.text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+            {%- if b.points != blank -%}
+              <ul class="gb-feat__pts">
+                {%- assign pts = b.points | split: '|' -%}
+                {%- for pt in pts -%}
+                  <li class="gb-check">{{ pt | strip | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
           </div>
         </div>
-      {%- endfor -%}
-    </div>
-  </section>
+      </section>
+    {%- endfor -%}
+  </div>
   {%- endif -%}
 
   {%- comment -%} d. Comparison table {%- endcomment -%}
@@ -353,13 +378,28 @@
 .gb-pb .gb-step__body p{color:var(--dim)}
 
 /* c. features */
-.gb-pb .gb-features{display:grid;gap:clamp(40px,6vw,80px)}
-.gb-pb .gb-feature{display:grid;gap:clamp(20px,3vw,48px);align-items:center}
-@media(min-width:900px){
-  .gb-pb .gb-feature{grid-template-columns:1fr 1fr}
-  .gb-pb .gb-feature--flip .gb-slot{order:2}
+.gb-pb .gb-feat{border-top:0}
+.gb-pb .gb-feat + .gb-feat{border-top:0}
+.gb-pb .gb-feat__in{display:grid;gap:clamp(24px,4vw,64px);align-items:center}
+@media(min-width:860px){
+  .gb-pb .gb-feat__in{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .gb-pb .gb-feat--flip .gb-feat__media{order:2}
 }
-.gb-pb .gb-feature__body .gb-lede{max-width:48ch}
+.gb-pb .gb-feat__media{margin:0;display:grid;gap:12px}
+.gb-pb .gb-feat__frame{position:relative;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 14px 40px rgba(43,36,25,.16)}
+.gb-pb .gb-feat__frame img{width:100%;height:auto;aspect-ratio:1;object-fit:cover;display:block}
+.gb-pb .gb-feat__frame .gb-ph{aspect-ratio:1}
+.gb-pb .gb-feat--flip .gb-feat__frame{transform:rotate(-.5deg)}
+.gb-pb .gb-feat__media figcaption{font-size:14px;font-weight:600;color:var(--dim);text-align:center;padding-inline:8px}
+.gb-pb .gb-sec--brown .gb-feat__media figcaption{color:#C9B9A5}
+.gb-pb .gb-feat__body{display:grid;gap:14px;align-content:start}
+.gb-pb .gb-feat__n{display:flex;align-items:center;gap:12px;margin:0;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--bark)}
+.gb-pb .gb-sec--brown .gb-feat__n{color:#E7C39A}
+.gb-pb .gb-feat__n span{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;font-size:15px;letter-spacing:0}
+.gb-pb .gb-feat__body .gb-lede{max-width:46ch;margin:0}
+.gb-pb .gb-feat__pts{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:10px;font-size:16px}
+.gb-pb .gb-sec--brown .gb-feat__pts .gb-check::before{background-color:#8FBF5E}
+@media(max-width:859px){.gb-pb .gb-feat__frame{max-width:460px;margin-inline:auto}}
 
 /* d. compare */
 .gb-pb .gb-cmp{width:100%;min-width:560px;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden}
@@ -521,7 +561,9 @@
         { "type": "text", "id": "heading", "label": "Heading", "default": "The handles are the point" },
         { "type": "textarea", "id": "text", "label": "Text", "default": "Getting down is easy. Getting up off the ground is the hard part. The steel frame gives you something to push on." },
         { "type": "image_picker", "id": "image", "label": "Photo" },
-        { "type": "text", "id": "placeholder", "label": "Empty slot label", "default": "Photo: hands on the handles" }
+        { "type": "text", "id": "placeholder", "label": "Empty slot label", "default": "Photo: hands on the handles" },
+        { "type": "text", "id": "caption", "label": "Caption under the media", "info": "One line saying what the clip shows." },
+        { "type": "textarea", "id": "points", "label": "Bullet points", "info": "Separate each point with a | character. Leave empty for none." }
       ]
     },
     {
