@@ -111,8 +111,16 @@
               assign pkey = 'ugc_ph_' | append: i
             -%}
             <figure class="gb-ugc__media">
+              {%- liquid
+                assign skey = 'ugc_src_' | append: i
+                assign pskey = 'ugc_poster_' | append: i
+              -%}
               {%- if s[vkey] != blank -%}
                 {{ s[vkey] | video_tag: image_size: '700x', controls: true, playsinline: true, preload: 'metadata', class: 'gb-ugc__vid' }}
+              {%- elsif s[skey] != blank -%}
+                <video class="gb-ugc__vid" controls playsinline preload="metadata"{% if s[pskey] != blank %} poster="{{ s[pskey] | image_url: width: 700 }}"{% endif %}>
+                  <source src="{{ s[skey] }}" type="video/mp4">
+                </video>
               {%- else -%}
                 <div class="gb-ph gb-ugc__ph"><span>{{ s[pkey] }}<small>Upload a clip in the theme editor</small></span></div>
               {%- endif -%}
@@ -878,12 +886,18 @@
     { "type": "textarea", "id": "ugc_text", "label": "Text", "default": "One take, no edit. Kneeling down, standing back up, and flipping it over into a seat." },
     { "type": "video", "id": "ugc_video_1", "label": "Video 1" },
     { "type": "text", "id": "ugc_caption_1", "label": "Caption 1" },
+    { "type": "text", "id": "ugc_src_1", "label": "Video 1 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
+    { "type": "image_picker", "id": "ugc_poster_1", "label": "Video 1 poster" },
     { "type": "text", "id": "ugc_ph_1", "label": "Placeholder 1", "default": "Clip 1" },
     { "type": "video", "id": "ugc_video_2", "label": "Video 2" },
     { "type": "text", "id": "ugc_caption_2", "label": "Caption 2" },
+    { "type": "text", "id": "ugc_src_2", "label": "Video 2 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
+    { "type": "image_picker", "id": "ugc_poster_2", "label": "Video 2 poster" },
     { "type": "text", "id": "ugc_ph_2", "label": "Placeholder 2", "default": "Clip 2" },
     { "type": "video", "id": "ugc_video_3", "label": "Video 3" },
     { "type": "text", "id": "ugc_caption_3", "label": "Caption 3" },
+    { "type": "text", "id": "ugc_src_3", "label": "Video 3 file URL", "info": "Direct .mp4 link from Shopify Files. Used when no video is picked above." },
+    { "type": "image_picker", "id": "ugc_poster_3", "label": "Video 3 poster" },
     { "type": "text", "id": "ugc_ph_3", "label": "Placeholder 3", "default": "Clip 3" },
     { "type": "header", "content": "Trust strip" },
     { "type": "text", "id": "strip_1_title", "label": "Item 1", "default": "2-5 Day Shipping" },
