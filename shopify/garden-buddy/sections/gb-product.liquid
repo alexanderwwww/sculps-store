@@ -1,8 +1,9 @@
 {%- comment -%}
-  GARDEN BUDDY — buy box, above the fold.
-  Pack (1 Kneeler / Kneeler + Tool Set / 2 Kneelers + Tool Set) x Color (Blue / Brown). Cards are one per pack value, read from the variants.
-  Prices, compare-at and availability come from the variants. Nothing is hardcoded.
+  GARDEN BUDDY — product buy box.
+  Pack (1 Kneeler / Kneeler + Tool Set / 2 Kneelers + Tool Set) x Color (Blue / Brown).
+  Prices, compare-at and availability ALWAYS come from the variants. Nothing is hardcoded.
   Anything written as [ LIKE THIS ] in a text setting renders as a highlighted fill span.
+  No ratings, review counts or urgency are rendered unless the merchant types them in.
 {%- endcomment -%}
 {{ 'gb.css' | asset_url | stylesheet_tag }}
 
@@ -34,7 +35,7 @@
 
   comment
     Preselect: URL ?variant= wins. Else the 2nd pack in the first colour when it is
-    in stock (that is the card flagged as our pick). Else first available.
+    in stock (that is the card carrying the flag). Else first available.
   endcomment
   assign selected = blank
   if product.selected_variant
@@ -59,10 +60,15 @@
 
   assign sel_pack = selected.options[pack_idx]
   assign sel_color = selected.options[color_idx]
-  assign eyebrow = product.type | default: 'Garden kneeler seat'
-  assign ph_captions = 'Clean product shot|Kneeling, in the garden|Flipped into a stool|Folded flat, carried by the handle|Pad and pouches, close' | split: '|'
+
+  assign subtitle = s.subtitle
+  if subtitle == blank
+    assign subtitle = product.description | split: '</p>' | first | strip_html | strip
+  endif
+
+  assign ph_captions = 'Clean product shot|Kneeling, in the garden|Flipped into a stool|Folded flat, carried by the handle|Pad and pouches, close|The tool set, laid out' | split: '|'
   assign media_n = product.media.size
-  assign ph_pad = 5 | minus: media_n
+  assign ph_pad = 6 | minus: media_n
 -%}
 
 <div class="gb gb-product" data-gb-product>
@@ -70,63 +76,123 @@
 
     {%- comment -%} ============ GALLERY ============ {%- endcomment -%}
     <div class="gb-gal">
-      <div class="gb-gal__frame">
-        <div class="gb-gal__track" data-gb-track aria-label="Product photos">
+      <div class="gb-gal__stage">
+        <div class="gb-gal__thumbs" role="tablist" aria-label="Choose a photo">
           {%- for media in product.media -%}
-            <div class="gb-gal__slide" data-media-id="{{ media.id }}">
-              {%- case media.media_type -%}
-                {%- when 'video' -%}
-                  {{ media | video_tag: autoplay: true, loop: true, muted: true, controls: true, playsinline: true, image_size: '1200x' }}
-                {%- when 'external_video' -%}
-                  {{ media | external_video_tag }}
-                {%- when 'model' -%}
-                  {{ media | model_viewer_tag }}
-                {%- else -%}
-                  <img
-                    src="{{ media | image_url: width: 1400 }}"
-                    srcset="{{ media | image_url: width: 700 }} 700w, {{ media | image_url: width: 1000 }} 1000w, {{ media | image_url: width: 1400 }} 1400w"
-                    sizes="(min-width: 1000px) 55vw, 100vw"
-                    alt="{{ media.alt | default: product.title | escape }}"
-                    width="{{ media.width | default: 1400 }}" height="{{ media.height | default: 1400 }}"
-                    {% unless forloop.first %}loading="lazy"{% endunless %}>
-              {%- endcase -%}
-            </div>
+            <button type="button" class="gb-gal__thumb" role="tab" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" data-media-id="{{ media.id }}" aria-label="{{ media.alt | default: product.title | escape }}">
+              <img src="{{ media.preview_image | image_url: width: 200 }}" alt="" width="200" height="200" loading="lazy">
+            </button>
           {%- endfor -%}
           {%- if ph_pad > 0 -%}
             {%- for i in (1..ph_pad) -%}
-              {%- assign ph_i = media_n | plus: forloop.index0 | modulo: 5 -%}
-              <div class="gb-gal__slide" data-media-id="ph{{ i }}">
-                <div class="gb-ph gb-gal__ph"><span>{{ ph_captions[ph_i] }}<small>Photo coming</small></span></div>
-              </div>
+              {%- assign n = media_n | plus: forloop.index -%}
+              <button type="button" class="gb-gal__thumb gb-gal__thumb--ph" role="tab" aria-selected="{% if n == 1 %}true{% else %}false{% endif %}" data-media-id="ph{{ i }}" aria-label="Photo {{ n }} coming">{{ n }}</button>
             {%- endfor -%}
           {%- endif -%}
         </div>
-        <button type="button" class="gb-gal__arrow gb-gal__arrow--prev" data-gb-prev aria-label="Previous photo">&#8249;</button>
-        <button type="button" class="gb-gal__arrow gb-gal__arrow--next" data-gb-next aria-label="Next photo">&#8250;</button>
+
+        <div class="gb-gal__frame">
+          <div class="gb-gal__track" data-gb-track aria-label="Product photos">
+            {%- for media in product.media -%}
+              <div class="gb-gal__slide" data-media-id="{{ media.id }}">
+                {%- case media.media_type -%}
+                  {%- when 'video' -%}
+                    {{ media | video_tag: autoplay: true, loop: true, muted: true, controls: true, playsinline: true, image_size: '1200x' }}
+                  {%- when 'external_video' -%}
+                    {{ media | external_video_tag }}
+                  {%- when 'model' -%}
+                    {{ media | model_viewer_tag }}
+                  {%- else -%}
+                    <img
+                      src="{{ media | image_url: width: 1400 }}"
+                      srcset="{{ media | image_url: width: 700 }} 700w, {{ media | image_url: width: 1000 }} 1000w, {{ media | image_url: width: 1400 }} 1400w"
+                      sizes="(min-width: 1000px) 50vw, 100vw"
+                      alt="{{ media.alt | default: product.title | escape }}"
+                      width="{{ media.width | default: 1400 }}" height="{{ media.height | default: 1400 }}"
+                      {% unless forloop.first %}loading="lazy"{% endunless %}>
+                {%- endcase -%}
+              </div>
+            {%- endfor -%}
+            {%- if ph_pad > 0 -%}
+              {%- for i in (1..ph_pad) -%}
+                {%- assign ph_i = media_n | plus: forloop.index0 | modulo: 6 -%}
+                <div class="gb-gal__slide" data-media-id="ph{{ i }}">
+                  <div class="gb-ph gb-gal__ph"><span>{{ ph_captions[ph_i] }}<small>Photo coming</small></span></div>
+                </div>
+              {%- endfor -%}
+            {%- endif -%}
+          </div>
+
+          {%- if s.hero_script != blank -%}
+            <p class="gb-gal__script gb-script">{{ s.hero_script }}</p>
+          {%- endif -%}
+          {%- if s.hero_badge != blank -%}
+            <p class="gb-gal__badge">{{ s.hero_badge }}</p>
+          {%- endif -%}
+
+          <button type="button" class="gb-gal__arrow gb-gal__arrow--prev" data-gb-prev aria-label="Previous photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <button type="button" class="gb-gal__arrow gb-gal__arrow--next" data-gb-next aria-label="Next photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
 
-      <div class="gb-gal__thumbs" role="tablist" aria-label="Choose a photo">
-        {%- for media in product.media -%}
-          <button type="button" class="gb-gal__thumb" role="tab" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" data-media-id="{{ media.id }}" aria-label="{{ media.alt | default: product.title | escape }}">
-            <img src="{{ media.preview_image | image_url: width: 160 }}" alt="" width="160" height="160" loading="lazy">
-          </button>
-        {%- endfor -%}
-        {%- if ph_pad > 0 -%}
-          {%- for i in (1..ph_pad) -%}
-            {%- assign n = media_n | plus: forloop.index -%}
-            <button type="button" class="gb-gal__thumb gb-gal__thumb--ph" role="tab" aria-selected="{% if n == 1 %}true{% else %}false{% endif %}" data-media-id="ph{{ i }}" aria-label="Photo {{ n }} coming">{{ n }}</button>
+      {%- assign usp_n = 0 -%}
+      {%- for block in section.blocks -%}{%- if block.type == 'usp' -%}{%- assign usp_n = usp_n | plus: 1 -%}{%- endif -%}{%- endfor -%}
+      {%- if usp_n > 0 -%}
+        <ul class="gb-usps">
+          {%- assign shown = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'usp' -%}{%- continue -%}{%- endif -%}
+            {%- assign shown = shown | plus: 1 -%}
+            {%- if shown > 5 -%}{%- break -%}{%- endif -%}
+            <li class="gb-usp" {{ block.shopify_attributes }}>
+              <span class="gb-usp__ring" aria-hidden="true">
+                {%- case block.settings.icon -%}
+                  {%- when 'shield' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8.1-7 10-4-1.9-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+                  {%- when 'cushion' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="9" rx="4"/><path d="M3 12.5h18"/><path d="M7 8V6.5M17 8V6.5"/></svg>
+                  {%- when 'tools' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a3.5 3.5 0 004.8 4.5l-9 9a2.1 2.1 0 01-3-3l9-9a3.5 3.5 0 00-1.8-1.5z"/><path d="M5 5l4 4"/></svg>
+                  {%- when 'carry' -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M9 9V6.5A3 3 0 0115 6.5V9"/></svg>
+                  {%- else -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v6a5 5 0 005 5h5"/><path d="M17 12l3 3-3 3"/><path d="M5 20h4"/></svg>
+                {%- endcase -%}
+              </span>
+              <span class="gb-usp__label">{{ block.settings.label | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
+            </li>
           {%- endfor -%}
-        {%- endif -%}
-      </div>
+        </ul>
+      {%- endif -%}
     </div>
 
     {%- comment -%} ============ BUY COLUMN ============ {%- endcomment -%}
     <div class="gb-buy" id="gb-buy">
-      <p class="gb-eyebrow">{{ eyebrow }}</p>
-      <h1 class="gb-h1">{{ product.title }}</h1>
+      {%- comment -%} No default rating. Blank unless the merchant types real numbers. {%- endcomment -%}
+      {%- if s.rating_text != blank or s.rating_count != blank -%}
+        <p class="gb-rating">
+          <span class="gb-rating__stars" aria-hidden="true">
+            {%- for i in (1..5) -%}
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>
+            {%- endfor -%}
+          </span>
+          {%- if s.rating_text != blank -%}<span class="gb-rating__txt">{{ s.rating_text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>{%- endif -%}
+          {%- if s.rating_count != blank -%}<span class="gb-rating__count">{{ s.rating_count | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>{%- endif -%}
+        </p>
+      {%- endif -%}
+
+      <h1 class="gb-h1 gb-buy__title">{{ product.title }}</h1>
+
+      {%- if subtitle != blank -%}
+        <p class="gb-buy__sub">{{ subtitle | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+      {%- endif -%}
 
       <ul class="gb-buy__bullets">
-        {%- for i in (1..3) -%}
+        {%- for i in (1..5) -%}
           {%- assign key = 'bullet_' | append: i -%}
           {%- assign line = s[key] -%}
           {%- if line != blank -%}
@@ -140,8 +206,8 @@
 
         {%- if colors.size > 0 -%}
           <div class="gb-field">
-            <p class="gb-field__label">Colour: <b data-gb-color-name>{{ sel_color }}</b></p>
-            <div class="gb-swatches" role="group" aria-label="Colour">
+            <p class="gb-field__label">Color: <b data-gb-color-name>{{ sel_color }}</b></p>
+            <div class="gb-swatches" role="group" aria-label="Color">
               {%- for c in colors -%}
                 {%- assign cl = c | downcase -%}
                 {%- assign hex = '#B9B1A2' -%}
@@ -150,7 +216,7 @@
                 {%- elsif cl contains 'green' -%}{%- assign hex = '#4F8A2E' -%}
                 {%- elsif cl contains 'black' -%}{%- assign hex = '#2B2419' -%}
                 {%- endif -%}
-                <button type="button" class="gb-swatch" data-gb-color="{{ c | escape }}" aria-pressed="{% if c == sel_color %}true{% else %}false{% endif %}">
+                <button type="button" class="gb-swatch" data-gb-color="{{ c | escape }}" aria-pressed="{% if c == sel_color %}true{% else %}false{% endif %}" aria-label="{{ c | escape }}">
                   <span class="gb-swatch__chip" style="background:{{ hex }}" aria-hidden="true"><span class="gb-swatch__tick"></span></span>
                   <span class="gb-swatch__name">{{ c }}</span>
                 </button>
@@ -160,8 +226,8 @@
         {%- endif -%}
 
         <div class="gb-field">
-          <p class="gb-field__label">{{ s.pick_label | default: 'Pick your bundle' }}</p>
-          <div class="gb-packs" role="radiogroup" aria-label="{{ s.pick_label | default: 'Pick your bundle' | escape }}">
+          <p class="gb-field__label gb-field__label--big">{{ s.pick_label | default: 'Choose Your Bundle' }}</p>
+          <div class="gb-packs" role="radiogroup" aria-label="{{ s.pick_label | default: 'Choose Your Bundle' | escape }}">
             {%- for pack in packs -%}
               {%- liquid
                 assign pv = blank
@@ -174,7 +240,7 @@
                   endif
                 endfor
                 assign n = pack | split: ' ' | first | plus: 0
-                if n < 1 or pack contains '+'
+                if n < 1
                   assign n = 1
                 endif
                 assign has_set = false
@@ -197,20 +263,30 @@
                 if forloop.index == 2
                   assign flag = s.flag_2
                 endif
+                assign incl = pack
+                if n > 1
+                  assign incl = n | append: ' kneeler seats'
+                else
+                  assign incl = '1 kneeler seat'
+                endif
+                if has_set
+                  assign incl = incl | append: ' + the tool set'
+                endif
               -%}
-              <label class="gb-pack{% if is_sel %} is-selected{% endif %}{% unless avail %} is-soldout{% endunless %}" data-gb-pack="{{ pack | escape }}" data-units="{{ n }}" data-variant-id="{{ pv.id }}">
+              <label class="gb-pack{% if is_sel %} is-selected{% endif %}{% unless avail %} is-soldout{% endunless %}{% if flag != blank %} is-flagged{% endif %}" data-gb-pack="{{ pack | escape }}" data-units="{{ n }}" data-variant-id="{{ pv.id }}">
                 <input type="radio" name="gb-pack" value="{{ pack | escape }}" {% if is_sel %}checked{% endif %} class="gb-pack__radio">
                 {%- if flag != blank -%}<span class="gb-pack__flag">{{ flag }}</span>{%- endif -%}
                 <span class="gb-pack__head">
                   <span class="gb-pack__mark" aria-hidden="true"></span>
                   <span class="gb-pack__body">
                     <span class="gb-pack__name">{{ pack }}</span>
+                    <span class="gb-pack__incl">{{ incl }}</span>
                     <span class="gb-pack__each" data-gb-each>{% if n > 1 and pv != blank %}{{ pv.price | divided_by: n | money }} each{% endif %}</span>
                   </span>
                   <span class="gb-pack__price">
-                    <span class="gb-pack__now" data-gb-now>{% if pv != blank %}{{ pv.price | money }}{% endif %}</span>
                     <s class="gb-pack__was" data-gb-was {% if save <= 0 %}hidden{% endif %}>{% if save > 0 %}{{ pv.compare_at_price | money }}{% endif %}</s>
-                    <span class="gb-pill gb-pack__save" data-gb-save {% if save <= 0 %}hidden{% endif %}>{% if save > 0 %}Save {{ save | money }}{% endif %}</span>
+                    <span class="gb-pack__now" data-gb-now>{% if pv != blank %}{{ pv.price | money }}{% endif %}</span>
+                    <span class="gb-pack__save" data-gb-save {% if save <= 0 %}hidden{% endif %}>{% if save > 0 %}Save {{ save | money }}{% endif %}</span>
                     <span class="gb-pack__so" data-gb-so {% if avail %}hidden{% endif %}>Sold out</span>
                   </span>
                 </span>
@@ -225,7 +301,8 @@
           </div>
         </div>
 
-        <button type="submit" class="gb-btn gb-btn--accent gb-buy__add" data-gb-add {% unless selected.available %}disabled{% endunless %}>
+        <button type="submit" class="gb-buy__add" data-gb-add {% unless selected.available %}disabled{% endunless %}>
+          <svg class="gb-buy__cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 3.5h2.2l2.3 11.2h10.3"/><path d="M6.4 6.6h14l-1.6 6.4H7.7"/><circle cx="9.5" cy="19.2" r="1.5"/><circle cx="17.5" cy="19.2" r="1.5"/></svg>
           <span data-gb-add-label>{% if selected.available %}Add to cart{% else %}Sold out{% endif %}</span>
           <span class="gb-buy__dot" aria-hidden="true">&middot;</span>
           <span data-gb-add-price>{{ selected.price | money }}</span>
@@ -236,10 +313,27 @@
             {%- assign key = 'trust_' | append: i -%}
             {%- assign line = s[key] -%}
             {%- if line != blank -%}
-              <li>{{ line | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>
+              <li>
+                <span class="gb-trust__ic" aria-hidden="true">
+                  {%- if i == 1 -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 10h4l3 3v2.5h-7z"/><circle cx="6.5" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg>
+                  {%- elsif i == 2 -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8.1-7 10-4-1.9-7-5.6-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+                  {%- else -%}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+                  {%- endif -%}
+                </span>
+                <span>{{ line | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
+              </li>
             {%- endif -%}
           {%- endfor -%}
         </ul>
+
+        {%- if shop.enabled_payment_types.size > 0 -%}
+          <div class="gb-pay" aria-label="Accepted payment methods">
+            {% for type in shop.enabled_payment_types %}{{ type | payment_type_svg_tag }}{% endfor %}
+          </div>
+        {%- endif -%}
       {%- endform -%}
     </div>
   </div>
@@ -271,97 +365,135 @@
 {% stylesheet %}
 .gb-product{padding:clamp(16px,3vw,40px) 0 clamp(40px,5vw,64px)}
 .gb-product p{margin:0}
-.gb-product .gb-product__grid{display:grid;gap:clamp(22px,4vw,56px)}
-@media(min-width:1000px){.gb-product .gb-product__grid{grid-template-columns:minmax(0,1.1fr) minmax(400px,.9fr);align-items:start}}
+.gb-product .gb-product__grid{display:grid;gap:clamp(24px,4vw,52px)}
+@media(min-width:1000px){.gb-product .gb-product__grid{grid-template-columns:minmax(0,55fr) minmax(400px,45fr);align-items:start}}
 
-/* gallery */
-.gb-product .gb-gal{display:grid;gap:10px}
+/* ===== gallery ===== */
+.gb-product .gb-gal{display:grid;gap:16px}
 @media(min-width:1000px){.gb-product .gb-gal{position:sticky;top:84px}}
-.gb-product .gb-gal__frame{position:relative;border-radius:var(--radius);overflow:hidden;background:var(--stone)}
+.gb-product .gb-gal__stage{display:grid;gap:12px}
+@media(min-width:1000px){.gb-product .gb-gal__stage{grid-template-columns:76px minmax(0,1fr)}}
+
+.gb-product .gb-gal__frame{position:relative;border-radius:var(--radius);overflow:hidden;background:var(--sand)}
 .gb-product .gb-gal__track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;aspect-ratio:1}
 .gb-product .gb-gal__track::-webkit-scrollbar{display:none}
+.gb-product .gb-gal__track:focus-visible{outline:3px solid var(--leaf);outline-offset:-3px}
 .gb-product .gb-gal__slide{position:relative;flex:0 0 100%;scroll-snap-align:start;aspect-ratio:1}
 .gb-product .gb-gal__slide img,.gb-product .gb-gal__slide video,.gb-product .gb-gal__slide iframe,.gb-product .gb-gal__slide model-viewer{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0}
 .gb-product .gb-gal__ph{position:absolute;inset:0;font-size:16px}
-.gb-product .gb-gal__arrow{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:var(--ink);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 2px 10px rgba(43,36,25,.18);display:grid;place-items:center;padding:0 0 3px}
-.gb-product .gb-gal__arrow:hover{background:#fff}
-.gb-product .gb-gal__arrow--prev{left:12px}.gb-product .gb-gal__arrow--next{right:12px}
-.gb-product .gb-gal__thumbs{display:flex;gap:8px;flex-wrap:wrap}
-.gb-product .gb-gal__thumb{flex:0 0 64px;width:64px;height:64px;padding:0;border-radius:8px;border:2px solid transparent;background:var(--stone);overflow:hidden;cursor:pointer;display:grid;place-items:center;font-weight:800;color:var(--bark);font-size:14px}
-.gb-product .gb-gal__thumb img{width:100%;height:100%;object-fit:cover}
-.gb-product .gb-gal__thumb[aria-selected="true"]{border-color:var(--accent)}
-@media(max-width:999px){
-  .gb-product .gb-gal__frame{margin-inline:calc(-1 * var(--pad));border-radius:0}
-  .gb-product .gb-gal__thumbs{justify-content:center}
-  .gb-product .gb-gal__thumb{flex-basis:52px;width:52px;height:52px}
-}
 
-/* buy column */
-.gb-product .gb-buy{display:grid;gap:22px}
+/* overlays */
+.gb-product .gb-gal__script{position:absolute;z-index:3;top:14px;left:18px;max-width:52%;color:#fff;font-size:clamp(26px,3.6vw,38px);text-shadow:0 2px 10px rgba(15,42,24,.55),0 1px 2px rgba(15,42,24,.6);pointer-events:none}
+.gb-product .gb-gal__badge{position:absolute;z-index:3;top:14px;right:16px;max-width:44%;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-weight:800;font-size:13px;line-height:1.25;letter-spacing:.05em;text-transform:uppercase;padding:10px 14px;border-radius:14px;box-shadow:0 4px 14px rgba(15,42,24,.25);pointer-events:none}
+.gb-product .gb-gal__badge::after{content:"";position:absolute;left:18px;bottom:-9px;width:0;height:0;border:10px solid transparent;border-top-color:var(--lime);border-bottom:0}
+
+.gb-product .gb-gal__arrow{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.94);color:var(--ink);cursor:pointer;box-shadow:0 2px 10px rgba(15,42,24,.2);display:none;place-items:center;padding:0;transition:background .15s}
+.gb-product .gb-gal__arrow svg{width:24px;height:24px}
+.gb-product .gb-gal__arrow:hover{background:#fff}
+.gb-product .gb-gal__arrow:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+.gb-product .gb-gal__arrow--prev{left:12px}.gb-product .gb-gal__arrow--next{right:12px}
+@media(min-width:1000px){.gb-product .gb-gal__arrow{display:grid}}
+
+.gb-product .gb-gal__thumbs{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.gb-product .gb-gal__thumbs::-webkit-scrollbar{display:none}
+@media(min-width:1000px){.gb-product .gb-gal__thumbs{flex-direction:column;overflow:visible}}
+.gb-product .gb-gal__thumb{flex:0 0 64px;width:64px;height:64px;padding:0;border-radius:10px;border:2px solid var(--rule);background:var(--sand);overflow:hidden;cursor:pointer;display:grid;place-items:center;font-weight:800;color:var(--dim);font-size:14px;transition:border-color .15s,box-shadow .15s}
+@media(min-width:1000px){.gb-product .gb-gal__thumb{flex:0 0 76px;width:76px;height:76px}}
+.gb-product .gb-gal__thumb img{width:100%;height:100%;object-fit:cover}
+.gb-product .gb-gal__thumb[aria-selected="true"]{border-color:var(--lime);box-shadow:0 0 0 3px rgba(163,224,72,.45)}
+.gb-product .gb-gal__thumb:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+@media(max-width:999px){.gb-product .gb-gal__frame{margin-inline:calc(-1 * var(--pad));border-radius:0}}
+
+/* usp row */
+.gb-product .gb-usps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:12px}
+.gb-product .gb-usp{display:grid;justify-items:center;gap:8px;text-align:center}
+.gb-product .gb-usp__ring{width:56px;height:56px;border-radius:50%;border:2px solid var(--rule);display:grid;place-items:center;color:var(--leaf)}
+.gb-product .gb-usp__ring svg{width:28px;height:28px}
+.gb-product .gb-usp__label{font-size:11.5px;font-weight:800;line-height:1.25;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);max-width:14ch}
+
+/* ===== buy column ===== */
+.gb-product .gb-buy{display:grid;gap:18px}
+.gb-product .gb-buy__title{margin:0}
+.gb-product .gb-buy__sub{color:var(--dim);font-size:17px;max-width:52ch}
+.gb-product .gb-rating{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:15px;font-weight:700;color:var(--dim)}
+.gb-product .gb-rating__stars{display:inline-flex;gap:2px;color:var(--yellow)}
+.gb-product .gb-rating__stars svg{width:19px;height:19px}
+.gb-product .gb-rating__txt{color:var(--ink)}
 .gb-product .gb-buy__bullets{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .gb-product .gb-form{display:grid;gap:22px}
-.gb-product .gb-field{display:grid;gap:10px}
-.gb-product .gb-field__label{font-weight:800;font-size:15px;letter-spacing:.02em}
+.gb-product .gb-field{display:grid;gap:12px}
+.gb-product .gb-field__label{font-weight:800;font-size:16px;letter-spacing:.01em}
 .gb-product .gb-field__label b{font-weight:600;color:var(--dim)}
+.gb-product .gb-field__label--big{font-family:var(--font-h);font-size:22px;font-weight:700;letter-spacing:-.01em}
 
 .gb-product .gb-swatches{display:flex;gap:12px;flex-wrap:wrap}
-.gb-product .gb-swatch{display:inline-flex;align-items:center;gap:12px;min-height:56px;padding:0 20px 0 12px;border-radius:999px;border:3px solid var(--stone-2);background:#fff;color:var(--ink);font-family:var(--font-h);font-weight:800;font-size:17px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.gb-product .gb-swatch__chip{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.45),0 1px 2px rgba(43,36,25,.35)}
-.gb-product .gb-swatch__tick{width:18px;height:18px;background:no-repeat center/18px url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>");opacity:0}
-.gb-product .gb-swatch[aria-pressed="true"]{border-color:var(--brown);box-shadow:0 2px 0 var(--brown)}
+.gb-product .gb-swatch{display:inline-flex;align-items:center;gap:12px;min-height:48px;padding:0 18px 0 6px;border-radius:999px;border:2px solid var(--rule);background:var(--paper);color:var(--ink);font-family:var(--font-h);font-weight:700;font-size:17px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.gb-product .gb-swatch__chip{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)}
+.gb-product .gb-swatch__tick{width:20px;height:20px;background:no-repeat center/20px url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>");opacity:0}
+.gb-product .gb-swatch[aria-pressed="true"]{border-color:var(--night)}
+.gb-product .gb-swatch[aria-pressed="true"] .gb-swatch__chip{box-shadow:0 0 0 3px var(--night)}
 .gb-product .gb-swatch[aria-pressed="true"] .gb-swatch__tick{opacity:1}
-.gb-product .gb-swatch:focus-visible{outline:3px solid var(--brown);outline-offset:3px}
+.gb-product .gb-swatch:focus-visible{outline:3px solid var(--leaf);outline-offset:3px}
 
-/* ===== bundle cards: white card, dark brown frame, yellow details ===== */
-.gb-product .gb-packs{display:grid;gap:14px}
-.gb-product .gb-pack{position:relative;display:grid;gap:12px;padding:20px 20px 18px;background:#fff;color:var(--ink);border:3px solid var(--brown);border-radius:14px;cursor:pointer;box-shadow:0 3px 0 rgba(59,42,27,.18);transition:box-shadow .15s,transform .1s}
-.gb-product .gb-pack:hover{box-shadow:0 6px 0 rgba(59,42,27,.22)}
-.gb-product .gb-pack.is-selected{box-shadow:0 0 0 4px var(--yellow),0 6px 0 rgba(59,42,27,.22)}
-.gb-product .gb-pack.is-selected::after{content:"";position:absolute;left:-3px;top:-3px;bottom:-3px;width:8px;border-radius:12px 0 0 12px;background:var(--yellow)}
+/* ===== bundle cards: brown ground, lime selection ===== */
+.gb-product .gb-packs{display:grid;gap:16px}
+.gb-product .gb-pack{position:relative;display:grid;gap:12px;padding:20px;background:var(--brown);color:var(--brown-ink);border:3px solid transparent;border-radius:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.gb-product .gb-pack.is-flagged{margin-top:12px}
+.gb-product .gb-pack:hover{box-shadow:0 4px 16px rgba(15,42,24,.18)}
+.gb-product .gb-pack.is-selected{border-color:var(--lime);box-shadow:0 0 0 6px rgba(163,224,72,.22),0 6px 18px rgba(15,42,24,.16)}
 .gb-product .gb-pack > *{position:relative;z-index:1}
 
-.gb-product .gb-pack__flag{position:absolute;z-index:2;top:-15px;left:20px;background:var(--yellow);color:var(--yellow-ink);font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;padding:5px 13px;border-radius:999px;border:2px solid var(--brown)}
+.gb-product .gb-pack__flag{position:absolute;z-index:2;top:-15px;left:18px;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;padding:5px 14px;border-radius:999px}
 
 .gb-product .gb-pack__radio{position:absolute;opacity:0;width:1px;height:1px;margin:0}
-.gb-product .gb-pack__radio:focus-visible ~ .gb-pack__head .gb-pack__mark{outline:3px solid var(--brown);outline-offset:3px}
+.gb-product .gb-pack__radio:focus-visible ~ .gb-pack__head .gb-pack__mark{outline:3px solid var(--lime);outline-offset:3px}
 .gb-product .gb-pack__head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;min-height:48px}
-.gb-product .gb-pack__mark{width:28px;height:28px;border-radius:50%;border:3px solid var(--brown);display:grid;place-items:center;background:#fff}
-.gb-product .gb-pack.is-selected .gb-pack__mark{background:var(--brown)}
-.gb-product .gb-pack.is-selected .gb-pack__mark::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--yellow)}
+.gb-product .gb-pack__mark{width:28px;height:28px;border-radius:50%;border:2px solid var(--brown-ink);display:grid;place-items:center;background:transparent}
+.gb-product .gb-pack.is-selected .gb-pack__mark{border-color:var(--lime)}
+.gb-product .gb-pack.is-selected .gb-pack__mark::after{content:"";width:14px;height:14px;border-radius:50%;background:var(--lime)}
 .gb-product .gb-pack__body{display:grid;gap:2px;min-width:0}
-.gb-product .gb-pack__name{font-family:var(--font-h);font-weight:800;font-size:21px;line-height:1.2;color:var(--brown)}
-.gb-product .gb-pack__each{color:var(--dim);font-size:15px}
+.gb-product .gb-pack__name{font-family:var(--font-h);font-weight:700;font-size:20px;line-height:1.2;color:var(--brown-ink)}
+.gb-product .gb-pack__incl,.gb-product .gb-pack__each{color:rgba(246,238,226,.72);font-size:14.5px;line-height:1.35}
 .gb-product .gb-pack__each:empty{display:none}
 
 .gb-product .gb-pack__price{display:grid;justify-items:end;gap:4px;text-align:right}
-.gb-product .gb-pack__now{font-family:var(--font-h);font-weight:800;font-size:31px;line-height:1;letter-spacing:-.01em;color:var(--brown)}
-.gb-product .gb-pack__was{color:var(--dim);font-size:15px;font-weight:600}
-.gb-product .gb-pack__save{background:var(--yellow);color:var(--yellow-ink);font-size:13px;font-weight:800;letter-spacing:.04em;padding:5px 12px;border-radius:999px;border:2px solid var(--brown)}
-.gb-product .gb-pack__so{font-size:14px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
-.gb-product .gb-pack.is-soldout{cursor:not-allowed;opacity:.6;box-shadow:none}
-.gb-product .gb-pack.is-soldout .gb-pack__now{text-decoration:line-through;color:var(--dim)}
+.gb-product .gb-pack__now{font-family:var(--font-h);font-weight:700;font-size:26px;line-height:1;letter-spacing:-.01em;color:#fff}
+.gb-product .gb-pack__was{color:rgba(246,238,226,.62);font-size:15px;font-weight:600}
+.gb-product .gb-pack__save{display:inline-block;background:var(--lime);color:var(--lime-ink);font-size:12.5px;font-weight:800;letter-spacing:.04em;padding:4px 11px;border-radius:999px}
+.gb-product .gb-pack__so{font-size:14px;font-weight:800;color:rgba(246,238,226,.72);text-transform:uppercase;letter-spacing:.08em}
+.gb-product .gb-pack.is-soldout{cursor:not-allowed;opacity:.55}
+.gb-product .gb-pack.is-soldout .gb-pack__now{text-decoration:line-through}
 
-.gb-product .gb-pack__extra{display:flex;gap:12px;align-items:center;padding:12px;background:var(--stone);border:2px solid var(--stone-2);border-radius:10px;font-size:15px;line-height:1.45;color:var(--dim)}
-.gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 60px;width:60px;height:60px;border-radius:8px;object-fit:cover;background:#fff}
-.gb-product .gb-pack__extra-ph{background:repeating-linear-gradient(135deg,var(--stone-2) 0 8px,#F1EADC 8px 16px);box-shadow:inset 0 0 0 2px var(--brown);display:block}
-.gb-product .gb-pack__extra b{display:block;font-family:var(--font-h);font-weight:800;color:var(--brown);font-size:16px}
+.gb-product .gb-pack__extra{display:flex;gap:12px;align-items:center;padding:12px;background:rgba(255,255,255,.07);border:1px solid rgba(246,238,226,.16);border-radius:10px;font-size:14.5px;line-height:1.45;color:rgba(246,238,226,.8)}
+.gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 60px;width:60px;height:60px;border-radius:8px;object-fit:cover;background:var(--brown-2)}
+.gb-product .gb-pack__extra-ph{background:repeating-linear-gradient(135deg,rgba(255,255,255,.1) 0 8px,rgba(255,255,255,.04) 8px 16px);box-shadow:inset 0 0 0 1px rgba(246,238,226,.25);display:block}
+.gb-product .gb-pack__extra b{display:block;font-family:var(--font-h);font-weight:700;color:var(--lime);font-size:16px}
 
-.gb-product .gb-trust{list-style:none;margin:0;padding:0;display:flex;gap:6px 18px;flex-wrap:wrap;color:var(--dim);font-size:15px;font-weight:600}
+/* add to cart */
+.gb-product .gb-buy__add{width:100%;min-height:62px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:999px;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-size:20px;font-weight:800;letter-spacing:.01em;cursor:pointer;transition:background .15s,transform .05s}
+.gb-product .gb-buy__add:hover{background:var(--lime-2)}
+.gb-product .gb-buy__add:active{transform:translateY(1px)}
+.gb-product .gb-buy__add[disabled]{opacity:.55;cursor:not-allowed}
+.gb-product .gb-buy__add:focus-visible{outline:3px solid var(--night);outline-offset:3px}
+.gb-product .gb-buy__cart{width:24px;height:24px;flex:0 0 24px}
+.gb-product .gb-buy__dot{opacity:.6}
+
+.gb-product .gb-trust{list-style:none;margin:0;padding:0;display:flex;gap:10px 20px;flex-wrap:wrap;justify-content:space-between;color:var(--dim);font-size:14.5px;font-weight:700}
 .gb-product .gb-trust li{display:flex;gap:8px;align-items:center}
-.gb-product .gb-trust li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--leaf);flex:0 0 8px}
+.gb-product .gb-trust__ic{display:grid;place-items:center;color:var(--leaf)}
+.gb-product .gb-trust__ic svg{width:22px;height:22px}
+.gb-product .gb-pay{display:flex;flex-wrap:wrap;gap:8px;align-items:center;opacity:.85}
+.gb-product .gb-pay svg{width:40px;height:26px}
 
 @media(max-width:520px){
   .gb-product .gb-pack__head{grid-template-columns:auto 1fr;row-gap:10px}
   .gb-product .gb-pack__price{grid-column:1 / -1;justify-items:start;text-align:left}
+  .gb-product .gb-trust{justify-content:flex-start}
 }
 @media(prefers-reduced-motion:reduce){
-  .gb-product .gb-pack,.gb-product .gb-swatch,.gb-product .gb-pack::before,.gb-product .gb-buy__add{transition:none}
-  .gb-product .gb-pack__save{transform:none}
+  .gb-product .gb-pack,.gb-product .gb-swatch,.gb-product .gb-buy__add,.gb-product .gb-gal__thumb,.gb-product .gb-gal__arrow{transition:none}
+  .gb-product .gb-buy__add:active{transform:none}
 }
-
-.gb-product .gb-buy__add{width:100%;min-height:60px;font-family:var(--font-h);font-size:20px;font-weight:800;letter-spacing:.01em;box-shadow:0 4px 0 var(--accent-2)}
-.gb-product .gb-buy__add:focus-visible{outline:3px solid var(--brown);outline-offset:3px}
-.gb-product .gb-buy__dot{opacity:.7}
 {% endstylesheet %}
 
 {% javascript %}
@@ -494,7 +626,8 @@
     function goTo(i) {
       if (!track || !slides.length) return;
       i = (i + slides.length) % slides.length;
-      track.scrollTo({ left: track.clientWidth * i, behavior: 'smooth' });
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      track.scrollTo({ left: track.clientWidth * i, behavior: reduce ? 'auto' : 'smooth' });
       thumbs.forEach(function (t, k) { t.setAttribute('aria-selected', String(k === i)); });
     }
     function current() { return track ? Math.round(track.scrollLeft / Math.max(1, track.clientWidth)) : 0; }
@@ -538,74 +671,66 @@
   "name": "Garden Buddy buy box",
   "tag": "section",
   "class": "gb-section",
+  "max_blocks": 5,
   "settings": [
+    { "type": "header", "content": "Photo overlays" },
+    { "type": "paragraph", "content": "Anything written as [ LIKE THIS ] shows as a highlighted placeholder until you replace it. Leave a field blank to hide it." },
+    { "type": "text", "id": "hero_script", "label": "Handwritten line", "default": "Sit. Kneel. Garden. Enjoy." },
+    { "type": "text", "id": "hero_badge", "label": "Green badge", "default": "ALL-IN-ONE GARDEN SET" },
+    { "type": "header", "content": "Rating (optional)" },
+    { "type": "paragraph", "content": "Leave both blank until you have real reviews. Never enter numbers you cannot back up." },
+    { "type": "text", "id": "rating_text", "label": "Rating text" },
+    { "type": "text", "id": "rating_count", "label": "Review count" },
+    { "type": "header", "content": "Description" },
+    { "type": "textarea", "id": "subtitle", "label": "Short intro line", "info": "Falls back to the first paragraph of the product description." },
+    { "type": "header", "content": "Bullets" },
+    { "type": "text", "id": "bullet_1", "label": "Bullet 1", "default": "Reduces knee and back strain" },
+    { "type": "text", "id": "bullet_2", "label": "Bullet 2", "default": "Thick, comfortable cushioning" },
+    { "type": "text", "id": "bullet_3", "label": "Bullet 3", "default": "Foldable and lightweight design" },
+    { "type": "text", "id": "bullet_4", "label": "Bullet 4", "default": "Complete tool set included in the bundles" },
+    { "type": "text", "id": "bullet_5", "label": "Bullet 5", "default": "Storage bag included in the bundles" },
+    { "type": "header", "content": "Bundles" },
+    { "type": "text", "id": "pick_label", "label": "Heading above cards", "default": "Choose Your Bundle" },
+    { "type": "text", "id": "flag_2", "label": "Flag on the 2nd card", "default": "Our pick", "info": "Our opinion only. No bestseller or popularity claims." },
+    { "type": "text", "id": "set_blurb", "label": "Tool set line on cards", "default": "A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer." },
+    { "type": "header", "content": "Trust row" },
+    { "type": "text", "id": "trust_1", "label": "Line 1", "default": "Free Shipping" },
+    { "type": "text", "id": "trust_2", "label": "Line 2", "default": "30-Day Guarantee" },
+    { "type": "text", "id": "trust_3", "label": "Line 3", "default": "Secure Checkout" }
+  ],
+  "blocks": [
     {
-      "type": "header",
-      "content": "Three reasons"
-    },
-    {
-      "type": "paragraph",
-      "content": "Anything written as [ LIKE THIS ] shows as a blue placeholder until you replace it."
-    },
-    {
-      "type": "text",
-      "id": "bullet_1",
-      "label": "Bullet 1",
-      "default": "Kneel on it, flip it, sit on it"
-    },
-    {
-      "type": "text",
-      "id": "bullet_2",
-      "label": "Bullet 2",
-      "default": "Handles help you stand back up"
-    },
-    {
-      "type": "text",
-      "id": "bullet_3",
-      "label": "Bullet 3",
-      "default": "Arrives assembled. Folds flat."
-    },
-    {
-      "type": "header",
-      "content": "Packs"
-    },
-    {
-      "type": "text",
-      "id": "pick_label",
-      "label": "Label above the pack cards",
-      "default": "Pick your bundle"
-    },
-    {
-      "type": "text",
-      "id": "flag_2",
-      "label": "Flag on the 2nd card",
-      "default": "Our pick",
-      "info": "Our opinion only. No bestseller or popularity claims."
-    },
-    { "type": "text", "id": "set_blurb", "label": "Tool set line on bundle cards", "default": "A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer." },
-    {
-      "type": "header",
-      "content": "Trust row"
-    },
-    {
-      "type": "text",
-      "id": "trust_1",
-      "label": "Line 1",
-      "default": "Free US shipping"
-    },
-    {
-      "type": "text",
-      "id": "trust_2",
-      "label": "Line 2",
-      "default": "30-day returns"
-    },
-    {
-      "type": "text",
-      "id": "trust_3",
-      "label": "Line 3",
-      "default": "Ships within [ DISPATCH TIME ]"
+      "type": "usp",
+      "name": "Feature icon",
+      "settings": [
+        { "type": "text", "id": "label", "label": "Label", "default": "Reduces knee & back pain" },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "default": "kneel",
+          "options": [
+            { "value": "kneel", "label": "Kneel" },
+            { "value": "shield", "label": "Shield" },
+            { "value": "cushion", "label": "Cushion" },
+            { "value": "tools", "label": "Tools" },
+            { "value": "carry", "label": "Carry" }
+          ]
+        }
+      ]
     }
   ],
-  "presets": [{ "name": "Garden Buddy buy box" }]
+  "presets": [
+    {
+      "name": "Garden Buddy buy box",
+      "blocks": [
+        { "type": "usp", "settings": { "label": "Reduces knee & back pain", "icon": "kneel" } },
+        { "type": "usp", "settings": { "label": "Sturdy & stable", "icon": "shield" } },
+        { "type": "usp", "settings": { "label": "Thick comfortable pad", "icon": "cushion" } },
+        { "type": "usp", "settings": { "label": "Complete tool set", "icon": "tools" } },
+        { "type": "usp", "settings": { "label": "Easy to carry & store", "icon": "carry" } }
+      ]
+    }
+  ]
 }
 {% endschema %}
