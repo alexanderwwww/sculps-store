@@ -1,0 +1,359 @@
+{
+  "sections": {
+    "main": {
+      "type": "gb-product",
+      "settings": {
+        "bullet_1": "Kneel on it, flip it, sit on it",
+        "bullet_2": "Handles help you stand back up",
+        "bullet_3": "Arrives assembled. Folds flat.",
+        "pick_label": "Pick your pack",
+        "flag_2": "Our pick",
+        "trust_1": "Free US shipping",
+        "trust_2": "30-day returns",
+        "trust_3": "Ships within [ DISPATCH TIME ]"
+      }
+    },
+    "below": {
+      "type": "gb-product-below",
+      "blocks": {
+        "step_1": {
+          "type": "step",
+          "settings": {
+            "heading": "Kneel",
+            "text": "Set it pad-side up. Hold the handles as you go down.",
+            "placeholder": "Clip: kneeling down"
+          }
+        },
+        "step_2": {
+          "type": "step",
+          "settings": {
+            "heading": "Flip",
+            "text": "Turn it over. The snap-lock clicks and it is a stool.",
+            "placeholder": "Clip: flipping it over"
+          }
+        },
+        "step_3": {
+          "type": "step",
+          "settings": {
+            "heading": "Sit",
+            "text": "Rest on the seat for potting, weeding, or the mailbox.",
+            "placeholder": "Clip: sitting on it"
+          }
+        },
+        "feature_1": {
+          "type": "feature",
+          "settings": {
+            "eyebrow": "Handles",
+            "heading": "The handles are the point",
+            "text": "Getting down is easy. Getting up off the ground is the hard part. The steel frame gives you something to push on.",
+            "placeholder": "Photo: hands on the handles, pushing up"
+          }
+        },
+        "feature_2": {
+          "type": "feature",
+          "settings": {
+            "eyebrow": "Pad",
+            "heading": "Thick pad, off the ground",
+            "text": "The pad is [ PAD THICKNESS ] of foam. It detaches, so you can hose it off and leave it in the sun.",
+            "placeholder": "Photo: pad, close, coming off the frame"
+          }
+        },
+        "feature_3": {
+          "type": "feature",
+          "settings": {
+            "eyebrow": "Frame",
+            "heading": "One piece of steel",
+            "text": "No assembly. The snap-lock keeps it shut when it is a stool. Fold it flat and it hangs on a nail in the shed.",
+            "placeholder": "Photo: folded flat, held by the handle"
+          }
+        },
+        "compare_1": {
+          "type": "compare",
+          "settings": {
+            "label": "Kneel",
+            "v1": "yes",
+            "v2": "yes",
+            "v3": "no"
+          }
+        },
+        "compare_2": {
+          "type": "compare",
+          "settings": {
+            "label": "Sit",
+            "v1": "yes",
+            "v2": "no",
+            "v3": "yes"
+          }
+        },
+        "compare_3": {
+          "type": "compare",
+          "settings": {
+            "label": "Handles to stand up",
+            "v1": "yes",
+            "v2": "no",
+            "v3": "no"
+          }
+        },
+        "compare_4": {
+          "type": "compare",
+          "settings": {
+            "label": "Folds flat",
+            "v1": "yes",
+            "v2": "yes",
+            "v3": "no"
+          }
+        },
+        "compare_5": {
+          "type": "compare",
+          "settings": {
+            "label": "Arrives assembled",
+            "v1": "yes",
+            "v2": "yes",
+            "v3": "Sometimes"
+          }
+        },
+        "compare_6": {
+          "type": "compare",
+          "settings": {
+            "label": "Detachable pad",
+            "v1": "yes",
+            "v2": "no",
+            "v3": "no"
+          }
+        },
+        "who_1": {
+          "type": "who",
+          "settings": {
+            "heading": "Bad knees",
+            "text": "The pad keeps you off the ground. The handles take the strain when you get up."
+          }
+        },
+        "who_2": {
+          "type": "who",
+          "settings": {
+            "heading": "Bad back",
+            "text": "Flip it and sit. Weeding and potting at bed height instead of bent double."
+          }
+        },
+        "who_3": {
+          "type": "who",
+          "settings": {
+            "heading": "Anyone who hates getting up off the ground",
+            "text": "That is most of us past a certain age. Two handles and a frame fix it."
+          }
+        },
+        "box_item_1": {
+          "type": "box_item",
+          "settings": {
+            "name": "Kneeler seat, assembled"
+          }
+        },
+        "box_item_2": {
+          "type": "box_item",
+          "settings": {
+            "name": "Detachable foam pad"
+          }
+        },
+        "box_item_3": {
+          "type": "box_item",
+          "settings": {
+            "name": "Tool pouch",
+            "note": "[ CONFIRM INCLUDED ]"
+          }
+        },
+        "box_item_4": {
+          "type": "box_item",
+          "settings": {
+            "name": "[ GLOVES — CONFIRM INCLUDED ]"
+          }
+        },
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "How much weight does it hold?",
+            "answer": "The frame is rated to [ WEIGHT CAPACITY ]."
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "How heavy is it?",
+            "answer": "[ WEIGHT ]. Light enough to carry by the handle in one hand."
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "Is there any assembly?",
+            "answer": "None. It arrives assembled. Take it out of the box and unfold it."
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "Does it stay shut when I use it as a stool?",
+            "answer": "Yes. A snap-lock holds the frame shut when it is flipped. It clicks when it is locked."
+          }
+        },
+        "faq_5": {
+          "type": "faq",
+          "settings": {
+            "question": "Will it sink into soft soil?",
+            "answer": "The feet are wide, so it sits well on lawn and on beds. On very soft ground, set it on the path or the grass edge."
+          }
+        },
+        "faq_6": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I leave it outside?",
+            "answer": "The frame is steel and handles weather. Bring the pad in when rain is coming so it does not soak through."
+          }
+        },
+        "faq_7": {
+          "type": "faq",
+          "settings": {
+            "question": "How does shipping work?",
+            "answer": "Free shipping in the US. Most orders arrive in [ DELIVERY WINDOW ]."
+          }
+        },
+        "faq_8": {
+          "type": "faq",
+          "settings": {
+            "question": "What if it is not for me?",
+            "answer": "Send it back within 30 days for a refund."
+          }
+        },
+        "spec_1": {
+          "type": "spec",
+          "settings": {
+            "label": "Open size",
+            "value": "[ OPEN SIZE ]"
+          }
+        },
+        "spec_2": {
+          "type": "spec",
+          "settings": {
+            "label": "Folded size",
+            "value": "[ FOLDED SIZE ]"
+          }
+        },
+        "spec_3": {
+          "type": "spec",
+          "settings": {
+            "label": "Weight",
+            "value": "[ WEIGHT ]"
+          }
+        },
+        "spec_4": {
+          "type": "spec",
+          "settings": {
+            "label": "Weight capacity",
+            "value": "[ WEIGHT CAPACITY ]"
+          }
+        },
+        "spec_5": {
+          "type": "spec",
+          "settings": {
+            "label": "Pad",
+            "value": "[ PAD THICKNESS ] foam, detachable"
+          }
+        },
+        "spec_6": {
+          "type": "spec",
+          "settings": {
+            "label": "Frame",
+            "value": "Steel, one piece, snap-lock"
+          }
+        },
+        "spec_7": {
+          "type": "spec",
+          "settings": {
+            "label": "Colours",
+            "value": "Blue, Brown"
+          }
+        },
+        "spec_8": {
+          "type": "spec",
+          "settings": {
+            "label": "Assembly",
+            "value": "None"
+          }
+        }
+      },
+      "block_order": [
+        "step_1",
+        "step_2",
+        "step_3",
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "compare_1",
+        "compare_2",
+        "compare_3",
+        "compare_4",
+        "compare_5",
+        "compare_6",
+        "who_1",
+        "who_2",
+        "who_3",
+        "box_item_1",
+        "box_item_2",
+        "box_item_3",
+        "box_item_4",
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4",
+        "faq_5",
+        "faq_6",
+        "faq_7",
+        "faq_8",
+        "spec_1",
+        "spec_2",
+        "spec_3",
+        "spec_4",
+        "spec_5",
+        "spec_6",
+        "spec_7",
+        "spec_8"
+      ],
+      "settings": {
+        "strip_1_title": "Kneeler and stool in one",
+        "strip_1_text": "Pad side up, or flip it and sit.",
+        "strip_2_title": "Handles to stand up",
+        "strip_2_text": "Something solid to push on.",
+        "strip_3_title": "Arrives assembled",
+        "strip_3_text": "Open the box, unfold it, go.",
+        "strip_4_title": "Folds flat",
+        "strip_4_text": "Hangs on a nail in the shed.",
+        "how_eyebrow": "How you use it",
+        "how_heading": "Kneel. Flip. Sit.",
+        "cmp_eyebrow": "Compare",
+        "cmp_heading": "What it does that the cheap options do not.",
+        "cmp_col_1": "Garden Buddy",
+        "cmp_col_2": "Basic foam kneeler",
+        "cmp_col_3": "Plastic step stool",
+        "who_eyebrow": "Who it's for",
+        "who_heading": "Made for the part of gardening nobody talks about.",
+        "box_eyebrow": "In the box",
+        "box_heading": "What arrives.",
+        "box_text": "Everything listed here comes in the box. Nothing to assemble.",
+        "rev_eyebrow": "Reviews",
+        "rev_heading": "From people who own one.",
+        "rev_empty_title": "Reviews go live once the first orders land.",
+        "rev_empty_text": "We are a new shop. We will post real reviews from real orders here, good and bad, and nothing else.",
+        "faq_eyebrow": "Questions",
+        "faq_heading": "Things people ask before they buy.",
+        "spec_eyebrow": "Specifications",
+        "spec_heading": "The numbers.",
+        "closer_heading": "Your knees will notice by Saturday.",
+        "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
+        "closer_button": "Pick your pack"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "below"
+  ]
+}
