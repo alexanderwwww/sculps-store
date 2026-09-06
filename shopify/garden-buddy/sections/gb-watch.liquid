@@ -1,0 +1,143 @@
+{%- comment -%}
+  GARDEN BUDDY — UGC video + the big FAQ. Sits directly under the buy box.
+  Type is deliberately large: the buyer is 55+ and reading this on a phone.
+{%- endcomment -%}
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign s = section.settings
+  assign fill_open = '<span class="gb-fill">[ '
+  assign fill_close = ' ]</span>'
+  assign faq_n = 0
+  for block in section.blocks
+    if block.type == 'faq'
+      assign faq_n = faq_n | plus: 1
+    endif
+  endfor
+-%}
+
+<div class="gb gb-pb">
+  <section class="gb-sec gb-watch" id="watch">
+    <div class="gb-wrap">
+
+      <div class="gb-watch__head">
+        {%- if s.eyebrow != blank -%}<p class="gb-eyebrow">{{ s.eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.heading }}</h2>
+        {%- if s.text != blank -%}
+          <p class="gb-lede">{{ s.text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+        {%- endif -%}
+      </div>
+
+      <div class="gb-watch__grid">
+
+        <figure class="gb-watch__media">
+          <div class="gb-watch__frame">
+            {%- if s.video_url != blank -%}
+              {{ s.video_url | external_video_tag: class: 'gb-watch__embed', loading: 'lazy' }}
+            {%- elsif s.video != blank -%}
+              {{ s.video | video_tag: image_size: '900x', controls: true, playsinline: true, preload: 'metadata', class: 'gb-watch__embed' }}
+            {%- elsif s.video_src != blank -%}
+              <video class="gb-watch__embed" controls playsinline preload="metadata"
+                {%- if s.poster != blank %} poster="{{ s.poster | image_url: width: 900 }}"{% endif %}>
+                <source src="{{ s.video_src }}" type="video/mp4">
+              </video>
+            {%- else -%}
+              <div class="gb-ph gb-watch__ph"><span>{{ s.placeholder }}<small>Paste a YouTube or Vimeo link in the theme editor</small></span></div>
+            {%- endif -%}
+          </div>
+          {%- if s.caption != blank -%}<figcaption>{{ s.caption | escape }}</figcaption>{%- endif -%}
+        </figure>
+
+        {%- if faq_n > 0 -%}
+          <div class="gb-watch__faq">
+            {%- if s.faq_heading != blank -%}<h3 class="gb-watch__faqh">{{ s.faq_heading }}</h3>{%- endif -%}
+            <div class="gb-watch__list">
+              {%- for block in section.blocks -%}
+                {%- if block.type != 'faq' -%}{%- continue -%}{%- endif -%}
+                {%- assign b = block.settings -%}
+                <details class="gb-watch__item"{% if forloop.first and s.open_first %} open{% endif %} {{ block.shopify_attributes }}>
+                  <summary>
+                    <span>{{ b.question | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
+                    <i aria-hidden="true"></i>
+                  </summary>
+                  <div class="gb-watch__a">
+                    <p>{{ b.answer | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+                  </div>
+                </details>
+              {%- endfor -%}
+            </div>
+            {%- if s.faq_note != blank -%}<p class="gb-watch__note">{{ s.faq_note | escape }}</p>{%- endif -%}
+          </div>
+        {%- endif -%}
+
+      </div>
+    </div>
+  </section>
+</div>
+
+{% stylesheet %}
+.gb-pb .gb-watch{padding-block:clamp(48px,6vw,88px)}
+.gb-pb .gb-watch__head{text-align:center;max-width:52ch;margin:0 auto clamp(28px,4vw,48px)}
+.gb-pb .gb-watch__head .gb-lede{margin-inline:auto;font-size:clamp(18px,1.8vw,21px)}
+.gb-pb .gb-watch__grid{display:grid;gap:clamp(28px,4vw,56px);align-items:start}
+@media(min-width:960px){.gb-pb .gb-watch__grid{grid-template-columns:minmax(0,420px) minmax(0,1fr)}}
+
+.gb-pb .gb-watch__media{margin:0;display:grid;gap:12px}
+.gb-pb .gb-watch__frame{position:relative;width:100%;aspect-ratio:9/16;border-radius:22px;overflow:hidden;background:var(--sand);box-shadow:0 16px 44px rgba(42,29,17,.20)}
+@media(max-width:959px){.gb-pb .gb-watch__frame{max-width:380px;margin-inline:auto}}
+.gb-pb .gb-watch__frame iframe,.gb-pb .gb-watch__frame video,.gb-pb .gb-watch__frame .gb-ph{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover}
+.gb-pb .gb-watch__media figcaption{text-align:center;color:var(--dim);font-size:16px}
+
+.gb-pb .gb-watch__faqh{font-family:var(--font-h);font-weight:700;font-size:clamp(24px,2.8vw,34px);line-height:1.15;margin:0 0 18px;color:var(--brown)}
+.gb-pb .gb-watch__list{display:grid;gap:12px}
+.gb-pb .gb-watch__item{background:var(--paper);border:2px solid var(--sand-2);border-radius:14px;overflow:hidden}
+.gb-pb .gb-watch__item[open]{border-color:var(--brown)}
+.gb-pb .gb-watch__item summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;
+  min-height:76px;padding:18px 22px;font-family:var(--font-h);font-weight:600;font-size:clamp(18px,1.7vw,21px);line-height:1.35;color:var(--brown)}
+.gb-pb .gb-watch__item summary::-webkit-details-marker{display:none}
+.gb-pb .gb-watch__item summary:focus-visible{outline:3px solid var(--lime);outline-offset:-3px}
+.gb-pb .gb-watch__item summary i{flex:0 0 36px;width:36px;height:36px;border-radius:50%;background:var(--lime);position:relative;transition:transform .18s}
+.gb-pb .gb-watch__item summary i::before,.gb-pb .gb-watch__item summary i::after{content:"";position:absolute;left:50%;top:50%;background:var(--lime-ink);border-radius:2px;transform:translate(-50%,-50%)}
+.gb-pb .gb-watch__item summary i::before{width:16px;height:3px}
+.gb-pb .gb-watch__item summary i::after{width:3px;height:16px}
+.gb-pb .gb-watch__item[open] summary i{transform:rotate(135deg)}
+.gb-pb .gb-watch__a{padding:0 22px 22px}
+.gb-pb .gb-watch__a p{margin:0;font-size:clamp(17px,1.6vw,19.5px);line-height:1.65;color:var(--ink);max-width:62ch}
+.gb-pb .gb-watch__note{margin:18px 0 0;font-size:16px;color:var(--dim)}
+@media(prefers-reduced-motion:reduce){.gb-pb .gb-watch__item summary i{transition:none}}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Watch + FAQ",
+  "tag": "section",
+  "settings": [
+    { "type": "header", "content": "Heading" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "See it for yourself" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Watch it, then read the answers." },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "One clip, no edit. Every question people ask before buying is answered underneath." },
+    { "type": "header", "content": "The video" },
+    { "type": "video_url", "id": "video_url", "label": "YouTube or Vimeo link", "accept": ["youtube", "vimeo"], "info": "Used first. This is the embedded iframe." },
+    { "type": "video", "id": "video", "label": "Or an uploaded video" },
+    { "type": "text", "id": "video_src", "label": "Or a direct .mp4 URL" },
+    { "type": "image_picker", "id": "poster", "label": "Poster image" },
+    { "type": "text", "id": "caption", "label": "Caption under the video" },
+    { "type": "text", "id": "placeholder", "label": "Placeholder caption", "default": "UGC clip: kneeling, standing up, flipping it into a seat" },
+    { "type": "header", "content": "FAQ" },
+    { "type": "text", "id": "faq_heading", "label": "FAQ heading", "default": "Questions people ask first." },
+    { "type": "checkbox", "id": "open_first", "label": "Open the first question", "default": true },
+    { "type": "text", "id": "faq_note", "label": "Note under the FAQ" }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "Question",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Question" },
+        { "type": "textarea", "id": "answer", "label": "Answer" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Watch + FAQ" }]
+}
+{% endschema %}

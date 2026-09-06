@@ -149,88 +149,6 @@
         "ugc_ph_3": "Clip 3"
       }
     },
-    "faq": {
-      "type": "gb-faq",
-      "settings": {
-        "faq_heading": "Questions people ask first."
-      },
-      "blocks": {
-        "faq_1": {
-          "type": "faq",
-          "settings": {
-            "question": "How much weight does it hold?",
-            "answer": "Steel frame, built to take an adult's weight sitting on it. We will print the tested figure here the moment we have it rather than guess."
-          }
-        },
-        "faq_2": {
-          "type": "faq",
-          "settings": {
-            "question": "How heavy is it?",
-            "answer": "Light enough to carry across the garden in one hand by the frame."
-          }
-        },
-        "faq_3": {
-          "type": "faq",
-          "settings": {
-            "question": "Is there any assembly?",
-            "answer": "None. Take it out of the box and unfold it."
-          }
-        },
-        "faq_4": {
-          "type": "faq",
-          "settings": {
-            "question": "Does it stay shut when I sit on it?",
-            "answer": "Yes. A snap-lock holds the frame closed when it is flipped into a seat. You hear it click."
-          }
-        },
-        "faq_5": {
-          "type": "faq",
-          "settings": {
-            "question": "Will it sink into soft ground?",
-            "answer": "The feet are wide and flat, so it sits level on a lawn or a bed. In deep mulch, press it down first."
-          }
-        },
-        "faq_6": {
-          "type": "faq",
-          "settings": {
-            "question": "Can I leave it outside?",
-            "answer": "The frame is steel and takes weather. Bring the pad in before heavy rain so it dries out."
-          }
-        },
-        "faq_7": {
-          "type": "faq",
-          "settings": {
-            "question": "What comes in the bundles?",
-            "answer": "The two bundle options add the ten-piece tool set: a folding stool, a storage bag, six steel hand tools, claw gloves and a sprayer."
-          }
-        },
-        "faq_8": {
-          "type": "faq",
-          "settings": {
-            "question": "How does shipping work?",
-            "answer": "Free shipping inside the US. You get a tracking link by email as soon as it leaves the warehouse."
-          }
-        },
-        "faq_9": {
-          "type": "faq",
-          "settings": {
-            "question": "What if it is not for me?",
-            "answer": "Send it back within 30 days and we refund you."
-          }
-        }
-      },
-      "block_order": [
-        "faq_1",
-        "faq_2",
-        "faq_3",
-        "faq_4",
-        "faq_5",
-        "faq_6",
-        "faq_7",
-        "faq_8",
-        "faq_9"
-      ]
-    },
     "toolset": {
       "type": "gb-toolset",
       "settings": {
@@ -744,13 +662,104 @@
         "closer_button": "Pick your bundle",
         "closer_url": ""
       }
+    },
+    "watch": {
+      "type": "gb-watch",
+      "blocks": {
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "How much weight does it hold?",
+            "answer": "Steel frame, built to take an adult's weight sitting on it. We will print the tested figure here the moment we have it rather than guess."
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "How heavy is it?",
+            "answer": "Light enough to carry across the garden in one hand by the frame."
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "Is there any assembly?",
+            "answer": "None. Take it out of the box and unfold it."
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "Does it stay shut when I sit on it?",
+            "answer": "Yes. A snap-lock holds the frame closed when it is flipped into a seat. You hear it click."
+          }
+        },
+        "faq_5": {
+          "type": "faq",
+          "settings": {
+            "question": "Will it sink into soft ground?",
+            "answer": "The feet are wide and flat, so it sits level on a lawn or a bed. In deep mulch, press it down first."
+          }
+        },
+        "faq_6": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I leave it outside?",
+            "answer": "The frame is steel and takes weather. Bring the pad in before heavy rain so it dries out."
+          }
+        },
+        "faq_7": {
+          "type": "faq",
+          "settings": {
+            "question": "What comes in the bundles?",
+            "answer": "The two bundle options add the ten-piece tool set: a folding stool, a storage bag, six steel hand tools, claw gloves and a sprayer."
+          }
+        },
+        "faq_8": {
+          "type": "faq",
+          "settings": {
+            "question": "How does shipping work?",
+            "answer": "Free shipping inside the US. You get a tracking link by email as soon as it leaves the warehouse."
+          }
+        },
+        "faq_9": {
+          "type": "faq",
+          "settings": {
+            "question": "What if it is not for me?",
+            "answer": "Send it back within 30 days and we refund you."
+          }
+        }
+      },
+      "block_order": [
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4",
+        "faq_5",
+        "faq_6",
+        "faq_7",
+        "faq_8",
+        "faq_9"
+      ],
+      "settings": {
+        "eyebrow": "See it for yourself",
+        "heading": "Watch it, then read the answers.",
+        "text": "One clip, no edit. Every question people ask before buying is answered right here.",
+        "video_url": "",
+        "video_src": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4",
+        "caption": "Kneeling down, standing back up, and flipping it into a seat.",
+        "placeholder": "UGC clip: kneeling, standing up, flipping it into a seat",
+        "faq_heading": "Questions people ask first.",
+        "open_first": true,
+        "faq_note": "Still unsure? Email us and a person answers."
+      }
     }
   },
   "order": [
     "main",
+    "watch",
     "social",
     "video",
-    "faq",
     "toolset",
     "trust",
     "steps",
