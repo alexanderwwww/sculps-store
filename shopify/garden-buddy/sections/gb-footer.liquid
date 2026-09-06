@@ -1,0 +1,114 @@
+{%- comment -%}
+  GARDEN BUDDY — footer. Three columns on stone, legal line below.
+{%- endcomment -%}
+
+{%- liquid
+  assign menu = linklists[section.settings.link_list]
+  assign wordmark = section.settings.wordmark | default: 'GARDEN BUDDY'
+-%}
+
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+<div class="gb gb-foot-sec">
+  <footer class="gb-foot">
+    <div class="gb-wrap gb-foot__cols">
+
+      <div class="gb-foot__col">
+        <a class="gb-foot__logo" href="{{ routes.root_url }}">{{ wordmark | escape }}</a>
+        {%- if section.settings.about != blank -%}
+          <p class="gb-foot__about">{{ section.settings.about | escape }}</p>
+        {%- endif -%}
+      </div>
+
+      <nav class="gb-foot__col" aria-label="Footer">
+        <h2 class="gb-foot__head">{{ section.settings.links_heading | escape }}</h2>
+        <ul class="gb-foot__links">
+          {%- if menu.links.size > 0 -%}
+            {%- for link in menu.links -%}
+              <li><a href="{{ link.url }}">{{ link.title | escape }}</a></li>
+            {%- endfor -%}
+          {%- else -%}
+            <li><a href="{{ routes.all_products_collection_url }}">Shop</a></li>
+            {%- for policy in shop.policies -%}
+              {%- if policy.body != blank -%}<li><a href="{{ policy.url }}">{{ policy.title | escape }}</a></li>{%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+        </ul>
+      </nav>
+
+      <div class="gb-foot__col">
+        <h2 class="gb-foot__head">{{ section.settings.contact_heading | escape }}</h2>
+        {%- if section.settings.contact_text != blank -%}
+          <p class="gb-foot__contact-txt">{{ section.settings.contact_text | escape }}</p>
+        {%- endif -%}
+        {%- if section.settings.contact_email != blank -%}
+          <a class="gb-foot__email" href="mailto:{{ section.settings.contact_email | escape }}">{{ section.settings.contact_email | escape }}</a>
+        {%- elsif request.design_mode -%}
+          <span class="gb-fill">[ CONTACT EMAIL ]</span>
+        {%- endif -%}
+      </div>
+
+    </div>
+
+    <div class="gb-wrap gb-foot__bottom">
+      <small class="gb-foot__legal">&copy; {{ 'now' | date: '%Y' }} {{ shop.name | escape }}. All rights reserved.</small>
+
+      {%- assign has_policy = false -%}
+      {%- for policy in shop.policies -%}
+        {%- if policy.body != blank -%}{%- assign has_policy = true -%}{%- endif -%}
+      {%- endfor -%}
+      {%- if has_policy and menu.links.size > 0 -%}
+        <nav class="gb-foot__policies" aria-label="Policies">
+          {%- for policy in shop.policies -%}
+            {%- if policy.body != blank -%}<a href="{{ policy.url }}">{{ policy.title | escape }}</a>{%- endif -%}
+          {%- endfor -%}
+        </nav>
+      {%- endif -%}
+
+      {%- if section.settings.show_payment and shop.enabled_payment_types.size > 0 -%}
+        <div class="gb-foot__pay" aria-label="Payment methods">
+          {%- for type in shop.enabled_payment_types -%}
+            {{ type | payment_type_svg_tag: class: 'gb-foot__icon' }}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </footer>
+</div>
+
+{% stylesheet %}
+.gb-foot-sec .gb-foot{background:var(--stone);border-top:1px solid var(--stone-2);padding:52px 0 calc(36px + env(safe-area-inset-bottom))}
+.gb-foot-sec .gb-foot__cols{display:grid;gap:36px;grid-template-columns:1fr}
+@media(min-width:760px){.gb-foot-sec .gb-foot__cols{grid-template-columns:1.4fr 1fr 1fr;gap:48px}}
+.gb-foot-sec .gb-foot__logo{display:inline-block;font-weight:800;font-size:21px;letter-spacing:.06em;text-decoration:none;color:var(--ink)}
+.gb-foot-sec .gb-foot__about{margin:12px 0 0;color:var(--dim);max-width:40ch;line-height:1.6}
+.gb-foot-sec .gb-foot__head{margin:0 0 12px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--bark);font-weight:800}
+.gb-foot-sec .gb-foot__links{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.gb-foot-sec .gb-foot__links a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:var(--ink);font-size:17px;font-weight:600}
+.gb-foot-sec .gb-foot__links a:hover{color:var(--accent)}
+.gb-foot-sec .gb-foot__contact-txt{margin:0 0 8px;color:var(--dim);line-height:1.6}
+.gb-foot-sec .gb-foot__email{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:700;font-size:17px;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:4px;word-break:break-all}
+.gb-foot-sec .gb-foot__bottom{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justify-content:space-between;margin-top:40px;padding-top:22px;border-top:1px solid var(--stone-2);color:var(--dim);font-size:14px}
+.gb-foot-sec .gb-foot__legal{font-size:14px}
+.gb-foot-sec .gb-foot__policies{display:flex;flex-wrap:wrap;gap:6px 18px}
+.gb-foot-sec .gb-foot__policies a{color:var(--dim);text-decoration:none;padding:6px 0}
+.gb-foot-sec .gb-foot__policies a:hover{color:var(--accent)}
+.gb-foot-sec .gb-foot__pay{display:flex;flex-wrap:wrap;gap:6px}
+.gb-foot-sec .gb-foot__icon{width:38px;height:24px;border-radius:3px}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Garden Buddy footer",
+  "settings": [
+    { "type": "text", "id": "wordmark", "label": "Wordmark", "default": "GARDEN BUDDY" },
+    { "type": "textarea", "id": "about", "label": "About line", "default": "A padded kneeler that flips into a stool. Made for people who still want to garden on their own terms." },
+    { "type": "text", "id": "links_heading", "label": "Links heading", "default": "Help" },
+    { "type": "link_list", "id": "link_list", "label": "Footer menu", "default": "footer", "info": "If empty, a Shop link and your policies are shown instead." },
+    { "type": "text", "id": "contact_heading", "label": "Contact heading", "default": "Talk to us" },
+    { "type": "textarea", "id": "contact_text", "label": "Contact text", "default": "Questions about sizing, shipping or a return. We answer in plain English." },
+    { "type": "text", "id": "contact_email", "label": "Contact email" },
+    { "type": "checkbox", "id": "show_payment", "label": "Show payment icons", "default": true }
+  ]
+}
+{% endschema %}

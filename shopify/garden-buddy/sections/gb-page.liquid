@@ -1,0 +1,32 @@
+{%- comment -%} GARDEN BUDDY — simple page. Title plus content, 70ch, big type. {%- endcomment -%}
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+<div class="gb gb-page-sec">
+  <article class="gb-wrap gb-page">
+    <h1 class="gb-h1">{{ page.title | escape }}</h1>
+    <div class="gb-page__body">
+      {{ page.content }}
+    </div>
+  </article>
+</div>
+
+{% stylesheet %}
+.gb-page-sec .gb-page{max-width:calc(70ch + 2 * var(--pad));padding-block:clamp(40px,6vw,80px)}
+.gb-page-sec .gb-page__body{margin-top:28px;font-size:18px;line-height:1.7}
+.gb-page-sec .gb-page__body h2{font-size:28px;line-height:1.15;margin:40px 0 12px;font-weight:800}
+.gb-page-sec .gb-page__body h3{font-size:22px;margin:32px 0 8px;font-weight:800}
+.gb-page-sec .gb-page__body p,.gb-page-sec .gb-page__body ul,.gb-page-sec .gb-page__body ol{margin:0 0 20px}
+.gb-page-sec .gb-page__body li{margin-bottom:8px}
+.gb-page-sec .gb-page__body a{color:var(--accent-2);text-underline-offset:3px}
+.gb-page-sec .gb-page__body img{border-radius:var(--radius)}
+.gb-page-sec .gb-page__body table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}
+.gb-page-sec .gb-page__body td,.gb-page-sec .gb-page__body th{padding:10px 12px;border-bottom:1px solid var(--rule);text-align:left}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Garden Buddy page",
+  "settings": [],
+  "presets": [{ "name": "Garden Buddy page" }]
+}
+{% endschema %}

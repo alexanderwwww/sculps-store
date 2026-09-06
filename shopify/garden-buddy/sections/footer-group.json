@@ -1,0 +1,20 @@
+{
+  "type": "footer",
+  "name": "t:names.footer",
+  "sections": {
+    "gb_footer": {
+      "type": "gb-footer",
+      "settings": {
+        "wordmark": "GARDEN BUDDY",
+        "about": "A padded kneeler that flips into a stool. Made for people who still want to garden on their own terms.",
+        "links_heading": "Help",
+        "link_list": "footer",
+        "contact_heading": "Talk to us",
+        "contact_text": "Questions about sizing, shipping or a return. We answer in plain English.",
+        "contact_email": "",
+        "show_payment": true
+      }
+    }
+  },
+  "order": ["gb_footer"]
+}

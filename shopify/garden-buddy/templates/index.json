@@ -1,0 +1,52 @@
+{
+  "sections": {
+    "home": {
+      "type": "gb-home",
+      "settings": {
+        "product_handle": "foldable-kneeler-seat",
+        "hero_eyebrow": "Garden Buddy foldable kneeler seat",
+        "hero_heading": "Kneel. Flip. Sit. Get up easy.",
+        "hero_text": "A padded kneeler and a garden stool in one folding steel frame. With handles, so getting up is not the hard part any more.",
+        "hero_button": "Shop the kneeler",
+        "hero_note": "Free US shipping · 30-day returns",
+        "feature_eyebrow": "The one product we make",
+        "feature_fallback_title": "Garden Buddy Foldable Kneeler Seat",
+        "check_1": "Kneeler one way up, stool the other. Thick detachable pad.",
+        "check_2": "Steel frame with handles you can push up on.",
+        "check_3": "Arrives assembled. Folds flat and snap-locks for the shed.",
+        "feature_button": "See packs and colours",
+        "steps_eyebrow": "How you use it",
+        "steps_heading": "Three moves. No thinking.",
+        "packs_eyebrow": "Packs",
+        "packs_heading": "One for you. Two if you share the beds.",
+        "packs_text": "One pack or two. Prices below are live from the store. The pair costs less per seat.",
+        "pack_color": "Blue",
+        "packs_highlight": 2,
+        "handles_eyebrow": "Why the handles matter",
+        "handles_heading": "Getting down is easy. Getting up is the part that hurts.",
+        "handles_text": "A cushion on the ground helps your knees. It does nothing for the moment you have to stand. The handles on this frame sit at about hip height when you kneel, so you push up with your arms instead of your knees and back. Flip it over and those same handles are the legs of a stool.\n\nThe frame is steel. The pad clips off so you can hose it down.",
+        "faq_eyebrow": "Questions",
+        "faq_heading": "The things people ask before they buy.",
+        "closer_heading": "Garden longer. Hurt less.",
+        "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
+        "closer_button": "Shop the kneeler"
+      },
+      "blocks": {
+        "benefit_1": { "type": "benefit", "settings": { "heading": "Kneeler and stool", "text": "Flip it over. One frame, two jobs." } },
+        "benefit_2": { "type": "benefit", "settings": { "heading": "Handles to push up on", "text": "Stand using your arms, not your knees." } },
+        "benefit_3": { "type": "benefit", "settings": { "heading": "Arrives assembled", "text": "Unfold it and kneel. No tools." } },
+        "benefit_4": { "type": "benefit", "settings": { "heading": "Folds flat", "text": "Snap-lock keeps it shut in the shed or the car." } },
+        "step_1": { "type": "step", "settings": { "heading": "Kneel", "text": "Pad on the ground, handles up. Your knees are off the dirt and the handles are right where your hands land.", "image_caption": "Kneeling on the pad, hands on the handles" } },
+        "step_2": { "type": "step", "settings": { "heading": "Flip", "text": "Grab it, turn it over. The handles become the legs.", "image_caption": "Mid-flip, frame turning over" } },
+        "step_3": { "type": "step", "settings": { "heading": "Sit", "text": "Now it is a stool. Weeding, potting, or just resting between beds.", "image_caption": "Sitting on the stool, trowel in hand" } },
+        "faq_1": { "type": "faq", "settings": { "question": "How much weight does the stool hold?", "answer": "The frame is steel and rated to [ WEIGHT LIMIT ]." } },
+        "faq_2": { "type": "faq", "settings": { "question": "Does it need assembly?", "answer": "No. It arrives assembled. Unfold it, snap the lock open, and it is ready." } },
+        "faq_3": { "type": "faq", "settings": { "question": "Can I wash the pad?", "answer": "Yes. The pad detaches from the frame. Hose it off or wipe it down and clip it back on." } },
+        "faq_4": { "type": "faq", "settings": { "question": "How long does shipping take?", "answer": "Shipping is free inside the US. Most orders arrive in [ DELIVERY WINDOW ]." } },
+        "faq_5": { "type": "faq", "settings": { "question": "What if it is not for me?", "answer": "You have 30 days from delivery to send it back. Email us and we will sort it out." } }
+      },
+      "block_order": ["benefit_1", "benefit_2", "benefit_3", "benefit_4", "step_1", "step_2", "step_3", "faq_1", "faq_2", "faq_3", "faq_4", "faq_5"]
+    }
+  },
+  "order": ["home"]
+}

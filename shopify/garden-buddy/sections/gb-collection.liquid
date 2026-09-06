@@ -1,0 +1,76 @@
+{%- comment -%} GARDEN BUDDY — collection grid. Title, optional description, product cards. {%- endcomment -%}
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+<div class="gb gb-col-sec">
+  <div class="gb-wrap gb-col">
+    <header class="gb-col__head">
+      <h1 class="gb-h1">{{ collection.title | escape }}</h1>
+      {%- if collection.description != blank -%}
+        <div class="gb-lede">{{ collection.description }}</div>
+      {%- endif -%}
+    </header>
+
+    {%- paginate collection.products by 12 -%}
+      {%- if collection.products.size > 0 -%}
+        <ul class="gb-col__grid">
+          {%- for p in collection.products -%}
+            <li class="gb-col__card gb-card">
+              <a href="{{ p.url }}">
+                {%- if p.featured_image != blank -%}
+                  {{ p.featured_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '400, 600, 900', sizes: '(min-width: 760px) 33vw, 100vw', class: 'gb-col__img' }}
+                {%- else -%}
+                  <div class="gb-ph gb-col__img">{{ p.title | escape }}<small>Product photo</small></div>
+                {%- endif -%}
+                <div class="gb-col__body">
+                  <h2>{{ p.title | escape }}</h2>
+                  <p class="gb-col__price">
+                    {%- if p.price_varies -%}from {% endif -%}<b>{{ p.price_min | money }}</b>
+                    {%- if p.compare_at_price_max > p.price_min -%}<s>{{ p.compare_at_price_max | money }}</s>{%- endif -%}
+                  </p>
+                  {%- unless p.available -%}<p class="gb-col__sold">Sold out</p>{%- endunless -%}
+                  <span class="gb-btn gb-btn--accent gb-col__btn">{{ section.settings.button | escape }}</span>
+                </div>
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+        {%- if paginate.pages > 1 -%}
+          <nav class="gb-col__pages" aria-label="Pages">{{ paginate | default_pagination }}</nav>
+        {%- endif -%}
+      {%- else -%}
+        <p class="gb-lede">Nothing in this collection yet.</p>
+      {%- endif -%}
+    {%- endpaginate -%}
+  </div>
+</div>
+
+{% stylesheet %}
+.gb-col-sec .gb-col{padding-block:clamp(40px,6vw,80px)}
+.gb-col-sec .gb-col__head{margin-bottom:36px}
+.gb-col-sec .gb-col__grid{list-style:none;margin:0;padding:0;display:grid;gap:20px}
+@media(min-width:560px){.gb-col-sec .gb-col__grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.gb-col-sec .gb-col__grid{grid-template-columns:repeat(3,1fr)}}
+.gb-col-sec .gb-col__card{overflow:hidden;transition:box-shadow .15s,transform .15s}
+.gb-col-sec .gb-col__card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(43,36,25,.10)}
+.gb-col-sec .gb-col__card a{display:block;text-decoration:none;color:var(--ink)}
+.gb-col-sec .gb-col__img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:0}
+.gb-col-sec .gb-col__body{padding:20px 22px 24px;display:grid;gap:8px}
+.gb-col-sec .gb-col__body h2{margin:0;font-size:21px;font-weight:800;line-height:1.2}
+.gb-col-sec .gb-col__price{margin:0;display:flex;gap:10px;align-items:baseline;color:var(--dim);font-size:16px}
+.gb-col-sec .gb-col__price b{color:var(--ink);font-size:24px}
+.gb-col-sec .gb-col__sold{margin:0;color:var(--dim);font-weight:700}
+.gb-col-sec .gb-col__btn{margin-top:8px;width:100%}
+.gb-col-sec .gb-col__pages{margin-top:36px;text-align:center;font-size:17px}
+.gb-col-sec .gb-col__pages a,.gb-col-sec .gb-col__pages span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 10px;margin:0 2px;border-radius:10px;color:var(--ink);text-decoration:none}
+.gb-col-sec .gb-col__pages .current{background:var(--accent);color:#fff;font-weight:800}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Garden Buddy collection",
+  "settings": [
+    { "type": "text", "id": "button", "label": "Card button", "default": "View" }
+  ],
+  "presets": [{ "name": "Garden Buddy collection" }]
+}
+{% endschema %}

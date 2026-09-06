@@ -1,0 +1,6 @@
+{
+  "sections": {
+    "main": { "type": "gb-page", "settings": {} }
+  },
+  "order": ["main"]
+}

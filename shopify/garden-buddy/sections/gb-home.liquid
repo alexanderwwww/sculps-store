@@ -1,0 +1,425 @@
+{%- comment -%}
+  GARDEN BUDDY — homepage in one section.
+  Hero, benefit strip, product feature, how you use it, pack picker, handles row, FAQ, closer.
+  Prices always come from Shopify. Nothing here is a review, a rating or a countdown.
+  Unknowns are written as [ LIKE THIS ] and rendered as a blue fill chip.
+{%- endcomment -%}
+
+{%- liquid
+  assign fill_open = '<span class="gb-fill">[ '
+  assign fill_close = ' ]</span>'
+
+  assign product = section.settings.product
+  if product == blank
+    assign product = all_products[section.settings.product_handle]
+  endif
+  if product != blank
+    assign product_url = product.url
+  else
+    assign product_url = routes.all_products_collection_url
+  endif
+
+  assign pack_color = section.settings.pack_color | default: 'Blue'
+  assign has_color = false
+  for v in product.variants
+    if v.title contains pack_color
+      assign has_color = true
+    endif
+  endfor
+-%}
+
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+<div class="gb gb-home">
+
+  {%- comment -%} a. HERO {%- endcomment -%}
+  <section class="gb-hero">
+    <div class="gb-wrap gb-hero__in">
+      <div class="gb-hero__copy">
+        {%- if section.settings.hero_eyebrow != blank -%}
+          <p class="gb-eyebrow">{{ section.settings.hero_eyebrow | escape }}</p>
+        {%- endif -%}
+        <h1 class="gb-h1">{{ section.settings.hero_heading | escape }}</h1>
+        <p class="gb-lede">{{ section.settings.hero_text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+        <div class="gb-hero__cta">
+          <a class="gb-btn gb-btn--accent" href="{{ product_url }}">{{ section.settings.hero_button | escape }}</a>
+          {%- if section.settings.hero_note != blank -%}
+            <p class="gb-hero__note">{{ section.settings.hero_note | escape }}</p>
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="gb-hero__media">
+        {%- if section.settings.hero_image != blank -%}
+          {{ section.settings.hero_image | image_url: width: 1600 | image_tag: loading: 'eager', widths: '600, 900, 1200, 1600', sizes: '(min-width: 960px) 55vw, 100vw', class: 'gb-hero__img' }}
+        {%- else -%}
+          <div class="gb-ph gb-hero__img">Hero image<small>A woman in her 60s kneeling on it in a flower bed, morning light</small></div>
+        {%- endif -%}
+      </div>
+    </div>
+  </section>
+
+  {%- comment -%} b. BENEFIT STRIP {%- endcomment -%}
+  {%- assign benefits = section.blocks | where: 'type', 'benefit' -%}
+  {%- if benefits.size > 0 -%}
+    <section class="gb-sec gb-sec--stone gb-benefits">
+      <ul class="gb-wrap gb-benefits__grid">
+        {%- for b in benefits -%}
+          <li class="gb-benefits__item" {{ b.shopify_attributes }}>
+            <b>{{ b.settings.heading | escape }}</b>
+            <span>{{ b.settings.text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</span>
+          </li>
+        {%- endfor -%}
+      </ul>
+    </section>
+  {%- endif -%}
+
+  {%- comment -%} c. PRODUCT FEATURE {%- endcomment -%}
+  <section class="gb-sec gb-feature">
+    <div class="gb-wrap gb-feature__in">
+      <a class="gb-feature__media gb-card" href="{{ product_url }}">
+        {%- if product.featured_image != blank -%}
+          {{ product.featured_image | image_url: width: 1200 | image_tag: loading: 'lazy', widths: '500, 800, 1200', sizes: '(min-width: 960px) 50vw, 100vw', class: 'gb-feature__img' }}
+        {%- else -%}
+          <div class="gb-ph gb-feature__img">Product photo<small>The kneeler on plain white, pad side up, handles visible</small></div>
+        {%- endif -%}
+      </a>
+      <div class="gb-feature__copy">
+        <p class="gb-eyebrow">{{ section.settings.feature_eyebrow | escape }}</p>
+        <h2 class="gb-h2">{%- if product != blank -%}{{ product.title | escape }}{%- else -%}{{ section.settings.feature_fallback_title | escape }}{%- endif -%}</h2>
+        {%- if product != blank -%}
+          <p class="gb-feature__price">from <b>{{ product.price_min | money }}</b></p>
+        {%- else -%}
+          <p class="gb-feature__price"><span class="gb-fill">[ PRODUCT NOT FOUND — check the handle in section settings ]</span></p>
+        {%- endif -%}
+        <ul class="gb-feature__checks">
+          {%- if section.settings.check_1 != blank -%}<li class="gb-check">{{ section.settings.check_1 | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>{%- endif -%}
+          {%- if section.settings.check_2 != blank -%}<li class="gb-check">{{ section.settings.check_2 | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>{%- endif -%}
+          {%- if section.settings.check_3 != blank -%}<li class="gb-check">{{ section.settings.check_3 | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>{%- endif -%}
+        </ul>
+        <a class="gb-btn gb-btn--accent" href="{{ product_url }}">{{ section.settings.feature_button | escape }}</a>
+      </div>
+    </div>
+  </section>
+
+  {%- comment -%} d. HOW YOU USE IT {%- endcomment -%}
+  {%- assign steps = section.blocks | where: 'type', 'step' -%}
+  {%- if steps.size > 0 -%}
+    <section class="gb-sec gb-sec--stone gb-steps">
+      <div class="gb-wrap">
+        <p class="gb-eyebrow">{{ section.settings.steps_eyebrow | escape }}</p>
+        <h2 class="gb-h2">{{ section.settings.steps_heading | escape }}</h2>
+        <ol class="gb-steps__grid">
+          {%- for s in steps -%}
+            <li class="gb-steps__item gb-card" {{ s.shopify_attributes }}>
+              <div class="gb-steps__media">
+                {%- if s.settings.image != blank -%}
+                  {{ s.settings.image | image_url: width: 800 | image_tag: loading: 'lazy', widths: '400, 600, 800', sizes: '(min-width: 760px) 33vw, 100vw', class: 'gb-steps__img' }}
+                {%- else -%}
+                  <div class="gb-ph gb-steps__img">Step {{ forloop.index }}<small>{{ s.settings.image_caption | default: s.settings.heading | escape }}</small></div>
+                {%- endif -%}
+              </div>
+              <div class="gb-steps__body">
+                <span class="gb-steps__n">{{ forloop.index }}</span>
+                <h3>{{ s.settings.heading | escape }}</h3>
+                <p>{{ s.settings.text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+              </div>
+            </li>
+          {%- endfor -%}
+        </ol>
+      </div>
+    </section>
+  {%- endif -%}
+
+  {%- comment -%} e. PACK PICKER TEASER {%- endcomment -%}
+  {%- if product != blank and product.variants.size > 0 -%}
+    <section class="gb-sec gb-packs">
+      <div class="gb-wrap">
+        <p class="gb-eyebrow">{{ section.settings.packs_eyebrow | escape }}</p>
+        <h2 class="gb-h2">{{ section.settings.packs_heading | escape }}</h2>
+        {%- if section.settings.packs_text != blank -%}
+          <p class="gb-lede">{{ section.settings.packs_text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+        {%- endif -%}
+        <ul class="gb-packs__grid">
+          {%- assign shown = 0 -%}
+          {%- for v in product.variants -%}
+            {%- assign use = false -%}
+            {%- if has_color == false -%}
+              {%- assign use = true -%}
+            {%- elsif v.title contains pack_color -%}
+              {%- assign use = true -%}
+            {%- endif -%}
+            {%- if use and shown < 2 -%}
+              {%- assign shown = shown | plus: 1 -%}
+              {%- capture pack_name -%}
+                {%- for opt in v.options -%}
+                  {%- if opt != pack_color -%}{{ opt | escape }} {% endif -%}
+                {%- endfor -%}
+              {%- endcapture -%}
+              {%- assign pack_name = pack_name | strip -%}
+              {%- if pack_name == blank -%}{%- assign pack_name = v.title | escape -%}{%- endif -%}
+              <li class="gb-packs__card gb-card{% if shown == section.settings.packs_highlight %} is-hot{% endif %}">
+                <a href="{{ product_url }}?variant={{ v.id }}">
+                  {%- if v.compare_at_price > v.price -%}
+                    {%- assign save = v.compare_at_price | minus: v.price -%}
+                    <span class="gb-pill">Save {{ save | money }}</span>
+                  {%- endif -%}
+                  <h3>{{ pack_name }}</h3>
+                  <p class="gb-packs__price">
+                    <b>{{ v.price | money }}</b>
+                    {%- if v.compare_at_price > v.price -%}
+                      <s>{{ v.compare_at_price | money }}</s>
+                    {%- endif -%}
+                  </p>
+                  {%- if v.available == false -%}
+                    <p class="gb-packs__sold">Sold out</p>
+                  {%- endif -%}
+                  <span class="gb-packs__go">Choose this pack</span>
+                </a>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+        {%- if has_color -%}
+          <p class="gb-packs__foot">Shown in {{ pack_color | escape }}. Pick your colour on the product page.</p>
+        {%- endif -%}
+      </div>
+    </section>
+  {%- endif -%}
+
+  {%- comment -%} f. WHY THE HANDLES MATTER {%- endcomment -%}
+  <section class="gb-sec gb-sec--stone gb-handles">
+    <div class="gb-wrap gb-handles__in">
+      <div class="gb-handles__copy">
+        <p class="gb-eyebrow">{{ section.settings.handles_eyebrow | escape }}</p>
+        <h2 class="gb-h2">{{ section.settings.handles_heading | escape }}</h2>
+        <p class="gb-handles__text">{{ section.settings.handles_text | newline_to_br | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+      </div>
+      <div class="gb-handles__media gb-card">
+        {%- if section.settings.handles_image != blank -%}
+          {{ section.settings.handles_image | image_url: width: 1200 | image_tag: loading: 'lazy', widths: '500, 800, 1200', sizes: '(min-width: 960px) 50vw, 100vw', class: 'gb-handles__img' }}
+        {%- else -%}
+          <div class="gb-ph gb-handles__img">Handles close-up<small>A hand gripping the handle, pushing up from kneeling</small></div>
+        {%- endif -%}
+      </div>
+    </div>
+  </section>
+
+  {%- comment -%} g. FAQ {%- endcomment -%}
+  {%- assign faqs = section.blocks | where: 'type', 'faq' -%}
+  {%- if faqs.size > 0 -%}
+    <section class="gb-sec gb-faq">
+      <div class="gb-wrap gb-faq__in">
+        <div class="gb-faq__head">
+          <p class="gb-eyebrow">{{ section.settings.faq_eyebrow | escape }}</p>
+          <h2 class="gb-h2">{{ section.settings.faq_heading | escape }}</h2>
+        </div>
+        <div class="gb-faq__list">
+          {%- for f in faqs -%}
+            <details class="gb-faq__item" {{ f.shopify_attributes }}{% if forloop.first %} open{% endif %}>
+              <summary>{{ f.settings.question | escape }}</summary>
+              <p>{{ f.settings.answer | newline_to_br | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+            </details>
+          {%- endfor -%}
+        </div>
+      </div>
+    </section>
+  {%- endif -%}
+
+  {%- comment -%} h. CLOSER {%- endcomment -%}
+  <section class="gb-sec gb-sec--tan gb-closer">
+    <div class="gb-wrap gb-closer__in">
+      <h2 class="gb-h2">{{ section.settings.closer_heading | escape }}</h2>
+      {%- if section.settings.closer_text != blank -%}
+        <p class="gb-closer__text">{{ section.settings.closer_text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+      {%- endif -%}
+      <a class="gb-btn gb-btn--accent" href="{{ product_url }}">{{ section.settings.closer_button | escape }}</a>
+      {%- if product != blank -%}
+        <p class="gb-closer__price">from {{ product.price_min | money }}</p>
+      {%- endif -%}
+    </div>
+  </section>
+
+</div>
+
+{% stylesheet %}
+/* hero */
+.gb-home .gb-hero{padding:clamp(28px,4vw,56px) 0 clamp(40px,6vw,80px)}
+.gb-home .gb-hero__in{display:grid;gap:28px;align-items:center}
+@media(min-width:960px){.gb-home .gb-hero__in{grid-template-columns:5fr 6fr;gap:56px}}
+.gb-home .gb-hero__copy{order:2}
+.gb-home .gb-hero__media{order:1}
+@media(min-width:960px){.gb-home .gb-hero__copy{order:1}.gb-home .gb-hero__media{order:2}}
+.gb-home .gb-hero__cta{margin-top:26px}
+.gb-home .gb-hero__note{margin:12px 0 0;color:var(--dim);font-size:15px;font-weight:600}
+.gb-home .gb-hero__img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--radius)}
+
+/* benefits */
+.gb-home .gb-benefits{padding:26px 0}
+.gb-home .gb-benefits__grid{list-style:none;margin:0 auto;padding-block:0;display:grid;gap:18px 28px;grid-template-columns:repeat(2,1fr)}
+@media(min-width:900px){.gb-home .gb-benefits__grid{grid-template-columns:repeat(4,1fr)}}
+.gb-home .gb-benefits__item{display:grid;gap:4px;padding-left:34px;position:relative}
+.gb-home .gb-benefits__item::before{content:"";position:absolute;left:0;top:4px;width:22px;height:22px;border-radius:50%;background:var(--leaf) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>") center/14px no-repeat}
+.gb-home .gb-benefits__item b{font-size:17px}
+.gb-home .gb-benefits__item span{color:var(--dim);font-size:15px;line-height:1.45}
+
+/* feature */
+.gb-home .gb-feature__in{display:grid;gap:28px;align-items:center}
+@media(min-width:960px){.gb-home .gb-feature__in{grid-template-columns:1fr 1fr;gap:56px}}
+.gb-home .gb-feature__media{display:block;overflow:hidden;text-decoration:none}
+.gb-home .gb-feature__img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius)}
+.gb-home .gb-feature__price{margin:14px 0 0;font-size:20px;color:var(--dim)}
+.gb-home .gb-feature__price b{color:var(--ink);font-size:28px}
+.gb-home .gb-feature__checks{list-style:none;margin:22px 0 28px;padding:0;display:grid;gap:12px;font-size:17px}
+
+/* steps */
+.gb-home .gb-steps__grid{list-style:none;margin:32px 0 0;padding:0;display:grid;gap:20px;counter-reset:gbstep}
+@media(min-width:760px){.gb-home .gb-steps__grid{grid-template-columns:repeat(3,1fr)}}
+.gb-home .gb-steps__item{overflow:hidden;display:grid}
+.gb-home .gb-steps__img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:0}
+.gb-home .gb-steps__body{padding:22px 24px 26px;position:relative}
+.gb-home .gb-steps__n{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:16px;margin-bottom:10px}
+.gb-home .gb-steps__body h3{margin:0 0 6px;font-size:22px;font-weight:800}
+.gb-home .gb-steps__body p{margin:0;color:var(--dim);line-height:1.55}
+
+/* packs */
+.gb-home .gb-packs__grid{list-style:none;margin:32px 0 0;padding:0;display:grid;gap:18px}
+@media(min-width:760px){.gb-home .gb-packs__grid{grid-template-columns:repeat(2,1fr);max-width:820px}}
+.gb-home .gb-packs__card{position:relative;transition:box-shadow .15s,transform .15s}
+.gb-home .gb-packs__card.is-hot{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.gb-home .gb-packs__card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(43,36,25,.10)}
+.gb-home .gb-packs__card a{display:grid;gap:8px;padding:26px 24px 24px;text-decoration:none;color:var(--ink);min-height:100%}
+.gb-home .gb-packs__card .gb-pill{justify-self:start}
+.gb-home .gb-packs__card h3{margin:2px 0 0;font-size:24px;font-weight:800}
+.gb-home .gb-packs__price{margin:0;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.gb-home .gb-packs__price b{font-size:30px}
+.gb-home .gb-packs__price s{color:var(--dim);font-size:18px}
+.gb-home .gb-packs__sold{margin:0;color:var(--dim);font-weight:700}
+.gb-home .gb-packs__go{margin-top:10px;font-weight:800;color:var(--accent);font-size:17px}
+.gb-home .gb-packs__go::after{content:" →"}
+.gb-home .gb-packs__foot{margin:18px 0 0;color:var(--dim);font-size:15px}
+
+/* handles */
+.gb-home .gb-handles__in{display:grid;gap:28px;align-items:center}
+@media(min-width:960px){.gb-home .gb-handles__in{grid-template-columns:1fr 1fr;gap:56px}}
+.gb-home .gb-handles__media{overflow:hidden}
+.gb-home .gb-handles__img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--radius)}
+.gb-home .gb-handles__text{margin:18px 0 0;max-width:52ch;font-size:18px;line-height:1.6}
+
+/* faq */
+.gb-home .gb-faq__in{display:grid;gap:28px}
+@media(min-width:960px){.gb-home .gb-faq__in{grid-template-columns:1fr 2fr;gap:56px;align-items:start}}
+.gb-home .gb-faq__list{display:grid;gap:0;border-top:1px solid var(--rule)}
+.gb-home .gb-faq__item{border-bottom:1px solid var(--rule)}
+.gb-home .gb-faq__item summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;padding:14px 0;cursor:pointer;list-style:none;font-size:19px;font-weight:800}
+.gb-home .gb-faq__item summary::-webkit-details-marker{display:none}
+.gb-home .gb-faq__item summary::after{content:"+";flex:0 0 auto;font-size:28px;line-height:1;color:var(--accent);font-weight:400}
+.gb-home .gb-faq__item[open] summary::after{content:"–"}
+.gb-home .gb-faq__item p{margin:0 0 20px;color:var(--dim);max-width:60ch;line-height:1.6;font-size:17px}
+
+/* closer */
+.gb-home .gb-closer__in{text-align:center;display:grid;justify-items:center;gap:0}
+.gb-home .gb-closer .gb-h2{color:var(--bark-2)}
+.gb-home .gb-closer__text{margin:14px 0 26px;max-width:46ch;color:var(--bark-2);font-size:18px}
+.gb-home .gb-closer__price{margin:14px 0 0;color:var(--bark-2);font-weight:700}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Garden Buddy home",
+  "settings": [
+    { "type": "header", "content": "Product" },
+    { "type": "product", "id": "product", "label": "Product", "info": "Leave empty to use the handle below." },
+    { "type": "text", "id": "product_handle", "label": "Product handle (fallback)", "default": "foldable-kneeler-seat" },
+
+    { "type": "header", "content": "Hero" },
+    { "type": "image_picker", "id": "hero_image", "label": "Hero image", "info": "A woman in her 60s kneeling on it in a flower bed, morning light." },
+    { "type": "text", "id": "hero_eyebrow", "label": "Eyebrow", "default": "Garden Buddy foldable kneeler seat" },
+    { "type": "text", "id": "hero_heading", "label": "Heading", "default": "Kneel. Flip. Sit. Get up easy." },
+    { "type": "textarea", "id": "hero_text", "label": "Text", "default": "A padded kneeler and a garden stool in one folding steel frame. With handles, so getting up is not the hard part any more." },
+    { "type": "text", "id": "hero_button", "label": "Button", "default": "Shop the kneeler" },
+    { "type": "text", "id": "hero_note", "label": "Small note", "default": "Free US shipping · 30-day returns" },
+
+    { "type": "header", "content": "Product feature" },
+    { "type": "text", "id": "feature_eyebrow", "label": "Eyebrow", "default": "The one product we make" },
+    { "type": "text", "id": "feature_fallback_title", "label": "Title if product not found", "default": "Garden Buddy Foldable Kneeler Seat" },
+    { "type": "text", "id": "check_1", "label": "Check 1", "default": "Kneeler one way up, stool the other. Thick detachable pad." },
+    { "type": "text", "id": "check_2", "label": "Check 2", "default": "Steel frame with handles you can push up on." },
+    { "type": "text", "id": "check_3", "label": "Check 3", "default": "Arrives assembled. Folds flat and snap-locks for the shed." },
+    { "type": "text", "id": "feature_button", "label": "Button", "default": "See packs and colours" },
+
+    { "type": "header", "content": "How you use it" },
+    { "type": "text", "id": "steps_eyebrow", "label": "Eyebrow", "default": "How you use it" },
+    { "type": "text", "id": "steps_heading", "label": "Heading", "default": "Three moves. No thinking." },
+
+    { "type": "header", "content": "Pack picker" },
+    { "type": "text", "id": "packs_eyebrow", "label": "Eyebrow", "default": "Packs" },
+    { "type": "text", "id": "packs_heading", "label": "Heading", "default": "One for you. Two if you share the beds." },
+    { "type": "textarea", "id": "packs_text", "label": "Text", "default": "One pack or two. Prices below are live from the store. The pair costs less per seat." },
+    { "type": "text", "id": "pack_color", "label": "Colour to show", "default": "Blue", "info": "Cards show the variants of this colour. Must match the option value in Shopify." },
+    { "type": "range", "id": "packs_highlight", "label": "Highlight card", "min": 0, "max": 2, "step": 1, "default": 2, "info": "0 for none." },
+
+    { "type": "header", "content": "Why the handles matter" },
+    { "type": "image_picker", "id": "handles_image", "label": "Image" },
+    { "type": "text", "id": "handles_eyebrow", "label": "Eyebrow", "default": "Why the handles matter" },
+    { "type": "text", "id": "handles_heading", "label": "Heading", "default": "Getting down is easy. Getting up is the part that hurts." },
+    { "type": "textarea", "id": "handles_text", "label": "Text", "default": "A cushion on the ground helps your knees. It does nothing for the moment you have to stand. The handles on this frame sit at about hip height when you kneel, so you push up with your arms instead of your knees and back. Flip it over and those same handles are the legs of a stool.\n\nThe frame is steel. The pad clips off so you can hose it down." },
+
+    { "type": "header", "content": "FAQ" },
+    { "type": "text", "id": "faq_eyebrow", "label": "Eyebrow", "default": "Questions" },
+    { "type": "text", "id": "faq_heading", "label": "Heading", "default": "The things people ask before they buy." },
+
+    { "type": "header", "content": "Closer" },
+    { "type": "text", "id": "closer_heading", "label": "Heading", "default": "Garden longer. Hurt less." },
+    { "type": "textarea", "id": "closer_text", "label": "Text", "default": "Free US shipping. 30 days to send it back if it is not for you." },
+    { "type": "text", "id": "closer_button", "label": "Button", "default": "Shop the kneeler" }
+  ],
+  "blocks": [
+    {
+      "type": "benefit",
+      "name": "Benefit",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Arrives assembled" },
+        { "type": "text", "id": "text", "label": "Text", "default": "Unfold it and kneel." }
+      ]
+    },
+    {
+      "type": "step",
+      "name": "Step",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Kneel" },
+        { "type": "textarea", "id": "text", "label": "Text", "default": "Pad on the ground, handles up. Your knees are off the dirt." },
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "image_caption", "label": "Placeholder caption", "info": "Shown on the tile until an image is set." }
+      ]
+    },
+    {
+      "type": "faq",
+      "name": "Question",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Question", "default": "How much weight does the stool hold?" },
+        { "type": "textarea", "id": "answer", "label": "Answer", "default": "[ WEIGHT LIMIT ]. Put unknowns in square brackets like this and they show as a blue chip until filled." }
+      ]
+    }
+  ],
+  "max_blocks": 20,
+  "presets": [
+    {
+      "name": "Garden Buddy home",
+      "blocks": [
+        { "type": "benefit", "settings": { "heading": "Kneeler and stool", "text": "Flip it over. One frame, two jobs." } },
+        { "type": "benefit", "settings": { "heading": "Handles to push up on", "text": "Stand using your arms, not your knees." } },
+        { "type": "benefit", "settings": { "heading": "Arrives assembled", "text": "Unfold it and kneel. No tools." } },
+        { "type": "benefit", "settings": { "heading": "Folds flat", "text": "Snap-lock keeps it shut in the shed or the car." } },
+        { "type": "step", "settings": { "heading": "Kneel", "text": "Pad on the ground, handles up. Your knees are off the dirt and the handles are right where your hands land.", "image_caption": "Kneeling on the pad, hands on the handles" } },
+        { "type": "step", "settings": { "heading": "Flip", "text": "Grab it, turn it over. The handles become the legs.", "image_caption": "Mid-flip, frame turning over" } },
+        { "type": "step", "settings": { "heading": "Sit", "text": "Now it is a stool. Weeding, potting, or just resting between beds.", "image_caption": "Sitting on the stool, trowel in hand" } },
+        { "type": "faq", "settings": { "question": "How much weight does the stool hold?", "answer": "The frame is steel and rated to [ WEIGHT LIMIT ]." } },
+        { "type": "faq", "settings": { "question": "Does it need assembly?", "answer": "No. It arrives assembled. Unfold it, snap the lock open, and it is ready." } },
+        { "type": "faq", "settings": { "question": "Can I wash the pad?", "answer": "Yes. The pad detaches from the frame. Hose it off or wipe it down and clip it back on." } },
+        { "type": "faq", "settings": { "question": "How long does shipping take?", "answer": "Shipping is free inside the US. Most orders arrive in [ DELIVERY WINDOW ]." } },
+        { "type": "faq", "settings": { "question": "What if it is not for me?", "answer": "You have 30 days from delivery to send it back. Email us and we will sort it out." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

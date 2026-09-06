@@ -1,0 +1,17 @@
+{
+  "type": "header",
+  "name": "t:names.header",
+  "sections": {
+    "gb_header": {
+      "type": "gb-header",
+      "settings": {
+        "show_bar": true,
+        "bar_text": "Free US shipping on every order · 30-day returns",
+        "wordmark": "GARDEN BUDDY",
+        "link_list": "main-menu",
+        "show_search": false
+      }
+    }
+  },
+  "order": ["gb_header"]
+}

@@ -1,0 +1,160 @@
+{%- comment -%}
+  GARDEN BUDDY — announcement bar + sticky header.
+  Big tap targets, 17px+ text. Mobile menu is a plain details/summary, no JS needed.
+{%- endcomment -%}
+
+{%- liquid
+  assign menu = linklists[section.settings.link_list]
+  assign wordmark = section.settings.wordmark | default: 'GARDEN BUDDY'
+-%}
+
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+<div class="gb gb-hdr-sec">
+
+  {%- if section.settings.show_bar and section.settings.bar_text != blank -%}
+    <div class="gb-bar" data-gb-bar>
+      <p class="gb-wrap gb-bar__in">{{ section.settings.bar_text | escape }}</p>
+    </div>
+  {%- endif -%}
+
+  <header class="gb-hdr">
+    <div class="gb-wrap gb-hdr__in">
+
+      <details class="gb-hdr__menu">
+        <summary class="gb-hdr__burger" aria-label="Menu">
+          <svg class="gb-hdr__ico gb-hdr__ico--open" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <svg class="gb-hdr__ico gb-hdr__ico--close" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          <span class="gb-hdr__burger-txt">Menu</span>
+        </summary>
+        <nav class="gb-hdr__mnav" aria-label="Main, mobile">
+          {%- for link in menu.links -%}
+            <a href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title | escape }}</a>
+          {%- endfor -%}
+          {%- if section.settings.show_search -%}
+            <a href="{{ routes.search_url }}">Search</a>
+          {%- endif -%}
+        </nav>
+      </details>
+
+      <a class="gb-hdr__logo" href="{{ routes.root_url }}">
+        {%- if section.settings.logo != blank -%}
+          {{ section.settings.logo | image_url: width: 400 | image_tag: alt: shop.name, class: 'gb-hdr__logo-img', loading: 'eager', widths: '200, 300, 400' }}
+        {%- else -%}
+          <span class="gb-hdr__wordmark">{{ wordmark | escape }}</span>
+        {%- endif -%}
+      </a>
+
+      <nav class="gb-hdr__nav" aria-label="Main">
+        {%- for link in menu.links -%}
+          <a href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title | escape }}</a>
+        {%- endfor -%}
+      </nav>
+
+      <div class="gb-hdr__right">
+        {%- if section.settings.show_search -%}
+          <a class="gb-hdr__icon-link" href="{{ routes.search_url }}" aria-label="Search">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          </a>
+        {%- endif -%}
+        <a class="gb-hdr__cart" href="{{ routes.cart_url }}" aria-label="Cart, {{ cart.item_count }} items">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l1 14H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+          <span class="gb-hdr__cart-txt">Cart</span>
+          <span class="gb-hdr__count" data-gb-count{% if cart.item_count == 0 %} hidden{% endif %}>{{ cart.item_count }}</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+</div>
+
+{% stylesheet %}
+.shopify-section:has(> .gb-hdr-sec){position:sticky;top:0;z-index:50}
+.gb-hdr-sec .gb-bar{background:var(--lettuce);color:#2F5A17}
+.gb-hdr-sec .gb-bar__in{margin:0;padding-block:10px;text-align:center;font-size:15px;font-weight:700;line-height:1.4}
+.gb-hdr-sec .gb-hdr{position:relative;background:var(--paper);border-bottom:1px solid var(--rule)}
+.gb-hdr-sec .gb-hdr__in{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;min-height:68px}
+@media(min-width:960px){.gb-hdr-sec .gb-hdr__in{grid-template-columns:auto 1fr auto;min-height:76px;gap:32px}}
+
+.gb-hdr-sec .gb-hdr__logo{display:inline-flex;align-items:center;min-height:48px;text-decoration:none;color:var(--ink);justify-self:center}
+@media(min-width:960px){.gb-hdr-sec .gb-hdr__logo{justify-self:start;order:-1}}
+.gb-hdr-sec .gb-hdr__wordmark{font-weight:800;font-size:clamp(19px,2vw,23px);letter-spacing:.06em;white-space:nowrap}
+.gb-hdr-sec .gb-hdr__logo-img{height:40px;width:auto}
+
+.gb-hdr-sec .gb-hdr__nav{display:none;gap:30px;justify-content:center;font-size:17px;font-weight:700}
+.gb-hdr-sec .gb-hdr__nav a{display:inline-flex;align-items:center;min-height:48px;text-decoration:none;color:var(--ink);border-bottom:3px solid transparent}
+.gb-hdr-sec .gb-hdr__nav a:hover,.gb-hdr-sec .gb-hdr__nav a[aria-current]{border-bottom-color:var(--accent)}
+@media(min-width:960px){.gb-hdr-sec .gb-hdr__nav{display:flex}}
+
+.gb-hdr-sec .gb-hdr__right{display:flex;align-items:center;gap:6px;justify-self:end}
+.gb-hdr-sec .gb-hdr__icon-link,.gb-hdr-sec .gb-hdr__cart{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:48px;min-height:48px;padding:0 8px;border-radius:12px;text-decoration:none;color:var(--ink);font-size:17px;font-weight:700}
+.gb-hdr-sec .gb-hdr__icon-link:hover,.gb-hdr-sec .gb-hdr__cart:hover{background:var(--stone)}
+.gb-hdr-sec .gb-hdr__cart-txt{display:none}
+@media(min-width:640px){.gb-hdr-sec .gb-hdr__cart-txt{display:inline}}
+.gb-hdr-sec .gb-hdr__count{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 7px;border-radius:12px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;line-height:1}
+.gb-hdr-sec .gb-hdr__count[hidden]{display:none}
+
+/* mobile menu: details/summary */
+.gb-hdr-sec .gb-hdr__menu{position:static}
+.gb-hdr-sec .gb-hdr__burger{display:inline-flex;align-items:center;gap:8px;min-width:48px;min-height:48px;padding:0 8px;margin-left:-8px;border-radius:12px;cursor:pointer;list-style:none;font-size:17px;font-weight:700;color:var(--ink)}
+.gb-hdr-sec .gb-hdr__burger::-webkit-details-marker{display:none}
+.gb-hdr-sec .gb-hdr__burger:hover{background:var(--stone)}
+.gb-hdr-sec .gb-hdr__burger-txt{display:none}
+@media(min-width:480px){.gb-hdr-sec .gb-hdr__burger-txt{display:inline}}
+.gb-hdr-sec .gb-hdr__ico--close{display:none}
+.gb-hdr-sec .gb-hdr__menu[open] .gb-hdr__ico--open{display:none}
+.gb-hdr-sec .gb-hdr__menu[open] .gb-hdr__ico--close{display:block}
+.gb-hdr-sec .gb-hdr__mnav{position:absolute;left:0;right:0;top:100%;display:grid;padding:6px var(--pad) 18px;background:var(--paper);border-bottom:1px solid var(--rule);box-shadow:0 14px 30px rgba(43,36,25,.12)}
+.gb-hdr-sec .gb-hdr__mnav a{display:flex;align-items:center;min-height:56px;border-bottom:1px solid var(--rule);text-decoration:none;color:var(--ink);font-size:19px;font-weight:700}
+.gb-hdr-sec .gb-hdr__mnav a[aria-current]{color:var(--accent)}
+@media(min-width:960px){.gb-hdr-sec .gb-hdr__menu{display:none}}
+{% endstylesheet %}
+
+{% javascript %}
+(function () {
+  function init(root) {
+    if (root.dataset.gbInit) return;
+    root.dataset.gbInit = '1';
+    var count = root.querySelector('[data-gb-count]');
+    var details = root.querySelector('details');
+    if (details) {
+      document.addEventListener('click', function (e) {
+        if (details.open && !details.contains(e.target)) details.open = false;
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && details.open) details.open = false;
+      });
+    }
+    function refresh() {
+      if (!count) return;
+      fetch('/cart.js', { headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (c) { count.textContent = c.item_count; count.hidden = c.item_count === 0; })
+        .catch(function () {});
+    }
+    window.addEventListener('pageshow', function (e) { if (e.persisted) refresh(); });
+    document.addEventListener('cart:update', refresh);
+  }
+  function boot() { document.querySelectorAll('.gb-hdr-sec').forEach(init); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+  document.addEventListener('shopify:section:load', boot);
+})();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Garden Buddy header",
+  "settings": [
+    { "type": "header", "content": "Announcement bar" },
+    { "type": "checkbox", "id": "show_bar", "label": "Show the bar", "default": true },
+    { "type": "text", "id": "bar_text", "label": "Bar text", "default": "Free US shipping on every order · 30-day returns" },
+    { "type": "header", "content": "Logo" },
+    { "type": "text", "id": "wordmark", "label": "Wordmark text", "default": "GARDEN BUDDY", "info": "Used when no logo image is set." },
+    { "type": "image_picker", "id": "logo", "label": "Logo image" },
+    { "type": "header", "content": "Menu" },
+    { "type": "link_list", "id": "link_list", "label": "Menu", "default": "main-menu" },
+    { "type": "checkbox", "id": "show_search", "label": "Show search icon", "default": false }
+  ]
+}
+{% endschema %}
