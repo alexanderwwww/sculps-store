@@ -685,1210 +685,841 @@ document.addEventListener('click', function (e) {
 
 {% schema %}
 {
-  "name": "Black Reaper product below",
-  "enabled_on": {
-    "templates": [
-      "product"
-    ]
-  },
-  "settings": [
-    {
-      "type": "paragraph",
-      "content": "One template serves all three products. Leave a field blank and it uses the copy written for the product being viewed. Type in a field and it overrides that copy on every product, so only do that if it is true for all three."
-    },
-    {
-      "type": "header",
-      "content": "Dates"
-    },
-    {
-      "type": "text",
-      "id": "cutoff_iso",
-      "label": "Cutoff instant (ISO 8601 with offset)",
-      "default": "2026-10-20T23:59:59-04:00",
-      "info": "Real deadline. Must match the one in the header and the buy box. After this instant the closer and the delivery FAQ switch to the after-cutoff wording. Do not move it to make urgency."
-    },
-    {
-      "type": "text",
-      "id": "cutoff_label",
-      "label": "Cutoff, as words",
-      "default": "Tuesday, October 20",
-      "info": "Used wherever [[cutoff]] appears. Kept as words so the shop's timezone cannot shift the date."
-    },
-    {
-      "type": "header",
-      "content": "Trust strip"
-    },
-    {
-      "type": "paragraph",
-      "content": "Blank = the strip written for this product. Anything written as [ LIKE THIS ] shows as a gold placeholder until you replace it."
-    },
-    {
-      "type": "text",
-      "id": "strip_1_title",
-      "label": "Item 1 title"
-    },
-    {
-      "type": "text",
-      "id": "strip_1_text",
-      "label": "Item 1 text"
-    },
-    {
-      "type": "text",
-      "id": "strip_2_title",
-      "label": "Item 2 title"
-    },
-    {
-      "type": "text",
-      "id": "strip_2_text",
-      "label": "Item 2 text"
-    },
-    {
-      "type": "text",
-      "id": "strip_3_title",
-      "label": "Item 3 title"
-    },
-    {
-      "type": "text",
-      "id": "strip_3_text",
-      "label": "Item 3 text"
-    },
-    {
-      "type": "text",
-      "id": "strip_4_title",
-      "label": "Item 4 title"
-    },
-    {
-      "type": "text",
-      "id": "strip_4_text",
-      "label": "Item 4 text"
-    },
-    {
-      "type": "header",
-      "content": "How it works"
-    },
-    {
-      "type": "text",
-      "id": "how_eyebrow",
-      "label": "Eyebrow"
-    },
-    {
-      "type": "text",
-      "id": "how_heading",
-      "label": "Heading"
-    },
-    {
-      "type": "text",
-      "id": "how_text",
-      "label": "Lede"
-    },
-    {
-      "type": "header",
-      "content": "See it running"
-    },
-    {
-      "type": "paragraph",
-      "content": "Hidden on the live store until at least one Reaction clip for this product has media. Empty slots only show in the editor."
-    },
-    {
-      "type": "text",
-      "id": "react_eyebrow",
-      "label": "Eyebrow"
-    },
-    {
-      "type": "text",
-      "id": "react_heading",
-      "label": "Heading"
-    },
-    {
-      "type": "textarea",
-      "id": "react_text",
-      "label": "Lede"
-    },
-    {
-      "type": "header",
-      "content": "Bundle band"
-    },
-    {
-      "type": "paragraph",
-      "content": "Reaper and Projector pages: the 2 Reapers + Projector bundle, priced from the bundle variant. Ghost Swing page: all three products, no bundle, because no three-product bundle exists."
-    },
-    {
-      "type": "text",
-      "id": "deal_eyebrow",
-      "label": "Eyebrow"
-    },
-    {
-      "type": "textarea",
-      "id": "deal_heading",
-      "label": "Heading (line breaks kept)"
-    },
-    {
-      "type": "textarea",
-      "id": "deal_text",
-      "label": "Text"
-    },
-    {
-      "type": "checkbox",
-      "id": "deal_show_prices",
-      "label": "Show the price list",
-      "default": true,
-      "info": "Prices come from the products, never typed here."
-    },
-    {
-      "type": "text",
-      "id": "deal_note",
-      "label": "Small note",
-      "info": "Only write this if the bundle physically ships as one parcel and you have confirmed it with fulfilment."
-    },
-    {
-      "type": "text",
-      "id": "deal_button",
-      "label": "Button"
-    },
-    {
-      "type": "url",
-      "id": "deal_url",
-      "label": "Button link",
-      "info": "Leave blank: Reaper page selects the bundle in the buy box. Projector page opens the Reaper with the bundle preselected. Swing page opens the collection."
-    },
-    {
-      "type": "image_picker",
-      "id": "deal_image",
-      "label": "Background photo",
-      "info": "Night photo: two reapers on the lawn, projection across the house. Falls back to the projector image."
-    },
-    {
-      "type": "header",
-      "content": "Up close"
-    },
-    {
-      "type": "text",
-      "id": "detail_eyebrow",
-      "label": "Eyebrow",
-      "default": "Up close"
-    },
-    {
-      "type": "text",
-      "id": "detail_heading",
-      "label": "Heading",
-      "default": "What you're actually getting."
-    },
-    {
-      "type": "text",
-      "id": "detail_text",
-      "label": "Lede",
-      "default": "Shot in the yard, not in a studio. If it has a seam, you'll see the seam."
-    },
-    {
-      "type": "text",
-      "id": "box_heading",
-      "label": "Box list heading",
-      "default": "What's in the box"
-    },
-    {
-      "type": "text",
-      "id": "box_sub",
-      "label": "Box list sub"
-    },
-    {
-      "type": "textarea",
-      "id": "box_foot",
-      "label": "Box list footnote"
-    },
-    {
-      "type": "header",
-      "content": "Reviews"
-    },
-    {
-      "type": "paragraph",
-      "content": "This block renders nothing until you add Review blocks. Verified orders only. Never write one yourself."
-    },
-    {
-      "type": "text",
-      "id": "rev_eyebrow",
-      "label": "Eyebrow",
-      "default": "Reviews"
-    },
-    {
-      "type": "text",
-      "id": "rev_heading",
-      "label": "Heading",
-      "default": "From people with it in the yard."
-    },
-    {
-      "type": "text",
-      "id": "rev_text",
-      "label": "Lede",
-      "default": "Verified orders only. We don't seed reviews and we don't remove the bad ones."
-    },
-    {
-      "type": "header",
-      "content": "FAQ"
-    },
-    {
-      "type": "text",
-      "id": "faq_eyebrow",
-      "label": "Eyebrow",
-      "default": "Questions"
-    },
-    {
-      "type": "text",
-      "id": "faq_heading",
-      "label": "Heading",
-      "default": "Everything people ask before ordering."
-    },
-    {
-      "type": "video",
-      "id": "faq_video",
-      "label": "UGC video (uploaded)"
-    },
-    {
-      "type": "video_url",
-      "id": "faq_video_url",
-      "label": "UGC video (YouTube or Vimeo)",
-      "accept": [
-        "youtube",
-        "vimeo"
-      ]
-    },
-    {
-      "type": "image_picker",
-      "id": "faq_image",
-      "label": "UGC still (if no video yet)"
-    },
-    {
-      "type": "text",
-      "id": "faq_media_placeholder",
-      "label": "Empty slot label (editor only)",
-      "default": "UGC video: setup and first light, vertical, real customer"
-    },
-    {
-      "type": "textarea",
-      "id": "faq_media_caption",
-      "label": "Caption under the video",
-      "info": "Blank = the caption written for this product. Only shows once there is media."
-    },
-    {
-      "type": "textarea",
-      "id": "faq_after_cutoff",
-      "label": "Delivery answer after the cutoff",
-      "default": "The Halloween delivery cutoff has passed. Orders still ship tracked from inside the US within 24 hours, but we can no longer promise it arrives before the 31st.",
-      "info": "Replaces any FAQ answer containing [[cutoff]] once the cutoff instant has passed."
-    },
-    {
-      "type": "text",
-      "id": "faq_link_label",
-      "label": "Link text",
-      "default": "Read the full FAQ"
-    },
-    {
-      "type": "url",
-      "id": "faq_link",
-      "label": "Link",
-      "default": "/pages/faq"
-    },
-    {
-      "type": "header",
-      "content": "Specs"
-    },
-    {
-      "type": "text",
-      "id": "spec_eyebrow",
-      "label": "Eyebrow",
-      "default": "Specifications"
-    },
-    {
-      "type": "text",
-      "id": "spec_heading",
-      "label": "Heading",
-      "default": "The honest numbers."
-    },
-    {
-      "type": "text",
-      "id": "spec_note",
-      "label": "Note shown while any value is blank",
-      "default": "Figures in gold are still being confirmed with the factory. We will not print a number we have not measured.",
-      "info": "Customers see this. Fill every blank value from the supplier spec sheet before launch and it disappears."
-    },
-    {
-      "type": "text",
-      "id": "spec_group_a",
-      "label": "Main table title",
-      "info": "Blank = this product's name."
-    },
-    {
-      "type": "text",
-      "id": "spec_group_b",
-      "label": "Second table title",
-      "info": "Blank on the Reaper page = 'Haunted Projector, bundle only'."
-    },
-    {
-      "type": "header",
-      "content": "Closer"
-    },
-    {
-      "type": "text",
-      "id": "closer_heading",
-      "label": "Heading",
-      "default": "Halloween is on a Saturday this year."
-    },
-    {
-      "type": "textarea",
-      "id": "closer_text",
-      "label": "Text",
-      "default": "Which means the whole street will be out walking. Put something in the yard worth stopping for."
-    },
-    {
-      "type": "text",
-      "id": "closer_button",
-      "label": "Button",
-      "default": "Choose your setup"
-    },
-    {
-      "type": "url",
-      "id": "closer_url",
-      "label": "Button link",
-      "info": "Leave blank to jump back to the buy box."
-    },
-    {
-      "type": "text",
-      "id": "closer_note",
-      "label": "Small print",
-      "default": "Free US shipping \u00b7 30-day returns \u00b7 Order by [[cutoff]] for Halloween delivery"
-    },
-    {
-      "type": "text",
-      "id": "closer_note_after",
-      "label": "Small print after the cutoff",
-      "default": "Free US shipping \u00b7 30-day returns \u00b7 The Halloween delivery cutoff has passed"
-    },
-    {
-      "type": "image_picker",
-      "id": "closer_image",
-      "label": "Background photo",
-      "info": "Falls back to the product's featured image."
-    }
-  ],
-  "blocks": [
-    {
-      "type": "step",
-      "name": "How it works step",
-      "limit": 9,
-      "settings": [
-        {
-          "type": "select",
-          "id": "shown_on",
-          "label": "Shown on",
-          "default": "all",
-          "options": [
-            {
-              "value": "all",
-              "label": "Every product"
-            },
-            {
-              "value": "the-black-reaper",
-              "label": "The Black Reaper"
-            },
-            {
-              "value": "the-haunted-projector",
-              "label": "The Haunted Projector"
-            },
-            {
-              "value": "the-lighted-ghost-swing",
-              "label": "The Lighted Ghost Swing"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "id": "heading",
-          "label": "Heading"
-        },
-        {
-          "type": "textarea",
-          "id": "text",
-          "label": "Text"
-        },
-        {
-          "type": "video",
-          "id": "video",
-          "label": "Clip (uploaded)"
-        },
-        {
-          "type": "video_url",
-          "id": "video_url",
-          "label": "Clip (YouTube or Vimeo)",
-          "accept": [
-            "youtube",
-            "vimeo"
-          ]
-        },
-        {
-          "type": "image_picker",
-          "id": "image",
-          "label": "Photo"
-        },
-        {
-          "type": "text",
-          "id": "placeholder",
-          "label": "Empty slot label (editor only)",
-          "info": "Live, a step with no media shows text only."
-        }
-      ]
-    },
-    {
-      "type": "reaction",
-      "name": "Reaction clip",
-      "limit": 12,
-      "settings": [
-        {
-          "type": "select",
-          "id": "shown_on",
-          "label": "Shown on",
-          "default": "all",
-          "options": [
-            {
-              "value": "all",
-              "label": "Every product"
-            },
-            {
-              "value": "the-black-reaper",
-              "label": "The Black Reaper"
-            },
-            {
-              "value": "the-haunted-projector",
-              "label": "The Haunted Projector"
-            },
-            {
-              "value": "the-lighted-ghost-swing",
-              "label": "The Lighted Ghost Swing"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "id": "caption",
-          "label": "Caption",
-          "info": "Doubles as the empty-slot label in the editor. Live, a clip with no media is skipped."
-        },
-        {
-          "type": "video",
-          "id": "video",
-          "label": "Vertical clip (uploaded)"
-        },
-        {
-          "type": "video_url",
-          "id": "video_url",
-          "label": "Vertical clip (YouTube or Vimeo)",
-          "accept": [
-            "youtube",
-            "vimeo"
-          ]
-        },
-        {
-          "type": "image_picker",
-          "id": "image",
-          "label": "Vertical photo"
-        }
-      ]
-    },
-    {
-      "type": "closeup",
-      "name": "Close-up",
-      "limit": 15,
-      "settings": [
-        {
-          "type": "select",
-          "id": "shown_on",
-          "label": "Shown on",
-          "default": "all",
-          "options": [
-            {
-              "value": "all",
-              "label": "Every product"
-            },
-            {
-              "value": "the-black-reaper",
-              "label": "The Black Reaper"
-            },
-            {
-              "value": "the-haunted-projector",
-              "label": "The Haunted Projector"
-            },
-            {
-              "value": "the-lighted-ghost-swing",
-              "label": "The Lighted Ghost Swing"
-            }
-          ]
-        },
-        {
-          "type": "image_picker",
-          "id": "image",
-          "label": "Photo",
-          "info": "Live, a close-up with no photo is skipped."
-        },
-        {
-          "type": "text",
-          "id": "placeholder",
-          "label": "Empty slot label (editor only)"
-        },
-        {
-          "type": "text",
-          "id": "title",
-          "label": "Caption title"
-        },
-        {
-          "type": "text",
-          "id": "caption",
-          "label": "Caption"
-        }
-      ]
-    },
-    {
-      "type": "box_item",
-      "name": "In the box item",
-      "limit": 24,
-      "settings": [
-        {
-          "type": "select",
-          "id": "shown_on",
-          "label": "Shown on",
-          "default": "all",
-          "options": [
-            {
-              "value": "all",
-              "label": "Every product"
-            },
-            {
-              "value": "the-black-reaper",
-              "label": "The Black Reaper"
-            },
-            {
-              "value": "the-haunted-projector",
-              "label": "The Haunted Projector"
-            },
-            {
-              "value": "the-lighted-ghost-swing",
-              "label": "The Lighted Ghost Swing"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "id": "name",
-          "label": "Item"
-        },
-        {
-          "type": "text",
-          "id": "note",
-          "label": "Note"
-        }
-      ]
-    },
-    {
-      "type": "review",
-      "name": "Review (verified order only)",
-      "settings": [
-        {
-          "type": "paragraph",
-          "content": "Real customers, their words. Never write one yourself."
-        },
-        {
-          "type": "select",
-          "id": "shown_on",
-          "label": "About which product",
-          "default": "all",
-          "options": [
-            {
-              "value": "all",
-              "label": "Every product"
-            },
-            {
-              "value": "the-black-reaper",
-              "label": "The Black Reaper"
-            },
-            {
-              "value": "the-haunted-projector",
-              "label": "The Haunted Projector"
-            },
-            {
-              "value": "the-lighted-ghost-swing",
-              "label": "The Lighted Ghost Swing"
-            }
-          ]
-        },
-        {
-          "type": "select",
-          "id": "stars",
-          "label": "Stars",
-          "default": "5",
-          "options": [
-            {
-              "value": "5",
-              "label": "5"
-            },
-            {
-              "value": "4",
-              "label": "4"
-            },
-            {
-              "value": "3",
-              "label": "3"
-            },
-            {
-              "value": "2",
-              "label": "2"
-            },
-            {
-              "value": "1",
-              "label": "1"
-            }
-          ]
-        },
-        {
-          "type": "textarea",
-          "id": "text",
-          "label": "Their words"
-        },
-        {
-          "type": "text",
-          "id": "name",
-          "label": "Name (First L.)"
-        },
-        {
-          "type": "text",
-          "id": "place",
-          "label": "Place"
-        },
-        {
-          "type": "checkbox",
-          "id": "verified",
-          "label": "Verified order",
-          "default": false,
-          "info": "Tick only when you can match this review to an order number."
-        },
-        {
-          "type": "image_picker",
-          "id": "photo",
-          "label": "Their photo"
-        }
-      ]
-    },
-    {
-      "type": "faq",
-      "name": "FAQ",
-      "settings": [
-        {
-          "type": "select",
-          "id": "shown_on",
-          "label": "Shown on",
-          "default": "all",
-          "options": [
-            {
-              "value": "all",
-              "label": "Every product"
-            },
-            {
-              "value": "the-black-reaper",
-              "label": "The Black Reaper"
-            },
-            {
-              "value": "the-haunted-projector",
-              "label": "The Haunted Projector"
-            },
-            {
-              "value": "the-lighted-ghost-swing",
-              "label": "The Lighted Ghost Swing"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "id": "question",
-          "label": "Question"
-        },
-        {
-          "type": "textarea",
-          "id": "answer",
-          "label": "Answer",
-          "info": "[[cutoff]] becomes the cutoff date, and the whole answer swaps to the after-cutoff wording once it passes. [ LIKE THIS ] shows as a gold placeholder."
-        }
-      ]
-    },
-    {
-      "type": "spec",
-      "name": "Spec row",
-      "settings": [
-        {
-          "type": "select",
-          "id": "shown_on",
-          "label": "Shown on",
-          "default": "all",
-          "options": [
-            {
-              "value": "all",
-              "label": "Every product"
-            },
-            {
-              "value": "the-black-reaper",
-              "label": "The Black Reaper"
-            },
-            {
-              "value": "the-haunted-projector",
-              "label": "The Haunted Projector"
-            },
-            {
-              "value": "the-lighted-ghost-swing",
-              "label": "The Lighted Ghost Swing"
-            }
-          ]
-        },
-        {
-          "type": "select",
-          "id": "group",
-          "label": "Table",
-          "default": "reaper",
-          "options": [
-            {
-              "value": "reaper",
-              "label": "Main table (this product)"
-            },
-            {
-              "value": "projector",
-              "label": "Second table (bundled product)"
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "id": "label",
-          "label": "Label"
-        },
-        {
-          "type": "text",
-          "id": "value",
-          "label": "Value",
-          "info": "Leave blank and it shows [ FILL ] in gold. Do not guess a number."
-        }
-      ]
-    }
-  ],
-  "presets": [
-    {
-      "name": "Black Reaper product below",
-      "blocks": [
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "heading": "Push the stake into the grass",
-            "text": "Pick a spot with open sky. Step on the crossbar until the base sits flush with the lawn.",
-            "placeholder": "Clip: staking it in"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "heading": "The sun charges it all day",
-            "text": "The panel sits on the stake. Nothing to plug in, nothing to switch on, nothing to remember.",
-            "placeholder": "Photo: solar panel in sunlight"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "heading": "It comes on by itself at dusk",
-            "text": "Light drops, the lantern catches, the souls light up. It shuts off by morning and does it again.",
-            "placeholder": "Clip: dusk, the moment it lights"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "heading": "Put it where it can see the wall",
-            "text": "A porch step, a planter, the top of a bin. Anywhere with a clear line to the front of the house.",
-            "placeholder": "Photo: projector set down on a porch step"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "heading": "Plug it in",
-            "text": "A porch outlet or an outdoor extension lead. [ CABLE LENGTH ] of cable in the box.",
-            "placeholder": "Photo: cable running to a porch outlet"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "heading": "Pick a scene",
-            "text": "[ SCENE COUNT ] scenes on the remote. It focuses itself as soon as it's pointed.",
-            "placeholder": "Clip: cycling through scenes with the remote"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "heading": "Loop the rope over",
-            "text": "Any branch that will hold a few pounds. A porch beam or a shepherd's hook works just as well.",
-            "placeholder": "Photo: hands looping the rope over a branch"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "heading": "Set the height",
-            "text": "Hang it around eye level from where people walk. Low enough to read, high enough to swing free.",
-            "placeholder": "Photo: adjusting the height so it hangs at eye level"
-          }
-        },
-        {
-          "type": "step",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "heading": "It lights at dark",
-            "text": "The ghost glows from inside and the pumpkin lights with it. Wind does the rest.",
-            "placeholder": "Clip: dusk, ghost and pumpkin lighting up, swinging"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "caption": "Clip 01: trick-or-treaters at the curb"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "caption": "Clip 02: neighbor walking up the drive"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "caption": "Clip 03: first look from the porch"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "caption": "Clip 04: car slowing down to look"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "caption": "Clip 01: full facade from the sidewalk"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "caption": "Clip 02: walking up the drive"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "caption": "Clip 03: kids at the door under the scene"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "caption": "Clip 04: car slowing down to look"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "caption": "Clip 01: swinging at dusk"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "caption": "Clip 02: a kid walking up to it"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "caption": "Clip 03: from the sidewalk"
-          }
-        },
-        {
-          "type": "reaction",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "caption": "Clip 04: wind, spinning"
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "placeholder": "Placement: the reaper at the end of a real front walk, dusk",
-            "title": "Where it goes",
-            "caption": "Open sky above the panel, soil soft enough to take the stake."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "placeholder": "Close-up: the lantern housing and glass",
-            "title": "The lantern",
-            "caption": "Where the stream starts."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "placeholder": "Close-up: hood, shoulders, hand detail",
-            "title": "The figure",
-            "caption": "Layered fabric over a shaped frame."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "placeholder": "Close-up: solar panel and stake joint",
-            "title": "The stake",
-            "caption": "Panel mounts above the soil line."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "placeholder": "Close-up: a single soul face lit, held in hand",
-            "title": "The souls",
-            "caption": "Individually lit, not a printed strip."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "placeholder": "Placement: the unit on a porch step, cable running out, dusk",
-            "title": "Where it goes",
-            "caption": "A porch step, a planter or a bin lid, with a clear line to the wall."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "placeholder": "Close-up: the lens",
-            "title": "The lens",
-            "caption": "Auto-focus. No wheel to fight with in the dark."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "placeholder": "Close-up: the remote in hand",
-            "title": "The remote",
-            "caption": "Scenes and power. Nothing to pair."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "placeholder": "Close-up: cable and plug",
-            "title": "The cable",
-            "caption": "[ CABLE LENGTH ] to the nearest outlet."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "placeholder": "Placement: the swing hanging from a real branch, dusk",
-            "title": "Where it goes",
-            "caption": "Any branch or beam with a foot or two of clear swing."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "placeholder": "Close-up: the ghost, lit from inside",
-            "title": "The ghost",
-            "caption": "Fabric over a shaped form, lit from inside."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "placeholder": "Close-up: the seat and knotted rope",
-            "title": "The seat",
-            "caption": "Wooden seat, knotted rope."
-          }
-        },
-        {
-          "type": "closeup",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "placeholder": "Close-up: the pumpkin, lit",
-            "title": "The pumpkin",
-            "caption": "Attached. Lights with the ghost."
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "name": "Reaper figure, folded",
-            "note": "Shake it out, it holds its shape"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "name": "Ground stake with solar panel",
-            "note": "[ STAKE LENGTH ] below the soil line"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "name": "Lantern with soul stream attached",
-            "note": "Pre-wired, nothing to connect"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "name": "Lantern arm",
-            "note": "Clips on, aims where you point it"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "name": "Setup card",
-            "note": "Four steps, one side"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "name": "Projector unit",
-            "note": ""
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "name": "Power cable",
-            "note": "[ CABLE LENGTH ]"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "name": "Remote",
-            "note": "[ CONFIRM INCLUDED ]"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "name": "Mounting bracket",
-            "note": "[ CONFIRM INCLUDED ]"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-haunted-projector",
-            "name": "Setup card",
-            "note": "One side"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "name": "Lighted ghost figure",
-            "note": ""
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "name": "Wooden swing seat",
-            "note": ""
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "name": "Rope cords, knotted",
-            "note": "Two"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "name": "Lit jack-o-lantern",
-            "note": "Attached"
-          }
-        },
-        {
-          "type": "box_item",
-          "settings": {
-            "shown_on": "the-lighted-ghost-swing",
-            "name": "Batteries",
-            "note": "[ CONFIRM INCLUDED ]"
-          }
-        },
-        {
-          "type": "faq",
-          "settings": {
-            "shown_on": "the-black-reaper",
-            "question": "How long does it stay lit on one day of sun?",
-            "answer": "[ RUNTIME HOURS ] on a full charge in clear conditions. An overcast day gives you a shorter night. Put it where the panel gets direct afternoon sun."
-          }
-        }
-      ]
-    }
+ "name": "Black Reaper product below",
+ "enabled_on": {
+  "templates": [
+   "product"
   ]
+ },
+ "settings": [
+  {
+   "type": "paragraph",
+   "content": "One template serves all three products. Leave a field blank and it uses the copy written for the product being viewed. Type in a field and it overrides that copy on every product, so only do that if it is true for all three."
+  },
+  {
+   "type": "header",
+   "content": "Dates"
+  },
+  {
+   "type": "text",
+   "id": "cutoff_iso",
+   "label": "Cutoff instant (ISO 8601 with offset)",
+   "default": "2026-10-20T23:59:59-04:00",
+   "info": "Real deadline. Must match the one in the header and the buy box. After this instant the closer and the delivery FAQ switch to the after-cutoff wording. Do not move it to make urgency."
+  },
+  {
+   "type": "text",
+   "id": "cutoff_label",
+   "label": "Cutoff, as words",
+   "default": "Tuesday, October 20",
+   "info": "Used wherever [[cutoff]] appears. Kept as words so the shop's timezone cannot shift the date."
+  },
+  {
+   "type": "header",
+   "content": "Trust strip"
+  },
+  {
+   "type": "paragraph",
+   "content": "Blank = the strip written for this product. Anything written as [ LIKE THIS ] shows as a gold placeholder until you replace it."
+  },
+  {
+   "type": "text",
+   "id": "strip_1_title",
+   "label": "Item 1 title"
+  },
+  {
+   "type": "text",
+   "id": "strip_1_text",
+   "label": "Item 1 text"
+  },
+  {
+   "type": "text",
+   "id": "strip_2_title",
+   "label": "Item 2 title"
+  },
+  {
+   "type": "text",
+   "id": "strip_2_text",
+   "label": "Item 2 text"
+  },
+  {
+   "type": "text",
+   "id": "strip_3_title",
+   "label": "Item 3 title"
+  },
+  {
+   "type": "text",
+   "id": "strip_3_text",
+   "label": "Item 3 text"
+  },
+  {
+   "type": "text",
+   "id": "strip_4_title",
+   "label": "Item 4 title"
+  },
+  {
+   "type": "text",
+   "id": "strip_4_text",
+   "label": "Item 4 text"
+  },
+  {
+   "type": "header",
+   "content": "How it works"
+  },
+  {
+   "type": "text",
+   "id": "how_eyebrow",
+   "label": "Eyebrow"
+  },
+  {
+   "type": "text",
+   "id": "how_heading",
+   "label": "Heading"
+  },
+  {
+   "type": "text",
+   "id": "how_text",
+   "label": "Lede"
+  },
+  {
+   "type": "header",
+   "content": "See it running"
+  },
+  {
+   "type": "paragraph",
+   "content": "Hidden on the live store until at least one Reaction clip for this product has media. Empty slots only show in the editor."
+  },
+  {
+   "type": "text",
+   "id": "react_eyebrow",
+   "label": "Eyebrow"
+  },
+  {
+   "type": "text",
+   "id": "react_heading",
+   "label": "Heading"
+  },
+  {
+   "type": "textarea",
+   "id": "react_text",
+   "label": "Lede"
+  },
+  {
+   "type": "header",
+   "content": "Bundle band"
+  },
+  {
+   "type": "paragraph",
+   "content": "Reaper and Projector pages: the 2 Reapers + Projector bundle, priced from the bundle variant. Ghost Swing page: all three products, no bundle, because no three-product bundle exists."
+  },
+  {
+   "type": "text",
+   "id": "deal_eyebrow",
+   "label": "Eyebrow"
+  },
+  {
+   "type": "textarea",
+   "id": "deal_heading",
+   "label": "Heading (line breaks kept)"
+  },
+  {
+   "type": "textarea",
+   "id": "deal_text",
+   "label": "Text"
+  },
+  {
+   "type": "checkbox",
+   "id": "deal_show_prices",
+   "label": "Show the price list",
+   "default": true,
+   "info": "Prices come from the products, never typed here."
+  },
+  {
+   "type": "text",
+   "id": "deal_note",
+   "label": "Small note",
+   "info": "Only write this if the bundle physically ships as one parcel and you have confirmed it with fulfilment."
+  },
+  {
+   "type": "text",
+   "id": "deal_button",
+   "label": "Button"
+  },
+  {
+   "type": "url",
+   "id": "deal_url",
+   "label": "Button link",
+   "info": "Leave blank: Reaper page selects the bundle in the buy box. Projector page opens the Reaper with the bundle preselected. Swing page opens the collection."
+  },
+  {
+   "type": "image_picker",
+   "id": "deal_image",
+   "label": "Background photo",
+   "info": "Night photo: two reapers on the lawn, projection across the house. Falls back to the projector image."
+  },
+  {
+   "type": "header",
+   "content": "Up close"
+  },
+  {
+   "type": "text",
+   "id": "detail_eyebrow",
+   "label": "Eyebrow",
+   "default": "Up close"
+  },
+  {
+   "type": "text",
+   "id": "detail_heading",
+   "label": "Heading",
+   "default": "What you're actually getting."
+  },
+  {
+   "type": "text",
+   "id": "detail_text",
+   "label": "Lede",
+   "default": "Shot in the yard, not in a studio. If it has a seam, you'll see the seam."
+  },
+  {
+   "type": "text",
+   "id": "box_heading",
+   "label": "Box list heading",
+   "default": "What's in the box"
+  },
+  {
+   "type": "text",
+   "id": "box_sub",
+   "label": "Box list sub"
+  },
+  {
+   "type": "textarea",
+   "id": "box_foot",
+   "label": "Box list footnote"
+  },
+  {
+   "type": "header",
+   "content": "Reviews"
+  },
+  {
+   "type": "paragraph",
+   "content": "This block renders nothing until you add Review blocks. Verified orders only. Never write one yourself."
+  },
+  {
+   "type": "text",
+   "id": "rev_eyebrow",
+   "label": "Eyebrow",
+   "default": "Reviews"
+  },
+  {
+   "type": "text",
+   "id": "rev_heading",
+   "label": "Heading",
+   "default": "From people with it in the yard."
+  },
+  {
+   "type": "text",
+   "id": "rev_text",
+   "label": "Lede",
+   "default": "Verified orders only. We don't seed reviews and we don't remove the bad ones."
+  },
+  {
+   "type": "header",
+   "content": "FAQ"
+  },
+  {
+   "type": "text",
+   "id": "faq_eyebrow",
+   "label": "Eyebrow",
+   "default": "Questions"
+  },
+  {
+   "type": "text",
+   "id": "faq_heading",
+   "label": "Heading",
+   "default": "Everything people ask before ordering."
+  },
+  {
+   "type": "video",
+   "id": "faq_video",
+   "label": "UGC video (uploaded)"
+  },
+  {
+   "type": "video_url",
+   "id": "faq_video_url",
+   "label": "UGC video (YouTube or Vimeo)",
+   "accept": [
+    "youtube",
+    "vimeo"
+   ]
+  },
+  {
+   "type": "image_picker",
+   "id": "faq_image",
+   "label": "UGC still (if no video yet)"
+  },
+  {
+   "type": "text",
+   "id": "faq_media_placeholder",
+   "label": "Empty slot label (editor only)",
+   "default": "UGC video: setup and first light, vertical, real customer"
+  },
+  {
+   "type": "textarea",
+   "id": "faq_media_caption",
+   "label": "Caption under the video",
+   "info": "Blank = the caption written for this product. Only shows once there is media."
+  },
+  {
+   "type": "textarea",
+   "id": "faq_after_cutoff",
+   "label": "Delivery answer after the cutoff",
+   "default": "The Halloween delivery cutoff has passed. Orders still ship tracked from inside the US within 24 hours, but we can no longer promise it arrives before the 31st.",
+   "info": "Replaces any FAQ answer containing [[cutoff]] once the cutoff instant has passed."
+  },
+  {
+   "type": "text",
+   "id": "faq_link_label",
+   "label": "Link text",
+   "default": "Read the full FAQ"
+  },
+  {
+   "type": "url",
+   "id": "faq_link",
+   "label": "Link",
+   "default": "/pages/faq"
+  },
+  {
+   "type": "header",
+   "content": "Specs"
+  },
+  {
+   "type": "text",
+   "id": "spec_eyebrow",
+   "label": "Eyebrow",
+   "default": "Specifications"
+  },
+  {
+   "type": "text",
+   "id": "spec_heading",
+   "label": "Heading",
+   "default": "The honest numbers."
+  },
+  {
+   "type": "text",
+   "id": "spec_note",
+   "label": "Note shown while any value is blank",
+   "default": "Figures in gold are still being confirmed with the factory. We will not print a number we have not measured.",
+   "info": "Customers see this. Fill every blank value from the supplier spec sheet before launch and it disappears."
+  },
+  {
+   "type": "text",
+   "id": "spec_group_a",
+   "label": "Main table title",
+   "info": "Blank = this product's name."
+  },
+  {
+   "type": "text",
+   "id": "spec_group_b",
+   "label": "Second table title",
+   "info": "Blank on the Reaper page = 'Haunted Projector, bundle only'."
+  },
+  {
+   "type": "header",
+   "content": "Closer"
+  },
+  {
+   "type": "text",
+   "id": "closer_heading",
+   "label": "Heading",
+   "default": "Halloween is on a Saturday this year."
+  },
+  {
+   "type": "textarea",
+   "id": "closer_text",
+   "label": "Text",
+   "default": "Which means the whole street will be out walking. Put something in the yard worth stopping for."
+  },
+  {
+   "type": "text",
+   "id": "closer_button",
+   "label": "Button",
+   "default": "Choose your setup"
+  },
+  {
+   "type": "url",
+   "id": "closer_url",
+   "label": "Button link",
+   "info": "Leave blank to jump back to the buy box."
+  },
+  {
+   "type": "text",
+   "id": "closer_note",
+   "label": "Small print",
+   "default": "Free US shipping \u00b7 30-day returns \u00b7 Order by [[cutoff]] for Halloween delivery"
+  },
+  {
+   "type": "text",
+   "id": "closer_note_after",
+   "label": "Small print after the cutoff",
+   "default": "Free US shipping \u00b7 30-day returns \u00b7 The Halloween delivery cutoff has passed"
+  },
+  {
+   "type": "image_picker",
+   "id": "closer_image",
+   "label": "Background photo",
+   "info": "Falls back to the product's featured image."
+  }
+ ],
+ "blocks": [
+  {
+   "type": "step",
+   "name": "How it works step",
+   "limit": 9,
+   "settings": [
+    {
+     "type": "select",
+     "id": "shown_on",
+     "label": "Shown on",
+     "default": "all",
+     "options": [
+      {
+       "value": "all",
+       "label": "Every product"
+      },
+      {
+       "value": "the-black-reaper",
+       "label": "The Black Reaper"
+      },
+      {
+       "value": "the-haunted-projector",
+       "label": "The Haunted Projector"
+      },
+      {
+       "value": "the-lighted-ghost-swing",
+       "label": "The Lighted Ghost Swing"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "id": "heading",
+     "label": "Heading"
+    },
+    {
+     "type": "textarea",
+     "id": "text",
+     "label": "Text"
+    },
+    {
+     "type": "video",
+     "id": "video",
+     "label": "Clip (uploaded)"
+    },
+    {
+     "type": "video_url",
+     "id": "video_url",
+     "label": "Clip (YouTube or Vimeo)",
+     "accept": [
+      "youtube",
+      "vimeo"
+     ]
+    },
+    {
+     "type": "image_picker",
+     "id": "image",
+     "label": "Photo"
+    },
+    {
+     "type": "text",
+     "id": "placeholder",
+     "label": "Empty slot label (editor only)",
+     "info": "Live, a step with no media shows text only."
+    }
+   ]
+  },
+  {
+   "type": "reaction",
+   "name": "Reaction clip",
+   "limit": 12,
+   "settings": [
+    {
+     "type": "select",
+     "id": "shown_on",
+     "label": "Shown on",
+     "default": "all",
+     "options": [
+      {
+       "value": "all",
+       "label": "Every product"
+      },
+      {
+       "value": "the-black-reaper",
+       "label": "The Black Reaper"
+      },
+      {
+       "value": "the-haunted-projector",
+       "label": "The Haunted Projector"
+      },
+      {
+       "value": "the-lighted-ghost-swing",
+       "label": "The Lighted Ghost Swing"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "id": "caption",
+     "label": "Caption",
+     "info": "Doubles as the empty-slot label in the editor. Live, a clip with no media is skipped."
+    },
+    {
+     "type": "video",
+     "id": "video",
+     "label": "Vertical clip (uploaded)"
+    },
+    {
+     "type": "video_url",
+     "id": "video_url",
+     "label": "Vertical clip (YouTube or Vimeo)",
+     "accept": [
+      "youtube",
+      "vimeo"
+     ]
+    },
+    {
+     "type": "image_picker",
+     "id": "image",
+     "label": "Vertical photo"
+    }
+   ]
+  },
+  {
+   "type": "closeup",
+   "name": "Close-up",
+   "limit": 15,
+   "settings": [
+    {
+     "type": "select",
+     "id": "shown_on",
+     "label": "Shown on",
+     "default": "all",
+     "options": [
+      {
+       "value": "all",
+       "label": "Every product"
+      },
+      {
+       "value": "the-black-reaper",
+       "label": "The Black Reaper"
+      },
+      {
+       "value": "the-haunted-projector",
+       "label": "The Haunted Projector"
+      },
+      {
+       "value": "the-lighted-ghost-swing",
+       "label": "The Lighted Ghost Swing"
+      }
+     ]
+    },
+    {
+     "type": "image_picker",
+     "id": "image",
+     "label": "Photo",
+     "info": "Live, a close-up with no photo is skipped."
+    },
+    {
+     "type": "text",
+     "id": "placeholder",
+     "label": "Empty slot label (editor only)"
+    },
+    {
+     "type": "text",
+     "id": "title",
+     "label": "Caption title"
+    },
+    {
+     "type": "text",
+     "id": "caption",
+     "label": "Caption"
+    }
+   ]
+  },
+  {
+   "type": "box_item",
+   "name": "In the box item",
+   "limit": 24,
+   "settings": [
+    {
+     "type": "select",
+     "id": "shown_on",
+     "label": "Shown on",
+     "default": "all",
+     "options": [
+      {
+       "value": "all",
+       "label": "Every product"
+      },
+      {
+       "value": "the-black-reaper",
+       "label": "The Black Reaper"
+      },
+      {
+       "value": "the-haunted-projector",
+       "label": "The Haunted Projector"
+      },
+      {
+       "value": "the-lighted-ghost-swing",
+       "label": "The Lighted Ghost Swing"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "id": "name",
+     "label": "Item"
+    },
+    {
+     "type": "text",
+     "id": "note",
+     "label": "Note"
+    }
+   ]
+  },
+  {
+   "type": "review",
+   "name": "Review (verified order only)",
+   "settings": [
+    {
+     "type": "paragraph",
+     "content": "Real customers, their words. Never write one yourself."
+    },
+    {
+     "type": "select",
+     "id": "shown_on",
+     "label": "About which product",
+     "default": "all",
+     "options": [
+      {
+       "value": "all",
+       "label": "Every product"
+      },
+      {
+       "value": "the-black-reaper",
+       "label": "The Black Reaper"
+      },
+      {
+       "value": "the-haunted-projector",
+       "label": "The Haunted Projector"
+      },
+      {
+       "value": "the-lighted-ghost-swing",
+       "label": "The Lighted Ghost Swing"
+      }
+     ]
+    },
+    {
+     "type": "select",
+     "id": "stars",
+     "label": "Stars",
+     "default": "5",
+     "options": [
+      {
+       "value": "5",
+       "label": "5"
+      },
+      {
+       "value": "4",
+       "label": "4"
+      },
+      {
+       "value": "3",
+       "label": "3"
+      },
+      {
+       "value": "2",
+       "label": "2"
+      },
+      {
+       "value": "1",
+       "label": "1"
+      }
+     ]
+    },
+    {
+     "type": "textarea",
+     "id": "text",
+     "label": "Their words"
+    },
+    {
+     "type": "text",
+     "id": "name",
+     "label": "Name (First L.)"
+    },
+    {
+     "type": "text",
+     "id": "place",
+     "label": "Place"
+    },
+    {
+     "type": "checkbox",
+     "id": "verified",
+     "label": "Verified order",
+     "default": false,
+     "info": "Tick only when you can match this review to an order number."
+    },
+    {
+     "type": "image_picker",
+     "id": "photo",
+     "label": "Their photo"
+    }
+   ]
+  },
+  {
+   "type": "faq",
+   "name": "FAQ",
+   "settings": [
+    {
+     "type": "select",
+     "id": "shown_on",
+     "label": "Shown on",
+     "default": "all",
+     "options": [
+      {
+       "value": "all",
+       "label": "Every product"
+      },
+      {
+       "value": "the-black-reaper",
+       "label": "The Black Reaper"
+      },
+      {
+       "value": "the-haunted-projector",
+       "label": "The Haunted Projector"
+      },
+      {
+       "value": "the-lighted-ghost-swing",
+       "label": "The Lighted Ghost Swing"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "id": "question",
+     "label": "Question"
+    },
+    {
+     "type": "textarea",
+     "id": "answer",
+     "label": "Answer",
+     "info": "[[cutoff]] becomes the cutoff date, and the whole answer swaps to the after-cutoff wording once it passes. [ LIKE THIS ] shows as a gold placeholder."
+    }
+   ]
+  },
+  {
+   "type": "spec",
+   "name": "Spec row",
+   "settings": [
+    {
+     "type": "select",
+     "id": "shown_on",
+     "label": "Shown on",
+     "default": "all",
+     "options": [
+      {
+       "value": "all",
+       "label": "Every product"
+      },
+      {
+       "value": "the-black-reaper",
+       "label": "The Black Reaper"
+      },
+      {
+       "value": "the-haunted-projector",
+       "label": "The Haunted Projector"
+      },
+      {
+       "value": "the-lighted-ghost-swing",
+       "label": "The Lighted Ghost Swing"
+      }
+     ]
+    },
+    {
+     "type": "select",
+     "id": "group",
+     "label": "Table",
+     "default": "reaper",
+     "options": [
+      {
+       "value": "reaper",
+       "label": "Main table (this product)"
+      },
+      {
+       "value": "projector",
+       "label": "Second table (bundled product)"
+      }
+     ]
+    },
+    {
+     "type": "text",
+     "id": "label",
+     "label": "Label"
+    },
+    {
+     "type": "text",
+     "id": "value",
+     "label": "Value",
+     "info": "Leave blank and it shows [ FILL ] in gold. Do not guess a number."
+    }
+   ]
+  }
+ ],
+ "presets": [
+  {
+   "name": "Black Reaper product below",
+   "blocks": [
+    {
+     "type": "step",
+     "settings": {
+      "shown_on": "the-black-reaper",
+      "heading": "Push the stake into the grass",
+      "text": "Pick a spot with open sky. Step on the crossbar until the base sits flush with the lawn.",
+      "placeholder": "Clip: staking it in"
+     }
+    },
+    {
+     "type": "reaction",
+     "settings": {
+      "shown_on": "the-black-reaper",
+      "caption": "Clip 01: trick-or-treaters at the curb"
+     }
+    },
+    {
+     "type": "closeup",
+     "settings": {
+      "shown_on": "the-black-reaper",
+      "placeholder": "Placement: the reaper at the end of a real front walk, dusk",
+      "title": "Where it goes",
+      "caption": "Open sky above the panel, soil soft enough to take the stake."
+     }
+    },
+    {
+     "type": "box_item",
+     "settings": {
+      "shown_on": "the-black-reaper",
+      "name": "Reaper figure, folded",
+      "note": "Shake it out, it holds its shape"
+     }
+    },
+    {
+     "type": "faq",
+     "settings": {
+      "shown_on": "the-black-reaper",
+      "question": "How long does it stay lit on one day of sun?",
+      "answer": "[ RUNTIME HOURS ] on a full charge in clear conditions. An overcast day gives you a shorter night. Put it where the panel gets direct afternoon sun."
+     }
+    }
+   ]
+  }
+ ]
 }
 {% endschema %}
