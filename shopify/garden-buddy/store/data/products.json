@@ -1,0 +1,51 @@
+[
+  {
+    "handle": "foldable-kneeler-seat",
+    "title": "The Garden Buddy",
+    "status": "ACTIVE",
+    "vendor": "Garden Buddy",
+    "productType": "Garden Kneeler",
+    "tags": [],
+    "descriptionHtml": "<p>The all-in-one kneeler, seat and tool set for a happier, easier time in the garden.</p><p>Kneel on the thick pad. Push up on the handles when you are done. Flip the whole frame over and it is a stool for potting and pruning. It arrives assembled and folds flat for the shed.</p><p>Add the 10-piece tool set in a bundle and the bag, the stool, the tools, the gloves and the sprayer come with it.</p>",
+    "seo": {
+      "title": "The Garden Buddy — Foldable Garden Kneeler Seat with Handles",
+      "description": "A padded garden kneeler that flips into a stool, with handles that help you stand back up. Arrives assembled, folds flat. Free US shipping, 30-day returns."
+    },
+    "options": [
+      { "name": "Bundle", "position": 1, "values": ["1 Garden Buddy", "Garden Buddy + Tool Set", "2 Garden Buddies + Tool Set"] }
+    ],
+    "variants": [
+      { "sku": "GB-1",  "option": "1 Garden Buddy",             "price": "69.99",  "compareAtPrice": "99.99",  "inventory": 500, "inventoryPolicy": "DENY", "image": "86f53337-9df6-40ba-8574-6f7d24958c6b_9ee15a92-0b3d-46ee-83ab-7bbfbb1f72dc.png" },
+      { "sku": "GB-1S", "option": "Garden Buddy + Tool Set",    "price": "99.99",  "compareAtPrice": "159.98", "inventory": 500, "inventoryPolicy": "DENY", "image": "5065143a-8db4-48ca-90ea-54c04e6013f3_5b06395c-7ba1-43fa-bcf9-c9b7de59a3ad.png" },
+      { "sku": "GB-2S", "option": "2 Garden Buddies + Tool Set","price": "129.99", "compareAtPrice": "259.97", "inventory": 500, "inventoryPolicy": "DENY", "image": "eca52aa4-96df-49a6-a58e-c1d571e27a56_0ae36317-6fd8-4c94-b1d7-465478c5422b.png" }
+    ],
+    "media": [
+      { "file": "f3e327ba-8e32-47ca-aa2b-9ebf53fe31b2_1.png", "alt": "" },
+      { "file": "1033f0ca-26f7-4c80-a115-2da9e9e4f865_d42a5da6-33fa-4a65-9484-c508f9d877e5.png", "alt": "Kneel comfortably, garden longer. Your knees stay off the gravel." },
+      { "file": "86f53337-9df6-40ba-8574-6f7d24958c6b_9ee15a92-0b3d-46ee-83ab-7bbfbb1f72dc.png", "alt": "The Garden Buddy — make gardening easier. Kneel, sit and get up with confidence." },
+      { "file": "hf_20260906_162251_c8cf888b-5062-4776-902a-90073efc0c0b.png", "alt": "Flip it over and it is a seat" },
+      { "file": "6aa422d1-f5e0-4ca5-a60a-d7bf10429c82_1b53cf67-44af-45f1-b34f-051668b4645a.png", "alt": "Garden comfort at every angle, with dimensions." },
+      { "file": "20b83552-a6ff-4987-ba8c-7ae5746c1b53_7d7eb862-8e85-472b-96ae-6027a7f3d843.png", "alt": "No more back pain. Strong handles for easy standing." },
+      { "file": "d537cb9c-10f3-426a-a40a-bfa3ae8a6c19_d6b781f6-0f63-4c29-b32c-4430e443667a.png", "alt": "Garden comfort made easy — kneel, sit when you need a break, sturdy handles." },
+      { "file": "hf_20260906_162251_bc5e10d0-5ea4-445a-9383-9ea9ef4556ed.png", "alt": "Kneel on the thick pad, knees off the gravel" },
+      { "file": "hf_20260906_162251_d2cd29cd-c9ab-4219-b2ab-8d7f30e0388f.png", "alt": "Folds flat and carries in one hand" },
+      { "file": "5065143a-8db4-48ca-90ea-54c04e6013f3_5b06395c-7ba1-43fa-bcf9-c9b7de59a3ad.png", "alt": "The complete gardening bundle — everything you get in one set." },
+      { "file": "eca52aa4-96df-49a6-a58e-c1d571e27a56_0ae36317-6fd8-4c94-b1d7-465478c5422b.png", "alt": "Sit. Kneel. Garden. Enjoy. The complete gardening set." }
+    ],
+    "publications": ["Online Store", "Shop"]
+  },
+  {
+    "handle": "garden-tool-set",
+    "title": "Garden Buddy 10-Piece Tool Set",
+    "status": "DRAFT",
+    "note": "Deliberately DRAFT. It is bundle-only and has no page of its own.",
+    "vendor": "Garden Buddy",
+    "productType": "Garden Tools",
+    "tags": [],
+    "descriptionHtml": "<p>Ten pieces: a folding stool, a bag that holds everything, six steel hand tools, claw gloves and a sprayer.</p><p>The bag hangs on the stool frame. Carry the whole thing out to the bed in one hand, sit down, and every tool is already at your side instead of back in the shed.</p><p>Tools are stainless heads on rubber-grip handles with a hanging hole in the end. The stool is a black steel frame with a canvas seat and it folds flat.</p>",
+    "options": [ { "name": "Pack", "position": 1, "values": ["1 Set"] } ],
+    "variants": [ { "sku": "GB-TS-1", "option": "1 Set", "price": "59.99", "compareAtPrice": null, "inventory": 250, "inventoryPolicy": "DENY" } ],
+    "media": [],
+    "publications": []
+  }
+]

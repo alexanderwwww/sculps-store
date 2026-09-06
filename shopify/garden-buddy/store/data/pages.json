@@ -1,0 +1,26 @@
+{
+  "contact": {
+    "title": "Contact",
+    "handle": "contact",
+    "published": true,
+    "body_file": "store/pages/contact.html"
+  },
+  "shipping": {
+    "title": "Shipping",
+    "handle": "shipping",
+    "published": true,
+    "body_file": "store/pages/shipping.html"
+  },
+  "returns": {
+    "title": "Returns",
+    "handle": "returns",
+    "published": true,
+    "body_file": "store/pages/returns.html"
+  },
+  "faq": {
+    "title": "FAQ",
+    "handle": "faq",
+    "published": true,
+    "body_file": "store/pages/faq.html"
+  }
+}

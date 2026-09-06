@@ -1,0 +1,4 @@
+{
+  "sections": { "main": { "type": "gb-collection", "settings": {} } },
+  "order": ["main"]
+}

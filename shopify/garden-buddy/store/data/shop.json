@@ -1,0 +1,15 @@
+{
+  "name": "GARDEN BUDDY",
+  "myshopifyDomain": "aj1wt0-dg.myshopify.com",
+  "currency": "USD",
+  "market": "United States only",
+  "passwordProtection": true,
+  "theme": { "name": "GARDEN BUDDY", "id": 206497710419, "role": "UNPUBLISHED", "base": "Horizon" },
+  "publishedTheme": { "name": "Horizon", "id": 206497579347, "note": "Stock Horizon is still the live theme. The GARDEN BUDDY theme has to be published for the build to be the real storefront." },
+  "openItems": [
+    "Weight, weight capacity, pad thickness and the delivery window are [ PLACEHOLDERS ] on /pages/faq and /pages/shipping until confirmed.",
+    "Reviews section ships empty on purpose. Zero orders. Nothing invented.",
+    "Storefront password is still on.",
+    "Trial plan has to be upgraded before the store can take money."
+  ]
+}

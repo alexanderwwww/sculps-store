@@ -25,7 +25,5 @@
       }
     }
   },
-  "order": [
-    "gb_footer"
-  ]
+  "order": ["gb_footer"]
 }

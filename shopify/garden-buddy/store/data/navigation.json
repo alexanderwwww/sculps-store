@@ -1,0 +1,28 @@
+{
+  "menus": [
+    {
+      "handle": "main-menu",
+      "title": "Main menu",
+      "items": [
+        { "title": "The Garden Buddy", "url": "/products/foldable-kneeler-seat" },
+        { "title": "Bundles", "url": "/products/foldable-kneeler-seat#gb-buy" },
+        { "title": "FAQ", "url": "/pages/faq" },
+        { "title": "Contact", "url": "/pages/contact" }
+      ]
+    },
+    {
+      "handle": "footer",
+      "title": "Footer menu",
+      "items": [
+        { "title": "Shipping", "url": "/pages/shipping" },
+        { "title": "Returns", "url": "/pages/returns" },
+        { "title": "FAQ", "url": "/pages/faq" },
+        { "title": "Contact", "url": "/pages/contact" }
+      ]
+    }
+  ],
+  "collections": [
+    { "handle": "frontpage", "title": "Home page", "descriptionHtml": "", "sortOrder": "BEST_SELLING", "products": [] },
+    { "handle": "garden-kneelers", "title": "Garden Kneelers", "descriptionHtml": "<p>Everything we make for people who would rather be in the garden than on the ground.</p>", "sortOrder": "BEST_SELLING", "products": ["foldable-kneeler-seat"] }
+  ]
+}

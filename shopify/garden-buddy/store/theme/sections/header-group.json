@@ -18,7 +18,5 @@
       }
     }
   },
-  "order": [
-    "gb_header"
-  ]
+  "order": ["gb_header"]
 }

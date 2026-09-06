@@ -1,0 +1,221 @@
+{
+  "sections": {
+    "home": {
+      "type": "gb-home",
+      "settings": {
+        "hero_kicker": "Say hello to",
+        "hero_heading": "The Garden Buddy",
+        "hero_text": "Kneel on the pad, flip it over and sit. Handles at hand height so getting back up is not the hard part.",
+        "hero_button": "See The Garden Buddy",
+        "hero_note": "Free US shipping. 30 days to send it back.",
+        "hero_image": "shopify://shop_images/d537cb9c-10f3-426a-a40a-bfa3ae8a6c19.png",
+        "hero_alt": "The Garden Buddy set up on a garden path",
+        "hero_placeholder": "Hero creative",
+        "strip_eyebrow": "A closer look",
+        "strip_heading": "See it from every angle",
+        "strip_note": "Swipe through, then tap any panel to open the product.",
+        "tiles_eyebrow": "Three moves",
+        "tiles_heading": "Kneel. Get up. Sit.",
+        "tiles_button": "See The Garden Buddy",
+        "kit_eyebrow": "In the bundles",
+        "kit_heading": "The 10-piece tool set",
+        "kit_text": "Stainless heads, wood handles, and a bag that hangs off the frame.",
+        "kit_note": "The tool set comes with the bundle packs. It is not sold on its own.",
+        "kit_button": "Pick a bundle",
+        "closer_heading": "Garden longer. Hurt less.",
+        "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
+        "closer_button": "See The Garden Buddy"
+      },
+      "blocks": {
+        "shot_1": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/86f53337-9df6-40ba-8574-6f7d24958c6b.png",
+            "alt": "Make gardening easier with The Garden Buddy",
+            "placeholder": "Make gardening easier"
+          }
+        },
+        "shot_2": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/1033f0ca-26f7-4c80-a115-2da9e9e4f865.png",
+            "alt": "Kneel comfortably and garden longer",
+            "placeholder": "Kneel comfortably"
+          }
+        },
+        "shot_3": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/20b83552-a6ff-4987-ba8c-7ae5746c1b53.png",
+            "alt": "Before and after: no more sore back",
+            "placeholder": "No more back pain"
+          }
+        },
+        "shot_4": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/5065143a-8db4-48ca-90ea-54c04e6013f3.png",
+            "alt": "The complete gardening bundle laid out",
+            "placeholder": "The complete bundle"
+          }
+        },
+        "shot_5": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/6aa422d1-f5e0-4ca5-a60a-d7bf10429c82.png",
+            "alt": "The Garden Buddy shown from every angle with dimensions",
+            "placeholder": "Comfort at every angle"
+          }
+        },
+        "shot_6": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/d537cb9c-10f3-426a-a40a-bfa3ae8a6c19.png",
+            "alt": "Garden comfort made easy",
+            "placeholder": "Comfort made easy"
+          }
+        },
+        "shot_7": {
+          "type": "shot",
+          "settings": {
+            "image": "shopify://shop_images/eca52aa4-96df-49a6-a58e-c1d571e27a56.png",
+            "alt": "Sit, kneel, garden, enjoy",
+            "placeholder": "Sit, kneel, garden"
+          }
+        },
+        "step_1": {
+          "type": "step",
+          "settings": {
+            "image": "shopify://shop_images/gb-gif-kneel.gif",
+            "heading": "Kneel",
+            "text": "Pad down, handles up. Knees off the dirt.",
+            "placeholder": "Loop: kneeling down"
+          }
+        },
+        "step_2": {
+          "type": "step",
+          "settings": {
+            "image": "shopify://shop_images/gb-gif-move.gif",
+            "heading": "Get up",
+            "text": "Push off the handles with your arms, not your knees.",
+            "placeholder": "Loop: standing up"
+          }
+        },
+        "step_3": {
+          "type": "step",
+          "settings": {
+            "image": "shopify://shop_images/gb-gif-sit.gif",
+            "heading": "Sit",
+            "text": "Flip it over and it is a stool.",
+            "placeholder": "Loop: sitting down"
+          }
+        },
+        "tool_1": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-stool.png",
+            "name": "The frame",
+            "placeholder": "Frame photo"
+          }
+        },
+        "tool_2": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-bag.png",
+            "name": "Tool bag",
+            "placeholder": "Bag photo"
+          }
+        },
+        "tool_3": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-trowel.png",
+            "name": "Trowel",
+            "placeholder": "Trowel photo"
+          }
+        },
+        "tool_4": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-transplanter.png",
+            "name": "Transplanter",
+            "placeholder": "Transplanter photo"
+          }
+        },
+        "tool_5": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-weeder.png",
+            "name": "Weeder",
+            "placeholder": "Weeder photo"
+          }
+        },
+        "tool_6": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-cultivator.png",
+            "name": "Cultivator",
+            "placeholder": "Cultivator photo"
+          }
+        },
+        "tool_7": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-rake.png",
+            "name": "Hand rake",
+            "placeholder": "Rake photo"
+          }
+        },
+        "tool_8": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-shears.png",
+            "name": "Pruning shears",
+            "placeholder": "Shears photo"
+          }
+        },
+        "tool_9": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-gloves.png",
+            "name": "Gloves",
+            "placeholder": "Gloves photo"
+          }
+        },
+        "tool_10": {
+          "type": "tool",
+          "settings": {
+            "image": "shopify://shop_images/gb-tool-sprayer.png",
+            "name": "Spray bottle",
+            "placeholder": "Sprayer photo"
+          }
+        }
+      },
+      "block_order": [
+        "shot_1",
+        "shot_2",
+        "shot_3",
+        "shot_4",
+        "shot_5",
+        "shot_6",
+        "shot_7",
+        "step_1",
+        "step_2",
+        "step_3",
+        "tool_1",
+        "tool_2",
+        "tool_3",
+        "tool_4",
+        "tool_5",
+        "tool_6",
+        "tool_7",
+        "tool_8",
+        "tool_9",
+        "tool_10"
+      ]
+    }
+  },
+  "order": [
+    "home"
+  ]
+}
