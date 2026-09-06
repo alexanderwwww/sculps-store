@@ -28,7 +28,7 @@
                     {%- if p.compare_at_price_max > p.price_min -%}<s>{{ p.compare_at_price_max | money }}</s>{%- endif -%}
                   </p>
                   {%- unless p.available -%}<p class="gb-col__sold">Sold out</p>{%- endunless -%}
-                  <span class="gb-btn gb-btn--accent gb-col__btn">{{ section.settings.button | escape }}</span>
+                  <span class="gb-btn gb-btn--lime gb-col__btn">{{ section.settings.button | escape }}</span>
                 </div>
               </a>
             </li>
@@ -62,7 +62,7 @@
 .gb-col-sec .gb-col__btn{margin-top:8px;width:100%}
 .gb-col-sec .gb-col__pages{margin-top:36px;text-align:center;font-size:17px}
 .gb-col-sec .gb-col__pages a,.gb-col-sec .gb-col__pages span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0 10px;margin:0 2px;border-radius:10px;color:var(--ink);text-decoration:none}
-.gb-col-sec .gb-col__pages .current{background:var(--accent);color:#fff;font-weight:800}
+.gb-col-sec .gb-col__pages .current{background:var(--lime);color:var(--lime-ink);font-weight:800}
 {% endstylesheet %}
 
 {% schema %}

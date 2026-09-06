@@ -42,7 +42,7 @@
         <h1 class="gb-h1">{{ section.settings.hero_heading | escape }}</h1>
         <p class="gb-lede">{{ section.settings.hero_text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
         <div class="gb-hero__cta">
-          <a class="gb-btn gb-btn--accent" href="{{ product_url }}">{{ section.settings.hero_button | escape }}</a>
+          <a class="gb-btn gb-btn--lime" href="{{ product_url }}">{{ section.settings.hero_button | escape }}</a>
           {%- if section.settings.hero_note != blank -%}
             <p class="gb-hero__note">{{ section.settings.hero_note | escape }}</p>
           {%- endif -%}
@@ -96,7 +96,7 @@
           {%- if section.settings.check_2 != blank -%}<li class="gb-check">{{ section.settings.check_2 | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>{%- endif -%}
           {%- if section.settings.check_3 != blank -%}<li class="gb-check">{{ section.settings.check_3 | replace: '[ ', fill_open | replace: ' ]', fill_close }}</li>{%- endif -%}
         </ul>
-        <a class="gb-btn gb-btn--accent" href="{{ product_url }}">{{ section.settings.feature_button | escape }}</a>
+        <a class="gb-btn gb-btn--lime" href="{{ product_url }}">{{ section.settings.feature_button | escape }}</a>
       </div>
     </div>
   </section>
@@ -104,7 +104,7 @@
   {%- comment -%} d. HOW YOU USE IT {%- endcomment -%}
   {%- assign steps = section.blocks | where: 'type', 'step' -%}
   {%- if steps.size > 0 -%}
-    <section class="gb-sec gb-sec--stone gb-steps">
+    <section class="gb-sec gb-sec--sand gb-steps">
       <div class="gb-wrap">
         <p class="gb-eyebrow">{{ section.settings.steps_eyebrow | escape }}</p>
         <h2 class="gb-h2">{{ section.settings.steps_heading | escape }}</h2>
@@ -132,7 +132,7 @@
 
   {%- comment -%} e. PACK PICKER TEASER {%- endcomment -%}
   {%- if product != blank and product.variants.size > 0 -%}
-    <section class="gb-sec gb-sec--lettuce gb-packs">
+    <section class="gb-sec gb-sec--sand gb-packs">
       <div class="gb-wrap">
         <p class="gb-eyebrow">{{ section.settings.packs_eyebrow | escape }}</p>
         <h2 class="gb-h2">{{ section.settings.packs_heading | escape }}</h2>
@@ -187,7 +187,7 @@
   {%- endif -%}
 
   {%- comment -%} f. WHY THE HANDLES MATTER {%- endcomment -%}
-  <section class="gb-sec gb-sec--tan gb-handles">
+  <section class="gb-sec gb-sec--sand gb-handles">
     <div class="gb-wrap gb-handles__in">
       <div class="gb-handles__copy">
         <p class="gb-eyebrow">{{ section.settings.handles_eyebrow | escape }}</p>
@@ -226,13 +226,13 @@
   {%- endif -%}
 
   {%- comment -%} h. CLOSER {%- endcomment -%}
-  <section class="gb-sec gb-sec--tan gb-closer">
+  <section class="gb-sec gb-sec--sand gb-closer">
     <div class="gb-wrap gb-closer__in">
       <h2 class="gb-h2">{{ section.settings.closer_heading | escape }}</h2>
       {%- if section.settings.closer_text != blank -%}
         <p class="gb-closer__text">{{ section.settings.closer_text | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
       {%- endif -%}
-      <a class="gb-btn gb-btn--accent" href="{{ product_url }}">{{ section.settings.closer_button | escape }}</a>
+      <a class="gb-btn gb-btn--lime" href="{{ product_url }}">{{ section.settings.closer_button | escape }}</a>
       {%- if product != blank -%}
         <p class="gb-closer__price">from {{ product.price_min | money }}</p>
       {%- endif -%}
@@ -279,7 +279,7 @@
 .gb-home .gb-steps__item{overflow:hidden;display:grid}
 .gb-home .gb-steps__img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:0}
 .gb-home .gb-steps__body{padding:22px 24px 26px;position:relative}
-.gb-home .gb-steps__n{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:16px;margin-bottom:10px}
+.gb-home .gb-steps__n{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--lime-ink);font-weight:800;font-size:16px;margin-bottom:10px}
 .gb-home .gb-steps__body h3{margin:0 0 6px;font-size:22px;font-weight:800}
 .gb-home .gb-steps__body p{margin:0;color:var(--dim);line-height:1.55}
 
@@ -287,7 +287,7 @@
 .gb-home .gb-packs__grid{list-style:none;margin:32px 0 0;padding:0;display:grid;gap:18px}
 @media(min-width:760px){.gb-home .gb-packs__grid{grid-template-columns:repeat(3,1fr);max-width:1100px}}
 .gb-home .gb-packs__card{position:relative;transition:box-shadow .15s,transform .15s}
-.gb-home .gb-packs__card.is-hot{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.gb-home .gb-packs__card.is-hot{border-color:var(--lime);box-shadow:0 0 0 2px var(--lime)}
 .gb-home .gb-packs__card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(43,36,25,.10)}
 .gb-home .gb-packs__card a{display:grid;gap:8px;padding:26px 24px 24px;text-decoration:none;color:var(--ink);min-height:100%}
 .gb-home .gb-packs__card .gb-pill{justify-self:start}
@@ -296,7 +296,7 @@
 .gb-home .gb-packs__price b{font-size:30px}
 .gb-home .gb-packs__price s{color:var(--dim);font-size:18px}
 .gb-home .gb-packs__sold{margin:0;color:var(--dim);font-weight:700}
-.gb-home .gb-packs__go{margin-top:10px;font-weight:800;color:var(--accent);font-size:17px}
+.gb-home .gb-packs__go{margin-top:10px;font-weight:800;color:var(--night);font-size:17px}
 .gb-home .gb-packs__go::after{content:" →"}
 .gb-home .gb-packs__foot{margin:18px 0 0;color:var(--dim);font-size:15px}
 
@@ -314,15 +314,15 @@
 .gb-home .gb-faq__item{border-bottom:1px solid var(--rule)}
 .gb-home .gb-faq__item summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;padding:14px 0;cursor:pointer;list-style:none;font-size:19px;font-weight:800}
 .gb-home .gb-faq__item summary::-webkit-details-marker{display:none}
-.gb-home .gb-faq__item summary::after{content:"+";flex:0 0 auto;font-size:28px;line-height:1;color:var(--accent);font-weight:400}
+.gb-home .gb-faq__item summary::after{content:"+";flex:0 0 auto;font-size:28px;line-height:1;color:var(--leaf);font-weight:400}
 .gb-home .gb-faq__item[open] summary::after{content:"–"}
 .gb-home .gb-faq__item p{margin:0 0 20px;color:var(--dim);max-width:60ch;line-height:1.6;font-size:17px}
 
 /* closer */
 .gb-home .gb-closer__in{text-align:center;display:grid;justify-items:center;gap:0}
-.gb-home .gb-closer .gb-h2{color:var(--bark-2)}
-.gb-home .gb-closer__text{margin:14px 0 26px;max-width:46ch;color:var(--bark-2);font-size:18px}
-.gb-home .gb-closer__price{margin:14px 0 0;color:var(--bark-2);font-weight:700}
+.gb-home .gb-closer .gb-h2{color:var(--night)}
+.gb-home .gb-closer__text{margin:14px 0 26px;max-width:46ch;color:var(--night);font-size:18px}
+.gb-home .gb-closer__price{margin:14px 0 0;color:var(--night);font-weight:700}
 {% endstylesheet %}
 
 {% schema %}
