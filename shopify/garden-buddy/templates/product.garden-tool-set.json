@@ -13,8 +13,99 @@
         "trust_3": "Ships within [ DISPATCH TIME ]"
       }
     },
-    "below": {
-      "type": "gb-product-below",
+    "faq": {
+      "type": "gb-faq",
+      "settings": {
+        "faq_heading": "Things people ask before they buy."
+      },
+      "blocks": {
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "Does the bag really hold all of it?",
+            "answer": "Yes. Long tools go in the outer sleeves, the sprayer and gloves go in the mesh pockets, and the snap pocket on the front takes seed packets."
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "Is this stool the same as the kneeler?",
+            "answer": "No, and they do different jobs. This stool is a light canvas seat that carries the tool bag. The Garden Buddy is padded, has handles to push up on, and flips between kneeling and sitting. A lot of people run both."
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "How much weight does the stool hold?",
+            "answer": "[ STOOL CAPACITY ]. We print that number once it is confirmed, not before."
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "Are the tools any good or are they filler?",
+            "answer": "Stainless heads, rubber grips, hanging hole in each handle. They are hand tools for beds and pots, not for breaking ground."
+          }
+        },
+        "faq_5": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I put the bag on my Garden Buddy instead?",
+            "answer": "It carries by its own handles and sits on the ground fine. It is cut for this stool frame, so it will not clip onto the kneeler."
+          }
+        },
+        "faq_6": {
+          "type": "faq",
+          "settings": {
+            "question": "Do the gloves fit small hands?",
+            "answer": "They are one size with digging claws on the fingertips. [ GLOVE SIZE ]"
+          }
+        },
+        "faq_7": {
+          "type": "faq",
+          "settings": {
+            "question": "How does shipping work?",
+            "answer": "Free shipping in the US. Most orders arrive in [ DELIVERY WINDOW ]."
+          }
+        },
+        "faq_8": {
+          "type": "faq",
+          "settings": {
+            "question": "What if it is not for me?",
+            "answer": "Send it back within 30 days for a refund."
+          }
+        }
+      },
+      "block_order": [
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4",
+        "faq_5",
+        "faq_6",
+        "faq_7",
+        "faq_8"
+      ]
+    },
+    "trust": {
+      "type": "gb-trust",
+      "settings": {
+        "strip_1_title": "10 pieces",
+        "strip_1_text": "Stool, bag, six tools, gloves, sprayer.",
+        "strip_2_title": "Bag hangs on the frame",
+        "strip_2_text": "Tools stay at your side, not in the shed.",
+        "strip_3_title": "Stainless heads",
+        "strip_3_text": "Rubber grips with a hanging hole.",
+        "strip_4_title": "Folds flat",
+        "strip_4_text": "Stool collapses, bag goes with it."
+      }
+    },
+    "steps": {
+      "type": "gb-steps",
+      "settings": {
+        "how_eyebrow": "How you use it",
+        "how_heading": "Carry it out. Sit down. Everything is there."
+      },
       "blocks": {
         "step_1": {
           "type": "step",
@@ -39,40 +130,78 @@
             "text": "Every tool sits in a pocket at knee height. You stop walking back to the shed for the one you forgot.",
             "placeholder": "Photo: pulling the trowel out of a side pocket"
           }
-        },
+        }
+      },
+      "block_order": [
+        "step_1",
+        "step_2",
+        "step_3"
+      ]
+    },
+    "features": {
+      "type": "gb-features",
+      "blocks": {
         "feature_1": {
           "type": "feature",
           "settings": {
-            "eyebrow": "What is in it",
             "heading": "Six steel tools, gloves and a sprayer.",
-            "text": "Trowel, transplanter, weeder, cultivator, hand rake and pruning shears. Stainless heads on rubber grips, each with a hanging hole in the end. Claw gloves and a hand sprayer round it out.",
-            "caption": "The ten pieces laid out.",
-            "points": "Stainless heads | Rubber grip handles | Hanging hole in every handle",
-            "placeholder": "The ten pieces laid out."
+            "text": "Trowel, transplanter, weeder, cultivator, hand rake and pruning shears. Stainless heads on rubber grips, each with a hanging hole in the end. Claw gloves and a hand sprayer round it out."
           }
         },
         "feature_2": {
           "type": "feature",
           "settings": {
-            "eyebrow": "The stool",
             "heading": "A seat that goes where you are working.",
-            "text": "Black steel frame, canvas seat, 15.4 inches across and 14.2 inches tall. It folds flat when you are done. This is the light seat for the tool bag, not a padded kneeler.",
-            "caption": "The stool, open and folded.",
-            "points": "15.4 in wide, 11.5 in deep, 14.2 in tall | Folds flat | Steel frame",
-            "placeholder": "The stool, open and folded."
+            "text": "Black steel frame, canvas seat, 15.4 inches across and 14.2 inches tall. It folds flat when you are done. This is the light seat for the tool bag, not a padded kneeler."
           }
         },
         "feature_3": {
           "type": "feature",
           "settings": {
-            "eyebrow": "The bag",
             "heading": "Pockets on every side.",
-            "text": "Outer sleeves for the long tools, mesh pockets for the sprayer and gloves, a snap pocket on the front for seed packets and your phone. It lifts off the frame and carries by the handles.",
-            "caption": "The bag on the frame, loaded.",
-            "points": "Lifts off the frame | Mesh and canvas pockets | Carry handles",
-            "placeholder": "The bag on the frame, loaded."
+            "text": "Outer sleeves for the long tools, mesh pockets for the sprayer and gloves, a snap pocket on the front for seed packets and your phone. It lifts off the frame and carries by the handles."
           }
-        },
+        }
+      },
+      "block_order": [
+        "feature_1",
+        "feature_2",
+        "feature_3"
+      ]
+    },
+    "compare": {
+      "type": "gb-compare",
+      "settings": {
+        "cmp_eyebrow": "Compare",
+        "cmp_heading": "What it does that the cheap options do not.",
+        "cmp_col_1": "Garden Buddy",
+        "cmp_col_2": "Basic foam kneeler"
+      }
+    },
+    "reviews": {
+      "type": "gb-reviews",
+      "settings": {
+        "rev_eyebrow": "Reviews",
+        "rev_heading": "From people who own one.",
+        "rev_empty_title": "Reviews go live once the first orders land.",
+        "rev_empty_text": "We are a new shop. We will post real reviews from real orders here, good and bad, and nothing else."
+      }
+    },
+    "who": {
+      "type": "gb-who",
+      "settings": {
+        "who_eyebrow": "Who it's for",
+        "who_heading": "Made for the part of gardening nobody talks about."
+      }
+    },
+    "box": {
+      "type": "gb-box",
+      "settings": {
+        "box_eyebrow": "In the set",
+        "box_heading": "All ten pieces.",
+        "box_text": "Sizes below are the manufacturer's published measurements."
+      },
+      "blocks": {
         "box_item_1": {
           "type": "box_item",
           "settings": {
@@ -142,63 +271,28 @@
             "name": "Hand sprayer",
             "note": "9 in"
           }
-        },
-        "faq_1": {
-          "type": "faq",
-          "settings": {
-            "question": "Does the bag really hold all of it?",
-            "answer": "Yes. Long tools go in the outer sleeves, the sprayer and gloves go in the mesh pockets, and the snap pocket on the front takes seed packets."
-          }
-        },
-        "faq_2": {
-          "type": "faq",
-          "settings": {
-            "question": "Is this stool the same as the kneeler?",
-            "answer": "No, and they do different jobs. This stool is a light canvas seat that carries the tool bag. The Garden Buddy is padded, has handles to push up on, and flips between kneeling and sitting. A lot of people run both."
-          }
-        },
-        "faq_3": {
-          "type": "faq",
-          "settings": {
-            "question": "How much weight does the stool hold?",
-            "answer": "[ STOOL CAPACITY ]. We print that number once it is confirmed, not before."
-          }
-        },
-        "faq_4": {
-          "type": "faq",
-          "settings": {
-            "question": "Are the tools any good or are they filler?",
-            "answer": "Stainless heads, rubber grips, hanging hole in each handle. They are hand tools for beds and pots, not for breaking ground."
-          }
-        },
-        "faq_5": {
-          "type": "faq",
-          "settings": {
-            "question": "Can I put the bag on my Garden Buddy instead?",
-            "answer": "It carries by its own handles and sits on the ground fine. It is cut for this stool frame, so it will not clip onto the kneeler."
-          }
-        },
-        "faq_6": {
-          "type": "faq",
-          "settings": {
-            "question": "Do the gloves fit small hands?",
-            "answer": "They are one size with digging claws on the fingertips. [ GLOVE SIZE ]"
-          }
-        },
-        "faq_7": {
-          "type": "faq",
-          "settings": {
-            "question": "How does shipping work?",
-            "answer": "Free shipping in the US. Most orders arrive in [ DELIVERY WINDOW ]."
-          }
-        },
-        "faq_8": {
-          "type": "faq",
-          "settings": {
-            "question": "What if it is not for me?",
-            "answer": "Send it back within 30 days for a refund."
-          }
-        },
+        }
+      },
+      "block_order": [
+        "box_item_1",
+        "box_item_2",
+        "box_item_3",
+        "box_item_4",
+        "box_item_5",
+        "box_item_6",
+        "box_item_7",
+        "box_item_8",
+        "box_item_9",
+        "box_item_10"
+      ]
+    },
+    "specs": {
+      "type": "gb-specs",
+      "settings": {
+        "spec_eyebrow": "Sizes",
+        "spec_heading": "Every piece, measured."
+      },
+      "blocks": {
         "spec_1": {
           "type": "spec",
           "settings": {
@@ -299,30 +393,6 @@
         }
       },
       "block_order": [
-        "step_1",
-        "step_2",
-        "step_3",
-        "feature_1",
-        "feature_2",
-        "feature_3",
-        "box_item_1",
-        "box_item_2",
-        "box_item_3",
-        "box_item_4",
-        "box_item_5",
-        "box_item_6",
-        "box_item_7",
-        "box_item_8",
-        "box_item_9",
-        "box_item_10",
-        "faq_1",
-        "faq_2",
-        "faq_3",
-        "faq_4",
-        "faq_5",
-        "faq_6",
-        "faq_7",
-        "faq_8",
         "spec_1",
         "spec_2",
         "spec_3",
@@ -337,36 +407,11 @@
         "spec_12",
         "spec_13",
         "spec_14"
-      ],
+      ]
+    },
+    "closer": {
+      "type": "gb-closer",
       "settings": {
-        "strip_1_title": "10 pieces",
-        "strip_1_text": "Stool, bag, six tools, gloves, sprayer.",
-        "strip_2_title": "Bag hangs on the frame",
-        "strip_2_text": "Tools stay at your side, not in the shed.",
-        "strip_3_title": "Stainless heads",
-        "strip_3_text": "Rubber grips with a hanging hole.",
-        "strip_4_title": "Folds flat",
-        "strip_4_text": "Stool collapses, bag goes with it.",
-        "how_eyebrow": "How you use it",
-        "how_heading": "Carry it out. Sit down. Everything is there.",
-        "cmp_eyebrow": "Compare",
-        "cmp_heading": "What it does that the cheap options do not.",
-        "cmp_col_1": "Garden Buddy",
-        "cmp_col_2": "Basic foam kneeler",
-        "cmp_col_3": "Plastic step stool",
-        "who_eyebrow": "Who it's for",
-        "who_heading": "Made for the part of gardening nobody talks about.",
-        "box_eyebrow": "In the set",
-        "box_heading": "All ten pieces.",
-        "box_text": "Sizes below are the manufacturer's published measurements.",
-        "rev_eyebrow": "Reviews",
-        "rev_heading": "From people who own one.",
-        "rev_empty_title": "Reviews go live once the first orders land.",
-        "rev_empty_text": "We are a new shop. We will post real reviews from real orders here, good and bad, and nothing else.",
-        "faq_eyebrow": "Questions",
-        "faq_heading": "Things people ask before they buy.",
-        "spec_eyebrow": "Sizes",
-        "spec_heading": "Every piece, measured.",
         "closer_heading": "Add it to the Garden Buddy and pay less.",
         "closer_text": "The Garden Buddy and this set cost less bought together. Both bundles are on its page.",
         "closer_button": "See the bundles",
@@ -376,6 +421,15 @@
   },
   "order": [
     "main",
-    "below"
+    "faq",
+    "trust",
+    "steps",
+    "features",
+    "compare",
+    "reviews",
+    "who",
+    "box",
+    "specs",
+    "closer"
   ]
 }

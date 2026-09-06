@@ -1,16 +1,27 @@
-# Shopify build — GARDEN BUDDY
+# GARDEN BUDDY — theme source
 
-Store: `aj1wt0-dg.myshopify.com` (trial plan, EUR — switch to USD in Settings → Store details)
-Theme: **GARDEN BUDDY** (`gid://shopify/OnlineStoreTheme/206497710419`, unpublished; Horizon copy)
-Preview: https://aj1wt0-dg.myshopify.com/?preview_theme_id=206497710419
+Live store `aj1wt0-dg.myshopify.com`. Theme **GARDEN BUDDY** id `206497710419`, a Horizon copy, unpublished.
 
-Product: Garden Buddy Foldable Kneeler Seat — `foldable-kneeler-seat` (`gid://shopify/Product/10837200077139`)
-Options: Pack (1 / 2 / 3) × Color (Blue / Brown). 250 units per variant at "Shop location".
-Prices (ASSUMED, confirm): 1 = 64.99 · 2 = 109.99 (compare 129.98) · 3 = 149.99 (compare 194.97)
-Collection: `garden-kneelers`. Pages: shipping, returns, faq. Menus: main-menu, footer.
+**To rebuild the whole store from nothing, read [REBUILD.md](REBUILD.md).**
+**For store data — products, prices, media, specs — read [store/store.json](store/store.json).**
 
-Sections: `gb-header`, `gb-footer`, `gb-home`, `gb-product`, `gb-product-below`, `gb-page`, `gb-collection`.
-Shared tokens: `assets/gb.css`. Palette: paper #FBF7EE · stone #EDE7DA · bark #8A6A4B · lettuce #CFE7A6 ·
-leaf #4F8A2E · sky #CFE6F6 · tan #F3D3B3 · orange #D9641C · ink #2B2419.
+## What is here
+- `assets/gb.css` — the design tokens. The palette is signed off; do not drift from it.
+- `sections/` — one Liquid section per band of the page, plus header, footer and their groups.
+- `templates/` — the JSON templates that arrange those sections.
+- `config/settings_data.json` — Horizon's own colour and type settings, matched to the palette.
+- `store/` — a snapshot of the store data and the page bodies.
+- `media/` — the three explainer GIFs.
+- `ref/` — competitor reference shots used to generate the product photography.
 
-Upload method and Horizon limits: see ../README.md (same rules).
+## Upload
+Commit and push, then `themeFilesUpsert` with a `URL` body pointing at the raw file on that commit.
+
+**Verify every write.** `themeFilesUpsert` returns success even when it writes nothing. Re-query the
+file and check `updatedAt` moved, not just that a size came back. REBUILD.md lists the traps.
+
+## Non-negotiable
+- No fabricated reviews, ratings or counts. The shop has zero orders; the review and social
+  sections ship empty with an honest empty state.
+- No invented spec numbers. Confirmed figures live in `store/store.json`; unconfirmed ones stay off the page.
+- Compare-at prices are arithmetic from real list prices.
