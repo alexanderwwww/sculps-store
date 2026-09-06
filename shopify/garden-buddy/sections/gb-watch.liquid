@@ -35,14 +35,17 @@
             {%- if s.video_url != blank -%}
               {{ s.video_url | external_video_tag: class: 'gb-watch__embed', loading: 'lazy' }}
             {%- elsif s.video != blank -%}
-              {{ s.video | video_tag: image_size: '900x', controls: true, playsinline: true, preload: 'metadata', class: 'gb-watch__embed' }}
-            {%- elsif s.video_src != blank -%}
-              <video class="gb-watch__embed" controls playsinline preload="metadata"
-                {%- if s.poster != blank %} poster="{{ s.poster | image_url: width: 900 }}"{% endif %}>
-                <source src="{{ s.video_src }}" type="video/mp4">
-              </video>
+              {{ s.video | video_tag: image_size: '900x', autoplay: true, loop: true, muted: true, controls: true, playsinline: true, preload: 'auto', class: 'gb-watch__embed' }}
             {%- else -%}
-              <div class="gb-ph gb-watch__ph"><span>{{ s.placeholder }}<small>Paste a YouTube or Vimeo link in the theme editor</small></span></div>
+              {%- assign src = s.video_src | default: s.video_fallback -%}
+              {%- if src != blank -%}
+                <video class="gb-watch__embed" autoplay loop muted playsinline controls preload="auto"
+                  {%- if s.poster != blank %} poster="{{ s.poster | image_url: width: 900 }}"{% endif %}>
+                  <source src="{{ src }}" type="video/mp4">
+                </video>
+              {%- else -%}
+                <div class="gb-ph gb-watch__ph"><span>{{ s.placeholder }}<small>Paste a YouTube or Vimeo link in the theme editor</small></span></div>
+              {%- endif -%}
             {%- endif -%}
           </div>
           {%- if s.caption != blank -%}<figcaption>{{ s.caption | escape }}</figcaption>{%- endif -%}
@@ -120,6 +123,7 @@
     { "type": "video_url", "id": "video_url", "label": "YouTube or Vimeo link", "accept": ["youtube", "vimeo"], "info": "Used first. This is the embedded iframe." },
     { "type": "video", "id": "video", "label": "Or an uploaded video" },
     { "type": "text", "id": "video_src", "label": "Or a direct .mp4 URL" },
+    { "type": "text", "id": "video_fallback", "label": "Fallback .mp4 URL", "default": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4", "info": "Plays when nothing above is set, so this band is never empty." },
     { "type": "image_picker", "id": "poster", "label": "Poster image" },
     { "type": "text", "id": "caption", "label": "Caption under the video" },
     { "type": "text", "id": "placeholder", "label": "Placeholder caption", "default": "UGC clip: kneeling, standing up, flipping it into a seat" },
