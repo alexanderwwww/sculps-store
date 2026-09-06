@@ -189,7 +189,7 @@
           "type": "faq",
           "settings": {
             "question": "What if it doesn't look like the video?",
-            "answer": "Send it back within 30 days and we refund you. Every clip on this page is the actual product. No renders, no composites, no enhancement."
+            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee. No renders, no composites, no enhancement."
           }
         },
         "spec_1": {
@@ -317,11 +317,11 @@
         "react_eyebrow": "See it running",
         "react_heading": "The soft one in a yard full of hard ones.",
         "react_text": "Every yard needs one thing that isn't trying to scare a six-year-old. This is it, and it's the one people photograph.",
-        "deal_eyebrow": "Why people buy all three",
+        "deal_eyebrow": "All three levels of the yard",
         "deal_heading": "Ground, air and the house.",
         "deal_text": "The reapers hold the lawn. The swings fill the trees. The projector takes the wall. A yard with all three levels working doesn't look decorated. It looks staged.",
         "deal_show_prices": true,
-        "deal_note": "Same free shipping, same 30-day return on all three.",
+        "deal_note": "",
         "deal_button": "Build the yard",
         "detail_eyebrow": "Up close",
         "detail_heading": "What you're actually getting.",
@@ -340,7 +340,7 @@
         "faq_link": "/pages/faq",
         "spec_eyebrow": "Specifications",
         "spec_heading": "The honest numbers.",
-        "spec_note": "Gold values are placeholders. Fill them from the supplier spec sheet before launch.",
+        "spec_note": "Figures in gold are still being confirmed with the factory. We will not print a number we have not measured.",
         "spec_group_a": "Lighted Ghost Swing",
         "spec_group_b": "",
         "closer_heading": "Halloween is on a Saturday this year.",

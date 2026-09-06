@@ -756,7 +756,26 @@
     }
 
     tiers.forEach(function (t) { t.addEventListener('change', render); });
-    addons.forEach(function (a) { a.addEventListener('change', render); });
+    addons.forEach(function (a) { a.addEventListener('change', function () {
+      /* If a tier already contains this add-on for the same money or less, take the tier.
+         Stops 2 Reapers + Projector add-on costing more than the bundle that has both. */
+      if (a.checked) {
+        var sel = selectedTier();
+        var target = null;
+        tiers.forEach(function (t) {
+          if (t === sel || t.disabled) return;
+          var inc = (t.dataset.includes || '');
+          var selInc = (sel && sel.dataset.includes) || '';
+          var hasAddon = inc.indexOf(a.dataset.addonHandle) > -1;
+          var coversSel = !selInc || inc.indexOf(selInc) > -1 || (+t.dataset.price) >= (+sel.dataset.price);
+          if (hasAddon && coversSel && (+t.dataset.price) <= (+sel.dataset.price) + (+a.dataset.price)) {
+            if (!target || (+t.dataset.price) < (+target.dataset.price)) target = t;
+          }
+        });
+        if (target) { a.checked = false; target.checked = true; target.dispatchEvent(new Event('change', { bubbles: true })); return; }
+      }
+      render();
+    }); });
     render();
 
     /* ---------- add to cart: main line + add-ons in one call ---------- */

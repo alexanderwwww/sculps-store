@@ -31,7 +31,7 @@
           "type": "step",
           "settings": {
             "heading": "It comes on by itself at dusk",
-            "text": "Light drops, the lantern catches, the souls start moving. It shuts off by morning and does it again.",
+            "text": "Light drops, the lantern catches, the souls light up along the stream. It shuts off by morning and does it again.",
             "placeholder": "Clip: dusk, the moment it lights"
           }
         },
@@ -201,7 +201,7 @@
           "type": "faq",
           "settings": {
             "question": "What if it doesn't look like the video?",
-            "answer": "Send it back within 30 days and we refund you. Every clip on this page is the actual product filmed at night. No renders, no composites, no enhancement."
+            "answer": "Send it back within 30 days and we refund you. No arguing, no restocking fee. No renders, no composites, no enhancement."
           }
         },
         "spec_1": {
@@ -429,12 +429,12 @@
         "how_text": "No outlet, no extension cord, no timer to program, no tools.",
         "react_eyebrow": "See it running",
         "react_heading": "The neighbors are going to lose it.",
-        "react_text": "Real footage from real yards. Nothing here is a render and nothing is enhanced. What you see is what shows up on your lawn.",
+        "react_text": "How it reads from the street once the light drops.",
         "deal_eyebrow": "The Halloween Special",
         "deal_heading": "Souls on the lawn.\nShadows on the house.",
         "deal_text": "The reapers own the ground. The projector takes the wall. Together the whole property is the decoration, not one object in the middle of it.",
         "deal_show_prices": true,
-        "deal_note": "Ships together in one box. Same 30-day return.",
+        "deal_note": "",
         "deal_button": "Get the bundle",
         "detail_eyebrow": "Up close",
         "detail_heading": "What you're actually getting.",
@@ -453,7 +453,7 @@
         "faq_link": "/pages/faq",
         "spec_eyebrow": "Specifications",
         "spec_heading": "The honest numbers.",
-        "spec_note": "Gold values are placeholders. Fill them from the supplier spec sheet before launch.",
+        "spec_note": "Figures in gold are still being confirmed with the factory. We will not print a number we have not measured.",
         "spec_group_a": "The Black Reaper",
         "spec_group_b": "Haunted Projector, bundle only",
         "closer_heading": "Halloween is on a Saturday this year.",
