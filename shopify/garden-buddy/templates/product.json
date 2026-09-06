@@ -70,91 +70,204 @@
         "step_1": {
           "type": "step",
           "settings": {
-            "heading": "Kneel",
-            "text": "Set it pad-side up. Hold the handles as you go down.",
-            "placeholder": "Clip: kneeling down",
-            "image": "shopify://shop_images/gb-step-1.png"
+            "heading": "Kneel on the thick pad",
+            "text": "Foam between you and the ground. Gravel, a wet lawn, a paved path, it makes no difference.",
+            "image": "shopify://shop_images/gb-gif-kneel.gif",
+            "placeholder": "Clip: kneeling down onto the pad"
           }
         },
         "step_2": {
           "type": "step",
           "settings": {
-            "heading": "Flip",
-            "text": "Turn it over. The snap-lock clicks and it is a stool.",
-            "placeholder": "Clip: flipping it over",
-            "image": "shopify://shop_images/gb-step-2.png"
+            "heading": "Push up on the handles",
+            "text": "The handles sit near hip height when you kneel, so your arms do the work. Then it comes with you to the next spot.",
+            "image": "shopify://shop_images/gb-gif-move.gif",
+            "placeholder": "Clip: standing up and moving down the path"
           }
         },
         "step_3": {
           "type": "step",
           "settings": {
-            "heading": "Sit",
-            "text": "Rest on the seat for potting, weeding, or the mailbox.",
-            "placeholder": "Clip: sitting on it",
-            "image": "shopify://shop_images/gb-step-3.png"
+            "heading": "Flip it and sit",
+            "text": "Same frame, upside down. The handles become the legs and a snap-lock holds it shut.",
+            "image": "shopify://shop_images/gb-gif-sit.gif",
+            "placeholder": "Clip: sitting on it at a raised bed"
+          }
+        },
+        "benefit_1": {
+          "type": "benefit",
+          "settings": {
+            "icon": "infinity",
+            "title": "Kneel one way, sit the other",
+            "text": "Pad side up to kneel. Flip it over and the frame is a seat at bed height."
+          }
+        },
+        "benefit_2": {
+          "type": "benefit",
+          "settings": {
+            "icon": "shield",
+            "title": "Handles to stand up",
+            "text": "Getting down is easy. The steel handles give you something solid to push on."
+          }
+        },
+        "benefit_3": {
+          "type": "benefit",
+          "settings": {
+            "icon": "layers",
+            "title": "Arrives assembled, folds flat",
+            "text": "Open the box and unfold it. Folded, it hangs on a nail in the shed."
           }
         },
         "feature_1": {
           "type": "feature",
           "settings": {
-            "eyebrow": "On your knees",
-            "heading": "The pad does the work your knees used to.",
-            "text": "Thick foam between you and the ground. Gravel, a wet lawn, a paved path, it makes no difference. You stay level and you stay dry.",
-            "placeholder": "Photo: hands on the handles, pushing up",
-            "image": "shopify://shop_images/gb-gif-kneel.gif",
-            "caption": "Kneeling down in a bed. One take, no edit.",
-            "points": "Pad lifts off so you can hose it down | Wide flat feet, it does not sink into a lawn | Foam is [ PAD THICKNESS ] thick"
+            "icon": "shield",
+            "heading": "Steel frame",
+            "text": "One piece, welded, with a snap-lock that clicks when it is shut."
           }
         },
         "feature_2": {
           "type": "feature",
           "settings": {
-            "eyebrow": "Getting back up",
-            "heading": "Push up on the handles, then take it with you.",
-            "text": "Getting down is easy. Getting up is the part that hurts. The handles sit near hip height when you kneel, so your arms do the work instead of your knees. Then it comes with you to the next spot.",
-            "placeholder": "Photo: pad, close, coming off the frame",
-            "image": "shopify://shop_images/gb-gif-move.gif",
-            "caption": "Standing up, then moving down the path.",
-            "points": "Carries in one hand, about [ WEIGHT ] | Folds flat and hangs in the shed | Steel frame, not plastic"
+            "icon": "heart",
+            "heading": "Thick foam pad",
+            "text": "[ PAD THICKNESS ] of foam. It detaches so you can hose it off."
           }
         },
         "feature_3": {
           "type": "feature",
           "settings": {
-            "eyebrow": "Turn it over",
-            "heading": "Flip it and it is a stool.",
-            "text": "Same frame, upside down. The handles become the legs, the padded side becomes the seat. A snap-lock holds it closed so it will not fold while you are sitting on it.",
-            "placeholder": "Photo: folded flat, held by the handle",
-            "image": "shopify://shop_images/gb-gif-sit.gif",
-            "caption": "Working a raised bed, sitting on it.",
-            "points": "Snap-lock holds it shut | Holds up to [ WEIGHT CAPACITY ] | Nothing to swap or unscrew"
+            "icon": "infinity",
+            "heading": "Kneeler and seat",
+            "text": "One flip turns it over. No parts to swap, nothing to tighten."
+          }
+        },
+        "feature_4": {
+          "type": "feature",
+          "settings": {
+            "icon": "layers",
+            "heading": "Folds flat",
+            "text": "Folded size is [ FOLDED SIZE ]. It hangs by the handle."
+          }
+        },
+        "feature_5": {
+          "type": "feature",
+          "settings": {
+            "icon": "clock",
+            "heading": "No assembly",
+            "text": "It ships built. Unfold it and go straight to the beds."
+          }
+        },
+        "feature_6": {
+          "type": "feature",
+          "settings": {
+            "icon": "leaf",
+            "heading": "Wide feet",
+            "text": "Sits level on lawn and on beds instead of sinking in."
+          }
+        },
+        "tool_1": {
+          "type": "tool",
+          "settings": {
+            "name": "Folding stool",
+            "size": "15.4 x 11.5 x 14.2 in",
+            "placeholder": "Photo: folding stool"
+          }
+        },
+        "tool_2": {
+          "type": "tool",
+          "settings": {
+            "name": "Storage bag",
+            "size": "Lifts off the frame",
+            "placeholder": "Photo: storage bag"
+          }
+        },
+        "tool_3": {
+          "type": "tool",
+          "settings": {
+            "name": "Trowel",
+            "size": "12 in",
+            "placeholder": "Photo: trowel"
+          }
+        },
+        "tool_4": {
+          "type": "tool",
+          "settings": {
+            "name": "Transplanter",
+            "size": "11.8 in, depth marks",
+            "placeholder": "Photo: transplanter"
+          }
+        },
+        "tool_5": {
+          "type": "tool",
+          "settings": {
+            "name": "Weeder",
+            "size": "11.8 in",
+            "placeholder": "Photo: weeder"
+          }
+        },
+        "tool_6": {
+          "type": "tool",
+          "settings": {
+            "name": "Cultivator fork",
+            "size": "11 in",
+            "placeholder": "Photo: cultivator fork"
+          }
+        },
+        "tool_7": {
+          "type": "tool",
+          "settings": {
+            "name": "Hand rake",
+            "size": "11.4 in",
+            "placeholder": "Photo: hand rake"
+          }
+        },
+        "tool_8": {
+          "type": "tool",
+          "settings": {
+            "name": "Pruning shears",
+            "size": "7.5 in",
+            "placeholder": "Photo: pruning shears"
+          }
+        },
+        "tool_9": {
+          "type": "tool",
+          "settings": {
+            "name": "Claw gloves",
+            "size": "4.1 in across",
+            "placeholder": "Photo: claw gloves"
+          }
+        },
+        "tool_10": {
+          "type": "tool",
+          "settings": {
+            "name": "Hand sprayer",
+            "size": "9 in",
+            "placeholder": "Photo: hand sprayer"
           }
         },
         "compare_1": {
           "type": "compare",
           "settings": {
-            "label": "Kneel",
+            "label": "Kneel and sit",
             "v1": "yes",
-            "v2": "yes",
-            "v3": "no"
+            "v2": "no"
           }
         },
         "compare_2": {
           "type": "compare",
           "settings": {
-            "label": "Sit",
+            "label": "Handles to stand up",
             "v1": "yes",
-            "v2": "no",
-            "v3": "yes"
+            "v2": "no"
           }
         },
         "compare_3": {
           "type": "compare",
           "settings": {
-            "label": "Handles to stand up",
+            "label": "Steel frame",
             "v1": "yes",
-            "v2": "no",
-            "v3": "no"
+            "v2": "no"
           }
         },
         "compare_4": {
@@ -162,8 +275,7 @@
           "settings": {
             "label": "Folds flat",
             "v1": "yes",
-            "v2": "yes",
-            "v3": "no"
+            "v2": "yes"
           }
         },
         "compare_5": {
@@ -171,8 +283,7 @@
           "settings": {
             "label": "Arrives assembled",
             "v1": "yes",
-            "v2": "yes",
-            "v3": "Sometimes"
+            "v2": "no"
           }
         },
         "compare_6": {
@@ -180,8 +291,7 @@
           "settings": {
             "label": "Detachable pad",
             "v1": "yes",
-            "v2": "no",
-            "v3": "no"
+            "v2": "no"
           }
         },
         "who_1": {
@@ -282,8 +392,8 @@
         "faq_8": {
           "type": "faq",
           "settings": {
-            "question": "The tool set has a stool too. Do I need both?",
-            "answer": "They do different jobs. The kneeler is padded, has handles to push up on, and flips between kneeling and sitting. The stool in the tool set is a light canvas seat that carries the tool bag out to the bed. Plenty of people run both, which is what the bundles are for."
+            "question": "What if it is not for me?",
+            "answer": "Send it back within 30 days for a refund."
           }
         },
         "spec_1": {
@@ -341,102 +451,21 @@
             "label": "Assembly",
             "value": "None"
           }
-        },
-        "faq_9": {
-          "type": "faq",
-          "settings": {
-            "question": "What if it is not for me?",
-            "answer": "Send it back within 30 days for a refund."
-          }
-        },
-        "tool_1": {
-          "type": "tool",
-          "settings": {
-            "name": "Folding stool",
-            "size": "15.4 \u00d7 11.5 \u00d7 14.2 in",
-            "placeholder": "Folding stool"
-          }
-        },
-        "tool_2": {
-          "type": "tool",
-          "settings": {
-            "name": "Storage bag",
-            "size": "Lifts off the frame",
-            "placeholder": "Storage bag"
-          }
-        },
-        "tool_3": {
-          "type": "tool",
-          "settings": {
-            "name": "Trowel",
-            "size": "12 in",
-            "placeholder": "Trowel"
-          }
-        },
-        "tool_4": {
-          "type": "tool",
-          "settings": {
-            "name": "Transplanter",
-            "size": "11.8 in, depth marks",
-            "placeholder": "Transplanter"
-          }
-        },
-        "tool_5": {
-          "type": "tool",
-          "settings": {
-            "name": "Weeder",
-            "size": "11.8 in",
-            "placeholder": "Weeder"
-          }
-        },
-        "tool_6": {
-          "type": "tool",
-          "settings": {
-            "name": "Cultivator fork",
-            "size": "11 in",
-            "placeholder": "Cultivator fork"
-          }
-        },
-        "tool_7": {
-          "type": "tool",
-          "settings": {
-            "name": "Hand rake",
-            "size": "11.4 in",
-            "placeholder": "Hand rake"
-          }
-        },
-        "tool_8": {
-          "type": "tool",
-          "settings": {
-            "name": "Pruning shears",
-            "size": "7.5 in",
-            "placeholder": "Pruning shears"
-          }
-        },
-        "tool_9": {
-          "type": "tool",
-          "settings": {
-            "name": "Claw gloves",
-            "size": "4.1 in across",
-            "placeholder": "Claw gloves"
-          }
-        },
-        "tool_10": {
-          "type": "tool",
-          "settings": {
-            "name": "Hand sprayer",
-            "size": "9 in",
-            "placeholder": "Hand sprayer"
-          }
         }
       },
       "block_order": [
         "step_1",
         "step_2",
         "step_3",
+        "benefit_1",
+        "benefit_2",
+        "benefit_3",
         "feature_1",
         "feature_2",
         "feature_3",
+        "feature_4",
+        "feature_5",
+        "feature_6",
         "tool_1",
         "tool_2",
         "tool_3",
@@ -468,7 +497,6 @@
         "faq_6",
         "faq_7",
         "faq_8",
-        "faq_9",
         "spec_1",
         "spec_2",
         "spec_3",
@@ -479,43 +507,52 @@
         "spec_8"
       ],
       "settings": {
-        "strip_1_title": "Kneeler and stool in one",
-        "strip_1_text": "Pad side up, or flip it and sit.",
-        "strip_2_title": "Handles to stand up",
-        "strip_2_text": "Something solid to push on.",
-        "strip_3_title": "Arrives assembled",
-        "strip_3_text": "Open the box, unfold it, go.",
-        "strip_4_title": "Folds flat",
-        "strip_4_text": "Hangs on a nail in the shed.",
-        "how_eyebrow": "How you use it",
-        "how_heading": "Kneel. Flip. Sit.",
+        "strip_1_title": "2-5 Day Shipping",
+        "strip_1_text": "Fast and reliable delivery",
+        "strip_2_title": "30-Day Guarantee",
+        "strip_2_text": "Not satisfied? Get a full refund",
+        "strip_3_title": "Secure Checkout",
+        "strip_3_text": "Your information is safe",
+        "strip_4_title": "24/7 Support",
+        "strip_4_text": "We're here for you",
+        "ben_eyebrow": "Why people keep one",
+        "ben_heading": "Kneel. Flip. Sit.",
+        "ben_text": "One frame does the whole job. Pad side up to kneel, flipped over to sit.",
+        "ben_placeholder": "Photo: the kneeler in use",
+        "how_eyebrow": "See it in use",
+        "how_heading": "Kneel. Get up. Sit.",
+        "set_eyebrow": "Only in the bundles",
+        "set_heading": "Everything You Need, In One Set",
+        "set_text": "You cannot buy the tool set on its own. It comes with the two bundle options above.",
+        "set_note": "Sizes are the manufacturer's published measurements.",
+        "set_button": "Add the set to your kneeler",
+        "pf_eyebrow": "Built for the job",
+        "pf_heading": "Product Features",
+        "pf_placeholder": "Photo: the kneeler, three-quarter view",
+        "pf_caption": "Thick & Comfortable Cushion",
+        "pf_caption_sub": "Keeps your knees off hard surfaces.",
         "cmp_eyebrow": "Compare",
-        "cmp_heading": "What it does that the cheap options do not.",
-        "cmp_col_1": "Garden Buddy",
-        "cmp_col_2": "Basic foam kneeler",
-        "cmp_col_3": "Plastic step stool",
+        "cmp_heading": "What Makes GardenBuddy Better?",
+        "cmp_col_1": "GardenBuddy",
+        "cmp_col_2": "Others",
+        "faq_heading": "Questions people ask",
         "who_eyebrow": "Who it's for",
         "who_heading": "Made for the part of gardening nobody talks about.",
         "box_eyebrow": "In the box",
         "box_heading": "What arrives.",
         "box_text": "Everything listed here comes in the box. Nothing to assemble.",
         "rev_eyebrow": "Reviews",
-        "rev_heading": "From people who own one.",
+        "rev_heading": "Real People. Real Results.",
+        "rev_sub": "Posted by people who bought one.",
         "rev_empty_title": "Reviews go live once the first orders land.",
         "rev_empty_text": "We are a new shop. We will post real reviews from real orders here, good and bad, and nothing else.",
-        "faq_eyebrow": "Questions",
-        "faq_heading": "Things people ask before they buy.",
         "spec_eyebrow": "Specifications",
         "spec_heading": "The numbers.",
         "closer_heading": "Your knees will notice by Saturday.",
         "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
         "closer_button": "Pick your bundle",
-        "set_eyebrow": "Only in the bundles",
-        "set_heading": "Ten pieces that come with it.",
-        "set_text": "You cannot buy the tool set on its own. It comes with the two bundle options above: a folding stool, a bag that holds everything, six steel hand tools, claw gloves and a sprayer.",
-        "set_note": "Sizes are the manufacturer's published measurements.",
-        "set_button": "Add the set to your kneeler",
-        "set_placeholder": "Photo: the whole set laid out on a path"
+        "ben_image": "shopify://shop_images/gb-hero.png",
+        "pf_image": "shopify://shop_images/gb-feature-2.png"
       }
     }
   },
