@@ -603,6 +603,12 @@
 @media(max-width:999px){body:has(.tbr-product [data-tbr-mbar]){padding-bottom:calc(72px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){.tbr-product *{transition:none!important}}
 .tbr-product .tbr-addons{display:none!important}
+
+.tbr-product .tbr-buy__price b{color:var(--accent);font-size:26px}
+.tbr-product .tbr-tier{border:2px solid var(--rule)}
+.tbr-product .tbr-tier.is-selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 22px rgba(255,106,0,.25)}
+.tbr-product .tbr-ribbon{transform:translateY(-50%) rotate(-3deg);font-weight:900}
+.tbr-product .tbr-tier__save{transform:rotate(-3deg);font-weight:900;box-shadow:0 2px 0 rgba(0,0,0,.35)}
 {% endstylesheet %}
 
 {% javascript %}

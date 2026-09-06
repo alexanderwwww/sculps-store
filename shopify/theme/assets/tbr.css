@@ -1,4 +1,4 @@
-.tbr{--night:#0E0B14;--panel:#FFFFFF;--panel-2:#1A1424;--ink:#14111A;--dim:#5E5769;--rule:#ECE6E0;--rule-2:#D6CEC6;--paper:#FFF4EA;--accent:#FF6A00;--accent-ink:#1A0800;--gold:#7A2FBF;--tag:#FF6A00;--tag-ink:#1A0800;--pad:clamp(18px,4vw,48px);background:#FFFFFF;color:var(--ink)}
+.tbr{--night:#0E0818;--panel:#1E1233;--panel-2:#2A1846;--ink:#FFF6EA;--dim:#CDBFE0;--rule:rgba(255,255,255,.14);--rule-2:rgba(255,120,30,.55);--paper:#180D2B;--accent:#FF6A00;--accent-ink:#1A0800;--gold:#9BE31A;--tag:#FF6A00;--tag-ink:#1A0800;--pad:clamp(18px,4vw,48px);background:linear-gradient(180deg,#1B0F30 0%,#0E0818 100%);color:var(--ink)}
 .tbr *{box-sizing:border-box}
 .tbr img{display:block;max-width:100%}
 .tbr-wrap{width:100%;max-width:1180px;margin:0 auto;padding-inline:var(--pad)}
@@ -91,3 +91,19 @@
 .tbr-closer__in .tbr-btn{margin-top:26px}
 .tbr-closer__in small{display:block;margin-top:16px;color:#B9AFC4;font-size:12.5px}
 @media(prefers-reduced-motion:reduce){.tbr *{transition:none!important}}
+
+/* ---- seasonal retail signage ---- */
+.tbr h1,.tbr h2,.tbr h3,.tbr .tbr-h2,.tbr .tbr-hero__h1,.tbr .tbr-card__h{text-transform:uppercase;letter-spacing:.01em}
+.tbr .tbr-hero__h1{color:var(--accent);text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.tbr .tbr-h2{color:var(--ink)}
+.tbr .tbr-eyebrow{color:var(--gold);font-weight:700}
+.tbr .tbr-pill,.tbr .tbr-deal__sum em{transform:rotate(-3deg);font-weight:900;letter-spacing:.04em;box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.tbr .tbr-card{border:2px solid rgba(255,120,30,.35)}
+.tbr .tbr-card:hover{border-color:var(--accent)}
+.tbr .tbr-card__price b{color:var(--accent);font-size:24px}
+.tbr .tbr-strip{background:var(--accent);border:0}
+.tbr .tbr-strip__in,.tbr .tbr-strip b{color:var(--accent-ink)}
+.tbr .tbr-step,.tbr .tbr-faq,.tbr .tbr-box{border:2px solid rgba(255,120,30,.28)}
+.tbr .tbr-step__n,.tbr .tbr-box__n{color:var(--accent)}
+.tbr .tbr-levels>div{border-top-color:var(--accent)}
+.tbr .tbr-sec{border-top:0}
