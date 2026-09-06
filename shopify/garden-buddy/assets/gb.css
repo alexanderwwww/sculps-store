@@ -11,6 +11,10 @@
   --leaf:#4F8A2E;       /* leaf green, checkmarks and pill text */
   --sky:#CFE6F6;        /* light sky blue, soft info fills */
   --tan:#F3D3B3;        /* orange-skin tan, warm band */
+  --yellow:#FFC72C;     /* vibrant yellow, the loud accent. Always on brown or with brown text */
+  --yellow-2:#F0B400;   /* yellow, pressed */
+  --yellow-ink:#2B1D08; /* text on yellow */
+  --brown-2:#2A1D11;    /* deepest brown, bundle cards and the announcement bar */
   --accent:#D9641C;     /* vintage orange, primary buttons (white text passes AA) */
   --accent-2:#BF5314;   /* hover */
   --ink:#2B2419;        /* body text */
@@ -19,14 +23,18 @@
   --radius:14px;
   --pad:clamp(18px,4vw,48px);
   background:var(--paper);color:var(--ink);
-  font-size:17px;line-height:1.5;   /* boomer-friendly: bigger base type */
+  --font-h:var(--font-heading--family,"Nunito",ui-rounded,"Segoe UI",system-ui,sans-serif);
+  --font-b:var(--font-body--family,"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif);
+  font-family:var(--font-b);
+  font-size:17px;line-height:1.55;   /* boomer-friendly: bigger base type */
+  -webkit-font-smoothing:antialiased;
 }
 .gb *{box-sizing:border-box}
 .gb img{display:block;max-width:100%}
 .gb-wrap{width:100%;max-width:1180px;margin:0 auto;padding-inline:var(--pad)}
-.gb-eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin:0 0 12px;font-weight:800}
-.gb-h1{font-size:clamp(34px,5vw,56px);line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:800;text-wrap:balance}
-.gb-h2{font-size:clamp(28px,3.4vw,40px);line-height:1.1;letter-spacing:-.015em;margin:0;font-weight:800;text-wrap:balance}
+.gb-eyebrow{font-family:var(--font-h);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);margin:0 0 12px;font-weight:800}
+.gb-h1{font-family:var(--font-h);font-size:clamp(34px,5vw,56px);line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:800;text-wrap:balance}
+.gb-h2{font-family:var(--font-h);font-size:clamp(28px,3.4vw,40px);line-height:1.1;letter-spacing:-.015em;margin:0;font-weight:800;text-wrap:balance}
 .gb-lede{color:var(--dim);max-width:44ch;margin:12px 0 0;font-size:clamp(16px,1.4vw,18px)}
 .gb-sec{padding:clamp(48px,6.5vw,86px) 0;border-top:1px solid var(--rule)}
 .gb-sec--stone{background:var(--stone)}
@@ -36,14 +44,18 @@
 .gb-sec--brown .gb-eyebrow{color:#E7C39A}
 .gb-sec--brown .gb-lede{color:#D8CBBA}
 .gb-sec--brown .gb-fill{background:#54402C;color:#F0D9BE}
-.gb-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 30px;border-radius:999px;text-decoration:none;font-size:18px;font-weight:800;border:0;cursor:pointer;transition:background .15s,transform .05s}
+.gb-btn{font-family:var(--font-h);display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 30px;border-radius:999px;text-decoration:none;font-size:18px;font-weight:800;border:0;cursor:pointer;transition:background .15s,transform .05s}
 .gb-btn--accent{background:var(--accent);color:#fff}
 .gb-btn--accent:hover{background:var(--accent-2)}
 .gb-btn--ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.gb-btn--yellow{background:var(--yellow);color:var(--yellow-ink)}
+.gb-btn--yellow:hover{background:var(--yellow-2)}
 .gb-btn:active{transform:translateY(1px)}
 .gb-btn[disabled]{opacity:.55;cursor:not-allowed}
 .gb-pill{display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--lettuce);color:#2F5A17;padding:6px 11px;border-radius:999px}
 .gb-pill--orange{background:var(--accent);color:#fff}
+.gb-pill--yellow{background:var(--yellow);color:var(--yellow-ink)}
+.gb-sec--brown .gb-eyebrow,.gb-on-brown .gb-eyebrow{color:var(--yellow)}
 .gb-card{background:#fff;border:1px solid var(--rule);border-radius:var(--radius)}
 .gb-check{display:flex;gap:12px;align-items:flex-start;font-weight:600}
 .gb-check::before{content:"";flex:0 0 22px;width:22px;height:22px;margin-top:3px;border-radius:50%;background:var(--leaf) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>") center/14px no-repeat}
