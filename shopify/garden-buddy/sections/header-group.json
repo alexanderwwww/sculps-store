@@ -6,12 +6,19 @@
       "type": "gb-header",
       "settings": {
         "show_bar": true,
-        "bar_text": "Free US shipping on every order · 30-day returns",
+        "bar_text_1": "Free Shipping",
+        "bar_text_2": "30-Day Money Back Guarantee",
+        "bar_text_3": "24/7 Support",
         "wordmark": "GARDEN BUDDY",
         "link_list": "main-menu",
-        "show_search": false
+        "show_search": false,
+        "cta_label": "Order Now",
+        "cta_url": "shopify://products/foldable-kneeler-seat",
+        "logo": "shopify://shop_images/f70cfb36-00ec-44bf-939c-5af7445d7a9e.png"
       }
     }
   },
-  "order": ["gb_header"]
+  "order": [
+    "gb_header"
+  ]
 }

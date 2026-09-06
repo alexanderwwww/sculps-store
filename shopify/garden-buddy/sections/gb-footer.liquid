@@ -1,28 +1,72 @@
 {%- comment -%}
-  GARDEN BUDDY — footer. Three columns on stone, legal line below.
+  GARDEN BUDDY — footer: dark CTA band + link footer.
 {%- endcomment -%}
 
 {%- liquid
   assign menu = linklists[section.settings.link_list]
   assign wordmark = section.settings.wordmark | default: 'GARDEN BUDDY'
+  assign cta_label = section.settings.cta_label | default: 'Order Now'
+  assign cta_url = section.settings.cta_url | default: routes.all_products_collection_url
 -%}
 
 {{ 'gb.css' | asset_url | stylesheet_tag }}
 
-<div class="gb gb-foot-sec">
-  <footer class="gb-foot">
-    <div class="gb-wrap gb-foot__cols">
+<div class="gb gb-ftr-sec">
 
-      <div class="gb-foot__col">
-        <a class="gb-foot__logo" href="{{ routes.root_url }}">{{ wordmark | escape }}</a>
+  {%- if section.settings.show_cta -%}
+    <section class="gb-cta" aria-label="Order Garden Buddy">
+      <div class="gb-wrap gb-cta__in">
+        <div class="gb-cta__left">
+          <a class="gb-cta__logo" href="{{ routes.root_url }}">
+            {%- if section.settings.foot_logo != blank -%}
+              {{ section.settings.foot_logo | image_url: width: 600 | image_tag: alt: shop.name, class: 'gb-ftr__logo-img', loading: 'lazy', widths: '200, 300, 460, 600' }}
+            {%- else -%}
+              <span class="gb-ftr__wordmark">{{ wordmark | escape }}</span>
+            {%- endif -%}
+          </a>
+          {%- if section.settings.cta_script != blank -%}
+            <p class="gb-script gb-cta__script">{{ section.settings.cta_script | escape }}</p>
+          {%- endif -%}
+          <a class="gb-ftr__btn" href="{{ cta_url }}">{{ cta_label | escape }}</a>
+        </div>
+
+        <ul class="gb-cta__trust">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M1.5 6.5h11v9h-11z"/><path d="M12.5 9.5h4.6l2.9 3v3h-7.5z"/><circle cx="6" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/></svg>
+            <span><strong>Free</strong>Shipping</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2.5l7.5 3v6c0 4.6-3.1 8.4-7.5 10-4.4-1.6-7.5-5.4-7.5-10v-6z"/><path d="M8.6 11.8l2.4 2.4 4.4-4.6"/></svg>
+            <span><strong>30-Day</strong>Guarantee</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 14v-2.5a7.5 7.5 0 0 1 15 0V14"/><path d="M4.5 12.5h2V18h-2a1.5 1.5 0 0 1-1.5-1.5v-2.5a1.5 1.5 0 0 1 1.5-1.5z"/><path d="M19.5 12.5h-2V18h2a1.5 1.5 0 0 0 1.5-1.5v-2.5a1.5 1.5 0 0 0-1.5-1.5z"/><path d="M19 18v.8a2.7 2.7 0 0 1-2.7 2.7H13"/></svg>
+            <span><strong>24/7</strong>Support</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+  {%- endif -%}
+
+  <footer class="gb-ftr">
+    <div class="gb-wrap gb-ftr__cols">
+
+      <div class="gb-ftr__col gb-ftr__col--brand">
+        <a class="gb-ftr__logo" href="{{ routes.root_url }}">
+          {%- if section.settings.foot_logo != blank -%}
+            {{ section.settings.foot_logo | image_url: width: 600 | image_tag: alt: shop.name, class: 'gb-ftr__logo-img', loading: 'lazy', widths: '200, 300, 460, 600' }}
+          {%- else -%}
+            <span class="gb-ftr__wordmark">{{ wordmark | escape }}</span>
+          {%- endif -%}
+        </a>
         {%- if section.settings.about != blank -%}
-          <p class="gb-foot__about">{{ section.settings.about | escape }}</p>
+          <p class="gb-ftr__about">{{ section.settings.about | escape }}</p>
         {%- endif -%}
       </div>
 
-      <nav class="gb-foot__col" aria-label="Footer">
-        <h2 class="gb-foot__head">{{ section.settings.links_heading | escape }}</h2>
-        <ul class="gb-foot__links">
+      <nav class="gb-ftr__col" aria-label="Footer">
+        <h2 class="gb-ftr__head">{{ section.settings.links_heading | escape }}</h2>
+        <ul class="gb-ftr__links">
           {%- if menu.links.size > 0 -%}
             {%- for link in menu.links -%}
               <li><a href="{{ link.url }}">{{ link.title | escape }}</a></li>
@@ -36,79 +80,130 @@
         </ul>
       </nav>
 
-      <div class="gb-foot__col">
-        <h2 class="gb-foot__head">{{ section.settings.contact_heading | escape }}</h2>
-        {%- if section.settings.contact_text != blank -%}
-          <p class="gb-foot__contact-txt">{{ section.settings.contact_text | escape }}</p>
-        {%- endif -%}
-        {%- if section.settings.contact_email != blank -%}
-          <a class="gb-foot__email" href="mailto:{{ section.settings.contact_email | escape }}">{{ section.settings.contact_email | escape }}</a>
-        {%- elsif request.design_mode -%}
-          <span class="gb-fill">[ CONTACT EMAIL ]</span>
-        {%- endif -%}
-      </div>
-
-    </div>
-
-    <div class="gb-wrap gb-foot__bottom">
-      <small class="gb-foot__legal">&copy; {{ 'now' | date: '%Y' }} {{ shop.name | escape }}. All rights reserved.</small>
-
-      {%- assign has_policy = false -%}
-      {%- for policy in shop.policies -%}
-        {%- if policy.body != blank -%}{%- assign has_policy = true -%}{%- endif -%}
-      {%- endfor -%}
-      {%- if has_policy and menu.links.size > 0 -%}
-        <nav class="gb-foot__policies" aria-label="Policies">
-          {%- for policy in shop.policies -%}
-            {%- if policy.body != blank -%}<a href="{{ policy.url }}">{{ policy.title | escape }}</a>{%- endif -%}
-          {%- endfor -%}
-        </nav>
+      {%- liquid
+        assign has_social = false
+        if section.settings.facebook != blank or section.settings.instagram != blank
+          assign has_social = true
+        endif
+        if section.settings.pinterest != blank or section.settings.youtube != blank
+          assign has_social = true
+        endif
+      -%}
+      {%- if has_social -%}
+        <div class="gb-ftr__col">
+          <h2 class="gb-ftr__head">{{ section.settings.social_heading | escape }}</h2>
+          <ul class="gb-ftr__social">
+            {%- if section.settings.facebook != blank -%}
+              <li><a href="{{ section.settings.facebook }}" aria-label="Facebook" rel="noopener" target="_blank">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H16.7V3.6A21 21 0 0 0 14.3 3.5c-2.4 0-4 1.45-4 4.1v2.3H7.6V13h2.7v8z"/></svg>
+              </a></li>
+            {%- endif -%}
+            {%- if section.settings.instagram != blank -%}
+              <li><a href="{{ section.settings.instagram }}" aria-label="Instagram" rel="noopener" target="_blank">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true" focusable="false"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" stroke="none"/></svg>
+              </a></li>
+            {%- endif -%}
+            {%- if section.settings.pinterest != blank -%}
+              <li><a href="{{ section.settings.pinterest }}" aria-label="Pinterest" rel="noopener" target="_blank">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 2.6a9.4 9.4 0 0 0-3.4 18.1 9.7 9.7 0 0 1 .2-2.7l1.1-4.6a3.4 3.4 0 0 1-.3-1.4c0-1.3.8-2.3 1.7-2.3.8 0 1.2.6 1.2 1.35 0 .8-.5 2.1-.8 3.2a1.4 1.4 0 0 0 1.45 1.75c1.7 0 3-1.8 3-4.4a3.8 3.8 0 0 0-4-3.9 4.15 4.15 0 0 0-4.3 4.15 3.7 3.7 0 0 0 .7 2.2.3.3 0 0 1 .07.28l-.28 1.1c-.05.2-.15.24-.35.15-1.25-.6-2-2.4-2-3.9 0-3.15 2.3-6.05 6.6-6.05 3.5 0 6.2 2.5 6.2 5.8 0 3.45-2.2 6.25-5.2 6.25a2.7 2.7 0 0 1-2.3-1.15l-.6 2.4a11 11 0 0 1-1.3 2.7A9.4 9.4 0 0 0 12 2.6z"/></svg>
+              </a></li>
+            {%- endif -%}
+            {%- if section.settings.youtube != blank -%}
+              <li><a href="{{ section.settings.youtube }}" aria-label="YouTube" rel="noopener" target="_blank">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M22.2 7.6a2.7 2.7 0 0 0-1.9-1.9C18.6 5.25 12 5.25 12 5.25s-6.6 0-8.3.45A2.7 2.7 0 0 0 1.8 7.6 28 28 0 0 0 1.35 12 28 28 0 0 0 1.8 16.4a2.7 2.7 0 0 0 1.9 1.9c1.7.45 8.3.45 8.3.45s6.6 0 8.3-.45a2.7 2.7 0 0 0 1.9-1.9A28 28 0 0 0 22.65 12a28 28 0 0 0-.45-4.4zM9.9 15.15v-6.3L15.35 12z"/></svg>
+              </a></li>
+            {%- endif -%}
+          </ul>
+        </div>
       {%- endif -%}
 
       {%- if section.settings.show_payment and shop.enabled_payment_types.size > 0 -%}
-        <div class="gb-foot__pay" aria-label="Payment methods">
-          {%- for type in shop.enabled_payment_types -%}
-            {{ type | payment_type_svg_tag: class: 'gb-foot__icon' }}
-          {%- endfor -%}
+        <div class="gb-ftr__col">
+          <h2 class="gb-ftr__head">{{ section.settings.pay_heading | escape }}</h2>
+          <div class="gb-ftr__pay" aria-label="Accepted payment methods">
+            {%- for type in shop.enabled_payment_types -%}
+              {{ type | payment_type_svg_tag }}
+            {%- endfor -%}
+          </div>
         </div>
+      {%- endif -%}
+
+    </div>
+
+    <div class="gb-wrap gb-ftr__bottom">
+      <small class="gb-ftr__legal">&copy; {{ 'now' | date: '%Y' }} {{ shop.name }}</small>
+      {%- if section.settings.signoff != blank -%}
+        <p class="gb-script gb-ftr__signoff">{{ section.settings.signoff | escape }}</p>
       {%- endif -%}
     </div>
   </footer>
 </div>
 
 {% stylesheet %}
-.gb-foot-sec .gb-foot{background:var(--stone);border-top:1px solid var(--stone-2);padding:52px 0 calc(36px + env(safe-area-inset-bottom))}
-.gb-foot-sec .gb-foot__cols{display:grid;gap:36px;grid-template-columns:1fr}
-@media(min-width:760px){.gb-foot-sec .gb-foot__cols{grid-template-columns:1.4fr 1fr 1fr;gap:48px}}
-.gb-foot-sec .gb-foot__logo{display:inline-block;font-weight:800;font-size:21px;letter-spacing:.06em;text-decoration:none;color:var(--ink)}
-.gb-foot-sec .gb-foot__about{margin:12px 0 0;color:var(--dim);max-width:40ch;line-height:1.6}
-.gb-foot-sec .gb-foot__head{margin:0 0 12px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--bark);font-weight:800}
-.gb-foot-sec .gb-foot__links{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-.gb-foot-sec .gb-foot__links a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:var(--ink);font-size:17px;font-weight:600}
-.gb-foot-sec .gb-foot__links a:hover{color:var(--accent)}
-.gb-foot-sec .gb-foot__contact-txt{margin:0 0 8px;color:var(--dim);line-height:1.6}
-.gb-foot-sec .gb-foot__email{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:700;font-size:17px;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:4px;word-break:break-all}
-.gb-foot-sec .gb-foot__bottom{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justify-content:space-between;margin-top:40px;padding-top:22px;border-top:1px solid var(--stone-2);color:var(--dim);font-size:14px}
-.gb-foot-sec .gb-foot__legal{font-size:14px}
-.gb-foot-sec .gb-foot__policies{display:flex;flex-wrap:wrap;gap:6px 18px}
-.gb-foot-sec .gb-foot__policies a{color:var(--dim);text-decoration:none;padding:6px 0}
-.gb-foot-sec .gb-foot__policies a:hover{color:var(--accent)}
-.gb-foot-sec .gb-foot__pay{display:flex;flex-wrap:wrap;gap:6px}
-.gb-foot-sec .gb-foot__icon{width:38px;height:24px;border-radius:3px}
+.gb-ftr-sec :focus-visible{outline:3px solid var(--lime);outline-offset:3px;border-radius:6px}
+/* CTA band */
+.gb-ftr-sec .gb-cta{background:var(--night);color:var(--night-ink)}
+.gb-ftr-sec .gb-cta__in{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:32px;padding-block:clamp(34px,5vw,56px)}
+.gb-ftr-sec .gb-cta__left{display:grid;justify-items:start;gap:14px}
+.gb-ftr-sec .gb-cta__logo{display:inline-flex;align-items:center;min-height:48px;text-decoration:none;color:var(--night-ink)}
+.gb-ftr-sec .gb-cta__script{margin:0;font-size:clamp(26px,3.4vw,38px);color:var(--lime)}
+.gb-ftr-sec .gb-ftr__btn{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 32px;border-radius:999px;background:var(--lime);color:var(--lime-ink);font-family:var(--font-b);font-size:18px;font-weight:700;text-decoration:none}
+.gb-ftr-sec .gb-ftr__btn:hover{background:var(--lime-2)}
+.gb-ftr-sec .gb-cta__trust{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:26px}
+.gb-ftr-sec .gb-cta__trust li{display:flex;align-items:center;gap:11px;font-size:15px;line-height:1.25}
+.gb-ftr-sec .gb-cta__trust svg{width:28px;height:28px;flex:0 0 28px;color:var(--lime)}
+.gb-ftr-sec .gb-cta__trust span{display:grid}
+.gb-ftr-sec .gb-cta__trust strong{font-weight:700}
+/* footer proper */
+.gb-ftr-sec .gb-ftr{background:var(--night-2);color:var(--night-ink);padding:clamp(40px,5vw,64px) 0 calc(28px + env(safe-area-inset-bottom))}
+.gb-ftr-sec .gb-ftr__cols{display:grid;gap:34px;grid-template-columns:1fr}
+@media(min-width:700px){.gb-ftr-sec .gb-ftr__cols{grid-template-columns:1fr 1fr}}
+@media(min-width:1000px){.gb-ftr-sec .gb-ftr__cols{grid-template-columns:1.6fr 1fr 1fr 1.2fr;gap:44px}}
+.gb-ftr-sec .gb-ftr__logo{display:inline-flex;align-items:center;min-height:48px;text-decoration:none;color:var(--night-ink)}
+.gb-ftr-sec .gb-ftr__logo-img{height:46px;width:auto}
+.gb-ftr-sec .gb-ftr__wordmark{font-family:var(--font-h);font-weight:800;font-size:24px;letter-spacing:-.01em;line-height:1;color:var(--night-ink)}
+.gb-ftr-sec .gb-ftr__about{margin:12px 0 0;max-width:38ch;font-size:16px;line-height:1.6;color:var(--night-ink);opacity:.85}
+.gb-ftr-sec .gb-ftr__head{margin:0 0 10px;font-family:var(--font-h);font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);font-weight:700}
+.gb-ftr-sec .gb-ftr__links{list-style:none;margin:0;padding:0;display:grid}
+.gb-ftr-sec .gb-ftr__links a{display:inline-flex;align-items:center;min-height:48px;text-decoration:none;color:var(--night-ink);font-size:16px;font-weight:500}
+.gb-ftr-sec .gb-ftr__links a:hover{color:var(--lime)}
+.gb-ftr-sec .gb-ftr__social{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:10px}
+.gb-ftr-sec .gb-ftr__social a{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;color:var(--night-ink);box-shadow:inset 0 0 0 1.5px rgba(234,243,231,.28)}
+.gb-ftr-sec .gb-ftr__social a:hover{color:var(--lime-ink);background:var(--lime);box-shadow:none}
+.gb-ftr-sec .gb-ftr__social svg{width:22px;height:22px}
+.gb-ftr-sec .gb-ftr__pay{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.gb-ftr-sec .gb-ftr__pay svg{width:40px;height:26px;border-radius:4px;background:var(--paper)}
+.gb-ftr-sec .gb-ftr__bottom{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between;margin-top:36px;padding-top:20px;border-top:1px solid rgba(234,243,231,.18)}
+.gb-ftr-sec .gb-ftr__legal{font-size:15px;color:var(--night-ink);opacity:.8}
+.gb-ftr-sec .gb-ftr__signoff{margin:0;font-size:24px;color:var(--lime)}
 {% endstylesheet %}
 
 {% schema %}
 {
   "name": "Garden Buddy footer",
   "settings": [
-    { "type": "text", "id": "wordmark", "label": "Wordmark", "default": "GARDEN BUDDY" },
+    { "type": "header", "content": "Order band" },
+    { "type": "checkbox", "id": "show_cta", "label": "Show the order band", "default": true },
+    { "type": "image_picker", "id": "foot_logo", "label": "Logo image" },
+    { "type": "text", "id": "wordmark", "label": "Wordmark", "default": "GARDEN BUDDY", "info": "Used when no logo image is set." },
+    { "type": "text", "id": "cta_script", "label": "Handwritten line", "default": "A Happier Garden Starts Here." },
+    { "type": "text", "id": "cta_label", "label": "Button label", "default": "Order Now" },
+    { "type": "url", "id": "cta_url", "label": "Button link" },
+    { "type": "header", "content": "Footer" },
     { "type": "textarea", "id": "about", "label": "About line", "default": "A padded kneeler that flips into a stool. Made for people who still want to garden on their own terms." },
     { "type": "text", "id": "links_heading", "label": "Links heading", "default": "Help" },
     { "type": "link_list", "id": "link_list", "label": "Footer menu", "default": "footer", "info": "If empty, a Shop link and your policies are shown instead." },
-    { "type": "text", "id": "contact_heading", "label": "Contact heading", "default": "Talk to us" },
-    { "type": "textarea", "id": "contact_text", "label": "Contact text", "default": "Questions about sizing, shipping or a return. We answer in plain English." },
-    { "type": "text", "id": "contact_email", "label": "Contact email" },
-    { "type": "checkbox", "id": "show_payment", "label": "Show payment icons", "default": true }
+    { "type": "header", "content": "Follow us" },
+    { "type": "text", "id": "social_heading", "label": "Social heading", "default": "Follow Us" },
+    { "type": "url", "id": "facebook", "label": "Facebook URL" },
+    { "type": "url", "id": "instagram", "label": "Instagram URL" },
+    { "type": "url", "id": "pinterest", "label": "Pinterest URL" },
+    { "type": "url", "id": "youtube", "label": "YouTube URL" },
+    { "type": "header", "content": "Payments" },
+    { "type": "checkbox", "id": "show_payment", "label": "Show payment icons", "default": true },
+    { "type": "text", "id": "pay_heading", "label": "Payments heading", "default": "Secure Payments" },
+    { "type": "header", "content": "Bottom line" },
+    { "type": "text", "id": "signoff", "label": "Sign-off", "default": "Plant More. Worry Less." }
   ]
 }
 {% endschema %}

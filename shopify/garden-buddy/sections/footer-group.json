@@ -5,16 +5,27 @@
     "gb_footer": {
       "type": "gb-footer",
       "settings": {
+        "show_cta": true,
         "wordmark": "GARDEN BUDDY",
+        "cta_script": "A Happier Garden Starts Here.",
+        "cta_label": "Order Now",
+        "cta_url": "shopify://products/foldable-kneeler-seat",
         "about": "A padded kneeler that flips into a stool. Made for people who still want to garden on their own terms.",
         "links_heading": "Help",
         "link_list": "footer",
-        "contact_heading": "Talk to us",
-        "contact_text": "Questions about sizing, shipping or a return. We answer in plain English.",
-        "contact_email": "",
-        "show_payment": true
+        "social_heading": "Follow Us",
+        "facebook": "",
+        "instagram": "",
+        "pinterest": "",
+        "youtube": "",
+        "show_payment": true,
+        "pay_heading": "Secure Payments",
+        "signoff": "Plant More. Worry Less.",
+        "foot_logo": "shopify://shop_images/f70cfb36-00ec-44bf-939c-5af7445d7a9e.png"
       }
     }
   },
-  "order": ["gb_footer"]
+  "order": [
+    "gb_footer"
+  ]
 }
