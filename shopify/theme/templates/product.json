@@ -16,7 +16,8 @@
           "settings": {
             "heading": "Push the stake into the grass",
             "text": "Pick a spot with open sky. Step on the crossbar until the base sits flush with the lawn.",
-            "placeholder": "Clip: staking it in"
+            "placeholder": "Clip: staking it in",
+            "image": "shopify://shop_images/tbr-step-1-stake.png"
           }
         },
         "step_2": {
@@ -24,7 +25,8 @@
           "settings": {
             "heading": "The sun charges it all day",
             "text": "The panel sits on the stake. Nothing to plug in, nothing to switch on, nothing to remember.",
-            "placeholder": "Photo: solar panel in sunlight"
+            "placeholder": "Photo: solar panel in sunlight",
+            "image": "shopify://shop_images/tbr-step-2-solar.png"
           }
         },
         "step_3": {
@@ -32,31 +34,36 @@
           "settings": {
             "heading": "It comes on by itself at dusk",
             "text": "Light drops, the lantern catches, the souls light up along the stream. It shuts off by morning and does it again.",
-            "placeholder": "Clip: dusk, the moment it lights"
+            "placeholder": "Clip: dusk, the moment it lights",
+            "image": "shopify://shop_images/tbr-step-3-dusk.png"
           }
         },
         "reaction_1": {
           "type": "reaction",
           "settings": {
-            "caption": "Clip 01: trick-or-treaters at the curb"
+            "caption": "Clip 01: trick-or-treaters at the curb",
+            "image": "shopify://shop_images/tbr-react-1-curb.png"
           }
         },
         "reaction_2": {
           "type": "reaction",
           "settings": {
-            "caption": "Clip 02: neighbor walking up the drive"
+            "caption": "Clip 02: neighbor walking up the drive",
+            "image": "shopify://shop_images/tbr-react-2-driveway.png"
           }
         },
         "reaction_3": {
           "type": "reaction",
           "settings": {
-            "caption": "Clip 03: first look from the porch"
+            "caption": "Clip 03: first look from the porch",
+            "image": "shopify://shop_images/tbr-react-3-porch.png"
           }
         },
         "reaction_4": {
           "type": "reaction",
           "settings": {
-            "caption": "Clip 04: car slowing down to look"
+            "caption": "Clip 04: car slowing down to look",
+            "image": "shopify://shop_images/tbr-react-4-car.png"
           }
         },
         "closeup_1": {
@@ -459,7 +466,8 @@
         "closer_heading": "Halloween is on a Saturday this year.",
         "closer_text": "Which means the whole street will be out walking. Put something in the yard worth stopping for.",
         "closer_button": "Choose your setup",
-        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery"
+        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery",
+        "deal_image": "shopify://shop_images/tbr-bundle-wide.png"
       }
     }
   },

@@ -362,7 +362,8 @@
         "closer_heading": "Halloween is on a Saturday this year.",
         "closer_text": "The whole street will be walking. Give them something to walk past.",
         "closer_button": "Choose your setup",
-        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery"
+        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery",
+        "deal_image": "shopify://shop_images/tbr-bundle-wide.png"
       }
     }
   },
