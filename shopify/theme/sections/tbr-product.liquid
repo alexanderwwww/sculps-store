@@ -315,6 +315,13 @@
                   {%- if flag != blank %} <em class="tbr-flag">{{ flag }}</em>{% endif -%}
                   {%- unless variant.available %} <em class="tbr-flag tbr-flag--out">Sold out</em>{% endunless -%}
                 </span>
+                {%- if special -%}
+                  {%- assign xp = all_products['the-haunted-projector'] -%}
+                  <span class="tbr-tier__extra">
+                    {%- if xp.featured_image -%}<img src="{{ xp.featured_image | image_url: width: 160 }}" alt="{{ xp.title | escape }}" width="80" height="80" loading="lazy">{%- endif -%}
+                    <span><b>+ {{ xp.title | default: 'Haunted Projector' }}</b> A separate plug-in device. It throws moving ghosts across the front of your house. Not needed for the reapers.</span>
+                  </span>
+                {%- endif -%}
                 {%- if unit_line != blank -%}<span class="tbr-tier__unit">{{ unit_line }}</span>{%- endif -%}
                 {%- if inc != blank -%}
                   <span class="tbr-tier__inc" {{ inc_attrs }}><b>You get:</b> {{ inc_html }}</span>
@@ -676,6 +683,12 @@
 .tbr-product .tbr-tier__save{font-size:12px;margin-top:6px}
 .tbr-product .tbr-ribbon{font-size:10px}
 .tbr-product .tbr-pick p{font-family:var(--font-heading--family);font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+
+.tbr-product .tbr-tier__extra{display:flex;gap:10px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14);font-family:var(--font-body--family);text-transform:none;letter-spacing:0;font-size:12.5px;line-height:1.4;color:var(--dim)}
+.tbr-product .tbr-tier__extra img{flex:0 0 52px;width:52px;height:52px;border-radius:6px;object-fit:cover;border:1px solid rgba(255,255,255,.18)}
+.tbr-product .tbr-tier__extra b{display:block;color:var(--ink);font-size:13px;margin-bottom:1px}
+.tbr-product .tbr-tier--special{grid-template-columns:22px 1fr auto;align-items:start}
+.tbr-product .tbr-tier--special .tbr-tier__price{padding-top:2px}
 {% endstylesheet %}
 
 {% javascript %}
