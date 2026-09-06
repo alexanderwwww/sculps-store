@@ -1,6 +1,6 @@
 {%- comment -%}
   GARDEN BUDDY — buy box, above the fold.
-  One product: Pack (1 Pack / 2 Pack) x Color (Blue / Brown). Cards are one per pack value, read from the variants.
+  Pack (1 Kneeler / Kneeler + Tool Set / 2 Kneelers + Tool Set) x Color (Blue / Brown). Cards are one per pack value, read from the variants.
   Prices, compare-at and availability come from the variants. Nothing is hardcoded.
   Anything written as [ LIKE THIS ] in a text setting renders as a highlighted fill span.
 {%- endcomment -%}
@@ -10,6 +10,7 @@
   assign s = section.settings
   assign fill_open = '<span class="gb-fill">[ '
   assign fill_close = ' ]</span>'
+  assign tool_set = all_products['garden-tool-set']
 
   comment
     Work out which option is the pack and which is the colour by name, so the
@@ -159,8 +160,8 @@
         {%- endif -%}
 
         <div class="gb-field">
-          <p class="gb-field__label">{{ s.pick_label | default: 'Pick your pack' }}</p>
-          <div class="gb-packs" role="radiogroup" aria-label="{{ s.pick_label | default: 'Pick your pack' | escape }}">
+          <p class="gb-field__label">{{ s.pick_label | default: 'Pick your bundle' }}</p>
+          <div class="gb-packs" role="radiogroup" aria-label="{{ s.pick_label | default: 'Pick your bundle' | escape }}">
             {%- for pack in packs -%}
               {%- liquid
                 assign pv = blank
@@ -173,8 +174,12 @@
                   endif
                 endfor
                 assign n = pack | split: ' ' | first | plus: 0
-                if n < 1
+                if n < 1 or pack contains '+'
                   assign n = 1
+                endif
+                assign has_set = false
+                if pack contains 'Tool Set'
+                  assign has_set = true
                 endif
                 assign save = 0
                 if pv != blank and pv.compare_at_price > pv.price
@@ -202,6 +207,12 @@
                     {%- if flag != blank -%}<span class="gb-pill gb-pill--orange gb-pack__flag">{{ flag }}</span>{%- endif -%}
                   </span>
                   <span class="gb-pack__each" data-gb-each>{% if n > 1 and pv != blank %}{{ pv.price | divided_by: n | money }} each{% endif %}</span>
+                  {%- if has_set -%}
+                    <span class="gb-pack__extra">
+                      {%- if tool_set.featured_image -%}<img src="{{ tool_set.featured_image | image_url: width: 120 }}" alt="{{ tool_set.title | escape }}" width="60" height="60" loading="lazy">{%- else -%}<span class="gb-pack__extra-ph" aria-hidden="true"></span>{%- endif -%}
+                      <span><b>+ {{ tool_set.title | default: 'Garden Tool Set' }}</b> {{ s.set_blurb | default: 'The canvas bag with the hand tools, pruners, gloves and sprayer in it. Hangs off the kneeler.' }}</span>
+                    </span>
+                  {%- endif -%}
                 </span>
                 <span class="gb-pack__price">
                   <span class="gb-pack__now" data-gb-now>{% if pv != blank %}{{ pv.price | money }}{% endif %}</span>
@@ -313,6 +324,10 @@
 .gb-product .gb-pack__top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .gb-product .gb-pack__name{font-weight:800;font-size:18px}
 .gb-product .gb-pack__each{color:var(--dim);font-size:14px;min-height:1em}
+.gb-product .gb-pack__each:empty{display:none}
+.gb-product .gb-pack__extra{display:flex;gap:10px;align-items:center;margin-top:8px;padding:8px 10px;background:var(--stone);border-radius:10px;font-size:14px;color:var(--dim);line-height:1.35}
+.gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 52px;width:52px;height:52px;border-radius:8px;object-fit:cover;background:var(--lettuce)}
+.gb-product .gb-pack__extra b{color:var(--ink)}
 .gb-product .gb-pack__price{display:grid;justify-items:end;gap:3px;text-align:right}
 .gb-product .gb-pack__now{font-weight:800;font-size:20px}
 .gb-product .gb-pack__was{color:var(--dim);font-size:14px}
@@ -534,7 +549,7 @@
       "type": "text",
       "id": "pick_label",
       "label": "Label above the pack cards",
-      "default": "Pick your pack"
+      "default": "Pick your bundle"
     },
     {
       "type": "text",
@@ -543,6 +558,7 @@
       "default": "Our pick",
       "info": "Our opinion only. No bestseller or popularity claims."
     },
+    { "type": "text", "id": "set_blurb", "label": "Tool set line on bundle cards", "default": "The canvas bag with the hand tools, pruners, gloves and sprayer in it. Hangs off the kneeler." },
     {
       "type": "header",
       "content": "Trust row"

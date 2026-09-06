@@ -148,7 +148,7 @@
             {%- elsif v.title contains pack_color -%}
               {%- assign use = true -%}
             {%- endif -%}
-            {%- if use and shown < 2 -%}
+            {%- if use and shown < 3 -%}
               {%- assign shown = shown | plus: 1 -%}
               {%- capture pack_name -%}
                 {%- for opt in v.options -%}
@@ -173,7 +173,7 @@
                   {%- if v.available == false -%}
                     <p class="gb-packs__sold">Sold out</p>
                   {%- endif -%}
-                  <span class="gb-packs__go">Choose this pack</span>
+                  <span class="gb-packs__go">Choose this one</span>
                 </a>
               </li>
             {%- endif -%}
@@ -283,7 +283,7 @@
 
 /* packs */
 .gb-home .gb-packs__grid{list-style:none;margin:32px 0 0;padding:0;display:grid;gap:18px}
-@media(min-width:760px){.gb-home .gb-packs__grid{grid-template-columns:repeat(2,1fr);max-width:820px}}
+@media(min-width:760px){.gb-home .gb-packs__grid{grid-template-columns:repeat(3,1fr);max-width:1100px}}
 .gb-home .gb-packs__card{position:relative;transition:box-shadow .15s,transform .15s}
 .gb-home .gb-packs__card.is-hot{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .gb-home .gb-packs__card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(43,36,25,.10)}
@@ -352,11 +352,11 @@
     { "type": "text", "id": "steps_heading", "label": "Heading", "default": "Three moves. No thinking." },
 
     { "type": "header", "content": "Pack picker" },
-    { "type": "text", "id": "packs_eyebrow", "label": "Eyebrow", "default": "Packs" },
-    { "type": "text", "id": "packs_heading", "label": "Heading", "default": "One for you. Two if you share the beds." },
-    { "type": "textarea", "id": "packs_text", "label": "Text", "default": "One pack or two. Prices below are live from the store. The pair costs less per seat." },
+    { "type": "text", "id": "packs_eyebrow", "label": "Eyebrow", "default": "Bundles" },
+    { "type": "text", "id": "packs_heading", "label": "Heading", "default": "Just the kneeler, or the whole kit." },
+    { "type": "textarea", "id": "packs_text", "label": "Text", "default": "Add the tool set and the bag hangs off the kneeler. Two kneelers if you share the beds. Prices are live from the store." },
     { "type": "text", "id": "pack_color", "label": "Colour to show", "default": "Blue", "info": "Cards show the variants of this colour. Must match the option value in Shopify." },
-    { "type": "range", "id": "packs_highlight", "label": "Highlight card", "min": 0, "max": 2, "step": 1, "default": 2, "info": "0 for none." },
+    { "type": "range", "id": "packs_highlight", "label": "Highlight card", "min": 0, "max": 3, "step": 1, "default": 2, "info": "0 for none." },
 
     { "type": "header", "content": "Why the handles matter" },
     { "type": "image_picker", "id": "handles_image", "label": "Image" },

@@ -315,7 +315,7 @@
         <h2 class="gb-h2">{{ s.closer_heading }}</h2>
         {%- if s.closer_text != blank -%}<p class="gb-lede">{{ s.closer_text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>{%- endif -%}
       </div>
-      <a class="gb-btn gb-btn--accent" href="#gb-buy" data-gb-scroll>{{ s.closer_button }}</a>
+      {%- if s.closer_url != blank -%}<a class="gb-btn gb-btn--accent" href="{{ s.closer_url }}">{{ s.closer_button }}</a>{%- else -%}<a class="gb-btn gb-btn--accent" href="#gb-buy" data-gb-scroll>{{ s.closer_button }}</a>{%- endif -%}
     </div>
   </section>
 </div>
@@ -497,7 +497,8 @@
     { "type": "header", "content": "Closer" },
     { "type": "text", "id": "closer_heading", "label": "Heading", "default": "Your knees will notice by Saturday." },
     { "type": "textarea", "id": "closer_text", "label": "Text", "default": "Free US shipping. 30 days to send it back if it is not for you." },
-    { "type": "text", "id": "closer_button", "label": "Button", "default": "Pick your pack" }
+    { "type": "text", "id": "closer_button", "label": "Button", "default": "Pick your bundle" },
+    { "type": "url", "id": "closer_url", "label": "Button link", "info": "Leave empty to scroll to the buy box." }
   ],
   "blocks": [
     {

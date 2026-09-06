@@ -1,0 +1,134 @@
+{
+  "sections": {
+    "main": {
+      "type": "gb-product",
+      "settings": {
+        "bullet_1": "Nine tools, gloves and a sprayer in one bag",
+        "bullet_2": "Bag hangs off the Garden Buddy kneeler",
+        "bullet_3": "Wood handles, steel heads",
+        "pick_label": "Pick your set",
+        "flag_2": "",
+        "trust_1": "Free US shipping",
+        "trust_2": "30-day returns",
+        "trust_3": "Ships within [ DISPATCH TIME ]"
+      }
+    },
+    "below": {
+      "type": "gb-product-below",
+      "blocks": {
+        "box_1": {
+          "type": "box_item",
+          "settings": {
+            "name": "Canvas tool bag",
+            "note": "Outer pockets for the tools, mesh pockets for the sprayer and gloves"
+          }
+        },
+        "box_2": {
+          "type": "box_item",
+          "settings": {
+            "name": "Hand trowel, transplanter, fork",
+            "note": "Wood handles, steel heads"
+          }
+        },
+        "box_3": {
+          "type": "box_item",
+          "settings": {
+            "name": "Hand rake, weeder, cultivator",
+            "note": "[ CONFIRM EXACT PIECES ]"
+          }
+        },
+        "box_4": {
+          "type": "box_item",
+          "settings": {
+            "name": "Pruning shears",
+            "note": "Bypass style, lock on the handle"
+          }
+        },
+        "box_5": {
+          "type": "box_item",
+          "settings": {
+            "name": "Gloves and spray bottle",
+            "note": "[ GLOVE SIZE ]"
+          }
+        },
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "Does the bag fit on the kneeler?",
+            "answer": "Yes. The bag hangs off the side of the Garden Buddy kneeler, tools facing out."
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "How many pieces?",
+            "answer": "[ PIECE COUNT ]. We list every piece under What arrives, so count them there."
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "Shipping",
+            "answer": "Free inside the US. Ships within [ DISPATCH TIME ]. Delivery is [ DELIVERY WINDOW ]."
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "Returns",
+            "answer": "30 days. Send it back, we refund it."
+          }
+        }
+      },
+      "block_order": [
+        "box_1",
+        "box_2",
+        "box_3",
+        "box_4",
+        "box_5",
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4"
+      ],
+      "settings": {
+        "strip_1_title": "Tools in the bag",
+        "strip_1_text": "Not loose in a box.",
+        "strip_2_title": "Hangs off the kneeler",
+        "strip_2_text": "Or carries by the handle.",
+        "strip_3_title": "Wood and steel",
+        "strip_3_text": "Handles you can grip with gloves on.",
+        "strip_4_title": "Free US shipping",
+        "strip_4_text": "30-day returns.",
+        "how_eyebrow": "How you use it",
+        "how_heading": "Kneel. Flip. Sit.",
+        "cmp_eyebrow": "Compare",
+        "cmp_heading": "What it does that the cheap options do not.",
+        "cmp_col_1": "Garden Buddy",
+        "cmp_col_2": "Basic foam kneeler",
+        "cmp_col_3": "Plastic step stool",
+        "who_eyebrow": "Who it's for",
+        "who_heading": "Made for the part of gardening nobody talks about.",
+        "box_eyebrow": "In the box",
+        "box_heading": "What arrives.",
+        "box_text": "Everything below comes in the bag.",
+        "rev_eyebrow": "Reviews",
+        "rev_heading": "From people who own one.",
+        "rev_empty_title": "Reviews go live once the first orders land.",
+        "rev_empty_text": "We are a new shop. We will post real reviews from real orders here, good and bad, and nothing else.",
+        "faq_eyebrow": "Questions",
+        "faq_heading": "Things people ask before they buy.",
+        "spec_eyebrow": "Specifications",
+        "spec_heading": "The numbers.",
+        "closer_heading": "Add it to the kneeler and save.",
+        "closer_text": "The kneeler and this set cost less together. Both bundles are on the kneeler page.",
+        "closer_button": "See the bundles",
+        "closer_url": "shopify://products/foldable-kneeler-seat"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "below"
+  ]
+}

@@ -6,7 +6,7 @@
         "bullet_1": "Kneel on it, flip it, sit on it",
         "bullet_2": "Handles help you stand back up",
         "bullet_3": "Arrives assembled. Folds flat.",
-        "pick_label": "Pick your pack",
+        "pick_label": "Pick your bundle",
         "flag_2": "Our pick",
         "trust_1": "Free US shipping",
         "trust_2": "30-day returns",
@@ -164,7 +164,7 @@
         "box_item_4": {
           "type": "box_item",
           "settings": {
-            "name": "[ GLOVES — CONFIRM INCLUDED ]"
+            "name": "[ GLOVES \u2014 CONFIRM INCLUDED ]"
           }
         },
         "faq_1": {
@@ -348,7 +348,7 @@
         "spec_heading": "The numbers.",
         "closer_heading": "Your knees will notice by Saturday.",
         "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
-        "closer_button": "Pick your pack"
+        "closer_button": "Pick your bundle"
       }
     }
   },
