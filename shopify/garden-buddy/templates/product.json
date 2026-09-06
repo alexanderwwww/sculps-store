@@ -3,16 +3,66 @@
     "main": {
       "type": "gb-product",
       "settings": {
-        "bullet_1": "Kneel on it, flip it, sit on it",
-        "bullet_2": "Handles help you stand back up",
-        "bullet_3": "Arrives assembled. Folds flat.",
-        "pick_label": "Pick your bundle",
+        "hero_script": "Sit. Kneel. Garden. Enjoy.",
+        "hero_badge": "ALL-IN-ONE GARDEN SET",
+        "bullet_1": "Reduces knee and back strain",
+        "bullet_2": "Thick, comfortable cushioning",
+        "bullet_3": "Foldable and lightweight design",
+        "bullet_4": "Complete tool set included in the bundles",
+        "bullet_5": "Storage bag included in the bundles",
+        "pick_label": "Choose Your Bundle",
         "flag_2": "Our pick",
-        "trust_1": "Free US shipping",
-        "trust_2": "30-day returns",
-        "trust_3": "Ships within [ DISPATCH TIME ]",
-        "set_blurb": "A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer."
-      }
+        "set_blurb": "A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer.",
+        "trust_1": "Free Shipping",
+        "trust_2": "30-Day Guarantee",
+        "trust_3": "Secure Checkout",
+        "rating_text": "",
+        "rating_count": ""
+      },
+      "blocks": {
+        "usp_1": {
+          "type": "usp",
+          "settings": {
+            "label": "Reduces knee & back pain",
+            "icon": "kneel"
+          }
+        },
+        "usp_2": {
+          "type": "usp",
+          "settings": {
+            "label": "Sturdy & stable",
+            "icon": "shield"
+          }
+        },
+        "usp_3": {
+          "type": "usp",
+          "settings": {
+            "label": "Thick comfortable pad",
+            "icon": "cushion"
+          }
+        },
+        "usp_4": {
+          "type": "usp",
+          "settings": {
+            "label": "Complete tool set",
+            "icon": "tools"
+          }
+        },
+        "usp_5": {
+          "type": "usp",
+          "settings": {
+            "label": "Easy to carry & store",
+            "icon": "carry"
+          }
+        }
+      },
+      "block_order": [
+        "usp_1",
+        "usp_2",
+        "usp_3",
+        "usp_4",
+        "usp_5"
+      ]
     },
     "below": {
       "type": "gb-product-below",
