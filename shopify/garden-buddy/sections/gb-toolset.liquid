@@ -1,0 +1,307 @@
+{%- comment -%}
+  GARDEN BUDDY — the 10-piece tool set. Bundle only.
+{%- endcomment -%}
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign s = section.settings
+  assign fill_open = '<span class="gb-fill">[ '
+  assign fill_close = ' ]</span>'
+  assign tool_n = 0
+  for block in section.blocks
+    if block.type == 'tool'
+      assign tool_n = tool_n | plus: 1
+    endif
+  endfor
+-%}
+
+<div class="gb gb-pb">
+
+  {%- if s.set_heading != blank or tool_n > 0 -%}
+  <section class="gb-sec gb-set" id="tool-set">
+    <div class="gb-wrap">
+      <div class="gb-head gb-head--center">
+        {%- if s.set_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.set_eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.set_heading }}</h2>
+        {%- if s.set_text != blank -%}<p class="gb-lede">{{ s.set_text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>{%- endif -%}
+      </div>
+
+      {%- if tool_n > 0 -%}
+        <ul class="gb-set__row gb-rise">
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'tool' -%}{%- continue -%}{%- endif -%}
+            {%- assign b = block.settings -%}
+            <li class="gb-tool" {{ block.shopify_attributes }}>
+              <div class="gb-tool__shot">
+                {%- if b.image != blank -%}
+                  <img src="{{ b.image | image_url: width: 700 }}" alt="{{ b.image.alt | default: b.name | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy" decoding="async">
+                {%- else -%}
+                  <div class="gb-ph"><span>{{ b.placeholder | default: 'Photo' }}</span></div>
+                {%- endif -%}
+              </div>
+              <p class="gb-tool__name">{{ b.name | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+              {%- if b.size != blank -%}<p class="gb-tool__size">{{ b.size | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>{%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      <div class="gb-set__foot">
+        {%- if s.set_note != blank -%}<p class="gb-set__note">{{ s.set_note | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>{%- endif -%}
+        {%- if s.set_button != blank -%}<a class="gb-btn gb-btn--lime" href="#gb-buy" data-gb-scroll>{{ s.set_button }}</a>{%- endif -%}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+.gb-pb p{margin:0}
+.gb-pb .gb-sec{padding:clamp(56px,7vw,100px) 0}
+.gb-pb .gb-head{display:grid;gap:10px;margin-bottom:clamp(34px,4.5vw,60px)}
+.gb-pb .gb-head--tight{margin-bottom:0}
+.gb-pb .gb-head--center{justify-items:center;text-align:center}
+.gb-pb .gb-head--center .gb-lede{max-width:52ch;text-align:center}
+.gb-pb .gb-h2{font-family:var(--font-h);font-weight:700;text-transform:uppercase;
+  font-size:clamp(30px,4.4vw,52px);line-height:1.06;letter-spacing:-.01em;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h2{color:var(--brown-ink)}
+.gb-pb .gb-sec--night .gb-h2{color:var(--night-ink)}
+.gb-pb .gb-lede{font-size:clamp(18px,1.8vw,21px);line-height:1.6;max-width:46ch;color:var(--dim);margin-top:4px}
+.gb-pb .gb-eyebrow{font-size:14px;letter-spacing:.16em;margin-bottom:4px}
+.gb-pb .gb-h3{font-family:var(--font-h);font-size:clamp(21px,2.1vw,26px);line-height:1.18;margin:0 0 8px;font-weight:800;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h3,.gb-pb .gb-sec--night .gb-h3{color:inherit}
+.gb-pb .gb-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.gb-pb .gb-table-wrap{overflow-x:auto}
+.gb-pb a:focus-visible,.gb-pb summary:focus-visible,.gb-pb button:focus-visible{outline:3px solid var(--leaf);outline-offset:3px;border-radius:6px}
+.gb-pb .gb-sec--night a:focus-visible,.gb-pb .gb-sec--brown a:focus-visible{outline-color:var(--lime)}
+.gb-pb svg{width:100%;height:100%;display:block}
+.gb-pb .gb-btn{min-height:60px;font-size:19px;padding:0 34px}
+
+/* ——— the tool set ——— */
+.gb-pb .gb-set__row{list-style:none;margin:0;padding:0;display:grid;gap:clamp(18px,2.4vw,30px);
+  grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:760px){.gb-pb .gb-set__row{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.gb-pb .gb-tool{display:grid;gap:10px;align-content:start;text-align:center}
+.gb-pb .gb-tool__shot{width:100%;aspect-ratio:1;border-radius:18px;overflow:hidden;background:var(--sand);
+  border:1px solid var(--rule)}
+.gb-pb .gb-tool__shot img{width:100%;height:100%;object-fit:cover}
+.gb-pb .gb-tool__shot .gb-ph{height:100%;border-radius:0;font-size:14px;padding:14px}
+.gb-pb .gb-tool__name{font-size:19px;font-weight:800;line-height:1.25;color:var(--ink)}
+.gb-pb .gb-tool__size{font-size:17px;font-weight:700;color:var(--leaf)}
+.gb-pb .gb-set__foot{display:grid;gap:22px;justify-items:center;text-align:center;margin-top:clamp(34px,4vw,52px)}
+.gb-pb .gb-set__note{color:var(--dim);font-size:18px;line-height:1.6;max-width:52ch}
+
+/* entrance. JS adds data-gb-anim, so with no JS everything is simply visible. */
+.gb-pb[data-gb-anim] .gb-rise{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.3,1)}
+.gb-pb[data-gb-anim] .gb-rise--late{transition-delay:.12s}
+.gb-pb[data-gb-anim] .gb-rise.is-in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+  .gb-pb[data-gb-anim] .gb-rise{opacity:1;transform:none;transition:none}
+}
+{% endstylesheet %}
+
+{% javascript %}
+  (function () {
+    var run = function () {
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce || !('IntersectionObserver' in window)) return;
+      var io = window.__gbRiseIO;
+      if (!io) {
+        io = window.__gbRiseIO = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
+          });
+        }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      }
+      Array.prototype.forEach.call(document.querySelectorAll('.gb-pb'), function (root) {
+        root.setAttribute('data-gb-anim', '');
+        Array.prototype.forEach.call(root.querySelectorAll('.gb-rise'), function (el) {
+          if (el.hasAttribute('data-gb-seen')) return;
+          el.setAttribute('data-gb-seen', '');
+          io.observe(el);
+        });
+      });
+    };
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', run); } else { run(); }
+    document.addEventListener('shopify:section:load', run);
+  }());
+
+  (function () {
+    if (document.documentElement.hasAttribute('data-gb-scroll-init')) return;
+    document.documentElement.setAttribute('data-gb-scroll-init', '');
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('[data-gb-scroll]');
+      if (!a) return;
+      var t = document.querySelector(a.getAttribute('href'));
+      if (!t) return;
+      e.preventDefault();
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }());
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "GB Tool set",
+  "tag": "section",
+  "class": "gb-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Anything written as [ LIKE THIS ] shows as a placeholder until you replace it. Nothing here is invented."
+    },
+    {
+      "type": "paragraph",
+      "content": "The 10-piece tool set is not sold on its own. It only comes inside the two bundles."
+    },
+    {
+      "type": "text",
+      "id": "set_eyebrow",
+      "label": "Eyebrow",
+      "default": "Only in the bundles"
+    },
+    {
+      "type": "text",
+      "id": "set_heading",
+      "label": "Heading",
+      "default": "Everything You Need, In One Set"
+    },
+    {
+      "type": "textarea",
+      "id": "set_text",
+      "label": "Sub-line",
+      "default": "You cannot buy the tool set on its own. It comes with the two bundle options above."
+    },
+    {
+      "type": "text",
+      "id": "set_note",
+      "label": "Closing line",
+      "default": "Sizes are the manufacturer's published measurements."
+    },
+    {
+      "type": "text",
+      "id": "set_button",
+      "label": "Button",
+      "default": "Add the set to your Garden Buddy"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tool",
+      "name": "Tool set piece",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "Trowel"
+        },
+        {
+          "type": "text",
+          "id": "size",
+          "label": "Size",
+          "default": "12 in"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Photo"
+        },
+        {
+          "type": "text",
+          "id": "placeholder",
+          "label": "Empty slot label",
+          "default": "Photo"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "GB Tool set",
+      "blocks": [
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Folding stool",
+            "size": "15.4 x 11.5 x 14.2 in",
+            "placeholder": "Photo: folding stool"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Storage bag",
+            "size": "Lifts off the frame",
+            "placeholder": "Photo: storage bag"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Trowel",
+            "size": "12 in",
+            "placeholder": "Photo: trowel"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Transplanter",
+            "size": "11.8 in, depth marks",
+            "placeholder": "Photo: transplanter"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Weeder",
+            "size": "11.8 in",
+            "placeholder": "Photo: weeder"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Cultivator fork",
+            "size": "11 in",
+            "placeholder": "Photo: cultivator fork"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Hand rake",
+            "size": "11.4 in",
+            "placeholder": "Photo: hand rake"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Pruning shears",
+            "size": "7.5 in",
+            "placeholder": "Photo: pruning shears"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Claw gloves",
+            "size": "4.1 in across",
+            "placeholder": "Photo: claw gloves"
+          }
+        },
+        {
+          "type": "tool",
+          "settings": {
+            "name": "Hand sprayer",
+            "size": "9 in",
+            "placeholder": "Photo: hand sprayer"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

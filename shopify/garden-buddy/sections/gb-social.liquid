@@ -1,0 +1,195 @@
+{%- comment -%}
+  GARDEN BUDDY — social proof carousel. Slides come from `social` blocks; empty until real ones exist.
+{%- endcomment -%}
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign s = section.settings
+  assign fill_open = '<span class="gb-fill">[ '
+  assign fill_close = ' ]</span>'
+  assign social_n = 0
+  for block in section.blocks
+    if block.type == 'social'
+      assign social_n = social_n | plus: 1
+    endif
+  endfor
+-%}
+
+<div class="gb gb-pb">
+
+  {%- if social_n > 0 -%}
+  <section class="gb-sec gb-sec--brown gb-social" id="social">
+    <div class="gb-wrap">
+      <div class="gb-social__head">
+        {%- if s.social_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.social_eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.social_heading }}</h2>
+        {%- if s.social_text != blank -%}<p class="gb-lede">{{ s.social_text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>{%- endif -%}
+      </div>
+
+      <div class="gb-social__rail">
+        <button type="button" class="gb-social__nav gb-social__nav--prev" data-gb-social-prev aria-label="Previous">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <ul class="gb-social__track" data-gb-social-track>
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'social' -%}{%- continue -%}{%- endif -%}
+            {%- assign b = block.settings -%}
+            <li class="gb-social__slide" {{ block.shopify_attributes }}>
+              {%- if b.image != blank -%}
+                {%- if b.image_mobile != blank -%}
+                  <picture>
+                    <source media="(max-width: 699px)" srcset="{{ b.image_mobile | image_url: width: 900 }}">
+                    <img src="{{ b.image | image_url: width: 1200 }}" alt="{{ b.alt | escape }}" loading="lazy" decoding="async">
+                  </picture>
+                {%- else -%}
+                  <img src="{{ b.image | image_url: width: 1200 }}" alt="{{ b.alt | escape }}" loading="lazy" decoding="async">
+                {%- endif -%}
+              {%- else -%}
+                <div class="gb-ph"><span>{{ b.placeholder | default: 'Add a screenshot' }}</span></div>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+        <button type="button" class="gb-social__nav gb-social__nav--next" data-gb-social-next aria-label="Next">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+.gb-pb p{margin:0}
+.gb-pb .gb-sec{padding:clamp(56px,7vw,100px) 0}
+.gb-pb .gb-head{display:grid;gap:10px;margin-bottom:clamp(34px,4.5vw,60px)}
+.gb-pb .gb-head--tight{margin-bottom:0}
+.gb-pb .gb-head--center{justify-items:center;text-align:center}
+.gb-pb .gb-head--center .gb-lede{max-width:52ch;text-align:center}
+.gb-pb .gb-h2{font-family:var(--font-h);font-weight:700;text-transform:uppercase;
+  font-size:clamp(30px,4.4vw,52px);line-height:1.06;letter-spacing:-.01em;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h2{color:var(--brown-ink)}
+.gb-pb .gb-sec--night .gb-h2{color:var(--night-ink)}
+.gb-pb .gb-lede{font-size:clamp(18px,1.8vw,21px);line-height:1.6;max-width:46ch;color:var(--dim);margin-top:4px}
+.gb-pb .gb-eyebrow{font-size:14px;letter-spacing:.16em;margin-bottom:4px}
+.gb-pb .gb-h3{font-family:var(--font-h);font-size:clamp(21px,2.1vw,26px);line-height:1.18;margin:0 0 8px;font-weight:800;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h3,.gb-pb .gb-sec--night .gb-h3{color:inherit}
+.gb-pb .gb-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.gb-pb .gb-table-wrap{overflow-x:auto}
+.gb-pb a:focus-visible,.gb-pb summary:focus-visible,.gb-pb button:focus-visible{outline:3px solid var(--leaf);outline-offset:3px;border-radius:6px}
+.gb-pb .gb-sec--night a:focus-visible,.gb-pb .gb-sec--brown a:focus-visible{outline-color:var(--lime)}
+.gb-pb svg{width:100%;height:100%;display:block}
+.gb-pb .gb-btn{min-height:60px;font-size:19px;padding:0 34px}
+
+/* ——— social proof carousel ——— */
+.gb-pb .gb-social__head{text-align:center;max-width:56ch;margin:0 auto clamp(26px,3.5vw,44px)}
+.gb-pb .gb-social__head .gb-lede{margin-inline:auto}
+.gb-pb .gb-social__rail{position:relative;display:flex;align-items:center;gap:10px}
+.gb-pb .gb-social__track{list-style:none;margin:0;padding:4px;display:flex;gap:clamp(14px,2vw,22px);overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;flex:1}
+.gb-pb .gb-social__track::-webkit-scrollbar{display:none}
+.gb-pb .gb-social__slide{flex:0 0 min(420px,84vw);scroll-snap-align:center;border-radius:16px;overflow:hidden;background:var(--paper);box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.gb-pb .gb-social__slide img{width:100%;height:auto;display:block}
+.gb-pb .gb-social__slide .gb-ph{aspect-ratio:1.1;width:100%}
+.gb-pb .gb-social__nav{flex:0 0 48px;width:48px;height:48px;border-radius:50%;border:0;display:none;place-items:center;cursor:pointer;background:var(--lime);color:var(--lime-ink)}
+.gb-pb .gb-social__nav svg{width:24px;height:24px}
+.gb-pb .gb-social__nav:hover{background:var(--lime-2)}
+@media(min-width:900px){.gb-pb .gb-social__nav{display:grid}}
+@media(prefers-reduced-motion:reduce){.gb-pb .gb-social__track{scroll-behavior:auto}}
+{% endstylesheet %}
+
+{% javascript %}
+  (function () {
+    var wire = function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.gb-social__rail'), function (rail) {
+        if (rail.hasAttribute('data-gb-wired')) return;
+        rail.setAttribute('data-gb-wired', '');
+        var track = rail.querySelector('[data-gb-social-track]');
+        if (!track) return;
+        var step = function () { var el = track.querySelector('.gb-social__slide'); return el ? el.offsetWidth + 20 : 320; };
+        var go = function (d) { track.scrollBy({ left: d * step(), behavior: 'smooth' }); };
+        var p = rail.querySelector('[data-gb-social-prev]'), n = rail.querySelector('[data-gb-social-next]');
+        if (p) p.addEventListener('click', function () { go(-1); });
+        if (n) n.addEventListener('click', function () { go(1); });
+      });
+    };
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', wire); } else { wire(); }
+    document.addEventListener('shopify:section:load', wire);
+  }());
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "GB Social proof",
+  "tag": "section",
+  "class": "gb-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Anything written as [ LIKE THIS ] shows as a placeholder until you replace it. Nothing here is invented."
+    },
+    {
+      "type": "text",
+      "id": "social_eyebrow",
+      "label": "Eyebrow",
+      "default": "From real gardens"
+    },
+    {
+      "type": "text",
+      "id": "social_heading",
+      "label": "Heading",
+      "default": "People who own one."
+    },
+    {
+      "type": "textarea",
+      "id": "social_text",
+      "label": "Text"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "social",
+      "name": "Social post",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Desktop image"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Mobile image",
+          "info": "Optional. Used under 700px."
+        },
+        {
+          "type": "text",
+          "id": "alt",
+          "label": "Alt text"
+        },
+        {
+          "type": "text",
+          "id": "placeholder",
+          "label": "Placeholder caption",
+          "default": "Social post"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "GB Social proof",
+      "blocks": [
+        {
+          "type": "social"
+        },
+        {
+          "type": "social"
+        },
+        {
+          "type": "social"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

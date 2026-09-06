@@ -1,0 +1,143 @@
+{%- comment -%}
+  GARDEN BUDDY — who it's for.
+{%- endcomment -%}
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign s = section.settings
+  assign fill_open = '<span class="gb-fill">[ '
+  assign fill_close = ' ]</span>'
+  assign who_n = 0
+  for block in section.blocks
+    if block.type == 'who'
+      assign who_n = who_n | plus: 1
+    endif
+  endfor
+-%}
+
+<div class="gb gb-pb">
+
+  {%- if who_n > 0 -%}
+  <section class="gb-sec gb-sec--sand" id="who">
+    <div class="gb-wrap">
+      <div class="gb-head">
+        {%- if s.who_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.who_eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.who_heading }}</h2>
+      </div>
+      <div class="gb-who">
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'who' -%}{%- continue -%}{%- endif -%}
+          {%- assign b = block.settings -%}
+          <div class="gb-card gb-who__card" {{ block.shopify_attributes }}>
+            <h3 class="gb-h3">{{ b.heading | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</h3>
+            <p>{{ b.text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+.gb-pb p{margin:0}
+.gb-pb .gb-sec{padding:clamp(56px,7vw,100px) 0}
+.gb-pb .gb-head{display:grid;gap:10px;margin-bottom:clamp(34px,4.5vw,60px)}
+.gb-pb .gb-head--tight{margin-bottom:0}
+.gb-pb .gb-head--center{justify-items:center;text-align:center}
+.gb-pb .gb-head--center .gb-lede{max-width:52ch;text-align:center}
+.gb-pb .gb-h2{font-family:var(--font-h);font-weight:700;text-transform:uppercase;
+  font-size:clamp(30px,4.4vw,52px);line-height:1.06;letter-spacing:-.01em;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h2{color:var(--brown-ink)}
+.gb-pb .gb-sec--night .gb-h2{color:var(--night-ink)}
+.gb-pb .gb-lede{font-size:clamp(18px,1.8vw,21px);line-height:1.6;max-width:46ch;color:var(--dim);margin-top:4px}
+.gb-pb .gb-eyebrow{font-size:14px;letter-spacing:.16em;margin-bottom:4px}
+.gb-pb .gb-h3{font-family:var(--font-h);font-size:clamp(21px,2.1vw,26px);line-height:1.18;margin:0 0 8px;font-weight:800;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h3,.gb-pb .gb-sec--night .gb-h3{color:inherit}
+.gb-pb .gb-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.gb-pb .gb-table-wrap{overflow-x:auto}
+.gb-pb a:focus-visible,.gb-pb summary:focus-visible,.gb-pb button:focus-visible{outline:3px solid var(--leaf);outline-offset:3px;border-radius:6px}
+.gb-pb .gb-sec--night a:focus-visible,.gb-pb .gb-sec--brown a:focus-visible{outline-color:var(--lime)}
+.gb-pb svg{width:100%;height:100%;display:block}
+.gb-pb .gb-btn{min-height:60px;font-size:19px;padding:0 34px}
+
+/* ——— who it's for ——— */
+.gb-pb .gb-who{display:grid;gap:22px}
+@media(min-width:800px){.gb-pb .gb-who{grid-template-columns:repeat(3,1fr)}}
+.gb-pb .gb-who__card{padding:32px 30px 34px;border-radius:20px}
+.gb-pb .gb-who__card p{color:var(--dim);font-size:18px;line-height:1.6}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "GB Who it's for",
+  "tag": "section",
+  "class": "gb-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Anything written as [ LIKE THIS ] shows as a placeholder until you replace it. Nothing here is invented."
+    },
+    {
+      "type": "text",
+      "id": "who_eyebrow",
+      "label": "Eyebrow",
+      "default": "Who it's for"
+    },
+    {
+      "type": "text",
+      "id": "who_heading",
+      "label": "Heading",
+      "default": "Made for the part of gardening nobody talks about."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "who",
+      "name": "Who card",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Bad knees"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "The pad keeps you off the ground. The handles take the strain when you get up."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "GB Who it's for",
+      "blocks": [
+        {
+          "type": "who",
+          "settings": {
+            "heading": "Bad knees",
+            "text": "The pad keeps you off the ground. The handles take the strain when you get up."
+          }
+        },
+        {
+          "type": "who",
+          "settings": {
+            "heading": "Bad back",
+            "text": "Flip it and sit. Weeding and potting at bed height instead of bent double."
+          }
+        },
+        {
+          "type": "who",
+          "settings": {
+            "heading": "Anyone who hates getting up off the ground",
+            "text": "That is most of us past a certain age. Two handles and a frame fix it."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

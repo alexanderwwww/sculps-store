@@ -1,0 +1,171 @@
+{%- comment -%}
+  GARDEN BUDDY — how you use it, compact three-step strip.
+{%- endcomment -%}
+{{ 'gb.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign s = section.settings
+  assign fill_open = '<span class="gb-fill">[ '
+  assign fill_close = ' ]</span>'
+  assign step_n = 0
+  for block in section.blocks
+    if block.type == 'step'
+      assign step_n = step_n | plus: 1
+    endif
+  endfor
+-%}
+
+<div class="gb gb-pb">
+
+  {%- if step_n > 0 -%}
+  <section class="gb-sec gb-sec--sand gb-steps" id="how">
+    <div class="gb-wrap">
+      <div class="gb-steps__head">
+        {%- if s.how_eyebrow != blank -%}<p class="gb-eyebrow">{{ s.how_eyebrow }}</p>{%- endif -%}
+        <h2 class="gb-h2">{{ s.how_heading }}</h2>
+      </div>
+      <ol class="gb-steps__list">
+        {%- assign sn = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'step' -%}{%- continue -%}{%- endif -%}
+          {%- assign b = block.settings -%}
+          {%- assign sn = sn | plus: 1 -%}
+          <li class="gb-step" {{ block.shopify_attributes }}>
+            <div class="gb-step__media">
+              {%- if b.image != blank -%}
+                {%- liquid
+                  assign is_gif = false
+                  if b.image.src contains '.gif'
+                    assign is_gif = true
+                  endif
+                  if is_gif
+                    assign step_src = b.image | image_url
+                  else
+                    assign step_src = b.image | image_url: width: 700
+                  endif
+                -%}
+                <img src="{{ step_src }}" alt="{{ b.image.alt | default: b.heading | escape }}" width="{{ b.image.width }}" height="{{ b.image.height }}" loading="lazy" decoding="async">
+              {%- else -%}
+                <div class="gb-ph"><span>{{ b.placeholder }}</span></div>
+              {%- endif -%}
+              <span class="gb-step__n" aria-hidden="true">{{ sn }}</span>
+            </div>
+            <h3 class="gb-step__h">{{ b.heading }}</h3>
+            <p class="gb-step__p">{{ b.text | escape | replace: '[ ', fill_open | replace: ' ]', fill_close }}</p>
+          </li>
+        {%- endfor -%}
+      </ol>
+    </div>
+  </section>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+.gb-pb p{margin:0}
+.gb-pb .gb-sec{padding:clamp(56px,7vw,100px) 0}
+.gb-pb .gb-head{display:grid;gap:10px;margin-bottom:clamp(34px,4.5vw,60px)}
+.gb-pb .gb-head--tight{margin-bottom:0}
+.gb-pb .gb-head--center{justify-items:center;text-align:center}
+.gb-pb .gb-head--center .gb-lede{max-width:52ch;text-align:center}
+.gb-pb .gb-h2{font-family:var(--font-h);font-weight:700;text-transform:uppercase;
+  font-size:clamp(30px,4.4vw,52px);line-height:1.06;letter-spacing:-.01em;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h2{color:var(--brown-ink)}
+.gb-pb .gb-sec--night .gb-h2{color:var(--night-ink)}
+.gb-pb .gb-lede{font-size:clamp(18px,1.8vw,21px);line-height:1.6;max-width:46ch;color:var(--dim);margin-top:4px}
+.gb-pb .gb-eyebrow{font-size:14px;letter-spacing:.16em;margin-bottom:4px}
+.gb-pb .gb-h3{font-family:var(--font-h);font-size:clamp(21px,2.1vw,26px);line-height:1.18;margin:0 0 8px;font-weight:800;color:var(--brown)}
+.gb-pb .gb-sec--brown .gb-h3,.gb-pb .gb-sec--night .gb-h3{color:inherit}
+.gb-pb .gb-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.gb-pb .gb-table-wrap{overflow-x:auto}
+.gb-pb a:focus-visible,.gb-pb summary:focus-visible,.gb-pb button:focus-visible{outline:3px solid var(--leaf);outline-offset:3px;border-radius:6px}
+.gb-pb .gb-sec--night a:focus-visible,.gb-pb .gb-sec--brown a:focus-visible{outline-color:var(--lime)}
+.gb-pb svg{width:100%;height:100%;display:block}
+.gb-pb .gb-btn{min-height:60px;font-size:19px;padding:0 34px}
+
+/* ——— how you use it: compact three-step strip ——— */
+.gb-pb .gb-steps{padding-block:clamp(40px,5vw,68px)}
+.gb-pb .gb-steps__head{text-align:center;margin-bottom:clamp(24px,3vw,36px)}
+.gb-pb .gb-steps__head .gb-h2{font-size:clamp(24px,3vw,34px)}
+.gb-pb .gb-steps__list{list-style:none;margin:0;padding:0;display:grid;gap:clamp(20px,3vw,32px)}
+@media(min-width:760px){.gb-pb .gb-steps__list{grid-template-columns:repeat(3,1fr)}}
+.gb-pb .gb-step{display:grid;gap:12px;justify-items:center;text-align:center}
+.gb-pb .gb-step__media{position:relative;width:100%;max-width:260px;aspect-ratio:1;border-radius:16px;overflow:hidden;background:var(--paper);box-shadow:0 6px 20px rgba(42,29,17,.12)}
+.gb-pb .gb-step__media img{width:100%;height:100%;object-fit:cover;display:block}
+.gb-pb .gb-step__media .gb-ph{width:100%;height:100%}
+.gb-pb .gb-step__n{position:absolute;top:10px;left:10px;width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-weight:700;font-size:17px;display:grid;place-items:center}
+.gb-pb .gb-step__h{font-family:var(--font-h);font-size:20px;font-weight:700;margin:2px 0 0;color:var(--brown)}
+.gb-pb .gb-step__p{margin:0;font-size:16.5px;color:var(--dim);max-width:34ch}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "GB Steps",
+  "tag": "section",
+  "class": "gb-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Anything written as [ LIKE THIS ] shows as a placeholder until you replace it. Nothing here is invented."
+    },
+    {
+      "type": "text",
+      "id": "how_eyebrow",
+      "label": "Eyebrow",
+      "default": "How you use it"
+    },
+    {
+      "type": "text",
+      "id": "how_heading",
+      "label": "Heading",
+      "default": "Three moves, no assembly."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Kneel"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "Set it pad-side up. Hold the handles as you go down."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Photo"
+        },
+        {
+          "type": "text",
+          "id": "placeholder",
+          "label": "Empty slot label",
+          "default": "Photo: kneeling down"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "GB Steps",
+      "blocks": [
+        {
+          "type": "step"
+        },
+        {
+          "type": "step"
+        },
+        {
+          "type": "step"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
