@@ -16,17 +16,19 @@
         "step_1": {
           "type": "step",
           "settings": {
-            "heading": "Loop the rope over",
-            "text": "Any branch that will hold a few pounds. A porch beam or a shepherd's hook works just as well.",
-            "placeholder": "Photo: hands looping the rope over a branch"
+            "heading": "Take it out of the box",
+            "text": "Nothing to assemble. Ghost, pumpkin and seat come out ready to hang.",
+            "placeholder": "Photo: hands looping the rope over a branch",
+            "image": "shopify://shop_images/tbr-swing-step-1.png"
           }
         },
         "step_2": {
           "type": "step",
           "settings": {
-            "heading": "Set the height",
-            "text": "Hang it around eye level from where people walk. Low enough to read, high enough to swing free.",
-            "placeholder": "Photo: adjusting the height so it hangs at eye level"
+            "heading": "Loop the rope over",
+            "text": "Any branch that will hold a few pounds. A porch beam or a shepherd's hook works just as well. Hang it around eye level.",
+            "placeholder": "Photo: adjusting the height so it hangs at eye level",
+            "image": "shopify://shop_images/tbr-swing-step-2.png"
           }
         },
         "step_3": {
@@ -34,7 +36,8 @@
           "settings": {
             "heading": "It lights at dark",
             "text": "The ghost glows from inside and the pumpkin lights with it. Wind does the rest.",
-            "placeholder": "Clip: dusk, ghost and pumpkin lighting up, swinging"
+            "placeholder": "Clip: dusk, ghost and pumpkin lighting up, swinging",
+            "image": "shopify://shop_images/tbr-swing-step-3.png"
           }
         },
         "reaction_1": {
@@ -346,7 +349,8 @@
         "closer_heading": "Halloween is on a Saturday this year.",
         "closer_text": "The whole street will be walking. Give them something to walk past.",
         "closer_button": "Choose how many",
-        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery"
+        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery",
+        "deal_image": "shopify://shop_images/tbr-reaper-deal.png"
       }
     }
   },

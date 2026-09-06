@@ -16,7 +16,8 @@
           "settings": {
             "heading": "Put it where it can see the wall",
             "text": "A porch step, a planter, the top of a bin. Anywhere with a clear line to the front of the house.",
-            "placeholder": "Photo: projector set down on a porch step"
+            "placeholder": "Photo: projector set down on a porch step",
+            "image": "shopify://shop_images/tbr-projector-step-1.png"
           }
         },
         "step_2": {
@@ -24,7 +25,8 @@
           "settings": {
             "heading": "Plug it in",
             "text": "A porch outlet or an outdoor extension lead. [ CABLE LENGTH ] of cable in the box.",
-            "placeholder": "Photo: cable running to an outdoor outlet"
+            "placeholder": "Photo: cable running to an outdoor outlet",
+            "image": "shopify://shop_images/tbr-projector-step-2.png"
           }
         },
         "step_3": {
@@ -32,7 +34,8 @@
           "settings": {
             "heading": "Pick a scene",
             "text": "[ SCENE COUNT ] scenes on the remote. It focuses itself as soon as it's pointed.",
-            "placeholder": "Clip: cycling through scenes with the remote"
+            "placeholder": "Clip: cycling through scenes with the remote",
+            "image": "shopify://shop_images/tbr-projector-step-3.png"
           }
         },
         "reaction_1": {
@@ -362,7 +365,8 @@
         "closer_heading": "Halloween is on a Saturday this year.",
         "closer_text": "The whole street will be walking. Give them something to walk past.",
         "closer_button": "Choose your setup",
-        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery"
+        "closer_note": "Free US shipping · 30-day returns · Order by [[cutoff]] for Halloween delivery",
+        "deal_image": "shopify://shop_images/tbr-reaper-deal.png"
       }
     }
   },
