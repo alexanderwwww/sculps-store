@@ -289,6 +289,10 @@
           <span data-gb-add-price>{{ selected.price | money }}</span>
         </button>
 
+        {%- if s.show_buy_now -%}
+          <div class="gb-buy__dyn">{{ form | payment_button }}</div>
+        {%- endif -%}
+
         <ul class="gb-trust">
           {%- for i in (1..3) -%}
             {%- assign key = 'trust_' | append: i -%}
@@ -488,6 +492,11 @@
 .gb-product .gb-buy__add:active{transform:translateY(1px)}
 .gb-product .gb-buy__add[disabled]{opacity:.55;cursor:not-allowed}
 .gb-product .gb-buy__add:focus-visible{outline:3px solid var(--night);outline-offset:3px}
+.gb-product .gb-buy__dyn{margin-top:10px}
+.gb-product .gb-buy__dyn .shopify-payment-button__button{min-height:60px;border-radius:999px;font-family:var(--font-b);font-weight:800;font-size:19px;background:var(--night);color:#fff}
+.gb-product .gb-buy__dyn .shopify-payment-button__button--unbranded{background:var(--night);color:#fff}
+.gb-product .gb-buy__dyn .shopify-payment-button__button--unbranded:hover:not([disabled]){background:var(--brown)}
+.gb-product .gb-buy__dyn .shopify-payment-button__more-options{margin-top:8px;color:var(--dim);font-size:15px;text-decoration:underline}
 .gb-product .gb-buy__cart{width:24px;height:24px;flex:0 0 24px}
 .gb-product .gb-buy__dot{opacity:.6}
 
@@ -729,6 +738,7 @@
     { "type": "header", "content": "Bundles" },
     { "type": "text", "id": "pick_label", "label": "Heading above cards", "default": "Choose Your Bundle" },
     { "type": "text", "id": "flag_2", "label": "Flag on the 2nd card", "default": "Our pick", "info": "Our opinion only. No bestseller or popularity claims." },
+    { "type": "checkbox", "id": "show_buy_now", "label": "Show Buy Now button", "default": true, "info": "Shopify's own express checkout. It shows Shop Pay, Apple Pay or Google Pay depending on the visitor." },
     { "type": "header", "content": "Bundle card images" },
     { "type": "image_picker", "id": "pack_img_1", "label": "Bundle 1 image" },
     { "type": "image_picker", "id": "pack_img_2", "label": "Bundle 2 image" },
