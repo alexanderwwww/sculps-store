@@ -262,11 +262,17 @@
                     <span class="gb-pack__so" data-gb-so {% if avail %}hidden{% endif %}>Sold out</span>
                   </span>
                 </span>
-                {%- if has_set or pv.featured_media != blank -%}
+                {%- liquid
+                  assign imgkey = 'pack_img_' | append: forloop.index
+                  assign pack_img = s[imgkey]
+                  if pack_img == blank
+                    assign pack_img = pv.featured_media
+                  endif
+                -%}
+                {%- if pack_img != blank or has_set -%}
                   <span class="gb-pack__extra">
-                    {%- if pv.featured_media != blank -%}<img src="{{ pv.featured_media | image_url: width: 160 }}" alt="" width="60" height="60" loading="lazy">
-                    {%- elsif s.set_thumb != blank -%}<img src="{{ s.set_thumb | image_url: width: 160 }}" alt="" width="60" height="60" loading="lazy">
-                    {%- elsif tool_set.featured_image -%}<img src="{{ tool_set.featured_image | image_url: width: 160 }}" alt="" width="60" height="60" loading="lazy">
+                    {%- if pack_img != blank -%}<img src="{{ pack_img | image_url: width: 200 }}" alt="" width="72" height="72" loading="lazy">
+                    {%- elsif s.set_thumb != blank -%}<img src="{{ s.set_thumb | image_url: width: 200 }}" alt="" width="72" height="72" loading="lazy">
                     {%- else -%}<span class="gb-pack__extra-ph" aria-hidden="true"></span>{%- endif -%}
                     <span class="gb-pack__extra-txt">{%- if has_set -%}<b>+ {{ tool_set.title | default: 'Garden Tool Set' }}</b> {{ s.set_blurb | default: 'A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer.' }}{%- endif -%}</span>
                   </span>
@@ -389,13 +395,14 @@
 
 /* overlays */
 
-.gb-product .gb-gal__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--paper);color:var(--brown);box-shadow:0 2px 10px rgba(42,29,17,.22)}
-.gb-product .gb-gal__arrow:hover{background:var(--lime);color:var(--lime-ink)}
-.gb-product .gb-gal__arrow svg{width:20px;height:20px}
+.gb-product .gb-gal__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--paper);color:var(--brown);opacity:.12;box-shadow:none;transition:opacity .15s}
+.gb-product .gb-gal__arrow:hover,.gb-product .gb-gal__arrow:focus-visible{opacity:.85}
+.gb-product .gb-gal__frame:hover .gb-gal__arrow{opacity:.45}
+.gb-product .gb-gal__arrow svg{width:17px;height:17px}
 .gb-product .gb-gal__arrow:hover{background:#fff}
 .gb-product .gb-gal__arrow:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
 .gb-product .gb-gal__arrow--prev{left:12px}.gb-product .gb-gal__arrow--next{right:12px}
-@media(min-width:1000px){.gb-product .gb-gal__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--paper);color:var(--brown);box-shadow:0 2px 10px rgba(42,29,17,.22)}}
+@media(min-width:1000px){.gb-product .gb-gal__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--paper);color:var(--brown);opacity:.12;box-shadow:none;transition:opacity .15s}}
 
 .gb-product .gb-gal__dots{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;padding-top:4px}
 .gb-product .gb-gal__dot{width:11px;height:11px;padding:0;border-radius:50%;border:2px solid var(--brown);background:transparent;cursor:pointer;transition:background .15s,transform .15s}
@@ -471,7 +478,7 @@
 .gb-product .gb-pack.is-soldout .gb-pack__now{text-decoration:line-through}
 
 .gb-product .gb-pack__extra{display:flex;gap:12px;align-items:center;padding:12px;background:var(--sand);border:1px solid var(--sand-2);border-radius:10px;font-size:14.5px;line-height:1.45;color:rgba(246,238,226,.8)}
-.gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 60px;width:60px;height:60px;border-radius:8px;object-fit:cover;background:var(--paper)}
+.gb-product .gb-pack__extra img,.gb-product .gb-pack__extra-ph{flex:0 0 72px;width:72px;height:72px;border-radius:8px;object-fit:cover;background:var(--paper)}
 .gb-product .gb-pack__extra-ph{background:repeating-linear-gradient(135deg,var(--sand-2) 0 8px,var(--sand) 8px 16px);box-shadow:inset 0 0 0 2px var(--brown);display:block}
 .gb-product .gb-pack__extra b{display:block;font-family:var(--font-h);font-weight:700;color:var(--brown);font-size:16px}
 
@@ -497,7 +504,7 @@
   .gb-product .gb-trust{justify-content:flex-start}
 }
 @media(prefers-reduced-motion:reduce){
-  .gb-product .gb-pack,.gb-product .gb-swatch,.gb-product .gb-buy__add,.gb-product .gb-gal__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--paper);color:var(--brown);box-shadow:0 2px 10px rgba(42,29,17,.22)}
+  .gb-product .gb-pack,.gb-product .gb-swatch,.gb-product .gb-buy__add,.gb-product .gb-gal__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--paper);color:var(--brown);opacity:.12;box-shadow:none;transition:opacity .15s}
   .gb-product .gb-buy__add:active{transform:none}
 }
 {% endstylesheet %}
@@ -627,7 +634,7 @@
         url.searchParams.set('variant', v.id);
         window.history.replaceState({}, '', url.toString());
       } catch (e) {}
-      if (v.featured_media_id) goToMedia(v.featured_media_id);
+      /* deliberately no goToMedia here: the gallery stays on image 1 until the visitor moves it */
     }
 
     function pickPack(pack) { state.pack = pack; renderSelection(); }
@@ -722,7 +729,11 @@
     { "type": "header", "content": "Bundles" },
     { "type": "text", "id": "pick_label", "label": "Heading above cards", "default": "Choose Your Bundle" },
     { "type": "text", "id": "flag_2", "label": "Flag on the 2nd card", "default": "Our pick", "info": "Our opinion only. No bestseller or popularity claims." },
-    { "type": "image_picker", "id": "set_thumb", "label": "Tool set thumbnail" },
+    { "type": "header", "content": "Bundle card images" },
+    { "type": "image_picker", "id": "pack_img_1", "label": "Bundle 1 image" },
+    { "type": "image_picker", "id": "pack_img_2", "label": "Bundle 2 image" },
+    { "type": "image_picker", "id": "pack_img_3", "label": "Bundle 3 image" },
+    { "type": "image_picker", "id": "set_thumb", "label": "Fallback tool set image" },
     { "type": "text", "id": "set_blurb", "label": "Tool set line on cards", "default": "A separate 10-piece set: folding stool, tool bag, six steel tools, claw gloves and a sprayer." },
     { "type": "header", "content": "Trust row" },
     { "type": "text", "id": "trust_1", "label": "Line 1", "default": "Free Shipping" },
