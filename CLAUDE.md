@@ -69,6 +69,18 @@ Foldable kneeler seat for 55+ US gardeners. Competitor: aimerlallc.com.
 Store `aj1wt0-dg.myshopify.com`, theme GARDEN BUDDY id 206497710419 (unpublished Horizon copy).
 Files in `shopify/garden-buddy/`. Upload by raw.githubusercontent URL via `themeFilesUpsert`.
 
+### WORKING RULE — never reset the operator's data
+He configures the store and the theme editor himself while I work. My job is **add and fix only**.
+
+- Before writing any `templates/*.json` or `sections/*-group.json`, **read the live copy off the
+  theme first**, merge my change into it, and write that back. Never upload a template built
+  from the repo copy alone — it silently discards whatever he set in the theme editor.
+- Never delete product media, variants, or files to "replace" them. Add, then remove only what
+  he asked to remove, by name.
+- Section `.liquid` files are mine and safe to overwrite. Templates and settings are his.
+- After every upload check **`updatedAt`**, not just the success response: a rejected file
+  returns success and writes nothing.
+
 ### PALETTE — LOCKED. The operator approved this exact combination. Do not drift.
 
 | Token | Value | Use |
