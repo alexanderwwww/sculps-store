@@ -61,7 +61,7 @@
   {%- comment -%} b. BENEFIT STRIP {%- endcomment -%}
   {%- assign benefits = section.blocks | where: 'type', 'benefit' -%}
   {%- if benefits.size > 0 -%}
-    <section class="gb-sec gb-sec--stone gb-benefits">
+    <section class="gb-sec gb-sec--brown gb-benefits">
       <ul class="gb-wrap gb-benefits__grid">
         {%- for b in benefits -%}
           <li class="gb-benefits__item" {{ b.shopify_attributes }}>
@@ -132,7 +132,7 @@
 
   {%- comment -%} e. PACK PICKER TEASER {%- endcomment -%}
   {%- if product != blank and product.variants.size > 0 -%}
-    <section class="gb-sec gb-packs">
+    <section class="gb-sec gb-sec--lettuce gb-packs">
       <div class="gb-wrap">
         <p class="gb-eyebrow">{{ section.settings.packs_eyebrow | escape }}</p>
         <h2 class="gb-h2">{{ section.settings.packs_heading | escape }}</h2>
@@ -187,7 +187,7 @@
   {%- endif -%}
 
   {%- comment -%} f. WHY THE HANDLES MATTER {%- endcomment -%}
-  <section class="gb-sec gb-sec--stone gb-handles">
+  <section class="gb-sec gb-sec--tan gb-handles">
     <div class="gb-wrap gb-handles__in">
       <div class="gb-handles__copy">
         <p class="gb-eyebrow">{{ section.settings.handles_eyebrow | escape }}</p>
@@ -261,6 +261,8 @@
 .gb-home .gb-benefits__item::before{content:"";position:absolute;left:0;top:4px;width:22px;height:22px;border-radius:50%;background:var(--leaf) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.2 4.2L19 7'/></svg>") center/14px no-repeat}
 .gb-home .gb-benefits__item b{font-size:17px}
 .gb-home .gb-benefits__item span{color:var(--dim);font-size:15px;line-height:1.45}
+.gb-home .gb-sec--brown .gb-benefits__item b{color:var(--brown-ink)}
+.gb-home .gb-sec--brown .gb-benefits__item span{color:#C9B9A5}
 
 /* feature */
 .gb-home .gb-feature__in{display:grid;gap:28px;align-items:center}

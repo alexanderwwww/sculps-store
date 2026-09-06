@@ -45,7 +45,7 @@
 <div class="gb gb-pb">
 
   {%- comment -%} a. Benefit strip {%- endcomment -%}
-  <section class="gb-sec gb-sec--stone gb-strip">
+  <section class="gb-sec gb-sec--brown gb-strip">
     <div class="gb-wrap">
       <ul class="gb-strip__list">
         {%- for i in (1..4) -%}
@@ -218,7 +218,7 @@
 
   {%- comment -%} e. Who it's for {%- endcomment -%}
   {%- if who_n > 0 -%}
-  <section class="gb-sec gb-sec--stone" id="who">
+  <section class="gb-sec gb-sec--tan" id="who">
     <div class="gb-wrap">
       <div class="gb-head">
         <p class="gb-eyebrow">{{ s.who_eyebrow }}</p>
@@ -261,7 +261,7 @@
   {%- endif -%}
 
   {%- comment -%} g. Reviews. Real blocks only. Otherwise the honest empty state. {%- endcomment -%}
-  <section class="gb-sec gb-sec--stone" id="reviews">
+  <section class="gb-sec gb-sec--lettuce" id="reviews">
     <div class="gb-wrap">
       <div class="gb-head">
         <p class="gb-eyebrow">{{ s.rev_eyebrow }}</p>
@@ -378,6 +378,9 @@
 .gb-pb .gb-strip__item{display:grid;gap:2px;padding-left:14px;border-left:3px solid var(--leaf)}
 .gb-pb .gb-strip__item b{font-size:17px}
 .gb-pb .gb-strip__item span{color:var(--dim);font-size:15px}
+.gb-pb .gb-sec--brown .gb-strip__item{border-left-color:#8FBF5E}
+.gb-pb .gb-sec--brown .gb-strip__item b{color:var(--brown-ink)}
+.gb-pb .gb-sec--brown .gb-strip__item span{color:#C9B9A5}
 
 /* b. steps */
 .gb-pb .gb-steps{list-style:none;margin:0;padding:0;display:grid;gap:18px}
