@@ -2,22 +2,22 @@
 .gb{
   /* grounds */
   --paper:#FFFFFF;      /* cards and the main page ground */
-  --sand:#F7F5EE;       /* soft alt band */
-  --sand-2:#EFEBE0;     /* rules on sand */
-  --night:#0F2A18;      /* dark green: top trust bar, footer CTA band */
-  --night-2:#0A1D10;    /* deepest green: footer */
-  --night-ink:#EAF3E7;  /* text on the dark green bands */
+  --sand:#F4EEE2;       /* soft alt band */
+  --sand-2:#E4DACA;     /* rules on sand */
+  --night:#2A1D11;      /* dark green: top trust bar, footer CTA band */
+  --night-2:#1C1309;    /* deepest green: footer */
+  --night-ink:#F6EEE2;  /* text on the dark green bands */
   --brown:#3B2A1B;      /* dark brown: review band, bundle card frames */
   --brown-2:#2A1D11;
   --brown-ink:#F6EEE2;
   /* accents */
-  --lime:#A3E048;       /* the CTA colour. Always with --lime-ink text */
-  --lime-2:#8CC935;     /* lime, pressed */
+  --lime:#A8F32A;       /* the CTA colour. Always with --lime-ink text */
+  --lime-2:#93DC17;     /* lime, pressed */
   --lime-ink:#12290C;
-  --lime-soft:#EAF7D6;  /* lime tint for table fills and chips */
+  --lime-soft:#ECFCD2;  /* lime tint for table fills and chips */
   --yellow:#FFC72C;     /* logo yellow, save stamps and badges */
   --yellow-ink:#2B1D08;
-  --leaf:#3E9B4F;       /* check circles */
+  --leaf:#5C8C1E;       /* check circles */
   /* type */
   --ink:#1C2318;
   --dim:#5D6657;
@@ -67,5 +67,5 @@
 .gb-sec--night .gb-ph,.gb-sec--brown .gb-ph{background:repeating-linear-gradient(135deg,rgba(255,255,255,.09) 0 12px,rgba(255,255,255,.04) 12px 24px);color:rgba(255,255,255,.72)}
 /* unconfirmed spec value */
 .gb-fill{background:var(--lime-soft);color:#2F5A17;padding:0 6px;border-radius:4px;font-weight:700;white-space:nowrap}
-.gb-sec--night .gb-fill,.gb-sec--brown .gb-fill{background:rgba(163,224,72,.2);color:var(--lime)}
+.gb-sec--night .gb-fill,.gb-sec--brown .gb-fill{background:rgba(168,243,42,.2);color:var(--lime)}
 @media(max-width:640px){.gb{font-size:16px}.gb-btn{width:100%}}
