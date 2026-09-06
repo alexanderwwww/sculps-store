@@ -21,7 +21,8 @@
           "settings": {
             "heading": "Kneel",
             "text": "Set it pad-side up. Hold the handles as you go down.",
-            "placeholder": "Clip: kneeling down"
+            "placeholder": "Clip: kneeling down",
+            "image": "shopify://shop_images/gb-step-1.png"
           }
         },
         "step_2": {
@@ -29,7 +30,8 @@
           "settings": {
             "heading": "Flip",
             "text": "Turn it over. The snap-lock clicks and it is a stool.",
-            "placeholder": "Clip: flipping it over"
+            "placeholder": "Clip: flipping it over",
+            "image": "shopify://shop_images/gb-step-2.png"
           }
         },
         "step_3": {
@@ -37,7 +39,8 @@
           "settings": {
             "heading": "Sit",
             "text": "Rest on the seat for potting, weeding, or the mailbox.",
-            "placeholder": "Clip: sitting on it"
+            "placeholder": "Clip: sitting on it",
+            "image": "shopify://shop_images/gb-step-3.png"
           }
         },
         "feature_1": {
@@ -46,7 +49,8 @@
             "eyebrow": "Handles",
             "heading": "The handles are the point",
             "text": "Getting down is easy. Getting up off the ground is the hard part. The steel frame gives you something to push on.",
-            "placeholder": "Photo: hands on the handles, pushing up"
+            "placeholder": "Photo: hands on the handles, pushing up",
+            "image": "shopify://shop_images/gb-feature-1.png"
           }
         },
         "feature_2": {
@@ -55,7 +59,8 @@
             "eyebrow": "Pad",
             "heading": "Thick pad, off the ground",
             "text": "The pad is [ PAD THICKNESS ] of foam. It detaches, so you can hose it off and leave it in the sun.",
-            "placeholder": "Photo: pad, close, coming off the frame"
+            "placeholder": "Photo: pad, close, coming off the frame",
+            "image": "shopify://shop_images/gb-feature-2.png"
           }
         },
         "feature_3": {
@@ -64,7 +69,8 @@
             "eyebrow": "Frame",
             "heading": "One piece of steel",
             "text": "No assembly. The snap-lock keeps it shut when it is a stool. Fold it flat and it hangs on a nail in the shed.",
-            "placeholder": "Photo: folded flat, held by the handle"
+            "placeholder": "Photo: folded flat, held by the handle",
+            "image": "shopify://shop_images/gb-feature-3.png"
           }
         },
         "compare_1": {

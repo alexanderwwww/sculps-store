@@ -29,7 +29,9 @@
         "faq_heading": "The things people ask before they buy.",
         "closer_heading": "Garden longer. Hurt less.",
         "closer_text": "Free US shipping. 30 days to send it back if it is not for you.",
-        "closer_button": "Shop the kneeler"
+        "closer_button": "Shop the kneeler",
+        "hero_image": "shopify://shop_images/gb-hero.png",
+        "handles_image": "shopify://shop_images/gb-feature-1.png"
       },
       "blocks": {
         "benefit_1": {
@@ -65,7 +67,8 @@
           "settings": {
             "heading": "Kneel",
             "text": "Pad on the ground, handles up. Your knees are off the dirt and the handles are right where your hands land.",
-            "image_caption": "Kneeling on the pad, hands on the handles"
+            "image_caption": "Kneeling on the pad, hands on the handles",
+            "image": "shopify://shop_images/gb-step-1.png"
           }
         },
         "step_2": {
@@ -73,7 +76,8 @@
           "settings": {
             "heading": "Flip",
             "text": "Grab it, turn it over. The handles become the legs.",
-            "image_caption": "Mid-flip, frame turning over"
+            "image_caption": "Mid-flip, frame turning over",
+            "image": "shopify://shop_images/gb-step-2.png"
           }
         },
         "step_3": {
@@ -81,7 +85,8 @@
           "settings": {
             "heading": "Sit",
             "text": "Now it is a stool. Weeding, potting, or just resting between beds.",
-            "image_caption": "Sitting on the stool, trowel in hand"
+            "image_caption": "Sitting on the stool, trowel in hand",
+            "image": "shopify://shop_images/gb-step-3.png"
           }
         },
         "faq_1": {
