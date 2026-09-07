@@ -1,0 +1,919 @@
+<title>XERO Chiron Build Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ink:#14141a;
+  --ink-2:#3d3e48;
+  --ink-3:#6c6e7a;
+  --alum:#8e9099;
+  --paper:#f7f7f9;
+  --surface:#ffffff;
+  --surface-2:#f0f0f3;
+  --rule:#dedee4;
+  --rule-2:#c8c8d0;
+  --accent:#6b3fd4;
+  --accent-soft:#efe9fd;
+  --signal:#b8322a;
+  --signal-soft:#fbeceb;
+  --shadow:0 1px 2px rgba(20,20,26,.05), 0 8px 24px -12px rgba(20,20,26,.18);
+
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --step--1:.8125rem;
+  --step-0:1rem;
+  --step-1:1.1875rem;
+  --step-2:1.5rem;
+  --step-3:2rem;
+  --step-4:2.75rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ececf1;
+    --ink-2:#b6b7c2;
+    --ink-3:#8a8b96;
+    --alum:#7e808b;
+    --paper:#101015;
+    --surface:#191921;
+    --surface-2:#1f1f28;
+    --rule:#2c2c37;
+    --rule-2:#3b3b48;
+    --accent:#a97dff;
+    --accent-soft:#241a3d;
+    --signal:#f08d84;
+    --signal-soft:#33191a;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ececf1;
+  --ink-2:#b6b7c2;
+  --ink-3:#8a8b96;
+  --alum:#7e808b;
+  --paper:#101015;
+  --surface:#191921;
+  --surface-2:#1f1f28;
+  --rule:#2c2c37;
+  --rule-2:#3b3b48;
+  --accent:#a97dff;
+  --accent-soft:#241a3d;
+  --signal:#f08d84;
+  --signal-soft:#33191a;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:var(--step-0);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+/* ---------- masthead ---------- */
+.masthead{
+  border-bottom:1px solid var(--rule);
+  background:var(--surface);
+}
+.masthead__in{
+  max-width:76rem;margin:0 auto;padding:2.75rem 1.5rem 2.25rem;
+  display:flex;flex-wrap:wrap;gap:2rem;align-items:flex-end;justify-content:space-between;
+}
+.wordmark{
+  font-family:var(--f-display);font-weight:700;font-size:var(--step-2);
+  letter-spacing:.22em;margin:0 0 .5rem;color:var(--ink);
+}
+.masthead h1{
+  font-family:var(--f-display);font-weight:600;font-size:var(--step-4);
+  line-height:1.05;letter-spacing:-.03em;margin:0;text-wrap:balance;max-width:16ch;
+}
+.masthead p{margin:.75rem 0 0;color:var(--ink-2);max-width:46ch}
+.meta{
+  font-family:var(--f-mono);font-size:var(--step--1);
+  display:grid;gap:.4rem;min-width:15rem;
+}
+.meta div{display:flex;gap:1rem;justify-content:space-between;
+  border-bottom:1px dotted var(--rule-2);padding-bottom:.4rem}
+.meta dt,.meta span:first-child{color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em}
+.meta span:last-child{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.shell{
+  max-width:76rem;margin:0 auto;padding:0 1.5rem 5rem;
+  display:grid;grid-template-columns:14rem minmax(0,1fr);gap:3.5rem;
+  align-items:start;
+}
+@media (max-width:64rem){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0}
+  .rail{display:none}
+}
+.rail{position:sticky;top:1.5rem;padding-top:2.5rem}
+.rail h2{
+  font-family:var(--f-mono);font-size:var(--step--1);font-weight:500;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);
+  margin:0 0 .9rem;
+}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:.1rem}
+.rail a{
+  display:grid;grid-template-columns:1.9rem 1fr;gap:.4rem;
+  text-decoration:none;color:var(--ink-2);font-size:var(--step--1);
+  padding:.35rem .4rem;border-radius:3px;line-height:1.35;
+}
+.rail a:hover{background:var(--surface-2);color:var(--ink)}
+.rail a span{font-family:var(--f-mono);color:var(--alum)}
+
+/* ---------- content ---------- */
+main{padding-top:2.5rem;max-width:44rem}
+section{margin:0 0 4rem}
+.sec-head{
+  display:grid;grid-template-columns:2.6rem 1fr;gap:.6rem;align-items:baseline;
+  border-top:2px solid var(--ink);padding-top:.85rem;margin-bottom:1.25rem;
+}
+.sec-head .num{
+  font-family:var(--f-mono);font-size:var(--step-0);font-weight:500;color:var(--accent);
+  font-variant-numeric:tabular-nums;
+}
+.sec-head h2{
+  font-family:var(--f-display);font-weight:600;font-size:var(--step-3);
+  letter-spacing:-.025em;line-height:1.1;margin:0;text-wrap:balance;
+}
+h3{
+  font-family:var(--f-display);font-weight:600;font-size:var(--step-1);
+  letter-spacing:-.015em;margin:2rem 0 .5rem;
+}
+h4{
+  font-family:var(--f-mono);font-weight:600;font-size:var(--step--1);
+  text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);
+  margin:1.75rem 0 .5rem;
+}
+p{margin:0 0 .9rem;max-width:65ch}
+ul,ol{margin:0 0 1rem;padding-left:1.2rem;max-width:65ch}
+li{margin:.3rem 0}
+strong{font-weight:600}
+em{color:var(--ink-2)}
+code{
+  font-family:var(--f-mono);font-size:.875em;background:var(--surface-2);
+  padding:.12em .38em;border-radius:3px;border:1px solid var(--rule);
+}
+.lede{font-size:var(--step-1);color:var(--ink-2);max-width:58ch}
+
+/* ---------- copy deck ---------- */
+.deck{
+  border-left:3px solid var(--accent);background:var(--surface);
+  padding:1rem 1.25rem;margin:0 0 1rem;border-radius:0 4px 4px 0;
+  box-shadow:var(--shadow);
+}
+.deck > .tag{
+  font-family:var(--f-mono);font-size:.6875rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.12em;color:var(--accent);
+  display:block;margin-bottom:.6rem;
+}
+.deck dl{margin:0;display:grid;gap:.55rem}
+.deck dl > div{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:.75rem}
+@media (max-width:34rem){.deck dl > div{grid-template-columns:minmax(0,1fr);gap:.15rem}}
+.deck dt{
+  font-family:var(--f-mono);font-size:var(--step--1);color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:.06em;line-height:1.5;
+}
+.deck dd{margin:0;color:var(--ink)}
+.deck p{margin:0 0 .55rem}
+.deck p:last-child{margin-bottom:0}
+
+/* ---------- data table ---------- */
+.tablewrap{overflow-x:auto;margin:0 0 1.25rem;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:var(--step--1)}
+th,td{text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--rule)}
+thead th{
+  font-family:var(--f-mono);font-weight:600;font-size:.6875rem;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--ink-3);background:var(--surface-2);white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.num,td.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.price{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ---------- spec groups ---------- */
+.specs{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));margin-bottom:1.25rem}
+.specgroup{border:1px solid var(--rule);border-radius:4px;background:var(--surface);padding:.9rem 1rem}
+.specgroup h5{
+  font-family:var(--f-mono);font-size:.6875rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.11em;color:var(--accent);margin:0 0 .6rem;
+}
+.specgroup dl{margin:0;display:grid;gap:.3rem;font-size:var(--step--1)}
+.specgroup dl > div{display:flex;justify-content:space-between;gap:1rem;
+  border-bottom:1px dotted var(--rule);padding-bottom:.3rem}
+.specgroup dl > div:last-child{border-bottom:none;padding-bottom:0}
+.specgroup dt{color:var(--ink-2)}
+.specgroup dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500}
+
+/* ---------- rules (compliance) ---------- */
+.rules{
+  border:1px solid var(--signal);border-left-width:3px;background:var(--signal-soft);
+  border-radius:0 4px 4px 0;padding:1.1rem 1.35rem;margin:0 0 1.25rem;
+}
+.rules .tag{
+  font-family:var(--f-mono);font-size:.6875rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--signal);display:block;margin-bottom:.6rem;
+}
+.rules ol{margin:0;padding-left:1.15rem}
+.rules li{margin:.5rem 0}
+.rules li::marker{font-family:var(--f-mono);color:var(--signal)}
+
+/* ---------- callout ---------- */
+.note{
+  border:1px solid var(--rule-2);border-radius:4px;background:var(--surface-2);
+  padding:.9rem 1.1rem;margin:0 0 1.25rem;
+}
+.note .tag{
+  font-family:var(--f-mono);font-size:.6875rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--ink-3);display:block;margin-bottom:.4rem;
+}
+.note p:last-child{margin-bottom:0}
+
+/* ---------- checklist ---------- */
+.check{list-style:none;padding:0;display:grid;gap:.35rem}
+.check li{display:grid;grid-template-columns:1.4rem 1fr;gap:.5rem;align-items:start;
+  font-size:var(--step--1);padding:.35rem 0;border-bottom:1px dotted var(--rule)}
+.check li::before{content:"☐";font-family:var(--f-mono);color:var(--alum);font-size:1.05rem;line-height:1.35}
+
+/* ---------- section list (page structure) ---------- */
+.blocks{display:grid;gap:1.25rem;margin-bottom:1.5rem}
+.block{border:1px solid var(--rule);border-radius:4px;background:var(--surface);overflow:hidden}
+.block__bar{
+  display:flex;gap:.75rem;align-items:baseline;padding:.65rem 1rem;
+  background:var(--surface-2);border-bottom:1px solid var(--rule);
+}
+.block__bar .n{font-family:var(--f-mono);font-size:var(--step--1);color:var(--accent);font-weight:600;
+  font-variant-numeric:tabular-nums}
+.block__bar h3{margin:0;font-size:var(--step-1)}
+.block__body{padding:.9rem 1rem}
+.block__body > :last-child{margin-bottom:0}
+.block__body p{max-width:60ch}
+
+footer{
+  border-top:1px solid var(--rule);margin-top:2rem;
+  padding:2rem 1.5rem 3rem;
+}
+.footer__in{max-width:76rem;margin:0 auto;display:flex;flex-wrap:wrap;gap:1rem;
+  justify-content:space-between;align-items:baseline;
+  font-family:var(--f-mono);font-size:var(--step--1);color:var(--ink-3)}
+.footer__in strong{color:var(--ink);letter-spacing:.18em;font-weight:600}
+
+@media (prefers-reduced-motion:no-preference){
+  .rail a{transition:background .15s ease,color .15s ease}
+}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<header class="masthead">
+  <div class="masthead__in">
+    <div>
+      <p class="wordmark">XERO</p>
+      <h1>Chiron store build brief</h1>
+      <p>Everything needed to build the storefront for an electric off-road motorcycle
+      sold direct at $4,999. One product, one page, premium presentation.</p>
+    </div>
+    <div class="meta">
+      <div><span>Product</span><span>XERO Chiron</span></div>
+      <div><span>Price</span><span>$4,999.00</span></div>
+      <div><span>Sections</span><span>20</span></div>
+      <div><span>Assets supplied</span><span>53 files</span></div>
+      <div><span>Market</span><span>United States</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#s1"><span>01</span>What this is</a></li>
+      <li><a href="#s2"><span>02</span>Platform &amp; stack</a></li>
+      <li><a href="#s3"><span>03</span>Brand</a></li>
+      <li><a href="#s4"><span>04</span>Page structure</a></li>
+      <li><a href="#s5"><span>05</span>Commerce</a></li>
+      <li><a href="#s6"><span>06</span>Store settings</a></li>
+      <li><a href="#s7"><span>07</span>Assets provided</a></li>
+      <li><a href="#s8"><span>08</span>Content rules</a></li>
+      <li><a href="#s9"><span>09</span>Acceptance</a></li>
+      <li><a href="#s10"><span>10</span>Known bugs</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <p class="lede">This brief is self-contained: every heading, paragraph, spec figure
+    and legal line below is the real copy. Nothing here is a placeholder except where
+    it says so.</p>
+
+    <!-- 1 -->
+    <section id="s1">
+      <div class="sec-head"><span class="num">01</span><h2>What this is</h2></div>
+      <p>A one-product direct-to-consumer store. The bike is a real machine in
+      manufacture with a factory in Zhejiang, China — <strong>not</strong> a concept
+      and <strong>not</strong> dropshipping.</p>
+      <p>The buyer is 25–45, follows product design, watches launch films, and is
+      buying an object as much as a vehicle. The site has to feel like a launch page
+      for a piece of hardware, not an e-commerce template.</p>
+      <div class="note">
+        <span class="tag">Reference feel</span>
+        <p>apple.com product pages, tesla.com order pages, rimac. Full-bleed imagery,
+        big type, tight tracking, generous whitespace, dark and light sections
+        alternating, everything reacting on scroll.</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="s2">
+      <div class="sec-head"><span class="num">02</span><h2>Platform and stack</h2></div>
+      <p><strong>The platform is the client's decision</strong> — the requirement is
+      only that the design survives it. The design currently exists as a Shopify theme
+      (Liquid + vanilla JS + CSS custom properties, no framework, no build step), and
+      has also been rendered to static HTML, so it can be ported to:</p>
+      <ul>
+        <li><strong>Shopify</strong> — native, the theme drops straight in</li>
+        <li><strong>WooCommerce</strong> — templates convert; cart/checkout rebuilt on Woo</li>
+        <li><strong>BigCommerce (Stencil)</strong> — templates convert to Handlebars</li>
+        <li><strong>Custom (Next.js / Astro) + Stripe Checkout</strong> — most freedom, most work</li>
+      </ul>
+      <h4>Hard requirements, whichever way it goes</h4>
+      <ul>
+        <li><strong>Mobile first.</strong> Over 70% of traffic will be phones. Every
+        section is designed for a 390px viewport before the desktop layout.</li>
+        <li>No framework lock-in for the presentation layer. Vanilla JS is fine and preferred.</li>
+        <li>Lighthouse performance 85+ on mobile. WebP/AVIF with proper <code>srcset</code>,
+        videos lazy-loaded and <code>playsinline</code>, nothing render-blocking.</li>
+        <li>JavaScript for enhancement only — <strong>the buy button must function without it</strong>.</li>
+        <li>Every animation is an intersection-observer reveal with a
+        <strong>visible-by-default fallback</strong>. If the observer never fires, content
+        must still be visible.</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section id="s3">
+      <div class="sec-head"><span class="num">03</span><h2>Brand</h2></div>
+      <div class="deck">
+        <span class="tag">Identity</span>
+        <dl>
+          <div><dt>Name</dt><dd>XERO. Product name: <strong>Chiron</strong>. Together: XERO Chiron</dd></div>
+          <div><dt>Wordmark</dt><dd>XERO, uppercase, tight letter-spacing</dd></div>
+          <div><dt>Tagline</dt><dd>Ride to the stars.</dd></div>
+          <div><dt>Secondary</dt><dd>Designed on Earth. Tested elsewhere.</dd></div>
+          <div><dt>Voice</dt><dd>Plain, confident, technical. Short sentences. No hype
+          adjectives, no exclamation marks, no emoji</dd></div>
+        </dl>
+      </div>
+
+      <h3>The machine's look</h3>
+      <p>Get this wrong and everything looks wrong: raw <strong>brushed aluminium</strong>
+      bodywork — not matte black, not painted — over a single-piece cast frame, with
+      <strong>purple</strong> LED lighting, not green, not blue. Anyone producing imagery
+      must match this.</p>
+
+      <h4>Colour</h4>
+      <p>Near-black grounds (<code>#0b0b0e</code>) with off-white type
+      (<code>#f2f2f4</code>) on dark sections; near-white with near-black type on light
+      sections. One accent, used sparingly. Buttons are <strong>black/graphite, not
+      blue</strong>: <code>#111116</code> background, <code>#f4f4f6</code> text,
+      <code>#2c2d34</code> rim, hover <code>#26272e</code>. The cart count badge is the
+      one loud element: <code>#ff3b30</code>.</p>
+
+      <h4>Type</h4>
+      <p>A clean geometric or neo-grotesque sans (Inter, Söhne, SF Pro or similar).
+      Headings large and tight (<code>letter-spacing: -0.03em</code>), body at
+      1.5–1.6 line-height.</p>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <div class="sec-head"><span class="num">04</span><h2>Page structure</h2></div>
+      <p>One long scrolling home page. Sections in this exact order.</p>
+
+      <div class="blocks">
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.1</span><h3>Header / chrome</h3></div>
+          <div class="block__body">
+            <p>Sticky, translucent, blurred backdrop. Wordmark left, minimal nav, cart
+            right with count badge. A <strong>sticky buy bar</strong> appears once the hero
+            buy box scrolls out of view: product name, price, and the same Buy button.</p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.2</span><h3>Hero + buy box</h3></div>
+          <div class="block__body">
+            <p>Full-height. Interactive product stage on one side, buy box on the other;
+            stacked on mobile with the stage first.</p>
+            <div class="deck">
+              <span class="tag">Copy — verbatim</span>
+              <dl>
+                <div><dt>Title</dt><dd>XERO Chiron.</dd></div>
+                <div><dt>Subtitle</dt><dd>980 Nm · 120 km/h</dd></div>
+                <div><dt>Process line</dt><dd>Order · Quality and safety check · Delivered to your door</dd></div>
+                <div><dt>Body</dt><dd>An electric off-road motorcycle designed to run
+                without a key or a barrel. Your phone lies flat in the tank, charges while
+                you ride, and the system is designed so that only your paired phone wakes
+                the machine. Design intent, not an independently tested security rating.</dd></div>
+                <div><dt>Bullets</dt><dd>Paired to your client ID before dispatch · Free
+                delivery within the United States, to your door on a tail-lift vehicle,
+                never a parcel courier · 30-day returns — we arrange and pay for collection</dd></div>
+              </dl>
+            </div>
+            <p><strong>Stage:</strong> 6 product images, thumbnail selector, day/night
+            toggle, and — optional, nice-to-have — a rotatable 3D model. If 3D is out of
+            scope, a 6-image switcher with a day/night background swap is the fallback and
+            must not feel degraded.</p>
+            <p><strong>Buy box:</strong> price $4,999, configuration selector, quantity,
+            Add to cart plus the platform's native express button, and an add-on row for
+            the spare wireless key at $99.</p>
+            <div class="rules">
+              <span class="tag">Critical</span>
+              <p style="margin:0">The checkout button must be the platform's <strong>own
+              native payment button</strong>, styled to match. Do not build a custom
+              "Buy now" that posts to a checkout URL by hand. Two competing buy buttons or
+              a hand-rolled money path is exactly what got a previous store flagged.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.3</span><h3>Gallery — "Every angle."</h3></div>
+          <div class="block__body"><p>Three images, one large plus two supporting, edge-to-edge.</p></div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.4</span><h3>The iPhone key — signature feature</h3></div>
+          <div class="block__body">
+            <div class="deck">
+              <span class="tag">Copy — verbatim</span>
+              <dl>
+                <div><dt>Eyebrow</dt><dd>NO KEYS. NO FOB HUNTING.</dd></div>
+                <div><dt>Heading</dt><dd>Your iPhone is the key.</dd></div>
+                <div><dt>Sub</dt><dd>Card in, card out, phone in. After that the bike knows
+                your phone and nothing else will start it.</dd></div>
+                <div><dt>Step 1</dt><dd><strong>Cut for your phone</strong> — A pocket
+                milled into the tank to the exact size and thickness of an iPhone, with the
+                charging coil built into the floor of it. Nothing clips on. Nothing sticks out.</dd></div>
+                <div><dt>Step 2</dt><dd><strong>Tap your card once</strong> — Your steel
+                card carries the bike's client ID and serial. Lay it in the pocket, the NFC
+                reader picks it up, and the machine is claimed. Then take the card straight
+                back out.</dd></div>
+                <div><dt>Step 3</dt><dd><strong>Drop your phone in</strong> — It lies flat
+                and flush, the magnet holds it, and it charges while you ride. From then on
+                the bike wakes for that phone alone.</dd></div>
+                <div><dt>Payoff</dt><dd>Designed around the phone you already carry.</dd></div>
+                <div><dt>CTA</dt><dd>Activate your ID → <code>/activate</code></dd></div>
+              </dl>
+            </div>
+            <div class="rules">
+              <span class="tag">Mandatory disclaimer — verbatim</span>
+              <p style="margin:0">XERO is an independent company and is not affiliated with,
+              endorsed by, or sponsored by Apple Inc. iPhone is a trademark of Apple Inc.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.5</span><h3>Reel — vertical video</h3></div>
+          <div class="block__body">
+            <p>One uploaded vertical video (9:16), plays on screen entry, muted, tap to unmute.</p>
+            <div class="deck">
+              <span class="tag">Copy — verbatim</span>
+              <dl>
+                <div><dt>Kicker</dt><dd>in the city</dd></div>
+                <div><dt>Heading</dt><dd>we made it with love</dd></div>
+                <div><dt>Sub</dt><dd>we build it like a spaceship</dd></div>
+                <div><dt>Footnote</dt><dd>Filmed by XERO. Not customer footage. Riding shown
+                on private land by an experienced rider in full protective equipment.</dd></div>
+              </dl>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.6</span><h3>Specifications — "Every number."</h3></div>
+          <div class="block__body">
+            <p>Kicker <code>SPECIFICATIONS</code>. Sub: "The whole sheet. No asterisks, no
+            small print, nothing withheld." Presented as a telemetry panel with figures that
+            count up on reveal.</p>
+            <div class="specs">
+              <div class="specgroup">
+                <h5>Powertrain</h5>
+                <dl>
+                  <div><dt>Peak power</dt><dd>82 hp</dd></div>
+                  <div><dt>Torque at wheel</dt><dd>980 Nm</dd></div>
+                  <div><dt>Motor speed</dt><dd>15,000 rpm</dd></div>
+                  <div><dt>Transmission</dt><dd>Direct drive</dd></div>
+                </dl>
+              </div>
+              <div class="specgroup">
+                <h5>Performance</h5>
+                <dl>
+                  <div><dt>Top speed</dt><dd>120 km/h</dd></div>
+                  <div><dt>0–60 km/h</dt><dd>2.3 s</dd></div>
+                </dl>
+              </div>
+              <div class="specgroup">
+                <h5>Battery — Astra Ultimum</h5>
+                <dl>
+                  <div><dt>Capacity</dt><dd>8.4 kWh</dd></div>
+                  <div><dt>Charge 0–100%</dt><dd>55 min</dd></div>
+                  <div><dt>Cycles to 80%</dt><dd>1,500</dd></div>
+                  <div><dt>Swap time</dt><dd>11 sec</dd></div>
+                </dl>
+              </div>
+              <div class="specgroup">
+                <h5>Chassis</h5>
+                <dl>
+                  <div><dt>Weight, all in</dt><dd>104 kg</dd></div>
+                  <div><dt>Suspension travel</dt><dd>310 mm</dd></div>
+                  <div><dt>Front brake</dt><dd>280 mm, 4-piston</dd></div>
+                </dl>
+              </div>
+            </div>
+            <div class="rules">
+              <span class="tag">Required footnote — verbatim</span>
+              <p style="margin:0">Manufacturer specifications. Real-world figures vary with
+              terrain, rider weight, temperature, tyre choice and setup.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.7</span><h3>The box — "The key lands before the bike."</h3></div>
+          <div class="block__body">
+            <div class="deck">
+              <span class="tag">Copy — verbatim</span>
+              <dl>
+                <div><dt>Kicker</dt><dd>WHAT ARRIVES FIRST</dd></div>
+                <div><dt>Sub</dt><dd>A machined aluminium case arrives days ahead of
+                delivery. Inside: your key and your card. Nothing else.</dd></div>
+                <div><dt>Card block</dt><dd><strong>Milled steel. Your number on it.</strong>
+                — Every Chiron ships with a solid steel card carrying its serial and client
+                ID, laser-etched. Tap it into the tank once and the bike is paired to you.</dd></div>
+                <div><dt>CTA</dt><dd>Track your build → <code>/track</code></dd></div>
+              </dl>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.8</span><h3>ASTRA ULTIMUM — the battery</h3></div>
+          <div class="block__body">
+            <p>Heading <strong>A new kind of battery.</strong> Three stats:
+            <strong>8.4 kWh</strong> Capacity · <strong>11 sec</strong> To swap ·
+            <strong>1,500</strong> Cycles to 80%.</p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.9</span><h3>Second reel</h3></div>
+          <div class="block__body">
+            <p>Kicker <code>ON THE TRAIL</code> / heading <strong>watch it move</strong> /
+            "Handheld footage from our own rides. Forest singletrack, rock, wet roots, after
+            dark." Same footnote as 4.5.</p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.10</span><h3>Vibes — two-image mood block</h3></div>
+          <div class="block__body">
+            <p><strong>Out of the trailer. Into the night.</strong> Captions:
+            <code>OUT OF THE TRAILER</code>, <code>FIRST RIDE</code>.</p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.11</span><h3>FAQ — "Questions."</h3></div>
+          <div class="block__body">
+            <p>Accordion, 12 entries, with a video alongside on desktop.</p>
+            <div class="tablewrap">
+              <table>
+                <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+                <tbody>
+                  <tr><td>How fast is it?</td><td>120 km/h, about 75 mph.</td></tr>
+                  <tr><td>How much torque?</td><td>980 Nm at the rear wheel, with 82 hp peak. There is no gearbox between the motor and the rear wheel.</td></tr>
+                  <tr><td>What does it weigh?</td><td>104 kg, all in. A single-piece cast frame carries the pack, so there is no subframe underneath.</td></tr>
+                  <tr><td>How far does it go?</td><td>An 8.4 kWh ASTRA ULTIMUM pack, good for a long day of trail riding. A second pack swaps in.</td></tr>
+                  <tr><td>How long does it charge?</td><td>About 55 minutes from empty to full, and the pack holds over 80% of its capacity after 1,500 cycles.</td></tr>
+                  <tr><td>How does the key work?</td><td>There is no key. A steel card ships with the bike and pairs it to you once. After that your phone wakes it.</td></tr>
+                  <tr><td>What if someone tries to take it?</td><td>It stays locked, the same way your phone does in somebody else's hand. Without the paired phone it will not run.</td></tr>
+                  <tr><td>What comes with it?</td><td>The bike, its charger, the wireless key and your steel owner card.</td></tr>
+                  <tr><td>What is 10-Year Replacement?</td><td>A second configuration of the bike rather than an add-on. A replacement term from us — not insurance. See terms.</td></tr>
+                  <tr><td>When does it ship?</td><td>Four to six weeks from order. Your key case arrives days before the bike does.</td></tr>
+                  <tr><td>How is it delivered?</td><td>To your door on a tail-lift vehicle, by our own team or a specialist vehicle carrier we appoint. Never a parcel courier.</td></tr>
+                  <tr><td>What servicing does it need?</td><td>No oil, no chain, no filters and no valve clearances. Tyres, brake pads and battery care only.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.12</span><h3>Full-bleed film ×2</h3></div>
+          <div class="block__body">
+            <p>Two full-width 16:9 films, 50–100vh, autoplay muted on screen, poster frame
+            before load. Placed at two points in the scroll for pacing.</p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.13</span><h3>Security — "impossible to ride without you."</h3></div>
+          <div class="block__body">
+            <div class="deck">
+              <span class="tag">Copy — verbatim</span>
+              <dl>
+                <div><dt>Kicker / sub</dt><dd>SECURITY / pairs with iPhone Find My app</dd></div>
+                <div><dt>Lock 1</dt><dd><strong>Paired to one phone</strong> — Your steel card
+                claims the bike once, to you. From then on it wakes for your iPhone and
+                refuses every other device.</dd></div>
+                <div><dt>Lock 2</dt><dd><strong>No key to copy</strong> — There is no barrel,
+                no blade and no fob to clone. There is nothing on the machine to pick, drill
+                or hotwire.</dd></div>
+                <div><dt>Lock 3</dt><dd><strong>Dead without you</strong> — The design puts
+                the lock in the controller rather than in a barrel, so cutting the loom is not
+                intended to defeat it. This describes the design intent of the system, not an
+                independently tested security rating.</dd></div>
+                <div><dt>Find My</dt><dd><strong>Designed to tell you where it is.</strong> —
+                Planned: the Chiron reports its position to the companion app, so a stolen bike
+                is a tracked bike. The app is in development and is not available at launch —
+                location reporting is a design goal, not a shipped feature.</dd></div>
+                <div><dt>Payoff</dt><dd>Designed to be worthless to anyone but you.</dd></div>
+              </dl>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.14</span><h3>Design visualisations gallery</h3></div>
+          <div class="block__body">
+            <p>Kicker <code>THE CHIRON</code>, title <strong>Design visualisations.</strong>
+            Horizontal scroll carousel, 5–6 images, dot indicators.</p>
+            <div class="rules">
+              <span class="tag">Required sub-line — verbatim</span>
+              <p style="margin:0 0 .5rem">Renders and design visualisations. Not photographs
+              of a customer machine.</p>
+              <p style="margin:0">Any card with no image must render <strong>nothing</strong> —
+              no empty frame. This was a real bug in the reference build; do not reproduce it.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.15</span><h3>Order updates</h3></div>
+          <div class="block__body">
+            <p>Kicker <code>ALWAYS IN THE LOOP</code> / <strong>Updates and notifications at
+            every step.</strong> — "From the moment your card is etched to the day your bike
+            arrives. Build, quality check, dispatch and delivery updates land on your
+            phone/email."</p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.16</span><h3>Track your build</h3></div>
+          <div class="block__body">
+            <p>Eyebrow <code>BUILT, CHECKED, DELIVERED</code> / <strong>Follow it to your
+            door.</strong> Three features: Free delivery within the US · Delivered to your
+            door · Updates at every stage. Input plus CTA <strong>Track</strong>, hint "Enter
+            the client ID etched on your steel card."</p>
+            <p>Backed by a simple lookup — only IDs the owner has entered can see a tracking
+            view. <strong>Never seed it with invented riders or demo tracking data.</strong></p>
+          </div>
+        </article>
+
+        <article class="block">
+          <div class="block__bar"><span class="n">4.17</span><h3>Footer</h3></div>
+          <div class="block__body">
+            <p>Newsletter (<em>ride to the stars</em> / <em>order — quality check — ship</em>),
+            a marquee ticker <code>RIDE TO THE STARS</code>, wordmark <strong>XERO</strong>,
+            sign-off <em>Ride to the stars.</em>, tagline <em>Designed on Earth. Tested
+            elsewhere.</em> — and a <strong>LEGAL column linking all five policy pages</strong>.</p>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="s5">
+      <div class="sec-head"><span class="num">05</span><h2>Commerce</h2></div>
+
+      <h3>Products</h3>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Variant</th><th>Price</th><th>SKU</th><th>Weight</th><th>Stock</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>XERO Chiron</td><td>Chiron</td><td class="price">$4,999.00</td><td class="mono">XC-CHIRON-STD</td><td class="num">104 kg</td><td class="num">10</td></tr>
+            <tr><td>XERO Chiron</td><td>Chiron + 10-Year Replacement</td><td class="price">$5,598.00</td><td class="mono">XC-CHIRON-10YR</td><td class="num">104 kg</td><td class="num">10</td></tr>
+            <tr><td>Wireless key</td><td>—</td><td class="price">$99.00</td><td class="mono">XC-KEY-01</td><td class="num">0.2 kg</td><td class="num">40</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Option name: <code>Configuration</code>. The 10-Year option is a <strong>variant of
+      the bike</strong>, not a separate product and not an insurance product. Qualifier shown
+      beside it: <em>"A replacement term from us — not insurance. See terms."</em></p>
+
+      <div class="rules">
+        <span class="tag">Non-negotiable</span>
+        <p style="margin:0">Inventory must be <strong>tracked with overselling OFF</strong> on
+        every variant. Selling an unlimited number of $4,999 vehicles from zero stock is the
+        classic undelivered-goods profile and gets stores shut down.</p>
+      </div>
+
+      <div class="deck">
+        <span class="tag">Product description — verbatim</span>
+        <p>An electric off-road motorcycle that unlocks with your phone. 980 Nm at the rear
+        wheel, 120 km/h, 104 kg. Brushed aluminium bodywork over a single-piece frame that
+        carries the pack.</p>
+        <p>Your steel owner card pairs the machine to you once. After that your iPhone lies
+        flat in the tank pocket, charges while you ride, and is the only thing that wakes it.</p>
+        <p>Manufacturer figures, not independently certified. Real-world results vary with
+        terrain, rider weight, temperature, tyre choice and setup.</p>
+      </div>
+
+      <h3>Checkout and payments</h3>
+      <ul>
+        <li><strong>Use the platform's native checkout and native payment buttons.</strong>
+        No custom money path, no hand-built "Buy now" that posts to a checkout URL.</li>
+        <li>Currency USD, prices tax-exclusive (US store).</li>
+        <li>Shipping: one United States zone, one <strong>Free delivery</strong> rate at $0.00.</li>
+        <li>Customer accounts optional, not required at checkout.</li>
+        <li>A $4,999 vehicle is a high-ticket, high-scrutiny category. Expect underwriting
+        whichever processor is used. Plan for either a vehicle-friendly merchant account
+        (MCC <strong>5571 — Motorcycle shops and dealers</strong>) or a deposit-plus-balance
+        structure.</li>
+        <li>Enable AVS, CVV and 3-D Secure. At this ticket size one stolen-card chargeback hurts.</li>
+      </ul>
+
+      <h3>Pages required</h3>
+      <p><code>/contact</code> · <code>/about</code> · <code>/refund-policy</code> ·
+      <code>/shipping-policy</code> · <code>/terms-of-service</code> ·
+      <code>/privacy-policy</code> · <code>/legal-notice</code> · <code>/activate</code> ·
+      <code>/track</code></p>
+      <p><strong>Activate page:</strong> dark standalone screen, input for a XERO ID in the
+      format <code>XR-XXXX-XXXX</code>, validated client-side, remembered locally, with a
+      confirmation state.</p>
+
+      <div class="rules">
+        <span class="tag">Policies — non-negotiable</span>
+        <p style="margin:0">All six policies (Refund, Shipping, Terms, Privacy, Contact
+        information, Legal notice) must be filled into the platform's <strong>policy
+        settings</strong>, not only as pages. Checkout links to the settings copies; pages
+        with the same text do not satisfy it. <strong>Empty policy objects are a top-three
+        reason payment applications get declined.</strong> Full text supplied in
+        <code>STORE-POLICIES.md</code>.</p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="s6">
+      <div class="sec-head"><span class="num">06</span><h2>Store settings</h2></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Store name</td><td><strong>XERO</strong> — prints on order confirmations and card statements</td></tr>
+            <tr><td>Country / market</td><td>United States, primary</td></tr>
+            <tr><td>Timezone</td><td class="mono">America/New_York</td></tr>
+            <tr><td>Currency</td><td>USD, tax-exclusive</td></tr>
+            <tr><td>Location</td><td>One US location at the business address</td></tr>
+            <tr><td>Statement descriptor</td><td class="mono">XERO CHIRON</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A market or location whose country does not match the billing country is a
+      geo-mismatch flag in underwriting. Keep everything US.</p>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <div class="sec-head"><span class="num">07</span><h2>Assets provided</h2></div>
+      <ul>
+        <li><strong>53 media files</strong> — 48 images + 5 videos, all product renders and
+        films, supplied by the client. Filenames and alt text in
+        <code>snapshot/media-manifest.json</code>.</li>
+        <li><strong>6 product images</strong> for the bike (side profile is primary), 2 for the key.</li>
+        <li><strong>Full policy text</strong> — <code>STORE-POLICIES.md</code>.</li>
+        <li><strong>Reference implementation</strong> — the complete existing theme: every
+        section as <code>.liquid</code> under <code>sections/</code>, styles in
+        <code>assets/</code>, and the live page composition with all real settings in
+        <code>snapshot/index.json.live</code>.</li>
+        <li><strong>Static render</strong> — <code>tools/render_static.py</code> renders the
+        whole page to plain HTML with the real copy and settings baked in, for porting to any
+        platform.</li>
+      </ul>
+      <p>Product photography beyond what is supplied is the client's to provide.</p>
+    </section>
+
+    <!-- 8 -->
+    <section id="s8">
+      <div class="sec-head"><span class="num">08</span><h2>Content rules</h2></div>
+      <p>Read before writing any copy. These are compliance rules, not style preferences.
+      Breaking them creates real risk.</p>
+      <div class="rules">
+        <span class="tag">Binding</span>
+        <ol>
+          <li><strong>The bike exists.</strong> Never describe it as pre-order, made to order,
+          built to order, or coming soon.</li>
+          <li><strong>Manufacturer figures, not certified.</strong> Never write "certified",
+          "tested to" or "rated" for any performance or ingress figure. The agreed wording is
+          <em>manufacturer figures, not independently certified</em>.</li>
+          <li><strong>Never label renders or brand footage as customer or owner content.</strong>
+          A store with no orders cannot have customer footage, and that is checkable. Renders
+          are labelled <em>Design visualisations</em>; films are labelled <em>Filmed by XERO.
+          Not customer footage.</em></li>
+          <li><strong>Never invent social proof</strong> — no fake reviews, no fake order
+          counts, no demo names in the tracking roster, no "X people are viewing this".</li>
+          <li><strong>The Apple disclaimer is mandatory</strong> wherever iPhone is mentioned
+          as a feature.</li>
+          <li><strong>No medical, safety or security guarantees.</strong> Security copy
+          describes <em>design intent</em>. Find My is <em>planned and not available at
+          launch</em> and must be labelled as such.</li>
+          <li><strong>Street-legality:</strong> the machine is off-road and not homologated for
+          US road use. This belongs in <strong>Terms of service §6</strong> and the pre-order
+          acknowledgement — the client's ruling is that it does <strong>not</strong> go into
+          page copy, banners or footers.</li>
+          <li>Riders must be 18 or over.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="s9">
+      <div class="sec-head"><span class="num">09</span><h2>Acceptance criteria</h2></div>
+      <ul class="check">
+        <li>Renders correctly at 390px, 768px, 1440px and 2560px</li>
+        <li>Lighthouse mobile: performance ≥ 85, accessibility ≥ 90</li>
+        <li>Every section visible with JS disabled; no invisible content if an animation fails</li>
+        <li>Add to cart works, cart shows correct line items and price, checkout completes on a test order</li>
+        <li>Selecting <strong>Chiron + 10-Year Replacement</strong> charges <strong>$5,598</strong>, not $4,999</li>
+        <li>Adding the $99 key adds a second line item</li>
+        <li>All six policies present in platform policy settings, all five linked in the footer</li>
+        <li>Videos autoplay muted inline on iOS Safari and do not block first paint</li>
+        <li>No empty image frames, no placeholder text, no lorem, no demo products</li>
+        <li>All copy matches this brief verbatim where quoted</li>
+      </ul>
+    </section>
+
+    <!-- 10 -->
+    <section id="s10">
+      <div class="sec-head"><span class="num">10</span><h2>Known bugs — do not repeat</h2></div>
+      <p>Each of these shipped broken once on the reference build.</p>
+      <div class="blocks">
+        <article class="block"><div class="block__body">
+          <h4 style="margin-top:0">Invisible sections</h4>
+          <p style="margin:0">Inline <code>opacity:0</code> cannot be overridden by a stylesheet
+          class. Animate with a visible-by-default contract and a timeout backstop.</p>
+        </div></article>
+        <article class="block"><div class="block__body">
+          <h4 style="margin-top:0">Empty carousel cards</h4>
+          <p style="margin:0">Filtering blocks by a nested image property silently matched
+          nothing and rendered every card, including empty ones. Loop plainly and test the
+          image directly.</p>
+        </div></article>
+        <article class="block"><div class="block__body">
+          <h4 style="margin-top:0">Double-charging cart</h4>
+          <p style="margin:0">A drawer "Checkout" button that also ran an add-to-cart added a
+          second $4,999 bike. Checkout navigates; it never adds.</p>
+        </div></article>
+        <article class="block"><div class="block__body">
+          <h4 style="margin-top:0">Silent cart failures</h4>
+          <p style="margin:0">Always check the response status and surface the platform's own
+          error text. A cart that fails quietly looks like a broken store.</p>
+        </div></article>
+        <article class="block"><div class="block__body">
+          <h4 style="margin-top:0">Sold-out that isn't</h4>
+          <p style="margin:0">Enabling inventory tracking before setting quantities leaves a
+          tracked/deny/zero window; the storefront then refuses to add to cart while the admin
+          shows stock. Set quantities first, then enable tracking.</p>
+        </div></article>
+        <article class="block"><div class="block__body">
+          <h4 style="margin-top:0">Overwritten owner content</h4>
+          <p style="margin:0">Page-composition files owned by a visual editor must never be
+          pushed from a local copy — it silently reverts everything the owner changed. Pull
+          live, edit that, push straight back.</p>
+        </div></article>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="footer__in">
+    <strong>XERO</strong>
+    <span>Chiron store build brief</span>
+    <span>Ride to the stars.</span>
+  </div>
+</footer>
