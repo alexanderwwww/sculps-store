@@ -105,13 +105,13 @@
         "heading": "Watch it in a real garden.",
         "text": "One clip, no edit. The three things people ask before buying are answered underneath.",
         "video_url": "",
-        "video_src": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4",
+        "video_src": "https://cdn.shopify.com/videos/c/vp/5fc740b73ce24a8291a535c64a57821a/5fc740b73ce24a8291a535c64a57821a.HD-720p-3.0Mbps-93838239.mp4",
         "caption": "Kneel on the pad, push up on the handles, flip it into a seat.",
         "placeholder": "UGC clip: kneeling, standing up, flipping it into a seat",
         "faq_heading": "Questions people ask first.",
         "open_first": true,
         "faq_note": "",
-        "video_fallback": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4"
+        "video_fallback": "https://cdn.shopify.com/videos/c/vp/5fc740b73ce24a8291a535c64a57821a/5fc740b73ce24a8291a535c64a57821a.HD-720p-3.0Mbps-93838239.mp4"
       }
     },
     "social": {
@@ -177,9 +177,9 @@
         "ugc_eyebrow": "See it for yourself",
         "ugc_heading": "Watch it in a real garden.",
         "ugc_text": "Three clips, no edit.",
-        "ugc_src_1": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4",
-        "ugc_src_2": "https://cdn.shopify.com/videos/c/vp/41cbbac02a0a4e4e9edacab6fe41014c/41cbbac02a0a4e4e9edacab6fe41014c.SD-480p-1.5Mbps-93649943.mp4",
-        "ugc_src_3": "https://cdn.shopify.com/videos/c/vp/8086622583cf4a63a9abdb2e08ee0ce4/8086622583cf4a63a9abdb2e08ee0ce4.HD-720p-4.5Mbps-93649942.mp4",
+        "ugc_src_1": "https://cdn.shopify.com/videos/c/vp/5fc740b73ce24a8291a535c64a57821a/5fc740b73ce24a8291a535c64a57821a.HD-720p-3.0Mbps-93838239.mp4",
+        "ugc_src_2": "https://cdn.shopify.com/videos/c/vp/15f73197ac4d41c2b101ac2216a7cd19/15f73197ac4d41c2b101ac2216a7cd19.SD-480p-1.2Mbps-93838240.mp4",
+        "ugc_src_3": "https://cdn.shopify.com/videos/c/vp/3d15c80c62bd4b3aaab8215a1952d0c4/3d15c80c62bd4b3aaab8215a1952d0c4.HD-720p-3.0Mbps-93838241.mp4",
         "ugc_title_1": "Kneel on the thick pad.",
         "ugc_caption_1": "Foam between your knees and the ground, so gravel and wet grass stop mattering.",
         "ugc_title_2": "Push up on the handles.",
