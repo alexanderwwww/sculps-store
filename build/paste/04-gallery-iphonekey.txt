@@ -1,0 +1,90 @@
+<div id="shopify-section-gallery" class="shopify-section"><section class="xero-night" data-sec="gallery" style="position:relative;width:100%;background:var(--pg);padding:6rem 0 0;">
+
+    <div style="max-width:76rem;margin:0 auto;padding:0 2.06rem;">
+      <h2 style="margin:0 0 2.2rem;font-size:clamp(2.2rem,4.4vw,3.6rem);font-weight:700;letter-spacing:-.035em;line-height:1.02;color:var(--txt,#0e0e0e);">Every angle.</h2>
+    </div><div style="position:relative;width:100%;aspect-ratio:1.618 / 1;overflow:hidden;"><img class="xero-fill" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260810_041320_269332c9-1739-458a-b679-9599df13b8bf.png"
+       srcset="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260810_041320_269332c9-1739-458a-b679-9599df13b8bf.png"
+       sizes="(max-width: 900px) 100vw, 60vw"
+       width="" height=""
+       alt="" loading="lazy" decoding="async" style="border-radius:0px;"></div>
+    <div style="margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+      <div style="position:relative;width:100%;aspect-ratio:4 / 3;overflow:hidden;"><img class="xero-fill" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/b5f1aa4a-e330-410b-b042-a2797456cfc1_1.png"
+       srcset="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/b5f1aa4a-e330-410b-b042-a2797456cfc1_1.png"
+       sizes="(max-width: 900px) 100vw, 60vw"
+       width="" height=""
+       alt="" loading="lazy" decoding="async" style="border-radius:0px;"></div>
+      <div style="position:relative;width:100%;aspect-ratio:4 / 3;overflow:hidden;"><img class="xero-fill" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260809_071104_9a78b890-c126-4568-85ec-afb32c4458ab.png"
+       srcset="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260809_071104_9a78b890-c126-4568-85ec-afb32c4458ab.png"
+       sizes="(max-width: 900px) 100vw, 60vw"
+       width="" height=""
+       alt="" loading="lazy" decoding="async" style="border-radius:0px;"></div>
+    </div>
+  
+</section>
+
+
+</div>
+
+<!-- ===== iphone-key (xero-iphone-key) ===== -->
+
+<div id="shopify-section-iphone-key" class="shopify-section"><section class="xero-night" data-sec="pairing" id="key" style="position:relative;width:100%;background:var(--pg);padding:7rem 1.4rem 6.5rem;">
+
+  <div style="max-width:52rem;margin:0 auto;text-align:center;">
+    <div style="font-size:.78rem;font-weight:600;letter-spacing:.22em;color:var(--txt3,#7c7d85);">NO KEYS. NO FOB HUNTING.</div>
+    <h2 style="margin:1rem 0 0;font-size:clamp(2.1rem,4.8vw,3.8rem);font-weight:700;letter-spacing:-.038em;line-height:1.03;color:var(--txt,#0e0e0e);text-wrap:balance;">Your iPhone is the key.</h2><p style="margin:1rem auto 0;max-width:36rem;font-size:1.08rem;line-height:1.5;color:var(--txt2,#55565c);text-wrap:pretty;">Card in, card out, phone in. After that the bike knows your phone and nothing else will start it.</p></div><div data-m="steps" style="max-width:76rem;margin:3rem auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;"><div>
+        <div style="position:relative;width:100%;aspect-ratio:4 / 3;overflow:hidden;border-radius:1rem;background:var(--sub,rgba(255,255,255,.04));">
+          <img class="xero-fill" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/Screenshot_2026-08-16_at_12.41.15.png"
+       srcset="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/Screenshot_2026-08-16_at_12.41.15.png"
+       sizes="(max-width: 900px) 100vw, 60vw"
+       width="" height=""
+       alt="" loading="lazy" decoding="async" style="border-radius:16px;">
+        </div>
+        <div style="margin-top:1.1rem;display:flex;align-items:baseline;gap:.7rem;">
+          <span style="font:600 .76rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#c68bff;">01</span>
+          <span style="font-size:1.18rem;font-weight:650;letter-spacing:-.026em;color:var(--txt,#0e0e0e);">Cut for your phone</span>
+        </div>
+        <p style="margin:.5rem 0 0;font-size:.98rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">A pocket milled into the tank to the exact size and thickness of an iPhone, with the charging coil built into the floor of it. Nothing clips on. Nothing sticks out.</p>
+      </div><div>
+        <div style="position:relative;width:100%;aspect-ratio:4 / 3;overflow:hidden;border-radius:1rem;background:var(--sub,rgba(255,255,255,.04));">
+          <img class="xero-fill" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/Screenshot_2026-08-16_at_12.40.39.png"
+       srcset="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/Screenshot_2026-08-16_at_12.40.39.png"
+       sizes="(max-width: 900px) 100vw, 60vw"
+       width="" height=""
+       alt="" loading="lazy" decoding="async" style="border-radius:16px;">
+        </div>
+        <div style="margin-top:1.1rem;display:flex;align-items:baseline;gap:.7rem;">
+          <span style="font:600 .76rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#c68bff;">02</span>
+          <span style="font-size:1.18rem;font-weight:650;letter-spacing:-.026em;color:var(--txt,#0e0e0e);">Tap your card once</span>
+        </div>
+        <p style="margin:.5rem 0 0;font-size:.98rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">Your steel card carries the bike's client ID and serial. Lay it in the pocket, the NFC reader picks it up, and the machine is claimed. Then take the card straight back out.</p>
+      </div><div>
+        <div style="position:relative;width:100%;aspect-ratio:4 / 3;overflow:hidden;border-radius:1rem;background:var(--sub,rgba(255,255,255,.04));">
+          <img class="xero-fill" src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/Screenshot_2026-08-21_at_18.59.29.png"
+       srcset="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/Screenshot_2026-08-21_at_18.59.29.png"
+       sizes="(max-width: 900px) 100vw, 60vw"
+       width="" height=""
+       alt="" loading="lazy" decoding="async" style="border-radius:16px;">
+        </div>
+        <div style="margin-top:1.1rem;display:flex;align-items:baseline;gap:.7rem;">
+          <span style="font:600 .76rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#c68bff;">03</span>
+          <span style="font-size:1.18rem;font-weight:650;letter-spacing:-.026em;color:var(--txt,#0e0e0e);">Drop your phone in</span>
+        </div>
+        <p style="margin:.5rem 0 0;font-size:.98rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">It lies flat and flush, the magnet holds it, and it charges while you ride. From then on the bike wakes for that phone alone.</p>
+      </div></div><div style="max-width:44rem;margin:3.4rem auto 0;text-align:center;">
+    <p style="margin:0;font-size:clamp(1.3rem,2.4vw,1.85rem);font-weight:600;letter-spacing:-.03em;line-height:1.3;color:var(--txt,#0e0e0e);text-wrap:balance;">Designed around the phone you already carry.</p><p style="margin:.9rem auto 0;max-width:32rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);">XERO is an independent company and is not affiliated with, endorsed by, or sponsored by Apple Inc. iPhone is a trademark of Apple Inc. The pocket, the magnet and the NFC handshake are designed around the iPhone you already carry. Your card and key ship days before the bike does, so you can register your ID the moment they land.</p><a href="/pages/activate" style="display:inline-flex;align-items:center;gap:.45rem;margin-top:1.4rem;font-size:1.02rem;font-weight:600;color:var(--acc,#111116);text-decoration:none;">
+        Activate your ID
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M9 5l3 3-3 3"></path></svg>
+      </a></div>
+
+</section>
+
+<style>
+  @media (max-width: 860px){
+    [data-sec="pairing"] [data-m="steps"]{ grid-template-columns: 1fr !important; gap: 2.4rem !important; max-width: 30rem; }
+  }
+</style>
+
+
+</div>
+
+<!-- ===== xero_reel_gjEwGd (xero-reel) ===== -->

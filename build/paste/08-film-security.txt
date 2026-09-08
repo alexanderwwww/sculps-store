@@ -1,0 +1,72 @@
+<div id="shopify-section-xero_film_E4yzrV" class="shopify-section"><section class="xero-night" data-sec="film"  style="position:relative;width:100%;background:var(--pg);padding:0;">
+
+  <div data-m="frame" style="position:relative;width:100%;height:min(84vh,56.25vw);min-height:20rem;overflow:hidden;background:#000;"><video src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260816_054731_48980959-5389-4322-80b5-0d3e7b4913fe.mp4" class="" playsinline muted loop autoplay playsinline></video>
+
+      <button data-m="sound" aria-label="Toggle sound"
+        style="position:absolute;right:1.1rem;bottom:1.1rem;z-index:2;width:2.6rem;height:2.6rem;border-radius:50%;background:rgba(14,14,20,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
+      </button></div>
+
+</section>
+
+
+
+</div>
+
+<!-- ===== antitheft (xero-antitheft) ===== -->
+
+<div id="shopify-section-antitheft" class="shopify-section"><section class="xero-night" data-sec="antitheft" style="position:relative;width:100%;background:var(--pg);padding:7rem 1.4rem;">
+  <div style="max-width:58rem;margin:0 auto;"><div style="font-size:.74rem;font-weight:700;letter-spacing:.2em;color:var(--txt3,#7c7d85);">SECURITY</div><h2 style="margin:1rem 0 0;font-size:clamp(2.1rem,5vw,3.6rem);font-weight:700;letter-spacing:-.04em;line-height:1.03;color:var(--txt,#f4f4f6);text-wrap:balance;">
+      impossible to ride without you.
+    </h2><p style="margin:1.15rem 0 0;max-width:34rem;font-size:1.12rem;line-height:1.5;letter-spacing:-.014em;color:var(--txt2,#a9aab1);text-wrap:pretty;">pairs with iphone find my app</p><div data-m="atrow" style="margin-top:3.4rem;display:grid;grid-template-columns:repeat(3,1fr);gap:2.4rem;"><div>
+          <div style="font:600 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:var(--acc,#0a84ff);">01</div>
+          <div style="margin-top:.9rem;font-size:1.18rem;font-weight:650;letter-spacing:-.024em;line-height:1.2;color:var(--txt,#f4f4f6);">Paired to one phone</div>
+          <p style="margin:.55rem 0 0;font-size:.97rem;line-height:1.5;color:var(--txt2,#a9aab1);text-wrap:pretty;">Your steel card claims the bike once, to you. From then on it wakes for your iPhone and refuses every other device.</p>
+        </div><div>
+          <div style="font:600 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:var(--acc,#0a84ff);">02</div>
+          <div style="margin-top:.9rem;font-size:1.18rem;font-weight:650;letter-spacing:-.024em;line-height:1.2;color:var(--txt,#f4f4f6);">No key to copy</div>
+          <p style="margin:.55rem 0 0;font-size:.97rem;line-height:1.5;color:var(--txt2,#a9aab1);text-wrap:pretty;">There is no barrel, no blade and no fob to clone. There is nothing on the machine to pick, drill or hotwire.</p>
+        </div><div>
+          <div style="font:600 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:var(--acc,#0a84ff);">03</div>
+          <div style="margin-top:.9rem;font-size:1.18rem;font-weight:650;letter-spacing:-.024em;line-height:1.2;color:var(--txt,#f4f4f6);">Dead without you</div>
+          <p style="margin:.55rem 0 0;font-size:.97rem;line-height:1.5;color:var(--txt2,#a9aab1);text-wrap:pretty;">The design puts the lock in the controller rather than in a barrel, so cutting the loom is not intended to defeat it. This describes the design intent of the system, not an independently tested security rating.</p>
+        </div></div><div data-m="atfind" style="margin-top:3.6rem;padding-top:2.4rem;border-top:1px solid var(--hair,rgba(255,255,255,.09));display:flex;align-items:center;gap:1.5rem;">
+
+      <div style="flex:0 0 auto;width:4.2rem;height:4.2rem;border-radius:1.05rem;overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/Screenshot_2026-08-22_at_13.38.03.png"
+               alt=""
+               width="84" height="84" loading="lazy" decoding="async"
+               style="width:100%;height:100%;object-fit:contain;display:block;"></div>
+
+      <div style="min-width:0;">
+        <div style="font-size:1.24rem;font-weight:650;letter-spacing:-.026em;line-height:1.25;color:var(--txt,#f4f4f6);text-wrap:balance;">Designed to tell you where it is.</div><p style="margin:.4rem 0 0;font-size:.98rem;line-height:1.5;color:var(--txt2,#a9aab1);text-wrap:pretty;">Planned: the Chiron reports its position to the companion app, so a stolen bike is a tracked bike. The app is in development and is not available at launch - location reporting is a design goal, not a feature you can use the day the bike arrives.</p></div>
+
+    </div><div style="margin-top:3.4rem;font-size:clamp(1.35rem,2.8vw,2rem);font-weight:650;letter-spacing:-.032em;line-height:1.2;color:var(--txt,#f4f4f6);text-wrap:balance;">Designed to be worthless to anyone but you.</div></div>
+</section>
+
+<style>
+  @media (max-width: 760px){
+    [data-sec="antitheft"] [data-m="atrow"]{ grid-template-columns:1fr !important; gap:2rem !important; }
+    [data-sec="antitheft"] [data-m="atfind"]{ gap:1.1rem !important; }
+  }
+</style>
+
+</div>
+
+<!-- ===== film2 (xero-film) ===== -->
+
+<div id="shopify-section-film2" class="shopify-section"><section class="xero-night" data-sec="film"  style="position:relative;width:100%;background:var(--pg);padding:0;">
+
+  <div data-m="frame" style="position:relative;width:100%;height:min(84vh,56.25vw);min-height:20rem;overflow:hidden;background:#000;"><video src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260816_054520_6d66faaa-3a63-4cd9-8282-a6ecbc8de5a2.mp4" class="" playsinline muted loop autoplay playsinline></video>
+
+      <button data-m="sound" aria-label="Toggle sound"
+        style="position:absolute;right:1.1rem;bottom:1.1rem;z-index:2;width:2.6rem;height:2.6rem;border-radius:50%;background:rgba(14,14,20,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
+      </button></div>
+
+</section>
+
+
+
+</div>
+
+<!-- ===== ugc (xero-ugc) ===== -->

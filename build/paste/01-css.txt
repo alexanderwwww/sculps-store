@@ -1,0 +1,740 @@
+
+    :root{
+      --btnbg:  ;
+      --btnbg-h:;
+      --btnink: ;
+      --btnb:   ;
+      --btn2b:  ;
+      --cartbadge: ;
+    }
+  
+
+/* ===== xero-fix.css ===== */
+/* XERO - loaded after xero-theme.css. Overrides only.
+
+   The segmented control lives in xero-pill.css, which loads AFTER this file. Nothing in
+   here should style [data-m="ctl"] > div, [data-m="worldpill"] or their children beyond
+   POSITION - the whole class of pill bugs came from asserting the same relationship in
+   two files.
+
+   ONE GRID. xero-hero.liquid hardcodes its layout in inline percentages picked by eye:
+   buy box left:68%, photo plate right:32%, camera offset 0.105. Nothing agreed with
+   anything else. Everything is pinned to a single golden section at 61.8 / 38.2, and the
+   camera in xero-model.js centres the bike in the field it actually occupies.
+
+       0 -------------------------- 61.8% ------------- 100%
+       |        stage / photos        |     buy box      |
+
+   STAGE FURNITURE, one arrangement at every size:
+       top left      3D / Photos
+       top right     Day / Night        (3D only - nothing to light in a photo)
+       bottom centre world switcher + thumbnail rail
+*/
+
+:root{
+  --xero-hdr-h: 6.5rem;
+  --xero-gold: 61.8%;
+  --xero-gold-i: 38.2%;
+  --xero-ink: #0b0b0d;
+}
+
+/* ==========================================================================
+   FIX 1: sections whose only content is position:fixed were invisible.
+   ==========================================================================
+   xero-theme.css sets `.shopify-section{contain:layout paint style}`. Shopify wraps every
+   section in a .shopify-section div, and `contain:paint` makes that wrapper both a
+   containing block for fixed descendants AND a clipping box, so a section holding nothing
+   but fixed UI collapses to zero height and clips itself away.
+
+   Two selector strategies in separate rules on purpose: if a browser lacks :has() it drops
+   only that rule and the ID rules still land. */
+
+#shopify-section-xero-header,
+#shopify-section-xero-chrome,
+#shopify-section-popup{
+  contain: none !important;
+  content-visibility: visible !important;
+}
+
+.shopify-section:has(> [data-m="hdr"]),
+.shopify-section:has(> [data-m="sticky"]),
+.shopify-section:has(> [data-xero-popup]){
+  contain: none !important;
+  content-visibility: visible !important;
+}
+
+/* ==========================================================================
+   FIX 2 / 3: the stage only ever shows the 3D model.
+   ==========================================================================
+   The WebGL canvas is a sibling of the sprite layer and only exists once a GLB mounts, so
+   setView('photos') - written before the canvas existed - never hid it. And useModel(true)
+   hides the sprite, but _paintCube() runs afterwards on every world, day-night and view
+   change and restores it unconditionally.
+
+   The data-model="on" gate is load-bearing. Do NOT make it unconditional and do NOT try to
+   reach the shadow or the reference cube by matching a substring of an inline style
+   attribute - browsers reserialise inline styles with a space after the colon, so
+   `[style*="pointer-events:none"]` matches nothing while `[style*="transform-origin"]`
+   matches the sprite wrapper, which is the element _init3D() uses as its insertBefore
+   anchor for the canvas. That combination took the whole 3D viewer off the page. */
+xero-stage[data-view="photos"] > canvas{ display: none !important; }
+/* The 2D bike sprite (bike-day/night/seam) is hidden unconditionally, permanently, by
+   the owner's explicit decision: only the 3D model may ever occupy the stage, and a
+   failure shows the clean studio gradient rather than a flat photo. This briefly carried
+   a data-3d="ok" gate that let the sprite stand in during load and on GLB failure; the
+   owner rejected the flat bike outright. The blank-failure risk that gate existed for is
+   now addressed at the root instead: the Draco decoder is non-fatal, the renderer no
+   longer over-allocates on phones, context loss actually recovers, and the tracking globe
+   no longer steals the hero's WebGL context. If the model URL ever dies, the stage shows
+   its gradient - that is the accepted trade.
+
+   The sprites live inside <xero-stage>; the product photos are in a sibling
+   [data-m="photolayer"], so this only removes the sprite, never the Photos images. */
+xero-stage img{ display: none !important; }
+
+/* FIX 4: dead controls. (The autorotate button data-act="toggleSpin" is intentionally
+   NOT hidden - it toggles the turntable.) */
+[data-act^="hot"]{ display: none !important; }
+
+/* ==========================================================================
+   FIX 5: stage furniture. POSITION ONLY - appearance is in xero-pill.css.
+   ========================================================================== */
+[data-m="ctl"]{
+  left: 2.28% !important;
+  right: calc(var(--xero-gold-i) + 1.5rem) !important;
+  top: calc(var(--xero-hdr-h) + 1rem) !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 1rem !important;
+  pointer-events: none !important;
+}
+[data-m="ctl"] > div{ pointer-events: auto !important; }
+
+[data-m="worldcol"]{
+  top: auto !important;
+  bottom: 1.3rem !important;
+  left: calc(var(--xero-gold) / 2) !important;
+  gap: .55rem !important;
+}
+
+[data-m="railcard"]{ width: 2.6rem !important; height: 2.05rem !important; border-width: 1.3px !important; }
+[data-m="rail"]{ gap: .36rem !important; }
+
+/* ==========================================================================
+   FIX 6: Photos is a white room.
+   ========================================================================== */
+:root[data-xero-view="photos"] xero-stage,
+:root[data-xero-view="photos"] [data-m="stage"]{ background: #fff !important; }
+[data-m="photolayer"]{ background: #fff !important; }
+[data-m="photolayer"] .xero-ph{ background: #fff !important; }
+[data-m="photolayer"] .xero-fill{ object-fit: contain !important; }
+
+/* NO NIGHT IN PHOTOS. The stage still carries whatever Day/Night world was last shown
+   (a dark studio/city/mars backdrop). In Photos we do not want ANY of it, so the whole
+   3D stage is taken out and only the white photo layer remains - a pure white room in
+   every mode. The stage returns the moment you switch back to 3D. */
+:root[data-xero-view="photos"] xero-stage{ opacity: 0 !important; visibility: hidden !important; }
+:root[data-xero-view="photos"] [data-m="stage"]{ background: #fff !important; }
+:root[data-xero-view="photos"] [data-m="photolayer"]{ background: #fff !important; opacity: 1 !important; }
+
+[data-m="photolayer"] > div{
+  left: 0 !important;
+  right: var(--xero-gold-i) !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  padding: calc(var(--xero-hdr-h) + 3.6rem) 1.5rem 4.6rem !important;
+}
+
+:root[data-xero-view="photos"] [data-m="brand"]{ color: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-m="nav"]{
+  background: rgba(255,255,255,.74) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+:root[data-xero-view="photos"] [data-m="nav"] a,
+:root[data-xero-view="photos"] [data-m="nav"] button{ color: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-m="nav"] svg{ stroke: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-act="toggleMenu"] span{ background: var(--xero-ink) !important; }
+:root[data-xero-view="photos"] [data-m="railcard"]{ background: rgba(255,255,255,.92) !important; }
+
+:root[data-xero-view="photos"] [data-m="ctl"] > div:nth-child(2){ display: none !important; }
+:root[data-xero-view="photos"] [data-m="worldpill"]{ display: none !important; }
+:root[data-xero-view="photos"] [data-m="dragchip"]{ display: none !important; }
+:root[data-xero-view="photos"] [data-m="side"]{ display: none !important; }
+
+/* ==========================================================================
+   FIX 7: the buy box on the golden section.
+   ========================================================================== */
+@media (min-width: 901px){
+  [data-m="buy"]{ left: var(--xero-gold) !important; }
+}
+
+[data-m="buy"] [data-act="buyNow"],
+[data-m="buy"] [data-act="addToCart"]{
+  height: 2.9rem !important;
+  border-radius: 1.45rem !important;
+  font-size: 1.02rem !important;
+}
+[data-m="paybtn"]{ min-height: 2.9rem !important; }
+
+/* ==========================================================================
+   FIX 8: UGC carousel, captionless.
+   ========================================================================== */
+.ugc-frame::after{ display: none !important; }
+.ugc-card:has(.ugc-meta) .ugc-frame::after{ display: block !important; }
+
+/* ==========================================================================
+   FIX 9: mobile. The hero had no mobile layout at all.
+   ==========================================================================
+   xero-hero.liquid is one fixed viewport frame with everything absolutely positioned; the
+   percentages only describe a wide screen. Below 901px the hero stops being a frame and
+   becomes a stack.
+
+   The pills sit at top: HEADER + 1.5rem - previously .5rem, but the visible header carries
+   a wordmark plus its own vertical padding, and at .5rem the pill's top edge kissed the
+   wordmark's baseline. 1.5rem clears both cleanly. */
+@media (max-width: 900px){
+
+  :root{ --xero-hdr-h: 4.2rem; }
+
+  /* --- header --- */
+  [data-m="hdr"]{ height: var(--xero-hdr-h) !important; padding: 0 .9rem !important; }
+  [data-m="brand"]{ font-size: 1.4rem !important; }
+  [data-m="nav"]{
+    left: auto !important;
+    right: 3.3rem !important;
+    width: auto !important;
+    height: auto !important;
+    top: 50% !important;
+    margin-top: 0 !important;
+    transform: translateY(-50%) !important;
+    padding: .38rem .5rem !important;
+  }
+  [data-m="nav"] > a{
+    flex: 0 0 auto !important;
+    font-size: .7rem !important;
+    padding: 0 .4rem !important;
+    line-height: 1 !important;
+  }
+  [data-m="nav"] > div{ display: none !important; }              /* hairline dividers */
+  [data-m="nav"] [data-m="navlbl"]{ display: none !important; }  /* the word "Cart" */
+  [data-m="nav"] button{ flex: 0 0 auto !important; padding: 0 .4rem !important; }
+  [data-m="nav"] button svg{ width: 16px !important; height: 16px !important; }
+  [data-m="hdr"] [data-act="toggleMenu"]{ right: .9rem !important; width: 1.9rem !important; }
+
+  /* --- the frame becomes a stack --- */
+  [data-m="hero"]{
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  [data-m="stage"]{
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 66svh !important;
+    min-height: 22rem !important;
+  }
+
+  /* pills: full row, clear of the header. Position only - size lives in xero-pill.css.
+
+     transform:none is not cosmetic. xero-theme.css's own mobile block still carries
+     `transform:scale(.9);transform-origin:0 0` from an older layout where the pills were
+     pinned to the top-left corner and had to be shrunk to fit beside the wordmark. This
+     block replaces the position but says nothing about transform, so the .9 survived and
+     multiplied the pill's height down to roughly 18px with ~8px glyphs - legible on a
+     desktop simulator, unreadable and untappable on a real phone. The pill's own geometry
+     stays where it belongs, in xero-pill.css; all we do here is stop scaling it. */
+  [data-m="ctl"]{
+    left: 10px !important;
+    right: 10px !important;
+    top: calc(var(--xero-hdr-h) + 1rem) !important;
+    gap: .4rem !important;
+    transform: none !important;
+  }
+  [data-m="worldcol"]{ left: 50% !important; bottom: .8rem !important; gap: .55rem !important; }
+
+  [data-m="railcard"]{ width: 2.35rem !important; height: 1.85rem !important; flex: 0 0 auto !important; }
+  [data-m="rail"]{
+    gap: .32rem !important;
+    max-width: 94vw !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    padding-bottom: 2px !important;
+  }
+  [data-m="rail"]::-webkit-scrollbar{ display: none !important; }
+
+  /* photos: TRUE FULL BLEED on mobile - fill the stage edge to edge, clear only the
+     header. No side gutters, minimal top/bottom. The product sits big on pure white. */
+  [data-m="photolayer"] > div{
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    padding: calc(var(--xero-hdr-h) + 1rem) 0 1rem !important;
+  }
+  [data-m="photolayer"] .xero-fill{ object-fit: contain !important; }
+
+  /* buy box: out of absolute positioning, full width, normal flow */
+  [data-m="buy"]{
+    position: static !important;
+    left: auto !important; right: auto !important; top: auto !important; bottom: auto !important;
+    width: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 14px 12px 20px !important;
+    padding: 20px 16px 16px !important;
+    border-radius: 22px !important;
+  }
+  [data-m="buy"] h1{ font-size: 2.2rem !important; }
+  [data-m="buy"] [data-act="buyNow"],
+  [data-m="buy"] [data-act="addToCart"]{ height: 2.7rem !important; border-radius: 1.35rem !important; font-size: .96rem !important; }
+  [data-m="paybtn"]{ min-height: 2.7rem !important; }
+
+  [data-m="side"]{ display: none !important; }
+  [data-m="dragchip"]{ display: none !important; }
+}
+
+/* ==========================================================================
+   FIX 10: smooth mobile navigation (CSS only, additive).
+   ==========================================================================
+   Evidence for each rule:
+   - xero-theme.css sets body{overflow-x:hidden} and, on mobile,
+     body{overflow:auto; overscroll-behavior-y:contain}. There is no momentum
+     scrolling hint, no smooth anchor scrolling, and nothing pins the scroll
+     axis to the root, so an inner scroller's rubber-band can chain to the page.
+   - xero-store.js scrollTo() already uses {behavior:'smooth'} for its own
+     anchor jumps; scroll-behavior:smooth makes native #anchor / keyboard
+     paging match it. Respect reduced-motion (see the block below).
+   - The stage (66svh), the marquee/coaster row ([data-anim] with xmarq) and the
+     photo rail ([data-m="rail"]) are the wide/overflowing elements; keep their
+     overscroll from chaining to the document and give the rail iOS momentum. */
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+}
+@media (max-width: 900px){
+  html, body{ overscroll-behavior-y: contain; }
+  body{ overscroll-behavior-x: none; }
+  /* horizontal scrollers must not rubber-band the whole page sideways, and
+     should carry iOS momentum */
+  [data-m="rail"]{
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* the auto-scrolling review row and the 3D stage are the two elements most
+     likely to trap a swipe; keep their gestures from chaining to the document */
+  [data-m="coaster"], [data-m="stage"]{ overscroll-behavior: contain; }
+  /* fixed overlays that are dismissed (default state) must never sit over the
+     page eating scroll — belt-and-braces alongside the JS pointer-events gates */
+  .xp[hidden]{ pointer-events: none !important; }
+}
+
+/* ------------------------------------------------------------------
+   FIX: Shopify dynamic checkout button ("Buy it now")
+
+   This button is rendered by Shopify from {{ form | payment_button }}, not by
+   our markup, and it paints itself from the theme/checkout brand colour - so
+   none of the inline styles in xero-hero touch it. It came out in Shopify's
+   default blue next to our neutral Buy now / Add to cart pair.
+
+   Overridden here to match the pair exactly. !important is required: Shopify
+   injects its own stylesheet for this button after ours.
+
+   The "more payment options" link underneath is also brand-coloured and is
+   neutralised with it.
+   ------------------------------------------------------------------ */
+.shopify-payment-button__button,
+.shopify-payment-button__button--unbranded,
+.shopify-payment-button__button--unbranded:hover,
+.shopify-payment-button__button--unbranded:focus{
+  background: var(--btnbg, #111116) !important;
+  background-image: none !important;
+  background-color: var(--btnbg, #111116) !important;
+  color: var(--btnink, #f4f4f6) !important;
+  border: 1px solid var(--btnb, rgba(255,255,255,.10)) !important;
+  border-radius: 1.63rem !important;
+  min-height: 3.25rem !important;
+  height: 3.25rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -.01em !important;
+  box-shadow: none !important;
+  transition: transform .3s cubic-bezier(.28,.11,.32,1), background .3s !important;
+}
+.shopify-payment-button__button--unbranded:hover{
+  background: var(--btnbg-h, #22232a) !important;
+  background-color: var(--btnbg-h, #22232a) !important;
+}
+.shopify-payment-button__more-options,
+.shopify-payment-button__more-options:hover{
+  color: var(--txt2, #a9aab1) !important;
+  text-decoration-color: var(--txt3, #7c7d85) !important;
+}
+
+
+/* ===== xero-pill.css ===== */
+/* XERO - the segmented control (View / Day-Night / World).
+   Rebuilt clean. THREE pills, ONE mechanism, ZERO scaling formulas.
+
+   ==========================================================================
+   THE ONE CONSTRAINT THAT DICTATES EVERYTHING
+   ==========================================================================
+   store.js only sets --seg-view / --seg-mode / --seg-world (0,1[,2]). It never
+   tags which BUTTON is active. So the ONLY thing that can show selection is the
+   sliding knob - CSS cannot know the active segment to colour its label.
+
+   Every past bug came from fighting that. This version stops fighting it:
+
+     - The knob is a TRANSLUCENT frosted highlight, not an opaque white slab.
+     - Every label is a single solid colour with a soft shadow, so it stays
+       readable whether it sits over the knob or over the bare track.
+     - Only ONE thing flips by state - text goes dark in Photos (white room) -
+       and it flips off a single attribute the stage already sets:
+       :root[data-xero-view="photos"].
+
+   No mix-blend-mode. No calc() colour chains. No per-segment overrides.
+
+   ==========================================================================
+   GEOMETRY - do not touch. This is what keeps the knob in register.
+   ==========================================================================
+   store.js moves the knob with translateX(var(--seg-*) * 100%); that 100% is
+   the knob's OWN width. It only lands on a segment when knob width == one
+   segment == (track - 2*padding) / n. With padding = 3px:
+       n = 2  ->  calc(50% - 3px)
+       n = 3  ->  calc(33.3333% - 2px)
+   Padding stays 3px on BOTH breakpoints so these hold. Nothing else sets a
+   width - the buttons are flex:1 1 0 and equal by construction.
+
+   ==========================================================================
+   SIZE - fixed pixels, not rem, not a formula. Two heights, that's it.
+   ==========================================================================
+   Desktop 30px.  Mobile 20px (small on purpose - the old size killed the tap
+   layout on phones). Change these two numbers and the control rescales.
+*/
+
+/* ---- the track ---------------------------------------------------------- */
+[data-m="ctl"] > div,
+[data-m="worldpill"]{
+  position: relative !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: auto !important;
+  height: 30px !important;
+  min-height: 0 !important;
+  padding: 3px !important;
+  box-sizing: border-box !important;
+  border-radius: 999px !important;
+
+  /* glass: translucent frost, hairline rim, real backdrop blur */
+  background: rgba(20,21,25,.34) !important;
+  border: 1px solid rgba(255,255,255,.20) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.6) !important;
+  backdrop-filter: blur(20px) saturate(1.6) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    0 2px 10px rgba(0,0,0,.30) !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* ---- the knob: translucent frosted highlight, one segment wide ---------- */
+[data-m="ctl"] > div > div,
+[data-m="worldpill"] > div{
+  position: absolute !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  z-index: 0 !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.16)) !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.40),
+    0 1px 4px rgba(0,0,0,.28) !important;
+  transition: transform .38s cubic-bezier(.28,.11,.32,1) !important;
+}
+[data-m="ctl"] > div > div{ width: calc(50% - 3px) !important; }
+[data-m="worldpill"] > div{ width: calc(33.3333% - 2px) !important; }
+
+/* ---- the segments ------------------------------------------------------- */
+[data-m="ctl"] > div > button,
+[data-m="worldpill"] > button{
+  position: relative !important;
+  z-index: 1 !important;
+  width: auto !important;
+  flex: 1 1 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  padding: 0 13px !important;
+  border: 0 !important;
+  background: none !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.005em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+
+  /* one colour, readable on knob AND track. No blend, no state math. */
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45) !important;
+  transition: none !important;
+
+  /* CRITICAL: xero-theme.css sets `min-height:44px` on these buttons at <=900px for a
+     touch target. That is TALLER than the whole track, so the button overflowed BELOW
+     the bar and dragged its label out from under the glass. Kill it here - the real tap
+     target is the invisible ::after collar defined in the mobile block, not the button. */
+  min-height: 0 !important;
+}
+
+/* icons follow the label colour */
+[data-m="ctl"] > div > button svg [fill]:not([fill="none"]),
+[data-m="ctl"] > div > button svg[fill]:not([fill="none"]){ fill: currentColor !important; }
+[data-m="ctl"] > div > button svg [stroke]:not([stroke="none"]),
+[data-m="ctl"] > div > button svg[stroke]:not([stroke="none"]){ stroke: currentColor !important; }
+[data-m="ctl"] svg,
+[data-m="worldpill"] svg{ width: 11px !important; height: 11px !important; }
+
+/* world switcher: uppercase, tighter, state dots gone (knob carries state) */
+[data-m="worldpill"] > button{ font-size: 10px !important; letter-spacing: .06em !important; padding: 0 11px !important; }
+[data-m="worldpill"] > button > span:first-child{ display: none !important; }
+
+/* ==========================================================================
+   PHOTOS - white room. Track -> light chip, knob -> dark tint, text -> dark.
+   The one and only state flip, off a single attribute.
+   ========================================================================== */
+:root[data-xero-view="photos"] [data-m="ctl"] > div{
+  background: rgba(118,118,128,.16) !important;
+  border-color: rgba(0,0,0,.06) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 1px 3px rgba(0,0,0,.10) !important;
+}
+:root[data-xero-view="photos"] [data-m="ctl"] > div > div{
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(236,236,240,.95)) !important;
+  border-color: rgba(0,0,0,.05) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.20) !important;
+}
+:root[data-xero-view="photos"] [data-m="ctl"] > div > button{
+  color: #1a1b1f !important;
+  text-shadow: none !important;
+}
+
+/* ==========================================================================
+   MOBILE - fixed 20px. Small visual, generous invisible tap targets.
+   ==========================================================================
+   The visible chip is 20px (under the 44px touch minimum) so each segment
+   carries a hidden hit area centred on it: looks 20px, taps ~38px. The world
+   switcher's hit area is capped so it does not overhang the thumbnail rail
+   below it. Padding stays 3px so the geometry formulas above hold unchanged.
+*/
+@media (max-width: 900px){
+  [data-m="ctl"] > div,
+  [data-m="worldpill"]{
+    height: 20px !important;
+    padding: 3px !important;
+  }
+  [data-m="ctl"] > div > button,
+  [data-m="worldpill"] > button{ min-height: 0 !important; }
+  [data-m="ctl"] > div > button{ font-size: 9px !important; padding: 0 8px !important; gap: 4px !important; }
+  [data-m="worldpill"] > button{ font-size: 8px !important; padding: 0 7px !important; letter-spacing: .05em !important; }
+  [data-m="ctl"] svg,
+  [data-m="worldpill"] svg{ width: 8.5px !important; height: 8.5px !important; }
+
+  /* invisible hit areas */
+  [data-m="ctl"] > div > button::after,
+  [data-m="worldpill"] > button::after{
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important; right: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    border-radius: 999px !important;
+  }
+  [data-m="ctl"] > div > button::after{ height: 38px !important; }
+  [data-m="worldpill"] > button::after{ height: 28px !important; }
+  [data-m="worldcol"]{ gap: .7rem !important; }
+}
+
+
+/* ===== xero-theme.css ===== */
+/* XERO Chiron — theme CSS.
+   Only what cannot be inline lives here: keyframes, pseudo-states, media queries,
+   the night token pin, and the striped image placeholder. */
+
+:root{
+  font-size:clamp(8.5px, min(calc(100vw / 90.5), calc(100vh / 62)), 16.6px);
+  /* NIGHT is the boot state — these fallbacks stop a one-frame white flash. */
+  --pg:rgba(26,27,31,1);--glass:rgba(13,13,15,.88);--glass-b:rgba(255,255,255,.075);--solid:rgba(20,20,23,1);--pill:rgba(30,31,36,.8);--pill-b:rgba(255,255,255,.08);--knob:rgba(46,47,55,1);--chip:rgba(30,31,37,.88);--txt:rgba(244,244,246,1);--txt2:rgba(169,170,177,1);--txt3:rgba(116,117,124,1);--acc:rgba(244,244,246,1);--acc-fill:rgba(200,201,208,1);--hair:rgba(255,255,255,.085);--card:rgba(26,27,32,.74);--sub:rgba(255,255,255,.05);--ok:rgba(52,208,88,1);--shadow:rgba(0,0,0,.45);--vsel:rgba(255,255,255,.045);--vidle:rgba(255,255,255,.035);--vb:rgba(255,255,255,.08);--sheen:rgba(255,255,255,.17);--gloss:rgba(255,255,255,.09);--glow:rgba(255,255,255,.04);--liq1:rgba(255,255,255,.1);--liq2:rgba(150,190,255,.14);--stickybg:rgba(22,22,26,.26);--stickyrim:rgba(255,255,255,.11);--pg2:rgba(16,16,19,1);--rvb:rgba(255,255,255,.08);
+  --nite:1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--pg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{overflow-x:hidden;font-family:system-ui,-apple-system,'SF Pro Display','SF Pro Text','Helvetica Neue',Helvetica,sans-serif;letter-spacing:-.011em;color:var(--txt)}
+a{color:var(--acc);text-decoration:none}
+a:hover{color:var(--acc-fill)}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+img{max-width:100%}
+
+/* Below-the-fold sections are permanently night. An element's own declared custom
+   property always beats one inherited from the JS-painted <html>, so the hero's
+   DAY/NIGHT state can never leak down here. */
+.xero-night{--pg:rgba(26,27,31,1);--glass:rgba(13,13,15,.88);--glass-b:rgba(255,255,255,.075);--solid:rgba(20,20,23,1);--pill:rgba(30,31,36,.8);--pill-b:rgba(255,255,255,.08);--knob:rgba(46,47,55,1);--chip:rgba(30,31,37,.88);--txt:rgba(244,244,246,1);--txt2:rgba(169,170,177,1);--txt3:rgba(116,117,124,1);--acc:rgba(244,244,246,1);--acc-fill:rgba(200,201,208,1);--hair:rgba(255,255,255,.085);--card:rgba(26,27,32,.74);--sub:rgba(255,255,255,.05);--ok:rgba(52,208,88,1);--shadow:rgba(0,0,0,.45);--vsel:rgba(255,255,255,.045);--vidle:rgba(255,255,255,.035);--vb:rgba(255,255,255,.08);--sheen:rgba(255,255,255,.17);--gloss:rgba(255,255,255,.09);--glow:rgba(255,255,255,.04);--liq1:rgba(255,255,255,.1);--liq2:rgba(150,190,255,.14);--stickybg:rgba(22,22,26,.26);--stickyrim:rgba(255,255,255,.11);--pg2:rgba(16,16,19,1);--rvb:rgba(255,255,255,.08);--nite:1}
+
+@keyframes xmarqA{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@keyframes xmarqB{from{transform:translate3d(-50%,0,0)}to{transform:translate3d(0,0,0)}}
+@keyframes xcoast{
+  0%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+  12.5%{transform:translate3d(0,-1.84rem,0) rotate(2.1deg)}
+  25%{transform:translate3d(0,0,0) rotate(3deg)}
+  37.5%{transform:translate3d(0,1.84rem,0) rotate(2.1deg)}
+  50%{transform:translate3d(0,2.6rem,0) rotate(0deg)}
+  62.5%{transform:translate3d(0,1.84rem,0) rotate(-2.1deg)}
+  75%{transform:translate3d(0,0,0) rotate(-3deg)}
+  87.5%{transform:translate3d(0,-1.84rem,0) rotate(-2.1deg)}
+  100%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+}
+@keyframes xtick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@keyframes xliqA{0%{transform:translate3d(-38%,-14%,0) scale(1)}50%{transform:translate3d(46%,10%,0) scale(1.18)}100%{transform:translate3d(-38%,-14%,0) scale(1)}}
+@keyframes xliqB{0%{transform:translate3d(58%,12%,0) scale(1.1)}50%{transform:translate3d(-26%,-10%,0) scale(.92)}100%{transform:translate3d(58%,12%,0) scale(1.1)}}
+
+/* generated pseudo-state rules (were style-hover / style-active in the design) */
+[data-x~="xh0"]:hover{transform:scale(1.09);}
+[data-x~="xh1"]:active{transform:scale(.985);}
+[data-x~="xh2"]:hover{transform:translateY(-2px);}
+[data-x~="xh3"]:hover{transform:scale(1.06);}
+[data-x~="xh4"]:active{transform:scale(.99);}
+[data-x~="xh5"]:hover{animation-play-state:paused;}
+[data-x~="xh6"]:hover{transform:translateY(-1px);}
+[data-x~="xh7"]:hover{color:var(--txt,#0e0e0e);}
+
+/* striped placeholder — one shared class, used by every unfilled image and video */
+.xero-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;
+  background:repeating-linear-gradient(135deg,var(--sub) 0 12px,transparent 12px 24px),var(--card);
+  border:1px solid var(--rvb)}
+.xero-ph span{font:500 .8rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;color:var(--txt3);text-align:center;padding:0 1rem}
+.xero-ph--circle{border-radius:50%}
+.xero-fill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.xero-fill--contain{object-fit:contain}
+.xero-play{width:4.4rem;height:4.4rem;border-radius:50%;background:var(--acc);box-shadow:0 .6rem 2rem rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
+
+/* Shopify's accelerated checkout button. We own the box, Shopify owns the mark inside —
+   only sizing and corner radius are ours to set. */
+[data-m="paybtn"] form{margin:0}
+[data-m="paybtn"] .shopify-payment-button{width:100%}
+[data-m="paybtn"] .shopify-payment-button__button{width:100%;height:3.25rem;border-radius:1.63rem;font-size:1.1rem}
+[data-m="paybtn"] .shopify-payment-button__more-options{display:none}
+
+/* Long pages composite far more than the design file did. Two cheap wins:
+   - contain the below-fold sections so layout/paint never escapes them
+   - never let an offscreen animation hold a compositor layer */
+.shopify-section{contain:layout paint style}
+[data-anim]{will-change:auto}
+[data-m="rvcard"]{contain:layout paint}
+
+@media (prefers-reduced-motion:reduce){[data-anim]{animation:none !important}}
+
+@media (max-width:900px){
+  :root{font-size:clamp(12.2px, calc(100vw / 30.2), 15px)}
+  body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
+
+  /* Mobile perf, in order of cost:
+     1. backdrop-filter on a full-width buy box is the single most expensive thing a
+        phone GPU can be asked to do here, and at this size the blur reads as a flat
+        tint anyway — so drop it entirely and raise the fill opacity to compensate.
+     2. content-visibility lets the browser skip layout+paint for offscreen sections. */
+  [data-m="buy"],[data-m="nav"]{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  [data-m="buy"]{background:var(--solid) !important}
+  [data-m="nav"]{background:var(--pill) !important}
+  [data-m="sticky"]{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  .shopify-section{content-visibility:auto;contain-intrinsic-size:auto 800px}
+  /* The exemption has to name the element content-visibility was applied to. Shopify wraps
+     every section in a .shopify-section div, and xero-hero.liquid declares "tag": "div",
+     so the hero's own <section data-m="hero"> is a CHILD of #shopify-section-hero. Exempting
+     only the child left the wrapper skippable: above the fold, before the browser has
+     decided the hero is on screen, it renders as the 800px intrinsic placeholder and
+     nothing else - which is a large part of what "the page is blank on mobile" looked
+     like. Kept rather than deleted because the skip is a real win on a page this long;
+     line 71's contain:layout paint style does not buy back the offscreen paint budget.
+     Two selectors on purpose, same reasoning as FIX 1 in xero-fix.css: a browser without
+     :has() drops that rule and the ID rule still lands. */
+  #shopify-section-hero{content-visibility:visible}
+  .shopify-section:has([data-m="hero"]){content-visibility:visible}
+  [data-m="hero"]{content-visibility:visible}
+  /* the coaster's 3D perspective forces a costly layer on mobile for no visible gain */
+  [data-m="coaster"]{perspective:none}
+  [data-m="rvcard"]{animation:none !important}
+  [data-m="hero"]{height:auto}
+  [data-m="stage"]{position:relative;inset:auto;width:100%;height:58vh}
+  [data-m="buy"]{position:relative;inset:auto;width:auto;height:auto;margin:1.1rem 1.1rem 0}
+  [data-m="nav"]{left:auto;right:4.6rem;width:auto;padding:0 .5rem}
+  [data-m="navact"],[data-m="navlbl"],[data-m="side"]{display:none}
+  [data-m="ctl"]{top:4.5rem;left:.9rem;gap:.65rem;transform:scale(.9);transform-origin:0 0}
+  [data-m="photolayer"]>div{inset:4% 0 12% 0;padding:0 4%}
+  [data-m="railcard"]{width:3rem;height:2.4rem;flex:0 0 auto}
+  [data-m="rail"]{gap:.4rem}
+  [data-m="worldcol"]{gap:.5rem;top:auto;bottom:1.1rem}
+  [data-m="worldpill"]{height:2.7rem;border-radius:1.35rem}
+  [data-m="worldpill"] button{width:5.6rem}
+  [data-m="dragchip"]{width:9.6rem;height:2.6rem}
+  [data-m="coaster"]{padding:2.4rem 0 2.8rem}
+  [data-m="rvcard"]{width:14.4rem}
+  [data-m="ftbig"]{font-size:15vw}
+  [data-m="ftgrid"]{gap:2rem 1.6rem}
+  [data-m="ftgrid"]>div{flex:1 1 42% !important}
+  [data-m="mini"]{display:flex}
+  [data-m="sticky"]{display:none}
+  [data-m="hdr"]{height:4.4rem}
+  [data-m="splash"] img{max-height:34vh}
+  /* mobile hit targets: the primary controls clear 44px. The photo rail keeps its
+     small visual size by design — it gets a transparent tap collar instead. */
+  [data-m="worldpill"] button,[data-m="ctl"] button{min-height:44px}
+  [data-m="mini"] button{min-height:44px}
+  [data-m="rail"]{padding:7px 0}
+  [data-m="railcard"]{position:relative}
+  [data-m="railcard"]::after{content:"";position:absolute;left:0;right:0;top:-7px;bottom:-7px}
+  [data-sec] a,[data-m="ftgrid"] a{min-height:32px;display:inline-flex;align-items:center}
+  /* the drawer must clear the notch and the home indicator */
+  [data-m="cartdrawer"],aside[data-screen-label="Cart"]{padding-top:env(safe-area-inset-top)}
+  .shopify-section > section,.shopify-section > footer{padding-left:1.15rem !important;padding-right:1.15rem !important}
+  /* The full-bleed exceptions have to out-specify the gutter rule above, not merely follow
+     it. Both sides are !important, so the cascade is decided on specificity alone, and
+     `.shopify-section > section` is (0,1,1) against a bare `[data-m="hero"]` at (0,1,0) -
+     the gutter won and the hero, the film strip, the reviews rail and the footer all kept
+     1.15rem of side padding they were explicitly written to drop. Naming the element type
+     and the parent brings each one to (0,2,1). */
+  .shopify-section > section[data-m="hero"],
+  .shopify-section > section[data-sec="film"],
+  .shopify-section > section[data-sec="reviews"],
+  .shopify-section > footer[data-sec="footer"]{padding-left:0 !important;padding-right:0 !important}
+  [data-sec="gallery"]{padding-top:3.4rem !important}
+  [data-sec="iphone-key"],[data-sec="motion"],[data-sec="ugc-faq"],[data-sec="panel"],[data-sec="delivery"]{padding-top:3.6rem !important;padding-bottom:3.6rem !important}
+  .shopify-section h2{font-size:2.05rem !important;letter-spacing:-.03em !important}
+  [data-m="chapters"] button,[data-m="panelrow"]>div,[data-m="steprow"]>div,[data-m="dlvpair"]>div{flex:1 1 100% !important}
+  [data-m="approw"]{gap:2.4rem !important}
+  [data-m="approw"]>div{flex:1 1 100% !important;margin:0 auto}
+  [data-m="specrow"]>div{flex:1 1 45% !important}
+}
+
+
+/* ===== xero-ugc-quiet.css ===== */
+/* XERO - UGC carousel, captionless.
+
+   The cards were designed with a name chip and a caption over the bottom of each shot, so
+   xero-ugc.liquid paints a scrim there: a gradient covering the bottom 52% of the frame,
+   reaching 60% black at the base. That exists purely to keep white text legible.
+
+   With the captions removed there is no text to protect, so the scrim is just half of
+   every photograph needlessly darkened. It comes off - unless a block still carries a
+   caption, in which case it comes back for that card only.
+
+   .ugc-meta is only rendered when a block has a handle or a caption (see the section's
+   {% if %}), so :has() reads the real state rather than a duplicated flag. A browser
+   without :has() simply never shows the scrim, which is the correct look here anyway. */
+
+.ugc-frame::after{ display: none !important; }
+.ugc-card:has(.ugc-meta) .ugc-frame::after{ display: block !important; }
+

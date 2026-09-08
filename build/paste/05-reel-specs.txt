@@ -1,0 +1,171 @@
+<div id="shopify-section-xero_reel_gjEwGd" class="shopify-section"><section class="xero-night" data-sec="reel" 
+         style="position:relative;width:100%;background:var(--pg);padding:6rem 0 5.5rem;">
+
+  <div style="max-width:70rem;margin:0 auto;padding:0 2.06rem;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(2rem,5vw,4rem);"><div data-m="reelcopy" style="flex:1 1 20rem;min-width:0;"><div style="display:flex;align-items:center;gap:.7rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.74rem;font-weight:500;letter-spacing:.2em;color:var(--txt3,#7c7d85);">
+          <span style="width:.44rem;height:.44rem;border-radius:50%;background:#8b7bff;box-shadow:0 0 9px rgba(139,123,255,.85);"></span>
+          <span>in the city</span>
+        </div><h2 style="margin:1rem 0 0;font-size:clamp(2rem,4.4vw,3.2rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:var(--txt,#f4f4f6);text-wrap:balance;">we made it with love</h2><p style="margin:1.05rem 0 0;max-width:30rem;font-size:1.02rem;line-height:1.55;color:var(--txt2,#a9aab1);text-wrap:pretty;">we build it like a spaceship</p><p style="margin:1.6rem 0 0;max-width:30rem;font-size:.8rem;line-height:1.55;color:var(--txt3,#7c7d85);">Filmed by XERO. Not customer footage. Riding shown on private land by an experienced rider in full protective equipment.</p></div>
+
+    <div data-m="reelmedia" style="flex:0 1 22rem;min-width:0;margin-inline:auto;">
+      <div data-m="reeltile" style="position:relative;width:100%;aspect-ratio:9/16;border-radius:1.25rem;overflow:hidden;background:#0a0a0c;border:1px solid rgba(255,255,255,.09);box-shadow:0 30px 60px -22px rgba(0,0,0,.65);cursor:pointer;"><video src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260817_143535_dc2817e5-4f15-4d8f-b5bd-a0cb5855cb6d.mp4" class="" playsinline muted loop autoplay playsinline></video><span data-m="reelsound" aria-hidden="true"
+                style="position:absolute;right:.8rem;top:.8rem;width:2.2rem;height:2.2rem;border-radius:50%;background:rgba(14,14,20,.5);-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;pointer-events:none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
+          </span></div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  /* Wide: reel left, copy right. The copy is second in the DOM so that on a
+     narrow screen it lands above the reel naturally - here it is pushed after. */
+  @media (min-width: 861px){
+    #shopify-section-xero_reel_gjEwGd [data-m="reelcopy"]{ order:2; }
+    #shopify-section-xero_reel_gjEwGd [data-m="reelmedia"]{ order:1; flex-basis:20rem; }
+  }
+  @media (max-width: 860px){
+    #shopify-section-xero_reel_gjEwGd [data-m="reelmedia"]{ flex:1 1 100%; max-width:24rem; }
+  }
+</style>
+
+</div>
+
+<!-- ===== specs (xero-specs) ===== -->
+
+<div id="shopify-section-specs" class="shopify-section"><section id="specs" class="xero-night" data-sec="specs" style="position:relative;width:100%;background:var(--pg);padding:6.5rem 0 6rem;overflow:hidden;">
+
+  <canvas data-m="specmatrix" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.42;"></canvas>
+
+  <div style="position:relative;z-index:1;max-width:70rem;margin:0 auto;padding:0 2.06rem;">
+
+    <div style="display:flex;align-items:center;gap:.75rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.75rem;font-weight:500;letter-spacing:.2em;color:var(--txt3,#7c7d85);">
+      <span style="width:.46rem;height:.46rem;border-radius:50%;background:#8b7bff;box-shadow:0 0 9px rgba(139,123,255,.85);"></span>
+      <span>SPECIFICATIONS</span>
+      <span data-m="speccursor" style="width:.55em;height:1.05em;background:currentColor;opacity:.8;"></span>
+    </div>
+
+    <h2 style="margin:1.1rem 0 0;font-size:clamp(2.2rem,4.8vw,3.6rem);font-weight:700;letter-spacing:-.038em;line-height:1.04;color:var(--txt,#f4f4f6);">Every number.</h2><p style="margin:1rem 0 0;max-width:40rem;font-size:1rem;line-height:1.55;color:var(--txt2,#a9aab1);text-wrap:pretty;">The whole sheet. No asterisks, no small print, nothing withheld.</p><div data-m="specscan" style="margin-top:2.6rem;height:1px;background:rgba(255,255,255,.08);position:relative;overflow:hidden;">
+      <span style="position:absolute;top:0;left:0;width:34%;height:100%;background:linear-gradient(90deg,transparent,#8b7bff,transparent);"></span>
+    </div>
+
+    <div data-m="specgroups" style="margin-top:2.4rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:1.1rem;"><div data-m="specgroup"  style="border:1px solid rgba(255,255,255,.08);border-radius:1.1rem;background:rgba(255,255,255,.022);padding:1.45rem 1.55rem 1.65rem;">
+
+            <div style="display:flex;align-items:baseline;gap:.85rem;padding-bottom:.95rem;border-bottom:1px solid rgba(255,255,255,.07);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+              <span style="font-size:.72rem;color:#8b7bff;">01</span>
+              <span style="font-size:.74rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">POWERTRAIN</span></div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:1.7rem 1.9rem;padding-top:1.55rem;"><div>
+                    <div data-m="specval" data-value="82 hp" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">82 hp</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Peak power</div>
+                  </div><div>
+                    <div data-m="specval" data-value="980 Nm" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">980 Nm</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Torque at the wheel</div>
+                  </div><div>
+                    <div data-m="specval" data-value="15,000 rpm" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">15,000 rpm</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Motor speed</div>
+                  </div><div>
+                    <div data-m="specval" data-value="Direct drive" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">Direct drive</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Transmission</div>
+                  </div></div>
+
+          </div><div data-m="specgroup"  style="border:1px solid rgba(255,255,255,.08);border-radius:1.1rem;background:rgba(255,255,255,.022);padding:1.45rem 1.55rem 1.65rem;">
+
+            <div style="display:flex;align-items:baseline;gap:.85rem;padding-bottom:.95rem;border-bottom:1px solid rgba(255,255,255,.07);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+              <span style="font-size:.72rem;color:#8b7bff;">02</span>
+              <span style="font-size:.74rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">PERFORMANCE</span></div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:1.7rem 1.9rem;padding-top:1.55rem;"><div>
+                    <div data-m="specval" data-value="120 km/h" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">120 km/h</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Top speed</div>
+                  </div><div>
+                    <div data-m="specval" data-value="2.3 s" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">2.3 s</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">0–60 km/h</div>
+                  </div><div>
+                    <div data-m="specval" data-value="0" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">0</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Scheduled service</div>
+                  </div></div>
+
+          </div><div data-m="specgroup"  style="border:1px solid rgba(255,255,255,.08);border-radius:1.1rem;background:rgba(255,255,255,.022);padding:1.45rem 1.55rem 1.65rem;">
+
+            <div style="display:flex;align-items:baseline;gap:.85rem;padding-bottom:.95rem;border-bottom:1px solid rgba(255,255,255,.07);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+              <span style="font-size:.72rem;color:#8b7bff;">03</span>
+              <span style="font-size:.74rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">BATTERY</span><span style="margin-left:auto;font-size:.72rem;letter-spacing:.06em;color:var(--txt3,#7c7d85);">ASTRA ULTIMUM</span></div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:1.7rem 1.9rem;padding-top:1.55rem;"><div>
+                    <div data-m="specval" data-value="8.4 kWh" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">8.4 kWh</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Capacity</div>
+                  </div><div>
+                    <div data-m="specval" data-value="55 min" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">55 min</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Charge 0–100%</div>
+                  </div><div>
+                    <div data-m="specval" data-value="1,500" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">1,500</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Cycles to 80%</div>
+                  </div><div>
+                    <div data-m="specval" data-value="11 sec" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">11 sec</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Swap time</div>
+                  </div></div>
+
+          </div><div data-m="specgroup"  style="border:1px solid rgba(255,255,255,.08);border-radius:1.1rem;background:rgba(255,255,255,.022);padding:1.45rem 1.55rem 1.65rem;">
+
+            <div style="display:flex;align-items:baseline;gap:.85rem;padding-bottom:.95rem;border-bottom:1px solid rgba(255,255,255,.07);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+              <span style="font-size:.72rem;color:#8b7bff;">04</span>
+              <span style="font-size:.74rem;font-weight:600;letter-spacing:.2em;color:var(--txt3,#7c7d85);">CHASSIS</span></div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:1.7rem 1.9rem;padding-top:1.55rem;"><div>
+                    <div data-m="specval" data-value="104 kg" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">104 kg</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Weight, all in</div>
+                  </div><div>
+                    <div data-m="specval" data-value="310 mm" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">310 mm</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Suspension travel</div>
+                  </div><div>
+                    <div data-m="specval" data-value="280 mm, 4-piston" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">280 mm, 4-piston</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Front brake</div>
+                  </div><div>
+                    <div data-m="specval" data-value="IP69K" style="position:relative;display:inline-block;padding-bottom:.5rem;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:600;letter-spacing:-.035em;line-height:1;color:var(--txt,#f4f4f6);font-variant-numeric:tabular-nums;">IP69K</div>
+                    <div style="margin-top:.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3,#8a8b91);">Sealing</div>
+                  </div></div>
+
+          </div></div><p style="margin:3rem 0 0;max-width:46rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.72rem;line-height:1.6;letter-spacing:.04em;color:var(--txt3,#7c7d85);">Manufacturer specifications. Real-world figures vary with terrain, rider weight, temperature, tyre choice and setup.</p></div>
+</section>
+
+<style>
+  #shopify-section-specs [data-m="speccursor"]{ animation: xspecBlink 1.1s steps(1) infinite; }
+  @keyframes xspecBlink{ 50%{ opacity:0; } }
+  #shopify-section-specs [data-m="specscan"] > span{ animation: xspecScan 3.8s cubic-bezier(.4,0,.6,1) infinite; }
+  @keyframes xspecScan{ from{ transform:translateX(-110%); } to{ transform:translateX(320%); } }
+
+  /* The purple rule under each value. Full-width by default so a static render
+     (no JS, reduced motion) shows the finished state; in anim mode it starts
+     collapsed and draws itself when the group reveals. */
+  #shopify-section-specs [data-m="specval"]::after{
+    content:''; position:absolute; left:0; bottom:0; height:2px; width:100%;
+    background:linear-gradient(90deg,#8b7bff,rgba(139,123,255,0));
+    transform-origin:left; transition:transform .9s cubic-bezier(.28,.11,.32,1) .25s;
+  }
+  #shopify-section-specs[data-anim="1"] [data-m="specgroup"]:not(.is-in) [data-m="specval"]::after{ transform:scaleX(0); }
+
+  /* Visibility contract (see header comment): the hidden state exists ONLY under
+     data-anim, which the script sets itself. Never inline-hide the groups. */
+  #shopify-section-specs[data-anim="1"] [data-m="specgroup"]{
+    opacity:0; transform:translateY(14px);
+    transition:opacity .7s cubic-bezier(.28,.11,.32,1), transform .7s cubic-bezier(.28,.11,.32,1);
+  }
+  #shopify-section-specs[data-anim="1"] [data-m="specgroup"].is-in{ opacity:1; transform:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    #shopify-section-specs [data-m="specgroup"]{ opacity:1 !important; transform:none !important; transition:none !important; }
+    #shopify-section-specs [data-m="specmatrix"]{ display:none; }
+    #shopify-section-specs [data-m="speccursor"],
+    #shopify-section-specs [data-m="specscan"] > span{ animation:none; }
+  }
+  @media (max-width: 900px){
+    #shopify-section-specs [data-m="specmatrix"]{ opacity:.3; }
+  }
+</style>
+
+
+
+
+</div>
+
+<!-- ===== box (xero-box) ===== -->

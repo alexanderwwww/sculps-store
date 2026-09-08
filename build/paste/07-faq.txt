@@ -1,0 +1,121 @@
+<div id="shopify-section-ugc-faq" class="shopify-section"><section class="xero-night" data-sec="ugc-faq" id="faq" style="position:relative;width:100%;background:var(--pg2);padding:6rem 1.4rem;">
+
+  <div style="max-width:76rem;margin:0 auto;display:flex;flex-wrap:wrap;gap:4rem;align-items:flex-start;justify-content:center;"><div data-m="clip" style="flex:0 1 22rem;min-width:0;width:100%;max-width:24rem;">
+      <div style="position:relative;width:100%;aspect-ratio:9 / 16;border-radius:1.8rem;overflow:hidden;background:#000;border:1px solid var(--hair,rgba(255,255,255,.12));box-shadow:0 1.6rem 4rem rgba(0,0,0,.45);"><video src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/openart-cgt-20260822164612-kmbtb_1787388503750_c5f8a379.mp4" class="" playsinline muted loop autoplay playsinline></video>
+          <button data-m="sound" aria-label="Toggle sound"
+            style="position:absolute;right:.8rem;bottom:.8rem;z-index:2;width:2.4rem;height:2.4rem;border-radius:50%;background:rgba(14,14,20,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"></path><path data-m="mute" d="M16 9.5l4.5 5M20.5 9.5l-4.5 5"></path><path data-m="unmute" style="display:none" d="M15.5 8.8a4.4 4.4 0 0 1 0 6.4M18.4 6.4a8 8 0 0 1 0 11.2"></path></svg>
+          </button></div>
+    </div><div style="flex:1 1 26rem;min-width:0;">
+      <h2 style="margin:0 0 2rem;font-size:clamp(2rem,3.6vw,3rem);font-weight:700;letter-spacing:-.035em;line-height:1.05;color:var(--txt,#0e0e0e);">Questions.</h2><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            How fast is it?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">120 km/h, about 75 mph.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            How much torque?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">980 Nm at the rear wheel, with 82 hp peak. There is no gearbox between the motor and the road, so all of it arrives the moment you touch the throttle.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            What does it weigh?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">104 kg, all in. A single-piece cast frame carries the pack, so there is no subframe underneath adding weight back.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            How far does it go?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">An 8.4 kWh ASTRA ULTIMUM pack, good for a long day of trail riding. A second pack swaps in tool-free in about eleven seconds, which is the closest thing there is to unlimited range.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            How long does it charge?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">About 55 minutes from empty to full, and the pack holds over 80% of its capacity after 1,500 cycles.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            How does the key work?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">There is no key. A steel card ships with the bike and pairs it to you once. After that your iPhone lies flat in the tank pocket, charges while you ride, and is the only thing that will wake the machine.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            What if someone tries to take it?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">It stays locked, the same way your phone does in somebody else's hand. Without the paired device it will not start, and you can see where it is from your iPhone. Location reporting is planned for the companion app and is not available yet.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            What comes with it?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">The bike, its charger, the wireless key and your steel owner card. At checkout you can add a spare wireless key, and you can choose the configuration that includes a ten-year replacement term.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            What is 10-Year Replacement?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">A second configuration of the bike rather than an add-on. Choose it at checkout and for ten years from delivery we replace the whole machine rather than repair it. Full terms are on the refund and terms pages. It is not insurance and is not underwritten by an insurer; it is an extended replacement term offered by us directly.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            When does it ship?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">Four to six weeks from order. Your key case arrives days before the bike does, and you can cancel for a full refund any time before dispatch.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            How is it delivered?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">To your door on a tail-lift vehicle, by our own team or a specialist vehicle carrier we appoint - not a parcel courier. Nothing for you to collect, no freight terminal, and shipping is free.</div>
+        </details><details  style="padding:1.15rem 0;border-top:1px solid var(--hair,rgba(255,255,255,.1));">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font-size:1.08rem;font-weight:600;letter-spacing:-.02em;color:var(--txt,#0e0e0e);">
+            What servicing does it need?
+            <span data-m="chev" style="flex:0 0 auto;transition:transform .3s cubic-bezier(.28,.11,.32,1);">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--txt3,#7c7d85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l4 4 4-4"></path></svg>
+            </span>
+          </summary>
+          <div style="margin-top:.5rem;font-size:1rem;line-height:1.55;color:var(--txt2,#55565c);text-wrap:pretty;">No oil, no chain, no filters and no valve clearances. Tyres, brake pads and battery care are the owner’s responsibility.</div>
+        </details></div>
+
+  </div>
+
+</section>
+
+<style>
+  [data-sec="ugc-faq"] summary::-webkit-details-marker{ display:none; }
+  [data-sec="ugc-faq"] details[open] [data-m="chev"]{ transform:rotate(180deg); }
+</style>
+
+
+
+</div>
+
+<!-- ===== xero_film_E4yzrV (xero-film) ===== -->

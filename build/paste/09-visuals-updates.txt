@@ -1,0 +1,218 @@
+<div id="shopify-section-ugc" class="shopify-section"><style>
+  /* --- containment guard: sticky dies inside a contained ancestor --- */
+  #shopify-section-ugc{ contain: none !important; content-visibility: visible !important; }
+
+  #shopify-section-ugc .ugc{
+    --ugc-card-w: clamp(210px, 24vw, 306px);
+    --ugc-gap: clamp(14px, 1.6vw, 26px);
+    --ugc-radius: 30px;
+    --ugc-ink: #f5f5f7;
+    --ugc-dim: rgba(245,245,247,.58);
+    --ugc-bg: #08080a;
+    --ugc-glass: rgba(255,255,255,.10);
+    --ugc-edge: rgba(255,255,255,.18);
+    position: relative;
+    background: var(--ugc-bg);
+    color: var(--ugc-ink);
+    isolation: isolate;
+  }
+
+  /* soft vignette so cards fade into the ground at the edges */
+  #shopify-section-ugc .ugc-stage::before,
+  #shopify-section-ugc .ugc-stage::after{
+    content:''; position:absolute; top:0; bottom:0; width:clamp(48px, 12vw, 200px);
+    z-index:5; pointer-events:none;
+  }
+  #shopify-section-ugc .ugc-stage::before{ left:0;  background:linear-gradient(90deg, var(--ugc-bg), transparent); }
+  #shopify-section-ugc .ugc-stage::after { right:0; background:linear-gradient(270deg, var(--ugc-bg), transparent); }
+
+  #shopify-section-ugc .ugc-pin{
+    padding: clamp(56px, 8vh, 104px) 0 clamp(40px, 6vh, 72px);
+  }
+
+  #shopify-section-ugc .ugc-head{
+    max-width: 44rem;
+    margin: 0 auto clamp(28px, 4vh, 52px);
+    padding: 0 24px;
+    text-align: center;
+  }
+  #shopify-section-ugc .ugc-kicker{
+    display:inline-block; margin:0 0 14px;
+    font-size: 12px; letter-spacing:.14em; text-transform:uppercase;
+    color: var(--ugc-dim);
+  }
+  #shopify-section-ugc .ugc-title{
+    margin:0; font-weight:600; letter-spacing:-.026em; line-height:1.06;
+    font-size: clamp(30px, 4.6vw, 60px);
+  }
+  #shopify-section-ugc .ugc-sub{
+    margin:14px 0 0; color:var(--ugc-dim); line-height:1.5;
+    font-size: clamp(15px, 1.35vw, 18px);
+  }
+
+  /* ---------- base (no JS) : native snap strip ---------- */
+  #shopify-section-ugc .ugc-stage{ position:relative; }
+  #shopify-section-ugc .ugc-track{
+    display:flex; gap: var(--ugc-gap);
+    padding-inline: max(24px, calc(50vw - (var(--ugc-card-w) / 2)));
+    overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width:none;
+  }
+  #shopify-section-ugc .ugc-track::-webkit-scrollbar{ display:none; }
+  #shopify-section-ugc .ugc-card{
+    flex: 0 0 var(--ugc-card-w);
+    scroll-snap-align:center;
+  }
+
+  /* ---------- card ---------- */
+  #shopify-section-ugc .ugc-card{
+    position:relative;
+    border-radius: var(--ugc-radius);
+    will-change: transform, opacity;
+  }
+  #shopify-section-ugc .ugc-frame{
+    position:relative;
+    aspect-ratio: 9 / 16;
+    border-radius: var(--ugc-radius);
+    overflow:hidden;
+    background:#141417;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.10) inset,
+      0 0 0 1px var(--ugc-edge),
+      0 30px 60px -22px rgba(0,0,0,.62);
+  }
+  #shopify-section-ugc .ugc-frame img,
+  #shopify-section-ugc .ugc-frame svg{
+    position:absolute; inset:-4%;
+    width:108%; height:108%;
+    object-fit:cover; display:block;
+    will-change: transform;
+  }
+  /* bottom scrim so the glass chip always reads */
+  #shopify-section-ugc .ugc-frame::after{
+    content:''; position:absolute; left:0; right:0; bottom:0; height:52%;
+    background:linear-gradient(to top, rgba(0,0,0,.60), rgba(0,0,0,0));
+    pointer-events:none;
+  }
+
+  #shopify-section-ugc .ugc-meta{
+    position:absolute; left:12px; right:12px; bottom:12px; z-index:2;
+    display:flex; flex-direction:column; gap:8px; align-items:flex-start;
+  }
+  #shopify-section-ugc .ugc-chip{
+    display:inline-flex; align-items:center; gap:7px;
+    padding:7px 12px; border-radius:999px;
+    font-size:12px; font-weight:590; letter-spacing:-.01em; color:#fff;
+    background: rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.30), 0 8px 24px rgba(0,0,0,.28);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+  }
+  #shopify-section-ugc .ugc-chip .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:#34c759; box-shadow:0 0 8px rgba(52,199,89,.9);
+  }
+  #shopify-section-ugc .ugc-cap{
+    margin:0; padding:0 4px;
+    font-size:13px; line-height:1.35; color:rgba(255,255,255,.90);
+    text-shadow:0 1px 12px rgba(0,0,0,.55);
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+
+  /* ---------- dots ---------- */
+  #shopify-section-ugc .ugc-dots{
+    display:flex; justify-content:center; gap:7px;
+    margin-top: clamp(26px, 3.4vh, 46px);
+  }
+  #shopify-section-ugc .ugc-dots i{
+    width:6px; height:6px; border-radius:999px; display:block;
+    background: var(--ugc-dim); opacity:.38;
+    transition: opacity .35s ease, width .35s ease, background .35s ease;
+  }
+  #shopify-section-ugc .ugc-dots i.on{ opacity:1; width:22px; background:var(--ugc-ink); }
+
+  /* ---------- enhanced (JS on) ---------- */
+  #shopify-section-ugc .ugc[data-ready="1"] .ugc-runway{ position:relative; }
+  #shopify-section-ugc .ugc[data-ready="1"] .ugc-pin{
+    position: sticky; top: 0;
+    min-height: 100svh;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  #shopify-section-ugc .ugc[data-ready="1"] .ugc-stage{
+    overflow:hidden;
+    perspective: 1500px;
+    perspective-origin: 50% 46%;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+  #shopify-section-ugc .ugc[data-ready="1"] .ugc-stage.drag{ cursor: grabbing; }
+  #shopify-section-ugc .ugc[data-ready="1"] .ugc-track{
+    display:block; position:relative;
+    height: calc(var(--ugc-card-w) * 16 / 9);
+    overflow: visible;
+    padding:0; scroll-snap-type:none;
+    transform-style: preserve-3d;
+  }
+  #shopify-section-ugc .ugc[data-ready="1"] .ugc-card{
+    position:absolute; top:0;
+    left: 50%; margin-left: calc(var(--ugc-card-w) / -2);
+    width: var(--ugc-card-w);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #shopify-section-ugc .ugc-frame img{ inset:0; width:100%; height:100%; }
+  }
+  @media (max-width: 749px){
+    #shopify-section-ugc .ugc{ --ugc-card-w: min(62vw, 260px); --ugc-radius: 26px; }
+  }
+</style>
+
+<div class="ugc" data-ugc data-count="6" data-span="58">
+  <div class="ugc-runway" data-ugc-runway>
+    <div class="ugc-pin" data-ugc-pin>
+
+      <div class="ugc-head"><span class="ugc-kicker">THE CHIRON</span><h2 class="ugc-title">Design visualisations.</h2><p class="ugc-sub">Renders and design visualisations. Not photographs of a customer machine.</p></div>
+
+      <div class="ugc-stage" data-ugc-stage>
+        <div class="ugc-track" data-ugc-track><article class="ugc-card" data-ugc-card data-i="0" >
+              <div class="ugc-frame"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260818_025446_38445f44-39b6-4663-97c9-6fae394efeae.png" alt="" loading="lazy"></div></article><article class="ugc-card" data-ugc-card data-i="1" >
+              <div class="ugc-frame"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260818_025507_2ed6750a-1ef2-44f2-8cb8-a7478ae63ca0.png" alt="" loading="lazy"></div></article><article class="ugc-card" data-ugc-card data-i="2" >
+              <div class="ugc-frame"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260818_031144_a7f94903-17d9-4ef0-984d-5c7f74f28d03.png" alt="" loading="lazy"></div></article><article class="ugc-card" data-ugc-card data-i="3" >
+              <div class="ugc-frame"><img src="" alt="" loading="lazy"></div></article><article class="ugc-card" data-ugc-card data-i="4" >
+              <div class="ugc-frame"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260818_031616_4f1172f0-e529-43c3-bdcf-142e4a79427a.png" alt="" loading="lazy"></div></article><article class="ugc-card" data-ugc-card data-i="5" >
+              <div class="ugc-frame"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260818_025729_38890e22-5af4-4d6d-82cf-a16617594a7c.png" alt="" loading="lazy"></div></article></div>
+      </div><div class="ugc-dots" data-ugc-dots aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  </div>
+</div>
+
+
+
+
+</div>
+
+<!-- ===== network (xero-network) ===== -->
+
+<div id="shopify-section-network" class="shopify-section"><section class="xero-night" data-sec="network" style="position:relative;width:100%;background:#000;overflow:hidden;">
+
+  <div style="position:relative;width:100%;min-height:clamp(30rem,62vw,52rem);"><img src="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260818_122304_8f50f520-5e2a-4157-b4ea-350c9f94cb52.png"
+           srcset="https://raw.githubusercontent.com/alexanderwwww/sculps-store/00017018494549593565bfcb5792d682f283c8d3/snapshot/media/hf_20260818_122304_8f50f520-5e2a-4157-b4ea-350c9f94cb52.png"
+           sizes="100vw"
+           alt=""
+           width="" height=""
+           loading="lazy" decoding="async"
+           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 42%,rgba(0,0,0,.35) 100%);pointer-events:none;"></div>
+
+    <div style="position:relative;max-width:78rem;margin:0 auto;padding:4.6rem 1.6rem;">
+      <div style="max-width:32rem;"><div style="font-size:.74rem;font-weight:700;letter-spacing:.2em;color:rgba(255,255,255,.62);">ALWAYS IN THE LOOP</div><h2 style="margin:1rem 0 0;font-size:clamp(2rem,4.6vw,3.4rem);font-weight:700;letter-spacing:-.038em;line-height:1.05;color:#fff;text-wrap:balance;">Updates and notifications at every step.</h2><p style="margin:1.1rem 0 0;font-size:1.08rem;line-height:1.5;letter-spacing:-.014em;color:rgba(255,255,255,.72);text-wrap:pretty;">From the moment your card is etched to the day your bike arrives. Build, quality check, dispatch and delivery updates land on your phone/email</p></div>
+    </div>
+
+  </div>
+</section>
+
+</div>
+
+<!-- ===== track (xero-track) ===== -->
