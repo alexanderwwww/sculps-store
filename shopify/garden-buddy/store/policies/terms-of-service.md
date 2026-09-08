@@ -1,8 +1,8 @@
 # Terms of Service
 
-Last updated: [ DATE ]
+Last updated: 8 September 2026
 
-This store is operated by [ HER FULL LEGAL NAME ], a sole proprietor trading as Garden Buddy ("we", "us"). By using this site or placing an order, you agree to these terms.
+This store is operated by Perla Burgos, a sole proprietor trading as Garden Buddy ("we", "us"). By using this site or placing an order, you agree to these terms.
 
 ## Ordering
 
@@ -50,9 +50,9 @@ We may update these terms. The version published when you order is the one that 
 
 ## Governing law
 
-These terms are governed by the laws of the State of [ HER STATE ], United States.
+These terms are governed by the laws of the State of New York, United States.
 
 ## Contact
 
-[ SUPPORT EMAIL ]
-[ HER BUSINESS ADDRESS ]
+gardenbuddystore@gmail.com
+505 West 162nd Street, New York, NY 10032, United States

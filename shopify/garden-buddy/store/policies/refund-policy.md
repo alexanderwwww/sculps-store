@@ -10,7 +10,7 @@ The item must be in the condition it arrived in, aside from normal garden use â€
 
 ## How to start a return
 
-Email [ SUPPORT EMAIL ] with your order number and a sentence about why. We reply within one business day with a prepaid return label. Print it, attach it to any box, and drop it at the carrier.
+Email gardenbuddystore@gmail.com with your order number and a sentence about why. We reply within one business day with a prepaid return label. Print it, attach it to any box, and drop it at the carrier.
 
 ## Return shipping
 
@@ -24,7 +24,7 @@ You will receive an email when the refund is issued.
 
 ## Damaged or faulty on arrival
 
-Send a photo to [ SUPPORT EMAIL ]. We send a replacement at no cost and you keep or dispose of the damaged one. No return needed.
+Send a photo to gardenbuddystore@gmail.com. We send a replacement at no cost and you keep or dispose of the damaged one. No return needed.
 
 ## Wrong item
 
@@ -44,4 +44,4 @@ Nothing. Every item we sell is covered by this policy.
 
 ## Questions
 
-Email [ SUPPORT EMAIL ].
+Email gardenbuddystore@gmail.com.

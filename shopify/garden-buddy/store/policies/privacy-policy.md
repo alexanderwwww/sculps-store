@@ -1,8 +1,8 @@
 # Privacy Policy
 
-Last updated: [ DATE ]
+Last updated: 8 September 2026
 
-This store is operated by [ HER FULL LEGAL NAME ], trading as Garden Buddy. This policy explains what we collect, why, and what you can do about it.
+This store is operated by Perla Burgos, trading as Garden Buddy. This policy explains what we collect, why, and what you can do about it.
 
 ## What we collect
 
@@ -51,7 +51,7 @@ Depending on where you live, you may have the right to:
 - Opt out of marketing, at any time, using the unsubscribe link
 - Opt out of the sharing of your information for targeted advertising
 
-To exercise any of these, email [ SUPPORT EMAIL ]. We reply within 30 days. We will not treat you differently for asking.
+To exercise any of these, email gardenbuddystore@gmail.com. We reply within 30 days. We will not treat you differently for asking.
 
 **California residents:** you have these rights under the CCPA/CPRA, including the right to opt out of "sharing" for cross-context behavioural advertising. Use the same email address.
 
@@ -69,5 +69,5 @@ If we change this policy we update the date at the top and post the new version 
 
 ## Contact
 
-[ SUPPORT EMAIL ]
-[ HER BUSINESS ADDRESS ]
+gardenbuddystore@gmail.com
+505 West 162nd Street, New York, NY 10032, United States

@@ -36,4 +36,4 @@ We can ship to PO boxes. APO and FPO addresses may take considerably longer.
 
 ## Questions
 
-Email [ SUPPORT EMAIL ] with your order number and we will reply within one business day.
+Email gardenbuddystore@gmail.com with your order number and we will reply within one business day.

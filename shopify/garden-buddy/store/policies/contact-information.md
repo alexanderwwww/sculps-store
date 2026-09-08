@@ -1,9 +1,9 @@
 # Contact Information
 
-Garden Buddy is operated by [ HER FULL LEGAL NAME ], a sole proprietor.
+Garden Buddy is operated by Perla Burgos, a sole proprietor.
 
-**Email:** [ SUPPORT EMAIL ]
-**Address:** [ HER BUSINESS ADDRESS ]
+**Email:** gardenbuddystore@gmail.com
+**Address:** 505 West 162nd Street, New York, NY 10032, United States
 **Hours:** We answer emails within one business day, Monday to Friday.
 
 For anything about an existing order, include your order number and we will find it faster.
