@@ -111,8 +111,7 @@
         "faq_heading": "Questions people ask first.",
         "open_first": true,
         "faq_note": "",
-        "video_fallback": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4",
-        "video": "shopify://files/videos/Screen Recording 2026-09-06 at 23.49.28.mov"
+        "video_fallback": "https://cdn.shopify.com/videos/c/vp/949d92588fe44ffda4721c60b1955d42/949d92588fe44ffda4721c60b1955d42.HD-720p-4.5Mbps-93649940.mp4"
       }
     },
     "social": {
