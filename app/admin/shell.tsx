@@ -17,6 +17,7 @@ import { Link, useFetcher, useLocation, useNavigate } from "react-router";
 import type { CSSProperties, ReactNode } from "react";
 import type { loader as notificationsLoader } from "~/routes/admin.notifications";
 import type { loader as searchLoader } from "~/routes/admin.search";
+import { money0 } from "~/lib/money";
 
 export interface ShellStore {
   id: string;
@@ -24,6 +25,11 @@ export interface ShellStore {
   name: string;
   domain: string;
   color: string;
+  /** money taken today, net of refunds, in cents */
+  revenueCents: number;
+  orderCount: number;
+  health: "ok" | "attention";
+  healthLabel: string;
 }
 
 export interface ShellUser {
@@ -71,7 +77,8 @@ export function AdminShell({
 }: {
   user: ShellUser;
   stores: ShellStore[];
-  store: ShellStore | null;
+  /** the store being viewed; the switcher's per-store figures are not needed here */
+  store: Pick<ShellStore, "id" | "slug" | "name" | "domain" | "color"> | null;
   counts: ShellCounts;
   children: ReactNode;
   /** Live View and the theme editor manage their own padding. */
@@ -410,18 +417,18 @@ export function AdminShell({
                     color: "var(--ink)",
                   }}
                 >
-                  {/* Health, today's revenue and today's order count all need
-                      loader fields the layout does not provide yet, so the row
-                      keeps its markup and shows the neutral, no-data state. */}
                   <span
-                    title="No data yet"
+                    title={option.healthLabel}
                     style={{
                       width: 9,
                       height: 9,
                       borderRadius: "50%",
-                      background: "var(--ink-3)",
+                      background: option.health === "attention" ? "var(--critical)" : "var(--success)",
                       flex: "none",
-                      boxShadow: "0 0 0 3px rgba(0,0,0,0)",
+                      boxShadow:
+                        option.health === "attention"
+                          ? "0 0 0 3px rgba(245,166,35,.18)"
+                          : "0 0 0 3px rgba(34,197,94,.16)",
                     }}
                   />
                   <span style={{ flex: 1, minWidth: 0 }}>
@@ -452,9 +459,11 @@ export function AdminShell({
                     </span>
                   </span>
                   <span style={{ textAlign: "right", flex: "none", fontVariantNumeric: "tabular-nums" }}>
-                    <span style={{ display: "block", fontWeight: 600, lineHeight: "16px" }}>—</span>
+                    <span style={{ display: "block", fontWeight: 600, lineHeight: "16px" }}>
+                      {money0(option.revenueCents)}
+                    </span>
                     <span style={{ display: "block", fontSize: 12, lineHeight: "16px", color: "var(--ink-2)" }}>
-                      —
+                      {option.orderCount} {option.orderCount === 1 ? "order" : "orders"}
                     </span>
                   </span>
                   {option.id === store?.id ? (
@@ -1139,7 +1148,7 @@ function CommandPalette({
   onClose,
   onGo,
 }: {
-  store: ShellStore | null;
+  store: Pick<ShellStore, "id" | "slug" | "name" | "domain" | "color"> | null;
   onClose: () => void;
   onGo: (to: string) => void;
 }) {

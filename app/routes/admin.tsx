@@ -3,11 +3,11 @@
  * the sign-in check happens in exactly one place.
  */
 import { Outlet, useLocation } from "react-router";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, gte, inArray } from "drizzle-orm";
 import type { Route } from "./+types/admin";
 import { requireUser } from "~/lib/auth.server";
 import { resolveAdminStore } from "~/lib/admin.server";
-import { orders, products, reviews } from "~/db/schema";
+import { orders, orderEvents, products, reviews } from "~/db/schema";
 import { AdminShell } from "~/admin/shell";
 import adminHref from "~/admin/admin.css?url";
 
@@ -52,6 +52,42 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     };
   }
 
+  // What the store switcher shows next to each store: money taken today, how
+  // many orders that was, and whether anything needs attention. All three are
+  // real reads — a store with no orders today shows zero, not a guess.
+  const ids = all.map((s) => s.id);
+  const since = new Date();
+  since.setUTCHours(0, 0, 0, 0);
+
+  let today = new Map<string, { revenueCents: number; orderCount: number }>();
+  let attention = new Map<string, string>();
+  if (ids.length) {
+    const [totals, disputed] = await Promise.all([
+      context.db
+        .select({
+          storeId: orders.storeId,
+          revenueCents: sql<number>`cast(coalesce(sum(${orders.totalCents} - ${orders.refundedCents}), 0) as int)`,
+          orderCount: sql<number>`cast(count(*) as int)`,
+        })
+        .from(orders)
+        .where(
+          and(
+            inArray(orders.storeId, ids),
+            eq(orders.paymentStatus, "paid"),
+            gte(orders.createdAt, since),
+          ),
+        )
+        .groupBy(orders.storeId),
+      context.db
+        .selectDistinct({ storeId: orders.storeId })
+        .from(orderEvents)
+        .innerJoin(orders, eq(orders.id, orderEvents.orderId))
+        .where(and(inArray(orders.storeId, ids), eq(orderEvents.type, "chargeback"))),
+    ]);
+    today = new Map(totals.map((row) => [row.storeId, row]));
+    attention = new Map(disputed.map((row) => [row.storeId, "Open chargeback"]));
+  }
+
   return {
     user: { email: user.email, name: user.name, avatarUrl: user.avatarUrl },
     stores: all.map((s) => ({
@@ -60,6 +96,10 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       name: s.name,
       domain: s.domain,
       color: s.color,
+      revenueCents: today.get(s.id)?.revenueCents ?? 0,
+      orderCount: today.get(s.id)?.orderCount ?? 0,
+      health: (attention.has(s.id) ? "attention" : "ok") as "ok" | "attention",
+      healthLabel: attention.get(s.id) ?? "No problems today",
     })),
     store: store
       ? { id: store.id, slug: store.slug, name: store.name, domain: store.domain, color: store.color }
