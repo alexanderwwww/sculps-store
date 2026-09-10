@@ -17,3 +17,8 @@ tsconfig.tsbuildinfo
 /journey.mjs
 /cleanup.mjs
 /store-stripe.mjs
+/traffic.mjs
+/journey.mjs
+/ten*.mjs
+/test-order*.mjs
+/port-garden-buddy.mjs

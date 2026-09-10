@@ -5,5 +5,10 @@
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // Store media: product photos and video, served from the Worker so the
+  // files belong to us rather than to whichever platform hosted them before.
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "gardenbuddy-media" }
+  ],
   "vars": {}
 }

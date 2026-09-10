@@ -14,6 +14,7 @@ export default [
   route("pages/:handle", "routes/pages.$handle.tsx"),
   route("password", "routes/password.tsx"),
   route("vitals", "routes/vitals.tsx"),
+  route("media/:key", "routes/media.$key.tsx"),
   route("webhooks/stripe", "routes/webhooks.stripe.tsx"),
 
   // Admin. Sign-in lives outside the layout so it is reachable when signed out.
