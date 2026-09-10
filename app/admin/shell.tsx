@@ -1,12 +1,22 @@
 /**
- * The admin shell: dark top bar, store switcher, sidebar, ⌘K palette.
+ * The admin shell: dark top bar, store switcher, notifications bell, ⌘K
+ * palette, sidebar, mobile drawer.
  *
- * Ported from the approved prototype. The one behavioural difference is that
- * the store list is whatever is in the database — including none at all.
+ * Transliterated from design/port/shell.html. Every style string here is the
+ * prototype's. Three differences, all of them because the real thing knows
+ * something the prototype did not:
+ *
+ *  - the prototype assumes a session and has no user menu; ours signs in and
+ *    out for real, so the avatar opens a menu instead of being decoration;
+ *  - the store list is whatever is in the database, including none at all;
+ *  - the bell and the palette read real rows from /admin/notifications and
+ *    /admin/search rather than the prototype's in-memory arrays.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useFetcher, useLocation, useNavigate } from "react-router";
 import type { CSSProperties, ReactNode } from "react";
+import type { loader as notificationsLoader } from "~/routes/admin.notifications";
+import type { loader as searchLoader } from "~/routes/admin.search";
 
 export interface ShellStore {
   id: string;
@@ -57,6 +67,7 @@ export function AdminShell({
   counts,
   children,
   fullBleed = false,
+  saveBar = null,
 }: {
   user: ShellUser;
   stores: ShellStore[];
@@ -65,10 +76,17 @@ export function AdminShell({
   children: ReactNode;
   /** Live View and the theme editor manage their own padding. */
   fullBleed?: boolean;
+  /**
+   * The prototype's "Unsaved changes" bar. It only appears when a screen says
+   * it has unsaved work; nothing reports that yet, so it stays closed rather
+   * than pretending. (See the report: the layout would have to pass it.)
+   */
+  saveBar?: { onDiscard: () => void; onSave: () => void } | null;
 }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [storeMenuOpen, setStoreMenuOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -89,6 +107,7 @@ export function AdminShell({
       if (event.key === "Escape") {
         setPaletteOpen(false);
         setStoreMenuOpen(false);
+        setBellOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -98,6 +117,7 @@ export function AdminShell({
   // Close the menus whenever the route changes.
   useEffect(() => {
     setStoreMenuOpen(false);
+    setBellOpen(false);
     setPaletteOpen(false);
     setDrawerOpen(false);
   }, [location.key]);
@@ -137,12 +157,15 @@ export function AdminShell({
         </svg>
       ),
     },
+    // navExtra in the prototype is Inventory, Customers, Reviews, Marketing.
+    // This project has no Customers screen and no Marketing screen, so those
+    // two rows are omitted rather than linked to nothing.
     {
       to: withStore("/admin/inventory"),
       label: "Inventory",
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
-          <path d="M3 7l7-4 7 4v6l-7 4-7-4z M3 7l7 4 7-4 M10 11v6" />
+          <path d="M3 6.5 10 3l7 3.5v7L10 17l-7-3.5zM3 6.5 10 10l7-3.5M10 10v7" />
         </svg>
       ),
     },
@@ -152,7 +175,7 @@ export function AdminShell({
       count: counts.reviews || undefined,
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
-          <path d="m10 3 2.2 4.5 5 .7-3.6 3.5.9 4.9L10 14.3 5.5 16.6l.9-4.9L2.8 8.2l5-.7z" />
+          <path d="M10 3l2.2 4.5 5 .7-3.6 3.5.9 4.9L10 14.3l-4.5 2.3.9-4.9L2.8 8.2l5-.7z" />
         </svg>
       ),
     },
@@ -202,6 +225,7 @@ export function AdminShell({
           <path d="M3 8l1.5-4h11L17 8M3 8v9h14V8M8 17v-5h4v5" />
         </svg>
       ),
+      trailing: <CustomizeShortcut suffix={suffix} />,
     },
     {
       to: withStore("/admin/media"),
@@ -248,21 +272,11 @@ export function AdminShell({
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: 9, flex: "none", marginRight: 4 }}>
-          <span
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 8,
-              background: "linear-gradient(135deg,#A78BFA,#6D3DF5)",
-              color: "#fff",
-              display: "grid",
-              placeItems: "center",
-              fontWeight: 700,
-              fontSize: 13,
-            }}
-          >
-            S
-          </span>
+          <img
+            src="/logo-white.png"
+            alt="Shop Admin"
+            style={{ width: 26, height: 26, objectFit: "contain", flex: "none", display: "block" }}
+          />
           {!isMobile ? (
             <span
               style={{
@@ -302,7 +316,12 @@ export function AdminShell({
 
         <div style={{ position: "relative", flex: "none", order: 5 }}>
           <button
-            onClick={() => setStoreMenuOpen((open) => !open)}
+            onClick={() => {
+              setBellOpen(false);
+              setStoreMenuOpen((open) => !open);
+            }}
+            onMouseEnter={(event) => (event.currentTarget.style.background = "rgba(255,255,255,.12)")}
+            onMouseLeave={(event) => (event.currentTarget.style.background = "rgba(255,255,255,.06)")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -339,7 +358,7 @@ export function AdminShell({
             <div
               style={{
                 position: "absolute",
-                left: 0,
+                right: 0,
                 top: 40,
                 width: 320,
                 zIndex: 60,
@@ -365,9 +384,7 @@ export function AdminShell({
                 Switch store
               </div>
               {stores.length === 0 ? (
-                <div style={{ padding: "10px", color: "var(--ink-2)" }}>
-                  No stores yet.
-                </div>
+                <div style={{ padding: "10px", color: "var(--ink-2)" }}>No stores yet.</div>
               ) : null}
               {stores.map((option) => (
                 <button
@@ -387,19 +404,24 @@ export function AdminShell({
                     padding: "8px 10px",
                     borderRadius: 8,
                     border: 0,
-                    background: option.id === store?.id ? "var(--sel)" : "transparent",
+                    background: option.id === store?.id ? "var(--accent-soft)" : "transparent",
                     cursor: "pointer",
                     textAlign: "left",
                     color: "var(--ink)",
                   }}
                 >
+                  {/* Health, today's revenue and today's order count all need
+                      loader fields the layout does not provide yet, so the row
+                      keeps its markup and shows the neutral, no-data state. */}
                   <span
+                    title="No data yet"
                     style={{
                       width: 9,
                       height: 9,
                       borderRadius: "50%",
-                      background: option.color,
+                      background: "var(--ink-3)",
                       flex: "none",
+                      boxShadow: "0 0 0 3px rgba(0,0,0,0)",
                     }}
                   />
                   <span style={{ flex: 1, minWidth: 0 }}>
@@ -429,6 +451,17 @@ export function AdminShell({
                       {option.domain}
                     </span>
                   </span>
+                  <span style={{ textAlign: "right", flex: "none", fontVariantNumeric: "tabular-nums" }}>
+                    <span style={{ display: "block", fontWeight: 600, lineHeight: "16px" }}>—</span>
+                    <span style={{ display: "block", fontSize: 12, lineHeight: "16px", color: "var(--ink-2)" }}>
+                      —
+                    </span>
+                  </span>
+                  {option.id === store?.id ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--link)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }}>
+                      <path d="M3 8.5 6.5 12 13 4.5" />
+                    </svg>
+                  ) : null}
                 </button>
               ))}
               <div style={{ borderTop: "1px solid var(--border)", marginTop: 6, paddingTop: 6 }}>
@@ -455,6 +488,8 @@ export function AdminShell({
         <div style={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0 }}>
           <button
             onClick={() => setPaletteOpen(true)}
+            onMouseEnter={(event) => (event.currentTarget.style.borderColor = "#616161")}
+            onMouseLeave={(event) => (event.currentTarget.style.borderColor = "transparent")}
             style={{
               width: "100%",
               maxWidth: 520,
@@ -492,6 +527,17 @@ export function AdminShell({
             </span>
           </button>
         </div>
+
+        <NotificationsBell
+          open={bellOpen}
+          storeName={store?.name ?? ""}
+          onToggle={() => {
+            setStoreMenuOpen(false);
+            setBellOpen((open) => !open);
+          }}
+          onClose={() => setBellOpen(false)}
+          storeSlug={store?.slug ?? null}
+        />
 
         <UserMenu user={user} />
       </header>
@@ -577,15 +623,108 @@ export function AdminShell({
                 background: "var(--side)",
                 display: "flex",
                 flexDirection: "column",
+                animation: "kSlide .2s ease-out",
                 boxShadow: "var(--shadow-lg)",
                 overflow: "auto",
-                padding: "12px",
-                gap: 2,
               }}
             >
-              {[...nav, ...channelNav].map((item) => (
-                <SideLink key={item.to + item.label} item={item} active={isActive(item.to)} />
-              ))}
+              <div style={{ padding: "14px 12px 8px", display: "flex", alignItems: "center", gap: 10 }}>
+                <span
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    background: "linear-gradient(135deg,#A78BFA,#6D3DF5)",
+                    color: "#fff",
+                    display: "grid",
+                    placeItems: "center",
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
+                  S
+                </span>
+                <span style={{ flex: 1, fontWeight: 650 }}>Shop Admin</span>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  style={{ border: 0, background: "transparent", cursor: "pointer", color: "var(--ink-2)", padding: 6 }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ padding: "4px 12px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
+                {stores.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => navigate(`${location.pathname}?store=${option.slug}`)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "6px 10px",
+                      borderRadius: 8,
+                      border: 0,
+                      background: option.id === store?.id ? "var(--accent-soft)" : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span style={{ width: 9, height: 9, borderRadius: "50%", background: option.color }} />
+                    <span style={{ flex: 1, fontWeight: 550 }}>{option.name}</span>
+                  </button>
+                ))}
+              </div>
+              <nav
+                style={{
+                  padding: "8px 12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  borderTop: "1px solid var(--border)",
+                }}
+              >
+                {[...nav, ...channelNav].map((item) => (
+                  <Link
+                    key={item.to + item.label}
+                    to={item.to}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      height: 40,
+                      padding: item.indent ? "0 10px 0 28px" : "0 10px",
+                      borderRadius: 8,
+                      border: 0,
+                      cursor: "pointer",
+                      fontWeight: item.indent ? 500 : 550,
+                      textAlign: "left",
+                      color: "var(--ink)",
+                      background: isActive(item.to) ? "var(--side-active)" : "transparent",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {item.count ? (
+                      <span
+                        style={{
+                          minWidth: 22,
+                          height: 20,
+                          padding: "0 6px",
+                          borderRadius: 6,
+                          background: "var(--b-neutral-bg)",
+                          color: "var(--b-neutral-fg)",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          display: "grid",
+                          placeItems: "center",
+                        }}
+                      >
+                        {item.count}
+                      </span>
+                    ) : null}
+                  </Link>
+                ))}
+              </nav>
             </aside>
           </>
         ) : null}
@@ -600,12 +739,65 @@ export function AdminShell({
             position: "relative",
           }}
         >
+          {saveBar ? (
+            <div
+              style={{
+                height: 48,
+                flex: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "0 16px",
+                background: "var(--topbar)",
+                color: "#fff",
+                animation: "kDrop .18s ease-out",
+              }}
+            >
+              <span style={{ fontWeight: 600, flex: 1 }}>Unsaved changes</span>
+              <button
+                onClick={saveBar.onDiscard}
+                style={{
+                  height: 30,
+                  padding: "0 12px",
+                  borderRadius: 8,
+                  border: "1px solid #616161",
+                  background: "transparent",
+                  color: "#fff",
+                  fontSize: 12,
+                  fontWeight: 550,
+                  cursor: "pointer",
+                }}
+              >
+                Discard
+              </button>
+              <button
+                onClick={saveBar.onSave}
+                style={{
+                  height: 30,
+                  padding: "0 12px",
+                  borderRadius: 8,
+                  border: 0,
+                  background: "#fff",
+                  color: "#1A1A1A",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Save
+              </button>
+            </div>
+          ) : null}
           <main
+            onClick={() => {
+              setStoreMenuOpen(false);
+              setBellOpen(false);
+            }}
             style={{
               flex: 1,
               minHeight: 0,
               overflow: fullBleed ? "hidden" : "auto",
-              padding: fullBleed ? 0 : "20px 24px 40px",
+              padding: fullBleed ? 0 : isMobile ? "16px" : "20px 24px 40px",
             }}
           >
             {children}
@@ -615,7 +807,6 @@ export function AdminShell({
 
       {paletteOpen ? (
         <CommandPalette
-          stores={stores}
           store={store}
           onClose={() => setPaletteOpen(false)}
           onGo={(to) => {
@@ -625,6 +816,24 @@ export function AdminShell({
         />
       ) : null}
     </div>
+  );
+}
+
+/** The inline "Customize" shortcut on the Online Store row. */
+function CustomizeShortcut({ suffix }: { suffix: string }) {
+  const navigate = useNavigate();
+  return (
+    <span
+      role="link"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate(`/admin/online-store${suffix}`);
+      }}
+      style={{ fontSize: 12, color: "var(--link)", fontWeight: 500, cursor: "pointer" }}
+    >
+      Customize
+    </span>
   );
 }
 
@@ -644,6 +853,7 @@ function SideLink({ item, active }: { item: NavItem; active: boolean }) {
     color: "var(--ink)",
     background: active ? "var(--side-active)" : "transparent",
     boxShadow: active ? "var(--shadow)" : "none",
+    borderLeft: `2px solid ${active ? "var(--accent)" : "transparent"}`,
     textDecoration: "none",
   };
 
@@ -683,6 +893,145 @@ function SideLink({ item, active }: { item: NavItem; active: boolean }) {
       ) : null}
       {item.trailing}
     </Link>
+  );
+}
+
+function NotificationsBell({
+  open,
+  storeName,
+  storeSlug,
+  onToggle,
+  onClose,
+}: {
+  open: boolean;
+  storeName: string;
+  storeSlug: string | null;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  const fetcher = useFetcher<typeof notificationsLoader>();
+  const navigate = useNavigate();
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Only load when the bell is opened, and reload each time it opens so the
+  // list is what the database says right now.
+  useEffect(() => {
+    if (!open) return;
+    fetcher.load(`/admin/notifications${storeSlug ? `?store=${storeSlug}` : ""}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, storeSlug]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, onClose]);
+
+  const notifications = fetcher.data?.notifications ?? [];
+  const loading = fetcher.state === "loading";
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={onToggle}
+        onMouseEnter={(event) => (event.currentTarget.style.background = "rgba(255,255,255,.08)")}
+        onMouseLeave={(event) => (event.currentTarget.style.background = "transparent")}
+        aria-label="Notifications"
+        style={{
+          width: 34,
+          height: 34,
+          border: 0,
+          background: "transparent",
+          borderRadius: 8,
+          cursor: "pointer",
+          color: "#fff",
+          display: "grid",
+          placeItems: "center",
+          position: "relative",
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
+          <path d="M5 14V9a5 5 0 0 1 10 0v5l1.5 1.5H3.5z" />
+          <path d="M8.5 17.5a1.5 1.5 0 0 0 3 0" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 40,
+            width: 340,
+            background: "var(--elev)",
+            color: "var(--ink)",
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            boxShadow: "var(--shadow-lg)",
+            animation: "kPop .14s ease-out",
+            overflow: "hidden",
+            zIndex: 60,
+          }}
+        >
+          <div
+            style={{
+              padding: "12px 14px",
+              borderBottom: "1px solid var(--border)",
+              fontWeight: 650,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            Notifications
+            <span style={{ fontSize: 12, color: "var(--ink-2)", fontWeight: 450 }}>{storeName}</span>
+          </div>
+          {!loading && notifications.length === 0 ? (
+            <div style={{ padding: "28px 16px", textAlign: "center", color: "var(--ink-2)" }}>
+              Nothing yet. Orders, tracking emails and payment alerts land here.
+            </div>
+          ) : null}
+          {notifications.map((item) => (
+            <button
+              key={item.id}
+              className="k-hover"
+              onClick={() => {
+                onClose();
+                navigate(item.to);
+              }}
+              style={{
+                width: "100%",
+                display: "flex",
+                gap: 10,
+                padding: "10px 14px",
+                border: 0,
+                borderBottom: "1px solid var(--border)",
+                background: "transparent",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: item.color,
+                  marginTop: 6,
+                  flex: "none",
+                }}
+              />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", color: "var(--ink)" }}>{item.text}</span>
+                <span style={{ display: "block", fontSize: 12, color: "var(--ink-2)" }}>{item.time}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -738,6 +1087,7 @@ function UserMenu({ user }: { user: ShellUser }) {
             boxShadow: "var(--shadow-lg)",
             padding: 6,
             zIndex: 60,
+            animation: "kPop .14s ease-out",
           }}
         >
           <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--border)", marginBottom: 6 }}>
@@ -771,55 +1121,86 @@ function UserMenu({ user }: { user: ShellUser }) {
   );
 }
 
-interface Command {
-  label: string;
-  hint: string;
+interface PaletteItem {
+  id: string;
+  title: string;
+  sub: string;
   to: string;
 }
 
+interface PaletteGroup {
+  label: string;
+  short: string;
+  items: PaletteItem[];
+}
+
 function CommandPalette({
-  stores,
   store,
   onClose,
   onGo,
 }: {
-  stores: ShellStore[];
   store: ShellStore | null;
   onClose: () => void;
   onGo: (to: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
+  const fetcher = useFetcher<typeof searchLoader>();
   const suffix = store ? `?store=${store.slug}` : "";
 
-  const commands = useMemo<Command[]>(() => {
-    const base: Command[] = [
-      { label: "Home", hint: "Go to", to: `/admin${suffix}` },
-      { label: "Orders", hint: "Go to", to: `/admin/orders${suffix}` },
-      { label: "Products", hint: "Go to", to: `/admin/products${suffix}` },
-      { label: "Inventory", hint: "Go to", to: `/admin/inventory${suffix}` },
-      { label: "Reviews", hint: "Go to", to: `/admin/reviews${suffix}` },
-      { label: "Analytics", hint: "Go to", to: `/admin/analytics${suffix}` },
-      { label: "Live View", hint: "Go to", to: `/admin/live${suffix}` },
-      { label: "Meta", hint: "Go to", to: `/admin/meta${suffix}` },
-      { label: "Online Store", hint: "Go to", to: `/admin/online-store${suffix}` },
-      { label: "Media", hint: "Go to", to: `/admin/media${suffix}` },
-      { label: "Settings", hint: "Go to", to: `/admin/settings${suffix}` },
-      { label: "Add store", hint: "Create", to: "/admin/stores/new" },
-    ];
-    for (const option of stores) {
-      base.push({ label: option.name, hint: "Switch store", to: `/admin?store=${option.slug}` });
-    }
-    return base;
-  }, [stores, suffix]);
+  const load = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams();
+      if (value) params.set("q", value);
+      if (store) params.set("store", store.slug);
+      fetcher.load(`/admin/search?${params.toString()}`);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store?.slug],
+  );
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return commands;
-    return commands.filter((c) => c.label.toLowerCase().includes(q));
-  }, [commands, query]);
+  // Debounced: one request per pause in typing, not one per keystroke.
+  useEffect(() => {
+    const timer = window.setTimeout(() => load(query.trim()), query ? 160 : 0);
+    return () => window.clearTimeout(timer);
+  }, [query, load]);
 
   useEffect(() => setIndex(0), [query]);
+
+  const groups = useMemo<PaletteGroup[]>(() => {
+    const q = query.trim().toLowerCase();
+    const all: PaletteGroup[] = [...((fetcher.data?.groups ?? []) as PaletteGroup[])];
+
+    // "Go to" is navigation this client already knows; it needs no round trip.
+    const screens: [string, string][] = [
+      ["Home", `/admin${suffix}`],
+      ["Orders", `/admin/orders${suffix}`],
+      ["Products", `/admin/products${suffix}`],
+      ["Inventory", `/admin/inventory${suffix}`],
+      ["Reviews", `/admin/reviews${suffix}`],
+      ["Analytics", `/admin/analytics${suffix}`],
+      ["Live View", `/admin/live${suffix}`],
+      ["Meta", `/admin/meta${suffix}`],
+      ["Online Store", `/admin/online-store${suffix}`],
+      ["Media", `/admin/media${suffix}`],
+      ["Settings", `/admin/settings${suffix}`],
+      ["Add store", "/admin/stores/new"],
+    ].filter(([label]) => !q || label.toLowerCase().includes(q)) as [string, string][];
+
+    if (screens.length) {
+      all.push({
+        label: "Go to",
+        short: "→",
+        items: screens.map(([label, to]) => ({ id: to, title: label, sub: "Screen", to })),
+      });
+    }
+    return all;
+  }, [fetcher.data, query, suffix]);
+
+  const flat = useMemo(() => groups.flatMap((group) => group.items), [groups]);
+  const current = Math.min(index, Math.max(0, flat.length - 1));
+
+  let counter = 0;
 
   return (
     <div
@@ -827,81 +1208,161 @@ function CommandPalette({
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 100,
-        background: "rgba(0,0,0,.35)",
+        zIndex: 80,
+        background: "rgba(0,0,0,.45)",
         display: "flex",
-        alignItems: "flex-start",
         justifyContent: "center",
+        alignItems: "flex-start",
         paddingTop: "12vh",
+        animation: "kFade .12s",
       }}
     >
       <div
         onClick={(event) => event.stopPropagation()}
         style={{
-          width: "min(560px, calc(100% - 32px))",
+          width: "min(640px,calc(100vw - 32px))",
           background: "var(--elev)",
           border: "1px solid var(--border)",
           borderRadius: 14,
           boxShadow: "var(--shadow-lg)",
           overflow: "hidden",
+          animation: "kModal .16s ease-out",
         }}
       >
-        <input
-          autoFocus
-          value={query}
-          placeholder="Search the admin…"
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowDown") {
-              event.preventDefault();
-              setIndex((i) => Math.min(i + 1, results.length - 1));
-            }
-            if (event.key === "ArrowUp") {
-              event.preventDefault();
-              setIndex((i) => Math.max(i - 1, 0));
-            }
-            if (event.key === "Enter" && results[index]) onGo(results[index].to);
-          }}
+        <div
           style={{
-            width: "100%",
-            height: 48,
-            border: 0,
-            borderBottom: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
             padding: "0 16px",
-            fontSize: 14,
-            outline: "none",
-            background: "transparent",
-            color: "var(--ink)",
+            height: 52,
+            borderBottom: "1px solid var(--border)",
           }}
-        />
-        <div style={{ maxHeight: 320, overflow: "auto", padding: 6 }}>
-          {results.length === 0 ? (
-            <div style={{ padding: "20px 12px", color: "var(--ink-2)" }}>Nothing matches.</div>
-          ) : null}
-          {results.map((command, i) => (
-            <button
-              key={command.to + command.label}
-              onMouseEnter={() => setIndex(i)}
-              onClick={() => onGo(command.to)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "9px 10px",
-                borderRadius: 8,
-                border: 0,
-                background: i === index ? "var(--sel)" : "transparent",
-                cursor: "pointer",
-                textAlign: "left",
-                color: "var(--ink)",
-                fontSize: 13,
-              }}
-            >
-              <span style={{ flex: 1 }}>{command.label}</span>
-              <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{command.hint}</span>
-            </button>
+        >
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="var(--ink-2)" strokeWidth="1.6" strokeLinecap="round">
+            <circle cx="7" cy="7" r="4.5" />
+            <path d="m10.5 10.5 3 3" />
+          </svg>
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setIndex((i) => Math.min(i + 1, flat.length - 1));
+              }
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setIndex((i) => Math.max(i - 1, 0));
+              }
+              if (event.key === "Enter" && flat[current]) onGo(flat[current].to);
+            }}
+            placeholder="Search orders, products, settings…"
+            style={{
+              flex: 1,
+              height: "100%",
+              border: 0,
+              background: "transparent",
+              fontSize: 15,
+              outline: "none",
+              color: "var(--ink)",
+            }}
+          />
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              padding: "1px 6px",
+              borderRadius: 5,
+              border: "1px solid var(--border)",
+              color: "var(--ink-2)",
+            }}
+          >
+            esc
+          </span>
+        </div>
+        <div style={{ maxHeight: 400, overflow: "auto", padding: 6 }}>
+          {groups.map((group) => (
+            <div key={group.label}>
+              <div
+                style={{
+                  padding: "8px 10px 4px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "var(--ink-2)",
+                  textTransform: "uppercase",
+                  letterSpacing: ".06em",
+                }}
+              >
+                {group.label}
+              </div>
+              {group.items.map((item) => {
+                const i = counter++;
+                return (
+                  <button
+                    key={group.label + item.id}
+                    onClick={() => onGo(item.to)}
+                    onMouseEnter={() => setIndex(i)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "8px 10px",
+                      border: 0,
+                      borderRadius: 8,
+                      background: i === current ? "var(--accent-soft)" : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 7,
+                        background: "var(--bg)",
+                        display: "grid",
+                        placeItems: "center",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: "var(--ink-2)",
+                        flex: "none",
+                      }}
+                    >
+                      {group.short}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span
+                        style={{
+                          display: "block",
+                          fontWeight: 550,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {item.title}
+                      </span>
+                      <span style={{ display: "block", fontSize: 12, color: "var(--ink-2)" }}>
+                        {item.sub}
+                      </span>
+                    </span>
+                    <span style={{ fontSize: 11, color: "var(--ink-3)", opacity: i === current ? 1 : 0 }}>
+                      ↵
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           ))}
+          {flat.length === 0 ? (
+            <div style={{ padding: 32, textAlign: "center", color: "var(--ink-2)" }}>
+              No results for “{query}”
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

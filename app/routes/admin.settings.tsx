@@ -44,22 +44,31 @@ import {
 import { createSenderDomain, readSenderDomain, verifySenderDomain } from "~/lib/resend-domains.server";
 import { emailReady, sendOrderConfirmation, sendShippingNotice, sendRefundNotice } from "~/lib/email.server";
 import { centsFromInput, centsToInput } from "~/lib/money";
-import { Badge, card, input } from "~/admin/ui";
+import { input } from "~/admin/ui";
 import {
   SettingsCard,
   CardButton,
+  RowButton,
+  RowBadge,
   FieldGrid,
   TextField,
   SelectField,
   AreaField,
   ToggleRow,
+  toggleRow,
   ListRow,
+  listRow,
+  listRowMain,
   EmptyRows,
   DnsTable,
   CopyButton,
   Steps,
   LinkRow,
+  linkRow,
+  LinkLabel,
+  LinkChevron,
   CostRow,
+  CostTotal,
   saveBar,
 } from "~/admin/settings-ui";
 
@@ -650,7 +659,18 @@ export default function Settings({ loaderData, actionData }: Route.ComponentProp
       {actionData?.ok ? <Notice kind="success">{actionData.ok}</Notice> : null}
 
       <div style={{ display: "grid", gridTemplateColumns: "208px minmax(0,1fr)", gap: 16, alignItems: "start" }}>
-        <nav style={{ ...card, padding: 6, display: "flex", flexDirection: "column", gap: 1 }}>
+        <nav
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            boxShadow: "var(--shadow)",
+            padding: 6,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+          }}
+        >
           {PANES.map(([key, label]) => (
             <Link
               key={key}
@@ -661,11 +681,14 @@ export default function Settings({ loaderData, actionData }: Route.ComponentProp
                 alignItems: "center",
                 height: 32,
                 padding: "0 10px",
+                border: 0,
                 borderRadius: 8,
                 background: pane === key ? "var(--accent-soft)" : "transparent",
                 color: "var(--ink)",
                 fontSize: 13,
                 fontWeight: pane === key ? 600 : 450,
+                cursor: "pointer",
+                textAlign: "left",
                 textDecoration: "none",
               }}
             >
@@ -724,12 +747,12 @@ function Notice({ kind, children }: { kind: "critical" | "success"; children: Re
 /** A control that is deliberately not wired up, shown off and explained. */
 function DeadRow({ label, help }: { label: string; help: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid var(--border)", opacity: 0.6 }}>
+    <div style={{ ...toggleRow, opacity: 0.6 }}>
       <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
         <span style={{ fontWeight: 550 }}>{label}</span>
         <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{help}</span>
       </span>
-      <span style={{ position: "relative", width: 38, height: 22, flex: "none" }}>
+      <span style={{ width: 38, height: 22, position: "relative", flex: "none" }}>
         <span className="k-switch-track" style={{ background: "var(--border-strong)" }} />
       </span>
     </div>
@@ -762,20 +785,18 @@ function ProfilePane({ profile, busy }: { profile: Route.ComponentProps["loaderD
       </Form>
 
       <SettingsCard title="Security" sub={`${profile.sessions} device${profile.sessions === 1 ? "" : "s"} signed in`}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid var(--border)" }}>
+        <div style={toggleRow}>
           <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
             <span style={{ fontWeight: 550 }}>Two-factor authentication</span>
             <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Handled by your Google account. Turn it on at myaccount.google.com → Security.</span>
           </span>
-          <Badge kind="info">via Google</Badge>
+          <RowBadge kind="info">via Google</RowBadge>
         </div>
         <Form method="post">
           <input type="hidden" name="intent" value="sign-out-others" />
-          <button type="submit" className="k-hover" style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", border: 0, background: "transparent", cursor: "pointer", textAlign: "left" }}>
-            <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-              <span style={{ fontWeight: 550, color: "var(--link)" }}>Sign out of all devices</span>
-              <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Ends every session except this one</span>
-            </span>
+          <button type="submit" className="k-hover" style={linkRow}>
+            <LinkLabel label="Sign out of all devices" help="Ends every session except this one" />
+            <LinkChevron />
           </button>
         </Form>
       </SettingsCard>
@@ -1047,14 +1068,18 @@ function PaymentsPane({
         </div>
       </SettingsCard>
 
-      <SettingsCard title="Add a payment provider" sub="A second account can take over if the first is frozen">
-        <div style={{ padding: "12px 16px", display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <CardButton type="button" disabled title="Stripe is provider one. A second Stripe account is the next thing to add here.">Add Stripe account</CardButton>
-          <CardButton type="button" disabled title="Not built yet. Payments are behind an interface so this does not touch orders or checkout when it arrives.">Add PayPal</CardButton>
-          <CardButton type="button" disabled title="Not built yet.">Add manual method</CardButton>
-        </div>
-        <div style={{ padding: "0 16px 12px", fontSize: 12, color: "var(--ink-3)" }}>Greyed out means not built yet — not broken. It says so rather than pretending.</div>
-      </SettingsCard>
+      <SettingsCard
+        title="Add a payment provider"
+        sub="A second account can take over if the first is frozen"
+        actions={
+          <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <CardButton type="button" disabled title="Stripe is provider one. A second Stripe account is the next thing to add here.">Add Stripe account</CardButton>
+            <CardButton type="button" disabled title="Not built yet. Payments are behind an interface so this does not touch orders or checkout when it arrives.">Add PayPal</CardButton>
+            <CardButton type="button" disabled title="Not built yet.">Add manual method</CardButton>
+          </span>
+        }
+        note="Greyed out means not built yet — not broken. It says so rather than pretending."
+      />
 
       <Form method="post">
         <input type="hidden" name="intent" value="payment-handling" />
@@ -1155,21 +1180,21 @@ function NotificationsPane({
           ["shipping", "Shipping confirmation", "Sent when you add a tracking number"],
           ["refund", "Refund notification", "Sent when you issue a refund"],
         ].map(([kind, name, note]) => (
-          <div key={kind} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
-            <span style={{ flex: 1, minWidth: 150, display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div key={kind} style={listRow}>
+            <span style={listRowMain}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 600 }}>{name}</span>
-                <Badge kind="success">Active</Badge>
+                <RowBadge kind="success">Active</RowBadge>
               </span>
               <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{note}</span>
             </span>
             <a href={`/admin/settings/email-preview?store=${store.slug}&kind=${kind}`} target="_blank" rel="noreferrer">
-              <CardButton type="button">Preview</CardButton>
+              <RowButton type="button">Preview</RowButton>
             </a>
             <Form method="post">
               <input type="hidden" name="intent" value="send-test-email" />
               <input type="hidden" name="kind" value={kind} />
-              <CardButton disabled={!resend || busy}>Send test</CardButton>
+              <RowButton disabled={!resend || busy}>Send test</RowButton>
             </Form>
           </div>
         ))}
@@ -1280,9 +1305,9 @@ function PoliciesPane({ store, policies, busy }: { store: Store; policies: Setti
         actions={
           <span style={{ display: "flex", gap: 6 }}>
             {policies.map((policy) => (
-              <Badge key={policy.handle} kind={policy.visible ? "success" : "neutral"}>
+              <RowBadge key={policy.handle} kind={policy.visible ? "success" : "neutral"}>
                 {policy.title.split(" ")[0]} {policy.visible ? "live" : "hidden"}
-              </Badge>
+              </RowBadge>
             ))}
           </span>
         }
@@ -1344,10 +1369,7 @@ function BillingPane({ domains }: { domains: number }) {
         {costs.map(([name, note, price, free]) => (
           <CostRow key={name} name={name} note={note} price={price} free={free} />
         ))}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "var(--bg)" }}>
-          <span style={{ flex: 1, fontWeight: 650 }}>Estimated total</span>
-          <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 650, fontSize: 16 }}>{domains ? `~$${(domains * 10 / 12).toFixed(2)}` : "$0.00"} / month + Stripe usage</span>
-        </div>
+        <CostTotal>{domains ? `~$${((domains * 10) / 12).toFixed(2)}` : "$0.00"} / month + Stripe usage</CostTotal>
         <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--ink-3)" }}>Free tiers hold for a one-product store doing a few hundred orders a month. When you outgrow one, that service bills you directly.</div>
       </SettingsCard>
       <SettingsCard title="Payment method for infrastructure">

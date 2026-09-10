@@ -1,11 +1,37 @@
 /**
- * The Settings card vocabulary from the design: a card with a header, an
- * optional note band, and any of: a field grid, toggle rows, list rows with
- * badges and actions, a DNS table, a numbered step list, link rows, a cost
- * list. Every pane is composed from these so all twelve look like one screen.
+ * The Settings card vocabulary, transliterated from `design/port/settings.html`.
+ *
+ * Every style string here is copied character for character from the
+ * prototype's markup: the card shell, the header with its actions, the note
+ * band, the field grid, the toggle rows, the list rows with badges and
+ * actions, the DNS table, the numbered steps, the link rows and the cost
+ * list. Nothing here invents a value.
  */
 import type { CSSProperties, ReactNode } from "react";
-import { Badge, type BadgeKind, input, textarea } from "./ui";
+
+export type BadgeKind = "success" | "warning" | "critical" | "info" | "neutral" | "purple";
+
+/** The prototype's row badge — no status dot, unlike the shared list badge. */
+export function RowBadge({ kind, children }: { kind: BadgeKind; children: ReactNode }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        height: 20,
+        padding: "0 8px",
+        borderRadius: 8,
+        fontSize: 12,
+        fontWeight: 550,
+        background: `var(--b-${kind}-bg)`,
+        color: `var(--b-${kind}-fg)`,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
 
 export function SettingsCard({
   title,
@@ -14,10 +40,10 @@ export function SettingsCard({
   note,
   children,
 }: {
-  title: string;
-  sub?: string;
+  title: ReactNode;
+  sub?: ReactNode;
   actions?: ReactNode;
-  note?: string;
+  note?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -45,10 +71,10 @@ export function SettingsCard({
           <span style={{ fontWeight: 650 }}>{title}</span>
           {sub ? <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{sub}</span> : null}
         </span>
-        {actions ? <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{actions}</span> : null}
+        {actions}
       </div>
       {note ? (
-        <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)", color: "var(--ink-2)", background: "var(--bg)", fontSize: 13, lineHeight: "19px" }}>
+        <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)", color: "var(--ink-2)", background: "var(--bg)" }}>
           {note}
         </div>
       ) : null}
@@ -57,6 +83,7 @@ export function SettingsCard({
   );
 }
 
+/** The card-header / save-bar button. */
 export function CardButton({
   children,
   primary,
@@ -95,7 +122,54 @@ export function CardButton({
         color: primary ? "var(--accent-ink)" : danger ? "var(--critical)" : "var(--ink)",
         fontSize: 12,
         fontWeight: primary ? 600 : 550,
-        cursor: disabled ? "default" : "pointer",
+        cursor: "pointer",
+        opacity: disabled ? 0.45 : 1,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** The list-row / DNS-row button: 26px tall, always outlined. */
+export function RowButton({
+  children,
+  danger,
+  disabled,
+  type = "submit",
+  name,
+  value,
+  onClick,
+  title,
+}: {
+  children: ReactNode;
+  danger?: boolean;
+  disabled?: boolean;
+  type?: "submit" | "button";
+  name?: string;
+  value?: string;
+  onClick?: () => void;
+  title?: string;
+}) {
+  return (
+    <button
+      type={type}
+      name={name}
+      value={value}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="k-hover"
+      style={{
+        height: 26,
+        padding: "0 10px",
+        borderRadius: 8,
+        border: "1px solid var(--border)",
+        background: "var(--surface)",
+        color: danger ? "var(--critical)" : "var(--ink)",
+        fontSize: 12,
+        fontWeight: 550,
+        cursor: "pointer",
         opacity: disabled ? 0.45 : 1,
       }}
     >
@@ -110,13 +184,36 @@ export function FieldGrid({ children, columns = 2 }: { children: ReactNode; colu
       style={{
         padding: "14px 16px",
         display: "grid",
-        gridTemplateColumns: columns === 1 ? "1fr" : "repeat(auto-fit,minmax(220px,1fr))",
+        gridTemplateColumns: columns === 1 ? "1fr" : "repeat(2,minmax(0,1fr))",
         gap: 12,
       }}
     >
       {children}
     </div>
   );
+}
+
+const fieldLabelStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+  fontSize: 12,
+  fontWeight: 550,
+  color: "var(--ink-2)",
+};
+
+const controlStyle: CSSProperties = {
+  height: 36,
+  padding: "0 12px",
+  borderRadius: 8,
+  border: "1px solid var(--input-border)",
+  background: "var(--input)",
+  fontSize: 13,
+  color: "var(--ink)",
+};
+
+function FieldHelp({ children }: { children: ReactNode }) {
+  return <span style={{ fontWeight: 450, color: "var(--ink-3)" }}>{children}</span>;
 }
 
 export function TextField({
@@ -135,7 +232,7 @@ export function TextField({
   name: string;
   defaultValue?: string | null;
   placeholder?: string;
-  help?: string;
+  help?: ReactNode;
   type?: string;
   mono?: boolean;
   span?: boolean;
@@ -143,8 +240,8 @@ export function TextField({
   required?: boolean;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 4, gridColumn: span ? "1 / -1" : undefined }}>
-      <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>{label}</span>
+    <label style={{ ...fieldLabelStyle, gridColumn: span ? "1 / -1" : "auto" }}>
+      {label}
       <input
         name={name}
         type={type}
@@ -153,13 +250,12 @@ export function TextField({
         readOnly={readOnly}
         required={required}
         style={{
-          ...input,
-          height: 36,
-          fontFamily: mono ? "'JetBrains Mono',monospace" : undefined,
-          background: readOnly ? "var(--bg)" : input.background,
+          ...controlStyle,
+          fontFamily: mono ? "'JetBrains Mono',monospace" : "inherit",
+          background: readOnly ? "var(--bg)" : "var(--input)",
         }}
       />
-      {help ? <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{help}</span> : null}
+      {help ? <FieldHelp>{help}</FieldHelp> : null}
     </label>
   );
 }
@@ -175,19 +271,31 @@ export function SelectField({
   name: string;
   defaultValue?: string | null;
   options: { value: string; label: string }[];
-  help?: string;
+  help?: ReactNode;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>{label}</span>
-      <select name={name} defaultValue={defaultValue ?? options[0]?.value} style={{ ...input, height: 36, padding: "0 8px" }}>
+    <label style={{ ...fieldLabelStyle, gridColumn: "auto" }}>
+      {label}
+      <select
+        name={name}
+        defaultValue={defaultValue ?? options[0]?.value}
+        style={{
+          height: 36,
+          borderRadius: 8,
+          border: "1px solid var(--input-border)",
+          background: "var(--input)",
+          padding: "0 8px",
+          fontSize: 13,
+          color: "var(--ink)",
+        }}
+      >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
-      {help ? <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{help}</span> : null}
+      {help ? <FieldHelp>{help}</FieldHelp> : null}
     </label>
   );
 }
@@ -206,17 +314,41 @@ export function AreaField({
   rows?: number;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 4, gridColumn: "1 / -1" }}>
-      <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>{label}</span>
-      <textarea name={name} defaultValue={defaultValue ?? ""} placeholder={placeholder} rows={rows} style={textarea} />
+    <label style={{ ...fieldLabelStyle, gridColumn: "1 / -1" }}>
+      {label}
+      <textarea
+        name={name}
+        defaultValue={defaultValue ?? ""}
+        placeholder={placeholder}
+        rows={rows}
+        style={{
+          width: "100%",
+          padding: "10px 12px",
+          borderRadius: 8,
+          border: "1px solid var(--input-border)",
+          background: "var(--input)",
+          fontSize: 13,
+          resize: "vertical",
+          color: "var(--ink)",
+          fontFamily: "inherit",
+        }}
+      />
     </label>
   );
 }
 
+export const toggleRow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  padding: "11px 16px",
+  borderBottom: "1px solid var(--border)",
+};
+
 /**
- * A toggle row that submits as a form field. Rendered as a real checkbox
- * styled like the design's switch, so it works without JavaScript and posts
- * with the rest of the card.
+ * The design's switch. The prototype toggles React state; here it is a real
+ * checkbox underneath the same track so the value posts with its card and
+ * works without JavaScript.
  */
 export function ToggleRow({
   label,
@@ -230,12 +362,12 @@ export function ToggleRow({
   defaultChecked: boolean;
 }) {
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid var(--border)", cursor: "pointer" }}>
+    <label style={{ ...toggleRow, cursor: "pointer" }}>
       <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
         <span style={{ fontWeight: 550 }}>{label}</span>
         {help ? <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{help}</span> : null}
       </span>
-      <span style={{ position: "relative", width: 38, height: 22, flex: "none" }}>
+      <span style={{ width: 38, height: 22, position: "relative", flex: "none" }}>
         <input
           type="checkbox"
           name={name}
@@ -255,8 +387,24 @@ export interface RowAction {
   danger?: boolean;
   disabled?: boolean;
   confirm?: string;
-  primary?: boolean;
 }
+
+export const listRow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  padding: "11px 16px",
+  borderBottom: "1px solid var(--border)",
+  flexWrap: "wrap",
+};
+
+export const listRowMain: CSSProperties = {
+  flex: 1,
+  minWidth: 150,
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+};
 
 export function ListRow({
   name,
@@ -264,6 +412,7 @@ export function ListRow({
   badges,
   hidden,
   actions,
+  extraActions,
   mono,
 }: {
   name: string;
@@ -272,21 +421,24 @@ export function ListRow({
   /** hidden inputs shared by every action button in this row */
   hidden?: Record<string, string>;
   actions?: RowAction[];
+  /** anything that is not a post — a preview link, say */
+  extraActions?: ReactNode;
   mono?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
-      <span style={{ flex: 1, minWidth: 150, display: "flex", flexDirection: "column", gap: 2 }}>
+    <div style={listRow}>
+      <span style={listRowMain}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontWeight: 600, fontFamily: mono ? "'JetBrains Mono',monospace" : undefined }}>{name}</span>
           {badges?.map((badge) => (
-            <Badge key={badge.label} kind={badge.kind}>
+            <RowBadge key={badge.label} kind={badge.kind}>
               {badge.label}
-            </Badge>
+            </RowBadge>
           ))}
         </span>
         {note ? <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{note}</span> : null}
       </span>
+      {extraActions}
       {actions?.map((action) => (
         <form
           key={action.label}
@@ -299,9 +451,9 @@ export function ListRow({
             <input key={key} type="hidden" name={key} value={value} />
           ))}
           <input type="hidden" name="intent" value={action.intent} />
-          <CardButton danger={action.danger} disabled={action.disabled} primary={action.primary}>
+          <RowButton danger={action.danger} disabled={action.disabled}>
             {action.label}
-          </CardButton>
+          </RowButton>
         </form>
       ))}
     </div>
@@ -349,7 +501,7 @@ export function DnsTable({ rows }: { rows: { type: string; name: string; value: 
 
 export function CopyButton({ value }: { value: string }) {
   return (
-    <CardButton
+    <RowButton
       type="button"
       onClick={() => {
         navigator.clipboard?.writeText(value).catch(() => undefined);
@@ -357,13 +509,13 @@ export function CopyButton({ value }: { value: string }) {
       title="Copy"
     >
       Copy
-    </CardButton>
+    </RowButton>
   );
 }
 
 export function Steps({ steps, current }: { steps: { label: string; help: string }[]; current: number }) {
   return (
-    <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column" }}>
+    <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 0 }}>
       {steps.map((step, index) => {
         const n = index + 1;
         const done = current > n;
@@ -387,7 +539,7 @@ export function Steps({ steps, current }: { steps: { label: string; help: string
               >
                 {n}
               </span>
-              {index < steps.length - 1 ? <span style={{ flex: 1, width: 1, background: "var(--border)", margin: "2px 0" }} /> : null}
+              <span style={{ flex: 1, width: 1, background: "var(--border)", margin: "2px 0" }} />
             </span>
             <span style={{ paddingBottom: 12, display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={{ fontWeight: 550, color: active ? "var(--ink)" : done ? "var(--ink-2)" : "var(--ink-3)" }}>{step.label}</span>
@@ -401,18 +553,43 @@ export function Steps({ steps, current }: { steps: { label: string; help: string
   );
 }
 
+export const linkRow: CSSProperties = {
+  width: "100%",
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  padding: "11px 16px",
+  border: 0,
+  borderBottom: "1px solid var(--border)",
+  background: "transparent",
+  cursor: "pointer",
+  textAlign: "left",
+  color: "var(--ink)",
+};
+
+export function LinkChevron() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-2)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 4 4 4-4 4" />
+    </svg>
+  );
+}
+
+export function LinkLabel({ label, help }: { label: string; help?: string }) {
+  return (
+    <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+      <span style={{ fontWeight: 550, color: "var(--link)" }}>{label}</span>
+      {help ? <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{help}</span> : null}
+    </span>
+  );
+}
+
+/** The prototype's link row. A real `<a>`, because ours actually navigates. */
 export function LinkRow({ label, help, href }: { label: string; help?: string; href: string }) {
   return (
-    <a
-      href={href}
-      className="k-hover"
-      style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", borderBottom: "1px solid var(--border)", textDecoration: "none" }}
-    >
-      <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-        <span style={{ fontWeight: 550, color: "var(--link)" }}>{label}</span>
-        {help ? <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{help}</span> : null}
-      </span>
-      <span style={{ color: "var(--ink-3)" }}>›</span>
+    <a href={href} className="k-hover" style={{ ...linkRow, textDecoration: "none" }}>
+      <LinkLabel label={label} help={help} />
+      <LinkChevron />
     </a>
   );
 }
@@ -429,10 +606,20 @@ export function CostRow({ name, note, price, free }: { name: string; note: strin
   );
 }
 
+export function CostTotal({ children }: { children: ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "var(--bg)" }}>
+      <span style={{ flex: 1, fontWeight: 650 }}>Estimated total</span>
+      <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 650, fontSize: 16 }}>{children}</span>
+    </div>
+  );
+}
+
 export const saveBar: CSSProperties = {
   padding: "12px 16px",
   borderTop: "1px solid var(--border)",
   display: "flex",
   alignItems: "center",
   gap: 10,
+  flexWrap: "wrap",
 };
