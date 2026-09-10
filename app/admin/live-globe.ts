@@ -258,7 +258,9 @@ class LiveGlobe {
         const ease = Math.sin(Math.min(1, rise) * Math.PI / 2) * (settle * settle);
         return { v: vec(x.lon, x.lat), cosR: Math.cos((x.max * (0.35 + 0.65 * rise)) * Math.PI / 180), amp: ease, col: x.col }; });
       void waves;
-      const MRGB: Record<string, string> = { view: "96,190,255", leaving: "96,190,255", cart: "255,105,205", checkout: "255,87,200", purchase: "255,20,170" };
+      // Same vocabulary as the dots: blue looking, pink in the cart, deeper
+      // pink at checkout, gold bought.
+      const MRGB: Record<string, string> = { view: "46,144,250", leaving: "46,144,250", cart: "255,87,200", checkout: "214,51,168", purchase: "212,166,42" };
       const picked: Record<number, { rgb: string; amp: number; stage: Stage }> = {};
       this.visitors.forEach(vv => {
         if (vv.ti == null) { const t2 = vec(vv.city[2], vv.city[3]); let bi = -1, bd = -2;
@@ -281,11 +283,12 @@ class LiveGlobe {
         const scale = (0.65 + 0.35 * q.z) * 0.86;
         const pk = picked[i];
         if (pk) {
-          g.shadowColor = "rgba(" + pk.rgb + "," + (0.5 + 0.45 * pk.amp).toFixed(2) + ")";
-          g.shadowBlur = (pk.stage === "purchase" ? 13 : 7) * (0.55 + 0.45 * pk.amp);
-          g.fillStyle = "rgba(" + pk.rgb + "," + Math.min(1, 0.72 + 0.28 * q.z).toFixed(3) + ")";
-          hex(q.x, q.y, hr * scale * 1.3); g.fill(); g.shadowBlur = 0;
-          g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 0.9; g.stroke();
+          // The tile under a visitor takes their colour and holds it. No glow
+          // and no breathing: the amplitude the design pulsed with is used
+          // only to fade a leaving visitor out.
+          const hold = pk.stage === "leaving" ? pk.amp : 1;
+          g.fillStyle = "rgba(" + pk.rgb + "," + Math.min(1, (0.62 + 0.28 * q.z) * hold).toFixed(3) + ")";
+          hex(q.x, q.y, hr * scale * 1.2); g.fill();
           continue;
         }
         const bk = Math.max(0, Math.min(9, Math.round(q.z * 9)));
@@ -305,19 +308,10 @@ class LiveGlobe {
       // glowing arc: purchase city → the store in New York
       this.arcs = (this.arcs || []).filter(a => now - a.born < a.dur + 700);
       this.pulses = (this.pulses || []).filter(p2 => now - p2.born < p2.dur);
-      // crisp celestial glow above the point of sale — drawn over the sphere, never on the tiles
-      this.pulses.forEach(pu => { const q = proj(pu.lon, pu.lat); if (q.z <= 0.02) return;
-        const k = Math.min(1, (now - pu.born) / pu.dur);
-        const grow = 1 - Math.pow(1 - k, 3), fade = k < .1 ? k / .1 : 1 - (k - .1) / .9;
-        const rad = 3 + grow * 26, al = Math.max(0, fade);
-        const gl = g.createRadialGradient(q.x, q.y, 0, q.x, q.y, rad * 1.5);
-        gl.addColorStop(0, "rgba(255,255,255," + (0.5 * al).toFixed(3) + ")");
-        gl.addColorStop(.35, "rgba(255,20,170," + (0.22 * al).toFixed(3) + ")");
-        gl.addColorStop(1, "rgba(255,20,170,0)");
-        g.fillStyle = gl; g.beginPath(); g.arc(q.x, q.y, rad * 1.5, 0, 6.284); g.fill();
-        g.strokeStyle = "rgba(255,255,255," + (0.8 * al).toFixed(3) + ")"; g.lineWidth = 1.1;
-        g.shadowColor = "rgba(255,20,170,.9)"; g.shadowBlur = 10 * al;
-        g.beginPath(); g.arc(q.x, q.y, rad, 0, 6.284); g.stroke(); g.shadowBlur = 0; });
+      // No glow over the point of sale. The design pulsed a 26px halo there;
+      // it draws the eye and then leaves an after-image, which is exactly the
+      // restlessness he asked to be rid of. The marker below says it instead.
+
       // The sale travelling home.
       //
       // The design drew this as a thick pink glow with an arrowhead on the
@@ -337,7 +331,13 @@ class LiveGlobe {
           const x = p1[0]*s1 + p2[0]*s2, y = p1[1]*s1 + p2[1]*s2, z = p1[2]*s1 + p2[2]*s2;
           const len = Math.hypot(x, y, z) || 1, lift = 1 + 0.17 * Math.sin(t2 * Math.PI);
           const lamR = Math.atan2(z / len, x / len) * 180 / Math.PI, phiR = Math.asin(y / len) * 180 / Math.PI;
-          const q2 = proj(lamR - this.rot.lam, phiR);
+          // proj() adds the globe's own rotation, exactly as it does for every
+          // tile and marker. The design subtracted it here first, which
+          // cancelled the rotation out and pinned the arc to a fixed spot on
+          // screen — a line hanging over the Atlantic while the planet turned
+          // underneath it. Passing the longitude straight through puts the
+          // path on the same earth as everything else.
+          const q2 = proj(lamR, phiR);
           return { x: cx + (q2.x - cx) * lift, y: cy + (q2.y - cy) * lift, z: q2.z };
         };
 
@@ -367,29 +367,49 @@ class LiveGlobe {
           if (p0.z <= 0.02 || p1.z <= 0.02) continue;
           const alpha = Math.pow(p1.t, 1.4) * fade;
           if (alpha < 0.03) continue;
-          // Gold, the colour a sale is everywhere else in this admin.
-          g.strokeStyle = "rgba(212,166,42," + (0.95 * alpha).toFixed(3) + ")";
-          g.lineWidth = 1.4;
+          // White. The line is the movement, not the event — the colour of the
+          // event lives on the two markers at its ends.
+          g.strokeStyle = "rgba(255,255,255," + (0.9 * alpha).toFixed(3) + ")";
+          g.lineWidth = 1.3;
           g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke();
         }
       });
 
       this.hit = [];
-      const M: Record<string, string> = { view: "#0EA5E9", leaving: "#0EA5E9", cart: "#FF9AE0", checkout: "#FF57C8", purchase: "#FF2FB9" };
+      // One flat dot per visitor, in the colour of what they are doing:
+      // blue looking, pink in the cart, deeper pink at checkout, gold bought.
+      // No glow, no halo, no rotating ring — a dot that holds still, so a
+      // globe with thirty people on it still reads as a map and not a
+      // fireworks display. Size and opacity ease, nothing flashes.
+      const M: Record<string, string> = {
+        view: "46,144,250",
+        leaving: "46,144,250",
+        cart: "255,87,200",
+        checkout: "214,51,168",
+        purchase: "212,166,42",
+      };
       this.visitors.forEach(vv => {
         const q = proj(vv.city[2], vv.city[3]); if (q.z <= 0.02) return;
         const age = now - (vv.at || now), col = M[vv.stage] || M.view;
-        void col;
-        let rr = vv.stage === "purchase" ? (age < 200 ? 7 - 1.5 * (age / 200) : 5.5) : vv.stage === "checkout" ? 6 : 4;
-        let op = 1;
-        if (vv.stage === "leaving") { const k = Math.min(1, age / 400); rr = 4 * (1 - k); op = 1 - k; }
-        else if (age < 250) op = age / 250;
-        void op;
+
+        // A dot settles into its size rather than popping to it.
+        const target = vv.stage === "purchase" ? 5.2 : vv.stage === "checkout" ? 4.4 : vv.stage === "cart" ? 4 : 3.4;
+        const settle = Math.min(1, age / 320);
+        let rr = target * (0.72 + 0.28 * (1 - Math.pow(1 - settle, 3)));
+        let op = age < 250 ? age / 250 : 1;
+        if (vv.stage === "leaving") { const k2 = Math.min(1, age / 400); rr = target * (1 - k2); op = 1 - k2; }
         if (rr <= 0.2) return;
-        if (!red && vv.stage === "checkout") { g.save(); g.translate(q.x, q.y); g.rotate((now / 3000) * 6.283);
-          g.strokeStyle = "rgba(255,87,200,.95)"; g.lineWidth = 1.4; g.setLineDash([3, 4]);
-          g.beginPath(); for (let k2 = 0; k2 < 6; k2++) { const ang = k2 * 1.0471976 + 0.5236, rad = hr * 2.1; const px = rad * Math.cos(ang), py = rad * Math.sin(ang); k2 ? g.lineTo(px, py) : g.moveTo(px, py); }
-          g.closePath(); g.stroke(); g.setLineDash([]); g.restore(); }
+
+        // Dim toward the edge of the globe, so a dot on the horizon does not
+        // sit as loudly as one facing the viewer.
+        const facing = Math.min(1, Math.max(0, (q.z - 0.02) / 0.35));
+        const alpha = op * (0.35 + 0.65 * facing);
+
+        g.fillStyle = "rgba(" + col + "," + alpha.toFixed(3) + ")";
+        g.beginPath(); g.arc(q.x, q.y, rr, 0, 6.284); g.fill();
+        g.strokeStyle = "rgba(255,255,255," + (0.55 * alpha).toFixed(3) + ")";
+        g.lineWidth = 1;
+        g.beginPath(); g.arc(q.x, q.y, rr, 0, 6.284); g.stroke();
 
         this.hit.push({ x: q.x, y: q.y, r: Math.max(9, rr + 5), city: vv.city, stage: vv.stage });
       });
