@@ -11,6 +11,9 @@ import { eq } from "drizzle-orm";
 import { resolveStore } from "~/lib/store.server";
 import { loadOrder, markOrderPaid, recordVisitorEvent } from "~/lib/admin.server";
 import { providerForStore } from "~/lib/payments.server";
+import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
+import { metaConfig } from "~/db/schema";
+import { pixelScript, purchasePixelScript } from "~/lib/meta.server";
 import { formatMoney } from "~/lib/money";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -61,6 +64,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           amountCents: loaded.order.totalCents,
           orderId: loaded.order.id,
         });
+        await afterPaymentConfirmed(context.db, context.cloudflare.env, loaded.order.id, request);
       }
     } catch {
       // Leave it pending. The webhook is the other route to the truth, and an
@@ -69,7 +73,25 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
   }
 
+  // The browser half of the Purchase event. Same event id as the server call,
+  // so Meta merges the two rather than counting the sale twice.
+  const [metaRow] = await context.db
+    .select({ pixelId: metaConfig.pixelId })
+    .from(metaConfig)
+    .where(eq(metaConfig.storeId, store.id))
+    .limit(1);
+
+  const pixel =
+    metaRow?.pixelId && paymentStatus === "paid" && loaded.order.metaEventId
+      ? `${pixelScript(metaRow.pixelId)}\n${purchasePixelScript({
+          eventId: loaded.order.metaEventId,
+          valueCents: loaded.order.totalCents,
+          currency: loaded.order.currency,
+        })}`
+      : null;
+
   return {
+    pixel,
     store: { name: store.name, slug: store.slug, contactEmail: store.contactEmail },
     order: {
       number: loaded.order.number,
@@ -88,11 +110,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function Thanks({ loaderData }: Route.ComponentProps) {
-  const { store, order, items } = loaderData;
+  const { store, order, items, pixel } = loaderData;
   const paid = order.paymentStatus === "paid";
 
   return (
     <div className="gk">
+      {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <header className="gk-header">
         <Link className="gk-logo" to={`/?store=${store.slug}`} style={{ textDecoration: "none" }}>
           {store.name}

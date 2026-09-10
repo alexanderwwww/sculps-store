@@ -16,6 +16,7 @@ import {
   recordOrderEvent,
 } from "~/lib/admin.server";
 import { money } from "~/lib/money";
+import { sendShippingNotice, emailReady } from "~/lib/email.server";
 import { orders } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import {
@@ -114,7 +115,33 @@ export async function action({ context, request, params }: Route.ActionArgs) {
     const tracking = String(form.get("tracking") || "").trim();
     const carrier = String(form.get("carrier") || "").trim();
     if (!tracking) return { error: "Paste the tracking number first." };
+
     await setTracking(context.db, orderId, tracking, carrier);
+
+    // Telling the customer is the point of adding a tracking number, so it
+    // happens here rather than being a second thing to remember.
+    const loaded = await loadOrder(context.db, orderId);
+    if (loaded) {
+      if (emailReady(context.cloudflare.env)) {
+        await sendShippingNotice(context.db, context.cloudflare.env, orderId, {
+          to: loaded.order.email,
+          customerName: loaded.order.customerName,
+          storeName: loaded.store.name,
+          fromAddress: loaded.store.emailFrom,
+          replyTo: loaded.store.contactEmail,
+          orderNumber: loaded.order.number,
+          tracking,
+          carrier: carrier || null,
+        });
+      } else {
+        await recordOrderEvent(
+          context.db,
+          orderId,
+          "email:skipped",
+          "Tracking added but no email sent: email is not configured on this Worker yet.",
+        );
+      }
+    }
     return { ok: true };
   }
 

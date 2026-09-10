@@ -2,8 +2,9 @@ import type { Route } from "./+types/storefront";
 import { data } from "react-router";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { currentUser } from "~/lib/auth.server";
-import { pages } from "~/db/schema";
+import { pages, metaConfig } from "~/db/schema";
 import { eq } from "drizzle-orm";
+import { pixelScript } from "~/lib/meta.server";
 import { GardenKneelerStorefront } from "~/storefronts/garden-kneeler";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -54,18 +55,28 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   }
 
   const page = await loadProductPage(context.db, store, { themeId, includeHidden });
+
+  // The browser pixel. Only rendered when this store actually has one, so a
+  // store without Meta gets no third-party script at all.
+  const [meta] = await context.db
+    .select({ pixelId: metaConfig.pixelId })
+    .from(metaConfig)
+    .where(eq(metaConfig.storeId, store.id))
+    .limit(1);
+  const pixel = meta?.pixelId && !previewPageId ? pixelScript(meta.pixelId) : null;
   if (!page) {
-    return { store, page: null };
+    return { store, page: null, pixel };
   }
-  return { store, page };
+  return { store, page, pixel };
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page } = loaderData;
+  const { store, page, pixel } = loaderData;
 
   if (!page) {
     return (
       <div className="gk">
+        {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         <header className="gk-header">
           <span className="gk-logo">{store.name}</span>
         </header>
@@ -83,6 +94,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="gk">
+      {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <GardenKneelerStorefront page={page} />
     </div>
   );

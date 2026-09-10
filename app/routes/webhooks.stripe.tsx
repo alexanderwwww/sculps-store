@@ -13,6 +13,7 @@ import { eq } from "drizzle-orm";
 import { orders, paymentProviders } from "~/db/schema";
 import { decryptSecret } from "~/lib/crypto.server";
 import { orderByPaymentRef, markOrderPaid, recordOrderEvent, recordVisitorEvent } from "~/lib/admin.server";
+import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
 
 /** Stripe signs with HMAC-SHA256 over "timestamp.payload". */
 async function signatureValid(
@@ -102,6 +103,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       amountCents: order.totalCents,
       orderId: order.id,
     });
+    await afterPaymentConfirmed(context.db, context.cloudflare.env, order.id, request);
   }
 
   if (parsed.type === "payment_intent.payment_failed") {
