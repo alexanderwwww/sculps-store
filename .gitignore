@@ -13,5 +13,4 @@ tsconfig.tsbuildinfo
 # never part of the product.
 /test-order.mjs
 /test-order-delete.mjs
-/ten.mjs
-/ten2.mjs
+/ten*.mjs
