@@ -3,16 +3,19 @@
  *
  * Pixel ID, ad account, and the Conversions API token — stored encrypted.
  * Event counts come from the orders and events tables, so a zero here means
- * zero events, not a broken screen.
+ * zero events, not a broken screen. "Send test event" really posts to the
+ * Conversions API and shows what Meta said back.
  */
-import { Form, useNavigation } from "react-router";
-import type { Route } from "./+types/admin.meta";
+import { useState } from "react";
+import { useFetcher } from "react-router";
 import { eq, and, gte, sql } from "drizzle-orm";
+import type { Route } from "./+types/admin.meta";
 import { requireUser } from "~/lib/auth.server";
 import { resolveAdminStore, saveMetaConfig } from "~/lib/admin.server";
 import { metaConfig, events, orders } from "~/db/schema";
 import { encryptSecret, decryptSecret, encryptionReady, maskSecret } from "~/lib/crypto.server";
-import { card, cardHeader, Badge, PageTitle, primaryButton, secondaryButton, input, Empty } from "~/admin/ui";
+import { metaSettings, sendPurchase } from "~/lib/meta.server";
+import { card, Empty } from "~/admin/ui";
 
 export function meta() {
   return [{ title: "Meta — Shop Admin" }];
@@ -22,7 +25,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   await requireUser(context.db, request);
   const url = new URL(request.url);
   const { store } = await resolveAdminStore(context.db, url);
-  if (!store) return { store: null, config: null, counts: null, encryption: false, tokenMask: "—" };
+  if (!store) return { store: null, config: null, counts: null, encryption: false, tokenMask: "—", hasToken: false };
 
   const [row] = await context.db
     .select()
@@ -58,7 +61,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       pixelId: row?.pixelId ?? "",
       adAccountId: row?.adAccountId ?? "",
       testEventCode: row?.testEventCode ?? "",
-      lastTestAt: row?.lastTestAt ?? null,
+      lastTestAt: row?.lastTestAt ? new Date(row.lastTestAt).toISOString() : null,
     },
     counts: {
       browser: browserRows.map((event) => ({ name: event.type, count: event.n })),
@@ -69,12 +72,56 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 }
 
 export async function action({ context, request }: Route.ActionArgs) {
-  await requireUser(context.db, request);
+  const user = await requireUser(context.db, request);
   const url = new URL(request.url);
   const { store } = await resolveAdminStore(context.db, url);
   if (!store) return { error: "Create a store first." };
 
   const form = await request.formData();
+  const intent = String(form.get("intent") || "save");
+
+  if (intent === "disconnect") {
+    await context.db.delete(metaConfig).where(eq(metaConfig.storeId, store.id));
+    return { ok: "Disconnected. The pixel and the stored token are gone from this store." };
+  }
+
+  if (intent === "test") {
+    const settings = await metaSettings(context.db, context.cloudflare.env, store.id);
+    if (!settings) {
+      return {
+        error:
+          "Nothing to send with: this store needs both a pixel ID and a Conversions API token saved before a test event can go out.",
+      };
+    }
+    if (!settings.testEventCode) {
+      // Without a test event code Meta would count this as a real purchase.
+      return {
+        error:
+          "Add the test event code from Events Manager first. Without it Meta would treat this as a real purchase.",
+      };
+    }
+
+    const result = await sendPurchase(settings, {
+      eventId: crypto.randomUUID(),
+      eventTime: Math.floor(Date.now() / 1000),
+      sourceUrl: `https://${store.domain}/`,
+      email: user.email,
+      valueCents: 0,
+      currency: store.currency,
+      contents: [],
+      userAgent: request.headers.get("User-Agent"),
+    });
+
+    if (!result.ok) return { error: `Meta refused the test event: ${result.reason}` };
+
+    await context.db
+      .update(metaConfig)
+      .set({ lastTestAt: new Date() })
+      .where(eq(metaConfig.storeId, store.id));
+
+    return { ok: `Test event accepted with code ${settings.testEventCode}. It shows in Events Manager under Test events.` };
+  }
+
   const pixelId = String(form.get("pixelId") || "").trim() || null;
   const adAccountId = String(form.get("adAccountId") || "").trim() || null;
   const testEventCode = String(form.get("testEventCode") || "").trim() || null;
@@ -103,10 +150,66 @@ export async function action({ context, request }: Route.ActionArgs) {
   return { ok: "Saved." };
 }
 
-export default function Meta({ loaderData, actionData }: Route.ComponentProps) {
+const fieldLabel: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+  fontSize: 12,
+  fontWeight: 550,
+  color: "var(--ink-2)",
+};
+
+const monoInput: React.CSSProperties = {
+  height: 36,
+  padding: "0 12px",
+  borderRadius: 8,
+  border: "1px solid var(--input-border)",
+  background: "var(--input)",
+  fontSize: 13,
+  fontFamily: "'JetBrains Mono',monospace",
+  color: "var(--ink)",
+};
+
+const cardStyle: React.CSSProperties = {
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  boxShadow: "var(--shadow)",
+  overflow: "hidden",
+};
+
+const cardHead: React.CSSProperties = {
+  padding: "12px 16px",
+  borderBottom: "1px solid var(--border)",
+  fontWeight: 650,
+};
+
+function pill(kind: string, label: string) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        height: 22,
+        padding: "0 9px",
+        borderRadius: 8,
+        fontSize: 12,
+        fontWeight: 550,
+        background: `var(--b-${kind}-bg)`,
+        color: `var(--b-${kind}-fg)`,
+      }}
+    >
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor", opacity: 0.8 }} />
+      {label}
+    </span>
+  );
+}
+
+export default function Meta({ loaderData }: Route.ComponentProps) {
   const { store, config, counts, encryption, tokenMask, hasToken } = loaderData;
-  const navigation = useNavigation();
-  const busy = navigation.state === "submitting";
+  const fetcher = useFetcher<typeof action>();
+  const [showToken, setShowToken] = useState(false);
 
   if (!store || !config || !counts) {
     return (
@@ -116,30 +219,34 @@ export default function Meta({ loaderData, actionData }: Route.ComponentProps) {
     );
   }
 
+  const result = fetcher.data as { ok?: string; error?: string } | undefined;
   const connected = Boolean(config.pixelId) && hasToken;
+  const dot = connected ? "#22C55E" : "var(--ink-3)";
+
+  // What this Worker actually sends server-side is the Purchase, and it is the
+  // one with a shared event id. The other CAPI events are not sent, so they are
+  // not listed as if they were.
+  const serverEvents = [{ name: "Purchase", count: counts.deduplicated }];
+
+  const tested = Boolean(config.lastTestAt);
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
-      <PageTitle
-        title={`Meta · ${store.name}`}
-        actions={
-          <Badge kind={connected ? "success" : "warning"}>
-            {connected ? "Connected" : config.pixelId ? "Pixel only — no server events" : "Not connected"}
-          </Badge>
-        }
-      />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650 }}>Meta · {store.name}</h1>
+        {pill(connected ? "success" : "neutral", connected ? "Connected" : "Not connected")}
+      </div>
 
-      {actionData?.error ? (
+      {result?.error ? (
         <div style={{ background: "var(--b-critical-bg)", color: "var(--b-critical-fg)", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>
-          {actionData.error}
+          {result.error}
         </div>
       ) : null}
-      {actionData?.ok ? (
+      {result?.ok ? (
         <div style={{ background: "var(--b-success-bg)", color: "var(--b-success-fg)", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>
-          {actionData.ok}
+          {result.ok}
         </div>
       ) : null}
-
       {!encryption ? (
         <div style={{ background: "var(--b-warning-bg)", color: "var(--b-warning-fg)", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>
           No encryption key is set on the Worker yet, so the Conversions API token cannot be stored.
@@ -147,60 +254,139 @@ export default function Meta({ loaderData, actionData }: Route.ComponentProps) {
         </div>
       ) : null}
 
-      <Form method="post" style={card}>
-        <div style={cardHeader}>Connection</div>
-        <div style={{ padding: "14px 16px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Pixel ID</span>
-            <input
-              name="pixelId"
-              defaultValue={config.pixelId}
-              placeholder="15 or 16 digits"
-              style={{ ...input, fontFamily: "'JetBrains Mono',monospace" }}
-            />
+      <fetcher.Form method="post" style={cardStyle}>
+        <input type="hidden" name="intent" value="save" />
+        <div style={cardHead}>Connection</div>
+        <div
+          style={{
+            padding: "14px 16px",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+            gap: 12,
+          }}
+        >
+          <label style={fieldLabel}>
+            Pixel ID
+            <input name="pixelId" defaultValue={config.pixelId} placeholder="15 or 16 digits" style={monoInput} />
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Ad account ID</span>
-            <input
-              name="adAccountId"
-              defaultValue={config.adAccountId}
-              placeholder="act_…"
-              style={{ ...input, fontFamily: "'JetBrains Mono',monospace" }}
-            />
+          <label style={fieldLabel}>
+            Ad account ID
+            <input name="adAccountId" defaultValue={config.adAccountId} placeholder="act_…" style={monoInput} />
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>
-              Conversions API token {hasToken ? `(stored: ${tokenMask})` : ""}
+          <label style={fieldLabel}>
+            Conversions API token
+            <span style={{ display: "flex", gap: 6 }}>
+              <input
+                name="capiToken"
+                type={showToken ? "text" : "password"}
+                placeholder={hasToken ? `stored: ${tokenMask}` : "EAAG…"}
+                style={{ ...monoInput, flex: 1, minWidth: 0 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowToken((current) => !current)}
+                style={{
+                  height: 36,
+                  padding: "0 10px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface)",
+                  color: "var(--ink)",
+                  fontSize: 12,
+                  fontWeight: 550,
+                  cursor: "pointer",
+                }}
+              >
+                {showToken ? "Hide" : "Show"}
+              </button>
             </span>
-            <input
-              name="capiToken"
-              type="password"
-              placeholder={hasToken ? "Leave blank to keep the stored one" : "EAAG…"}
-              style={{ ...input, fontFamily: "'JetBrains Mono',monospace" }}
-            />
           </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Test event code</span>
-            <input name="testEventCode" defaultValue={config.testEventCode} style={input} />
+          {/*
+            Not in the prototype's three fields, but "Send test event" cannot be
+            real without it: Meta only keeps an event out of the live totals when
+            it carries a test event code from Events Manager.
+          */}
+          <label style={fieldLabel}>
+            Test event code
+            <input name="testEventCode" defaultValue={config.testEventCode} placeholder="TEST12345" style={monoInput} />
           </label>
         </div>
-        <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <button type="submit" disabled={busy} style={primaryButton}>
-            {busy ? "Saving…" : "Save"}
+        <div
+          style={{
+            padding: "12px 16px",
+            borderTop: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            type="submit"
+            style={{
+              height: 30,
+              padding: "0 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--surface)",
+              color: "var(--ink)",
+              fontSize: 12,
+              fontWeight: 550,
+              cursor: "pointer",
+            }}
+          >
+            Save
           </button>
+          <button
+            type="submit"
+            name="intent"
+            value="test"
+            style={{
+              height: 30,
+              padding: "0 12px",
+              borderRadius: 8,
+              border: 0,
+              background: "var(--accent)",
+              color: "var(--accent-ink)",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Send test event
+          </button>
+          {pill(tested ? "success" : "neutral", tested ? "Received" : "Not tested")}
           <span style={{ fontSize: 12, color: "var(--ink-2)", flex: 1, minWidth: 200 }}>
-            The browser pixel and the server call share one event ID, so Meta merges them instead of
-            counting a purchase twice.
+            Browser and server events share one event ID, so Meta never counts a purchase twice.
           </span>
+          <button
+            type="submit"
+            name="intent"
+            value="disconnect"
+            style={{
+              height: 30,
+              padding: "0 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--surface)",
+              color: "var(--critical)",
+              fontSize: 12,
+              fontWeight: 550,
+              cursor: "pointer",
+            }}
+          >
+            Disconnect
+          </button>
         </div>
-      </Form>
+      </fetcher.Form>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16 }}>
-        <div style={card}>
-          <div style={cardHeader}>Browser events · last 7 days</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 16 }}>
+        <div style={cardStyle}>
+          <div style={cardHead}>Browser events</div>
           {counts.browser.length === 0 ? (
-            <div style={{ padding: "24px 16px", textAlign: "center", color: "var(--ink-2)" }}>
-              No events recorded yet. They start when the storefront has visitors.
+            <div style={{ padding: "40px 16px", textAlign: "center", color: "var(--ink-2)" }}>
+              <div style={{ fontWeight: 650, color: "var(--ink)", marginBottom: 4 }}>No events yet</div>
+              They start when the storefront has visitors.
             </div>
           ) : (
             counts.browser.map((event) => (
@@ -214,48 +400,62 @@ export default function Meta({ loaderData, actionData }: Route.ComponentProps) {
                   borderBottom: "1px solid var(--border)",
                 }}
               >
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22C55E" }} />
-                <span style={{ flex: 1, fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>
-                  {event.name}
-                </span>
-                <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--ink-2)" }}>
-                  {event.count}
-                </span>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: dot }} />
+                <span style={{ flex: 1, fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>{event.name}</span>
+                <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--ink-2)" }}>{event.count}</span>
               </div>
             ))
           )}
         </div>
 
-        <div style={card}>
-          <div style={cardHeader}>Server events (CAPI) · last 7 days</div>
-          <Row label="Purchases recorded" value={String(counts.purchases)} />
-          <Row label="Carrying a shared event ID" value={String(counts.deduplicated)} />
-          <div style={{ padding: "11px 16px", fontSize: 12, color: "var(--ink-2)", lineHeight: "17px" }}>
-            {counts.purchases === 0
-              ? "Nothing to send yet — these appear once real orders come in."
-              : counts.deduplicated === counts.purchases
-                ? "Every purchase carries an event ID, so nothing will be double counted."
-                : "Some purchases have no event ID. Those can be counted twice by Meta."}
+        <div style={cardStyle}>
+          <div style={cardHead}>Server events (CAPI)</div>
+          {serverEvents.map((event) => (
+            <div
+              key={event.name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "9px 16px",
+                borderBottom: "1px solid var(--border)",
+              }}
+            >
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: dot }} />
+              <span style={{ flex: 1, fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>{event.name}</span>
+              <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--ink-2)" }}>{event.count}</span>
+            </div>
+          ))}
+          {/*
+            Event match quality is only known inside Events Manager; there is no
+            API reading it here, so the design's neutral state is what shows.
+          */}
+          <div
+            style={{
+              padding: "11px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Event match quality</span>
+            <span style={{ fontWeight: 650, color: "var(--ink-3)" }}>—</span>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "9px 16px",
-        borderBottom: "1px solid var(--border)",
-      }}
-    >
-      <span style={{ flex: 1 }}>{label}</span>
-      <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{value}</span>
+      <div style={cardStyle}>
+        <div style={cardHead}>Ad performance</div>
+        {/*
+          No ad account is read anywhere in this app yet, so the design's own
+          empty state stands instead of a table of guessed numbers.
+        */}
+        <div style={{ padding: "40px 16px", textAlign: "center", color: "var(--ink-2)" }}>
+          <div style={{ fontWeight: 650, color: "var(--ink)", marginBottom: 4 }}>No ad data</div>
+          Connect an ad account to pull spend, revenue and ROAS in here.
+        </div>
+      </div>
     </div>
   );
 }

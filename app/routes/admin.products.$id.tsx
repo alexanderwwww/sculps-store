@@ -1,30 +1,54 @@
 /**
- * Product detail: title, description, bundle options, supplier and cost.
+ * Product detail: title, description, media, bundle options, supplier and cost.
  *
  * The saved-percent column is calculated as you type from price against
  * compare-at. It is never a field, because storing it is how a badge ends up
- * disagreeing with the price beside it.
+ * disagreeing with the price beside it. Margin is calculated the same way,
+ * from unit cost against the default option's price.
  */
 import { Form, Link, useNavigation } from "react-router";
 import { useState } from "react";
+import { eq } from "drizzle-orm";
 import type { Route } from "./+types/admin.products.$id";
 import { requireUser } from "~/lib/auth.server";
-import { loadProduct, updateProduct, saveVariants, unitsSold } from "~/lib/admin.server";
+import { loadProduct, updateProduct, saveVariants, unitsSold, addMedia, deleteMedia } from "~/lib/admin.server";
+import { media as mediaTable, products as productsTable } from "~/db/schema";
 import { centsFromInput, centsToInput, savedPercent, formatMoney } from "~/lib/money";
-import {
-  card,
-  cardHeader,
-  Field,
-  input,
-  textarea,
-  primaryButton,
-  secondaryButton,
-  Badge,
-} from "~/admin/ui";
+import { primaryButton } from "~/admin/ui";
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: data?.product ? `${data.product.title} — Shop Admin` : "Product — Shop Admin" }];
 }
+
+/** detailCols, from the prototype view-model (desktop). */
+const DETAIL_COLS = "minmax(0,1fr) 300px";
+
+const panel = {
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  boxShadow: "var(--shadow)",
+} as const;
+
+const cellInput = {
+  width: "100%",
+  height: 32,
+  padding: "0 10px",
+  borderRadius: 8,
+  border: "1px solid var(--input-border)",
+  background: "var(--input)",
+  fontSize: 13,
+  color: "var(--ink)",
+} as const;
+
+const fieldLabelStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+  fontSize: 12,
+  fontWeight: 550,
+  color: "var(--ink-2)",
+} as const;
 
 export async function loader({ context, request, params }: Route.LoaderArgs) {
   await requireUser(context.db, request);
@@ -34,8 +58,18 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
   const sold = await unitsSold(context.db, loaded.product.storeId);
   const url = new URL(request.url);
 
+  // Media has no product column yet, so this is every image on the store.
+  const mediaRows = await context.db
+    .select()
+    .from(mediaTable)
+    .where(eq(mediaTable.storeId, loaded.product.storeId));
+
   return {
     storeSlug: url.searchParams.get("store") || "",
+    // Uploads need a Cloudflare R2 bucket; the binding is added to
+    // wrangler.jsonc when the bucket exists.
+    storageReady: "MEDIA" in context.cloudflare.env,
+    media: mediaRows.map((row) => ({ id: row.id, url: row.key, filename: row.filename })),
     product: {
       id: loaded.product.id,
       title: loaded.product.title,
@@ -62,6 +96,39 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
 export async function action({ context, request, params }: Route.ActionArgs) {
   await requireUser(context.db, request);
   const form = await request.formData();
+  const intent = String(form.get("intent") || "save");
+
+  const loaded = await loadProduct(context.db, params.id);
+  if (!loaded) throw new Response("Product not found", { status: 404 });
+  const storeSlug = String(form.get("storeSlug") || "");
+
+  if (intent === "delete") {
+    if (String(form.get("confirm") || "") !== "delete") return { error: "Deletion was not confirmed." };
+    await context.db.delete(productsTable).where(eq(productsTable.id, params.id));
+    return new Response(null, {
+      status: 302,
+      headers: { Location: `/admin/products?store=${storeSlug}` },
+    });
+  }
+
+  if (intent === "addMedia") {
+    const link = String(form.get("mediaUrl") || "").trim();
+    if (!link) return { error: "Paste an image address first." };
+    await addMedia(context.db, loaded.product.storeId, {
+      key: link,
+      filename: link.split("/").pop()?.slice(0, 120) || link,
+      mime: "image/*",
+      sizeBytes: 0,
+      alt: null,
+    });
+    return { ok: true, savedAt: new Date().toISOString() };
+  }
+
+  if (intent === "removeMedia") {
+    const id = String(form.get("mediaId") || "");
+    if (id) await deleteMedia(context.db, [id]);
+    return { ok: true, savedAt: new Date().toISOString() };
+  }
 
   const title = String(form.get("title") || "").trim();
   if (!title) return { error: "A product needs a title." };
@@ -80,7 +147,8 @@ export async function action({ context, request, params }: Route.ActionArgs) {
     costCents: centsFromInput(String(form.get("cost") || "")),
   });
 
-  // The option rows arrive as parallel arrays, one entry per row still on screen.
+  // The option rows arrive as parallel arrays, one entry per row still on
+  // screen, in the order they are shown — which is how a drag reorder is saved.
   const ids = form.getAll("variantId").map(String);
   const labels = form.getAll("variantLabel").map(String);
   const sublabels = form.getAll("variantSublabel").map(String);
@@ -128,7 +196,7 @@ interface Row {
 }
 
 export default function ProductDetail({ loaderData, actionData }: Route.ComponentProps) {
-  const { product, variants, storeSlug } = loaderData;
+  const { product, variants, storeSlug, media, storageReady } = loaderData;
   const navigation = useNavigation();
   const busy = navigation.state === "submitting";
 
@@ -139,6 +207,8 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
     const found = variants.findIndex((variant) => variant.isDefault);
     return found >= 0 ? found : 0;
   });
+  const [cost, setCost] = useState(product.cost);
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
 
   const update = (index: number, patch: Partial<Row>) =>
     setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -163,27 +233,81 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
     setDefaultIndex((current) => (current >= index && current > 0 ? current - 1 : current));
   };
 
+  const dropOn = (index: number) => {
+    const from = dragFrom;
+    setDragFrom(null);
+    if (from === null || from === index) return;
+    setRows((current) => {
+      const next = current.slice();
+      const [moved] = next.splice(from, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    setDefaultIndex((current) => {
+      if (current === from) return index;
+      if (from < current && index >= current) return current - 1;
+      if (from > current && index <= current) return current + 1;
+      return current;
+    });
+  };
+
+  // Margin: default option's price against unit cost, worked out as you type.
+  const costCents = centsFromInput(cost) ?? 0;
+  const defaultPriceCents = centsFromInput(rows[defaultIndex]?.price ?? "") ?? 0;
+  const margin = defaultPriceCents > 0 ? ((defaultPriceCents - costCents) / defaultPriceCents) * 100 : null;
+  const marginText = margin === null ? "—" : `${margin.toFixed(0)}%`;
+  const marginColor =
+    margin === null ? "var(--ink-3)" : margin >= 60 ? "var(--success)" : margin >= 35 ? "var(--ink)" : "var(--critical)";
+  const marginNote =
+    margin === null
+      ? "set a price and cost"
+      : `${formatMoney(defaultPriceCents - costCents)} per unit on ${rows[defaultIndex]?.label || "default option"}`;
+
+  const mediaNote = media.length
+    ? `${media.length} image${media.length === 1 ? "" : "s"} · first one is the thumbnail`
+    : "PNG or JPG. The first image is used as the thumbnail.";
+
   return (
     <Form method="post" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <input type="hidden" name="storeSlug" value={storeSlug} />
+      <input type="hidden" name="handle" value={product.handle} />
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <Link to={`/admin/products?store=${storeSlug}`} style={{ ...secondaryButton, textDecoration: "none" }}>
-          ←
+        <Link
+          to={`/admin/products?store=${storeSlug}`}
+          className="k-hover"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            color: "var(--ink)",
+            cursor: "pointer",
+            display: "grid",
+            placeItems: "center",
+            flex: "none",
+            boxShadow: "var(--shadow)",
+            textDecoration: "none",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m10 4-4 4 4 4" />
+          </svg>
         </Link>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 650 }}>{product.title}</h1>
-        <Badge kind={product.status === "active" ? "success" : "neutral"}>
-          {product.status === "active" ? "Active" : "Draft"}
-        </Badge>
+        <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650 }}>{product.title || "New product"}</h1>
+        {/* The prototype saves from the shell's save bar, which is not this
+            screen's markup — the Save button lives here instead. */}
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-          {actionData?.ok ? (
+          {actionData && "ok" in actionData && actionData.ok ? (
             <span style={{ color: "var(--b-success-fg)", fontSize: 12, fontWeight: 550 }}>Saved</span>
           ) : null}
-          <button type="submit" disabled={busy} style={primaryButton}>
+          <button type="submit" name="intent" value="save" disabled={busy} style={primaryButton}>
             {busy ? "Saving…" : "Save"}
           </button>
         </div>
       </div>
 
-      {actionData?.error ? (
+      {actionData && "error" in actionData && actionData.error ? (
         <div
           style={{
             background: "var(--b-critical-bg)",
@@ -197,24 +321,187 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
         </div>
       ) : null}
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.7fr) minmax(0,1fr)", gap: 16, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: DETAIL_COLS, gap: 16, alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          <div style={{ ...card, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <Field label="Title">
-              <input name="title" defaultValue={product.title} style={{ ...input, height: 36, fontSize: 14 }} />
-            </Field>
-            <Field label="Description" help="Shown on the product page.">
-              <textarea name="description" defaultValue={product.description} rows={6} style={textarea} />
-            </Field>
-            <Field label="Handle" help="The part of the storefront address that names this product.">
-              <input name="handle" defaultValue={product.handle} style={input} />
-            </Field>
+          <div style={{ ...panel, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+            <label style={fieldLabelStyle}>
+              Title
+              <input
+                name="title"
+                defaultValue={product.title}
+                placeholder="e.g. Garden Kneeler &amp; Seat"
+                style={{
+                  height: 36,
+                  padding: "0 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--input)",
+                  fontSize: 14,
+                  color: "var(--ink)",
+                }}
+              />
+            </label>
+            <label style={fieldLabelStyle}>
+              Description
+              <textarea
+                name="description"
+                defaultValue={product.description}
+                rows={6}
+                placeholder="What it is, who it's for, what's in the box…"
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--input)",
+                  fontSize: 13,
+                  resize: "vertical",
+                  color: "var(--ink)",
+                  fontFamily: "inherit",
+                }}
+              />
+            </label>
           </div>
 
-          <div style={card}>
-            <div style={cardHeader}>
-              <span>Bundle options</span>
-              <button type="button" onClick={addRow} style={secondaryButton}>
+          <div style={{ ...panel, padding: 16 }}>
+            <div style={{ fontWeight: 650, marginBottom: 10 }}>Media</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(96px,1fr))", gap: 10 }}>
+              {media.map((m) => (
+                <span
+                  key={m.id}
+                  style={{
+                    position: "relative",
+                    aspectRatio: 1,
+                    borderRadius: 10,
+                    border: "1px solid var(--border)",
+                    background: "var(--bg)",
+                    overflow: "hidden",
+                    display: "block",
+                    maxWidth: "100%",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backgroundImage: `url("${m.url}")`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      display: "block",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="removeMedia"
+                    onClick={(event) => {
+                      const form = event.currentTarget.form;
+                      if (form) (form.elements.namedItem("mediaId") as HTMLInputElement).value = m.id;
+                    }}
+                    title="Remove"
+                    style={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      border: 0,
+                      background: "rgba(0,0,0,.6)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      fontSize: 11,
+                    }}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+              <input type="hidden" name="mediaId" value="" />
+              {/* Rule 2: file upload needs a Cloudflare R2 bucket, which is not
+                  bound to the Worker yet, so the tile is visibly disabled. */}
+              <label
+                style={{
+                  aspectRatio: 1,
+                  maxWidth: "100%",
+                  borderRadius: 10,
+                  border: "1px dashed var(--border-strong)",
+                  background: "var(--bg)",
+                  color: "var(--ink-2)",
+                  cursor: "not-allowed",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                  fontSize: 12,
+                  opacity: 0.5,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>＋</span>
+                Upload
+                <input type="file" accept="image/*" multiple disabled style={{ display: "none" }} />
+              </label>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 8 }}>{mediaNote}</div>
+            <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 8 }}>
+              {storageReady
+                ? "Uploads are disabled here until this panel is wired to the media library."
+                : "Uploading a file needs a Cloudflare R2 bucket, which is not connected yet. Until it is, add an image that is already on the internet by its address."}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <input
+                name="mediaUrl"
+                placeholder="https://…"
+                style={{ ...cellInput, flex: 1, minWidth: 220, width: "auto" }}
+              />
+              <button
+                type="submit"
+                name="intent"
+                value="addMedia"
+                style={{
+                  height: 32,
+                  padding: "0 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface)",
+                  color: "var(--ink)",
+                  fontSize: 12,
+                  fontWeight: 550,
+                  cursor: "pointer",
+                }}
+              >
+                Add by URL
+              </button>
+            </div>
+          </div>
+
+          <div style={{ ...panel, overflow: "hidden" }}>
+            <div
+              style={{
+                padding: "12px 16px",
+                borderBottom: "1px solid var(--border)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span style={{ fontWeight: 650 }}>Bundle options</span>
+              <button
+                type="button"
+                onClick={addRow}
+                style={{
+                  height: 26,
+                  padding: "0 10px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface)",
+                  color: "var(--ink)",
+                  fontSize: 12,
+                  fontWeight: 550,
+                  cursor: "pointer",
+                }}
+              >
                 Add option
               </button>
             </div>
@@ -231,31 +518,62 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
                       borderBottom: "1px solid var(--border)",
                     }}
                   >
+                    <th style={{ width: 34 }} />
                     <th style={{ padding: "0 8px", fontWeight: 550 }}>Label</th>
                     <th style={{ padding: "0 8px", fontWeight: 550 }}>Sublabel</th>
-                    <th style={{ padding: "0 8px", fontWeight: 550, width: 100 }}>Price</th>
-                    <th style={{ padding: "0 8px", fontWeight: 550, width: 112 }}>Compare-at</th>
+                    <th style={{ padding: "0 8px", fontWeight: 550, width: 96 }}>Price</th>
+                    <th style={{ padding: "0 8px", fontWeight: 550, width: 108 }}>Compare-at</th>
                     <th style={{ padding: "0 8px", fontWeight: 550, width: 76 }}>Saved</th>
-                    <th style={{ padding: "0 8px", fontWeight: 550, width: 64 }}>Default</th>
-                    <th style={{ width: 44 }} />
+                    <th style={{ padding: "0 8px", fontWeight: 550, width: 60 }}>Default</th>
+                    <th style={{ width: 40 }} />
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row, index) => {
                     const priceCents = centsFromInput(row.price);
                     const compareCents = centsFromInput(row.compareAt);
-                    const saved =
-                      priceCents !== null ? savedPercent(priceCents, compareCents) : null;
+                    const saved = priceCents !== null ? savedPercent(priceCents, compareCents) : null;
                     return (
-                      <tr key={row.key} style={{ borderBottom: "1px solid var(--border)", height: 48 }}>
-                        <td style={{ padding: "0 8px" }}>
+                      <tr
+                        key={row.key}
+                        style={{ borderBottom: "1px solid var(--border)", height: 48 }}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          dropOn(index);
+                        }}
+                      >
+                        <td style={{ textAlign: "center" }}>
                           <input type="hidden" name="variantId" value={row.id} />
+                          <input type="hidden" name="variantSku" value={row.sku} />
+                          <span
+                            draggable
+                            onDragStart={(event) => {
+                              setDragFrom(index);
+                              try {
+                                event.dataTransfer.effectAllowed = "move";
+                              } catch {
+                                /* Safari refuses on some elements */
+                              }
+                            }}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              dropOn(index);
+                            }}
+                            title="Drag to reorder"
+                            style={{ cursor: "grab", color: "var(--ink-3)", display: "inline-block", padding: "4px 6px" }}
+                          >
+                            ⠿
+                          </span>
+                        </td>
+                        <td style={{ padding: "0 8px" }}>
                           <input
                             name="variantLabel"
                             value={row.label}
                             onChange={(event) => update(index, { label: event.target.value })}
                             placeholder="Buy 2"
-                            style={input}
+                            style={cellInput}
                           />
                         </td>
                         <td style={{ padding: "0 8px" }}>
@@ -264,7 +582,7 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
                             value={row.sublabel}
                             onChange={(event) => update(index, { sublabel: event.target.value })}
                             placeholder="Most popular"
-                            style={input}
+                            style={cellInput}
                           />
                         </td>
                         <td style={{ padding: "0 8px" }}>
@@ -274,7 +592,7 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
                             onChange={(event) => update(index, { price: event.target.value })}
                             placeholder="0.00"
                             inputMode="decimal"
-                            style={{ ...input, fontVariantNumeric: "tabular-nums" }}
+                            style={{ ...cellInput, fontVariantNumeric: "tabular-nums" }}
                           />
                         </td>
                         <td style={{ padding: "0 8px" }}>
@@ -284,18 +602,18 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
                             onChange={(event) => update(index, { compareAt: event.target.value })}
                             placeholder="0.00"
                             inputMode="decimal"
-                            style={{ ...input, fontVariantNumeric: "tabular-nums" }}
+                            style={{ ...cellInput, fontVariantNumeric: "tabular-nums" }}
                           />
                         </td>
                         <td
                           style={{
                             padding: "0 8px",
                             fontWeight: 600,
-                            color: saved ? "var(--b-success-fg)" : "var(--ink-3)",
+                            color: saved === null ? "var(--ink-3)" : "var(--success)",
                             fontVariantNumeric: "tabular-nums",
                           }}
                         >
-                          {saved ? `${saved}%` : "—"}
+                          {saved === null ? "—" : `${saved}%`}
                         </td>
                         <td style={{ padding: "0 8px", textAlign: "center" }}>
                           <input
@@ -336,34 +654,118 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
                 No bundle options yet. Add one to set pricing.
               </div>
             ) : null}
-            <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--ink-2)" }}>
-              Saved percent is worked out from price against compare-at. Change a price and every
-              badge on the storefront follows.
+          </div>
+
+          <div style={{ ...panel, padding: 16 }}>
+            <div style={{ fontWeight: 650, marginBottom: 10 }}>Supplier &amp; cost</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+              <label style={fieldLabelStyle}>
+                Supplier name
+                <input
+                  name="supplierName"
+                  defaultValue={product.supplierName}
+                  placeholder="Supplier"
+                  style={{ ...cellInput, height: 36, padding: "0 12px" }}
+                />
+              </label>
+              <label style={fieldLabelStyle}>
+                Supplier URL
+                <input
+                  name="supplierUrl"
+                  defaultValue={product.supplierUrl}
+                  placeholder="https://…"
+                  style={{ ...cellInput, height: 36, padding: "0 12px" }}
+                />
+              </label>
+              <label style={fieldLabelStyle}>
+                Cost per unit
+                <input
+                  name="cost"
+                  value={cost}
+                  onChange={(event) => setCost(event.target.value)}
+                  placeholder="0.00"
+                  inputMode="decimal"
+                  style={{ ...cellInput, height: 36, padding: "0 12px", fontVariantNumeric: "tabular-nums" }}
+                />
+              </label>
+              <div style={fieldLabelStyle}>
+                Margin
+                <div
+                  style={{
+                    height: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 15,
+                    fontWeight: 650,
+                    color: marginColor,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {marginText}
+                  <span style={{ fontSize: 12, fontWeight: 450, color: "var(--ink-2)" }}>{marginNote}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          <div style={{ ...card, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <Field label="Status" help="Draft keeps it off the storefront.">
-              <select name="status" defaultValue={product.status} style={{ ...input, padding: "0 8px" }}>
+          <div style={{ ...panel, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+            <label style={fieldLabelStyle}>
+              Status
+              <select
+                name="status"
+                defaultValue={product.status}
+                style={{
+                  height: 34,
+                  borderRadius: 8,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--input)",
+                  padding: "0 8px",
+                  fontSize: 13,
+                  color: "var(--ink)",
+                }}
+              >
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>
               </select>
-            </Field>
+            </label>
+            {/* Store select and Meta content ID are omitted: no column exists
+                for either, and there is one store. */}
           </div>
-
-          <div style={{ ...card, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ fontWeight: 650 }}>Supplier &amp; cost</div>
-            <Field label="Supplier name">
-              <input name="supplierName" defaultValue={product.supplierName} style={input} />
-            </Field>
-            <Field label="Supplier link">
-              <input name="supplierUrl" defaultValue={product.supplierUrl} style={input} />
-            </Field>
-            <Field label="Unit cost" help="What you pay. Used for the margin readout.">
-              <input name="cost" defaultValue={product.cost} inputMode="decimal" style={input} />
-            </Field>
+          <div style={{ ...panel, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontWeight: 650 }}>Danger zone</span>
+            <button
+              type="submit"
+              name="intent"
+              value="delete"
+              onClick={(event) => {
+                if (
+                  !confirm(
+                    "Delete this product? It will be removed from the store and from Meta catalogue syncs. This cannot be undone.",
+                  )
+                ) {
+                  event.preventDefault();
+                  return;
+                }
+                const form = event.currentTarget.form;
+                if (form) (form.elements.namedItem("confirm") as HTMLInputElement).value = "delete";
+              }}
+              style={{
+                height: 30,
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "var(--surface)",
+                color: "var(--critical)",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Delete product
+            </button>
+            <input type="hidden" name="confirm" value="" />
           </div>
         </div>
       </div>

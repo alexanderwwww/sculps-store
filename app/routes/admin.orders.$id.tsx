@@ -5,7 +5,9 @@
  * change. Nothing is ever deleted. That record is the evidence that wins a
  * payment-processor review, so it is not optional and not left to the caller.
  */
-import { Form, Link, useNavigation } from "react-router";
+import { useEffect, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { Form, Link, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/admin.orders.$id";
 import { requireUser } from "~/lib/auth.server";
 import {
@@ -23,16 +25,7 @@ import { orders } from "~/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import { centsFromInput } from "~/lib/money";
-import {
-  card,
-  cardHeader,
-  Badge,
-  primaryButton,
-  secondaryButton,
-  criticalButton,
-  input,
-  textarea,
-} from "~/admin/ui";
+import { primaryButton, secondaryButton, criticalButton, input } from "~/admin/ui";
 import type { BadgeKind } from "~/admin/ui";
 
 const STATE_LABEL: Record<string, string> = {
@@ -64,8 +57,31 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
   if (!loaded) throw new Response("Order not found", { status: 404 });
 
   const { order, store, items, timeline } = loaded;
+
+  // The chargeback banner and the evidence card exist only when Stripe has
+  // actually opened a dispute on this order — that is the "chargeback" event
+  // the Stripe webhook writes.
+  const chargebackEvent = timeline.filter((event) => event.type === "chargeback").at(-1) ?? null;
+
+  // "3 orders" under the customer's name: how many orders this email has left
+  // on this store, counted rather than guessed.
+  const [{ count: customerOrderCount }] = await context.db
+    .select({ count: sql<number>`cast(count(*) as int)` })
+    .from(orders)
+    .where(and(eq(orders.storeId, store.id), eq(orders.email, order.email)));
+
   return {
-    store: { slug: store.slug, name: store.name, currency: store.currency },
+    store: {
+      slug: store.slug,
+      name: store.name,
+      currency: store.currency,
+      color: store.color,
+      initial: store.name.slice(0, 1).toUpperCase(),
+    },
+    chargeback: chargebackEvent
+      ? { reason: chargebackEvent.text.replace(/^Chargeback opened · /, ""), at: chargebackEvent.at }
+      : null,
+    customerOrderCount,
     order: {
       id: order.id,
       number: order.number,
@@ -94,6 +110,14 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
       campaign: order.campaign,
       metaEventId: order.metaEventId,
       note: order.note,
+      city: order.city,
+      region: order.region,
+      postalCode: order.postalCode,
+      country: order.country,
+      itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+      shippingIsFree: order.shippingCents === 0,
+      taxRate:
+        order.subtotalCents > 0 ? `${((order.taxCents / order.subtotalCents) * 100).toFixed(2)}%` : "—",
     },
     items: items.map((item) => ({
       id: item.id,
@@ -288,31 +312,326 @@ function formatWhen(value: string | Date): string {
   });
 }
 
+function formatLong(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** The dot colour on a timeline row, by what the event was. */
+function dotFor(type: string): string {
+  if (type === "chargeback" || type.startsWith("refund")) return "var(--critical)";
+  if (type.startsWith("state") || type.startsWith("tracking")) return "var(--link)";
+  if (type.startsWith("email")) return "#22C55E";
+  return "var(--ink-3)";
+}
+
+const menuItem: CSSProperties = {
+  width: "100%",
+  textAlign: "left",
+  padding: "7px 10px",
+  border: 0,
+  borderRadius: 7,
+  background: "transparent",
+  cursor: "pointer",
+  fontSize: 13,
+  color: "var(--ink)",
+  textDecoration: "none",
+  display: "block",
+};
+
+const deadMenuItem: CSSProperties = {
+  ...menuItem,
+  cursor: "not-allowed",
+  opacity: 0.5,
+};
+
+const cardStyle: CSSProperties = {
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  boxShadow: "var(--shadow)",
+  overflow: "hidden",
+};
+
+const cardHead: CSSProperties = {
+  padding: "12px 16px",
+  fontWeight: 650,
+  borderBottom: "1px solid var(--border)",
+};
+
+function Chip({ kind, children }: { kind: string; children: ReactNode }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        height: 20,
+        padding: "0 8px",
+        borderRadius: 8,
+        fontSize: 12,
+        fontWeight: 550,
+        background: `var(--b-${kind}-bg)`,
+        color: `var(--b-${kind}-fg)`,
+      }}
+    >
+      <span
+        style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor", opacity: 0.8 }}
+      />
+      {children}
+    </span>
+  );
+}
+
 export default function OrderDetail({ loaderData, actionData }: Route.ComponentProps) {
-  const { order, store, items, timeline } = loaderData;
+  const { order, store, items, timeline, chargeback, customerOrderCount } = loaderData;
   const navigation = useNavigation();
   const busy = navigation.state === "submitting";
+  const [params] = useSearchParams();
+
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [refundOpen, setRefundOpen] = useState(params.get("refund") === "1");
+  const [noteEditing, setNoteEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const close = () => setMoreMenuOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, []);
+
+  // Refunding is only possible while there is money left on a paid order.
+  const canRefund =
+    (order.paymentStatus === "paid" || order.paymentStatus === "partially_refunded") &&
+    Number(order.remaining) > 0;
+  const isRefunded = order.paymentStatus === "refunded";
+  const canFulfill = order.state === "new" || order.state === "ordered";
+  const isFulfilled = order.state === "fulfilled";
+
+  const payKind = order.paymentStatus === "paid" ? "success" : "neutral";
+  const payLabel =
+    order.paymentStatus === "paid"
+      ? "Paid"
+      : order.paymentStatus === "partially_refunded"
+        ? "Partially refunded"
+        : order.paymentStatus === "refunded"
+          ? "Refunded"
+          : order.paymentStatus;
+  const stateKind = STATE_KIND[order.state] ?? "neutral";
+  const stateLabel = STATE_LABEL[order.state] ?? order.state;
+
+  const stripeUrl =
+    order.paymentProvider === "stripe" && order.paymentRef
+      ? `https://dashboard.stripe.com/payments/${order.paymentRef}`
+      : null;
+
+  const evidence: { label: string; value: string }[] = [
+    { label: "Order details", value: `#${order.number} · ${order.total}` },
+    { label: "Tracking number", value: order.tracking || "Added when fulfilled" },
+    {
+      label: "Delivery confirmation",
+      value: isFulfilled ? "Marked fulfilled on this order" : "Pending carrier scan",
+    },
+    { label: "Customer communications", value: `Order + shipping emails to ${order.email}` },
+    {
+      label: "Billing/shipping match",
+      value: [order.city, order.region].filter(Boolean).join(", ") || "No address on this order",
+    },
+  ];
 
   return (
     <div style={{ maxWidth: 998, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <Link to={`/admin/orders?store=${store.slug}`} style={{ ...secondaryButton, textDecoration: "none" }}>
-          ←
+      <style>{`
+        .k-order-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+        @media (max-width: 720px){ .k-order-grid{grid-template-columns:1fr} }
+      `}</style>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
+        <Link
+          to={`/admin/orders?store=${store.slug}`}
+          className="k-hover"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            color: "var(--ink)",
+            cursor: "pointer",
+            display: "grid",
+            placeItems: "center",
+            flex: "none",
+            boxShadow: "var(--shadow)",
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m10 4-4 4 4 4" />
+          </svg>
         </Link>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 650, fontFamily: "'JetBrains Mono',monospace" }}>
-          #{order.number}
-        </h1>
-        <Badge kind={STATE_KIND[order.state] ?? "neutral"}>{STATE_LABEL[order.state] ?? order.state}</Badge>
-        <Badge kind={order.paymentStatus === "paid" ? "success" : "neutral"}>
-          {order.paymentStatus === "paid"
-            ? "Paid"
-            : order.paymentStatus === "partially_refunded"
-              ? "Partially refunded"
-              : order.paymentStatus === "refunded"
-                ? "Refunded"
-                : order.paymentStatus}
-        </Badge>
-        <span style={{ color: "var(--ink-2)", fontSize: 12 }}>{formatWhen(order.createdAt)}</span>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 20,
+                lineHeight: "28px",
+                fontWeight: 650,
+                fontFamily: "'JetBrains Mono',monospace",
+              }}
+            >
+              #{order.number}
+            </h1>
+            <Chip kind={payKind}>{payLabel}</Chip>
+            <Chip kind={stateKind}>{stateLabel}</Chip>
+          </div>
+          <div style={{ color: "var(--ink-2)", fontSize: 12 }}>
+            {formatLong(order.createdAt)} · {store.name}
+            {order.source ? ` · from ${order.source}` : ""}
+          </div>
+        </div>
+        <div
+          style={{ display: "flex", gap: 8, position: "relative" }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => setRefundOpen(true)}
+            disabled={!canRefund}
+            title={canRefund ? undefined : "There is nothing left to refund on this order"}
+            className="k-hover"
+            style={{
+              height: 28,
+              padding: "0 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--surface)",
+              color: "var(--ink)",
+              fontSize: 12,
+              fontWeight: 550,
+              cursor: canRefund ? "pointer" : "not-allowed",
+              boxShadow: "var(--shadow)",
+              opacity: canRefund ? 1 : 0.5,
+            }}
+          >
+            Refund
+          </button>
+          <button
+            type="button"
+            onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+            className="k-hover"
+            style={{
+              height: 28,
+              padding: "0 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--surface)",
+              color: "var(--ink)",
+              fontSize: 12,
+              fontWeight: 550,
+              cursor: "pointer",
+              boxShadow: "var(--shadow)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            More actions
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            >
+              <path d="m4 6 4 4 4-4" />
+            </svg>
+          </button>
+          {moreMenuOpen ? (
+            <div
+              style={{
+                position: "absolute",
+                right: 0,
+                top: 34,
+                width: 230,
+                background: "var(--elev)",
+                border: "1px solid var(--border)",
+                borderRadius: 10,
+                boxShadow: "var(--shadow-lg)",
+                padding: 6,
+                zIndex: 20,
+                animation: "kPop .14s ease-out",
+              }}
+            >
+              {/* No packing-slip document exists yet. */}
+              <button
+                type="button"
+                disabled
+                title="There is no packing-slip document to print yet"
+                style={deadMenuItem}
+              >
+                Print packing slip
+              </button>
+              {/* The order-confirmation email is sent by checkout; there is no
+                  resend path on this route yet. */}
+              <button
+                type="button"
+                disabled
+                title="Resending the order confirmation is not wired up — only the shipping and refund emails can be sent from here"
+                style={deadMenuItem}
+              >
+                Resend order confirmation
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(window.location.href);
+                  setCopied(true);
+                  setMoreMenuOpen(false);
+                }}
+                className="k-hover"
+                style={{ ...menuItem, background: "transparent" }}
+              >
+                {copied ? "Order link copied" : "Copy order link"}
+              </button>
+              {stripeUrl ? (
+                <a
+                  href={stripeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="k-hover"
+                  style={menuItem}
+                >
+                  View payment in Stripe
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  title="This order has no Stripe payment reference to open"
+                  style={deadMenuItem}
+                >
+                  View payment in Stripe
+                </button>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {actionData?.error ? (
@@ -329,144 +648,544 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
         </div>
       ) : null}
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", gap: 16, alignItems: "start" }}>
+      {chargeback ? (
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "flex-start",
+            padding: "12px 16px",
+            borderRadius: 12,
+            background: "var(--critical-bg)",
+            border: "1px solid var(--critical)",
+            color: "var(--ink)",
+          }}
+        >
+          <span
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              background: "var(--critical)",
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              fontWeight: 700,
+              fontSize: 12,
+              flex: "none",
+            }}
+          >
+            !
+          </span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 650 }}>Chargeback opened · {chargeback.reason}</div>
+            <div style={{ color: "var(--ink-2)" }}>
+              Opened <strong style={{ color: "var(--ink)" }}>{formatWhen(chargeback.at)}</strong>. Stripe's
+              response deadline is not recorded on this order — check the dispute in Stripe. Evidence is
+              listed below.
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="k-order-grid">
         <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          <div style={card}>
-            <div style={cardHeader}>Items</div>
+          <div style={cardStyle}>
+            <div
+              style={{ ...cardHead, display: "flex", alignItems: "center", gap: 8 }}
+            >
+              Items
+              <Chip kind={stateKind}>{stateLabel}</Chip>
+            </div>
             {items.map((item) => (
               <div
                 key={item.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "12px 16px",
-                  borderBottom: "1px solid var(--border)",
-                }}
+                style={{ display: "flex", gap: 14, padding: "14px 16px", alignItems: "center" }}
               >
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "block", fontWeight: 550 }}>{item.title}</span>
-                  <span style={{ display: "block", fontSize: 12, color: "var(--ink-2)" }}>{item.label}</span>
+                <span
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 10,
+                    background: store.color,
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 18,
+                    flex: "none",
+                  }}
+                >
+                  {store.initial}
                 </span>
-                <span style={{ color: "var(--ink-2)" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 550 }}>{item.title}</div>
+                  <div style={{ color: "var(--ink-2)", fontSize: 12 }}>{item.label}</div>
+                </div>
+                <div style={{ color: "var(--ink-2)", fontVariantNumeric: "tabular-nums" }}>
                   {item.unitPrice} × {item.quantity}
-                </span>
-                <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 550, minWidth: 80, textAlign: "right" }}>
+                </div>
+                <div
+                  style={{
+                    fontWeight: 600,
+                    fontVariantNumeric: "tabular-nums",
+                    minWidth: 70,
+                    textAlign: "right",
+                  }}
+                >
                   {item.lineTotal}
-                </span>
+                </div>
               </div>
             ))}
-            <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6 }}>
-              <Row label="Subtotal" value={order.subtotal} />
-              <Row label="Shipping" value={order.shipping} />
-              <Row label="Tax" value={order.tax} />
-              <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
-              <Row label="Total" value={order.total} strong />
-              {order.refunded ? <Row label="Refunded" value={`− ${order.refunded}`} /> : null}
+          </div>
+
+          <div style={cardStyle}>
+            <div style={{ ...cardHead, display: "flex", alignItems: "center", gap: 8 }}>
+              Payment
+              <Chip kind={payKind}>{payLabel}</Chip>
+            </div>
+            <div
+              style={{
+                padding: "12px 16px",
+                display: "grid",
+                gridTemplateColumns: "1fr auto auto",
+                gap: "6px 24px",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              <span>Subtotal</span>
+              <span style={{ color: "var(--ink-2)" }}>
+                {order.itemCount} item{order.itemCount === 1 ? "" : "s"}
+              </span>
+              <span style={{ textAlign: "right" }}>{order.subtotal}</span>
+              <span>Tax</span>
+              <span style={{ color: "var(--ink-2)" }}>
+                {order.region ? `${order.region} state · ${order.taxRate}` : order.taxRate}
+              </span>
+              <span style={{ textAlign: "right" }}>{order.tax}</span>
+              <span>Shipping</span>
+              <span style={{ color: "var(--ink-2)" }}>{order.shippingIsFree ? "Free shipping" : ""}</span>
+              <span style={{ textAlign: "right" }}>{order.shipping}</span>
+              <span style={{ fontWeight: 650, paddingTop: 6, borderTop: "1px solid var(--border)" }}>
+                Total
+              </span>
+              <span style={{ paddingTop: 6, borderTop: "1px solid var(--border)" }} />
+              <span
+                style={{
+                  fontWeight: 650,
+                  textAlign: "right",
+                  paddingTop: 6,
+                  borderTop: "1px solid var(--border)",
+                }}
+              >
+                {order.total}
+              </span>
+              {order.refunded ? (
+                <>
+                  <span>Refunded</span>
+                  <span style={{ color: "var(--ink-2)" }}>
+                    {order.remainingFormatted} left to refund
+                  </span>
+                  <span style={{ textAlign: "right" }}>− {order.refunded}</span>
+                </>
+              ) : null}
+            </div>
+            <div
+              style={{
+                padding: "10px 16px",
+                borderTop: "1px solid var(--border)",
+                display: "flex",
+                justifyContent: "space-between",
+                color: "var(--ink-2)",
+                fontSize: 12,
+                flexWrap: "wrap",
+                gap: 6,
+              }}
+            >
+              <span>
+                {order.paymentProvider ? `Paid via ${order.paymentProvider}` : "No payment provider recorded"}
+              </span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{order.paymentRef ?? "—"}</span>
             </div>
           </div>
 
-          <div style={card}>
-            <div style={cardHeader}>Fulfilment</div>
-            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-              {order.state === "new" ? (
-                <Form method="post">
-                  <input type="hidden" name="intent" value="mark-ordered" />
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    <span style={{ flex: 1, color: "var(--ink-2)" }}>
-                      Place this with the supplier, then mark it here.
-                    </span>
-                    <button type="submit" disabled={busy} style={primaryButton}>
-                      Mark as ordered with supplier
+          {chargeback ? (
+            <div style={cardStyle}>
+              <div style={cardHead}>Evidence</div>
+              <div style={{ padding: "8px 16px 12px", color: "var(--ink-2)" }}>
+                Assembled from this order. Nothing is filed with Stripe from here yet.
+              </div>
+              {evidence.map((row) => (
+                <div
+                  key={row.label}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "8px 16px",
+                    borderTop: "1px solid var(--border)",
+                  }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="var(--success)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 8.5 6.5 12 13 4.5" />
+                  </svg>
+                  <span style={{ flex: 1 }}>{row.label}</span>
+                  <span style={{ color: "var(--ink-2)", fontSize: 12 }}>{row.value}</span>
+                </div>
+              ))}
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderTop: "1px solid var(--border)",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                {/* Nothing uploads evidence to Stripe yet, so this cannot pretend to. */}
+                <button
+                  type="button"
+                  disabled
+                  title="Submitting dispute evidence to Stripe is not implemented — file it in the Stripe dashboard"
+                  style={{
+                    height: 28,
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    border: 0,
+                    background: "var(--accent)",
+                    color: "var(--accent-ink)",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "not-allowed",
+                    opacity: 0.5,
+                  }}
+                >
+                  Submit evidence
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <div style={cardStyle} id="tracking">
+            <div style={cardHead}>Fulfillment</div>
+            {canFulfill ? (
+              <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+                <Form method="post" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <input type="hidden" name="intent" value="tracking" />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 160px", gap: 10 }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        fontSize: 12,
+                        fontWeight: 550,
+                        color: "var(--ink-2)",
+                      }}
+                    >
+                      Tracking number
+                      <input
+                        name="tracking"
+                        defaultValue={order.tracking ?? ""}
+                        placeholder="e.g. 9400 1112 0620 …"
+                        style={{
+                          height: 36,
+                          padding: "0 12px",
+                          borderRadius: 8,
+                          border: "1px solid var(--input-border)",
+                          background: "var(--input)",
+                          fontSize: 14,
+                          fontFamily: "'JetBrains Mono',monospace",
+                          color: "var(--ink)",
+                        }}
+                      />
+                    </label>
+                    <label
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        fontSize: 12,
+                        fontWeight: 550,
+                        color: "var(--ink-2)",
+                      }}
+                    >
+                      Carrier
+                      <select
+                        name="carrier"
+                        defaultValue={order.carrier ?? ""}
+                        style={{
+                          height: 36,
+                          borderRadius: 8,
+                          border: "1px solid var(--input-border)",
+                          background: "var(--input)",
+                          padding: "0 8px",
+                          fontSize: 13,
+                          color: "var(--ink)",
+                        }}
+                      >
+                        <option value="">Choose…</option>
+                        {CARRIERS.map((carrier) => (
+                          <option key={carrier} value={carrier}>
+                            {carrier}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className="k-btn-primary"
+                      style={{
+                        height: 32,
+                        padding: "0 14px",
+                        borderRadius: 8,
+                        border: 0,
+                        background: "var(--accent)",
+                        color: "var(--accent-ink)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Mark fulfilled &amp; email customer
                     </button>
                   </div>
                 </Form>
-              ) : null}
-
-              {order.tracking ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <span style={{ color: "var(--ink-2)" }}>Tracking</span>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{order.tracking}</span>
-                  {order.carrier ? <Badge kind="neutral">{order.carrier}</Badge> : null}
-                  {order.trackingUrl ? (
-                    <a href={order.trackingUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 550 }}>
-                      Track ↗
-                    </a>
-                  ) : null}
+                {order.state === "new" ? (
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="mark-ordered" />
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className="k-hover"
+                      style={{
+                        height: 32,
+                        padding: "0 12px",
+                        borderRadius: 8,
+                        border: "1px solid var(--border)",
+                        background: "var(--surface)",
+                        color: "var(--ink)",
+                        fontSize: 12,
+                        fontWeight: 550,
+                        cursor: "pointer",
+                        boxShadow: "var(--shadow)",
+                      }}
+                    >
+                      Mark as ordered with supplier
+                    </button>
+                  </Form>
+                ) : null}
+              </div>
+            ) : null}
+            {isFulfilled ? (
+              <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E" }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 550 }}>Shipped via {order.carrier ?? "—"}</div>
+                  <div
+                    style={{
+                      fontFamily: "'JetBrains Mono',monospace",
+                      fontSize: 12,
+                      color: "var(--ink-2)",
+                    }}
+                  >
+                    {order.tracking ?? "—"}
+                    {order.trackingUrl ? (
+                      <>
+                        {" "}
+                        <a href={order.trackingUrl} target="_blank" rel="noreferrer">
+                          Track ↗
+                        </a>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
-              ) : null}
-
-              <Form method="post" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-                <input type="hidden" name="intent" value="tracking" />
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", display: "block", marginBottom: 4 }}>
-                    {order.tracking ? "Correct the tracking number" : "Tracking number"}
-                  </label>
-                  <input name="tracking" defaultValue={order.tracking ?? ""} style={input} placeholder="9400 1112 0620 …" />
-                </div>
-                <div style={{ width: 160 }}>
-                  <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", display: "block", marginBottom: 4 }}>
-                    Carrier
-                  </label>
-                  <select name="carrier" defaultValue={order.carrier ?? ""} style={{ ...input, padding: "0 8px" }}>
-                    <option value="">Choose…</option>
-                    {CARRIERS.map((carrier) => (
-                      <option key={carrier} value={carrier}>
-                        {carrier}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button type="submit" disabled={busy} style={primaryButton}>
-                  {order.tracking ? "Update tracking" : "Add tracking & email customer"}
-                </button>
-              </Form>
-
-              {order.state !== "fulfilled" && order.state !== "cancelled" ? (
-                <Form
-                  method="post"
-                  onSubmit={(event) => {
-                    if (!confirm("Cancel this order? Only unpaid or fully refunded orders can be cancelled.")) event.preventDefault();
-                  }}
-                  style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", paddingTop: 8, borderTop: "1px solid var(--border)" }}
-                >
-                  <input type="hidden" name="intent" value="cancel" />
-                  <input name="reason" placeholder="Why? (optional)" style={{ ...input, flex: 1, minWidth: 160 }} />
-                  <button type="submit" disabled={busy} style={criticalButton}>
-                    Cancel order
+                {/* Resending is the same write as adding it: it re-sends the
+                    shipping email with the tracking already on the order. */}
+                <Form method="post">
+                  <input type="hidden" name="intent" value="tracking" />
+                  <input type="hidden" name="tracking" value={order.tracking ?? ""} />
+                  <input type="hidden" name="carrier" value={order.carrier ?? ""} />
+                  <button
+                    type="submit"
+                    disabled={busy || !order.tracking || !order.carrier}
+                    title={
+                      order.tracking && order.carrier
+                        ? undefined
+                        : "Add a tracking number and carrier before a tracking email can be sent"
+                    }
+                    style={{
+                      height: 28,
+                      padding: "0 10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border)",
+                      background: "var(--surface)",
+                      color: "var(--ink)",
+                      fontSize: 12,
+                      fontWeight: 550,
+                      cursor: order.tracking && order.carrier ? "pointer" : "not-allowed",
+                      opacity: order.tracking && order.carrier ? 1 : 0.5,
+                    }}
+                  >
+                    Resend tracking
                   </button>
                 </Form>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
+            {isRefunded ? (
+              <div style={{ padding: "14px 16px", color: "var(--ink-2)" }}>
+                This order was refunded. No fulfillment needed.
+              </div>
+            ) : null}
+            {order.state !== "fulfilled" && order.state !== "cancelled" ? (
+              <Form
+                method="post"
+                onSubmit={(event) => {
+                  if (!confirm("Cancel this order? Only unpaid or fully refunded orders can be cancelled.")) {
+                    event.preventDefault();
+                  }
+                }}
+                style={{
+                  padding: "12px 16px",
+                  borderTop: "1px solid var(--border)",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <input type="hidden" name="intent" value="cancel" />
+                <input
+                  name="reason"
+                  placeholder="Why? (optional)"
+                  style={{ ...input, flex: 1, minWidth: 160 }}
+                />
+                <button type="submit" disabled={busy} style={criticalButton}>
+                  Cancel order
+                </button>
+              </Form>
+            ) : null}
           </div>
 
-          <div style={card}>
-            <div style={cardHeader}>Timeline</div>
-            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={cardStyle}>
+            <div style={cardHead}>Timeline</div>
+            <div
+              style={{
+                padding: "12px 16px",
+                display: "flex",
+                gap: 10,
+                borderBottom: "1px solid var(--border)",
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  background: "#A78BFA",
+                  color: "#14102A",
+                  display: "grid",
+                  placeItems: "center",
+                  fontSize: 11,
+                  fontWeight: 650,
+                  flex: "none",
+                }}
+              >
+                ·
+              </span>
+              {/* The timeline is the system's own record; there is nowhere to
+                  save a staff comment yet, so the box is visibly dead. */}
+              <div style={{ flex: 1, display: "flex", gap: 8 }}>
+                <input
+                  disabled
+                  placeholder="Leave a comment…"
+                  title="Staff comments are not stored yet — the timeline only records what the system did"
+                  style={{
+                    flex: 1,
+                    height: 32,
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--input-border)",
+                    background: "var(--input)",
+                    fontSize: 13,
+                    color: "var(--ink)",
+                    opacity: 0.5,
+                    cursor: "not-allowed",
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled
+                  title="Staff comments are not stored yet — the timeline only records what the system did"
+                  style={{
+                    height: 32,
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    color: "var(--ink)",
+                    fontSize: 12,
+                    fontWeight: 550,
+                    cursor: "not-allowed",
+                    opacity: 0.5,
+                  }}
+                >
+                  Post
+                </button>
+              </div>
+            </div>
+            <div style={{ padding: "12px 16px 4px", display: "flex", flexDirection: "column" }}>
               {timeline.length === 0 ? (
-                <div style={{ color: "var(--ink-2)" }}>Nothing recorded yet.</div>
+                <div style={{ color: "var(--ink-2)", paddingBottom: 8 }}>Nothing recorded yet.</div>
               ) : (
-                timeline.map((event) => (
-                  <div key={event.id} style={{ display: "flex", gap: 10 }}>
+                [...timeline].reverse().map((event) => (
+                  <div
+                    key={event.id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "20px 1fr auto",
+                      gap: "0 10px",
+                      position: "relative",
+                    }}
+                  >
+                    <span style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: dotFor(event.type),
+                          marginTop: 6,
+                          flex: "none",
+                          border: "2px solid var(--surface)",
+                          boxShadow: "0 0 0 1px var(--border)",
+                        }}
+                      />
+                      <span
+                        style={{ flex: 1, width: 1, background: "var(--border)", margin: "2px 0" }}
+                      />
+                    </span>
+                    <span style={{ paddingBottom: 14, color: "var(--ink)" }}>{event.text}</span>
                     <span
                       style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        background: event.type.startsWith("refund")
-                          ? "var(--critical)"
-                          : event.type.startsWith("state")
-                            ? "var(--link)"
-                            : "var(--ink-3)",
-                        marginTop: 6,
-                        flex: "none",
+                        fontSize: 12,
+                        color: "var(--ink-2)",
+                        whiteSpace: "nowrap",
+                        fontVariantNumeric: "tabular-nums",
                       }}
-                    />
-                    <span style={{ flex: 1 }}>
-                      <span style={{ display: "block" }}>{event.text}</span>
-                      <span style={{ display: "block", fontSize: 12, color: "var(--ink-2)" }}>
-                        {formatWhen(event.at)}
-                      </span>
+                    >
+                      {formatWhen(event.at)}
                     </span>
                   </div>
                 ))
@@ -476,112 +1195,377 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
-          <div style={card}>
-            <div style={cardHeader}>Customer</div>
-            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ fontWeight: 550 }}>{order.customerName}</div>
+          <div style={cardStyle}>
+            <div style={cardHead}>Customer</div>
+            <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontWeight: 550 }}>{order.customerName}</span>
+              <span style={{ color: "var(--ink-2)", fontSize: 12 }}>
+                {customerOrderCount === 1 ? "First order" : `${customerOrderCount} orders`}
+              </span>
+            </div>
+            <div
+              style={{
+                padding: "10px 16px",
+                borderTop: "1px solid var(--border)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Contact</span>
               <a href={`mailto:${order.email}`} style={{ wordBreak: "break-all" }}>
                 {order.email}
               </a>
-              {order.phone ? <div style={{ color: "var(--ink-2)" }}>{order.phone}</div> : null}
+              <span>{order.phone ?? "—"}</span>
+            </div>
+            <div
+              style={{
+                padding: "10px 16px",
+                borderTop: "1px solid var(--border)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>
+                Shipping address
+              </span>
               {order.address ? (
-                <div style={{ color: "var(--ink-2)", lineHeight: "18px" }}>{order.address}</div>
-              ) : null}
+                <>
+                  <span>{order.customerName}</span>
+                  <span>{order.address}</span>
+                </>
+              ) : (
+                <span style={{ color: "var(--ink-2)" }}>No address on this order</span>
+              )}
             </div>
           </div>
 
-          <div style={card}>
-            <div style={cardHeader}>Payment</div>
-            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-              <KeyValue label="Provider" value={order.paymentProvider ?? "—"} />
-              <KeyValue label="Reference" value={order.paymentRef ?? "—"} mono />
-              <KeyValue label="Status" value={order.paymentStatus} />
-            </div>
-            {order.paymentStatus === "paid" || order.paymentStatus === "partially_refunded" ? (
-              <Form
-                method="post"
-                onSubmit={(event) => {
-                  const amount = (event.currentTarget.elements.namedItem("amount") as HTMLInputElement | null)?.value || order.remaining;
-                  if (!confirm(`Refund $${amount} through Stripe now? This moves money and cannot be undone.`)) {
-                    event.preventDefault();
-                  }
-                }}
-                style={{ padding: 16, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 8 }}
-              >
-                <input type="hidden" name="intent" value="refund" />
-                <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Amount to refund</label>
-                <input name="amount" defaultValue={order.remaining} inputMode="decimal" style={input} />
-                <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Reason</label>
-                <select name="reason" defaultValue="Customer request" style={{ ...input, padding: "0 8px" }}>
-                  <option>Customer request</option>
-                  <option>Item damaged in transit</option>
-                  <option>Item not received</option>
-                  <option>Wrong item sent</option>
-                  <option>Duplicate order</option>
-                  <option>Other</option>
-                </select>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-                  <input type="checkbox" name="notify" defaultChecked style={{ width: 16, height: 16, accentColor: "var(--focus)" }} />
-                  Email the customer about this refund
-                </label>
-                <button type="submit" disabled={busy} style={{ ...criticalButton, width: "100%", justifyContent: "center" }}>
-                  Refund via Stripe
-                </button>
-                <span style={{ fontSize: 11, color: "var(--ink-3)" }}>
-                  Up to {order.remainingFormatted} left on this order. The order only changes once Stripe confirms.
+          <div style={cardStyle}>
+            <div style={cardHead}>Meta attribution</div>
+            <div
+              style={{
+                padding: "10px 16px",
+                display: "grid",
+                gridTemplateColumns: "auto 1fr",
+                gap: "6px 12px",
+                fontSize: 12,
+              }}
+            >
+              <span style={{ color: "var(--ink-2)" }}>Ad</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 500 }}>
+                {order.source ?? "—"}
+              </span>
+              <span style={{ color: "var(--ink-2)" }}>Campaign</span>
+              <span>{order.campaign ?? "—"}</span>
+              <span style={{ color: "var(--ink-2)" }}>Event ID</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", color: "var(--ink-2)" }}>
+                {order.metaEventId ?? "—"}
+              </span>
+              <span style={{ color: "var(--ink-2)" }}>Purchase event</span>
+              {order.metaEventId ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E" }} />
+                  Browser + server, deduplicated
                 </span>
-              </Form>
-            ) : null}
-          </div>
-
-          <div style={card}>
-            <div style={cardHeader}>Where it came from</div>
-            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-              <KeyValue label="Source" value={order.source ?? "—"} />
-              <KeyValue label="Campaign" value={order.campaign ?? "—"} />
-              <KeyValue label="Meta event" value={order.metaEventId ?? "—"} mono />
+              ) : (
+                <span style={{ color: "var(--ink-2)" }}>No event ID on this order</span>
+              )}
             </div>
           </div>
 
-          <div style={card}>
-            <div style={cardHeader}>Note</div>
-            <Form method="post" style={{ padding: 16 }}>
-              <input type="hidden" name="intent" value="note" />
-              <textarea name="note" defaultValue={order.note} style={textarea} placeholder="Private note about this order" />
-              <button type="submit" disabled={busy} style={{ ...secondaryButton, marginTop: 8 }}>
-                Save note
-              </button>
-            </Form>
+          <div style={cardStyle}>
+            <div
+              style={{
+                ...cardHead,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              Notes
+              {noteEditing ? null : (
+                <button
+                  type="button"
+                  onClick={() => setNoteEditing(true)}
+                  style={{
+                    border: 0,
+                    background: "transparent",
+                    color: "var(--link)",
+                    fontSize: 12,
+                    fontWeight: 550,
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+            {noteEditing ? (
+              <Form method="post" onSubmit={() => setNoteEditing(false)} style={{ padding: "12px 16px" }}>
+                <input type="hidden" name="intent" value="note" />
+                <textarea
+                  name="note"
+                  defaultValue={order.note}
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--input-border)",
+                    background: "var(--input)",
+                    fontSize: 13,
+                    resize: "vertical",
+                    color: "var(--ink)",
+                  }}
+                />
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setNoteEditing(false)}
+                    style={secondaryButton}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={busy} style={primaryButton}>
+                    Save
+                  </button>
+                </div>
+              </Form>
+            ) : (
+              <div
+                style={{
+                  padding: "12px 16px",
+                  color: order.note ? "var(--ink)" : "var(--ink-2)",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {order.note || "No notes on this order"}
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: strong ? 650 : 400 }}>
-      <span style={{ color: strong ? "var(--ink)" : "var(--ink-2)" }}>{label}</span>
-      <span style={{ fontVariantNumeric: "tabular-nums" }}>{value}</span>
-    </div>
-  );
-}
-
-function KeyValue({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-      <span style={{ color: "var(--ink-2)" }}>{label}</span>
-      <span
-        style={{
-          fontFamily: mono ? "'JetBrains Mono',monospace" : undefined,
-          fontSize: mono ? 12 : undefined,
-          textAlign: "right",
-          wordBreak: "break-all",
-        }}
-      >
-        {value}
-      </span>
+      {refundOpen ? (
+        <div
+          onClick={() => setRefundOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 80,
+            background: "rgba(0,0,0,.45)",
+            display: "grid",
+            placeItems: "center",
+            padding: 16,
+            animation: "kFade .12s",
+          }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              width: "min(560px,100%)",
+              background: "var(--elev)",
+              border: "1px solid var(--border)",
+              borderRadius: 14,
+              boxShadow: "var(--shadow-lg)",
+              overflow: "hidden",
+              animation: "kModal .16s ease-out",
+            }}
+          >
+            {/* Same POST the action already expects: intent, amount, reason, notify. */}
+            <Form method="post" onSubmit={() => setRefundOpen(false)}>
+              <input type="hidden" name="intent" value="refund" />
+              <input type="hidden" name="amount" value={order.remaining} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "14px 20px",
+                  borderBottom: "1px solid var(--border)",
+                }}
+              >
+                <span style={{ fontWeight: 650, fontSize: 15 }}>Refund #{order.number}</span>
+                <button
+                  type="button"
+                  onClick={() => setRefundOpen(false)}
+                  className="k-hover"
+                  style={{
+                    width: 28,
+                    height: 28,
+                    border: 0,
+                    borderRadius: 7,
+                    background: "transparent",
+                    color: "var(--ink-2)",
+                    cursor: "pointer",
+                    fontSize: 16,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div
+                style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}
+              >
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: "flex",
+                      gap: 12,
+                      alignItems: "center",
+                      padding: "10px 12px",
+                      border: "1px solid var(--border)",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 8,
+                        background: store.color,
+                        flex: "none",
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 550 }}>{item.title}</div>
+                      <div style={{ fontSize: 12, color: "var(--ink-2)" }}>{item.label}</div>
+                    </div>
+                    <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {item.unitPrice} × {item.quantity}
+                    </span>
+                  </div>
+                ))}
+                <label
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    fontSize: 12,
+                    fontWeight: 550,
+                    color: "var(--ink-2)",
+                  }}
+                >
+                  Reason for refund
+                  <select
+                    name="reason"
+                    defaultValue="Customer changed mind"
+                    style={{
+                      height: 34,
+                      borderRadius: 8,
+                      border: "1px solid var(--input-border)",
+                      background: "var(--input)",
+                      padding: "0 8px",
+                      fontSize: 13,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <option>Customer changed mind</option>
+                    <option>Item damaged in transit</option>
+                    <option>Item never arrived</option>
+                    <option>Duplicate order</option>
+                    <option>Other</option>
+                  </select>
+                  <span style={{ fontWeight: 450 }}>Only you and other staff can see this reason.</span>
+                </label>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr auto",
+                    gap: "4px 16px",
+                    fontVariantNumeric: "tabular-nums",
+                    padding: 12,
+                    borderRadius: 10,
+                    background: "var(--bg)",
+                  }}
+                >
+                  <span>Subtotal</span>
+                  <span style={{ textAlign: "right" }}>{order.subtotal}</span>
+                  <span>Tax</span>
+                  <span style={{ textAlign: "right" }}>{order.tax}</span>
+                  <span>Shipping</span>
+                  <span style={{ textAlign: "right" }}>{order.shipping}</span>
+                  {order.refunded ? (
+                    <>
+                      <span>Already refunded</span>
+                      <span style={{ textAlign: "right" }}>− {order.refunded}</span>
+                    </>
+                  ) : null}
+                  <span style={{ fontWeight: 650, paddingTop: 6, borderTop: "1px solid var(--border)" }}>
+                    Refund amount
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 650,
+                      textAlign: "right",
+                      paddingTop: 6,
+                      borderTop: "1px solid var(--border)",
+                    }}
+                  >
+                    {order.remainingFormatted}
+                  </span>
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    name="notify"
+                    defaultChecked
+                    style={{ width: 16, height: 16, accentColor: "var(--focus)" }}
+                  />
+                  Send a notification to the customer
+                </label>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 8,
+                  padding: "12px 20px",
+                  borderTop: "1px solid var(--border)",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setRefundOpen(false)}
+                  style={{
+                    height: 32,
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    color: "var(--ink)",
+                    fontSize: 12,
+                    fontWeight: 550,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  style={{
+                    height: 32,
+                    padding: "0 14px",
+                    borderRadius: 8,
+                    border: 0,
+                    background: "var(--critical)",
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Refund {order.remainingFormatted}
+                </button>
+              </div>
+            </Form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
