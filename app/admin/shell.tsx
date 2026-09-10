@@ -297,7 +297,7 @@ export function AdminShell({
       >
         <span style={{ display: "flex", alignItems: "center", gap: 9, flex: "none", marginRight: 4 }}>
           <img
-            src="/logo-white.png"
+            src="/logo-mark.png"
             alt="Shop Admin"
             style={{ width: 26, height: 26, objectFit: "contain", flex: "none", display: "block" }}
           />

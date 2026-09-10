@@ -464,7 +464,12 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
                   boxShadow: "0 14px 40px rgba(28,12,56,.18)",
                 }}
               >
-                <span style={{ width: 26, height: 26, borderRadius: 8, background: "#1A1A1A", display: "grid", placeItems: "center", flex: "none", color: "#fff", fontSize: 12, fontWeight: 700, letterSpacing: "-.02em" }}>S</span>
+                <span style={{ width: 26, height: 26, borderRadius: 8, background: "#1A1A1A", display: "grid", placeItems: "center", flex: "none" }}>
+                  {/* His mark, in the design's own black tile. The artwork is
+                      white, so it only reads on the dark tile — never on the
+                      glass itself. */}
+                  <img src="/logo-mark.png" alt="" style={{ width: 17, height: 17, objectFit: "contain", display: "block" }} />
+                </span>
                 <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
                   <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
                     <span style={{ fontSize: 12, fontWeight: 650, color: "#14102A", lineHeight: "15px" }}>{card.title}</span>
