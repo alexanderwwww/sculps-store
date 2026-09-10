@@ -43,3 +43,21 @@ button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .k-switch:checked + .k-switch-track { background: var(--accent); }
 .k-switch:checked + .k-switch-track::after { left: 18px; }
 .k-switch:focus-visible + .k-switch-track { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Customer behaviour: the flow through the funnel.
+   The bars ease to their new height instead of jumping, staggered so the eye
+   reads carts, then checkout, then purchased — the direction the customer
+   actually moves — and a slow highlight travels the same way across them. */
+@keyframes kFunnelFlow{0%{transform:translateX(-40%)}100%{transform:translateX(140%)}}
+.k-funnel-bar{transition:y .55s cubic-bezier(.22,.8,.28,1),height .55s cubic-bezier(.22,.8,.28,1)}
+.k-funnel-bar[data-step="1"]{transition-delay:.09s}
+.k-funnel-bar[data-step="2"]{transition-delay:.18s}
+.k-funnel-slope{transition:opacity .55s ease-out}
+.k-funnel-sweep{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:6px}
+.k-funnel-sweep span{position:absolute;top:0;bottom:0;width:34%;
+  background:linear-gradient(90deg,rgba(47,92,245,0) 0%,rgba(47,92,245,.16) 45%,rgba(255,255,255,.30) 55%,rgba(47,92,245,0) 100%);
+  animation:kFunnelFlow 2.6s cubic-bezier(.45,0,.35,1) infinite}
+@media (prefers-reduced-motion:reduce){
+  .k-funnel-bar{transition:none}
+  .k-funnel-sweep span{animation:none;display:none}
+}

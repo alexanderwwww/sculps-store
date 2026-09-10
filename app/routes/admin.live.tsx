@@ -17,6 +17,7 @@ import { requireUser } from "~/lib/auth.server";
 import { resolveAdminStore, liveBoard } from "~/lib/admin.server";
 import { formatMoney, money0 } from "~/lib/money";
 import { mountLiveGlobe, GLOBE_TYPE, type LiveGlobeHandle, type GlobeTip } from "~/admin/live-globe";
+import { pointForAddress } from "~/lib/places";
 
 export function meta() {
   return [{ title: "Live View — Shop Admin" }];
@@ -31,7 +32,21 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const board = await liveBoard(context.db, store.id);
   return {
     now: Date.now(),
-    store: { slug: store.slug, name: store.name, currency: store.currency },
+    store: {
+      slug: store.slug,
+      name: store.name,
+      currency: store.currency,
+      // Where a sale flies home to: the point he set, otherwise the centre of
+      // the state or country in his business address. Null when he has set
+      // neither, and then no arc is drawn rather than a made-up one.
+      home:
+        store.lat != null && store.lon != null
+          ? { lat: store.lat, lon: store.lon }
+          : // stores carry no country column yet — the state is enough to place a
+            // US business, and pointForAddress falls back to the country when
+            // one exists.
+            pointForAddress(store.region, null),
+    },
     stores: all.map((s) => ({ slug: s.slug, name: s.name })),
     board: {
       activeVisitors: board.activeVisitors,
@@ -132,7 +147,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     const canvas = canvasRef.current;
     if (!canvas || !store) return;
     let cancelled = false;
-    mountLiveGlobe(canvas, { onTip: setTip })
+    mountLiveGlobe(canvas, { onTip: setTip, home: store?.home ?? null })
       .then((globe) => {
         if (cancelled) {
           globe.destroy();
@@ -341,14 +356,19 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
           </div>
           <div style={{ position: "relative", height: 132, marginTop: 12 }}>
             <svg viewBox="0 0 300 132" preserveAspectRatio="none" style={{ width: "100%", height: 132, display: "block" }}>
-              <path d={funnel.slope} fill="#2F5CF5" opacity=".16" />
-              <rect x="2" y={funnel.y0} width="94" height={funnel.h0} rx="5" fill="#2F5CF5" />
-              <rect x="103" y={funnel.y1} width="94" height={funnel.h1} rx="5" fill="#2F5CF5" />
-              <rect x="204" y={funnel.y2} width="94" height={funnel.h2} rx="5" fill="#2F5CF5" />
-              <rect x="2" y={funnel.y0} width="94" height={funnel.sh0} rx="5" fill="rgba(255,255,255,.22)" />
-              <rect x="103" y={funnel.y1} width="94" height={funnel.sh1} rx="5" fill="rgba(255,255,255,.22)" />
-              <rect x="204" y={funnel.y2} width="94" height={funnel.sh2} rx="5" fill="rgba(255,255,255,.22)" />
+              <path className="k-funnel-slope" d={funnel.slope} fill="#2F5CF5" opacity=".16" />
+              <rect className="k-funnel-bar" data-step="0" x="2" y={funnel.y0} width="94" height={funnel.h0} rx="5" fill="#2F5CF5" />
+              <rect className="k-funnel-bar" data-step="1" x="103" y={funnel.y1} width="94" height={funnel.h1} rx="5" fill="#2F5CF5" />
+              <rect className="k-funnel-bar" data-step="2" x="204" y={funnel.y2} width="94" height={funnel.h2} rx="5" fill="#2F5CF5" />
+              <rect className="k-funnel-bar" data-step="0" x="2" y={funnel.y0} width="94" height={funnel.sh0} rx="5" fill="rgba(255,255,255,.22)" />
+              <rect className="k-funnel-bar" data-step="1" x="103" y={funnel.y1} width="94" height={funnel.sh1} rx="5" fill="rgba(255,255,255,.22)" />
+              <rect className="k-funnel-bar" data-step="2" x="204" y={funnel.y2} width="94" height={funnel.sh2} rx="5" fill="rgba(255,255,255,.22)" />
             </svg>
+            {funnel.empty ? null : (
+              <span className="k-funnel-sweep" aria-hidden="true">
+                <span />
+              </span>
+            )}
             {funnel.empty ? (
               <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--ink-3)", fontSize: 12, background: "linear-gradient(180deg,rgba(255,255,255,.7),#fff)" }}>
                 No sessions yet — nothing to chart

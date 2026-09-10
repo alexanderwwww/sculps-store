@@ -52,6 +52,8 @@ export interface LiveGlobeHandle {
 export interface LiveGlobeOptions {
   /** Hover hit-testing feeds the design's tooltip through this. */
   onTip?: (tip: GlobeTip | null) => void;
+  /** Where this store sits. A sale flies home to it; without it, no arc. */
+  home?: { lat: number; lon: number } | null;
 }
 
 declare global {
@@ -94,6 +96,8 @@ interface GlassCard { id: string; title: string; sub: string; tone?: string; ema
 class LiveGlobe {
   canvas: HTMLCanvasElement;
   onTip: (tip: GlobeTip | null) => void;
+  /** where this store sits; a sale flies home to it */
+  home: { lat: number; lon: number } | null = null;
 
   rot = { lam: 98, phi: 38 };
   zoom = 1;
@@ -127,6 +131,7 @@ class LiveGlobe {
   constructor(canvas: HTMLCanvasElement, options: LiveGlobeOptions) {
     this.canvas = canvas;
     this.onTip = options.onTip ?? (() => undefined);
+    this.home = options.home ?? null;
     this.bindPointer();
     this.startGlobe();
   }
@@ -455,7 +460,19 @@ class LiveGlobe {
     this.pulses = (this.pulses || []).slice(-3);
     this.pulses.push({ lon: target.city[2], lat: target.city[3], born: performance.now(), dur: 1400 });
     this.arcs = (this.arcs || []).slice(-3);
-    this.arcs.push({ lon1: target.city[2], lat1: target.city[3], lon2: -74.006, lat2: 40.7128, born: performance.now(), dur: 1500 });
+    // The sale travels from the buyer to the store. The design hard-coded one
+    // city here because it had one imaginary shop; ours flies to wherever this
+    // store actually is, and skips the arc entirely when that is not known.
+    if (this.home) {
+      this.arcs.push({
+        lon1: target.city[2],
+        lat1: target.city[3],
+        lon2: this.home.lon,
+        lat2: this.home.lat,
+        born: performance.now(),
+        dur: 1500,
+      });
+    }
   }
 
   /** The design's `globeReset`. */

@@ -32,6 +32,9 @@ export const stores = pgTable("stores", {
   domain: text("domain").notNull().unique(),
   currency: text("currency").notNull().default("USD"),
   timezone: text("timezone").notNull().default("America/New_York"),
+  /** where the store itself sits, so Live View can fly a sale home to it */
+  lat: real("lat"),
+  lon: real("lon"),
   contactEmail: text("contact_email"),
   /** what shows on the customer's card statement */
   statementDescriptor: text("statement_descriptor"),
