@@ -20,6 +20,15 @@ import {
 import { data as withHeaders } from "react-router";
 import { GardenKneelerStorefront } from "~/storefronts/garden-kneeler";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
+import { GardenBuddyStorefront } from "~/storefronts/garden-buddy";
+import gardenBuddyThemeHref from "~/storefronts/garden-buddy/theme.css?url";
+
+/**
+ * Which theme a store gets. Design lives in code, one theme per store, so this
+ * is the whole switch: a store with its own theme is named here, everything
+ * else keeps the generic one.
+ */
+const GARDEN_BUDDY = "garden-buddy";
 
 export function links() {
   return [
@@ -173,11 +182,27 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  return (
-    <div className="gk">
+  const head = (
+    <>
       {favicon ? <link rel="icon" href={favicon} /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
+    </>
+  );
+
+  if (store.slug === GARDEN_BUDDY) {
+    return (
+      <>
+        <link rel="stylesheet" href={gardenBuddyThemeHref} />
+        {head}
+        <GardenBuddyStorefront page={page} />
+      </>
+    );
+  }
+
+  return (
+    <div className="gk">
+      {head}
       <GardenKneelerStorefront page={page} />
     </div>
   );
