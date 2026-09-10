@@ -67,6 +67,20 @@ can't be violated by accident.
 
 ## Status
 
-Phase 1 is scaffolded and builds, but has never run against the database —
-the session that wrote it had no network access to Neon or Cloudflare. Next
-step is `npm run db:push`, `npm run db:seed`, then a first deploy.
+Phase 1 scaffolding is live. The schema is pushed to Neon, store one is
+seeded, and the storefront is deployed at
+**https://kerberos.gardenbuddystore.workers.dev** (`/healthz` reports
+database state).
+
+The approved admin prototype from `design/prototype/` is also deployed, as a
+separate static Worker named `shop-admin`, at
+**https://shop-admin.gardenbuddystore.workers.dev**. It is the *design* only —
+fake data, nothing wired to the database. Building it for real is Phase 2.
+
+Deploying needs `CLOUDFLARE_API_TOKEN` in your environment; `DATABASE_URL`
+is already stored as a Worker secret, so it is not read from `.dev.vars` in
+production.
+
+Next up in Phase 1: cart, on-site checkout, Stripe, Meta pixel and
+Conversions API, transactional email, the real domain, and the minimal
+orders list.

@@ -29,7 +29,7 @@ checkout, pixels, and domains cold. He has never built software.
 
 Keep this section current. Update it at the end of any session that moves the work.
 
-_Last updated: 10 Sep 2026._
+_Last updated: 10 Sep 2026 — first real database run and first deploy._
 
 - **Design prototype — done, and approved.** `Shop Admin.dc.html` (in `design/prototype/`)
   has every admin screen built and working: shell with ⌘K and the top-right store switcher,
@@ -40,19 +40,34 @@ _Last updated: 10 Sep 2026._
   He signed the globe off with "globe done"; **do not touch it**, reuse `shop-globe.js`.
   Never designed as pictures: the storefront, cart, checkout and thank-you screens. That is
   deliberate — those live in code (rule 1), so drawing them first would spend his budget twice.
-- **Code — Phase 1 started.** This branch (`kerberos/phase-1`) has a working React Router v7
-  app on Cloudflare Workers: the full Drizzle schema, the fifteen sections as a single source
-  of truth in `app/lib/sections.ts`, and the garden kneeler storefront rendering from the
-  database. It builds and it typechecks; the dev server serves.
-- **Not yet run against the database.** The session that wrote it was in a sandbox whose
-  network policy blocked Neon and Cloudflare, so `db:push`, `db:seed` and `deploy` have never
-  executed. That is the first thing to do next, from a session with Full network access.
+- **Code — Phase 1 scaffolding is live.** A working React Router v7 app on Cloudflare
+  Workers: the full Drizzle schema, the fifteen sections as a single source of truth in
+  `app/lib/sections.ts`, and the garden kneeler storefront rendering from the database.
+- **Database is real now.** `db:push` and `db:seed` have run against Neon. The tables exist
+  and store one is seeded: product, 3 bundle variants, all 15 sections in fixed order, 6
+  specs (2 deliberately blank, rendering "Spec pending"), no reviews, no invented copy.
+- **Deployed — two separate URLs, and the difference matters.**
+  - Storefront (real, reads Neon): **https://kerberos.gardenbuddystore.workers.dev** —
+    `/healthz` returns `{"ok":true,"db":"up"}`. `DATABASE_URL` is a Cloudflare Worker
+    secret. Redeploy with `npm run deploy` (needs `CLOUDFLARE_API_TOKEN` set).
+  - Admin (the Claude Design prototype, static, NOT wired to the database):
+    **https://shop-admin.gardenbuddystore.workers.dev** — Worker `shop-admin`, serving
+    `design/prototype/` as static assets with `Shop Admin.dc.html` renamed to `index.html`
+    plus `support.js`, `shop-globe.js` and `assets/`.
+  - **Alex expects the admin to run his stores.** It does not yet — fake data, buttons that
+    save nothing. He was frustrated when this was not clear. Say so plainly before he clicks
+    around expecting it to work. Making it real is Phase 2.
+- **Still to build in Phase 1:** cart, on-site checkout, Stripe, Meta pixel + Conversions
+  API, confirmation and shipping emails, the real domain with SSL, and the stripped-down
+  orders list with tracking field and refund button.
 - **Live business** — the garden kneeler store is live on Shopify at amboras.com and making
   money. It stays there until Kerberos has taken real orders for a week without a problem.
   Do not let him switch it off early.
-- **Accounts** — Neon is open (project `shopadmin`, AWS US East 2). Cloudflare, Resend,
+- **Accounts** — Neon is open (project `shopadmin`, AWS US East 2). Cloudflare is now open
+  too, on gardenbuddystore@gmail.com, workers.dev subdomain `gardenbuddystore`. Resend and
   Stripe still to do. His Neon connection string is not in this repo; ask him for it and put
-  it in `.dev.vars`, which is gitignored.
+  it in `.dev.vars`, which is gitignored. Same for the Cloudflare API token — never commit
+  either.
 - **Domain** — bought for the garden kneeler store, but he has not told us the name yet. The
   seed uses `garden-kneeler.pending` as a placeholder. Ask.
 
@@ -60,7 +75,7 @@ _Last updated: 10 Sep 2026._
 
 Do not skip ahead. Each phase ends with something he can click.
 
-**Phase 0 — Design (current).** Finish the prototype in Claude Design, one screen per turn:
+**Phase 0 — Design. Done and approved.** Finish the prototype in Claude Design, one screen per turn:
 Live View, then Analytics, then Settings, then Products. `references/design-prompts.md`
 holds the exact prompts to paste. Nothing gets coded until he approves the screens.
 
