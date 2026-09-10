@@ -15,3 +15,4 @@ tsconfig.tsbuildinfo
 /test-order-delete.mjs
 /ten*.mjs
 /journey.mjs
+/cleanup.mjs
