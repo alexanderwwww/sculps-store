@@ -286,11 +286,48 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     { label: "Purchased", value: board.purchased, note: board.purchased ? "paid orders today" : "nothing yet" },
   ];
   const locMax = Math.max(1, ...board.byLocation.map((row) => row.count));
+  // The last half hour, in ten three-minute buckets, from the events the board
+  // already carries. Nothing is generated: a bucket with no traffic is a zero,
+  // and a metric with no traffic at all draws no line rather than a flat one.
+  const spark = (pick: (event: RecentEvent) => number) => {
+    const BUCKETS = 10;
+    const span = 30 * 60_000;
+    const end = Date.now();
+    const series = new Array(BUCKETS).fill(0);
+    for (const event of board.recent) {
+      const age = end - event.at;
+      if (age < 0 || age > span) continue;
+      const index = Math.min(BUCKETS - 1, Math.floor(((span - age) / span) * BUCKETS));
+      series[index] += pick(event);
+    }
+    return series;
+  };
+
   const cards = [
-    { key: "v", label: "Visitors right now", value: String(board.activeVisitors) },
-    { key: "s", label: "Total sales", value: money0(board.revenueToday, store.currency) },
-    { key: "e", label: "Total sessions", value: board.sessionsToday.toLocaleString() },
-    { key: "o", label: "Total orders", value: String(board.ordersToday) },
+    {
+      key: "v",
+      label: "Visitors right now",
+      value: String(board.activeVisitors),
+      series: spark((event) => (event.type === "view" ? 1 : 0)),
+    },
+    {
+      key: "s",
+      label: "Total sales",
+      value: money0(board.revenueToday, store.currency),
+      series: spark((event) => (event.type === "purchase" ? (event.amountCents ?? 0) / 100 : 0)),
+    },
+    {
+      key: "e",
+      label: "Total sessions",
+      value: board.sessionsToday.toLocaleString(),
+      series: spark(() => 1),
+    },
+    {
+      key: "o",
+      label: "Total orders",
+      value: String(board.ordersToday),
+      series: spark((event) => (event.type === "purchase" ? 1 : 0)),
+    },
   ];
 
   return (
@@ -339,13 +376,14 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
                 overflow: "hidden",
               }}
             >
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".01em", color: "var(--ink-2)" }}>{card.label}</div>
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginTop: 6 }}>
-                <span style={{ display: "inline-block", padding: "2px 2px 4px 0" }}>
-                  <span style={{ fontSize: 26, lineHeight: "32px", fontWeight: 650, letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums", display: "inline-block" }}>
+              <div style={{ fontSize: 12, fontWeight: 550, letterSpacing: ".01em", color: "var(--ink-2)" }}>{card.label}</div>
+              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginTop: 4 }}>
+                <span style={{ display: "inline-block", padding: "2px 2px 2px 0" }}>
+                  <span style={{ fontSize: 20, lineHeight: "26px", fontWeight: 600, letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums", display: "inline-block" }}>
                     {card.value}
                   </span>
                 </span>
+                <Sparkline series={card.series} />
               </div>
             </div>
           ))}
@@ -484,22 +522,20 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
               }}
             >
               <div
-                className={card.sale ? "k-sale-card" : undefined}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 11,
                   padding: "8px 10px",
                   borderRadius: 14,
-                  background: card.sale
-                    ? "linear-gradient(135deg,rgba(255,248,225,.86),rgba(255,236,179,.72))"
-                    : "rgba(255,255,255,.62)",
+                  // Liquid glass, the way an iOS notification is: clear, blurred,
+                  // lit along its top edge. A sale is not a different material —
+                  // only its icon is gold.
+                  background: "rgba(255,255,255,.62)",
                   backdropFilter: "blur(22px) saturate(190%)",
                   WebkitBackdropFilter: "blur(22px) saturate(190%)",
-                  border: card.sale ? "1px solid rgba(212,166,42,.55)" : "1px solid rgba(255,255,255,.85)",
-                  boxShadow: card.sale
-                    ? "0 14px 40px rgba(150,105,10,.28), inset 0 1px 0 rgba(255,255,255,.9)"
-                    : "0 14px 40px rgba(28,12,56,.18)",
+                  border: "1px solid rgba(255,255,255,.85)",
+                  boxShadow: "0 14px 40px rgba(28,12,56,.18), inset 0 1px 0 rgba(255,255,255,.95)",
                 }}
               >
                 <span
@@ -525,7 +561,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
                 </span>
                 <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
                   <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 650, color: card.sale ? "#6B4E05" : "#14102A", lineHeight: "15px" }}>{card.title}</span>
+                    <span style={{ fontSize: 12, fontWeight: 650, color: "#14102A", lineHeight: "15px" }}>{card.title}</span>
                     <span style={{ fontSize: 11, color: "#6B6280", flex: "none" }}>now</span>
                   </span>
                   <span
@@ -660,6 +696,42 @@ function LegendChip({ color, label }: { color: string; label: string }) {
 }
 
 /** The prototype's own funnel arithmetic, so the bars have the same shape. */
+/**
+ * The last half hour of this metric, beside its number.
+ *
+ * Shopify puts one of these on every live card, and it is the difference
+ * between a number and a number you can read a direction from. It draws only
+ * what happened: no traffic means no line at all, never a flat one implying a
+ * steady zero was measured.
+ */
+function Sparkline({ series }: { series: number[] }) {
+  const max = Math.max(...series);
+  if (!series.length || max <= 0) return null;
+
+  const W = 54;
+  const H = 18;
+  const step = W / Math.max(1, series.length - 1);
+  const points = series.map((value, index) => {
+    const x = index * step;
+    const y = H - 1 - (value / max) * (H - 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ flex: "none", display: "block", overflow: "visible" }} aria-hidden="true">
+      <polyline
+        points={points.join(" ")}
+        fill="none"
+        stroke="#1D3FCC"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity=".85"
+      />
+    </svg>
+  );
+}
+
 function buildFunnel(carts: number, checkouts: number, purchases: number, sessions: number) {
   const max = Math.max(carts, checkouts, purchases, sessions, 1);
   const height = (value: number) => (value ? Math.max(58, Math.round(38 + (value / max) * (122 - 38))) : 0);

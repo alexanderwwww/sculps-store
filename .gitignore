@@ -14,3 +14,4 @@ tsconfig.tsbuildinfo
 /test-order.mjs
 /test-order-delete.mjs
 /ten*.mjs
+/journey.mjs

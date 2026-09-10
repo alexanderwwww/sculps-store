@@ -344,34 +344,34 @@ class LiveGlobe {
         const fade = now - a.born > a.dur ? Math.max(0, 1 - (now - a.born - a.dur) / 700) : 1;
         if (fade <= 0) return;
 
-        // The whole path from the order to wherever the head has reached, so
-        // the line is continuous rather than a floating dash.
-        const N = 56;
+        // A travelling stroke, not a finished line. Only a window of the path
+        // is drawn — the head, and a short tail behind it — so what you see is
+        // the sale moving from where it was bought to the store, and the globe
+        // is never criss-crossed with lines that have already arrived.
+        const TAIL = 0.34;
+        const from = Math.max(0, k - TAIL);
+        const N = 30;
         const pts: { x: number; y: number; z: number; t: number }[] = [];
         for (let i2 = 0; i2 <= N; i2++) {
-          const t2 = (k * i2) / N;
+          const t2 = from + (k - from) * (i2 / N);
           const q2 = gc(t2);
           pts.push({ ...q2, t: i2 / N });
         }
         if (pts.length < 2) return;
 
-        // One thin stroke, drawn segment by segment so the tail can fade into
-        // nothing behind the head. No glow pass, no arrowhead.
         g.lineCap = "round";
         for (let i2 = 1; i2 < pts.length; i2++) {
           const p0 = pts[i2 - 1], p1 = pts[i2];
-          if (p0.z <= -0.2 || p1.z <= -0.2) continue;
-          // Front of the trail is bright, the back of it is gone.
-          const trail = Math.pow(p1.t, 1.7);
-          const alpha = trail * fade;
-          if (alpha < 0.02) continue;
-          // Gold, the colour a sale is everywhere else in this admin. The
-          // design's pink read as a laser; this reads as a line.
-          g.strokeStyle = "rgba(212,166,42," + (0.9 * alpha).toFixed(3) + ")";
+          // Front of the globe only. A segment on the far side belongs behind
+          // the planet, and drawing it puts a line across the face.
+          if (p0.z <= 0.02 || p1.z <= 0.02) continue;
+          const alpha = Math.pow(p1.t, 1.4) * fade;
+          if (alpha < 0.03) continue;
+          // Gold, the colour a sale is everywhere else in this admin.
+          g.strokeStyle = "rgba(212,166,42," + (0.95 * alpha).toFixed(3) + ")";
           g.lineWidth = 1.4;
           g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke();
         }
-
       });
 
       this.hit = [];
