@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useRevalidator } from "react-router";
 import type { Route } from "./+types/admin.live";
 import { requireUser } from "~/lib/auth.server";
-import { resolveAdminStore, liveBoard, listStores } from "~/lib/admin.server";
+import { resolveAdminStore, liveBoard } from "~/lib/admin.server";
 import { formatMoney } from "~/lib/money";
 import { mountGlobe, GLOBE_TYPE, type GlobeInstance } from "~/admin/globe";
 import { card } from "~/admin/ui";
