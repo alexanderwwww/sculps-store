@@ -6,6 +6,13 @@ export default [
   index("routes/storefront.tsx"),
   route("healthz", "routes/healthz.ts"),
 
+  // Storefront buying flow. Same Worker, same hostname rules as the storefront.
+  route("cart", "routes/cart.tsx"),
+  route("cart/add", "routes/cart.add.tsx"),
+  route("checkout", "routes/checkout.tsx"),
+  route("thanks", "routes/thanks.tsx"),
+  route("webhooks/stripe", "routes/webhooks.stripe.tsx"),
+
   // Admin. Sign-in lives outside the layout so it is reachable when signed out.
   route("admin/login", "routes/admin.login.tsx"),
   route("admin/auth/callback", "routes/admin.auth.callback.tsx"),

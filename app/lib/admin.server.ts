@@ -1184,3 +1184,158 @@ export async function liveView(db: DB, storeId: string) {
     recent,
   };
 }
+
+/* ------------------------------------------------------------ order writes */
+
+export interface PlaceOrderInput {
+  storeId: string;
+  customerName: string;
+  email: string;
+  phone: string | null;
+  address1: string | null;
+  address2: string | null;
+  city: string | null;
+  region: string | null;
+  postalCode: string | null;
+  country: string;
+  subtotalCents: number;
+  taxCents: number;
+  shippingCents: number;
+  totalCents: number;
+  currency: string;
+  paymentProvider: string;
+  paymentRef: string;
+  paymentStatus: string;
+  source: string | null;
+  campaign: string | null;
+  metaEventId: string | null;
+  fbp: string | null;
+  fbc: string | null;
+  lines: {
+    variantId: string;
+    title: string;
+    label: string;
+    unitPriceCents: number;
+    quantity: number;
+  }[];
+}
+
+/**
+ * Creates an order and its opening timeline, and takes the store's next order
+ * number.
+ *
+ * The number comes from the store row so it is sequential per store the way a
+ * merchant expects, rather than a random id the customer has to read out.
+ */
+export async function placeOrder(db: DB, input: PlaceOrderInput) {
+  const [store] = await db.select().from(stores).where(eq(stores.id, input.storeId)).limit(1);
+  if (!store) throw new Error("That store no longer exists.");
+
+  const number = store.orderSeq;
+  await db.update(stores).set({ orderSeq: number + 1 }).where(eq(stores.id, store.id));
+
+  const [order] = await db
+    .insert(orders)
+    .values({
+      storeId: input.storeId,
+      number,
+      state: "new",
+      customerName: input.customerName,
+      email: input.email,
+      phone: input.phone,
+      address1: input.address1,
+      address2: input.address2,
+      city: input.city,
+      region: input.region,
+      postalCode: input.postalCode,
+      country: input.country,
+      subtotalCents: input.subtotalCents,
+      taxCents: input.taxCents,
+      shippingCents: input.shippingCents,
+      totalCents: input.totalCents,
+      currency: input.currency,
+      paymentProvider: input.paymentProvider,
+      paymentRef: input.paymentRef,
+      paymentStatus: input.paymentStatus,
+      source: input.source,
+      campaign: input.campaign,
+      metaEventId: input.metaEventId,
+      fbp: input.fbp,
+      fbc: input.fbc,
+    })
+    .returning();
+
+  if (input.lines.length) {
+    await db.insert(orderItems).values(
+      input.lines.map((line) => ({
+        orderId: order.id,
+        variantId: line.variantId,
+        title: line.title,
+        label: line.label,
+        unitPriceCents: line.unitPriceCents,
+        quantity: line.quantity,
+      })),
+    );
+  }
+
+  await recordOrderEvent(db, order.id, "created", `Order created · #${number}`, {
+    source: input.source,
+  });
+  await recordOrderEvent(
+    db,
+    order.id,
+    "payment",
+    `Payment of ${money(input.totalCents, input.currency)} ${
+      input.paymentStatus === "paid" ? "captured" : input.paymentStatus
+    } via ${input.paymentProvider} · ${input.paymentRef}`,
+    { ref: input.paymentRef },
+  );
+
+  return order;
+}
+
+/** Used by the webhook and the return page; both can arrive first. */
+export async function orderByPaymentRef(db: DB, paymentRef: string) {
+  const [row] = await db.select().from(orders).where(eq(orders.paymentRef, paymentRef)).limit(1);
+  return row ?? null;
+}
+
+export async function markOrderPaid(db: DB, orderId: string, note: string): Promise<void> {
+  await db
+    .update(orders)
+    .set({ paymentStatus: "paid", updatedAt: new Date() })
+    .where(eq(orders.id, orderId));
+  await recordOrderEvent(db, orderId, "payment:confirmed", note);
+}
+
+/** Records a visitor action for Live View and Analytics. */
+export async function recordVisitorEvent(
+  db: DB,
+  storeId: string,
+  input: {
+    type: string;
+    sessionId: string;
+    path?: string | null;
+    city?: string | null;
+    region?: string | null;
+    country?: string | null;
+    source?: string | null;
+    campaign?: string | null;
+    amountCents?: number | null;
+    orderId?: string | null;
+  },
+): Promise<void> {
+  await db.insert(events).values({
+    storeId,
+    type: input.type,
+    sessionId: input.sessionId,
+    path: input.path ?? null,
+    city: input.city ?? null,
+    region: input.region ?? null,
+    country: input.country ?? null,
+    source: input.source ?? null,
+    campaign: input.campaign ?? null,
+    amountCents: input.amountCents ?? null,
+    orderId: input.orderId ?? null,
+  });
+}

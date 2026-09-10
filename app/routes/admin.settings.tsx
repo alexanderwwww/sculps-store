@@ -71,6 +71,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
             publishableKey: stripe.publishableKey ?? "",
             hasSecret: Boolean(stripe.secretKeyEnc),
             secretMask: maskSecret(secret),
+            hasWebhookSecret: Boolean(stripe.webhookSecretEnc),
             capture: stripe.capture,
           }
         : null,
@@ -137,6 +138,7 @@ export async function action({ context, request }: Route.ActionArgs) {
     const accountName = String(form.get("accountName") || "").trim() || null;
     const publishableKey = String(form.get("publishableKey") || "").trim() || null;
     const secretKey = String(form.get("secretKey") || "").trim();
+    const webhookSecret = String(form.get("webhookSecret") || "").trim();
     const capture = String(form.get("capture") || "automatic");
 
     if (publishableKey && !publishableKey.startsWith("pk_")) {
@@ -145,7 +147,10 @@ export async function action({ context, request }: Route.ActionArgs) {
     if (secretKey && !secretKey.startsWith("sk_") && !secretKey.startsWith("rk_")) {
       return { error: "A Stripe secret key starts with sk_ (or rk_). Check what you pasted." };
     }
-    if (secretKey && !encryptionReady(context.cloudflare.env)) {
+    if (webhookSecret && !webhookSecret.startsWith("whsec_")) {
+      return { error: "A Stripe webhook signing secret starts with whsec_. Check what you pasted." };
+    }
+    if ((secretKey || webhookSecret) && !encryptionReady(context.cloudflare.env)) {
       return {
         error:
           "The secret key was not saved: no ENCRYPTION_KEY is set on the Worker, and a live payment key will not be stored unencrypted.",
@@ -155,6 +160,9 @@ export async function action({ context, request }: Route.ActionArgs) {
     const settings = await storeSettings(context.db, store.id);
     const existing = settings.providers.find((provider) => provider.provider === "stripe");
     const encrypted = secretKey ? await encryptSecret(context.cloudflare.env, secretKey) : null;
+    const encryptedWebhook = webhookSecret
+      ? await encryptSecret(context.cloudflare.env, webhookSecret)
+      : null;
 
     if (existing) {
       await context.db
@@ -164,6 +172,7 @@ export async function action({ context, request }: Route.ActionArgs) {
           publishableKey,
           capture,
           ...(encrypted ? { secretKeyEnc: encrypted } : {}),
+          ...(encryptedWebhook ? { webhookSecretEnc: encryptedWebhook } : {}),
         })
         .where(eq(paymentProviders.id, existing.id));
     } else {
@@ -173,6 +182,7 @@ export async function action({ context, request }: Route.ActionArgs) {
         accountName,
         publishableKey,
         secretKeyEnc: encrypted,
+        webhookSecretEnc: encryptedWebhook,
         capture,
         isPrimary: true,
         connectedAt: new Date(),
@@ -369,6 +379,17 @@ export default function Settings({ loaderData, actionData }: Route.ComponentProp
                 name="secretKey"
                 type="password"
                 placeholder={settings.stripe?.hasSecret ? "Leave blank to keep the stored one" : "sk_live_…"}
+                style={{ ...input, fontFamily: "'JetBrains Mono',monospace" }}
+              />
+            </Labelled>
+            <Labelled
+              label={`Webhook signing secret${settings.stripe?.hasWebhookSecret ? " (stored)" : ""}`}
+              help="From Stripe → Developers → Webhooks. Without it, payment confirmations are refused."
+            >
+              <input
+                name="webhookSecret"
+                type="password"
+                placeholder={settings.stripe?.hasWebhookSecret ? "Leave blank to keep the stored one" : "whsec_…"}
                 style={{ ...input, fontFamily: "'JetBrains Mono',monospace" }}
               />
             </Labelled>
