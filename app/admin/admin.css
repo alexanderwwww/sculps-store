@@ -1,0 +1,38 @@
+
+:root{--bg:#F1F1F1;--surface:#FFFFFF;--elev:#FFFFFF;--border:#E3E3E3;--border-strong:#8A8A8A;--ink:#303030;--ink-2:#616161;--ink-3:#B5B5B5;--accent:#303030;--accent-ink:#FFFFFF;--accent-hover:#1A1A1A;--accent-soft:#F1F1F1;--focus:#005BD3;--side:#EBEBEB;--side-active:#FFFFFF;--side-hover:#E3E3E3;--side-rail:transparent;--input:#FFFFFF;--input-border:#8A8A8A;--hover:#F7F7F7;--shadow:0 1px 0 rgba(0,0,0,.05);--shadow-lg:0 8px 24px rgba(0,0,0,.14),0 1px 2px rgba(0,0,0,.08);--link:#005BD3;--critical:#E51C00;--critical-bg:#FEDAD9;--success:#0C5132;--topbar:#1A1A1A;--topbar-ink:#E3E3E3;--search:#303030;--sel:#EAF4FF;
+--b-success-bg:#CDFEE1;--b-success-fg:#0C5132;--b-warning-bg:#FFEF9D;--b-warning-fg:#4F4700;--b-critical-bg:#FEDAD9;--b-critical-fg:#8E1F0B;--b-info-bg:#E0F0FF;--b-info-fg:#00527C;--b-neutral-bg:#E3E3E3;--b-neutral-fg:#303030;--b-purple-bg:#E3E3FF;--b-purple-fg:#2E2EB8;--chart:#2E7DFF;--chart-fill:rgba(46,125,255,.14);--chart-2:#B5B5B5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink)}
+*{box-sizing:border-box}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+input,button,select,textarea{font:inherit;color:inherit}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--focus);outline-offset:-1px}
+button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--ink-3);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+@keyframes kDrawer{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes kToast{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes kPop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes kModal{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes kFade{from{opacity:0}to{opacity:1}}
+@keyframes kPulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}100%{box-shadow:0 0 0 8px rgba(34,197,94,0)}}
+@keyframes kSlide{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes kDrop{from{transform:translateY(-100%)}to{transform:none}}
+@keyframes kRoll{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}
+@keyframes kFeed{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes kRing{0%{r:6;opacity:.9;stroke-width:3}100%{r:46;opacity:0;stroke-width:1}}
+@keyframes kFloat{0%{opacity:0;transform:translateY(0)}14%{opacity:1}100%{opacity:0;transform:translateY(-40px)}}
+@keyframes kGlassL{0%{opacity:0;transform:translateX(-18px) scale(.95)}14%{opacity:1;transform:translateX(0) scale(1)}82%{opacity:1;transform:translateX(0) scale(1)}100%{opacity:0;transform:translateX(-8px) scale(.98)}}
+@keyframes kRollA{from{transform:translateY(70%);opacity:0}to{transform:none;opacity:1}}
+@keyframes kRollB{from{transform:translateY(70%);opacity:0}to{transform:none;opacity:1}}
+@keyframes kTint{from{background:#F4F1FD}to{background:transparent}}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+
+/* ------------------------------------------------------------------------ */
+/* Added for the real admin. The block above is lifted verbatim from the      */
+/* approved prototype so the colours and typography cannot drift.            */
+
+.k-app { font-family: Inter, system-ui, sans-serif; font-size: 13px; line-height: 20px; }
+.k-hover:hover { background: var(--hover) !important; }
+.k-side-item:hover { background: var(--side-hover); }
+.k-btn-primary:hover { background: var(--accent-hover); }
+.k-btn:hover { background: var(--hover); }

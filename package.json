@@ -11,7 +11,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "node --env-file=.dev.vars ./node_modules/drizzle-kit/bin.cjs push",
     "db:studio": "node --env-file=.dev.vars ./node_modules/drizzle-kit/bin.cjs studio",
-    "db:seed": "node --env-file=.dev.vars ./node_modules/.bin/tsx scripts/seed.ts"
+    "db:seed": "node --env-file=.dev.vars ./node_modules/.bin/tsx scripts/seed.ts",
+    "db:backfill": "node --env-file=.dev.vars ./node_modules/.bin/tsx scripts/backfill-admin.ts"
   },
   "keywords": [],
   "author": "",

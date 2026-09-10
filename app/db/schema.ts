@@ -167,6 +167,12 @@ export const pages = pgTable(
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
+    /**
+     * Which theme this page belongs to. Duplicating a theme copies its pages,
+     * sections and blocks, so the copy can be edited without touching what is
+     * live. Null only for rows seeded before themes existed.
+     */
+    themeId: uuid("theme_id"),
     /** product | standalone */
     kind: text("kind").notNull().default("standalone"),
     /** set when kind = product */
@@ -178,7 +184,7 @@ export const pages = pgTable(
     visible: boolean("visible").notNull().default(false),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex("pages_store_handle_idx").on(t.storeId, t.handle)],
+  (t) => [uniqueIndex("pages_theme_handle_idx").on(t.themeId, t.handle), index("pages_store_idx").on(t.storeId)],
 );
 
 /**
@@ -454,4 +460,92 @@ export const orderRelations = relations(orders, ({ many, one }) => ({
   items: many(orderItems),
   timeline: many(orderEvents),
   store: one(stores, { fields: [orders.storeId], references: [stores.id] }),
+}));
+
+/* ------------------------------------------------------------ admin access */
+
+/**
+ * Who may open the admin. One row per person, and in practice one row: Alex.
+ *
+ * Sign-in is Google only — there is no password column here on purpose, so
+ * there is no password to leak, reset, or brute force. A Google account that
+ * is not in this table cannot get in, which is what makes the admin URL being
+ * public harmless.
+ */
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /** lowercased Google account address — the allow-list is this column */
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  avatarUrl: text("avatar_url"),
+  /** Google's stable account id, filled in on first successful sign-in */
+  googleSub: text("google_sub").unique(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * A signed-in browser. "Remember me" is this row living for 30 days and being
+ * renewed on use, rather than a long-lived cookie that cannot be revoked —
+ * deleting the row signs that browser out immediately.
+ */
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** sha-256 of the cookie value; the raw token is never stored */
+    tokenHash: text("token_hash").notNull().unique(),
+    userAgent: text("user_agent"),
+    ip: text("ip"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+/* ------------------------------------------------------------------ themes */
+
+/**
+ * A theme is a named set of storefront content for one store: the fifteen
+ * sections and their blocks.
+ *
+ * Structure still lives in code — a theme cannot reorder or invent sections.
+ * What it holds is the words, images and videos. That is what makes
+ * "duplicate, edit the copy, publish it" safe: the layout cannot drift.
+ *
+ * Exactly one theme per store has isLive = true. Editing the live one is
+ * allowed on purpose; Shopify's restriction is the thing being dropped here.
+ */
+export const themes = pgTable(
+  "themes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    isLive: boolean("is_live").notNull().default(false),
+    /** set when this theme was made with "duplicate" */
+    duplicatedFromId: uuid("duplicated_from_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("themes_store_idx").on(t.storeId)],
+);
+
+export const userRelations = relations(users, ({ many }) => ({
+  sessions: many(sessions),
+}));
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+  user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+export const themeRelations = relations(themes, ({ one, many }) => ({
+  store: one(stores, { fields: [themes.storeId], references: [stores.id] }),
+  pages: many(pages),
 }));
