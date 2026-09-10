@@ -1,0 +1,41 @@
+{
+  "name": "kerberos",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "react-router dev",
+    "build": "react-router build",
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "typecheck": "wrangler types && react-router typegen && tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "node --env-file=.dev.vars ./node_modules/drizzle-kit/bin.cjs push",
+    "db:studio": "node --env-file=.dev.vars ./node_modules/drizzle-kit/bin.cjs studio",
+    "db:seed": "node --env-file=.dev.vars ./node_modules/.bin/tsx scripts/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.2",
+    "isbot": "^5.2.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^7.18.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.6",
+    "@react-router/dev": "^7.18.3",
+    "@types/node": "^22.20.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3",
+    "vite": "^6.4.3",
+    "wrangler": "^4.130.0"
+  },
+  "private": true,
+  "type": "module"
+}

@@ -1,0 +1,595 @@
+/*
+  Garden kneeler storefront — store one.
+
+  Audience is 55+, so the whole thing is built around legibility:
+  body text never below 18px, headings 36–48px, high contrast, and touch
+  targets big enough to hit without aiming.
+
+  This look lives in code on purpose. The admin edits words and images inside
+  it; it can never change layout, colour or order.
+*/
+
+:root {
+  --gk-ground: #241a12;
+  --gk-ground-2: #2f2318;
+  --gk-cream: #f6efe4;
+  --gk-cream-dim: #cdbfa9;
+  --gk-accent: #b6f03c;
+  --gk-accent-ink: #1d2a07;
+  --gk-line: rgba(246, 239, 228, 0.16);
+  --gk-radius: 14px;
+  --gk-max: 1120px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--gk-ground);
+}
+
+.gk {
+  background: var(--gk-ground);
+  color: var(--gk-cream);
+  font-family: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 18px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.gk h1,
+.gk h2,
+.gk h3 {
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.gk h1 {
+  font-size: clamp(34px, 5vw, 48px);
+}
+.gk h2 {
+  font-size: clamp(28px, 4vw, 40px);
+}
+.gk h3 {
+  font-size: clamp(21px, 2.4vw, 25px);
+}
+
+.gk p {
+  margin: 0 0 1em;
+}
+.gk p:last-child {
+  margin-bottom: 0;
+}
+
+.gk-wrap {
+  max-width: var(--gk-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.gk-section {
+  padding: clamp(48px, 7vw, 88px) 0;
+  border-top: 1px solid var(--gk-line);
+}
+.gk-section:first-of-type {
+  border-top: 0;
+}
+.gk-section--alt {
+  background: var(--gk-ground-2);
+}
+
+.gk-eyebrow {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--gk-accent);
+  margin-bottom: 14px;
+}
+
+.gk-sub {
+  font-size: clamp(18px, 2vw, 21px);
+  color: var(--gk-cream-dim);
+  margin-top: 14px;
+  max-width: 62ch;
+}
+
+.gk-head {
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+/* ------------------------------------------------------------------ header */
+
+.gk-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+  max-width: var(--gk-max);
+  margin: 0 auto;
+}
+
+.gk-logo {
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.gk-header-note {
+  font-size: 16px;
+  color: var(--gk-cream-dim);
+}
+
+/* ----------------------------------------------------------------- buy box */
+
+.gk-buybox {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .gk-buybox {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gk-gallery {
+  display: grid;
+  gap: 12px;
+}
+
+.gk-gallery-main,
+.gk-gallery-thumb {
+  background: rgba(246, 239, 228, 0.06);
+  border: 1px solid var(--gk-line);
+  border-radius: var(--gk-radius);
+  overflow: hidden;
+}
+
+.gk-gallery-main {
+  aspect-ratio: 4 / 3;
+}
+.gk-gallery-main img,
+.gk-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gk-gallery-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.gk-gallery-thumb {
+  aspect-ratio: 1;
+}
+
+/* a placeholder that is obviously a placeholder — never a fake photo */
+.gk-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 96px;
+  color: var(--gk-cream-dim);
+  font-size: 15px;
+  text-align: center;
+  padding: 12px;
+}
+
+.gk-options {
+  display: grid;
+  gap: 12px;
+  margin: 26px 0;
+}
+
+.gk-option {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 18px 20px;
+  min-height: 76px;
+  background: rgba(246, 239, 228, 0.05);
+  border: 2px solid var(--gk-line);
+  border-radius: var(--gk-radius);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.gk-option:hover {
+  border-color: rgba(182, 240, 60, 0.5);
+}
+
+.gk-option[aria-checked="true"] {
+  border-color: var(--gk-accent);
+  background: rgba(182, 240, 60, 0.09);
+}
+
+.gk-radio {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--gk-cream-dim);
+  display: grid;
+  place-items: center;
+}
+
+.gk-option[aria-checked="true"] .gk-radio {
+  border-color: var(--gk-accent);
+}
+.gk-option[aria-checked="true"] .gk-radio::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gk-accent);
+}
+
+.gk-option-label {
+  font-size: 19px;
+  font-weight: 700;
+}
+.gk-option-sub {
+  font-size: 16px;
+  color: var(--gk-cream-dim);
+}
+
+.gk-price {
+  text-align: right;
+  white-space: nowrap;
+}
+.gk-price-now {
+  font-size: 21px;
+  font-weight: 700;
+}
+.gk-price-was {
+  font-size: 16px;
+  color: var(--gk-cream-dim);
+  text-decoration: line-through;
+}
+
+.gk-saved {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--gk-accent);
+  color: var(--gk-accent-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gk-cta {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  padding: 18px 24px;
+  border: 0;
+  border-radius: var(--gk-radius);
+  background: var(--gk-accent);
+  color: var(--gk-accent-ink);
+  font-size: 21px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.gk-cta:hover {
+  filter: brightness(1.06);
+}
+
+.gk-reassurance {
+  margin-top: 14px;
+  font-size: 17px;
+  color: var(--gk-cream-dim);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------- grids */
+
+.gk-grid {
+  display: grid;
+  gap: clamp(18px, 2.4vw, 28px);
+}
+.gk-grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.gk-grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.gk-grid--4 {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.gk-card {
+  background: rgba(246, 239, 228, 0.05);
+  border: 1px solid var(--gk-line);
+  border-radius: var(--gk-radius);
+  padding: 26px;
+}
+
+.gk-card h3 {
+  margin-bottom: 10px;
+}
+
+.gk-card-media {
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  background: rgba(246, 239, 228, 0.06);
+}
+.gk-card-media img,
+.gk-card-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gk-step-n {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--gk-accent);
+  color: var(--gk-accent-ink);
+  font-size: 21px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* -------------------------------------------------------------- video, faq */
+
+.gk-video-faq {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+}
+@media (max-width: 880px) {
+  .gk-video-faq {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gk-video {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--gk-radius);
+  overflow: hidden;
+  background: rgba(246, 239, 228, 0.06);
+  border: 1px solid var(--gk-line);
+}
+.gk-video video,
+.gk-video iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.gk-faq {
+  border-top: 1px solid var(--gk-line);
+}
+.gk-faq details {
+  border-bottom: 1px solid var(--gk-line);
+}
+.gk-faq summary {
+  cursor: pointer;
+  padding: 20px 0;
+  font-size: 19px;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+.gk-faq summary::-webkit-details-marker {
+  display: none;
+}
+.gk-faq summary::after {
+  content: "+";
+  color: var(--gk-accent);
+  font-size: 26px;
+  line-height: 1;
+}
+.gk-faq details[open] summary::after {
+  content: "–";
+}
+.gk-faq-answer {
+  padding: 0 0 20px;
+  color: var(--gk-cream-dim);
+  max-width: 60ch;
+}
+
+/* ------------------------------------------------------------ social proof */
+
+.gk-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.gk-photo {
+  border-radius: var(--gk-radius);
+  overflow: hidden;
+  background: rgba(246, 239, 228, 0.06);
+  border: 1px solid var(--gk-line);
+  aspect-ratio: 1;
+}
+.gk-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.gk-photo-caption {
+  font-size: 16px;
+  color: var(--gk-cream-dim);
+  padding: 10px 12px;
+}
+
+/* ------------------------------------------------------------ trust, table */
+
+.gk-trust {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 22px;
+  text-align: center;
+}
+.gk-trust-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: rgba(182, 240, 60, 0.14);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.gk-trust-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gk-table-scroll {
+  overflow-x: auto;
+}
+.gk-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+.gk-table th,
+.gk-table td {
+  padding: 16px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--gk-line);
+  font-size: 18px;
+}
+.gk-table thead th {
+  font-size: 17px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gk-cream-dim);
+}
+.gk-table thead th.gk-col-us {
+  color: var(--gk-accent);
+}
+.gk-table td.gk-col-us {
+  font-weight: 700;
+}
+
+/* ----------------------------------------------------------------- reviews */
+
+.gk-reviews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.gk-review {
+  background: rgba(246, 239, 228, 0.05);
+  border: 1px solid var(--gk-line);
+  border-radius: var(--gk-radius);
+  padding: 24px;
+}
+.gk-stars {
+  color: var(--gk-accent);
+  font-size: 19px;
+  letter-spacing: 2px;
+}
+.gk-review-name {
+  font-weight: 700;
+  margin-top: 14px;
+}
+.gk-review-meta {
+  font-size: 16px;
+  color: var(--gk-cream-dim);
+}
+.gk-review-photo {
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  aspect-ratio: 4 / 3;
+}
+.gk-review-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ------------------------------------------------------------------ specs */
+
+.gk-specs {
+  width: 100%;
+  border-collapse: collapse;
+}
+.gk-specs th,
+.gk-specs td {
+  padding: 16px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--gk-line);
+  font-size: 18px;
+}
+.gk-specs th {
+  width: 42%;
+  font-weight: 600;
+  color: var(--gk-cream-dim);
+}
+
+/* An unmeasured spec is shown, not hidden and never guessed. */
+.gk-spec-pending {
+  color: var(--gk-cream-dim);
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* ------------------------------------------------------------------- close */
+
+.gk-closing {
+  text-align: center;
+}
+.gk-closing .gk-cta {
+  max-width: 420px;
+  margin: 26px auto 0;
+}
+
+.gk-footer {
+  border-top: 1px solid var(--gk-line);
+  padding: 34px 0 56px;
+  font-size: 16px;
+  color: var(--gk-cream-dim);
+}
+.gk-footer a {
+  color: var(--gk-cream-dim);
+  margin-right: 20px;
+}
+
+/* An empty page should say so plainly rather than render a blank slab. */
+.gk-empty {
+  border: 1px dashed var(--gk-line);
+  border-radius: var(--gk-radius);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--gk-cream-dim);
+}
