@@ -1,0 +1,32 @@
+  <sc-if value="{{ isInventory }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Inventory</h1>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+          <input value="{{ iv.query }}" onChange="{{ iv.setQuery }}" placeholder="Search product or SKU" style="flex:1;min-width:170px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px">
+          <select value="{{ iv.store }}" onChange="{{ iv.setStore }}" style="height:32px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">All stores</option><sc-for list="{{ storeList }}" as="s2" hint-placeholder-count="3"><option value="{{ s2.id }}">{{ s2.name }}</option></sc-for></select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2)"><input type="checkbox" checked="{{ iv.lowOnly }}" onChange="{{ iv.toggleLow }}" style="width:16px;height:16px;accent-color:var(--focus)">Low stock only</label>
+        </div>
+        <sc-if value="{{ iv.empty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:52px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font-weight:650">{{ iv.emptyTitle }}</div><div style="color:var(--ink-2);max-width:360px">{{ iv.emptyBody }}</div></div>
+        </sc-if>
+        <sc-if value="{{ iv.hasRows }}" hint-placeholder-val="{{ false }}">
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:900px">
+            <thead><tr style="height:36px;color:var(--ink-2);font-size:12px;font-weight:550;text-align:left;border-bottom:1px solid var(--border)"><th style="padding:0 16px;font-weight:550">Product</th><th style="padding:0 12px;font-weight:550">Variant</th><th style="padding:0 12px;font-weight:550">SKU</th><th style="padding:0 12px;font-weight:550;text-align:center">Available</th><th style="padding:0 12px;font-weight:550;text-align:right">Committed</th><th style="padding:0 12px;font-weight:550;text-align:right">Incoming</th><th style="padding:0 12px;font-weight:550;text-align:right">Threshold</th><th style="padding:0 16px"></th></tr></thead>
+            <tbody><sc-for list="{{ iv.rows }}" as="r" hint-placeholder-count="0">
+              <tr style="height:48px;border-bottom:1px solid var(--border)">
+                <td style="padding:0 16px"><span style="display:flex;align-items:center;gap:8px"><span style="font-weight:550">{{ r.product }}</span><sc-if value="{{ r.low }}" hint-placeholder-val="{{ false }}"><span style="height:19px;padding:0 7px;border-radius:8px;background:var(--b-warning-bg);color:var(--b-warning-fg);font-size:11px;font-weight:600;display:inline-flex;align-items:center">Low</span></sc-if></span><span style="display:block;font-size:12px;color:var(--ink-2)">{{ r.storeName }}</span></td>
+                <td style="padding:0 12px">{{ r.variant }}</td>
+                <td style="padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-2)">{{ r.sku }}</td>
+                <td style="padding:0 12px"><span style="display:flex;align-items:center;justify-content:center;gap:6px"><button onClick="{{ r.dec }}" style="width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;font-size:14px;line-height:1">−</button><span style="min-width:34px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600">{{ r.available }}</span><button onClick="{{ r.inc }}" style="width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;font-size:14px;line-height:1">+</button></span></td>
+                <td style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)">{{ r.committed }}</td>
+                <td style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)">{{ r.incoming }}</td>
+                <td style="padding:0 12px;text-align:right"><input value="{{ r.threshold }}" onChange="{{ r.setThreshold }}" style="width:56px;height:30px;padding:0 8px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums"></td>
+                <td style="padding:0 16px;text-align:right"><button onClick="{{ r.adjust }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Adjust stock</button></td>
+              </tr>
+            </sc-for></tbody>
+          </table></div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>

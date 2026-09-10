@@ -1,0 +1,423 @@
+  <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100%;display:flex;flex-direction:column;background:#EDEDED">
+      <div style="height:48px;flex:none;background:#1A1A1A;color:#fff;display:flex;align-items:center;gap:10px;padding:0 12px">
+        <button onClick="{{ ed.exit }}" title="Back to Online Store" style="width:28px;height:28px;border-radius:7px;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;display:grid;place-items:center;flex:none"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m10 4-4 4 4 4"/></svg></button>
+        <span style="font-weight:650;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">{{ ed.themeName }}</span>
+        <select value="{{ ed.page }}" onChange="{{ ed.setPage }}" style="height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;padding:0 8px;font-size:12px;flex:none"><option value="product">Product page</option><option value="home">Home page</option><option value="cart">Cart</option><option value="checkout">Checkout</option><option value="thanks">Thank you</option></select>
+        <div style="flex:1;display:flex;justify-content:center;align-items:center;gap:8px">
+          <div style="display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:3px">
+            <sc-for list="{{ ed.devices }}" as="d" hint-placeholder-count="3">
+              <button onClick="{{ d.select }}" title="{{ d.title }}" style="width:28px;height:22px;border-radius:6px;border:0;background:{{ d.bg }};color:#fff;cursor:pointer;display:grid;place-items:center"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="{{ d.icon }}"/></svg></button>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.08);border-radius:8px;padding:3px 6px">
+            <button onClick="{{ ed.zoomOut }}" style="width:20px;height:20px;border:0;border-radius:5px;background:transparent;color:#fff;cursor:pointer;font-size:13px;line-height:1">−</button>
+            <span style="font-size:11px;font-variant-numeric:tabular-nums;min-width:34px;text-align:center">{{ ed.zoomLabel }}</span>
+            <button onClick="{{ ed.zoomIn }}" style="width:20px;height:20px;border:0;border-radius:5px;background:transparent;color:#fff;cursor:pointer;font-size:13px;line-height:1">+</button>
+          </div>
+        </div>
+        <button onClick="{{ ed.undo }}" disabled="{{ ed.noUndo }}" title="Undo" style="width:28px;height:28px;border-radius:7px;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;display:grid;place-items:center;opacity:{{ ed.undoOpacity }};flex:none"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 3 6.5l3 3"/><path d="M3 6.5h6.2A3.3 3.3 0 0 1 9.2 13H7"/></svg></button>
+        <button onClick="{{ ed.redo }}" disabled="{{ ed.noRedo }}" title="Redo" style="width:28px;height:28px;border-radius:7px;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;display:grid;place-items:center;opacity:{{ ed.redoOpacity }};flex:none"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10 3.5 3 3-3 3"/><path d="M13 6.5H6.8A3.3 3.3 0 0 0 6.8 13H9"/></svg></button>
+        <button onClick="{{ ed.previewStore }}" style="height:28px;padding:0 10px;border-radius:8px;border:0;background:transparent;color:#fff;font-size:12px;font-weight:550;cursor:pointer;flex:none">Preview</button>
+        <button onClick="{{ ed.save }}" style="height:28px;padding:0 16px;border-radius:8px;border:0;background:#fff;color:#1A1A1A;font-size:12px;font-weight:650;cursor:pointer;flex:none">Save</button>
+      </div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:{{ ed.dir }};overflow:{{ ed.wrapOverflow }}">
+        <div style="width:{{ ed.panelW }};flex:none;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;overflow:auto">
+          <div style="padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between"><span style="font-weight:650;font-size:13px">Sections</span><span style="font-size:11px;color:var(--ink-3)">{{ ed.visibleCount }} of 15 showing</span></div>
+          <sc-for list="{{ ed.sections }}" as="sc" hint-placeholder-count="15">
+            <div style="display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;height:38px;border-bottom:1px solid var(--border);background:{{ sc.bg }};border-left:2px solid {{ sc.rail }}">
+              <span style="width:20px;height:20px;border-radius:5px;background:var(--bg);display:grid;place-items:center;flex:none;color:{{ sc.iconColor }}"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="{{ sc.icon }}"/></svg></span>
+              <button onClick="{{ sc.select }}" style="flex:1;min-width:0;height:38px;border:0;background:transparent;color:{{ sc.color }};font-size:13px;font-weight:{{ sc.weight }};cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:{{ sc.strike }}">{{ sc.name }}</button>
+              <button onClick="{{ sc.toggle }}" title="{{ sc.eyeTitle }}" style="width:24px;height:24px;border-radius:6px;border:0;background:transparent;color:{{ sc.eyeColor }};cursor:pointer;display:grid;place-items:center;flex:none" style-hover="background:var(--hover)">
+                <sc-if value="{{ sc.visible }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.8 10S4.8 5.2 10 5.2s8.2 4.8 8.2 4.8-3 4.8-8.2 4.8S1.8 10 1.8 10z"/><circle cx="10" cy="10" r="2.1"/></svg></sc-if>
+                <sc-if value="{{ sc.hidden }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.8 10S4.8 5.2 10 5.2s8.2 4.8 8.2 4.8-3 4.8-8.2 4.8S1.8 10 1.8 10z"/><circle cx="10" cy="10" r="2.1"/><path d="M3.4 16.6 16.6 3.4"/></svg></sc-if>
+              </button>
+            </div>
+          </sc-for>
+        </div>
+
+        <div ref="{{ ed.frameRef }}" style="flex:1;min-width:0;min-height:{{ ed.previewMinH }};overflow:auto;background:#EDEDED;padding:16px;display:flex;justify-content:center">
+          <div style="width:100%;max-width:{{ ed.frameW }};transform:scale({{ ed.zoom }});transform-origin:top center;background:#fff;border:1px solid #DEDEDE;border-radius:10px;overflow:hidden;align-self:flex-start;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+            <div style="height:44px;border-bottom:1px solid #F0F0F0;display:flex;align-items:center;gap:12px;padding:0 14px"><span style="font-weight:700;letter-spacing:-.02em">{{ ed.brandName }}</span><span style="display:flex;gap:10px;font-size:12px;color:#666"><sc-for list="{{ ed.headerLinks }}" as="hl" hint-placeholder-count="0">{{ hl.label }}</sc-for></span><span style="flex:1"></span><span style="font-size:12px;color:#666">Cart · 0</span></div>
+            <sc-for list="{{ ed.preview }}" as="p" hint-placeholder-count="6">
+              <div data-sec="{{ p.key }}" onClick="{{ p.click }}" style="border-bottom:1px solid #F0F0F0;padding:18px;cursor:pointer;outline:{{ p.outline }};outline-offset:-2px;position:relative">
+                <sc-if value="{{ p.isSelected }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:0;background:#2F5CF5;color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:0 0 6px 0;z-index:2">{{ p.label }}</span></sc-if>
+                <sc-if value="{{ p.isBuy }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:{{ ed.buyCols }};gap:16px">
+                    <div style="aspect-ratio:1;border-radius:10px;background-color:#F4F4F4;background-image:{{ p.image }};background-size:cover;background-position:center;display:grid;place-items:center;color:#B9B9B9;font-size:12px">{{ p.imageLabel }}</div>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <div style="font-size:22px;font-weight:650;letter-spacing:-.02em;line-height:28px">{{ p.title }}</div>
+                      <div style="font-size:13px;color:#5A5A5A;line-height:19px">{{ p.subtitle }}</div>
+                      <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px">
+                        <sc-for list="{{ p.options }}" as="op" hint-placeholder-count="0">
+                          <span style="display:flex;align-items:center;gap:10px;border:1px solid {{ op.border }};border-radius:9px;padding:9px 11px"><span style="width:14px;height:14px;border-radius:50%;border:1px solid {{ op.dot }};flex:none"></span><span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:600">{{ op.label }}</span><span style="display:block;font-size:11px;color:#7A7A7A">{{ op.sublabel }}</span></span><span style="font-size:13px;font-weight:650;font-variant-numeric:tabular-nums">{{ op.price }}</span></span>
+                        </sc-for>
+                        <sc-if value="{{ p.noOptions }}" hint-placeholder-val="{{ true }}"><span style="font-size:12px;color:#9A9A9A;border:1px dashed #DADADA;border-radius:9px;padding:12px;text-align:center">Bundle options come from the product in Products</span></sc-if>
+                      </div>
+                      <span style="height:42px;border-radius:9px;background:#1A1A1A;color:#fff;display:grid;place-items:center;font-size:14px;font-weight:650;margin-top:4px">{{ p.cta }}</span>
+                      <span style="font-size:11px;color:#7A7A7A;text-align:center">{{ p.reassurance }}</span>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.isReviews }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <div style="font-size:18px;font-weight:650;letter-spacing:-.015em">{{ p.title }}</div>
+                    <sc-for list="{{ p.reviews }}" as="rw" hint-placeholder-count="0">
+                      <div style="border:1px solid #EDEDED;border-radius:9px;padding:10px;display:flex;gap:10px"><span style="width:40px;height:40px;border-radius:7px;background-color:#F4F4F4;background-image:{{ rw.thumb }};background-size:cover;flex:none"></span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="display:flex;gap:8px;align-items:baseline"><span style="font-size:13px;font-weight:650">{{ rw.name }}</span><span style="color:#F5A623;font-size:12px">{{ rw.stars }}</span></span><span style="font-size:12px;color:#5A5A5A">{{ rw.body }}</span></span></div>
+                    </sc-for>
+                    <sc-if value="{{ p.reviewsEmpty }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#9A9A9A;border:1px dashed #DADADA;border-radius:9px;padding:14px;text-align:center">No published reviews yet — add them in Reviews</div></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.isSpecs }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="font-size:18px;font-weight:650;letter-spacing:-.015em">{{ p.title }}</div>
+                    <sc-for list="{{ p.rows }}" as="sr" hint-placeholder-count="0">
+                      <span style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #F2F2F2;padding:7px 0;font-size:13px"><span style="color:#5A5A5A">{{ sr.label }}</span><span style="font-weight:600;color:{{ sr.color }}">{{ sr.value }}</span></span>
+                    </sc-for>
+                    <sc-if value="{{ p.rowsEmpty }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#9A9A9A;border:1px dashed #DADADA;border-radius:9px;padding:14px;text-align:center">No specs yet — add rows in the panel</div></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.isGeneric }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="font-size:11px;font-weight:600;color:#A9A9A9;text-transform:uppercase;letter-spacing:.06em">{{ p.kicker }}</div>
+                    <div style="font-size:18px;font-weight:650;letter-spacing:-.015em;line-height:24px">{{ p.title }}</div>
+                    <sc-if value="{{ p.hasBody }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#5A5A5A;line-height:19px">{{ p.body }}</div></sc-if>
+                    <sc-if value="{{ p.hasItems }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:grid;grid-template-columns:{{ p.itemCols }};gap:10px;margin-top:2px">
+                        <sc-for list="{{ p.items }}" as="it" hint-placeholder-count="0">
+                          <div style="border:1px solid #EDEDED;border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:4px"><sc-if value="{{ it.hasImage }}" hint-placeholder-val="{{ false }}"><span style="display:block;aspect-ratio:4/3;border-radius:7px;background-color:#F4F4F4;background-image:{{ it.image }};background-size:cover;background-position:center"></span></sc-if><span style="font-size:13px;font-weight:600">{{ it.title }}</span><sc-if value="{{ it.hasText }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#5A5A5A;line-height:17px">{{ it.text }}</span></sc-if></div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ p.isEmptySection }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#9A9A9A;border:1px dashed #DADADA;border-radius:9px;padding:14px;text-align:center">{{ p.emptyHint }}</div></sc-if>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+            <div style="padding:16px;background:#FAFAFA;display:flex;flex-direction:column;gap:6px;align-items:center"><span style="display:flex;gap:12px;font-size:11px;color:#7A7A7A;flex-wrap:wrap;justify-content:center"><sc-for list="{{ ed.footerLinks }}" as="fl2" hint-placeholder-count="0">{{ fl2.label }}</sc-for></span><span style="font-size:11px;color:#8A8A8A">{{ ed.brandName }} · {{ ed.domain }}</span></div>
+          </div>
+        </div>
+
+        <div style="width:{{ ed.rightW }};flex:none;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;min-height:0;overflow:auto">
+          <sc-if value="{{ ed.noSel }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:22px 16px;color:var(--ink-2);font-size:12px;line-height:18px">Pick a section on the left, or click one in the preview, to edit its words and images.<br><br>Design is written in code per store — the order of sections is fixed and only their content changes here.</div>
+          </sc-if>
+          <sc-if value="{{ ed.editMode }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;position:sticky;top:0;background:var(--surface);z-index:2"><button onClick="{{ ed.back }}" style="width:24px;height:24px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;flex:none"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m10 4-4 4 4 4"/></svg></button><span style="font-weight:650;font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ed.currentName }}</span></div>
+            <sc-if value="{{ ed.isReviewsSection }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Heading<input value="{{ ed.revHeading }}" onChange="{{ ed.setRevHeading }}" placeholder="Reviews" style="height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></label>
+                <div style="padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;gap:6px">
+                  <span style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--ink-2)">Published on this page</span><span style="font-weight:650;font-variant-numeric:tabular-nums">{{ ed.reviewCount }}</span></span>
+                  <span style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--ink-2)">Unpublished drafts</span><span style="font-weight:650;font-variant-numeric:tabular-nums">{{ ed.reviewDrafts }}</span></span>
+                  <span style="font-size:11px;color:var(--ink-3);line-height:16px">This section has no blocks of its own — it always shows the published reviews. One source of truth.</span>
+                  <button onClick="{{ ed.goReviews }}" style="height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Manage reviews</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ed.hasFields }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:12px;display:flex;flex-direction:column;gap:11px">
+                <sc-for list="{{ ed.fields }}" as="fd" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">{{ fd.label }}
+                    <sc-if value="{{ fd.isText }}" hint-placeholder-val="{{ true }}"><input value="{{ fd.value }}" onChange="{{ fd.set }}" placeholder="{{ fd.placeholder }}" style="height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink);font-weight:450"></sc-if>
+                    <sc-if value="{{ fd.isArea }}" hint-placeholder-val="{{ false }}"><textarea value="{{ fd.value }}" onChange="{{ fd.set }}" rows="3" placeholder="{{ fd.placeholder }}" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;resize:vertical;color:var(--ink);font-family:inherit;font-weight:450"></textarea></sc-if>
+                    <sc-if value="{{ fd.isImage }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--border);border-radius:9px;background:var(--bg)">
+                        <span style="width:44px;height:44px;border-radius:7px;border:1px solid var(--border);background-color:var(--surface);background-image:{{ fd.bg }};background-size:cover;background-position:center;flex:none;display:grid;place-items:center;color:var(--ink-3);font-size:9px">{{ fd.thumbText }}</span>
+                        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:12px;font-weight:550;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fd.fileName }}</span>
+                          <span style="display:flex;gap:8px"><button onClick="{{ fd.pick }}" style="border:0;background:transparent;padding:0;color:var(--link);font-size:12px;font-weight:550;cursor:pointer">Change</button><button onClick="{{ fd.clear }}" style="border:0;background:transparent;padding:0;color:var(--critical);font-size:12px;font-weight:550;cursor:pointer;opacity:{{ fd.clearOpacity }}">Remove</button></span>
+                        </span>
+                      </span>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ed.hasBlocks }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:8px 12px 4px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em">Blocks</span><span style="font-size:11px;color:var(--ink-3)">{{ ed.blockCount }}</span></div>
+              <sc-if value="{{ ed.specHint }}" hint-placeholder-val="{{ false }}"><div style="padding:0 12px 8px;font-size:11px;color:var(--ink-3);line-height:16px">Empty values display as “Spec pending” on the live page.</div></sc-if>
+              <sc-for list="{{ ed.blocks }}" as="b" hint-placeholder-count="0">
+                <div style="border-top:1px solid var(--border);background:{{ b.bg }}">
+                  <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 8px 12px">
+                    <span draggable="true" onDragStart="{{ b.dragStart }}" onDragOver="{{ b.dragOver }}" onDrop="{{ b.drop }}" title="Drag to reorder" style="cursor:grab;color:var(--ink-3);flex:none">⠿</span>
+                    <button onClick="{{ b.toggleOpen }}" style="flex:1;min-width:0;border:0;background:transparent;padding:0;text-align:left;font-size:12px;font-weight:550;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.summary }}</button>
+                    <button onClick="{{ b.remove }}" title="Delete block" style="width:24px;height:24px;border-radius:6px;border:0;background:transparent;color:var(--critical);cursor:pointer;flex:none">✕</button>
+                  </div>
+                  <sc-if value="{{ b.open }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:0 12px 10px 30px;display:flex;flex-direction:column;gap:7px">
+                      <sc-for list="{{ b.fields }}" as="bf" hint-placeholder-count="2">
+                        <sc-if value="{{ bf.isImage }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px"><span style="width:34px;height:34px;border-radius:6px;border:1px solid var(--border);background-color:var(--bg);background-image:{{ bf.bg }};background-size:cover;background-position:center;flex:none"></span><button onClick="{{ bf.pick }}" style="flex:1;height:30px;border-radius:8px;border:1px dashed var(--border-strong);background:var(--bg);color:var(--ink-2);font-size:12px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ bf.value }}</button></span></sc-if>
+                        <sc-if value="{{ bf.isArea }}" hint-placeholder-val="{{ false }}"><textarea value="{{ bf.value }}" onChange="{{ bf.set }}" rows="2" placeholder="{{ bf.placeholder }}" style="width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:12px;resize:vertical;color:var(--ink);font-family:inherit"></textarea></sc-if>
+                        <sc-if value="{{ bf.isText }}" hint-placeholder-val="{{ true }}"><input value="{{ bf.value }}" onChange="{{ bf.set }}" placeholder="{{ bf.placeholder }}" style="height:30px;padding:0 9px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:12px;color:var(--ink)"></sc-if>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <div style="padding:10px 12px;border-top:1px solid var(--border)"><button onClick="{{ ed.addBlock }}" style="width:100%;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:600;cursor:pointer">+ Add {{ ed.blockSingular }}</button></div>
+            </sc-if>
+            <div style="margin-top:auto;padding:11px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface)">
+              <span style="flex:1;font-size:12px;font-weight:550">Show this section</span>
+              <button onClick="{{ ed.toggleCurrent }}" role="switch" style="width:38px;height:22px;border-radius:11px;border:0;background:{{ ed.curTrack }};position:relative;cursor:pointer;flex:none"><span style="position:absolute;top:2px;left:{{ ed.curKnob }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .18s"></span></button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- STUB SCREENS -->
+  <sc-if value="{{ isStub }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:998px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">{{ stubTitle }}</h1>
+      <div style="background:var(--surface);border:1px dashed var(--border-strong);border-radius:12px;padding:40px 24px;text-align:center;color:var(--ink-2)">
+        <div style="font-weight:650;color:var(--ink);margin-bottom:4px">{{ stubTitle }} is scheduled for the next build phase</div>
+        <div>This screen keeps its place in navigation so links resolve.</div>
+      </div>
+    </div>
+  </sc-if>
+  </main>
+</div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closePalette }}" style="position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.45);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh;animation:kFade .12s">
+    <div onClick="{{ stop }}" style="width:min(640px,calc(100vw - 32px));background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 16px;height:52px;border-bottom:1px solid var(--border)">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+        <input ref="{{ paletteRef }}" value="{{ paletteQuery }}" onChange="{{ setPaletteQuery }}" onKeyDown="{{ paletteKey }}" placeholder="Search orders, customers, products, settings…" style="flex:1;height:100%;border:0;background:transparent;font-size:15px;outline:none;color:var(--ink)">
+        <span style="font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid var(--border);color:var(--ink-2)">esc</span>
+      </div>
+      <div style="max-height:400px;overflow:auto;padding:6px">
+        <sc-for list="{{ paletteGroups }}" as="g" hint-placeholder-count="2">
+          <div style="padding:8px 10px 4px;font-size:11px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em">{{ g.label }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+            <button onClick="{{ it.go }}" onMouseEnter="{{ it.hover }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:8px 10px;border:0;border-radius:8px;background:{{ it.bg }};cursor:pointer;text-align:left;color:var(--ink)">
+              <span style="width:28px;height:28px;border-radius:7px;background:var(--bg);display:grid;place-items:center;font-size:11px;font-weight:600;color:var(--ink-2);flex:none">{{ g.short }}</span>
+              <span style="flex:1;min-width:0"><span style="display:block;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.title }}</span><span style="display:block;font-size:12px;color:var(--ink-2)">{{ it.sub }}</span></span>
+              <span style="font-size:11px;color:var(--ink-3);opacity:{{ it.hintOpacity }}">↵</span>
+            </button>
+          </sc-for>
+        </sc-for>
+        <sc-if value="{{ paletteEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:32px;text-align:center;color:var(--ink-2)">No results for “{{ paletteQuery }}”</div></sc-if>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- REFUND MODAL -->
+<sc-if value="{{ refundOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeRefund }}" style="position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:kFade .12s">
+    <div onClick="{{ stop }}" style="width:min(560px,100%);background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)"><span style="font-weight:650;font-size:15px">Refund {{ o.number }}</span><button onClick="{{ closeRefund }}" style="width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);cursor:pointer;font-size:16px" style-hover="background:var(--hover)">✕</button></div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:10px"><span style="width:40px;height:40px;border-radius:8px;background:{{ o.storeColor }};flex:none"></span><div style="flex:1"><div style="font-weight:550">{{ o.product }}</div><div style="font-size:12px;color:var(--ink-2)">{{ o.bundle }}</div></div><span style="font-variant-numeric:tabular-nums">{{ o.priceStr }} × 1</span></div>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Reason for refund<select value="{{ refundReason }}" onChange="{{ setRefundReason }}" style="height:34px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option>Customer changed mind</option><option>Item damaged in transit</option><option>Item never arrived</option><option>Duplicate order</option><option>Other</option></select><span style="font-weight:450">Only you and other staff can see this reason.</span></label>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;font-variant-numeric:tabular-nums;padding:12px;border-radius:10px;background:var(--bg)">
+          <span>Subtotal</span><span style="text-align:right">{{ o.subtotalStr }}</span><span>Tax</span><span style="text-align:right">{{ o.taxStr }}</span><span>Shipping</span><span style="text-align:right">$0.00</span>
+          <span style="font-weight:650;padding-top:6px;border-top:1px solid var(--border)">Refund amount</span><span style="font-weight:650;text-align:right;padding-top:6px;border-top:1px solid var(--border)">{{ o.totalStr }}</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" checked="{{ true }}" readOnly="{{ true }}" style="width:16px;height:16px;accent-color:var(--focus)">Send a notification to the customer</label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+        <button onClick="{{ closeRefund }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Cancel</button>
+        <button onClick="{{ confirmRefund }}" style="height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--critical);color:#fff;font-size:12px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">Refund {{ o.totalStr }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- EXPORT MODAL -->
+<sc-if value="{{ exportOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeExport }}" style="position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:kFade .12s">
+    <div onClick="{{ stop }}" style="width:min(480px,100%);background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)"><span style="font-weight:650;font-size:15px">Export orders</span><button onClick="{{ closeExport }}" style="width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);cursor:pointer;font-size:16px">✕</button></div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ exportScopes }}" as="s" hint-placeholder-count="3"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="scope" checked="{{ s.checked }}" onChange="{{ s.select }}" style="accent-color:var(--focus);width:16px;height:16px">{{ s.label }}</label></sc-for>
+        <div style="margin-top:6px;font-size:12px;color:var(--ink-2);padding:10px 12px;border-radius:8px;background:var(--bg)">Format: CSV for Excel, Numbers or Sheets. All orders are kept permanently — exports never delete anything.</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+        <button onClick="{{ closeExport }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Cancel</button>
+        <button onClick="{{ confirmExport }}" style="height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Export orders</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- CONFIRM DIALOG -->
+<sc-if value="{{ confirm }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeConfirm }}" style="position:fixed;inset:0;z-index:85;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:kFade .12s">
+    <div onClick="{{ stop }}" style="width:min(440px,100%);background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out">
+      <div style="padding:16px 20px 4px;font-weight:650;font-size:15px">{{ confirm.title }}</div>
+      <div style="padding:4px 20px 16px;color:var(--ink-2)">{{ confirm.body }}</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+        <button onClick="{{ closeConfirm }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Cancel</button>
+        <button onClick="{{ confirm.go }}" style="height:32px;padding:0 14px;border-radius:8px;border:0;background:{{ confirm.bg }};color:#fff;font-size:12px;font-weight:600;cursor:pointer">{{ confirm.label }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- META CONNECT -->
+<sc-if value="{{ metaOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeMeta }}" style="position:fixed;inset:0;z-index:82;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:kFade .12s">
+    <div onClick="{{ stop }}" style="width:min(560px,100%);background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)"><span style="font-weight:650;font-size:15px">Connect Meta ads</span><button onClick="{{ closeMeta }}" style="width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);cursor:pointer;font-size:16px">✕</button></div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Pixel ID<input value="{{ metaPixel }}" onChange="{{ setMetaPixel }}" placeholder="e.g. 884210933341" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--ink)"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Conversions API access token<input type="password" value="{{ metaToken }}" onChange="{{ setMetaToken }}" placeholder="EAAG…" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--ink)"><span style="font-weight:450">Stored on your server and never exposed to the storefront.</span></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Ad account ID<input value="{{ metaAcct }}" onChange="{{ setMetaAcct }}" placeholder="act_…" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--ink)"></label>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg)">
+          <button onClick="{{ testMeta }}" style="height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Test connection</button>
+          <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:600;background:{{ metaTestBg }};color:{{ metaTestFg }}"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>{{ metaTestLabel }}</span>
+          <span style="flex:1;font-size:12px;color:var(--ink-2)">Sends one test Purchase event so you can confirm Meta receives it.</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+        <sc-if value="{{ metaConnected }}" hint-placeholder-val="{{ false }}"><button onClick="{{ disconnectMeta }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--critical);font-size:12px;font-weight:550;cursor:pointer">Disconnect</button></sc-if>
+        <span style="flex:1"></span>
+        <button onClick="{{ closeMeta }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Cancel</button>
+        <button onClick="{{ saveMeta }}" style="height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Save and connect</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ADJUST STOCK -->
+<sc-if value="{{ iv.adjustOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ iv.closeAdjust }}" style="position:fixed;inset:0;z-index:86;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:kFade .12s">
+    <div onClick="{{ stop }}" style="width:min(460px,100%);background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-weight:650;font-size:15px">Adjust stock · {{ iv.adjustName }}</div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Change by<input value="{{ iv.adjustQty }}" onChange="{{ iv.setAdjustQty }}" placeholder="e.g. 25 or −4" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Reason<select value="{{ iv.adjustReason }}" onChange="{{ iv.setAdjustReason }}" style="height:36px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option>Received from supplier</option><option>Damaged</option><option>Correction after count</option><option>Returned to supplier</option></select></label>
+        </div>
+        <div style="padding:10px 12px;border-radius:8px;background:var(--bg);font-size:12px;color:var(--ink-2)">Available goes from <strong style="color:var(--ink)">{{ iv.adjustFrom }}</strong> to <strong style="color:var(--ink)">{{ iv.adjustTo }}</strong>.</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+        <button onClick="{{ iv.closeAdjust }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Cancel</button>
+        <button onClick="{{ iv.applyAdjust }}" style="height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Save adjustment</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- CUSTOMER DRAWER -->
+<sc-if value="{{ cu.drawer }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ cu.closeDrawer }}" style="position:fixed;inset:0;z-index:86;background:rgba(0,0,0,.4);animation:kFade .12s"></div>
+  <div style="position:fixed;right:0;top:0;bottom:0;width:min(420px,100%);z-index:87;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;animation:kDrawer .2s ease-out">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px">
+      <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-weight:650;font-size:15px">{{ cu.d.name }}</span><span style="font-size:12px;color:var(--ink-2)">{{ cu.d.email }}</span></span>
+      <button onClick="{{ cu.closeDrawer }}" style="width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--ink-2);cursor:pointer">✕</button>
+    </div>
+    <div style="flex:1;min-height:0;overflow:auto">
+      <div style="padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-bottom:1px solid var(--border)">
+        <span style="display:flex;flex-direction:column"><span style="font-size:12px;color:var(--ink-2)">Orders</span><span style="font-size:20px;font-weight:650;font-variant-numeric:tabular-nums">{{ cu.d.orders }}</span></span>
+        <span style="display:flex;flex-direction:column"><span style="font-size:12px;color:var(--ink-2)">Total spent</span><span style="font-size:20px;font-weight:650;font-variant-numeric:tabular-nums">{{ cu.d.spent }}</span></span>
+      </div>
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border)"><div style="font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px">Shipping address</div><div style="line-height:19px">{{ cu.d.address }}<br>{{ cu.d.cityLine }}<br>United States</div></div>
+      <div style="padding:12px 18px 4px;font-size:12px;font-weight:600;color:var(--ink-2)">Orders</div>
+      <sc-for list="{{ cu.d.orderList }}" as="o2" hint-placeholder-count="1">
+        <button onClick="{{ o2.open }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 18px;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--hover)">
+          <span style="flex:1;min-width:0"><span style="display:block;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--link)">{{ o2.number }}</span><span style="display:block;font-size:12px;color:var(--ink-2)">{{ o2.date }} · {{ o2.bundle }}</span></span>
+          <span style="font-variant-numeric:tabular-nums;font-weight:550">{{ o2.total }}</span>
+          <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ o2.kind }}-bg);color:var(--b-{{ o2.kind }}-fg)">{{ o2.state }}</span>
+        </button>
+      </sc-for>
+      <div style="padding:12px 18px;display:flex;align-items:center;gap:10px"><span style="flex:1;font-size:13px">Accepts email marketing</span><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ cu.d.mkKind }}-bg);color:var(--b-{{ cu.d.mkKind }}-fg)">{{ cu.d.marketing }}</span></div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- REVIEW IMPORT -->
+<sc-if value="{{ rv.importOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ rv.closeImport }}" style="position:fixed;inset:0;z-index:86;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:kFade .12s;overflow:auto">
+    <div onClick="{{ stop }}" style="width:min(760px,100%);background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out;margin:auto">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between"><span style="font-weight:650;font-size:15px">{{ rv.importTitle }}</span><button onClick="{{ rv.closeImport }}" style="width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--ink-2);cursor:pointer">✕</button></div>
+      <sc-if value="{{ rv.impStep1 }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:18px 20px">
+          <label onDragOver="{{ rv.dragOver }}" onDrop="{{ rv.dropFile }}" style="display:block;border:1px dashed var(--border-strong);border-radius:12px;background:var(--bg);padding:34px 20px;text-align:center;cursor:pointer">
+            <div style="font-weight:650">Drop a CSV, JSON or ZIP here</div>
+            <div style="font-size:12px;color:var(--ink-2);margin-top:3px">A ZIP may hold a CSV plus an images folder. Nothing is imported until you map the columns.</div>
+            <input type="file" accept=".csv,.json,.zip" onChange="{{ rv.pickFile }}" style="display:none">
+          </label>
+        </div>
+      </sc-if>
+      <sc-if value="{{ rv.impStep2 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:600">{{ rv.impFileName }}</span><span style="font-size:12px;color:var(--ink-2)">{{ rv.impRowCount }} rows detected · {{ rv.impImages }}</span></div>
+        <div style="padding:14px 20px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--ink-2)">Map your columns</div>
+          <sc-for list="{{ rv.impMap }}" as="m" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:1fr 22px 1fr;gap:10px;align-items:center">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.column }}</span>
+              <span style="color:var(--ink-3);text-align:center">→</span>
+              <select value="{{ m.target }}" onChange="{{ m.set }}" style="height:34px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">Skip this column</option><option value="name">Name</option><option value="rating">Rating</option><option value="title">Title</option><option value="body">Body</option><option value="date">Date</option><option value="country">Country</option><option value="image">Image</option><option value="verified">Verified</option></select>
+            </div>
+          </sc-for>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Assign to product<select value="{{ rv.impProduct }}" onChange="{{ rv.setImpProduct }}" style="height:34px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><sc-for list="{{ rv.productNames }}" as="p4" hint-placeholder-count="1"><option value="{{ p4 }}">{{ p4 }}</option></sc-for></select></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Source (required)<select value="{{ rv.impSource }}" onChange="{{ rv.setImpSource }}" style="height:34px;border-radius:8px;border:1px solid {{ rv.impSourceBorder }};background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">Choose source…</option><option value="From my customers">From my customers</option><option value="Imported from supplier listing">Imported from supplier listing</option></select></label>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--ink-2);margin-top:6px">Preview · first five rows</div>
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px">
+            <table style="width:100%;border-collapse:collapse;min-width:520px">
+              <thead><tr style="height:32px;background:var(--bg);color:var(--ink-2);font-size:11px;font-weight:600;text-align:left"><sc-for list="{{ rv.impHeaders }}" as="h" hint-placeholder-count="4"><th style="padding:0 10px;font-weight:600">{{ h }}</th></sc-for></tr></thead>
+              <tbody><sc-for list="{{ rv.impPreview }}" as="row" hint-placeholder-count="5"><tr style="height:34px;border-top:1px solid var(--border)"><sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="4"><td style="padding:0 10px;font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">{{ cell }}</td></sc-for></tr></sc-for></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;padding:12px 20px;border-top:1px solid var(--border)">
+          <button onClick="{{ rv.closeImport }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Cancel</button>
+          <button onClick="{{ rv.runImport }}" style="height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Import {{ rv.impRowCount }} reviews</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ rv.impStep3 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+          <span style="height:8px;border-radius:5px;background:#F2F1F5;overflow:hidden"><span style="display:block;height:8px;width:{{ rv.impPct }};background:var(--accent);border-radius:5px;transition:width .2s"></span></span>
+          <span style="font-size:13px;color:var(--ink-2)">{{ rv.impProgressText }}</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ rv.impStep4 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px;display:flex;flex-direction:column;gap:10px">
+          <span style="font-weight:650;font-size:15px">Import finished</span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <span style="padding:12px;border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column"><span style="font-size:12px;color:var(--ink-2)">Imported</span><span style="font-size:22px;font-weight:650;font-variant-numeric:tabular-nums">{{ rv.impDone }}</span></span>
+            <span style="padding:12px;border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column"><span style="font-size:12px;color:var(--ink-2)">Skipped</span><span style="font-size:22px;font-weight:650;font-variant-numeric:tabular-nums">{{ rv.impSkipped }}</span></span>
+          </div>
+          <span style="font-size:12px;color:var(--ink-2)">{{ rv.impSummary }}</span>
+          <button onClick="{{ rv.closeImport }}" style="align-self:flex-start;height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Done</button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<!-- MEDIA PICKER -->
+<sc-if value="{{ md.pickerOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ md.closePicker }}" style="position:fixed;inset:0;z-index:86;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;animation:kFade .12s">
+    <div onClick="{{ stop }}" style="width:min(700px,100%);max-height:80vh;background:var(--elev);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;animation:kModal .16s ease-out;display:flex;flex-direction:column">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between"><span style="font-weight:650;font-size:15px">Select file</span><button onClick="{{ md.closePicker }}" style="width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--ink-2);cursor:pointer">✕</button></div>
+      <div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px"><input value="{{ md.query }}" onChange="{{ md.setQuery }}" placeholder="Search files" style="flex:1;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px"><label style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer;display:inline-flex;align-items:center">Upload<input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ md.upload }}" style="display:none"></label></div>
+      <div style="flex:1;min-height:0;overflow:auto;padding:14px 20px">
+        <sc-if value="{{ md.empty }}" hint-placeholder-val="{{ true }}"><div style="padding:36px 0;text-align:center;color:var(--ink-2)"><div style="font-weight:650;color:var(--ink)">Nothing in your library</div>Upload an image to use it here.</div></sc-if>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">
+          <sc-for list="{{ md.files }}" as="fl" hint-placeholder-count="0">
+            <button onClick="{{ fl.choose }}" style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg);cursor:pointer;padding:0;text-align:left" style-hover="border-color:var(--accent)">
+              <span style="display:block;aspect-ratio:1;background-image:{{ fl.bg }};background-size:cover;background-position:center"></span>
+              <span style="display:block;padding:6px 8px;background:var(--surface);font-size:11px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)">{{ fl.name }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- TOAST -->
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:24px;z-index:90;transform:translateX(-50%);background:#303030;color:#fff;padding:0 8px 0 16px;height:40px;border-radius:10px;display:flex;align-items:center;gap:12px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);animation:kToast .2s ease-out;white-space:nowrap">{{ toast }}<button onClick="{{ dismissToast }}" style="width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:inherit;cursor:pointer;opacity:.7;font-size:14px">✕</button></div>
+</sc-if>
+</div>
+</x-dc>

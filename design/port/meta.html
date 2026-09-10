@@ -1,0 +1,55 @@
+  <sc-if value="{{ isMeta }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Meta · {{ scopeName }}</h1>
+        <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ mt.kind }}-bg);color:var(--b-{{ mt.kind }}-fg)"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8"></span>{{ mt.statusLabel }}</span>
+      </div>
+      <sc-if value="{{ mt.scopeAll }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;color:var(--ink-2)">Pick a single store in the switcher to edit its pixel and token. Combined ad performance is shown below.</div>
+      </sc-if>
+      <sc-if value="{{ mt.scopeOne }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:650">Connection</div>
+          <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Pixel ID<input value="{{ mt.pixel }}" onChange="{{ mt.setPixel }}" placeholder="15 or 16 digits" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--ink)"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Ad account ID<input value="{{ mt.adAccount }}" onChange="{{ mt.setAdAccount }}" placeholder="act_…" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--ink)"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Conversions API token<span style="display:flex;gap:6px"><input value="{{ mt.tokenShown }}" onChange="{{ mt.setToken }}" type="{{ mt.tokenType }}" placeholder="EAAG…" style="flex:1;min-width:0;height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--ink)"><button onClick="{{ mt.toggleToken }}" style="height:36px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">{{ mt.tokenBtn }}</button></span></label>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <button onClick="{{ mt.sendTest }}" style="height:30px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Send test event</button>
+            <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ mt.testKind }}-bg);color:var(--b-{{ mt.testKind }}-fg)">{{ mt.testLabel }}</span>
+            <span style="font-size:12px;color:var(--ink-2);flex:1;min-width:200px">Browser and server events share one event ID, so Meta never counts a purchase twice.</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:{{ mt.cols }};gap:16px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:650">Browser events</div>
+            <sc-for list="{{ mt.browserEvents }}" as="e" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="width:7px;height:7px;border-radius:50%;background:{{ e.dot }}"></span><span style="flex:1;font-family:'JetBrains Mono',monospace;font-size:12px">{{ e.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--ink-2)">{{ e.count }}</span></div>
+            </sc-for>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:650">Server events (CAPI)</div>
+            <sc-for list="{{ mt.serverEvents }}" as="e" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border)"><span style="width:7px;height:7px;border-radius:50%;background:{{ e.dot }}"></span><span style="flex:1;font-family:'JetBrains Mono',monospace;font-size:12px">{{ e.name }}</span><span style="font-variant-numeric:tabular-nums;color:var(--ink-2)">{{ e.count }}</span></div>
+            </sc-for>
+            <div style="padding:11px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-size:12px;font-weight:550;color:var(--ink-2)">Event match quality</span><span style="font-weight:650;color:{{ mt.emqColor }}">{{ mt.emq }}</span></div>
+          </div>
+        </div>
+      </sc-if>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:650">Ad performance</div>
+        <sc-if value="{{ mt.adsEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:40px 16px;text-align:center;color:var(--ink-2)"><div style="font-weight:650;color:var(--ink);margin-bottom:4px">No ad data</div>Connect an ad account to pull spend, revenue and ROAS in here.</div>
+        </sc-if>
+        <sc-if value="{{ mt.hasAds }}" hint-placeholder-val="{{ false }}">
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:720px">
+            <thead><tr style="height:36px;color:var(--ink-2);font-size:12px;font-weight:550;text-align:left;border-bottom:1px solid var(--border)"><th style="padding:0 16px;font-weight:550">Campaign</th><th style="padding:0 12px;font-weight:550">Ad</th><th style="padding:0 12px;font-weight:550;text-align:right">Spend</th><th style="padding:0 12px;font-weight:550;text-align:right">Revenue</th><th style="padding:0 12px;font-weight:550;text-align:right">ROAS</th><th style="padding:0 16px;font-weight:550;text-align:right">Profit</th></tr></thead>
+            <tbody><sc-for list="{{ mt.adRows }}" as="r" hint-placeholder-count="0">
+              <tr style="height:44px;border-bottom:1px solid var(--border)"><td style="padding:0 16px">{{ r.campaign }}</td><td style="padding:0 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-2)">{{ r.ad }}</td><td style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums">{{ r.spend }}</td><td style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums">{{ r.revenue }}</td><td style="padding:0 12px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{{ r.roasColor }}">{{ r.roas }}</td><td style="padding:0 16px;text-align:right;font-variant-numeric:tabular-nums">{{ r.profit }}</td></tr>
+            </sc-for></tbody>
+          </table></div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>

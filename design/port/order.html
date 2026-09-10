@@ -1,0 +1,121 @@
+  <sc-if value="{{ isOrder }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:998px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">
+        <button onClick="{{ goOrders }}" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;flex:none;box-shadow:var(--shadow)" style-hover="background:var(--hover)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10 4-4 4 4 4"/></svg></button>
+        <div style="flex:1;min-width:200px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650;font-family:'JetBrains Mono',monospace">{{ o.number }}</h1>
+            <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ o.payKind }}-bg);color:var(--b-{{ o.payKind }}-fg)"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8"></span>{{ o.payment }}</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ o.stateKind }}-bg);color:var(--b-{{ o.stateKind }}-fg)"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8"></span>{{ o.stateLabel }}</span>
+          </div>
+          <div style="color:var(--ink-2);font-size:12px">{{ o.dateLong }} · {{ o.storeName }} · from {{ o.source }}</div>
+        </div>
+        <div style="display:flex;gap:8px;position:relative">
+          <button onClick="{{ openRefund }}" disabled="{{ o.isRefunded }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer;box-shadow:var(--shadow);opacity:{{ o.refundOpacity }}" style-hover="background:var(--hover)">Refund</button>
+          <button onClick="{{ toggleMoreMenu }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:6px" style-hover="background:var(--hover)">More actions<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="m4 6 4 4 4-4"/></svg></button>
+          <sc-if value="{{ moreMenuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;right:0;top:34px;width:230px;background:var(--elev);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;z-index:20;animation:kPop .14s ease-out">
+              <button onClick="{{ printSlip }}" style="width:100%;text-align:left;padding:7px 10px;border:0;border-radius:7px;background:transparent;cursor:pointer;font-size:13px;color:var(--ink)" style-hover="background:var(--hover)">Print packing slip</button>
+              <button onClick="{{ resendConfirmation }}" style="width:100%;text-align:left;padding:7px 10px;border:0;border-radius:7px;background:transparent;cursor:pointer;font-size:13px;color:var(--ink)" style-hover="background:var(--hover)">Resend order confirmation</button>
+              <button onClick="{{ copyOrderLink }}" style="width:100%;text-align:left;padding:7px 10px;border:0;border-radius:7px;background:transparent;cursor:pointer;font-size:13px;color:var(--ink)" style-hover="background:var(--hover)">Copy order link</button>
+              <button onClick="{{ viewOnStripe }}" style="width:100%;text-align:left;padding:7px 10px;border:0;border-radius:7px;background:transparent;cursor:pointer;font-size:13px;color:var(--ink)" style-hover="background:var(--hover)">View payment in Stripe</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <sc-if value="{{ o.chargeback }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-radius:12px;background:var(--critical-bg);border:1px solid var(--critical);color:var(--ink)">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--critical);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none">!</span>
+          <div style="flex:1"><div style="font-weight:650">Chargeback opened · {{ o.chargebackReason }}</div><div style="color:var(--ink-2)">Respond by <strong style="color:var(--ink)">{{ o.chargebackBy }}</strong>. Evidence is assembled automatically from this order; review it below and submit.</div></div>
+        </div>
+      </sc-if>
+      <div style="display:grid;grid-template-columns:{{ detailCols }};gap:16px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">Items<span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ o.stateKind }}-bg);color:var(--b-{{ o.stateKind }}-fg)">{{ o.stateLabel }}</span></div>
+            <div style="display:flex;gap:14px;padding:14px 16px;align-items:center">
+              <span style="width:56px;height:56px;border-radius:10px;background:{{ o.storeColor }};display:grid;place-items:center;color:#fff;font-weight:700;font-size:18px;flex:none">{{ o.storeInitial }}</span>
+              <div style="flex:1;min-width:0"><div style="font-weight:550">{{ o.product }}</div><div style="color:var(--ink-2);font-size:12px">{{ o.bundle }}<sc-if value="{{ o.hasUpsell }}" hint-placeholder-val="{{ false }}"> · + Tool Pouch Add-on</sc-if></div></div>
+              <div style="color:var(--ink-2);font-variant-numeric:tabular-nums">{{ o.priceStr }} × 1</div>
+              <div style="font-weight:600;font-variant-numeric:tabular-nums;min-width:70px;text-align:right">{{ o.priceStr }}</div>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">Payment<span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ o.payKind }}-bg);color:var(--b-{{ o.payKind }}-fg)">{{ o.payment }}</span></div>
+            <div style="padding:12px 16px;display:grid;grid-template-columns:1fr auto auto;gap:6px 24px;font-variant-numeric:tabular-nums">
+              <span>Subtotal</span><span style="color:var(--ink-2)">1 item</span><span style="text-align:right">{{ o.subtotalStr }}</span>
+              <span>Tax</span><span style="color:var(--ink-2)">{{ o.st }} state · {{ o.taxRate }}</span><span style="text-align:right">{{ o.taxStr }}</span>
+              <span>Shipping</span><span style="color:var(--ink-2)">Free shipping (5–9 days)</span><span style="text-align:right">$0.00</span>
+              <span style="font-weight:650;padding-top:6px;border-top:1px solid var(--border)">Total</span><span style="padding-top:6px;border-top:1px solid var(--border)"></span><span style="font-weight:650;text-align:right;padding-top:6px;border-top:1px solid var(--border)">{{ o.totalStr }}</span>
+            </div>
+            <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;color:var(--ink-2);font-size:12px;flex-wrap:wrap;gap:6px"><span>Paid via Stripe · {{ o.stripe }}</span><span style="font-family:'JetBrains Mono',monospace">{{ o.ref }}</span></div>
+          </div>
+          <sc-if value="{{ o.chargeback }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+              <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Evidence</div>
+              <div style="padding:8px 16px 12px;color:var(--ink-2)">Submitted automatically to Stripe on your behalf:</div>
+              <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-top:1px solid var(--border)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><span style="flex:1">{{ e.label }}</span><span style="color:var(--ink-2);font-size:12px">{{ e.value }}</span></div></sc-for>
+              <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end"><button onClick="{{ submitEvidence }}" style="height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Submit evidence</button></div>
+            </div>
+          </sc-if>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Fulfillment</div>
+            <sc-if value="{{ o.canFulfill }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:grid;grid-template-columns:1fr 160px;gap:10px">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Tracking number<input value="{{ trackingInput }}" onChange="{{ setTracking }}" placeholder="e.g. 9400 1112 0620 …" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--ink)"></label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Carrier<select value="{{ carrier }}" onChange="{{ setCarrier }}" style="height:36px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option>USPS</option><option>UPS</option><option>FedEx</option><option>YunExpress</option></select></label>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button onClick="{{ fulfill }}" disabled="{{ noTracking }}" style="height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer;opacity:{{ fulfillOpacity }}" style-hover="background:var(--accent-hover)">Mark fulfilled &amp; email customer</button>
+                  <sc-if value="{{ o.isNew }}" hint-placeholder-val="{{ true }}"><button onClick="{{ markOrdered }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer;box-shadow:var(--shadow)" style-hover="background:var(--hover)">Mark as ordered with supplier</button></sc-if>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ o.isFulfilled }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px 16px;display:flex;align-items:center;gap:12px"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E"></span><div style="flex:1"><div style="font-weight:550">Shipped via {{ o.carrier }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-2)">{{ o.tracking }}</div></div><button onClick="{{ resendTracking }}" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Resend tracking</button></div>
+            </sc-if>
+            <sc-if value="{{ o.isRefunded }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 16px;color:var(--ink-2)">This order was refunded. No fulfillment needed.</div></sc-if>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Timeline</div>
+            <div style="padding:12px 16px;display:flex;gap:10px;border-bottom:1px solid var(--border)">
+              <span style="width:28px;height:28px;border-radius:50%;background:#A78BFA;color:#14102A;display:grid;place-items:center;font-size:11px;font-weight:650;flex:none">AK</span>
+              <div style="flex:1;display:flex;gap:8px"><input value="{{ comment }}" onChange="{{ setComment }}" onKeyDown="{{ commentKey }}" placeholder="Leave a comment…" style="flex:1;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"><button onClick="{{ postComment }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Post</button></div>
+            </div>
+            <div style="padding:12px 16px 4px;display:flex;flex-direction:column">
+              <sc-for list="{{ timeline }}" as="e" hint-placeholder-count="6">
+                <div style="display:grid;grid-template-columns:20px 1fr auto;gap:0 10px;position:relative">
+                  <span style="display:flex;flex-direction:column;align-items:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ e.dot }};margin-top:6px;flex:none;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--border)"></span><span style="flex:1;width:1px;background:var(--border);margin:2px 0"></span></span>
+                  <span style="padding-bottom:14px;color:{{ e.color }}">{{ e.text }}</span>
+                  <span style="font-size:12px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums">{{ e.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Customer</div>
+            <div style="padding:12px 16px;display:flex;flex-direction:column;gap:2px"><a href="#" onClick="{{ stopPrevent }}" style="font-weight:550">{{ o.customer }}</a><span style="color:var(--ink-2);font-size:12px">{{ o.orderCountText }}</span></div>
+            <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:550;color:var(--ink-2)">Contact</span><a href="#" onClick="{{ stopPrevent }}">{{ o.email }}</a><span>{{ o.phone }}</span></div>
+            <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;font-weight:550;color:var(--ink-2)">Shipping address</span><span>{{ o.customer }}</span><span>{{ o.address }}</span><span>{{ o.city }}, {{ o.st }} {{ o.zip }}</span><span>United States</span></div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Meta attribution</div>
+            <div style="padding:10px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12px">
+              <span style="color:var(--ink-2)">Ad</span><span style="font-family:'JetBrains Mono',monospace;font-weight:500">{{ o.source }}</span>
+              <span style="color:var(--ink-2)">Campaign</span><span>{{ o.campaign }}</span>
+              <span style="color:var(--ink-2)">Event ID</span><span style="font-family:'JetBrains Mono',monospace;color:var(--ink-2)">{{ o.eventId }}</span>
+              <span style="color:var(--ink-2)">Purchase event</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#22C55E"></span>Browser + server, deduplicated</span>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">Notes<button onClick="{{ toggleNoteEdit }}" style="border:0;background:transparent;color:var(--link);font-size:12px;font-weight:550;cursor:pointer;padding:0">{{ noteEditLabel }}</button></div>
+            <sc-if value="{{ noteEditing }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 16px"><textarea value="{{ noteDraft }}" onChange="{{ setNoteDraft }}" rows="3" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;resize:vertical;color:var(--ink)"></textarea></div></sc-if>
+            <sc-if value="{{ noteViewing }}" hint-placeholder-val="{{ true }}"><div style="padding:12px 16px;color:{{ noteColor }}">{{ noteText }}</div></sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>

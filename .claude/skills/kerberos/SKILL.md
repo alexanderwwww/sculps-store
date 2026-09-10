@@ -94,6 +94,18 @@ own domains, their own Stripe accounts, their own pixels.
 
 ## Design rules — do not violate these
 
+**0. When a design exists, port it — never re-author it.** The approved
+prototype is `design/prototype/Shop Admin.dc.html`, split per screen into
+`design/port/*.html` with the method written in `design/port/PORTING.md`.
+Every style string in it was signed off. Transliterate the markup: `sc-if` to
+a ternary, `sc-for` to `.map`, `style="a:b"` to `style={{ a: "b" }}`, same
+values, same nesting. The only thing that changes is where the data comes
+from. If you are typing a colour, a pixel value, a font weight or a line of
+copy that is not already in the prototype, stop — you are inventing, and that
+is the mistake that made the first build feel like a toy version of his
+design. Reading the design and rebuilding from a summary of it is not
+porting, and it is what he will notice first.
+
 **1. Design lives in code. Content lives in the admin.** Each store's look is written
 directly in code with full creative freedom. The admin can only change words, images, and
 repeatable blocks inside a fixed structure. It cannot reorder sections, change layout, or

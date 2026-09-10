@@ -1,0 +1,143 @@
+  <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Analytics</h1>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="position:relative">
+            <button onClick="{{ toggleARange }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;display:inline-flex;align-items:center;gap:6px;cursor:pointer;box-shadow:var(--shadow)" style-hover="background:var(--hover)">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 7h12M5 1.5v3M11 1.5v3"/></svg>{{ aRange }}
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="m4 6 4 4 4-4"/></svg>
+            </button>
+            <sc-if value="{{ aRangeOpen }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ stop }}" style="position:absolute;right:0;top:34px;width:190px;background:var(--elev);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;z-index:20;animation:kPop .14s ease-out">
+                <sc-for list="{{ aRanges }}" as="r" hint-placeholder-count="5"><button onClick="{{ r.select }}" style="width:100%;text-align:left;padding:7px 10px;border:0;border-radius:7px;background:{{ r.bg }};cursor:pointer;font-size:13px;color:var(--ink)" style-hover="background:var(--hover)">{{ r.label }}</button></sc-for>
+              </div>
+            </sc-if>
+          </div>
+          <button onClick="{{ toggleCompare }}" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;display:inline-flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--shadow)" style-hover="background:var(--hover)">
+            <span style="width:26px;height:15px;border-radius:8px;background:{{ compareTrack }};position:relative;flex:none;transition:background .15s"><span style="position:absolute;top:2px;left:{{ compareKnob }};width:11px;height:11px;border-radius:50%;background:#fff;transition:left .15s"></span></span>Compare to previous period</button>
+          <button onClick="{{ aExport }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer;box-shadow:var(--shadow)" style-hover="background:var(--hover)">Export</button>
+        </div>
+      </div>
+
+      <!-- meta ads -->
+      <sc-if value="{{ metaNotConnected }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:16px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+          <span style="width:36px;height:36px;border-radius:9px;background:var(--b-info-bg);color:var(--b-info-fg);display:grid;place-items:center;font-weight:700;flex:none">M</span>
+          <div style="flex:1;min-width:220px">
+            <div style="font-weight:650">Meta ads · not connected</div>
+            <div style="color:var(--ink-2)">Connect Meta to pull ad spend into this page. Spend, revenue, ROAS and profit per campaign appear in Marketing below once it's linked.</div>
+          </div>
+          <button onClick="{{ openMeta }}" style="height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer;flex:none" style-hover="background:var(--accent-hover)">Connect Meta</button>
+    <div style="padding:14px 10px 4px;font-size:12px;font-weight:600;color:var(--ink-2)">Sales channel</div>
+    <button onClick="{{ goStore }}" style="display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:8px;border:0;cursor:pointer;font-weight:550;font-size:13px;text-align:left;color:var(--ink);background:{{ nav.store }};box-shadow:{{ navShadow.store }};border-left:2px solid {{ navRail.store }}" style-hover="background:var(--side-hover)">
+      <span style="width:20px;display:grid;place-items:center;flex:none;color:var(--ink-2)"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8l1.5-4h11L17 8M3 8v9h14V8M8 17v-5h4v5"/></svg></span><span style="flex:1">Online Store</span>
+      <span onClick="{{ goEditor }}" style="font-size:12px;color:var(--link);font-weight:500">Customize</span></button>
+    <button onClick="{{ goMedia }}" style="display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:8px;border:0;cursor:pointer;font-weight:550;font-size:13px;text-align:left;color:var(--ink);background:{{ nav.media }};box-shadow:{{ navShadow.media }};border-left:2px solid {{ navRail.media }}" style-hover="background:var(--side-hover)">
+      <span style="width:20px;display:grid;place-items:center;flex:none;color:var(--ink-2)"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="m3 14 4.5-4.5 4 4 2.5-2.5 3 3"/></svg></span>Media</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ metaConnected }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-weight:650">Meta ads</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-success-bg);color:var(--b-success-fg)"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>Connected</span>
+            <span style="flex:1"></span>
+            <button onClick="{{ openMeta }}" style="border:0;background:transparent;color:var(--link);font-size:12px;font-weight:550;cursor:pointer;padding:0">Manage</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+            <div style="padding:12px 16px;border-right:1px solid var(--border)"><div style="font-size:12px;color:var(--ink-2);font-weight:550">Ad spend</div><div style="font-size:20px;font-weight:650;font-variant-numeric:tabular-nums">{{ metaSpend }}</div></div>
+            <div style="padding:12px 16px;border-right:1px solid var(--border)"><div style="font-size:12px;color:var(--ink-2);font-weight:550">Attributed revenue</div><div style="font-size:20px;font-weight:650;font-variant-numeric:tabular-nums">{{ metaRevenue }}</div></div>
+            <div style="padding:12px 16px;border-right:1px solid var(--border)"><div style="font-size:12px;color:var(--ink-2);font-weight:550">ROAS</div><div style="font-size:20px;font-weight:650;font-variant-numeric:tabular-nums">{{ metaRoas }}</div></div>
+            <div style="padding:12px 16px"><div style="font-size:12px;color:var(--ink-2);font-weight:550">Profit</div><div style="font-size:20px;font-weight:650;font-variant-numeric:tabular-nums">{{ metaProfit }}</div></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- metric cards -->
+      <div style="display:grid;grid-template-columns:{{ aCols }};gap:16px">
+        <sc-for list="{{ aCards }}" as="m" hint-placeholder-count="7">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px 10px;min-width:0">
+            <div style="font-size:12px;font-weight:550;color:var(--ink-2)">{{ m.label }}</div>
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:24px;line-height:30px;font-weight:650;font-variant-numeric:tabular-nums">{{ m.value }}</span><span style="font-size:12px;font-weight:600;color:{{ m.deltaColor }}">{{ m.delta }}</span></div>
+            <svg viewBox="0 0 120 30" preserveAspectRatio="none" style="width:100%;height:30px;display:block;margin-top:4px"><path d="{{ m.spark }}" fill="none" stroke="var(--chart)" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>
+            <div style="font-size:11px;color:var(--ink-3)">{{ m.note }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- sales over time -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+          <div><div style="font-weight:650">Total sales over time</div><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:26px;line-height:32px;font-weight:650;font-variant-numeric:tabular-nums">{{ aChartTotal }}</span><span style="font-size:12px;color:var(--ink-2)">{{ compareNote }}</span></div></div>
+          <span style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;height:28px">
+            <button onClick="{{ setGranDay }}" style="padding:0 12px;border:0;background:{{ granDayBg }};color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Day</button>
+            <button onClick="{{ setGranHour }}" style="padding:0 12px;border:0;border-left:1px solid var(--border);background:{{ granHourBg }};color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Hour</button>
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:44px 1fr">
+          <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:var(--ink-2);height:160px;text-align:right;padding-right:8px;font-variant-numeric:tabular-nums"><span>$3</span><span>$2</span><span>$1</span><span>$0</span></div>
+          <svg viewBox="0 0 760 160" preserveAspectRatio="none" style="width:100%;height:160px;display:block">
+            <line x1="0" y1="1" x2="760" y2="1" stroke="var(--border)" vector-effect="non-scaling-stroke"/><line x1="0" y1="53" x2="760" y2="53" stroke="var(--border)" vector-effect="non-scaling-stroke"/><line x1="0" y1="105" x2="760" y2="105" stroke="var(--border)" vector-effect="non-scaling-stroke"/><line x1="0" y1="157" x2="760" y2="157" stroke="var(--border)" vector-effect="non-scaling-stroke"/>
+            <line x1="0" y1="157" x2="760" y2="157" stroke="var(--chart)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+          </svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2);margin:6px 0 0 44px">
+          <sc-for list="{{ aXLabels }}" as="x" hint-placeholder-count="7"><span>{{ x }}</span></sc-for>
+        </div>
+      </div>
+
+      <!-- breakdowns -->
+      <div style="display:grid;grid-template-columns:{{ aCols }};gap:16px">
+        <sc-for list="{{ aBreakdowns }}" as="b" hint-placeholder-count="6">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;min-width:0">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:650">{{ b.title }}</span><span style="font-size:11px;color:var(--ink-2)">{{ b.unit }}</span></div>
+            <sc-for list="{{ b.rows }}" as="r" hint-placeholder-count="1">
+              <div style="padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center">
+                <span style="font-size:13px;color:var(--ink-2);overflow-wrap:anywhere">{{ r.label }}</span>
+                <span style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums">{{ r.value }}</span>
+                <span style="grid-column:1 / -1;height:6px;border-radius:3px;background:var(--bg);display:block"><span style="display:block;height:6px;width:{{ r.bar }};background:var(--chart);border-radius:3px"></span></span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- marketing -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-weight:650">Marketing · sales attributed to Meta ads</span><span style="font-size:12px;color:var(--ink-2)">{{ aRange }}</span></div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:760px">
+            <thead><tr style="height:38px;color:var(--ink-2);font-size:12px;font-weight:550;text-align:left;border-bottom:1px solid var(--border)">
+              <th style="padding:0 16px;font-weight:550">Campaign</th><th style="padding:0 12px;font-weight:550">Ad</th>
+              <th style="padding:0 12px;font-weight:550;text-align:right">Spend</th><th style="padding:0 12px;font-weight:550;text-align:right">Revenue</th>
+              <th style="padding:0 12px;font-weight:550;text-align:right">ROAS</th><th style="padding:0 16px;font-weight:550;text-align:right">Profit</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ aMarketing }}" as="m" hint-placeholder-count="0">
+                <tr style="height:44px;border-bottom:1px solid var(--border)"><td style="padding:0 16px">{{ m.campaign }}</td><td style="padding:0 12px">{{ m.ad }}</td><td style="padding:0 12px;text-align:right">{{ m.spend }}</td><td style="padding:0 12px;text-align:right">{{ m.revenue }}</td><td style="padding:0 12px;text-align:right">{{ m.roas }}</td><td style="padding:0 16px;text-align:right">{{ m.profit }}</td></tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <sc-if value="{{ aMarketingEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:40px 16px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center">
+            <span style="width:44px;height:44px;border-radius:11px;background:var(--bg);display:grid;place-items:center;color:var(--ink-3)"><svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 16V9M10 16V4M16 16v-5"/></svg></span>
+            <div style="font-weight:650">No attributed sales yet</div>
+            <div style="color:var(--ink-2);max-width:420px">Campaign spend, revenue, ROAS and profit appear here once Meta ads is connected and a store starts taking orders.</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- refunds -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:650">Refunds and chargebacks</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+          <sc-for list="{{ aRefunds }}" as="r" hint-placeholder-count="4">
+            <div style="padding:14px 16px;border-right:1px solid var(--border)"><div style="font-size:12px;font-weight:550;color:var(--ink-2)">{{ r.label }}</div><div style="font-size:20px;line-height:26px;font-weight:650;font-variant-numeric:tabular-nums">{{ r.value }}</div><div style="font-size:11px;color:var(--ink-3)">{{ r.sub }}</div></div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <!--SETTINGS-->

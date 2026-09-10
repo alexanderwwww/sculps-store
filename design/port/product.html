@@ -1,0 +1,78 @@
+  <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button onClick="{{ goProducts }}" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;flex:none;box-shadow:var(--shadow)" style-hover="background:var(--hover)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10 4-4 4 4 4"/></svg></button>
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">{{ pdHeading }}</h1>
+      </div>
+      <div style="display:grid;grid-template-columns:{{ detailCols }};gap:16px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Title<input value="{{ pdTitle }}" onChange="{{ setPdTitle }}" placeholder="e.g. Garden Kneeler &amp; Seat" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:14px;color:var(--ink)"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Description<textarea value="{{ pdDesc }}" onChange="{{ setPdDesc }}" rows="6" placeholder="What it is, who it's for, what's in the box…" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;resize:vertical;color:var(--ink);font-family:inherit"></textarea></label>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:16px">
+            <div style="font-weight:650;margin-bottom:10px">Media</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px">
+              <sc-for list="{{ pdMedia }}" as="m" hint-placeholder-count="0">
+                <span style="position:relative;aspect-ratio:1;border-radius:10px;border:1px solid var(--border);background:var(--bg);overflow:hidden;display:block">
+                  <span style="position:absolute;inset:0;background-image:{{ m.bg }};background-size:cover;background-position:center;display:block"></span>
+                  <button onClick="{{ m.remove }}" title="Remove" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:6px;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:11px">✕</button>
+                </span>
+              </sc-for>
+              <label style="aspect-ratio:1;border-radius:10px;border:1px dashed var(--border-strong);background:var(--bg);color:var(--ink-2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px" style-hover="background:var(--hover)"><span style="font-size:18px">＋</span>Upload<input type="file" accept="image/*" multiple="{{ true }}" onChange="{{ uploadMedia }}" style="display:none"></label>
+            </div>
+            <div style="font-size:12px;color:var(--ink-2);margin-top:8px">{{ pdMediaNote }}</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-weight:650">Bundle options</span><button onClick="{{ addOption }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Add option</button></div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;min-width:740px">
+                <thead><tr style="height:36px;color:var(--ink-2);font-size:12px;font-weight:550;text-align:left;border-bottom:1px solid var(--border)">
+                  <th style="width:34px"></th><th style="padding:0 8px;font-weight:550">Label</th><th style="padding:0 8px;font-weight:550">Sublabel</th>
+                  <th style="padding:0 8px;font-weight:550;width:96px">Price</th><th style="padding:0 8px;font-weight:550;width:108px">Compare-at</th>
+                  <th style="padding:0 8px;font-weight:550;width:76px">Saved</th><th style="padding:0 8px;font-weight:550;width:60px">Default</th><th style="width:40px"></th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{ pdOptions }}" as="o" hint-placeholder-count="1">
+                    <tr style="border-bottom:1px solid var(--border);height:48px">
+                      <td style="text-align:center"><span draggable="true" onDragStart="{{ o.dragStart }}" onDragOver="{{ o.dragOver }}" onDrop="{{ o.drop }}" title="Drag to reorder" style="cursor:grab;color:var(--ink-3);display:inline-block;padding:4px 6px">⠿</span></td>
+                      <td style="padding:0 8px"><input value="{{ o.label }}" onChange="{{ o.setLabel }}" placeholder="Buy 2" style="width:100%;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></td>
+                      <td style="padding:0 8px"><input value="{{ o.sublabel }}" onChange="{{ o.setSub }}" placeholder="Most popular" style="width:100%;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></td>
+                      <td style="padding:0 8px"><input value="{{ o.price }}" onChange="{{ o.setPrice }}" placeholder="0.00" style="width:100%;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums"></td>
+                      <td style="padding:0 8px"><input value="{{ o.compare }}" onChange="{{ o.setCompare }}" placeholder="0.00" style="width:100%;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums"></td>
+                      <td style="padding:0 8px;font-weight:600;color:{{ o.savedColor }};font-variant-numeric:tabular-nums">{{ o.saved }}</td>
+                      <td style="padding:0 8px;text-align:center"><input type="radio" name="pdDefault" checked="{{ o.isDefault }}" onChange="{{ o.setDefault }}" style="width:16px;height:16px;accent-color:var(--focus);cursor:pointer"></td>
+                      <td style="padding:0 8px;text-align:center"><button onClick="{{ o.remove }}" title="Delete option" style="width:26px;height:26px;border-radius:7px;border:0;background:transparent;color:var(--critical);cursor:pointer">✕</button></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <sc-if value="{{ pdNoOptions }}" hint-placeholder-val="{{ false }}"><div style="padding:24px 16px;text-align:center;color:var(--ink-2)">No bundle options yet. Add one to set pricing.</div></sc-if>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:16px">
+            <div style="font-weight:650;margin-bottom:10px">Supplier &amp; cost</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Supplier name<input value="{{ pdSupplier }}" onChange="{{ setPdSupplier }}" placeholder="Supplier" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Supplier URL<input value="{{ pdSupplierUrl }}" onChange="{{ setPdSupplierUrl }}" placeholder="https://…" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Cost per unit<input value="{{ pdCost }}" onChange="{{ setPdCost }}" placeholder="0.00" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums"></label>
+              <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Margin<div style="height:36px;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:650;color:{{ marginColor }};font-variant-numeric:tabular-nums">{{ marginText }}<span style="font-size:12px;font-weight:450;color:var(--ink-2)">{{ marginNote }}</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Status<select value="{{ pdStatus }}" onChange="{{ setPdStatus }}" style="height:34px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option>Draft</option><option>Active</option></select></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Store<select value="{{ pdStore }}" onChange="{{ setPdStore }}" style="height:34px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="gk">Garden Kneeler</option><option value="hd">Halloween Decor</option><option value="eb">E-Bike</option></select></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Meta content ID<input value="{{ pdContentId }}" onChange="{{ setPdContentId }}" placeholder="e.g. gk-kneeler-01" style="height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--ink)"><span style="font-weight:450">Sent with every Meta event for this product.</span></label>
+          </div>
+          <sc-if value="{{ pdExisting }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+              <span style="font-weight:650">Danger zone</span>
+              <button onClick="{{ deleteProduct }}" style="height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--critical);font-size:12px;font-weight:600;cursor:pointer">Delete product</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>

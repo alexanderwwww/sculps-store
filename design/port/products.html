@@ -1,0 +1,38 @@
+  <sc-if value="{{ isProducts }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Products</h1>
+        <button onClick="{{ newProduct }}" style="height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer" style-hover="background:var(--accent-hover)">Add product</button>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+          <div style="flex:1;min-width:180px;position:relative">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--ink-3)" stroke-width="1.6" stroke-linecap="round" style="position:absolute;left:10px;top:8px"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+            <input value="{{ pQuery }}" onChange="{{ setPQuery }}" placeholder="Search products" style="width:100%;height:32px;padding:0 10px 0 32px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px">
+          </div>
+          <select value="{{ pStatus }}" onChange="{{ setPStatus }}" style="height:32px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">Any status</option><option value="Active">Active</option><option value="Draft">Draft</option></select>
+        </div>
+        <sc-if value="{{ productsEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:56px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px">
+            <span style="width:48px;height:48px;border-radius:12px;background:var(--bg);display:grid;place-items:center;color:var(--ink-3)"><svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 3h6.5l7.5 7.5-6.5 6.5L3 9.5z"/></svg></span>
+            <div style="font-weight:650;font-size:14px">{{ pEmptyTitle }}</div>
+            <div style="color:var(--ink-2);max-width:340px">{{ pEmptyBody }}</div>
+            <button onClick="{{ newProduct }}" style="margin-top:6px;height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Add product</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasProductRows }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:{{ pCols }};gap:12px;padding:0 16px;height:36px;align-items:center;font-size:12px;font-weight:550;color:var(--ink-2);border-bottom:1px solid var(--border)"><span></span><span>Product</span><span>Status</span><span>Options</span><span style="text-align:right">Price from</span><span style="text-align:right">Units sold</span></div>
+        </sc-if>
+        <sc-for list="{{ productRows }}" as="p" hint-placeholder-count="0">
+          <button onClick="{{ p.open }}" style="width:100%;display:grid;grid-template-columns:{{ pCols }};gap:12px;align-items:center;padding:0 16px;height:56px;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--hover)">
+            <span style="width:40px;height:40px;border-radius:8px;background:var(--bg);border:1px solid var(--border);display:grid;place-items:center;overflow:hidden;color:var(--ink-3);font-size:16px;font-weight:650">{{ p.thumb }}</span>
+            <span style="min-width:0"><span style="display:block;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</span><span style="display:block;font-size:12px;color:var(--ink-2)">{{ p.storeName }}</span></span>
+            <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ p.statusKind }}-bg);color:var(--b-{{ p.statusKind }}-fg);justify-self:start"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8"></span>{{ p.status }}</span>
+            <span style="color:var(--ink-2)">{{ p.options }}</span>
+            <span style="text-align:right;font-variant-numeric:tabular-nums">{{ p.priceFrom }}</span>
+            <span style="text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)">{{ p.units }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>

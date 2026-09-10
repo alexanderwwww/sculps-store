@@ -1,0 +1,53 @@
+  <sc-if value="{{ isMedia }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Media</h1>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:3px">
+            <button onClick="{{ md.setGrid }}" style="height:24px;padding:0 10px;border-radius:6px;border:0;background:{{ md.gridBg }};color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Grid</button>
+            <button onClick="{{ md.setList }}" style="height:24px;padding:0 10px;border-radius:6px;border:0;background:{{ md.listBg }};color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">List</button>
+          </div>
+          <label style="height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center">Upload<input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ md.upload }}" style="display:none"></label>
+        </div>
+      </div>
+      <label onDragOver="{{ md.dragOver }}" onDrop="{{ md.drop }}" style="border:1px dashed var(--border-strong);border-radius:12px;background:var(--surface);padding:22px;text-align:center;color:var(--ink-2);cursor:pointer;display:block">
+        <div style="font-weight:600;color:var(--ink)">Drop images or video here</div>
+        <div style="font-size:12px">or click to choose · PNG, JPG, WEBP, MP4</div>
+        <input type="file" accept="image/*,video/*" multiple="{{ true }}" onChange="{{ md.upload }}" style="display:none">
+      </label>
+      <sc-if value="{{ md.uploading }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:12px 16px;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:550;color:var(--ink-2)">Uploading {{ md.uploadName }}</span><span style="height:6px;border-radius:4px;background:#F2F1F5;overflow:hidden"><span style="display:block;height:6px;width:{{ md.uploadPct }};background:var(--accent);border-radius:4px;transition:width .2s"></span></span></div>
+      </sc-if>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="padding:8px 12px;border-bottom:1px solid var(--border)"><input value="{{ md.query }}" onChange="{{ md.setQuery }}" placeholder="Search files" style="width:100%;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px"></div>
+        <sc-if value="{{ md.empty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:52px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font-weight:650">{{ md.emptyTitle }}</div><div style="color:var(--ink-2);max-width:360px">{{ md.emptyBody }}</div></div>
+        </sc-if>
+        <sc-if value="{{ md.isGrid }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px">
+            <sc-for list="{{ md.files }}" as="fl" hint-placeholder-count="0">
+              <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)">
+                <span style="display:block;aspect-ratio:1;background-image:{{ fl.bg }};background-size:cover;background-position:center"></span>
+                <span style="display:flex;flex-direction:column;gap:1px;padding:8px 10px;background:var(--surface)"><span style="font-size:12px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fl.name }}</span><span style="font-size:11px;color:var(--ink-2)">{{ fl.size }} · used in {{ fl.used }}</span>
+                  <span style="display:flex;gap:6px;margin-top:4px"><button onClick="{{ fl.copy }}" style="flex:1;height:24px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:11px;font-weight:550;cursor:pointer">Copy URL</button><button onClick="{{ fl.remove }}" style="width:26px;height:24px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--critical);font-size:11px;cursor:pointer">✕</button></span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ md.isList }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ md.files }}" as="fl" hint-placeholder-count="0">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)">
+              <span style="width:40px;height:40px;border-radius:8px;border:1px solid var(--border);background-color:var(--bg);background-image:{{ fl.bg }};background-size:cover;background-position:center;flex:none"></span>
+              <span style="flex:1;min-width:0"><span style="display:block;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fl.name }}</span><span style="display:block;font-size:12px;color:var(--ink-2)">{{ fl.size }} · {{ fl.type }} · used in {{ fl.used }}</span></span>
+              <button onClick="{{ fl.copy }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Copy URL</button>
+              <button onClick="{{ fl.remove }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--critical);font-size:12px;font-weight:550;cursor:pointer">Delete</button>
+            </div>
+          </sc-for>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  
+  

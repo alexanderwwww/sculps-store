@@ -1,0 +1,63 @@
+  <sc-if value="{{ isReviews }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Reviews · {{ scopeName }}</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onClick="{{ rv.exportCsv }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Export CSV</button>
+          <button onClick="{{ rv.addManual }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Add review</button>
+          <button onClick="{{ rv.openImport }}" style="height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Import reviews</button>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;display:grid;grid-template-columns:{{ rv.sumCols }};gap:16px;align-items:center">
+        <div><div style="font-size:12px;color:var(--ink-2);font-weight:550">Average rating</div><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:26px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ rv.avg }}</span><span style="color:var(--ink-3)">/ 5</span></div><div style="color:#F5A623;letter-spacing:2px">{{ rv.avgStars }}</div></div>
+        <div><div style="font-size:12px;color:var(--ink-2);font-weight:550">Total reviews</div><div style="font-size:26px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ rv.total }}</div></div>
+        <div><div style="font-size:12px;color:var(--ink-2);font-weight:550">With photos</div><div style="font-size:26px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ rv.photoPct }}</div></div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <sc-for list="{{ rv.dist }}" as="d" hint-placeholder-count="5">
+            <span style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="width:28px;color:var(--ink-2);white-space:nowrap">{{ d.star }}★</span><span style="flex:1;height:6px;border-radius:4px;background:#F2F1F5;overflow:hidden"><span style="display:block;height:6px;width:{{ d.pct }};background:#F5A623;border-radius:4px"></span></span><span style="width:26px;text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums">{{ d.count }}</span></span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+          <input value="{{ rv.query }}" onChange="{{ rv.setQuery }}" placeholder="Search review text" style="flex:1;min-width:170px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px">
+          <select value="{{ rv.fProduct }}" onChange="{{ rv.setFProduct }}" style="height:32px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">Any product</option><sc-for list="{{ rv.productNames }}" as="p2" hint-placeholder-count="1"><option value="{{ p2 }}">{{ p2 }}</option></sc-for></select>
+          <select value="{{ rv.fRating }}" onChange="{{ rv.setFRating }}" style="height:32px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">Any rating</option><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select>
+          <select value="{{ rv.fState }}" onChange="{{ rv.setFState }}" style="height:32px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">Any status</option><option value="published">Published</option><option value="hidden">Unpublished</option><option value="photo">Has photo</option></select>
+        </div>
+        <sc-if value="{{ rv.hasSel }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--accent-soft);flex-wrap:wrap">
+            <span style="font-weight:600">{{ rv.selCount }} selected</span>
+            <button onClick="{{ rv.bulkPublish }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Publish</button>
+            <button onClick="{{ rv.bulkHide }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Unpublish</button>
+            <select value="{{ rv.reassign }}" onChange="{{ rv.setReassign }}" style="height:26px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 6px;font-size:12px;color:var(--ink)"><option value="">Reassign to…</option><sc-for list="{{ rv.productNames }}" as="p3" hint-placeholder-count="1"><option value="{{ p3 }}">{{ p3 }}</option></sc-for></select>
+            <button onClick="{{ rv.bulkDelete }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--critical);font-size:12px;font-weight:550;cursor:pointer">Delete</button>
+            <button onClick="{{ rv.clearSel }}" style="margin-left:auto;height:26px;padding:0 8px;border:0;background:transparent;color:var(--ink-2);font-size:12px;cursor:pointer">Clear</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ rv.empty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:52px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font-weight:650">{{ rv.emptyTitle }}</div><div style="color:var(--ink-2);max-width:400px">{{ rv.emptyBody }}</div></div>
+        </sc-if>
+        <sc-for list="{{ rv.rows }}" as="r" hint-placeholder-count="0">
+          <div style="display:grid;grid-template-columns:{{ rv.cols }};gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);background:{{ r.bg }};overflow:hidden">
+            <span style="display:flex;align-items:center;gap:10px"><input type="checkbox" checked="{{ r.selected }}" onChange="{{ r.toggle }}" style="width:16px;height:16px;accent-color:var(--focus);cursor:pointer"><span draggable="true" onDragStart="{{ r.dragStart }}" onDragOver="{{ r.dragOver }}" onDrop="{{ r.drop }}" title="Drag to reorder" style="cursor:grab;color:var(--ink-3)">⠿</span></span>
+            <span style="width:44px;height:44px;border-radius:8px;border:1px solid var(--border);background-color:var(--bg);background-image:{{ r.thumb }};background-size:cover;background-position:center;display:grid;place-items:center;color:var(--ink-3);font-size:11px">{{ r.thumbText }}</span>
+            <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+              <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-weight:600">{{ r.name }}</span><span style="color:#F5A623;letter-spacing:1px">{{ r.stars }}</span><sc-if value="{{ r.verified }}" hint-placeholder-val="{{ false }}"><span style="height:18px;padding:0 6px;border-radius:6px;background:var(--b-success-bg);color:var(--b-success-fg);font-size:11px;font-weight:600;display:inline-flex;align-items:center">Verified</span></sc-if></span>
+              <input value="{{ r.title }}" onChange="{{ r.setTitle }}" placeholder="Review title" style="height:28px;padding:0 8px;border-radius:7px;border:1px solid transparent;background:transparent;font-size:13px;font-weight:550;color:var(--ink)" style-hover="border-color:var(--input-border);background:var(--input)">
+              <input value="{{ r.body }}" onChange="{{ r.setBody }}" placeholder="Review body" style="height:28px;padding:0 8px;border-radius:7px;border:1px solid transparent;background:transparent;font-size:12px;color:var(--ink-2)" style-hover="border-color:var(--input-border);background:var(--input)">
+            </span>
+            <span style="display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--ink-2)"><span>{{ r.date }}</span><span>{{ r.country }}</span><span>{{ r.product }}</span></span>
+            <span style="display:flex;flex-direction:column;gap:4px;align-items:stretch;min-width:0;overflow:hidden">
+              <select value="{{ r.source }}" onChange="{{ r.setSource }}" style="height:28px;width:100%;max-width:100%;min-width:0;border-radius:8px;border:1px solid {{ r.sourceBorder }};background:var(--input);padding:0 6px;font-size:12px;color:var(--ink)"><option value="">Choose source…</option><option value="From my customers">From my customers</option><option value="Imported from supplier listing">Imported from supplier listing</option></select>
+              <sc-if value="{{ r.noSource }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:var(--critical);font-weight:600">Source required before publishing</span></sc-if>
+            </span>
+            <span style="display:flex;align-items:center;gap:8px">
+              <button onClick="{{ r.togglePub }}" role="switch" title="Published" style="width:38px;height:22px;border-radius:11px;border:0;background:{{ r.pubTrack }};position:relative;cursor:pointer;flex:none"><span style="position:absolute;top:2px;left:{{ r.pubKnob }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .18s"></span></button>
+              <button onClick="{{ r.remove }}" style="width:26px;height:26px;border-radius:7px;border:0;background:transparent;color:var(--critical);cursor:pointer">✕</button>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>

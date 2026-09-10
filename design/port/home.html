@@ -1,0 +1,108 @@
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Home</h1>
+        <div style="position:relative">
+          <button onClick="{{ toggleDateMenu }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;display:inline-flex;align-items:center;gap:6px;cursor:pointer;box-shadow:var(--shadow)" style-hover="background:var(--hover)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 7h12M5 1.5v3M11 1.5v3"/></svg>{{ homeRange }}
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="m4 6 4 4 4-4"/></svg>
+          </button>
+          <sc-if value="{{ dateMenuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;right:0;top:34px;width:180px;background:var(--elev);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;z-index:20;animation:kPop .14s ease-out">
+              <sc-for list="{{ homeRanges }}" as="r" hint-placeholder-count="3"><button onClick="{{ r.select }}" style="width:100%;text-align:left;padding:7px 10px;border:0;border-radius:7px;background:{{ r.bg }};cursor:pointer;font-size:13px;color:var(--ink)" style-hover="background:var(--hover)">{{ r.label }}</button></sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:{{ homeCols }};gap:16px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));overflow:hidden">
+            <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="4">
+              <div style="padding:14px 16px;border-right:1px solid var(--border)">
+                <div style="color:var(--ink-2);font-size:12px;font-weight:550">{{ m.label }}</div>
+                <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px"><span style="font-size:22px;line-height:28px;font-weight:650;letter-spacing:-.01em;font-variant-numeric:tabular-nums">{{ m.value }}</span><span style="font-size:12px;font-weight:600;white-space:nowrap;color:{{ m.color }}">{{ m.arrow }} {{ m.delta }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ isAll }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+              <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Stores today</div>
+              <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:12px;padding:0 16px;height:36px;align-items:center;font-size:12px;font-weight:550;color:var(--ink-2);border-bottom:1px solid var(--border)"><span>Store</span><span style="text-align:right">Sales</span><span style="text-align:right">Orders</span><span style="text-align:right">Sessions</span><span style="text-align:right">Conv.</span></div>
+              <sc-for list="{{ storeRows }}" as="r" hint-placeholder-count="3">
+                <button onClick="{{ r.select }}" style="width:100%;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:12px;padding:0 16px;height:44px;align-items:center;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink);font-variant-numeric:tabular-nums" style-hover="background:var(--hover)">
+                  <span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.color }};flex:none"></span><span style="font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span></span>
+                  <span style="text-align:right;font-weight:600">{{ r.sales }}</span><span style="text-align:right">{{ r.orders }}</span><span style="text-align:right">{{ r.sessions }}</span><span style="text-align:right">{{ r.conv }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px 12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:650">Sales over time</span><span style="display:flex;gap:14px;font-size:12px;color:var(--ink-2)"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:var(--chart);border-radius:2px"></span>Today</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;border-top:2px dashed var(--chart-2)"></span>Yesterday</span></span></div>
+            <div style="display:grid;grid-template-columns:44px 1fr">
+              <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:var(--ink-2);height:180px;text-align:right;padding-right:8px;font-variant-numeric:tabular-nums"><span>{{ yTop }}</span><span>{{ yMid2 }}</span><span>{{ yMid }}</span><span>$0</span></div>
+              <div style="position:relative;height:180px" onMouseMove="{{ chartMove }}" onMouseLeave="{{ chartLeave }}">
+                <svg viewBox="0 0 800 180" preserveAspectRatio="none" style="width:100%;height:180px;display:block;overflow:visible">
+                  <line x1="0" y1="0" x2="800" y2="0" stroke="var(--border)" vector-effect="non-scaling-stroke"/><line x1="0" y1="60" x2="800" y2="60" stroke="var(--border)" vector-effect="non-scaling-stroke"/><line x1="0" y1="120" x2="800" y2="120" stroke="var(--border)" vector-effect="non-scaling-stroke"/><line x1="0" y1="179" x2="800" y2="179" stroke="var(--border)" vector-effect="non-scaling-stroke"/>
+                  <path d="{{ chart.areaPath }}" fill="var(--chart-fill)"/>
+                  <path d="{{ chart.ydayPath }}" fill="none" stroke="var(--chart-2)" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
+                  <path d="{{ chart.todayPath }}" fill="none" stroke="var(--chart)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+                  <line x1="{{ chart.tipX }}" y1="0" x2="{{ chart.tipX }}" y2="180" stroke="var(--ink-2)" stroke-dasharray="2 3" vector-effect="non-scaling-stroke" style="opacity:{{ chart.tipOpacity }}"/>
+                </svg>
+                <div style="position:absolute;left:{{ chart.tipLeft }};top:8px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:8px;font-size:12px;line-height:16px;white-space:nowrap;pointer-events:none;opacity:{{ chart.tipOpacity }};transition:opacity .1s;box-shadow:var(--shadow-lg)"><div style="font-weight:600">{{ chart.tipLabel }}</div><div>Today {{ chart.tipToday }}</div><div style="opacity:.7">Yesterday {{ chart.tipYday }}</div></div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2);margin:6px 0 0 44px"><span>12 AM</span><span>4 AM</span><span>8 AM</span><span>12 PM</span><span>4 PM</span><span>8 PM</span><span>11 PM</span></div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Things to do</div>
+            <sc-if value="{{ todosEmpty }}" hint-placeholder-val="{{ true }}"><div style="padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--ink-3)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 8 14.5 16 5.5"/></svg><div style="font-weight:600">Nothing to do</div><div style="color:var(--ink-2)">Orders needing a supplier order or tracking number show up here.</div></div></sc-if>
+            <sc-for list="{{ todos }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.open }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--hover)">
+                <span style="width:32px;height:32px;border-radius:8px;background:{{ t.iconBg }};color:{{ t.iconFg }};display:grid;place-items:center;font-weight:700;font-size:13px;flex:none">{{ t.count }}</span>
+                <span style="flex:1"><strong style="font-weight:600">{{ t.strong }}</strong> {{ t.rest }}</span>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 4 4 4-4 4"/></svg>
+              </button>
+            </sc-for>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)"><span style="font-weight:650">Recent orders</span><a href="#orders" onClick="{{ goOrders }}" style="font-size:12px;font-weight:550">View all</a></div>
+            <sc-if value="{{ recentEmpty }}" hint-placeholder-val="{{ true }}"><div style="padding:28px 16px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center"><span style="width:40px;height:40px;border-radius:10px;background:var(--bg);display:grid;place-items:center;color:var(--ink-3)"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 3h12v14l-2-1.5L12 17l-2-1.5L8 17l-2-1.5L4 17z"/></svg></span><div style="font-weight:600">No orders yet</div><div style="color:var(--ink-2)">Paid orders appear here as soon as a store is connected.</div></div></sc-if>
+            <sc-for list="{{ recentOrders }}" as="o" hint-placeholder-count="6">
+              <button onClick="{{ o.open }}" style="width:100%;display:grid;grid-template-columns:{{ recentCols }};gap:12px;align-items:center;padding:0 16px;height:44px;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--hover)">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--link);display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:{{ o.storeColor }};flex:none"></span>{{ o.number }}</span>
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.customer }}</span>
+                <sc-if value="{{ notMobile }}" hint-placeholder-val="{{ true }}"><span style="color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.items }}</span></sc-if>
+                <span style="font-variant-numeric:tabular-nums;text-align:right">{{ o.total }}</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ o.stateKind }}-bg);color:var(--b-{{ o.stateKind }}-fg);justify-self:start;white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8"></span>{{ o.stateLabel }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border)">Meta ads health</div>
+            <sc-for list="{{ pixelRows }}" as="p" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)"><span style="width:8px;height:8px;border-radius:50%;background:{{ p.dot }};flex:none"></span><span style="flex:1">{{ p.label }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-2)">{{ p.value }}</span></div>
+            </sc-for>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)"><span style="width:8px;height:8px;border-radius:50%;background:{{ capiDot }};flex:none"></span><span style="flex:1">Server events (CAPI)</span><span style="font-variant-numeric:tabular-nums;color:var(--ink-2)">{{ capi }} sent</span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 16px"><span style="width:8px;height:8px;border-radius:50%;background:{{ dedupeDot }};flex:none"></span><span style="flex:1">Deduplication</span><span style="color:var(--ink-2)">{{ dedupe }}</span></div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;font-weight:650;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">Store health<span style="font-size:12px;color:var(--ink-2);font-weight:450">{{ healthNote }}</span></div>
+            <sc-for list="{{ healthRows }}" as="r" hint-placeholder-count="4">
+              <button onClick="{{ r.open }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 16px;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--hover)">
+                <span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }};flex:none"></span>
+                <span style="flex:1;min-width:0"><span style="display:block;font-weight:550">{{ r.label }}</span><span style="display:block;font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.help }}</span></span>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m6 4 4 4-4 4"/></svg>
+              </button>
+            </sc-for>
+            <sc-for list="{{ statusRows }}" as="r" hint-placeholder-count="0">
+              <button onClick="{{ r.open }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 16px;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--hover)"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }};flex:none"></span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.text }}</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 4 4 4-4 4"/></svg></button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ORDERS -->
