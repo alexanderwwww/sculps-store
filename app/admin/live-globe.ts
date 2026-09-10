@@ -376,6 +376,15 @@ class LiveGlobe {
       });
 
       this.hit = [];
+      // A visitor is only on the globe while they are actually there. Without
+      // this they pile up for the life of the page and the map stops showing
+      // what is happening now — which is the whole point of it. Two minutes
+      // without an event and the marker goes, matching the window the
+      // "Visitors right now" card counts.
+      const TTL = 120_000;
+      if (this.visitors.length) {
+        this.visitors = this.visitors.filter(v => now - (v.at || now) < TTL);
+      }
       // One flat dot per visitor, in the colour of what they are doing:
       // blue looking, pink in the cart, deeper pink at checkout, gold bought.
       // No glow, no halo, no rotating ring — a dot that holds still, so a
@@ -405,11 +414,10 @@ class LiveGlobe {
         const facing = Math.min(1, Math.max(0, (q.z - 0.02) / 0.35));
         const alpha = op * (0.35 + 0.65 * facing);
 
-        g.fillStyle = "rgba(" + col + "," + alpha.toFixed(3) + ")";
-        g.beginPath(); g.arc(q.x, q.y, rr, 0, 6.284); g.fill();
-        g.strokeStyle = "rgba(255,255,255," + (0.55 * alpha).toFixed(3) + ")";
-        g.lineWidth = 1;
-        g.beginPath(); g.arc(q.x, q.y, rr, 0, 6.284); g.stroke();
+        // No dot drawn here. The tile under the visitor is already lit in
+        // their colour, and a circle on top of a hexagon reads as a mistake.
+        // This pass exists only to keep the hover target in step with it.
+        void col; void alpha;
 
         this.hit.push({ x: q.x, y: q.y, r: Math.max(9, rr + 5), city: vv.city, stage: vv.stage });
       });
