@@ -2,7 +2,9 @@
  * Live View — transliterated from `design/port/live.html`.
  *
  * Every style string below is copied from the approved prototype. The globe is
- * `public/shop-globe.js`, which was signed off and is used unedited.
+ * `app/admin/live-globe.ts`, the design's own renderer ported from
+ * `design/port/globe-renderer.js`; `public/shop-globe.js` is loaded only for
+ * its verified `isLand` land raster.
  *
  * Two deliberate departures, both required by the project's rules: the
  * "Simulate live traffic" button is gone, and the empty state no longer tells
@@ -14,7 +16,7 @@ import type { Route } from "./+types/admin.live";
 import { requireUser } from "~/lib/auth.server";
 import { resolveAdminStore, liveBoard } from "~/lib/admin.server";
 import { formatMoney, money0 } from "~/lib/money";
-import { mountGlobe, GLOBE_TYPE, type GlobeInstance } from "~/admin/globe";
+import { mountLiveGlobe, GLOBE_TYPE, type LiveGlobeHandle, type GlobeTip } from "~/admin/live-globe";
 
 export function meta() {
   return [{ title: "Live View — Shop Admin" }];
@@ -100,8 +102,8 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
   const revalidator = useRevalidator();
   const navigate = useNavigate();
 
-  const paneRef = useRef<HTMLDivElement>(null);
-  const globeRef = useRef<GlobeInstance | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const globeRef = useRef<LiveGlobeHandle | null>(null);
   const seen = useRef(new Map<string, number>());
   const mountedAt = useRef(Date.now());
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -112,6 +114,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
   const [locQuery, setLocQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [glassCards, setGlassCards] = useState<{ key: string; title: string; sub: string }[]>([]);
+  const [tip, setTip] = useState<GlobeTip | null>(null);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -123,21 +126,27 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     return () => clearInterval(timer);
   }, [revalidator]);
 
+  // Mounted per visit and torn down on the way out — the ported renderer has a
+  // destroy(), so there is no leaked rAF loop and no cross-visit singleton.
   useEffect(() => {
-    const pane = paneRef.current;
-    if (!pane || !store) return;
+    const canvas = canvasRef.current;
+    if (!canvas || !store) return;
     let cancelled = false;
-    mountGlobe(pane)
+    mountLiveGlobe(canvas, { onTip: setTip })
       .then((globe) => {
-        if (cancelled) return;
-        globe.markers.clear();
-        globe.reset();
+        if (cancelled) {
+          globe.destroy();
+          return;
+        }
         seen.current.clear();
         globeRef.current = globe;
       })
       .catch(() => setToast("The globe could not be loaded."));
     return () => {
       cancelled = true;
+      globeRef.current?.destroy();
+      globeRef.current = null;
+      setTip(null);
     };
   }, [store?.slug]);
 
@@ -468,7 +477,14 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
           ))}
         </div>
 
-        <div ref={paneRef} style={{ position: "absolute", inset: 0 }} />
+        <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block", cursor: "grab", touchAction: "none" }} />
+
+        {tip ? (
+          <div style={{ position: "absolute", left: `${tip.x}px`, top: `${Math.max(6, tip.y - 44)}px`, transform: "translateX(-50%)", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 9, boxShadow: "var(--shadow-lg)", padding: "6px 10px", pointerEvents: "none", whiteSpace: "nowrap", zIndex: 3 }}>
+            <div style={{ fontSize: 12, fontWeight: 600 }}>{tip.label}</div>
+            {tip.amount ? <div style={{ fontSize: 12, fontWeight: 700, color: "#FF2FB9", fontVariantNumeric: "tabular-nums" }}>{tip.amount}</div> : null}
+          </div>
+        ) : null}
 
         {toast ? (
           <div style={{ position: "absolute", left: "50%", top: 60, transform: "translateX(-50%)", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 9, boxShadow: "var(--shadow-lg)", padding: "6px 10px", pointerEvents: "none", whiteSpace: "nowrap", zIndex: 3 }}>
@@ -497,7 +513,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
             onClick={() => {
               const globe = globeRef.current;
               setDotsOn((on) => {
-                if (on && globe) globe.markers.clear();
+                if (on && globe) globe.clear();
                 seen.current.clear();
                 return !on;
               });
@@ -520,7 +536,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
           <GlobeButton
             title={fullscreen ? "Exit full screen" : "Full screen"}
             onClick={() => {
-              const wrapper = paneRef.current?.parentElement;
+              const wrapper = canvasRef.current?.parentElement;
               if (!wrapper) return;
               if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
               else wrapper.requestFullscreen().catch(() => undefined);
