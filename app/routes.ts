@@ -22,6 +22,11 @@ export default [
   route("admin/auth/callback", "routes/admin.auth.callback.tsx"),
   route("admin/logout", "routes/admin.logout.tsx"),
 
+  // The theme editor is its own environment, the way Shopify's is: no
+  // sidebar, no top bar, nothing but the page being edited. It sits outside
+  // the admin layout for exactly that reason.
+  route("admin/online-store/editor/:pageId", "routes/admin.online-store.editor.$pageId.tsx"),
+
   layout("routes/admin.tsx", [
     ...prefix("admin", [
       index("routes/admin._index.tsx"),
@@ -44,7 +49,6 @@ export default [
       route("settings/email-preview", "routes/admin.settings.email-preview.tsx"),
       route("events/export", "routes/admin.events.export.tsx"),
       route("online-store", "routes/admin.online-store.tsx"),
-      route("online-store/editor/:pageId", "routes/admin.online-store.editor.$pageId.tsx"),
       route("stores/new", "routes/admin.stores.new.tsx"),
     ]),
   ]),
