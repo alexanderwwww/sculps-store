@@ -12,6 +12,10 @@ export default [
   route("checkout", "routes/checkout.tsx"),
   route("thanks", "routes/thanks.tsx"),
   route("pages/:handle", "routes/pages.$handle.tsx"),
+  // The shapes Shopify used. Old links stay alive rather than dying in the
+  // index and in every ad that already points at them.
+  route("products/:handle", "routes/products.$handle.tsx"),
+  route("collections/:handle", "routes/collections.$handle.tsx"),
   route("password", "routes/password.tsx"),
   route("vitals", "routes/vitals.tsx"),
   route("media/:key", "routes/media.$key.tsx"),

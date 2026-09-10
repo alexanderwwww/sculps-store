@@ -20,6 +20,11 @@ export function links() {
       href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
     },
     { rel: "stylesheet", href: adminHref },
+    // The tab icon. Every admin has a mark in the tab strip; a blank globe
+    // makes this look like a page rather than a place.
+    { rel: "icon", href: "/favicon.ico", sizes: "any" },
+    { rel: "icon", href: "/icon-512.png", type: "image/png" },
+    { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
   ];
 }
 
