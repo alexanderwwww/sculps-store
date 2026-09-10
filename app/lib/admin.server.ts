@@ -24,6 +24,9 @@ import {
   metaConfig,
   themes,
   events,
+  taxRates,
+  users,
+  sessions,
   ORDER_STATES,
   type OrderState,
 } from "~/db/schema";
@@ -392,33 +395,80 @@ export async function setOrderState(
   orderId: string,
   state: OrderState,
   note: string,
+  by?: string,
 ): Promise<void> {
   await db.update(orders).set({ state, updatedAt: new Date() }).where(eq(orders.id, orderId));
-  await recordOrderEvent(db, orderId, `state:${state}`, note, { state });
+  await recordOrderEvent(db, orderId, `state:${state}`, by ? `${note} · by ${by}` : note, { state, by });
 }
 
+/**
+ * Adds or corrects the tracking number. The first time marks the order
+ * fulfilled and stamps fulfilledAt; a later edit keeps that stamp and says
+ * on the timeline what it was before, so a wrong number is never silently
+ * papered over.
+ */
 export async function setTracking(
   db: DB,
   orderId: string,
   tracking: string,
   carrier: string,
-): Promise<void> {
+  by?: string,
+): Promise<{ changed: boolean; previous: string | null }> {
+  const [current] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!current) return { changed: false, previous: null };
+  const previous = current.tracking;
+  const first = !current.fulfilledAt;
+
   await db
     .update(orders)
-    .set({ tracking, carrier, state: "fulfilled", updatedAt: new Date() })
+    .set({
+      tracking,
+      carrier,
+      state: "fulfilled",
+      fulfilledAt: current.fulfilledAt ?? new Date(),
+      updatedAt: new Date(),
+    })
     .where(eq(orders.id, orderId));
+
   await recordOrderEvent(
     db,
     orderId,
     "tracking",
-    `Tracking ${tracking}${carrier ? ` (${carrier})` : ""} added`,
-    { tracking, carrier },
+    previous && previous !== tracking
+      ? `Tracking corrected from ${previous} to ${tracking}${carrier ? ` (${carrier})` : ""}${by ? ` · by ${by}` : ""}`
+      : `Tracking ${tracking}${carrier ? ` (${carrier})` : ""} added${first ? " · marked fulfilled" : ""}${by ? ` · by ${by}` : ""}`,
+    { tracking, carrier, previous, by },
+  );
+  return { changed: previous !== tracking, previous };
+}
+
+export async function addOrderNote(db: DB, orderId: string, note: string, by?: string): Promise<void> {
+  await db.update(orders).set({ note, updatedAt: new Date() }).where(eq(orders.id, orderId));
+  await recordOrderEvent(
+    db,
+    orderId,
+    "note",
+    note.trim() ? `Note${by ? ` by ${by}` : ""}: ${note.trim()}` : `Note cleared${by ? ` by ${by}` : ""}`,
+    { note, by },
   );
 }
 
-export async function addOrderNote(db: DB, orderId: string, note: string): Promise<void> {
-  await db.update(orders).set({ note, updatedAt: new Date() }).where(eq(orders.id, orderId));
-  await recordOrderEvent(db, orderId, "note", "Note updated", { note });
+/** Cancels an order that never shipped. Paid orders must be refunded first. */
+export async function cancelOrder(
+  db: DB,
+  orderId: string,
+  reason: string,
+  by: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const [current] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!current) return { ok: false, reason: "That order no longer exists." };
+  if (current.state === "fulfilled") return { ok: false, reason: "This order has shipped. It can be refunded, not cancelled." };
+  if (current.paymentStatus === "paid" || current.paymentStatus === "partially_refunded") {
+    return { ok: false, reason: "This order is paid. Refund it in full first, then cancel it." };
+  }
+  await db.update(orders).set({ state: "cancelled", updatedAt: new Date() }).where(eq(orders.id, orderId));
+  await recordOrderEvent(db, orderId, "state:cancelled", `Cancelled${reason ? ` · ${reason}` : ""} · by ${by}`, { reason, by });
+  return { ok: true };
 }
 
 /* ---------------------------------------------------------------- products */
@@ -1324,7 +1374,7 @@ export async function orderByPaymentRef(db: DB, paymentRef: string) {
 export async function markOrderPaid(db: DB, orderId: string, note: string): Promise<void> {
   await db
     .update(orders)
-    .set({ paymentStatus: "paid", updatedAt: new Date() })
+    .set({ paymentStatus: "paid", paidAt: new Date(), updatedAt: new Date() })
     .where(eq(orders.id, orderId));
   await recordOrderEvent(db, orderId, "payment:confirmed", note);
 }
@@ -1442,4 +1492,111 @@ export async function liveBoard(db: DB, storeId: string) {
       })),
     recent,
   };
+}
+
+
+/* --------------------------------------------------- settings: taxes etc. */
+
+export async function listTaxRates(db: DB, storeId: string) {
+  return db.select().from(taxRates).where(eq(taxRates.storeId, storeId)).orderBy(asc(taxRates.region));
+}
+
+export async function upsertTaxRate(db: DB, storeId: string, region: string, rate: number): Promise<void> {
+  const [existing] = await db
+    .select()
+    .from(taxRates)
+    .where(and(eq(taxRates.storeId, storeId), eq(taxRates.region, region)))
+    .limit(1);
+  if (existing) await db.update(taxRates).set({ rate }).where(eq(taxRates.id, existing.id));
+  else await db.insert(taxRates).values({ storeId, region, rate });
+}
+
+export async function removeTaxRate(db: DB, id: string): Promise<void> {
+  await db.delete(taxRates).where(eq(taxRates.id, id));
+}
+
+export async function updateUserPrefs(
+  db: DB,
+  userId: string,
+  patch: Partial<typeof users.$inferInsert>,
+): Promise<void> {
+  await db.update(users).set(patch).where(eq(users.id, userId));
+}
+
+/** Ends every session except the one making the request. */
+export async function signOutOtherSessions(db: DB, userId: string, keepTokenHash: string): Promise<number> {
+  const rows = await db.select().from(sessions).where(eq(sessions.userId, userId));
+  const others = rows.filter((row) => row.tokenHash !== keepTokenHash);
+  if (others.length) await db.delete(sessions).where(inArray(sessions.id, others.map((r) => r.id)));
+  return others.length;
+}
+
+/**
+ * Deletes a store and everything under it through the schema's cascades.
+ * Orders are the one thing that refuse (onDelete: restrict) — a store with
+ * orders cannot be deleted, because those orders are the processor evidence.
+ */
+export async function deleteStore(db: DB, storeId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const [{ n }] = await db
+    .select({ n: sql<number>`cast(count(*) as int)` })
+    .from(orders)
+    .where(eq(orders.storeId, storeId));
+  if (n > 0) {
+    return { ok: false, reason: `This store has ${n} order${n === 1 ? "" : "s"}. Orders are permanent, so a store that has taken orders cannot be deleted.` };
+  }
+  await db.delete(pages).where(eq(pages.storeId, storeId));
+  await db.delete(stores).where(eq(stores.id, storeId));
+  return { ok: true };
+}
+
+/** The policy pages every store has, by handle. Created by the seed and by createStore. */
+export const POLICY_HANDLES = [
+  ["refund-policy", "Refund policy"],
+  ["privacy-policy", "Privacy policy"],
+  ["terms-of-service", "Terms of service"],
+  ["shipping-policy", "Shipping policy"],
+] as const;
+
+export async function policyPages(db: DB, storeId: string) {
+  const theme = await liveTheme(db, storeId);
+  if (!theme) return [];
+  const rows = await db.select().from(pages).where(eq(pages.themeId, theme.id));
+  return POLICY_HANDLES.map(([handle, title]) => {
+    const row = rows.find((page) => page.handle === handle);
+    return { handle, title, id: row?.id ?? null, body: row?.body ?? "", visible: row?.visible ?? false };
+  });
+}
+
+export async function savePolicies(
+  db: DB,
+  storeId: string,
+  bodies: Record<string, string>,
+  publish: boolean,
+): Promise<void> {
+  const theme = await liveTheme(db, storeId);
+  if (!theme) return;
+  for (const [handle, title] of POLICY_HANDLES) {
+    const body = bodies[handle] ?? "";
+    const [row] = await db
+      .select()
+      .from(pages)
+      .where(and(eq(pages.themeId, theme.id), eq(pages.handle, handle)))
+      .limit(1);
+    if (row) {
+      await db
+        .update(pages)
+        .set({ body, updatedAt: new Date(), ...(publish ? { visible: body.trim().length > 0 } : {}) })
+        .where(eq(pages.id, row.id));
+    } else {
+      await db.insert(pages).values({
+        storeId,
+        themeId: theme.id,
+        kind: "standalone",
+        title,
+        handle,
+        body,
+        visible: publish && body.trim().length > 0,
+      });
+    }
+  }
 }

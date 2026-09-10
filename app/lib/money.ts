@@ -34,13 +34,16 @@ export function savedAmount(priceCents: number, compareAtCents: number | null): 
   return compareAtCents - priceCents;
 }
 
-/** Reads a typed price like "89" or "$89.00" into integer cents. */
+/**
+ * Reads a typed price like "89", "$89.00" or "1,290.50" into integer cents.
+ *
+ * Strict on purpose: "2O" (letter O) is null, not two dollars. Money typed
+ * wrong must fail loudly, never be quietly reinterpreted.
+ */
 export function centsFromInput(value: string): number | null {
-  const cleaned = value.replace(/[^0-9.]/g, "").trim();
-  if (!cleaned) return null;
-  const asNumber = Number(cleaned);
-  if (!Number.isFinite(asNumber)) return null;
-  return Math.round(asNumber * 100);
+  const cleaned = value.replace(/[$\s,]/g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  return Math.round(Number(cleaned) * 100);
 }
 
 /** The inverse, for putting a stored price back into a form field. */

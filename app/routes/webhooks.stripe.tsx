@@ -9,7 +9,7 @@
  * cannot mark orders paid.
  */
 import type { Route } from "./+types/webhooks.stripe";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { orders, paymentProviders } from "~/db/schema";
 import { decryptSecret } from "~/lib/crypto.server";
 import { orderByPaymentRef, markOrderPaid, recordOrderEvent, recordVisitorEvent } from "~/lib/admin.server";
@@ -89,7 +89,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     return new Response("Bad signature", { status: 400 });
   }
 
-  const intentId = object?.id;
+  // payment_intent.* events carry the intent as `id`; charge.* events carry
+  // a charge id and point at the intent through `payment_intent`. Orders are
+  // keyed by the intent, so refunds and disputes must resolve through it.
+  const intentId: string | undefined =
+    typeof object?.payment_intent === "string" ? object.payment_intent : object?.id;
   if (!intentId) return new Response("ok", { status: 200 });
 
   const order = await orderByPaymentRef(context.db, intentId);
@@ -120,16 +124,28 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   if (parsed.type === "charge.refunded") {
-    await context.db
+    // Stripe reports the running total refunded on the charge. Never lower
+    // what we already know, and never call a partial refund a full one.
+    const reported = Number(object?.amount_refunded ?? 0);
+    const [updated] = await context.db
       .update(orders)
       .set({
-        state: "refunded",
-        paymentStatus: "refunded",
-        refundedCents: object?.amount_refunded ?? order.totalCents,
+        refundedCents: sql`greatest(${orders.refundedCents}, ${reported})`,
         updatedAt: new Date(),
       })
+      .where(eq(orders.id, order.id))
+      .returning({ refundedCents: orders.refundedCents, totalCents: orders.totalCents });
+    const full = (updated?.refundedCents ?? 0) >= (updated?.totalCents ?? Infinity);
+    await context.db
+      .update(orders)
+      .set({ paymentStatus: full ? "refunded" : "partially_refunded" })
       .where(eq(orders.id, order.id));
-    await recordOrderEvent(context.db, order.id, "refund:confirmed", "Refund confirmed by Stripe");
+    await recordOrderEvent(
+      context.db,
+      order.id,
+      "refund:confirmed",
+      `Stripe confirms ${((updated?.refundedCents ?? 0) / 100).toFixed(2)} ${order.currency} refunded in total${full ? " · fully refunded" : ""}`,
+    );
   }
 
   if (parsed.type === "charge.dispute.created") {

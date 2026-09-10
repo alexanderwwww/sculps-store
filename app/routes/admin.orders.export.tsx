@@ -8,11 +8,20 @@
 import type { Route } from "./+types/admin.orders.export";
 import { requireUser } from "~/lib/auth.server";
 import { resolveAdminStore, listOrders } from "~/lib/admin.server";
-import type { OrderState } from "~/db/schema";
+import { ORDER_STATES, type OrderState } from "~/db/schema";
 
 function cell(value: unknown): string {
-  const text = value === null || value === undefined ? "" : String(value);
+  let text = value === null || value === undefined ? "" : String(value);
+  // A customer can type "=HYPERLINK(...)" as their name. Spreadsheets would
+  // run it. A leading apostrophe makes it text.
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/** Store-local time, the same rendering the admin screens use. */
+function localStamp(value: Date | string, timezone: string): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return date.toLocaleString("en-US", { timeZone: timezone, hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 export async function loader({ context, request }: Route.LoaderArgs) {
@@ -21,7 +30,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const { store } = await resolveAdminStore(context.db, url);
   if (!store) return new Response("No store.", { status: 404 });
 
-  const state = (url.searchParams.get("state") || "all") as OrderState | "all";
+  const wanted = url.searchParams.get("state") || "all";
+  const state = (ORDER_STATES as readonly string[]).includes(wanted) ? (wanted as OrderState) : "all";
   const ids = url.searchParams.getAll("id");
 
   // Everything, not a page. A review wants the whole record.
@@ -38,7 +48,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const lines = chosen.map(({ order, itemSummary }) =>
     [
       order.number,
-      new Date(order.createdAt).toISOString(),
+      localStamp(order.createdAt, store.timezone),
       order.state,
       order.paymentStatus,
       order.customerName,

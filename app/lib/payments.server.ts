@@ -36,8 +36,10 @@ export interface PaymentProvider {
     metadata?: Record<string, string>;
   }): Promise<PaymentIntent>;
   capture(intentId: string): Promise<PaymentIntent>;
-  refund(intentId: string, amountCents?: number): Promise<RefundResult>;
+  refund(intentId: string, amountCents: number | undefined, idempotencyKey: string): Promise<RefundResult>;
   readIntent(intentId: string): Promise<PaymentIntent>;
+  /** Proves the secret key works, without charging anyone. */
+  testConnection(): Promise<{ ok: true; account: string } | { ok: false; reason: string }>;
 }
 
 export class PaymentsNotConfigured extends Error {
@@ -96,12 +98,15 @@ class StripeProvider implements PaymentProvider {
     private readonly manualCapture: boolean,
   ) {}
 
-  private async call(path: string, body?: Record<string, string>): Promise<any> {
+  private async call(path: string, body?: Record<string, string>, idempotencyKey?: string): Promise<any> {
     const response = await fetch(`https://api.stripe.com/v1/${path}`, {
       method: body ? "POST" : "GET",
       headers: {
         Authorization: `Bearer ${this.secretKey}`,
         ...(body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+        // A retried request with the same key returns the same refund rather
+        // than creating a second one.
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       },
       body: body ? new URLSearchParams(body) : undefined,
     });
@@ -148,10 +153,22 @@ class StripeProvider implements PaymentProvider {
     return { id: intent.id, clientSecret: intent.client_secret, status: intent.status };
   }
 
-  async refund(intentId: string, amountCents?: number): Promise<RefundResult> {
+  async testConnection(): Promise<{ ok: true; account: string } | { ok: false; reason: string }> {
+    try {
+      // /v1/balance is the cheapest authenticated call Stripe has. A wrong or
+      // revoked key fails here; a right one names the account's currency.
+      const balance = await this.call("balance");
+      const currency = balance?.available?.[0]?.currency?.toUpperCase() ?? "account";
+      return { ok: true, account: currency };
+    } catch (error) {
+      return { ok: false, reason: error instanceof Error ? error.message : "Stripe refused the key." };
+    }
+  }
+
+  async refund(intentId: string, amountCents: number | undefined, idempotencyKey: string): Promise<RefundResult> {
     const body: Record<string, string> = { payment_intent: intentId };
     if (amountCents !== undefined) body.amount = String(amountCents);
-    const refund = await this.call("refunds", body);
+    const refund = await this.call("refunds", body, idempotencyKey);
     return { id: refund.id, status: refund.status, amountCents: refund.amount };
   }
 }

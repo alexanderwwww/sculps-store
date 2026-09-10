@@ -97,6 +97,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       number: loaded.order.number,
       email: loaded.order.email,
       customerName: loaded.order.customerName,
+      address: [loaded.order.address1, loaded.order.address2, loaded.order.city, loaded.order.region, loaded.order.postalCode, loaded.order.country]
+        .filter(Boolean)
+        .join(", "),
       total: formatMoney(loaded.order.totalCents, loaded.order.currency),
       paymentStatus,
     },
@@ -137,6 +140,12 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
             )}
           </p>
 
+          {order.address ? (
+            <p className="gk-quiet" style={{ marginTop: 0 }}>
+              Shipping to: <strong style={{ color: "var(--gk-cream)" }}>{order.address}</strong>
+              {store.contactEmail ? ` — wrong? Email ${store.contactEmail} right away and quote #${order.number}.` : ""}
+            </p>
+          ) : null}
           {items.map((item) => (
             <div className="gk-line" key={item.id}>
               <span style={{ flex: 1 }}>

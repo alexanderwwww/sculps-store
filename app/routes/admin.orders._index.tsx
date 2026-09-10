@@ -20,17 +20,19 @@ export function meta() {
 
 const TABS: { key: string; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "new", label: "New" },
+  { key: "new", label: "Unfulfilled" },
   { key: "ordered", label: "Ordered" },
   { key: "fulfilled", label: "Fulfilled" },
   { key: "refunded", label: "Refunded" },
+  { key: "cancelled", label: "Cancelled" },
 ];
 
 const STATE_LABEL: Record<string, string> = {
-  new: "New",
+  new: "Unfulfilled",
   ordered: "Ordered with supplier",
   fulfilled: "Fulfilled",
   refunded: "Refunded",
+  cancelled: "Cancelled",
 };
 
 const STATE_KIND: Record<string, BadgeKind> = {
@@ -38,6 +40,7 @@ const STATE_KIND: Record<string, BadgeKind> = {
   ordered: "purple",
   fulfilled: "success",
   refunded: "neutral",
+  cancelled: "neutral",
 };
 
 export async function loader({ context, request }: Route.LoaderArgs) {

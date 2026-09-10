@@ -101,6 +101,9 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
   const seen = useRef(new Map<string, number>());
   const mountedAt = useRef(Date.now());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   const [soundOn, setSoundOn] = useState(true);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
@@ -135,7 +138,12 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     let cancelled = false;
     mountGlobe(pane)
       .then((globe) => {
-        if (!cancelled) globeRef.current = globe;
+        if (cancelled) return;
+        // A different store is a different planet: drop the old markers.
+        globe.markers.clear();
+        globe.reset();
+        seen.current.clear();
+        globeRef.current = globe;
       })
       .catch(() => setToast("The globe could not be loaded."));
     return () => {
@@ -180,10 +188,13 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     const fresh: RecentEvent[] = [];
     for (const event of [...board.recent].reverse()) {
       if (seen.current.has(event.id)) continue;
+      // With dots hidden, leave the event unseen so it is drawn when they
+      // come back rather than lost.
+      if (!dotsOn) continue;
       seen.current.set(event.id, event.at);
       fresh.push(event);
 
-      if (dotsOn && event.lat != null && event.lon != null) {
+      if (event.lat != null && event.lon != null) {
         globe.push({
           type: GLOBE_TYPE[event.type] ?? "visitor",
           id: event.sessionId,
@@ -210,9 +221,9 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
           ...current,
         ].slice(0, 3),
       );
-      setTimeout(
-        () => setCards((current) => current.filter((c) => !arrivedSinceMount.some((e) => e.id === c.key))),
-        3_600,
+      const ids = new Set(arrivedSinceMount.map((event) => event.id));
+      timers.current.push(
+        setTimeout(() => setCards((current) => current.filter((c) => !ids.has(c.key))), 3_600),
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,7 +246,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     const hit = [...knownPlaces.entries()].find(([label]) => label.includes(wanted));
     if (!hit) {
       setToast(`No location matches "${query}"`);
-      setTimeout(() => setToast(null), 2_400);
+      timers.current.push(setTimeout(() => setToast(null), 2_400));
       return;
     }
     globe.lookAt(hit[1].lat, hit[1].lon);
@@ -246,7 +257,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     const globe = globeRef.current;
     setDotsOn((on) => {
       if (on && globe) globe.markers.clear();
-      if (!on) seen.current.clear();
+      seen.current.clear();
       return !on;
     });
   };

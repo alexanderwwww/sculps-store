@@ -35,6 +35,13 @@ export function meta({ data }: Route.MetaArgs) {
   return [{ title: data?.store ? `Checkout — ${data.store.name}` : "Checkout" }];
 }
 
+/** ISO-2 codes, stored as-is. What Meta's match and any tax logic expect. */
+const COUNTRIES: [string, string][] = [
+  ["US", "United States"], ["CA", "Canada"], ["GB", "United Kingdom"], ["AU", "Australia"],
+  ["NZ", "New Zealand"], ["IE", "Ireland"], ["DE", "Germany"], ["FR", "France"], ["NL", "Netherlands"],
+  ["ES", "Spain"], ["IT", "Italy"], ["SE", "Sweden"], ["NO", "Norway"], ["DK", "Denmark"], ["MX", "Mexico"],
+];
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const store = await resolveStore(context.db, context.hostname, url);
@@ -140,7 +147,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     city: String(form.get("city") || "").trim() || null,
     region: String(form.get("region") || "").trim() || null,
     postalCode: String(form.get("postalCode") || "").trim() || null,
-    country: String(form.get("country") || "US").trim(),
+    country: COUNTRIES.some(([code]) => code === form.get("country")) ? String(form.get("country")) : "US",
     subtotalCents: cart.subtotalCents,
     taxCents: cart.taxCents,
     shippingCents: cart.shippingCents,
@@ -287,7 +294,13 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
                   </label>
                   <label className="gk-field">
                     <span>Country</span>
-                    <input className="gk-input" name="country" defaultValue="US" autoComplete="country" />
+                    <select className="gk-input" name="country" defaultValue="US" autoComplete="country">
+                      {COUNTRIES.map(([code, name]) => (
+                        <option key={code} value={code}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                 </div>
 

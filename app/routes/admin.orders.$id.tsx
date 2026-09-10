@@ -10,6 +10,7 @@ import type { Route } from "./+types/admin.orders.$id";
 import { requireUser } from "~/lib/auth.server";
 import {
   resolveAdminStore,
+  cancelOrder,
   loadOrder,
   setOrderState,
   setTracking,
@@ -17,9 +18,9 @@ import {
   recordOrderEvent,
 } from "~/lib/admin.server";
 import { money } from "~/lib/money";
-import { sendShippingNotice, emailReady } from "~/lib/email.server";
+import { sendShippingNotice, sendRefundNotice, emailReady, trackingUrl } from "~/lib/email.server";
 import { orders } from "~/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import { centsFromInput } from "~/lib/money";
 import {
@@ -35,10 +36,11 @@ import {
 import type { BadgeKind } from "~/admin/ui";
 
 const STATE_LABEL: Record<string, string> = {
-  new: "New",
+  new: "Unfulfilled",
   ordered: "Ordered with supplier",
   fulfilled: "Fulfilled",
   refunded: "Refunded",
+  cancelled: "Cancelled",
 };
 
 const STATE_KIND: Record<string, BadgeKind> = {
@@ -46,7 +48,10 @@ const STATE_KIND: Record<string, BadgeKind> = {
   ordered: "purple",
   fulfilled: "success",
   refunded: "neutral",
+  cancelled: "neutral",
 };
+
+const CARRIERS = ["USPS", "UPS", "FedEx", "DHL", "YunExpress", "4PX", "China Post", "Other"];
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: data?.order ? `Order #${data.order.number} — Shop Admin` : "Order — Shop Admin" }];
@@ -84,6 +89,7 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
       paymentRef: order.paymentRef,
       tracking: order.tracking,
       carrier: order.carrier,
+      trackingUrl: order.tracking ? trackingUrl(order.carrier, order.tracking) : null,
       source: order.source,
       campaign: order.campaign,
       metaEventId: order.metaEventId,
@@ -112,17 +118,29 @@ export async function action({ context, request, params }: Route.ActionArgs) {
   const intent = String(form.get("intent") || "");
   const orderId = params.id;
 
+  // Every write on this screen is scoped to the store being viewed, the same
+  // way the loader is, so a hand-made POST cannot reach another store's order.
+  const { store: scope } = await resolveAdminStore(context.db, new URL(request.url));
+  const scoped = await loadOrder(context.db, orderId, scope?.id);
+  if (!scoped) return { error: "That order is not on this store." };
+
   if (intent === "mark-ordered") {
-    await setOrderState(context.db, orderId, "ordered", "Marked as ordered with supplier");
+    await setOrderState(context.db, orderId, "ordered", "Marked as ordered with supplier", user.email);
     return { ok: true };
+  }
+
+  if (intent === "cancel") {
+    const result = await cancelOrder(context.db, orderId, String(form.get("reason") || "").trim(), user.email);
+    return result.ok ? { ok: true } : { error: result.reason };
   }
 
   if (intent === "tracking") {
     const tracking = String(form.get("tracking") || "").trim();
     const carrier = String(form.get("carrier") || "").trim();
     if (!tracking) return { error: "Paste the tracking number first." };
+    if (!carrier) return { error: "Choose the carrier — the customer's tracking link depends on it." };
 
-    await setTracking(context.db, orderId, tracking, carrier);
+    await setTracking(context.db, orderId, tracking, carrier, user.email);
 
     // Telling the customer is the point of adding a tracking number, so it
     // happens here rather than being a second thing to remember.
@@ -152,37 +170,57 @@ export async function action({ context, request, params }: Route.ActionArgs) {
   }
 
   if (intent === "note") {
-    await addOrderNote(context.db, orderId, String(form.get("note") || ""));
+    await addOrderNote(context.db, orderId, String(form.get("note") || ""), user.email);
     return { ok: true };
   }
 
   if (intent === "refund") {
-    const loaded = await loadOrder(context.db, orderId);
-    if (!loaded) return { error: "That order no longer exists." };
-    const { order, store } = loaded;
+    const { order, store } = scoped;
     const reason = String(form.get("reason") || "").trim();
+    const notify = form.get("notify") === "on";
 
-    if (order.paymentStatus !== "paid") {
-      return { error: "Only a paid order can be refunded. This one is " + order.paymentStatus + "." };
+    if (order.paymentStatus !== "paid" && order.paymentStatus !== "partially_refunded") {
+      return { error: `Only a paid order can be refunded. This one is ${order.paymentStatus}.` };
     }
     if (!order.paymentRef) {
       return { error: "This order has no payment reference, so there is nothing to refund at the provider." };
     }
 
     const remaining = order.totalCents - order.refundedCents;
-    const requested = centsFromInput(String(form.get("amount") || "")) ?? remaining;
+    const typed = String(form.get("amount") || "").trim();
+    const requested = typed ? centsFromInput(typed) : remaining;
+    if (requested === null) {
+      return { error: `Enter the amount like 12.50. Nothing was refunded.` };
+    }
     if (requested <= 0 || requested > remaining) {
-      return { error: `Refund amount must be between $0.01 and ${money(remaining, order.currency)}.` };
+      return { error: `Refund amount must be between $0.01 and ${money(remaining, order.currency)}. Nothing was refunded.` };
     }
 
-    // The money moves first. Only when the provider confirms does the order
-    // change — the record never says "refunded" while the customer's money
-    // is still taken.
+    // Claim the amount in the ledger before asking Stripe, guarded so two
+    // submits cannot both pass the "remaining" check. If Stripe then refuses,
+    // the claim is released.
+    const [claimed] = await context.db
+      .update(orders)
+      .set({ refundedCents: sql`${orders.refundedCents} + ${requested}`, updatedAt: new Date() })
+      .where(and(eq(orders.id, orderId), sql`${orders.refundedCents} + ${requested} <= ${orders.totalCents}`))
+      .returning({ refundedCents: orders.refundedCents });
+    if (!claimed) {
+      return { error: "That amount is no longer available to refund — reload the order." };
+    }
+
     let result;
     try {
       const provider = await providerForStore(context.db, context.cloudflare.env, store.id);
-      result = await provider.refund(order.paymentRef, requested);
+      result = await provider.refund(
+        order.paymentRef,
+        requested,
+        `refund:${order.id}:${claimed.refundedCents}`,
+      );
     } catch (error) {
+      await context.db
+        .update(orders)
+        .set({ refundedCents: sql`${orders.refundedCents} - ${requested}` })
+        .where(eq(orders.id, orderId));
       const why =
         error instanceof PaymentsNotConfigured
           ? error.message
@@ -193,22 +231,18 @@ export async function action({ context, request, params }: Route.ActionArgs) {
         context.db,
         orderId,
         "refund:failed",
-        `Refund of ${money(requested, order.currency)} attempted by ${user.email} but the provider refused · ${why}`,
+        `Refund of ${money(requested, order.currency)} attempted by ${user.email} but Stripe refused · ${why}`,
         { reason, requestedBy: user.email, amountCents: requested },
       );
       return { error: `The refund did not go through: ${why}. The order is unchanged.` };
     }
 
-    const refundedCents = order.refundedCents + result.amountCents;
-    const full = refundedCents >= order.totalCents;
+    // Refunding is a payment fact. Whether the parcel shipped is a separate
+    // fact and stays exactly as it was.
+    const full = claimed.refundedCents >= order.totalCents;
     await context.db
       .update(orders)
-      .set({
-        refundedCents,
-        paymentStatus: full ? "refunded" : "partially_refunded",
-        state: full ? "refunded" : order.state,
-        updatedAt: new Date(),
-      })
+      .set({ paymentStatus: full ? "refunded" : "partially_refunded", updatedAt: new Date() })
       .where(eq(orders.id, orderId));
 
     await recordOrderEvent(
@@ -220,6 +254,24 @@ export async function action({ context, request, params }: Route.ActionArgs) {
       } · by ${user.email}`,
       { reason, requestedBy: user.email, refundId: result.id, amountCents: result.amountCents },
     );
+
+    if (notify) {
+      if (emailReady(context.cloudflare.env)) {
+        await sendRefundNotice(context.db, context.cloudflare.env, orderId, {
+          to: order.email,
+          customerName: order.customerName,
+          storeName: store.name,
+          fromAddress: store.emailFrom,
+          replyTo: store.contactEmail,
+          orderNumber: order.number,
+          amountCents: result.amountCents,
+          currency: order.currency,
+          full,
+        });
+      } else {
+        await recordOrderEvent(context.db, orderId, "email:skipped", "Refund email not sent: email is not configured on this Worker yet.");
+      }
+    }
     return { ok: true };
   }
 
@@ -332,33 +384,59 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
               ) : null}
 
               {order.tracking ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ color: "var(--ink-2)" }}>Tracking</span>
-                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>
-                    {order.tracking}
-                  </span>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>{order.tracking}</span>
                   {order.carrier ? <Badge kind="neutral">{order.carrier}</Badge> : null}
+                  {order.trackingUrl ? (
+                    <a href={order.trackingUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 550 }}>
+                      Track ↗
+                    </a>
+                  ) : null}
                 </div>
-              ) : (
-                <Form method="post" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <input type="hidden" name="intent" value="tracking" />
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", display: "block", marginBottom: 4 }}>
-                      Tracking number
-                    </label>
-                    <input name="tracking" style={input} placeholder="9400 1112 0620 …" />
-                  </div>
-                  <div style={{ width: 140 }}>
-                    <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", display: "block", marginBottom: 4 }}>
-                      Carrier
-                    </label>
-                    <input name="carrier" style={input} placeholder="USPS" />
-                  </div>
-                  <button type="submit" disabled={busy} style={primaryButton}>
-                    Add tracking
+              ) : null}
+
+              <Form method="post" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+                <input type="hidden" name="intent" value="tracking" />
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", display: "block", marginBottom: 4 }}>
+                    {order.tracking ? "Correct the tracking number" : "Tracking number"}
+                  </label>
+                  <input name="tracking" defaultValue={order.tracking ?? ""} style={input} placeholder="9400 1112 0620 …" />
+                </div>
+                <div style={{ width: 160 }}>
+                  <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", display: "block", marginBottom: 4 }}>
+                    Carrier
+                  </label>
+                  <select name="carrier" defaultValue={order.carrier ?? ""} style={{ ...input, padding: "0 8px" }}>
+                    <option value="">Choose…</option>
+                    {CARRIERS.map((carrier) => (
+                      <option key={carrier} value={carrier}>
+                        {carrier}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button type="submit" disabled={busy} style={primaryButton}>
+                  {order.tracking ? "Update tracking" : "Add tracking & email customer"}
+                </button>
+              </Form>
+
+              {order.state !== "fulfilled" && order.state !== "cancelled" ? (
+                <Form
+                  method="post"
+                  onSubmit={(event) => {
+                    if (!confirm("Cancel this order? Only unpaid or fully refunded orders can be cancelled.")) event.preventDefault();
+                  }}
+                  style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", paddingTop: 8, borderTop: "1px solid var(--border)" }}
+                >
+                  <input type="hidden" name="intent" value="cancel" />
+                  <input name="reason" placeholder="Why? (optional)" style={{ ...input, flex: 1, minWidth: 160 }} />
+                  <button type="submit" disabled={busy} style={criticalButton}>
+                    Cancel order
                   </button>
                 </Form>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -423,7 +501,8 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
               <Form
                 method="post"
                 onSubmit={(event) => {
-                  if (!confirm("Refund this order through Stripe now? This moves money and cannot be undone.")) {
+                  const amount = (event.currentTarget.elements.namedItem("amount") as HTMLInputElement | null)?.value || order.remaining;
+                  if (!confirm(`Refund $${amount} through Stripe now? This moves money and cannot be undone.`)) {
                     event.preventDefault();
                   }
                 }}
@@ -441,6 +520,10 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
                   <option>Duplicate order</option>
                   <option>Other</option>
                 </select>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                  <input type="checkbox" name="notify" defaultChecked style={{ width: 16, height: 16, accentColor: "var(--focus)" }} />
+                  Email the customer about this refund
+                </label>
                 <button type="submit" disabled={busy} style={{ ...criticalButton, width: "100%", justifyContent: "center" }}>
                   Refund via Stripe
                 </button>

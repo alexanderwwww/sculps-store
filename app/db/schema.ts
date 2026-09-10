@@ -43,8 +43,75 @@ export const stores = pgTable("stores", {
   taxRate: real("tax_rate").notNull().default(0),
   /** next order number for this store */
   orderSeq: integer("order_seq").notNull().default(1001),
+
+  /* Business address — invoices and tax */
+  legalName: text("legal_name"),
+  address1: text("address1"),
+  city: text("city"),
+  region: text("region"),
+  postalCode: text("postal_code"),
+  phone: text("phone"),
+
+  /* Taxes */
+  /** automatic | manual */
+  taxMode: text("tax_mode").notNull().default("manual"),
+  pricesIncludeTax: boolean("prices_include_tax").notNull().default(false),
+  taxOnShipping: boolean("tax_on_shipping").notNull().default(false),
+
+  /* Shipping */
+  shipFlatCents: integer("ship_flat_cents").notNull().default(0),
+  shipFreeOverCents: integer("ship_free_over_cents"),
+  shipEstimate: text("ship_estimate"),
+  shipAlwaysFree: boolean("ship_always_free").notNull().default(true),
+  shipEtaOnProduct: boolean("ship_eta_on_product").notNull().default(true),
+
+  /* Checkout */
+  /** full | last */
+  checkoutNameMode: text("checkout_name_mode").notNull().default("full"),
+  /** optional | required | hidden */
+  checkoutPhoneMode: text("checkout_phone_mode").notNull().default("optional"),
+  /** hidden | optional | required */
+  checkoutCompanyMode: text("checkout_company_mode").notNull().default("hidden"),
+  checkoutConsent: boolean("checkout_consent").notNull().default(true),
+  checkoutCaptureAbandoned: boolean("checkout_capture_abandoned").notNull().default(true),
+  checkoutTip: boolean("checkout_tip").notNull().default(false),
+
+  /* Branding — emails and checkout only, never the storefront layout */
+  logoUrl: text("logo_url"),
+  faviconUrl: text("favicon_url"),
+  brandColor: text("brand_color"),
+  accentColor: text("accent_color"),
+
+  /* Online Store → Preferences */
+  seoTitle: text("seo_title"),
+  metaDescription: text("meta_description"),
+  socialImageUrl: text("social_image_url"),
+  passwordEnabled: boolean("password_enabled").notNull().default(false),
+  /** sha-256 of the storefront password; the plaintext is never stored */
+  passwordHash: text("password_hash"),
+  passwordMessage: text("password_message"),
+
+  /* Email sender domain, verified through Resend */
+  resendDomainId: text("resend_domain_id"),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Manual per-state sales tax rates. Only read when taxMode = manual. */
+export const taxRates = pgTable(
+  "tax_rates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    /** two-letter state code, e.g. OK */
+    region: text("region").notNull(),
+    /** decimal, e.g. 0.0875 */
+    rate: real("rate").notNull(),
+  },
+  (t) => [uniqueIndex("tax_rates_store_region_idx").on(t.storeId, t.region)],
+);
 
 /**
  * Payment credentials live in their own table, one row per provider per store.
@@ -70,6 +137,7 @@ export const paymentProviders = pgTable(
     /** automatic | manual */
     capture: text("capture").notNull().default("automatic"),
     submitDisputeEvidence: boolean("submit_dispute_evidence").notNull().default(true),
+    emailOnFailedPayment: boolean("email_on_failed_payment").notNull().default(false),
     isPrimary: boolean("is_primary").notNull().default(false),
     isBackup: boolean("is_backup").notNull().default(false),
     connectedAt: timestamp("connected_at", { withTimezone: true }),
@@ -104,6 +172,14 @@ export const domains = pgTable(
     isPrimary: boolean("is_primary").notNull().default(false),
     /** null unless this domain is being transferred in to us */
     transferStep: integer("transfer_step"),
+    /** Cloudflare zone id once the domain has been added there */
+    cloudflareZoneId: text("cloudflare_zone_id"),
+    /** the nameservers Cloudflare assigned; what he sets at his registrar */
+    nameservers: jsonb("nameservers").notNull().default([]),
+    /** Cloudflare Workers custom-domain record id once bound */
+    cloudflareDomainId: text("cloudflare_domain_id"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    lastError: text("last_error"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("domains_store_idx").on(t.storeId)],
@@ -225,8 +301,12 @@ export const blocks = pgTable(
 
 /* ------------------------------------------------------------------ orders */
 
-/** New → Ordered with supplier → Fulfilled → Refunded. */
-export const ORDER_STATES = ["new", "ordered", "fulfilled", "refunded"] as const;
+/**
+ * Fulfilment: Unfulfilled → Ordered with supplier → Fulfilled. Cancelled is
+ * for an order that never shipped and never will. Refunds are a payment fact
+ * and live in paymentStatus, not here.
+ */
+export const ORDER_STATES = ["new", "ordered", "fulfilled", "refunded", "cancelled"] as const;
 export type OrderState = (typeof ORDER_STATES)[number];
 
 export const orders = pgTable(
@@ -265,6 +345,8 @@ export const orders = pgTable(
 
     tracking: text("tracking"),
     carrier: text("carrier"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    fulfilledAt: timestamp("fulfilled_at", { withTimezone: true }),
 
     source: text("source"),
     campaign: text("campaign"),
@@ -480,6 +562,9 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   /** Google's stable account id, filled in on first successful sign-in */
   googleSub: text("google_sub").unique(),
+  notifyEveryOrder: boolean("notify_every_order").notNull().default(true),
+  notifyChargebacks: boolean("notify_chargebacks").notNull().default(true),
+  notifyWeekly: boolean("notify_weekly").notNull().default(false),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

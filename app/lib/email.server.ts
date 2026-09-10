@@ -73,13 +73,38 @@ async function send(
   }
 }
 
+/** Every customer-typed string goes through this before it touches HTML. */
+export function esc(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Public tracking pages per carrier. Unknown carrier → no link, never a guess. */
+export function trackingUrl(carrier: string | null, tracking: string): string | null {
+  const number = encodeURIComponent(tracking.replace(/\s+/g, ""));
+  switch ((carrier ?? "").toLowerCase()) {
+    case "usps": return `https://tools.usps.com/go/TrackConfirmAction?tLabels=${number}`;
+    case "ups": return `https://www.ups.com/track?tracknum=${number}`;
+    case "fedex": return `https://www.fedex.com/fedextrack/?trknbr=${number}`;
+    case "dhl": return `https://www.dhl.com/en/express/tracking.html?AWB=${number}`;
+    case "yunexpress": case "yun express": return `https://www.yuntrack.com/parcelTracking?id=${number}`;
+    case "4px": return `https://track.4px.com/#/result/0/${number}`;
+    case "china post": return `https://track-chinapost.com/result_china.php?order_no=${number}`;
+    default: return null;
+  }
+}
+
 function shell(storeName: string, body: string): string {
   return `<!doctype html><html><body style="margin:0;background:#f6f6f6;padding:24px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#242424">
 <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:28px">
-<div style="font-size:18px;font-weight:700;margin-bottom:18px">${storeName}</div>
+<div style="font-size:18px;font-weight:700;margin-bottom:18px">${esc(storeName)}</div>
 ${body}
 </div>
-<div style="max-width:560px;margin:14px auto 0;color:#8a8a8a;font-size:12px;text-align:center">${storeName}</div>
+<div style="max-width:560px;margin:14px auto 0;color:#8a8a8a;font-size:12px;text-align:center">${esc(storeName)}</div>
 </body></html>`;
 }
 
@@ -87,7 +112,7 @@ function lineRows(lines: EmailLine[], currency: string): string {
   return lines
     .map(
       (line) =>
-        `<tr><td style="padding:8px 0;font-size:15px">${line.label} × ${line.quantity}</td><td style="padding:8px 0;text-align:right;font-size:15px">${formatMoney(line.lineTotalCents, currency)}</td></tr>`,
+        `<tr><td style="padding:8px 0;font-size:15px">${esc(line.label)} × ${line.quantity}</td><td style="padding:8px 0;text-align:right;font-size:15px">${formatMoney(line.lineTotalCents, currency)}</td></tr>`,
     )
     .join("");
 }
@@ -125,7 +150,7 @@ export async function sendOrderConfirmation(
 
   const html = shell(
     input.storeName,
-    `<p style="font-size:16px;margin:0 0 12px">Thanks ${input.customerName}.</p>
+    `<p style="font-size:16px;margin:0 0 12px">Thanks ${esc(input.customerName)}.</p>
 <p style="font-size:16px;margin:0 0 18px">Your order <strong>#${input.orderNumber}</strong> is confirmed.</p>
 <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee">${lineRows(input.lines, input.currency)}</table>
 <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;margin-top:8px">
@@ -175,17 +200,22 @@ export async function sendShippingNotice(
 ): Promise<boolean> {
   const from = input.fromAddress || "orders@resend.dev";
   const carrier = input.carrier ? ` with ${input.carrier}` : "";
+  const link = trackingUrl(input.carrier, input.tracking);
 
   const text = [
     `Good news ${input.customerName} — order #${input.orderNumber} is on its way.`,
     ``,
     `Tracking${carrier}: ${input.tracking}`,
-  ].join("\n");
+    link ? `Track it: ${link}` : ``,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const html = shell(
     input.storeName,
-    `<p style="font-size:16px;margin:0 0 12px">Good news ${input.customerName} — order <strong>#${input.orderNumber}</strong> is on its way.</p>
-<p style="font-size:16px;margin:0">Tracking${carrier}:<br><strong style="font-family:ui-monospace,monospace">${input.tracking}</strong></p>`,
+    `<p style="font-size:16px;margin:0 0 12px">Good news ${esc(input.customerName)} — order <strong>#${input.orderNumber}</strong> is on its way.</p>
+<p style="font-size:16px;margin:0 0 16px">Tracking${esc(carrier)}:<br><strong style="font-family:ui-monospace,monospace">${esc(input.tracking)}</strong></p>
+${link ? `<a href="${esc(link)}" style="display:inline-block;background:#1A1A1A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600">Track your parcel</a>` : ""}`,
   );
 
   const result = await send(env, {
@@ -220,38 +250,50 @@ export async function sendMerchantNewOrder(
     storeName: string;
     orderNumber: number;
     customerName: string;
-    city: string | null;
-    region: string | null;
+    email: string;
+    phone: string | null;
+    address: string;
+    paymentMethod: string;
+    placedAt: Date;
     totalCents: number;
     currency: string;
     lines: EmailLine[];
     adminUrl: string;
+    fromAddress: string | null;
   },
 ): Promise<boolean> {
-  const where = [input.city, input.region].filter(Boolean).join(", ");
-  const summary = input.lines.map((line) => `${line.label} × ${line.quantity}`).join(", ");
   const subject = `[${input.storeName}] New order #${input.orderNumber} · ${formatMoney(input.totalCents, input.currency)}`;
+  const when = input.placedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   const text = [
-    `New order #${input.orderNumber} on ${input.storeName}.`,
+    `New order #${input.orderNumber} on ${input.storeName} · ${when}`,
     ``,
-    `${input.customerName}${where ? ` · ${where}` : ""}`,
-    summary,
-    `Total ${formatMoney(input.totalCents, input.currency)}`,
+    `${input.customerName}`,
+    input.email,
+    input.phone ?? "",
+    input.address,
+    ``,
+    ...input.lines.map((line) => `${line.label} × ${line.quantity} — ${formatMoney(line.lineTotalCents, input.currency)}`),
+    `Total ${formatMoney(input.totalCents, input.currency)} · ${input.paymentMethod}`,
     ``,
     `Open it: ${input.adminUrl}`,
-  ].join("\n");
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
 
   const html = shell(
     input.storeName,
-    `<p style="font-size:16px;margin:0 0 12px">New order <strong>#${input.orderNumber}</strong> · <strong>${formatMoney(input.totalCents, input.currency)}</strong></p>
-<p style="font-size:15px;margin:0 0 6px">${input.customerName}${where ? ` · ${where}` : ""}</p>
-<p style="font-size:15px;color:#555;margin:0 0 18px">${summary}</p>
-<a href="${input.adminUrl}" style="display:inline-block;background:#1A1A1A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600">Open the order</a>`,
+    `<p style="font-size:16px;margin:0 0 4px">New order <strong>#${input.orderNumber}</strong> · <strong>${formatMoney(input.totalCents, input.currency)}</strong></p>
+<p style="font-size:13px;color:#888;margin:0 0 14px">${esc(when)} · ${esc(input.paymentMethod)}</p>
+<p style="font-size:15px;margin:0 0 2px"><strong>${esc(input.customerName)}</strong></p>
+<p style="font-size:14px;color:#555;margin:0 0 2px">${esc(input.email)}${input.phone ? ` · ${esc(input.phone)}` : ""}</p>
+<p style="font-size:14px;color:#555;margin:0 0 16px">${esc(input.address)}</p>
+<table style="width:100%;border-collapse:collapse;border-top:1px solid #eee">${lineRows(input.lines, input.currency)}</table>
+<a href="${esc(input.adminUrl)}" style="display:inline-block;margin-top:16px;background:#1A1A1A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600">Open the order</a>`,
   );
 
   const result = await send(env, {
-    from: `${input.storeName} <orders@resend.dev>`,
+    from: `${input.storeName} <${input.fromAddress || "orders@resend.dev"}>`,
     to: input.to,
     subject,
     html,
@@ -263,6 +305,57 @@ export async function sendMerchantNewOrder(
     orderId,
     result.ok ? "email:merchant" : "email:failed",
     result.ok ? `You were emailed about this order at ${input.to}` : `Could not email you about this order · ${result.reason}`,
+    result.ok ? { id: result.id } : { reason: result.reason },
+  );
+  return result.ok;
+}
+
+/** Tells the customer their money is on the way back. Not sending this is how a refund turns into a chargeback anyway. */
+export async function sendRefundNotice(
+  db: DB,
+  env: Env,
+  orderId: string,
+  input: {
+    to: string;
+    customerName: string;
+    storeName: string;
+    fromAddress: string | null;
+    replyTo: string | null;
+    orderNumber: number;
+    amountCents: number;
+    currency: string;
+    full: boolean;
+  },
+): Promise<boolean> {
+  const amount = formatMoney(input.amountCents, input.currency);
+  const text = [
+    `Hi ${input.customerName},`,
+    ``,
+    `We have refunded ${amount} on order #${input.orderNumber}${input.full ? "" : " (a partial refund)"}.`,
+    `It usually shows on your card within 5–10 business days, depending on your bank.`,
+  ].join("\n");
+
+  const html = shell(
+    input.storeName,
+    `<p style="font-size:16px;margin:0 0 12px">Hi ${esc(input.customerName)},</p>
+<p style="font-size:16px;margin:0 0 12px">We have refunded <strong>${amount}</strong> on order <strong>#${input.orderNumber}</strong>${input.full ? "" : " (a partial refund)"}.</p>
+<p style="font-size:15px;color:#555;margin:0">It usually shows on your card within 5–10 business days, depending on your bank.</p>`,
+  );
+
+  const result = await send(env, {
+    from: `${input.storeName} <${input.fromAddress || "orders@resend.dev"}>`,
+    to: input.to,
+    replyTo: input.replyTo,
+    subject: `${input.storeName} — refund of ${amount} on order #${input.orderNumber}`,
+    html,
+    text,
+  });
+
+  await recordOrderEvent(
+    db,
+    orderId,
+    result.ok ? "email:refund" : "email:failed",
+    result.ok ? `Refund email sent to ${input.to}` : `Refund email could NOT be sent to ${input.to} · ${result.reason}`,
     result.ok ? { id: result.id } : { reason: result.reason },
   );
   return result.ok;

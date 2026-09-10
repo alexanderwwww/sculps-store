@@ -68,15 +68,20 @@ export async function afterPaymentConfirmed(
   }
 
   // 2. Tell him. Without this, nothing announces a sale unless he is looking.
-  if (!(await alreadyDone(db, orderId, "email:merchant")) && store.contactEmail) {
-    if (emailReady(env)) {
+  if (!(await alreadyDone(db, orderId, "email:merchant"))) {
+    if (!store.contactEmail) {
+      await recordOrderEvent(db, orderId, "email:skipped", "You were not emailed about this order: the store has no contact email in Settings → General.");
+    } else if (emailReady(env)) {
       await sendMerchantNewOrder(db, env, orderId, {
         to: store.contactEmail,
         storeName: store.name,
         orderNumber: order.number,
         customerName: order.customerName,
-        city: order.city,
-        region: order.region,
+        email: order.email,
+        phone: order.phone,
+        address: [order.address1, order.address2, order.city, order.region, order.postalCode, order.country].filter(Boolean).join(", "),
+        paymentMethod: order.paymentProvider ? `paid via ${order.paymentProvider}` : "payment pending",
+        placedAt: new Date(order.createdAt),
         totalCents: order.totalCents,
         currency: order.currency,
         lines: items.map((item) => ({
@@ -84,7 +89,8 @@ export async function afterPaymentConfirmed(
           quantity: item.quantity,
           lineTotalCents: item.unitPriceCents * item.quantity,
         })),
-        adminUrl: `${env.ADMIN_ORIGIN || "https://kerberos.gardenbuddystore.workers.dev"}/admin/orders/${order.id}`,
+        adminUrl: `${env.ADMIN_ORIGIN || "https://kerberos.gardenbuddystore.workers.dev"}/admin/orders/${order.id}?store=${store.slug}`,
+        fromAddress: store.emailFrom,
       });
     }
   }

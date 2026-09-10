@@ -106,8 +106,19 @@ export async function priceCart(
   }
 
   const subtotalCents = lines.reduce((total, line) => total + line.lineTotalCents, 0);
-  const taxCents = Math.round(subtotalCents * (store.taxRate ?? 0));
-  const shippingCents = 0;
+
+  // Shipping comes from Settings → Shipping, in this order: always free wins,
+  // then the free-over threshold, then the flat rate.
+  const shippingCents = !lines.length
+    ? 0
+    : store.shipAlwaysFree
+      ? 0
+      : store.shipFreeOverCents != null && subtotalCents >= store.shipFreeOverCents
+        ? 0
+        : store.shipFlatCents;
+
+  const taxable = subtotalCents + (store.taxOnShipping ? shippingCents : 0);
+  const taxCents = store.pricesIncludeTax ? 0 : Math.round(taxable * (store.taxRate ?? 0));
 
   return {
     token: row?.token ?? token ?? "",

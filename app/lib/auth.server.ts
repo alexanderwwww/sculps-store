@@ -286,7 +286,9 @@ export async function recordFailedLogin(db: DB, ip: string): Promise<void> {
 }
 
 export function clientIp(request: Request): string {
-  return request.headers.get("CF-Connecting-IP") ?? "unknown";
+  // Off Cloudflare (local dev) there is no trustworthy address; a random
+  // bucket means nobody is locked out by someone else's typos.
+  return request.headers.get("CF-Connecting-IP") ?? `local-${crypto.randomUUID()}`;
 }
 
 export async function checkAccessCode(
