@@ -322,10 +322,10 @@ class LiveGlobe {
       //
       // The design drew this as a thick pink glow with an arrowhead on the
       // front, which reads as broken at globe scale: the head clips into the
-      // sphere and the glow smears. Shopify draws one thin curve with a soft
-      // comet head, so that is what this is — a single stroke whose trail
-      // fades back toward where the order came from, decelerating into the
-      // store. Same great-circle path, same lift, same colours.
+      // sphere and the glow smears. This is a line and nothing else — one
+      // thin gold stroke along the great circle from the buyer to the store,
+      // its tail fading out behind it, easing as it arrives. No head, no
+      // arrow, no glow.
       this.arcs.forEach(a => {
         const raw = Math.min(1, (now - a.born) / a.dur);
         // Ease out, so it arrives gently instead of stopping dead.
@@ -365,23 +365,13 @@ class LiveGlobe {
           const trail = Math.pow(p1.t, 1.7);
           const alpha = trail * fade;
           if (alpha < 0.02) continue;
-          g.strokeStyle = "rgba(255,140,225," + (0.95 * alpha).toFixed(3) + ")";
-          g.lineWidth = 1.1 + 0.7 * trail;
+          // Gold, the colour a sale is everywhere else in this admin. The
+          // design's pink read as a laser; this reads as a line.
+          g.strokeStyle = "rgba(212,166,42," + (0.9 * alpha).toFixed(3) + ")";
+          g.lineWidth = 1.4;
           g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke();
         }
 
-        // A soft comet head, and nothing else.
-        const head = pts[pts.length - 1];
-        if (head && head.z > -0.2) {
-          const halo = g.createRadialGradient(head.x, head.y, 0, head.x, head.y, 9);
-          halo.addColorStop(0, "rgba(255,255,255," + (0.9 * fade).toFixed(3) + ")");
-          halo.addColorStop(.4, "rgba(255,47,185," + (0.5 * fade).toFixed(3) + ")");
-          halo.addColorStop(1, "rgba(255,47,185,0)");
-          g.fillStyle = halo;
-          g.beginPath(); g.arc(head.x, head.y, 9, 0, 6.284); g.fill();
-          g.fillStyle = "rgba(255,255,255," + fade.toFixed(2) + ")";
-          g.beginPath(); g.arc(head.x, head.y, 1.9, 0, 6.284); g.fill();
-        }
       });
 
       this.hit = [];

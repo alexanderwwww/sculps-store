@@ -117,7 +117,12 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const globeRef = useRef<LiveGlobeHandle | null>(null);
   const seen = useRef(new Map<string, number>());
-  const mountedAt = useRef(Date.now());
+  // The first poll is history: it primes what we have seen without announcing
+  // any of it. Everything new after that is live, and gets a card. Comparing
+  // the event's timestamp against this browser's clock — which is what this
+  // used to do — silently swallowed real arrivals whenever the two clocks
+  // disagreed by a few seconds.
+  const primed = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -211,7 +216,8 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
       }
     }
 
-    const arrived = fresh.filter((event) => event.at >= mountedAt.current);
+    const arrived = primed.current ? fresh : [];
+    primed.current = true;
     if (arrived.some((event) => event.type === "purchase")) chaching();
 
     if (arrived.length) {
@@ -229,7 +235,10 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
       }));
       setGlassCards((current) => [...added, ...current].slice(0, 3));
       const ids = new Set(added.map((card) => card.key));
-      timers.current.push(setTimeout(() => setGlassCards((current) => current.filter((card) => !ids.has(card.key))), 3_600));
+      // A sale holds twice as long as anything else. It is the one card he
+      // will want to actually read.
+      const hold = added.some((card) => card.sale) ? 7_200 : 3_600;
+      timers.current.push(setTimeout(() => setGlassCards((current) => current.filter((card) => !ids.has(card.key))), hold));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board, dotsOn]);
@@ -356,19 +365,15 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
           </div>
           <div style={{ position: "relative", height: 132, marginTop: 12 }}>
             <svg viewBox="0 0 300 132" preserveAspectRatio="none" style={{ width: "100%", height: 132, display: "block" }}>
-              <path className="k-funnel-slope" d={funnel.slope} fill="#2F5CF5" opacity=".16" />
-              <rect className="k-funnel-bar" data-step="0" x="2" y={funnel.y0} width="94" height={funnel.h0} rx="5" fill="#2F5CF5" />
-              <rect className="k-funnel-bar" data-step="1" x="103" y={funnel.y1} width="94" height={funnel.h1} rx="5" fill="#2F5CF5" />
-              <rect className="k-funnel-bar" data-step="2" x="204" y={funnel.y2} width="94" height={funnel.h2} rx="5" fill="#2F5CF5" />
-              <rect className="k-funnel-bar" data-step="0" x="2" y={funnel.y0} width="94" height={funnel.sh0} rx="5" fill="rgba(255,255,255,.22)" />
-              <rect className="k-funnel-bar" data-step="1" x="103" y={funnel.y1} width="94" height={funnel.sh1} rx="5" fill="rgba(255,255,255,.22)" />
-              <rect className="k-funnel-bar" data-step="2" x="204" y={funnel.y2} width="94" height={funnel.sh2} rx="5" fill="rgba(255,255,255,.22)" />
+              <path className="k-funnel-slope" d={funnel.slope} fill="#1D3FCC" opacity=".16" />
+              <rect className="k-funnel-bar" data-step="0" x="2" y={funnel.y0} width="94" height={funnel.h0} rx="3" fill="#1D3FCC" />
+              <rect className="k-funnel-bar" data-step="1" x="103" y={funnel.y1} width="94" height={funnel.h1} rx="3" fill="#1D3FCC" />
+              <rect className="k-funnel-bar" data-step="2" x="204" y={funnel.y2} width="94" height={funnel.h2} rx="3" fill="#1D3FCC" />
+              <rect className="k-funnel-bar" data-step="0" x="2" y={funnel.y0} width="94" height={funnel.sh0} rx="3" fill="rgba(255,255,255,.16)" />
+              <rect className="k-funnel-bar" data-step="1" x="103" y={funnel.y1} width="94" height={funnel.sh1} rx="3" fill="rgba(255,255,255,.16)" />
+              <rect className="k-funnel-bar" data-step="2" x="204" y={funnel.y2} width="94" height={funnel.sh2} rx="3" fill="rgba(255,255,255,.16)" />
             </svg>
-            {funnel.empty ? null : (
-              <span className="k-funnel-sweep" aria-hidden="true">
-                <span />
-              </span>
-            )}
+
             {funnel.empty ? (
               <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--ink-3)", fontSize: 12, background: "linear-gradient(180deg,rgba(255,255,255,.7),#fff)" }}>
                 No sessions yet — nothing to chart
@@ -469,7 +474,15 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
       <div style={{ position: "relative", flex: "1 1 auto", minWidth: 0, height: "auto", minHeight: 0, overflow: "hidden", background: "var(--bg)" }}>
         <div style={{ position: "absolute", left: 20, top: 20, zIndex: 8, display: "flex", flexDirection: "column", gap: 8, pointerEvents: "none", width: 226 }}>
           {glassCards.map((card) => (
-            <div key={card.key} style={{ animation: "kGlassL 3.6s cubic-bezier(.22,.8,.28,1) forwards" }}>
+            <div
+              key={card.key}
+              style={{
+                // The fade-out is the animation's own last keyframe, so a card
+                // that is held longer has to be animated longer or it would
+                // disappear while it is still meant to be on screen.
+                animation: `kGlassL ${card.sale ? "7.2s" : "3.6s"} cubic-bezier(.22,.8,.28,1) forwards`,
+              }}
+            >
               <div
                 className={card.sale ? "k-sale-card" : undefined}
                 style={{
