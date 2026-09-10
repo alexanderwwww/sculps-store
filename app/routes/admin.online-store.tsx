@@ -26,8 +26,8 @@ import {
   storeMenus,
   saveMenuLinks,
   saveStoreSettings,
-  MENU_HANDLES,
 } from "~/lib/admin.server";
+import { MENU_HANDLES } from "~/lib/menus";
 import { sections as sectionsTable } from "~/db/schema";
 import { hashPassword } from "~/lib/password.server";
 import { SECTIONS } from "~/lib/sections";

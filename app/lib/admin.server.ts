@@ -33,6 +33,7 @@ import {
   type OrderState,
 } from "~/db/schema";
 import { SECTIONS } from "./sections";
+import { MENU_HANDLES } from "./menus";
 import { money } from "./money";
 
 export type StoreRow = typeof stores.$inferSelect;
@@ -1639,11 +1640,6 @@ export async function savePolicies(
 
 
 /* -------------------------------------------------------------- navigation */
-
-export const MENU_HANDLES = [
-  ["main", "Header menu", "top navigation"],
-  ["footer", "Footer menu", "footer"],
-] as const;
 
 export interface MenuWithLinks {
   id: string;
