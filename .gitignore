@@ -23,3 +23,5 @@ tsconfig.tsbuildinfo
 /test-order*.mjs
 /port-garden-buddy.mjs
 /port-policies.mjs
+/seed-tools.mjs
+/store-stripe2.mjs

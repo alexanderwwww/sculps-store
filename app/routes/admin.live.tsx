@@ -18,6 +18,9 @@ import { resolveAdminStore, liveBoard } from "~/lib/admin.server";
 import { formatMoney, money0 } from "~/lib/money";
 import { mountLiveGlobe, GLOBE_TYPE, type LiveGlobeHandle, type GlobeTip } from "~/admin/live-globe";
 import { pointForAddress } from "~/lib/places";
+// One sparkline, shared with Home: a smooth curve, and nothing at all when
+// there is not enough real traffic to draw one.
+import { Sparkline } from "~/admin/sparkline";
 
 export function meta() {
   return [{ title: "Live View — Shop Admin" }];
@@ -710,42 +713,6 @@ function LegendChip({ color, label }: { color: string; label: string }) {
 }
 
 /** The prototype's own funnel arithmetic, so the bars have the same shape. */
-/**
- * The last half hour of this metric, beside its number.
- *
- * Shopify puts one of these on every live card, and it is the difference
- * between a number and a number you can read a direction from. It draws only
- * what happened: no traffic means no line at all, never a flat one implying a
- * steady zero was measured.
- */
-function Sparkline({ series }: { series: number[] }) {
-  const max = Math.max(...series);
-  if (!series.length || max <= 0) return null;
-
-  const W = 54;
-  const H = 18;
-  const step = W / Math.max(1, series.length - 1);
-  const points = series.map((value, index) => {
-    const x = index * step;
-    const y = H - 1 - (value / max) * (H - 2);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ flex: "none", display: "block", overflow: "visible" }} aria-hidden="true">
-      <polyline
-        points={points.join(" ")}
-        fill="none"
-        stroke="#1D3FCC"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity=".85"
-      />
-    </svg>
-  );
-}
-
 function buildFunnel(carts: number, checkouts: number, purchases: number, sessions: number) {
   const max = Math.max(carts, checkouts, purchases, sessions, 1);
   const height = (value: number) => (value ? Math.max(58, Math.round(38 + (value / max) * (122 - 38))) : 0);

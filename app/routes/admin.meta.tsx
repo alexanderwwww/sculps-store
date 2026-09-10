@@ -16,6 +16,24 @@ import { metaConfig, events, orders } from "~/db/schema";
 import { encryptSecret, decryptSecret, encryptionReady, maskSecret } from "~/lib/crypto.server";
 import { metaSettings, sendPurchase } from "~/lib/meta.server";
 import { card, Empty } from "~/admin/ui";
+import {
+  GlassGround,
+  GlassPanel,
+  GlassNotice,
+  HandshakeResult,
+  StateBadge,
+  StateRail,
+  Fact,
+  FactGrid,
+  Metric,
+  PrimaryAction,
+  QuietAction,
+  glassBody,
+  glassRule,
+  glassField,
+  glassInput,
+  type ConnState,
+} from "~/admin/connection-glass";
 
 export function meta() {
   return [{ title: "Meta — Shop Admin" }];
@@ -150,66 +168,26 @@ export async function action({ context, request }: Route.ActionArgs) {
   return { ok: "Saved." };
 }
 
-const fieldLabel: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 4,
-  fontSize: 12,
-  fontWeight: 550,
-  color: "var(--ink-2)",
-};
 
-const monoInput: React.CSSProperties = {
-  height: 36,
-  padding: "0 12px",
-  borderRadius: 8,
-  border: "1px solid var(--input-border)",
-  background: "var(--input)",
-  fontSize: 13,
-  fontFamily: "'JetBrains Mono',monospace",
-  color: "var(--ink)",
-};
+/* --------------------------------------------------------------- screen --
+   Presentation only below this line. Every value shown is either stored on
+   this store or counted from the last seven days by the loader above; where
+   there is no source at all the panel keeps its empty state and says why. */
 
-const cardStyle: React.CSSProperties = {
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 12,
-  boxShadow: "var(--shadow)",
-  overflow: "hidden",
-};
-
-const cardHead: React.CSSProperties = {
-  padding: "12px 16px",
-  borderBottom: "1px solid var(--border)",
-  fontWeight: 650,
-};
-
-function pill(kind: string, label: string) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        height: 22,
-        padding: "0 9px",
-        borderRadius: 8,
-        fontSize: 12,
-        fontWeight: 550,
-        background: `var(--b-${kind}-bg)`,
-        color: `var(--b-${kind}-fg)`,
-      }}
-    >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor", opacity: 0.8 }} />
-      {label}
-    </span>
-  );
+function formatWhen(iso: string) {
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export default function Meta({ loaderData }: Route.ComponentProps) {
   const { store, config, counts, encryption, tokenMask, hasToken } = loaderData;
   const fetcher = useFetcher<typeof action>();
   const [showToken, setShowToken] = useState(false);
+  const [showKeys, setShowKeys] = useState(false);
 
   if (!store || !config || !counts) {
     return (
@@ -220,242 +198,287 @@ export default function Meta({ loaderData }: Route.ComponentProps) {
   }
 
   const result = fetcher.data as { ok?: string; error?: string } | undefined;
-  const connected = Boolean(config.pixelId) && hasToken;
-  const dot = connected ? "#22C55E" : "var(--ink-3)";
+  const busy = fetcher.state !== "idle";
+
+  // The connection is a state, and every stop in it is a stored fact:
+  //   off        — nothing saved yet
+  //   connecting — some credentials saved, but Meta has never answered us
+  //   on         — pixel + token saved and a test event came back accepted
+  const hasAny = Boolean(config.pixelId) || hasToken;
+  const hasBoth = Boolean(config.pixelId) && hasToken;
+  const tested = Boolean(config.lastTestAt);
+  const state: ConnState = hasBoth && tested ? "on" : hasAny ? "connecting" : "off";
+  const stateIndex = state === "on" ? 2 : state === "connecting" ? 1 : 0;
 
   // What this Worker actually sends server-side is the Purchase, and it is the
   // one with a shared event id. The other CAPI events are not sent, so they are
   // not listed as if they were.
-  const serverEvents = [{ name: "Purchase", count: counts.deduplicated }];
-
-  const tested = Boolean(config.lastTestAt);
+  const browserTotal = counts.browser.reduce((sum, event) => sum + event.count, 0);
+  const dedupPercent =
+    counts.purchases > 0 ? Math.round((counts.deduplicated / counts.purchases) * 100) : null;
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650 }}>Meta · {store.name}</h1>
-        {pill(connected ? "success" : "neutral", connected ? "Connected" : "Not connected")}
+        <StateBadge
+          state={state}
+          label={state === "on" ? "Connected" : state === "connecting" ? "Connecting" : "Not connected"}
+        />
       </div>
 
-      {result?.error ? (
-        <div style={{ background: "var(--b-critical-bg)", color: "var(--b-critical-fg)", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>
-          {result.error}
-        </div>
-      ) : null}
-      {result?.ok ? (
-        <div style={{ background: "var(--b-success-bg)", color: "var(--b-success-fg)", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>
-          {result.ok}
-        </div>
-      ) : null}
-      {!encryption ? (
-        <div style={{ background: "var(--b-warning-bg)", color: "var(--b-warning-fg)", borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>
-          No encryption key is set on the Worker yet, so the Conversions API token cannot be stored.
-          Pixel ID and ad account will still save.
-        </div>
-      ) : null}
-
-      <fetcher.Form method="post" style={cardStyle}>
-        <input type="hidden" name="intent" value="save" />
-        <div style={cardHead}>Connection</div>
-        <div
-          style={{
-            padding: "14px 16px",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-            gap: 12,
-          }}
+      <GlassGround>
+        <GlassPanel
+          title="Connection"
+          sub="Pixel ID and ad account are stored on this store. The Conversions API token is stored encrypted and never shown again."
+          aside={
+            <StateBadge
+              state={state}
+              label={state === "on" ? "Handshake complete" : state === "connecting" ? "Waiting on a test" : "Nothing saved"}
+            />
+          }
         >
-          <label style={fieldLabel}>
-            Pixel ID
-            <input name="pixelId" defaultValue={config.pixelId} placeholder="15 or 16 digits" style={monoInput} />
-          </label>
-          <label style={fieldLabel}>
-            Ad account ID
-            <input name="adAccountId" defaultValue={config.adAccountId} placeholder="act_…" style={monoInput} />
-          </label>
-          <label style={fieldLabel}>
-            Conversions API token
-            <span style={{ display: "flex", gap: 6 }}>
-              <input
-                name="capiToken"
-                type={showToken ? "text" : "password"}
-                placeholder={hasToken ? `stored: ${tokenMask}` : "EAAG…"}
-                style={{ ...monoInput, flex: 1, minWidth: 0 }}
+          <div style={glassBody}>
+            <StateRail
+              current={stateIndex}
+              steps={[
+                {
+                  key: "off",
+                  label: "Not connected",
+                  note: hasAny ? "Credentials are saved" : "No pixel ID and no token saved yet",
+                },
+                {
+                  key: "connecting",
+                  label: "Connecting",
+                  note: hasBoth
+                    ? "Pixel ID and token are both stored"
+                    : hasAny
+                      ? "Both a pixel ID and a token are needed"
+                      : "Save a pixel ID and a Conversions API token",
+                },
+                {
+                  key: "on",
+                  label: "Connected",
+                  note: tested
+                    ? `Meta accepted a test event on ${formatWhen(config.lastTestAt as string)}`
+                    : "Meta has never answered this store",
+                },
+              ]}
+            />
+
+            <FactGrid>
+              <Fact label="Pixel ID" value={config.pixelId || null} mono reason="Not saved yet" />
+              <Fact label="Ad account" value={config.adAccountId || null} mono reason="Not saved yet" />
+              <Fact
+                label="Conversions API token"
+                value={hasToken ? tokenMask : null}
+                mono
+                reason={encryption ? "Not saved yet" : "No encryption key on the Worker"}
               />
-              <button
-                type="button"
-                onClick={() => setShowToken((current) => !current)}
-                style={{
-                  height: 36,
-                  padding: "0 10px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "var(--surface)",
-                  color: "var(--ink)",
-                  fontSize: 12,
-                  fontWeight: 550,
-                  cursor: "pointer",
-                }}
-              >
-                {showToken ? "Hide" : "Show"}
-              </button>
-            </span>
-          </label>
-          {/*
-            Not in the prototype's three fields, but "Send test event" cannot be
-            real without it: Meta only keeps an event out of the live totals when
-            it carries a test event code from Events Manager.
-          */}
-          <label style={fieldLabel}>
-            Test event code
-            <input name="testEventCode" defaultValue={config.testEventCode} placeholder="TEST12345" style={monoInput} />
-          </label>
-        </div>
-        <div
-          style={{
-            padding: "12px 16px",
-            borderTop: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            type="submit"
-            style={{
-              height: 30,
-              padding: "0 12px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "var(--surface)",
-              color: "var(--ink)",
-              fontSize: 12,
-              fontWeight: 550,
-              cursor: "pointer",
-            }}
-          >
-            Save
-          </button>
-          <button
-            type="submit"
-            name="intent"
-            value="test"
-            style={{
-              height: 30,
-              padding: "0 12px",
-              borderRadius: 8,
-              border: 0,
-              background: "var(--accent)",
-              color: "var(--accent-ink)",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Send test event
-          </button>
-          {pill(tested ? "success" : "neutral", tested ? "Received" : "Not tested")}
-          <span style={{ fontSize: 12, color: "var(--ink-2)", flex: 1, minWidth: 200 }}>
-            Browser and server events share one event ID, so Meta never counts a purchase twice.
-          </span>
-          <button
-            type="submit"
-            name="intent"
-            value="disconnect"
-            style={{
-              height: 30,
-              padding: "0 12px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "var(--surface)",
-              color: "var(--critical)",
-              fontSize: 12,
-              fontWeight: 550,
-              cursor: "pointer",
-            }}
-          >
-            Disconnect
-          </button>
-        </div>
-      </fetcher.Form>
+              <Fact label="Test event code" value={config.testEventCode || null} mono reason="Not saved yet" />
+            </FactGrid>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 16 }}>
-        <div style={cardStyle}>
-          <div style={cardHead}>Browser events</div>
-          {counts.browser.length === 0 ? (
-            <div style={{ padding: "40px 16px", textAlign: "center", color: "var(--ink-2)" }}>
-              <div style={{ fontWeight: 650, color: "var(--ink)", marginBottom: 4 }}>No events yet</div>
-              They start when the storefront has visitors.
-            </div>
-          ) : (
-            counts.browser.map((event) => (
-              <div
-                key={event.name}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "9px 16px",
-                  borderBottom: "1px solid var(--border)",
-                }}
-              >
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: dot }} />
-                <span style={{ flex: 1, fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>{event.name}</span>
-                <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--ink-2)" }}>{event.count}</span>
-              </div>
-            ))
-          )}
-        </div>
+            {!encryption ? (
+              <GlassNotice kind="warning">
+                No encryption key is set on the Worker yet, so the Conversions API token cannot be stored.
+                Pixel ID and ad account will still save.
+              </GlassNotice>
+            ) : null}
 
-        <div style={cardStyle}>
-          <div style={cardHead}>Server events (CAPI)</div>
-          {serverEvents.map((event) => (
-            <div
-              key={event.name}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "9px 16px",
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: dot }} />
-              <span style={{ flex: 1, fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>{event.name}</span>
-              <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--ink-2)" }}>{event.count}</span>
+            <hr style={glassRule} />
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 12, color: "var(--ink-2)" }}>
+                {hasAny ? "Change what is stored for this store" : "Nothing is stored for this store yet"}
+              </span>
+              <QuietAction type="button" onClick={() => setShowKeys((open) => !open)} aria-expanded={showKeys}>
+                {showKeys ? "Hide credentials" : hasAny ? "Edit credentials" : "Add credentials"}
+              </QuietAction>
             </div>
-          ))}
-          {/*
-            Event match quality is only known inside Events Manager; there is no
-            API reading it here, so the design's neutral state is what shows.
-          */}
-          <div
-            style={{
-              padding: "11px 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 10,
-            }}
-          >
-            <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Event match quality</span>
-            <span style={{ fontWeight: 650, color: "var(--ink-3)" }}>—</span>
+
+            {showKeys || !hasAny ? (
+              <fetcher.Form method="post" style={{ display: "flex", flexDirection: "column", gap: 14, animation: "kFade .22s ease-out" }}>
+                <input type="hidden" name="intent" value="save" />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
+                  <label style={glassField}>
+                    Pixel ID
+                    <input name="pixelId" defaultValue={config.pixelId} placeholder="15 or 16 digits" style={glassInput} />
+                  </label>
+                  <label style={glassField}>
+                    Ad account ID
+                    <input name="adAccountId" defaultValue={config.adAccountId} placeholder="act_…" style={glassInput} />
+                  </label>
+                  <label style={glassField}>
+                    Conversions API token
+                    <span style={{ display: "flex", gap: 6 }}>
+                      <input
+                        name="capiToken"
+                        type={showToken ? "text" : "password"}
+                        placeholder={hasToken ? `stored: ${tokenMask}` : "EAAG…"}
+                        style={{ ...glassInput, flex: 1 }}
+                      />
+                      <QuietAction type="button" onClick={() => setShowToken((current) => !current)} style={{ height: 38 }}>
+                        {showToken ? "Hide" : "Show"}
+                      </QuietAction>
+                    </span>
+                  </label>
+                  {/*
+                    Not in the prototype's three fields, but "Send test event" cannot be
+                    real without it: Meta only keeps an event out of the live totals when
+                    it carries a test event code from Events Manager.
+                  */}
+                  <label style={glassField}>
+                    Test event code
+                    <input name="testEventCode" defaultValue={config.testEventCode} placeholder="TEST12345" style={glassInput} />
+                  </label>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <PrimaryAction type="submit" disabled={busy}>
+                    {busy ? "Saving…" : "Save"}
+                  </PrimaryAction>
+                  <span style={{ flex: 1 }} />
+                  <QuietAction
+                    type="submit"
+                    name="intent"
+                    value="disconnect"
+                    disabled={!hasAny}
+                    title={hasAny ? undefined : "Nothing is stored for this store yet"}
+                    style={{ color: "var(--critical)" }}
+                  >
+                    Disconnect
+                  </QuietAction>
+                </div>
+              </fetcher.Form>
+            ) : null}
           </div>
-        </div>
-      </div>
+        </GlassPanel>
 
-      <div style={cardStyle}>
-        <div style={cardHead}>Ad performance</div>
+        {/* The handshake. This posts a real Purchase to the Conversions API with
+            the stored test event code and shows what Meta actually said back. */}
+        <GlassPanel
+          title="Send test event"
+          sub="Posts a real Purchase to the Conversions API with your test event code. Meta's own answer comes back below."
+          lift
+          aside={
+            <StateBadge
+              state={tested ? "on" : "off"}
+              label={tested ? "Last accepted " + formatWhen(config.lastTestAt as string) : "Never tested"}
+            />
+          }
+        >
+          <div style={glassBody}>
+            <fetcher.Form method="post" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <PrimaryAction
+                type="submit"
+                name="intent"
+                value="test"
+                disabled={busy}
+                style={{ height: 44, padding: "0 24px", fontSize: 14 }}
+              >
+                {busy ? "Sending…" : "Send test event"}
+              </PrimaryAction>
+              <span style={{ fontSize: 12, color: "var(--ink-2)", flex: 1, minWidth: 220, lineHeight: "18px" }}>
+                It appears in Events Manager under Test events, and stays out of your live totals because it carries
+                the test event code.
+              </span>
+            </fetcher.Form>
+
+            {result?.error ? <HandshakeResult kind="error">{result.error}</HandshakeResult> : null}
+            {result?.ok ? <HandshakeResult kind="ok">{result.ok}</HandshakeResult> : null}
+          </div>
+        </GlassPanel>
+
+        {/* The two halves of the funnel, shown as a pair. */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
+          <GlassPanel title="Browser pixel" sub="Counted on this store over the last 7 days" tight lift>
+            <div style={{ ...glassBody, padding: "14px 16px 16px" }}>
+              <Metric label="Events" value={browserTotal} note="All pixel events fired by the storefront" />
+              {counts.browser.length === 0 ? (
+                <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "18px" }}>
+                  No events yet. They start when the storefront has visitors.
+                </span>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {counts.browser.map((event) => {
+                    const share = browserTotal > 0 ? (event.count / browserTotal) * 100 : 0;
+                    return (
+                      <div key={event.name} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ flex: 1, fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>{event.name}</span>
+                          <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 12, fontWeight: 600 }}>{event.count}</span>
+                        </span>
+                        <span style={{ height: 4, borderRadius: 2, background: "rgba(48,48,48,.10)", overflow: "hidden" }}>
+                          <span
+                            style={{
+                              display: "block",
+                              height: "100%",
+                              width: `${share}%`,
+                              borderRadius: 2,
+                              background: "#2E7DFF",
+                              transition: "width .55s cubic-bezier(.22,.8,.28,1)",
+                            }}
+                          />
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </GlassPanel>
+
+          <GlassPanel title="Server · Conversions API" sub="Counted on this store over the last 7 days" tight lift>
+            <div style={{ ...glassBody, padding: "14px 16px 16px" }}>
+              <Metric
+                label="Purchase events sent"
+                value={counts.deduplicated}
+                note="Purchase is the only event this Worker sends server-side"
+              />
+              <hr style={glassRule} />
+              {/*
+                Event match quality is only known inside Events Manager; there is no
+                API reading it here, so the design's neutral state is what shows.
+              */}
+              <Metric
+                label="Event match quality"
+                value={null}
+                reason="Only Events Manager knows this score. Nothing here reads it, so nothing is shown."
+              />
+            </div>
+          </GlassPanel>
+        </div>
+
+        {/* Deduplication. The only evidence that exists is orders carrying a
+            shared metaEventId, so that is exactly what is counted. */}
+        <GlassPanel title="Deduplication" sub="Orders in the last 7 days carrying one shared event ID across browser and server" tight>
+          <div style={{ ...glassBody, padding: "14px 16px 16px", flexDirection: "row", flexWrap: "wrap", gap: 24, alignItems: "flex-end" }}>
+            <Metric label="Orders" value={counts.purchases} note="Placed in the last 7 days" />
+            <Metric label="Carrying a shared event ID" value={counts.deduplicated} note="Meta cannot count these twice" />
+            <Metric
+              label="Covered"
+              value={dedupPercent}
+              note={dedupPercent === null ? undefined : "Of orders in the window"}
+              reason="No orders in the last 7 days, so there is nothing to deduplicate yet."
+            />
+            <span style={{ flex: "1 1 220px", fontSize: 12, lineHeight: "18px", color: "var(--ink-2)" }}>
+              An order without a shared event ID can be counted once by the pixel and once by the server. Every order
+              placed through this checkout gets one.
+            </span>
+          </div>
+        </GlassPanel>
+
         {/*
           No ad account is read anywhere in this app yet, so the design's own
           empty state stands instead of a table of guessed numbers.
         */}
-        <div style={{ padding: "40px 16px", textAlign: "center", color: "var(--ink-2)" }}>
-          <div style={{ fontWeight: 650, color: "var(--ink)", marginBottom: 4 }}>No ad data</div>
-          Connect an ad account to pull spend, revenue and ROAS in here.
-        </div>
-      </div>
+        <GlassPanel title="Ad performance" tight>
+          <div style={{ padding: "34px 16px 38px", textAlign: "center", color: "var(--ink-2)", fontSize: 13 }}>
+            <div style={{ fontWeight: 650, color: "var(--ink)", marginBottom: 4 }}>No ad data</div>
+            Spend, revenue and ROAS come from the Marketing API, which nothing here calls yet. No number is shown rather
+            than a guessed one.
+          </div>
+        </GlassPanel>
+      </GlassGround>
     </div>
   );
 }

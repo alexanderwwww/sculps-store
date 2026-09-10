@@ -72,6 +72,23 @@ import {
   CostTotal,
   saveBar,
 } from "~/admin/settings-ui";
+import {
+  GlassGround,
+  GlassPanel,
+  GlassNotice,
+  StateBadge,
+  StateRail,
+  Fact,
+  FactGrid,
+  CopyValue,
+  PrimaryAction,
+  QuietAction,
+  glassBody,
+  glassRule,
+  glassField,
+  glassInput,
+  type ConnState,
+} from "~/admin/connection-glass";
 
 export function meta() {
   return [{ title: "Settings — Shop Admin" }];
@@ -1220,82 +1237,319 @@ function PaymentsPane({
   // Never show a webhook URL guessed from whatever host he happens to be on:
   // pasting a preview URL into Stripe means payments silently never confirm.
   const webhookUrl = adminOrigin ? `${adminOrigin}/webhooks/stripe` : null;
+
+  const hasSecret = Boolean(stripe?.hasSecret);
+  const connected = Boolean(stripe?.connectedAt);
+  const state: ConnState = connected ? "on" : hasSecret || stripe ? "connecting" : "off";
+  const stateIndex = connected ? 2 : hasSecret || stripe ? 1 : 0;
+
+  // Live or test. The secret key is only ever held masked on this screen, so
+  // the mode is read off the publishable key, which is not a secret and is
+  // stored in the clear. With no publishable key the mode is genuinely unknown
+  // and is said to be unknown — it is real money either way, so it is not guessed.
+  const publishable = stripe?.publishableKey ?? "";
+  const mode: "live" | "test" | "unknown" = publishable.startsWith("pk_live_")
+    ? "live"
+    : publishable.startsWith("pk_test_")
+      ? "test"
+      : "unknown";
+
   return (
     <>
-      <SettingsCard title={`Payments · ${store.name}`} note={`${store.name} has its own payment account. If this account is ever frozen, your other stores keep taking money — nothing is shared between them.`} />
-
-      {!encryption ? (
-        <Notice kind="critical">No encryption key is set on the Worker. Secret keys will not be saved until there is one — a live payment key is not going in the database in the clear.</Notice>
-      ) : null}
-
-      {stripe?.hasSecret && !stripe.hasWebhookSecret ? (
-        <Notice kind="critical">
-          No webhook signing secret yet. Cards will be charged at Stripe, but this admin will never learn that they were paid —
-          orders would sit as "pending" forever. Finish the webhook step below before taking a real order.
-        </Notice>
-      ) : null}
-
-      <Form method="post">
-        <input type="hidden" name="intent" value="stripe" />
-        <SettingsCard title={`Stripe${stripe?.accountName ? ` · ${stripe.accountName}` : ""} (primary)`} sub={stripe?.connectedAt ? "Connected" : "Not connected"}>
-          <FieldGrid>
-            <TextField label="Account name" name="accountName" defaultValue={stripe?.accountName} placeholder="Legal entity on the account" />
-            <TextField label="Statement descriptor" name="statementDescriptor" defaultValue={store.statementDescriptor} placeholder="What buyers see on their card" />
-            <TextField label="Publishable key" name="publishableKey" defaultValue={stripe?.publishableKey} placeholder="pk_live_…" mono />
-            <TextField label="Secret key" name="secretKey" type="password" placeholder={stripe?.hasSecret ? "Leave blank to keep the stored one" : "sk_live_…"} mono help={stripe?.hasSecret ? `Stored encrypted · ${stripe.secretMask}` : undefined} />
-            <TextField label="Webhook signing secret" name="webhookSecret" type="password" placeholder={stripe?.hasWebhookSecret ? "Leave blank to keep the stored one" : "whsec_…"} mono help={stripe?.hasWebhookSecret ? "Stored encrypted" : undefined} />
-          </FieldGrid>
-          <SaveRow busy={busy} />
-        </SettingsCard>
-      </Form>
-
-      <SettingsCard title="Connection">
-        <ListRow
-          name={stripe?.connectedAt ? "Connection verified" : "Not connected"}
-          note={stripe?.connectedAt ? `Stripe answered on ${new Date(stripe.connectedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Add the keys above, then test the connection"}
-          badges={[{ label: stripe?.connectedAt ? "Connected" : "Not connected", kind: stripe?.connectedAt ? "success" : "neutral" }, ...(stripe?.isBackup ? [{ label: "Backup", kind: "info" as const }] : [])]}
-          actions={[
-            { label: "Test connection", intent: "stripe-test", disabled: !stripe?.hasSecret || busy },
-            { label: "Remove", intent: "stripe-remove", danger: true, disabled: !stripe, confirm: "Remove Stripe from this store? Checkout will refuse payments until a provider is connected again." },
-          ]}
-        />
-        <div style={{ padding: "12px 16px", fontSize: 13, lineHeight: "19px", color: "var(--ink-2)" }}>
-          <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>Webhook — set this up once in Stripe</div>
-          <div style={{ marginBottom: 6 }}>In Stripe: Developers → Webhooks → Add endpoint.</div>
-          {webhookUrl ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-              <code style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, background: "var(--bg)", padding: "3px 8px", borderRadius: 4 }}>{webhookUrl}</code>
-              <CopyButton value={webhookUrl} />
+      <GlassGround>
+        <GlassPanel
+          title={`Payments · ${store.name}`}
+          sub={`${store.name} has its own payment account. If this account is ever frozen, your other stores keep taking money — nothing is shared between them.`}
+          aside={
+            <StateBadge
+              state={state}
+              label={connected ? "Connected" : hasSecret ? "Keys saved, untested" : "Not connected"}
+            />
+          }
+        >
+          <div style={glassBody}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "12px 14px",
+                borderRadius: 14,
+                flexWrap: "wrap",
+                background:
+                  mode === "live"
+                    ? "rgba(205,254,225,.7)"
+                    : mode === "test"
+                      ? "rgba(224,240,255,.7)"
+                      : "rgba(227,227,227,.6)",
+                color:
+                  mode === "live"
+                    ? "var(--b-success-fg)"
+                    : mode === "test"
+                      ? "var(--b-info-fg)"
+                      : "var(--ink-2)",
+              }}
+            >
+              <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: ".02em" }}>
+                {mode === "live" ? "LIVE MODE" : mode === "test" ? "TEST MODE" : "MODE UNKNOWN"}
+              </span>
+              <span style={{ fontSize: 12, lineHeight: "18px", flex: 1, minWidth: 200 }}>
+                {mode === "live"
+                  ? "These keys charge real cards and move real money."
+                  : mode === "test"
+                    ? "Test keys never charge a real card, and a test webhook never confirms a real order."
+                    : "No publishable key is saved, so this store's mode cannot be read. The secret key is stored masked and is never shown back."}
+              </span>
             </div>
-          ) : (
-            <div style={{ background: "var(--b-critical-bg)", color: "var(--b-critical-fg)", borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
-              The admin's own address is not set on the Worker (ADMIN_ORIGIN), so the exact webhook URL cannot be shown. Set it before creating the endpoint — a URL guessed from the page you happen to be on will silently never confirm a payment.
-            </div>
-          )}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-            <span>Select these four events:</span>
-            <code style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>{STRIPE_EVENTS}</code>
-            <CopyButton value={STRIPE_EVENTS} />
-          </div>
-          Then paste the signing secret it shows (whsec_…) into the field above.
-          <div style={{ marginTop: 6, fontWeight: 600, color: "var(--ink)" }}>
-            Check the endpoint says Live, not Test — a test-mode webhook never confirms a real order.
-          </div>
-        </div>
-      </SettingsCard>
 
-      <SettingsCard
-        title="Add a payment provider"
-        sub="A second account can take over if the first is frozen"
-        actions={
-          <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <CardButton type="button" disabled title="Stripe is provider one. A second Stripe account is the next thing to add here.">Add Stripe account</CardButton>
-            <CardButton type="button" disabled title="Not built yet. Payments are behind an interface so this does not touch orders or checkout when it arrives.">Add PayPal</CardButton>
-            <CardButton type="button" disabled title="Not built yet.">Add manual method</CardButton>
-          </span>
-        }
-        note="Greyed out means not built yet — not broken. It says so rather than pretending."
-      />
+            <StateRail
+              current={stateIndex}
+              steps={[
+                {
+                  key: "off",
+                  label: "Not connected",
+                  note: stripe ? "A Stripe account is on this store" : "No Stripe account on this store yet",
+                },
+                {
+                  key: "connecting",
+                  label: "Keys saved",
+                  note: hasSecret ? "A secret key is stored encrypted" : "A secret key is still missing",
+                },
+                {
+                  key: "on",
+                  label: "Connected",
+                  note: stripe?.connectedAt
+                    ? `Stripe answered on ${new Date(stripe.connectedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+                    : "Stripe has never answered this store",
+                },
+              ]}
+            />
+
+            <FactGrid>
+              <Fact label="Account name" value={stripe?.accountName || null} reason="Not saved yet" />
+              <Fact label="Publishable key" value={publishable || null} mono reason="Not saved yet" />
+              <Fact
+                label="Secret key"
+                value={stripe?.hasSecret ? stripe.secretMask : null}
+                mono
+                reason={encryption ? "Not saved yet" : "No encryption key on the Worker"}
+              />
+              <Fact label="Statement descriptor" value={store.statementDescriptor || null} reason="Not saved yet" />
+              <Fact
+                label="Webhook secret"
+                value={stripe?.hasWebhookSecret ? "Stored encrypted" : null}
+                reason="Not saved yet — paid orders would never be marked paid"
+              />
+              <Fact label="Role" value={stripe?.isBackup ? "Backup account" : stripe ? "Primary account" : null} reason="No account yet" />
+            </FactGrid>
+
+            {!encryption ? (
+              <GlassNotice kind="critical">
+                No encryption key is set on the Worker. Secret keys will not be saved until there is one — a live
+                payment key is not going in the database in the clear.
+              </GlassNotice>
+            ) : null}
+
+            <hr style={glassRule} />
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <Form method="post" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", flex: 1 }}>
+                <input type="hidden" name="intent" value="stripe-test" />
+                <PrimaryAction
+                  type="submit"
+                  disabled={!hasSecret || busy}
+                  title={hasSecret ? undefined : "Save a secret key first — there is nothing to test with"}
+                  style={{ height: 44, padding: "0 24px", fontSize: 14 }}
+                >
+                  {busy ? "Testing…" : "Test connection"}
+                </PrimaryAction>
+                <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "18px", flex: 1, minWidth: 200 }}>
+                  This really calls Stripe with the stored key. Stripe's own answer appears at the top of this screen.
+                </span>
+              </Form>
+              <Form
+                method="post"
+                onSubmit={(event) => {
+                  if (
+                    !confirm(
+                      "Remove Stripe from this store? Checkout will refuse payments until a provider is connected again.",
+                    )
+                  ) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <input type="hidden" name="intent" value="stripe-remove" />
+                <QuietAction
+                  type="submit"
+                  disabled={!stripe}
+                  title={stripe ? undefined : "No Stripe account on this store"}
+                  style={{ color: "var(--critical)" }}
+                >
+                  Remove
+                </QuietAction>
+              </Form>
+            </div>
+          </div>
+        </GlassPanel>
+
+        <GlassPanel title="Keys" sub="Paste them from Stripe → Developers → API keys. Secrets are stored encrypted and never shown back.">
+          <Form method="post">
+            <input type="hidden" name="intent" value="stripe" />
+            <div style={glassBody}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
+                <label style={glassField}>
+                  Account name
+                  <input
+                    name="accountName"
+                    defaultValue={stripe?.accountName}
+                    placeholder="Legal entity on the account"
+                    style={{ ...glassInput, fontFamily: "inherit" }}
+                  />
+                </label>
+                <label style={glassField}>
+                  Statement descriptor
+                  <input
+                    name="statementDescriptor"
+                    defaultValue={store.statementDescriptor}
+                    placeholder="What buyers see on their card"
+                    style={{ ...glassInput, fontFamily: "inherit" }}
+                  />
+                </label>
+                <label style={glassField}>
+                  Publishable key
+                  <input name="publishableKey" defaultValue={stripe?.publishableKey} placeholder="pk_live_…" style={glassInput} />
+                </label>
+                <label style={glassField}>
+                  Secret key
+                  <input
+                    name="secretKey"
+                    type="password"
+                    placeholder={stripe?.hasSecret ? "Leave blank to keep the stored one" : "sk_live_…"}
+                    style={glassInput}
+                  />
+                  <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-2)" }}>
+                    {stripe?.hasSecret ? `Stored encrypted · ${stripe.secretMask}` : "Stored encrypted, never shown back"}
+                  </span>
+                </label>
+                <label style={glassField}>
+                  Webhook signing secret
+                  <input
+                    name="webhookSecret"
+                    type="password"
+                    placeholder={stripe?.hasWebhookSecret ? "Leave blank to keep the stored one" : "whsec_…"}
+                    style={glassInput}
+                  />
+                  <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-2)" }}>
+                    {stripe?.hasWebhookSecret ? "Stored encrypted" : "From the endpoint you create below"}
+                  </span>
+                </label>
+              </div>
+              <div>
+                <PrimaryAction type="submit" disabled={busy}>
+                  {busy ? "Saving…" : "Save"}
+                </PrimaryAction>
+              </div>
+            </div>
+          </Form>
+        </GlassPanel>
+
+        <GlassPanel
+          title="Webhook"
+          sub="Stripe tells this admin that a card was actually charged. Without it a paid order sits as pending forever."
+          aside={
+            <StateBadge
+              state={stripe?.hasWebhookSecret ? "connecting" : "off"}
+              label={stripe?.hasWebhookSecret ? "Secret stored" : "No secret stored"}
+            />
+          }
+        >
+          <div style={glassBody}>
+            {stripe?.hasSecret && !stripe.hasWebhookSecret ? (
+              <GlassNotice kind="critical">
+                No webhook signing secret yet. Cards will be charged at Stripe, but this admin will never learn that
+                they were paid — orders would sit as "pending" forever. Finish this step before taking a real order.
+              </GlassNotice>
+            ) : null}
+
+            <span style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: "19px" }}>
+              In Stripe: Developers → Webhooks → Add endpoint.
+            </span>
+
+            {webhookUrl ? (
+              <CopyValue label="Endpoint URL" value={webhookUrl} />
+            ) : (
+              <GlassNotice kind="critical">
+                The admin's own address is not set on the Worker (ADMIN_ORIGIN), so the exact webhook URL cannot be
+                shown. Set it before creating the endpoint — a URL guessed from the page you happen to be on will
+                silently never confirm a payment.
+              </GlassNotice>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-2)" }}>
+                Select exactly these events — they are the four this admin handles
+              </span>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {STRIPE_EVENTS.split(", ").map((event) => (
+                  <code
+                    key={event}
+                    style={{
+                      fontFamily: "'JetBrains Mono',monospace",
+                      fontSize: 12,
+                      padding: "5px 10px",
+                      borderRadius: 999,
+                      background: "rgba(255,255,255,.72)",
+                      border: "1px solid rgba(255,255,255,.85)",
+                    }}
+                  >
+                    {event}
+                  </code>
+                ))}
+                <CopyValue value={STRIPE_EVENTS} />
+              </div>
+            </div>
+
+            <span style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: "19px" }}>
+              Then paste the signing secret it shows (whsec_…) into the Keys card above.
+            </span>
+
+            {/*
+              Whether a webhook has ever actually arrived is the single most useful
+              fact on this card, and nothing records it yet — there is no
+              last-received timestamp on the provider row and no loader field for
+              one. So it renders as unknown with the reason, not as a green tick.
+            */}
+            <Fact
+              label="Last webhook received"
+              value={null}
+              reason="Nothing records when a webhook last arrived, so this cannot be answered yet. Stripe's own endpoint page shows the delivery attempts in the meantime."
+            />
+
+            <GlassNotice kind="warning">
+              Check the endpoint says Live, not Test — a test-mode webhook never confirms a real order.
+            </GlassNotice>
+          </div>
+        </GlassPanel>
+
+        <GlassPanel
+          title="Add a payment provider"
+          sub="A second account can take over if the first is frozen. Greyed out means not built yet — not broken."
+          tight
+        >
+          <div style={{ ...glassBody, padding: "14px 16px 18px", flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            <QuietAction type="button" disabled title="Stripe is provider one. A second Stripe account is the next thing to add here.">
+              Add Stripe account
+            </QuietAction>
+            <QuietAction type="button" disabled title="Not built yet. Payments are behind an interface so this does not touch orders or checkout when it arrives.">
+              Add PayPal
+            </QuietAction>
+            <QuietAction type="button" disabled title="Not built yet.">
+              Add manual method
+            </QuietAction>
+          </div>
+        </GlassPanel>
+      </GlassGround>
 
       <Form method="post">
         <input type="hidden" name="intent" value="payment-handling" />
