@@ -14,6 +14,9 @@ import {
   setLineQuantity,
   saveCart,
 } from "~/lib/cart.server";
+import { eq } from "drizzle-orm";
+import { metaConfig, variants } from "~/db/schema";
+import { eventPixelScript, pixelScript } from "~/lib/meta.server";
 import { formatMoney } from "~/lib/money";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -37,10 +40,41 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!store) throw new Response("No store for this domain.", { status: 404 });
 
   const cart = await priceCart(context.db, store, readCartToken(request));
+
+  // The pixel, and the browser half of an AddToCart that /cart/add just sent
+  // from the server. It carries the id that redirect handed us, so the two
+  // halves deduplicate into one event.
+  const [meta] = await context.db
+    .select({ pixelId: metaConfig.pixelId })
+    .from(metaConfig)
+    .where(eq(metaConfig.storeId, store.id))
+    .limit(1);
+
+  let pixel = meta?.pixelId ? pixelScript(meta.pixelId) : null;
+  const eventId = url.searchParams.get("fbe");
+  const addedVariantId = url.searchParams.get("fbv");
+  if (pixel && eventId && addedVariantId) {
+    const [variant] = await context.db
+      .select()
+      .from(variants)
+      .where(eq(variants.id, addedVariantId))
+      .limit(1);
+    if (variant) {
+      pixel = `${pixel}\n${eventPixelScript({
+        name: "AddToCart",
+        eventId,
+        valueCents: variant.priceCents,
+        currency: store.currency,
+        contents: [{ id: variant.id, quantity: 1, itemPrice: variant.priceCents }],
+      })}`;
+    }
+  }
+
   return {
     store: { name: store.name, slug: store.slug, currency: store.currency },
     cart,
     taxRate: store.taxRate,
+    pixel,
   };
 }
 
@@ -62,11 +96,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function Cart({ loaderData }: Route.ComponentProps) {
-  const { store, cart } = loaderData;
+  const { store, cart, pixel } = loaderData;
   const storeParam = `?store=${store.slug}`;
 
   return (
     <div className="gk">
+      {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <header className="gk-header">
         <Link className="gk-logo" to={`/${storeParam}`} style={{ textDecoration: "none" }}>
           {store.name}

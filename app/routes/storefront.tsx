@@ -5,7 +5,7 @@ import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig, themes } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
 import { eq } from "drizzle-orm";
-import { pixelScript } from "~/lib/meta.server";
+import { pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import {
   geoFromRequest,
   readVisitorSession,
@@ -103,7 +103,28 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .from(metaConfig)
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
-  const pixel = meta?.pixelId && !previewPageId && !previewThemeId && !isThumb ? pixelScript(meta.pixelId) : null;
+  const live = !previewPageId && !previewThemeId && !isThumb;
+  let pixel = meta?.pixelId && live ? pixelScript(meta.pixelId) : null;
+
+  // ViewContent. Someone looking at the product is the top of the funnel, and
+  // it is the event Meta needs most after Purchase to find more people like
+  // the ones who buy. Sent from the browser and the server with one shared id.
+  if (pixel && page) {
+    const shown = page.variants.find((v) => v.isDefault) ?? page.variants[0];
+    if (shown) {
+      const viewContent = await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+        storeId: store.id,
+        pixelId: meta?.pixelId ?? null,
+        request,
+        url,
+        name: "ViewContent",
+        valueCents: shown.priceCents,
+        currency: store.currency,
+        contents: [{ id: shown.id, quantity: 1, itemPrice: shown.priceCents }],
+      });
+      if (viewContent) pixel = `${pixel}\n${viewContent}`;
+    }
+  }
   // Record the visit. This is what Live View and Analytics are made of.
   const headers = new Headers();
   if (shouldTrack(request, url) && !isThumb && !previewThemeId) {

@@ -17,7 +17,9 @@ import { readCartToken, priceCart, markCartConverted } from "~/lib/cart.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import { placeOrder } from "~/lib/admin.server";
 import { geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
-import { readMetaCookies } from "~/lib/meta.server";
+import { metaConfig } from "~/db/schema";
+import { eq } from "drizzle-orm";
+import { pixelScript, readMetaCookies, trackFunnelEvent } from "~/lib/meta.server";
 import { formatMoney } from "~/lib/money";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -67,7 +69,35 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         : "Payments are not available right now.";
   }
 
+  // InitiateCheckout: reaching this page with something in the cart. Both
+  // halves, one shared id, the whole cart as contents.
+  const [meta] = await context.db
+    .select({ pixelId: metaConfig.pixelId })
+    .from(metaConfig)
+    .where(eq(metaConfig.storeId, store.id))
+    .limit(1);
+
+  let pixel = meta?.pixelId ? pixelScript(meta.pixelId) : null;
+  if (pixel && cart.lines.length) {
+    const initiate = await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+      storeId: store.id,
+      pixelId: meta?.pixelId ?? null,
+      request,
+      url,
+      name: "InitiateCheckout",
+      valueCents: cart.totalCents,
+      currency: cart.currency,
+      contents: cart.lines.map((line) => ({
+        id: line.variantId,
+        quantity: line.quantity,
+        itemPrice: line.unitPriceCents,
+      })),
+    });
+    if (initiate) pixel = `${pixel}\n${initiate}`;
+  }
+
   return {
+    pixel,
     store: {
       name: store.name,
       slug: store.slug,
@@ -209,7 +239,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function Checkout({ loaderData, actionData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, paymentsMessage, publishableKey } = loaderData;
+  const { store, cart, paymentsReady, paymentsMessage, publishableKey, pixel } = loaderData;
   const navigation = useNavigation();
   const busy = navigation.state === "submitting";
   const storeParam = `?store=${store.slug}`;
@@ -236,6 +266,7 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
 
   return (
     <div className="gk">
+      {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <header className="gk-header">
         <Link className="gk-logo" to={`/${storeParam}`} style={{ textDecoration: "none" }}>
           {store.name}

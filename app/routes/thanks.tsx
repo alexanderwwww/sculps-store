@@ -87,6 +87,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           eventId: loaded.order.metaEventId,
           valueCents: loaded.order.totalCents,
           currency: loaded.order.currency,
+          // The same contents the server sends. Two halves of one deduplicated
+          // event must describe the same purchase, or Meta keeps the poorer one.
+          contents: loaded.items.map((item) => ({
+            id: item.variantId ?? item.id,
+            quantity: item.quantity,
+            itemPrice: item.unitPriceCents,
+          })),
         })}`
       : null;
 

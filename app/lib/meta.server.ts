@@ -21,11 +21,19 @@ async function hash(value: string | null | undefined): Promise<string | null> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export interface PurchaseEvent {
+/**
+ * The four events an ad account actually optimises on. Meta learns from the
+ * whole funnel, not just the sale — a pixel that only ever reports Purchase
+ * gives the algorithm almost nothing to work with.
+ */
+export type MetaEventName = "ViewContent" | "AddToCart" | "InitiateCheckout" | "Purchase";
+
+export interface MetaEvent {
   eventId: string;
   eventTime: number;
   sourceUrl: string;
-  email: string;
+  /** absent before checkout — the earlier events have no customer yet */
+  email?: string | null;
   phone?: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -40,6 +48,11 @@ export interface PurchaseEvent {
   userAgent?: string | null;
   fbp?: string | null;
   fbc?: string | null;
+}
+
+/** A Purchase always knows who bought. */
+export interface PurchaseEvent extends MetaEvent {
+  email: string;
 }
 
 export interface MetaSettings {
@@ -63,15 +76,16 @@ export async function metaSettings(
 }
 
 /**
- * Sends a Purchase to the Conversions API.
+ * Sends one event to the Conversions API.
  *
  * Returns a reason rather than throwing: a failed ad event must never take
  * down a page the customer is looking at, and the failure belongs on the order
  * timeline where it can be seen.
  */
-export async function sendPurchase(
+export async function sendEvent(
   settings: MetaSettings,
-  event: PurchaseEvent,
+  name: MetaEventName,
+  event: MetaEvent,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const [em, ph, fn, ln, ct, st, zp, country] = await Promise.all([
     hash(event.email),
@@ -101,7 +115,7 @@ export async function sendPurchase(
   const body: Record<string, unknown> = {
     data: [
       {
-        event_name: "Purchase",
+        event_name: name,
         event_time: event.eventTime,
         // The same id the browser pixel used. This is the deduplication.
         event_id: event.eventId,
@@ -117,6 +131,8 @@ export async function sendPurchase(
             item_price: (item.itemPrice / 100).toFixed(2),
           })),
           content_type: "product",
+          content_ids: event.contents.map((item) => item.id),
+          num_items: event.contents.reduce((sum, item) => sum + item.quantity, 0),
         },
       },
     ],
@@ -143,6 +159,11 @@ export async function sendPurchase(
   }
 }
 
+/** Purchase, the event the whole funnel is pointed at. */
+export function sendPurchase(settings: MetaSettings, event: PurchaseEvent) {
+  return sendEvent(settings, "Purchase", event);
+}
+
 /**
  * The browser half. Emits the same event id as the server call above.
  *
@@ -158,12 +179,48 @@ document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init','${pixelId}');fbq('track','PageView');`;
 }
 
+/**
+ * The browser half of any of the four events.
+ *
+ * It sends the same custom_data the server sends — same contents, same ids,
+ * same count. When the two halves of a deduplicated pair disagree, Meta keeps
+ * one of them and the match quality of the event drops; sending the same thing
+ * twice is the whole point.
+ */
+export function eventPixelScript(input: {
+  name: MetaEventName;
+  eventId: string;
+  valueCents: number;
+  currency: string;
+  contents: { id: string; quantity: number; itemPrice: number }[];
+}): string {
+  const customData = {
+    value: Number((input.valueCents / 100).toFixed(2)),
+    currency: input.currency.toUpperCase(),
+    content_type: "product",
+    content_ids: input.contents.map((item) => item.id),
+    contents: input.contents.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      item_price: Number((item.itemPrice / 100).toFixed(2)),
+    })),
+    num_items: input.contents.reduce((sum, item) => sum + item.quantity, 0),
+  };
+  return `if(window.fbq){fbq('track',${JSON.stringify(input.name)},${JSON.stringify(customData)},{eventID:${JSON.stringify(input.eventId)}});}`;
+}
+
 export function purchasePixelScript(input: {
   eventId: string;
   valueCents: number;
   currency: string;
+  contents: { id: string; quantity: number; itemPrice: number }[];
 }): string {
-  return `if(window.fbq){fbq('track','Purchase',{value:${(input.valueCents / 100).toFixed(2)},currency:'${input.currency.toUpperCase()}'},{eventID:'${input.eventId}'});}`;
+  return eventPixelScript({ ...input, name: "Purchase" });
+}
+
+/** A fresh id for one event, shared by the browser and server halves. */
+export function newMetaEventId(): string {
+  return crypto.randomUUID();
 }
 
 /** Reads the pixel's own cookies, which improve Meta's match rate. */
@@ -180,4 +237,66 @@ export function readMetaCookies(request: Request): { fbp: string | null; fbc: st
     if (key === "_fbc") fbc = value;
   }
   return { fbp, fbc };
+}
+
+/**
+ * One funnel event, both halves.
+ *
+ * Fires the server-side Conversions API call in the background and returns the
+ * browser script for the same event, carrying the same id so Meta merges them.
+ * The server half never blocks the page: an ad event is not worth a slow
+ * storefront, so it goes out through waitUntil and its failure is silent to
+ * the customer.
+ *
+ * Before checkout there is no customer, so the only identity we can send is
+ * what the pixel's own cookies and the request give us — fbp, fbc, IP and user
+ * agent. That is what Meta expects for these events; nothing is invented.
+ */
+export async function trackFunnelEvent(
+  db: DB,
+  env: Env,
+  ctx: { waitUntil(promise: Promise<unknown>): void },
+  input: {
+    storeId: string;
+    pixelId: string | null;
+    request: Request;
+    url: URL;
+    name: MetaEventName;
+    valueCents: number;
+    currency: string;
+    contents: { id: string; quantity: number; itemPrice: number }[];
+  },
+): Promise<string | null> {
+  if (!input.pixelId || !input.contents.length) return null;
+
+  const eventId = newMetaEventId();
+  const script = eventPixelScript({
+    name: input.name,
+    eventId,
+    valueCents: input.valueCents,
+    currency: input.currency,
+    contents: input.contents,
+  });
+
+  const { fbp, fbc } = readMetaCookies(input.request);
+  ctx.waitUntil(
+    (async () => {
+      const settings = await metaSettings(db, env, input.storeId);
+      if (!settings) return;
+      await sendEvent(settings, input.name, {
+        eventId,
+        eventTime: Math.floor(Date.now() / 1000),
+        sourceUrl: input.url.toString(),
+        valueCents: input.valueCents,
+        currency: input.currency,
+        contents: input.contents,
+        clientIp: input.request.headers.get("CF-Connecting-IP"),
+        userAgent: input.request.headers.get("User-Agent"),
+        fbp,
+        fbc,
+      });
+    })(),
+  );
+
+  return script;
 }
