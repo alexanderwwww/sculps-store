@@ -53,6 +53,8 @@ export const stores = pgTable("stores", {
   city: text("city"),
   region: text("region"),
   postalCode: text("postal_code"),
+  /** ISO-2, the same vocabulary the checkout and Meta use */
+  country: text("country"),
   phone: text("phone"),
 
   /* Taxes */

@@ -42,10 +42,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       home:
         store.lat != null && store.lon != null
           ? { lat: store.lat, lon: store.lon }
-          : // stores carry no country column yet — the state is enough to place a
-            // US business, and pointForAddress falls back to the country when
-            // one exists.
-            pointForAddress(store.region, null),
+          : pointForAddress(store.region, store.country),
     },
     stores: all.map((s) => ({ slug: s.slug, name: s.name })),
     board: {
@@ -128,7 +125,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
   const [fullscreen, setFullscreen] = useState(false);
   const [locQuery, setLocQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
-  const [glassCards, setGlassCards] = useState<{ key: string; title: string; sub: string }[]>([]);
+  const [glassCards, setGlassCards] = useState<{ key: string; title: string; sub: string; sale: boolean }[]>([]);
   const [tip, setTip] = useState<GlobeTip | null>(null);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -226,6 +223,9 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
           : event.source
             ? `from ${event.source}`
             : "direct visit",
+        // A sale is the only event worth interrupting him for, so it is the
+        // only one that turns gold.
+        sale: event.type === "purchase",
       }));
       setGlassCards((current) => [...added, ...current].slice(0, 3));
       const ids = new Set(added.map((card) => card.key));
@@ -471,31 +471,64 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
           {glassCards.map((card) => (
             <div key={card.key} style={{ animation: "kGlassL 3.6s cubic-bezier(.22,.8,.28,1) forwards" }}>
               <div
+                className={card.sale ? "k-sale-card" : undefined}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 11,
                   padding: "8px 10px",
                   borderRadius: 14,
-                  background: "rgba(255,255,255,.62)",
+                  background: card.sale
+                    ? "linear-gradient(135deg,rgba(255,248,225,.86),rgba(255,236,179,.72))"
+                    : "rgba(255,255,255,.62)",
                   backdropFilter: "blur(22px) saturate(190%)",
                   WebkitBackdropFilter: "blur(22px) saturate(190%)",
-                  border: "1px solid rgba(255,255,255,.85)",
-                  boxShadow: "0 14px 40px rgba(28,12,56,.18)",
+                  border: card.sale ? "1px solid rgba(212,166,42,.55)" : "1px solid rgba(255,255,255,.85)",
+                  boxShadow: card.sale
+                    ? "0 14px 40px rgba(150,105,10,.28), inset 0 1px 0 rgba(255,255,255,.9)"
+                    : "0 14px 40px rgba(28,12,56,.18)",
                 }}
               >
-                <span style={{ width: 26, height: 26, borderRadius: 8, background: "#1A1A1A", display: "grid", placeItems: "center", flex: "none" }}>
-                  {/* His mark, in the design's own black tile. The artwork is
-                      white, so it only reads on the dark tile — never on the
-                      glass itself. */}
-                  <img src="/logo-mark.png" alt="" style={{ width: 17, height: 17, objectFit: "contain", display: "block" }} />
+                <span
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    // A sale gets his gold bag, which is artwork in its own
+                    // right and needs no tile behind it. Everything else keeps
+                    // the design's black tile, because that mark is white and
+                    // would vanish on the glass.
+                    background: card.sale ? "transparent" : "#1A1A1A",
+                    display: "grid",
+                    placeItems: "center",
+                    flex: "none",
+                  }}
+                >
+                  <img
+                    src={card.sale ? "/logo-gold.png" : "/logo-mark.png"}
+                    alt=""
+                    style={{ width: card.sale ? 24 : 17, height: card.sale ? 24 : 17, objectFit: "contain", display: "block" }}
+                  />
                 </span>
                 <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
                   <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 650, color: "#14102A", lineHeight: "15px" }}>{card.title}</span>
+                    <span style={{ fontSize: 12, fontWeight: 650, color: card.sale ? "#6B4E05" : "#14102A", lineHeight: "15px" }}>{card.title}</span>
                     <span style={{ fontSize: 11, color: "#6B6280", flex: "none" }}>now</span>
                   </span>
-                  <span style={{ fontSize: 11, color: "#4A4260", lineHeight: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{card.sub}</span>
+                  <span
+                    style={{
+                      fontSize: card.sale ? 12 : 11,
+                      fontWeight: card.sale ? 700 : 400,
+                      color: card.sale ? "#8A6508" : "#4A4260",
+                      lineHeight: "14px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      fontVariantNumeric: card.sale ? "tabular-nums" : undefined,
+                    }}
+                  >
+                    {card.sub}
+                  </span>
                 </span>
               </div>
             </div>
