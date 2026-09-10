@@ -549,3 +549,44 @@
 .gb-drawer__checkout:hover{background:var(--lime-2)}
 .gb-drawer__checkout[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 .gb-drawer__x:focus-visible,.gb-drawer__qty button:focus-visible,.gb-drawer__up-add:focus-visible,.gb-drawer__checkout:focus-visible{outline:3px solid var(--night);outline-offset:3px}
+
+/* ------------------------------------------------- standalone pages ------
+   Shipping, returns, privacy and the rest. Same paper, same type, same rules
+   as the rest of the shop — a policy page is part of the website, not an
+   apology printed on the back of it. */
+.gb-page-sec { background: var(--paper); }
+.gb-page {
+  padding: clamp(40px, 7vw, 84px) 0 clamp(56px, 9vw, 104px);
+  max-width: 760px;
+}
+.gb-page__title {
+  font-family: var(--font-h);
+  font-weight: 800;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  margin: 0 0 26px;
+}
+.gb-page__body { color: var(--ink); font-size: 17px; line-height: 1.72; }
+.gb-page__body > * + * { margin-top: 18px; }
+.gb-page__body h2 {
+  font-family: var(--font-h);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.25;
+  margin-top: 40px;
+}
+.gb-page__body h3 { font-family: var(--font-h); font-weight: 700; font-size: 19px; margin-top: 30px; }
+.gb-page__body ul { padding-left: 22px; }
+.gb-page__body li + li { margin-top: 8px; }
+.gb-page__body a { color: var(--leaf); text-underline-offset: 3px; }
+.gb-page__body strong { font-weight: 650; }
+.gb-page__empty { color: var(--dim); font-size: 17px; }
+.gb-page__meta {
+  margin-top: 44px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--dim);
+  font-size: 14px;
+}

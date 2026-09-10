@@ -81,6 +81,13 @@ const ArrowRight = (
 
 /* ------------------------------------------------------------------- page */
 
+/**
+ * What the header and footer actually need. A policy page has a store and a
+ * menu but no product, and the chrome has to be the same chrome on both — a
+ * page with no header and no way home is not a page on this website.
+ */
+export type ChromeInput = Pick<LoadedProductPage, "store" | "nav">;
+
 export function GardenBuddyStorefront({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
   // Which store answers is decided by the hostname, except on the built-in
   // address where it comes from ?store=. Without carrying that through, every
@@ -149,7 +156,7 @@ function Section({
 
 /* ----------------------------------------------------------------- header */
 
-function Header({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
+export function Header({ page, storeParam = "" }: { page: ChromeInput; storeParam?: string }) {
   const href = (path: string) => `${path}${storeParam}`;
   const { store, nav } = page;
   const links = nav.main;
@@ -249,7 +256,7 @@ function Logo({
 
 /* ----------------------------------------------------------------- footer */
 
-function Footer({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
+export function Footer({ page, storeParam = "" }: { page: ChromeInput; storeParam?: string }) {
   const href = (path: string) => `${path}${storeParam}`;
   const { store, nav } = page;
 
