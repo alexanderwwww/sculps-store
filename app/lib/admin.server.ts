@@ -243,8 +243,16 @@ export async function publishTheme(db: DB, storeId: string, themeId: string): Pr
     .where(eq(themes.id, themeId));
 }
 
+/**
+ * Deletes a draft theme and everything inside it. pages.themeId is a plain
+ * column rather than a foreign key, so the pages (and through them the
+ * sections and blocks) have to go explicitly or they are left orphaned.
+ */
 export async function deleteTheme(db: DB, themeId: string): Promise<void> {
-  await db.delete(themes).where(and(eq(themes.id, themeId), eq(themes.isLive, false)));
+  const [theme] = await db.select().from(themes).where(eq(themes.id, themeId)).limit(1);
+  if (!theme || theme.isLive) return;
+  await db.delete(pages).where(eq(pages.themeId, themeId));
+  await db.delete(themes).where(eq(themes.id, themeId));
 }
 
 /* ------------------------------------------------------------------ orders */
@@ -277,7 +285,7 @@ export async function listOrders(
   if (options.query) {
     const q = `%${options.query.toLowerCase()}%`;
     filters.push(
-      sql`(lower(${orders.customerName}) like ${q} or lower(${orders.email}) like ${q} or cast(${orders.number} as text) like ${q})`,
+      sql`(lower(${orders.customerName}) like ${q} or lower(${orders.email}) like ${q} or cast(${orders.number} as text) like ${q} or lower(coalesce(${orders.city}, '')) like ${q} or lower(coalesce(${orders.tracking}, '')) like ${q})`,
     );
   }
   const where = filters.length ? and(...filters) : undefined;
@@ -340,12 +348,17 @@ export async function listOrders(
   };
 }
 
-export async function loadOrder(db: DB, orderId: string) {
+/**
+ * Loads one order. When a storeId is given the order must belong to that
+ * store, so a link carried over from another store's admin view resolves to
+ * nothing rather than to someone else's order.
+ */
+export async function loadOrder(db: DB, orderId: string, storeId?: string) {
   const [row] = await db
     .select({ order: orders, store: stores })
     .from(orders)
     .innerJoin(stores, eq(stores.id, orders.storeId))
-    .where(eq(orders.id, orderId))
+    .where(storeId ? and(eq(orders.id, orderId), eq(orders.storeId, storeId)) : eq(orders.id, orderId))
     .limit(1);
   if (!row) return null;
 
@@ -1230,11 +1243,15 @@ export interface PlaceOrderInput {
  * merchant expects, rather than a random id the customer has to read out.
  */
 export async function placeOrder(db: DB, input: PlaceOrderInput) {
-  const [store] = await db.select().from(stores).where(eq(stores.id, input.storeId)).limit(1);
-  if (!store) throw new Error("That store no longer exists.");
-
-  const number = store.orderSeq;
-  await db.update(stores).set({ orderSeq: number + 1 }).where(eq(stores.id, store.id));
+  // Take the next number atomically. Two checkouts at the same second on an
+  // ad spike must never be handed the same order number.
+  const [taken] = await db
+    .update(stores)
+    .set({ orderSeq: sql`${stores.orderSeq} + 1` })
+    .where(eq(stores.id, input.storeId))
+    .returning({ next: stores.orderSeq });
+  if (!taken) throw new Error("That store no longer exists.");
+  const number = taken.next - 1;
 
   const [order] = await db
     .insert(orders)

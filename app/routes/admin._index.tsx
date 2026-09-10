@@ -214,7 +214,7 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
           recent.map((order) => (
             <Link
               key={order.id}
-              to={`/admin/orders/${order.id}`}
+              to={`/admin/orders/${order.id}?store=${store.slug}`}
               className="k-hover"
               style={{
                 display: "grid",

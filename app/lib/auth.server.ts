@@ -7,9 +7,9 @@
  * is rejected before a session is ever created. That is what makes the admin
  * being on a public URL safe.
  */
-import { eq, and, gt, lt } from "drizzle-orm";
+import { eq, and, gt, lt, sql } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { users, sessions } from "~/db/schema";
+import { users, sessions, loginAttempts } from "~/db/schema";
 
 const COOKIE = "kerberos_session";
 /** "Remember me" means this, renewed every time the session is used. */
@@ -103,8 +103,27 @@ export async function currentUser(db: DB, request: Request): Promise<AdminUser |
   return { id: row.id, email: row.email, name: row.name, avatarUrl: row.avatarUrl };
 }
 
+/**
+ * A state-changing request must come from a page on this same origin.
+ *
+ * The session cookie is SameSite=Lax, which stops a cross-site form POST from
+ * carrying it in most browsers but not all. Checking Origin (or Referer) is
+ * the belt to that braces: a form on another site cannot refund an order.
+ */
+function assertSameOrigin(request: Request): void {
+  if (request.method === "GET" || request.method === "HEAD") return;
+  const url = new URL(request.url);
+  const origin = request.headers.get("Origin");
+  const referer = request.headers.get("Referer");
+  const source = origin ?? (referer ? new URL(referer).origin : null);
+  if (!source || source !== url.origin) {
+    throw new Response("This request did not come from the admin.", { status: 403 });
+  }
+}
+
 /** Throws a redirect to the sign-in page when nobody is signed in. */
 export async function requireUser(db: DB, request: Request): Promise<AdminUser> {
+  assertSameOrigin(request);
   const user = await currentUser(db, request);
   if (user) return user;
   const url = new URL(request.url);
@@ -245,6 +264,31 @@ export async function exchangeCode(
  * guessed a character at a time. When GOOGLE_CLIENT_ID is set this stops being
  * offered — Google becomes the only door.
  */
+const MAX_ATTEMPTS = 8;
+const ATTEMPT_WINDOW_MS = 15 * 60_000;
+
+/**
+ * Brute-force guard for the access code: eight wrong tries per address per
+ * fifteen minutes. Kept in the database so it holds across Worker isolates.
+ */
+export async function loginAllowed(db: DB, ip: string): Promise<boolean> {
+  const since = new Date(Date.now() - ATTEMPT_WINDOW_MS);
+  const [row] = await db
+    .select({ n: sql<number>`cast(count(*) as int)` })
+    .from(loginAttempts)
+    .where(and(eq(loginAttempts.ip, ip), gt(loginAttempts.at, since)));
+  return (row?.n ?? 0) < MAX_ATTEMPTS;
+}
+
+export async function recordFailedLogin(db: DB, ip: string): Promise<void> {
+  await db.insert(loginAttempts).values({ ip });
+  await db.delete(loginAttempts).where(lt(loginAttempts.at, new Date(Date.now() - ATTEMPT_WINDOW_MS)));
+}
+
+export function clientIp(request: Request): string {
+  return request.headers.get("CF-Connecting-IP") ?? "unknown";
+}
+
 export async function checkAccessCode(
   db: DB,
   env: Env,

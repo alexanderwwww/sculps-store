@@ -88,6 +88,11 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return { error: "That email address does not look right — we send your receipt there." };
   }
+  // An order with no shipping address cannot be fulfilled, so it is not taken.
+  const required = { address1: "street address", city: "city", region: "state", postalCode: "ZIP code" };
+  for (const [field, label] of Object.entries(required)) {
+    if (!String(form.get(field) || "").trim()) return { error: `Please add your ${label} so we can ship it.` };
+  }
 
   let provider;
   try {
@@ -256,7 +261,7 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
 
                 <label className="gk-field">
                   <span>Address</span>
-                  <input className="gk-input" name="address1" autoComplete="address-line1" />
+                  <input className="gk-input" name="address1" required autoComplete="address-line1" />
                 </label>
 
                 <label className="gk-field">
@@ -267,18 +272,18 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
                 <div className="gk-row">
                   <label className="gk-field">
                     <span>City</span>
-                    <input className="gk-input" name="city" autoComplete="address-level2" />
+                    <input className="gk-input" name="city" required autoComplete="address-level2" />
                   </label>
                   <label className="gk-field">
                     <span>State</span>
-                    <input className="gk-input" name="region" autoComplete="address-level1" />
+                    <input className="gk-input" name="region" required autoComplete="address-level1" />
                   </label>
                 </div>
 
                 <div className="gk-row">
                   <label className="gk-field">
                     <span>ZIP code</span>
-                    <input className="gk-input" name="postalCode" autoComplete="postal-code" />
+                    <input className="gk-input" name="postalCode" required autoComplete="postal-code" />
                   </label>
                   <label className="gk-field">
                     <span>Country</span>

@@ -266,7 +266,7 @@ export default function Orders({ loaderData }: Route.ComponentProps) {
                       </td>
                       <td style={{ padding: "0 12px" }}>
                         <Link
-                          to={`/admin/orders/${order.id}`}
+                          to={`/admin/orders/${order.id}?store=${store.slug}`}
                           style={{
                             fontFamily: "'JetBrains Mono',monospace",
                             fontSize: 12,

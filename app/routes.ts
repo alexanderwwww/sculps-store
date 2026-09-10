@@ -11,6 +11,7 @@ export default [
   route("cart/add", "routes/cart.add.tsx"),
   route("checkout", "routes/checkout.tsx"),
   route("thanks", "routes/thanks.tsx"),
+  route("pages/:handle", "routes/pages.$handle.tsx"),
   route("webhooks/stripe", "routes/webhooks.stripe.tsx"),
 
   // Admin. Sign-in lives outside the layout so it is reachable when signed out.
@@ -22,6 +23,7 @@ export default [
     ...prefix("admin", [
       index("routes/admin._index.tsx"),
       route("orders", "routes/admin.orders._index.tsx"),
+      route("orders/export", "routes/admin.orders.export.tsx"),
       route("orders/:id", "routes/admin.orders.$id.tsx"),
       route("products", "routes/admin.products._index.tsx"),
       route("products/:id", "routes/admin.products.$id.tsx"),

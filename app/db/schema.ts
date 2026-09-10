@@ -507,6 +507,17 @@ export const sessions = pgTable(
   (t) => [index("sessions_user_idx").on(t.userId)],
 );
 
+/** Failed sign-in attempts, for the brute-force guard. Rows expire in minutes. */
+export const loginAttempts = pgTable(
+  "login_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ip: text("ip").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("login_attempts_ip_at_idx").on(t.ip, t.at)],
+);
+
 /* ------------------------------------------------------------------ themes */
 
 /**

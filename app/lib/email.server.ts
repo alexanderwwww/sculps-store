@@ -209,3 +209,61 @@ export async function sendShippingNotice(
 
   return result.ok;
 }
+
+/** The one that goes to him: a sale happened. Short, and it links to the order. */
+export async function sendMerchantNewOrder(
+  db: DB,
+  env: Env,
+  orderId: string,
+  input: {
+    to: string;
+    storeName: string;
+    orderNumber: number;
+    customerName: string;
+    city: string | null;
+    region: string | null;
+    totalCents: number;
+    currency: string;
+    lines: EmailLine[];
+    adminUrl: string;
+  },
+): Promise<boolean> {
+  const where = [input.city, input.region].filter(Boolean).join(", ");
+  const summary = input.lines.map((line) => `${line.label} × ${line.quantity}`).join(", ");
+  const subject = `[${input.storeName}] New order #${input.orderNumber} · ${formatMoney(input.totalCents, input.currency)}`;
+
+  const text = [
+    `New order #${input.orderNumber} on ${input.storeName}.`,
+    ``,
+    `${input.customerName}${where ? ` · ${where}` : ""}`,
+    summary,
+    `Total ${formatMoney(input.totalCents, input.currency)}`,
+    ``,
+    `Open it: ${input.adminUrl}`,
+  ].join("\n");
+
+  const html = shell(
+    input.storeName,
+    `<p style="font-size:16px;margin:0 0 12px">New order <strong>#${input.orderNumber}</strong> · <strong>${formatMoney(input.totalCents, input.currency)}</strong></p>
+<p style="font-size:15px;margin:0 0 6px">${input.customerName}${where ? ` · ${where}` : ""}</p>
+<p style="font-size:15px;color:#555;margin:0 0 18px">${summary}</p>
+<a href="${input.adminUrl}" style="display:inline-block;background:#1A1A1A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600">Open the order</a>`,
+  );
+
+  const result = await send(env, {
+    from: `${input.storeName} <orders@resend.dev>`,
+    to: input.to,
+    subject,
+    html,
+    text,
+  });
+
+  await recordOrderEvent(
+    db,
+    orderId,
+    result.ok ? "email:merchant" : "email:failed",
+    result.ok ? `You were emailed about this order at ${input.to}` : `Could not email you about this order · ${result.reason}`,
+    result.ok ? { id: result.id } : { reason: result.reason },
+  );
+  return result.ok;
+}

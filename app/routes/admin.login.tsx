@@ -16,6 +16,9 @@ import {
   checkAccessCode,
   createSession,
   sessionCookie,
+  loginAllowed,
+  recordFailedLogin,
+  clientIp,
 } from "~/lib/auth.server";
 import adminHref from "~/admin/admin.css?url";
 
@@ -71,9 +74,14 @@ export async function action({ context, request }: Route.ActionArgs) {
   }
 
   if (intent === "code") {
+    const ip = clientIp(request);
+    if (!(await loginAllowed(context.db, ip))) {
+      return { error: "Too many attempts. Wait fifteen minutes and try again." };
+    }
     const submitted = String(form.get("code") || "");
     const user = await checkAccessCode(context.db, context.cloudflare.env, submitted);
     if (!user) {
+      await recordFailedLogin(context.db, ip);
       // Deliberately vague: a wrong code and an unknown user look the same.
       return { error: "That code is not right." };
     }

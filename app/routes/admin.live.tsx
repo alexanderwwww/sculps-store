@@ -458,7 +458,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
             board.recent.slice(0, 30).map((event) => (
               <button
                 key={event.id}
-                onClick={() => event.orderId && navigate(`/admin/orders/${event.orderId}`)}
+                onClick={() => event.orderId && navigate(`/admin/orders/${event.orderId}?store=${store.slug}`)}
                 style={{
                   width: "100%",
                   display: "flex",

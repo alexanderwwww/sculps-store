@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { orders, orderEvents, stores } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
-import { sendOrderConfirmation, emailReady } from "./email.server";
+import { sendOrderConfirmation, sendMerchantNewOrder, emailReady } from "./email.server";
 import { metaSettings, sendPurchase } from "./meta.server";
 
 /**
@@ -67,7 +67,29 @@ export async function afterPaymentConfirmed(
     }
   }
 
-  // 2. Meta's server-side Purchase, sharing the browser pixel's event id.
+  // 2. Tell him. Without this, nothing announces a sale unless he is looking.
+  if (!(await alreadyDone(db, orderId, "email:merchant")) && store.contactEmail) {
+    if (emailReady(env)) {
+      await sendMerchantNewOrder(db, env, orderId, {
+        to: store.contactEmail,
+        storeName: store.name,
+        orderNumber: order.number,
+        customerName: order.customerName,
+        city: order.city,
+        region: order.region,
+        totalCents: order.totalCents,
+        currency: order.currency,
+        lines: items.map((item) => ({
+          label: item.label,
+          quantity: item.quantity,
+          lineTotalCents: item.unitPriceCents * item.quantity,
+        })),
+        adminUrl: `${env.ADMIN_ORIGIN || "https://kerberos.gardenbuddystore.workers.dev"}/admin/orders/${order.id}`,
+      });
+    }
+  }
+
+  // 3. Meta's server-side Purchase, sharing the browser pixel's event id.
   if (!(await alreadyDone(db, orderId, "meta:purchase"))) {
     const settings = await metaSettings(db, env, store.id);
     if (!settings) {

@@ -9,6 +9,7 @@ import { Form, Link, useNavigation } from "react-router";
 import type { Route } from "./+types/admin.orders.$id";
 import { requireUser } from "~/lib/auth.server";
 import {
+  resolveAdminStore,
   loadOrder,
   setOrderState,
   setTracking,
@@ -19,6 +20,8 @@ import { money } from "~/lib/money";
 import { sendShippingNotice, emailReady } from "~/lib/email.server";
 import { orders } from "~/db/schema";
 import { eq } from "drizzle-orm";
+import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
+import { centsFromInput } from "~/lib/money";
 import {
   card,
   cardHeader,
@@ -51,7 +54,8 @@ export function meta({ data }: Route.MetaArgs) {
 
 export async function loader({ context, request, params }: Route.LoaderArgs) {
   await requireUser(context.db, request);
-  const loaded = await loadOrder(context.db, params.id);
+  const { store: scope } = await resolveAdminStore(context.db, new URL(request.url));
+  const loaded = await loadOrder(context.db, params.id, scope?.id);
   if (!loaded) throw new Response("Order not found", { status: 404 });
 
   const { order, store, items, timeline } = loaded;
@@ -73,6 +77,8 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
       shipping: money(order.shippingCents, order.currency),
       total: money(order.totalCents, order.currency),
       refunded: order.refundedCents ? money(order.refundedCents, order.currency) : null,
+      remaining: ((order.totalCents - order.refundedCents) / 100).toFixed(2),
+      remainingFormatted: money(order.totalCents - order.refundedCents, order.currency),
       paymentStatus: order.paymentStatus,
       paymentProvider: order.paymentProvider,
       paymentRef: order.paymentRef,
@@ -153,25 +159,66 @@ export async function action({ context, request, params }: Route.ActionArgs) {
   if (intent === "refund") {
     const loaded = await loadOrder(context.db, orderId);
     if (!loaded) return { error: "That order no longer exists." };
+    const { order, store } = loaded;
     const reason = String(form.get("reason") || "").trim();
 
-    // The money movement itself belongs to the payment provider and is wired
-    // up with Stripe. Recording it here without moving money would be a lie in
-    // the one record that has to be true, so the refund is marked as requested
-    // and the timeline says exactly that.
+    if (order.paymentStatus !== "paid") {
+      return { error: "Only a paid order can be refunded. This one is " + order.paymentStatus + "." };
+    }
+    if (!order.paymentRef) {
+      return { error: "This order has no payment reference, so there is nothing to refund at the provider." };
+    }
+
+    const remaining = order.totalCents - order.refundedCents;
+    const requested = centsFromInput(String(form.get("amount") || "")) ?? remaining;
+    if (requested <= 0 || requested > remaining) {
+      return { error: `Refund amount must be between $0.01 and ${money(remaining, order.currency)}.` };
+    }
+
+    // The money moves first. Only when the provider confirms does the order
+    // change — the record never says "refunded" while the customer's money
+    // is still taken.
+    let result;
+    try {
+      const provider = await providerForStore(context.db, context.cloudflare.env, store.id);
+      result = await provider.refund(order.paymentRef, requested);
+    } catch (error) {
+      const why =
+        error instanceof PaymentsNotConfigured
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "unknown error";
+      await recordOrderEvent(
+        context.db,
+        orderId,
+        "refund:failed",
+        `Refund of ${money(requested, order.currency)} attempted by ${user.email} but the provider refused · ${why}`,
+        { reason, requestedBy: user.email, amountCents: requested },
+      );
+      return { error: `The refund did not go through: ${why}. The order is unchanged.` };
+    }
+
+    const refundedCents = order.refundedCents + result.amountCents;
+    const full = refundedCents >= order.totalCents;
     await context.db
       .update(orders)
-      .set({ state: "refunded", paymentStatus: "refund_pending", updatedAt: new Date() })
+      .set({
+        refundedCents,
+        paymentStatus: full ? "refunded" : "partially_refunded",
+        state: full ? "refunded" : order.state,
+        updatedAt: new Date(),
+      })
       .where(eq(orders.id, orderId));
 
     await recordOrderEvent(
       context.db,
       orderId,
-      "refund:requested",
-      `Refund of ${money(loaded.order.totalCents, loaded.order.currency)} requested by ${user.email}${
+      "refund:issued",
+      `Refund of ${money(result.amountCents, order.currency)} issued via Stripe · ${result.id}${
         reason ? ` · ${reason}` : ""
-      } · awaiting the payment provider`,
-      { reason, requestedBy: user.email },
+      } · by ${user.email}`,
+      { reason, requestedBy: user.email, refundId: result.id, amountCents: result.amountCents },
     );
     return { ok: true };
   }
@@ -207,9 +254,11 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
         <Badge kind={order.paymentStatus === "paid" ? "success" : "neutral"}>
           {order.paymentStatus === "paid"
             ? "Paid"
-            : order.paymentStatus === "refund_pending"
-              ? "Refund pending"
-              : order.paymentStatus}
+            : order.paymentStatus === "partially_refunded"
+              ? "Partially refunded"
+              : order.paymentStatus === "refunded"
+                ? "Refunded"
+                : order.paymentStatus}
         </Badge>
         <span style={{ color: "var(--ink-2)", fontSize: 12 }}>{formatWhen(order.createdAt)}</span>
       </div>
@@ -370,16 +419,34 @@ export default function OrderDetail({ loaderData, actionData }: Route.ComponentP
               <KeyValue label="Reference" value={order.paymentRef ?? "—"} mono />
               <KeyValue label="Status" value={order.paymentStatus} />
             </div>
-            {order.state !== "refunded" ? (
-              <Form method="post" style={{ padding: 16, borderTop: "1px solid var(--border)" }}>
+            {order.paymentStatus === "paid" || order.paymentStatus === "partially_refunded" ? (
+              <Form
+                method="post"
+                onSubmit={(event) => {
+                  if (!confirm("Refund this order through Stripe now? This moves money and cannot be undone.")) {
+                    event.preventDefault();
+                  }
+                }}
+                style={{ padding: 16, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 8 }}
+              >
                 <input type="hidden" name="intent" value="refund" />
-                <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", display: "block", marginBottom: 4 }}>
-                  Refund reason
-                </label>
-                <input name="reason" style={{ ...input, marginBottom: 8 }} placeholder="Item damaged in transit" />
+                <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Amount to refund</label>
+                <input name="amount" defaultValue={order.remaining} inputMode="decimal" style={input} />
+                <label style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Reason</label>
+                <select name="reason" defaultValue="Customer request" style={{ ...input, padding: "0 8px" }}>
+                  <option>Customer request</option>
+                  <option>Item damaged in transit</option>
+                  <option>Item not received</option>
+                  <option>Wrong item sent</option>
+                  <option>Duplicate order</option>
+                  <option>Other</option>
+                </select>
                 <button type="submit" disabled={busy} style={{ ...criticalButton, width: "100%", justifyContent: "center" }}>
-                  Refund {order.total}
+                  Refund via Stripe
                 </button>
+                <span style={{ fontSize: 11, color: "var(--ink-3)" }}>
+                  Up to {order.remainingFormatted} left on this order. The order only changes once Stripe confirms.
+                </span>
               </Form>
             ) : null}
           </div>
