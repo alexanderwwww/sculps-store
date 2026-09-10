@@ -16,3 +16,4 @@ tsconfig.tsbuildinfo
 /ten*.mjs
 /journey.mjs
 /cleanup.mjs
+/store-stripe.mjs
