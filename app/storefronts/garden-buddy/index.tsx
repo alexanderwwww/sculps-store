@@ -80,7 +80,12 @@ const ArrowRight = (
 
 /* ------------------------------------------------------------------- page */
 
-export function GardenBuddyStorefront({ page }: { page: LoadedProductPage }) {
+export function GardenBuddyStorefront({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
+  // Which store answers is decided by the hostname, except on the built-in
+  // address where it comes from ?store=. Without carrying that through, every
+  // internal link lands on whichever store happens to be first — which is how
+  // clicking this store's own logo ended up on a different shop.
+  const href = (path: string) => `${path}${storeParam}`;
   const { sections } = page;
 
   return (
@@ -94,7 +99,7 @@ export function GardenBuddyStorefront({ page }: { page: LoadedProductPage }) {
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap"
       />
 
-      <Header page={page} />
+      <Header page={page} storeParam={storeParam} />
 
       <main id="MainContent" className="content-for-layout" role="main" data-template="product">
         {sections.map((s) => (
@@ -102,7 +107,7 @@ export function GardenBuddyStorefront({ page }: { page: LoadedProductPage }) {
         ))}
       </main>
 
-      <Footer page={page} />
+      <Footer page={page} storeParam={storeParam} />
     </>
   );
 }
@@ -126,7 +131,8 @@ function Section({ section, page }: { section: LoadedSection; page: LoadedProduc
 
 /* ----------------------------------------------------------------- header */
 
-function Header({ page }: { page: LoadedProductPage }) {
+function Header({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
+  const href = (path: string) => `${path}${storeParam}`;
   const { store, nav } = page;
   const links = nav.main;
 
@@ -158,14 +164,14 @@ function Header({ page }: { page: LoadedProductPage }) {
               </summary>
               <nav className="gb-hdr__mnav" aria-label="Main, mobile">
                 {links.map((l) => (
-                  <a key={`m${l.href}${l.label}`} href={l.href}>
+                  <a key={`m${l.href}${l.label}`} href={href(l.href)}>
                     {l.label}
                   </a>
                 ))}
               </nav>
             </details>
 
-            <a className="gb-hdr__logo" href="/">
+            <a className="gb-hdr__logo" href={href("/")}>
               <Logo store={store} imgClass="gb-hdr__logo-img" wordClass="gb-hdr__wordmark" loading="eager" />
             </a>
 
@@ -178,7 +184,7 @@ function Header({ page }: { page: LoadedProductPage }) {
             </nav>
 
             <div className="gb-hdr__right">
-              <a className="gb-hdr__cart" href="/cart" aria-label="Cart">
+              <a className="gb-hdr__cart" href={href("/cart")} aria-label="Cart">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 7h12l1 14H5L6 7z" /><path d="M9 7a3 3 0 0 1 6 0" /></svg>
               </a>
               <a className="gb-hdr__cta" href="#gb-buy">
@@ -213,7 +219,8 @@ function Logo({
 
 /* ----------------------------------------------------------------- footer */
 
-function Footer({ page }: { page: LoadedProductPage }) {
+function Footer({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
+  const href = (path: string) => `${path}${storeParam}`;
   const { store, nav } = page;
 
   return (
@@ -222,7 +229,7 @@ function Footer({ page }: { page: LoadedProductPage }) {
         <section className="gb-cta" aria-label={`Order ${store.name}`}>
           <div className="gb-wrap gb-cta__in">
             <div className="gb-cta__left">
-              <a className="gb-cta__logo" href="/">
+              <a className="gb-cta__logo" href={href("/")}>
                 <Logo store={store} imgClass="gb-ftr__logo-img" wordClass="gb-ftr__wordmark" />
               </a>
               <p className="gb-script gb-cta__script">A Happier Garden Starts Here.</p>
@@ -257,7 +264,7 @@ function Footer({ page }: { page: LoadedProductPage }) {
         <footer className="gb-ftr">
           <div className="gb-wrap gb-ftr__cols">
             <div className="gb-ftr__col gb-ftr__col--brand">
-              <a className="gb-ftr__logo" href="/">
+              <a className="gb-ftr__logo" href={href("/")}>
                 <Logo store={store} imgClass="gb-ftr__logo-img" wordClass="gb-ftr__wordmark" />
               </a>
               <p className="gb-ftr__about">
@@ -272,7 +279,7 @@ function Footer({ page }: { page: LoadedProductPage }) {
                 <ul className="gb-ftr__links">
                   {nav.footer.map((l: NavLink) => (
                     <li key={l.href + l.label}>
-                      <a href={l.href}>{l.label}</a>
+                      <a href={href(l.href)}>{l.label}</a>
                     </li>
                   ))}
                 </ul>
@@ -294,7 +301,8 @@ function Footer({ page }: { page: LoadedProductPage }) {
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
+  const href = (path: string) => `${path}${storeParam}`;
   const { product, variants, store } = page;
   const v = section.values;
   const images = section.blocks.filter((b) => has(b.values, "image"));
@@ -419,7 +427,7 @@ function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProduct
           )}
 
           {variants.length > 0 ? (
-            <form method="post" action="/cart/add" id="gb-form" className="gb-form">
+            <form method="post" action={href("/cart/add")} id="gb-form" className="gb-form">
               <input type="hidden" name="variantId" value={chosen?.id ?? ""} />
 
               <div className="gb-field">

@@ -157,11 +157,15 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   // store's numbers.
   const vitals = shouldTrack(request, url) && !isThumb && !previewThemeId ? vitalsScript() : null;
 
-  return withHeaders({ store, page: page ?? null, pixel, vitals, favicon: store.faviconUrl }, { headers });
+  // On the built-in address the store is chosen by ?store=; carry it so an
+  // internal link cannot wander into a different shop.
+  const storeParam = url.searchParams.get("store") ? `?store=${store.slug}` : "";
+
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, favicon } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon } = loaderData;
 
   if (!page) {
     return (
@@ -195,7 +199,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
       <>
         <link rel="stylesheet" href={gardenBuddyThemeHref} />
         {head}
-        <GardenBuddyStorefront page={page} />
+        <GardenBuddyStorefront page={page} storeParam={storeParam} />
       </>
     );
   }
