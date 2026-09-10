@@ -318,8 +318,18 @@ class LiveGlobe {
         g.strokeStyle = "rgba(255,255,255," + (0.8 * al).toFixed(3) + ")"; g.lineWidth = 1.1;
         g.shadowColor = "rgba(255,20,170,.9)"; g.shadowBlur = 10 * al;
         g.beginPath(); g.arc(q.x, q.y, rad, 0, 6.284); g.stroke(); g.shadowBlur = 0; });
+      // The sale travelling home.
+      //
+      // The design drew this as a thick pink glow with an arrowhead on the
+      // front, which reads as broken at globe scale: the head clips into the
+      // sphere and the glow smears. Shopify draws one thin curve with a soft
+      // comet head, so that is what this is — a single stroke whose trail
+      // fades back toward where the order came from, decelerating into the
+      // store. Same great-circle path, same lift, same colours.
       this.arcs.forEach(a => {
-        const k = Math.min(1, (now - a.born) / a.dur), tail = Math.max(0, k - 0.26);
+        const raw = Math.min(1, (now - a.born) / a.dur);
+        // Ease out, so it arrives gently instead of stopping dead.
+        const k = 1 - Math.pow(1 - raw, 3);
         const gc = (t2: number) => { // great-circle interpolation, lifted off the surface
           const p1 = vec(a.lon1, a.lat1), p2 = vec(a.lon2, a.lat2);
           const dot = Math.max(-1, Math.min(1, p1[0]*p2[0] + p1[1]*p2[1] + p1[2]*p2[2])), om = Math.acos(dot);
@@ -330,26 +340,47 @@ class LiveGlobe {
           const q2 = proj(lamR - this.rot.lam, phiR);
           return { x: cx + (q2.x - cx) * lift, y: cy + (q2.y - cy) * lift, z: q2.z };
         };
-        const N = 44, pts: { x: number; y: number; z: number }[] = [];
-        for (let i2 = 0; i2 <= N; i2++) { const t2 = tail + (k - tail) * (i2 / N); if (t2 < 0) continue; pts.push(gc(t2)); }
-        if (pts.length < 2) return;
+
         const fade = now - a.born > a.dur ? Math.max(0, 1 - (now - a.born - a.dur) / 700) : 1;
-        for (let pass = 0; pass < 2; pass++) {
-          g.beginPath(); let started = false;
-          pts.forEach(p2 => { if (p2.z <= -0.25) { started = false; return; } if (!started) { g.moveTo(p2.x, p2.y); started = true; } else g.lineTo(p2.x, p2.y); });
-          g.strokeStyle = pass === 0 ? "rgba(255,20,170," + (0.22 * fade).toFixed(3) + ")" : "rgba(255,140,225," + (0.95 * fade).toFixed(3) + ")";
-          g.lineWidth = pass === 0 ? 7 : 1.8; g.lineCap = "round";
-          if (pass === 0) { g.shadowColor = "rgba(255,20,170,.85)"; g.shadowBlur = 16; } else g.shadowBlur = 0;
-          g.stroke(); g.shadowBlur = 0;
+        if (fade <= 0) return;
+
+        // The whole path from the order to wherever the head has reached, so
+        // the line is continuous rather than a floating dash.
+        const N = 56;
+        const pts: { x: number; y: number; z: number; t: number }[] = [];
+        for (let i2 = 0; i2 <= N; i2++) {
+          const t2 = (k * i2) / N;
+          const q2 = gc(t2);
+          pts.push({ ...q2, t: i2 / N });
         }
-        const head = pts[pts.length - 1], prev = pts[pts.length - 2];
-        if (head && prev && head.z > -0.25) {
-          const ang = Math.atan2(head.y - prev.y, head.x - prev.x);
-          g.save(); g.translate(head.x, head.y); g.rotate(ang);
+        if (pts.length < 2) return;
+
+        // One thin stroke, drawn segment by segment so the tail can fade into
+        // nothing behind the head. No glow pass, no arrowhead.
+        g.lineCap = "round";
+        for (let i2 = 1; i2 < pts.length; i2++) {
+          const p0 = pts[i2 - 1], p1 = pts[i2];
+          if (p0.z <= -0.2 || p1.z <= -0.2) continue;
+          // Front of the trail is bright, the back of it is gone.
+          const trail = Math.pow(p1.t, 1.7);
+          const alpha = trail * fade;
+          if (alpha < 0.02) continue;
+          g.strokeStyle = "rgba(255,140,225," + (0.95 * alpha).toFixed(3) + ")";
+          g.lineWidth = 1.1 + 0.7 * trail;
+          g.beginPath(); g.moveTo(p0.x, p0.y); g.lineTo(p1.x, p1.y); g.stroke();
+        }
+
+        // A soft comet head, and nothing else.
+        const head = pts[pts.length - 1];
+        if (head && head.z > -0.2) {
+          const halo = g.createRadialGradient(head.x, head.y, 0, head.x, head.y, 9);
+          halo.addColorStop(0, "rgba(255,255,255," + (0.9 * fade).toFixed(3) + ")");
+          halo.addColorStop(.4, "rgba(255,47,185," + (0.5 * fade).toFixed(3) + ")");
+          halo.addColorStop(1, "rgba(255,47,185,0)");
+          g.fillStyle = halo;
+          g.beginPath(); g.arc(head.x, head.y, 9, 0, 6.284); g.fill();
           g.fillStyle = "rgba(255,255,255," + fade.toFixed(2) + ")";
-          g.shadowColor = "rgba(255,20,170,.9)"; g.shadowBlur = 12;
-          g.beginPath(); g.moveTo(6, 0); g.lineTo(-4, 3.2); g.lineTo(-2, 0); g.lineTo(-4, -3.2); g.closePath(); g.fill();
-          g.restore(); g.shadowBlur = 0;
+          g.beginPath(); g.arc(head.x, head.y, 1.9, 0, 6.284); g.fill();
         }
       });
 

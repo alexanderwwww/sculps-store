@@ -8,3 +8,10 @@ dist
 *.local
 .DS_Store
 tsconfig.tsbuildinfo
+
+# Throwaway scripts that write test rows into the live database. They are
+# never part of the product.
+/test-order.mjs
+/test-order-delete.mjs
+/ten.mjs
+/ten2.mjs
