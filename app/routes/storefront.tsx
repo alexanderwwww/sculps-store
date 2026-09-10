@@ -5,6 +5,16 @@ import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import { pixelScript } from "~/lib/meta.server";
+import {
+  geoFromRequest,
+  readVisitorSession,
+  newVisitorSession,
+  visitorCookie,
+  shouldTrack,
+  track,
+  attribution,
+} from "~/lib/visitor.server";
+import { data as withHeaders } from "react-router";
 import { GardenKneelerStorefront } from "~/storefronts/garden-kneeler";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -64,10 +74,22 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
   const pixel = meta?.pixelId && !previewPageId ? pixelScript(meta.pixelId) : null;
-  if (!page) {
-    return { store, page: null, pixel };
+  // Record the visit. This is what Live View and Analytics are made of.
+  const headers = new Headers();
+  if (shouldTrack(request, url)) {
+    const sessionId = readVisitorSession(request) ?? newVisitorSession();
+    headers.append("Set-Cookie", visitorCookie(sessionId, url));
+    track(context.db, context.cloudflare.ctx, {
+      storeId: store.id,
+      sessionId,
+      type: "view",
+      path: url.pathname,
+      geo: geoFromRequest(request),
+      ...attribution(url),
+    });
   }
-  return { store, page, pixel };
+
+  return withHeaders({ store, page: page ?? null, pixel }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {

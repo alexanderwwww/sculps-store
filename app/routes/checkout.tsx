@@ -15,7 +15,9 @@ import type { Route } from "./+types/checkout";
 import { resolveStore } from "~/lib/store.server";
 import { readCartToken, priceCart, markCartConverted } from "~/lib/cart.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
-import { placeOrder, recordVisitorEvent } from "~/lib/admin.server";
+import { placeOrder } from "~/lib/admin.server";
+import { geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
+import { readMetaCookies } from "~/lib/meta.server";
 import { formatMoney } from "~/lib/money";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -120,6 +122,9 @@ export async function action({ request, context }: Route.ActionArgs) {
     };
   }
 
+  const geo = geoFromRequest(request);
+  const metaCookies = readMetaCookies(request);
+
   const order = await placeOrder(context.db, {
     storeId: store.id,
     customerName: name,
@@ -142,8 +147,10 @@ export async function action({ request, context }: Route.ActionArgs) {
     source: url.searchParams.get("utm_source") || null,
     campaign: url.searchParams.get("utm_campaign") || null,
     metaEventId,
-    fbp: null,
-    fbc: null,
+    fbp: metaCookies.fbp,
+    fbc: metaCookies.fbc,
+    lat: geo.lat,
+    lon: geo.lon,
     lines: cart.lines.map((line) => ({
       variantId: line.variantId,
       title: line.productTitle,
@@ -155,10 +162,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   if (token) await markCartConverted(context.db, store.id, token, order.id);
 
-  await recordVisitorEvent(context.db, store.id, {
+  track(context.db, context.cloudflare.ctx, {
+    storeId: store.id,
+    sessionId: readVisitorSession(request) ?? token ?? intent.id,
     type: "checkout",
-    sessionId: token ?? intent.id,
     path: "/checkout",
+    geo,
     amountCents: cart.totalCents,
     orderId: order.id,
   });

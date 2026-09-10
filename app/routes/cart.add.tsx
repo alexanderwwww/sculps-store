@@ -6,6 +6,7 @@
  */
 import type { Route } from "./+types/cart.add";
 import { resolveStore } from "~/lib/store.server";
+import { geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
 import {
   readCartToken,
   newCartToken,
@@ -30,6 +31,17 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
   const token = readCartToken(request) ?? newCartToken();
   const lines = await currentLines(context.db, store.id, token);
   await saveCart(context.db, store.id, token, addLine(lines, variantId, 1));
+
+  const sessionId = readVisitorSession(request);
+  if (sessionId) {
+    track(context.db, context.cloudflare.ctx, {
+      storeId: store.id,
+      sessionId,
+      type: "cart",
+      path: "/cart/add",
+      geo: geoFromRequest(request),
+    });
+  }
 
   return new Response(null, {
     status: 302,

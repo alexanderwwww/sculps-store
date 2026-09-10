@@ -1211,6 +1211,8 @@ export interface PlaceOrderInput {
   metaEventId: string | null;
   fbp: string | null;
   fbc: string | null;
+  lat?: number | null;
+  lon?: number | null;
   lines: {
     variantId: string;
     title: string;
@@ -1262,6 +1264,8 @@ export async function placeOrder(db: DB, input: PlaceOrderInput) {
       metaEventId: input.metaEventId,
       fbp: input.fbp,
       fbc: input.fbc,
+      lat: input.lat ?? null,
+      lon: input.lon ?? null,
     })
     .returning();
 
