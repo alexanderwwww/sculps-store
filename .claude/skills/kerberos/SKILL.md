@@ -92,6 +92,36 @@ match the approved design exactly.
 **Phase 3 — Stores two and three.** Store switcher, Halloween and e-bike storefronts, their
 own domains, their own Stripe accounts, their own pixels.
 
+## Never guess. Check, then say.
+
+His time is the scarcest thing in this project and a confident wrong answer
+costs more of it than saying nothing. So: **do not state anything about the
+running system that has not been verified in that same turn.** Not "it should
+be live", not "that is probably cached", not "yes it works" from having built
+it. Run the request, read the row, fetch the page — then say what came back,
+and say where it came from.
+
+This has already gone wrong here more than once: the domain was declared ours
+before it was checked, the sale card was declared working when a clock
+comparison was silently dropping every event, and a subagent reported
+click-to-edit finished when it was not. In each case the words came before the
+evidence.
+
+Three practical forms of it:
+
+- **Reporting on the deployed system** — curl it, query it, read the header.
+  A screenshot from him is evidence; a build succeeding is not.
+- **Relaying a subagent's report** — its claims are unverified until spot-checked.
+  Check the constants, the file, the behaviour it says it delivered.
+- **Diagnosing what he is seeing** — ask or test before explaining. "Your
+  browser is caching" is a guess until the cache-busted request proves the
+  server is fine.
+
+When something genuinely cannot be verified from here — anything behind his
+login, on his phone, or inside his Stripe account — say that plainly and ask
+him to look, rather than reasoning toward a likely answer and presenting it as
+one.
+
 ## Design rules — do not violate these
 
 **0. When a design exists, port it — never re-author it.** The approved
