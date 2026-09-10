@@ -879,3 +879,308 @@ export async function productPageOfTheme(db: DB, themeId: string) {
     .limit(1);
   return row ?? null;
 }
+
+/* --------------------------------------------------------- review writes */
+
+export interface ReviewInput {
+  name: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  country: string | null;
+  imageUrl: string | null;
+  verified: boolean;
+  /** "customer" | "supplier_listing" — required, never defaulted */
+  source: string;
+  productId: string | null;
+  reviewedOn: Date | null;
+}
+
+export async function createReview(db: DB, storeId: string, input: ReviewInput) {
+  const existing = await db
+    .select({ n: sql<number>`cast(count(*) as int)` })
+    .from(reviews)
+    .where(eq(reviews.storeId, storeId));
+
+  const [row] = await db
+    .insert(reviews)
+    .values({ storeId, position: existing[0]?.n ?? 0, published: false, ...input })
+    .returning();
+  return row;
+}
+
+export async function updateReview(
+  db: DB,
+  reviewId: string,
+  patch: Partial<ReviewInput> & { published?: boolean; position?: number },
+): Promise<void> {
+  await db.update(reviews).set(patch).where(eq(reviews.id, reviewId));
+}
+
+export async function deleteReviews(db: DB, ids: string[]): Promise<void> {
+  if (ids.length) await db.delete(reviews).where(inArray(reviews.id, ids));
+}
+
+/**
+ * Publishing is refused for any review with no source.
+ *
+ * The column is not nullable and has no default, but a caller could still pass
+ * an empty string. This is the gate that makes "every published review is
+ * declared either the customer's or the supplier listing's" true in practice
+ * rather than only on paper.
+ */
+export async function publishReviews(
+  db: DB,
+  ids: string[],
+  published: boolean,
+): Promise<{ changed: number; refused: string[] }> {
+  if (!ids.length) return { changed: 0, refused: [] };
+
+  const rows = await db.select().from(reviews).where(inArray(reviews.id, ids));
+  if (!published) {
+    await db.update(reviews).set({ published: false }).where(inArray(reviews.id, ids));
+    return { changed: rows.length, refused: [] };
+  }
+
+  const allowed = rows.filter((row) => row.source && row.source.trim());
+  const refused = rows.filter((row) => !row.source || !row.source.trim()).map((row) => row.name);
+
+  if (allowed.length) {
+    await db
+      .update(reviews)
+      .set({ published: true })
+      .where(inArray(reviews.id, allowed.map((row) => row.id)));
+  }
+
+  return { changed: allowed.length, refused };
+}
+
+export async function reviewStats(db: DB, storeId: string) {
+  const rows = await db.select().from(reviews).where(eq(reviews.storeId, storeId));
+  const total = rows.length;
+  const average = total ? rows.reduce((sum, row) => sum + row.rating, 0) / total : 0;
+  const withPhotos = rows.filter((row) => row.imageUrl).length;
+
+  const distribution = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    count: rows.filter((row) => row.rating === star).length,
+  }));
+
+  return {
+    total,
+    average,
+    withPhotos,
+    published: rows.filter((row) => row.published).length,
+    distribution,
+  };
+}
+
+/* ---------------------------------------------------------- media writes */
+
+export async function addMedia(
+  db: DB,
+  storeId: string,
+  input: { key: string; filename: string; mime: string; sizeBytes: number; alt: string | null },
+) {
+  const [row] = await db.insert(media).values({ storeId, ...input }).returning();
+  return row;
+}
+
+export async function deleteMedia(db: DB, ids: string[]): Promise<void> {
+  if (ids.length) await db.delete(media).where(inArray(media.id, ids));
+}
+
+/* -------------------------------------------------------- settings writes */
+
+export async function saveStoreSettings(
+  db: DB,
+  storeId: string,
+  patch: Partial<typeof stores.$inferInsert>,
+): Promise<void> {
+  await db.update(stores).set(patch).where(eq(stores.id, storeId));
+}
+
+export async function saveMetaConfig(
+  db: DB,
+  storeId: string,
+  patch: { pixelId: string | null; adAccountId: string | null; testEventCode: string | null },
+): Promise<void> {
+  const existing = await db
+    .select()
+    .from(metaConfig)
+    .where(eq(metaConfig.storeId, storeId))
+    .limit(1);
+
+  if (existing.length) {
+    await db.update(metaConfig).set(patch).where(eq(metaConfig.storeId, storeId));
+  } else {
+    await db.insert(metaConfig).values({ storeId, ...patch });
+  }
+}
+
+export async function addDomain(db: DB, storeId: string, hostname: string) {
+  const existing = await db.select().from(domains).where(eq(domains.storeId, storeId));
+  const [row] = await db
+    .insert(domains)
+    .values({ storeId, hostname, isPrimary: existing.length === 0 })
+    .returning();
+  return row;
+}
+
+export async function removeDomain(db: DB, domainId: string): Promise<void> {
+  await db.delete(domains).where(eq(domains.id, domainId));
+}
+
+export async function setPrimaryDomain(db: DB, storeId: string, domainId: string): Promise<void> {
+  await db.update(domains).set({ isPrimary: false }).where(eq(domains.storeId, storeId));
+  await db.update(domains).set({ isPrimary: true }).where(eq(domains.id, domainId));
+}
+
+/* -------------------------------------------------------------- analytics */
+
+export interface AnalyticsRange {
+  days: number;
+  label: string;
+}
+
+/**
+ * Analytics.
+ *
+ * Everything is counted from orders and events. Where there is no data the
+ * figure is null and the screen says so, rather than showing a zero that reads
+ * like a measurement.
+ */
+export async function analytics(db: DB, storeId: string, days: number) {
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  since.setDate(since.getDate() - (days - 1));
+
+  const [totals, byDay, bySource, topVariants, sessionRows] = await Promise.all([
+    db
+      .select({
+        orders: sql<number>`cast(count(*) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+        refunded: sql<number>`cast(coalesce(sum(${orders.refundedCents}), 0) as int)`,
+      })
+      .from(orders)
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since))),
+
+    db
+      .select({
+        day: sql<string>`to_char(${orders.createdAt}, 'YYYY-MM-DD')`,
+        orders: sql<number>`cast(count(*) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+      })
+      .from(orders)
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since)))
+      .groupBy(sql`1`)
+      .orderBy(sql`1`),
+
+    db
+      .select({
+        source: orders.source,
+        orders: sql<number>`cast(count(*) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+      })
+      .from(orders)
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since)))
+      .groupBy(orders.source)
+      .orderBy(desc(sql`2`)),
+
+    db
+      .select({
+        label: orderItems.label,
+        units: sql<number>`cast(coalesce(sum(${orderItems.quantity}), 0) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orderItems.unitPriceCents} * ${orderItems.quantity}), 0) as int)`,
+      })
+      .from(orderItems)
+      .innerJoin(orders, eq(orders.id, orderItems.orderId))
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since)))
+      .groupBy(orderItems.label)
+      .orderBy(desc(sql`3`))
+      .limit(10),
+
+    db
+      .select({
+        sessions: sql<number>`cast(count(distinct ${events.sessionId}) as int)`,
+        views: sql<number>`cast(count(*) filter (where ${events.type} = 'view') as int)`,
+        carts: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'cart') as int)`,
+        checkouts: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'checkout') as int)`,
+      })
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, since))),
+  ]);
+
+  const orderCount = totals[0]?.orders ?? 0;
+  const revenue = totals[0]?.revenue ?? 0;
+  const sessions = sessionRows[0]?.sessions ?? 0;
+
+  return {
+    orderCount,
+    revenue,
+    refunded: totals[0]?.refunded ?? 0,
+    averageOrder: orderCount ? Math.round(revenue / orderCount) : null,
+    sessions,
+    conversion: sessions ? (orderCount / sessions) * 100 : null,
+    funnel: {
+      sessions,
+      views: sessionRows[0]?.views ?? 0,
+      carts: sessionRows[0]?.carts ?? 0,
+      checkouts: sessionRows[0]?.checkouts ?? 0,
+      purchases: orderCount,
+    },
+    byDay,
+    bySource: bySource.map((row) => ({
+      source: row.source ?? "Direct",
+      orders: row.orders,
+      revenue: row.revenue,
+    })),
+    topVariants,
+  };
+}
+
+/* -------------------------------------------------------------- live view */
+
+/**
+ * Live View.
+ *
+ * Reads the last half hour of events. There is no simulator: what is on this
+ * screen either happened or the screen is empty.
+ */
+export async function liveView(db: DB, storeId: string) {
+  const since = new Date(Date.now() - 30 * 60_000);
+
+  const [recent, active, todayTotals] = await Promise.all([
+    db
+      .select()
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, since)))
+      .orderBy(desc(events.at))
+      .limit(60),
+
+    db
+      .select({ n: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, new Date(Date.now() - 5 * 60_000)))),
+
+    db
+      .select({
+        orders: sql<number>`cast(count(*) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.storeId, storeId),
+          gte(orders.createdAt, new Date(new Date().setHours(0, 0, 0, 0))),
+        ),
+      ),
+  ]);
+
+  return {
+    activeVisitors: active[0]?.n ?? 0,
+    todayOrders: todayTotals[0]?.orders ?? 0,
+    todayRevenue: todayTotals[0]?.revenue ?? 0,
+    recent,
+  };
+}
