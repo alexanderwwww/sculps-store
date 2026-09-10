@@ -360,3 +360,36 @@ export async function sendRefundNotice(
   );
   return result.ok;
 }
+
+/** The three templates with example values, for Settings → Preview. Nothing is sent. */
+export function previewEmail(kind: string, input: { storeName: string; currency: string }): string {
+  const lines: EmailLine[] = [{ label: "Example bundle × 1", quantity: 1, lineTotalCents: 12900 }];
+  if (kind === "shipping") {
+    const link = trackingUrl("USPS", "9400100000000000000000");
+    return shell(
+      input.storeName,
+      `<p style="font-size:16px;margin:0 0 12px">Good news Alex — order <strong>#1001</strong> is on its way.</p>
+<p style="font-size:16px;margin:0 0 16px">Tracking with USPS:<br><strong style="font-family:ui-monospace,monospace">9400 1000 0000 0000 0000 00</strong></p>
+<a href="${esc(link ?? "#")}" style="display:inline-block;background:#1A1A1A;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600">Track your parcel</a>`,
+    );
+  }
+  if (kind === "refund") {
+    return shell(
+      input.storeName,
+      `<p style="font-size:16px;margin:0 0 12px">Hi Alex,</p>
+<p style="font-size:16px;margin:0 0 12px">We have refunded <strong>${formatMoney(12900, input.currency)}</strong> on order <strong>#1001</strong>.</p>
+<p style="font-size:15px;color:#555;margin:0">It usually shows on your card within 5–10 business days, depending on your bank.</p>`,
+    );
+  }
+  return shell(
+    input.storeName,
+    `<p style="font-size:16px;margin:0 0 12px">Thanks Alex.</p>
+<p style="font-size:16px;margin:0 0 18px">Your order <strong>#1001</strong> is confirmed.</p>
+<table style="width:100%;border-collapse:collapse;border-top:1px solid #eee">${lineRows(lines, input.currency)}</table>
+<table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;margin-top:8px">
+<tr><td style="padding:6px 0;color:#666">Subtotal</td><td style="padding:6px 0;text-align:right">${formatMoney(12900, input.currency)}</td></tr>
+<tr><td style="padding:6px 0;font-weight:700">Total</td><td style="padding:6px 0;text-align:right;font-weight:700">${formatMoney(12900, input.currency)}</td></tr>
+</table>
+<p style="font-size:15px;color:#555;margin:20px 0 0">We will email you the tracking number as soon as it ships.</p>`,
+  );
+}

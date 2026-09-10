@@ -68,7 +68,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   return {
-    store: { name: store.name, slug: store.slug, currency: store.currency },
+    store: {
+      name: store.name,
+      slug: store.slug,
+      currency: store.currency,
+      phoneMode: store.checkoutPhoneMode,
+      shipEstimate: store.shipEstimate,
+    },
     cart,
     paymentsReady,
     paymentsMessage,
@@ -96,7 +102,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     return { error: "That email address does not look right — we send your receipt there." };
   }
   // An order with no shipping address cannot be fulfilled, so it is not taken.
-  const required = { address1: "street address", city: "city", region: "state", postalCode: "ZIP code" };
+  const required: Record<string, string> = { address1: "street address", city: "city", region: "state", postalCode: "ZIP code" };
+  if (store.checkoutPhoneMode === "required") required.phone = "phone number";
   for (const [field, label] of Object.entries(required)) {
     if (!String(form.get(field) || "").trim()) return { error: `Please add your ${label} so we can ship it.` };
   }
@@ -261,10 +268,12 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
                   <input className="gk-input" name="email" type="email" required autoComplete="email" />
                 </label>
 
-                <label className="gk-field">
-                  <span>Phone (optional)</span>
-                  <input className="gk-input" name="phone" autoComplete="tel" />
-                </label>
+                {store.phoneMode !== "hidden" ? (
+                  <label className="gk-field">
+                    <span>{store.phoneMode === "required" ? "Phone" : "Phone (optional)"}</span>
+                    <input className="gk-input" name="phone" autoComplete="tel" required={store.phoneMode === "required"} />
+                  </label>
+                ) : null}
 
                 <label className="gk-field">
                   <span>Address</span>
@@ -338,8 +347,8 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
               </div>
             ) : null}
             <div className="gk-totals">
-              <span>Shipping</span>
-              <span>Free</span>
+              <span>Shipping{store.shipEstimate ? <span className="gk-quiet"> · {store.shipEstimate}</span> : null}</span>
+              <span>{cart.shippingCents ? formatMoney(cart.shippingCents, cart.currency) : "Free"}</span>
             </div>
             <div className="gk-totals" style={{ borderTop: "1px solid var(--gk-line)", marginTop: 8, paddingTop: 14 }}>
               <strong>Total</strong>

@@ -133,7 +133,7 @@ export default function Cart({ loaderData }: Route.ComponentProps) {
               ) : null}
               <div className="gk-totals">
                 <span>Shipping</span>
-                <span>Free</span>
+                <span>{cart.shippingCents ? formatMoney(cart.shippingCents, cart.currency) : "Free"}</span>
               </div>
               <div className="gk-totals" style={{ borderTop: "1px solid var(--gk-line)", marginTop: 8, paddingTop: 16 }}>
                 <strong>Total</strong>

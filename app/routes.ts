@@ -34,6 +34,8 @@ export default [
       route("analytics", "routes/admin.analytics.tsx"),
       route("live", "routes/admin.live.tsx"),
       route("settings", "routes/admin.settings.tsx"),
+      route("settings/email-preview", "routes/admin.settings.email-preview.tsx"),
+      route("events/export", "routes/admin.events.export.tsx"),
       route("online-store", "routes/admin.online-store.tsx"),
       route("online-store/editor/:pageId", "routes/admin.online-store.editor.$pageId.tsx"),
       route("stores/new", "routes/admin.stores.new.tsx"),
