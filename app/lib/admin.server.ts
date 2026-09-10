@@ -1343,3 +1343,86 @@ export async function recordVisitorEvent(
     orderId: input.orderId ?? null,
   });
 }
+
+/* ------------------------------------------------------- live view board */
+
+/**
+ * Everything the Live View screen shows, in one round trip.
+ *
+ * All of it is derived from the events and orders tables for the last
+ * thirty minutes (today, for money). Nothing here is simulated; when the
+ * store has no traffic every list is empty and every number is zero.
+ */
+export async function liveBoard(db: DB, storeId: string) {
+  const window = new Date(Date.now() - 30 * 60_000);
+  const fiveMinutes = new Date(Date.now() - 5 * 60_000);
+  const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
+
+  const [recent, active, sessions, today, funnel, byLocation] = await Promise.all([
+    db
+      .select()
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, window)))
+      .orderBy(desc(events.at))
+      .limit(120),
+
+    db
+      .select({ n: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, fiveMinutes))),
+
+    db
+      .select({ n: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, startOfToday))),
+
+    db
+      .select({
+        orders: sql<number>`cast(count(*) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+      })
+      .from(orders)
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, startOfToday))),
+
+    db
+      .select({
+        carts: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'cart') as int)`,
+        checkouts: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'checkout') as int)`,
+        purchases: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'purchase') as int)`,
+      })
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, startOfToday))),
+
+    db
+      .select({
+        city: events.city,
+        region: events.region,
+        country: events.country,
+        n: sql<number>`cast(count(distinct ${events.sessionId}) as int)`,
+      })
+      .from(events)
+      .where(and(eq(events.storeId, storeId), gte(events.at, startOfToday)))
+      .groupBy(events.city, events.region, events.country)
+      .orderBy(desc(sql`4`))
+      .limit(8),
+  ]);
+
+  return {
+    activeVisitors: active[0]?.n ?? 0,
+    sessionsToday: sessions[0]?.n ?? 0,
+    ordersToday: today[0]?.orders ?? 0,
+    revenueToday: today[0]?.revenue ?? 0,
+    activeCarts: funnel[0]?.carts ?? 0,
+    checkingOut: funnel[0]?.checkouts ?? 0,
+    purchased: funnel[0]?.purchases ?? 0,
+    byLocation: byLocation
+      .filter((row) => row.city || row.country)
+      .map((row) => ({
+        label: [row.country, [row.city, row.region].filter(Boolean).join(", ")]
+          .filter(Boolean)
+          .join(" · "),
+        count: row.n,
+      })),
+    recent,
+  };
+}
