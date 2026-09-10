@@ -234,7 +234,9 @@ export function AdminShell({
       label: "Meta",
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" {...iconStroke}>
-          <path d="M3 13.5c0-4.2 1.5-7 3.5-7 2.8 0 3.5 7 6.4 7 1.8 0 3.1-1.8 3.1-4.3S14.9 5 13.3 5C11 5 9.7 9.3 7.3 13.5" />
+          {/* Meta's mark is a symmetric infinity. The old path was one
+              lopsided squiggle that looked like a mistake. */}
+          <path d="M10 10c-1.5-2.5-2.7-4.2-4.5-4.2C3.5 5.8 2 7.7 2 10s1.5 4.2 3.5 4.2c1.8 0 3-1.7 4.5-4.2zM10 10c1.5 2.5 2.7 4.2 4.5 4.2 2 0 3.5-1.9 3.5-4.2s-1.5-4.2-3.5-4.2c-1.8 0-3 1.7-4.5 4.2z" />
         </svg>
       ),
     },
