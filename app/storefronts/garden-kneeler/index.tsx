@@ -178,6 +178,36 @@ function renderSection(s: LoadedSection, page: LoadedProductPage): React.ReactNo
     /* ----------------------------------------------------------- product grid */
     case "product_grid": {
       const { variants, product } = page;
+
+      // What is in the set, when the section lists it. This is the tool grid:
+      // the items that come with the bundle, not products of their own — the
+      // tools are never sold separately, they are what the second and third
+      // variants include.
+      const tools = blocks.filter((b) => has(b.values, "image"));
+      if (tools.length > 0) {
+        return (
+          <>
+            <Head v={v} />
+            <div className="gk-grid gk-grid--4">
+              {tools.map((block) => (
+                <div className="gk-tool" key={block.id}>
+                  {block.values.image && (
+                    <img src={block.values.image} alt={block.values.title ?? ""} loading="lazy" />
+                  )}
+                  {block.values.title && <h4>{block.values.title}</h4>}
+                  {block.values.note && <p className="gk-sub">{block.values.note}</p>}
+                </div>
+              ))}
+            </div>
+            {val(v, "footnote") && (
+              <p className="gk-sub" style={{ marginTop: 22 }}>
+                {val(v, "footnote")}
+              </p>
+            )}
+          </>
+        );
+      }
+
       if (variants.length === 0) return null;
       return (
         <>

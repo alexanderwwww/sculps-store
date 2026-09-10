@@ -229,17 +229,6 @@ class LiveGlobe {
       const sprites = this.sprites;
       const spr = (set: HTMLCanvasElement[], bucket: number, x: number, y: number, scl: number) => { const img = set[bucket], sz = Math.max(2, hr * 2.6 * scl);
         g.drawImage(img, x - sz / 2, y - sz / 2, sz, sz); };
-      /** Five-pointed star, drawn point-up. */
-      const star = (x: number, y: number, outer: number, inner: number) => {
-        g.beginPath();
-        for (let k = 0; k < 10; k++) {
-          const rad = k % 2 ? inner : outer;
-          const ang = -Math.PI / 2 + (k * Math.PI) / 5;
-          const px = x + rad * Math.cos(ang), py = y + rad * Math.sin(ang);
-          k ? g.lineTo(px, py) : g.moveTo(px, py);
-        }
-        g.closePath();
-      };
       const hex = (x: number, y: number, rad: number) => { g.beginPath();
         for (let k = 0; k < 6; k++) { const a = k * 1.0471976 + 0.5236, px = x + rad * Math.cos(a), py = y + rad * Math.sin(a); k ? g.lineTo(px, py) : g.moveTo(px, py); }
         g.closePath(); };
@@ -301,21 +290,17 @@ class LiveGlobe {
           const fill = "rgba(" + pk.rgb + "," + Math.min(1, (0.62 + 0.28 * q.z) * hold).toFixed(3) + ")";
 
           if (pk.stage === "purchase") {
-            // A sale is a gold star, not another hexagon, and it carries a
-            // small warm glow — enough to find at a glance on a busy globe,
-            // not enough to become the fireworks display he asked me to
-            // remove.
-            const r2 = hr * scale * 1.9;
-            g.shadowColor = "rgba(212,166,42,.75)";
-            g.shadowBlur = 9;
-            g.fillStyle = fill;
-            star(q.x, q.y, r2, r2 * 0.46);
-            g.fill();
+            // A sale is the same hexagon as everything else — just gold, a
+            // little brighter, and with a warm glow around it so it is the
+            // first thing your eye lands on.
+            g.shadowColor = "rgba(255,196,54,.85)";
+            g.shadowBlur = 12;
+            g.fillStyle = "rgba(255,196,54," + Math.min(1, 0.82 + 0.18 * q.z).toFixed(3) + ")";
+            hex(q.x, q.y, hr * scale * 1.35); g.fill();
             g.shadowBlur = 0;
-            g.strokeStyle = "rgba(255,241,196,.85)";
+            g.strokeStyle = "rgba(255,241,196,.9)";
             g.lineWidth = 0.9;
-            star(q.x, q.y, r2, r2 * 0.46);
-            g.stroke();
+            hex(q.x, q.y, hr * scale * 1.35); g.stroke();
             continue;
           }
 

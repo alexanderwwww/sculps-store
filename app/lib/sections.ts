@@ -111,9 +111,17 @@ export const SECTIONS: SectionDef[] = [
   {
     type: "product_grid",
     label: "Product grid",
-    hint: "The bundle options laid out side by side",
+    hint: "What comes in the set. With no items it falls back to the bundles.",
     fields: [heading, subheading, { name: "footnote", label: "Footnote", kind: "text" }],
-    blocks: null,
+    blocks: {
+      label: "Item",
+      addLabel: "Add item",
+      fields: [
+        { name: "image", label: "Photo", kind: "image" },
+        { name: "title", label: "Name", kind: "text" },
+        { name: "note", label: "Size or detail", kind: "text" },
+      ],
+    },
   },
   {
     type: "trust_icons",

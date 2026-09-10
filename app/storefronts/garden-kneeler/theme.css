@@ -704,3 +704,28 @@ body {
 .gk-nav a:hover { color: var(--gk-accent); }
 .gk-footer nav { display: flex; flex-wrap: wrap; gap: 14px 22px; }
 @media (max-width: 700px) { .gk-nav { display: none; } }
+
+/* What comes in the set: the tools, laid out as a grid of photos with their
+   name and size underneath. They are contents of a bundle, not products —
+   there is nothing to buy here and so nothing to click. */
+.gk-tool {
+  text-align: center;
+  min-width: 0;
+}
+.gk-tool img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  display: block;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .03);
+}
+.gk-tool h4 {
+  margin: 10px 0 2px;
+  font-size: 15px;
+  line-height: 20px;
+}
+.gk-tool .gk-sub {
+  margin: 0;
+  font-size: 13px;
+}

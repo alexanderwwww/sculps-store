@@ -1,0 +1,482 @@
+<div
+      id="shopify-section-cart-drawer-section"
+      class="shopify-section"
+    >
+  
+
+  
+
+  
+
+  <theme-drawer
+    id="cart-drawer"
+    data-skip-node-update
+  >
+    <dialog
+      ref="panel"
+      class="theme-drawer__dialog color-custom-drawer"
+      aria-labelledby="cart-drawer-heading"
+      cart-summary-sticky="true"
+    >
+      <cart-drawer-component
+        
+      >
+        <template id="empty-cart-template">
+          
+    <div
+      class="cart-drawer__content"
+      aria-label="Cart"
+    >
+      <h2
+        class="theme-drawer__title h4"
+        id="cart-drawer-heading"
+      >
+        Your cart is empty
+      </h2>
+
+      <div class="cart-drawer__items">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div
+  
+  class="cart-items__wrapper cart-items__wrapper--drawer-empty"
+  
+    data-cart-drawer-empty
+  
+  style=""
+>
+  
+<p>
+        Have an account? <a href="https://gardenbuddy.store/customer_authentication/redirect?locale=en&region_country=US">Log in</a> to check out faster.
+      </p><a
+      class="button cart-items__empty-button"
+      href="/collections/all"
+    >
+      <span class="button-text">
+        Continue shopping
+      </span>
+    </a></div>
+
+
+
+      </div>
+    </div>
+  
+        </template>
+
+        <div
+          class="cart-drawer__inner cart-drawer--empty"
+          data-hydration-key="cart-drawer-inner"
+        ><div class="theme-drawer__header">
+              <button
+                on:click="#cart-drawer/close"
+                class="theme-drawer__close-button cart-drawer__close-button--empty"
+                type="button"
+                aria-label="Close"
+              >
+                <span class="svg-wrapper"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M11.1765 12.025C11.4108 12.2594 11.7907 12.2594 12.025 12.025C12.2594 11.7907 12.2594 11.4108 12.025 11.1765L8.84931 8.00078L12.025 4.82505C12.2594 4.59073 12.2594 4.21083 12.025 3.97652C11.7907 3.7422 11.4108 3.7422 11.1765 3.97652L8.00078 7.15225L4.82505 3.97652C4.59073 3.7422 4.21083 3.7422 3.97652 3.97652C3.7422 4.21083 3.7422 4.59073 3.97652 4.82505L7.15225 8.00078L3.97652 11.1765C3.7422 11.4108 3.7422 11.7907 3.97652 12.025C4.21083 12.2594 4.59073 12.2594 4.82505 12.025L8.00078 8.84931L11.1765 12.025Z" fill="currentColor"/>
+</svg>
+</span>
+              </button>
+            </div>
+          
+
+<cart-items-component
+  class="cart-items-component"
+  
+    data-drawer
+    view-event-trigger="dialog"
+  
+  data-section-id="cart-drawer-section"
+  
+  view-event-payload="{&quot;context&quot;:null,&quot;cart&quot;:null}"
+  
+>
+  
+
+    <div
+      class="cart-drawer__content"
+      aria-label="Cart"
+    >
+      <h2
+        class="theme-drawer__title h4"
+        id="cart-drawer-heading"
+      >
+        Your cart is empty
+      </h2>
+
+      <div class="cart-drawer__items">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div
+  
+  class="cart-items__wrapper cart-items__wrapper--drawer-empty"
+  
+    data-cart-drawer-empty
+  
+  style=""
+>
+  
+<p>
+        Have an account? <a href="https://gardenbuddy.store/customer_authentication/redirect?locale=en&region_country=US">Log in</a> to check out faster.
+      </p><a
+      class="button cart-items__empty-button"
+      href="/collections/all"
+    >
+      <span class="button-text">
+        Continue shopping
+      </span>
+    </a></div>
+
+
+
+      </div>
+    </div>
+  
+
+</cart-items-component>
+
+
+
+        </div>
+      </cart-drawer-component>
+    </dialog>
+  </theme-drawer>
+
+  
+    </div>
+  
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dialog-component
+  id="search-modal"
+  class="search-modal"
+  
+>
+  <dialog
+    ref="dialog"
+    on:click="/closeDialogOnClickOutside"
+    on:keydown="/closeDialogOnEscapePress"
+    class="search-modal__content dialog-modal"
+    scroll-lock
+    aria-labelledby="search-modal-heading"
+  >
+    <h2
+      id="search-modal-heading"
+      class="visually-hidden"
+    >
+      Search
+    </h2>
+    <predictive-search-component
+      class="predictive-search color-custom-popover"
+      style="--product-corner-radius: 14px; --card-corner-radius: 14px;"
+      data-section-id="predictive-search"
+      data-testid="search-component--modal"
+      role="search"
+      aria-label="Search"
+    >
+      <form
+        action="/search"
+        method="get"
+        role="search"
+        class="predictive-search-form"
+        ref="form"
+        on:keydown="/onSearchKeyDown"
+      >
+        <div
+          class="predictive-search-form__header"
+        >
+          <div class="predictive-search-form__header-inner">
+            <label
+              for="cmdk-input"
+              class="visually-hidden"
+            >Search</label>
+            <input
+              class="search-input"
+              id="cmdk-input"
+              type="search"
+              name="q"
+              role="combobox"
+              aria-expanded="false"
+              aria-owns="predictive-search-results"
+              aria-controls="predictive-search-results"
+              aria-haspopup="listbox"
+              aria-autocomplete="list"
+              autocomplete="off"
+              placeholder="Search"
+              ref="searchInput"
+              on:input="/search"
+              on:keydown="/onSearchKeyDown"
+            >
+            <input
+              name="options[prefix]"
+              type="hidden"
+              value="last"
+            >
+            <span class="svg-wrapper predictive-search__icon">
+              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="4.75" stroke="currentColor" stroke-width="var(--icon-stroke-width)"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="var(--icon-stroke-width)" d="m12.5 12.5 3.25 3.25"/></svg>
+
+            </span>
+            <button
+              type="button"
+              class="button-unstyled predictive-search__reset-button"
+              ref="resetButton"
+              hidden
+              on:click="/resetSearch"
+            >
+              Clear
+            </button>
+          </div>
+          <button
+            type="button"
+            class="button predictive-search__close-modal-button"
+            aria-label="Close dialog"
+            on:click="dialog-component/closeDialog"
+            ref="closeModalButton"
+          >
+            <span class="svg-wrapper">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M11.1765 12.025C11.4108 12.2594 11.7907 12.2594 12.025 12.025C12.2594 11.7907 12.2594 11.4108 12.025 11.1765L8.84931 8.00078L12.025 4.82505C12.2594 4.59073 12.2594 4.21083 12.025 3.97652C11.7907 3.7422 11.4108 3.7422 11.1765 3.97652L8.00078 7.15225L4.82505 3.97652C4.59073 3.7422 4.21083 3.7422 3.97652 3.97652C3.7422 4.21083 3.7422 4.59073 3.97652 4.82505L7.15225 8.00078L3.97652 11.1765C3.7422 11.4108 3.7422 11.7907 3.97652 12.025C4.21083 12.2594 4.59073 12.2594 4.82505 12.025L8.00078 8.84931L11.1765 12.025Z" fill="currentColor"/>
+</svg>
+
+            </span>
+          </button>
+        </div>
+
+        <div class="predictive-search-form__content-wrapper">
+          <div
+            class="predictive-search-form__content"
+            ref="predictiveSearchResults"
+            on:click="/handleModalClick"
+          >
+            
+
+<div
+  id="predictive-search-results"
+  class="predictive-search-dropdown"
+  role="listbox"
+  aria-expanded="true"
+  style="--color-shadow: rgb(var(--color-foreground-rgb) / 0.1);"
+>
+  
+    <div class="predictive-search-results__inner">
+      
+      
+        
+        
+        
+          <div
+  id="predictive-search-products"
+  class="predictive-search-results__products"
+  
+    data-testid="products-list-default--modal"
+  
+>
+  
+    <h4 class="predictive-search-results__title">
+      Products
+    </h4>
+    <ul
+      class="predictive-search-results__list predictive-search-results__wrapper-products list-unstyled"
+    >
+      
+      
+        <li
+          class="predictive-search-results__card predictive-search-results__card--product"
+          ref="resultsItems[]"
+        >
+          
+<product-component
+    class="resource-card__wrapper"
+    
+    
+    view-event-payload="{&quot;product&quot;:{&quot;id&quot;:16519853375837,&quot;title&quot;:&quot;The Garden Buddy&quot;,&quot;handle&quot;:&quot;foldable-kneeler-seat&quot;,&quot;selectedVariant&quot;:null},&quot;context&quot;:&quot;search&quot;,&quot;selectedOptions&quot;:[]}"
+    
+  ><div
+  class="resource-card"
+  data-resource-type="product"
+>
+  <a
+    class="resource-card__link"
+    href="/products/foldable-kneeler-seat"
+  >
+    <span class="visually-hidden">
+      The Garden Buddy
+    </span>
+  </a>
+  <div
+    class="resource-card__media"
+    style="--resource-card-aspect-ratio: 4 / 5;"
+    
+  >
+      
+      
+
+        <img src="//gardenbuddy.store/cdn/shop/files/f3e327ba-8e32-47ca-aa2b-9ebf53fe31b2_1_ada74b90-8fd9-44b0-b27d-4553f4797f52.png?v=1788891274&amp;width=500" alt="The Garden Buddy with the tool set" srcset="//gardenbuddy.store/cdn/shop/files/f3e327ba-8e32-47ca-aa2b-9ebf53fe31b2_1_ada74b90-8fd9-44b0-b27d-4553f4797f52.png?v=1788891274&amp;width=240 240w, //gardenbuddy.store/cdn/shop/files/f3e327ba-8e32-47ca-aa2b-9ebf53fe31b2_1_ada74b90-8fd9-44b0-b27d-4553f4797f52.png?v=1788891274&amp;width=352 352w" width="500" height="500" loading="lazy" class="resource-card__image" sizes="auto" ref="" style="object-position: 50.0% 50.0%;">
+
+          <img src="//gardenbuddy.store/cdn/shop/files/1033f0ca-26f7-4c80-a115-2da9e9e4f865_c1436a27-f427-4bd3-8bf7-0512465a1909.png?v=1788891274&amp;width=500" alt="Kneel comfortably, garden longer. Your knees stay off the gravel." srcset="//gardenbuddy.store/cdn/shop/files/1033f0ca-26f7-4c80-a115-2da9e9e4f865_c1436a27-f427-4bd3-8bf7-0512465a1909.png?v=1788891274&amp;width=240 240w, //gardenbuddy.store/cdn/shop/files/1033f0ca-26f7-4c80-a115-2da9e9e4f865_c1436a27-f427-4bd3-8bf7-0512465a1909.png?v=1788891274&amp;width=352 352w" width="500" height="500" loading="lazy" class="resource-card__image resource-card__image--secondary" sizes="auto" ref="" data-media-id="77053549478237" style="object-position: 50.0% 50.0%;">
+</div>
+
+  <div class="resource-card__content">
+    <p class="resource-card__title paragraph">The Garden Buddy</p>
+
+    
+      
+
+<div ref="priceContainer">
+  
+    
+    
+      
+        <span class="price-item__group price-item--regular compare-at-price">
+          <span class="visually-hidden">Regular price&nbsp;</span>$99.99</span>
+        <span class="price-item__group price">
+          <span class="visually-hidden">Sale price&nbsp;</span>
+          $69.99
+        </span>
+      
+    
+  
+</div>
+    
+  </div>
+</div></product-component>
+
+        </li>
+      
+    </ul>
+  
+</div>
+
+        
+      
+    </div>
+  
+</div>
+
+          </div>
+
+          <div class="predictive-search-form__footer">
+            <button
+              class="button predictive-search__search-button"
+              ref="viewAllButton"
+            >
+              View all
+            </button>
+          </div>
+        </div>
+      </form>
+    </predictive-search-component>
+  </dialog>
+</dialog-component>
+
+
+
+
+    
+      
+
+
+
+
+<quick-add-dialog id="quick-add-dialog">
+  <dialog
+    class="quick-add-modal dialog-modal color-custom-popover"
+    ref="dialog"
+    scroll-lock
+  >
+    <button
+      ref="closeButton"
+      on:click="/closeDialog"
+      class="button button-unstyled close-button quick-add-modal__close"
+      aria-label="Close dialog"
+    ><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M11.1765 12.025C11.4108 12.2594 11.7907 12.2594 12.025 12.025C12.2594 11.7907 12.2594 11.4108 12.025 11.1765L8.84931 8.00078L12.025 4.82505C12.2594 4.59073 12.2594 4.21083 12.025 3.97652C11.7907 3.7422 11.4108 3.7422 11.1765 3.97652L8.00078 7.15225L4.82505 3.97652C4.59073 3.7422 4.21083 3.7422 3.97652 3.97652C3.7422 4.21083 3.7422 4.59073 3.97652 4.82505L7.15225 8.00078L3.97652 11.1765C3.7422 11.4108 3.7422 11.7907 3.97652 12.025C4.21083 12.2594 4.59073 12.2594 4.82505 12.025L8.00078 8.84931L11.1765 12.025Z" fill="currentColor"/>
+</svg>
+</button>
+
+    <product-component
+      id="quick-add-modal-content"
+      class="quick-add-modal__content"
+      view-event-trigger="dialog"
+    ></product-component>
+  </dialog>
+</quick-add-dialog>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+  
+</body>
+</html>
