@@ -648,3 +648,114 @@ export async function todos(db: DB, storeId: string | null) {
 
   return out;
 }
+
+/* -------------------------------------------------- product writes */
+
+export interface ProductInput {
+  title: string;
+  handle: string;
+  description: string;
+  status: string;
+  supplierName: string | null;
+  supplierUrl: string | null;
+  costCents: number | null;
+}
+
+export async function createProduct(
+  db: DB,
+  storeId: string,
+  input: ProductInput,
+): Promise<ProductRow> {
+  const [row] = await db
+    .insert(products)
+    .values({ storeId, ...input })
+    .returning();
+  return row;
+}
+
+export async function updateProduct(db: DB, productId: string, input: ProductInput): Promise<void> {
+  await db.update(products).set(input).where(eq(products.id, productId));
+}
+
+export interface VariantInput {
+  id?: string;
+  label: string;
+  sublabel: string | null;
+  priceCents: number;
+  compareAtCents: number | null;
+  sku: string | null;
+  position: number;
+  isDefault: boolean;
+}
+
+/**
+ * Replaces a product's bundle options with exactly what the form submitted.
+ *
+ * Rows that came back keep their id — an option that has been sold must keep
+ * the same variant so order history still points at something real. Rows that
+ * were removed in the form are deleted, and anything new is inserted.
+ */
+export async function saveVariants(
+  db: DB,
+  productId: string,
+  submitted: VariantInput[],
+): Promise<void> {
+  const existing = await db.select().from(variants).where(eq(variants.productId, productId));
+  const keptIds = new Set(submitted.map((v) => v.id).filter(Boolean) as string[]);
+
+  const removed = existing.filter((row) => !keptIds.has(row.id));
+  if (removed.length) {
+    await db.delete(variants).where(inArray(variants.id, removed.map((r) => r.id)));
+  }
+
+  for (const variant of submitted) {
+    const values = {
+      label: variant.label,
+      sublabel: variant.sublabel,
+      priceCents: variant.priceCents,
+      compareAtCents: variant.compareAtCents,
+      sku: variant.sku,
+      position: variant.position,
+      isDefault: variant.isDefault,
+    };
+    if (variant.id && existing.some((row) => row.id === variant.id)) {
+      await db.update(variants).set(values).where(eq(variants.id, variant.id));
+    } else {
+      await db.insert(variants).values({ productId, ...values });
+    }
+  }
+}
+
+/** Stock levels, edited on the Inventory screen. */
+export async function saveStock(
+  db: DB,
+  rows: { id: string; available: number; incoming: number; lowStockThreshold: number }[],
+): Promise<void> {
+  for (const row of rows) {
+    await db
+      .update(variants)
+      .set({
+        available: row.available,
+        incoming: row.incoming,
+        lowStockThreshold: row.lowStockThreshold,
+      })
+      .where(eq(variants.id, row.id));
+  }
+}
+
+/** Units sold per variant, so Products can show it without inventing it. */
+export async function unitsSold(db: DB, storeId: string): Promise<Map<string, number>> {
+  const rows = await db
+    .select({
+      variantId: orderItems.variantId,
+      units: sql<number>`cast(coalesce(sum(${orderItems.quantity}), 0) as int)`,
+    })
+    .from(orderItems)
+    .innerJoin(orders, eq(orders.id, orderItems.orderId))
+    .where(eq(orders.storeId, storeId))
+    .groupBy(orderItems.variantId);
+
+  const out = new Map<string, number>();
+  for (const row of rows) if (row.variantId) out.set(row.variantId, row.units);
+  return out;
+}
