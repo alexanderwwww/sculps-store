@@ -39,6 +39,7 @@ import {
   findZone,
   bindHostname,
   unbindHostname,
+  hostnameSsl,
   rootDomain,
 } from "~/lib/cloudflare.server";
 import { createSenderDomain, readSenderDomain, verifySenderDomain } from "~/lib/resend-domains.server";
@@ -178,6 +179,9 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       resend: emailReady(env),
       encryption: encryptionReady(env),
       adminOrigin: env.ADMIN_ORIGIN || null,
+      // Our equivalent of *.myshopify.com: the address the store answers on
+      // before any domain is connected, and which never stops working.
+      workersHost: url.hostname.endsWith(".workers.dev") ? url.hostname : null,
     },
     store: {
       id: store.id,
@@ -370,13 +374,61 @@ export async function action({ context, request }: Route.ActionArgs) {
       await context.db.update(domainsTable).set({ lastError: bound.reason }).where(eq(domainsTable.id, id));
       return { error: bound.reason };
     }
+
+    // The certificate state is read from Cloudflare, not assumed. A domain
+    // marked "SSL active" while the pack is still issuing is a browser warning
+    // on a customer's screen.
+    const ssl = await hostnameSsl(config, zone.value.id, row.hostname);
+
     await context.db
       .update(domainsTable)
-      .set({ cloudflareZoneId: zone.value.id, cloudflareDomainId: bound.value.id, status: "connected", ssl: "active", verifiedAt: new Date(), lastError: null })
+      .set({
+        cloudflareZoneId: zone.value.id,
+        cloudflareDomainId: bound.value.id,
+        status: "connected",
+        ssl: ssl.ok ? ssl.value : "provisioning",
+        verifiedAt: new Date(),
+        lastError: null,
+      })
       .where(eq(domainsTable.id, id));
+
+    // www is a hostname of its own. Shopify binds it alongside the root and
+    // lists it under it; without this, typing www.<domain> reaches nothing.
+    let wwwNote = "";
+    if (!row.hostname.startsWith("www.") && row.hostname === rootDomain(row.hostname)) {
+      const wwwHost = `www.${row.hostname}`;
+      const existing = await storeSettings(context.db, store.id);
+      if (!existing.domains.some((d) => d.hostname === wwwHost)) {
+        const wwwBound = await bindHostname(config, zone.value.id, wwwHost);
+        if (wwwBound.ok) {
+          const wwwRow = await addDomain(context.db, store.id, wwwHost).catch(() => null);
+          if (wwwRow) {
+            await context.db
+              .update(domainsTable)
+              .set({
+                cloudflareZoneId: zone.value.id,
+                cloudflareDomainId: wwwBound.value.id,
+                status: "connected",
+                ssl: ssl.ok ? ssl.value : "provisioning",
+                verifiedAt: new Date(),
+              })
+              .where(eq(domainsTable.id, wwwRow.id));
+            wwwNote = ` ${wwwHost} is connected too and redirects here.`;
+          }
+        } else {
+          wwwNote = ` ${wwwHost} could not be bound: ${wwwBound.reason}`;
+        }
+      }
+    }
+
     // The storefront answers on the primary hostname.
     if (row.isPrimary) await saveStoreSettings(context.db, store.id, { domain: row.hostname });
-    return { ok: `${row.hostname} is connected. Cloudflare is issuing the certificate — usually a minute or two.` };
+    return {
+      ok:
+        ssl.ok && ssl.value === "active"
+          ? `${row.hostname} is connected and its certificate is active.${wwwNote}`
+          : `${row.hostname} is connected. Cloudflare is still issuing the certificate — usually a minute or two.${wwwNote}`,
+    };
   }
 
   if (intent === "primary-domain") {
@@ -705,7 +757,7 @@ export default function Settings({ loaderData, actionData }: Route.ComponentProp
           ) : pane === "general" ? (
             <GeneralPane store={store} busy={busy} />
           ) : pane === "domains" ? (
-            <DomainsPane store={store} domains={settings.domains} cloudflare={env.cloudflare} adminOrigin={env.adminOrigin} busy={busy} />
+            <DomainsPane store={store} domains={settings.domains} cloudflare={env.cloudflare} adminOrigin={env.adminOrigin} workersHost={env.workersHost} busy={busy} />
           ) : pane === "payments" ? (
             <PaymentsPane store={store} stripe={settings.stripe} encryption={env.encryption} adminOrigin={env.adminOrigin} busy={busy} />
           ) : pane === "notifications" ? (
@@ -847,17 +899,228 @@ function GeneralPane({ store, busy }: { store: Store; busy: boolean }) {
   );
 }
 
+/**
+ * Domains, in the shape Shopify shows them.
+ *
+ * One bordered table, grouped by what the domain serves. The store's primary
+ * hostname is the top-level row with a Primary chip; everything that points at
+ * it — the www form, the workers.dev address, any subdomain — is an indented
+ * child row on a dotted rail. Status is the real state of the domain, not an
+ * assumption: pending until Cloudflare says the zone is active, connected once
+ * the hostname is bound, and an issue when Cloudflare told us why not.
+ */
+function DomainTable({
+  store,
+  domains,
+  workersHost,
+  busy,
+}: {
+  store: Store;
+  domains: SettingsData["domains"];
+  workersHost: string | null;
+  busy: boolean;
+}) {
+  const primary = domains.find((d) => d.isPrimary) ?? null;
+  const children = domains.filter((d) => d !== primary);
+
+  const statusOf = (domain: SettingsData["domains"][number]) => {
+    if (domain.lastError) return { label: "Issue", kind: "critical" as const, title: domain.lastError };
+    if (domain.transferStep != null) return { label: "Transferring", kind: "info" as const, title: "Registration transfer in progress" };
+    if (domain.status !== "connected") {
+      return {
+        label: domain.zone ? "Verifying" : "Pending",
+        kind: "warning" as const,
+        title: domain.zone
+          ? "Cloudflare has the zone, but the nameservers are not pointing at it yet."
+          : "Not added at Cloudflare yet.",
+      };
+    }
+    if (domain.ssl !== "active") {
+      return { label: "Verifying", kind: "warning" as const, title: "Connected. The certificate is still being issued." };
+    }
+    return { label: "Connected", kind: "success" as const, title: "Bound to this Worker with an active certificate." };
+  };
+
+  return (
+    <SettingsCard
+      title="Domains"
+      actions={
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <CardButton
+            onClick={() => document.getElementById("connect-existing")?.scrollIntoView({ behavior: "smooth" })}
+          >
+            Connect existing
+          </CardButton>
+          <CardButton
+            disabled
+            title="We do not sell domain registrations. Buy the domain at any registrar, then connect it here."
+          >
+            Buy new domain
+          </CardButton>
+        </div>
+      }
+    >
+      <div style={{ margin: "0 16px 16px", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) 140px",
+            padding: "10px 14px",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--ink-2)",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <span>Domain</span>
+          <span>Status</span>
+        </div>
+
+        <div style={{ padding: "8px 14px", background: "var(--bg)", fontSize: 12, fontWeight: 600, color: "var(--ink-2)", borderBottom: "1px solid var(--border)" }}>
+          Online Store
+        </div>
+
+        {!primary && !workersHost ? (
+          <EmptyRows
+            title="No domains connected"
+            body={`The storefront answers on ${store.domain} today. Connect a domain you already own below.`}
+          />
+        ) : null}
+
+        {primary ? (
+          <DomainRow domain={primary} status={statusOf(primary)} primary busy={busy} />
+        ) : null}
+
+        {workersHost ? (
+          <DomainRow
+            child
+            hostname={workersHost}
+            status={{ label: "Connected", kind: "success", title: "This store's built-in address. It always works and cannot be removed." }}
+            note="Built-in address"
+          />
+        ) : null}
+
+        {children.map((domain) => (
+          <DomainRow key={domain.id} child domain={domain} status={statusOf(domain)} busy={busy} />
+        ))}
+      </div>
+
+      <div style={{ textAlign: "center", padding: "0 16px 16px" }}>
+        <a
+          href="https://developers.cloudflare.com/workers/configuration/routing/custom-domains/"
+          target="_blank"
+          rel="noreferrer"
+          style={{ fontSize: 13, color: "var(--link)" }}
+        >
+          Learn more about domains
+        </a>
+      </div>
+    </SettingsCard>
+  );
+}
+
+function DomainRow({
+  domain,
+  hostname,
+  status,
+  primary = false,
+  child = false,
+  note,
+  busy = false,
+}: {
+  domain?: SettingsData["domains"][number];
+  hostname?: string;
+  status: { label: string; kind: "success" | "warning" | "critical" | "info"; title: string };
+  primary?: boolean;
+  child?: boolean;
+  note?: string;
+  busy?: boolean;
+}) {
+  const name = domain?.hostname ?? hostname ?? "";
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(0,1fr) 140px",
+        alignItems: "center",
+        gap: 10,
+        padding: child ? "10px 14px 10px 34px" : "12px 14px",
+        borderBottom: "1px solid var(--border)",
+        position: "relative",
+      }}
+    >
+      {child ? (
+        <span style={{ position: "absolute", left: 20, top: 0, bottom: 0, borderLeft: "1px dotted var(--border-strong)" }} />
+      ) : null}
+
+      <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--ink-2)" strokeWidth="1.5" style={{ flex: "none" }}>
+          <circle cx="10" cy="10" r="7.5" />
+          <path d="M2.5 10h15M10 2.5c2.4 2.4 2.4 12.6 0 15M10 2.5c-2.4 2.4-2.4 12.6 0 15" />
+        </svg>
+        <span style={{ fontWeight: 550, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+        {primary ? (
+          <span style={{ flex: "none", fontSize: 12, color: "var(--ink-2)", border: "1px solid var(--border)", borderRadius: 999, padding: "1px 8px" }}>
+            Primary
+          </span>
+        ) : null}
+        {note ? <span style={{ flex: "none", fontSize: 12, color: "var(--ink-3)" }}>{note}</span> : null}
+      </span>
+
+      <span style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
+        <span title={status.title}>
+          <RowBadge kind={status.kind}>{status.label}</RowBadge>
+        </span>
+        {domain ? (
+          <span style={{ display: "flex", gap: 4 }}>
+            {[
+              { label: "Verify", intent: "verify-domain", disabled: busy || domain.transferStep != null, danger: false, confirm: "" },
+              ...(domain.isPrimary
+                ? []
+                : [{ label: "Make primary", intent: "primary-domain", disabled: busy, danger: false, confirm: "" }]),
+              {
+                label: "Remove",
+                intent: "remove-domain",
+                disabled: busy,
+                danger: true,
+                confirm: `Remove ${domain.hostname}? The storefront stops answering on it immediately.`,
+              },
+            ].map((action) => (
+              <Form
+                key={action.label}
+                method="post"
+                onSubmit={(event) => {
+                  if (action.confirm && !window.confirm(action.confirm)) event.preventDefault();
+                }}
+              >
+                <input type="hidden" name="domainId" value={domain.id} />
+                <input type="hidden" name="intent" value={action.intent} />
+                <RowButton danger={action.danger} disabled={action.disabled}>
+                  {action.label}
+                </RowButton>
+              </Form>
+            ))}
+          </span>
+        ) : null}
+      </span>
+    </div>
+  );
+}
+
 function DomainsPane({
   store,
   domains,
   cloudflare,
   adminOrigin,
+  workersHost,
   busy,
 }: {
   store: Store;
   domains: SettingsData["domains"];
   cloudflare: boolean;
   adminOrigin: string | null;
+  workersHost: string | null;
   busy: boolean;
 }) {
   const transferring = domains.find((d) => d.transferStep != null);
@@ -870,59 +1133,12 @@ function DomainsPane({
         </Notice>
       ) : null}
 
-      <SettingsCard
-        title={`Domains · ${store.name}`}
-        sub={domains.length ? `${domains.length} domain${domains.length === 1 ? "" : "s"}` : "None connected"}
-        actions={
-          <Form method="post" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input type="hidden" name="intent" value="add-subdomain" />
-            <input name="subdomain" placeholder="shop" style={{ ...input, height: 28, width: 90 }} />
-            <CardButton disabled={!domains.length || busy}>Add subdomain</CardButton>
-          </Form>
-        }
-      >
-        {domains.length === 0 ? (
-          <EmptyRows title="No domains connected" body={`The storefront answers on ${store.domain} today. Connect a domain you already own, or transfer its registration here.`} />
-        ) : (
-          domains.map((domain) => (
-            <div key={domain.id}>
-              <ListRow
-                name={domain.hostname}
-                note={
-                  domain.transferStep != null
-                    ? `Registration transferring in — step ${Math.min(domain.transferStep, 6)} of 6`
-                    : domain.lastError
-                      ? `Cloudflare: ${domain.lastError}`
-                      : domain.status === "connected"
-                        ? "Bound to this Worker · Cloudflare manages DNS and the certificate"
-                        : domain.zone
-                          ? "Waiting for the nameservers to point at Cloudflare"
-                          : "Pointing here via DNS"
-                }
-                badges={[
-                  { label: domain.status === "connected" ? "Connected" : domain.transferStep != null ? "Transferring" : "Pending", kind: domain.status === "connected" ? "success" : domain.transferStep != null ? "info" : "warning" },
-                  { label: `SSL ${domain.ssl === "active" ? "Active" : "Pending"}`, kind: domain.ssl === "active" ? "success" : "neutral" },
-                  ...(domain.isPrimary ? [{ label: "Primary", kind: "info" as const }] : []),
-                ]}
-                hidden={{ domainId: domain.id }}
-                actions={[
-                  { label: "Verify connection", intent: "verify-domain", disabled: busy || domain.transferStep != null },
-                  { label: "Set as primary", intent: "primary-domain", disabled: domain.isPrimary || busy },
-                  { label: "Remove", intent: "remove-domain", danger: true, confirm: `Remove ${domain.hostname}? The storefront stops answering on it immediately.` },
-                ]}
-              />
-              {domain.nameservers.length && domain.status !== "connected" ? (
-                <div style={{ padding: "0 16px 12px" }}>
-                  <div style={{ fontSize: 12, color: "var(--ink-2)", padding: "8px 0 6px" }}>
-                    Set these two nameservers for <strong>{domain.hostname}</strong> at your registrar:
-                  </div>
-                  <DnsTable rows={domain.nameservers.map((server, index) => ({ type: "NS", name: `nameserver ${index + 1}`, value: server }))} />
-                </div>
-              ) : null}
-            </div>
-          ))
-        )}
-      </SettingsCard>
+      <DomainTable
+        store={store}
+        domains={domains}
+        workersHost={workersHost}
+        busy={busy}
+      />
 
       <SettingsCard
         title="Connect an existing domain"

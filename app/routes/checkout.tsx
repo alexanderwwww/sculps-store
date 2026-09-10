@@ -16,7 +16,7 @@ import { resolveStore } from "~/lib/store.server";
 import { readCartToken, priceCart, markCartConverted } from "~/lib/cart.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import { placeOrder } from "~/lib/admin.server";
-import { geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
+import { deviceFromRequest, geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
 import { metaConfig } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import { pixelScript, readMetaCookies, trackFunnelEvent } from "~/lib/meta.server";
@@ -226,6 +226,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     type: "checkout",
     path: "/checkout",
     geo,
+    device: deviceFromRequest(request),
     amountCents: cart.totalCents,
     orderId: order.id,
   });

@@ -6,7 +6,9 @@ import { pages, metaConfig, themes } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
 import { eq } from "drizzle-orm";
 import { pixelScript, trackFunnelEvent } from "~/lib/meta.server";
+import { vitalsScript } from "~/lib/vitals";
 import {
+  deviceFromRequest,
   geoFromRequest,
   readVisitorSession,
   newVisitorSession,
@@ -136,15 +138,21 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       type: "view",
       path: url.pathname,
       geo: geoFromRequest(request),
+      device: deviceFromRequest(request),
       ...attribution(url),
     });
   }
 
-  return withHeaders({ store, page: page ?? null, pixel, favicon: store.faviconUrl }, { headers });
+  // Core Web Vitals, measured on this visit. Only on a real, tracked view —
+  // a preview or a thumbnail render is not a visitor and must not move the
+  // store's numbers.
+  const vitals = shouldTrack(request, url) && !isThumb && !previewThemeId ? vitalsScript() : null;
+
+  return withHeaders({ store, page: page ?? null, pixel, vitals, favicon: store.faviconUrl }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, favicon } = loaderData;
+  const { store, page, pixel, vitals, favicon } = loaderData;
 
   if (!page) {
     return (
@@ -169,6 +177,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
     <div className="gk">
       {favicon ? <link rel="icon" href={favicon} /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
+      {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
       <GardenKneelerStorefront page={page} />
     </div>
   );

@@ -1,15 +1,16 @@
 /**
  * Online Store — Themes, Pages, Navigation, Preferences.
  *
- * Themes shows the real storefront, not a drawing of it: a scaled iframe of
- * the live page in a browser frame, and one per draft. Layout stays in code;
+ * Themes is Shopify's screen: the visibility pill over the store's real
+ * password state, the Web Vitals strip built from measurements real browsers
+ * reported, the live theme card showing the actual rendered storefront, and
+ * the draft list. Nothing on it is a drawing. Layout stays in code;
  * a theme holds the words, images and videos, so duplicating one is safe and
  * editing the live one — the Shopify restriction — is allowed on purpose.
  */
 import { useEffect, useRef, useState } from "react";
 import { Form, Link, useNavigation } from "react-router";
 import type { Route } from "./+types/admin.online-store";
-import { eq } from "drizzle-orm";
 import { requireUser } from "~/lib/auth.server";
 import {
   resolveAdminStore,
@@ -28,10 +29,9 @@ import {
   saveStoreSettings,
 } from "~/lib/admin.server";
 import { MENU_HANDLES } from "~/lib/menus";
-import { sections as sectionsTable } from "~/db/schema";
 import { hashPassword } from "~/lib/password.server";
-import { SECTIONS } from "~/lib/sections";
-import { card, Empty, primaryButton, input } from "~/admin/ui";
+import { card, Empty, primaryButton, secondaryButton, input } from "~/admin/ui";
+import { vitalsStrip, type VitalsStrip } from "~/admin/online-store.data.server";
 
 export function meta() {
   return [{ title: "Online Store — Shop Admin" }];
@@ -48,7 +48,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   await requireUser(context.db, request);
   const url = new URL(request.url);
   const { store } = await resolveAdminStore(context.db, url);
-  if (!store) return { store: null, tab: "themes", live: null, drafts: [], pages: [], menus: [], destinations: [], visibleCount: 0, totalSections: SECTIONS.length, productPageId: null, prefs: null };
+  if (!store) return { store: null, tab: "themes", live: null, drafts: [], pages: [], menus: [], destinations: [], productPageId: null, prefs: null, vitals: null as VitalsStrip | null };
 
   const wanted = url.searchParams.get("tab") || "themes";
   const tab = TABS.some(([key]) => key === wanted) ? wanted : "themes";
@@ -56,26 +56,22 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const all = await listThemes(context.db, store.id);
   const live = all.find((theme) => theme.isLive) ?? null;
 
-  let visibleCount = 0;
   let productPageId: string | null = null;
   if (live) {
     const productPage = await productPageOfTheme(context.db, live.id);
     productPageId = productPage?.id ?? null;
-    if (productPage) {
-      const rows = await context.db.select().from(sectionsTable).where(eq(sectionsTable.pageId, productPage.id));
-      visibleCount = rows.filter((row) => !row.hidden).length;
-    }
   }
 
   const pageRows = live ? await listPages(context.db, live.id) : [];
   const menus = await storeMenus(context.db, store.id);
+  // The strip only shows on Themes, so the two extra queries only run there.
+  const vitals = tab === "themes" ? await vitalsStrip(context.db, store.id) : null;
 
   return {
     store: { slug: store.slug, name: store.name, domain: store.domain },
     tab,
+    vitals,
     productPageId,
-    visibleCount,
-    totalSections: SECTIONS.length,
     live: live ? { id: live.id, name: live.name, updatedAt: live.updatedAt } : null,
     drafts: all.filter((theme) => !theme.isLive).map((theme) => ({ id: theme.id, name: theme.name, updatedAt: theme.updatedAt })),
     pages: pageRows.map((page) => ({ id: page.id, title: page.title, handle: page.handle, kind: page.kind, visible: page.visible, updatedAt: page.updatedAt })),
@@ -177,6 +173,15 @@ export async function action({ context, request }: Route.ActionArgs) {
     return { ok: "Menu saved. The storefront shows it on the next load." };
   }
 
+  // The header pill writes the same column the Preferences pane writes:
+  // password protection off = Public, on = Restricted.
+  if (intent === "visibility") {
+    const restricted = text("visibility") === "restricted";
+    if (restricted && !store.passwordHash) return { error: "Set a password in Preferences before restricting the store." };
+    await saveStoreSettings(context.db, store.id, { passwordEnabled: restricted });
+    return { ok: restricted ? "Restricted. The storefront now asks for the password." : "Public. Anyone with the address can see the store." };
+  }
+
   if (intent === "preferences") {
     const password = text("password");
     const enabled = form.get("passwordEnabled") === "on";
@@ -206,7 +211,7 @@ function when(value: string | Date): string {
 }
 
 export default function OnlineStore({ loaderData, actionData }: Route.ComponentProps) {
-  const { store, tab, live, drafts, pages, menus, destinations, visibleCount, totalSections, productPageId, prefs } = loaderData;
+  const { store, tab, live, drafts, pages, menus, destinations, productPageId, prefs, vitals } = loaderData;
   const navigation = useNavigation();
   const busy = navigation.state === "submitting";
 
@@ -218,12 +223,11 @@ export default function OnlineStore({ loaderData, actionData }: Route.ComponentP
     );
   }
 
-  const themeCols = "minmax(0,300px) minmax(0,1fr)";
   const pgCols = "minmax(0,1.4fr) minmax(0,1fr) 110px 80px";
 
   return (
     <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
-      <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650 }}>Online Store · {store.name}</h1>
+      <StoreHeader store={store} prefs={prefs} busy={busy} />
       <div style={{ display: "flex", gap: 2, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 6, boxShadow: "var(--shadow)", width: "fit-content", flexWrap: "wrap" }}>
         {TABS.map(([key, label]) => (
           <Link
@@ -241,41 +245,34 @@ export default function OnlineStore({ loaderData, actionData }: Route.ComponentP
 
       {tab === "themes" ? (
         <>
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "var(--shadow)", overflow: "hidden" }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", fontWeight: 650 }}>Current theme</div>
-            {!live ? (
+          {vitals ? <VitalsStripCard vitals={vitals} /> : null}
+
+          {!live ? (
+            <div style={card}>
               <Empty title="No live theme" help="This store has no live theme, which should not happen. Duplicate a draft and publish it." />
-            ) : (
-              <div style={{ padding: 16, display: "grid", gridTemplateColumns: themeCols, gap: 18, alignItems: "start" }}>
-                {/* The prototype draws a wireframe of the storefront here; we put the
-                    real page in the same browser chrome, at the same card size. */}
-                <StorefrontThumb slug={store.slug} domain={store.domain} height={260} scale={0.32} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-                  <span style={{ fontWeight: 650, fontSize: 15 }}>{live.name}</span>
-                  <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Last updated {when(live.updatedAt)} · {visibleCount} of {totalSections} sections showing</span>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2, position: "relative" }}>
-                    {productPageId ? (
-                      <Link to={`/admin/online-store/editor/${productPageId}?store=${store.slug}`} style={{ height: 30, padding: "0 14px", borderRadius: 8, border: 0, background: "var(--accent)", color: "var(--accent-ink)", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
-                        Customize
-                      </Link>
-                    ) : null}
-                    <ThemeMenu theme={live} isLive slug={store.slug} busy={busy} />
-                  </div>
-                  <span style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: "17px", marginTop: 4 }}>Design is written in code per store. This editor changes words and images.</span>
-                </div>
-              </div>
-            )}
+            </div>
+          ) : (
+            <LiveThemeCard store={store} live={live} productPageId={productPageId} busy={busy} />
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
+            <h2 style={{ margin: 0, fontSize: 14, lineHeight: "20px", fontWeight: 650 }}>Draft themes</h2>
+            <span style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {/* Nothing pretends: there is no theme-file format and no upload
+                  endpoint behind Import, so it is disabled with the reason. */}
+              <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Importing needs a theme file format and an upload endpoint. Neither exists yet.</span>
+              <button type="button" disabled title="Importing needs a theme file format and an upload endpoint. Neither exists yet." style={{ ...secondaryButton, opacity: 0.5, cursor: "not-allowed" }}>
+                Import
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m4 6 4 4 4-4" /></svg>
+              </button>
+            </span>
           </div>
 
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "var(--shadow)", overflow: "hidden" }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontWeight: 650 }}>Theme library</span>
-              <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Saved versions of this design</span>
-            </div>
+          <div style={card}>
             {drafts.length === 0 ? (
               <div style={{ padding: "40px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <div style={{ fontWeight: 650 }}>No saved versions yet</div>
-                <div style={{ color: "var(--ink-2)", maxWidth: 360 }}>Duplicate the current theme from the Actions menu to keep a version you can roll back to.</div>
+                <div style={{ fontWeight: 650 }}>No draft themes yet</div>
+                <div style={{ color: "var(--ink-2)", maxWidth: 360 }}>Duplicate the live theme from its ⋯ menu to keep a version you can roll back to.</div>
               </div>
             ) : (
               drafts.map((theme) => (
@@ -368,6 +365,305 @@ function Notice({ kind, children }: { kind: "critical" | "success"; children: Re
   return <div style={{ background: `var(--b-${kind}-bg)`, color: `var(--b-${kind}-fg)`, borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>{children}</div>;
 }
 
+/* ------------------------------------------------------- header row */
+
+/**
+ * Shopify's Online Store header: shop glyph and title on the left; the
+ * visibility pill, View store and the ⋯ menu on the right.
+ */
+function StoreHeader({
+  store,
+  prefs,
+  busy,
+}: {
+  store: { slug: string; name: string; domain: string };
+  prefs: { passwordEnabled: boolean; hasPassword: boolean };
+  busy: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+        <span style={{ width: 28, height: 28, borderRadius: 8, background: "var(--b-success-bg)", color: "var(--b-success-fg)", display: "grid", placeItems: "center", flex: "none" }}>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
+            <path d="M3.2 7.6 4.8 3.5h10.4l1.6 4.1" />
+            <path d="M3.2 7.6a2.1 2.1 0 0 0 3.4 1.6 2.1 2.1 0 0 0 3.4 0 2.1 2.1 0 0 0 3.4 0 2.1 2.1 0 0 0 3.4-1.6" />
+            <path d="M4.8 9.9v6.6h10.4V9.9" />
+          </svg>
+        </span>
+        <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650 }}>Online Store</h1>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
+        <VisibilityPill prefs={prefs} slug={store.slug} busy={busy} />
+        <a href={`/?store=${store.slug}`} target="_blank" rel="noreferrer" style={{ ...secondaryButton, height: 30, color: "var(--ink)", textDecoration: "none" }}>
+          View store
+        </a>
+        <HeaderMore slug={store.slug} />
+      </div>
+    </div>
+  );
+}
+
+/** Reads and writes `stores.passwordEnabled` — off is Public, on is Restricted. */
+function VisibilityPill({ prefs, slug, busy }: { prefs: { passwordEnabled: boolean; hasPassword: boolean }; slug: string; busy: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useCloseOnOutside<HTMLDivElement>(() => setOpen(false));
+  const restricted = prefs.passwordEnabled;
+
+  const choice = (value: "public" | "restricted", label: string, help: string, disabled?: boolean) => (
+    <Form method="post">
+      <input type="hidden" name="intent" value="visibility" />
+      <input type="hidden" name="visibility" value={value} />
+      <button
+        type="submit"
+        disabled={busy || disabled}
+        title={disabled ? "Set a password in Preferences first." : undefined}
+        className="k-hover"
+        style={{ width: "100%", textAlign: "left", padding: "7px 10px", border: 0, borderRadius: 7, background: "transparent", cursor: disabled ? "not-allowed" : "pointer", fontSize: 13, color: "var(--ink)", opacity: disabled ? 0.5 : 1 }}
+      >
+        <span style={{ display: "block", fontWeight: 550 }}>{label}</span>
+        <span style={{ display: "block", fontSize: 12, color: "var(--ink-2)" }}>{help}</span>
+      </button>
+    </Form>
+  );
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{ height: 30, padding: "0 10px", borderRadius: 999, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontSize: 12, fontWeight: 550, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, boxShadow: "var(--shadow)" }}
+      >
+        {restricted ? (
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <path d="M3 10s2.8-4.5 7-4.5S17 10 17 10s-2.8 4.5-7 4.5S3 10 3 10Z" />
+            <path d="M3 3l14 14" />
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <path d="M3 10s2.8-4.5 7-4.5S17 10 17 10s-2.8 4.5-7 4.5S3 10 3 10Z" />
+            <circle cx="10" cy="10" r="1.9" />
+          </svg>
+        )}
+        {restricted ? "Restricted" : "Public"}
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m4 6 4 4 4-4" /></svg>
+      </button>
+      {open ? (
+        <div style={{ position: "absolute", right: 0, top: 36, width: 260, background: "var(--elev)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "var(--shadow-lg)", padding: 6, zIndex: 20, animation: "kPop .14s ease-out" }}>
+          {choice("public", "Public", "Anyone with the address can see the store.")}
+          {choice("restricted", "Restricted", prefs.hasPassword ? "Visitors need the storefront password." : "Set a password in Preferences first.", !prefs.hasPassword)}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** The ⋯ next to View store. Only links that go somewhere real are in it. */
+function HeaderMore({ slug }: { slug: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useCloseOnOutside<HTMLDivElement>(() => setOpen(false));
+  const itemStyle = { display: "block", padding: "7px 10px", borderRadius: 7, fontSize: 13, color: "var(--ink)", textDecoration: "none" } as const;
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-label="More actions" style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", boxShadow: "var(--shadow)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 15, lineHeight: 1 }}>
+        ⋯
+      </button>
+      {open ? (
+        <div style={{ position: "absolute", right: 0, top: 36, width: 200, background: "var(--elev)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "var(--shadow-lg)", padding: 6, zIndex: 20, animation: "kPop .14s ease-out" }}>
+          <Link to={`/admin/online-store?store=${slug}&tab=preferences`} className="k-hover" style={itemStyle}>Edit preferences</Link>
+          <Link to={`/admin/settings?store=${slug}&pane=domains`} className="k-hover" style={itemStyle}>Manage domains</Link>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function useCloseOnOutside<T extends HTMLElement>(close: () => void) {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) close();
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  });
+  return ref;
+}
+
+/* ------------------------------------------------------- web vitals */
+
+/**
+ * One card, five cells divided by vertical rules: the window, the three Core
+ * Web Vitals at P75, and sessions by device. Every number is measured; a
+ * metric without five samples says "Collecting" rather than showing a zero.
+ */
+function VitalsStripCard({ vitals }: { vitals: VitalsStrip }) {
+  const cell = { padding: "13px 16px", minWidth: 0, display: "flex", flexDirection: "column" as const, justifyContent: "center" };
+  const rule = { borderLeft: "1px solid var(--border)" };
+
+  return (
+    <div style={{ ...card, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+      <div style={{ ...cell, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: "var(--ink-2)", flex: "none" }}>
+          <rect x="3" y="4.5" width="14" height="12.5" rx="2" />
+          <path d="M3 8.5h14M7 3v3M13 3v3" />
+        </svg>
+        <span style={{ fontSize: 13, fontWeight: 550 }}>{vitals.days} days</span>
+      </div>
+
+      <MetricCell
+        style={{ ...cell, ...rule }}
+        label="LCP P75"
+        definition="Largest Contentful Paint at the 75th percentile: how long the biggest thing on screen takes to appear, for the slowest quarter of visits."
+        cellData={vitals.lcp}
+        format={(value) => `${value} milliseconds`}
+        grade={(value) => (value <= 2500 ? "good" : value <= 4000 ? "fair" : "poor")}
+      />
+      <MetricCell
+        style={{ ...cell, ...rule }}
+        label="INP P75"
+        definition="Interaction to Next Paint at the 75th percentile: how long the page takes to respond to a tap or click, for the slowest quarter of visits."
+        cellData={vitals.inp}
+        format={(value) => `${value} milliseconds`}
+        grade={(value) => (value <= 200 ? "good" : value <= 500 ? "fair" : "poor")}
+      />
+      <MetricCell
+        style={{ ...cell, ...rule }}
+        label="Cumulative Layout Shift"
+        definition="How much the page moves around while it loads, at the 75th percentile. Zero means nothing jumped."
+        cellData={vitals.cls}
+        format={(value) => (value / 1000).toFixed(2)}
+        grade={(value) => (value <= 100 ? "good" : value <= 250 ? "fair" : "poor")}
+      />
+
+      <div style={{ ...cell, ...rule, gap: 6 }}>
+        <span style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)" }}>Sessions by Device Type</span>
+        {vitals.devices.length === 0 ? (
+          <span style={{ fontSize: 13, color: "var(--ink-3)" }}>No sessions yet</span>
+        ) : (
+          <span style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            {vitals.devices.map((row) => (
+              <span key={row.device} style={{ fontSize: 13 }}>
+                <b style={{ fontWeight: 650 }}>{row.sessions}</b>{" "}
+                <span style={{ color: "var(--ink-2)", textTransform: "capitalize" }}>{row.device}</span>
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MetricCell({
+  style,
+  label,
+  definition,
+  cellData,
+  format,
+  grade,
+}: {
+  style: React.CSSProperties;
+  label: string;
+  definition: string;
+  cellData: { p75: number | null; samples: number };
+  format: (value: number) => string;
+  grade: (value: number) => "good" | "fair" | "poor";
+}) {
+  const collecting = cellData.p75 === null;
+  const barColor = collecting
+    ? "var(--border)"
+    : grade(cellData.p75 as number) === "good"
+      ? "var(--b-success-fg)"
+      : grade(cellData.p75 as number) === "fair"
+        ? "var(--b-warning-fg)"
+        : "var(--critical)";
+
+  return (
+    <div style={{ ...style, gap: 6 }}>
+      <span
+        title={definition}
+        style={{ fontSize: 12, fontWeight: 550, color: "var(--ink-2)", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3, cursor: "help", width: "fit-content" }}
+      >
+        {label}
+      </span>
+      <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        {collecting ? (
+          <span
+            title={`${cellData.samples} ${cellData.samples === 1 ? "measurement" : "measurements"} so far. A P75 needs at least five, so there is no number to show yet.`}
+            style={{ fontSize: 15, fontWeight: 650, color: "var(--ink-2)", cursor: "help" }}
+          >
+            Collecting
+          </span>
+        ) : (
+          <span style={{ fontSize: 15, fontWeight: 650 }}>{format(cellData.p75 as number)}</span>
+        )}
+        <span title="No earlier 30-day window to compare against yet." style={{ fontSize: 12, color: "var(--ink-3)", cursor: "help" }}>—</span>
+      </span>
+      <span style={{ display: "block", height: 3, borderRadius: 2, background: barColor }} />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------- live theme */
+
+/** The weekday-and-time stamp Shopify prints under the domain. */
+function lastSaved(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  const day = date.toLocaleDateString("en-US", { weekday: "long" });
+  const time = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${day} at ${time}`;
+}
+
+/**
+ * The live theme as Shopify shows it: the real rendered storefront filling the
+ * card, fading out at the bottom, with the domain and last-saved stamp bottom
+ * left and Edit theme plus ⋯ bottom right.
+ */
+function LiveThemeCard({
+  store,
+  live,
+  productPageId,
+  busy,
+}: {
+  store: { slug: string; domain: string };
+  live: { id: string; name: string; updatedAt: string | Date };
+  productPageId: string | null;
+  busy: boolean;
+}) {
+  const height = 420;
+  const scale = 0.5;
+  return (
+    <div style={{ ...card, position: "relative" }}>
+      <div style={{ position: "relative", height, overflow: "hidden", background: "#fff" }}>
+        <iframe
+          src={`/?store=${store.slug}&thumb=1`}
+          title="Live theme preview"
+          tabIndex={-1}
+          loading="lazy"
+          style={{ width: `${100 / scale}%`, height: height / scale, border: 0, display: "block", transform: `scale(${scale})`, transformOrigin: "top left", pointerEvents: "none" }}
+        />
+        <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 200, background: "linear-gradient(to bottom, rgba(255,255,255,0), var(--surface) 78%)", pointerEvents: "none" }} />
+      </div>
+      <div style={{ position: "absolute", left: 16, right: 16, bottom: 14, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <span style={{ minWidth: 0 }}>
+          <span style={{ display: "block", fontWeight: 650, fontSize: 14 }}>{store.domain}</span>
+          <span style={{ display: "block", fontSize: 12, color: "var(--ink-2)" }}>
+            <span style={{ textTransform: "uppercase" }}>{live.name}</span> · Last saved: {lastSaved(live.updatedAt)}
+          </span>
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
+          {productPageId ? (
+            <Link to={`/admin/online-store/editor/${productPageId}?store=${store.slug}`} style={{ height: 30, padding: "0 14px", borderRadius: 8, border: 0, background: "var(--accent)", color: "var(--accent-ink)", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+              Edit theme
+            </Link>
+          ) : null}
+          <ThemeMenu theme={live} isLive slug={store.slug} busy={busy} dots />
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /**
  * The real storefront in the prototype's browser chrome, scaled down.
  * `thumb=1` tells the storefront to skip visitor tracking and the pixel so
@@ -420,7 +716,7 @@ function StorefrontThumb({
   );
 }
 
-function ThemeMenu({ theme, isLive, slug, busy }: { theme: { id: string; name: string }; isLive: boolean; slug: string; busy: boolean }) {
+function ThemeMenu({ theme, isLive, slug, busy, dots }: { theme: { id: string; name: string }; isLive: boolean; slug: string; busy: boolean; dots?: boolean }) {
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -445,12 +741,18 @@ function ThemeMenu({ theme, isLive, slug, busy }: { theme: { id: string; name: s
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button type="button" onClick={() => setOpen((v) => !v)} style={{ height: 30, padding: "0 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontSize: 12, fontWeight: 550, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
-        Actions
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m4 6 4 4 4-4" /></svg>
-      </button>
+      {dots ? (
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-label="Theme actions" style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", boxShadow: "var(--shadow)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 15, lineHeight: 1 }}>
+          ⋯
+        </button>
+      ) : (
+        <button type="button" onClick={() => setOpen((v) => !v)} style={{ height: 30, padding: "0 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontSize: 12, fontWeight: 550, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          Actions
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m4 6 4 4 4-4" /></svg>
+        </button>
+      )}
       {open ? (
-        <div style={{ position: "absolute", left: 0, top: 36, width: 200, background: "var(--elev)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "var(--shadow-lg)", padding: 6, zIndex: 20, animation: "kPop .14s ease-out" }}>
+        <div style={{ position: "absolute", ...(dots ? { right: 0, bottom: 36 } : { left: 0, top: 36 }), width: 200, background: "var(--elev)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "var(--shadow-lg)", padding: 6, zIndex: 20, animation: "kPop .14s ease-out" }}>
           {renaming ? (
             <Form method="post" style={{ padding: 6, display: "flex", flexDirection: "column", gap: 6 }}>
               <input type="hidden" name="intent" value="rename" />

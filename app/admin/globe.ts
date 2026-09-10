@@ -95,6 +95,12 @@ export async function mountGlobe(pane: HTMLElement): Promise<GlobeInstance> {
     pane.appendChild(globe.canvas);
   }
 
+  // Back to the design's start position every time the screen is opened.
+  // The instance is kept alive across visits and its idle spin never stops, so
+  // without this the globe is showing whatever ocean it drifted to since the
+  // last visit instead of the United States the design opens on.
+  globe.reset();
+
   // The vendor file only listens to window resize.
   requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
   return globe;

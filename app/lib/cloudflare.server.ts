@@ -148,3 +148,31 @@ export function registrarInstructions(zone: Zone | null): { type: string; name: 
     value: server,
   }));
 }
+
+/**
+ * Whether the certificate for a hostname is actually issued.
+ *
+ * Marking a domain "SSL active" the moment it is bound is a lie that shows up
+ * as a browser warning on his customer's screen. Cloudflare knows the truth,
+ * so this asks it: the certificate pack for the zone, and whether the pack
+ * covering this hostname is active.
+ */
+export async function hostnameSsl(
+  config: CloudflareConfig,
+  zoneId: string,
+  hostname: string,
+): Promise<Result<"none" | "provisioning" | "active">> {
+  const packs = await call<{ status: string; hosts: string[] }[]>(
+    config,
+    "GET",
+    `/zones/${zoneId}/ssl/certificate_packs?status=all`,
+  );
+  if (!packs.ok) return packs;
+
+  const covering = packs.value.filter((pack) =>
+    (pack.hosts ?? []).some((host) => host === hostname || (host.startsWith("*.") && hostname.endsWith(host.slice(1)))),
+  );
+  if (!covering.length) return { ok: true, value: "none" };
+  if (covering.some((pack) => pack.status === "active")) return { ok: true, value: "active" };
+  return { ok: true, value: "provisioning" };
+}

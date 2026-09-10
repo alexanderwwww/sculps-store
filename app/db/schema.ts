@@ -445,6 +445,8 @@ export const events = pgTable(
     lon: real("lon"),
     source: text("source"),
     campaign: text("campaign"),
+    /** desktop | mobile | tablet, read from the user agent */
+    device: text("device"),
     amountCents: integer("amount_cents"),
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
     at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
@@ -545,6 +547,33 @@ export const orderRelations = relations(orders, ({ many, one }) => ({
   timeline: many(orderEvents),
   store: one(stores, { fields: [orders.storeId], references: [stores.id] }),
 }));
+
+/**
+ * Core Web Vitals, measured on real visits.
+ *
+ * Shopify's Online Store screen reports LCP, INP and CLS at the 75th
+ * percentile over thirty days, which is the same window and percentile Google
+ * ranks on. These rows are what the browser actually measured on this store's
+ * pages — there is no synthetic run behind them.
+ */
+export const webVitals = pgTable(
+  "web_vitals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    sessionId: text("session_id").notNull(),
+    /** LCP | INP | CLS */
+    metric: text("metric").notNull(),
+    /** milliseconds for LCP and INP; CLS is unitless and stored x1000 */
+    value: integer("value").notNull(),
+    path: text("path"),
+    device: text("device"),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("web_vitals_store_at_idx").on(t.storeId, t.metric, t.at)],
+);
 
 /* ------------------------------------------------------------ admin access */
 

@@ -68,6 +68,21 @@ export function shouldTrack(request: Request, url: URL): boolean {
   return true;
 }
 
+/**
+ * Desktop, mobile or tablet, from the user agent.
+ *
+ * Shopify splits sessions this way on the Online Store screen, and an ad
+ * account that cannot see its mobile share is flying blind. The test is the
+ * conservative one: anything that says it is a tablet is a tablet, anything
+ * that says it is a phone is mobile, everything else is desktop.
+ */
+export function deviceFromRequest(request: Request): "desktop" | "mobile" | "tablet" {
+  const ua = request.headers.get("User-Agent") ?? "";
+  if (/ipad|tablet|playbook|silk|(android(?!.*mobile))/i.test(ua)) return "tablet";
+  if (/mobi|iphone|ipod|android|blackberry|iemobile|opera mini/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
 export interface TrackInput {
   storeId: string;
   sessionId: string;
@@ -78,6 +93,7 @@ export interface TrackInput {
   campaign?: string | null;
   amountCents?: number | null;
   orderId?: string | null;
+  device?: "desktop" | "mobile" | "tablet" | null;
 }
 
 export function track(db: DB, ctx: ExecutionContext, input: TrackInput): void {
@@ -95,6 +111,7 @@ export function track(db: DB, ctx: ExecutionContext, input: TrackInput): void {
       lon: input.geo.lon,
       source: input.source ?? null,
       campaign: input.campaign ?? null,
+      device: input.device ?? null,
       amountCents: input.amountCents ?? null,
       orderId: input.orderId ?? null,
     })

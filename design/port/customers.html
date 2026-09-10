@@ -1,0 +1,30 @@
+  <sc-if value="{{ isCustomers }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Customers</h1>
+        <button onClick="{{ cu.export }}" style="height:28px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Export CSV</button>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+          <input value="{{ cu.query }}" onChange="{{ cu.setQuery }}" placeholder="Search name, email or city" style="flex:1;min-width:180px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px">
+          <select value="{{ cu.filter }}" onChange="{{ cu.setFilter }}" style="height:32px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option value="">Everyone</option><option value="marketing">Accepts marketing</option><option value="repeat">Repeat customers</option></select>
+        </div>
+        <sc-if value="{{ cu.empty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:52px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font-weight:650">{{ cu.emptyTitle }}</div><div style="color:var(--ink-2);max-width:360px">{{ cu.emptyBody }}</div></div>
+        </sc-if>
+        <sc-if value="{{ cu.hasRows }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:{{ cu.cols }};gap:10px;padding:0 16px;height:36px;align-items:center;font-size:12px;font-weight:550;color:var(--ink-2);border-bottom:1px solid var(--border);overflow:hidden"><span>Name</span><span>Email</span><span style="text-align:right">Orders</span><span style="text-align:right">Total spent</span><span>Location</span><span>Marketing</span></div>
+          <sc-for list="{{ cu.rows }}" as="r" hint-placeholder-count="0">
+            <button onClick="{{ r.open }}" style="width:100%;display:grid;grid-template-columns:{{ cu.cols }};gap:10px;align-items:center;padding:0 16px;height:44px;overflow:hidden;border:0;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--hover)">
+              <span style="font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+              <span style="color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.email }}</span>
+              <span style="text-align:right;font-variant-numeric:tabular-nums">{{ r.orders }}</span>
+              <span style="text-align:right;font-variant-numeric:tabular-nums;font-weight:550">{{ r.spent }}</span>
+              <span style="color:var(--ink-2);white-space:nowrap">{{ r.location }}</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ r.mkKind }}-bg);color:var(--b-{{ r.mkKind }}-fg);justify-self:start">{{ r.marketing }}</span>
+            </button>
+          </sc-for>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>

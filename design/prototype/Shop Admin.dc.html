@@ -1537,14 +1537,15 @@ button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
           </sc-for>
         </div>
 
-        <div ref="{{ ed.frameRef }}" style="flex:1;min-width:0;min-height:{{ ed.previewMinH }};overflow:auto;background:#EDEDED;padding:16px;display:flex;justify-content:center">
-          <div style="width:100%;max-width:{{ ed.frameW }};transform:scale({{ ed.zoom }});transform-origin:top center;background:#fff;border:1px solid #DEDEDE;border-radius:10px;overflow:hidden;align-self:flex-start;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div ref="{{ ed.frameRef }}" style="flex:1;min-width:0;min-height:{{ ed.previewMinH }};overflow-x:hidden;overflow-y:auto;background:#EDEDED;padding:16px;display:flex;justify-content:center">
+          <div style="width:{{ ed.shellW }};height:{{ ed.shellH }};flex:none;position:relative">
+          <div ref="{{ ed.innerRef }}" style="width:{{ ed.frameW }};position:absolute;left:0;top:0;transform:scale({{ ed.frameScale }});transform-origin:top left;background:#fff;border:1px solid #DEDEDE;border-radius:10px;overflow:hidden;align-self:flex-start;box-shadow:0 1px 3px rgba(0,0,0,.08)">
             <div style="height:44px;border-bottom:1px solid #F0F0F0;display:flex;align-items:center;gap:12px;padding:0 14px"><span style="font-weight:700;letter-spacing:-.02em">{{ ed.brandName }}</span><span style="display:flex;gap:10px;font-size:12px;color:#666"><sc-for list="{{ ed.headerLinks }}" as="hl" hint-placeholder-count="0">{{ hl.label }}</sc-for></span><span style="flex:1"></span><span style="font-size:12px;color:#666">Cart · 0</span></div>
             <sc-for list="{{ ed.preview }}" as="p" hint-placeholder-count="6">
-              <div data-sec="{{ p.key }}" onClick="{{ p.click }}" style="border-bottom:1px solid #F0F0F0;padding:18px;cursor:pointer;outline:{{ p.outline }};outline-offset:-2px;position:relative">
+              <div data-sec="{{ p.key }}" onClick="{{ p.click }}" style="border-bottom:1px solid #F0F0F0;padding:18px;cursor:pointer;outline:{{ p.outline }};outline-offset:-2px;position:relative;min-width:0;overflow:hidden">
                 <sc-if value="{{ p.isSelected }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:0;background:#2F5CF5;color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:0 0 6px 0;z-index:2">{{ p.label }}</span></sc-if>
                 <sc-if value="{{ p.isBuy }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:grid;grid-template-columns:{{ ed.buyCols }};gap:16px">
+                  <div style="display:grid;grid-template-columns:{{ ed.buyCols }};gap:16px;min-width:0;align-items:start">
                     <div style="aspect-ratio:1;border-radius:10px;background-color:#F4F4F4;background-image:{{ p.image }};background-size:cover;background-position:center;display:grid;place-items:center;color:#B9B9B9;font-size:12px">{{ p.imageLabel }}</div>
                     <div style="display:flex;flex-direction:column;gap:8px">
                       <div style="font-size:22px;font-weight:650;letter-spacing:-.02em;line-height:28px">{{ p.title }}</div>
@@ -1596,6 +1597,7 @@ button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
               </div>
             </sc-for>
             <div style="padding:16px;background:#FAFAFA;display:flex;flex-direction:column;gap:6px;align-items:center"><span style="display:flex;gap:12px;font-size:11px;color:#7A7A7A;flex-wrap:wrap;justify-content:center"><sc-for list="{{ ed.footerLinks }}" as="fl2" hint-placeholder-count="0">{{ fl2.label }}</sc-for></span><span style="font-size:11px;color:#8A8A8A">{{ ed.brandName }} · {{ ed.domain }}</span></div>
+          </div>
           </div>
         </div>
 
@@ -2071,7 +2073,7 @@ class Component extends DCLogic {
   }
   componentWillUnmount() { window.removeEventListener('resize', this._resize); window.removeEventListener('keydown', this._key); clearTimeout(this._toastT); this.unmountExtras && this.unmountExtras(); }
   toast(text) { clearTimeout(this._toastT); this.setState({ toast: text }); this._toastT = setTimeout(() => this.setState({ toast: null }), 3200); }
-  go(screen, id) { this.setState({ route: { screen, id: id || null }, drawerOpen: false, storeMenuOpen: false, bellOpen: false, paletteOpen: false, menuFor: null, moreMenuOpen: false, trackingInput: '', comment: '', noteEditing: false, fullscreen: false }); const m = document.querySelector('main'); if (m) m.scrollTop = 0; }
+  go(screen, id) { if (screen === 'editor') { setTimeout(() => this.forceUpdate(), 60); setTimeout(() => this.syncFrame(), 200); } this.setState({ route: { screen, id: id || null }, drawerOpen: false, storeMenuOpen: false, bellOpen: false, paletteOpen: false, menuFor: null, moreMenuOpen: false, trackingInput: '', comment: '', noteEditing: false, fullscreen: false }); const m = document.querySelector('main'); if (m) m.scrollTop = 0; }
   store() { return this.state.storeId === 'all' ? ALL : STORES.find(s => s.id === this.state.storeId); }
   isAll() { return this.state.storeId === 'all'; }
   storeOrders() { return this.isAll() ? this.state.orders : this.state.orders.filter(o => o.store === this.state.storeId); }
@@ -3745,9 +3747,18 @@ class Component extends DCLogic {
         page: s.edPage || 'product', setPage: e => this.setState({ edPage: e.target.value }),
         devices: [['desktop', 'Desktop', 'M3 5h14v8H3zM8 16h4M10 13v3'], ['tablet', 'Tablet', 'M5 3h10v14H5zM9 15h2'], ['mobile', 'Mobile', 'M6 3h8v14H6zM9 15h2']].map(([k, title, icon]) => ({ title, icon, bg: dev === k ? 'rgba(255,255,255,.22)' : 'transparent', select: () => this.setState({ edDevice: k }) })),
         zoom, zoomLabel: Math.round(zoom * 100) + '%',
-        zoomIn: () => this.setState({ edZoom: Math.min(1.4, zoom + 0.1) }), zoomOut: () => this.setState({ edZoom: Math.max(0.6, zoom - 0.1) }),
-        frameW: dev === 'mobile' ? '390px' : dev === 'tablet' ? '640px' : '1000px',
-        buyCols: dev === 'desktop' && !isM ? '1fr 1fr' : '1fr',
+        zoomIn: () => this.setState({ edZoom: Math.min(1.4, zoom + 0.1) }), zoomOut: () => this.setState({ edZoom: Math.max(0.5, zoom - 0.1) }),
+        ...(() => { const devW = dev === 'mobile' ? 390 : dev === 'tablet' ? 768 : 1180;
+          const box = this.edFrameRef && this.edFrameRef.current;
+          const avail = box ? box.clientWidth - 32 : 0;
+          const fit = avail > 100 ? Math.min(1, avail / devW) : 1;
+          const sc2 = fit * zoom;
+          const inner = this.edInnerRef && this.edInnerRef.current;
+          const innerH = inner ? inner.offsetHeight : 900;
+          return { frameW: devW + 'px', frameScale: sc2.toFixed(3),
+            shellW: Math.round(devW * sc2) + 'px', shellH: Math.round(innerH * sc2) + 'px',
+            innerRef: this.edInnerRef || (this.edInnerRef = React.createRef()),
+            buyCols: devW < 560 ? 'minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,1fr)' }; })(),
         dir: isM ? 'column' : 'row', wrapOverflow: isM ? 'auto' : 'hidden',
         panelW: isM ? '100%' : (typeof window !== 'undefined' && window.innerWidth < 1240 ? '244px' : '300px'),
         rightW: isM ? '100%' : (typeof window !== 'undefined' && window.innerWidth < 1240 ? '270px' : '320px'), previewMinH: isM ? '520px' : '0',
@@ -3812,6 +3823,13 @@ class Component extends DCLogic {
         pickerOpen: !!s.mdPicker, closePicker: () => this.setState({ mdPicker: null }) },
 
     };
+  }
+  componentDidUpdate() { if (this.state.route.screen === 'editor') { clearTimeout(this._syncT); this._syncT = setTimeout(() => this.syncFrame(), 90); } }
+  syncFrame() {
+    if (this.state.route.screen !== 'editor') return;
+    const inner = this.edInnerRef && this.edInnerRef.current; if (!inner) return;
+    const h = inner.offsetHeight;
+    if (Math.abs((this._lastFrameH || 0) - h) > 2) { this._lastFrameH = h; this.forceUpdate(); }
   }
   selectSection(key) {
     this.setState({ editorSel: key, edBlockOpen: 0 });

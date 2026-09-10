@@ -1,0 +1,117 @@
+  <sc-if value="{{ isMarketing }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <h1 style="margin:0;font-size:20px;line-height:28px;font-weight:650">Marketing · {{ scopeName }}</h1>
+        <sc-if value="{{ mk.isCampaigns }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mk.create }}" style="height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Create campaign</button></sc-if>
+      </div>
+      <div style="display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px;box-shadow:var(--shadow);width:fit-content">
+        <sc-for list="{{ mk.tabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.select }}" style="height:30px;padding:0 14px;border-radius:8px;border:0;background:{{ t.bg }};color:{{ t.color }};font-size:13px;font-weight:550;cursor:pointer">{{ t.label }}</button></sc-for>
+      </div>
+
+      <sc-if value="{{ mk.showBuilder }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:{{ mk.builderCols }};gap:16px;align-items:start">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-weight:650">New campaign</span><button onClick="{{ mk.closeBuilder }}" style="border:0;background:transparent;color:var(--ink-2);cursor:pointer;font-size:14px">✕</button></div>
+            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Audience<select value="{{ mk.audience }}" onChange="{{ mk.setAudience }}" style="height:36px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);padding:0 8px;font-size:13px;color:var(--ink)"><option>All subscribers (0)</option><option>Customers who bought (0)</option><option>Never purchased (0)</option><option>Lapsed 45+ days (0)</option></select></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Subject<input value="{{ mk.subject }}" onChange="{{ mk.setSubject }}" placeholder="Subject line" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:550;color:var(--ink-2)">Preview text<input value="{{ mk.preheader }}" onChange="{{ mk.setPreheader }}" placeholder="Shown after the subject in the inbox" style="height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></label>
+            </div>
+            <div style="padding:0 16px 8px;display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ mk.blockTypes }}" as="b" hint-placeholder-count="6"><button onClick="{{ b.add }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">+ {{ b.label }}</button></sc-for>
+            </div>
+            <sc-for list="{{ mk.blocks }}" as="b" hint-placeholder-count="0">
+              <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">
+                <span draggable="true" onDragStart="{{ b.dragStart }}" onDragOver="{{ b.dragOver }}" onDrop="{{ b.drop }}" style="cursor:grab;color:var(--ink-3);padding-top:6px">⠿</span>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em">{{ b.type }}</span>
+                  <sc-if value="{{ b.editable }}" hint-placeholder-val="{{ true }}"><input value="{{ b.value }}" onChange="{{ b.set }}" placeholder="{{ b.placeholder }}" style="height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px;color:var(--ink)"></sc-if>
+                  <sc-if value="{{ b.isImage }}" hint-placeholder-val="{{ false }}"><button onClick="{{ b.pick }}" style="height:32px;padding:0 10px;border-radius:8px;border:1px dashed var(--border-strong);background:var(--bg);color:var(--ink-2);font-size:12px;cursor:pointer;text-align:left">{{ b.value }}</button></sc-if>
+                </span>
+                <button onClick="{{ b.remove }}" style="width:26px;height:26px;border-radius:7px;border:0;background:transparent;color:var(--critical);cursor:pointer">✕</button>
+              </div>
+            </sc-for>
+            <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ mk.sendNow }}" style="height:30px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Send now</button>
+              <input value="{{ mk.schedule }}" onChange="{{ mk.setSchedule }}" placeholder="Schedule · e.g. Sep 12, 9:00 am" style="flex:1;min-width:160px;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:12px;color:var(--ink)">
+              <button onClick="{{ mk.scheduleSend }}" style="height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Schedule</button>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;position:sticky;top:0">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:650">Live preview</div>
+            <div style="padding:16px;background:var(--bg)">
+              <div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+                <div style="padding:12px 14px;border-bottom:1px solid var(--border)"><div style="font-weight:650;font-size:14px">{{ mk.previewSubject }}</div><div style="font-size:12px;color:var(--ink-2)">{{ mk.previewPre }}</div><div style="font-size:11px;color:var(--ink-3);margin-top:4px">{{ mk.previewFrom }}</div></div>
+                <div style="padding:16px 14px;display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ mk.previewBlocks }}" as="p" hint-placeholder-count="0">
+                    <sc-if value="{{ p.isHeading }}" hint-placeholder-val="{{ false }}"><div style="font-size:19px;font-weight:650;letter-spacing:-.015em;color:#1A1A1A">{{ p.value }}</div></sc-if>
+                    <sc-if value="{{ p.isText }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;line-height:20px;color:#3A3A3A">{{ p.value }}</div></sc-if>
+                    <sc-if value="{{ p.isButton }}" hint-placeholder-val="{{ false }}"><div><span style="display:inline-flex;height:36px;padding:0 18px;align-items:center;border-radius:8px;background:#1A1A1A;color:#fff;font-size:13px;font-weight:600">{{ p.value }}</span></div></sc-if>
+                    <sc-if value="{{ p.isDivider }}" hint-placeholder-val="{{ false }}"><div style="height:1px;background:var(--border)"></div></sc-if>
+                    <sc-if value="{{ p.isImg }}" hint-placeholder-val="{{ false }}"><div style="aspect-ratio:16/9;border-radius:8px;background-color:var(--bg);background-image:{{ p.bg }};background-size:cover;background-position:center;border:1px solid var(--border);display:grid;place-items:center;color:var(--ink-3);font-size:12px">{{ p.label }}</div></sc-if>
+                    <sc-if value="{{ p.isProduct }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:8px;padding:10px"><span style="width:44px;height:44px;border-radius:6px;background:var(--bg)"></span><span style="flex:1;display:flex;flex-direction:column"><span style="font-weight:600;font-size:13px">{{ p.value }}</span><span style="font-size:12px;color:var(--ink-2)">$0.00</span></span></div></sc-if>
+                  </sc-for>
+                  <sc-if value="{{ mk.previewEmpty }}" hint-placeholder-val="{{ true }}"><div style="padding:24px 0;text-align:center;color:var(--ink-3);font-size:12px">Add a block to build the email</div></sc-if>
+                  <div style="border-top:1px solid var(--border);padding-top:10px;font-size:11px;color:var(--ink-3)">Sent by {{ mk.previewFooter }} · Unsubscribe</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ mk.showCampaigns }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+          <sc-if value="{{ mk.campaignsEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:52px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font-weight:650">No campaigns yet</div><div style="color:var(--ink-2);max-width:360px">Create one to email your subscribers from your own domain.</div><button onClick="{{ mk.create }}" style="margin-top:6px;height:28px;padding:0 12px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:600;cursor:pointer">Create campaign</button></div>
+          </sc-if>
+          <sc-if value="{{ mk.hasCampaigns }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:{{ mk.campCols }};gap:12px;padding:0 16px;height:36px;align-items:center;font-size:12px;font-weight:550;color:var(--ink-2);border-bottom:1px solid var(--border)"><span>Campaign</span><span>Status</span><span style="text-align:right">Recipients</span><span style="text-align:right">Open rate</span><span style="text-align:right">Click rate</span><span style="text-align:right">Revenue</span></div>
+            <sc-for list="{{ mk.campaigns }}" as="r" hint-placeholder-count="0">
+              <div style="display:grid;grid-template-columns:{{ mk.campCols }};gap:12px;align-items:center;padding:0 16px;height:48px;border-bottom:1px solid var(--border)">
+                <span style="min-width:0"><span style="display:block;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.subject }}</span><span style="display:block;font-size:12px;color:var(--ink-2)">{{ r.audience }}</span></span>
+                <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ r.kind }}-bg);color:var(--b-{{ r.kind }}-fg);justify-self:start">{{ r.status }}</span>
+                <span style="text-align:right;font-variant-numeric:tabular-nums">{{ r.recipients }}</span><span style="text-align:right;font-variant-numeric:tabular-nums">{{ r.open }}</span><span style="text-align:right;font-variant-numeric:tabular-nums">{{ r.click }}</span><span style="text-align:right;font-variant-numeric:tabular-nums">{{ r.revenue }}</span>
+              </div>
+            </sc-for>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ mk.showAutomations }}" hint-placeholder-val="{{ false }}">
+        <sc-for list="{{ mk.automations }}" as="a" hint-placeholder-count="5">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <span style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:1px"><span style="font-weight:650">{{ a.name }}</span><span style="font-size:12px;color:var(--ink-2)">Trigger: {{ a.trigger }}</span></span>
+              <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ a.kind }}-bg);color:var(--b-{{ a.kind }}-fg)">{{ a.statusLabel }}</span>
+              <button onClick="{{ a.toggle }}" role="switch" style="width:38px;height:22px;border-radius:11px;border:0;background:{{ a.track }};position:relative;cursor:pointer;flex:none"><span style="position:absolute;top:2px;left:{{ a.knob }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .18s"></span></button>
+            </div>
+            <sc-for list="{{ a.steps }}" as="p" hint-placeholder-count="2">
+              <div style="display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border)">
+                <span style="font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums">{{ p.delay }}</span>
+                <span style="min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-weight:550">{{ p.subject }}</span><span style="font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.body }}</span></span>
+                <button onClick="{{ p.edit }}" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Edit email</button>
+              </div>
+            </sc-for>
+            <div style="padding:9px 16px;font-size:12px;color:var(--ink-2)">Sent from {{ a.sender }} · {{ a.sentCount }} sent</div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ mk.showSubscribers }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+          <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
+            <input value="{{ mk.subQuery }}" onChange="{{ mk.setSubQuery }}" placeholder="Search subscribers" style="flex:1;min-width:170px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--input-border);background:var(--input);font-size:13px">
+            <label style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer;display:inline-flex;align-items:center">Import CSV<input type="file" accept=".csv" onChange="{{ mk.importSubs }}" style="display:none"></label>
+            <button onClick="{{ mk.exportSubs }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:12px;font-weight:550;cursor:pointer">Export</button>
+          </div>
+          <sc-if value="{{ mk.subsEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:52px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font-weight:650">No subscribers yet</div><div style="color:var(--ink-2);max-width:360px">Checkout consent and imports both land here.</div></div>
+          </sc-if>
+          <sc-for list="{{ mk.subs }}" as="r" hint-placeholder-count="0">
+            <div style="display:grid;grid-template-columns:{{ mk.subCols }};gap:12px;align-items:center;padding:0 16px;height:44px;border-bottom:1px solid var(--border)"><span style="font-weight:550">{{ r.email }}</span><span style="color:var(--ink-2)">{{ r.source }}</span><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:550;background:var(--b-{{ r.kind }}-bg);color:var(--b-{{ r.kind }}-fg);justify-self:start">{{ r.status }}</span><span style="color:var(--ink-2);text-align:right">{{ r.date }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+

@@ -6,7 +6,7 @@
  */
 import type { Route } from "./+types/cart.add";
 import { resolveStore } from "~/lib/store.server";
-import { geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
+import { deviceFromRequest, geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
 import { metaSettings, newMetaEventId, readMetaCookies, sendEvent } from "~/lib/meta.server";
 import { metaConfig, variants } from "~/db/schema";
 import { eq } from "drizzle-orm";
@@ -43,6 +43,7 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
       type: "cart",
       path: "/cart/add",
       geo: geoFromRequest(request),
+      device: deviceFromRequest(request),
     });
   }
 
