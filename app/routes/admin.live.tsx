@@ -221,7 +221,13 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     if (arrived.some((event) => event.type === "purchase")) chaching();
 
     if (arrived.length) {
-      const added = arrived.slice(-3).map((event) => ({
+      // A sale outranks everything. When four things land in the same poll,
+      // three carts used to fill the stack and the purchase — the one event
+      // that made the sound — was the one you never saw. Sales are taken
+      // first, newest first, and the rest fill whatever room is left.
+      const sales = arrived.filter((event) => event.type === "purchase").reverse();
+      const rest = arrived.filter((event) => event.type !== "purchase").reverse();
+      const added = [...sales, ...rest].slice(0, 3).map((event) => ({
         key: event.id,
         title: `${EVENT_TITLE[event.type] ?? event.type} · ${place(event)}`,
         sub: event.amountCents
@@ -233,7 +239,15 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
         // only one that turns gold.
         sale: event.type === "purchase",
       }));
-      setGlassCards((current) => [...added, ...current].slice(0, 3));
+      setGlassCards((current) => {
+        const next = [...added, ...current];
+        // Trim from the back, but never drop a sale to make room for a cart.
+        while (next.length > 3) {
+          const index = next.map((card) => card.sale).lastIndexOf(false);
+          next.splice(index === -1 ? next.length - 1 : index, 1);
+        }
+        return next;
+      });
       const ids = new Set(added.map((card) => card.key));
       // A sale holds twice as long as anything else. It is the one card he
       // will want to actually read.

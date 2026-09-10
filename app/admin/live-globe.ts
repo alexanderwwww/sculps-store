@@ -229,6 +229,17 @@ class LiveGlobe {
       const sprites = this.sprites;
       const spr = (set: HTMLCanvasElement[], bucket: number, x: number, y: number, scl: number) => { const img = set[bucket], sz = Math.max(2, hr * 2.6 * scl);
         g.drawImage(img, x - sz / 2, y - sz / 2, sz, sz); };
+      /** Five-pointed star, drawn point-up. */
+      const star = (x: number, y: number, outer: number, inner: number) => {
+        g.beginPath();
+        for (let k = 0; k < 10; k++) {
+          const rad = k % 2 ? inner : outer;
+          const ang = -Math.PI / 2 + (k * Math.PI) / 5;
+          const px = x + rad * Math.cos(ang), py = y + rad * Math.sin(ang);
+          k ? g.lineTo(px, py) : g.moveTo(px, py);
+        }
+        g.closePath();
+      };
       const hex = (x: number, y: number, rad: number) => { g.beginPath();
         for (let k = 0; k < 6; k++) { const a = k * 1.0471976 + 0.5236, px = x + rad * Math.cos(a), py = y + rad * Math.sin(a); k ? g.lineTo(px, py) : g.moveTo(px, py); }
         g.closePath(); };
@@ -283,11 +294,32 @@ class LiveGlobe {
         const scale = (0.65 + 0.35 * q.z) * 0.86;
         const pk = picked[i];
         if (pk) {
-          // The tile under a visitor takes their colour and holds it. No glow
-          // and no breathing: the amplitude the design pulsed with is used
-          // only to fade a leaving visitor out.
+          // The tile under a visitor takes their colour and holds it. No
+          // breathing: the amplitude the design pulsed with is used only to
+          // fade a leaving visitor out.
           const hold = pk.stage === "leaving" ? pk.amp : 1;
-          g.fillStyle = "rgba(" + pk.rgb + "," + Math.min(1, (0.62 + 0.28 * q.z) * hold).toFixed(3) + ")";
+          const fill = "rgba(" + pk.rgb + "," + Math.min(1, (0.62 + 0.28 * q.z) * hold).toFixed(3) + ")";
+
+          if (pk.stage === "purchase") {
+            // A sale is a gold star, not another hexagon, and it carries a
+            // small warm glow — enough to find at a glance on a busy globe,
+            // not enough to become the fireworks display he asked me to
+            // remove.
+            const r2 = hr * scale * 1.9;
+            g.shadowColor = "rgba(212,166,42,.75)";
+            g.shadowBlur = 9;
+            g.fillStyle = fill;
+            star(q.x, q.y, r2, r2 * 0.46);
+            g.fill();
+            g.shadowBlur = 0;
+            g.strokeStyle = "rgba(255,241,196,.85)";
+            g.lineWidth = 0.9;
+            star(q.x, q.y, r2, r2 * 0.46);
+            g.stroke();
+            continue;
+          }
+
+          g.fillStyle = fill;
           hex(q.x, q.y, hr * scale * 1.2); g.fill();
           continue;
         }
@@ -381,9 +413,14 @@ class LiveGlobe {
       // what is happening now — which is the whole point of it. Two minutes
       // without an event and the marker goes, matching the window the
       // "Visitors right now" card counts.
+      // How long a marker lives, by what it is. A visitor is only interesting
+      // while they are there; a sale is worth looking at for a while.
       const TTL = 120_000;
+      const SALE_TTL = 600_000;
       if (this.visitors.length) {
-        this.visitors = this.visitors.filter(v => now - (v.at || now) < TTL);
+        this.visitors = this.visitors.filter(v =>
+          now - (v.at || now) < (v.stage === "purchase" ? SALE_TTL : TTL),
+        );
       }
       // One flat dot per visitor, in the colour of what they are doing:
       // blue looking, pink in the cart, deeper pink at checkout, gold bought.
@@ -505,7 +542,10 @@ class LiveGlobe {
     if (v) { v.stage = "purchase"; v.at = now; }
     else { v = { id: event.id, city, stage: "purchase", at: now }; this.visitors.push(v); }
     const target = v;
-    this._timers.push(setTimeout(() => { if (target.stage === "purchase") { target.stage = "view"; target.at = performance.now(); } }, 8000));
+    // A sale stays gold. The design turned it back into an ordinary visitor
+    // after eight seconds; on a real store that is the one marker worth
+    // leaving up, and it survives a refresh because the board replays the
+    // day's purchases on every poll.
     this.pulses = (this.pulses || []).slice(-3);
     this.pulses.push({ lon: target.city[2], lat: target.city[3], born: performance.now(), dur: 1400 });
     this.arcs = (this.arcs || []).slice(-3);
