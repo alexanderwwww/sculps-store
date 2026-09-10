@@ -640,3 +640,49 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ------------------------------------------------- touch, then edit it */
+
+/*
+ * Clicking a heading, a caption or a picture in the preview selects its
+ * section and opens that field here. Three small motions carry that across so
+ * it reads as one movement rather than three separate redraws.
+ */
+
+/* the inspector arriving when a section is picked */
+.ed-inspector {
+  animation: ed-slide-in 0.22s var(--ease) both;
+}
+
+@keyframes ed-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* the field the preview click landed on */
+.ed-field[data-touched="true"] {
+  animation: ed-touched 0.9s var(--ease) both;
+  border-radius: 12px;
+}
+
+@keyframes ed-touched {
+  from {
+    background: var(--accent-soft);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-inspector,
+  .ed-field[data-touched="true"] {
+    animation: none;
+  }
+}

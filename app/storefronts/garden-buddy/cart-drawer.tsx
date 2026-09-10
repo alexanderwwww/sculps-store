@@ -1,0 +1,386 @@
+/**
+ * Garden Buddy — the slide-out cart.
+ *
+ * New markup. There is no live-store source for it: the live shop is on
+ * Shopify's stock cart drawer, which is the thing he wants replaced. So it is
+ * built out of the theme's own tokens and `gb-*` class conventions and nothing
+ * else — no colour, radius or font here that is not already in `theme.css`.
+ *
+ * What it is: a right-hand panel on desktop, a full-height sheet on mobile,
+ * over a native `<dialog>` so escape closes it, focus is trapped while it is
+ * open and returns to whatever opened it, and the page behind cannot scroll.
+ *
+ * What drives it:
+ *   - reading the cart — `useFetcher().load("/cart")`, the existing cart
+ *     route's own loader, so prices are the server's and never the browser's.
+ *   - writing — a plain `fetch()` to the existing `/cart/add` and `/cart`.
+ *     Deliberately not `fetcher.submit`: `/cart/add` answers with a 302 to
+ *     `/cart`, which a fetcher turns into a real navigation (the exact
+ *     page-load the drawer exists to avoid), and any fetcher action also
+ *     revalidates the storefront loader — which records a visit and re-fires
+ *     ViewContent, so changing a quantity would inflate the store's own
+ *     analytics. A small JSON cart endpoint would remove both; it is named in
+ *     the report.
+ *   - no JavaScript — the buy box keeps its plain form and the header keeps
+ *     its `/cart` link, so the old flow still works untouched.
+ */
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useFetcher } from "react-router";
+import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
+import { formatMoney } from "~/lib/money";
+
+/* ------------------------------------------------------------------- types */
+
+interface DrawerLine {
+  variantId: string;
+  quantity: number;
+  label: string;
+  sublabel: string | null;
+  productTitle: string;
+  unitPriceCents: number;
+  lineTotalCents: number;
+}
+
+/** The shape of what `/cart`'s loader returns, as far as the drawer reads it. */
+interface CartPayload {
+  cart: {
+    lines: DrawerLine[];
+    subtotalCents: number;
+    currency: string;
+    itemCount: number;
+  };
+}
+
+interface CartDrawerApi {
+  /** Add a variant and show the drawer. */
+  add: (variantId: string, opener: HTMLElement | null) => void;
+  /** Show the drawer without adding anything (the header's cart button). */
+  open: (opener: HTMLElement | null) => void;
+}
+
+const Ctx = createContext<CartDrawerApi | null>(null);
+
+/** Null when the drawer is not mounted, e.g. inside a preview render. */
+export function useCartDrawer(): CartDrawerApi | null {
+  return useContext(Ctx);
+}
+
+/* ------------------------------------------------------------------ icons */
+/* Both are already in the theme: the cart glyph is the header's, the close
+   cross is the header burger's close icon. */
+
+const IcoCart = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 7h12l1 14H5L6 7z" /><path d="M9 7a3 3 0 0 1 6 0" /></svg>
+);
+const IcoClose = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+);
+
+/* ---------------------------------------------------------------- provider */
+
+export function CartDrawerProvider({
+  page,
+  storeParam = "",
+  photo,
+  children,
+}: {
+  page: LoadedProductPage;
+  storeParam?: string;
+  /** The buy box's first photo — the only picture of this product we hold. */
+  photo?: { src: string; alt: string } | null;
+  children: React.ReactNode;
+}) {
+  const href = (path: string) => `${path}${storeParam}`;
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const opener = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const fetcher = useFetcher<CartPayload>();
+
+  const reload = useCallback(() => {
+    fetcher.load(href("/cart"));
+    // fetcher identity is stable for the life of the component
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeParam]);
+
+  const show = useCallback((from: HTMLElement | null) => {
+    opener.current = from;
+    setOpen(true);
+  }, []);
+
+  const add = useCallback(
+    (variantId: string, from: HTMLElement | null) => {
+      show(from);
+      setBusy(true);
+      // `redirect: "manual"` keeps the 302 to /cart from being followed; the
+      // Set-Cookie that mints the cart token is applied either way.
+      fetch(href("/cart/add"), {
+        method: "POST",
+        body: new URLSearchParams({ variantId }),
+        credentials: "same-origin",
+        redirect: "manual",
+      })
+        .catch(() => {})
+        .finally(() => {
+          setBusy(false);
+          reload();
+        });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storeParam, reload, show],
+  );
+
+  const setQuantity = useCallback(
+    (variantId: string, quantity: number) => {
+      setBusy(true);
+      fetch(href("/cart"), {
+        method: "POST",
+        body: new URLSearchParams({ variantId, quantity: String(quantity) }),
+        credentials: "same-origin",
+      })
+        .catch(() => {})
+        .finally(() => {
+          setBusy(false);
+          reload();
+        });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storeParam, reload],
+  );
+
+  const close = useCallback(() => setOpen(false), []);
+
+  // Opening loads the cart; the storefront's own loader does not carry it.
+  useEffect(() => {
+    if (open && fetcher.state === "idle" && !fetcher.data) reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // The dialog itself: modal for the focus trap and the backdrop, body scroll
+  // locked behind it, focus handed back to whatever opened it.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open) {
+      if (!dialog.open) dialog.showModal();
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previous;
+      };
+    }
+    if (dialog.open) dialog.close();
+    opener.current?.focus();
+  }, [open]);
+
+  const api: CartDrawerApi = { add, open: show };
+  const cart = (fetcher.data as CartPayload | undefined)?.cart ?? null;
+  const loading = fetcher.state !== "idle" || busy;
+
+  return (
+    <Ctx.Provider value={api}>
+      {children}
+      <dialog
+        ref={dialogRef}
+        className="gb gb-drawer"
+        aria-modal="true"
+        aria-label="Cart"
+        onClose={close}
+        onCancel={close}
+        onClick={(event) => {
+          if (event.target === dialogRef.current) close();
+        }}
+      >
+        <div className="gb-drawer__panel" aria-busy={loading}>
+          <div className="gb-drawer__head">
+            <h2 className="gb-drawer__title">
+              <span className="gb-drawer__title-ic" aria-hidden="true">
+                {IcoCart}
+              </span>
+              Your cart
+              {cart && cart.itemCount > 0 ? (
+                <span className="gb-drawer__count">{cart.itemCount}</span>
+              ) : null}
+            </h2>
+            <button type="button" className="gb-drawer__x" onClick={close} aria-label="Close cart">
+              {IcoClose}
+            </button>
+          </div>
+
+          <Shipping store={page.store} subtotalCents={cart?.subtotalCents ?? 0} />
+
+          <div className="gb-drawer__body">
+            {!cart ? (
+              <p className="gb-drawer__note">Loading your cart…</p>
+            ) : cart.lines.length === 0 ? (
+              <div className="gb-drawer__empty">
+                <p className="gb-drawer__note">Your cart is empty.</p>
+                <button type="button" className="gb-btn gb-btn--ghost" onClick={close}>
+                  Keep looking
+                </button>
+              </div>
+            ) : (
+              <ul className="gb-drawer__lines">
+                {cart.lines.map((line) => (
+                  <li className="gb-drawer__line" key={line.variantId}>
+                    <div className="gb-drawer__shot">
+                      {photo ? (
+                        <img src={photo.src} alt={photo.alt} loading="lazy" />
+                      ) : (
+                        <div className="gb-ph">Product photo not added yet</div>
+                      )}
+                    </div>
+                    <div className="gb-drawer__line-body">
+                      <p className="gb-drawer__line-name">{line.label}</p>
+                      <p className="gb-drawer__line-sub">{line.sublabel || line.productTitle}</p>
+                      <div className="gb-drawer__qty" aria-label={`Quantity of ${line.label}`}>
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(line.variantId, line.quantity - 1)}
+                          aria-label={line.quantity <= 1 ? `Remove ${line.label}` : `One fewer ${line.label}`}
+                        >
+                          −
+                        </button>
+                        <span>{line.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(line.variantId, line.quantity + 1)}
+                          disabled={line.quantity >= 20}
+                          aria-label={`One more ${line.label}`}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <p className="gb-drawer__line-total">
+                      {formatMoney(line.lineTotalCents, cart.currency)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <Upsell
+              variants={page.variants}
+              currency={page.store.currency}
+              inCart={cart ? cart.lines.map((l) => l.variantId) : []}
+              onAdd={(variantId, from) => add(variantId, from)}
+            />
+          </div>
+
+          <div className="gb-drawer__foot">
+            <div className="gb-drawer__totals">
+              <span>Subtotal</span>
+              <strong>
+                {formatMoney(cart?.subtotalCents ?? 0, cart?.currency ?? page.store.currency)}
+              </strong>
+            </div>
+            <p className="gb-drawer__fine">Taxes and shipping are worked out at checkout.</p>
+            <a
+              className="gb-drawer__checkout"
+              href={href("/checkout")}
+              aria-disabled={!cart || cart.lines.length === 0}
+              onClick={(event) => {
+                if (!cart || cart.lines.length === 0) event.preventDefault();
+              }}
+            >
+              Checkout
+            </a>
+            {/* Apple Pay / Google Pay would go here. They come out of Stripe's
+                payment element, which needs a payment intent, and a payment
+                intent only exists once checkout has started — so there is
+                nothing behind those buttons on this page. The slot is left out
+                rather than drawn dead. */}
+          </div>
+        </div>
+      </dialog>
+    </Ctx.Provider>
+  );
+}
+
+/* ------------------------------------------------------------- ship / upsell */
+
+/**
+ * Free shipping, straight off the store row. Always-free says so; a threshold
+ * counts down to it; a store with neither gets no line at all — the number is
+ * never guessed.
+ */
+function Shipping({
+  store,
+  subtotalCents,
+}: {
+  store: LoadedProductPage["store"];
+  subtotalCents: number;
+}) {
+  if (store.shipAlwaysFree) {
+    return <p className="gb-drawer__ship gb-drawer__ship--done">Free shipping on every order.</p>;
+  }
+  const threshold = store.shipFreeOverCents;
+  if (threshold == null || threshold <= 0) return null;
+
+  const left = threshold - subtotalCents;
+  const pct = Math.max(0, Math.min(100, Math.round((subtotalCents / threshold) * 100)));
+  return (
+    <div className={`gb-drawer__ship${left <= 0 ? " gb-drawer__ship--done" : ""}`}>
+      <p>
+        {left <= 0 ? (
+          "You have free shipping."
+        ) : (
+          <>
+            You are <strong>{formatMoney(left, store.currency)}</strong> away from free shipping.
+          </>
+        )}
+      </p>
+      <span className="gb-drawer__bar" aria-hidden="true">
+        <i style={{ width: `${pct}%` }} />
+      </span>
+    </div>
+  );
+}
+
+/** The bundles this cart does not have yet — real variants, real prices. */
+function Upsell({
+  variants,
+  currency,
+  inCart,
+  onAdd,
+}: {
+  variants: VariantRow[];
+  currency: string;
+  inCart: string[];
+  onAdd: (variantId: string, from: HTMLElement | null) => void;
+}) {
+  const rest = variants.filter((v) => !inCart.includes(v.id) && v.available > 0);
+  if (rest.length === 0) return null;
+
+  return (
+    <div className="gb-drawer__up">
+      <p className="gb-drawer__up-head">Add another bundle</p>
+      <ul className="gb-drawer__up-list">
+        {rest.map((variant) => (
+          <li className="gb-drawer__up-item" key={variant.id}>
+            <span className="gb-drawer__up-body">
+              <span className="gb-drawer__up-name">{variant.label}</span>
+              {variant.sublabel ? (
+                <span className="gb-drawer__up-sub">{variant.sublabel}</span>
+              ) : null}
+            </span>
+            <span className="gb-drawer__up-price">
+              {variant.compareAtCents ? (
+                <s>{formatMoney(variant.compareAtCents, currency)}</s>
+              ) : null}
+              <b>{formatMoney(variant.priceCents, currency)}</b>
+            </span>
+            <button
+              type="button"
+              className="gb-drawer__up-add"
+              onClick={(event) => onAdd(variant.id, event.currentTarget)}
+            >
+              Add
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

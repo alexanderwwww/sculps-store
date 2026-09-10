@@ -25,3 +25,4 @@ tsconfig.tsbuildinfo
 /port-policies.mjs
 /seed-tools.mjs
 /store-stripe2.mjs
+/seed-gb-nav.mjs

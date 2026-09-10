@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection, NavLink } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
+import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 
 /**
  * Garden Buddy storefront — store two.
@@ -88,8 +89,17 @@ export function GardenBuddyStorefront({ page, storeParam = "" }: { page: LoadedP
   const href = (path: string) => `${path}${storeParam}`;
   const { sections } = page;
 
+  // The one picture of this product we hold: the buy box's first gallery
+  // photo. The drawer shows it beside each line; there is no per-variant image
+  // in the database, so there is nothing else to show and nothing is invented.
+  const buyBox = sections.find((s) => s.type === "buy_box");
+  const firstShot = buyBox?.blocks.find((b) => has(b.values, "image"));
+  const photo = firstShot
+    ? { src: val(firstShot.values, "image"), alt: val(firstShot.values, "alt") }
+    : null;
+
   return (
-    <>
+    <CartDrawerProvider page={page} storeParam={storeParam} photo={photo}>
       {/* The theme's own fonts and stylesheet, in the order the live page loads
           them. React hoists both into <head>. */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -103,20 +113,28 @@ export function GardenBuddyStorefront({ page, storeParam = "" }: { page: LoadedP
 
       <main id="MainContent" className="content-for-layout" role="main" data-template="product">
         {sections.map((s) => (
-          <Section key={s.id} section={s} page={page} />
+          <Section key={s.id} section={s} page={page} storeParam={storeParam} />
         ))}
       </main>
 
       <Footer page={page} storeParam={storeParam} />
-    </>
+    </CartDrawerProvider>
   );
 }
 
-function Section({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+function Section({
+  section,
+  page,
+  storeParam = "",
+}: {
+  section: LoadedSection;
+  page: LoadedProductPage;
+  storeParam?: string;
+}) {
   if (section.type === "buy_box") {
     return (
       <section className="shopify-section gb-section">
-        <BuyBox section={section} page={page} />
+        <BuyBox section={section} page={page} storeParam={storeParam} />
       </section>
     );
   }
@@ -135,6 +153,7 @@ function Header({ page, storeParam = "" }: { page: LoadedProductPage; storeParam
   const href = (path: string) => `${path}${storeParam}`;
   const { store, nav } = page;
   const links = nav.main;
+  const drawer = useCartDrawer();
 
   return (
     <div className="shopify-section shopify-section-group-header-group">
@@ -177,14 +196,25 @@ function Header({ page, storeParam = "" }: { page: LoadedProductPage; storeParam
 
             <nav className="gb-hdr__nav" aria-label="Main">
               {links.map((l) => (
-                <a key={`d${l.href}${l.label}`} href={l.href}>
+                <a key={`d${l.href}${l.label}`} href={href(l.href)}>
                   {l.label}
                 </a>
               ))}
             </nav>
 
             <div className="gb-hdr__right">
-              <a className="gb-hdr__cart" href={href("/cart")} aria-label="Cart">
+              <a
+                className="gb-hdr__cart"
+                href={href("/cart")}
+                aria-label="Cart"
+                onClick={(event) => {
+                  // With JavaScript the cart is the drawer; without it, the
+                  // link still goes to the cart page.
+                  if (!drawer) return;
+                  event.preventDefault();
+                  drawer.open(event.currentTarget);
+                }}
+              >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 7h12l1 14H5L6 7z" /><path d="M9 7a3 3 0 0 1 6 0" /></svg>
               </a>
               <a className="gb-hdr__cta" href="#gb-buy">
@@ -248,7 +278,7 @@ function Footer({ page, storeParam = "" }: { page: LoadedProductPage; storeParam
               <li>
                 {IcoShield}
                 <span>
-                  <strong>30-Day</strong>Guarantee
+                  <strong>30-Day</strong>Money Back Guarantee
                 </span>
               </li>
               <li>
@@ -304,6 +334,7 @@ function Footer({ page, storeParam = "" }: { page: LoadedProductPage; storeParam
 function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
   const href = (path: string) => `${path}${storeParam}`;
   const { product, variants, store } = page;
+  const drawer = useCartDrawer();
   const v = section.values;
   const images = section.blocks.filter((b) => has(b.values, "image"));
 
@@ -427,7 +458,19 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
           )}
 
           {variants.length > 0 ? (
-            <form method="post" action={href("/cart/add")} id="gb-form" className="gb-form">
+            <form
+              method="post"
+              action={href("/cart/add")}
+              id="gb-form"
+              className="gb-form"
+              onSubmit={(event) => {
+                // With JavaScript the add happens in place and the drawer
+                // slides in. Without it this form posts as it always did.
+                if (!drawer || !chosen) return;
+                event.preventDefault();
+                drawer.add(chosen.id, event.currentTarget.querySelector<HTMLButtonElement>(".gb-buy__add"));
+              }}
+            >
               <input type="hidden" name="variantId" value={chosen?.id ?? ""} />
 
               <div className="gb-field">

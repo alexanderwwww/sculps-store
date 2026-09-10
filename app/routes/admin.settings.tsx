@@ -75,15 +75,12 @@ import {
   GlassGround,
   GlassPanel,
   GlassNotice,
-  StateBadge,
-  StateRail,
   Fact,
   FactGrid,
   CopyValue,
   PrimaryAction,
   QuietAction,
   glassBody,
-  glassRule,
   glassField,
   glassInput,
   type ConnState,
@@ -1220,6 +1217,206 @@ function DomainsPane({
   );
 }
 
+/* ------------------------------------------------------- payments ------ */
+
+/**
+ * The publishable key shown the way a card number is: only the last group is
+ * readable, the rest is dots. It is not a secret — this is about calm, not
+ * secrecy. With no key saved there is nothing to mask, so the card shows its
+ * empty state instead of inventing digits.
+ */
+function cardDigits(publishable: string) {
+  if (!publishable) return null;
+  const tail = publishable.slice(-4);
+  return `•••• •••• •••• ${tail}`;
+}
+
+/** The Stripe wordmark as type. Their logo file is not ours to ship. */
+function StripeMark({ ink }: { ink: string }) {
+  return (
+    <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-.02em", color: ink }}>stripe</span>
+  );
+}
+
+/** The one object at the top: is this connected, and is it live. */
+function PayCard({
+  mode,
+  accountName,
+  digits,
+  storeName,
+}: {
+  mode: "live" | "test" | "unknown";
+  accountName: string | null;
+  digits: string | null;
+  storeName: string;
+}) {
+  const live = mode === "live";
+  return (
+    <div
+      className="k-lift"
+      style={{
+        width: "100%",
+        maxWidth: 384,
+        aspectRatio: "1.6",
+        borderRadius: 18,
+        padding: 20,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        color: "#FFFFFF",
+        background: live
+          ? "linear-gradient(140deg,#3A3A46 0%,#232330 55%,#101018 100%)"
+          : "linear-gradient(140deg,#6E7A8A 0%,#4A5462 55%,#2C333D 100%)",
+        boxShadow: "0 18px 40px rgba(20,16,40,.22), inset 0 1px 0 rgba(255,255,255,.28)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <StripeMark ink="rgba(255,255,255,.92)" />
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: ".08em",
+            padding: "4px 9px",
+            borderRadius: 999,
+            background: "rgba(255,255,255,.16)",
+            border: "1px solid rgba(255,255,255,.28)",
+          }}
+        >
+          {mode === "live" ? "LIVE" : mode === "test" ? "TEST" : "MODE UNKNOWN"}
+        </span>
+      </div>
+
+      <span
+        style={{
+          fontFamily: "'JetBrains Mono',monospace",
+          fontSize: 16,
+          letterSpacing: ".06em",
+          color: digits ? "rgba(255,255,255,.94)" : "rgba(255,255,255,.55)",
+        }}
+      >
+        {digits ?? "No key saved"}
+      </span>
+
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".01em", color: "rgba(255,255,255,.92)" }}>
+          {accountName || "No account name"}
+        </span>
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,.62)" }}>{storeName}</span>
+      </div>
+    </div>
+  );
+}
+
+/** One line of state. Label left, answer right. No paragraph. */
+function StateLine({ label, value, state }: { label: string; value: string; state: ConnState }) {
+  const dot = state === "on" ? "#22C55E" : state === "connecting" ? "#B99400" : "var(--ink-3)";
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "10px 0",
+        borderBottom: "1px solid rgba(48,48,48,.08)",
+      }}
+    >
+      <span style={{ fontSize: 13, color: "var(--ink-2)" }}>{label}</span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 550 }}>
+        <span style={{ width: 7, height: 7, borderRadius: 999, background: dot }} />
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * A provider row, the way Shopify offers them. Rule 2 of the port: a provider
+ * with nothing behind it is visibly disabled with the reason. None of these
+ * rows is a button.
+ */
+function ProviderRow({
+  glyph,
+  name,
+  note,
+  status,
+  on,
+}: {
+  glyph: React.ReactNode;
+  name: string;
+  note: string;
+  status: string;
+  on?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 16px",
+        borderTop: "1px solid rgba(48,48,48,.07)",
+        opacity: on ? 1 : 0.62,
+      }}
+    >
+      <span
+        style={{
+          width: 40,
+          height: 28,
+          borderRadius: 7,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(255,255,255,.78)",
+          border: "1px solid rgba(255,255,255,.9)",
+          flexShrink: 0,
+        }}
+      >
+        {glyph}
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>{name}</span>
+        <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "17px" }}>{note}</span>
+      </span>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          padding: "4px 10px",
+          borderRadius: 999,
+          whiteSpace: "nowrap",
+          background: on ? "rgba(205,254,225,.75)" : "rgba(227,227,227,.75)",
+          color: on ? "var(--b-success-fg)" : "var(--ink-2)",
+        }}
+      >
+        {status}
+      </span>
+    </div>
+  );
+}
+
+/** A disclosure that stays shut until it is asked for. */
+function Disclosure({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <details>
+      <summary
+        style={{
+          cursor: "pointer",
+          listStyle: "none",
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--ink-2)",
+          padding: "8px 0",
+        }}
+      >
+        {label}
+      </summary>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 10 }}>{children}</div>
+    </details>
+  );
+}
+
 function PaymentsPane({
   store,
   stripe,
@@ -1240,7 +1437,6 @@ function PaymentsPane({
   const hasSecret = Boolean(stripe?.hasSecret);
   const connected = Boolean(stripe?.connectedAt);
   const state: ConnState = connected ? "on" : hasSecret || stripe ? "connecting" : "off";
-  const stateIndex = connected ? 2 : hasSecret || stripe ? 1 : 0;
 
   // Live or test. The secret key is only ever held masked on this screen, so
   // the mode is read off the publishable key, which is not a secret and is
@@ -1256,296 +1452,268 @@ function PaymentsPane({
   return (
     <>
       <GlassGround>
-        <GlassPanel
-          title={`Payments · ${store.name}`}
-          sub={`${store.name} has its own payment account. If this account is ever frozen, your other stores keep taking money — nothing is shared between them.`}
-          aside={
-            <StateBadge
-              state={state}
-              label={connected ? "Connected" : hasSecret ? "Keys saved, untested" : "Not connected"}
-            />
-          }
-        >
-          <div style={glassBody}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 14px",
-                borderRadius: 14,
-                flexWrap: "wrap",
-                background:
-                  mode === "live"
-                    ? "rgba(205,254,225,.7)"
-                    : mode === "test"
-                      ? "rgba(224,240,255,.7)"
-                      : "rgba(227,227,227,.6)",
-                color:
-                  mode === "live"
-                    ? "var(--b-success-fg)"
-                    : mode === "test"
-                      ? "var(--b-info-fg)"
-                      : "var(--ink-2)",
-              }}
-            >
-              <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: ".02em" }}>
-                {mode === "live" ? "LIVE MODE" : mode === "test" ? "TEST MODE" : "MODE UNKNOWN"}
-              </span>
-              <span style={{ fontSize: 12, lineHeight: "18px", flex: 1, minWidth: 200 }}>
-                {mode === "live"
-                  ? "These keys charge real cards and move real money."
-                  : mode === "test"
-                    ? "Test keys never charge a real card, and a test webhook never confirms a real order."
-                    : "No publishable key is saved, so this store's mode cannot be read. The secret key is stored masked and is never shown back."}
-              </span>
-            </div>
-
-            <StateRail
-              current={stateIndex}
-              steps={[
-                {
-                  key: "off",
-                  label: "Not connected",
-                  note: stripe ? "A Stripe account is on this store" : "No Stripe account on this store yet",
-                },
-                {
-                  key: "connecting",
-                  label: "Keys saved",
-                  note: hasSecret ? "A secret key is stored encrypted" : "A secret key is still missing",
-                },
-                {
-                  key: "on",
-                  label: "Connected",
-                  note: stripe?.connectedAt
-                    ? `Stripe answered on ${new Date(stripe.connectedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
-                    : "Stripe has never answered this store",
-                },
-              ]}
+        <GlassPanel style={{ padding: "20px 20px 18px" }}>
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
+            <PayCard
+              mode={mode}
+              accountName={stripe?.accountName || null}
+              digits={cardDigits(publishable)}
+              storeName={store.name}
             />
 
-            <FactGrid>
-              <Fact label="Account name" value={stripe?.accountName || null} reason="Not saved yet" />
-              <Fact label="Publishable key" value={publishable || null} mono reason="Not saved yet" />
-              <Fact
-                label="Secret key"
-                value={stripe?.hasSecret ? stripe.secretMask : null}
-                mono
-                reason={encryption ? "Not saved yet" : "No encryption key on the Worker"}
+            <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column" }}>
+              <StateLine
+                label="Connection"
+                state={state}
+                value={connected ? "Connected" : hasSecret ? "Keys saved, untested" : "Not connected"}
               />
-              <Fact label="Statement descriptor" value={store.statementDescriptor || null} reason="Not saved yet" />
-              <Fact
-                label="Webhook secret"
-                value={stripe?.hasWebhookSecret ? "Stored encrypted" : null}
-                reason="Not saved yet — paid orders would never be marked paid"
+              <StateLine
+                label="Webhook"
+                state={stripe?.hasWebhookSecret ? "on" : "off"}
+                value={stripe?.hasWebhookSecret ? "Secret stored" : "No secret"}
               />
-              <Fact label="Role" value={stripe?.isBackup ? "Backup account" : stripe ? "Primary account" : null} reason="No account yet" />
-            </FactGrid>
+              <StateLine
+                label="Mode"
+                state={mode === "live" ? "on" : mode === "test" ? "connecting" : "off"}
+                value={mode === "live" ? "Live" : mode === "test" ? "Test" : "Unknown"}
+              />
 
-            {!encryption ? (
-              <GlassNotice kind="critical">
-                No encryption key is set on the Worker. Secret keys will not be saved until there is one — a live
-                payment key is not going in the database in the clear.
-              </GlassNotice>
-            ) : null}
-
-            <hr style={glassRule} />
-
-            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <Form method="post" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", flex: 1 }}>
-                <input type="hidden" name="intent" value="stripe-test" />
-                <PrimaryAction
-                  type="submit"
-                  disabled={!hasSecret || busy}
-                  title={hasSecret ? undefined : "Save a secret key first — there is nothing to test with"}
-                  style={{ height: 44, padding: "0 24px", fontSize: 14 }}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", paddingTop: 14 }}>
+                <Form method="post">
+                  <input type="hidden" name="intent" value="stripe-test" />
+                  <PrimaryAction
+                    type="submit"
+                    disabled={!hasSecret || busy}
+                    title={hasSecret ? undefined : "Save a secret key first — there is nothing to test with"}
+                  >
+                    {busy ? "Testing…" : "Test"}
+                  </PrimaryAction>
+                </Form>
+                <Form
+                  method="post"
+                  onSubmit={(event) => {
+                    if (
+                      !confirm(
+                        "Remove Stripe from this store? Checkout will refuse payments until a provider is connected again.",
+                      )
+                    ) {
+                      event.preventDefault();
+                    }
+                  }}
                 >
-                  {busy ? "Testing…" : "Test connection"}
-                </PrimaryAction>
-                <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "18px", flex: 1, minWidth: 200 }}>
-                  This really calls Stripe with the stored key. Stripe's own answer appears at the top of this screen.
-                </span>
-              </Form>
-              <Form
-                method="post"
-                onSubmit={(event) => {
-                  if (
-                    !confirm(
-                      "Remove Stripe from this store? Checkout will refuse payments until a provider is connected again.",
-                    )
-                  ) {
-                    event.preventDefault();
-                  }
-                }}
-              >
-                <input type="hidden" name="intent" value="stripe-remove" />
-                <QuietAction
-                  type="submit"
-                  disabled={!stripe}
-                  title={stripe ? undefined : "No Stripe account on this store"}
-                  style={{ color: "var(--critical)" }}
-                >
-                  Remove
-                </QuietAction>
-              </Form>
+                  <input type="hidden" name="intent" value="stripe-remove" />
+                  <QuietAction
+                    type="submit"
+                    disabled={!stripe}
+                    title={stripe ? undefined : "No Stripe account on this store"}
+                    style={{ color: "var(--critical)" }}
+                  >
+                    Remove
+                  </QuietAction>
+                </Form>
+              </div>
             </div>
           </div>
-        </GlassPanel>
 
-        <GlassPanel title="Keys" sub="Paste them from Stripe → Developers → API keys. Secrets are stored encrypted and never shown back.">
-          <Form method="post">
-            <input type="hidden" name="intent" value="stripe" />
-            <div style={glassBody}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
-                <label style={glassField}>
-                  Account name
-                  <input
-                    name="accountName"
-                    defaultValue={stripe?.accountName}
-                    placeholder="Legal entity on the account"
-                    style={{ ...glassInput, fontFamily: "inherit" }}
-                  />
-                </label>
-                <label style={glassField}>
-                  Statement descriptor
-                  <input
-                    name="statementDescriptor"
-                    defaultValue={store.statementDescriptor}
-                    placeholder="What buyers see on their card"
-                    style={{ ...glassInput, fontFamily: "inherit" }}
-                  />
-                </label>
-                <label style={glassField}>
-                  Publishable key
-                  <input name="publishableKey" defaultValue={stripe?.publishableKey} placeholder="pk_live_…" style={glassInput} />
-                </label>
-                <label style={glassField}>
-                  Secret key
-                  <input
-                    name="secretKey"
-                    type="password"
-                    placeholder={stripe?.hasSecret ? "Leave blank to keep the stored one" : "sk_live_…"}
-                    style={glassInput}
-                  />
-                  <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-2)" }}>
-                    {stripe?.hasSecret ? `Stored encrypted · ${stripe.secretMask}` : "Stored encrypted, never shown back"}
-                  </span>
-                </label>
-                <label style={glassField}>
-                  Webhook signing secret
-                  <input
-                    name="webhookSecret"
-                    type="password"
-                    placeholder={stripe?.hasWebhookSecret ? "Leave blank to keep the stored one" : "whsec_…"}
-                    style={glassInput}
-                  />
-                  <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-2)" }}>
-                    {stripe?.hasWebhookSecret ? "Stored encrypted" : "From the endpoint you create below"}
-                  </span>
-                </label>
-              </div>
-              <div>
-                <PrimaryAction type="submit" disabled={busy}>
-                  {busy ? "Saving…" : "Save"}
-                </PrimaryAction>
-              </div>
-            </div>
-          </Form>
-        </GlassPanel>
-
-        <GlassPanel
-          title="Webhook"
-          sub="Stripe tells this admin that a card was actually charged. Without it a paid order sits as pending forever."
-          aside={
-            <StateBadge
-              state={stripe?.hasWebhookSecret ? "connecting" : "off"}
-              label={stripe?.hasWebhookSecret ? "Secret stored" : "No secret stored"}
-            />
-          }
-        >
-          <div style={glassBody}>
-            {stripe?.hasSecret && !stripe.hasWebhookSecret ? (
+          {!encryption ? (
+            <div style={{ paddingTop: 14 }}>
               <GlassNotice kind="critical">
-                No webhook signing secret yet. Cards will be charged at Stripe, but this admin will never learn that
-                they were paid — orders would sit as "pending" forever. Finish this step before taking a real order.
+                No encryption key on the Worker. Secret keys will not be saved until there is one.
               </GlassNotice>
-            ) : null}
+            </div>
+          ) : null}
 
-            <span style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: "19px" }}>
-              In Stripe: Developers → Webhooks → Add endpoint.
-            </span>
+          {stripe?.hasSecret && !stripe.hasWebhookSecret ? (
+            <div style={{ paddingTop: 14 }}>
+              <GlassNotice kind="critical">
+                No webhook secret. Cards would be charged and the order would sit as pending forever.
+              </GlassNotice>
+            </div>
+          ) : null}
 
+          <div style={{ paddingTop: 8 }}>
+            <Disclosure label="Details">
+              <FactGrid>
+                <Fact label="Account name" value={stripe?.accountName || null} reason="Not saved yet" />
+                <Fact label="Publishable key" value={publishable || null} mono reason="Not saved yet" />
+                <Fact
+                  label="Secret key"
+                  value={stripe?.hasSecret ? stripe.secretMask : null}
+                  mono
+                  reason={encryption ? "Not saved yet" : "No encryption key on the Worker"}
+                />
+                <Fact label="Statement descriptor" value={store.statementDescriptor || null} reason="Not saved yet" />
+                <Fact
+                  label="Webhook secret"
+                  value={stripe?.hasWebhookSecret ? "Stored encrypted" : null}
+                  reason="Not saved yet — paid orders would never be marked paid"
+                />
+                <Fact
+                  label="Role"
+                  value={stripe?.isBackup ? "Backup account" : stripe ? "Primary account" : null}
+                  reason="No account yet"
+                />
+                <Fact
+                  label="Last connected"
+                  value={
+                    stripe?.connectedAt
+                      ? new Date(stripe.connectedAt).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      : null
+                  }
+                  reason="Stripe has never answered this store"
+                />
+                {/*
+                  Whether a webhook has ever actually arrived is the single most
+                  useful fact here, and nothing records it yet — no
+                  last-received timestamp on the provider row, no loader field
+                  for one. So it renders as unknown with the reason, not a tick.
+                */}
+                <Fact
+                  label="Last webhook received"
+                  value={null}
+                  reason="Nothing records when a webhook last arrived. Stripe's endpoint page shows deliveries meanwhile."
+                />
+              </FactGrid>
+
+              <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "18px" }}>
+                {store.name} has its own payment account. If it is ever frozen, your other stores keep taking money.
+              </span>
+            </Disclosure>
+          </div>
+
+          <Disclosure label="Edit keys">
+            <Form method="post">
+              <input type="hidden" name="intent" value="stripe" />
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
+                  <label style={glassField}>
+                    Account name
+                    <input
+                      name="accountName"
+                      defaultValue={stripe?.accountName}
+                      placeholder="Legal entity on the account"
+                      style={{ ...glassInput, fontFamily: "inherit" }}
+                    />
+                  </label>
+                  <label style={glassField}>
+                    Statement descriptor
+                    <input
+                      name="statementDescriptor"
+                      defaultValue={store.statementDescriptor}
+                      placeholder="What buyers see on their card"
+                      style={{ ...glassInput, fontFamily: "inherit" }}
+                    />
+                  </label>
+                  <label style={glassField}>
+                    Publishable key
+                    <input
+                      name="publishableKey"
+                      defaultValue={stripe?.publishableKey}
+                      placeholder="pk_live_…"
+                      style={glassInput}
+                    />
+                  </label>
+                  <label style={glassField}>
+                    Secret key
+                    <input
+                      name="secretKey"
+                      type="password"
+                      placeholder={stripe?.hasSecret ? "Leave blank to keep the stored one" : "sk_live_…"}
+                      style={glassInput}
+                    />
+                    <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-2)" }}>
+                      {stripe?.hasSecret ? `Stored encrypted · ${stripe.secretMask}` : "Stored encrypted, never shown back"}
+                    </span>
+                  </label>
+                  <label style={glassField}>
+                    Webhook signing secret
+                    <input
+                      name="webhookSecret"
+                      type="password"
+                      placeholder={stripe?.hasWebhookSecret ? "Leave blank to keep the stored one" : "whsec_…"}
+                      style={glassInput}
+                    />
+                    <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink-2)" }}>
+                      {stripe?.hasWebhookSecret ? "Stored encrypted" : "From the webhook endpoint below"}
+                    </span>
+                  </label>
+                </div>
+                <div>
+                  <PrimaryAction type="submit" disabled={busy}>
+                    {busy ? "Saving…" : "Save"}
+                  </PrimaryAction>
+                </div>
+              </div>
+            </Form>
+          </Disclosure>
+        </GlassPanel>
+
+        <GlassPanel title="Webhook endpoint" sub="Stripe → Developers → Webhooks → Add endpoint." tight>
+          <div style={{ ...glassBody, padding: "12px 16px 16px", gap: 10 }}>
             {webhookUrl ? (
               <CopyValue label="Endpoint URL" value={webhookUrl} />
             ) : (
               <GlassNotice kind="critical">
-                The admin's own address is not set on the Worker (ADMIN_ORIGIN), so the exact webhook URL cannot be
-                shown. Set it before creating the endpoint — a URL guessed from the page you happen to be on will
-                silently never confirm a payment.
+                ADMIN_ORIGIN is not set on the Worker, so the exact URL cannot be shown. A guessed one silently never
+                confirms a payment.
               </GlassNotice>
             )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--ink-2)" }}>
-                Select exactly these events — they are the four this admin handles
-              </span>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {STRIPE_EVENTS.split(", ").map((event) => (
-                  <code
-                    key={event}
-                    style={{
-                      fontFamily: "'JetBrains Mono',monospace",
-                      fontSize: 12,
-                      padding: "5px 10px",
-                      borderRadius: 999,
-                      background: "rgba(255,255,255,.72)",
-                      border: "1px solid rgba(255,255,255,.85)",
-                    }}
-                  >
-                    {event}
-                  </code>
-                ))}
-                <CopyValue value={STRIPE_EVENTS} />
-              </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              {STRIPE_EVENTS.split(", ").map((event) => (
+                <code
+                  key={event}
+                  style={{
+                    fontFamily: "'JetBrains Mono',monospace",
+                    fontSize: 12,
+                    padding: "5px 10px",
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,.72)",
+                    border: "1px solid rgba(255,255,255,.85)",
+                  }}
+                >
+                  {event}
+                </code>
+              ))}
+              <CopyValue value={STRIPE_EVENTS} />
             </div>
-
-            <span style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: "19px" }}>
-              Then paste the signing secret it shows (whsec_…) into the Keys card above.
+            <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "18px" }}>
+              These four events only. Check the endpoint says Live, not Test.
             </span>
-
-            {/*
-              Whether a webhook has ever actually arrived is the single most useful
-              fact on this card, and nothing records it yet — there is no
-              last-received timestamp on the provider row and no loader field for
-              one. So it renders as unknown with the reason, not as a green tick.
-            */}
-            <Fact
-              label="Last webhook received"
-              value={null}
-              reason="Nothing records when a webhook last arrived, so this cannot be answered yet. Stripe's own endpoint page shows the delivery attempts in the meantime."
-            />
-
-            <GlassNotice kind="warning">
-              Check the endpoint says Live, not Test — a test-mode webhook never confirms a real order.
-            </GlassNotice>
           </div>
         </GlassPanel>
 
-        <GlassPanel
-          title="Add a payment provider"
-          sub="A second account can take over if the first is frozen. Greyed out means not built yet — not broken."
-          tight
-        >
-          <div style={{ ...glassBody, padding: "14px 16px 18px", flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            <QuietAction type="button" disabled title="Stripe is provider one. A second Stripe account is the next thing to add here.">
-              Add Stripe account
-            </QuietAction>
-            <QuietAction type="button" disabled title="Not built yet. Payments are behind an interface so this does not touch orders or checkout when it arrives.">
-              Add PayPal
-            </QuietAction>
-            <QuietAction type="button" disabled title="Not built yet.">
-              Add manual method
-            </QuietAction>
+        <GlassPanel title="Providers" sub="Greyed out means not built yet — not broken." tight>
+          <div style={{ paddingBottom: 4 }}>
+            <ProviderRow
+              glyph={<StripeMark ink="var(--ink)" />}
+              name="Stripe"
+              note="Cards, Link and wallets through the payment element"
+              status={connected ? "Connected" : hasSecret ? "Keys saved" : "Not connected"}
+              on={connected}
+            />
+            <ProviderRow
+              glyph={<span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)" }}>PP</span>}
+              name="PayPal"
+              note="A second account can take over if the first is frozen"
+              status="Not built yet"
+            />
+            <ProviderRow
+              glyph={<span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-2)" }}>A·G</span>}
+              name="Apple Pay & Google Pay"
+              note="Stripe can present both in the same payment element, so they arrive together — not switched on yet"
+              status="Not built yet"
+            />
+            <ProviderRow
+              glyph={<span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-2)" }}>BT</span>}
+              name="Manual bank transfer"
+              note="Marked paid by hand after the money lands"
+              status="Not built yet"
+            />
           </div>
         </GlassPanel>
       </GlassGround>

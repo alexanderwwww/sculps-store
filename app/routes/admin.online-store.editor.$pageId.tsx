@@ -42,6 +42,14 @@ import {
 } from "~/lib/admin.server";
 import { SECTIONS, type SectionDef, type FieldDef } from "~/lib/sections";
 import { SECTION_ICON_SET, type IconDef } from "~/admin/section-icons";
+import {
+  hitFor,
+  installBridge,
+  markPreview,
+  sendPatch,
+  type IndexSection,
+  type PreviewHit,
+} from "~/admin/editor-preview";
 import editorHref from "~/admin/editor.css?url";
 
 export function meta() {
@@ -333,54 +341,202 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
   /* ------------------------------------------------------------ preview */
 
   const frameRef = useRef<HTMLIFrameElement>(null);
-  const previewSrc = `/?store=${store.slug}&preview=${page.id}&t=${navigation.state}`;
+  // Stable on purpose. The preview used to be keyed on navigation state, so
+  // every write threw the page away and rebuilt it. Now it is patched in
+  // place while you type, and reloaded only once a write has actually changed
+  // what the server would send back.
+  const previewSrc = `/?store=${store.slug}&preview=${page.id}`;
 
-  // The preview is same-origin, so the editor can talk to the real page: each
-  // rendered section carries data-section, which is enough to make clicking
-  // one select it here and to outline the selected one.
-  const wireFrame = useCallback(() => {
+  // Bumped on each iframe load: the marking pass runs once per load, and the
+  // outline and patch passes need to re-run after one.
+  const [loadCount, setLoadCount] = useState(0);
+  const scrollBack = useRef<number | null>(null);
+  const [stale, setStale] = useState(false);
+
+  // What the last click in the preview asked to edit.
+  const [focus, setFocus] = useState<
+    { sectionId: string; field: string; blockId: string | null; nonce: number } | null
+  >(null);
+
+  // The marking pass needs to know which fields are pictures, so it can match
+  // them on `src` instead of on text. Both come from the one section list.
+  const indexSections: IndexSection[] = useMemo(
+    () =>
+      sections.map((section) => {
+        const def = SECTIONS.find((s) => s.type === section.type);
+        const kind = (field: FieldDef) => ({
+          name: field.name,
+          media: field.kind === "image" || field.kind === "video",
+        });
+        return {
+          id: section.id,
+          type: section.type,
+          values: section.values,
+          blocks: section.blocks,
+          fields: (def?.fields ?? []).map(kind),
+          blockFields: (def?.blocks?.fields ?? []).map(kind),
+        };
+      }),
+    [sections],
+  );
+
+  // A click in the preview selects the section and, when the click landed on
+  // something the editor could trace back to a field, opens that field.
+  const openHit = useCallback(
+    (hit: PreviewHit) => {
+      const match =
+        sections.find((section) => section.id === hit.sectionId) ??
+        sections.find((section) => section.type === hit.sectionId);
+      if (!match) return;
+      setFocus(
+        hit.field
+          ? { sectionId: match.id, field: hit.field, blockId: hit.blockId, nonce: Date.now() }
+          : null,
+      );
+      if (match.id !== selectedId) setParam("section", match.id);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sections, selectedId, params],
+  );
+
+  // Clicking a block's own text opens that block in the inspector, so the
+  // field you touched is the field you land on.
+  useEffect(() => {
+    if (!focus || !focus.blockId || focus.sectionId !== selectedId) return;
+    const index = draft.blocks.findIndex((row) => row.id === focus.blockId);
+    if (index >= 0) setOpenBlock(index);
+  }, [focus, selectedId, draft.blocks]);
+
+  // The click listener is bound once per document load; the ref keeps it
+  // pointing at the current handler without rebinding.
+  const openHitRef = useRef(openHit);
+  openHitRef.current = openHit;
+
+  const onFrameLoad = useCallback(() => {
+    const doc = frameRef.current?.contentDocument;
+    const win = frameRef.current?.contentWindow;
+    if (!doc || !win) return;
+
+    installBridge(doc);
+    markPreview(doc, indexSections);
+
+    doc.addEventListener(
+      "click",
+      (event) => {
+        const hit = hitFor(event.target);
+        if (!hit) return;
+        // Links and video controls inside the preview would otherwise
+        // navigate the frame away from the page being edited.
+        event.preventDefault();
+        openHitRef.current(hit);
+      },
+      true,
+    );
+
+    if (scrollBack.current != null) {
+      win.scrollTo(0, scrollBack.current);
+      scrollBack.current = null;
+    }
+    setLoadCount((count) => count + 1);
+  }, [indexSections]);
+
+  // The selected section's outline and its name tag.
+  useEffect(() => {
     const doc = frameRef.current?.contentDocument;
     if (!doc) return;
-    const nodes = Array.from(doc.querySelectorAll<HTMLElement>("[data-section]"));
-    for (const node of nodes) {
-      const type = node.dataset.section;
-      const match = sections.find((section) => section.type === type);
-      node.style.cursor = "pointer";
-      node.style.outlineOffset = "-3px";
-      node.style.position = node.style.position || "relative";
+    for (const node of Array.from(doc.querySelectorAll<HTMLElement>("[data-section]"))) {
+      const match = sections.find((section) => section.type === node.dataset.section);
       const isSelected = match ? match.id === selectedId : false;
-      node.style.outline = isSelected ? "3px solid rgba(0,113,227,.9)" : "none";
+      if (!node.style.position) node.style.position = "relative";
+      node.style.outlineColor = isSelected ? "rgba(0,113,227,.9)" : "transparent";
       node.style.borderRadius = isSelected ? "14px" : "";
 
-      // The selected-section label overlay.
       const existing = node.querySelector<HTMLElement>("[data-editor-label]");
       if (isSelected && match) {
-        const label =
-          SECTIONS.find((s) => s.type === match.type)?.label ?? match.type;
+        const label = SECTIONS.find((s) => s.type === match.type)?.label ?? match.type;
         const tag = existing ?? doc.createElement("span");
         tag.setAttribute("data-editor-label", "1");
         tag.textContent = label;
         tag.setAttribute(
           "style",
-          "position:absolute;left:10px;top:10px;background:rgba(0,113,227,.92);color:#fff;font-size:11px;font-weight:590;padding:4px 10px;border-radius:999px;z-index:2;box-shadow:0 6px 18px rgba(0,113,227,.35);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif",
+          "position:absolute;left:10px;top:10px;background:rgba(0,113,227,.92);color:#fff;font-size:11px;font-weight:590;padding:4px 10px;border-radius:999px;z-index:2;box-shadow:0 6px 18px rgba(0,113,227,.35);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;pointer-events:none",
         );
         if (!existing) node.insertBefore(tag, node.firstChild);
       } else if (existing) {
         existing.remove();
       }
-
-      node.onclick = (event) => {
-        if (!match) return;
-        event.preventDefault();
-        setParam("section", match.id);
-      };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sections, selectedId, params]);
+  }, [sections, selectedId, loadCount]);
 
+  // Live editing: every change to the draft is pushed into the preview as a
+  // patch, debounced so a keystroke does not post a message per character.
   useEffect(() => {
-    wireFrame();
-  }, [wireFrame]);
+    if (!selected || !definition) {
+      setStale(false);
+      return;
+    }
+    const saved = selected;
+    const timer = setTimeout(() => {
+      const doc = frameRef.current?.contentDocument;
+      const win = frameRef.current?.contentWindow;
+      if (!doc || !win) return;
+      let missing = false;
+
+      for (const field of definition.fields) {
+        const value = draft.values[field.name] ?? "";
+        const applied = sendPatch(doc, win, {
+          sectionId: saved.id,
+          field: field.name,
+          blockId: null,
+          value,
+          media: field.kind === "image" || field.kind === "video",
+        });
+        if (!applied && value.trim() !== (saved.values[field.name] ?? "").trim()) missing = true;
+      }
+
+      for (const row of draft.blocks) {
+        const savedBlock = saved.blocks.find((block) => block.id === row.id);
+        for (const field of definition.blocks?.fields ?? []) {
+          const value = row.values[field.name] ?? "";
+          const applied =
+            row.id &&
+            sendPatch(doc, win, {
+              sectionId: saved.id,
+              field: field.name,
+              blockId: row.id,
+              value,
+              media: field.kind === "image" || field.kind === "video",
+            });
+          if (!applied && value.trim() !== (savedBlock?.values[field.name] ?? "").trim()) {
+            missing = true;
+          }
+        }
+      }
+
+      // Adding, deleting or reordering blocks changes the shape of the page,
+      // which no patch can do — it only shows once the section is saved.
+      if (draft.blocks.length !== saved.blocks.length) missing = true;
+
+      setStale(missing);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [draft, selected, definition, loadCount]);
+
+  // A write is the one thing that changes what the server would render, so it
+  // is the one thing that reloads the preview — quietly, keeping the scroll.
+  const posting =
+    navigation.state === "submitting" && (navigation.formMethod ?? "").toUpperCase() === "POST";
+  const wasPosting = useRef(false);
+  useEffect(() => {
+    if (wasPosting.current && navigation.state === "idle") {
+      const win = frameRef.current?.contentWindow;
+      if (win) {
+        scrollBack.current = win.scrollY;
+        win.location.replace(previewSrc);
+      }
+    }
+    wasPosting.current = posting;
+  }, [posting, navigation.state, previewSrc]);
 
   return (
     <div className="ed">
@@ -572,17 +728,16 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
             }}
           >
             <iframe
-              key={previewSrc}
               ref={frameRef}
               src={previewSrc}
-              onLoad={wireFrame}
+              onLoad={onFrameLoad}
               title="Storefront preview"
             />
           </div>
         </div>
 
         {/* INSPECTOR */}
-        <div className="ed-panel ed-inspector">
+        <div className="ed-panel ed-inspector" key={selectedId || "none"}>
           {!selected || !definition ? (
             <div className="ed-empty">
               Pick a section on the left, or click one in the preview, to change its words and
@@ -601,6 +756,8 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
               setOpenBlock={setOpenBlock}
               reviews={reviews}
               mediaReady={mediaReady}
+              focus={focus && focus.sectionId === selected.id ? focus : null}
+              stale={stale}
               message={actionData && "ok" in actionData ? actionData.ok : undefined}
               error={actionData && "error" in actionData ? actionData.error : undefined}
             />
@@ -624,6 +781,8 @@ function SectionPanel({
   setOpenBlock,
   reviews,
   mediaReady,
+  focus,
+  stale,
   message,
   error,
 }: {
@@ -637,6 +796,8 @@ function SectionPanel({
   setOpenBlock: (index: number) => void;
   reviews: { published: number; drafts: number };
   mediaReady: boolean;
+  focus: { field: string; blockId: string | null; nonce: number } | null;
+  stale: boolean;
   message?: string;
   error?: string;
 }) {
@@ -694,6 +855,9 @@ function SectionPanel({
             inputName={`field.${field.name}`}
             onChange={(next) => setField(field.name, next)}
             mediaReady={mediaReady}
+            focusKey={
+              focus && !focus.blockId && focus.field === field.name ? focus.nonce : undefined
+            }
           />
         ))}
 
@@ -777,6 +941,11 @@ function SectionPanel({
                         onChange={(next) => setBlockField(index, field.name, next)}
                         mediaReady={mediaReady}
                         compact
+                        focusKey={
+                          focus && focus.blockId === row.id && focus.field === field.name
+                            ? focus.nonce
+                            : undefined
+                        }
                       />
                     ))}
                   </div>
@@ -813,8 +982,16 @@ function SectionPanel({
         ) : null}
       </div>
 
-      {message || error ? (
+      {stale || message || error ? (
         <div className="ed-status">
+          {/* The preview shows a patch of the saved page. A change that adds
+              or removes something the saved page never drew cannot be patched
+              in, so it says so rather than pretending it is showing. */}
+          {stale ? (
+            <span style={{ color: "var(--ink-3)" }}>
+              Some of this shows in the preview only after you save.
+            </span>
+          ) : null}
           {message ? <span style={{ color: "#1c7c3c" }}>{message}</span> : null}
           {error ? <span style={{ color: "#d0021b" }}>{error}</span> : null}
         </div>
@@ -832,6 +1009,7 @@ function FieldRow({
   onChange,
   mediaReady,
   compact,
+  focusKey,
 }: {
   field: FieldDef;
   value: string;
@@ -839,14 +1017,47 @@ function FieldRow({
   onChange: (next: string) => void;
   mediaReady: boolean;
   compact?: boolean;
+  /** bumped when the preview was clicked on this field's value */
+  focusKey?: number;
 }) {
   // `trust_icons` declares its icon as an image field, and the storefront
   // renders it with <img src>. The named-glyph picker sits above it, disabled,
   // until the storefront reads the same list — see IconPicker.
   const isIcon = field.name === "icon";
 
+  // Touching a value in the preview brings its field into view and puts the
+  // cursor in it, so nothing has to be hunted for on the right.
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focusKey) return;
+    const row = rowRef.current;
+    if (!row) return;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+    // Re-trigger the tint on every touch, not only the first.
+    row.removeAttribute("data-touched");
+    void row.offsetWidth;
+    row.setAttribute("data-touched", "true");
+    const input = row.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+      "input:not([type=hidden]), textarea",
+    );
+    if (input) {
+      input.focus();
+      if (typeof input.setSelectionRange === "function") {
+        const end = input.value.length;
+        input.setSelectionRange(end, end);
+      }
+    }
+  }, [focusKey]);
+
   return (
-    <div className="ed-field" style={compact ? { padding: "0 0 4px" } : undefined}>
+    <div
+      ref={rowRef}
+      className="ed-field"
+      style={compact ? { padding: "0 0 4px" } : undefined}
+    >
       <span className="ed-label">{field.label}</span>
 
       {isIcon ? <IconPicker value={value} /> : null}
