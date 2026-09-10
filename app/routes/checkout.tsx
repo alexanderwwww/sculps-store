@@ -16,7 +16,7 @@ import { resolveStore } from "~/lib/store.server";
 import { readCartToken, priceCart, markCartConverted } from "~/lib/cart.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import { placeOrder } from "~/lib/admin.server";
-import { deviceFromRequest, geoFromRequest, readVisitorSession, track } from "~/lib/visitor.server";
+import { deviceFromRequest, geoFromRequest, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
 import { metaConfig } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import { pixelScript, readMetaCookies, trackFunnelEvent } from "~/lib/meta.server";
@@ -67,6 +67,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       error instanceof PaymentsNotConfigured
         ? error.message
         : "Payments are not available right now.";
+  }
+
+  // Reaching checkout is itself the event, the way Shopify counts it: the
+  // customer got here with a cart, whether or not they go on to pay. Live View
+  // counts distinct sessions, so the submit below cannot double count this.
+  const checkoutSession = readVisitorSession(request);
+  if (checkoutSession && cart.lines.length && shouldTrack(request, url)) {
+    track(context.db, context.cloudflare.ctx, {
+      storeId: store.id,
+      sessionId: checkoutSession,
+      type: "checkout",
+      path: "/checkout",
+      geo: geoFromRequest(request),
+      device: deviceFromRequest(request),
+      amountCents: cart.totalCents,
+    });
   }
 
   // InitiateCheckout: reaching this page with something in the cart. Both
