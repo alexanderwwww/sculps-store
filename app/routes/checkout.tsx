@@ -73,6 +73,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       slug: store.slug,
       currency: store.currency,
       phoneMode: store.checkoutPhoneMode,
+      companyMode: store.checkoutCompanyMode,
+      consent: store.checkoutConsent,
       shipEstimate: store.shipEstimate,
     },
     cart,
@@ -88,16 +90,22 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!store) throw new Response("No store for this domain.", { status: 404 });
 
   const token = readCartToken(request);
-  const cart = await priceCart(context.db, store, token);
+  const form = await request.formData();
+  // Priced with the destination state, so a manual state rate applies.
+  const cart = await priceCart(context.db, store, token, String(form.get("region") || "").trim() || null);
   if (cart.lines.length === 0) {
     return { error: "Your cart is empty." };
   }
-
-  const form = await request.formData();
   const email = String(form.get("email") || "").trim().toLowerCase();
   const name = String(form.get("name") || "").trim();
 
   if (!name) return { error: "Please put your name in." };
+  if (store.checkoutNameMode === "full" && !/\S+\s+\S+/.test(name)) {
+    return { error: "Please put your first and last name in." };
+  }
+  if (store.checkoutCompanyMode === "required" && !String(form.get("company") || "").trim()) {
+    return { error: "Please add the company name." };
+  }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return { error: "That email address does not look right — we send your receipt there." };
   }
@@ -150,7 +158,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     email,
     phone: String(form.get("phone") || "").trim() || null,
     address1: String(form.get("address1") || "").trim() || null,
-    address2: String(form.get("address2") || "").trim() || null,
+    address2: [String(form.get("company") || "").trim(), String(form.get("address2") || "").trim()].filter(Boolean).join(" · ") || null,
+    marketingConsent: form.get("consent") === "on",
     city: String(form.get("city") || "").trim() || null,
     region: String(form.get("region") || "").trim() || null,
     postalCode: String(form.get("postalCode") || "").trim() || null,
@@ -275,6 +284,13 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
                   </label>
                 ) : null}
 
+                {store.companyMode !== "hidden" ? (
+                  <label className="gk-field">
+                    <span>{store.companyMode === "required" ? "Company" : "Company (optional)"}</span>
+                    <input className="gk-input" name="company" autoComplete="organization" required={store.companyMode === "required"} />
+                  </label>
+                ) : null}
+
                 <label className="gk-field">
                   <span>Address</span>
                   <input className="gk-input" name="address1" required autoComplete="address-line1" />
@@ -312,6 +328,13 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
                     </select>
                   </label>
                 </div>
+
+                {store.consent ? (
+                  <label style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 17, marginBottom: 14 }}>
+                    <input type="checkbox" name="consent" style={{ width: 22, height: 22 }} />
+                    Email me about new offers
+                  </label>
+                ) : null}
 
                 <button
                   className="gk-cta"

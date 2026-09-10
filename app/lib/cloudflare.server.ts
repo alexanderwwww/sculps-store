@@ -78,10 +78,18 @@ export interface Zone {
   name_servers: string[];
 }
 
-/** Root domain of a hostname: shop.example.com → example.com. */
+/** Two-label public suffixes where the registrable domain is three labels. */
+const SECOND_LEVEL = new Set([
+  "co.uk", "org.uk", "me.uk", "ac.uk", "gov.uk", "com.au", "net.au", "org.au", "co.nz", "org.nz",
+  "co.za", "com.br", "com.mx", "co.jp", "co.kr", "com.sg", "com.hk", "co.in", "com.tr", "com.ar",
+]);
+
+/** Root domain of a hostname: shop.example.com → example.com, shop.example.co.uk → example.co.uk. */
 export function rootDomain(hostname: string): string {
   const parts = hostname.toLowerCase().split(".").filter(Boolean);
-  return parts.length <= 2 ? parts.join(".") : parts.slice(-2).join(".");
+  if (parts.length <= 2) return parts.join(".");
+  const lastTwo = parts.slice(-2).join(".");
+  return SECOND_LEVEL.has(lastTwo) ? parts.slice(-3).join(".") : lastTwo;
 }
 
 export async function findZone(config: CloudflareConfig, name: string): Promise<Result<Zone | null>> {

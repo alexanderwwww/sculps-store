@@ -17,6 +17,7 @@ import {
   resolveAdminStore,
   storeSettings,
   saveStoreSettings,
+  storeDomain,
   addDomain,
   removeDomain,
   setPrimaryDomain,
@@ -38,13 +39,12 @@ import {
   findZone,
   bindHostname,
   unbindHostname,
-  registrarInstructions,
   rootDomain,
 } from "~/lib/cloudflare.server";
 import { createSenderDomain, readSenderDomain, verifySenderDomain } from "~/lib/resend-domains.server";
 import { emailReady, sendOrderConfirmation, sendShippingNotice, sendRefundNotice } from "~/lib/email.server";
 import { centsFromInput, centsToInput } from "~/lib/money";
-import { Badge, Empty, card } from "~/admin/ui";
+import { Badge, card, input } from "~/admin/ui";
 import {
   SettingsCard,
   CardButton,
@@ -56,6 +56,7 @@ import {
   ListRow,
   EmptyRows,
   DnsTable,
+  CopyButton,
   Steps,
   LinkRow,
   CostRow,
@@ -114,11 +115,15 @@ const TRANSFER_STEPS = [
  * same thing. Anything above 1 is read as a percentage; 30% is the ceiling.
  */
 function parseRate(raw: string): number | null {
+  if (!raw.trim()) return null;
   const n = Number(raw.replace("%", "").trim());
   if (!Number.isFinite(n) || n < 0) return null;
-  const rate = n > 1 || raw.includes("%") ? n / 100 : n;
+  // 8.75 and 1 are percentages; 0.0875 is a decimal. 30% is the ceiling.
+  const rate = n >= 1 || raw.includes("%") ? n / 100 : n;
   return rate > 0.3 ? null : rate;
 }
+
+const STRIPE_EVENTS = "payment_intent.succeeded, payment_intent.payment_failed, charge.refunded, charge.dispute.created";
 
 const US_STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
 
@@ -163,7 +168,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       cloudflare: Boolean(cloudflareConfig(env)),
       resend: emailReady(env),
       encryption: encryptionReady(env),
-      adminOrigin: env.ADMIN_ORIGIN || url.origin,
+      adminOrigin: env.ADMIN_ORIGIN || null,
     },
     store: {
       id: store.id,
@@ -295,9 +300,11 @@ export async function action({ context, request }: Route.ActionArgs) {
     let hostname = text("hostname").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
     if (intent === "add-subdomain") {
       const existing = await storeSettings(context.db, store.id);
-      const root = existing.domains.find((d) => d.isPrimary) ?? existing.domains[0];
-      if (!root) return { error: "Connect a root domain first." };
-      hostname = `shop.${root.hostname}`;
+      const base = existing.domains.find((d) => d.isPrimary) ?? existing.domains[0];
+      if (!base) return { error: "Connect a root domain first." };
+      const typed = text("subdomain") || "shop";
+      hostname = `${typed.replace(/[^a-z0-9-]/gi, "").toLowerCase()}.${rootDomain(base.hostname)}`;
+      if (existing.domains.some((d) => d.hostname === hostname)) return { error: `${hostname} is already on this store.` };
     }
     if (!hostname || !hostname.includes(".")) return { error: "Type the domain, like yourstore.com — no http:// and no www." };
 
@@ -328,8 +335,8 @@ export async function action({ context, request }: Route.ActionArgs) {
 
   if (intent === "verify-domain") {
     const id = text("domainId");
-    const [row] = await context.db.select().from(domainsTable).where(eq(domainsTable.id, id)).limit(1);
-    if (!row) return { error: "That domain is gone." };
+    const row = await storeDomain(context.db, store.id, id);
+    if (!row) return { error: "That domain is not on this store." };
     const config = cloudflareConfig(env);
     if (!config) return { error: "Cloudflare API is not configured on the Worker, so nothing can be verified yet." };
 
@@ -364,21 +371,35 @@ export async function action({ context, request }: Route.ActionArgs) {
   }
 
   if (intent === "primary-domain") {
-    const id = text("domainId");
-    await setPrimaryDomain(context.db, store.id, id);
-    const [row] = await context.db.select().from(domainsTable).where(eq(domainsTable.id, id)).limit(1);
-    if (row?.status === "connected") await saveStoreSettings(context.db, store.id, { domain: row.hostname });
-    return { ok: "Primary domain changed." };
+    const row = await storeDomain(context.db, store.id, text("domainId"));
+    if (!row) return { error: "That domain is not on this store." };
+    await setPrimaryDomain(context.db, store.id, row.id);
+    if (row.status === "connected") {
+      await saveStoreSettings(context.db, store.id, { domain: row.hostname });
+      return { ok: `The storefront now answers on ${row.hostname}.` };
+    }
+    return { ok: `${row.hostname} is primary, but it is not connected yet — the storefront still answers on ${store.domain} until you verify it.` };
   }
 
   if (intent === "remove-domain") {
-    const id = text("domainId");
-    const [row] = await context.db.select().from(domainsTable).where(eq(domainsTable.id, id)).limit(1);
-    if (row?.cloudflareDomainId) {
+    const row = await storeDomain(context.db, store.id, text("domainId"));
+    if (!row) return { error: "That domain is not on this store." };
+    if (row.cloudflareDomainId) {
       const config = cloudflareConfig(env);
       if (config) await unbindHostname(config, row.cloudflareDomainId);
     }
-    await removeDomain(context.db, id);
+    await removeDomain(context.db, store.id, row.id);
+
+    // Never leave the store answering on a hostname that is no longer bound.
+    if (row.isPrimary) {
+      const rest = (await storeSettings(context.db, store.id)).domains;
+      const next = rest.find((d) => d.status === "connected") ?? rest[0];
+      if (next) {
+        await setPrimaryDomain(context.db, store.id, next.id);
+        if (next.status === "connected") await saveStoreSettings(context.db, store.id, { domain: next.hostname });
+        return { ok: `Removed. ${next.hostname} is the primary domain now.` };
+      }
+    }
     return { ok: "Removed. The storefront no longer answers on it." };
   }
 
@@ -396,14 +417,14 @@ export async function action({ context, request }: Route.ActionArgs) {
   }
   if (intent === "advance-transfer") {
     const id = text("domainId");
-    const [row] = await context.db.select().from(domainsTable).where(eq(domainsTable.id, id)).limit(1);
-    if (!row) return { error: "That domain is gone." };
+    const row = await storeDomain(context.db, store.id, id);
+    if (!row) return { error: "That domain is not on this store." };
     const next = Math.min(7, (row.transferStep ?? 1) + 1);
     await context.db.update(domainsTable).set({ transferStep: next }).where(eq(domainsTable.id, id));
     return { ok: next > 6 ? "Transfer recorded as complete. Press Verify connection to bind it." : `Step ${next - 1} done.` };
   }
   if (intent === "cancel-transfer") {
-    await removeDomain(context.db, text("domainId"));
+    await removeDomain(context.db, store.id, text("domainId"));
     return { ok: "Transfer cancelled." };
   }
 
@@ -543,7 +564,7 @@ export async function action({ context, request }: Route.ActionArgs) {
     return { ok: `${region} rate saved.` };
   }
   if (intent === "remove-tax-rate") {
-    await removeTaxRate(context.db, text("rateId"));
+    await removeTaxRate(context.db, store.id, text("rateId"));
     return { ok: "Removed." };
   }
 
@@ -600,7 +621,6 @@ export async function action({ context, request }: Route.ActionArgs) {
       faviconUrl: text("faviconUrl") || null,
       brandColor: colour(text("brandColor")),
       accentColor: colour(text("accentColor")),
-      color: colour(text("brandColor")) ?? store.color,
     });
     return { ok: "Saved." };
   }
@@ -666,7 +686,7 @@ export default function Settings({ loaderData, actionData }: Route.ComponentProp
           ) : pane === "payments" ? (
             <PaymentsPane store={store} stripe={settings.stripe} encryption={env.encryption} adminOrigin={env.adminOrigin} busy={busy} />
           ) : pane === "notifications" ? (
-            <NotificationsPane store={store} sender={settings.sender} resend={env.resend} busy={busy} profileEmail={profile.email} />
+            <NotificationsPane store={store} sender={settings.sender} resend={env.resend} busy={busy} profileEmail={profile.email} onCloudflare={settings.domains.some((d) => d.zone && store.emailFrom.endsWith(`@${d.hostname}`))} />
           ) : pane === "taxes" ? (
             <TaxesPane store={store} taxes={settings.taxes} busy={busy} />
           ) : pane === "shipping" ? (
@@ -697,6 +717,21 @@ function Notice({ kind, children }: { kind: "critical" | "success"; children: Re
   return (
     <div style={{ background: `var(--b-${kind}-bg)`, color: `var(--b-${kind}-fg)`, borderRadius: 10, padding: "10px 12px", fontSize: 13, lineHeight: "19px" }}>
       {children}
+    </div>
+  );
+}
+
+/** A control that is deliberately not wired up, shown off and explained. */
+function DeadRow({ label, help }: { label: string; help: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: "1px solid var(--border)", opacity: 0.6 }}>
+      <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+        <span style={{ fontWeight: 550 }}>{label}</span>
+        <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{help}</span>
+      </span>
+      <span style={{ position: "relative", width: 38, height: 22, flex: "none" }}>
+        <span className="k-switch-track" style={{ background: "var(--border-strong)" }} />
+      </span>
     </div>
   );
 }
@@ -748,12 +783,16 @@ function ProfilePane({ profile, busy }: { profile: Route.ComponentProps["loaderD
       <Form method="post">
         <input type="hidden" name="intent" value="notify-prefs" />
         <SettingsCard title="Notification preferences">
-          <ToggleRow label="Email me on every order" name="notifyEveryOrder" defaultChecked={profile.notifyEveryOrder} />
-          <ToggleRow label="Email me on chargebacks" name="notifyChargebacks" defaultChecked={profile.notifyChargebacks} />
-          <ToggleRow label="Weekly summary" help="Monday morning, all stores" name="notifyWeekly" defaultChecked={profile.notifyWeekly} />
+          <ToggleRow label="Email me on every order" help="Goes to the store's contact email in Settings → General" name="notifyEveryOrder" defaultChecked={profile.notifyEveryOrder} />
           <SaveRow busy={busy} />
         </SettingsCard>
       </Form>
+
+      <SettingsCard title="Not built yet" note="Switched off because nothing sends them yet.">
+        <DeadRow label="Email me on chargebacks" help="The chargeback lands on the order timeline; no email goes out" />
+        <DeadRow label="Weekly summary" help="Needs a scheduled job, which the Worker does not have yet" />
+      </SettingsCard>
+
     </>
   );
 }
@@ -767,7 +806,7 @@ function GeneralPane({ store, busy }: { store: Store; busy: boolean }) {
           <FieldGrid>
             <TextField label="Store name" name="name" defaultValue={store.name} required />
             <TextField label="Contact email" name="contactEmail" type="email" defaultValue={store.contactEmail} placeholder={`support@${store.domain}`} help="Where customer replies go, and where you are told about new orders." />
-            <SelectField label="Currency" name="currency" defaultValue={store.currency} options={CURRENCIES} />
+            <SelectField label="Currency" name="currency" defaultValue={store.currency} options={CURRENCIES} help="Changing this relabels existing prices — it does not convert them." />
             <SelectField label="Timezone" name="timezone" defaultValue={store.timezone} options={TIMEZONES} />
           </FieldGrid>
         </SettingsCard>
@@ -797,12 +836,10 @@ function DomainsPane({
   store: Store;
   domains: SettingsData["domains"];
   cloudflare: boolean;
-  adminOrigin: string;
+  adminOrigin: string | null;
   busy: boolean;
 }) {
   const transferring = domains.find((d) => d.transferStep != null);
-  const primary = domains.find((d) => d.isPrimary) ?? domains[0];
-  const nameservers = (primary?.nameservers ?? []).map((server, index) => ({ type: "NS", name: `nameserver ${index + 1}`, value: server }));
 
   return (
     <>
@@ -816,8 +853,9 @@ function DomainsPane({
         title={`Domains · ${store.name}`}
         sub={domains.length ? `${domains.length} domain${domains.length === 1 ? "" : "s"}` : "None connected"}
         actions={
-          <Form method="post">
+          <Form method="post" style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <input type="hidden" name="intent" value="add-subdomain" />
+            <input name="subdomain" placeholder="shop" style={{ ...input, height: 28, width: 90 }} />
             <CardButton disabled={!domains.length || busy}>Add subdomain</CardButton>
           </Form>
         }
@@ -852,6 +890,14 @@ function DomainsPane({
                   { label: "Remove", intent: "remove-domain", danger: true, confirm: `Remove ${domain.hostname}? The storefront stops answering on it immediately.` },
                 ]}
               />
+              {domain.nameservers.length && domain.status !== "connected" ? (
+                <div style={{ padding: "0 16px 12px" }}>
+                  <div style={{ fontSize: 12, color: "var(--ink-2)", padding: "8px 0 6px" }}>
+                    Set these two nameservers for <strong>{domain.hostname}</strong> at your registrar:
+                  </div>
+                  <DnsTable rows={domain.nameservers.map((server, index) => ({ type: "NS", name: `nameserver ${index + 1}`, value: server }))} />
+                </div>
+              ) : null}
             </div>
           ))
         )}
@@ -860,20 +906,21 @@ function DomainsPane({
       <SettingsCard
         title="Connect an existing domain"
         sub="The domain stays at your registrar and simply points here"
-        note={
-          nameservers.length
-            ? "At your registrar, replace the domain's nameservers with the two below, then press Verify connection on the domain above. Status moves Pending → Connected → SSL Active. Nameserver changes can take up to 24 hours."
-            : "Add the domain and Cloudflare assigns two nameservers. Set those at your registrar, then press Verify connection. Status moves Pending → Connected → SSL Active."
-        }
+        note="Add the domain, and Cloudflare gives you two nameservers to set at your registrar. Then press Verify connection on the domain above. Status moves Pending → Connected → SSL Active. Nameserver changes can take up to 24 hours."
       >
+        <div style={{ margin: 16, background: "var(--b-warning-bg)", color: "var(--b-warning-fg)", borderRadius: 10, padding: "12px 14px", fontSize: 13, lineHeight: "19px" }}>
+          <strong>Before you change nameservers, read this.</strong> Changing them moves <em>everything</em> about that domain to
+          Cloudflare — including your email. If you receive mail on this domain (Google Workspace, Outlook, anything), your email
+          stops working until those MX records are re-added at Cloudflare. If mail runs on the domain, ask me first and I will
+          copy the records across before you switch.
+        </div>
         <Form method="post">
           <input type="hidden" name="intent" value="add-domain" />
           <FieldGrid columns={1}>
-            <TextField label="Domain" name="hostname" placeholder="yourstore.com" help="No http:// and no www" span />
+            <TextField label="Domain" name="hostname" placeholder="yourstore.com" help="No http:// and no www — www is added for you once it is connected." span />
           </FieldGrid>
           <SaveRow busy={busy} label="Add domain" />
         </Form>
-        <DnsTable rows={nameservers} />
       </SettingsCard>
 
       <SettingsCard
@@ -910,7 +957,11 @@ function DomainsPane({
 
       <SettingsCard
         title="Admin domain"
-        note={`This admin runs on ${adminOrigin.replace(/^https?:\/\//, "")} — its own address, separate from every storefront. Removing a store domain never affects your access here.`}
+        note={
+          adminOrigin
+            ? `This admin runs on ${adminOrigin.replace(/^https?:\/\//, "")} — its own address, separate from every storefront. Removing a store domain never affects your access here.`
+            : "This admin has its own address, separate from every storefront. Removing a store domain never affects your access here."
+        }
       />
     </>
   );
@@ -926,16 +977,25 @@ function PaymentsPane({
   store: Store;
   stripe: SettingsData["stripe"];
   encryption: boolean;
-  adminOrigin: string;
+  adminOrigin: string | null;
   busy: boolean;
 }) {
-  const webhookUrl = `${adminOrigin}/webhooks/stripe`;
+  // Never show a webhook URL guessed from whatever host he happens to be on:
+  // pasting a preview URL into Stripe means payments silently never confirm.
+  const webhookUrl = adminOrigin ? `${adminOrigin}/webhooks/stripe` : null;
   return (
     <>
       <SettingsCard title={`Payments · ${store.name}`} note={`${store.name} has its own payment account. If this account is ever frozen, your other stores keep taking money — nothing is shared between them.`} />
 
       {!encryption ? (
         <Notice kind="critical">No encryption key is set on the Worker. Secret keys will not be saved until there is one — a live payment key is not going in the database in the clear.</Notice>
+      ) : null}
+
+      {stripe?.hasSecret && !stripe.hasWebhookSecret ? (
+        <Notice kind="critical">
+          No webhook signing secret yet. Cards will be charged at Stripe, but this admin will never learn that they were paid —
+          orders would sit as "pending" forever. Finish the webhook step below before taking a real order.
+        </Notice>
       ) : null}
 
       <Form method="post">
@@ -963,13 +1023,27 @@ function PaymentsPane({
           ]}
         />
         <div style={{ padding: "12px 16px", fontSize: 13, lineHeight: "19px", color: "var(--ink-2)" }}>
-          <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Webhook — set this up once in Stripe</div>
-          Stripe → Developers → Webhooks → Add endpoint. URL:{" "}
-          <code style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, background: "var(--bg)", padding: "1px 6px", borderRadius: 4 }}>{webhookUrl}</code>
-          <br />
-          Events: <code style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>payment_intent.succeeded, payment_intent.payment_failed, charge.refunded, charge.dispute.created</code>
-          <br />
-          Then paste the signing secret it shows (whsec_…) into the field above. Without it, payment confirmations are refused.
+          <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>Webhook — set this up once in Stripe</div>
+          <div style={{ marginBottom: 6 }}>In Stripe: Developers → Webhooks → Add endpoint.</div>
+          {webhookUrl ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+              <code style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, background: "var(--bg)", padding: "3px 8px", borderRadius: 4 }}>{webhookUrl}</code>
+              <CopyButton value={webhookUrl} />
+            </div>
+          ) : (
+            <div style={{ background: "var(--b-critical-bg)", color: "var(--b-critical-fg)", borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
+              The admin's own address is not set on the Worker (ADMIN_ORIGIN), so the exact webhook URL cannot be shown. Set it before creating the endpoint — a URL guessed from the page you happen to be on will silently never confirm a payment.
+            </div>
+          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+            <span>Select these four events:</span>
+            <code style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>{STRIPE_EVENTS}</code>
+            <CopyButton value={STRIPE_EVENTS} />
+          </div>
+          Then paste the signing secret it shows (whsec_…) into the field above.
+          <div style={{ marginTop: 6, fontWeight: 600, color: "var(--ink)" }}>
+            Check the endpoint says Live, not Test — a test-mode webhook never confirms a real order.
+          </div>
         </div>
       </SettingsCard>
 
@@ -989,12 +1063,9 @@ function PaymentsPane({
             <SelectField
               label="Payment capture"
               name="capture"
-              defaultValue={stripe?.capture ?? "automatic"}
-              options={[
-                { value: "automatic", label: "Automatic — charge at checkout" },
-                { value: "manual", label: "Manual — authorise now, capture later" },
-              ]}
-              help="Manual needs a Capture button on each order. Until that exists, keep Automatic."
+              defaultValue="automatic"
+              options={[{ value: "automatic", label: "Automatic — charge at checkout" }]}
+              help="Manual capture is not built yet, so it is not offered — choosing it would authorise money you could not collect."
             />
           </FieldGrid>
           <ToggleRow label="Submit dispute evidence automatically" help="Tracking, delivery scans and emails filed with Stripe when a chargeback opens" name="submitDisputeEvidence" defaultChecked={stripe?.submitDisputeEvidence ?? true} />
@@ -1013,16 +1084,20 @@ function NotificationsPane({
   resend,
   busy,
   profileEmail,
+  onCloudflare,
 }: {
   store: Store;
   sender: SettingsData["sender"];
   resend: boolean;
   busy: boolean;
   profileEmail: string;
+  onCloudflare: boolean;
 }) {
   const domain = store.emailFrom.split("@")[1];
   const spf = sender?.records.find((r) => r.record === "SPF");
   const dkim = sender?.records.find((r) => r.record === "DKIM");
+  const verified = sender?.status === "verified";
+
   return (
     <>
       {!resend ? <Notice kind="critical">Email is not configured on the Worker (RESEND_API_KEY). Nothing can be sent or verified until it is.</Notice> : null}
@@ -1031,24 +1106,48 @@ function NotificationsPane({
         <input type="hidden" name="intent" value="sender" />
         <SettingsCard title="Sender" sub={domain ? `Sending from ${domain}` : "Set a from address on your own domain"}>
           <FieldGrid columns={1}>
-            <TextField label="From address" name="emailFrom" type="email" defaultValue={store.emailFrom} placeholder={`orders@${store.domain}`} help="Must be on your own domain so mail lands in inboxes, not spam." span />
+            <TextField
+              label="From address"
+              name="emailFrom"
+              type="email"
+              defaultValue={store.emailFrom}
+              placeholder={`orders@${store.domain}`}
+              help="Must be on your own domain so mail lands in inboxes, not spam."
+              span
+            />
           </FieldGrid>
-          <ListRow
-            name="SPF"
-            note={spf ? `${spf.type} ${spf.name}` : domain ? "Save the address to fetch the record" : "No sender domain yet"}
-            badges={[{ label: spf?.status === "verified" ? "Verified" : "Not verified", kind: spf?.status === "verified" ? "success" : "neutral" }]}
-            actions={[{ label: "Verify", intent: "verify-sender", disabled: !store.resendDomainId || busy }]}
-          />
-          <ListRow
-            name="DKIM"
-            note="Signs every message so it is not marked as spam"
-            badges={[{ label: dkim?.status === "verified" ? "Verified" : "Not verified", kind: dkim?.status === "verified" ? "success" : "neutral" }]}
-            actions={[{ label: "Verify", intent: "verify-sender", disabled: !store.resendDomainId || busy }]}
-          />
-          {sender ? <DnsTable rows={sender.records.map((r) => ({ type: r.type, name: r.name, value: r.value }))} /> : null}
           <SaveRow busy={busy} />
         </SettingsCard>
       </Form>
+
+      <SettingsCard
+        title="Sender domain records"
+        sub={sender ? `Resend says: ${sender.status.replace(/_/g, " ")}` : "Save a from address to fetch the records"}
+        note={
+          onCloudflare
+            ? "This domain's DNS is on Cloudflare, so add these at Cloudflare → your domain → DNS → Records. Adding them at your old registrar will do nothing, because it is no longer authoritative."
+            : "Add these at whoever hosts this domain's DNS, then press Verify. If you later move the domain onto Cloudflare nameservers, they have to be re-added there."
+        }
+      >
+        <ListRow
+          name="SPF"
+          note={spf ? `${spf.type} record on ${domain}` : domain ? "Save the address to fetch the record" : "No sender domain yet"}
+          badges={[{ label: spf?.status === "verified" ? "Verified" : "Not verified", kind: spf?.status === "verified" ? "success" : "neutral" }]}
+          actions={[{ label: "Verify", intent: "verify-sender", disabled: !store.resendDomainId || busy }]}
+        />
+        <ListRow
+          name="DKIM"
+          note="Signs every message so it is not marked as spam"
+          badges={[{ label: dkim?.status === "verified" ? "Verified" : "Not verified", kind: dkim?.status === "verified" ? "success" : "neutral" }]}
+          actions={[{ label: "Verify", intent: "verify-sender", disabled: !store.resendDomainId || busy }]}
+        />
+        {sender ? <DnsTable rows={sender.records.map((r) => ({ type: r.type, name: r.name, value: r.value }))} /> : null}
+        {!verified && store.emailFrom ? (
+          <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--ink-3)" }}>
+            Until this says Verified, receipts go out from a shared address and are far more likely to land in spam.
+          </div>
+        ) : null}
+      </SettingsCard>
 
       <SettingsCard title="Customer emails" sub={`Tests go to ${profileEmail}`}>
         {[
@@ -1074,6 +1173,9 @@ function NotificationsPane({
             </Form>
           </div>
         ))}
+        <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--ink-3)" }}>
+          The wording of these is written in code. Tell me what you want them to say and I will change it.
+        </div>
       </SettingsCard>
     </>
   );
@@ -1104,7 +1206,7 @@ function TaxesPane({ store, taxes, busy }: { store: Store; taxes: SettingsData["
         </SettingsCard>
       </Form>
 
-      <SettingsCard title="Manual state rates">
+      <SettingsCard title="Manual state rates" note="A state listed here is charged its own rate at checkout. Everywhere else pays the default rate above.">
         {taxes.length === 0 ? (
           <EmptyRows title="No manual state rates" body="Add a rate for every state where you have nexus." />
         ) : (
@@ -1136,7 +1238,9 @@ function ShippingPane({ store, busy }: { store: Store; busy: boolean }) {
           <TextField label="Delivery estimate shown at checkout" name="shipEstimate" defaultValue={store.shipEstimate} placeholder="e.g. 5–9 business days" span />
         </FieldGrid>
         <ToggleRow label="Free shipping on every order" help="Overrides the flat rate" name="shipAlwaysFree" defaultChecked={store.shipAlwaysFree} />
-        <ToggleRow label="Show the estimate on the product page too" name="shipEtaOnProduct" defaultChecked={store.shipEtaOnProduct} />
+        <div style={{ padding: "11px 16px", fontSize: 12, color: "var(--ink-3)", borderBottom: "1px solid var(--border)" }}>
+          One rate, every destination. Checkout ships to the countries listed in its country box — there are no per-country zones yet.
+        </div>
         <SaveRow busy={busy} />
       </SettingsCard>
     </Form>
@@ -1151,12 +1255,17 @@ function CheckoutPane({ store, busy }: { store: Store; busy: boolean }) {
         <FieldGrid>
           <SelectField label="Full name" name="checkoutNameMode" defaultValue={store.checkoutNameMode} options={[{ value: "full", label: "Require first and last name" }, { value: "last", label: "Require last name only" }]} />
           <SelectField label="Phone number" name="checkoutPhoneMode" defaultValue={store.checkoutPhoneMode} options={[{ value: "optional", label: "Optional" }, { value: "required", label: "Required" }, { value: "hidden", label: "Hidden" }]} />
-          <SelectField label="Company address" name="checkoutCompanyMode" defaultValue={store.checkoutCompanyMode} options={[{ value: "hidden", label: "Hidden" }, { value: "optional", label: "Optional" }, { value: "required", label: "Required" }]} />
+          <SelectField label="Company name" name="checkoutCompanyMode" defaultValue={store.checkoutCompanyMode} options={[{ value: "hidden", label: "Hidden" }, { value: "optional", label: "Optional" }, { value: "required", label: "Required" }]} />
         </FieldGrid>
-        <ToggleRow label="Email marketing consent checkbox" help="Pre-ticked is not allowed in several states" name="checkoutConsent" defaultChecked={store.checkoutConsent} />
-        <ToggleRow label="Capture abandoned checkouts" help="Feeds the abandoned-checkout automation in Marketing" name="checkoutCaptureAbandoned" defaultChecked={store.checkoutCaptureAbandoned} />
-        <ToggleRow label="Tip field" name="checkoutTip" defaultChecked={store.checkoutTip} />
+        <ToggleRow label="Email marketing consent checkbox" help="Never pre-ticked — several states forbid it. Consent is recorded on the order." name="checkoutConsent" defaultChecked={store.checkoutConsent} />
         <SaveRow busy={busy} />
+      </SettingsCard>
+
+      <SettingsCard title="Not built yet" note="These are switched off because nothing behind them exists. They will turn on when they do — they are not broken, and switching them would change nothing.">
+        <DeadRow label="Capture abandoned checkouts" help="Needs the abandoned-checkout email, which needs a scheduled job" />
+        <DeadRow label="Tip field" help="No tipping at checkout" />
+        <DeadRow label="Express wallets (Apple Pay, Google Pay)" help="Stripe supports them; the checkout does not offer them yet" />
+        <DeadRow label="Discount codes" help="Deliberately out of scope for now" />
       </SettingsCard>
     </Form>
   );
@@ -1201,11 +1310,15 @@ function BrandingPane({ store, busy }: { store: Store; busy: boolean }) {
   return (
     <Form method="post">
       <input type="hidden" name="intent" value="branding" />
-      <SettingsCard title="Branding" sub="Used in emails, checkout and the favicon — not the storefront layout" note="Storefront design lives in code, written per store. This only styles the parts the platform renders: emails and checkout.">
+      <SettingsCard
+        title="Branding"
+        sub="Stored, but nothing reads these yet"
+        note="Being straight with you: these four are saved and used nowhere. The storefront's look is written in code, and the emails use their own plain layout. They will be read when email and checkout branding is built. The favicon that does work is in Online Store → Preferences."
+      >
         <FieldGrid>
           <TextField label="Logo URL" name="logoUrl" defaultValue={store.logoUrl} placeholder="https://…" />
           <TextField label="Favicon URL" name="faviconUrl" defaultValue={store.faviconUrl} placeholder="https://…" />
-          <TextField label="Brand colour" name="brandColor" defaultValue={store.brandColor || store.color} placeholder="#000000" mono />
+          <TextField label="Brand colour" name="brandColor" defaultValue={store.brandColor} placeholder="#000000" mono />
           <TextField label="Accent colour" name="accentColor" defaultValue={store.accentColor} placeholder="#000000" mono />
         </FieldGrid>
         <SaveRow busy={busy} />
@@ -1247,10 +1360,9 @@ function BillingPane({ domains }: { domains: number }) {
 function DataPane({ store, busy }: { store: Store; busy: boolean }) {
   return (
     <>
-      <SettingsCard title="Data export" note="Every export is a CSV download. Exporting never deletes anything.">
-        <LinkRow label="Export orders" help="All fields including tracking, refunds and Meta attribution" href={`/admin/orders/export?store=${store.slug}`} />
-        <LinkRow label="Export events" help="Raw visitor and purchase events with locations" href={`/admin/events/export?store=${store.slug}`} />
-        <LinkRow label="Export payment records" help="Orders with payment provider, reference, status and refunded amount" href={`/admin/orders/export?store=${store.slug}`} />
+      <SettingsCard title="Data export" note="Every export is a CSV download. Exporting never deletes anything. The orders file is the one a payment processor asks for in a review — it carries the payment reference, refunds, tracking and the ad each order came from.">
+        <LinkRow label="Export orders" help="Every order with its payment reference, refunds, tracking and attribution" href={`/admin/orders/export?store=${store.slug}`} />
+        <LinkRow label="Export visitor events" help="Raw views, carts, checkouts and purchases with locations" href={`/admin/events/export?store=${store.slug}`} />
       </SettingsCard>
       <SettingsCard title="Danger zone">
         <Form method="post" onSubmit={(e) => { if (!confirm(`Delete ${store.name}? This removes its products, pages, themes and settings.`)) e.preventDefault(); }}>

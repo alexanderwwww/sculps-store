@@ -1,6 +1,6 @@
 import { eq, and, asc, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { stores, pages, sections, blocks, products, variants, reviews, themes } from "~/db/schema";
+import { stores, pages, sections, blocks, products, variants, reviews, themes, menus, menuLinks } from "~/db/schema";
 import { SECTIONS } from "./sections";
 
 /**
@@ -46,8 +46,14 @@ export interface LoadedSection {
   blocks: { id: string; values: Record<string, string> }[];
 }
 
+export interface NavLink {
+  label: string;
+  href: string;
+}
+
 export interface LoadedProductPage {
   store: StoreRow;
+  nav: { main: NavLink[]; footer: NavLink[] };
   product: ProductRow;
   variants: VariantRow[];
   sections: LoadedSection[];
@@ -121,7 +127,35 @@ export async function loadProductPage(
       .map((b) => ({ id: b.id, values: (b.values ?? {}) as Record<string, string> })),
   }));
 
-  return { store, product, variants: variantRows, sections: loaded, reviews: publishedReviews };
+  const nav = await storeNav(db, store.id);
+  return { store, nav, product, variants: variantRows, sections: loaded, reviews: publishedReviews };
+}
+
+/**
+ * Header and footer links. When a menu has no links yet, the footer falls
+ * back to the visible policy pages so the required links always exist.
+ */
+export async function storeNav(db: DB, storeId: string): Promise<{ main: NavLink[]; footer: NavLink[] }> {
+  const menuRows = await db.select().from(menus).where(eq(menus.storeId, storeId));
+  const linkRows = menuRows.length
+    ? await db.select().from(menuLinks).where(inArray(menuLinks.menuId, menuRows.map((m) => m.id))).orderBy(asc(menuLinks.position))
+    : [];
+  const linksFor = (handle: string): NavLink[] => {
+    const menu = menuRows.find((m) => m.handle === handle);
+    if (!menu) return [];
+    return linkRows
+      .filter((l) => l.menuId === menu.id)
+      .map((l) => ({ label: l.label, href: l.destination === "custom" ? l.url || "#" : l.destination === "product" ? "/" : l.destination === "cart" ? "/cart" : `/pages/${l.destination}` }));
+  };
+  let footer = linksFor("footer");
+  if (!footer.length) {
+    const visible = await db
+      .select({ title: pages.title, handle: pages.handle })
+      .from(pages)
+      .where(and(eq(pages.storeId, storeId), eq(pages.kind, "standalone"), eq(pages.visible, true)));
+    footer = visible.map((p) => ({ label: p.title, href: `/pages/${p.handle}` }));
+  }
+  return { main: linksFor("main"), footer };
 }
 
 /** The fixed fifteen, used when seeding a new store's page. */

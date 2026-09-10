@@ -9,6 +9,7 @@
 import { eq, and } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { carts, variants, products, stores } from "~/db/schema";
+import { taxRateFor } from "./admin.server";
 
 const CART_COOKIE = "kerberos_cart";
 
@@ -79,6 +80,8 @@ export async function priceCart(
   db: DB,
   store: typeof stores.$inferSelect,
   token: string | null,
+  /** the shipping state, once checkout knows it — picks a manual state rate */
+  region: string | null = null,
 ): Promise<PricedCart> {
   const row = await loadCartRow(db, store.id, token);
   const stored = (row?.items ?? []) as CartLine[];
@@ -117,8 +120,13 @@ export async function priceCart(
         ? 0
         : store.shipFlatCents;
 
+  const rate = await taxRateFor(db, store.id, region, store.taxRate ?? 0);
   const taxable = subtotalCents + (store.taxOnShipping ? shippingCents : 0);
-  const taxCents = store.pricesIncludeTax ? 0 : Math.round(taxable * (store.taxRate ?? 0));
+  // Tax-inclusive prices already contain the tax; it is backed out for the
+  // record rather than added on top.
+  const taxCents = store.pricesIncludeTax
+    ? taxable - Math.round(taxable / (1 + rate))
+    : Math.round(taxable * rate);
 
   return {
     token: row?.token ?? token ?? "",
@@ -126,7 +134,7 @@ export async function priceCart(
     subtotalCents,
     taxCents,
     shippingCents,
-    totalCents: subtotalCents + taxCents + shippingCents,
+    totalCents: store.pricesIncludeTax ? subtotalCents + shippingCents : subtotalCents + taxCents + shippingCents,
     currency: store.currency,
     itemCount: lines.reduce((count, line) => count + line.quantity, 0),
   };

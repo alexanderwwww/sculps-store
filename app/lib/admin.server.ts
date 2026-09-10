@@ -27,6 +27,8 @@ import {
   taxRates,
   users,
   sessions,
+  menus,
+  menuLinks,
   ORDER_STATES,
   type OrderState,
 } from "~/db/schema";
@@ -387,6 +389,8 @@ export async function recordOrderEvent(
   text: string,
   meta: Record<string, unknown> = {},
 ): Promise<void> {
+  // Test sends from Settings use a placeholder id; there is no order to write to.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) return;
   await db.insert(orderEvents).values({ orderId, type, text, meta });
 }
 
@@ -1090,13 +1094,26 @@ export async function addDomain(db: DB, storeId: string, hostname: string) {
   return row;
 }
 
-export async function removeDomain(db: DB, domainId: string): Promise<void> {
-  await db.delete(domains).where(eq(domains.id, domainId));
+export async function removeDomain(db: DB, storeId: string, domainId: string): Promise<void> {
+  await db.delete(domains).where(and(eq(domains.id, domainId), eq(domains.storeId, storeId)));
 }
 
 export async function setPrimaryDomain(db: DB, storeId: string, domainId: string): Promise<void> {
   await db.update(domains).set({ isPrimary: false }).where(eq(domains.storeId, storeId));
-  await db.update(domains).set({ isPrimary: true }).where(eq(domains.id, domainId));
+  await db
+    .update(domains)
+    .set({ isPrimary: true })
+    .where(and(eq(domains.id, domainId), eq(domains.storeId, storeId)));
+}
+
+/** A domain row, only if it belongs to the store. */
+export async function storeDomain(db: DB, storeId: string, domainId: string) {
+  const [row] = await db
+    .select()
+    .from(domains)
+    .where(and(eq(domains.id, domainId), eq(domains.storeId, storeId)))
+    .limit(1);
+  return row ?? null;
 }
 
 /* -------------------------------------------------------------- analytics */
@@ -1276,6 +1293,7 @@ export interface PlaceOrderInput {
   fbc: string | null;
   lat?: number | null;
   lon?: number | null;
+  marketingConsent?: boolean;
   lines: {
     variantId: string;
     title: string;
@@ -1333,6 +1351,7 @@ export async function placeOrder(db: DB, input: PlaceOrderInput) {
       fbc: input.fbc,
       lat: input.lat ?? null,
       lon: input.lon ?? null,
+      marketingConsent: input.marketingConsent ?? false,
     })
     .returning();
 
@@ -1511,8 +1530,19 @@ export async function upsertTaxRate(db: DB, storeId: string, region: string, rat
   else await db.insert(taxRates).values({ storeId, region, rate });
 }
 
-export async function removeTaxRate(db: DB, id: string): Promise<void> {
-  await db.delete(taxRates).where(eq(taxRates.id, id));
+export async function removeTaxRate(db: DB, storeId: string, id: string): Promise<void> {
+  await db.delete(taxRates).where(and(eq(taxRates.id, id), eq(taxRates.storeId, storeId)));
+}
+
+/** The rate for a destination: the state's manual rate if there is one, else the default. */
+export async function taxRateFor(db: DB, storeId: string, region: string | null, fallback: number): Promise<number> {
+  if (!region) return fallback;
+  const [row] = await db
+    .select()
+    .from(taxRates)
+    .where(and(eq(taxRates.storeId, storeId), eq(taxRates.region, region.toUpperCase())))
+    .limit(1);
+  return row ? row.rate : fallback;
 }
 
 export async function updateUserPrefs(
@@ -1585,7 +1615,13 @@ export async function savePolicies(
     if (row) {
       await db
         .update(pages)
-        .set({ body, updatedAt: new Date(), ...(publish ? { visible: body.trim().length > 0 } : {}) })
+        .set({
+          body,
+          updatedAt: new Date(),
+          // Publish makes every written policy live and hides empty ones.
+          // A plain save keeps whatever is live, live — with the new text.
+          ...(publish ? { visible: body.trim().length > 0 } : body.trim() ? {} : { visible: false }),
+        })
         .where(eq(pages.id, row.id));
     } else {
       await db.insert(pages).values({
@@ -1599,4 +1635,58 @@ export async function savePolicies(
       });
     }
   }
+}
+
+
+/* -------------------------------------------------------------- navigation */
+
+export const MENU_HANDLES = [
+  ["main", "Header menu", "top navigation"],
+  ["footer", "Footer menu", "footer"],
+] as const;
+
+export interface MenuWithLinks {
+  id: string;
+  handle: string;
+  title: string;
+  links: { id: string; label: string; destination: string; url: string | null; position: number }[];
+}
+
+/** Both menus for a store, created empty the first time they are asked for. */
+export async function storeMenus(db: DB, storeId: string): Promise<MenuWithLinks[]> {
+  const existing = await db.select().from(menus).where(eq(menus.storeId, storeId));
+  const out: MenuWithLinks[] = [];
+  for (const [handle, title] of MENU_HANDLES) {
+    let menu = existing.find((row) => row.handle === handle);
+    if (!menu) [menu] = await db.insert(menus).values({ storeId, handle, title }).returning();
+    const links = await db.select().from(menuLinks).where(eq(menuLinks.menuId, menu.id)).orderBy(asc(menuLinks.position));
+    out.push({ id: menu.id, handle: menu.handle, title: menu.title, links });
+  }
+  return out;
+}
+
+/** Replaces one menu's links with exactly what the form submitted, in order. */
+export async function saveMenuLinks(
+  db: DB,
+  storeId: string,
+  menuId: string,
+  submitted: { id?: string; label: string; destination: string; url: string | null }[],
+): Promise<void> {
+  const [menu] = await db.select().from(menus).where(and(eq(menus.id, menuId), eq(menus.storeId, storeId))).limit(1);
+  if (!menu) return;
+  await db.delete(menuLinks).where(eq(menuLinks.menuId, menuId));
+  if (submitted.length) {
+    await db.insert(menuLinks).values(
+      submitted.map((link, position) => ({ menuId, position, label: link.label, destination: link.destination, url: link.url })),
+    );
+  }
+  await db.update(menus).set({ updatedAt: new Date() }).where(eq(menus.id, menuId));
+}
+
+/** Resolves a link's destination to a storefront href. */
+export function menuHref(link: { destination: string; url: string | null }): string {
+  if (link.destination === "custom") return link.url || "#";
+  if (link.destination === "product") return "/";
+  if (link.destination === "cart") return "/cart";
+  return `/pages/${link.destination}`;
 }

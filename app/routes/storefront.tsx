@@ -2,7 +2,8 @@ import type { Route } from "./+types/storefront";
 import { data } from "react-router";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { currentUser } from "~/lib/auth.server";
-import { pages, metaConfig } from "~/db/schema";
+import { pages, metaConfig, themes } from "~/db/schema";
+import { passwordCookieValid } from "~/lib/password.server";
 import { eq } from "drizzle-orm";
 import { pixelScript } from "~/lib/meta.server";
 import {
@@ -20,6 +21,7 @@ import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
 export function links() {
   return [
+    // A favicon set in Preferences; the browser default otherwise.
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
     { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
     {
@@ -31,12 +33,21 @@ export function links() {
 }
 
 export function meta({ data: loaded }: Route.MetaArgs) {
-  if (!loaded?.page) return [{ title: "Store" }];
+  if (!loaded?.page) return [{ title: loaded?.store?.name ?? "Store" }];
   const { store, product } = loaded.page;
-  return [
-    { title: `${product.title} — ${store.name}` },
-    { name: "description", content: product.description.slice(0, 160) },
+  // Settings → Online Store → Preferences win; the product is the fallback.
+  const title = store.seoTitle || `${product.title} — ${store.name}`;
+  const description = store.metaDescription || product.description.slice(0, 160);
+  const tags: Record<string, string>[] = [
+    { title },
+    { name: "description", content: description },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:type", content: "product" },
+    { property: "og:site_name", content: store.name },
   ];
+  if (store.socialImageUrl) tags.push({ property: "og:image", content: store.socialImageUrl });
+  return tags;
 }
 
 export async function loader({ context, request }: Route.LoaderArgs) {
@@ -46,13 +57,17 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     throw data("No store is configured for this domain yet.", { status: 404 });
   }
 
-  // The theme editor previews a specific page in an iframe, hidden sections
-  // included so the section list and the page agree. Only a signed-in admin
-  // gets that view; a visitor always sees the live theme.
+  // Two admin-only views of the storefront:
+  //   ?preview=<pageId>  the theme editor's iframe, hidden sections included
+  //   ?theme=<themeId>   a draft theme, for the Online Store thumbnails
+  // A visitor always gets the live theme; these need a signed-in admin.
   const previewPageId = url.searchParams.get("preview");
+  const previewThemeId = url.searchParams.get("theme");
+  const isThumb = url.searchParams.has("thumb");
   let themeId: string | undefined;
   let includeHidden = false;
-  if (previewPageId && (await currentUser(context.db, request))) {
+  const admin = previewPageId || previewThemeId ? await currentUser(context.db, request) : null;
+  if (previewPageId && admin) {
     const [previewPage] = await context.db
       .select()
       .from(pages)
@@ -61,6 +76,21 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     if (previewPage?.storeId === store.id && previewPage.themeId) {
       themeId = previewPage.themeId;
       includeHidden = true;
+    }
+  } else if (previewThemeId && admin) {
+    const [draft] = await context.db.select().from(themes).where(eq(themes.id, previewThemeId)).limit(1);
+    if (draft?.storeId === store.id) themeId = draft.id;
+  }
+
+  // Pre-launch password. Meta's crawler still gets through so the domain can
+  // be verified; the admin's own previews are not gated either.
+  if (store.passwordEnabled && !admin && !passwordCookieValid(request, store.passwordHash)) {
+    const ua = request.headers.get("User-Agent") ?? "";
+    const crawler = /facebookexternalhit|Facebot|Stripe|Twitterbot|LinkedInBot|Googlebot/i.test(ua);
+    if (!crawler) {
+      const next = new URL("/password", url.origin);
+      next.searchParams.set("store", store.slug);
+      throw new Response(null, { status: 302, headers: { Location: next.toString() } });
     }
   }
 
@@ -73,10 +103,10 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .from(metaConfig)
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
-  const pixel = meta?.pixelId && !previewPageId ? pixelScript(meta.pixelId) : null;
+  const pixel = meta?.pixelId && !previewPageId && !previewThemeId && !isThumb ? pixelScript(meta.pixelId) : null;
   // Record the visit. This is what Live View and Analytics are made of.
   const headers = new Headers();
-  if (shouldTrack(request, url)) {
+  if (shouldTrack(request, url) && !isThumb && !previewThemeId) {
     const sessionId = readVisitorSession(request) ?? newVisitorSession();
     headers.append("Set-Cookie", visitorCookie(sessionId, url));
     track(context.db, context.cloudflare.ctx, {
@@ -89,11 +119,11 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     });
   }
 
-  return withHeaders({ store, page: page ?? null, pixel }, { headers });
+  return withHeaders({ store, page: page ?? null, pixel, favicon: store.faviconUrl }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel } = loaderData;
+  const { store, page, pixel, favicon } = loaderData;
 
   if (!page) {
     return (
@@ -116,6 +146,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="gk">
+      {favicon ? <link rel="icon" href={favicon} /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <GardenKneelerStorefront page={page} />
     </div>

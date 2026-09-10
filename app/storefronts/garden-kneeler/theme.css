@@ -698,3 +698,9 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.gk-nav { display: flex; gap: 22px; margin: 0 auto; }
+.gk-nav a { color: var(--gk-cream); text-decoration: none; font-size: 18px; font-weight: 600; }
+.gk-nav a:hover { color: var(--gk-accent); }
+.gk-footer nav { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+@media (max-width: 700px) { .gk-nav { display: none; } }

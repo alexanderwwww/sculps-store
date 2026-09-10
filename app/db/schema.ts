@@ -356,6 +356,8 @@ export const orders = pgTable(
     fbc: text("fbc"),
 
     note: text("note").notNull().default(""),
+    /** ticked the marketing box at checkout — never pre-ticked */
+    marketingConsent: boolean("marketing_consent").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -631,6 +633,45 @@ export const themes = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("themes_store_idx").on(t.storeId)],
+);
+
+/* ------------------------------------------------------------- navigation */
+
+/**
+ * The storefront's header and footer menus. Two per store, by handle. The
+ * storefront layout is code; what these hold is the list of links inside the
+ * slots that layout already has.
+ */
+export const menus = pgTable(
+  "menus",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    /** main | footer */
+    handle: text("handle").notNull(),
+    title: text("title").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("menus_store_handle_idx").on(t.storeId, t.handle)],
+);
+
+export const menuLinks = pgTable(
+  "menu_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    menuId: uuid("menu_id")
+      .notNull()
+      .references(() => menus.id, { onDelete: "cascade" }),
+    position: integer("position").notNull().default(0),
+    label: text("label").notNull(),
+    /** a page handle, "product", "cart", or "custom" */
+    destination: text("destination").notNull(),
+    /** only when destination = custom */
+    url: text("url"),
+  },
+  (t) => [index("menu_links_menu_idx").on(t.menuId)],
 );
 
 export const userRelations = relations(users, ({ many }) => ({

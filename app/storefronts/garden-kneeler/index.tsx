@@ -22,6 +22,15 @@ export function GardenKneelerStorefront({ page }: { page: LoadedProductPage }) {
     <>
       <header className="gk-header">
         <span className="gk-logo">{store.name}</span>
+        {page.nav.main.length ? (
+          <nav className="gk-nav">
+            {page.nav.main.map((link) => (
+              <a key={link.href + link.label} href={link.href}>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        ) : null}
         <span className="gk-header-note">{store.domain}</span>
       </header>
 
@@ -32,16 +41,14 @@ export function GardenKneelerStorefront({ page }: { page: LoadedProductPage }) {
       </main>
 
       <footer className="gk-footer">
-        <div className="gk-wrap">
-          <a href="/pages/refund-policy">Refund policy</a>
-          <a href="/pages/privacy-policy">Privacy policy</a>
-          <a href="/pages/terms-of-service">Terms of service</a>
-          <a href="/pages/shipping-policy">Shipping policy</a>
-          <a href="/pages/contact">Contact</a>
-          <p style={{ marginTop: 18 }}>
-            © {new Date().getFullYear()} {store.name} · {product.title}
-          </p>
-        </div>
+        <nav>
+          {page.nav.footer.map((link) => (
+            <a key={link.href + link.label} href={link.href}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
+        <p className="gk-sub" style={{ marginTop: 18 }}>© {new Date().getFullYear()} {store.name}</p>
       </footer>
     </>
   );
