@@ -1,6 +1,6 @@
 import { eq, and, asc, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { stores, pages, sections, blocks, products, variants, reviews } from "~/db/schema";
+import { stores, pages, sections, blocks, products, variants, reviews, themes } from "~/db/schema";
 import { SECTIONS } from "./sections";
 
 /**
@@ -41,6 +41,7 @@ export interface LoadedSection {
   id: string;
   type: string;
   position: number;
+  hidden: boolean;
   values: Record<string, string>;
   blocks: { id: string; values: Record<string, string> }[];
 }
@@ -61,11 +62,29 @@ export interface LoadedProductPage {
 export async function loadProductPage(
   db: DB,
   store: StoreRow,
+  options: { themeId?: string; includeHidden?: boolean } = {},
 ): Promise<LoadedProductPage | null> {
+  // Which theme answers: the one being previewed in the editor, otherwise the
+  // store's live theme. Falling back to any product page keeps stores seeded
+  // before themes existed working.
+  const themeId =
+    options.themeId ??
+    (
+      await db
+        .select({ id: themes.id })
+        .from(themes)
+        .where(and(eq(themes.storeId, store.id), eq(themes.isLive, true)))
+        .limit(1)
+    )[0]?.id;
+
   const [page] = await db
     .select()
     .from(pages)
-    .where(and(eq(pages.storeId, store.id), eq(pages.kind, "product")))
+    .where(
+      themeId
+        ? and(eq(pages.storeId, store.id), eq(pages.kind, "product"), eq(pages.themeId, themeId))
+        : and(eq(pages.storeId, store.id), eq(pages.kind, "product")),
+    )
     .limit(1);
   if (!page || !page.productId) return null;
 
@@ -82,7 +101,7 @@ export async function loadProductPage(
       .orderBy(asc(reviews.position)),
   ]);
 
-  const visible = sectionRows.filter((s) => !s.hidden);
+  const visible = options.includeHidden ? sectionRows : sectionRows.filter((s) => !s.hidden);
   const blockRows = visible.length
     ? await db
         .select()
@@ -95,6 +114,7 @@ export async function loadProductPage(
     id: s.id,
     type: s.type,
     position: s.position,
+    hidden: s.hidden,
     values: (s.values ?? {}) as Record<string, string>,
     blocks: blockRows
       .filter((b) => b.sectionId === s.id)

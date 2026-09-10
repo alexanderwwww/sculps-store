@@ -1,6 +1,9 @@
 import type { Route } from "./+types/storefront";
 import { data } from "react-router";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
+import { currentUser } from "~/lib/auth.server";
+import { pages } from "~/db/schema";
+import { eq } from "drizzle-orm";
 import { GardenKneelerStorefront } from "~/storefronts/garden-kneeler";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -32,7 +35,25 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     throw data("No store is configured for this domain yet.", { status: 404 });
   }
 
-  const page = await loadProductPage(context.db, store);
+  // The theme editor previews a specific page in an iframe, hidden sections
+  // included so the section list and the page agree. Only a signed-in admin
+  // gets that view; a visitor always sees the live theme.
+  const previewPageId = url.searchParams.get("preview");
+  let themeId: string | undefined;
+  let includeHidden = false;
+  if (previewPageId && (await currentUser(context.db, request))) {
+    const [previewPage] = await context.db
+      .select()
+      .from(pages)
+      .where(eq(pages.id, previewPageId))
+      .limit(1);
+    if (previewPage?.storeId === store.id && previewPage.themeId) {
+      themeId = previewPage.themeId;
+      includeHidden = true;
+    }
+  }
+
+  const page = await loadProductPage(context.db, store, { themeId, includeHidden });
   if (!page) {
     return { store, page: null };
   }

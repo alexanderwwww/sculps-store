@@ -19,6 +19,8 @@ export default [
       route("products", "routes/admin.products._index.tsx"),
       route("products/:id", "routes/admin.products.$id.tsx"),
       route("inventory", "routes/admin.inventory.tsx"),
+      route("online-store", "routes/admin.online-store.tsx"),
+      route("online-store/editor/:pageId", "routes/admin.online-store.editor.$pageId.tsx"),
       route("stores/new", "routes/admin.stores.new.tsx"),
     ]),
   ]),

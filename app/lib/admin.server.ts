@@ -759,3 +759,123 @@ export async function unitsSold(db: DB, storeId: string): Promise<Map<string, nu
   for (const row of rows) if (row.variantId) out.set(row.variantId, row.units);
   return out;
 }
+
+/* ------------------------------------------------------------------- pages */
+
+export async function listPages(db: DB, themeId: string) {
+  return db.select().from(pages).where(eq(pages.themeId, themeId)).orderBy(asc(pages.title));
+}
+
+export async function loadPageWithSections(db: DB, pageId: string) {
+  const [page] = await db.select().from(pages).where(eq(pages.id, pageId)).limit(1);
+  if (!page) return null;
+
+  const sectionRows = await db
+    .select()
+    .from(sections)
+    .where(eq(sections.pageId, pageId))
+    .orderBy(asc(sections.position));
+
+  const blockRows = sectionRows.length
+    ? await db
+        .select()
+        .from(blocks)
+        .where(inArray(blocks.sectionId, sectionRows.map((s) => s.id)))
+        .orderBy(asc(blocks.position))
+    : [];
+
+  return {
+    page,
+    sections: sectionRows.map((section) => ({
+      ...section,
+      blocks: blockRows.filter((block) => block.sectionId === section.id),
+    })),
+  };
+}
+
+export async function savePageBody(
+  db: DB,
+  pageId: string,
+  input: { title: string; body: string; visible: boolean },
+): Promise<void> {
+  await db
+    .update(pages)
+    .set({ title: input.title, body: input.body, visible: input.visible, updatedAt: new Date() })
+    .where(eq(pages.id, pageId));
+}
+
+export async function setPageVisible(db: DB, pageId: string, visible: boolean): Promise<void> {
+  await db.update(pages).set({ visible, updatedAt: new Date() }).where(eq(pages.id, pageId));
+}
+
+export async function createStandalonePage(
+  db: DB,
+  storeId: string,
+  themeId: string,
+  title: string,
+  handle: string,
+) {
+  const [row] = await db
+    .insert(pages)
+    .values({ storeId, themeId, kind: "standalone", title, handle, visible: false })
+    .returning();
+  return row;
+}
+
+/* ---------------------------------------------------------------- sections */
+
+/**
+ * Saves one section's values and its blocks.
+ *
+ * `type` and `position` are never in the payload. They are written by code at
+ * seed time and are the reason a theme editor can no longer overwrite the
+ * layout — the admin can only reach the words.
+ */
+export async function saveSection(
+  db: DB,
+  sectionId: string,
+  values: Record<string, string>,
+  hidden: boolean,
+  submittedBlocks: { id?: string; values: Record<string, string> }[],
+): Promise<void> {
+  await db.update(sections).set({ values, hidden }).where(eq(sections.id, sectionId));
+
+  const existing = await db.select().from(blocks).where(eq(blocks.sectionId, sectionId));
+  const kept = new Set(submittedBlocks.map((b) => b.id).filter(Boolean) as string[]);
+
+  const removed = existing.filter((row) => !kept.has(row.id));
+  if (removed.length) {
+    await db.delete(blocks).where(inArray(blocks.id, removed.map((r) => r.id)));
+  }
+
+  for (let index = 0; index < submittedBlocks.length; index++) {
+    const block = submittedBlocks[index];
+    if (block.id && existing.some((row) => row.id === block.id)) {
+      await db
+        .update(blocks)
+        .set({ values: block.values, position: index })
+        .where(eq(blocks.id, block.id));
+    } else {
+      await db.insert(blocks).values({ sectionId, values: block.values, position: index });
+    }
+  }
+
+  // Touch the theme so "last updated" on the Themes screen means something.
+  const [section] = await db.select().from(sections).where(eq(sections.id, sectionId)).limit(1);
+  if (section) {
+    const [page] = await db.select().from(pages).where(eq(pages.id, section.pageId)).limit(1);
+    if (page?.themeId) {
+      await db.update(themes).set({ updatedAt: new Date() }).where(eq(themes.id, page.themeId));
+    }
+  }
+}
+
+/** The product page of a theme — what "Customize" opens. */
+export async function productPageOfTheme(db: DB, themeId: string) {
+  const [row] = await db
+    .select()
+    .from(pages)
+    .where(and(eq(pages.themeId, themeId), eq(pages.kind, "product")))
+    .limit(1);
+  return row ?? null;
+}

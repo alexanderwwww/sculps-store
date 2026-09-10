@@ -2,7 +2,7 @@
  * The admin layout. Everything under /admin passes through here, which means
  * the sign-in check happens in exactly one place.
  */
-import { Outlet, useLoaderData } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import { eq, and, sql } from "drizzle-orm";
 import type { Route } from "./+types/admin";
 import { requireUser } from "~/lib/auth.server";
@@ -68,10 +68,16 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   };
 }
 
+/** Screens that fill the whole area and manage their own scrolling. */
+const FULL_BLEED = ["/admin/online-store/editor", "/admin/live"];
+
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {
   const { user, stores, store, counts } = loaderData;
+  const location = useLocation();
+  const fullBleed = FULL_BLEED.some((path) => location.pathname.startsWith(path));
+
   return (
-    <AdminShell user={user} stores={stores} store={store} counts={counts}>
+    <AdminShell user={user} stores={stores} store={store} counts={counts} fullBleed={fullBleed}>
       <Outlet />
     </AdminShell>
   );
