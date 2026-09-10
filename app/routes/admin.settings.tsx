@@ -62,7 +62,6 @@ import {
   listRowMain,
   EmptyRows,
   DnsTable,
-  CopyButton,
   Steps,
   LinkRow,
   linkRow,
