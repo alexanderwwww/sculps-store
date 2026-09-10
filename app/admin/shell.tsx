@@ -164,9 +164,8 @@ export function AdminShell({
         </svg>
       ),
     },
-    // navExtra in the prototype is Inventory, Customers, Reviews, Marketing.
-    // This project has no Customers screen and no Marketing screen, so those
-    // two rows are omitted rather than linked to nothing.
+    // navExtra in the prototype is Inventory, Customers, Reviews, Marketing,
+    // in that order.
     {
       to: withStore("/admin/inventory"),
       label: "Inventory",
@@ -177,12 +176,30 @@ export function AdminShell({
       ),
     },
     {
+      to: withStore("/admin/customers"),
+      label: "Customers",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
+          <path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 17c0-3 2.7-4.6 6-4.6S16 14 16 17" />
+        </svg>
+      ),
+    },
+    {
       to: withStore("/admin/reviews"),
       label: "Reviews",
       count: counts.reviews || undefined,
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
           <path d="M10 3l2.2 4.5 5 .7-3.6 3.5.9 4.9L10 14.3l-4.5 2.3.9-4.9L2.8 8.2l5-.7z" />
+        </svg>
+      ),
+    },
+    {
+      to: withStore("/admin/marketing"),
+      label: "Marketing",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
+          <path d="M3 7.5h3.5L13 4v12L6.5 12.5H3zM16 8.5v3" />
         </svg>
       ),
     },
