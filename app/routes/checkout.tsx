@@ -34,6 +34,7 @@ import {
   priceCart,
   setCartDiscount,
   cartPaymentIntentId,
+  setCartPaymentIntentId,
   newCartToken,
   cartCookie,
   setCartProtection,
@@ -742,39 +743,65 @@ async function payAction({
     };
   }
 
-  // The intent was made when the page loaded. The browser confirms it a moment
-  // after this returns, so this is the last point at which the amount can be
-  // put right — and it is put right on the server, from the cart row.
-  const intentId = token ? await cartPaymentIntentId(context.db, store.id, token) : null;
-  if (!intentId) {
-    return { error: "This checkout has expired. Please reload the page and try again." };
-  }
-
-  let intent;
-  try {
-    intent = await provider.readIntent(intentId);
-  } catch (error) {
-    return {
-      error: `The payment could not be read back: ${
-        error instanceof Error ? error.message : "unknown error"
-      }. Nothing has been charged.`,
-    };
-  }
-  if (!PAYABLE_INTENT_STATUSES.has(intent.status)) {
-    return { error: "This payment has already been taken. Please reload the page." };
-  }
-
-  // An order may already be sitting against this intent — a card was declined
-  // and they are trying again. One intent is one order; the row is brought up
-  // to date rather than written twice.
-  // A declined card comes back here with the same intent and an order row the
-  // webhook has already marked "failed". That is a retry, not a second sale:
-  // both pending and failed may be tried again. Only a payment that went
-  // through (or was refunded) is closed.
+  /**
+   * The payment this order will be charged against.
+   *
+   * The page normally made one when it loaded, and that is the one used. But
+   * a wallet sheet is already open and authorised by the time we get here:
+   * telling it "this checkout has expired, reload the page" is a payment
+   * thrown away over something the customer cannot see and did not cause. So
+   * anything wrong with the stored intent — missing, unreadable, already
+   * spent, or belonging to an order that is finished — is answered by making
+   * a fresh one and carrying on. Nothing is ever charged twice: a spent
+   * intent is left alone and a new one takes its place.
+   */
   const RETRYABLE = new Set(["pending", "failed"]);
-  const existing = await orderByPaymentRef(context.db, intent.id);
+  const startFresh = async (why: string) => {
+    const made = await provider.createIntent({
+      amountCents: cart.totalCents,
+      currency: cart.currency,
+      orderReference: `${store.name} order`,
+      metadata: { storeId: store.id },
+    });
+    if (token) {
+      await setCartPaymentIntentId(context.db, store.id, token, made.id, {
+        amountCents: cart.totalCents,
+        clientSecret: made.clientSecret,
+      });
+    }
+    console.log("checkout: fresh intent", made.id, why);
+    return made;
+  };
+
+  let intent: Awaited<ReturnType<typeof provider.readIntent>> | null = null;
+  const intentId = token ? await cartPaymentIntentId(context.db, store.id, token) : null;
+  if (intentId) {
+    try {
+      const found = await provider.readIntent(intentId);
+      if (PAYABLE_INTENT_STATUSES.has(found.status)) intent = found;
+    } catch {
+      intent = null;
+    }
+  }
+  // An order already sitting against this intent is a retry of the same
+  // payment — the row is brought up to date rather than written twice. One
+  // that is finished (paid, refunded) means this intent is spent.
+  let existing = intent ? await orderByPaymentRef(context.db, intent.id) : null;
   if (existing && (existing.storeId !== store.id || !RETRYABLE.has(existing.paymentStatus))) {
-    return { error: "This payment has already been taken. Please reload the page." };
+    intent = null;
+    existing = null;
+  }
+  if (!intent) {
+    try {
+      intent = await startFresh(intentId ? "stored intent unusable" : "no stored intent");
+    } catch (error) {
+      return {
+        error: `The payment could not be started: ${
+          error instanceof Error ? error.message : "Stripe did not answer"
+        }. Nothing has been charged.`,
+      };
+    }
+    existing = null;
   }
 
   // One id shared by the browser pixel and the server Conversions API call, so
@@ -794,7 +821,12 @@ async function payAction({
    * says what it showed; only a real difference sends them back to the button.
    */
   const shownTotal = Number(form.get("shownTotal"));
-  const changed = Number.isFinite(shownTotal) && shownTotal > 0 && shownTotal !== cart.totalCents;
+  // Only upwards. Nobody is charged more than the figure they were looking at
+  // — that is the whole rule — but a total that came out *lower* (a discount
+  // that landed a moment before the tap) is simply charged at the lower
+  // figure. Sending a wallet back for that was a payment refused for the
+  // customer's benefit, which is no benefit at all.
+  const changed = Number.isFinite(shownTotal) && shownTotal > 0 && cart.totalCents > shownTotal;
   try {
     await provider.updateIntent(intent.id, {
       amountCents: cart.totalCents,
