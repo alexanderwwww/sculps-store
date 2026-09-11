@@ -37,6 +37,10 @@ import {
   cartCookie,
   cartPaymentIntentId,
   setCartPaymentIntentId,
+  setCartProtection,
+  currentLines,
+  addLine,
+  saveCart,
 } from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
@@ -49,6 +53,8 @@ import {
   pages as pagesTable,
   sections as sectionsTable,
   blocks as blocksTable,
+  products as productsTable,
+  variants as variantsTable,
 } from "~/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { pixelScript, readMetaCookies, trackFunnelEvent } from "~/lib/meta.server";
@@ -248,6 +254,33 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     productPhoto(context.db, store.id),
   ]);
 
+  /**
+   * "Just one more thing": the store's other bundles, from the variants table.
+   * Only live products, only variants with stock, and only ones this cart does
+   * not already hold — so nothing is ever offered that does not exist, cannot
+   * be shipped, or is already being paid for. Prices are the row's own.
+   */
+  const inCart = new Set(cart.lines.map((line) => line.variantId));
+  const upsellRows = cart.lines.length
+    ? await context.db
+        .select({
+          id: variantsTable.id,
+          label: variantsTable.label,
+          sublabel: variantsTable.sublabel,
+          priceCents: variantsTable.priceCents,
+          compareAtCents: variantsTable.compareAtCents,
+          available: variantsTable.available,
+          productTitle: productsTable.title,
+        })
+        .from(variantsTable)
+        .innerJoin(productsTable, eq(variantsTable.productId, productsTable.id))
+        .where(and(eq(productsTable.storeId, store.id), eq(productsTable.status, "active")))
+        .orderBy(asc(variantsTable.position))
+    : [];
+  const upsells = upsellRows
+    .filter((row) => row.available > 0 && !inCart.has(row.id))
+    .map(({ available, ...rest }) => rest);
+
   return {
     pixel,
     store: {
@@ -265,6 +298,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     },
     footerLinks: nav.footer,
     photo,
+    upsells,
     cart,
     paymentsReady,
     paymentsMessage,
@@ -315,6 +349,53 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
     await setCartDiscount(context.db, store.id, cartToken, check.discount.code);
     return Response.json({ discountError: null }, headers ? { headers } : undefined);
+  }
+
+  /**
+   * Package protection, on or off. The browser sends the choice and nothing
+   * else — what it costs is the store's column, read by priceCart when this
+   * page reloads, which is also what moves the PaymentIntent's amount.
+   */
+  if (formIntent === "protection") {
+    let cartToken = token;
+    let setCookie: string | null = null;
+    if (!cartToken) {
+      cartToken = newCartToken();
+      setCookie = cartCookie(cartToken, url);
+    }
+    await setCartProtection(context.db, store.id, cartToken, form.get("wanted") === "on");
+    return Response.json({ protection: true }, setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined);
+  }
+
+  /**
+   * The upsell's Add. A variant id, checked against this store's own live
+   * products and its stock before it is allowed onto the cart; the price is
+   * never sent and never read from here. Adding re-prices the cart on the next
+   * load, which moves the intent with it.
+   */
+  if (formIntent === "upsell") {
+    const variantId = String(form.get("variantId") || "").trim();
+    if (!variantId) return Response.json({ added: false });
+
+    const [row] = await context.db
+      .select({ id: variantsTable.id, available: variantsTable.available, status: productsTable.status, storeId: productsTable.storeId })
+      .from(variantsTable)
+      .innerJoin(productsTable, eq(variantsTable.productId, productsTable.id))
+      .where(eq(variantsTable.id, variantId))
+      .limit(1);
+    if (!row || row.storeId !== store.id || row.status !== "active" || row.available < 1) {
+      return Response.json({ added: false });
+    }
+
+    let cartToken = token;
+    let setCookie: string | null = null;
+    if (!cartToken) {
+      cartToken = newCartToken();
+      setCookie = cartCookie(cartToken, url);
+    }
+    const lines = await currentLines(context.db, store.id, cartToken);
+    await saveCart(context.db, store.id, cartToken, addLine(lines, variantId, 1));
+    return Response.json({ added: true }, setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined);
   }
 
   if (cart.lines.length === 0) {
@@ -425,6 +506,9 @@ export async function action({ request, context }: Route.ActionArgs) {
     // Both worked out by priceCart, on the server, from the code on the cart row.
     discountCode: cart.discount?.code ?? null,
     discountCents: cart.discount?.amountCents ?? 0,
+    // Priced by the server from the store's own column, the same as every
+    // other figure here — so the intent, the order row and the receipt agree.
+    protectionCents: cart.protectionCents,
   };
   const lines = cart.lines.map((line) => ({
     variantId: line.variantId,
@@ -494,6 +578,12 @@ export async function action({ request, context }: Route.ActionArgs) {
     });
     orderId = order.id;
     orderNumber = order.number;
+    if (cart.protectionCents > 0) {
+      await context.db
+        .update(ordersTable)
+        .set({ protectionCents: cart.protectionCents })
+        .where(eq(ordersTable.id, order.id));
+    }
   }
 
   if (token) await markCartConverted(context.db, store.id, token, orderId);
@@ -532,7 +622,7 @@ type LoadedStore = Awaited<ReturnType<typeof loader>>["store"];
 /** What the action can answer with, from this page's point of view. */
 type ActionReply =
   | { error: string }
-  | { discountError?: string | null }
+  | { discountError?: string | null; protection?: boolean; added?: boolean }
   | { ok: true; orderId: string; orderNumber: number; totalCents: number; repriced: boolean; returnTo: string };
 type Errors = Partial<Record<string, string>>;
 
@@ -701,6 +791,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
       summary={summary}
+      under={buddy ? <Upsell items={loaderData.upsells} photo={photo} money={money} /> : null}
     />
   );
 
@@ -852,19 +943,19 @@ const KNEELER: CN = {
   grandStyle: { borderTop: "1px solid var(--gk-line)", marginTop: 8, paddingTop: 14, fontWeight: 700 },
 };
 
-/* Stripe's own fields, dressed to match the group next to them: the same 5px
-   radius, the same 16px text, the same neutral ink Shopify uses. */
+/* Stripe's own fields, dressed to match the boxes next to them: the same 10px
+   radius, the same 16px text, the store's own ink and dim. */
 const BUDDY_APPEARANCE = {
   theme: "stripe",
   variables: {
-    colorPrimary: "#1878b9",
-    colorText: "#1a1a1a",
-    colorTextSecondary: "#6b7177",
-    colorTextPlaceholder: "#6b7177",
-    colorDanger: "#d72c0d",
+    colorPrimary: "#3B2A1B",
+    colorText: "#1C2318",
+    colorTextSecondary: "#5D6657",
+    colorTextPlaceholder: "#5D6657",
+    colorDanger: "#B3341C",
     colorBackground: "#ffffff",
     fontSizeBase: "16px",
-    borderRadius: "5px",
+    borderRadius: "10px",
     spacingUnit: "4px",
   },
 };
@@ -1189,7 +1280,17 @@ function DeliveryFields({
           />
         </Row>
 
-        <Row cn={cn} cols={3}>
+        <Row cn={cn} cols={2}>
+          <Cell
+            {...common}
+            name="postalCode"
+            label={postalLabel(country)}
+            inputMode={country === "US" ? "numeric" : undefined}
+            autoComplete="postal-code"
+            autoCapitalize="characters"
+            enterKeyHint="next"
+            error={shownError("postalCode")}
+          />
           <Cell
             {...common}
             name="city"
@@ -1199,6 +1300,9 @@ function DeliveryFields({
             enterKeyHint="next"
             error={shownError("city")}
           />
+        </Row>
+
+        <Row cn={cn} cols={1}>
           {known ? (
             <SelectCell
               cn={cn}
@@ -1223,16 +1327,6 @@ function DeliveryFields({
               error={shownError("region")}
             />
           )}
-          <Cell
-            {...common}
-            name="postalCode"
-            label={postalLabel(country)}
-            inputMode={country === "US" ? "numeric" : undefined}
-            autoComplete="postal-code"
-            autoCapitalize="characters"
-            enterKeyHint="next"
-            error={shownError("postalCode")}
-          />
         </Row>
 
         {store.phoneMode !== "hidden" ? (
@@ -1258,9 +1352,9 @@ function DeliveryFields({
           shownError("lastName"),
           shownError("company"),
           shownError("address1"),
+          shownError("postalCode"),
           shownError("city"),
           shownError("region"),
-          shownError("postalCode"),
           shownError("phone"),
         ]}
       />
@@ -1318,6 +1412,8 @@ function Summary({
         ))}
       </ul>
 
+      {buddy ? <ProtectionRow cart={cart} money={money} locked={locked} /> : null}
+
       <DiscountBox cn={cn} applied={cart.discount} reason={cart.discountReason} locked={locked} />
 
       <div className={buddy ? "gb-co__totals" : undefined} style={buddy ? undefined : { marginTop: 12 }}>
@@ -1343,6 +1439,13 @@ function Summary({
           <b>{cart.shippingCents > 0 ? money(cart.shippingCents) : "Free"}</b>
         </div>
 
+        {cart.protectionCents > 0 ? (
+          <div className={cn.tot}>
+            <span>Package protection</span>
+            <b>{money(cart.protectionCents)}</b>
+          </div>
+        ) : null}
+
         {cart.taxCents > 0 ? (
           <div className={cn.tot}>
             <span>Tax</span>
@@ -1359,6 +1462,131 @@ function Summary({
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * Package protection.
+ *
+ * The store decides whether it is sold at all and what it costs; this row
+ * only records the customer's choice, and it starts off. When the store has
+ * no price set the row does not render — there is nothing honest to charge
+ * for. The figure beside it is the server's own, read back off the priced
+ * cart, and ticking the box reloads the page so the total, the intent and the
+ * order all move together.
+ */
+function ProtectionRow({
+  cart,
+  money,
+  locked,
+}: {
+  cart: Awaited<ReturnType<typeof loader>>["cart"];
+  money: (cents: number) => string;
+  locked: boolean;
+}) {
+  const fetcher = useFetcher<ActionReply>();
+  const busy = fetcher.state !== "idle";
+  if (cart.protectionOfferCents == null || !cart.protectionCopy) return null;
+
+  if (locked) {
+    return cart.protectionChosen ? (
+      <p className="gb-co__note">Package protection is included in this payment.</p>
+    ) : null;
+  }
+
+  return (
+    <fetcher.Form method="post" className="gb-co__prot">
+      <input type="hidden" name="intent" value="protection" />
+      {/* The summary is drawn twice — pinned on a desk, folded on a phone — so
+          the box carries its label in aria rather than in an id that would
+          then exist twice on the page. */}
+      <label className="gb-co__prot-row" data-busy={busy ? "1" : undefined}>
+        <input
+          type="checkbox"
+          name="wanted"
+          aria-label="Add package protection"
+          checked={cart.protectionChosen}
+          disabled={busy}
+          onChange={(event) => {
+            const body = new FormData();
+            body.set("intent", "protection");
+            body.set("wanted", event.currentTarget.checked ? "on" : "");
+            fetcher.submit(body, { method: "post" });
+          }}
+        />
+        <span className="gb-co__prot-body">
+          <span className="gb-co__prot-title">Package protection</span>
+          <span className="gb-co__prot-copy">{cart.protectionCopy}</span>
+        </span>
+        <span className="gb-co__prot-price">{money(cart.protectionOfferCents)}</span>
+      </label>
+    </fetcher.Form>
+  );
+}
+
+/**
+ * "Just one more thing" — the bundles this cart does not already hold.
+ *
+ * Every row is a real variant of a live product with stock on it, and every
+ * figure is that row's own. Adding posts the variant id and nothing else: the
+ * server checks it again, puts it on the cart, and the loader re-prices —
+ * which is what moves the PaymentIntent's amount. Nothing to offer, no block.
+ */
+function Upsell({
+  items,
+  photo,
+  money,
+}: {
+  items: Awaited<ReturnType<typeof loader>>["upsells"];
+  photo: { src: string; alt: string } | null;
+  money: (cents: number) => string;
+}) {
+  const fetcher = useFetcher<ActionReply>();
+  const busy = fetcher.state !== "idle";
+  const adding = busy ? String(fetcher.formData?.get("variantId") ?? "") : "";
+  if (!items.length) return null;
+
+  return (
+    <section className="gb-co__up gb-co__glass" aria-label="Add to your order">
+      <h2 className="gb-co__up-h">Just one more thing</h2>
+      <p className="gb-co__up-sub">Goes in the same parcel. Shipping does not change.</p>
+      <ul className="gb-co__up-list">
+        {items.map((item) => (
+          <li className="gb-co__up-item" key={item.id}>
+            <span className="gb-co__up-shot">
+              {photo ? (
+                <img src={photo.src} alt={photo.alt || item.productTitle} loading="lazy" />
+              ) : (
+                <span className="gb-ph">No photo</span>
+              )}
+            </span>
+            <span className="gb-co__up-body">
+              <span className="gb-co__up-name">{item.label}</span>
+              <span className="gb-co__up-price">
+                {money(item.priceCents)}
+                {item.compareAtCents && item.compareAtCents > item.priceCents ? (
+                  <span className="gb-co__up-was">{money(item.compareAtCents)}</span>
+                ) : null}
+              </span>
+            </span>
+            <button
+              type="button"
+              className="gb-co__up-add"
+              disabled={busy}
+              aria-label={`Add ${item.label} to your order`}
+              onClick={() => {
+                const body = new FormData();
+                body.set("intent", "upsell");
+                body.set("variantId", item.id);
+                fetcher.submit(body, { method: "post" });
+              }}
+            >
+              {adding === item.id ? "Adding…" : "Add"}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -1501,6 +1729,7 @@ function OnePage({
   trust,
   shell,
   summary,
+  under,
 }: {
   cn: CN;
   store: LoadedStore;
@@ -1516,6 +1745,8 @@ function OnePage({
       above the summary row as well as above the form */
   shell: boolean;
   summary: React.ReactNode;
+  /** the block that sits under the summary — "Just one more thing" */
+  under: React.ReactNode;
 }) {
   const buddy = cn === BUDDY;
   const fetcher = useFetcher<ActionReply>();
@@ -1644,7 +1875,7 @@ function OnePage({
       try {
         const express = elements.create("expressCheckout", {
           // Stripe accepts 40–55 here and throws outside it.
-          buttonHeight: 52,
+          buttonHeight: 55,
           emailRequired: true,
           // Phone is one of the four we ask for, so the sheet collects it too
           // wherever this store shows a phone field at all.
@@ -1826,7 +2057,7 @@ function OnePage({
       <div className="gb-co__grid">
         <div className="gb-co__main">{stopped}</div>
         <aside className="gb-co__aside">
-          <div className="gb-co__sum">
+          <div className="gb-co__sum gb-co__glass">
             <h2 className="gb-co__h3">Order summary</h2>
             {summary}
           </div>
@@ -1842,7 +2073,7 @@ function OnePage({
   const express = (
     <>
       <section
-        className={buddy ? "gb-co__express" : undefined}
+        className={buddy ? "gb-co__express gb-co__glass" : undefined}
         style={wallets ? undefined : { display: "none" }}
         aria-label="Express checkout"
       >
@@ -1850,6 +2081,12 @@ function OnePage({
           Express checkout
         </p>
         <div className={buddy ? "gb-co__express-row" : undefined} ref={walletRef} />
+        {buddy ? (
+          <p className="gb-co__express-note">
+            Pay with the card already on your phone — your address comes with it, so there is
+            nothing else to type.
+          </p>
+        ) : null}
       </section>
       <div
         className={buddy ? "gb-co__or" : undefined}
@@ -1861,7 +2098,7 @@ function OnePage({
   );
 
   const section = (title: string, note: string | null, children: React.ReactNode) => (
-    <section className={buddy ? "gb-co__sec" : undefined} style={buddy ? undefined : { marginTop: 26 }}>
+    <section className={buddy ? "gb-co__sec gb-co__glass" : undefined} style={buddy ? undefined : { marginTop: 26 }}>
       <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
         {title}
       </h2>
@@ -1972,21 +2209,25 @@ function OnePage({
     <div className="gb-co__grid">
       <div className="gb-co__main">
         {express}
-        <details className="gb-co__msum">
+        <details className="gb-co__msum gb-co__glass gb-co__glass--tight">
           <summary>
             <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
             Order summary
             <span className="gb-co__msum-total">{money(total)}</span>
           </summary>
-          <div className="gb-co__msum-body">{summary}</div>
+          <div className="gb-co__msum-body">
+            {summary}
+            {under}
+          </div>
         </details>
         {form}
       </div>
       <aside className="gb-co__aside">
-        <div className="gb-co__sum">
+        <div className="gb-co__sum gb-co__glass">
           <h2 className="gb-co__h3">Order summary</h2>
           {summary}
         </div>
+        {under}
       </aside>
     </div>
   );

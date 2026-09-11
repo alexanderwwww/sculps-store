@@ -42,6 +42,16 @@ export interface PricedCart {
   subtotalCents: number;
   taxCents: number;
   shippingCents: number;
+  /**
+   * Package protection, when the store sells it and the customer chose it.
+   * Its own line, priced from the store row, so the intent amount, the order
+   * total and the receipt are all the same arithmetic.
+   */
+  protectionCents: number;
+  /** what the store charges for it, whether or not it is taken — null = not sold */
+  protectionOfferCents: number | null;
+  protectionCopy: string | null;
+  protectionChosen: boolean;
   totalCents: number;
   currency: string;
   itemCount: number;
@@ -163,6 +173,15 @@ export async function priceCart(
   const discountedSubtotal = Math.max(0, subtotalCents - discountOrderCents);
   const discountedShipping = Math.max(0, shippingCents - discountShippingCents);
 
+  // Package protection. The price is the store's; the cart row only carries
+  // the choice. No lines, no protection — there is nothing to protect.
+  const protectionOfferCents =
+    store.packageProtectionCents != null && store.packageProtectionCents > 0
+      ? store.packageProtectionCents
+      : null;
+  const protectionChosen = Boolean(row?.packageProtection) && lines.length > 0 && protectionOfferCents != null;
+  const protectionCents = protectionChosen ? (protectionOfferCents as number) : 0;
+
   const rate = await taxRateFor(db, store.id, region, store.taxRate ?? 0);
   const taxable = discountedSubtotal + (store.taxOnShipping ? discountedShipping : 0);
   // Tax-inclusive prices already contain the tax; it is backed out for the
@@ -177,11 +196,15 @@ export async function priceCart(
     subtotalCents,
     taxCents,
     shippingCents,
+    protectionCents,
+    protectionOfferCents,
+    protectionCopy: store.packageProtectionCopy ?? null,
+    protectionChosen,
     totalCents: Math.max(
       0,
-      store.pricesIncludeTax
+      (store.pricesIncludeTax
         ? discountedSubtotal + discountedShipping
-        : discountedSubtotal + taxCents + discountedShipping,
+        : discountedSubtotal + taxCents + discountedShipping) + protectionCents,
     ),
     currency: store.currency,
     itemCount: lines.reduce((count, line) => count + line.quantity, 0),
@@ -234,6 +257,27 @@ export async function setCartDiscount(
       .where(eq(carts.id, existing.id));
   } else {
     await db.insert(carts).values({ storeId, token, items: [], status: "open", discountCode: code });
+  }
+}
+
+/**
+ * Records whether the customer wants package protection. Only the choice is
+ * written; priceCart reads the price off the store row every time.
+ */
+export async function setCartProtection(
+  db: DB,
+  storeId: string,
+  token: string,
+  wanted: boolean,
+): Promise<void> {
+  const existing = await loadCartRow(db, storeId, token);
+  if (existing) {
+    await db
+      .update(carts)
+      .set({ packageProtection: wanted, updatedAt: new Date() })
+      .where(eq(carts.id, existing.id));
+  } else {
+    await db.insert(carts).values({ storeId, token, items: [], status: "open", packageProtection: wanted });
   }
 }
 

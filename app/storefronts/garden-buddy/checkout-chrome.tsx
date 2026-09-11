@@ -44,6 +44,15 @@ function Logo({ store, wordClass, imgClass }: { store: CheckoutChromeStore; word
   return <img src={store.logoUrl} alt={store.name} className={imgClass} />;
 }
 
+/**
+ * The header: the store's logo centred on a white band, and under it the
+ * three steps of a checkout with the one being stood in marked.
+ *
+ * This page is one page — the details and the card are both on it — so
+ * "Information" is the step the customer is on, and "Payment" is ahead of
+ * them rather than a link they can jump to. "Cart" goes back to the product,
+ * which is where this store's cart drawer lives.
+ */
 export function CheckoutHeader({ store, home }: { store: CheckoutChromeStore; home: string }) {
   return (
     <header className="gb-co__bar">
@@ -51,6 +60,19 @@ export function CheckoutHeader({ store, home }: { store: CheckoutChromeStore; ho
         <a className="gb-co__logo" href={home} aria-label={store.name}>
           <Logo store={store} wordClass="gb-co__wordmark" imgClass="gb-co__logo-img" />
         </a>
+        <nav aria-label="Checkout steps">
+          <ol className="gb-co__crumb">
+            <li>
+              <a href={home}>Cart</a>
+            </li>
+            <li>
+              <span aria-current="step">Information</span>
+            </li>
+            <li>
+              <span>Payment</span>
+            </li>
+          </ol>
+        </nav>
       </div>
     </header>
   );

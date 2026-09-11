@@ -80,6 +80,12 @@ export const stores = pgTable("stores", {
   checkoutConsent: boolean("checkout_consent").notNull().default(true),
   checkoutCaptureAbandoned: boolean("checkout_capture_abandoned").notNull().default(true),
   checkoutTip: boolean("checkout_tip").notNull().default(false),
+  /**
+   * Package protection, priced by the store and never by the browser.
+   * Null means this store does not sell it, and the row is not drawn at all.
+   */
+  packageProtectionCents: integer("package_protection_cents"),
+  packageProtectionCopy: text("package_protection_copy"),
 
   /* Branding — emails and checkout only, never the storefront layout */
   logoUrl: text("logo_url"),
@@ -346,6 +352,8 @@ export const orders = pgTable(
     /** the code as it was typed at checkout, kept so the order explains itself */
     discountCode: text("discount_code"),
     discountCents: integer("discount_cents").notNull().default(0),
+    /** what was charged for package protection on this order, in cents */
+    protectionCents: integer("protection_cents").notNull().default(0),
 
     paymentProvider: text("payment_provider"),
     paymentRef: text("payment_ref"),
@@ -437,6 +445,11 @@ export const carts = pgTable(
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
     /** the discount code applied to this cart, so it survives a reload */
     discountCode: text("discount_code"),
+    /**
+     * The customer ticked package protection. Only the choice lives here —
+     * what it costs is read from the store row when the cart is priced.
+     */
+    packageProtection: boolean("package_protection").notNull().default(false),
     /**
      * The Stripe PaymentIntent this cart is paying with.
      *

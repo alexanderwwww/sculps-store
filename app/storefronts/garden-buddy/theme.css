@@ -592,38 +592,49 @@
 }
 
 
+
 /* ====================================================================== *
- * Checkout — Shopify's, as closely as this can be drawn.
+ * Checkout — Garden Buddy's own, in glass.
  *
- * The owner's instruction, which overrides the "store skin" rule for this
- * page only: "change colours and basically do what Shopify did on checkout —
- * for now, identical." So the storefront keeps its paper, brown and lime, and
- * this one page does not. The palette below is Shopify's checkout: a white
- * form column, a #f5f5f5 summary column behind a hairline, #1a1a1a text,
- * #6b7177 for labels and helper text, #d9d9d9 field borders, #e1e1e1
- * dividers, a #1878b9 focus ring and #d72c0d for anything wrong.
+ * The owner's latest instruction replaces the earlier "make it identical to
+ * Shopify" one: the checkout is the store's, and it is built out of the same
+ * material the admin uses — translucent white panels over the store's sand,
+ * a real backdrop blur with saturation, a hairline rim, a soft shadow and a
+ * specular highlight along the lit edge. The recipe is the admin's `.k-glass`
+ * (app/admin/admin.css), written out here in storefront terms; no admin
+ * stylesheet is imported into a storefront.
  *
- * The one exception is the button that takes the money: that keeps the
- * store's own accent (--lime, with --lime-ink on it, which is the pair the
- * theme already ships and the only high-contrast pairing here).
+ * The type is the store's (--font-h for names, --font-b for everything else)
+ * and the store's lime appears exactly once: on the button that takes the
+ * money. Everything else is the theme's neutral ink and dim.
  *
- * Sizes are Shopify's too, and they are small on purpose: 44px fields, 5px
- * radius, 16px input text so iOS does not zoom, 14px labels and helper text,
- * 16px section headings, a 20px total, 12px between fields and 24px between
- * sections.
+ * Fields are individually rounded at 10px rather than fused into one bordered
+ * block, 46px tall, with 16px text so iOS does not zoom, and labels that float
+ * by CSS alone.
  * ====================================================================== */
 
 .gb-co-sec {
-  --co-ink: #1a1a1a;
-  --co-dim: #6b7177;
-  --co-line: #e1e1e1;
-  --co-field: #d9d9d9;
-  --co-tint: #f5f5f5;
-  --co-focus: #1878b9;
-  --co-bad: #d72c0d;
-  --co-r: 5px;
+  --co-ink: #1C2318;
+  --co-dim: #5D6657;
+  --co-line: rgba(28, 35, 24, .12);
+  --co-field: rgba(28, 35, 24, .16);
+  --co-focus: #3B2A1B;
+  --co-bad: #B3341C;
+  /* field radius, panel radius */
+  --co-r: 10px;
+  --co-rx: 20px;
+  /* the glass itself */
+  --co-glass: rgba(255, 255, 255, .62);
+  --co-glass-rim: rgba(255, 255, 255, .75);
+  --co-glass-shadow: 0 12px 40px rgba(43, 36, 25, .12), inset 0 1px 0 rgba(255, 255, 255, .95);
 
-  background: #fff;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(60% 45% at 10% 0%, rgba(168, 243, 42, .16), transparent 70%),
+    radial-gradient(52% 42% at 92% 6%, rgba(255, 199, 44, .12), transparent 72%),
+    radial-gradient(60% 55% at 50% 100%, rgba(92, 140, 30, .10), transparent 70%),
+    var(--sand);
   color: var(--co-ink);
   font-family: var(--font-b);
   font-size: 14px;
@@ -634,16 +645,48 @@
 }
 @media (min-width: 960px) { .gb-co-sec { overflow-x: clip; } }
 
-/* the header and footer line up with the form column, not with the storefront's
-   wider 1200px wrapper */
-.gb-co__wrap { width: 100%; max-width: 1000px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); }
+/* ---- the glass ---------------------------------------------------------
+   Translucent white, blurred and saturated, a hairline rim, a soft shadow,
+   and the specular edge along the lit side — the detail most imitations miss
+   and the reason theirs look like plastic. */
+.gb-co__glass {
+  position: relative;
+  background: var(--co-glass);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid var(--co-glass-rim);
+  border-radius: var(--co-rx);
+  box-shadow: var(--co-glass-shadow);
+}
+.gb-co__glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 42%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.gb-co__glass--tight { border-radius: 16px; }
 
-/* header and footer: the logo, the policy links, nothing else */
+/* ---- header: the logo on a white band, the breadcrumb under it --------- */
+.gb-co__wrap { width: 100%; max-width: 1040px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); }
+
 .gb-co__bar { background: #fff; border-bottom: 1px solid var(--co-line); }
-.gb-co__bar-in { display: flex; align-items: center; min-height: 64px; }
-.gb-co__logo { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; color: var(--co-ink); }
-.gb-co__logo-img { max-height: 34px; width: auto; }
-.gb-co__wordmark { font-family: var(--font-b); font-weight: 600; font-size: 20px; letter-spacing: -.01em; line-height: 1; color: var(--co-ink); }
+.gb-co__bar-in { display: grid; justify-items: center; gap: 10px; padding-block: 16px 14px; }
+.gb-co__logo { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none; color: var(--co-ink); }
+.gb-co__logo-img { max-height: 40px; width: auto; }
+.gb-co__wordmark { font-family: var(--font-h); font-weight: 800; font-size: 24px; letter-spacing: -.01em; line-height: 1; color: var(--co-ink); }
+
+.gb-co__crumb { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--co-dim); }
+.gb-co__crumb li { display: flex; align-items: center; gap: 8px; }
+.gb-co__crumb li + li:before { content: "›"; color: var(--co-dim); opacity: .6; }
+.gb-co__crumb a { color: var(--co-dim); text-decoration: none; text-underline-offset: 3px; }
+.gb-co__crumb a:hover { text-decoration: underline; }
+.gb-co__crumb [aria-current="step"] { color: var(--co-ink); font-weight: 600; }
 
 .gb-co__foot { flex: 0 0 auto; background: #fff; border-top: 1px solid var(--co-line); }
 .gb-co__foot-in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; min-height: 56px; padding-block: 12px; }
@@ -652,70 +695,64 @@
 .gb-co__foot-links a { color: var(--co-focus); font-size: 13px; text-decoration: none; text-underline-offset: 3px; }
 .gb-co__foot-links a:hover { text-decoration: underline; }
 
-/* the two columns: about 1000px, split 56/44, with the tint running out to
-   the right edge the way Shopify's does */
-.gb-co { flex: 1 0 auto; width: 100%; max-width: 1000px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); padding-block: 0 40px; }
-.gb-co__grid { display: grid; gap: 0; align-items: start; }
+/* ---- the two columns --------------------------------------------------- */
+.gb-co { flex: 1 0 auto; width: 100%; max-width: 1040px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); padding-block: 0 48px; }
+.gb-co__grid { display: grid; gap: 24px; align-items: start; }
 @media (min-width: 960px) {
-  .gb-co__grid { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); }
+  .gb-co__grid { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); gap: 28px; }
 }
-.gb-co__main { min-width: 0; padding-block: 28px; }
-@media (min-width: 960px) { .gb-co__main { padding-right: 40px; } }
+.gb-co__main { min-width: 0; padding-block: 24px; }
 
-.gb-co__aside { min-width: 0; }
-@media (min-width: 960px) {
-  .gb-co__aside {
-    position: sticky;
-    top: 0;
-    background: var(--co-tint);
-    border-left: 1px solid var(--co-line);
-    box-shadow: 100vw 0 0 var(--co-tint);
-    padding: 28px 0 40px 40px;
-    margin-left: -1px;
-  }
-}
+.gb-co__aside { min-width: 0; display: grid; gap: 16px; }
+@media (min-width: 960px) { .gb-co__aside { position: sticky; top: 20px; padding-block: 24px; } }
 @media (max-width: 959px) { .gb-co__aside { display: none; } }
 
-/* sections: 24px apart, headings 16px semibold */
-.gb-co__sec + .gb-co__sec { margin-top: 24px; }
-.gb-co__h2 { font-family: var(--font-b); font-size: 16px; font-weight: 600; line-height: 1.4; letter-spacing: 0; color: var(--co-ink); margin: 0 0 12px; }
-.gb-co__h3 { font-family: var(--font-b); font-size: 16px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--co-ink); margin: 0 0 16px; }
-.gb-co__secure { margin: -6px 0 12px; color: var(--co-dim); font-size: 14px; }
+/* sections: the form's own panels float too */
+.gb-co__sec { padding: 20px; }
+.gb-co__sec + .gb-co__sec { margin-top: 16px; }
+.gb-co__h2 { font-family: var(--font-h); font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 14px; }
+.gb-co__h3 { font-family: var(--font-h); font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 16px; }
+.gb-co__secure { margin: -8px 0 14px; color: var(--co-dim); font-size: 13px; }
 .gb-co__note { color: var(--co-dim); font-size: 13px; line-height: 1.5; margin: 12px 0 0; }
 
 /* ---- express checkout --------------------------------------------------
-   The wallet row, then a rule with OR through the middle of it. Stripe only
+   The wallets first, full width and tall, above everything. Stripe only ever
    reports what the account has actually enabled, so nothing is drawn here
-   that cannot take money. */
-.gb-co__express { margin: 0 0 16px; }
-.gb-co__express-lead { margin: 0 0 10px; font-family: var(--font-b); font-size: 14px; font-weight: 400; color: var(--co-dim); text-align: center; }
-.gb-co__express-row { min-height: 52px; }
-.gb-co__or { display: flex; align-items: center; gap: 12px; margin: 0 0 24px; color: var(--co-dim); font-size: 13px; font-weight: 400; }
-.gb-co__or:before, .gb-co__or:after { content: ""; flex: 1 1 auto; height: 1px; background: var(--co-line); }
+   that cannot take money — and when it reports none, both this block and the
+   OR rule below it stay hidden. */
+.gb-co__express { margin: 0 0 14px; padding: 16px; }
+.gb-co__express-lead { margin: 0 0 12px; font-family: var(--font-b); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--co-dim); text-align: center; }
+.gb-co__express-row { min-height: 55px; }
+.gb-co__express-note { margin: 12px 0 0; text-align: center; font-size: 13px; color: var(--co-dim); }
+.gb-co__or { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; color: var(--co-dim); font-size: 12px; letter-spacing: .12em; font-weight: 600; }
+.gb-co__or:before, .gb-co__or:after { content: ""; flex: 1 1 auto; height: 1px; background: var(--co-field); }
 
 /* ---- fields ------------------------------------------------------------
-   One bordered group per section. The cells inside it share hairlines rather
-   than each carrying a box of its own, and the focused cell draws a 2px ring
-   and lifts above its neighbours so the ring is never cut in half by the
-   divider next to it. */
-.gb-sf__group { border: 1px solid var(--co-field); border-radius: var(--co-r); background: #fff; }
-.gb-sf__group + .gb-sf__group { margin-top: 12px; }
-.gb-sf__row { display: grid; grid-template-columns: 1fr; }
-.gb-sf__row + .gb-sf__row { border-top: 1px solid var(--co-field); }
+   Individually rounded, 10px, 46px tall — each its own box, never fused into
+   one block. The focused box draws a 2px ring and lifts above its
+   neighbours. */
+.gb-sf__group { display: grid; gap: 10px; }
+.gb-sf__group + .gb-sf__group { margin-top: 10px; }
+.gb-sf__row { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .gb-sf__row--2 { grid-template-columns: 1fr 1fr; }
 .gb-sf__row--3 { grid-template-columns: 1fr 1fr 1fr; }
-.gb-sf__row > .gb-sf__cell + .gb-sf__cell { border-left: 1px solid var(--co-field); }
 @media (max-width: 559px) {
-  .gb-sf__row--2, .gb-sf__row--3 { grid-template-columns: 1fr 1fr; }
-  .gb-sf__row--3 > .gb-sf__cell:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--co-field); }
+  .gb-sf__row--2, .gb-sf__row--3 { grid-template-columns: 1fr; }
 }
 
-.gb-sf__cell { position: relative; min-width: 0; }
+.gb-sf__cell {
+  position: relative;
+  min-width: 0;
+  background: rgba(255, 255, 255, .78);
+  border: 1px solid var(--co-field);
+  border-radius: var(--co-r);
+  transition: box-shadow .18s cubic-bezier(.22,.8,.28,1), border-color .18s cubic-bezier(.22,.8,.28,1);
+}
 .gb-sf__in {
   display: block;
   width: 100%;
-  height: 44px;
-  padding: 16px 11px 2px;
+  height: 46px;
+  padding: 17px 12px 3px;
   border: 0;
   border-radius: var(--co-r);
   background: transparent;
@@ -728,23 +765,20 @@
   outline: 0;
 }
 .gb-sf__in--sel {
-  padding-right: 30px;
+  padding-right: 32px;
   cursor: pointer;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7177' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9.5l6 6 6-6'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235D6657' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9.5l6 6 6-6'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right 11px center;
   background-size: 16px;
 }
-.gb-sf__in:autofill, .gb-sf__in:-webkit-autofill { box-shadow: 0 0 0 44px #fff inset; }
+.gb-sf__in:autofill, .gb-sf__in:-webkit-autofill { box-shadow: 0 0 0 46px #fff inset; border-radius: var(--co-r); }
 
-/* the label, sitting in the box until there is something to read — moved by
-   CSS alone, off :placeholder-shown and :focus. No JavaScript stands between
-   a person and the field they are typing in. */
 .gb-sf__lbl {
   position: absolute;
-  left: 11px;
-  right: 11px;
-  top: 12px;
+  left: 12px;
+  right: 12px;
+  top: 13px;
   font-size: 16px;
   line-height: 1.25;
   color: var(--co-dim);
@@ -752,31 +786,28 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: top .1s ease, font-size .1s ease;
+  transition: top .14s cubic-bezier(.22,.8,.28,1), font-size .14s cubic-bezier(.22,.8,.28,1);
 }
 .gb-sf__in:focus + .gb-sf__lbl,
 .gb-sf__in:not(:placeholder-shown) + .gb-sf__lbl,
-.gb-sf__lbl--up { top: 5px; font-size: 11px; }
-/* a select always has a value, so its label is floated from the start */
-.gb-sf__in--sel + .gb-sf__lbl { top: 5px; font-size: 11px; }
+.gb-sf__lbl--up { top: 6px; font-size: 11px; }
+.gb-sf__in--sel + .gb-sf__lbl { top: 6px; font-size: 11px; }
 
-.gb-sf__cell:focus-within { z-index: 3; border-radius: var(--co-r); box-shadow: 0 0 0 2px var(--co-focus); }
-.gb-sf__cell[data-err="1"] { z-index: 2; border-radius: var(--co-r); box-shadow: 0 0 0 1px var(--co-bad); }
+.gb-sf__cell:focus-within { z-index: 3; border-color: transparent; box-shadow: 0 0 0 2px var(--co-focus); }
+.gb-sf__cell[data-err="1"] { z-index: 2; border-color: transparent; box-shadow: 0 0 0 1px var(--co-bad); }
 .gb-sf__cell[data-err="1"]:focus-within { box-shadow: 0 0 0 2px var(--co-bad); }
 
-.gb-sf__errs { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.gb-sf__errs { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
 .gb-sf__errs li { color: var(--co-bad); font-size: 13px; line-height: 1.4; }
 
-/* the store's marketing opt-in, when the store has it switched on */
 .gb-co__check { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--co-ink); margin: 12px 0 0; }
-.gb-co__check input { width: 17px; height: 17px; accent-color: var(--co-focus); }
+.gb-co__check input { width: 18px; height: 18px; accent-color: var(--leaf); }
 
 /* ---- payment -----------------------------------------------------------
-   Stripe's own box, given the same border and radius as the group above it.
-   It is created and mounted before the wallet row, and the wallet row is
-   wrapped in a try/catch, so a wallet that fails can never take the card
-   form away with it. */
-.gb-co__card { border: 1px solid var(--co-field); border-radius: var(--co-r); background: #fff; padding: 14px 12px; min-height: 180px; }
+   Stripe's own box, in the same glass as the group above it. It is created
+   and mounted before the wallet row, and the wallet row is wrapped in a
+   try/catch, so a wallet that fails can never take the card form away. */
+.gb-co__card { border: 1px solid var(--co-field); border-radius: var(--co-r); background: rgba(255, 255, 255, .82); padding: 14px 12px; min-height: 180px; }
 
 .gb-co__pay {
   display: flex;
@@ -784,89 +815,152 @@
   justify-content: center;
   gap: 10px;
   width: 100%;
-  height: 52px;
+  height: 56px;
   margin-top: 20px;
   padding: 0 20px;
   border: 0;
-  border-radius: var(--co-r);
+  border-radius: 999px;
   background: var(--lime);
   color: var(--lime-ink);
-  font-family: var(--font-b);
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--font-h);
+  font-size: 18px;
+  font-weight: 800;
   cursor: pointer;
-  transition: background .15s;
+  box-shadow: 0 10px 26px rgba(92, 140, 30, .26);
+  transition: background .18s cubic-bezier(.22,.8,.28,1), transform .18s cubic-bezier(.22,.8,.28,1), box-shadow .18s cubic-bezier(.22,.8,.28,1);
 }
-.gb-co__pay:hover { background: var(--lime-2); }
-.gb-co__pay[disabled] { opacity: .55; cursor: not-allowed; }
+.gb-co__pay:hover { background: var(--lime-2); transform: translateY(-1px); box-shadow: 0 14px 32px rgba(92, 140, 30, .3); }
+.gb-co__pay[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
 .gb-co__pay[aria-busy="true"] { cursor: progress; }
-.gb-co__pay:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 2px; }
+.gb-co__pay:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 3px; }
 .gb-co__spin { flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(18, 41, 12, .28); border-top-color: var(--lime-ink); animation: gb-co-spin .7s linear infinite; }
 @keyframes gb-co-spin { to { transform: rotate(360deg); } }
 
-.gb-co__alert { border: 1px solid var(--co-bad); background: #fff4f4; color: #8a1c08; border-radius: var(--co-r); padding: 12px 14px; font-size: 14px; margin-bottom: 16px; }
+.gb-co__alert { border: 1px solid var(--co-bad); background: rgba(255, 244, 244, .9); color: #8a1c08; border-radius: var(--co-r); padding: 12px 14px; font-size: 14px; margin-bottom: 16px; }
 
-/* the store's own three promises, under the button that takes the money */
 .gb-co__trust { list-style: none; display: grid; gap: 10px; margin: 20px 0 0; padding: 16px 0 0; border-top: 1px solid var(--co-line); }
 @media (min-width: 560px) { .gb-co__trust { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .gb-co__trust li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--co-dim); line-height: 1.3; }
 .gb-co__trust svg { width: 20px; height: 20px; flex: 0 0 20px; color: var(--co-dim); }
 .gb-co__trust strong { display: block; color: var(--co-ink); font-weight: 600; }
 
-/* ---- order summary -----------------------------------------------------
-   On the tinted column: a 46px thumbnail with the quantity in its top-right
-   corner, the variant under the title, the price on the right. */
-.gb-co__sum { background: transparent; }
+/* ---- order summary ----------------------------------------------------- */
+.gb-co__sum { padding: 20px; }
 .gb-co__lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
 .gb-co__line { display: flex; gap: 12px; align-items: center; }
-.gb-co__shot { flex: 0 0 46px; width: 46px; height: 46px; border-radius: var(--co-r); background: #fff; border: 1px solid var(--co-field); position: relative; }
-.gb-co__shot img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-.gb-co__shot .gb-ph { height: 100%; border-radius: 4px; font-size: 9px; padding: 4px; }
-.gb-co__qty { position: absolute; top: -8px; right: -8px; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: #6b7177; color: #fff; font-size: 12px; font-weight: 600; line-height: 1; }
+.gb-co__shot { flex: 0 0 52px; width: 52px; height: 52px; border-radius: 12px; background: #fff; border: 1px solid var(--co-field); position: relative; }
+.gb-co__shot img { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; }
+.gb-co__shot .gb-ph { height: 100%; border-radius: 11px; font-size: 9px; padding: 4px; }
+.gb-co__qty { position: absolute; top: -8px; right: -8px; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--brown); color: #fff; font-size: 12px; font-weight: 700; line-height: 1; }
 .gb-co__line-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
-.gb-co__line-name { margin: 0; font-weight: 600; font-size: 14px; line-height: 1.3; color: var(--co-ink); }
+.gb-co__line-name { margin: 0; font-weight: 700; font-size: 14px; line-height: 1.3; color: var(--co-ink); }
 .gb-co__line-sub { margin: 0; color: var(--co-dim); font-size: 13px; }
-.gb-co__line-total { margin: 0; font-weight: 500; font-size: 14px; white-space: nowrap; color: var(--co-ink); }
+.gb-co__line-total { margin: 0; font-weight: 600; font-size: 14px; white-space: nowrap; color: var(--co-ink); }
 
-/* the discount code box, between the items and the totals, as Shopify has it */
-.gb-co__disc { margin: 20px 0 0; }
-.gb-co__disc-row { display: flex; gap: 8px; align-items: stretch; }
-.gb-co__disc-row .gb-sf__group { flex: 1 1 auto; min-width: 0; }
-.gb-co__disc-btn { flex: 0 0 auto; height: 46px; padding: 0 18px; border: 1px solid var(--co-field); border-radius: var(--co-r); background: #e1e1e1; color: #4a4a4a; font-family: var(--font-b); font-size: 14px; font-weight: 600; cursor: pointer; }
-.gb-co__disc-btn:hover { background: #d5d5d5; }
+/* ---- package protection ------------------------------------------------
+   One row on the summary: what it is, one honest sentence, and the price the
+   store set. Off unless the customer ticks it; the price on screen is the
+   server's figure, and the tick only ever records the choice. */
+.gb-co__prot { margin: 18px 0 0; }
+.gb-co__prot-row { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid var(--co-field); border-radius: var(--co-r); background: rgba(255, 255, 255, .7); cursor: pointer; transition: border-color .18s cubic-bezier(.22,.8,.28,1), background .18s cubic-bezier(.22,.8,.28,1); }
+.gb-co__prot-row:hover { background: rgba(255, 255, 255, .88); }
+.gb-co__prot-row input { flex: 0 0 20px; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--leaf); }
+.gb-co__prot-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; }
+.gb-co__prot-title { font-weight: 700; font-size: 14px; color: var(--co-ink); }
+.gb-co__prot-copy { color: var(--co-dim); font-size: 13px; line-height: 1.45; }
+.gb-co__prot-price { flex: 0 0 auto; font-weight: 700; font-size: 14px; color: var(--co-ink); white-space: nowrap; }
+.gb-co__prot-row[data-busy="1"] { opacity: .6; }
+
+/* ---- the discount row: one box, Apply inside its right edge ------------- */
+.gb-co__disc { margin: 18px 0 0; }
+.gb-co__disc-row { position: relative; }
+.gb-co__disc-row .gb-sf__cell { border-radius: var(--co-r); }
+.gb-co__disc .gb-sf__in { height: 48px; padding-right: 92px; }
+.gb-co__disc-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  bottom: 5px;
+  z-index: 4;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(28, 35, 24, .08);
+  color: var(--co-ink);
+  font-family: var(--font-b);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s cubic-bezier(.22,.8,.28,1);
+}
+.gb-co__disc-btn:hover { background: rgba(28, 35, 24, .14); }
 .gb-co__disc-btn[disabled] { opacity: .55; cursor: not-allowed; }
 .gb-co__disc-btn:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 2px; }
-.gb-co__disc .gb-sf__in { height: 44px; }
 
+/* ---- totals ------------------------------------------------------------ */
 .gb-co__totals { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--co-line); display: grid; gap: 10px; }
 .gb-co__tot { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 14px; color: var(--co-dim); }
-.gb-co__tot b { color: var(--co-ink); font-weight: 400; }
-.gb-co__tot--free b { color: var(--co-ink); font-weight: 400; }
-.gb-co__grand { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--co-line); font-size: 15px; font-weight: 600; color: var(--co-ink); }
-.gb-co__grand b { font-family: var(--font-b); font-size: 20px; font-weight: 600; }
-.gb-co__grand-cc { font-size: 12px; color: var(--co-dim); font-weight: 400; margin-right: 6px; }
+.gb-co__tot b { color: var(--co-ink); font-weight: 600; }
+.gb-co__tot--free b { color: var(--leaf); font-weight: 700; }
+.gb-co__grand { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--co-line); font-size: 15px; font-weight: 700; color: var(--co-ink); }
+.gb-co__grand b { font-family: var(--font-h); font-size: 24px; font-weight: 800; letter-spacing: -.01em; }
+.gb-co__grand-cc { font-size: 12px; color: var(--co-dim); font-weight: 500; margin-right: 6px; }
+
+/* ---- "Just one more thing" --------------------------------------------
+   The bundles this cart does not already have, from the variants table. Real
+   photo, real price, real compare-at. Nothing out of stock is ever drawn. */
+.gb-co__up { padding: 20px; }
+.gb-co__up-h { font-family: var(--font-h); font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 4px; }
+.gb-co__up-sub { margin: 0 0 14px; color: var(--co-dim); font-size: 13px; }
+.gb-co__up-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.gb-co__up-item { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--co-field); border-radius: var(--co-r); background: rgba(255, 255, 255, .7); }
+.gb-co__up-shot { flex: 0 0 52px; width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--co-field); }
+.gb-co__up-shot img { width: 100%; height: 100%; object-fit: cover; }
+.gb-co__up-shot .gb-ph { height: 100%; font-size: 9px; padding: 4px; }
+.gb-co__up-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; }
+.gb-co__up-name { margin: 0; font-weight: 700; font-size: 14px; line-height: 1.3; color: var(--co-ink); }
+.gb-co__up-price { margin: 0; display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--co-ink); font-weight: 600; }
+.gb-co__up-was { color: var(--co-dim); font-weight: 500; text-decoration: line-through; font-size: 13px; }
+.gb-co__up-add {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid rgba(28, 35, 24, .18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .9);
+  color: var(--co-ink);
+  font-family: var(--font-b);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s cubic-bezier(.22,.8,.28,1), transform .18s cubic-bezier(.22,.8,.28,1);
+}
+.gb-co__up-add:hover { background: #fff; transform: translateY(-1px); }
+.gb-co__up-add[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
+.gb-co__up-add:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 2px; }
 
 /* on a phone the summary folds into one row you can open */
-.gb-co__msum { background: var(--co-tint); border: 1px solid var(--co-line); border-radius: var(--co-r); margin: 0 0 24px; }
-.gb-co__msum > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 14px; font-weight: 400; font-size: 14px; color: var(--co-focus); }
+.gb-co__msum { margin: 0 0 20px; }
+.gb-co__msum > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 16px; font-weight: 600; font-size: 14px; color: var(--co-ink); }
 .gb-co__msum > summary::-webkit-details-marker { display: none; }
-.gb-co__msum-caret { width: 16px; height: 16px; flex: 0 0 16px; color: var(--co-focus); transition: transform .18s ease; }
+.gb-co__msum-caret { width: 16px; height: 16px; flex: 0 0 16px; color: var(--co-dim); transition: transform .2s cubic-bezier(.22,.8,.28,1); }
 .gb-co__msum[open] .gb-co__msum-caret { transform: rotate(180deg); }
-.gb-co__msum-total { margin-left: auto; font-size: 18px; font-weight: 600; color: var(--co-ink); }
-.gb-co__msum-body { padding: 4px 14px 18px; border-top: 1px solid var(--co-line); animation: gb-co-fade .18s ease both; }
+.gb-co__msum-total { margin-left: auto; font-family: var(--font-h); font-size: 19px; font-weight: 800; color: var(--co-ink); }
+.gb-co__msum-body { padding: 4px 16px 18px; border-top: 1px solid var(--co-line); animation: gb-co-fade .2s cubic-bezier(.22,.8,.28,1) both; }
 @keyframes gb-co-fade { from { opacity: 0; transform: translateY(-4px); } }
 @media (min-width: 960px) { .gb-co__msum { display: none; } }
 
 /* the empty cart, and the one link off this page */
 .gb-co__empty { text-align: center; padding: clamp(40px, 8vw, 90px) 0; }
-.gb-co__empty p { font-size: 20px; font-weight: 600; color: var(--co-ink); margin: 0 0 20px; }
-.gb-co__btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 20px; border: 0; border-radius: var(--co-r); background: var(--lime); color: var(--lime-ink); font-family: var(--font-b); font-size: 15px; font-weight: 600; cursor: pointer; }
+.gb-co__empty p { font-size: 20px; font-weight: 700; color: var(--co-ink); margin: 0 0 20px; }
+.gb-co__btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--font-h); font-size: 16px; font-weight: 800; cursor: pointer; }
 .gb-co__btn:hover { background: var(--lime-2); }
 .gb-co__btn[disabled] { opacity: .55; cursor: not-allowed; }
 .gb-co__btn:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .gb-sf__lbl, .gb-co__msum-caret, .gb-co__pay { transition: none; }
+  .gb-sf__lbl, .gb-sf__cell, .gb-co__msum-caret, .gb-co__pay, .gb-co__up-add, .gb-co__disc-btn, .gb-co__prot-row { transition: none; }
+  .gb-co__pay:hover, .gb-co__up-add:hover { transform: none; }
   .gb-co__msum-body { animation: none; }
   .gb-co__spin { animation-duration: 2.4s; }
 }
