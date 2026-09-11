@@ -204,6 +204,17 @@ export function AdminShell({
       ),
     },
     {
+      to: withStore("/admin/discounts"),
+      label: "Discounts",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
+          <path d="M6.5 13.5l7-7" />
+          <circle cx="6.75" cy="6.75" r="1.75" />
+          <circle cx="13.25" cy="13.25" r="1.75" />
+        </svg>
+      ),
+    },
+    {
       to: withStore("/admin/analytics"),
       label: "Analytics",
       icon: (

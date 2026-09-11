@@ -32,6 +32,9 @@ export interface OrderEmailInput {
   taxCents: number;
   shippingCents: number;
   totalCents: number;
+  /** the code used, and what it took off — so the receipt adds up */
+  discountCode?: string | null;
+  discountCents?: number;
 }
 
 export function emailReady(env: Env): boolean {
@@ -140,6 +143,9 @@ export async function sendOrderConfirmation(
     ...input.lines.map((line) => `${line.label} × ${line.quantity} — ${formatMoney(line.lineTotalCents, input.currency)}`),
     ``,
     `Subtotal ${formatMoney(input.subtotalCents, input.currency)}`,
+    input.discountCode && input.discountCents
+      ? `${input.discountCode} −${formatMoney(input.discountCents, input.currency)}`
+      : ``,
     input.taxCents ? `Tax ${formatMoney(input.taxCents, input.currency)}` : ``,
     `Total ${formatMoney(input.totalCents, input.currency)}`,
     ``,
@@ -155,6 +161,7 @@ export async function sendOrderConfirmation(
 <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee">${lineRows(input.lines, input.currency)}</table>
 <table style="width:100%;border-collapse:collapse;border-top:1px solid #eee;margin-top:8px">
 <tr><td style="padding:6px 0;color:#666">Subtotal</td><td style="padding:6px 0;text-align:right">${formatMoney(input.subtotalCents, input.currency)}</td></tr>
+${input.discountCode && input.discountCents ? `<tr><td style="padding:6px 0;color:#666">${esc(input.discountCode)}</td><td style="padding:6px 0;text-align:right">−${formatMoney(input.discountCents, input.currency)}</td></tr>` : ""}
 ${input.taxCents ? `<tr><td style="padding:6px 0;color:#666">Tax</td><td style="padding:6px 0;text-align:right">${formatMoney(input.taxCents, input.currency)}</td></tr>` : ""}
 <tr><td style="padding:6px 0;font-weight:700">Total</td><td style="padding:6px 0;text-align:right;font-weight:700">${formatMoney(input.totalCents, input.currency)}</td></tr>
 </table>

@@ -43,6 +43,7 @@ export default [
       route("customers", "routes/admin.customers.tsx"),
       route("reviews", "routes/admin.reviews.tsx"),
       route("marketing", "routes/admin.marketing.tsx"),
+      route("discounts", "routes/admin.discounts.tsx"),
       route("meta", "routes/admin.meta.tsx"),
       route("media", "routes/admin.media.tsx"),
       route("analytics", "routes/admin.analytics.tsx"),

@@ -79,6 +79,8 @@ export async function afterPaymentConfirmed(
         taxCents: order.taxCents,
         shippingCents: order.shippingCents,
         totalCents: order.totalCents,
+        discountCode: order.discountCode,
+        discountCents: order.discountCents,
       });
     } else {
       // Say so on the timeline rather than leaving a silent gap that looks
