@@ -15,6 +15,7 @@ export default [
   route("checkout/identify", "routes/checkout.identify.tsx"),
   route("checkout/intent", "routes/checkout.intent.tsx"),
   route("checkout/diag", "routes/checkout.diag.tsx"),
+  route("push/log", "routes/push.log.tsx"),
   route("thanks", "routes/thanks.tsx"),
   route("pages/:handle", "routes/pages.$handle.tsx"),
   // The shapes Shopify used. Old links stay alive rather than dying in the

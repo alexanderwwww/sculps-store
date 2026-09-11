@@ -9,6 +9,19 @@
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
+/** Tell the shop what happened, since nobody can watch this from the inside. */
+function say(kind, detail) {
+  try {
+    return fetch("/push/log", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ kind: kind, detail: String(detail || "").slice(0, 400) }),
+    }).catch(function () {});
+  } catch (error) {
+    return Promise.resolve();
+  }
+}
+
 self.addEventListener("push", (event) => {
   let data = {};
   try {
@@ -19,15 +32,27 @@ self.addEventListener("push", (event) => {
 
   const title = data.title || "Shop Admin";
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body: data.body || "",
-      icon: "/icon-512.png",
-      badge: "/logo-mark.png",
-      // Same tag means a re-delivery replaces the banner instead of stacking.
-      tag: data.tag || "shop-admin",
-      renotify: true,
-      data: { url: data.url || "/admin" },
-    }),
+    say("received", title + " | permission=" + (self.Notification ? Notification.permission : "none"))
+      .then(function () {
+        return self.registration.showNotification(title, {
+          body: data.body || "",
+          icon: "/icon-512.png",
+          badge: "/logo-mark.png",
+          // Same tag means a re-delivery replaces the banner instead of
+          // stacking; requireInteraction keeps it on screen until it is dealt
+          // with, which is what an order deserves.
+          tag: data.tag || "shop-admin",
+          renotify: true,
+          requireInteraction: true,
+          data: { url: data.url || "/admin" },
+        });
+      })
+      .then(function () {
+        return say("shown", title);
+      })
+      .catch(function (error) {
+        return say("failed", (error && error.message) || String(error));
+      }),
   );
 });
 
