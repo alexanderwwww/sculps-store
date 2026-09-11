@@ -261,7 +261,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     paymentsMessage,
     publishableKey,
     clientSecret,
-    returnTo: `${url.origin}/thanks`,
   };
 }
 
@@ -344,22 +343,55 @@ export async function action({ request, context }: Route.ActionArgs) {
     };
   }
 
-  // One id shared by the browser pixel and the server Conversions API call, so
-  // Meta merges the two instead of counting the purchase twice.
-  const metaEventId = crypto.randomUUID();
+  // The intent was made when the page loaded. The browser confirms it a moment
+  // after this returns, so this is the last point at which the amount can be
+  // put right — and it is put right on the server, from the cart row.
+  const intentId = token ? await cartPaymentIntentId(context.db, store.id, token) : null;
+  if (!intentId) {
+    return { error: "This checkout has expired. Please reload the page and try again." };
+  }
 
   let intent;
   try {
-    intent = await provider.createIntent({
+    intent = await provider.readIntent(intentId);
+  } catch (error) {
+    return {
+      error: `The payment could not be read back: ${
+        error instanceof Error ? error.message : "unknown error"
+      }. Nothing has been charged.`,
+    };
+  }
+  if (!PAYABLE_INTENT_STATUSES.has(intent.status)) {
+    return { error: "This payment has already been taken. Please reload the page." };
+  }
+
+  // An order may already be sitting against this intent — a card was declined
+  // and they are trying again. One intent is one order; the row is brought up
+  // to date rather than written twice.
+  const existing = await orderByPaymentRef(context.db, intent.id);
+  if (existing && (existing.storeId !== store.id || existing.paymentStatus !== "pending")) {
+    return { error: "This payment has already been taken. Please reload the page." };
+  }
+
+  // One id shared by the browser pixel and the server Conversions API call, so
+  // Meta merges the two instead of counting the purchase twice. A retry keeps
+  // the id the first attempt was given.
+  const metaEventId = existing?.metaEventId ?? crypto.randomUUID();
+
+  // The amount Stripe is holding is moved to the amount just computed — with
+  // the destination state applied, which a manual tax rate can change. A stale
+  // amount never reaches confirmation.
+  const changed = intent.amountCents !== cart.totalCents;
+  try {
+    await provider.updateIntent(intent.id, {
       amountCents: cart.totalCents,
       currency: cart.currency,
       email,
-      orderReference: `${store.name} order`,
       metadata: { storeId: store.id, metaEventId },
     });
   } catch (error) {
     return {
-      error: `The payment could not be started: ${
+      error: `The payment could not be updated: ${
         error instanceof Error ? error.message : "unknown error"
       }. Nothing has been charged.`,
     };
@@ -367,19 +399,15 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   const geo = geoFromRequest(request);
   const metaCookies = readMetaCookies(request);
+  const country = COUNTRIES.some(([code]) => code === form.get("country"))
+    ? String(form.get("country"))
+    : "US";
+  const address2 =
+    [String(form.get("company") || "").trim(), String(form.get("address2") || "").trim()]
+      .filter(Boolean)
+      .join(" · ") || null;
 
-  const order = await placeOrder(context.db, {
-    storeId: store.id,
-    customerName: name,
-    email,
-    phone: String(form.get("phone") || "").trim() || null,
-    address1: String(form.get("address1") || "").trim() || null,
-    address2: [String(form.get("company") || "").trim(), String(form.get("address2") || "").trim()].filter(Boolean).join(" · ") || null,
-    marketingConsent: form.get("consent") === "on",
-    city: String(form.get("city") || "").trim() || null,
-    region: String(form.get("region") || "").trim() || null,
-    postalCode: String(form.get("postalCode") || "").trim() || null,
-    country: COUNTRIES.some(([code]) => code === form.get("country")) ? String(form.get("country")) : "US",
+  const money = {
     subtotalCents: cart.subtotalCents,
     taxCents: cart.taxCents,
     shippingCents: cart.shippingCents,
@@ -388,26 +416,78 @@ export async function action({ request, context }: Route.ActionArgs) {
     // Both worked out by priceCart, on the server, from the code on the cart row.
     discountCode: cart.discount?.code ?? null,
     discountCents: cart.discount?.amountCents ?? 0,
-    paymentProvider: provider.name,
-    paymentRef: intent.id,
-    paymentStatus: "pending",
-    source: url.searchParams.get("utm_source") || null,
-    campaign: url.searchParams.get("utm_campaign") || null,
-    metaEventId,
-    fbp: metaCookies.fbp,
-    fbc: metaCookies.fbc,
-    lat: geo.lat,
-    lon: geo.lon,
-    lines: cart.lines.map((line) => ({
-      variantId: line.variantId,
-      title: line.productTitle,
-      label: line.label,
-      unitPriceCents: line.unitPriceCents,
-      quantity: line.quantity,
-    })),
-  });
+  };
+  const lines = cart.lines.map((line) => ({
+    variantId: line.variantId,
+    title: line.productTitle,
+    label: line.label,
+    unitPriceCents: line.unitPriceCents,
+    quantity: line.quantity,
+  }));
 
-  if (token) await markCartConverted(context.db, store.id, token, order.id);
+  let orderId: string;
+  let orderNumber: number;
+
+  if (existing) {
+    // Same intent, same order. The details and the money are refreshed, and
+    // the lines are rewritten so the row can never describe a cart that has
+    // since changed underneath it.
+    await context.db
+      .update(ordersTable)
+      .set({
+        customerName: name,
+        email,
+        phone: String(form.get("phone") || "").trim() || null,
+        address1: String(form.get("address1") || "").trim() || null,
+        address2,
+        city: String(form.get("city") || "").trim() || null,
+        region: String(form.get("region") || "").trim() || null,
+        postalCode: String(form.get("postalCode") || "").trim() || null,
+        country,
+        marketingConsent: form.get("consent") === "on",
+        ...money,
+        updatedAt: new Date(),
+      })
+      .where(eq(ordersTable.id, existing.id));
+    await context.db.delete(orderItemsTable).where(eq(orderItemsTable.orderId, existing.id));
+    if (lines.length) {
+      await context.db
+        .insert(orderItemsTable)
+        .values(lines.map((line) => ({ orderId: existing.id, ...line })));
+    }
+    orderId = existing.id;
+    orderNumber = existing.number;
+  } else {
+    const order = await placeOrder(context.db, {
+      storeId: store.id,
+      customerName: name,
+      email,
+      phone: String(form.get("phone") || "").trim() || null,
+      address1: String(form.get("address1") || "").trim() || null,
+      address2,
+      marketingConsent: form.get("consent") === "on",
+      city: String(form.get("city") || "").trim() || null,
+      region: String(form.get("region") || "").trim() || null,
+      postalCode: String(form.get("postalCode") || "").trim() || null,
+      country,
+      ...money,
+      paymentProvider: provider.name,
+      paymentRef: intent.id,
+      paymentStatus: "pending",
+      source: url.searchParams.get("utm_source") || null,
+      campaign: url.searchParams.get("utm_campaign") || null,
+      metaEventId,
+      fbp: metaCookies.fbp,
+      fbc: metaCookies.fbc,
+      lat: geo.lat,
+      lon: geo.lon,
+      lines,
+    });
+    orderId = order.id;
+    orderNumber = order.number;
+  }
+
+  if (token) await markCartConverted(context.db, store.id, token, orderId);
 
   track(context.db, context.cloudflare.ctx, {
     storeId: store.id,
@@ -417,20 +497,33 @@ export async function action({ request, context }: Route.ActionArgs) {
     geo,
     device: deviceFromRequest(request),
     amountCents: cart.totalCents,
-    orderId: order.id,
+    orderId,
   });
 
   return {
-    clientSecret: intent.clientSecret,
-    orderId: order.id,
-    orderNumber: order.number,
-    returnTo: `${url.origin}/thanks?order=${order.id}`,
+    ok: true as const,
+    orderId,
+    orderNumber,
+    totalCents: cart.totalCents,
+    /**
+     * The total moved between the page loading and this submit — a state tax
+     * rate applying to the address they just typed. The browser is told to
+     * show the new figure and ask again rather than confirm an amount nobody
+     * agreed to.
+     */
+    repriced: changed,
+    returnTo: `${url.origin}/thanks?order=${orderId}`,
   };
 }
 
 /* ------------------------------------------------------------ validation */
 
 type LoadedStore = Awaited<ReturnType<typeof loader>>["store"];
+/** What the action can answer with, from this page's point of view. */
+type ActionReply =
+  | { error: string }
+  | { discountError?: string | null }
+  | { ok: true; orderId: string; orderNumber: number; totalCents: number; repriced: boolean; returnTo: string };
 type Errors = Partial<Record<string, string>>;
 
 /**
@@ -477,44 +570,24 @@ function fieldForMessage(message: string): string | null {
 
 /* --------------------------------------------------------------- the page */
 
-export default function Checkout({ loaderData, actionData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, paymentsMessage, publishableKey, pixel, footerLinks, photo } = loaderData;
-  const navigation = useNavigation();
-  const busy = navigation.state === "submitting";
+export default function Checkout({ loaderData }: Route.ComponentProps) {
+  const { store, cart, paymentsReady, paymentsMessage, publishableKey, clientSecret, pixel, footerLinks, photo } =
+    loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = store.slug === GARDEN_BUDDY;
   const home = `/${storeParam}`;
   const href = (path: string) => `${path}${storeParam}`;
-
-  const [touched, setTouched] = useState<Errors>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({});
-
-  const clientErrors = validate(values, store);
-  const serverMessage = actionData && "error" in actionData ? actionData.error : null;
-  const serverField = serverMessage ? fieldForMessage(serverMessage) : null;
-  const errors: Errors = { ...clientErrors };
-  if (serverField && serverMessage) errors[serverField] = serverMessage;
-
-  const shownError = (field: string) =>
-    (submitted || touched[field] ? clientErrors[field] : undefined) ??
-    (serverField === field ? serverMessage ?? undefined : undefined);
-
-  const onField = (field: string, value: string) => setValues((prev) => ({ ...prev, [field]: value }));
-  const onBlur = (field: string) => setTouched((prev) => ({ ...prev, [field]: "1" }));
-
-  const paying = Boolean(actionData && "clientSecret" in actionData && actionData.clientSecret);
+  const cn = buddy ? BUDDY : KNEELER;
   const money = (cents: number) => formatMoney(cents, cart.currency);
 
-  /* The cart emptied under them, and there is no payment in flight. */
-  if (cart.lines.length === 0 && !paying) {
+  /* The cart emptied under them. */
+  if (cart.lines.length === 0) {
     if (buddy) {
       return (
         <>
           <BuddyFonts />
           {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
-          {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
-        <link rel="stylesheet" href={buddyHref} />
+          <link rel="stylesheet" href={buddyHref} />
           <div className="gb gb-co-sec">
             <CheckoutHeader store={store} home={home} />
             <div className="gb-co">
@@ -550,78 +623,22 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
   }
 
   const summary = (
-    <Summary
-      cart={cart}
-      photo={photo}
-      shipEstimate={store.shipEstimate}
-      cn={buddy ? BUDDY : KNEELER}
-      money={money}
-      locked={paying}
-    />
+    <Summary cart={cart} photo={photo} shipEstimate={store.shipEstimate} cn={cn} money={money} locked={false} />
   );
 
-  const stepper = <Steps step={paying ? 2 : 1} cn={buddy ? BUDDY : KNEELER} />;
-
-  const left = paying && publishableKey && actionData && "clientSecret" in actionData ? (
-    <StripePayment
+  const left = (
+    <OnePage
+      cn={cn}
+      store={store}
+      cart={cart}
+      money={money}
+      paymentsReady={paymentsReady}
+      paymentsMessage={paymentsMessage}
       publishableKey={publishableKey}
-      clientSecret={actionData.clientSecret!}
-      returnTo={actionData.returnTo!}
-      total={money(cart.totalCents)}
-      cn={buddy ? BUDDY : KNEELER}
+      clientSecret={clientSecret}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
     />
-  ) : (
-    <Form
-      method="post"
-      noValidate
-      onSubmit={(event) => {
-        setSubmitted(true);
-        if (Object.keys(clientErrors).length > 0) event.preventDefault();
-      }}
-    >
-      <h2 className={buddy ? BUDDY.h2 : KNEELER.h2} style={buddy ? undefined : { marginTop: 0 }}>
-        Where it goes
-      </h2>
-
-      {!paymentsReady ? (
-        <div className={buddy ? BUDDY.alert : KNEELER.alert}>
-          {paymentsMessage} Nothing can be charged until that is set up, so please do not enter
-          card details yet.
-        </div>
-      ) : null}
-
-      {serverMessage && !serverField ? (
-        <div className={buddy ? BUDDY.alert : KNEELER.alert}>{serverMessage}</div>
-      ) : null}
-
-      <Fields
-        cn={buddy ? BUDDY : KNEELER}
-        store={store}
-        shownError={shownError}
-        onField={onField}
-        onBlur={onBlur}
-      />
-
-      {store.consent ? (
-        <label className={buddy ? BUDDY.check : KNEELER.check} style={buddy ? undefined : { display: "flex", gap: 10, alignItems: "center", fontSize: 17, marginBottom: 14 }}>
-          <input type="checkbox" name="consent" style={buddy ? undefined : { width: 22, height: 22 }} />
-          Email me about new offers
-        </label>
-      ) : null}
-
-      <button
-        className={buddy ? BUDDY.btn : KNEELER.btn}
-        type="submit"
-        disabled={busy || !paymentsReady}
-        style={buddy ? undefined : { width: "100%", marginTop: 10, opacity: paymentsReady ? 1 : 0.5 }}
-      >
-        {busy ? "One moment…" : "Continue to payment"}
-      </button>
-
-      {buddy ? <TrustRow /> : null}
-    </Form>
   );
 
   if (buddy) {
@@ -642,8 +659,6 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
               </summary>
               <div className="gb-co__msum-body">{summary}</div>
             </details>
-
-            {stepper}
 
             <div className="gb-co__grid">
               <section className="gb-co__panel">{left}</section>
@@ -673,7 +688,6 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
       </header>
 
       <div className="gk-shell">
-        {stepper}
         <div
           style={{
             display: "grid",
@@ -735,8 +749,6 @@ interface CN {
   btn: string;
   alert: string;
   note: string;
-  steps: string;
-  stepsStyle?: React.CSSProperties;
   lines: string;
   linesStyle?: React.CSSProperties;
   line: string;
@@ -757,7 +769,6 @@ const BUDDY: CN = {
   btn: "gb-co__btn",
   alert: "gb-co__alert",
   note: "gb-co__note",
-  steps: "gb-co__steps",
   lines: "gb-co__lines",
   line: "gb-co__line",
   tot: "gb-co__tot",
@@ -777,8 +788,6 @@ const KNEELER: CN = {
   btn: "gk-cta",
   alert: "gk-alert",
   note: "gk-quiet",
-  steps: "",
-  stepsStyle: { display: "flex", gap: 12, listStyle: "none", padding: 0, margin: "0 0 18px", alignItems: "center" },
   lines: "",
   linesStyle: { listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 14 },
   line: "gk-line",
@@ -801,25 +810,6 @@ const BUDDY_APPEARANCE = {
 const KNEELER_APPEARANCE = { theme: "night", variables: { colorPrimary: "#b6f03c", fontSizeBase: "17px" } };
 
 /* ----------------------------------------------------------------- pieces */
-
-function Steps({ step, cn }: { step: 1 | 2; cn: CN }) {
-  const items = ["Where it goes", "Payment"];
-  return (
-    <ol className={cn.steps} style={cn.stepsStyle}>
-      {items.map((label, index) => {
-        const n = index + 1;
-        const state = n < step ? "is-done" : n === step ? "is-now" : "";
-        return (
-          <li key={label} className={state} aria-current={n === step ? "step" : undefined}
-              style={cn.stepsStyle ? { display: "flex", alignItems: "center", gap: 8, opacity: n === step ? 1 : 0.55 } : undefined}>
-            <span className={cn.steps ? "gb-co__dot" : undefined}>{n < step ? "✓" : n}</span>
-            {label}
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
 
 function Field({
   cn,
@@ -1131,46 +1121,101 @@ function DiscountBox({
 }
 
 /**
- * Stripe's payment element.
+ * The one page: wallets, details, card, one button.
  *
- * Card details are entered inside Stripe's own iframe and never touch this
- * Worker, which is what keeps the PCI burden off this codebase entirely.
+ * Stripe's Elements are mounted the moment the page loads, on the intent the
+ * loader made, which is the only way a wallet button can be on screen before
+ * anyone has typed. The Express Checkout Element is *shown* only when Stripe's
+ * own `ready` event says this browser has a wallet to offer — so there is
+ * never a button here that cannot take money. A method the account has not
+ * enabled, or a domain not registered for Apple Pay, simply does not appear.
  *
- * Above it, the Express Checkout Element. It is mounted on the same
- * PaymentIntent, so a wallet payment is the same charge against the same
- * pending order — no second code path. It is only ever *shown* when Stripe's
- * `ready` event reports that this browser actually has a wallet to offer, so
- * there is never a button here that does nothing. If Apple Pay is not enabled
- * on the account, or the domain is not registered with Stripe, the slot stays
- * empty and the page reads as if it were never there.
+ * Card details are entered inside Stripe's iframe and never touch this Worker,
+ * which is what keeps the PCI burden off this codebase entirely.
+ *
+ * Both routes to a payment do the same two things in the same order: post the
+ * details to this route's action, which writes the pending order against the
+ * intent id the webhook will match on, and only then confirm. An order that
+ * exists and is unpaid is recoverable; a payment with no order is money taken
+ * for something nobody can find.
  */
-function StripePayment({
+function OnePage({
+  cn,
+  store,
+  cart,
+  money,
+  paymentsReady,
+  paymentsMessage,
   publishableKey,
   clientSecret,
-  returnTo,
-  total,
-  cn,
   appearance,
   trust,
 }: {
-  publishableKey: string;
-  clientSecret: string;
-  returnTo: string;
-  total: string;
   cn: CN;
+  store: LoadedStore;
+  cart: Awaited<ReturnType<typeof loader>>["cart"];
+  money: (cents: number) => string;
+  paymentsReady: boolean;
+  paymentsMessage: string | null;
+  publishableKey: string | null;
+  clientSecret: string | null;
   appearance: unknown;
   trust: React.ReactNode;
 }) {
-  const mountRef = useRef<HTMLDivElement>(null);
+  const buddy = cn === BUDDY;
+  const fetcher = useFetcher<ActionReply>();
+
+  const formRef = useRef<HTMLFormElement>(null);
   const walletRef = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
-  const [wallets, setWallets] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const stripeRef = useRef<any>(null);
   const elementsRef = useRef<any>(null);
+  /** resolves the in-flight details post, so a wallet's confirm can await it */
+  const replyRef = useRef<((reply: ActionReply) => void) | null>(null);
 
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Errors>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [wallets, setWallets] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [working, setWorking] = useState(false);
+  /** the server's figure when it differs from the one the page loaded with */
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
+  const [repriced, setRepriced] = useState(false);
+
+  const clientErrors = validate(values, store);
+  const reply = fetcher.data;
+  const serverMessage = reply && "error" in reply && reply.error ? reply.error : null;
+  const serverField = serverMessage ? fieldForMessage(serverMessage) : null;
+
+  const shownError = (field: string) =>
+    (submitted || touched[field] ? clientErrors[field] : undefined) ??
+    (serverField === field ? serverMessage ?? undefined : undefined);
+
+  const onField = (field: string, value: string) => setValues((prev) => ({ ...prev, [field]: value }));
+  const onBlur = (field: string) => setTouched((prev) => ({ ...prev, [field]: "1" }));
+
+  const total = serverTotal ?? cart.totalCents;
+
+  /* Hand the action's answer back to whoever is waiting on it. */
   useEffect(() => {
+    if (fetcher.state !== "idle" || !fetcher.data) return;
+    const resolve = replyRef.current;
+    if (!resolve) return;
+    replyRef.current = null;
+    resolve(fetcher.data);
+  }, [fetcher.state, fetcher.data]);
+
+  const postDetails = (body: FormData) =>
+    new Promise<ActionReply>((resolve) => {
+      replyRef.current = resolve;
+      fetcher.submit(body, { method: "post" });
+    });
+
+  /* Mount Stripe once, on the intent the loader made. */
+  useEffect(() => {
+    if (!publishableKey || !clientSecret) return;
     let cancelled = false;
 
     const boot = async () => {
@@ -1187,95 +1232,232 @@ function StripePayment({
 
       const stripe = (window as any).Stripe(publishableKey);
       const elements = stripe.elements({ clientSecret, appearance });
+      stripeRef.current = stripe;
+      elementsRef.current = elements;
 
-      // Wallets first, because a person who has one is done in two taps.
+      // Wallets first, because a person who has one is done in two taps. The
+      // wallet is asked for the address as well, because it is the only address
+      // that flow ever has — and the order cannot be shipped without one.
       const express = elements.create("expressCheckout", {
         buttonHeight: 56,
-        // The address is already on the order; the wallet only supplies the
-        // payment method and the billing details Stripe needs for the charge.
-        emailRequired: false,
-        phoneNumberRequired: false,
+        emailRequired: true,
+        phoneNumberRequired: store.phoneMode === "required",
+        billingAddressRequired: true,
       });
+
       express.on("ready", (event: any) => {
         const available = event?.availablePaymentMethods;
         const any = available && Object.values(available).some(Boolean);
         if (!cancelled) setWallets(Boolean(any));
       });
-      express.on("confirm", async () => {
-        setError(null);
-        setSubmitting(true);
-        const result = await stripe.confirmPayment({
-          elements,
-          clientSecret,
-          confirmParams: { return_url: returnTo },
-        });
-        if (result?.error) {
-          setError(result.error.message ?? "The payment did not go through.");
-          setSubmitting(false);
-        }
+
+      express.on("confirm", async (event: any) => {
+        setPayError(null);
+        setWorking(true);
+        const done = await payWithWallet(event);
+        if (!done) setWorking(false);
       });
+
       if (walletRef.current) express.mount(walletRef.current);
 
       const payment = elements.create("payment");
-      if (mountRef.current) payment.mount(mountRef.current);
+      if (cardRef.current) payment.mount(cardRef.current);
 
-      stripeRef.current = stripe;
-      elementsRef.current = elements;
-      setReady(true);
+      if (!cancelled) setReady(true);
     };
 
-    boot().catch((bootError) => {
-      if (!cancelled) setError(bootError.message);
+    boot().catch((bootError: Error) => {
+      if (!cancelled) setPayError(bootError.message);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [publishableKey, clientSecret, returnTo, appearance]);
+    // The intent, and therefore the secret, is fixed for the life of this cart.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publishableKey, clientSecret]);
 
-  const pay = async () => {
-    if (!stripeRef.current || !elementsRef.current) return;
-    setSubmitting(true);
-    setError(null);
+  /* The total moved — a discount applied, a quantity changed. The server has
+     already moved the intent to match; this pulls the new amount into the
+     mounted elements so the wallet sheet can never show yesterday's price. */
+  const lastTotal = useRef(cart.totalCents);
+  useEffect(() => {
+    if (lastTotal.current === cart.totalCents) return;
+    lastTotal.current = cart.totalCents;
+    setServerTotal(null);
+    setRepriced(false);
+    elementsRef.current?.fetchUpdates?.();
+  }, [cart.totalCents]);
+
+  /** Reads the typed fields. The amounts are not among them — they are the
+      server's, always. */
+  const detailsFromForm = (): FormData => {
+    const body = new FormData(formRef.current!);
+    body.set("intent", "pay");
+    return body;
+  };
+
+  /** Turns what the wallet handed back into the same fields the form posts. */
+  const detailsFromWallet = (event: any): FormData => {
+    const details = event?.billingDetails ?? {};
+    const address = details.address ?? {};
+    const body = new FormData();
+    body.set("intent", "pay");
+    body.set("name", String(details.name ?? "").trim());
+    body.set("email", String(event?.billingDetails?.email ?? details.email ?? "").trim());
+    body.set("phone", String(details.phone ?? "").trim());
+    body.set("address1", String(address.line1 ?? "").trim());
+    body.set("address2", String(address.line2 ?? "").trim());
+    body.set("city", String(address.city ?? "").trim());
+    body.set("region", String(address.state ?? "").trim());
+    body.set("postalCode", String(address.postal_code ?? "").trim());
+    body.set("country", String(address.country ?? "US").trim());
+    if (values.consent === "on") body.set("consent", "on");
+    return body;
+  };
+
+  /**
+   * Writes the order, then confirms. Returns true when Stripe has taken over
+   * (it redirects to the return url), false when we are still here with an
+   * error to show.
+   */
+  const confirmAfterOrder = async (body: FormData): Promise<boolean> => {
+    const answer = await postDetails(body);
+
+    if (!answer || !("ok" in answer)) {
+      // The action's own sentence. Field-level ones render under their box.
+      if (answer && "error" in answer && answer.error && !fieldForMessage(answer.error)) {
+        setPayError(answer.error);
+      }
+      return false;
+    }
+
+    setServerTotal(answer.totalCents);
+    if (answer.repriced) {
+      // The address changed the tax. Nobody is charged an amount they have not
+      // been shown, so the new one is shown and the button is pressed again.
+      setRepriced(true);
+      return false;
+    }
 
     const result = await stripeRef.current.confirmPayment({
       elements: elementsRef.current,
-      confirmParams: { return_url: returnTo },
+      clientSecret,
+      confirmParams: { return_url: answer.returnTo },
     });
 
-    if (result.error) {
-      setError(result.error.message ?? "The payment did not go through.");
-      setSubmitting(false);
+    if (result?.error) {
+      setPayError(result.error.message ?? "The payment did not go through.");
+      return false;
     }
+    return true;
   };
 
-  const buddy = cn === BUDDY;
+  const payWithWallet = async (event: any): Promise<boolean> => {
+    const done = await confirmAfterOrder(detailsFromWallet(event));
+    // Telling the sheet it failed is what closes it; leaving it open on a
+    // payment that is not happening is worse than the error underneath it.
+    if (!done) event?.paymentFailed?.({ reason: "fail" });
+    return done;
+  };
+
+  const pay = async () => {
+    setSubmitted(true);
+    if (Object.keys(clientErrors).length > 0) {
+      // Nothing is confirmed until the details are good enough to ship to.
+      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      return;
+    }
+    if (!stripeRef.current || !elementsRef.current) return;
+    setPayError(null);
+    setRepriced(false);
+    setWorking(true);
+    const done = await confirmAfterOrder(detailsFromForm());
+    if (!done) setWorking(false);
+  };
+
+  /* No intent, no form. A page that cannot take money does not draw a box
+     that looks like it can. */
+  if (!paymentsReady || !publishableKey || !clientSecret) {
+    return (
+      <div>
+        <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
+          Checkout
+        </h2>
+        <div className={cn.alert}>
+          {paymentsMessage ?? "Payments are not available right now."} Nothing can be charged, so
+          please do not enter any card details.
+        </div>
+        {trust}
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
-        Payment
-      </h2>
-      {error ? <div className={cn.alert}>{error}</div> : null}
-
+    <form
+      ref={formRef}
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        void pay();
+      }}
+    >
       {/* Mounted always so Stripe can answer; shown only once it says yes. */}
       <div className={buddy ? "gb-co__wallet" : undefined} style={wallets ? undefined : { display: "none" }}>
+        <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
+          Express checkout
+        </h2>
         <div ref={walletRef} />
-        {buddy ? <div className="gb-co__or">or pay by card</div> : null}
+        <div className={buddy ? "gb-co__or" : undefined} style={buddy ? undefined : { textAlign: "center", margin: "18px 0" }}>
+          or pay by card
+        </div>
       </div>
 
-      <div ref={mountRef} style={{ minHeight: 200 }} />
+      <h2 className={cn.h2} style={buddy || wallets ? undefined : { marginTop: 0 }}>
+        Where it goes
+      </h2>
+
+      {payError ? <div className={cn.alert}>{payError}</div> : null}
+      {serverMessage && !serverField ? <div className={cn.alert}>{serverMessage}</div> : null}
+
+      <Fields cn={cn} store={store} shownError={shownError} onField={onField} onBlur={onBlur} />
+
+      {store.consent ? (
+        <label className={cn.check} style={buddy ? undefined : { display: "flex", gap: 10, alignItems: "center", fontSize: 17, marginBottom: 14 }}>
+          <input
+            type="checkbox"
+            name="consent"
+            style={buddy ? undefined : { width: 22, height: 22 }}
+            onChange={(event) => onField("consent", event.currentTarget.checked ? "on" : "")}
+          />
+          Email me about new offers
+        </label>
+      ) : null}
+
+      <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 26 }}>
+        Payment
+      </h2>
+
+      <div ref={cardRef} style={{ minHeight: 200 }} />
+
+      {repriced ? (
+        <div className={cn.alert} style={{ marginTop: 16 }}>
+          The tax for that address changes your total to {money(total)}. Press Pay again to be
+          charged that amount — nothing has been charged yet.
+        </div>
+      ) : null}
+
       <button
         className={cn.btn}
-        type="button"
-        onClick={pay}
-        disabled={!ready || submitting}
-        style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: ready && !submitting ? 1 : 0.6 }}
+        type="submit"
+        disabled={!ready || working}
+        style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: ready && !working ? 1 : 0.6 }}
       >
-        {submitting ? "Paying…" : `Pay ${total}`}
+        {working ? "Paying…" : `Pay ${money(total)}`}
       </button>
+
       <p className={cn.note}>Card details go straight to Stripe. They never touch this store.</p>
       {trust}
-    </div>
+    </form>
   );
 }
