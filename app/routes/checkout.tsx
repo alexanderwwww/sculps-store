@@ -551,8 +551,13 @@ function validate(values: Record<string, string>, store: LoadedStore): Errors {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(at("email"))) {
     errors.email = "That email address does not look right — we send your receipt there.";
   }
+  // Company is only ever asked for when this store's settings make the server
+  // demand it. It is not one of the four, so it is never invented here.
   if (store.companyMode === "required" && !at("company")) errors.company = "Please add the company name.";
-  if (store.phoneMode === "required" && !at("phone")) errors.phone = "Please add your phone number so we can ship it.";
+  // Name, address, email, phone — the four, and nothing else. Phone is asked
+  // for wherever the field is on the page; the server still accepts an order
+  // without one, so this never refuses anything the server would have taken.
+  if (store.phoneMode !== "hidden" && !at("phone")) errors.phone = "Please add your phone number so we can ship it.";
   if (!at("address1")) errors.address1 = "Please add your street address so we can ship it.";
   if (!at("city")) errors.city = "Please add your city so we can ship it.";
   if (!at("region")) errors.region = "Please add your state so we can ship it.";
@@ -647,6 +652,8 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       clientSecret={clientSecret}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
+      shell={buddy}
+      summary={summary}
     />
   );
 
@@ -659,26 +666,10 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         <div className="gb gb-co-sec">
           <CheckoutHeader store={store} home={home} />
-          <main className="gb-co">
-            <details className="gb-co__msum">
-              <summary>
-                <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
-                Order summary
-                <span className="gb-co__msum-total">{money(cart.totalCents)}</span>
-              </summary>
-              <div className="gb-co__msum-body">{summary}</div>
-            </details>
-
-            <div className="gb-co__grid">
-              <section className="gb-co__panel">{left}</section>
-              <aside className="gb-co__aside">
-                <div className="gb-co__panel">
-                  <h2 className="gb-co__h3">Order summary</h2>
-                  {summary}
-                </div>
-              </aside>
-            </div>
-          </main>
+          {/* The wallets, the folded summary and the form are all laid out
+              inside OnePage, because the wallet row has to come above the
+              summary row as well as above the fields. */}
+          <main className="gb-co">{left}</main>
           <CheckoutFooter store={store} links={footerLinks.map(withParam(storeParam))} contactEmail={store.contactEmail} />
         </div>
       </>
@@ -832,7 +823,7 @@ function Field({
 }: {
   cn: CN;
   name: string;
-  label: string;
+  label: React.ReactNode;
   error?: string;
   onValue: (field: string, value: string) => void;
   onTouch: (field: string) => void;
@@ -861,7 +852,14 @@ function Field({
   );
 }
 
-function Fields({
+/**
+ * The two groups of typed details, in the order a person can answer them:
+ * who to reach, then where it goes. Four things are asked for and required —
+ * name, address, email, phone. Everything else on this page is optional, and
+ * the company box only appears at all when this store's settings make the
+ * server demand it.
+ */
+function ContactFields({
   cn,
   store,
   shownError,
@@ -879,59 +877,103 @@ function Fields({
     <>
       <Field
         {...common}
-        name="name"
-        label={store.nameMode === "full" ? "Full name" : "Name"}
-        autoComplete="given-name"
-        autoCapitalize="words"
-        error={shownError("name")}
-      />
-      <Field
-        {...common}
         name="email"
-        label="Email — your receipt goes here"
+        label="Email"
         type="email"
         inputMode="email"
         autoComplete="email"
         autoCapitalize="off"
+        autoCorrect="off"
         spellCheck={false}
+        enterKeyHint="next"
         error={shownError("email")}
       />
       {store.phoneMode !== "hidden" ? (
         <Field
           {...common}
           name="phone"
-          label={store.phoneMode === "required" ? "Phone" : "Phone (optional)"}
+          label="Phone"
           type="tel"
           inputMode="tel"
           autoComplete="tel"
+          enterKeyHint="next"
           error={shownError("phone")}
         />
       ) : null}
-      {store.companyMode !== "hidden" ? (
-        <Field
-          {...common}
-          name="company"
-          label={store.companyMode === "required" ? "Company" : "Company (optional)"}
-          autoComplete="organization"
-          error={shownError("company")}
-        />
+    </>
+  );
+}
+
+function ShippingFields({
+  cn,
+  store,
+  shownError,
+  onField,
+  onBlur,
+}: {
+  cn: CN;
+  store: LoadedStore;
+  shownError: (field: string) => string | undefined;
+  onField: (field: string, value: string) => void;
+  onBlur: (field: string) => void;
+}) {
+  const common = { cn, onValue: onField, onTouch: onBlur };
+  const optional = (label: string) => (
+    <>
+      {label} <span className="gb-co__optional">(optional)</span>
+    </>
+  );
+  return (
+    <>
+      <Field
+        {...common}
+        name="name"
+        label={store.nameMode === "full" ? "Full name" : "Name"}
+        autoComplete="name"
+        autoCapitalize="words"
+        enterKeyHint="next"
+        error={shownError("name")}
+      />
+      {/* Only when the server will refuse the order without it. */}
+      {store.companyMode === "required" ? (
+        <Field {...common} name="company" label="Company" autoComplete="organization" error={shownError("company")} />
       ) : null}
       <Field
         {...common}
         name="address1"
         label="Address"
         autoComplete="address-line1"
+        autoCapitalize="words"
+        enterKeyHint="next"
         error={shownError("address1")}
       />
       <Field
         {...common}
         name="address2"
-        label="Apartment, suite (optional)"
+        label={cn === BUDDY ? optional("Apartment, suite") : "Apartment, suite (optional)"}
         autoComplete="address-line2"
+        autoCapitalize="words"
+        enterKeyHint="next"
       />
       <div className={cn.row} style={cn.rowStyle}>
-        <Field {...common} name="city" label="City" autoComplete="address-level2" error={shownError("city")} />
-        <Field {...common} name="region" label="State" autoComplete="address-level1" error={shownError("region")} />
+        <Field
+          {...common}
+          name="city"
+          label="City"
+          autoComplete="address-level2"
+          autoCapitalize="words"
+          enterKeyHint="next"
+          error={shownError("city")}
+        />
+        <Field
+          {...common}
+          name="region"
+          label="State"
+          autoComplete="address-level1"
+          autoCapitalize="characters"
+          enterKeyHint="next"
+          error={shownError("region")}
+        />
       </div>
       <div className={cn.row} style={cn.rowStyle}>
         <Field
@@ -940,6 +982,7 @@ function Fields({
           label="ZIP code"
           inputMode="numeric"
           autoComplete="postal-code"
+          enterKeyHint="done"
           error={shownError("postalCode")}
         />
         <label className={cn.field}>
@@ -1013,14 +1056,6 @@ function Summary({
           <b>{money(cart.subtotalCents)}</b>
         </div>
 
-        <div className={`${cn.tot}${buddy && cart.shippingCents === 0 ? " gb-co__tot--free" : ""}`}>
-          <span>
-            Shipping
-            {shipEstimate ? <span className={buddy ? "gb-co__line-sub" : "gk-quiet"}> · {shipEstimate}</span> : null}
-          </span>
-          <b>{cart.shippingCents > 0 ? money(cart.shippingCents) : "Free"}</b>
-        </div>
-
         {cart.discount ? (
           <div className={cn.tot}>
             <span>
@@ -1029,6 +1064,14 @@ function Summary({
             <b>−{money(cart.discount.amountCents)}</b>
           </div>
         ) : null}
+
+        <div className={`${cn.tot}${buddy && cart.shippingCents === 0 ? " gb-co__tot--free" : ""}`}>
+          <span>
+            Shipping
+            {shipEstimate ? <span className={buddy ? "gb-co__line-sub" : "gk-quiet"}> · {shipEstimate}</span> : null}
+          </span>
+          <b>{cart.shippingCents > 0 ? money(cart.shippingCents) : "Free"}</b>
+        </div>
 
         {cart.taxCents > 0 ? (
           <div className={cn.tot}>
@@ -1159,6 +1202,8 @@ function OnePage({
   clientSecret,
   appearance,
   trust,
+  shell,
+  summary,
 }: {
   cn: CN;
   store: LoadedStore;
@@ -1170,6 +1215,10 @@ function OnePage({
   clientSecret: string | null;
   appearance: unknown;
   trust: React.ReactNode;
+  /** this skin lays the whole page out from in here, so the wallets can sit
+      above the summary row as well as above the form */
+  shell: boolean;
+  summary: React.ReactNode;
 }) {
   const buddy = cn === BUDDY;
   const fetcher = useFetcher<ActionReply>();
@@ -1271,7 +1320,9 @@ function OnePage({
           // Stripe accepts 40–55 here and throws outside it.
           buttonHeight: 52,
           emailRequired: true,
-          phoneNumberRequired: store.phoneMode === "required",
+          // Phone is one of the four we ask for, so the sheet collects it too
+          // wherever this store shows a phone field at all.
+          phoneNumberRequired: store.phoneMode !== "hidden",
           billingAddressRequired: true,
         });
 
@@ -1403,6 +1454,9 @@ function OnePage({
   };
 
   const pay = async () => {
+    // The button is disabled while a payment is in flight; this is the second
+    // lock, so a stray Enter key or a double tap can never confirm twice.
+    if (working) return;
     setSubmitted(true);
     if (Object.keys(clientErrors).length > 0) {
       // Nothing is confirmed until the details are good enough to ship to.
@@ -1420,7 +1474,7 @@ function OnePage({
   /* No intent, no form. A page that cannot take money does not draw a box
      that looks like it can. */
   if (!paymentsReady || !publishableKey || !clientSecret) {
-    return (
+    const stopped = (
       <div>
         <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
           Checkout
@@ -1432,9 +1486,67 @@ function OnePage({
         {trust}
       </div>
     );
+    if (!shell) return stopped;
+    return (
+      <div className="gb-co__grid">
+        <div className="gb-co__main">
+          <section className="gb-co__panel">{stopped}</section>
+        </div>
+        <aside className="gb-co__aside">
+          <div className="gb-co__panel">
+            <h2 className="gb-co__h3">Order summary</h2>
+            {summary}
+          </div>
+        </aside>
+      </div>
+    );
   }
 
-  return (
+  /* Wallets. Mounted always so Stripe can answer, shown only once it has said
+     this browser has one — and rendered outside the form, above everything,
+     because someone holding a phone with Apple Pay should be finished before
+     they have read a single label. */
+  const express = (
+    <>
+      <section
+        className={buddy ? "gb-co__express" : undefined}
+        style={wallets ? undefined : { display: "none" }}
+        aria-label="Express checkout"
+      >
+        {buddy ? <p className="gb-co__express-lead">Express checkout</p> : (
+          <h2 className={cn.h2} style={{ marginTop: 0 }}>
+            Express checkout
+          </h2>
+        )}
+        <div className={buddy ? "gb-co__express-row" : undefined} ref={walletRef} />
+      </section>
+      <div
+        className={buddy ? "gb-co__or" : undefined}
+        style={wallets ? (buddy ? undefined : { textAlign: "center", margin: "18px 0" }) : { display: "none" }}
+      >
+        or pay with card
+      </div>
+    </>
+  );
+
+  const group = (step: string, title: string, note: string | null, children: React.ReactNode) => (
+    <section className={buddy ? "gb-co__group" : undefined} style={buddy ? undefined : { marginTop: 26 }}>
+      <div className={buddy ? "gb-co__group-head" : undefined}>
+        {buddy ? (
+          <span className="gb-co__step" aria-hidden="true">
+            {step}
+          </span>
+        ) : null}
+        <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
+          {title}
+        </h2>
+      </div>
+      {note ? <p className={buddy ? "gb-co__group-note" : cn.note}>{note}</p> : null}
+      {children}
+    </section>
+  );
+
+  const form = (
     <form
       ref={formRef}
       noValidate
@@ -1443,67 +1555,111 @@ function OnePage({
         void pay();
       }}
     >
-      {/* Mounted always so Stripe can answer; shown only once it says yes. */}
-      <div className={buddy ? "gb-co__wallet" : undefined} style={wallets ? undefined : { display: "none" }}>
-        <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
-          Express checkout
-        </h2>
-        <div ref={walletRef} />
-        <div className={buddy ? "gb-co__or" : undefined} style={buddy ? undefined : { textAlign: "center", margin: "18px 0" }}>
-          or pay by card
-        </div>
-      </div>
+      {group(
+        "1",
+        "Contact",
+        "Your receipt goes to this address, and we only call about this order.",
+        <>
+          <ContactFields cn={cn} store={store} shownError={shownError} onField={onField} onBlur={onBlur} />
+          {store.consent ? (
+            <label
+              className={cn.check}
+              style={buddy ? undefined : { display: "flex", gap: 10, alignItems: "center", fontSize: 17, marginBottom: 14 }}
+            >
+              <input
+                type="checkbox"
+                name="consent"
+                style={buddy ? undefined : { width: 22, height: 22 }}
+                onChange={(event) => onField("consent", event.currentTarget.checked ? "on" : "")}
+              />
+              Email me about new offers
+            </label>
+          ) : null}
+        </>,
+      )}
 
-      <h2 className={cn.h2} style={buddy || wallets ? undefined : { marginTop: 0 }}>
-        Where it goes
-      </h2>
+      {group(
+        "2",
+        "Shipping address",
+        null,
+        <ShippingFields cn={cn} store={store} shownError={shownError} onField={onField} onBlur={onBlur} />,
+      )}
 
-      <Fields cn={cn} store={store} shownError={shownError} onField={onField} onBlur={onBlur} />
+      {group(
+        "3",
+        "Payment",
+        null,
+        <>
+          <div className={buddy ? "gb-co__card" : undefined} ref={cardRef} style={buddy ? undefined : { minHeight: 200 }} />
 
-      {store.consent ? (
-        <label className={cn.check} style={buddy ? undefined : { display: "flex", gap: 10, alignItems: "center", fontSize: 17, marginBottom: 14 }}>
-          <input
-            type="checkbox"
-            name="consent"
-            style={buddy ? undefined : { width: 22, height: 22 }}
-            onChange={(event) => onField("consent", event.currentTarget.checked ? "on" : "")}
-          />
-          Email me about new offers
-        </label>
-      ) : null}
+          {/* Stripe's own words, under Stripe's own fields — a declined card is
+              about what is in that box, not about the page. */}
+          {payError || (serverMessage && !serverField) ? (
+            <div className={cn.alert} style={{ marginTop: 16, marginBottom: 0 }} role="alert">
+              {payError ?? serverMessage}
+            </div>
+          ) : null}
 
-      <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 26 }}>
-        Payment
-      </h2>
+          {repriced ? (
+            <div className={cn.alert} style={{ marginTop: 16 }}>
+              The tax for that address changes your total to {money(total)}. Press Pay again to be
+              charged that amount — nothing has been charged yet.
+            </div>
+          ) : null}
 
-      <div ref={cardRef} style={{ minHeight: 200 }} />
+          <button
+            className={buddy ? `${cn.btn} gb-co__pay` : cn.btn}
+            type="submit"
+            disabled={!ready || working}
+            aria-busy={working || undefined}
+            style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: ready && !working ? 1 : 0.6 }}
+          >
+            {working ? (
+              <>
+                {buddy ? <span className="gb-co__spin" aria-hidden="true" /> : null}
+                Paying…
+              </>
+            ) : (
+              `Pay ${money(total)}`
+            )}
+          </button>
 
-      {/* Stripe's own words, under Stripe's own fields — a declined card is
-          about what is in that box, not about the page. */}
-      {payError || (serverMessage && !serverField) ? (
-        <div className={cn.alert} style={{ marginTop: 16, marginBottom: 0 }} role="alert">
-          {payError ?? serverMessage}
-        </div>
-      ) : null}
-
-      {repriced ? (
-        <div className={cn.alert} style={{ marginTop: 16 }}>
-          The tax for that address changes your total to {money(total)}. Press Pay again to be
-          charged that amount — nothing has been charged yet.
-        </div>
-      ) : null}
-
-      <button
-        className={cn.btn}
-        type="submit"
-        disabled={!ready || working}
-        style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: ready && !working ? 1 : 0.6 }}
-      >
-        {working ? "Paying…" : `Pay ${money(total)}`}
-      </button>
-
-      <p className={cn.note}>Card details go straight to Stripe. They never touch this store.</p>
-      {trust}
+          <p className={cn.note}>Card details go straight to Stripe. They never touch this store.</p>
+          {trust}
+        </>,
+      )}
     </form>
+  );
+
+  if (!shell) {
+    return (
+      <>
+        {express}
+        {form}
+      </>
+    );
+  }
+
+  return (
+    <div className="gb-co__grid">
+      <div className="gb-co__main">
+        {express}
+        <details className="gb-co__msum">
+          <summary>
+            <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
+            Order summary
+            <span className="gb-co__msum-total">{money(total)}</span>
+          </summary>
+          <div className="gb-co__msum-body">{summary}</div>
+        </details>
+        <section className="gb-co__panel">{form}</section>
+      </div>
+      <aside className="gb-co__aside">
+        <div className="gb-co__panel">
+          <h2 className="gb-co__h3">Order summary</h2>
+          {summary}
+        </div>
+      </aside>
+    </div>
   );
 }

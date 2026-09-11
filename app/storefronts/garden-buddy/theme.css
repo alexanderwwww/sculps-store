@@ -695,3 +695,68 @@ select.gb-co__input { padding-right: 42px; background-image: url("data:image/svg
 .gb-co__foot-links { display: flex; flex-wrap: wrap; gap: 10px 20px; }
 .gb-co__foot-links a { color: var(--dim); font-size: 14px; text-decoration: none; text-underline-offset: 3px; }
 .gb-co__foot-links a:hover { color: var(--leaf); text-decoration: underline; }
+
+/* ---- checkout, second pass -----------------------------------------------
+   The owner's brief: wallets first, one confident column on a phone, the
+   summary pinned beside it on a desk, and generous air between groups with
+   none inside them. Every value below is a token already declared on `.gb`
+   above, or a size this file already uses for the same job (the 56px field,
+   the 62px pill, the 44px tap target, the 12px/14px radii). Nothing new. */
+
+/* the left column: wallets, then the folded summary, then the form */
+.gb-co__main { display: grid; gap: clamp(14px, 2vw, 18px); min-width: 0; }
+
+/* wallets, on top of everything */
+.gb-co__express { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: clamp(18px, 2.6vw, 24px); }
+.gb-co__express-lead { margin: 0 0 14px; font-family: var(--font-h); font-size: 15px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); text-align: center; }
+.gb-co__express-row { min-height: 52px; }
+
+/* groups: air between them, none inside them */
+.gb-co__group + .gb-co__group { margin-top: clamp(28px, 4vw, 40px); }
+.gb-co__group-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 16px; }
+.gb-co__group-head .gb-co__h2 { margin: 0; }
+.gb-co__step { flex: 0 0 28px; width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--sand); color: var(--ink); font-family: var(--font-b); font-size: 14px; font-weight: 800; align-self: center; }
+.gb-co__group-note { margin: -8px 0 16px; color: var(--dim); font-size: 14.5px; }
+
+/* fields: tight within a group */
+.gb-co__field { margin-bottom: 14px; }
+.gb-co__field:last-child { margin-bottom: 0; }
+.gb-co__row { margin-bottom: 14px; }
+.gb-co__row .gb-co__field { margin-bottom: 0; }
+.gb-co__input { min-height: 56px; font-size: 17px; }
+.gb-co__optional { font-weight: 500; color: var(--dim); }
+
+/* the pay button and its working state */
+.gb-co__btn { margin-top: 0; }
+.gb-co__pay { margin-top: clamp(20px, 3vw, 26px); }
+.gb-co__pay[aria-busy="true"] { cursor: progress; }
+.gb-co__spin { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid rgba(18, 41, 12, .28); border-top-color: var(--lime-ink); animation: gb-co-spin .7s linear infinite; }
+@keyframes gb-co-spin { to { transform: rotate(360deg); } }
+
+/* Stripe's card box, given the same air as our own fields */
+.gb-co__card { min-height: 200px; }
+
+/* the divider between the two ways to pay */
+.gb-co__or { margin: 18px 0 0; }
+
+/* motion: short, eased, and off when the system asks for it */
+.gb-co__msum-body { animation: gb-co-fade .18s ease both; }
+@keyframes gb-co-fade { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .gb-co__input, .gb-co__btn, .gb-co__msum-caret { transition: none; }
+  .gb-co__msum-body { animation: none; }
+  .gb-co__spin { animation-duration: 2.4s; }
+  .gb-co__btn:active { transform: none; }
+}
+
+/* a phone: the touch targets and the type both get bigger, never smaller */
+@media (max-width: 559px) {
+  .gb-co__input { min-height: 54px; font-size: 17px; }
+  .gb-co__msum > summary { min-height: 60px; }
+  .gb-co__trust { gap: 14px; }
+}
+
+/* the left column owns the spacing between its three blocks, so the pieces
+   inside it do not add their own on top */
+.gb-co__main > .gb-co__or { margin: 0; }
+.gb-co__main > .gb-co__msum { margin-bottom: 0; }
