@@ -2543,7 +2543,18 @@ function OnePage({
                 // "always" means draw it wherever the browser can do it at
                 // all, rather than only where Stripe is certain. Link stays on
                 // so the row is never empty on a browser with no wallet.
-                paymentMethods: { applePay: "always", googlePay: "always", link: "auto" },
+                /**
+                 * "always" for Apple Pay only where Apple Pay can exist. On
+                 * Chrome — no ApplePaySession — the element was mounting and
+                 * never drawing a thing, while the same options worked in
+                 * Safari. Insisting on a wallet the browser cannot show is
+                 * the one difference between the two.
+                 */
+                paymentMethods: {
+                  applePay: typeof (window as any).ApplePaySession !== "undefined" ? "always" : "never",
+                  googlePay: "always",
+                  link: "auto",
+                },
                 emailRequired: true,
                 phoneNumberRequired: store.phoneMode !== "hidden",
                 billingAddressRequired: true,
@@ -2571,15 +2582,17 @@ function OnePage({
       }
       report("express-built", built);
 
-      // Set the moment the fallback takes the row. A "ready" that arrives from
-      // the express element after that must not hide or blank what the
-      // fallback drew.
+      // Set the moment a fallback takes the row. A "ready" that arrives from
+      // an element that has been replaced must not hide or blank what
+      // replaced it.
       let fellBack = false;
+      /** which element currently owns the row — its events are the live ones */
+      let live: any = express;
 
       if (express) {
         try {
           express.on("ready", (event: any) => {
-            if (fellBack || cancelled) return;
+            if (fellBack || cancelled || live !== express) return;
             const available = event?.availablePaymentMethods;
             const any = available && Object.values(available).some(Boolean);
             walletsAnsweredRef.current = true;
@@ -2592,7 +2605,7 @@ function OnePage({
 
           express.on("loaderror", (event: any) => {
             report("express-loaderror", event?.error?.message ?? event);
-            if (!cancelled && !fellBack) setWalletsAnswered(true);
+            if (!cancelled && !fellBack && live === express) setWalletsAnswered(true);
           });
 
           // The wallet asks where to ship; the store has one rate, so that is
@@ -2632,18 +2645,69 @@ function OnePage({
            * this one still puts a real Google Pay (or Apple Pay, on Safari)
            * button on the page.
            */
+          /**
+           * The ladder. The rich element gets 1.2 seconds to say "ready".
+           * If it stays silent it is taken down and a bare express element —
+           * nothing but a height, the shape that rendered instantly before
+           * any option was added — gets 1.5 seconds. Only if that is silent
+           * too does the older Payment Request Button take the row. Every
+           * rung reports, so the next silent row says which rung it was.
+           */
           window.setTimeout(() => {
             if (cancelled || walletsAnsweredRef.current) return;
-            fellBack = true;
-            // Take the silent element off the page first, so the two can
-            // never both end up in the row.
             try {
               express.unmount();
             } catch {
               /* it may never have got that far */
             }
-            void mountRequestButton(stripe, elements);
-          }, 1500);
+            let minimal: any = null;
+            try {
+              minimal = makeExpress(false);
+            } catch (error) {
+              report("express-minimal-create", error);
+            }
+            if (minimal && walletRef.current) {
+              live = minimal;
+              minimal.on("ready", (event: any) => {
+                if (cancelled || fellBack || live !== minimal) return;
+                const available = event?.availablePaymentMethods;
+                const any = available && Object.values(available).some(Boolean);
+                walletsAnsweredRef.current = true;
+                setWallets(Boolean(any));
+                setWalletsAnswered(true);
+                report("express-minimal-ready", JSON.stringify(available ?? "none"));
+              });
+              minimal.on("confirm", async (event: any) => {
+                setPayError(null);
+                setWorking(true);
+                const done = await payWithWallet(event);
+                if (!done) setWorking(false);
+              });
+              minimal.on("shippingaddresschange", (event: any) => {
+                try {
+                  event.resolve({
+                    shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: "Shipping" }],
+                  });
+                } catch {
+                  /* nothing to do */
+                }
+              });
+              minimal.mount(walletRef.current);
+              report("express-minimal-mounted", "ok");
+            }
+
+            window.setTimeout(() => {
+              if (cancelled || walletsAnsweredRef.current) return;
+              fellBack = true;
+              try {
+                minimal?.unmount();
+              } catch {
+                /* never mounted */
+              }
+              report("express-minimal-timeout", JSON.stringify({ children: walletRef.current?.childElementCount ?? -1 }));
+              void mountRequestButton(stripe, elements);
+            }, 1500);
+          }, 1200);
 
           /**
            * If Stripe has said nothing at all after five seconds, say so —
