@@ -651,23 +651,45 @@ export async function action({ request, context }: Route.ActionArgs) {
     return { error: "The total is below the minimum card charge of $0.50. Remove the discount or add something to the order." };
   }
   const email = String(form.get("email") || "").trim().toLowerCase();
-  const name = String(form.get("name") || "").trim();
+  /**
+   * A wallet order is taken with whatever the wallet handed over.
+   *
+   * Apple Pay and Google Pay give what the customer's card has on file — a
+   * single name, an address with no state, sometimes no phone — and there is
+   * no form under the sheet to correct it in. Refusing such an order used to
+   * be silent: the sheet failed, nothing was written, nothing was reported.
+   * The owner's call is the right one: take the money, note what is missing,
+   * and message the customer. The card form on the page keeps its checks.
+   */
+  const fromWallet = form.get("source") === "wallet";
+  const missing: string[] = [];
+  let name = String(form.get("name") || "").trim();
 
-  if (!name) return { error: "Please put your name in." };
-  if (store.checkoutNameMode === "full" && !/\S+\s+\S+/.test(name)) {
-    return { error: "Please put your first and last name in." };
+  if (!name) {
+    if (!fromWallet) return { error: "Please put your name in." };
+    name = email || "Wallet customer";
+    missing.push("name");
   }
-  if (store.checkoutCompanyMode === "required" && !String(form.get("company") || "").trim()) {
+  if (store.checkoutNameMode === "full" && !/\S+\s+\S+/.test(name)) {
+    if (!fromWallet) return { error: "Please put your first and last name in." };
+    missing.push("full name");
+  }
+  if (store.checkoutCompanyMode === "required" && !String(form.get("company") || "").trim() && !fromWallet) {
     return { error: "Please add the company name." };
   }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return { error: "That email address does not look right — we send your receipt there." };
+    if (!fromWallet) return { error: "That email address does not look right — we send your receipt there." };
+    missing.push("email");
   }
-  // An order with no shipping address cannot be fulfilled, so it is not taken.
+  // An order with no shipping address cannot be fulfilled, so the form
+  // insists. A wallet order is taken and the gaps are written on the order.
   const required: Record<string, string> = { address1: "street address", city: "city", region: "state", postalCode: "ZIP code" };
   if (store.checkoutPhoneMode === "required") required.phone = "phone number";
   for (const [field, label] of Object.entries(required)) {
-    if (!String(form.get(field) || "").trim()) return { error: `Please add your ${label} so we can ship it.` };
+    if (!String(form.get(field) || "").trim()) {
+      if (!fromWallet) return { error: `Please add your ${label} so we can ship it.` };
+      missing.push(label);
+    }
   }
 
   let provider;
@@ -880,6 +902,17 @@ export async function action({ request, context }: Route.ActionArgs) {
      * agreed to.
      */
     repriced: changed,
+    ...(await (async () => {
+      if (fromWallet && missing.length) {
+        await recordOrderEvent(
+          context.db,
+          orderId,
+          "wallet:incomplete",
+          `Paid with a wallet; it did not provide: ${missing.join(", ")}. Message the customer before shipping.`,
+        ).catch(() => undefined);
+      }
+      return {};
+    })()),
     /**
      * The token that authorises paying this one intent. The page no longer
      * fetches it on load — it mounts Stripe against the amount alone and is
@@ -2937,8 +2970,29 @@ function OnePage({
           express.on("confirm", async (event: any) => {
             setPayError(null);
             setWorking(true);
-            const done = await payWithWallet(event);
+            report("wallet-step", `confirm from ${event?.expressPaymentType ?? "wallet"}`);
+            let done = false;
+            try {
+              done = await payWithWallet(event);
+            } catch (error) {
+              setPayError(error instanceof Error ? error.message : "The payment did not go through.");
+              try {
+                event?.paymentFailed?.({ reason: "fail" });
+              } catch {
+                /* the sheet is already gone */
+              }
+            }
             if (!done) setWorking(false);
+          });
+
+          // A single rate, so a change of it is accepted as it is. Without a
+          // handler the sheet can sit waiting for an answer that never comes.
+          express.on("shippingratechange", (event: any) => {
+            try {
+              event.resolve({});
+            } catch {
+              /* nothing to do */
+            }
           });
 
           if (walletRef.current) {
@@ -2969,8 +3023,12 @@ function OnePage({
            */
           window.setTimeout(() => {
             if (cancelled || walletsAnsweredRef.current) return;
+            // Stripe allows one express element per Elements instance: the
+            // silent one has to be destroyed, not merely unmounted, or the
+            // next line throws "Can only create one Element".
             try {
               express.unmount();
+              express.destroy();
             } catch {
               /* it may never have got that far */
             }
@@ -3157,6 +3215,7 @@ function OnePage({
     const address = shipping?.address ?? details.address ?? {};
     const body = new FormData();
     body.set("intent", "pay");
+    body.set("source", "wallet");
     body.set("shownTotal", String(total));
     body.set("name", String(shipping?.name ?? details.name ?? "").trim());
     body.set("email", String(event?.billingDetails?.email ?? details.email ?? "").trim());
@@ -3216,6 +3275,7 @@ function OnePage({
         setPayError(null);
         setWorking(true);
         const body = detailsFromForm();
+        body.set("source", "wallet");
         // The wallet knows the buyer even when the form is empty. The action
         // reads "name", never first/last, so that is what is written.
         if (event.payerEmail) body.set("email", String(event.payerEmail).trim());
@@ -3299,12 +3359,19 @@ function OnePage({
       return false;
     }
 
+    const wallet = body.get("source") === "wallet";
+    if (wallet) report("wallet-step", "submitted; posting details");
     const answer = await postDetails(body);
+    if (wallet) report("wallet-step", `answer: ${answer ? Object.keys(answer).join(",") : "none"}${answer && "error" in answer ? ` · ${answer.error}` : ""}`);
 
     if (!answer || !("ok" in answer)) {
-      // The action's own sentence. Field-level ones render under their box.
-      if (answer && "error" in answer && answer.error && !fieldForMessage(answer.error)) {
-        setPayError(answer.error);
+      // The action's own sentence. From the form, a field-level one renders
+      // under its box; from a wallet there is no box, so it is always shown.
+      const message = answer && "error" in answer && answer.error ? answer.error : null;
+      if (message && (wallet || !fieldForMessage(message))) {
+        setPayError(message);
+      } else if (!message) {
+        setPayError("The order could not be placed. Nothing has been charged.");
       }
       return false;
     }
@@ -3325,11 +3392,13 @@ function OnePage({
       return false;
     }
 
+    if (wallet) report("wallet-step", "confirming with Stripe");
     const result = await stripeRef.current.confirmPayment({
       elements: elementsRef.current,
       clientSecret: answer.clientSecret,
       confirmParams: { return_url: answer.returnTo },
     });
+    if (wallet && result?.error) report("wallet-step", `Stripe: ${result.error.code ?? ""} ${result.error.message ?? ""}`);
 
     if (result?.error) {
       setPayError(result.error.message ?? "The payment did not go through.");

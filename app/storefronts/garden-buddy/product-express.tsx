@@ -122,6 +122,13 @@ export function ProductExpress(props: Props) {
           /* nothing to do */
         }
       });
+      express.on("shippingratechange", (event: any) => {
+        try {
+          event.resolve({});
+        } catch {
+          /* nothing to do */
+        }
+      });
 
       express.on("confirm", async (event: any) => {
         setError(null);
@@ -151,6 +158,7 @@ export function ProductExpress(props: Props) {
           const address = shipping?.address ?? details.address ?? {};
           const body = new URLSearchParams({
             intent: "pay",
+            source: "wallet",
             shownTotal: String(latest.current.amountCents + shippingCents),
             name: String(shipping?.name ?? details.name ?? "").trim(),
             email: String(details.email ?? "").trim(),
