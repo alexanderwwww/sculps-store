@@ -1694,15 +1694,47 @@ function Upsell({
 function useScratchSound() {
   const ctxRef = useRef<AudioContext | null>(null);
 
+  /**
+   * iOS will not make a sound until a real finger has caused one.
+   *
+   * Safari starts every AudioContext suspended and only lets it out inside a
+   * touch handler — and even then, only after something has actually been
+   * played through it. So the first touch creates the context, resumes it,
+   * and pushes one silent sample through: the standard unlock, without which
+   * every later sound is silently dropped on an iPhone.
+   *
+   * The one thing no page can beat is the hardware ring/silent switch. With
+   * that flipped to silent, iOS mutes web audio outright.
+   */
+  const unlocked = useRef(false);
   const context = () => {
     if (!ctxRef.current) {
       const Ctor = (window as any).AudioContext ?? (window as any).webkitAudioContext;
       if (!Ctor) return null;
       ctxRef.current = new Ctor();
     }
-    if (ctxRef.current?.state === "suspended") void ctxRef.current.resume();
-    return ctxRef.current;
+    const audio = ctxRef.current;
+    if (!audio) return null;
+    if (audio.state === "suspended") void audio.resume();
+    if (!unlocked.current) {
+      unlocked.current = true;
+      try {
+        const buffer = audio.createBuffer(1, 1, audio.sampleRate);
+        const source = audio.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audio.destination);
+        source.start(0);
+      } catch {
+        /* if the unlock fails there is nothing else to try */
+      }
+    }
+    return audio;
   };
+
+  /** Called from the very first touch, before anything wants to be heard. */
+  const prime = useCallback(() => {
+    context();
+  }, []);
 
   /**
    * One continuous rasp, not a burst per movement.
@@ -1817,7 +1849,7 @@ function useScratchSound() {
     }
   }, []);
 
-  return { scratch, win };
+  return { scratch, win, prime };
 }
 
 function ScratchCard({
@@ -2021,7 +2053,13 @@ function ScratchCard({
       <p className="gb-co__scratch-h">Try your luck</p>
       <p className="gb-co__scratch-sub">Every card wins. Scratch to see what this order gets.</p>
 
-      <div className="gb-co__scratch-box" data-won={revealed ? "1" : undefined} data-touched={touched ? "1" : undefined}>
+      <div
+        className="gb-co__scratch-box"
+        data-won={revealed ? "1" : undefined}
+        data-touched={touched ? "1" : undefined}
+        onPointerDown={() => sound.prime()}
+        onTouchStart={() => sound.prime()}
+      >
         <div className="gb-co__scratch-prize" aria-live="polite">
           {prize ? (
             <>
@@ -3086,7 +3124,10 @@ function OnePage({
           {chrome?.header}
           {express}
           <div className="gb-co__mobile-only">{scratch}</div>
-          <details className="gb-co__msum">
+          {/* Open, not folded. A summary someone has to tap to see is a
+              summary most people never see, and on a phone that is the only
+              place the cart and the discount box exist at all. */}
+          <details className="gb-co__msum" open>
             <summary>
               <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
               Order summary
