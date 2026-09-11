@@ -108,6 +108,9 @@ export function AdminShell({
    */
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    // Registered on every load: installing the admin as an app and receiving
+    // push both need it, and it costs nothing when it is already there.
+    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     const onMessage = (event: MessageEvent) => {
       if (event.data?.type !== "shop-admin:push") return;
       try {

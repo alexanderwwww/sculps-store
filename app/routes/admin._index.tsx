@@ -15,6 +15,7 @@
  * a metric with no traffic shows its zero and draws no line, and the headline
  * says what is actually true of the store, never that it is open when it is not.
  */
+import { InstallCard } from "~/admin/install-card";
 import { Link } from "react-router";
 import { eq, sql } from "drizzle-orm";
 import type { Route } from "./+types/admin._index";
@@ -357,6 +358,9 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
       </div>
 
       {/* The work waiting. Real rows out of `todos`, in the glass. */}
+      {/* The admin as an app — install it from here. */}
+      {!isMobile ? <InstallCard /> : null}
+
       <div className="k-glass" style={{ overflow: "hidden" }}>
         <div
           style={{
