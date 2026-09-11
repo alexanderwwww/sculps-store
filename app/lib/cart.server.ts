@@ -349,14 +349,38 @@ export async function setCartPaymentIntentId(
   storeId: string,
   token: string,
   intentId: string | null,
+  /** what that intent is worth and how the browser pays it, when known */
+  known?: { amountCents: number; clientSecret: string } | null,
 ): Promise<void> {
+  const fields = {
+    paymentIntentId: intentId,
+    paymentIntentAmount: known?.amountCents ?? null,
+    paymentIntentSecret: known?.clientSecret ?? null,
+  };
   const existing = await loadCartRow(db, storeId, token);
   if (existing) {
     await db
       .update(carts)
-      .set({ paymentIntentId: intentId, updatedAt: new Date() })
+      .set({ ...fields, updatedAt: new Date() })
       .where(eq(carts.id, existing.id));
   } else {
-    await db.insert(carts).values({ storeId, token, items: [], status: "open", paymentIntentId: intentId });
+    await db.insert(carts).values({ storeId, token, items: [], status: "open", ...fields });
   }
+}
+
+/**
+ * The intent this cart already has, with what it is worth. When the amount
+ * still matches the cart's total there is nothing to ask Stripe.
+ */
+export async function cartIntentState(
+  db: DB,
+  storeId: string,
+  token: string | null,
+): Promise<{ id: string | null; amountCents: number | null; clientSecret: string | null }> {
+  const row = await loadCartRow(db, storeId, token);
+  return {
+    id: row?.paymentIntentId ?? null,
+    amountCents: row?.paymentIntentAmount ?? null,
+    clientSecret: row?.paymentIntentSecret ?? null,
+  };
 }

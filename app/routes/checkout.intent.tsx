@@ -15,7 +15,7 @@
  */
 import type { ActionFunctionArgs } from "react-router";
 import { resolveStore } from "~/lib/store.server";
-import { priceCart, readCartToken, cartPaymentIntentId, setCartPaymentIntentId } from "~/lib/cart.server";
+import { priceCart, readCartToken, cartIntentState, setCartPaymentIntentId } from "~/lib/cart.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 
 /** Intent states that still belong to a payment that has not happened. */
@@ -40,11 +40,19 @@ export async function action({ context, request }: ActionFunctionArgs) {
       return Response.json({ clientSecret: null, error: "This store has no Stripe key set." }, { status: 400 });
     }
 
-    const existingId = await cartPaymentIntentId(context.db, store.id, token);
+    const known = await cartIntentState(context.db, store.id, token);
+
+    // The fast path, and the common one: this cart already has an intent and
+    // it is already worth exactly what the cart is worth. Nothing to ask
+    // Stripe — the browser gets its secret straight out of the database.
+    if (known.id && known.clientSecret && known.amountCents === cart.totalCents) {
+      return Response.json({ clientSecret: known.clientSecret, amountCents: cart.totalCents, error: null });
+    }
+
     let intent = null;
-    if (existingId) {
+    if (known.id) {
       try {
-        const found = await provider.readIntent(existingId);
+        const found = await provider.readIntent(known.id);
         // An intent that is already being paid belongs to a charge that is
         // happening. It is never reused or written over.
         if (PAYABLE.has(found.status)) intent = found;
@@ -67,8 +75,12 @@ export async function action({ context, request }: ActionFunctionArgs) {
         orderReference: `${store.name} order`,
         metadata: { storeId: store.id },
       });
-      await setCartPaymentIntentId(context.db, store.id, token, intent.id);
     }
+
+    await setCartPaymentIntentId(context.db, store.id, token, intent.id, {
+      amountCents: cart.totalCents,
+      clientSecret: intent.clientSecret,
+    });
 
     return Response.json({ clientSecret: intent.clientSecret, amountCents: cart.totalCents, error: null });
   } catch (error) {

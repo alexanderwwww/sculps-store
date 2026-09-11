@@ -29,7 +29,8 @@
   --dim: #6B6559;
   --line: rgba(59, 42, 27, .14);
   --field: rgba(59, 42, 27, .22);
-  --rail: #F3EFE7;
+  /* the right half — the store's own sand, not a neutral grey */
+  --rail: #F4EEE2;
   --bad: #B3341C;
   --r: 8px;
   --font-h: "Poppins", system-ui, "Segoe UI", sans-serif;

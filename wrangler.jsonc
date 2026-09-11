@@ -5,6 +5,19 @@
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  /*
+   * Run the Worker next to the database, not next to the visitor.
+   *
+   * The database is Neon in us-east-2 (Ohio). Cloudflare's default is to run
+   * a Worker at the edge closest to whoever is browsing, which for a customer
+   * in Greece means every single query crosses the Atlantic and comes back —
+   * about a quarter of a second each, several times per page. Smart placement
+   * moves the Worker itself to Ohio, so the queries become local and only the
+   * visitor's own request makes the crossing, exactly once. Geolocation is
+   * unaffected: `cf` is stamped at the edge the visitor actually arrives at,
+   * which is why the Live View globe still knows where they are.
+   */
+  "placement": { "mode": "smart" },
   // Store media: product photos and video, served from the Worker so the
   // files belong to us rather than to whichever platform hosted them before.
   "r2_buckets": [

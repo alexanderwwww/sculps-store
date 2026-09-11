@@ -458,6 +458,16 @@ export const carts = pgTable(
      * leaving a trail of abandoned intents behind every refresh.
      */
     paymentIntentId: text("payment_intent_id"),
+    /**
+     * What that intent is already worth, and the token the browser needs to
+     * pay it. Both are held here so a checkout whose total has not moved can
+     * hand the browser its secret with no call to Stripe at all — that call
+     * was the slowest thing on the page. Neither is a secret key: the client
+     * secret only ever authorises paying this one intent, which is why Stripe
+     * puts it in the page in the first place.
+     */
+    paymentIntentAmount: integer("payment_intent_amount"),
+    paymentIntentSecret: text("payment_intent_secret"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

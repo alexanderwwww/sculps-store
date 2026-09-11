@@ -144,20 +144,43 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // on screen, the amount on the intent and the amount the action confirms all
   // the same figure.
   const region = (url.searchParams.get("region") || "").trim().toUpperCase().slice(0, 3) || null;
-  const cart = await priceCart(context.db, store, token, region);
+  /**
+   * Everything this page needs from the database, asked for at once.
+   *
+   * These used to run one after another — price the cart, then look up the
+   * payment provider, then the pixel, then the navigation, then the product
+   * photo. Five sequential round trips to a database that is not in the same
+   * building as the Worker is most of a second spent waiting rather than
+   * working, and it is the page where waiting costs orders. None of them
+   * depends on another, so they now go out together and the page waits once.
+   */
+  const [cart, providerResult, metaRows, nav, photo] = await Promise.all([
+    priceCart(context.db, store, token, region),
+    providerForStore(context.db, context.cloudflare.env, store.id).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
+    context.db
+      .select({ pixelId: metaConfig.pixelId })
+      .from(metaConfig)
+      .where(eq(metaConfig.storeId, store.id))
+      .limit(1),
+    storeNav(context.db, store.id),
+    productPhoto(context.db, store.id),
+  ]);
 
   let paymentsReady = true;
   let paymentsMessage: string | null = null;
   let publishableKey: string | null = null;
 
-  try {
-    const provider = await providerForStore(context.db, context.cloudflare.env, store.id);
-    publishableKey = provider.publishableKey;
+  if (providerResult.ok) {
+    publishableKey = providerResult.value.publishableKey;
     if (!publishableKey) {
       paymentsReady = false;
       paymentsMessage = "This store has no Stripe publishable key set in Settings → Payments.";
     }
-  } catch (error) {
+  } else {
+    const error = providerResult.error;
     paymentsReady = false;
     paymentsMessage =
       error instanceof PaymentsNotConfigured
@@ -188,11 +211,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   // InitiateCheckout: reaching this page with something in the cart. Both
   // halves, one shared id, the whole cart as contents.
-  const [meta] = await context.db
-    .select({ pixelId: metaConfig.pixelId })
-    .from(metaConfig)
-    .where(eq(metaConfig.storeId, store.id))
-    .limit(1);
+  const [meta] = metaRows;
 
   let pixel = meta?.pixelId ? pixelScript(meta.pixelId) : null;
   if (pixel && firstView && cart.lines.length) {
@@ -212,13 +231,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     });
     if (initiate) pixel = `${pixel}\n${initiate}`;
   }
-
-  // The chrome needs what the chrome needs: the logo, the policy links and the
-  // product shot. Nothing here changes what is tracked or what is charged.
-  const [nav, photo] = await Promise.all([
-    storeNav(context.db, store.id),
-    productPhoto(context.db, store.id),
-  ]);
 
   /**
    * "Just one more thing": the store's other bundles, from the variants table.
@@ -807,6 +819,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         <BuddyFonts />
         {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
         <link rel="stylesheet" href={buddyHref} />
+        <PayBoot />
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         {/* Two halves of the screen. OnePage lays out both of them, because
             the same pieces have to sit in different places on a phone: the
@@ -858,6 +871,42 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
 
 /** Carries `?store=` through the chrome's plain anchors. */
 const withParam = (storeParam: string) => (link: NavLink) => ({ ...link, href: `${link.href}${storeParam}` });
+
+
+/**
+ * The two things the payment needs, started before React exists.
+ *
+ * Everything on this page used to wait for the route bundle to download, for
+ * React to hydrate, and only then to ask for Stripe's script and for the
+ * payment intent — one after the other. That is why the wallet row took so
+ * long to appear even though the page itself was up: nothing about the
+ * payment had even been requested yet.
+ *
+ * This runs while the browser is still parsing the HTML. Stripe's script and
+ * the intent request go out together, in parallel, and both are waiting in
+ * `window.__gbPay` by the time the component asks for them.
+ */
+const PAY_BOOT = `(function(){
+  var w=window; if(w.__gbPay) return;
+  var s=document.createElement('script');
+  s.src='https://js.stripe.com/v3/'; s.async=true;
+  var stripe=new Promise(function(res,rej){ s.onload=function(){res()}; s.onerror=function(){rej(new Error('Stripe could not be loaded.'))} });
+  document.head.appendChild(s);
+  var intent=fetch('/checkout/intent',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:''})
+    .then(function(r){return r.json()})
+    .catch(function(){return {clientSecret:null,error:'The payment could not be started. Please reload the page.'}});
+  w.__gbPay={stripe:stripe,intent:intent};
+})();`;
+
+function PayBoot() {
+  return (
+    <>
+      <link rel="preconnect" href="https://js.stripe.com" />
+      <link rel="preconnect" href="https://api.stripe.com" />
+      <script dangerouslySetInnerHTML={{ __html: PAY_BOOT }} />
+    </>
+  );
+}
 
 function BuddyFonts() {
   return (
@@ -1619,6 +1668,8 @@ function ScratchCard({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [prize, setPrize] = useState<{ percent: number; code: string } | null>(null);
   const [revealed, setRevealed] = useState(false);
+  /** scratched past halfway — the reveal waits for the server's answer */
+  const [scratchedThrough, setScratchedThrough] = useState(false);
   const [touched, setTouched] = useState(false);
   const [showOdds, setShowOdds] = useState(false);
   const cleared = useRef(false);
@@ -1631,12 +1682,24 @@ function ScratchCard({
     if (data && "scratch" in data && data.scratch) setPrize(data.scratch);
   }, [data]);
 
-  /** Ask for the card once, so the foil is live the moment it is touched. */
+  /* Both halves have to be true: scratched off, and an answer in hand. */
   useEffect(() => {
-    if (locked || applied) return;
+    if (scratchedThrough && prize) setRevealed(true);
+  }, [scratchedThrough, prize]);
+
+  /**
+   * The card costs nothing until it is touched. It used to ask the server for
+   * a prize the moment the page loaded — one more request competing with the
+   * payment on the page where speed is money, and the reason it could sit on
+   * "Preparing your card…". Now the foil is painted immediately and the draw
+   * is requested by the first scratch.
+   */
+  const asked = useRef(false);
+  const askForPrize = () => {
+    if (asked.current || locked || applied) return;
+    asked.current = true;
     fetcher.submit({ intent: "scratch" }, { method: "post" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
   /**
    * The foil: brown metal with the store's own mark stamped through it in
@@ -1645,7 +1708,7 @@ function ScratchCard({
    */
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !prize || revealed) return;
+    if (!canvas || revealed) return;
     let frame = 0;
     let stopped = false;
     const mark = new Image();
@@ -1727,7 +1790,7 @@ function ScratchCard({
       stopped = true;
       cancelAnimationFrame(frame);
     };
-  }, [prize, revealed, touched, logoUrl]);
+  }, [revealed, touched, logoUrl]);
 
   /** How much has been rubbed off — it opens at just over half. */
   const measure = useCallback(() => {
@@ -1743,7 +1806,7 @@ function ScratchCard({
     }
     if (seen && clear / seen > 0.52) {
       cleared.current = true;
-      setRevealed(true);
+      setScratchedThrough(true);
     }
   }, []);
 
@@ -1752,6 +1815,7 @@ function ScratchCard({
     if (!touchedRef.current) {
       touchedRef.current = true;
       setTouched(true);
+      askForPrize();
     }
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -1792,10 +1856,10 @@ function ScratchCard({
               )}
             </>
           ) : (
-            <span>Preparing your card…</span>
+            <span>{scratchedThrough ? "Turning it over…" : "your discount"}</span>
           )}
         </div>
-        {prize && !revealed ? (
+        {!revealed ? (
           <>
             <canvas
               ref={canvasRef}
@@ -2103,13 +2167,18 @@ function OnePage({
 
     const boot = async () => {
       if (!(window as any).Stripe) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://js.stripe.com/v3/";
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Stripe could not be loaded."));
-          document.head.appendChild(script);
-        });
+        const booted = (window as any).__gbPay?.stripe as Promise<void> | undefined;
+        if (booted) {
+          await booted;
+        } else {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://js.stripe.com/v3/";
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Stripe could not be loaded."));
+            document.head.appendChild(script);
+          });
+        }
       }
       if (cancelled) return;
 
@@ -2198,6 +2267,20 @@ function OnePage({
 
   useEffect(() => {
     if (!publishableKey || cart.lines.length === 0) return;
+    // The inline boot script fired this request before React existed. Take
+    // its answer; only ask again if that script is not there (the other skin,
+    // or a browser that blocked it).
+    const started = (window as any).__gbPay?.intent as Promise<{ clientSecret: string | null; error: string | null }> | undefined;
+    const waiting = started ?? undefined;
+    if (waiting) {
+      waiting
+        .then((data) => {
+          if (data?.clientSecret) setClientSecret((current) => current ?? data.clientSecret);
+          else if (data?.error) setIntentError(data.error);
+        })
+        .catch(() => setIntentError("The payment could not be started. Please reload the page."));
+      return;
+    }
     askForIntent((params.get("region") ?? "").trim()).catch(() =>
       setIntentError("The payment could not be started. Please reload the page."),
     );
@@ -2512,6 +2595,12 @@ function OnePage({
      card, then the suggestions. On a phone this is the folded summary at the
      top of the page instead, so the first thing on screen is still the
      wallet button. */
+  /**
+   * The rail is rendered exactly once. It used to be rendered twice — inside
+   * the phone's folded summary and again in the right-hand column — which
+   * meant two scratch cards, two canvases and two fetchers racing each other
+   * for the same card. That is why it sat on "Preparing your card…".
+   */
   const rail = (
     <>
       {summary}
@@ -2531,7 +2620,7 @@ function OnePage({
               Order summary
               <span className="gb-co__msum-total">{money(total)}</span>
             </summary>
-            <div className="gb-co__msum-body">{rail}</div>
+            <div className="gb-co__msum-body">{summary}</div>
           </details>
           {express}
           {form}
