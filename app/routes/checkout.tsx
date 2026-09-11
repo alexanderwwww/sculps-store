@@ -32,7 +32,6 @@ import { liveTheme, recordOrderEvent } from "~/lib/admin.server";
 import {
   readCartToken,
   priceCart,
-  markCartConverted,
   setCartDiscount,
   cartPaymentIntentId,
   newCartToken,
@@ -877,7 +876,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   }
 
-  if (token) await markCartConverted(context.db, store.id, token, orderId);
+  // The cart is NOT finished here. An order row exists, but nothing has been
+  // charged yet — the browser is about to confirm with Stripe. Marking the
+  // cart converted at this point emptied it on the very next read, which
+  // tore the checkout down while Apple Pay was still waiting for its answer.
+  // It is finished on the thank-you page, once the payment is confirmed.
 
   track(context.db, context.cloudflare.ctx, {
     storeId: store.id,

@@ -11,6 +11,7 @@ import buddyHref from "~/storefronts/garden-buddy/checkout.css?url";
 import type { Route } from "./+types/thanks";
 import { eq } from "drizzle-orm";
 import { resolveStore, storeNav } from "~/lib/store.server";
+import { readCartToken, markCartConverted } from "~/lib/cart.server";
 import { loadOrder, markOrderPaid, recordVisitorEvent } from "~/lib/admin.server";
 import { providerForStore } from "~/lib/payments.server";
 import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
@@ -108,8 +109,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         })}`
       : null;
 
-  // A paid order ends the cart: the cookie goes, so the next visit starts
-  // clean instead of finding what was just bought still in the basket.
+  // A paid order ends the cart — here, and only here, because this is the
+  // first place the payment is known to have gone through. The row is marked
+  // converted (so a stale cookie cannot resurrect the bought lines) and the
+  // cookie goes, so the next visit starts clean.
+  if (paymentStatus === "paid") {
+    const token = readCartToken(request);
+    if (token) await markCartConverted(context.db, store.id, token, loaded.order.id).catch(() => undefined);
+  }
   const headers =
     paymentStatus === "paid"
       ? { "Set-Cookie": `kerberos_cart=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${url.protocol === "https:" ? "; Secure" : ""}` }
