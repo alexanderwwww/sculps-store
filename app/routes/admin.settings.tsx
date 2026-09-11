@@ -1838,7 +1838,15 @@ function PushCard() {
           endpoint: json.endpoint,
           p256dh: json.keys?.p256dh ?? "",
           auth: json.keys?.auth ?? "",
-          label: iOS ? "iPhone" : /Mac/.test(navigator.userAgent) ? "Mac" : "This browser",
+          // Chrome and Safari on the same Mac are two separate enrolments, and
+        // the list has to say which is which.
+        label: iOS
+          ? "iPhone"
+          : /Mac/.test(navigator.userAgent)
+            ? /Chrome|Chromium|Edg/.test(navigator.userAgent)
+              ? "Mac · Chrome"
+              : "Mac · Safari"
+            : "This browser",
         });
         await fetch("/admin/push", { method: "POST", body });
         if (!cancelled) await load();
