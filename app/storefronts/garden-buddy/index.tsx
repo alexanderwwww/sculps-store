@@ -115,7 +115,7 @@ export function GardenBuddyStorefront({
     : null;
 
   return (
-    <CartDrawerProvider page={page} storeParam={storeParam} photo={photo}>
+    <CartDrawerProvider page={page} storeParam={storeParam} photo={photo} publishableKey={publishableKey}>
       {/* The theme's own fonts and stylesheet, in the order the live page loads
           them. React hoists both into <head>. */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />

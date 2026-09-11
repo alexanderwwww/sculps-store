@@ -661,3 +661,11 @@
 .gb-product .gb-secure__card--mc i{display:block;width:12px;height:12px;border-radius:50%;background:#EB001B}
 .gb-product .gb-secure__card--mc i+i{background:#F79E1B;margin-left:-5px;opacity:.95}
 @media(max-width:640px){.gb-product .gb-secure{flex-wrap:wrap}.gb-product .gb-secure__cards{width:100%;justify-content:flex-start;padding-left:42px}}
+
+/* the theme's display rules must not beat the hidden attribute: once Stripe
+   has drawn a wallet, the plain Buy now is gone */
+.gb-product .gb-buy__express[hidden]{display:none}
+/* the same wallet buttons in the cart drawer, above Checkout */
+.gb-drawer__wallet{margin:0 0 10px;border-radius:999px;overflow:hidden}
+.gb-drawer__wallet:empty{display:none}
+.gb-drawer__wallet-err{margin:0 0 10px;color:#B3341C;font-size:14px;line-height:1.4}

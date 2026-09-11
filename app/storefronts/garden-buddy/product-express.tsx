@@ -21,6 +21,11 @@
 import { useEffect, useRef, useState } from "react";
 
 interface Props {
+  /**
+   * "product": the chosen bundle becomes the cart, then it is paid.
+   * "cart": the cart as it stands is paid — the drawer's own button.
+   */
+  mode?: "product" | "cart";
   publishableKey: string;
   currency: string;
   variantId: string;
@@ -51,7 +56,8 @@ function loadStripe(): Promise<void> {
 }
 
 export function ProductExpress(props: Props) {
-  const { publishableKey, currency, variantId, amountCents, label, storeName, shippingCents, storeParam, onReady } = props;
+  const { mode = "product", publishableKey, currency, variantId, amountCents, label, storeName, shippingCents, storeParam, onReady } = props;
+  const className = mode === "cart" ? "gb-drawer__wallet" : "gb-buy__wallet";
   const rowRef = useRef<HTMLDivElement | null>(null);
   const elementsRef = useRef<any>(null);
   const stripeRef = useRef<any>(null);
@@ -123,13 +129,16 @@ export function ProductExpress(props: Props) {
           const submitted = await elements.submit();
           if (submitted?.error) throw new Error(submitted.error.message ?? "Please check the payment details.");
 
-          // 1. This bundle, and only this bundle, becomes the cart.
-          await fetch(`${href("/cart/add")}${storeParam ? "&" : "?"}replace=1`, {
-            method: "POST",
-            body: new URLSearchParams({ variantId: latest.current.variantId }),
-            credentials: "same-origin",
-            redirect: "manual",
-          });
+          // 1. On the product page this bundle, and only this bundle, becomes
+          //    the cart. In the drawer the cart is already what it is.
+          if (mode === "product") {
+            await fetch(`${href("/cart/add")}${storeParam ? "&" : "?"}replace=1`, {
+              method: "POST",
+              body: new URLSearchParams({ variantId: latest.current.variantId }),
+              credentials: "same-origin",
+              redirect: "manual",
+            });
+          }
 
           // 2. A payment intent for that cart.
           const intentRes = await fetch(href("/checkout/intent"), { method: "POST", body: new URLSearchParams(), credentials: "same-origin" });
@@ -214,9 +223,9 @@ export function ProductExpress(props: Props) {
 
   return (
     <>
-      <div ref={rowRef} className="gb-buy__wallet" />
+      <div ref={rowRef} className={className} />
       {error ? (
-        <p className="gb-buy__wallet-err" role="alert">
+        <p className={mode === "cart" ? "gb-drawer__wallet-err" : "gb-buy__wallet-err"} role="alert">
           {error}
         </p>
       ) : null}

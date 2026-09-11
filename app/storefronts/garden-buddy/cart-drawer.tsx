@@ -24,6 +24,7 @@
  *   - no JavaScript — the buy box keeps its plain form and the header keeps
  *     its `/cart` link, so the old flow still works untouched.
  */
+import { ProductExpress } from "./product-express";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
@@ -86,12 +87,15 @@ export function CartDrawerProvider({
   page,
   storeParam = "",
   photo,
+  publishableKey = null,
   children,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
   /** The buy box's first photo — the only picture of this product we hold. */
   photo?: { src: string; alt: string } | null;
+  /** the store's Stripe publishable key, for the wallet buttons above Checkout */
+  publishableKey?: string | null;
   children: React.ReactNode;
 }) {
   const href = (path: string) => `${path}${storeParam}`;
@@ -319,6 +323,21 @@ export function CartDrawerProvider({
               </strong>
             </div>
             <p className="gb-drawer__fine">Taxes and shipping are worked out at checkout.</p>
+            {/* Apple Pay / Google Pay for the cart as it stands, one tap. */}
+            {publishableKey && cart && cart.lines.length > 0 ? (
+              <ProductExpress
+                mode="cart"
+                publishableKey={publishableKey}
+                currency={cart.currency ?? page.store.currency}
+                variantId={cart.lines[0].variantId}
+                amountCents={cart.totalCents}
+                label={`${page.store.name} order`}
+                storeName={page.store.name}
+                shippingCents={0}
+                storeParam={storeParam}
+                onReady={() => undefined}
+              />
+            ) : null}
             <a
               className="gb-drawer__checkout"
               href={href("/checkout")}
