@@ -2268,6 +2268,7 @@ function OnePage({
   const [wallets, setWallets] = useState(false);
   /** Stripe has said something about wallets — until then, show the space. */
   const [walletsAnswered, setWalletsAnswered] = useState(false);
+  const walletsAnsweredRef = useRef(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   /** the server's figure when it differs from the one the page loaded with */
@@ -2446,27 +2447,32 @@ function OnePage({
         );
 
       let express: any = null;
+      let built = "rich";
       try {
         express = makeExpress(true);
       } catch (error) {
+        built = "minimal";
         report("express-options", error);
         try {
           express = makeExpress(false);
         } catch (fallbackError) {
+          built = "none";
           report("express-create", fallbackError);
         }
       }
+      report("express-built", built);
 
       if (express) {
         try {
           express.on("ready", (event: any) => {
             const available = event?.availablePaymentMethods;
             const any = available && Object.values(available).some(Boolean);
+            walletsAnsweredRef.current = true;
             if (!cancelled) {
               setWallets(Boolean(any));
               setWalletsAnswered(true);
             }
-            if (!any) report("express-empty", available ?? "no methods");
+            report("express-ready", JSON.stringify(available ?? "none"));
           });
 
           express.on("loaderror", (event: any) => {
@@ -2481,7 +2487,48 @@ function OnePage({
             if (!done) setWorking(false);
           });
 
-          if (walletRef.current) express.mount(walletRef.current);
+          if (walletRef.current) {
+            express.mount(walletRef.current);
+            report("express-mounted", "ok");
+          } else {
+            report("express-mounted", "no container");
+          }
+
+          /**
+           * The safety net.
+           *
+           * If the Express Checkout Element has not reported itself ready
+           * within three seconds, the older Payment Request Button is mounted
+           * in its place. It is a different element with a different code
+           * path inside Stripe, it has existed for years, and his browser
+           * reports it as available — so whatever is wrong with the new one,
+           * this one still puts a real Google Pay (or Apple Pay, on Safari)
+           * button on the page.
+           */
+          window.setTimeout(() => {
+            if (cancelled || walletsAnsweredRef.current) return;
+            void mountRequestButton(stripe, elements);
+          }, 3000);
+
+          /**
+           * If Stripe has said nothing at all after five seconds, say so —
+           * with what is actually inside the box. "It did not render" is not
+           * something I can debug; "mounted, no ready event, zero child
+           * nodes" is.
+           */
+          window.setTimeout(() => {
+            if (cancelled) return;
+            const node = walletRef.current;
+            report(
+              "express-timeout",
+              JSON.stringify({
+                answered: walletsAnsweredRef.current,
+                children: node ? node.childElementCount : -1,
+                height: node ? Math.round(node.getBoundingClientRect().height) : -1,
+                built,
+              }),
+            );
+          }, 5000);
         } catch (error) {
           report("express-mount", error);
           if (!cancelled) setWalletsAnswered(true);
@@ -2601,6 +2648,97 @@ function OnePage({
    * (it redirects to the return url), false when we are still here with an
    * error to show.
    */
+  /**
+   * Stripe's original wallet button, used only when the modern one does not
+   * appear. It confirms differently — it hands us a payment method rather
+   * than driving the confirmation itself — so the order is created first,
+   * exactly as everywhere else on this page, and then the payment method is
+   * attached to that intent.
+   */
+  const mountRequestButton = async (stripe: any, elements: any) => {
+    try {
+      const request = stripe.paymentRequest({
+        country: "US",
+        currency: (cart.currency ?? "usd").toLowerCase(),
+        total: { label: store.name, amount: Math.max(50, cart.totalCents) },
+        requestPayerName: true,
+        requestPayerEmail: true,
+        requestPayerPhone: store.phoneMode !== "hidden",
+        requestShipping: false,
+      });
+
+      const can = await request.canMakePayment();
+      report("prb-can", JSON.stringify(can ?? null));
+      if (!can) {
+        setWalletsAnswered(true);
+        walletsAnsweredRef.current = true;
+        return;
+      }
+
+      request.on("paymentmethod", async (event: any) => {
+        setPayError(null);
+        setWorking(true);
+        const body = detailsFromForm();
+        // The wallet knows the buyer even when the form is empty.
+        if (event.payerEmail) body.set("email", event.payerEmail);
+        if (event.payerName) {
+          const [first, ...rest] = String(event.payerName).split(" ");
+          if (first) body.set("firstName", first);
+          if (rest.length) body.set("lastName", rest.join(" "));
+        }
+        if (event.payerPhone) body.set("phone", event.payerPhone);
+
+        const answer = await postDetails(body);
+        if (!answer || !("ok" in answer)) {
+          event.complete("fail");
+          setWorking(false);
+          if (answer && "error" in answer && answer.error) setPayError(answer.error);
+          return;
+        }
+
+        const first = await stripe.confirmCardPayment(
+          answer.clientSecret,
+          { payment_method: event.paymentMethod.id },
+          { handleActions: false },
+        );
+        if (first.error) {
+          event.complete("fail");
+          setWorking(false);
+          setPayError(first.error.message ?? "The payment did not go through.");
+          return;
+        }
+        event.complete("success");
+
+        // 3-D Secure, if the bank asks for it.
+        if (first.paymentIntent?.status === "requires_action") {
+          const second = await stripe.confirmCardPayment(answer.clientSecret);
+          if (second.error) {
+            setWorking(false);
+            setPayError(second.error.message ?? "The payment was not completed.");
+            return;
+          }
+        }
+        window.location.href = answer.returnTo;
+      });
+
+      const button = elements.create("paymentRequestButton", {
+        paymentRequest: request,
+        style: { paymentRequestButton: { type: "buy", theme: "dark", height: "55px" } },
+      });
+      if (walletRef.current) {
+        button.mount(walletRef.current);
+        setWallets(true);
+        setWalletsAnswered(true);
+        walletsAnsweredRef.current = true;
+        report("prb-mounted", "ok");
+      }
+    } catch (error) {
+      report("prb-failed", error);
+      setWalletsAnswered(true);
+      walletsAnsweredRef.current = true;
+    }
+  };
+
   const confirmAfterOrder = async (body: FormData): Promise<boolean> => {
     /**
      * Stripe's own check on its own fields, before an order row exists. With
@@ -2728,8 +2866,11 @@ function OnePage({
         <p className={buddy ? "gb-co__express-lead" : undefined} style={buddy ? undefined : { textAlign: "center" }}>
           Express checkout
         </p>
-        <div className={buddy ? "gb-co__express-row" : undefined} ref={walletRef} />
-        {!wallets ? <div className="gb-co__express-wait" aria-hidden="true" /> : null}
+        <div
+          className={buddy ? "gb-co__express-row" : undefined}
+          data-waiting={wallets ? undefined : "1"}
+          ref={walletRef}
+        />
         {buddy ? (
           <p className="gb-co__express-note">
             Pay with the card already on your phone — your address comes with it, so there is
