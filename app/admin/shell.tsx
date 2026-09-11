@@ -301,7 +301,7 @@ export function AdminShell({
           <img
             src="/logo-mark.png"
             alt="Shop Admin"
-            style={{ width: 33, height: 33, objectFit: "contain", flex: "none", display: "block" }}
+            style={{ width: 40, height: 40, objectFit: "contain", flex: "none", display: "block" }}
           />
           {!isMobile ? (
             <span

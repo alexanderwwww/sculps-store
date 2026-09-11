@@ -343,6 +343,9 @@ export const orders = pgTable(
     totalCents: integer("total_cents").notNull(),
     refundedCents: integer("refunded_cents").notNull().default(0),
     currency: text("currency").notNull().default("USD"),
+    /** the code as it was typed at checkout, kept so the order explains itself */
+    discountCode: text("discount_code"),
+    discountCents: integer("discount_cents").notNull().default(0),
 
     paymentProvider: text("payment_provider"),
     paymentRef: text("payment_ref"),
@@ -425,6 +428,8 @@ export const carts = pgTable(
     /** open | converted | abandoned */
     status: text("status").notNull().default("open"),
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+    /** the discount code applied to this cart, so it survives a reload */
+    discountCode: text("discount_code"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -720,3 +725,66 @@ export const themeRelations = relations(themes, ({ one, many }) => ({
   store: one(stores, { fields: [themes.storeId], references: [stores.id] }),
   pages: many(pages),
 }));
+
+/* -------------------------------------------------------------- discounts */
+
+/**
+ * A discount code. One row per code per store; the code itself is stored
+ * uppercased so "SAVE10" and "save10" are the same code and cannot both exist.
+ */
+export const discounts = pgTable(
+  "discounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    /** always stored uppercased */
+    code: text("code").notNull(),
+    /** percentage | fixed | free_shipping */
+    kind: text("kind").notNull().default("percentage"),
+    /** percent 1-100 for percentage, cents for fixed, unused for free_shipping */
+    value: integer("value").notNull().default(0),
+    /** order | shipping */
+    appliesTo: text("applies_to").notNull().default("order"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    /** null means no limit */
+    usageLimit: integer("usage_limit"),
+    /**
+     * A cache of how many redemptions exist, incremented under the same
+     * conditional write that enforces the limit. discountRedemptions is the
+     * record; this column is what makes the limit race-safe.
+     */
+    usedCount: integer("used_count").notNull().default(0),
+    oncePerCustomer: boolean("once_per_customer").notNull().default(false),
+    minimumSubtotalCents: integer("minimum_subtotal_cents"),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("discounts_store_code_idx").on(t.storeId, t.code)],
+);
+
+/**
+ * One row per actual use, written when an order is paid — never when a code
+ * is typed. "Used 3 times" is a count of these rows, not a hopeful counter.
+ */
+export const discountRedemptions = pgTable(
+  "discount_redemptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    discountId: uuid("discount_id")
+      .notNull()
+      .references(() => discounts.id, { onDelete: "cascade" }),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("discount_redemptions_discount_idx").on(t.discountId),
+    uniqueIndex("discount_redemptions_order_idx").on(t.orderId),
+  ],
+);
