@@ -345,6 +345,13 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
   // Admin → Products, and the product's first gallery photo otherwise — the
   // same photo the cart drawer already uses. Nothing is drawn that does not
   // exist: no photo at all means no thumbnail.
+  // Whether this browser can do Apple Pay — decided after mount, so the
+  // server and the first paint agree ("Buy now") and the label upgrades a
+  // moment later where it applies.
+  const [applePay, setApplePay] = useState(false);
+  useEffect(() => {
+    setApplePay(typeof (window as any).ApplePaySession !== "undefined");
+  }, []);
   const fallbackShot = section.blocks.find((b) => has(b.values, "image"));
   const fallbackSrc = fallbackShot ? val(fallbackShot.values, "image") : null;
   const href = (path: string) => `${path}${storeParam}`;
@@ -479,6 +486,13 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
               id="gb-form"
               className="gb-form"
               onSubmit={(event) => {
+                // "Buy now" posts through to the checkout and the drawer
+                // stays out of it.
+                const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
+                if (submitter?.classList.contains("gb-buy__express")) {
+                  event.currentTarget.action = `${href("/cart/add")}${storeParam ? "&" : "?"}next=checkout`;
+                  return;
+                }
                 // With JavaScript the add happens in place and the drawer
                 // slides in. Without it this form posts as it always did.
                 if (!drawer || !chosen) return;
@@ -559,6 +573,25 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                     </span>
                     <span>{formatMoney(chosen.priceCents, store.currency)}</span>
                   </>
+                )}
+              </button>
+
+              {/* Straight to the checkout with this bundle in the cart. On a
+                  browser that has Apple Pay the button says so; on any other
+                  it says Buy now. The checkout's wallet row is the first
+                  thing on that screen, so this is one tap to the sheet. */}
+              <button
+                type="submit"
+                className="gb-buy__express"
+                disabled={!chosen || chosen.available <= 0}
+              >
+                {applePay ? (
+                  <>
+                    <span>Buy with</span>
+                    <svg viewBox="0 0 40 20" aria-label="Apple Pay" role="img"><path fill="#fff" d="M7.6 4.3c.5-.6.8-1.4.7-2.2-.7 0-1.6.5-2.1 1.1-.5.5-.9 1.4-.8 2.2.8.1 1.6-.4 2.2-1.1M8.3 5.5c-1.2-.1-2.2.7-2.8.7-.6 0-1.5-.6-2.4-.6C1.8 5.6.7 6.4.1 7.5c-1.3 2.2-.3 5.5.9 7.3.6.9 1.3 1.9 2.3 1.8.9 0 1.3-.6 2.4-.6s1.4.6 2.4.6c1 0 1.6-.9 2.2-1.8.7-1 1-2 1-2.1 0 0-1.9-.7-1.9-2.9 0-1.8 1.5-2.6 1.5-2.7-.8-1.2-2.1-1.4-2.6-1.6M15.6 3.1v13.4h2.1v-4.6h2.9c2.6 0 4.5-1.8 4.5-4.4s-1.8-4.4-4.4-4.4h-5.1zm2.1 1.8h2.4c1.8 0 2.8 1 2.8 2.6s-1 2.6-2.8 2.6h-2.4V4.9zM28.8 16.6c1.3 0 2.5-.7 3.1-1.7h.1v1.6h1.9V9.8c0-2-1.6-3.2-4-3.2-2.2 0-3.9 1.3-4 3h1.9c.2-.8 1-1.4 2-1.4 1.3 0 2.1.6 2.1 1.7v.8l-2.7.2c-2.5.1-3.9 1.2-3.9 3 0 1.7 1.4 2.7 3.5 2.7zm.6-1.6c-1.1 0-1.9-.5-1.9-1.4 0-.9.7-1.4 2-1.5l2.4-.2v.8c0 1.3-1.1 2.3-2.5 2.3zM35.6 20c2 0 3-.8 3.8-3.1L43 6.8h-2.1l-2.4 7.8h-.1L36 6.8h-2.2l3.5 9.7-.2.6c-.3 1-.8 1.4-1.7 1.4h-.7V20h.9z"/></svg>
+                  </>
+                ) : (
+                  <span>Buy now</span>
                 )}
               </button>
 

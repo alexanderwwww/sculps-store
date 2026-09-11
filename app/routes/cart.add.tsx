@@ -26,6 +26,10 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
 
   const back = new URL("/cart", url.origin);
   if (url.searchParams.get("store")) back.searchParams.set("store", url.searchParams.get("store")!);
+  // "Buy now" skips the cart: the line goes in and the customer lands on the
+  // checkout, where Apple Pay is the first thing on the screen.
+  const wantsCheckout = url.searchParams.get("next") === "checkout";
+  if (wantsCheckout) back.pathname = "/checkout";
 
   if (!variantId) {
     return new Response(null, { status: 302, headers: { Location: back.toString() } });

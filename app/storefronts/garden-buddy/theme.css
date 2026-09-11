@@ -598,23 +598,44 @@
 .gb-drawer .gb-co__input:focus{border-color:var(--brown);box-shadow:0 0 0 1px var(--brown)}
 .gb-drawer .gb-co__err{display:block;color:#B3341C;font-size:13px}
 
-/* On a phone: a short card, the picture big on the right. The radio, then
-   the name with the price under it, then the photo filling the height of the
-   card on the right-hand side. */
+/* On a phone: a short card, the picture big on the right.
+   The theme's own rules are all `.gb-product .gb-pack…` and at 520px they
+   push the price onto its own full-width row — which is what made the cards
+   200px tall. These carry the same prefix so they actually win. */
 @media(max-width:640px){
-  .gb-packs{gap:7px}
-  .gb-pack{padding:7px 10px 7px 12px;gap:0;border-radius:11px}
-  .gb-pack.is-flagged{margin-top:9px}
-  .gb-pack__head{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"mark body thumb" "mark price thumb";column-gap:10px;row-gap:2px;align-items:center;min-height:0}
-  .gb-pack__mark{grid-area:mark;width:20px;height:20px}
-  .gb-pack.is-selected .gb-pack__mark:after{width:10px;height:10px}
-  .gb-pack__body{grid-area:body;align-self:end}
-  .gb-pack__price{grid-area:price;justify-items:start;text-align:left;align-self:start;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 8px}
-  .gb-pack__thumb{grid-area:thumb;width:72px;height:72px;border-radius:10px;align-self:center}
-  .gb-pack__name{font-size:16px;line-height:1.15}
-  .gb-pack__incl,.gb-product .gb-pack__each{font-size:12px;line-height:1.25}
-  .gb-pack__now{font-size:20px}
-  .gb-pack__was{font-size:12.5px}
-  .gb-pack__save{font-size:10.5px;padding:2px 8px}
-  .gb-pack__flag{top:-11px;left:12px;font-size:10.5px;padding:3px 10px}
+  .gb-product .gb-packs{gap:7px}
+  .gb-product .gb-pack{padding:6px 10px 6px 12px;gap:0;border-radius:11px}
+  .gb-product .gb-pack.is-flagged{margin-top:9px}
+  .gb-product .gb-pack__head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"mark body thumb" "mark price thumb";column-gap:12px;row-gap:1px;align-items:center;min-height:0}
+  .gb-product .gb-pack__mark{grid-area:mark;width:20px;height:20px;align-self:center}
+  .gb-product .gb-pack.is-selected .gb-pack__mark:after{width:10px;height:10px}
+  .gb-product .gb-pack__body{grid-area:body;align-self:end;gap:0}
+  .gb-product .gb-pack__price{grid-area:price;grid-column:auto;align-self:start;display:grid;grid-template-columns:max-content max-content;column-gap:8px;row-gap:3px;align-items:baseline;justify-items:start;text-align:left}
+  .gb-product .gb-pack__thumb{grid-area:thumb;width:68px;height:68px;border-radius:10px;align-self:center}
+  .gb-product .gb-pack__name{font-size:15.5px;line-height:1.15}
+  .gb-product .gb-pack__incl,.gb-product .gb-pack__each{font-size:12px;line-height:1.2}
+  .gb-product .gb-pack__now{font-size:19px;line-height:1.1}
+  .gb-product .gb-pack__was{font-size:12px}
+  .gb-product .gb-pack__save{font-size:10.5px;padding:2px 8px;line-height:1.3}
+  .gb-product .gb-pack__flag{top:-11px;left:12px;font-size:10.5px;padding:3px 10px}
+  /* room under the "Our pick" flag so it never sits on the name */
+  .gb-product .gb-pack.is-flagged{padding-top:14px}
+  /* the sub-line repeats the name on a phone ("1 Garden Buddy / 1 Garden
+     Buddy"); the card is shorter without it, and nothing is lost */
+  .gb-product .gb-pack__incl{display:none}
+  /* price first, the struck price beside it, the saving on its own short line */
+  .gb-product .gb-pack__now{order:1}
+  .gb-product .gb-pack__was{order:2}
+  .gb-product .gb-pack__save{order:3;grid-column:1 / -1;justify-self:start}
+  .gb-product .gb-pack__so{order:4;grid-column:1 / -1}
 }
+
+/* "Buy now" under the add-to-cart button: the black wallet pill. On a
+   browser with Apple Pay it carries the Apple Pay mark; elsewhere it says
+   Buy now. Either way it puts the chosen bundle in the cart and lands on the
+   checkout, where the wallet row is the first thing on the screen. */
+.gb-product .gb-buy__express{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;margin-top:10px;padding:0 22px;border:0;border-radius:999px;background:#0B0B0B;color:#fff;font-family:var(--font-b);font-size:17px;font-weight:700;cursor:pointer;transition:transform .12s,background .15s}
+.gb-product .gb-buy__express:hover{background:#000;transform:translateY(-1px)}
+.gb-product .gb-buy__express:active{transform:translateY(0)}
+.gb-product .gb-buy__express svg{height:20px;width:auto;display:block}
+.gb-product .gb-buy__express[disabled]{opacity:.5;cursor:not-allowed;transform:none}

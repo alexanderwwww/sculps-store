@@ -55,7 +55,9 @@ export default {
     const redirect = (to: string) =>
       new Response(null, { status: 301, headers: { Location: to, "Strict-Transport-Security": HSTS } });
 
-    if (url.protocol === "http:") {
+    // Local development has no certificate; everything else has no excuse.
+    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (url.protocol === "http:" && !local) {
       url.protocol = "https:";
       return redirect(url.toString());
     }
