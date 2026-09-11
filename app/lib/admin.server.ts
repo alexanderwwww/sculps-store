@@ -1076,7 +1076,9 @@ export async function saveStoreSettings(
 export async function saveMetaConfig(
   db: DB,
   storeId: string,
-  patch: { pixelId: string | null; adAccountId: string | null; testEventCode: string | null },
+  // Partial on purpose: the Meta screen saves one field at a time as the
+  // setup is walked through, and a step must never wipe the step before it.
+  patch: Partial<{ pixelId: string | null; adAccountId: string | null; testEventCode: string | null }>,
 ): Promise<void> {
   const existing = await db
     .select()
@@ -1085,6 +1087,7 @@ export async function saveMetaConfig(
     .limit(1);
 
   if (existing.length) {
+    if (Object.keys(patch).length === 0) return;
     await db.update(metaConfig).set(patch).where(eq(metaConfig.storeId, storeId));
   } else {
     await db.insert(metaConfig).values({ storeId, ...patch });
