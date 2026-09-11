@@ -37,6 +37,25 @@ const requestHandler = createRequestHandler(
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    /**
+     * Nothing here is served over plain HTTP. Ever.
+     *
+     * The store was answering http:// with a 200, which is how an iPhone
+     * ended up on "Not Secure — gardenbuddy.store" with Stripe refusing to
+     * load ("Live Stripe.js integrations must use HTTPS") and no way to pay.
+     * The same insecure origin also switches off service workers and push
+     * notifications, so the phone could never have been notified either.
+     *
+     * This is the redirect Cloudflare's "Always Use HTTPS" would do, done
+     * here so it cannot be switched off by accident and does not depend on a
+     * dashboard setting nobody remembers.
+     */
+    if (url.protocol === "http:") {
+      url.protocol = "https:";
+      return Response.redirect(url.toString(), 301);
+    }
+
     const db = makeDb(env.DATABASE_URL);
 
     // One store, one address. Every other hostname connected to a store — the
@@ -52,12 +71,21 @@ export default {
       }
     }
 
-    return requestHandler(request, {
+    const response = await requestHandler(request, {
       cloudflare: { env, ctx },
       db,
       hostname: url.hostname,
       geo: edgeGeo(request),
     });
+
+    /**
+     * And tell the browser never to try HTTP again. A year, subdomains
+     * included — after the first visit there is no insecure request left to
+     * intercept, which is the point of the header.
+     */
+    const secured = new Response(response.body, response);
+    secured.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    return secured;
   },
 } satisfies ExportedHandler<Env>;
 
