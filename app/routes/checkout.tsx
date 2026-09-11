@@ -1702,95 +1702,88 @@ function ScratchCard({
   };
 
   /**
-   * The foil: brown metal with the store's own mark stamped through it in
-   * gold, and a sheen crossing it slowly so it reads as foil rather than a
-   * grey rectangle. Repainted on resize so it always covers exactly.
+   * The foil.
+   *
+   * Painted once, in device pixels, and then left alone. The first version
+   * animated a sheen across it on every frame, which fought the scratching:
+   * each frame repainted the foil over what had just been rubbed away. That
+   * is why it would not scratch. The shine is part of the painting now, not
+   * a loop.
    */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || revealed) return;
-    let frame = 0;
     let stopped = false;
-    const mark = new Image();
-    let markReady = false;
-    if (logoUrl) {
-      mark.crossOrigin = "anonymous";
-      mark.onload = () => {
-        markReady = true;
-      };
-      mark.src = logoUrl;
-    }
 
-    const paint = (time: number) => {
-      if (stopped || touchedRef.current) return;
+    const paint = (mark: HTMLImageElement | null) => {
+      if (stopped || cleared.current || touchedRef.current) return;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0) return;
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
-      if (canvas.width !== Math.round(rect.width * ratio)) {
-        canvas.width = Math.max(1, Math.round(rect.width * ratio));
-        canvas.height = Math.max(1, Math.round(rect.height * ratio));
-      }
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.globalCompositeOperation = "source-over";
 
-      const metal = ctx.createLinearGradient(0, 0, rect.width, rect.height);
-      metal.addColorStop(0, "#2A1D11");
-      metal.addColorStop(0.42, "#4A3626");
-      metal.addColorStop(0.5, "#6B5238");
-      metal.addColorStop(0.58, "#4A3626");
-      metal.addColorStop(1, "#241809");
+      const metal = ctx.createLinearGradient(0, 0, w, h);
+      metal.addColorStop(0, "#3B2A1B");
+      metal.addColorStop(0.45, "#57402B");
+      metal.addColorStop(0.52, "#7A5C3C");
+      metal.addColorStop(0.6, "#57402B");
+      metal.addColorStop(1, "#2A1D11");
       ctx.fillStyle = metal;
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.fillRect(0, 0, w, h);
 
-      // the store's mark, stamped faintly across the foil
-      ctx.globalAlpha = 0.14;
-      if (markReady) {
-        const h = 22;
-        const w = (mark.width / mark.height) * h || 60;
-        for (let y = 6; y < rect.height; y += h + 14) {
-          for (let x = -w; x < rect.width; x += w + 22) {
-            ctx.drawImage(mark, x + (((y / (h + 14)) | 0) % 2) * ((w + 22) / 2), y, w, h);
+      // The store's own mark, big and in its own colours — this is the front
+      // of the card, so it should look like the brand, not like a watermark.
+      if (mark && mark.naturalWidth) {
+        const height = 30 * ratio;
+        const width = (mark.naturalWidth / mark.naturalHeight) * height;
+        ctx.globalAlpha = 0.55;
+        let row = 0;
+        for (let y = 8 * ratio; y < h; y += height + 16 * ratio) {
+          for (let x = -width; x < w; x += width + 18 * ratio) {
+            ctx.drawImage(mark, x + (row % 2) * ((width + 18 * ratio) / 2), y, width, height);
           }
+          row++;
         }
-      } else {
-        ctx.fillStyle = "#FFC72C";
-        ctx.font = "800 11px system-ui, sans-serif";
-        for (let y = 16; y < rect.height + 16; y += 24) {
-          for (let x = -20; x < rect.width; x += 96) {
-            ctx.fillText("GARDEN BUDDY", x + (((y / 24) | 0) % 2) * 48, y);
-          }
-        }
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
 
-      // the sheen, travelling
-      const sweep = ((time / 2600) % 1) * (rect.width * 1.8) - rect.width * 0.4;
-      const sheen = ctx.createLinearGradient(sweep - 60, 0, sweep + 60, rect.height);
-      sheen.addColorStop(0, "rgba(255,255,255,0)");
-      sheen.addColorStop(0.5, "rgba(255, 226, 150, .28)");
-      sheen.addColorStop(1, "rgba(255,255,255,0)");
+      // one fixed gold sheen across the corner
+      const sheen = ctx.createLinearGradient(0, h, w, 0);
+      sheen.addColorStop(0, "rgba(255, 199, 44, 0)");
+      sheen.addColorStop(0.46, "rgba(255, 226, 150, .30)");
+      sheen.addColorStop(0.54, "rgba(255, 199, 44, .18)");
+      sheen.addColorStop(1, "rgba(255, 199, 44, 0)");
       ctx.fillStyle = sheen;
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.fillRect(0, 0, w, h);
 
-      frame = requestAnimationFrame(paint);
+      ctx.globalCompositeOperation = "destination-out";
     };
 
-    // Once a finger is on it the animation stops: an animated layer cannot be
-    // scratched, because every frame would paint the scratches back in.
-    if (!touched) frame = requestAnimationFrame(paint);
-    else paintStatic();
-
-    function paintStatic() {
-      const ctx = canvas!.getContext("2d");
-      if (ctx) ctx.globalCompositeOperation = "destination-out";
+    if (logoUrl) {
+      const mark = new Image();
+      mark.crossOrigin = "anonymous";
+      mark.onload = () => paint(mark);
+      mark.onerror = () => paint(null);
+      mark.src = logoUrl;
+      if (mark.complete) paint(mark);
+    } else {
+      paint(null);
     }
 
+    const onResize = () => paint(null);
+    window.addEventListener("resize", onResize);
     return () => {
       stopped = true;
-      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", onResize);
     };
-  }, [revealed, touched, logoUrl]);
+  }, [revealed, logoUrl]);
 
   /** How much has been rubbed off — it opens at just over half. */
   const measure = useCallback(() => {
@@ -1804,7 +1797,7 @@ function ScratchCard({
       seen++;
       if (pixels[i]! < 32) clear++;
     }
-    if (seen && clear / seen > 0.52) {
+    if (seen && clear / seen > 0.38) {
       cleared.current = true;
       setScratchedThrough(true);
     }
@@ -1825,8 +1818,11 @@ function ScratchCard({
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc((event.clientX - rect.left) * ratio, (event.clientY - rect.top) * ratio, 22 * ratio, 0, Math.PI * 2);
+    ctx.arc((event.clientX - rect.left) * ratio, (event.clientY - rect.top) * ratio, 28 * ratio, 0, Math.PI * 2);
     ctx.fill();
+    // A drag that leaves the panel and comes back would otherwise stop
+    // erasing; the pointer is captured so the whole gesture belongs to it.
+    if (event.type === "pointerdown") canvas.setPointerCapture?.(event.pointerId);
     measure();
   };
 
@@ -2194,8 +2190,16 @@ function OnePage({
       // method the account has actually enabled — instead of one wall of
       // fields. Stripe builds the list, so nothing is drawn that cannot be
       // paid with.
+      /**
+       * Choose, then type. The rows are closed to start with — "Credit or
+       * debit card", "Apple Pay", and whatever else this account has on — so
+       * the customer picks a way to pay and only that one's fields open.
+       * Apple Pay appearing here as well as in the row at the top is on
+       * purpose: two chances to use the one he cares about.
+       */
       const payment = elements.create("payment", {
-        layout: { type: "accordion", defaultCollapsed: false, radios: true, spacedAccordionItems: true },
+        layout: { type: "accordion", defaultCollapsed: true, radios: true, spacedAccordionItems: true },
+        wallets: { applePay: "auto", googlePay: "auto" },
       });
       if (cardRef.current) payment.mount(cardRef.current);
 
@@ -2206,6 +2210,27 @@ function OnePage({
         const express = elements.create("expressCheckout", {
           // Stripe accepts 40–55 here and throws outside it.
           buttonHeight: 55,
+          /**
+           * Every wallet at once, no "See more".
+           *
+           * Stripe collapses the row into a menu as soon as more than one or
+           * two buttons fit, which is how Google Pay ended up hidden behind a
+           * link on his own checkout. `overflow: "never"` lays them all out.
+           *
+           * `applePay: "always"` and `googlePay: "always"` tell Stripe to draw
+           * those buttons wherever the browser can do them at all rather than
+           * only where it is certain — Chrome on a Mac can do Apple Pay, and
+           * that is most of his customers. A browser that genuinely cannot
+           * still draws nothing, because the button belongs to the browser,
+           * not to us: there is no way to paint one that would not work.
+           *
+           * Link is off here. It is Stripe's own wallet, it was taking the
+           * whole row, and it is still offered inside the card form below for
+           * anyone who actually uses it.
+           */
+          layout: { maxColumns: 2, maxRows: 2, overflow: "never" },
+          paymentMethods: { applePay: "always", googlePay: "always", link: "never" },
+          buttonType: { applePay: "buy", googlePay: "buy" },
           emailRequired: true,
           // Phone is one of the four we ask for, so the sheet collects it too
           // wherever this store shows a phone field at all.

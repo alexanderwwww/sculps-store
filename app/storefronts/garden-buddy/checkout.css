@@ -165,7 +165,7 @@
 /* ---- the rail: what is being bought ------------------------------------ */
 .gb-co__lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .gb-co__line { display: flex; gap: 12px; align-items: center; }
-.gb-co__shot { flex: 0 0 52px; width: 52px; height: 52px; border-radius: 10px; background: #fff; border: 1px solid var(--line); position: relative; }
+.gb-co__shot { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 10px; background: #fff; border: 1px solid var(--line); position: relative; }
 .gb-co__shot img { width: 100%; height: 100%; object-fit: contain; border-radius: 9px; }
 .gb-co__qty { position: absolute; top: -7px; right: -7px; display: inline-flex; align-items: center; justify-content: center; min-width: 19px; height: 19px; padding: 0 6px; border-radius: 10px; background: var(--brown); color: #fff; font-size: 11px; font-weight: 700; }
 .gb-co__line-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
@@ -209,7 +209,7 @@
 .gb-co__up-sub { display: none; }
 .gb-co__up-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .gb-co__up-item { display: grid; justify-items: center; gap: 6px; padding: 12px 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; text-align: center; }
-.gb-co__up-shot { width: 84px; height: 84px; border-radius: 10px; overflow: hidden; background: #fff; }
+.gb-co__up-shot { width: 104px; height: 104px; border-radius: 10px; overflow: hidden; background: #fff; }
 .gb-co__up-shot img { width: 100%; height: 100%; object-fit: contain; }
 .gb-co__up-body { display: grid; gap: 4px; justify-items: center; }
 .gb-co__up-name { margin: 0; font-weight: 700; font-size: 12.5px; line-height: 1.3; color: var(--ink); }
@@ -242,10 +242,10 @@
    lifts away — it does not blink out — and the prize scales up behind it.
    The odds are one tap below, because a prize promotion that hides them is
    the kind that loses you a payment account. */
-.gb-co__scratch { margin: 22px 0 0; padding: 14px; border-radius: 14px; background: linear-gradient(165deg, #2A1D11, #3B2A1B 60%, #4A3626); color: #F6EEE2; box-shadow: 0 10px 28px rgba(43, 30, 17, .22); }
-.gb-co__scratch-h { margin: 0; font-family: var(--font-h); font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: #fff; text-align: center; }
-.gb-co__scratch-sub { margin: 3px 0 11px; font-size: 12px; color: rgba(246, 238, 226, .72); text-align: center; }
-.gb-co__scratch-box { position: relative; border-radius: 12px; overflow: hidden; background: #FFFDF7; aspect-ratio: 1.9 / 1; max-height: 128px; }
+.gb-co__scratch { margin: 22px 0 0; }
+.gb-co__scratch-h { margin: 0; font-family: var(--font-h); font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); text-align: center; }
+.gb-co__scratch-sub { margin: 3px 0 11px; font-size: 12px; color: var(--dim); text-align: center; }
+.gb-co__scratch-box { position: relative; border-radius: 14px; overflow: hidden; background: #FFFDF7; aspect-ratio: 1.9 / 1; max-height: 140px; box-shadow: 0 8px 24px rgba(43, 30, 17, .18); }
 .gb-co__scratch-prize { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 3px; text-align: center; padding: 8px; }
 .gb-co__scratch-prize b { font-family: var(--font-h); font-size: 34px; font-weight: 800; letter-spacing: -.025em; line-height: 1; color: var(--brown); }
 .gb-co__scratch-prize span { font-size: 12px; color: var(--dim); }
@@ -259,11 +259,11 @@
 .gb-co__scratch-applied { display: inline-flex; align-items: center; gap: 6px; margin-top: 9px; padding: 5px 11px; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-size: 12px; font-weight: 800; animation: gb-co-slide .32s var(--ease) both; }
 @keyframes gb-co-slide { from { opacity: 0; transform: translateY(5px); } }
 .gb-co__scratch-foot { display: flex; align-items: center; justify-content: center; margin-top: 10px; }
-.gb-co__scratch-odds-btn { padding: 0; border: 0; background: none; color: rgba(246, 238, 226, .8); font-family: var(--font-b); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.gb-co__scratch-odds { list-style: none; margin: 9px 0 0; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .08); display: grid; gap: 5px; }
-.gb-co__scratch-odds li { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: rgba(246, 238, 226, .78); }
-.gb-co__scratch-odds li b { color: #fff; font-weight: 700; }
-.gb-co__scratch-odds-note { display: block; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, .14); line-height: 1.45; }
+.gb-co__scratch-odds-btn { padding: 0; border: 0; background: none; color: var(--brown); font-family: var(--font-b); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.gb-co__scratch-odds { list-style: none; margin: 9px 0 0; padding: 10px 12px; border-radius: 10px; background: rgba(59, 42, 27, .06); display: grid; gap: 5px; }
+.gb-co__scratch-odds li { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--dim); }
+.gb-co__scratch-odds li b { color: var(--ink); font-weight: 700; }
+.gb-co__scratch-odds-note { display: block; padding-top: 5px; border-top: 1px solid var(--line); line-height: 1.45; }
 
 @media (prefers-reduced-motion: reduce) {
   .gb-sf__lbl, .gb-sf__cell, .gb-co__msum-caret, .gb-co__pay, .gb-co__up-add, .gb-co__disc-btn, .gb-co__prot-row, .gb-co__scratch-foil { transition: none; }
