@@ -1758,9 +1758,43 @@ function PushCard() {
     const res = await fetch("/admin/push");
     if (res.ok) setState(await res.json());
   }, []);
+
+  /**
+   * What this browser actually has, reported to the shop.
+   *
+   * A push that is accepted by Google and then never wakes the worker looks,
+   * from the server, identical to one that worked. So the browser says what
+   * it is holding: which worker script is active, whether a subscription
+   * still exists, and whether that subscription is the one we are pushing to.
+   */
+  const inspect = React.useCallback(async () => {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      const subscription = registration ? await registration.pushManager.getSubscription() : null;
+      const detail = JSON.stringify({
+        permission: typeof Notification !== "undefined" ? Notification.permission : "none",
+        script: registration?.active?.scriptURL ?? null,
+        waiting: Boolean(registration?.waiting),
+        installing: Boolean(registration?.installing),
+        endpoint: subscription ? subscription.endpoint.slice(-24) : null,
+      });
+      await fetch("/push/log", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ kind: "browser-state", detail }),
+      });
+    } catch (error) {
+      await fetch("/push/log", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ kind: "browser-state-failed", detail: String(error).slice(0, 300) }),
+      }).catch(() => undefined);
+    }
+  }, []);
   React.useEffect(() => {
     void load();
-  }, [load]);
+    void inspect();
+  }, [load, inspect]);
 
   const supported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
   const standalone =
@@ -1868,6 +1902,33 @@ function PushCard() {
           onClick={() => void act(new URLSearchParams({ intent: "test" }))}
         >
           Send a test
+        </CardButton>
+        {/* This one never leaves the machine: the worker draws a notification
+            without any push at all. If this shows nothing, the problem is the
+            operating system refusing to draw it, not the delivery. */}
+        <CardButton
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setMessage(null);
+            try {
+              const registration = await navigator.serviceWorker.getRegistration();
+              if (!registration) {
+                setMessage("This browser has no service worker registered — press Enable first.");
+                return;
+              }
+              await registration.showNotification("Shop Admin", {
+                body: "Drawn by this browser, with no push involved.",
+                icon: "/icon-512.png",
+                tag: `local-${Date.now()}`,
+              });
+              setMessage("Asked the browser to draw one. If nothing appeared, macOS is blocking Chrome's notifications.");
+            } catch (error) {
+              setMessage(error instanceof Error ? error.message : "The browser refused to draw it.");
+            }
+          }}
+        >
+          Test without push
         </CardButton>
         {message ? <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{message}</span> : null}
         {!supported ? (
