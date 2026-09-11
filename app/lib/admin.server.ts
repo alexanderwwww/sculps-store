@@ -754,6 +754,7 @@ export interface VariantInput {
   priceCents: number;
   compareAtCents: number | null;
   sku: string | null;
+  imageUrl?: string | null;
   position: number;
   isDefault: boolean;
 }
@@ -785,6 +786,7 @@ export async function saveVariants(
       priceCents: variant.priceCents,
       compareAtCents: variant.compareAtCents,
       sku: variant.sku,
+      imageUrl: variant.imageUrl ?? null,
       position: variant.position,
       isDefault: variant.isDefault,
     };

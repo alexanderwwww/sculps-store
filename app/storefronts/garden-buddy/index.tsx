@@ -341,6 +341,12 @@ export function Footer({ page, storeParam = "" }: { page: ChromeInput; storePara
 /* ---------------------------------------------------------------- buy box */
 
 function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
+  // Each bundle card shows its own picture when one has been chosen for it in
+  // Admin → Products, and the product's first gallery photo otherwise — the
+  // same photo the cart drawer already uses. Nothing is drawn that does not
+  // exist: no photo at all means no thumbnail.
+  const fallbackShot = section.blocks.find((b) => has(b.values, "image"));
+  const fallbackSrc = fallbackShot ? val(fallbackShot.values, "image") : null;
   const href = (path: string) => `${path}${storeParam}`;
   const { product, variants, store } = page;
   const drawer = useCartDrawer();
@@ -507,6 +513,11 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                         {variant.isDefault && <span className="gb-pack__flag">Our pick</span>}
                         <span className="gb-pack__head">
                           <span className="gb-pack__mark" aria-hidden="true" />
+                          {variant.imageUrl || fallbackSrc ? (
+                            <span className="gb-pack__thumb" aria-hidden="true">
+                              <img src={variant.imageUrl || fallbackSrc || ""} alt="" loading="lazy" width={44} height={44} />
+                            </span>
+                          ) : null}
                           <span className="gb-pack__body">
                             <span className="gb-pack__name">{variant.label}</span>
                             {variant.sublabel && (

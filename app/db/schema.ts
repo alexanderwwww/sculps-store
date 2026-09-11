@@ -235,6 +235,8 @@ export const variants = pgTable(
     priceCents: integer("price_cents").notNull(),
     compareAtCents: integer("compare_at_cents"),
     sku: text("sku"),
+    /** the picture shown on this option's card; the product's first photo when unset */
+    imageUrl: text("image_url"),
     position: integer("position").notNull().default(0),
     isDefault: boolean("is_default").notNull().default(false),
     available: integer("available").notNull().default(0),

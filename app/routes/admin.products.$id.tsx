@@ -87,6 +87,7 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
       price: centsToInput(variant.priceCents),
       compareAt: centsToInput(variant.compareAtCents),
       sku: variant.sku ?? "",
+      imageUrl: variant.imageUrl ?? "",
       isDefault: variant.isDefault,
       sold: sold.get(variant.id) ?? 0,
     })),
@@ -155,6 +156,7 @@ export async function action({ context, request, params }: Route.ActionArgs) {
   const prices = form.getAll("variantPrice").map(String);
   const compares = form.getAll("variantCompare").map(String);
   const skus = form.getAll("variantSku").map(String);
+  const images = form.getAll("variantImage").map(String);
   const defaultIndex = Number(form.get("defaultVariant") ?? -1);
 
   const submitted = [];
@@ -173,6 +175,7 @@ export async function action({ context, request, params }: Route.ActionArgs) {
       priceCents,
       compareAtCents: centsFromInput(compares[index] ?? ""),
       sku: skus[index]?.trim() || null,
+      imageUrl: images[index]?.trim() || null,
       position: index,
       isDefault: index === defaultIndex,
     });
@@ -192,6 +195,7 @@ interface Row {
   price: string;
   compareAt: string;
   sku: string;
+  imageUrl: string;
   sold: number;
 }
 
@@ -224,6 +228,7 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
         price: "",
         compareAt: "",
         sku: "",
+        imageUrl: "",
         sold: 0,
       },
     ]);
@@ -521,6 +526,7 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
                     <th style={{ width: 34 }} />
                     <th style={{ padding: "0 8px", fontWeight: 550 }}>Label</th>
                     <th style={{ padding: "0 8px", fontWeight: 550 }}>Sublabel</th>
+                    <th style={{ padding: "0 8px", fontWeight: 550, width: 150 }}>Image</th>
                     <th style={{ padding: "0 8px", fontWeight: 550, width: 96 }}>Price</th>
                     <th style={{ padding: "0 8px", fontWeight: 550, width: 108 }}>Compare-at</th>
                     <th style={{ padding: "0 8px", fontWeight: 550, width: 76 }}>Saved</th>
@@ -584,6 +590,24 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
                             placeholder="Most popular"
                             style={cellInput}
                           />
+                        </td>
+                        <td style={{ padding: "0 8px" }}>
+                          {/* The picture on this option's card. Nothing chosen
+                              means the product's first photo, which is what
+                              the card showed before there was a choice. */}
+                          <select
+                            name="variantImage"
+                            value={row.imageUrl}
+                            onChange={(event) => update(index, { imageUrl: event.currentTarget.value })}
+                            style={{ width: "100%", height: 32, borderRadius: 8, border: "1px solid var(--border)", background: "var(--input)", color: "var(--ink)", fontSize: 13, padding: "0 8px" }}
+                          >
+                            <option value="">Product photo</option>
+                            {media.map((item) => (
+                              <option key={item.id} value={item.url}>
+                                {item.filename}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td style={{ padding: "0 8px" }}>
                           <input
