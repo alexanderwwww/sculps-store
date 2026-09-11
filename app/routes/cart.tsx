@@ -48,7 +48,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // the checkout, which is this store's own page and where they were headed.
   // This route's markup is the other store's, and a customer must never see
   // the wrong brand a step before paying.
-  if (store.slug === "garden-buddy") {
+  // Only a person arriving on this address is sent to the drawer. The drawer
+  // itself reads its lines through this same loader as a data request, and
+  // redirecting that left it saying "loading" forever.
+  const isNavigation =
+    request.headers.get("sec-fetch-dest") === "document" ||
+    (!request.headers.has("sec-fetch-dest") && (request.headers.get("accept") ?? "").includes("text/html"));
+  if (store.slug === "garden-buddy" && isNavigation) {
     // Garden Buddy's cart is the drawer: the home page with it open, where
     // lines can be changed or removed and nobody is hurried anywhere.
     const to = new URL("/", url);
