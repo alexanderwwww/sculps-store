@@ -14,7 +14,8 @@ import type { Route } from "./+types/products.$handle";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
-  const store = url.searchParams.get("store");
-  const to = store ? `/?store=${encodeURIComponent(store)}` : "/";
+  // Everything after the ? comes along: fbclid, utm_*, ?store=. An ad click
+  // that lands here and loses its parameters is a sale nobody can attribute.
+  const to = `/${url.search}`;
   return new Response(null, { status: 301, headers: { Location: to } });
 }

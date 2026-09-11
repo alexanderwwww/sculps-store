@@ -43,7 +43,14 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       context.db
         .select({ n: sql<number>`cast(count(*) as int)` })
         .from(orders)
-        .where(and(eq(orders.storeId, store.id), eq(orders.state, "new"))),
+        .where(
+          and(
+            eq(orders.storeId, store.id),
+            eq(orders.state, "new"),
+            // an unpaid checkout is not a new order
+            sql`${orders.paymentStatus} in ('paid','partially_refunded','refunded')`,
+          ),
+        ),
       context.db
         .select({ n: sql<number>`cast(count(*) as int)` })
         .from(products)

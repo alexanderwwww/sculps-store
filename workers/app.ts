@@ -51,9 +51,13 @@ export default {
      * here so it cannot be switched off by accident and does not depend on a
      * dashboard setting nobody remembers.
      */
+    const HSTS = "max-age=31536000; includeSubDomains";
+    const redirect = (to: string) =>
+      new Response(null, { status: 301, headers: { Location: to, "Strict-Transport-Security": HSTS } });
+
     if (url.protocol === "http:") {
       url.protocol = "https:";
-      return Response.redirect(url.toString(), 301);
+      return redirect(url.toString());
     }
 
     const db = makeDb(env.DATABASE_URL);
@@ -63,11 +67,14 @@ export default {
     // primary one, which is what Shopify does and what stops the same page
     // being indexed twice. The admin is never redirected: it lives on its own
     // address and must stay reachable however he arrives.
-    if (!url.pathname.startsWith("/admin") && !url.pathname.startsWith("/webhooks")) {
+    // Pictures and scripts are served without asking the database which
+    // store this is: that lookup was a round trip on every single image.
+    const isAsset = url.pathname.startsWith("/media/") || url.pathname.startsWith("/assets/");
+    if (!isAsset && !url.pathname.startsWith("/admin") && !url.pathname.startsWith("/webhooks")) {
       const primary = await primaryFor(db, url.hostname);
       if (primary && primary !== url.hostname) {
         url.hostname = primary;
-        return Response.redirect(url.toString(), 301);
+        return redirect(url.toString());
       }
     }
 
@@ -84,7 +91,7 @@ export default {
      * intercept, which is the point of the header.
      */
     const secured = new Response(response.body, response);
-    secured.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    secured.headers.set("Strict-Transport-Security", HSTS);
     return secured;
   },
 } satisfies ExportedHandler<Env>;

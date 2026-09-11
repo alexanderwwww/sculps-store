@@ -685,7 +685,8 @@ function buildMetrics(
 
 /** Orders that need him to do something. Drives Home's "Things to do". */
 export async function todos(db: DB, storeId: string | null) {
-  const scope = storeId ? [eq(orders.storeId, storeId)] : [];
+  // Unpaid checkouts are not orders to place with anyone.
+  const scope = [sql`${orders.paymentStatus} in ('paid','partially_refunded','refunded')`, ...(storeId ? [eq(orders.storeId, storeId)] : [])];
   const rows = await db
     .select({ state: orders.state, count: sql<number>`cast(count(*) as int)` })
     .from(orders)
@@ -1137,24 +1138,33 @@ export async function analytics(db: DB, storeId: string, days: number) {
   since.setHours(0, 0, 0, 0);
   since.setDate(since.getDate() - (days - 1));
 
+  /**
+   * Only money that was actually taken counts. Every checkout submit writes
+   * an order row as "pending"; abandoned card entry leaves it there, and a
+   * decline leaves "failed". None of that is revenue, and the sidebar was
+   * already excluding it — so Home and Analytics disagreed with the sidebar
+   * for the same day.
+   */
+  const paidOnly = sql`${orders.paymentStatus} in ('paid','partially_refunded','refunded')`;
+
   const [totals, byDay, bySource, topVariants, sessionRows] = await Promise.all([
     db
       .select({
         orders: sql<number>`cast(count(*) as int)`,
-        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents} - ${orders.refundedCents}), 0) as int)`,
         refunded: sql<number>`cast(coalesce(sum(${orders.refundedCents}), 0) as int)`,
       })
       .from(orders)
-      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since))),
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since), paidOnly)),
 
     db
       .select({
         day: sql<string>`to_char(${orders.createdAt}, 'YYYY-MM-DD')`,
         orders: sql<number>`cast(count(*) as int)`,
-        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents} - ${orders.refundedCents}), 0) as int)`,
       })
       .from(orders)
-      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since)))
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since), paidOnly))
       .groupBy(sql`1`)
       .orderBy(sql`1`),
 
@@ -1162,10 +1172,10 @@ export async function analytics(db: DB, storeId: string, days: number) {
       .select({
         source: orders.source,
         orders: sql<number>`cast(count(*) as int)`,
-        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents} - ${orders.refundedCents}), 0) as int)`,
       })
       .from(orders)
-      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since)))
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since), paidOnly))
       .groupBy(orders.source)
       .orderBy(desc(sql`2`)),
 
@@ -1177,7 +1187,7 @@ export async function analytics(db: DB, storeId: string, days: number) {
       })
       .from(orderItems)
       .innerJoin(orders, eq(orders.id, orderItems.orderId))
-      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since)))
+      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, since), paidOnly))
       .groupBy(orderItems.label)
       .orderBy(desc(sql`3`))
       .limit(10),
@@ -1409,16 +1419,27 @@ export async function orderByPaymentRef(db: DB, paymentRef: string) {
   return row ?? null;
 }
 
-export async function markOrderPaid(db: DB, orderId: string, note: string): Promise<void> {
+/**
+ * Claims the order as paid. Returns true for exactly one caller.
+ *
+ * The webhook and the /thanks page both race to do this, and both used to
+ * win: an unconditional update followed by side-effects meant two timeline
+ * rows, two purchase events on the globe, two receipts, and a discount
+ * counted twice. The WHERE is the lock — whoever gets a row back is the one
+ * that turned it from unpaid to paid, and only they carry on.
+ */
+export async function markOrderPaid(db: DB, orderId: string, note: string): Promise<boolean> {
   const [paid] = await db
     .update(orders)
     .set({ paymentStatus: "paid", paidAt: new Date(), updatedAt: new Date() })
-    .where(eq(orders.id, orderId))
+    .where(and(eq(orders.id, orderId), sql`${orders.paymentStatus} <> 'paid'`))
     .returning({ storeId: orders.storeId, email: orders.email });
+  if (!paid) return false;
   await recordOrderEvent(db, orderId, "payment:confirmed", note);
   // Lifetime spend only counts money actually taken, so it is recounted here
   // as well as at order time.
-  if (paid) await recomputeCustomerTotals(db, paid.storeId, paid.email);
+  await recomputeCustomerTotals(db, paid.storeId, paid.email);
+  return true;
 }
 
 /** Records a visitor action for Live View and Analytics. */
@@ -1436,6 +1457,9 @@ export async function recordVisitorEvent(
     campaign?: string | null;
     amountCents?: number | null;
     orderId?: string | null;
+    /** where it happened — without these the globe cannot draw a sale */
+    lat?: number | null;
+    lon?: number | null;
   },
 ): Promise<void> {
   await db.insert(events).values({
@@ -1450,6 +1474,8 @@ export async function recordVisitorEvent(
     campaign: input.campaign ?? null,
     amountCents: input.amountCents ?? null,
     orderId: input.orderId ?? null,
+    lat: input.lat ?? null,
+    lon: input.lon ?? null,
   });
 }
 
@@ -1488,10 +1514,17 @@ export async function liveBoard(db: DB, storeId: string) {
     db
       .select({
         orders: sql<number>`cast(count(*) as int)`,
-        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
+        revenue: sql<number>`cast(coalesce(sum(${orders.totalCents} - ${orders.refundedCents}), 0) as int)`,
       })
       .from(orders)
-      .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, startOfToday))),
+      // paid money only — a pending checkout is not a sale today
+      .where(
+        and(
+          eq(orders.storeId, storeId),
+          gte(orders.createdAt, startOfToday),
+          sql`${orders.paymentStatus} in ('paid','partially_refunded','refunded')`,
+        ),
+      ),
 
     db
       .select({

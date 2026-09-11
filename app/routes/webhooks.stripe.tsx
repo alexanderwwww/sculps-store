@@ -10,8 +10,9 @@
  */
 import { notifyAdmins, money } from "~/lib/notify.server";
 import type { Route } from "./+types/webhooks.stripe";
-import { eq, sql } from "drizzle-orm";
-import { orders, paymentProviders } from "~/db/schema";
+import { and, eq, sql } from "drizzle-orm";
+import { orders, paymentProviders, stores } from "~/db/schema";
+import { recomputeCustomerTotals } from "~/lib/customers.server";
 import { decryptSecret } from "~/lib/crypto.server";
 import { orderByPaymentRef, markOrderPaid, recordOrderEvent, recordVisitorEvent } from "~/lib/admin.server";
 import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
@@ -24,12 +25,17 @@ async function signatureValid(
 ): Promise<boolean> {
   if (!header) return false;
 
-  const parts = Object.fromEntries(
-    header.split(",").map((piece) => piece.split("=") as [string, string]),
-  );
-  const timestamp = parts.t;
-  const signature = parts.v1;
-  if (!timestamp || !signature) return false;
+  // During a signing-secret roll Stripe sends two v1 entries. Keep them all
+  // and accept any that matches, or a valid event is rejected for the whole
+  // roll-over window.
+  let timestamp: string | undefined;
+  const signatures: string[] = [];
+  for (const piece of header.split(",")) {
+    const [k, v] = piece.trim().split("=") as [string, string];
+    if (k === "t") timestamp = v;
+    else if (k === "v1" && v) signatures.push(v);
+  }
+  if (!timestamp || signatures.length === 0) return false;
 
   // Reject anything older than five minutes so a captured request cannot be
   // replayed later.
@@ -50,12 +56,14 @@ async function signatureValid(
   );
   const expected = [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
 
-  if (expected.length !== signature.length) return false;
-  let difference = 0;
-  for (let i = 0; i < expected.length; i++) {
-    difference |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
-  }
-  return difference === 0;
+  return signatures.some((signature) => {
+    if (expected.length !== signature.length) return false;
+    let difference = 0;
+    for (let i = 0; i < expected.length; i++) {
+      difference |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+    }
+    return difference === 0;
+  });
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -72,8 +80,19 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const object = parsed?.data?.object ?? {};
-  const storeId = object?.metadata?.storeId;
-  if (!storeId) return new Response("No store on the event", { status: 400 });
+
+  // payment_intent.* events carry the intent as `id`; charge.* events carry a
+  // charge id and point at the intent through `payment_intent`. Orders are
+  // keyed by the intent, so everything resolves through it — including which
+  // store's signing secret to check with. A Dispute object carries no
+  // metadata at all, which is why looking there used to 400 every chargeback
+  // for as long as Stripe kept retrying.
+  const intentId: string | undefined =
+    typeof object?.payment_intent === "string" ? object.payment_intent : object?.id;
+  const early = intentId ? await orderByPaymentRef(context.db, intentId) : null;
+  const storeId: string | undefined = early?.storeId ?? object?.metadata?.storeId;
+  // Not ours, or not an order we know: acknowledge it so Stripe stops asking.
+  if (!storeId) return new Response("ok", { status: 200 });
 
   const [provider] = await context.db
     .select()
@@ -90,40 +109,69 @@ export async function action({ request, context }: Route.ActionArgs) {
     return new Response("Bad signature", { status: 400 });
   }
 
-  // payment_intent.* events carry the intent as `id`; charge.* events carry
-  // a charge id and point at the intent through `payment_intent`. Orders are
-  // keyed by the intent, so refunds and disputes must resolve through it.
-  const intentId: string | undefined =
-    typeof object?.payment_intent === "string" ? object.payment_intent : object?.id;
   if (!intentId) return new Response("ok", { status: 200 });
-
-  const order = await orderByPaymentRef(context.db, intentId);
+  const order = early ?? (await orderByPaymentRef(context.db, intentId));
   if (!order) return new Response("ok", { status: 200 });
 
-  if (parsed.type === "payment_intent.succeeded" && order.paymentStatus !== "paid") {
-    await markOrderPaid(context.db, order.id, `Payment confirmed by Stripe webhook · ${intentId}`);
-    await recordVisitorEvent(context.db, storeId, {
-      type: "purchase",
-      sessionId: intentId,
-      amountCents: order.totalCents,
-      orderId: order.id,
-    });
-    await afterPaymentConfirmed(context.db, context.cloudflare.env, order.id, request);
-    // The sound on his phone and his laptop. Last, and never fatal: the money
-    // is already recorded by this point.
-    await notifyAdmins(context.db, context.cloudflare.env, {
-      title: "Order paid",
-      body: `#${order.number} · ${money(order.totalCents, order.currency ?? "USD")}`,
-      url: `/admin/orders/${order.id}`,
-      tag: `order-${order.id}`,
-    });
+  if (parsed.type === "payment_intent.succeeded") {
+    // Exactly one of the webhook and the return page wins this; the other
+    // does nothing further. Everything after the claim is best effort and
+    // must not fail the webhook: the money is already recorded, and a 500
+    // here would only make Stripe retry an event that is now a no-op.
+    const claimed = await markOrderPaid(
+      context.db,
+      order.id,
+      `Payment confirmed by Stripe webhook · ${intentId}`,
+    );
+    if (claimed) {
+      const [store] = await context.db
+        .select({ slug: stores.slug })
+        .from(stores)
+        .where(eq(stores.id, order.storeId))
+        .limit(1);
+      try {
+        await recordVisitorEvent(context.db, storeId, {
+          type: "purchase",
+          sessionId: intentId,
+          city: order.city,
+          region: order.region,
+          country: order.country,
+          lat: order.lat,
+          lon: order.lon,
+          amountCents: order.totalCents,
+          orderId: order.id,
+        });
+      } catch (error) {
+        await recordOrderEvent(context.db, order.id, "event:failed", `Purchase event not written · ${String(error)}`).catch(() => undefined);
+      }
+      try {
+        await afterPaymentConfirmed(context.db, context.cloudflare.env, order.id, request);
+      } catch (error) {
+        await recordOrderEvent(context.db, order.id, "after-payment:failed", `After-payment steps failed · ${String(error)}`).catch(() => undefined);
+      }
+      // The sound on his phone and his laptop. Last, and never fatal.
+      try {
+        await notifyAdmins(context.db, context.cloudflare.env, {
+          title: "Order paid",
+          body: `#${order.number} · ${money(order.totalCents, order.currency ?? "USD")}`,
+          url: `/admin/orders/${order.id}${store ? `?store=${store.slug}` : ""}`,
+          tag: `order-${order.id}`,
+        });
+      } catch {
+        /* a missed ping is not a missed order */
+      }
+    }
   }
 
   if (parsed.type === "payment_intent.payment_failed") {
-    await context.db
+    // Only a pending order can fail. A late or retried failure event must
+    // never overwrite a payment that has since succeeded.
+    const [flipped] = await context.db
       .update(orders)
       .set({ paymentStatus: "failed", updatedAt: new Date() })
-      .where(eq(orders.id, order.id));
+      .where(and(eq(orders.id, order.id), eq(orders.paymentStatus, "pending")))
+      .returning({ id: orders.id });
+    if (!flipped) return new Response("ok", { status: 200 });
     await recordOrderEvent(
       context.db,
       order.id,
@@ -155,6 +203,8 @@ export async function action({ request, context }: Route.ActionArgs) {
       "refund:confirmed",
       `Stripe confirms ${((updated?.refundedCents ?? 0) / 100).toFixed(2)} ${order.currency} refunded in total${full ? " · fully refunded" : ""}`,
     );
+    // Lifetime spend is net of refunds; recount it now, not at their next order.
+    await recomputeCustomerTotals(context.db, order.storeId, order.email).catch(() => undefined);
   }
 
   if (parsed.type === "charge.dispute.created") {

@@ -43,6 +43,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const store = await resolveStore(context.db, context.hostname, url);
   if (!store) throw new Response("No store for this domain.", { status: 404 });
 
+  // Garden Buddy's cart is the drawer on the product page. Anyone who lands
+  // on this address — a no-script add-to-cart, an old bookmark — is sent to
+  // the checkout, which is this store's own page and where they were headed.
+  // This route's markup is the other store's, and a customer must never see
+  // the wrong brand a step before paying.
+  if (store.slug === "garden-buddy") {
+    const to = new URL("/checkout", url);
+    to.search = url.search;
+    return new Response(null, { status: 302, headers: { Location: to.pathname + to.search } });
+  }
+
   const cart = await priceCart(context.db, store, readCartToken(request));
 
   // The pixel, and the browser half of an AddToCart that /cart/add just sent

@@ -32,7 +32,16 @@ export function links() {
 }
 
 export function meta({ data }: Route.MetaArgs) {
-  return [{ title: data ? `${data.page.title} — ${data.store.name}` : "Page" }];
+  if (!data) return [{ title: "Page" }];
+  const plain = data.page.body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const tags: Record<string, string>[] = [
+    { title: `${data.page.title} — ${data.store.name}` },
+    { name: "description", content: plain.slice(0, 160) || `${data.page.title} — ${data.store.name}` },
+  ];
+  if (data.store.domain) {
+    tags.push({ tagName: "link", rel: "canonical", href: `https://${data.store.domain}/pages/${data.handle}` });
+  }
+  return tags;
 }
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
@@ -66,6 +75,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     },
     nav,
     page: { title: page.title, body: page.body, updatedAt: page.updatedAt },
+    handle: page.handle,
     storeParam: url.searchParams.get("store") ? `?store=${store.slug}` : "",
   };
 }

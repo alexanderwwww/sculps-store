@@ -590,3 +590,8 @@
   color: var(--dim);
   font-size: 14px;
 }
+
+/* the discount box in the cart drawer — 16px text, or iOS zooms the page when it is tapped */
+.gb-drawer .gb-co__input{display:block;width:100%;min-height:48px;padding:0 14px;border:1px solid var(--rule);border-radius:10px;background:#fff;color:var(--ink);font-family:var(--font-b);font-size:16px;outline:0}
+.gb-drawer .gb-co__input:focus{border-color:var(--brown);box-shadow:0 0 0 1px var(--brown)}
+.gb-drawer .gb-co__err{display:block;color:#B3341C;font-size:13px}

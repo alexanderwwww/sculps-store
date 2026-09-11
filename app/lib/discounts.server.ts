@@ -228,12 +228,27 @@ export async function redeemDiscount(
 
   if (!claimed.length) return { ok: false, reason: "This code has been used" };
 
-  await db.insert(discountRedemptions).values({
-    discountId: discount.id,
-    orderId: input.orderId,
-    email,
-    amountCents: input.amountCents,
-  });
+  // One redemption per order, enforced by the unique index. If the webhook
+  // and the return page both got this far for the same order, the second
+  // insert does nothing — and its increment above is given back, so the
+  // count stays equal to the number of rows.
+  const inserted = await db
+    .insert(discountRedemptions)
+    .values({
+      discountId: discount.id,
+      orderId: input.orderId,
+      email,
+      amountCents: input.amountCents,
+    })
+    .onConflictDoNothing({ target: discountRedemptions.orderId })
+    .returning({ id: discountRedemptions.id });
+
+  if (!inserted.length) {
+    await db
+      .update(discounts)
+      .set({ usedCount: sql`greatest(${discounts.usedCount} - 1, 0)` })
+      .where(eq(discounts.id, discount.id));
+  }
 
   return { ok: true, amountCents: input.amountCents };
 }

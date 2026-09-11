@@ -357,7 +357,8 @@ export const orders = pgTable(
 
     paymentProvider: text("payment_provider"),
     paymentRef: text("payment_ref"),
-    paymentStatus: text("payment_status").notNull().default("paid"),
+    /** pending | paid | failed | partially_refunded | refunded — never paid by default */
+    paymentStatus: text("payment_status").notNull().default("pending"),
 
     tracking: text("tracking"),
     carrier: text("carrier"),

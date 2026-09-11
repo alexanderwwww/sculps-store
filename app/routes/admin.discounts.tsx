@@ -62,7 +62,14 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     context.db
       .select()
       .from(discounts)
-      .where(eq(discounts.storeId, store.id))
+      // Every scratch card mints a LUCKY code; the ones nobody redeemed are
+      // noise here. A redeemed one is a real discount and stays.
+      .where(
+        and(
+          eq(discounts.storeId, store.id),
+          sql`not (${discounts.code} like 'LUCKY%' and ${discounts.usedCount} = 0)`,
+        ),
+      )
       .orderBy(asc(discounts.code)),
     redemptionTotals(context.db, store.id),
   ]);

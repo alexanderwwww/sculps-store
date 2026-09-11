@@ -32,15 +32,26 @@ const GARDEN_BUDDY = "garden-buddy";
 
 export function links() {
   return [
-    // A favicon set in Preferences; the browser default otherwise.
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
     { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-    {
-      rel: "stylesheet",
-      href: "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap",
-    },
-    { rel: "stylesheet", href: themeHref },
   ];
+}
+
+/**
+ * The kneeler skin's stylesheet and fonts. They used to be declared for every
+ * store, so Garden Buddy downloaded a second theme and two more font families
+ * it never used before it could paint.
+ */
+function KneelerAssets() {
+  return (
+    <>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      />
+      <link rel="stylesheet" href={themeHref} />
+    </>
+  );
 }
 
 export function meta({ data: loaded }: Route.MetaArgs) {
@@ -48,10 +59,16 @@ export function meta({ data: loaded }: Route.MetaArgs) {
   const { store, product } = loaded.page;
   // Settings → Online Store → Preferences win; the product is the fallback.
   const title = store.seoTitle || `${product.title} — ${store.name}`;
-  const description = store.metaDescription || product.description.slice(0, 160);
+  // The product description is stored as HTML; Google and Facebook were being
+  // shown literal <p> tags. Plain words, one line, 160 characters.
+  const plain = product.description.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const description = store.metaDescription || plain.slice(0, 160);
   const tags: Record<string, string>[] = [
     { title },
     { name: "description", content: description },
+    // One address for this page whatever the query string says, so the
+    // engines do not index /?fbclid=… as a second copy of the shop.
+    ...(store.domain ? [{ tagName: "link", rel: "canonical", href: `https://${store.domain}/` }] : []),
     { property: "og:title", content: title },
     { property: "og:description", content: description },
     { property: "og:type", content: "product" },
@@ -205,9 +222,12 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
   }
 
   return (
+    <>
+      <KneelerAssets />
     <div className="gk">
       {head}
       <GardenKneelerStorefront page={page} />
     </div>
+    </>
   );
 }

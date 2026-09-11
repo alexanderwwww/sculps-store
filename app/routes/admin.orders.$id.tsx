@@ -23,6 +23,7 @@ import { money } from "~/lib/money";
 import { sendShippingNotice, sendRefundNotice, emailReady, trackingUrl } from "~/lib/email.server";
 import { orders } from "~/db/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { recomputeCustomerTotals } from "~/lib/customers.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import { centsFromInput } from "~/lib/money";
 import { primaryButton, secondaryButton, criticalButton, input } from "~/admin/ui";
@@ -268,6 +269,8 @@ export async function action({ context, request, params }: Route.ActionArgs) {
       .update(orders)
       .set({ paymentStatus: full ? "refunded" : "partially_refunded", updatedAt: new Date() })
       .where(eq(orders.id, orderId));
+    // Lifetime spend is net of refunds.
+    await recomputeCustomerTotals(context.db, store.id, order.email).catch(() => undefined);
 
     await recordOrderEvent(
       context.db,

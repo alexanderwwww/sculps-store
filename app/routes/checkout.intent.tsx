@@ -33,6 +33,14 @@ export async function action({ context, request }: ActionFunctionArgs) {
   const region = String(form?.get("region") ?? "").trim().toUpperCase().slice(0, 3) || null;
   const cart = await priceCart(context.db, store, token, region);
   if (cart.lines.length === 0) return Response.json({ clientSecret: null, error: "Your cart is empty." }, { status: 400 });
+  // Stripe will not take less than 50 cents. Saying so here, before a form is
+  // filled in, beats a mystery failure at the pay button.
+  if (cart.totalCents > 0 && cart.totalCents < 50) {
+    return Response.json(
+      { clientSecret: null, error: "The total is below the minimum card charge of $0.50. Remove the discount or add something to the order." },
+      { status: 400 },
+    );
+  }
 
   try {
     const provider = await providerForStore(context.db, context.cloudflare.env, store.id);

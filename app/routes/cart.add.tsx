@@ -8,8 +8,8 @@ import type { Route } from "./+types/cart.add";
 import { resolveStore } from "~/lib/store.server";
 import { deviceFromRequest, geoFromContext, readVisitorSession, track } from "~/lib/visitor.server";
 import { metaSettings, newMetaEventId, readMetaCookies, sendEvent } from "~/lib/meta.server";
-import { metaConfig, variants } from "~/db/schema";
-import { eq } from "drizzle-orm";
+import { metaConfig, products, variants } from "~/db/schema";
+import { and, eq } from "drizzle-orm";
 import {
   readCartToken,
   newCartToken,
@@ -28,6 +28,21 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
   if (url.searchParams.get("store")) back.searchParams.set("store", url.searchParams.get("store")!);
 
   if (!variantId) {
+    return new Response(null, { status: 302, headers: { Location: back.toString() } });
+  }
+
+  // Only a real variant of one of this store's live products, with stock,
+  // goes in the cart. Anything else used to be written and then silently
+  // dropped at pricing time, which left the drawer saying "empty" with no
+  // explanation.
+  const [sellable] = await context.db
+    .select({ id: variants.id, available: variants.available })
+    .from(variants)
+    .innerJoin(products, eq(products.id, variants.productId))
+    .where(and(eq(variants.id, variantId), eq(products.storeId, store.id), eq(products.status, "active")))
+    .limit(1);
+  if (!sellable || sellable.available <= 0) {
+    back.searchParams.set("unavailable", "1");
     return new Response(null, { status: 302, headers: { Location: back.toString() } });
   }
 

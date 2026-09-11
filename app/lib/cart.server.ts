@@ -89,7 +89,34 @@ async function loadCartRow(db: DB, storeId: string, token: string | null) {
     .from(carts)
     .where(and(eq(carts.token, token), eq(carts.storeId, storeId)))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+
+  /**
+   * A cart that has been paid for is finished. Left as it was, the next visit
+   * under the same cookie would find the bought lines still in it and the
+   * paid intent still attached — a repeat buyer either got "already taken" or
+   * ordered the first purchase twice. The order row keeps the record; this
+   * row starts over.
+   */
+  if (row.status === "converted") {
+    const [reset] = await db
+      .update(carts)
+      .set({
+        status: "open",
+        items: [],
+        orderId: null,
+        discountCode: null,
+        packageProtection: false,
+        paymentIntentId: null,
+        paymentIntentAmount: null,
+        paymentIntentSecret: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(carts.id, row.id))
+      .returning();
+    return reset ?? null;
+  }
+  return row;
 }
 
 /**

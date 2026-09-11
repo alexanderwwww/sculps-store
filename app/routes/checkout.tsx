@@ -401,6 +401,9 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (cart.lines.length === 0) {
     return { error: "Your cart is empty." };
   }
+  if (cart.totalCents > 0 && cart.totalCents < 50) {
+    return { error: "The total is below the minimum card charge of $0.50. Remove the discount or add something to the order." };
+  }
   const email = String(form.get("email") || "").trim().toLowerCase();
   const name = String(form.get("name") || "").trim();
 
@@ -458,8 +461,13 @@ export async function action({ request, context }: Route.ActionArgs) {
   // An order may already be sitting against this intent — a card was declined
   // and they are trying again. One intent is one order; the row is brought up
   // to date rather than written twice.
+  // A declined card comes back here with the same intent and an order row the
+  // webhook has already marked "failed". That is a retry, not a second sale:
+  // both pending and failed may be tried again. Only a payment that went
+  // through (or was refunded) is closed.
+  const RETRYABLE = new Set(["pending", "failed"]);
   const existing = await orderByPaymentRef(context.db, intent.id);
-  if (existing && (existing.storeId !== store.id || existing.paymentStatus !== "pending")) {
+  if (existing && (existing.storeId !== store.id || !RETRYABLE.has(existing.paymentStatus))) {
     return { error: "This payment has already been taken. Please reload the page." };
   }
 
@@ -489,9 +497,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   const geo = geoFromContext(context, request);
   const metaCookies = readMetaCookies(request);
-  const country = COUNTRIES.some(([code]) => code === form.get("country"))
-    ? String(form.get("country"))
-    : "US";
+  const countryGiven = String(form.get("country") || "").trim().toUpperCase();
+  if (!COUNTRIES.some(([code]) => code === countryGiven)) {
+    // A wallet can hand over any country on earth. Rewriting an unknown one
+    // to the United States would ship a parcel to the wrong continent.
+    return { error: "We cannot ship to that country yet." };
+  }
+  const country = countryGiven;
   const address2 =
     [String(form.get("company") || "").trim(), String(form.get("address2") || "").trim()]
       .filter(Boolean)
@@ -539,6 +551,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         country,
         marketingConsent: form.get("consent") === "on",
         ...money,
+        // a retry after a decline is pending again until Stripe says otherwise
+        paymentStatus: "pending",
         updatedAt: new Date(),
       })
       .where(eq(ordersTable.id, existing.id));
@@ -2328,6 +2342,8 @@ function OnePage({
   const [walletsAnswered, setWalletsAnswered] = useState(false);
   /** the payment section, so "Pay with card" has somewhere to scroll to */
   const paymentRef = useRef<HTMLDivElement | null>(null);
+  /** the fallback wallet's request object, so its total can follow the cart */
+  const requestRef = useRef<any>(null);
   const walletsAnsweredRef = useRef(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -2531,6 +2547,10 @@ function OnePage({
                 emailRequired: true,
                 phoneNumberRequired: store.phoneMode !== "hidden",
                 billingAddressRequired: true,
+                // The parcel goes where the buyer says, which is not always
+                // where their card is registered.
+                shippingAddressRequired: true,
+                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: "Shipping" }],
               }
             : { buttonHeight: 48 },
         );
@@ -2551,9 +2571,15 @@ function OnePage({
       }
       report("express-built", built);
 
+      // Set the moment the fallback takes the row. A "ready" that arrives from
+      // the express element after that must not hide or blank what the
+      // fallback drew.
+      let fellBack = false;
+
       if (express) {
         try {
           express.on("ready", (event: any) => {
+            if (fellBack || cancelled) return;
             const available = event?.availablePaymentMethods;
             const any = available && Object.values(available).some(Boolean);
             walletsAnsweredRef.current = true;
@@ -2566,7 +2592,19 @@ function OnePage({
 
           express.on("loaderror", (event: any) => {
             report("express-loaderror", event?.error?.message ?? event);
-            if (!cancelled) setWalletsAnswered(true);
+            if (!cancelled && !fellBack) setWalletsAnswered(true);
+          });
+
+          // The wallet asks where to ship; the store has one rate, so that is
+          // the answer. Without a handler some wallets wait forever here.
+          express.on("shippingaddresschange", (event: any) => {
+            try {
+              event.resolve({
+                shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: "Shipping" }],
+              });
+            } catch {
+              /* nothing to do */
+            }
           });
 
           express.on("confirm", async (event: any) => {
@@ -2596,6 +2634,7 @@ function OnePage({
            */
           window.setTimeout(() => {
             if (cancelled || walletsAnsweredRef.current) return;
+            fellBack = true;
             // Take the silent element off the page first, so the two can
             // never both end up in the row.
             try {
@@ -2698,6 +2737,17 @@ function OnePage({
     setRepriced(false);
     // Elements holds the amount itself now, so this is instant and local.
     elementsRef.current?.update?.({ amount: Math.max(50, cart.totalCents) });
+    // And the fallback wallet's sheet, which holds its own copy.
+    try {
+      requestRef.current?.update?.({
+        total: { label: store.name, amount: Math.max(50, cart.totalCents) },
+        shippingOptions: [
+          { id: "standard", label: "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+        ],
+      });
+    } catch {
+      /* the sheet is not open; the next open reads the new figure */
+    }
     // And the intent is moved in the background, so it is already right when
     // the pay button is pressed.
     void askForIntent((params.get("region") ?? "").trim()).catch(() => undefined);
@@ -2723,10 +2773,12 @@ function OnePage({
   /** Turns what the wallet handed back into the same fields the form posts. */
   const detailsFromWallet = (event: any): FormData => {
     const details = event?.billingDetails ?? {};
-    const address = details.address ?? {};
+    // Ship-to first; the billing address only if the wallet gave no other.
+    const shipping = event?.shippingAddress ?? null;
+    const address = shipping?.address ?? details.address ?? {};
     const body = new FormData();
     body.set("intent", "pay");
-    body.set("name", String(details.name ?? "").trim());
+    body.set("name", String(shipping?.name ?? details.name ?? "").trim());
     body.set("email", String(event?.billingDetails?.email ?? details.email ?? "").trim());
     body.set("phone", String(details.phone ?? "").trim());
     body.set("address1", String(address.line1 ?? "").trim());
@@ -2734,7 +2786,7 @@ function OnePage({
     body.set("city", String(address.city ?? "").trim());
     body.set("region", String(address.state ?? "").trim());
     body.set("postalCode", String(address.postal_code ?? "").trim());
-    body.set("country", String(address.country ?? "US").trim());
+    body.set("country", String(address.country ?? "").trim());
     if (values.consent === "on") body.set("consent", "on");
     return body;
   };
@@ -2754,14 +2806,23 @@ function OnePage({
   const mountRequestButton = async (stripe: any, elements: any) => {
     try {
       const request = stripe.paymentRequest({
-        country: "US",
+        // The country of the Stripe account, not of the buyer — Stripe's own
+        // definition of this field. The account is Greek.
+        country: "GR",
         currency: (cart.currency ?? "usd").toLowerCase(),
         total: { label: store.name, amount: Math.max(50, cart.totalCents) },
         requestPayerName: true,
         requestPayerEmail: true,
         requestPayerPhone: store.phoneMode !== "hidden",
-        requestShipping: false,
+        requestShipping: true,
+        shippingOptions: [
+          { id: "standard", label: "Shipping", detail: cart.shippingCents === 0 ? "Free" : "", amount: cart.shippingCents },
+        ],
       });
+      // Kept so a later change of total moves the sheet's figure too. A sheet
+      // that says $59 while the intent says $68 is the one thing this page
+      // exists to prevent.
+      requestRef.current = request;
 
       const can = await request.canMakePayment();
       report("prb-can", JSON.stringify(can ?? null));
@@ -2775,14 +2836,25 @@ function OnePage({
         setPayError(null);
         setWorking(true);
         const body = detailsFromForm();
-        // The wallet knows the buyer even when the form is empty.
-        if (event.payerEmail) body.set("email", event.payerEmail);
-        if (event.payerName) {
-          const [first, ...rest] = String(event.payerName).split(" ");
-          if (first) body.set("firstName", first);
-          if (rest.length) body.set("lastName", rest.join(" "));
-        }
-        if (event.payerPhone) body.set("phone", event.payerPhone);
+        // The wallet knows the buyer even when the form is empty. The action
+        // reads "name", never first/last, so that is what is written.
+        if (event.payerEmail) body.set("email", String(event.payerEmail).trim());
+        if (event.payerName) body.set("name", String(event.payerName).trim());
+        if (event.payerPhone) body.set("phone", String(event.payerPhone).trim());
+        const ship = event.shippingAddress ?? null;
+        const billing = event.paymentMethod?.billing_details?.address ?? null;
+        const line1 = ship ? (ship.addressLine ?? [])[0] : billing?.line1;
+        const line2 = ship ? (ship.addressLine ?? [])[1] : billing?.line2;
+        const city = ship ? ship.city : billing?.city;
+        const region = ship ? ship.region : billing?.state;
+        const postal = ship ? ship.postalCode : billing?.postal_code;
+        const country = ship ? ship.country : billing?.country;
+        if (line1) body.set("address1", String(line1).trim());
+        if (line2) body.set("address2", String(line2).trim());
+        if (city) body.set("city", String(city).trim());
+        if (region) body.set("region", String(region).trim());
+        if (postal) body.set("postalCode", String(postal).trim());
+        if (country) body.set("country", String(country).trim().toUpperCase());
 
         const answer = await postDetails(body);
         if (!answer || !("ok" in answer)) {
@@ -3077,7 +3149,7 @@ function OnePage({
 
           {/* Stripe's own words, under Stripe's own fields — a declined card is
               about what is in that box, not about the page. */}
-          {payError || (serverMessage && !serverField) ? (
+          {payError || intentError || (serverMessage && !serverField) ? (
             <div className={cn.alert} style={{ marginTop: 16, marginBottom: 0 }} role="alert">
               {payError ?? serverMessage}
             </div>
@@ -3093,7 +3165,7 @@ function OnePage({
           <button
             className={buddy ? "gb-co__pay" : cn.btn}
             type="submit"
-            disabled={!ready || working}
+            disabled={!ready || working || Boolean(intentError)}
             aria-busy={working || undefined}
             style={buddy ? undefined : { width: "100%", marginTop: 18, opacity: ready && !working ? 1 : 0.6 }}
           >

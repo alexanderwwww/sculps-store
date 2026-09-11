@@ -5,10 +5,12 @@
  * Stripe rather than trusting the redirect, because a redirect can be typed
  * into the address bar by anyone.
  */
-import { Link } from "react-router";
+import { Link, data } from "react-router";
+import { CheckoutHeader, CheckoutFooter } from "~/storefronts/garden-buddy/checkout-chrome";
+import buddyHref from "~/storefronts/garden-buddy/checkout.css?url";
 import type { Route } from "./+types/thanks";
 import { eq } from "drizzle-orm";
-import { resolveStore } from "~/lib/store.server";
+import { resolveStore, storeNav } from "~/lib/store.server";
 import { loadOrder, markOrderPaid, recordVisitorEvent } from "~/lib/admin.server";
 import { providerForStore } from "~/lib/payments.server";
 import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
@@ -51,20 +53,29 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       const provider = await providerForStore(context.db, context.cloudflare.env, store.id);
       const intent = await provider.readIntent(loaded.order.paymentRef);
       if (intent.status === "succeeded") {
-        await markOrderPaid(
+        // The webhook races this page for the claim; whoever gets it does the
+        // rest, and the other does nothing. Either way the page shows paid.
+        const claimed = await markOrderPaid(
           context.db,
           loaded.order.id,
           `Payment confirmed by ${provider.name} · ${intent.id}`,
         );
         paymentStatus = "paid";
-        await recordVisitorEvent(context.db, store.id, {
-          type: "purchase",
-          sessionId: intent.id,
-          path: "/thanks",
-          amountCents: loaded.order.totalCents,
-          orderId: loaded.order.id,
-        });
-        await afterPaymentConfirmed(context.db, context.cloudflare.env, loaded.order.id, request);
+        if (claimed) {
+          await recordVisitorEvent(context.db, store.id, {
+            type: "purchase",
+            sessionId: intent.id,
+            path: "/thanks",
+            city: loaded.order.city,
+            region: loaded.order.region,
+            country: loaded.order.country,
+            lat: loaded.order.lat,
+            lon: loaded.order.lon,
+            amountCents: loaded.order.totalCents,
+            orderId: loaded.order.id,
+          });
+          await afterPaymentConfirmed(context.db, context.cloudflare.env, loaded.order.id, request);
+        }
       }
     } catch {
       // Leave it pending. The webhook is the other route to the truth, and an
@@ -97,9 +108,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         })}`
       : null;
 
-  return {
+  // A paid order ends the cart: the cookie goes, so the next visit starts
+  // clean instead of finding what was just bought still in the basket.
+  const headers =
+    paymentStatus === "paid"
+      ? { "Set-Cookie": `kerberos_cart=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${url.protocol === "https:" ? "; Secure" : ""}` }
+      : undefined;
+
+  const nav = store.slug === "garden-buddy" ? await storeNav(context.db, store.id) : null;
+
+  return data({
     pixel,
-    store: { name: store.name, slug: store.slug, contactEmail: store.contactEmail },
+    store: { name: store.name, slug: store.slug, contactEmail: store.contactEmail, logoUrl: store.logoUrl },
+    footerLinks: nav?.footer ?? [],
     order: {
       number: loaded.order.number,
       email: loaded.order.email,
@@ -116,12 +137,80 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       quantity: item.quantity,
       lineTotal: formatMoney(item.unitPriceCents * item.quantity, loaded.order.currency),
     })),
-  };
+  }, headers ? { headers } : undefined);
 }
 
 export default function Thanks({ loaderData }: Route.ComponentProps) {
-  const { store, order, items, pixel } = loaderData;
+  const { store, order, items, pixel, footerLinks } = loaderData;
   const paid = order.paymentStatus === "paid";
+
+  /* Garden Buddy: the last page a paying customer sees is the store's own,
+     laid out like the checkout they just left — not the other store's. */
+  if (store.slug === "garden-buddy") {
+    const home = `/?store=${store.slug}`;
+    return (
+      <>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap"
+        />
+        <link rel="stylesheet" href={buddyHref} />
+        {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
+        <div className="gb-co-sec">
+          <div className="gb-co__pane">
+            <div className="gb-co__pane-in">
+              <CheckoutHeader store={store} home={home} />
+              <section className="gb-co__sec">
+                <h1 className="gb-co__h2" style={{ fontSize: 24 }}>
+                  {paid ? "Thank you — your order is in." : "We have your order."}
+                </h1>
+                <p style={{ fontSize: 16, margin: "0 0 14px" }}>
+                  Order <strong>#{order.number}</strong>
+                  {paid ? (
+                    <> — a receipt is on its way to {order.email}.</>
+                  ) : (
+                    <> — the payment is still being confirmed. You will get an email once it clears.</>
+                  )}
+                </p>
+                {order.address ? (
+                  <p className="gb-co__note" style={{ margin: "0 0 18px" }}>
+                    Shipping to: <strong style={{ color: "var(--ink)" }}>{order.address}</strong>
+                    {store.contactEmail ? ` — wrong? Email ${store.contactEmail} right away and quote #${order.number}.` : ""}
+                  </p>
+                ) : null}
+                <ul className="gb-co__lines">
+                  {items.map((item) => (
+                    <li className="gb-co__line" key={item.id}>
+                      <span className="gb-co__line-body">
+                        <strong className="gb-co__line-name">{item.label}</strong>
+                        <span className="gb-co__line-sub">× {item.quantity}</span>
+                      </span>
+                      <span className="gb-co__line-total">{item.lineTotal}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="gb-co__grand">
+                  <span>Total</span>
+                  <b>{order.total}</b>
+                </div>
+                {store.contactEmail ? (
+                  <p className="gb-co__note">
+                    Any questions, reply to your receipt or write to {store.contactEmail} and quote #{order.number}.
+                  </p>
+                ) : null}
+                <Link className="gb-co__btn" to={home} style={{ marginTop: 18 }}>
+                  Back to the store
+                </Link>
+              </section>
+            </div>
+            <CheckoutFooter store={store} links={footerLinks} contactEmail={store.contactEmail} />
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="gk">

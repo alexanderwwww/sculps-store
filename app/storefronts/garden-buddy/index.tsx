@@ -190,7 +190,7 @@ export function Header({ page, storeParam = "" }: { page: ChromeInput; storePara
               </summary>
               <nav className="gb-hdr__mnav" aria-label="Main, mobile">
                 {links.map((l) => (
-                  <a key={`m${l.href}${l.label}`} href={href(l.href)}>
+                  <a key={`m${l.href}${l.label}`} href={l.href.startsWith("#") ? `${href("/")}${l.href}` : href(l.href)}>
                     {l.label}
                   </a>
                 ))}
@@ -203,7 +203,7 @@ export function Header({ page, storeParam = "" }: { page: ChromeInput; storePara
 
             <nav className="gb-hdr__nav" aria-label="Main">
               {links.map((l) => (
-                <a key={`d${l.href}${l.label}`} href={href(l.href)}>
+                <a key={`d${l.href}${l.label}`} href={l.href.startsWith("#") ? `${href("/")}${l.href}` : href(l.href)}>
                   {l.label}
                 </a>
               ))}
@@ -224,7 +224,9 @@ export function Header({ page, storeParam = "" }: { page: ChromeInput; storePara
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 7h12l1 14H5L6 7z" /><path d="M9 7a3 3 0 0 1 6 0" /></svg>
               </a>
-              <a className="gb-hdr__cta" href="#gb-buy">
+              {/* From a policy page this has to travel to the home page first;
+                  on the home page it is the same in-page jump it always was. */}
+              <a className="gb-hdr__cta" href={`${href("/")}#gb-buy`}>
                 <span className="gb-hdr__cta-txt">Order Now</span>
               </a>
             </div>
@@ -270,7 +272,7 @@ export function Footer({ page, storeParam = "" }: { page: ChromeInput; storePara
                 <Logo store={store} imgClass="gb-ftr__logo-img" wordClass="gb-ftr__wordmark" />
               </a>
               <p className="gb-script gb-cta__script">A Happier Garden Starts Here.</p>
-              <a className="gb-ftr__btn" href="#gb-buy">
+              <a className="gb-ftr__btn" href={`${href("/")}#gb-buy`}>
                 Order Now
               </a>
             </div>
