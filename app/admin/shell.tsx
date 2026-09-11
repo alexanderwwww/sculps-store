@@ -310,7 +310,7 @@ export function AdminShell({
       >
         <span style={{ display: "flex", alignItems: "center", gap: 9, flex: "none", marginRight: 4 }}>
           <img
-            src="/logo-mark.png"
+            src="/logo-silver-mark.png"
             alt="Shop Admin"
             style={{ width: 36, height: 36, objectFit: "contain", flex: "none", display: "block" }}
           />

@@ -611,6 +611,13 @@ export async function action({ request, context }: Route.ActionArgs) {
      * agreed to.
      */
     repriced: changed,
+    /**
+     * The token that authorises paying this one intent. The page no longer
+     * fetches it on load — it mounts Stripe against the amount alone and is
+     * handed the secret here, at the moment it is actually needed, which is
+     * what took the wait out of the wallet row.
+     */
+    clientSecret: intent.clientSecret,
     returnTo: `${url.origin}/thanks?order=${orderId}`,
   };
 }
@@ -624,7 +631,15 @@ type ActionReply =
   | { error: string }
   | { discountError?: string | null; protection?: boolean; added?: boolean }
   | { scratch: { percent: number; code: string } }
-  | { ok: true; orderId: string; orderNumber: number; totalCents: number; repriced: boolean; returnTo: string };
+  | {
+      ok: true;
+      orderId: string;
+      orderNumber: number;
+      totalCents: number;
+      repriced: boolean;
+      clientSecret: string;
+      returnTo: string;
+    };
 type Errors = Partial<Record<string, string>>;
 
 /**
@@ -896,6 +911,18 @@ const PAY_BOOT = `(function(){
     .then(function(r){return r.json()})
     .catch(function(){return {clientSecret:null,error:'The payment could not be started. Please reload the page.'}});
   w.__gbPay={stripe:stripe,intent:intent};
+  // What this browser is actually capable of. Apple Pay and Google Pay belong
+  // to the browser, not to us, so this is the only way to know from here why a
+  // button did or did not appear.
+  try{
+    var can={
+      applePaySession: typeof w.ApplePaySession !== 'undefined',
+      applePayCanMake: (typeof w.ApplePaySession !== 'undefined' && w.ApplePaySession.canMakePayments) ? !!w.ApplePaySession.canMakePayments() : false,
+      paymentRequest: typeof w.PaymentRequest !== 'undefined',
+      secure: w.isSecureContext === true
+    };
+    navigator.sendBeacon && navigator.sendBeacon('/checkout/diag', new Blob([new URLSearchParams({kind:'capabilities',detail:JSON.stringify(can)}).toString()],{type:'application/x-www-form-urlencoded'}));
+  }catch(e){}
 })();`;
 
 function PayBoot() {
@@ -1666,7 +1693,6 @@ function Upsell({
  */
 function useScratchSound() {
   const ctxRef = useRef<AudioContext | null>(null);
-  const lastRef = useRef(0);
 
   const context = () => {
     if (!ctxRef.current) {
@@ -1678,35 +1704,80 @@ function useScratchSound() {
     return ctxRef.current;
   };
 
-  /** A short rasp, at most every 90ms so a fast drag does not become a roar. */
+  /**
+   * One continuous rasp, not a burst per movement.
+   *
+   * The first version fired a short noise hit on every pointer event, which
+   * at thirty events a second is a machine gun — his words, and he was right.
+   * This is a single looping noise source, opened by a low-pass filter while
+   * the finger is moving and closed the moment it stops, which is what
+   * rubbing a card actually sounds like.
+   */
+  const loopRef = useRef<{ gain: GainNode; stop: () => void } | null>(null);
+  const quietAt = useRef(0);
+
   const scratch = useCallback(() => {
-    const now = Date.now();
-    if (now - lastRef.current < 90) return;
-    lastRef.current = now;
     try {
       const audio = context();
       if (!audio) return;
-      const length = Math.floor(audio.sampleRate * 0.09);
-      const buffer = audio.createBuffer(1, length, audio.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < length; i++) {
-        // noise that fades out, so it reads as one stroke rather than static
-        data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 2;
+
+      if (!loopRef.current) {
+        const seconds = 2;
+        const buffer = audio.createBuffer(1, audio.sampleRate * seconds, audio.sampleRate);
+        const data = buffer.getChannelData(0);
+        // Brownish noise: each sample leans on the last, so it is a rustle
+        // rather than a hiss.
+        let previous = 0;
+        for (let i = 0; i < data.length; i++) {
+          const white = Math.random() * 2 - 1;
+          previous = (previous + 0.035 * white) / 1.035;
+          data[i] = previous * 3.2;
+        }
+        const source = audio.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        const filter = audio.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 2400;
+        const gain = audio.createGain();
+        gain.gain.value = 0;
+        source.connect(filter).connect(gain).connect(audio.destination);
+        source.start();
+        loopRef.current = { gain, stop: () => source.stop() };
       }
-      const source = audio.createBufferSource();
-      source.buffer = buffer;
-      const filter = audio.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 1700 + Math.random() * 600;
-      filter.Q.value = 0.8;
-      const gain = audio.createGain();
-      gain.gain.value = 0.06;
-      source.connect(filter).connect(gain).connect(audio.destination);
-      source.start();
+
+      const { gain } = loopRef.current;
+      const now = audio.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setTargetAtTime(0.09, now, 0.03);
+
+      // Fade out shortly after the last movement.
+      window.clearTimeout(quietAt.current);
+      quietAt.current = window.setTimeout(() => {
+        try {
+          const at = audio.currentTime;
+          gain.gain.cancelScheduledValues(at);
+          gain.gain.setTargetAtTime(0, at, 0.05);
+        } catch {
+          /* nothing to do */
+        }
+      }, 110);
     } catch {
       /* sound is never worth an error */
     }
   }, []);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(quietAt.current);
+      try {
+        loopRef.current?.stop();
+      } catch {
+        /* already gone */
+      }
+    },
+    [],
+  );
 
   /** Two bell notes: the reveal. */
   const win = useCallback(() => {
@@ -2272,9 +2343,19 @@ function OnePage({
       fetcher.submit(body, { method: "post" });
     });
 
-  /* Mount Stripe once, on the intent the loader made. */
+  /**
+   * Mount Stripe the moment its script is here.
+   *
+   * This used to wait for a payment intent, which meant the wallet row could
+   * not be drawn until a request had gone to our Worker, on to Stripe, and
+   * come back — and that is what he was watching for fifteen seconds. Stripe
+   * supports mounting against the amount instead ("deferred intent"), so the
+   * buttons are drawn immediately and the intent is only needed at the moment
+   * somebody actually pays, by which time it has long since been made in the
+   * background.
+   */
   useEffect(() => {
-    if (!publishableKey || !clientSecret) return;
+    if (!publishableKey || cart.lines.length === 0) return;
     let cancelled = false;
 
     const boot = async () => {
@@ -2295,7 +2376,12 @@ function OnePage({
       if (cancelled) return;
 
       const stripe = (window as any).Stripe(publishableKey);
-      const elements = stripe.elements({ clientSecret, appearance });
+      const elements = stripe.elements({
+        mode: "payment",
+        amount: Math.max(50, cart.totalCents),
+        currency: (cart.currency ?? "usd").toLowerCase(),
+        appearance,
+      });
       stripeRef.current = stripe;
       elementsRef.current = elements;
 
@@ -2414,9 +2500,9 @@ function OnePage({
     return () => {
       cancelled = true;
     };
-    // The intent, and therefore the secret, is fixed for the life of this cart.
+    // Mounted once per page. The amount is kept current by the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publishableKey, clientSecret]);
+  }, [publishableKey]);
 
   /* Ask for the intent as soon as this page exists. */
   const askForIntent = useCallback(
@@ -2467,9 +2553,11 @@ function OnePage({
     lastTotal.current = cart.totalCents;
     setServerTotal(null);
     setRepriced(false);
-    void askForIntent((params.get("region") ?? "").trim())
-      .then(() => elementsRef.current?.fetchUpdates?.())
-      .catch(() => undefined);
+    // Elements holds the amount itself now, so this is instant and local.
+    elementsRef.current?.update?.({ amount: Math.max(50, cart.totalCents) });
+    // And the intent is moved in the background, so it is already right when
+    // the pay button is pressed.
+    void askForIntent((params.get("region") ?? "").trim()).catch(() => undefined);
   }, [cart.totalCents]);
 
   /** Reads the typed fields. The amounts are not among them — they are the
@@ -2514,6 +2602,17 @@ function OnePage({
    * error to show.
    */
   const confirmAfterOrder = async (body: FormData): Promise<boolean> => {
+    /**
+     * Stripe's own check on its own fields, before an order row exists. With
+     * a deferred intent this is required, and it is also the right order: a
+     * card that is obviously incomplete should not create an order.
+     */
+    const submitted = await elementsRef.current?.submit?.();
+    if (submitted?.error) {
+      setPayError(submitted.error.message ?? "Please check your payment details.");
+      return false;
+    }
+
     const answer = await postDetails(body);
 
     if (!answer || !("ok" in answer)) {
@@ -2542,7 +2641,7 @@ function OnePage({
 
     const result = await stripeRef.current.confirmPayment({
       elements: elementsRef.current,
-      clientSecret,
+      clientSecret: answer.clientSecret,
       confirmParams: { return_url: answer.returnTo },
     });
 
