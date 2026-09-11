@@ -3139,7 +3139,6 @@ function OnePage({
   const rail = (
     <>
       {summary}
-      {scratch}
       {under}
     </>
   );
@@ -3164,7 +3163,11 @@ function OnePage({
         <div className="gb-co__pane-in">
           {chrome?.header}
           {express}
-          <div className="gb-co__mobile-only">{scratch}</div>
+          {/* The card sits under the wallets on every screen. It used to be
+              duplicated — one copy here and one in the right-hand column —
+              and a stylesheet ordering slip showed both at once on a desktop.
+              There is one now, in the place he asked for it. */}
+          {scratch}
           {/* Open, not folded. A summary someone has to tap to see is a
               summary most people never see, and on a phone that is the only
               place the cart and the discount box exist at all. */}

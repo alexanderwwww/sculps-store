@@ -1750,7 +1750,10 @@ function PaymentsPane({
  * the home screen — the card says so rather than failing silently.
  */
 function PushCard() {
-  const [state, setState] = React.useState<{ publicKey: string; devices: { id: string; label: string; since: string }[] } | null>(null);
+  const [state, setState] = React.useState<{
+    publicKey: string;
+    devices: { id: string; label: string; since: string; endpointTail: string }[];
+  } | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
 
@@ -1796,6 +1799,46 @@ function PushCard() {
     void inspect();
   }, [load, inspect]);
 
+  /**
+   * Self-repair. If this browser already has permission and a live
+   * subscription, but the shop is not holding that exact endpoint (it was
+   * rotated, or a dead one was deleted after a 410), store the live one now
+   * without waiting for a click. Permission was granted once; that is enough.
+   */
+  React.useEffect(() => {
+    if (!state?.publicKey || typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) return;
+        const subscription = await registration.pushManager.getSubscription();
+        if (!subscription || cancelled) return;
+        const json = subscription.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+        if (!json.endpoint) return;
+        const known = state.devices.some((d) => d.endpointTail && json.endpoint!.endsWith(d.endpointTail));
+        if (known) return;
+        const body = new URLSearchParams({
+          intent: "subscribe",
+          endpoint: json.endpoint,
+          p256dh: json.keys?.p256dh ?? "",
+          auth: json.keys?.auth ?? "",
+          label: iOS ? "iPhone" : /Mac/.test(navigator.userAgent) ? "Mac" : "This browser",
+        });
+        await fetch("/admin/push", { method: "POST", body });
+        if (!cancelled) await load();
+      } catch {
+        /* a repair that fails is just the state we were already in */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.publicKey, state?.devices.length]);
+
   const supported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
   const standalone =
     typeof window !== "undefined" &&
@@ -1817,10 +1860,20 @@ function PushCard() {
       }
       const raw = atob(state.publicKey.replace(/-/g, "+").replace(/_/g, "/"));
       const key = Uint8Array.from(raw, (ch) => ch.charCodeAt(0));
+      /**
+       * Always a fresh subscription. Google was answering 410 Gone to the
+       * one this browser was holding — a token it had already retired — and
+       * re-using it just re-stored a dead token. The old one is dropped and a
+       * new one minted every time Enable is pressed.
+       */
       const existing = await registration.pushManager.getSubscription();
-      const subscription =
-        existing ??
-        (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
+      if (existing) {
+        await existing.unsubscribe().catch(() => undefined);
+      }
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: key,
+      });
       const json = subscription.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
       const body = new URLSearchParams({
         intent: "subscribe",
