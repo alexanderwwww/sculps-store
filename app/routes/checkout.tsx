@@ -2754,6 +2754,15 @@ function OnePage({
   };
 
   const total = serverTotal ?? cart.totalCents;
+  /**
+   * The wallet's confirm handler is attached once, when Stripe mounts, and
+   * closes over that first render. Reading `total` from it gave the total
+   * as it was when the page loaded — $69.99 — while the server, after a
+   * discount, charged $0.70, saw the two disagree, and refused. Handlers
+   * read the live figure through this ref instead.
+   */
+  const totalRef = useRef(total);
+  totalRef.current = total;
 
   /**
    * "Pay with card" — not a payment, a shortcut. It puts the payment section
@@ -3200,7 +3209,7 @@ function OnePage({
       read. */
   const detailsFromForm = (): FormData => {
     const body = new FormData(formRef.current!);
-    body.set("shownTotal", String(total));
+    body.set("shownTotal", String(totalRef.current));
     const first = String(body.get("firstName") ?? "").trim();
     const last = String(body.get("lastName") ?? "").trim();
     body.delete("firstName");
@@ -3219,7 +3228,7 @@ function OnePage({
     const body = new FormData();
     body.set("intent", "pay");
     body.set("source", "wallet");
-    body.set("shownTotal", String(total));
+    body.set("shownTotal", String(totalRef.current));
     body.set("name", String(shipping?.name ?? details.name ?? "").trim());
     body.set("email", String(event?.billingDetails?.email ?? details.email ?? "").trim());
     body.set("phone", String(details.phone ?? "").trim());
@@ -3365,7 +3374,13 @@ function OnePage({
     const wallet = body.get("source") === "wallet";
     if (wallet) report("wallet-step", "submitted; posting details");
     const answer = await postDetails(body);
-    if (wallet) report("wallet-step", `answer: ${answer ? Object.keys(answer).join(",") : "none"}${answer && "error" in answer ? ` · ${answer.error}` : ""}`);
+    if (wallet)
+      report(
+        "wallet-step",
+        answer && "ok" in answer
+          ? `answer: ok · order #${answer.orderNumber} · server ${answer.totalCents} · shown ${body.get("shownTotal")} · repriced ${answer.repriced}`
+          : `answer: ${answer && "error" in answer ? answer.error : "none"}`,
+      );
 
     if (!answer || !("ok" in answer)) {
       // The action's own sentence. From the form, a field-level one renders
