@@ -1531,6 +1531,7 @@ function OnePage({
 
   const [values, setValues] = useState<Record<string, string>>({ country: "US" });
   const [touched, setTouched] = useState<Errors>({});
+  const identified = useRef<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [ready, setReady] = useState(false);
   const [wallets, setWallets] = useState(false);
@@ -1561,6 +1562,25 @@ function OnePage({
 
   const onBlur = (field: string) => {
     setTouched((prev) => ({ ...prev, [field]: "1" }));
+
+    // Leaving the email box tells the store who this is, so the cart stops
+    // being anonymous: it is the difference between a sale that walked away
+    // and a person he can follow up with. Only what they typed here, sent
+    // once, and a failure is silent — nothing about identifying someone may
+    // interfere with them paying.
+    if (field === "email") {
+      const email = (values.email ?? "").trim();
+      if (email.includes("@") && email !== identified.current) {
+        identified.current = email;
+        const body = new URLSearchParams({ email });
+        const name = [values.firstName, values.lastName].filter(Boolean).join(" ").trim();
+        if (name) body.set("name", name);
+        if (values.phone) body.set("phone", values.phone);
+        if (store.consent) body.set("consent", values.marketing === "on" ? "on" : "false");
+        fetch("/checkout/identify", { method: "POST", body }).catch(() => undefined);
+      }
+    }
+
     // Leaving the state box re-prices the cart on the server for that state,
     // which moves the intent with it. The browser sends the two letters and
     // nothing else — what they are worth is worked out there.
