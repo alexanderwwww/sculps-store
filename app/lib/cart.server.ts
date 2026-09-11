@@ -190,6 +190,14 @@ export async function priceCart(
   };
 }
 
+/**
+ * The cart row itself, for callers that need its id — attaching a person to a
+ * cart, for one. Returns null when this browser has no cart on this store.
+ */
+export async function cartRowByToken(db: DB, storeId: string, token: string | null) {
+  return loadCartRow(db, storeId, token);
+}
+
 /** Writes the cart, creating the row on first use. */
 export async function saveCart(
   db: DB,

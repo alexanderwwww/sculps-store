@@ -34,6 +34,7 @@ import {
 } from "~/db/schema";
 import { SECTIONS } from "./sections";
 import { MENU_HANDLES } from "./menus";
+import { recomputeCustomerTotals, upsertCustomer } from "./customers.server";
 import { money } from "./money";
 
 export type StoreRow = typeof stores.$inferSelect;
@@ -1374,6 +1375,18 @@ export async function placeOrder(db: DB, input: PlaceOrderInput) {
     );
   }
 
+  // The buyer is a customer now. Built from this order's own details — what
+  // they typed at this store's checkout — and their order count and lifetime
+  // spend are then recounted from the `orders` table rather than incremented.
+  await upsertCustomer(db, input.storeId, {
+    email: input.email,
+    name: input.customerName,
+    phone: input.phone,
+    geo: { city: input.city, region: input.region, country: input.country },
+    consent: input.marketingConsent ?? false,
+  });
+  await recomputeCustomerTotals(db, input.storeId, input.email);
+
   await recordOrderEvent(db, order.id, "created", `Order created · #${number}`, {
     source: input.source,
   });
@@ -1397,11 +1410,15 @@ export async function orderByPaymentRef(db: DB, paymentRef: string) {
 }
 
 export async function markOrderPaid(db: DB, orderId: string, note: string): Promise<void> {
-  await db
+  const [paid] = await db
     .update(orders)
     .set({ paymentStatus: "paid", paidAt: new Date(), updatedAt: new Date() })
-    .where(eq(orders.id, orderId));
+    .where(eq(orders.id, orderId))
+    .returning({ storeId: orders.storeId, email: orders.email });
   await recordOrderEvent(db, orderId, "payment:confirmed", note);
+  // Lifetime spend only counts money actually taken, so it is recounted here
+  // as well as at order time.
+  if (paid) await recomputeCustomerTotals(db, paid.storeId, paid.email);
 }
 
 /** Records a visitor action for Live View and Analytics. */

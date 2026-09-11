@@ -423,7 +423,14 @@ export const carts = pgTable(
       .notNull()
       .references(() => stores.id, { onDelete: "cascade" }),
     token: text("token").notNull().unique(),
+    /**
+     * The email the customer typed into this store's own checkout, and
+     * nothing else. Null until they type one — a cart with no email belongs
+     * to nobody and must never be counted as a person.
+     */
     email: text("email"),
+    /** set at the same moment the email is, so the cart has a person on it */
+    customerId: uuid("customer_id"),
     items: jsonb("items").notNull().default([]),
     /** open | converted | abandoned */
     status: text("status").notNull().default("open"),
@@ -442,6 +449,52 @@ export const carts = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("carts_store_idx").on(t.storeId, t.status)],
+);
+
+/**
+ * A person who has told this store who they are.
+ *
+ * A row exists here only because someone typed their email into this store's
+ * own checkout — either completing the email field, or placing an order. A
+ * visitor who types nothing has no row: an anonymous session is not a
+ * customer, and there is nothing here that was bought, enriched, guessed from
+ * an IP, or joined across stores. storeId is on every row for that reason.
+ *
+ * `ordersCount` and `totalSpentCents` are denormalised so the list renders in
+ * one query, but they are never incremented hopefully — they are recomputed
+ * from the `orders` table every time an order is placed.
+ */
+export const customers = pgTable(
+  "customers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    /** always stored lowercased, so one person is one row */
+    email: text("email").notNull(),
+    /** what they typed; empty when unknown — never a placeholder */
+    name: text("name"),
+    phone: text("phone"),
+    /** where the request came from at the edge, the same view Live View has */
+    city: text("city"),
+    region: text("region"),
+    country: text("country"),
+    /** exactly what they ticked. This decides whether he may email them. */
+    marketingConsent: boolean("marketing_consent").notNull().default(false),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    /** recomputed from orders, never guessed */
+    ordersCount: integer("orders_count").notNull().default(0),
+    totalSpentCents: integer("total_spent_cents").notNull().default(0),
+    /** the visitor session they were last seen on, so their pages can be read */
+    lastSessionId: text("last_session_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("customers_store_email_idx").on(t.storeId, t.email),
+    index("customers_store_seen_idx").on(t.storeId, t.lastSeenAt),
+  ],
 );
 
 /** Feeds Live View and Analytics. One row per visitor action. */
