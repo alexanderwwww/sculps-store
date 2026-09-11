@@ -14,6 +14,7 @@ export default [
   // a person on it before an order exists.
   route("checkout/identify", "routes/checkout.identify.tsx"),
   route("checkout/intent", "routes/checkout.intent.tsx"),
+  route("checkout/pay", "routes/checkout.pay.tsx"),
   route("checkout/diag", "routes/checkout.diag.tsx"),
   route("push/log", "routes/push.log.tsx"),
   route("thanks", "routes/thanks.tsx"),

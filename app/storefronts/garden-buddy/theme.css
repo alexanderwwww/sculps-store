@@ -639,3 +639,25 @@
 .gb-product .gb-buy__express:active{transform:translateY(0)}
 .gb-product .gb-buy__express svg{height:20px;width:auto;display:block}
 .gb-product .gb-buy__express[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+
+/* the wallet button Stripe draws on the product page, same shape as the
+   buttons around it; empty until Stripe has drawn one, and empty takes no room */
+.gb-product .gb-buy__wallet{margin-top:10px;border-radius:999px;overflow:hidden}
+.gb-product .gb-buy__wallet:empty{display:none}
+.gb-product .gb-buy__wallet-err{margin:8px 0 0;color:#B3341C;font-size:14px;line-height:1.4}
+
+/* secure checkout strip under the buy buttons */
+.gb-product .gb-secure{display:flex;align-items:center;gap:12px;margin-top:14px;padding:10px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--paper)}
+.gb-product .gb-secure__lock{flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:var(--lime-soft);color:var(--leaf);display:grid;place-items:center}
+.gb-product .gb-secure__lock svg{width:17px;height:17px}
+.gb-product .gb-secure__txt{display:grid;gap:1px;min-width:0;flex:1 1 auto}
+.gb-product .gb-secure__txt strong{font-size:13.5px;color:var(--ink);font-weight:700}
+.gb-product .gb-secure__txt span{font-size:12px;color:var(--dim);line-height:1.3}
+.gb-product .gb-secure__cards{display:flex;gap:5px;flex:0 0 auto}
+.gb-product .gb-secure__card{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:22px;padding:0 5px;border-radius:5px;border:1px solid var(--rule);background:#fff;color:#1A1F71;font-family:var(--font-h);font-size:9.5px;font-weight:800;letter-spacing:.02em}
+.gb-product .gb-secure__card--amex{color:#006FCF}
+.gb-product .gb-secure__card--dark{background:#0B0B0B;color:#fff;border-color:#0B0B0B}
+.gb-product .gb-secure__card--mc{gap:0}
+.gb-product .gb-secure__card--mc i{display:block;width:12px;height:12px;border-radius:50%;background:#EB001B}
+.gb-product .gb-secure__card--mc i+i{background:#F79E1B;margin-left:-5px;opacity:.95}
+@media(max-width:640px){.gb-product .gb-secure{flex-wrap:wrap}.gb-product .gb-secure__cards{width:100%;justify-content:flex-start;padding-left:42px}}

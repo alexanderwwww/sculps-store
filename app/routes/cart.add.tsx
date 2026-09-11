@@ -51,7 +51,10 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
   }
 
   const token = readCartToken(request) ?? newCartToken();
-  const lines = await currentLines(context.db, store.id, token);
+  // "Buy now" means this bundle and nothing else: the wallet sheet on the
+  // product page shows one price, and the cart it pays for must be that.
+  const replace = url.searchParams.get("replace") === "1";
+  const lines = replace ? [] : await currentLines(context.db, store.id, token);
   await saveCart(context.db, store.id, token, addLine(lines, variantId, 1));
 
   const sessionId = readVisitorSession(request);

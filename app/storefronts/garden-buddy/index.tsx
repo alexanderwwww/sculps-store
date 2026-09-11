@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ProductExpress } from "./product-express";
 import type { LoadedProductPage, LoadedSection, NavLink } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
@@ -88,7 +89,15 @@ const ArrowRight = (
  */
 export type ChromeInput = Pick<LoadedProductPage, "store" | "nav">;
 
-export function GardenBuddyStorefront({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
+export function GardenBuddyStorefront({
+  page,
+  storeParam = "",
+  publishableKey = null,
+}: {
+  page: LoadedProductPage;
+  storeParam?: string;
+  publishableKey?: string | null;
+}) {
   // Which store answers is decided by the hostname, except on the built-in
   // address where it comes from ?store=. Without carrying that through, every
   // internal link lands on whichever store happens to be first — which is how
@@ -120,7 +129,7 @@ export function GardenBuddyStorefront({ page, storeParam = "" }: { page: LoadedP
 
       <main id="MainContent" className="content-for-layout" role="main" data-template="product">
         {sections.map((s) => (
-          <Section key={s.id} section={s} page={page} storeParam={storeParam} />
+          <Section key={s.id} section={s} page={page} storeParam={storeParam} publishableKey={publishableKey} />
         ))}
       </main>
 
@@ -133,15 +142,17 @@ function Section({
   section,
   page,
   storeParam = "",
+  publishableKey = null,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
   storeParam?: string;
+  publishableKey?: string | null;
 }) {
   if (section.type === "buy_box") {
     return (
       <section className="shopify-section gb-section">
-        <BuyBox section={section} page={page} storeParam={storeParam} />
+        <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} />
       </section>
     );
   }
@@ -340,7 +351,20 @@ export function Footer({ page, storeParam = "" }: { page: ChromeInput; storePara
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
+function BuyBox({
+  section,
+  page,
+  storeParam = "",
+  publishableKey = null,
+}: {
+  section: LoadedSection;
+  page: LoadedProductPage;
+  storeParam?: string;
+  publishableKey?: string | null;
+}) {
+  // True once Stripe has put a real wallet button on the page; until then
+  // the plain Buy now underneath is what the customer sees.
+  const [walletReady, setWalletReady] = useState(false);
   // Each bundle card shows its own picture when one has been chosen for it in
   // Admin → Products, and the product's first gallery photo otherwise — the
   // same photo the cart drawer already uses. Nothing is drawn that does not
@@ -576,14 +600,30 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                 )}
               </button>
 
-              {/* Straight to the checkout with this bundle in the cart. On a
-                  browser that has Apple Pay the button says so; on any other
-                  it says Buy now. The checkout's wallet row is the first
-                  thing on that screen, so this is one tap to the sheet. */}
+              {/* The wallet sheet, right here. Apple Pay on an iPhone or
+                  Safari, Google Pay elsewhere — mounted by Stripe once it
+                  knows this browser has one. */}
+              {publishableKey && chosen ? (
+                <ProductExpress
+                  publishableKey={publishableKey}
+                  currency={store.currency}
+                  variantId={chosen.id}
+                  amountCents={chosen.priceCents}
+                  label={`${page.product.title} — ${chosen.label}`}
+                  storeName={store.name}
+                  shippingCents={0}
+                  storeParam={storeParam}
+                  onReady={setWalletReady}
+                />
+              ) : null}
+
+              {/* Straight to the checkout with this bundle in the cart, for
+                  a browser with no wallet. Hidden once a wallet is drawn. */}
               <button
                 type="submit"
                 className="gb-buy__express"
                 disabled={!chosen || chosen.available <= 0}
+                hidden={walletReady}
               >
                 {applePay ? (
                   <>
@@ -594,6 +634,26 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                   <span>Buy now</span>
                 )}
               </button>
+
+              {/* Secure checkout: the padlock, what protects the card, and
+                  the ways to pay. Plain facts — Stripe handles the card, the
+                  page is HTTPS — no seal that means nothing. */}
+              <div className="gb-secure" aria-label="Secure checkout">
+                <span className="gb-secure__lock" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2.5" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></svg>
+                </span>
+                <span className="gb-secure__txt">
+                  <strong>Secure checkout</strong>
+                  <span>256-bit encrypted · payments by Stripe</span>
+                </span>
+                <span className="gb-secure__cards" aria-label="Visa, Mastercard, American Express, Apple Pay, Google Pay">
+                  <span className="gb-secure__card">VISA</span>
+                  <span className="gb-secure__card gb-secure__card--mc"><i /><i /></span>
+                  <span className="gb-secure__card gb-secure__card--amex">AMEX</span>
+                  <span className="gb-secure__card gb-secure__card--dark"> Pay</span>
+                  <span className="gb-secure__card gb-secure__card--dark">G Pay</span>
+                </span>
+              </div>
 
               {reassurance.length > 0 && (
                 <ul className="gb-trust">

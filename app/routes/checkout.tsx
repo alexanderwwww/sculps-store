@@ -2279,12 +2279,59 @@ function ScratchCard({
     }
   }, []);
 
+  /**
+   * A tap scratches the card by itself.
+   *
+   * Rubbing with a finger still works, but a single tap is what most people
+   * do — and on a phone it is also the one gesture inside which the browser
+   * lets sound start. So the first touch kicks off a sweep across the foil
+   * over about a second, rasping as it goes, and reveals at the end.
+   */
+  const autoRef = useRef(false);
+  const autoScratch = () => {
+    if (autoRef.current || cleared.current) return;
+    autoRef.current = true;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
+    const ratio = canvas.width / Math.max(1, canvas.getBoundingClientRect().width);
+    const started = performance.now();
+    const duration = 1100;
+    const rows = 4;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - started) / duration);
+      // a serpentine: back and forth across the card, top to bottom
+      const p = t * rows;
+      const row = Math.floor(p);
+      const along = p - row;
+      const x = (row % 2 === 0 ? along : 1 - along) * w;
+      const y = ((row + 0.5) / rows) * h;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.beginPath();
+      ctx.arc(x, y, (h / rows) * 0.62 + 6 * ratio, 0, Math.PI * 2);
+      ctx.fill();
+      sound.scratch(1.4);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+        cleared.current = true;
+        setScratchedThrough(true);
+      }
+    };
+    requestAnimationFrame(step);
+  };
+
   const rub = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (event.buttons === 0 && event.pointerType === "mouse") return;
     if (!touchedRef.current) {
       touchedRef.current = true;
       setTouched(true);
       askForPrize();
+      if (event.type === "pointerdown") autoScratch();
     }
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");

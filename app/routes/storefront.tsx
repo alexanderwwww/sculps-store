@@ -1,6 +1,7 @@
 import type { Route } from "./+types/storefront";
 import { data } from "react-router";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
+import { providerForStore } from "~/lib/payments.server";
 import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig, themes } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
@@ -178,11 +179,20 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   // internal link cannot wander into a different shop.
   const storeParam = url.searchParams.get("store") ? `?store=${store.slug}` : "";
 
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl }, { headers });
+  // The publishable key only — it is public by design — so the product page
+  // can draw a wallet button. No key, no button; nothing is drawn that
+  // cannot take money.
+  let publishableKey: string | null = null;
+  try {
+    publishableKey = (await providerForStore(context.db, context.cloudflare.env, store.id)).publishableKey ?? null;
+  } catch {
+    publishableKey = null;
+  }
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey } = loaderData;
 
   if (!page) {
     return (
@@ -216,7 +226,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
       <>
         <link rel="stylesheet" href={gardenBuddyThemeHref} />
         {head}
-        <GardenBuddyStorefront page={page} storeParam={storeParam} />
+        <GardenBuddyStorefront page={page} storeParam={storeParam} publishableKey={publishableKey} />
       </>
     );
   }
