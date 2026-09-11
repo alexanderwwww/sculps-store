@@ -10,5 +10,9 @@
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "gardenbuddy-media" }
   ],
-  "vars": {}
+  "vars": {
+    // Public half of the web-push key pair; the private half is a secret.
+    "VAPID_PUBLIC_KEY": "BCf8j0s_6L5JucJbLihh3D5Lu-BTXUBd6a8xHlbkNY1K_kCwUdlvgrYmt-O4rdILlFevGyo4svz7sUfWGYM69E0",
+    "VAPID_SUBJECT": "mailto:getsculps@gmail.com"
+  }
 }

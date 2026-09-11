@@ -23,7 +23,8 @@
  * store's checkout came out brown.
  */
 import { Link, useFetcher, useSearchParams } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import type { Route } from "./+types/checkout";
 import { resolveStore, storeNav } from "~/lib/store.server";
 import type { NavLink } from "~/lib/store.server";
@@ -43,6 +44,7 @@ import {
   saveCart,
 } from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
+import { scratchPlayFor, SCRATCH_PRIZES } from "~/lib/scratch.server";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
@@ -283,6 +285,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   return {
     pixel,
+    // The odds go to the browser so the card can print them next to itself.
+    // They live in one place on the server; this is a copy, never a second
+    // set of numbers.
+    scratchOdds: SCRATCH_PRIZES.map((prize) => ({ percent: prize.percent, weight: prize.weight })),
     store: {
       name: store.name,
       slug: store.slug,
@@ -349,6 +355,25 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
     await setCartDiscount(context.db, store.id, cartToken, check.discount.code);
     return Response.json({ discountError: null }, headers ? { headers } : undefined);
+  }
+
+  /**
+   * The scratch card. The prize is drawn here, on the server, the first time
+   * this cart asks for one, and the same cart always gets the same answer
+   * back — scratching reveals it, it never decides it.
+   */
+  if (formIntent === "scratch") {
+    let cartToken = token;
+    let setCookie: string | null = null;
+    if (!cartToken) {
+      cartToken = newCartToken();
+      setCookie = cartCookie(cartToken, url);
+    }
+    const play = await scratchPlayFor(context.db, store.id, cartToken);
+    return Response.json(
+      { scratch: play },
+      setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined,
+    );
   }
 
   /**
@@ -623,6 +648,7 @@ type LoadedStore = Awaited<ReturnType<typeof loader>>["store"];
 type ActionReply =
   | { error: string }
   | { discountError?: string | null; protection?: boolean; added?: boolean }
+  | { scratch: { percent: number; code: string } }
   | { ok: true; orderId: string; orderNumber: number; totalCents: number; repriced: boolean; returnTo: string };
 type Errors = Partial<Record<string, string>>;
 
@@ -792,6 +818,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       shell={buddy}
       summary={summary}
       under={buddy ? <Upsell items={loaderData.upsells} photo={photo} money={money} /> : null}
+      scratchOdds={loaderData.scratchOdds}
     />
   );
 
@@ -1590,6 +1617,166 @@ function Upsell({
   );
 }
 
+/* ------------------------------------------------------------- scratch card
+ * "Try your luck" — a foil panel the customer rubs off with a finger or the
+ * mouse, under which is the discount the server already drew.
+ *
+ * Why it is built this way: the prize is requested from the server the moment
+ * the card is first touched, and it is written down there before a single
+ * pixel of foil is removed. The page cannot influence it, and a refresh gets
+ * the same card back. The odds are printed under the card because a prize
+ * promotion that hides its odds is the kind that gets an account closed.
+ */
+function ScratchCard({
+  odds,
+  applied,
+  locked,
+}: {
+  odds: { percent: number; weight: number }[];
+  applied: string | null;
+  locked: boolean;
+}) {
+  const fetcher = useFetcher<ActionReply>();
+  const apply = useFetcher<ActionReply>();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [prize, setPrize] = useState<{ percent: number; code: string } | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [showOdds, setShowOdds] = useState(false);
+  const cleared = useRef(false);
+
+  const data = fetcher.data;
+  useEffect(() => {
+    if (data && "scratch" in data && data.scratch) setPrize(data.scratch);
+  }, [data]);
+
+  /** Ask for the card once — on mount, so the foil is already live to touch. */
+  useEffect(() => {
+    if (locked || applied) return;
+    fetcher.submit({ intent: "scratch" }, { method: "post" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Paint the foil. Re-painted on resize so it always covers exactly. */
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !prize || revealed) return;
+    const paint = () => {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.scale(ratio, ratio);
+      const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+      gradient.addColorStop(0, "#3B2A1B");
+      gradient.addColorStop(0.45, "#5B4630");
+      gradient.addColorStop(0.55, "#7A6244");
+      gradient.addColorStop(1, "#3B2A1B");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+      // The store's mark, tiled faintly across the foil.
+      ctx.fillStyle = "rgba(168, 243, 42, .16)";
+      ctx.font = "600 11px system-ui, sans-serif";
+      for (let y = 14; y < rect.height + 14; y += 22) {
+        for (let x = -10; x < rect.width; x += 74) {
+          ctx.fillText("GARDEN BUDDY", x + ((y / 22) % 2) * 36, y);
+        }
+      }
+      ctx.fillStyle = "rgba(255,255,255,.92)";
+      ctx.font = "800 14px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("SCRATCH HERE", rect.width / 2, rect.height / 2 + 5);
+    };
+    paint();
+    window.addEventListener("resize", paint);
+    return () => window.removeEventListener("resize", paint);
+  }, [prize, revealed]);
+
+  /** How much has been rubbed off — the reveal happens at just over half. */
+  const measure = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx || cleared.current) return;
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let clear = 0;
+    for (let i = 3; i < pixels.length; i += 4 * 16) if (pixels[i]! < 32) clear++;
+    if (clear / (pixels.length / (4 * 16)) > 0.52) {
+      cleared.current = true;
+      setRevealed(true);
+    }
+  }, []);
+
+  const rub = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (event.buttons === 0 && event.pointerType === "mouse") return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    const ratio = canvas.width / rect.width;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc((event.clientX - rect.left) * ratio, (event.clientY - rect.top) * ratio, 20 * ratio, 0, Math.PI * 2);
+    ctx.fill();
+    measure();
+  };
+
+  /** Revealed means won: the code goes on the cart through the normal path. */
+  useEffect(() => {
+    if (!revealed || !prize || applied) return;
+    apply.submit({ intent: "discount", code: prize.code }, { method: "post" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealed, prize]);
+
+  if (applied) return null;
+
+  return (
+    <div className="gb-co__scratch gb-co__glass gb-co__glass--tight">
+      <p className="gb-co__scratch-h">Try your luck</p>
+      <p className="gb-co__scratch-sub">Every card wins. Scratch it to see what this order gets.</p>
+
+      <div className="gb-co__scratch-box">
+        <div className="gb-co__scratch-prize" aria-live="polite">
+          {prize ? (
+            <>
+              <b>{prize.percent}% off</b>
+              <span>{revealed ? "Applied to this order" : "Rub the panel to reveal"}</span>
+            </>
+          ) : (
+            <span>Preparing your card…</span>
+          )}
+        </div>
+        {prize && !revealed ? (
+          <canvas
+            ref={canvasRef}
+            className="gb-co__scratch-foil"
+            onPointerMove={rub}
+            onPointerDown={rub}
+            aria-label="Scratch panel"
+          />
+        ) : null}
+      </div>
+
+      <button type="button" className="gb-co__scratch-odds-btn" onClick={() => setShowOdds((v) => !v)}>
+        {showOdds ? "Hide odds" : "See the odds"}
+      </button>
+      {showOdds ? (
+        <ul className="gb-co__scratch-odds">
+          {odds.map((o) => (
+            <li key={o.percent}>
+              <span>{o.percent}% off</span>
+              <b>{o.weight} in 100</b>
+            </li>
+          ))}
+          <li className="gb-co__scratch-odds-note">
+            The prize is drawn at random when the card is made, before you scratch it. One card per order.
+          </li>
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * The discount code box on the checkout summary.
  *
@@ -1730,6 +1917,7 @@ function OnePage({
   shell,
   summary,
   under,
+  scratchOdds,
 }: {
   cn: CN;
   store: LoadedStore;
@@ -1747,6 +1935,8 @@ function OnePage({
   summary: React.ReactNode;
   /** the block that sits under the summary — "Just one more thing" */
   under: React.ReactNode;
+  /** the published scratch-card odds, straight from the server's table */
+  scratchOdds: { percent: number; weight: number }[];
 }) {
   const buddy = cn === BUDDY;
   const fetcher = useFetcher<ActionReply>();
@@ -2209,6 +2399,7 @@ function OnePage({
     <div className="gb-co__grid">
       <div className="gb-co__main">
         {express}
+        <ScratchCard odds={scratchOdds} applied={cart.discount?.code ?? null} locked={false} />
         <details className="gb-co__msum gb-co__glass gb-co__glass--tight">
           <summary>
             <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>

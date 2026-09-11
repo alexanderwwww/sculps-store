@@ -9,6 +9,7 @@
  * connection test, Resend for the sender domain) the real call is made and
  * the real answer shown — nothing on this screen pretends.
  */
+import * as React from "react";
 import { Form, Link, useNavigation } from "react-router";
 import type { Route } from "./+types/admin.settings";
 import { eq } from "drizzle-orm";
@@ -1740,6 +1741,143 @@ function PaymentsPane({
   );
 }
 
+/**
+ * Turning on the sound — this browser, this device.
+ *
+ * A browser can only be enrolled from inside the browser, so this card is
+ * the only place that can do it. On the Mac, pressing Enable in Safari or
+ * Chrome is enough. On the iPhone, Apple only allows it once the page is on
+ * the home screen — the card says so rather than failing silently.
+ */
+function PushCard() {
+  const [state, setState] = React.useState<{ publicKey: string; devices: { id: string; label: string; since: string }[] } | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [message, setMessage] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async () => {
+    const res = await fetch("/admin/push");
+    if (res.ok) setState(await res.json());
+  }, []);
+  React.useEffect(() => {
+    void load();
+  }, [load]);
+
+  const supported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+  const standalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
+  const iOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  async function enable() {
+    if (!state?.publicKey) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setMessage("The browser refused notifications. Allow them for this site and press Enable again.");
+        return;
+      }
+      const raw = atob(state.publicKey.replace(/-/g, "+").replace(/_/g, "/"));
+      const key = Uint8Array.from(raw, (ch) => ch.charCodeAt(0));
+      const existing = await registration.pushManager.getSubscription();
+      const subscription =
+        existing ??
+        (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
+      const json = subscription.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+      const body = new URLSearchParams({
+        intent: "subscribe",
+        endpoint: json.endpoint ?? "",
+        p256dh: json.keys?.p256dh ?? "",
+        auth: json.keys?.auth ?? "",
+        label: iOS ? "iPhone" : /Mac/.test(navigator.userAgent) ? "Mac" : "This browser",
+      });
+      const res = await fetch("/admin/push", { method: "POST", body });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      setMessage(data.ok ? "This device will now be notified." : data.error ?? "Could not save the subscription.");
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not enable notifications here.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function act(body: URLSearchParams) {
+    setBusy(true);
+    const res = await fetch("/admin/push", { method: "POST", body });
+    const data = (await res.json()) as { ok: boolean; error?: string; delivered?: number; total?: number };
+    setMessage(
+      data.ok
+        ? data.delivered !== undefined
+          ? `Sent to ${data.delivered} of ${data.total} device${data.total === 1 ? "" : "s"}.`
+          : "Done."
+        : data.error ?? "That did not work.",
+    );
+    setBusy(false);
+    await load();
+  }
+
+  return (
+    <SettingsCard
+      title="Notifications on your phone and laptop"
+      sub="A sound and a banner the moment an order is paid — no app to install"
+      note={
+        iOS && !standalone
+          ? "On iPhone, Apple only allows this once the admin is on your home screen: Share → Add to Home Screen, open it from there, then press Enable."
+          : "Enable this once in each browser you want notified — your Mac and your iPhone are separate."
+      }
+    >
+      {state?.devices.length ? (
+        state.devices.map((device) => (
+          <div key={device.id} style={listRow}>
+            <span style={listRowMain}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontWeight: 600 }}>{device.label}</span>
+                <RowBadge kind="success">Enabled</RowBadge>
+              </span>
+              <span style={{ fontSize: 12, color: "var(--ink-2)" }}>
+                Since {new Date(device.since).toLocaleDateString()}
+              </span>
+            </span>
+            <RowButton
+              type="button"
+              disabled={busy}
+              onClick={() => act(new URLSearchParams({ intent: "remove", id: device.id }))}
+            >
+              Remove
+            </RowButton>
+          </div>
+        ))
+      ) : (
+        <div style={{ padding: "10px 16px", fontSize: 12, color: "var(--ink-3)" }}>
+          No device is enrolled yet, so nothing will make a sound.
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8, padding: "12px 16px", flexWrap: "wrap", alignItems: "center" }}>
+        <CardButton type="button" primary disabled={!supported || busy || !state?.publicKey} onClick={() => void enable()}>
+          {busy ? "Working…" : "Enable on this device"}
+        </CardButton>
+        <CardButton
+          type="button"
+          disabled={busy || !state?.devices.length}
+          onClick={() => void act(new URLSearchParams({ intent: "test" }))}
+        >
+          Send a test
+        </CardButton>
+        {message ? <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{message}</span> : null}
+        {!supported ? (
+          <span style={{ fontSize: 12, color: "var(--ink-2)" }}>This browser cannot do push notifications.</span>
+        ) : null}
+      </div>
+    </SettingsCard>
+  );
+}
+
 function NotificationsPane({
   store,
   sender,
@@ -1762,6 +1900,7 @@ function NotificationsPane({
 
   return (
     <>
+      <PushCard />
       {!resend ? <Notice kind="critical">Email is not configured on the Worker (RESEND_API_KEY). Nothing can be sent or verified until it is.</Notice> : null}
 
       <Form method="post">

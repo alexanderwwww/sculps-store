@@ -862,3 +862,61 @@ export const discountRedemptions = pgTable(
     uniqueIndex("discount_redemptions_order_idx").on(t.orderId),
   ],
 );
+
+/* ------------------------------------------------------- push notifications */
+
+/**
+ * One browser that has agreed to be woken when something sells.
+ *
+ * This is how he hears a sale on his phone and on his laptop without an app
+ * in either store: each browser hands us an endpoint owned by Apple or
+ * Google, plus the two keys that let us encrypt a message only that browser
+ * can open. We never see the device, only the endpoint — and when the browser
+ * throws the subscription away the push service says so and the row is
+ * deleted.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** the push service URL; unique because it already identifies the browser */
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    /** "iPhone", "MacBook" — whatever the browser told us, for the settings list */
+    label: text("label"),
+    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("push_subscriptions_user_idx").on(t.userId)],
+);
+
+/**
+ * One scratch card, one cart.
+ *
+ * The prize is drawn by the server the moment the card is created, before
+ * anything is scratched — the scratching is how it is shown, never how it is
+ * decided. The row is what stops a customer redrawing until they like the
+ * answer: one cart gets one card, and the code it produced is written here.
+ */
+export const scratchPlays = pgTable(
+  "scratch_plays",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    /** the cart token — one card per cart */
+    cartToken: text("cart_token").notNull(),
+    /** percent off that was drawn */
+    percent: integer("percent").notNull(),
+    /** the single-use code this play created */
+    code: text("code").notNull(),
+    discountId: uuid("discount_id").references(() => discounts.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("scratch_plays_cart_idx").on(t.storeId, t.cartToken)],
+);

@@ -52,6 +52,7 @@ export default [
       route("analytics", "routes/admin.analytics.tsx"),
       route("live", "routes/admin.live.tsx"),
       route("notifications", "routes/admin.notifications.tsx"),
+      route("push", "routes/admin.push.tsx"),
       route("search", "routes/admin.search.tsx"),
       route("settings", "routes/admin.settings.tsx"),
       route("settings/email-preview", "routes/admin.settings.email-preview.tsx"),

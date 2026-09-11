@@ -8,6 +8,7 @@
  * The signature is verified before anything is written, so a forged POST
  * cannot mark orders paid.
  */
+import { notifyAdmins, money } from "~/lib/notify.server";
 import type { Route } from "./+types/webhooks.stripe";
 import { eq, sql } from "drizzle-orm";
 import { orders, paymentProviders } from "~/db/schema";
@@ -108,6 +109,14 @@ export async function action({ request, context }: Route.ActionArgs) {
       orderId: order.id,
     });
     await afterPaymentConfirmed(context.db, context.cloudflare.env, order.id, request);
+    // The sound on his phone and his laptop. Last, and never fatal: the money
+    // is already recorded by this point.
+    await notifyAdmins(context.db, context.cloudflare.env, {
+      title: "Order paid",
+      body: `#${order.number} · ${money(order.totalCents, order.currency ?? "USD")}`,
+      url: `/admin/orders/${order.id}`,
+      tag: `order-${order.id}`,
+    });
   }
 
   if (parsed.type === "payment_intent.payment_failed") {

@@ -614,15 +614,19 @@
  * ====================================================================== */
 
 .gb-co-sec {
-  --co-ink: #1C2318;
-  --co-dim: #5D6657;
-  --co-line: rgba(28, 35, 24, .12);
-  --co-field: rgba(28, 35, 24, .16);
+  /* The store's four colours and nothing else: near-black ink, the brown for
+     structure and the quiet marks, the neon lime for the one thing that takes
+     money, white for the glass. */
+  --co-ink: #14180F;
+  --co-dim: #6B6559;
+  --co-brown: var(--brown, #3B2A1B);
+  --co-line: rgba(59, 42, 27, .12);
+  --co-field: rgba(59, 42, 27, .18);
   --co-focus: #3B2A1B;
   --co-bad: #B3341C;
   /* field radius, panel radius */
-  --co-r: 10px;
-  --co-rx: 20px;
+  --co-r: 9px;
+  --co-rx: 16px;
   /* the glass itself */
   --co-glass: rgba(255, 255, 255, .62);
   --co-glass-rim: rgba(255, 255, 255, .75);
@@ -630,11 +634,11 @@
 
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(60% 45% at 10% 0%, rgba(168, 243, 42, .16), transparent 70%),
-    radial-gradient(52% 42% at 92% 6%, rgba(255, 199, 44, .12), transparent 72%),
-    radial-gradient(60% 55% at 50% 100%, rgba(92, 140, 30, .10), transparent 70%),
-    var(--sand);
+  /* No coloured haze behind the glass — he asked for it gone. What is left is
+     the store's own paper: white at the top where the logo band sits, settling
+     into sand. Colour comes from the palette below, on the things that mean
+     something, never on the backdrop. */
+  background: linear-gradient(180deg, #FFFDF8 0%, var(--sand) 340px);
   color: var(--co-ink);
   font-family: var(--font-b);
   font-size: 14px;
@@ -673,13 +677,13 @@
 .gb-co__glass--tight { border-radius: 16px; }
 
 /* ---- header: the logo on a white band, the breadcrumb under it --------- */
-.gb-co__wrap { width: 100%; max-width: 1040px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); }
+.gb-co__wrap { width: 100%; max-width: 960px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); }
 
 .gb-co__bar { background: #fff; border-bottom: 1px solid var(--co-line); }
 .gb-co__bar-in { display: grid; justify-items: center; gap: 10px; padding-block: 16px 14px; }
 .gb-co__logo { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; text-decoration: none; color: var(--co-ink); }
-.gb-co__logo-img { max-height: 40px; width: auto; }
-.gb-co__wordmark { font-family: var(--font-h); font-weight: 800; font-size: 24px; letter-spacing: -.01em; line-height: 1; color: var(--co-ink); }
+.gb-co__logo-img { max-height: 30px; width: auto; }
+.gb-co__wordmark { font-family: var(--font-h); font-weight: 800; font-size: 20px; letter-spacing: -.01em; line-height: 1; color: var(--co-ink); }
 
 .gb-co__crumb { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--co-dim); }
 .gb-co__crumb li { display: flex; align-items: center; gap: 8px; }
@@ -696,10 +700,11 @@
 .gb-co__foot-links a:hover { text-decoration: underline; }
 
 /* ---- the two columns --------------------------------------------------- */
-.gb-co { flex: 1 0 auto; width: 100%; max-width: 1040px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); padding-block: 0 48px; }
-.gb-co__grid { display: grid; gap: 24px; align-items: start; }
+.gb-co { flex: 1 0 auto; width: 100%; max-width: 960px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); padding-block: 0 48px; }
+.gb-co__grid { display: grid; gap: 18px; align-items: start; }
 @media (min-width: 960px) {
-  .gb-co__grid { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); gap: 28px; }
+  /* 1.618 : 1 — the form gets the long side of the golden section. */
+  .gb-co__grid { grid-template-columns: minmax(0, 61.8fr) minmax(0, 38.2fr); gap: 24px; }
 }
 .gb-co__main { min-width: 0; padding-block: 24px; }
 
@@ -708,10 +713,10 @@
 @media (max-width: 959px) { .gb-co__aside { display: none; } }
 
 /* sections: the form's own panels float too */
-.gb-co__sec { padding: 20px; }
-.gb-co__sec + .gb-co__sec { margin-top: 16px; }
-.gb-co__h2 { font-family: var(--font-h); font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 14px; }
-.gb-co__h3 { font-family: var(--font-h); font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 16px; }
+.gb-co__sec { padding: 16px; }
+.gb-co__sec + .gb-co__sec { margin-top: 12px; }
+.gb-co__h2 { font-family: var(--font-h); font-size: 15px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 14px; }
+.gb-co__h3 { font-family: var(--font-h); font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 16px; }
 .gb-co__secure { margin: -8px 0 14px; color: var(--co-dim); font-size: 13px; }
 .gb-co__note { color: var(--co-dim); font-size: 13px; line-height: 1.5; margin: 12px 0 0; }
 
@@ -720,7 +725,7 @@
    reports what the account has actually enabled, so nothing is drawn here
    that cannot take money — and when it reports none, both this block and the
    OR rule below it stay hidden. */
-.gb-co__express { margin: 0 0 14px; padding: 16px; }
+.gb-co__express { margin: 0 0 12px; padding: 12px; }
 .gb-co__express-lead { margin: 0 0 12px; font-family: var(--font-b); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--co-dim); text-align: center; }
 .gb-co__express-row { min-height: 55px; }
 .gb-co__express-note { margin: 12px 0 0; text-align: center; font-size: 13px; color: var(--co-dim); }
@@ -731,9 +736,9 @@
    Individually rounded, 10px, 46px tall — each its own box, never fused into
    one block. The focused box draws a 2px ring and lifts above its
    neighbours. */
-.gb-sf__group { display: grid; gap: 10px; }
-.gb-sf__group + .gb-sf__group { margin-top: 10px; }
-.gb-sf__row { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.gb-sf__group { display: grid; gap: 8px; }
+.gb-sf__group + .gb-sf__group { margin-top: 8px; }
+.gb-sf__row { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .gb-sf__row--2 { grid-template-columns: 1fr 1fr; }
 .gb-sf__row--3 { grid-template-columns: 1fr 1fr 1fr; }
 @media (max-width: 559px) {
@@ -751,8 +756,8 @@
 .gb-sf__in {
   display: block;
   width: 100%;
-  height: 46px;
-  padding: 17px 12px 3px;
+  height: 42px;
+  padding: 15px 11px 2px;
   border: 0;
   border-radius: var(--co-r);
   background: transparent;
@@ -772,14 +777,14 @@
   background-position: right 11px center;
   background-size: 16px;
 }
-.gb-sf__in:autofill, .gb-sf__in:-webkit-autofill { box-shadow: 0 0 0 46px #fff inset; border-radius: var(--co-r); }
+.gb-sf__in:autofill, .gb-sf__in:-webkit-autofill { box-shadow: 0 0 0 42px #fff inset; border-radius: var(--co-r); }
 
 .gb-sf__lbl {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 13px;
-  font-size: 16px;
+  left: 11px;
+  right: 11px;
+  top: 11px;
+  font-size: 15px;
   line-height: 1.25;
   color: var(--co-dim);
   pointer-events: none;
@@ -790,8 +795,8 @@
 }
 .gb-sf__in:focus + .gb-sf__lbl,
 .gb-sf__in:not(:placeholder-shown) + .gb-sf__lbl,
-.gb-sf__lbl--up { top: 6px; font-size: 11px; }
-.gb-sf__in--sel + .gb-sf__lbl { top: 6px; font-size: 11px; }
+.gb-sf__lbl--up { top: 4px; font-size: 10px; }
+.gb-sf__in--sel + .gb-sf__lbl { top: 4px; font-size: 10px; }
 
 .gb-sf__cell:focus-within { z-index: 3; border-color: transparent; box-shadow: 0 0 0 2px var(--co-focus); }
 .gb-sf__cell[data-err="1"] { z-index: 2; border-color: transparent; box-shadow: 0 0 0 1px var(--co-bad); }
@@ -815,8 +820,8 @@
   justify-content: center;
   gap: 10px;
   width: 100%;
-  height: 56px;
-  margin-top: 20px;
+  height: 52px;
+  margin-top: 16px;
   padding: 0 20px;
   border: 0;
   border-radius: 999px;
@@ -845,10 +850,10 @@
 .gb-co__trust strong { display: block; color: var(--co-ink); font-weight: 600; }
 
 /* ---- order summary ----------------------------------------------------- */
-.gb-co__sum { padding: 20px; }
+.gb-co__sum { padding: 16px; }
 .gb-co__lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
 .gb-co__line { display: flex; gap: 12px; align-items: center; }
-.gb-co__shot { flex: 0 0 52px; width: 52px; height: 52px; border-radius: 12px; background: #fff; border: 1px solid var(--co-field); position: relative; }
+.gb-co__shot { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; background: #fff; border: 1px solid var(--co-field); position: relative; }
 .gb-co__shot img { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; }
 .gb-co__shot .gb-ph { height: 100%; border-radius: 11px; font-size: 9px; padding: 4px; }
 .gb-co__qty { position: absolute; top: -8px; right: -8px; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--brown); color: #fff; font-size: 12px; font-weight: 700; line-height: 1; }
@@ -903,18 +908,18 @@
 .gb-co__tot b { color: var(--co-ink); font-weight: 600; }
 .gb-co__tot--free b { color: var(--leaf); font-weight: 700; }
 .gb-co__grand { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--co-line); font-size: 15px; font-weight: 700; color: var(--co-ink); }
-.gb-co__grand b { font-family: var(--font-h); font-size: 24px; font-weight: 800; letter-spacing: -.01em; }
+.gb-co__grand b { font-family: var(--font-h); font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
 .gb-co__grand-cc { font-size: 12px; color: var(--co-dim); font-weight: 500; margin-right: 6px; }
 
 /* ---- "Just one more thing" --------------------------------------------
    The bundles this cart does not already have, from the variants table. Real
    photo, real price, real compare-at. Nothing out of stock is ever drawn. */
-.gb-co__up { padding: 20px; }
+.gb-co__up { padding: 16px; }
 .gb-co__up-h { font-family: var(--font-h); font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--co-ink); margin: 0 0 4px; }
 .gb-co__up-sub { margin: 0 0 14px; color: var(--co-dim); font-size: 13px; }
 .gb-co__up-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .gb-co__up-item { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--co-field); border-radius: var(--co-r); background: rgba(255, 255, 255, .7); }
-.gb-co__up-shot { flex: 0 0 52px; width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--co-field); }
+.gb-co__up-shot { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--co-field); }
 .gb-co__up-shot img { width: 100%; height: 100%; object-fit: cover; }
 .gb-co__up-shot .gb-ph { height: 100%; font-size: 9px; padding: 4px; }
 .gb-co__up-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; }
@@ -964,3 +969,25 @@
   .gb-co__msum-body { animation: none; }
   .gb-co__spin { animation-duration: 2.4s; }
 }
+
+
+/* ---- try your luck -----------------------------------------------------
+   The foil is the store's brown with its name printed through it in lime;
+   under it is the prize the server already drew. The odds sit one tap away
+   because a prize promotion that hides them is the sort that closes payment
+   accounts. Sized off the same golden section as the page: the panel is
+   1.618 wide for every 1 tall. */
+.gb-co__scratch { margin: 0 0 12px; padding: 14px; }
+.gb-co__scratch-h { margin: 0; font-family: var(--font-h); font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: var(--co-ink); }
+.gb-co__scratch-sub { margin: 2px 0 10px; font-size: 12px; color: var(--co-dim); }
+.gb-co__scratch-box { position: relative; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--co-field); aspect-ratio: 1.618 / 1; max-height: 132px; }
+.gb-co__scratch-prize { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 2px; text-align: center; }
+.gb-co__scratch-prize b { font-family: var(--font-h); font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--co-brown); }
+.gb-co__scratch-prize span { font-size: 12px; color: var(--co-dim); }
+.gb-co__scratch-foil { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.gb-co__scratch-foil:active { cursor: grabbing; }
+.gb-co__scratch-odds-btn { margin: 10px 0 0; padding: 0; border: 0; background: none; color: var(--co-brown); font-family: var(--font-b); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.gb-co__scratch-odds { list-style: none; margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: rgba(59, 42, 27, .05); display: grid; gap: 5px; }
+.gb-co__scratch-odds li { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--co-dim); }
+.gb-co__scratch-odds li b { color: var(--co-ink); font-weight: 700; }
+.gb-co__scratch-odds-note { display: block; padding-top: 4px; border-top: 1px solid var(--co-line); line-height: 1.45; }
