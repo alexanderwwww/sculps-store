@@ -49,8 +49,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // This route's markup is the other store's, and a customer must never see
   // the wrong brand a step before paying.
   if (store.slug === "garden-buddy") {
-    const to = new URL("/checkout", url);
+    // Garden Buddy's cart is the drawer: the home page with it open, where
+    // lines can be changed or removed and nobody is hurried anywhere.
+    const to = new URL("/", url);
     to.search = url.search;
+    to.searchParams.set("cart", "1");
     return new Response(null, { status: 302, headers: { Location: to.pathname + to.search } });
   }
 

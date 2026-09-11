@@ -400,12 +400,13 @@ class LiveGlobe {
       // "Visitors right now" card counts.
       // How long a marker lives, by what it is. A visitor is only interesting
       // while they are there; a sale is worth looking at for a while.
-      const TTL = 120_000;
-      const SALE_TTL = 600_000;
+      // A sale for three minutes; a cart or a checkout for fifty seconds;
+      // someone simply looking for the same two minutes the visitor count
+      // uses. Nothing sits on the globe forever.
+      const ttlFor = (stage: string) =>
+        stage === "purchase" ? 180_000 : stage === "cart" || stage === "checkout" ? 50_000 : 120_000;
       if (this.visitors.length) {
-        this.visitors = this.visitors.filter(v =>
-          now - (v.at || now) < (v.stage === "purchase" ? SALE_TTL : TTL),
-        );
+        this.visitors = this.visitors.filter(v => now - (v.at || now) < ttlFor(v.stage));
       }
       // One flat dot per visitor, in the colour of what they are doing:
       // blue looking, pink in the cart, deeper pink at checkout, gold bought.

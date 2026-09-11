@@ -116,6 +116,18 @@ export function CartDrawerProvider({
     setOpen(true);
   }, []);
 
+  // Arriving on ?cart=1 — the cart link, or /cart — opens the drawer at
+  // once, and the flag is dropped from the address so a refresh or a back
+  // does not open it again.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("cart") !== "1") return;
+    show(null);
+    params.delete("cart");
+    const rest = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${rest ? `?${rest}` : ""}`);
+  }, [show]);
+
   const add = useCallback(
     (variantId: string, from: HTMLElement | null) => {
       show(from);
