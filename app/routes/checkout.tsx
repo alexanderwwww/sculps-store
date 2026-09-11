@@ -3044,30 +3044,48 @@ function OnePage({
     );
   }
 
-  /* The rail: everything about the order, in the order he asked for — what
-     is being bought, the discount, the protection, the totals, the scratch
-     card, then the suggestions. On a phone this is the folded summary at the
-     top of the page instead, so the first thing on screen is still the
-     wallet button. */
+  const scratch = (
+    <ScratchCard
+      odds={scratchOdds}
+      applied={cart.discount?.code ?? null}
+      locked={false}
+      logoUrl={store.logoUrl}
+    />
+  );
+
   /**
-   * The rail is rendered exactly once. It used to be rendered twice — inside
-   * the phone's folded summary and again in the right-hand column — which
-   * meant two scratch cards, two canvases and two fetchers racing each other
-   * for the same card. That is why it sat on "Preparing your card…".
+   * The right-hand column, on a screen wide enough to have one: what is being
+   * bought, the discount, the totals, the card, then the suggestions.
    */
   const rail = (
     <>
       {summary}
-      <ScratchCard odds={scratchOdds} applied={cart.discount?.code ?? null} locked={false} logoUrl={store.logoUrl} />
+      {scratch}
       {under}
     </>
   );
 
+  /**
+   * A phone is a different order of business, and he is right that the old one
+   * was not a converting one: wallets, then a wall of fields, with the cart,
+   * the discount and the card marooned somewhere below the fold.
+   *
+   * So on a phone the page reads: the wallets, then the scratch card while
+   * the mood is good, then a small folded summary carrying the discount box,
+   * then the details, then the card — and it ends on the green button. There
+   * is nothing underneath it to scroll to, which is the point.
+   *
+   * Both copies of the card exist in the markup and CSS shows one; the card
+   * asks the server for nothing until it is touched, so the copy nobody can
+   * see costs nothing and draws nothing.
+   */
   return (
     <div className="gb-co-split">
       <div className="gb-co__pane">
         <div className="gb-co__pane-in">
           {chrome?.header}
+          {express}
+          <div className="gb-co__mobile-only">{scratch}</div>
           <details className="gb-co__msum">
             <summary>
               <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
@@ -3076,7 +3094,6 @@ function OnePage({
             </summary>
             <div className="gb-co__msum-body">{summary}</div>
           </details>
-          {express}
           {form}
         </div>
         {chrome?.footer}

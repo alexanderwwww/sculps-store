@@ -74,7 +74,15 @@
   /* on a phone the rail is the folded summary instead */
   .gb-co__rail { display: block; }
 }
-@media (max-width: 959px) { .gb-co__rail { background: var(--rail); border-top: 1px solid var(--line); } }
+/* On a phone the right-hand column is gone entirely: everything it held is
+   either in the folded summary or, in the scratch card's case, high up the
+   page where it belongs. A page that ends on the pay button has nothing left
+   to scroll past. */
+@media (max-width: 959px) {
+  .gb-co__rail { display: none; }
+}
+.gb-co__mobile-only { display: block; }
+@media (min-width: 960px) { .gb-co__mobile-only { display: none; } }
 
 /* ---- the head of the white half --------------------------------------- */
 .gb-co__bar-in { display: grid; justify-items: center; gap: 8px; padding-bottom: 18px; }
@@ -249,6 +257,7 @@
    The odds are one tap below, because a prize promotion that hides them is
    the kind that loses you a payment account. */
 .gb-co__scratch { margin: 22px auto 0; max-width: 340px; }
+.gb-co__mobile-only .gb-co__scratch { margin: 0 auto 18px; max-width: none; }
 .gb-co__scratch-h { margin: 0; font-family: var(--font-h); font-size: 15px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); text-align: center; }
 .gb-co__scratch-sub { margin: 3px 0 11px; font-size: 12px; color: var(--dim); text-align: center; }
 .gb-co__scratch-box { position: relative; border-radius: 14px; overflow: hidden; background: #FFFDF7; aspect-ratio: 1.9 / 1; max-height: 140px; box-shadow: 0 8px 24px rgba(43, 30, 17, .18); }
