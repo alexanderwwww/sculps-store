@@ -1716,7 +1716,7 @@ function useScratchSound() {
   const loopRef = useRef<{ gain: GainNode; stop: () => void } | null>(null);
   const quietAt = useRef(0);
 
-  const scratch = useCallback(() => {
+  const scratch = useCallback((speed = 1) => {
     try {
       const audio = context();
       if (!audio) return;
@@ -1736,12 +1736,23 @@ function useScratchSound() {
         const source = audio.createBufferSource();
         source.buffer = buffer;
         source.loop = true;
-        const filter = audio.createBiquadFilter();
-        filter.type = "lowpass";
-        filter.frequency.value = 2400;
+        // Shaped like a fingernail on a foil card rather than a rumble:
+        // everything below 700Hz cut away, a resonant lift where the rasp
+        // actually lives, and the very top rolled off so it is not hissy.
+        const high = audio.createBiquadFilter();
+        high.type = "highpass";
+        high.frequency.value = 700;
+        const peak = audio.createBiquadFilter();
+        peak.type = "peaking";
+        peak.frequency.value = 2600;
+        peak.Q.value = 0.9;
+        peak.gain.value = 7;
+        const low = audio.createBiquadFilter();
+        low.type = "lowpass";
+        low.frequency.value = 7000;
         const gain = audio.createGain();
         gain.gain.value = 0;
-        source.connect(filter).connect(gain).connect(audio.destination);
+        source.connect(high).connect(peak).connect(low).connect(gain).connect(audio.destination);
         source.start();
         loopRef.current = { gain, stop: () => source.stop() };
       }
@@ -1749,7 +1760,8 @@ function useScratchSound() {
       const { gain } = loopRef.current;
       const now = audio.currentTime;
       gain.gain.cancelScheduledValues(now);
-      gain.gain.setTargetAtTime(0.09, now, 0.03);
+      const level = Math.min(0.13, 0.035 + speed * 0.05);
+      gain.gain.setTargetAtTime(level, now, 0.02);
 
       // Fade out shortly after the last movement.
       window.clearTimeout(quietAt.current);
@@ -1833,6 +1845,7 @@ function ScratchCard({
   /** set the instant a finger lands, so the sheen stops before it can paint
       over the first scratch — state lands a render too late for that. */
   const touchedRef = useRef(false);
+  const lastPoint = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const data = fetcher.data;
   useEffect(() => {
@@ -1981,7 +1994,13 @@ function ScratchCard({
     ctx.beginPath();
     ctx.arc((event.clientX - rect.left) * ratio, (event.clientY - rect.top) * ratio, 28 * ratio, 0, Math.PI * 2);
     ctx.fill();
-    sound.scratch();
+    const previous = lastPoint.current;
+    const here = { x: event.clientX, y: event.clientY, t: performance.now() };
+    lastPoint.current = here;
+    const speed = previous
+      ? Math.min(2, Math.hypot(here.x - previous.x, here.y - previous.y) / Math.max(8, here.t - previous.t))
+      : 0.6;
+    sound.scratch(speed);
     // A drag that leaves the panel and comes back would otherwise stop
     // erasing; the pointer is captured so the whole gesture belongs to it.
     if (event.type === "pointerdown") canvas.setPointerCapture?.(event.pointerId);
@@ -2433,12 +2452,19 @@ function OnePage({
                 // Every wallet laid out at once. Stripe's default folds them
                 // into a "See more" menu, which is how Google Pay ended up
                 // hidden on his own checkout.
-                layout: { maxColumns: 2, maxRows: 2, overflow: "never" },
+                /**
+                 * `overflow: "never"` is the part that matters — it stops
+                 * Stripe folding the buttons into a "See more" menu. The row
+                 * and column caps that were here with it are gone: his own
+                 * browser reported the element mounting and then never
+                 * becoming ready, and that combination is the only thing that
+                 * changed between the row working and the row staying blank.
+                 */
+                layout: { overflow: "never" },
                 // "always" means draw it wherever the browser can do it at
                 // all, rather than only where Stripe is certain. Link stays on
                 // so the row is never empty on a browser with no wallet.
                 paymentMethods: { applePay: "always", googlePay: "always", link: "auto" },
-                buttonType: { applePay: "buy", googlePay: "buy" },
                 emailRequired: true,
                 phoneNumberRequired: store.phoneMode !== "hidden",
                 billingAddressRequired: true,
@@ -2507,8 +2533,15 @@ function OnePage({
            */
           window.setTimeout(() => {
             if (cancelled || walletsAnsweredRef.current) return;
+            // Take the silent element off the page first, so the two can
+            // never both end up in the row.
+            try {
+              express.unmount();
+            } catch {
+              /* it may never have got that far */
+            }
             void mountRequestButton(stripe, elements);
-          }, 3000);
+          }, 1500);
 
           /**
            * If Stripe has said nothing at all after five seconds, say so —

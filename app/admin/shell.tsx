@@ -296,7 +296,7 @@ export function AdminShell({
     >
       <header
         style={{
-          height: 45,
+          height: 78,
           flex: "none",
           display: "flex",
           alignItems: "center",
@@ -310,9 +310,9 @@ export function AdminShell({
       >
         <span style={{ display: "flex", alignItems: "center", gap: 9, flex: "none", marginRight: 4 }}>
           <img
-            src="/logo-silver-mark.png"
+            src="/logo-gold-mark.png"
             alt="Shop Admin"
-            style={{ width: 36, height: 36, objectFit: "contain", flex: "none", display: "block" }}
+            style={{ width: 72, height: 72, objectFit: "contain", flex: "none", display: "block" }}
           />
           {!isMobile ? (
             <span
