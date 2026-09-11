@@ -28,7 +28,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import type { Route } from "./+types/checkout";
 import { resolveStore, storeNav } from "~/lib/store.server";
 import type { NavLink } from "~/lib/store.server";
-import { liveTheme } from "~/lib/admin.server";
+import { liveTheme, recordOrderEvent } from "~/lib/admin.server";
 import {
   readCartToken,
   priceCart,
