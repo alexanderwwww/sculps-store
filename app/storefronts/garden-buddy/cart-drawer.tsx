@@ -46,8 +46,12 @@ interface CartPayload {
   cart: {
     lines: DrawerLine[];
     subtotalCents: number;
+    totalCents: number;
     currency: string;
     itemCount: number;
+    /** worked out on the server; the drawer only ever displays it */
+    discount: { code: string; label: string; amountCents: number } | null;
+    discountReason: string | null;
   };
 }
 
@@ -139,6 +143,37 @@ export function CartDrawerProvider({
         credentials: "same-origin",
       })
         .catch(() => {})
+        .finally(() => {
+          setBusy(false);
+          reload();
+        });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storeParam, reload],
+  );
+
+  // The code is text the customer typed. The server decides what it is worth
+  // and answers with a sentence when it cannot be used.
+  const [discountError, setDiscountError] = useState<string | null>(null);
+
+  const sendDiscount = useCallback(
+    (body: Record<string, string>) => {
+      setBusy(true);
+      setDiscountError(null);
+      fetch(href("/cart"), {
+        method: "POST",
+        body: new URLSearchParams(body),
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+      })
+        .then((response) => response.json().catch(() => null))
+        .then((data) => {
+          const answer = data as { discountError?: string | null } | null;
+          setDiscountError(answer?.discountError ?? null);
+        })
+        .catch(() => {
+          setDiscountError("That code could not be checked just now. Please try again.");
+        })
         .finally(() => {
           setBusy(false);
           reload();
@@ -269,6 +304,14 @@ export function CartDrawerProvider({
           </div>
 
           <div className="gb-drawer__foot">
+            <DiscountField
+              currency={cart?.currency ?? page.store.currency}
+              applied={cart?.discount ?? null}
+              error={discountError ?? cart?.discountReason ?? null}
+              busy={loading}
+              onApply={(code) => sendDiscount({ intent: "discount", code })}
+              onRemove={() => sendDiscount({ intent: "discount-remove" })}
+            />
             <div className="gb-drawer__totals">
               <span>Subtotal</span>
               <strong>
@@ -295,6 +338,94 @@ export function CartDrawerProvider({
         </div>
       </dialog>
     </Ctx.Provider>
+  );
+}
+
+/* ---------------------------------------------------------------- discount */
+
+/**
+ * The discount code box.
+ *
+ * It holds nothing but the typed text. The applied line and the reason a code
+ * was refused both come from the server, so this cannot show a saving the
+ * server has not agreed to.
+ */
+function DiscountField({
+  currency,
+  applied,
+  error,
+  busy,
+  onApply,
+  onRemove,
+}: {
+  currency: string;
+  applied: { code: string; label: string; amountCents: number } | null;
+  error: string | null;
+  busy: boolean;
+  onApply: (code: string) => void;
+  onRemove: () => void;
+}) {
+  const [code, setCode] = useState("");
+
+  if (applied) {
+    return (
+      <>
+        <div className="gb-drawer__totals" style={{ fontSize: 16 }}>
+          <span>
+            {applied.code} · {applied.label}
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span>−{formatMoney(applied.amountCents, currency)}</span>
+            <button
+              type="button"
+              className="gb-drawer__x"
+              onClick={onRemove}
+              disabled={busy}
+              aria-label={`Remove discount code ${applied.code}`}
+            >
+              {IcoClose}
+            </button>
+          </span>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <p className="gb-drawer__up-head">Discount code</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <input
+          className="gb-co__input"
+          type="text"
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && code.trim()) {
+              event.preventDefault();
+              onApply(code.trim());
+            }
+          }}
+          placeholder="Discount code"
+          aria-label="Discount code"
+          aria-invalid={error ? "true" : undefined}
+          style={{ minHeight: 48, flex: 1 }}
+        />
+        <button
+          type="button"
+          className="gb-drawer__up-add"
+          onClick={() => onApply(code.trim())}
+          disabled={busy || !code.trim()}
+        >
+          Apply
+        </button>
+      </div>
+      {error ? (
+        <span className="gb-co__err" role="alert" style={{ marginBottom: 12 }}>
+          {error}
+        </span>
+      ) : null}
+    </>
   );
 }
 

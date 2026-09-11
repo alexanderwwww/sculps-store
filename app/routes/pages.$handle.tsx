@@ -62,6 +62,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
       currency: store.currency,
       contactEmail: store.contactEmail,
       logoUrl: store.logoUrl,
+      faviconUrl: store.faviconUrl,
     },
     nav,
     page: { title: page.title, body: page.body, updatedAt: page.updatedAt },
@@ -107,6 +108,7 @@ export default function StandalonePage({ loaderData }: Route.ComponentProps) {
     const chrome = { store, nav } as Parameters<typeof Header>[0]["page"];
     return (
       <>
+        {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
         <link rel="stylesheet" href={buddyHref} />
         <Header page={chrome} storeParam={storeParam} />
         <div className="gb gb-page-sec">

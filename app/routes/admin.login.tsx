@@ -24,6 +24,8 @@ import adminHref from "~/admin/admin.css?url";
 
 export function links() {
   return [
+    { rel: "icon", href: "/favicon.ico", sizes: "any" },
+    { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     {
       rel: "stylesheet",
       href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap",

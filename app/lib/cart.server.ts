@@ -10,6 +10,7 @@ import { eq, and } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { carts, variants, products, stores } from "~/db/schema";
 import { taxRateFor } from "./admin.server";
+import { applyDiscount, checkDiscount, discountLabel, findDiscount } from "./discounts.server";
 
 const CART_COOKIE = "kerberos_cart";
 
@@ -28,6 +29,13 @@ export interface PricedLine {
   lineTotalCents: number;
 }
 
+export interface AppliedDiscount {
+  code: string;
+  label: string;
+  /** total taken off, goods plus shipping */
+  amountCents: number;
+}
+
 export interface PricedCart {
   token: string;
   lines: PricedLine[];
@@ -37,6 +45,10 @@ export interface PricedCart {
   totalCents: number;
   currency: string;
   itemCount: number;
+  /** null when no code is on the cart, or the stored code no longer applies */
+  discount: AppliedDiscount | null;
+  /** why a stored code was dropped, in a sentence the customer can act on */
+  discountReason: string | null;
 }
 
 export function readCartToken(request: Request): string | null {
@@ -120,8 +132,39 @@ export async function priceCart(
         ? 0
         : store.shipFlatCents;
 
+  // The discount is worked out here, from the row in the database, and never
+  // taken from the browser. The cart row only ever carries the code as text.
+  let discount: AppliedDiscount | null = null;
+  let discountReason: string | null = null;
+  let discountOrderCents = 0;
+  let discountShippingCents = 0;
+
+  if (row?.discountCode && lines.length) {
+    const found = await findDiscount(db, store.id, row.discountCode);
+    const check = checkDiscount(found, {
+      subtotalCents,
+      email: row.email,
+      currency: store.currency,
+    });
+    if (check.ok) {
+      const amounts = applyDiscount(check.discount, { subtotalCents, shippingCents });
+      discountOrderCents = amounts.orderCents;
+      discountShippingCents = amounts.shippingCents;
+      discount = {
+        code: check.discount.code,
+        label: discountLabel(check.discount, store.currency),
+        amountCents: amounts.totalCents,
+      };
+    } else {
+      discountReason = check.reason;
+    }
+  }
+
+  const discountedSubtotal = Math.max(0, subtotalCents - discountOrderCents);
+  const discountedShipping = Math.max(0, shippingCents - discountShippingCents);
+
   const rate = await taxRateFor(db, store.id, region, store.taxRate ?? 0);
-  const taxable = subtotalCents + (store.taxOnShipping ? shippingCents : 0);
+  const taxable = discountedSubtotal + (store.taxOnShipping ? discountedShipping : 0);
   // Tax-inclusive prices already contain the tax; it is backed out for the
   // record rather than added on top.
   const taxCents = store.pricesIncludeTax
@@ -134,9 +177,16 @@ export async function priceCart(
     subtotalCents,
     taxCents,
     shippingCents,
-    totalCents: store.pricesIncludeTax ? subtotalCents + shippingCents : subtotalCents + taxCents + shippingCents,
+    totalCents: Math.max(
+      0,
+      store.pricesIncludeTax
+        ? discountedSubtotal + discountedShipping
+        : discountedSubtotal + taxCents + discountedShipping,
+    ),
     currency: store.currency,
     itemCount: lines.reduce((count, line) => count + line.quantity, 0),
+    discount,
+    discountReason,
   };
 }
 
@@ -156,6 +206,36 @@ export async function saveCart(
   } else {
     await db.insert(carts).values({ storeId, token, items: lines, status: "open" });
   }
+}
+
+/**
+ * Puts a code on the cart, or takes it off. Only the text is stored — what it
+ * is worth is recomputed by priceCart every time.
+ */
+export async function setCartDiscount(
+  db: DB,
+  storeId: string,
+  token: string,
+  code: string | null,
+): Promise<void> {
+  const existing = await loadCartRow(db, storeId, token);
+  if (existing) {
+    await db
+      .update(carts)
+      .set({ discountCode: code, updatedAt: new Date() })
+      .where(eq(carts.id, existing.id));
+  } else {
+    await db.insert(carts).values({ storeId, token, items: [], status: "open", discountCode: code });
+  }
+}
+
+export async function cartDiscountCode(
+  db: DB,
+  storeId: string,
+  token: string | null,
+): Promise<string | null> {
+  const row = await loadCartRow(db, storeId, token);
+  return row?.discountCode ?? null;
 }
 
 export async function currentLines(db: DB, storeId: string, token: string | null): Promise<CartLine[]> {

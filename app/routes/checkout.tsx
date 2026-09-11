@@ -15,13 +15,14 @@
  * It used to import the garden kneeler stylesheet unconditionally, so every
  * store's checkout came out brown.
  */
-import { Form, Link, useNavigation } from "react-router";
+import { Form, Link, useFetcher, useNavigation } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import type { Route } from "./+types/checkout";
 import { resolveStore, storeNav } from "~/lib/store.server";
 import type { NavLink } from "~/lib/store.server";
 import { liveTheme } from "~/lib/admin.server";
-import { readCartToken, priceCart, markCartConverted } from "~/lib/cart.server";
+import { readCartToken, priceCart, markCartConverted, setCartDiscount, newCartToken, cartCookie } from "~/lib/cart.server";
+import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import { placeOrder } from "~/lib/admin.server";
 import { deviceFromRequest, geoFromRequest, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
@@ -172,6 +173,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       slug: store.slug,
       currency: store.currency,
       logoUrl: store.logoUrl,
+      faviconUrl: store.faviconUrl,
       contactEmail: store.contactEmail,
       phoneMode: store.checkoutPhoneMode,
       companyMode: store.checkoutCompanyMode,
@@ -197,6 +199,41 @@ export async function action({ request, context }: Route.ActionArgs) {
   const form = await request.formData();
   // Priced with the destination state, so a manual state rate applies.
   const cart = await priceCart(context.db, store, token, String(form.get("region") || "").trim() || null);
+
+  // Applying or removing a code. It never starts a payment — it only changes
+  // what is stored on the cart, and the page re-reads the server's prices.
+  const formIntent = String(form.get("intent") || "");
+  if (formIntent === "discount" || formIntent === "discount-remove") {
+    let cartToken = token;
+    let setCookie: string | null = null;
+    if (!cartToken) {
+      cartToken = newCartToken();
+      setCookie = cartCookie(cartToken, url);
+    }
+    const headers = setCookie ? { "Set-Cookie": setCookie } : undefined;
+
+    if (formIntent === "discount-remove") {
+      await setCartDiscount(context.db, store.id, cartToken, null);
+      return Response.json({ discountError: null }, headers ? { headers } : undefined);
+    }
+
+    const code = normaliseCode(String(form.get("code") || ""));
+    if (!code) {
+      return Response.json({ discountError: "Please type a discount code." }, headers ? { headers } : undefined);
+    }
+    const found = await findDiscount(context.db, store.id, code);
+    const check = checkDiscount(found, {
+      subtotalCents: cart.subtotalCents,
+      email: String(form.get("email") || "").trim().toLowerCase() || null,
+      currency: store.currency,
+    });
+    if (!check.ok) {
+      return Response.json({ discountError: check.reason }, headers ? { headers } : undefined);
+    }
+    await setCartDiscount(context.db, store.id, cartToken, check.discount.code);
+    return Response.json({ discountError: null }, headers ? { headers } : undefined);
+  }
+
   if (cart.lines.length === 0) {
     return { error: "Your cart is empty." };
   }
@@ -273,6 +310,9 @@ export async function action({ request, context }: Route.ActionArgs) {
     shippingCents: cart.shippingCents,
     totalCents: cart.totalCents,
     currency: cart.currency,
+    // Both worked out by priceCart, on the server, from the code on the cart row.
+    discountCode: cart.discount?.code ?? null,
+    discountCents: cart.discount?.amountCents ?? 0,
     paymentProvider: provider.name,
     paymentRef: intent.id,
     paymentStatus: "pending",
@@ -397,7 +437,9 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
       return (
         <>
           <BuddyFonts />
-          <link rel="stylesheet" href={buddyHref} />
+          {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
+          {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
+        <link rel="stylesheet" href={buddyHref} />
           <div className="gb gb-co-sec">
             <CheckoutHeader store={store} home={home} />
             <div className="gb-co">
@@ -433,7 +475,14 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
   }
 
   const summary = (
-    <Summary cart={cart} photo={photo} shipEstimate={store.shipEstimate} cn={buddy ? BUDDY : KNEELER} money={money} />
+    <Summary
+      cart={cart}
+      photo={photo}
+      shipEstimate={store.shipEstimate}
+      cn={buddy ? BUDDY : KNEELER}
+      money={money}
+      locked={paying}
+    />
   );
 
   const stepper = <Steps step={paying ? 2 : 1} cn={buddy ? BUDDY : KNEELER} />;
@@ -504,6 +553,7 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
     return (
       <>
         <BuddyFonts />
+        {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
         <link rel="stylesheet" href={buddyHref} />
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         <div className="gb gb-co-sec">
@@ -839,12 +889,15 @@ function Summary({
   shipEstimate,
   cn,
   money,
+  locked,
 }: {
   cart: Awaited<ReturnType<typeof loader>>["cart"];
   photo: { src: string; alt: string } | null;
   shipEstimate: string | null;
   cn: CN;
   money: (cents: number) => string;
+  /** the payment is already started for this exact amount, so the code is fixed */
+  locked: boolean;
 }) {
   const buddy = cn === BUDDY;
   return (
@@ -894,6 +947,15 @@ function Summary({
           <b>{cart.shippingCents > 0 ? money(cart.shippingCents) : "Free"}</b>
         </div>
 
+        {cart.discount ? (
+          <div className={cn.tot}>
+            <span>
+              {cart.discount.code} · {cart.discount.label}
+            </span>
+            <b>−{money(cart.discount.amountCents)}</b>
+          </div>
+        ) : null}
+
         {cart.taxCents > 0 ? (
           <div className={cn.tot}>
             <span>Tax</span>
@@ -906,7 +968,90 @@ function Summary({
           <b>{money(cart.totalCents)}</b>
         </div>
       </div>
+
+      <DiscountBox cn={cn} applied={cart.discount} reason={cart.discountReason} locked={locked} />
     </>
+  );
+}
+
+/**
+ * The discount code box on the checkout summary.
+ *
+ * It posts to this route's own action, which stores nothing but the text; the
+ * amount is recomputed by priceCart when the page reloads. Once a payment has
+ * been started the intent is fixed to an amount, so the box is not offered —
+ * a control that could not change the charge is not drawn as if it could.
+ */
+function DiscountBox({
+  cn,
+  applied,
+  reason,
+  locked,
+}: {
+  cn: CN;
+  applied: { code: string; label: string; amountCents: number } | null;
+  reason: string | null;
+  locked: boolean;
+}) {
+  const fetcher = useFetcher<{ discountError?: string | null }>();
+  const busy = fetcher.state !== "idle";
+  const error = fetcher.data?.discountError ?? reason;
+
+  if (locked) {
+    return applied ? (
+      <p className={cn.note} style={{ marginTop: 12 }}>
+        {applied.code} is applied to this payment.
+      </p>
+    ) : null;
+  }
+
+  if (applied) {
+    return (
+      <fetcher.Form method="post" style={{ marginTop: 12 }}>
+        <input type="hidden" name="intent" value="discount-remove" />
+        <p className={cn.note} style={{ margin: 0 }}>
+          {applied.code} applied.{" "}
+          <button
+            type="submit"
+            disabled={busy}
+            style={{ background: "none", border: 0, padding: 0, cursor: "pointer", font: "inherit", color: "inherit", textDecoration: "underline" }}
+          >
+            Remove
+          </button>
+        </p>
+      </fetcher.Form>
+    );
+  }
+
+  return (
+    <fetcher.Form method="post" style={{ marginTop: 12 }}>
+      <input type="hidden" name="intent" value="discount" />
+      <label className={cn.field}>
+        <span className={cn.label}>Discount code</span>
+        <span style={{ display: "flex", gap: 8 }}>
+          <input
+            className={cn.input}
+            type="text"
+            name="code"
+            aria-invalid={error ? "true" : undefined}
+            style={{ flex: 1 }}
+          />
+          <button
+            type="submit"
+            className={cn.btn}
+            disabled={busy}
+            style={{ width: "auto", marginTop: 0, minHeight: 56, padding: "0 22px" }}
+          >
+            Apply
+          </button>
+        </span>
+        {error ? (
+          <span className={cn.err} style={cn.errStyle} role="alert">
+            {error}
+          </span>
+        ) : null}
+      </label>
+    </fetcher.Form>
   );
 }
 

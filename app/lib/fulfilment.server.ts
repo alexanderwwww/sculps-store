@@ -12,6 +12,7 @@ import { orders, orderEvents, stores } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
 import { sendOrderConfirmation, sendMerchantNewOrder, emailReady } from "./email.server";
 import { metaSettings, sendPurchase } from "./meta.server";
+import { redeemDiscount } from "./discounts.server";
 
 /**
  * True when this side effect has already run for this order.
@@ -33,6 +34,30 @@ export async function afterPaymentConfirmed(
   const loaded = await loadOrder(db, orderId);
   if (!loaded) return;
   const { order, store, items } = loaded;
+
+  // 0. The discount redemption, if this order used a code.
+  //
+  // This is the only place a redemption is written: an order that is paid.
+  // Typing a code records nothing. The usage limit and the once-per-customer
+  // rule are enforced inside redeemDiscount, by a conditional increment, so
+  // two people racing the last use cannot both take it.
+  if (order.discountCode && !(await alreadyDone(db, orderId, "discount:redeemed"))) {
+    const result = await redeemDiscount(db, {
+      storeId: store.id,
+      code: order.discountCode,
+      orderId,
+      email: order.email,
+      amountCents: order.discountCents,
+    });
+    await recordOrderEvent(
+      db,
+      orderId,
+      result.ok ? "discount:redeemed" : "discount:refused",
+      result.ok
+        ? `Discount ${order.discountCode} recorded · ${(order.discountCents / 100).toFixed(2)} ${order.currency} off`
+        : `Discount ${order.discountCode} was charged at the discounted price but could not be recorded: ${result.reason}`,
+    );
+  }
 
   // 1. The receipt.
   if (!(await alreadyDone(db, orderId, "email:confirmation"))) {

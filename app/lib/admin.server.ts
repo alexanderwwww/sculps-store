@@ -1284,6 +1284,9 @@ export interface PlaceOrderInput {
   shippingCents: number;
   totalCents: number;
   currency: string;
+  /** the code as typed, and what it was worth — both computed on the server */
+  discountCode?: string | null;
+  discountCents?: number;
   paymentProvider: string;
   paymentRef: string;
   paymentStatus: string;
@@ -1342,6 +1345,8 @@ export async function placeOrder(db: DB, input: PlaceOrderInput) {
       shippingCents: input.shippingCents,
       totalCents: input.totalCents,
       currency: input.currency,
+      discountCode: input.discountCode ?? null,
+      discountCents: input.discountCents ?? 0,
       paymentProvider: input.paymentProvider,
       paymentRef: input.paymentRef,
       paymentStatus: input.paymentStatus,

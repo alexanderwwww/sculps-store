@@ -13,7 +13,11 @@ import {
   currentLines,
   setLineQuantity,
   saveCart,
+  setCartDiscount,
+  newCartToken,
+  cartCookie,
 } from "~/lib/cart.server";
+import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
 import { eq } from "drizzle-orm";
 import { metaConfig, variants } from "~/db/schema";
 import { eventPixelScript, pixelScript } from "~/lib/meta.server";
@@ -83,20 +87,66 @@ export async function action({ request, context }: Route.ActionArgs) {
   const store = await resolveStore(context.db, context.hostname, url);
   if (!store) throw new Response("No store for this domain.", { status: 404 });
 
-  const token = readCartToken(request);
-  if (!token) return { ok: true };
-
   const form = await request.formData();
+  const intent = String(form.get("intent") || "");
+
+  // Applying or removing a code. Only the text is stored — what it is worth is
+  // recomputed by priceCart on the server every time the cart is read.
+  if (intent === "discount" || intent === "discount-remove") {
+    let token = readCartToken(request);
+    let setCookie: string | null = null;
+    if (!token) {
+      token = newCartToken();
+      setCookie = cartCookie(token, url);
+    }
+
+    if (intent === "discount-remove") {
+      await setCartDiscount(context.db, store.id, token, null);
+      return Response.json(
+        { ok: true, discountError: null },
+        setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined,
+      );
+    }
+
+    const code = normaliseCode(String(form.get("code") || ""));
+    if (!code) {
+      return Response.json({ ok: false, discountError: "Please type a discount code." });
+    }
+
+    const cart = await priceCart(context.db, store, token);
+    const found = await findDiscount(context.db, store.id, code);
+    const check = checkDiscount(found, {
+      subtotalCents: cart.subtotalCents,
+      currency: store.currency,
+    });
+    if (!check.ok) {
+      return Response.json(
+        { ok: false, discountError: check.reason },
+        setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined,
+      );
+    }
+
+    await setCartDiscount(context.db, store.id, token, check.discount.code);
+    return Response.json(
+      { ok: true, discountError: null },
+      setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined,
+    );
+  }
+
+  const token = readCartToken(request);
+  if (!token) return { ok: true, discountError: null };
+
   const variantId = String(form.get("variantId") || "");
   const quantity = Number(form.get("quantity") || 0);
 
   const lines = await currentLines(context.db, store.id, token);
   await saveCart(context.db, store.id, token, setLineQuantity(lines, variantId, quantity));
-  return { ok: true };
+  return { ok: true, discountError: null };
 }
 
-export default function Cart({ loaderData }: Route.ComponentProps) {
+export default function Cart({ loaderData, actionData }: Route.ComponentProps) {
   const { store, cart, pixel } = loaderData;
+  const discountError = actionData?.discountError ?? null;
   const storeParam = `?store=${store.slug}`;
 
   return (
@@ -160,6 +210,20 @@ export default function Cart({ loaderData }: Route.ComponentProps) {
                 <span>Subtotal</span>
                 <span>{formatMoney(cart.subtotalCents, cart.currency)}</span>
               </div>
+              {cart.discount ? (
+                <div className="gk-totals">
+                  <span>
+                    {cart.discount.code} · {cart.discount.label}{" "}
+                    <Form method="post" style={{ display: "inline" }}>
+                      <input type="hidden" name="intent" value="discount-remove" />
+                      <button type="submit" className="gk-quiet" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", textDecoration: "underline" }}>
+                        Remove
+                      </button>
+                    </Form>
+                  </span>
+                  <span>−{formatMoney(cart.discount.amountCents, cart.currency)}</span>
+                </div>
+              ) : null}
               {cart.taxCents > 0 ? (
                 <div className="gk-totals">
                   <span>Tax</span>
@@ -174,6 +238,31 @@ export default function Cart({ loaderData }: Route.ComponentProps) {
                 <strong>Total</strong>
                 <strong>{formatMoney(cart.totalCents, cart.currency)}</strong>
               </div>
+
+              <Form method="post" style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <input type="hidden" name="intent" value="discount" />
+                <input
+                  className="gk-input"
+                  type="text"
+                  name="code"
+                  placeholder="Discount code"
+                  aria-label="Discount code"
+                  defaultValue=""
+                  style={{ flex: 1 }}
+                />
+                <button type="submit" className="gk-cta" style={{ padding: "0 18px", height: 48, lineHeight: "48px" }}>
+                  Apply
+                </button>
+              </Form>
+              {discountError ? (
+                <p className="gk-quiet" role="alert" style={{ color: "#b23a2c", fontWeight: 600 }}>
+                  {discountError}
+                </p>
+              ) : cart.discountReason ? (
+                <p className="gk-quiet" role="alert" style={{ color: "#b23a2c", fontWeight: 600 }}>
+                  {cart.discountReason}
+                </p>
+              ) : null}
 
               <Link
                 className="gk-cta"
