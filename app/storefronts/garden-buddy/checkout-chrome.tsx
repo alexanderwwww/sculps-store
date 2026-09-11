@@ -47,7 +47,7 @@ function Logo({ store, wordClass, imgClass }: { store: CheckoutChromeStore; word
 export function CheckoutHeader({ store, home }: { store: CheckoutChromeStore; home: string }) {
   return (
     <header className="gb-co__bar">
-      <div className="gb-wrap gb-co__bar-in">
+      <div className="gb-co__wrap gb-co__bar-in">
         <a className="gb-co__logo" href={home} aria-label={store.name}>
           <Logo store={store} wordClass="gb-co__wordmark" imgClass="gb-co__logo-img" />
         </a>
@@ -67,7 +67,7 @@ export function CheckoutFooter({
 }) {
   return (
     <footer className="gb-co__foot">
-      <div className="gb-wrap gb-co__foot-in">
+      <div className="gb-co__wrap gb-co__foot-in">
         <small className="gb-co__legal">
           © {new Date().getFullYear()} {store.name}
         </small>

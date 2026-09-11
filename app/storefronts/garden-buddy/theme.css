@@ -591,172 +591,282 @@
   font-size: 14px;
 }
 
-/* ------------------------------------------------------ checkout ---------
-   Our own checkout, wearing this store's paper, type and lime. Built from the
-   tokens already declared on `.gb` above — no colour, radius or font here is
-   new. Two columns on a desk with the summary pinned, one column on a phone
-   with the summary folded into a row you can open. */
-.gb-co-sec { background: var(--sand); min-height: 100vh; display: flex; flex-direction: column; }
 
-.gb-co__bar { background: var(--paper); border-bottom: 1px solid var(--rule); }
-.gb-co__bar-in { display: flex; align-items: center; justify-content: center; min-height: 74px; }
-.gb-co__logo { display: inline-flex; align-items: center; min-height: 48px; text-decoration: none; color: var(--ink); }
-.gb-co__logo-img { max-height: 40px; width: auto; }
-.gb-co__wordmark { font-family: var(--font-h); font-weight: 800; font-size: clamp(20px, 2.2vw, 26px); letter-spacing: -.01em; line-height: 1; color: var(--ink); }
+/* ====================================================================== *
+ * Checkout — Shopify's, as closely as this can be drawn.
+ *
+ * The owner's instruction, which overrides the "store skin" rule for this
+ * page only: "change colours and basically do what Shopify did on checkout —
+ * for now, identical." So the storefront keeps its paper, brown and lime, and
+ * this one page does not. The palette below is Shopify's checkout: a white
+ * form column, a #f5f5f5 summary column behind a hairline, #1a1a1a text,
+ * #6b7177 for labels and helper text, #d9d9d9 field borders, #e1e1e1
+ * dividers, a #1878b9 focus ring and #d72c0d for anything wrong.
+ *
+ * The one exception is the button that takes the money: that keeps the
+ * store's own accent (--lime, with --lime-ink on it, which is the pair the
+ * theme already ships and the only high-contrast pairing here).
+ *
+ * Sizes are Shopify's too, and they are small on purpose: 44px fields, 5px
+ * radius, 16px input text so iOS does not zoom, 14px labels and helper text,
+ * 16px section headings, a 20px total, 12px between fields and 24px between
+ * sections.
+ * ====================================================================== */
 
-.gb-co { flex: 1 0 auto; width: 100%; max-width: 1120px; margin: 0 auto; padding-inline: var(--pad); padding-block: clamp(20px, 3vw, 44px) clamp(40px, 6vw, 72px); }
-.gb-co__grid { display: grid; gap: clamp(20px, 3vw, 34px); align-items: start; }
-@media (min-width: 960px) { .gb-co__grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } }
+.gb-co-sec {
+  --co-ink: #1a1a1a;
+  --co-dim: #6b7177;
+  --co-line: #e1e1e1;
+  --co-field: #d9d9d9;
+  --co-tint: #f5f5f5;
+  --co-focus: #1878b9;
+  --co-bad: #d72c0d;
+  --co-r: 5px;
 
-.gb-co__panel { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: clamp(20px, 3vw, 32px); }
-.gb-co__h2 { font-family: var(--font-h); font-weight: 800; font-size: clamp(21px, 2.2vw, 26px); line-height: 1.15; letter-spacing: -.01em; color: var(--ink); margin: 0 0 20px; }
-.gb-co__h3 { font-family: var(--font-h); font-weight: 800; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 0 0 14px; }
+  background: #fff;
+  color: var(--co-ink);
+  font-family: var(--font-b);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 960px) { .gb-co-sec { overflow-x: clip; } }
 
-/* No progress steps: checkout is one page, so there is nothing to step
-   through. The rules that drew them are gone rather than left behind. */
+/* the header and footer line up with the form column, not with the storefront's
+   wider 1200px wrapper */
+.gb-co__wrap { width: 100%; max-width: 1000px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); }
 
-/* fields */
-.gb-co__field { display: block; margin-bottom: 16px; }
-.gb-co__label { display: block; font-size: 15px; font-weight: 600; color: var(--dim); margin-bottom: 6px; }
-.gb-co__input { width: 100%; min-height: 56px; padding: 0 16px; border: 1px solid var(--sand-2); border-radius: 12px; background: var(--paper); color: var(--ink); font-family: var(--font-b); font-size: 17px; line-height: 1.4; appearance: none; transition: border-color .12s, box-shadow .12s; }
-select.gb-co__input { padding-right: 42px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235D6657' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9.5l6 6 6-6'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; background-size: 20px; }
-.gb-co__input:hover { border-color: var(--dim); }
-.gb-co__input:focus-visible { outline: 0; border-color: var(--leaf); box-shadow: 0 0 0 3px var(--lime-soft); }
-.gb-co__input[aria-invalid="true"] { border-color: #B23A2C; }
-.gb-co__input[aria-invalid="true"]:focus-visible { box-shadow: 0 0 0 3px rgba(178, 58, 44, .16); }
-.gb-co__err { display: block; margin-top: 6px; color: #B23A2C; font-size: 14.5px; font-weight: 600; }
-.gb-co__row { display: grid; gap: 16px; }
-@media (min-width: 560px) { .gb-co__row { grid-template-columns: 1fr 1fr; } }
-.gb-co__check { display: flex; gap: 12px; align-items: center; font-size: 16px; color: var(--ink); margin: 4px 0 18px; }
-.gb-co__check input { width: 22px; height: 22px; accent-color: var(--leaf); }
+/* header and footer: the logo, the policy links, nothing else */
+.gb-co__bar { background: #fff; border-bottom: 1px solid var(--co-line); }
+.gb-co__bar-in { display: flex; align-items: center; min-height: 64px; }
+.gb-co__logo { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; color: var(--co-ink); }
+.gb-co__logo-img { max-height: 34px; width: auto; }
+.gb-co__wordmark { font-family: var(--font-b); font-weight: 600; font-size: 20px; letter-spacing: -.01em; line-height: 1; color: var(--co-ink); }
 
-.gb-co__btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 8px; min-height: 62px; padding: 0 26px; border: 0; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--font-h); font-size: 19px; font-weight: 800; cursor: pointer; transition: background .15s, transform .05s; }
-.gb-co__btn:hover { background: var(--lime-2); }
-.gb-co__btn:active { transform: translateY(1px); }
-.gb-co__btn[disabled] { opacity: .55; cursor: not-allowed; }
-.gb-co__btn:focus-visible { outline: 3px solid var(--night); outline-offset: 3px; }
-.gb-co__back { display: inline-block; margin-top: 16px; color: var(--dim); font-size: 15px; font-weight: 600; text-underline-offset: 3px; }
+.gb-co__foot { flex: 0 0 auto; background: #fff; border-top: 1px solid var(--co-line); }
+.gb-co__foot-in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; min-height: 56px; padding-block: 12px; }
+.gb-co__legal { color: var(--co-dim); font-size: 13px; }
+.gb-co__foot-links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.gb-co__foot-links a { color: var(--co-focus); font-size: 13px; text-decoration: none; text-underline-offset: 3px; }
+.gb-co__foot-links a:hover { text-decoration: underline; }
 
-.gb-co__alert { border: 1px solid rgba(178, 58, 44, .35); background: rgba(178, 58, 44, .07); color: #7F2A20; border-radius: 12px; padding: 14px 16px; font-size: 16px; margin-bottom: 18px; }
-.gb-co__note { color: var(--dim); font-size: 14.5px; line-height: 1.5; margin: 12px 0 0; }
+/* the two columns: about 1000px, split 56/44, with the tint running out to
+   the right edge the way Shopify's does */
+.gb-co { flex: 1 0 auto; width: 100%; max-width: 1000px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 24px); padding-block: 0 40px; }
+.gb-co__grid { display: grid; gap: 0; align-items: start; }
+@media (min-width: 960px) {
+  .gb-co__grid { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); }
+}
+.gb-co__main { min-width: 0; padding-block: 28px; }
+@media (min-width: 960px) { .gb-co__main { padding-right: 40px; } }
 
-/* the three promises, next to the button that takes the money */
-.gb-co__trust { list-style: none; display: grid; gap: 12px; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid var(--rule); }
-@media (min-width: 560px) { .gb-co__trust { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.gb-co__trust li { display: flex; align-items: center; gap: 10px; font-size: 14.5px; color: var(--dim); line-height: 1.3; }
-.gb-co__trust svg { width: 24px; height: 24px; flex: 0 0 24px; color: var(--leaf); }
-.gb-co__trust strong { display: block; color: var(--ink); font-weight: 800; }
-
-/* wallets — at the top of the page, and only ever rendered when Stripe
-   reports this browser actually has one to offer */
-.gb-co__wallet { margin-bottom: 20px; }
-.gb-co__wallet .gb-co__h2 { margin-bottom: 14px; }
-.gb-co__or { display: flex; align-items: center; gap: 14px; margin: 20px 0; color: var(--dim); font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.gb-co__or:before, .gb-co__or:after { content: ""; flex: 1 1 auto; height: 1px; background: var(--rule); }
-
-/* summary */
-.gb-co__aside { position: static; }
-@media (min-width: 960px) { .gb-co__aside { position: sticky; top: 24px; } }
-.gb-co__lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
-.gb-co__line { display: flex; gap: 14px; align-items: flex-start; }
-.gb-co__shot { flex: 0 0 66px; width: 66px; height: 66px; border-radius: 12px; overflow: hidden; background: var(--sand); position: relative; }
-.gb-co__shot img { width: 100%; height: 100%; object-fit: cover; }
-.gb-co__shot .gb-ph { height: 100%; border-radius: 0; font-size: 11px; padding: 6px; }
-.gb-co__qty { position: absolute; top: -8px; right: -8px; display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; background: var(--night); color: var(--night-ink); font-size: 13px; font-weight: 800; }
-.gb-co__line-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; }
-.gb-co__line-name { margin: 0; font-weight: 700; font-size: 16.5px; line-height: 1.25; }
-.gb-co__line-sub { margin: 0; color: var(--dim); font-size: 14px; }
-.gb-co__line-total { margin: 0; font-weight: 800; font-size: 16.5px; white-space: nowrap; }
-.gb-co__totals { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--rule); display: grid; gap: 10px; }
-.gb-co__tot { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 16px; color: var(--dim); }
-.gb-co__tot b { color: var(--ink); font-weight: 700; }
-.gb-co__tot--free b { color: var(--leaf); font-weight: 800; }
-.gb-co__grand { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--rule); font-family: var(--font-h); font-size: 19px; font-weight: 800; color: var(--ink); }
-.gb-co__grand b { font-size: 26px; }
-
-/* on a phone the summary folds into one row you can open */
-.gb-co__msum { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); margin-bottom: 4px; }
-.gb-co__msum > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 62px; padding: 0 18px; font-weight: 700; font-size: 16.5px; color: var(--ink); }
-.gb-co__msum > summary::-webkit-details-marker { display: none; }
-.gb-co__msum-caret { width: 18px; height: 18px; flex: 0 0 18px; color: var(--leaf); transition: transform .18s ease; }
-.gb-co__msum[open] .gb-co__msum-caret { transform: rotate(180deg); }
-.gb-co__msum-total { margin-left: auto; font-family: var(--font-h); font-weight: 800; font-size: 19px; }
-.gb-co__msum-body { padding: 4px 18px 20px; border-top: 1px solid var(--rule); }
-@media (min-width: 960px) { .gb-co__msum { display: none; } }
+.gb-co__aside { min-width: 0; }
+@media (min-width: 960px) {
+  .gb-co__aside {
+    position: sticky;
+    top: 0;
+    background: var(--co-tint);
+    border-left: 1px solid var(--co-line);
+    box-shadow: 100vw 0 0 var(--co-tint);
+    padding: 28px 0 40px 40px;
+    margin-left: -1px;
+  }
+}
 @media (max-width: 959px) { .gb-co__aside { display: none; } }
-@media (prefers-reduced-motion: reduce) { .gb-co__msum-caret { transition: none; } }
 
-.gb-co__empty { text-align: center; padding: clamp(40px, 8vw, 90px) 0; }
-.gb-co__empty p { font-family: var(--font-h); font-size: clamp(22px, 3vw, 30px); font-weight: 800; color: var(--ink); margin: 0 0 22px; }
+/* sections: 24px apart, headings 16px semibold */
+.gb-co__sec + .gb-co__sec { margin-top: 24px; }
+.gb-co__h2 { font-family: var(--font-b); font-size: 16px; font-weight: 600; line-height: 1.4; letter-spacing: 0; color: var(--co-ink); margin: 0 0 12px; }
+.gb-co__h3 { font-family: var(--font-b); font-size: 16px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--co-ink); margin: 0 0 16px; }
+.gb-co__secure { margin: -6px 0 12px; color: var(--co-dim); font-size: 14px; }
+.gb-co__note { color: var(--co-dim); font-size: 13px; line-height: 1.5; margin: 12px 0 0; }
 
-.gb-co__foot { flex: 0 0 auto; background: var(--paper); border-top: 1px solid var(--rule); }
-.gb-co__foot-in { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; min-height: 66px; padding-block: 14px; }
-.gb-co__legal { color: var(--dim); font-size: 14px; }
-.gb-co__foot-links { display: flex; flex-wrap: wrap; gap: 10px 20px; }
-.gb-co__foot-links a { color: var(--dim); font-size: 14px; text-decoration: none; text-underline-offset: 3px; }
-.gb-co__foot-links a:hover { color: var(--leaf); text-decoration: underline; }
-
-/* ---- checkout, second pass -----------------------------------------------
-   The owner's brief: wallets first, one confident column on a phone, the
-   summary pinned beside it on a desk, and generous air between groups with
-   none inside them. Every value below is a token already declared on `.gb`
-   above, or a size this file already uses for the same job (the 56px field,
-   the 62px pill, the 44px tap target, the 12px/14px radii). Nothing new. */
-
-/* the left column: wallets, then the folded summary, then the form */
-.gb-co__main { display: grid; gap: clamp(14px, 2vw, 18px); min-width: 0; }
-
-/* wallets, on top of everything */
-.gb-co__express { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: clamp(18px, 2.6vw, 24px); }
-.gb-co__express-lead { margin: 0 0 14px; font-family: var(--font-h); font-size: 15px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); text-align: center; }
+/* ---- express checkout --------------------------------------------------
+   The wallet row, then a rule with OR through the middle of it. Stripe only
+   reports what the account has actually enabled, so nothing is drawn here
+   that cannot take money. */
+.gb-co__express { margin: 0 0 16px; }
+.gb-co__express-lead { margin: 0 0 10px; font-family: var(--font-b); font-size: 14px; font-weight: 400; color: var(--co-dim); text-align: center; }
 .gb-co__express-row { min-height: 52px; }
+.gb-co__or { display: flex; align-items: center; gap: 12px; margin: 0 0 24px; color: var(--co-dim); font-size: 13px; font-weight: 400; }
+.gb-co__or:before, .gb-co__or:after { content: ""; flex: 1 1 auto; height: 1px; background: var(--co-line); }
 
-/* groups: air between them, none inside them */
-.gb-co__group + .gb-co__group { margin-top: clamp(28px, 4vw, 40px); }
-.gb-co__group-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 16px; }
-.gb-co__group-head .gb-co__h2 { margin: 0; }
-.gb-co__step { flex: 0 0 28px; width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--sand); color: var(--ink); font-family: var(--font-b); font-size: 14px; font-weight: 800; align-self: center; }
-.gb-co__group-note { margin: -8px 0 16px; color: var(--dim); font-size: 14.5px; }
+/* ---- fields ------------------------------------------------------------
+   One bordered group per section. The cells inside it share hairlines rather
+   than each carrying a box of its own, and the focused cell draws a 2px ring
+   and lifts above its neighbours so the ring is never cut in half by the
+   divider next to it. */
+.gb-sf__group { border: 1px solid var(--co-field); border-radius: var(--co-r); background: #fff; }
+.gb-sf__group + .gb-sf__group { margin-top: 12px; }
+.gb-sf__row { display: grid; grid-template-columns: 1fr; }
+.gb-sf__row + .gb-sf__row { border-top: 1px solid var(--co-field); }
+.gb-sf__row--2 { grid-template-columns: 1fr 1fr; }
+.gb-sf__row--3 { grid-template-columns: 1fr 1fr 1fr; }
+.gb-sf__row > .gb-sf__cell + .gb-sf__cell { border-left: 1px solid var(--co-field); }
+@media (max-width: 559px) {
+  .gb-sf__row--2, .gb-sf__row--3 { grid-template-columns: 1fr 1fr; }
+  .gb-sf__row--3 > .gb-sf__cell:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--co-field); }
+}
 
-/* fields: tight within a group */
-.gb-co__field { margin-bottom: 14px; }
-.gb-co__field:last-child { margin-bottom: 0; }
-.gb-co__row { margin-bottom: 14px; }
-.gb-co__row .gb-co__field { margin-bottom: 0; }
-.gb-co__input { min-height: 56px; font-size: 17px; }
-.gb-co__optional { font-weight: 500; color: var(--dim); }
+.gb-sf__cell { position: relative; min-width: 0; }
+.gb-sf__in {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 16px 11px 2px;
+  border: 0;
+  border-radius: var(--co-r);
+  background: transparent;
+  color: var(--co-ink);
+  font-family: var(--font-b);
+  /* 16px, and it stays 16px: anything smaller makes iOS zoom the page in. */
+  font-size: 16px;
+  line-height: 1.4;
+  appearance: none;
+  outline: 0;
+}
+.gb-sf__in--sel {
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7177' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9.5l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+.gb-sf__in:autofill, .gb-sf__in:-webkit-autofill { box-shadow: 0 0 0 44px #fff inset; }
 
-/* the pay button and its working state */
-.gb-co__btn { margin-top: 0; }
-.gb-co__pay { margin-top: clamp(20px, 3vw, 26px); }
+/* the label, sitting in the box until there is something to read — moved by
+   CSS alone, off :placeholder-shown and :focus. No JavaScript stands between
+   a person and the field they are typing in. */
+.gb-sf__lbl {
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  top: 12px;
+  font-size: 16px;
+  line-height: 1.25;
+  color: var(--co-dim);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: top .1s ease, font-size .1s ease;
+}
+.gb-sf__in:focus + .gb-sf__lbl,
+.gb-sf__in:not(:placeholder-shown) + .gb-sf__lbl,
+.gb-sf__lbl--up { top: 5px; font-size: 11px; }
+/* a select always has a value, so its label is floated from the start */
+.gb-sf__in--sel + .gb-sf__lbl { top: 5px; font-size: 11px; }
+
+.gb-sf__cell:focus-within { z-index: 3; border-radius: var(--co-r); box-shadow: 0 0 0 2px var(--co-focus); }
+.gb-sf__cell[data-err="1"] { z-index: 2; border-radius: var(--co-r); box-shadow: 0 0 0 1px var(--co-bad); }
+.gb-sf__cell[data-err="1"]:focus-within { box-shadow: 0 0 0 2px var(--co-bad); }
+
+.gb-sf__errs { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.gb-sf__errs li { color: var(--co-bad); font-size: 13px; line-height: 1.4; }
+
+/* the store's marketing opt-in, when the store has it switched on */
+.gb-co__check { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--co-ink); margin: 12px 0 0; }
+.gb-co__check input { width: 17px; height: 17px; accent-color: var(--co-focus); }
+
+/* ---- payment -----------------------------------------------------------
+   Stripe's own box, given the same border and radius as the group above it.
+   It is created and mounted before the wallet row, and the wallet row is
+   wrapped in a try/catch, so a wallet that fails can never take the card
+   form away with it. */
+.gb-co__card { border: 1px solid var(--co-field); border-radius: var(--co-r); background: #fff; padding: 14px 12px; min-height: 180px; }
+
+.gb-co__pay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  margin-top: 20px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--co-r);
+  background: var(--lime);
+  color: var(--lime-ink);
+  font-family: var(--font-b);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.gb-co__pay:hover { background: var(--lime-2); }
+.gb-co__pay[disabled] { opacity: .55; cursor: not-allowed; }
 .gb-co__pay[aria-busy="true"] { cursor: progress; }
-.gb-co__spin { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid rgba(18, 41, 12, .28); border-top-color: var(--lime-ink); animation: gb-co-spin .7s linear infinite; }
+.gb-co__pay:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 2px; }
+.gb-co__spin { flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(18, 41, 12, .28); border-top-color: var(--lime-ink); animation: gb-co-spin .7s linear infinite; }
 @keyframes gb-co-spin { to { transform: rotate(360deg); } }
 
-/* Stripe's card box, given the same air as our own fields */
-.gb-co__card { min-height: 200px; }
+.gb-co__alert { border: 1px solid var(--co-bad); background: #fff4f4; color: #8a1c08; border-radius: var(--co-r); padding: 12px 14px; font-size: 14px; margin-bottom: 16px; }
 
-/* the divider between the two ways to pay */
-.gb-co__or { margin: 18px 0 0; }
+/* the store's own three promises, under the button that takes the money */
+.gb-co__trust { list-style: none; display: grid; gap: 10px; margin: 20px 0 0; padding: 16px 0 0; border-top: 1px solid var(--co-line); }
+@media (min-width: 560px) { .gb-co__trust { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.gb-co__trust li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--co-dim); line-height: 1.3; }
+.gb-co__trust svg { width: 20px; height: 20px; flex: 0 0 20px; color: var(--co-dim); }
+.gb-co__trust strong { display: block; color: var(--co-ink); font-weight: 600; }
 
-/* motion: short, eased, and off when the system asks for it */
-.gb-co__msum-body { animation: gb-co-fade .18s ease both; }
+/* ---- order summary -----------------------------------------------------
+   On the tinted column: a 46px thumbnail with the quantity in its top-right
+   corner, the variant under the title, the price on the right. */
+.gb-co__sum { background: transparent; }
+.gb-co__lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.gb-co__line { display: flex; gap: 12px; align-items: center; }
+.gb-co__shot { flex: 0 0 46px; width: 46px; height: 46px; border-radius: var(--co-r); background: #fff; border: 1px solid var(--co-field); position: relative; }
+.gb-co__shot img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.gb-co__shot .gb-ph { height: 100%; border-radius: 4px; font-size: 9px; padding: 4px; }
+.gb-co__qty { position: absolute; top: -8px; right: -8px; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: #6b7177; color: #fff; font-size: 12px; font-weight: 600; line-height: 1; }
+.gb-co__line-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
+.gb-co__line-name { margin: 0; font-weight: 600; font-size: 14px; line-height: 1.3; color: var(--co-ink); }
+.gb-co__line-sub { margin: 0; color: var(--co-dim); font-size: 13px; }
+.gb-co__line-total { margin: 0; font-weight: 500; font-size: 14px; white-space: nowrap; color: var(--co-ink); }
+
+/* the discount code box, between the items and the totals, as Shopify has it */
+.gb-co__disc { margin: 20px 0 0; }
+.gb-co__disc-row { display: flex; gap: 8px; align-items: stretch; }
+.gb-co__disc-row .gb-sf__group { flex: 1 1 auto; min-width: 0; }
+.gb-co__disc-btn { flex: 0 0 auto; height: 46px; padding: 0 18px; border: 1px solid var(--co-field); border-radius: var(--co-r); background: #e1e1e1; color: #4a4a4a; font-family: var(--font-b); font-size: 14px; font-weight: 600; cursor: pointer; }
+.gb-co__disc-btn:hover { background: #d5d5d5; }
+.gb-co__disc-btn[disabled] { opacity: .55; cursor: not-allowed; }
+.gb-co__disc-btn:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 2px; }
+.gb-co__disc .gb-sf__in { height: 44px; }
+
+.gb-co__totals { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--co-line); display: grid; gap: 10px; }
+.gb-co__tot { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 14px; color: var(--co-dim); }
+.gb-co__tot b { color: var(--co-ink); font-weight: 400; }
+.gb-co__tot--free b { color: var(--co-ink); font-weight: 400; }
+.gb-co__grand { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--co-line); font-size: 15px; font-weight: 600; color: var(--co-ink); }
+.gb-co__grand b { font-family: var(--font-b); font-size: 20px; font-weight: 600; }
+.gb-co__grand-cc { font-size: 12px; color: var(--co-dim); font-weight: 400; margin-right: 6px; }
+
+/* on a phone the summary folds into one row you can open */
+.gb-co__msum { background: var(--co-tint); border: 1px solid var(--co-line); border-radius: var(--co-r); margin: 0 0 24px; }
+.gb-co__msum > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 14px; font-weight: 400; font-size: 14px; color: var(--co-focus); }
+.gb-co__msum > summary::-webkit-details-marker { display: none; }
+.gb-co__msum-caret { width: 16px; height: 16px; flex: 0 0 16px; color: var(--co-focus); transition: transform .18s ease; }
+.gb-co__msum[open] .gb-co__msum-caret { transform: rotate(180deg); }
+.gb-co__msum-total { margin-left: auto; font-size: 18px; font-weight: 600; color: var(--co-ink); }
+.gb-co__msum-body { padding: 4px 14px 18px; border-top: 1px solid var(--co-line); animation: gb-co-fade .18s ease both; }
 @keyframes gb-co-fade { from { opacity: 0; transform: translateY(-4px); } }
+@media (min-width: 960px) { .gb-co__msum { display: none; } }
+
+/* the empty cart, and the one link off this page */
+.gb-co__empty { text-align: center; padding: clamp(40px, 8vw, 90px) 0; }
+.gb-co__empty p { font-size: 20px; font-weight: 600; color: var(--co-ink); margin: 0 0 20px; }
+.gb-co__btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 20px; border: 0; border-radius: var(--co-r); background: var(--lime); color: var(--lime-ink); font-family: var(--font-b); font-size: 15px; font-weight: 600; cursor: pointer; }
+.gb-co__btn:hover { background: var(--lime-2); }
+.gb-co__btn[disabled] { opacity: .55; cursor: not-allowed; }
+.gb-co__btn:focus-visible { outline: 2px solid var(--co-focus); outline-offset: 2px; }
+
 @media (prefers-reduced-motion: reduce) {
-  .gb-co__input, .gb-co__btn, .gb-co__msum-caret { transition: none; }
+  .gb-sf__lbl, .gb-co__msum-caret, .gb-co__pay { transition: none; }
   .gb-co__msum-body { animation: none; }
   .gb-co__spin { animation-duration: 2.4s; }
-  .gb-co__btn:active { transform: none; }
 }
-
-/* a phone: the touch targets and the type both get bigger, never smaller */
-@media (max-width: 559px) {
-  .gb-co__input { min-height: 54px; font-size: 17px; }
-  .gb-co__msum > summary { min-height: 60px; }
-  .gb-co__trust { gap: 14px; }
-}
-
-/* the left column owns the spacing between its three blocks, so the pieces
-   inside it do not add their own on top */
-.gb-co__main > .gb-co__or { margin: 0; }
-.gb-co__main > .gb-co__msum { margin-bottom: 0; }

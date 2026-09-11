@@ -41,7 +41,7 @@ import {
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
-import { deviceFromRequest, geoFromRequest, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
+import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
 import {
   metaConfig,
   orders as ordersTable,
@@ -208,7 +208,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       sessionId: checkoutSession,
       type: "checkout",
       path: "/checkout",
-      geo: geoFromRequest(request),
+      geo: geoFromContext(context, request),
       device: deviceFromRequest(request),
       amountCents: cart.totalCents,
     });
@@ -406,7 +406,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     };
   }
 
-  const geo = geoFromRequest(request);
+  const geo = geoFromContext(context, request);
   const metaCookies = readMetaCookies(request);
   const country = COUNTRIES.some(([code]) => code === form.get("country"))
     ? String(form.get("country"))
@@ -525,6 +525,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   };
 }
 
+
 /* ------------------------------------------------------------ validation */
 
 type LoadedStore = Awaited<ReturnType<typeof loader>>["store"];
@@ -536,18 +537,63 @@ type ActionReply =
 type Errors = Partial<Record<string, string>>;
 
 /**
+ * The state/province lists for the two countries whose subdivisions the
+ * shipper needs spelled exactly. Every other country gets a plain text box,
+ * because guessing at another country's regions is inventing data.
+ *
+ * Codes are the two-letter ones the address label wants and the tax lookup
+ * already reads out of `?region=`.
+ */
+const US_STATES: [string, string][] = [
+  ["AL", "Alabama"], ["AK", "Alaska"], ["AZ", "Arizona"], ["AR", "Arkansas"], ["CA", "California"],
+  ["CO", "Colorado"], ["CT", "Connecticut"], ["DE", "Delaware"], ["DC", "District of Columbia"],
+  ["FL", "Florida"], ["GA", "Georgia"], ["HI", "Hawaii"], ["ID", "Idaho"], ["IL", "Illinois"],
+  ["IN", "Indiana"], ["IA", "Iowa"], ["KS", "Kansas"], ["KY", "Kentucky"], ["LA", "Louisiana"],
+  ["ME", "Maine"], ["MD", "Maryland"], ["MA", "Massachusetts"], ["MI", "Michigan"], ["MN", "Minnesota"],
+  ["MS", "Mississippi"], ["MO", "Missouri"], ["MT", "Montana"], ["NE", "Nebraska"], ["NV", "Nevada"],
+  ["NH", "New Hampshire"], ["NJ", "New Jersey"], ["NM", "New Mexico"], ["NY", "New York"],
+  ["NC", "North Carolina"], ["ND", "North Dakota"], ["OH", "Ohio"], ["OK", "Oklahoma"], ["OR", "Oregon"],
+  ["PA", "Pennsylvania"], ["RI", "Rhode Island"], ["SC", "South Carolina"], ["SD", "South Dakota"],
+  ["TN", "Tennessee"], ["TX", "Texas"], ["UT", "Utah"], ["VT", "Vermont"], ["VA", "Virginia"],
+  ["WA", "Washington"], ["WV", "West Virginia"], ["WI", "Wisconsin"], ["WY", "Wyoming"],
+  ["PR", "Puerto Rico"],
+];
+
+const CA_PROVINCES: [string, string][] = [
+  ["AB", "Alberta"], ["BC", "British Columbia"], ["MB", "Manitoba"], ["NB", "New Brunswick"],
+  ["NL", "Newfoundland and Labrador"], ["NT", "Northwest Territories"], ["NS", "Nova Scotia"],
+  ["NU", "Nunavut"], ["ON", "Ontario"], ["PE", "Prince Edward Island"], ["QC", "Quebec"],
+  ["SK", "Saskatchewan"], ["YT", "Yukon"],
+];
+
+/** Only the two we actually hold lists for. Everything else is a text box. */
+const REGIONS: Record<string, { label: string; options: [string, string][] }> = {
+  US: { label: "State", options: US_STATES },
+  CA: { label: "Province", options: CA_PROVINCES },
+};
+
+/** What the postal line is called where it is being posted to. */
+function postalLabel(country: string) {
+  if (country === "CA") return "Postal code";
+  if (country === "GB" || country === "IE") return "Postcode";
+  return "ZIP code";
+}
+
+/**
  * The same rules the action enforces, checked in the browser so a person is
  * told which box is wrong before a round trip — never instead of the server,
  * which still refuses anything that gets past this.
+ *
+ * The name is asked for in two boxes, the way Shopify asks for it, and joined
+ * into the single `name` field the action reads. So the one-word rule lands on
+ * the last name box rather than rejecting a full box the person has filled in.
  */
 function validate(values: Record<string, string>, store: LoadedStore): Errors {
   const errors: Errors = {};
   const at = (k: string) => (values[k] ?? "").trim();
 
-  if (!at("name")) errors.name = "Please put your name in.";
-  else if (store.nameMode === "full" && !/\S+\s+\S+/.test(at("name"))) {
-    errors.name = "Please put your first and last name in.";
-  }
+  if (!at("firstName")) errors.firstName = "Please put your first name in.";
+  if (store.nameMode === "full" && !at("lastName")) errors.lastName = "Please put your last name in.";
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(at("email"))) {
     errors.email = "That email address does not look right — we send your receipt there.";
   }
@@ -555,8 +601,8 @@ function validate(values: Record<string, string>, store: LoadedStore): Errors {
   // demand it. It is not one of the four, so it is never invented here.
   if (store.companyMode === "required" && !at("company")) errors.company = "Please add the company name.";
   // Name, address, email, phone — the four, and nothing else. Phone is asked
-  // for wherever the field is on the page; the server still accepts an order
-  // without one, so this never refuses anything the server would have taken.
+  // for wherever the field is on the page, and its label says so: no box on
+  // this page is marked optional and then refused when it is left empty.
   if (store.phoneMode !== "hidden" && !at("phone")) errors.phone = "Please add your phone number so we can ship it.";
   if (!at("address1")) errors.address1 = "Please add your street address so we can ship it.";
   if (!at("city")) errors.city = "Please add your city so we can ship it.";
@@ -571,7 +617,8 @@ function validate(values: Record<string, string>, store: LoadedStore): Errors {
  * field it is about instead of in a banner nobody reads.
  */
 function fieldForMessage(message: string): string | null {
-  if (/your name|first and last name/i.test(message)) return "name";
+  if (/first and last name/i.test(message)) return "lastName";
+  if (/your name/i.test(message)) return "firstName";
   if (/email address/i.test(message)) return "email";
   if (/company name/i.test(message)) return "company";
   if (/phone number/i.test(message)) return "phone";
@@ -605,7 +652,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
           <div className="gb gb-co-sec">
             <CheckoutHeader store={store} home={home} />
             <div className="gb-co">
-              <div className="gb-co__panel gb-co__empty">
+              <div className="gb-co__empty">
                 <p>Your cart is empty.</p>
                 <Link className="gb-co__btn" to={home} style={{ textDecoration: "none", maxWidth: 320, margin: "0 auto" }}>
                   Back to the product
@@ -733,9 +780,16 @@ function BuddyFonts() {
 
 /* ------------------------------------------------------------ class sets */
 /* One checkout, two skins. Every class here already exists in the theme it
-   belongs to; nothing is invented per store in this file. */
+   belongs to; nothing is invented per store in this file.
+
+   Garden Buddy wears the Shopify field structure: one bordered group per
+   section with hairline-divided cells and labels that float. The shared
+   kneeler skin has no such rules in its stylesheet, so it keeps its own
+   stacked `gk-field` boxes — the markup branches on `cn.floating`. */
 
 interface CN {
+  /** this skin has the grouped, floating-label field rules in its stylesheet */
+  floating: boolean;
   h2: string;
   h3: string;
   field: string;
@@ -758,6 +812,7 @@ interface CN {
 }
 
 const BUDDY: CN = {
+  floating: true,
   h2: "gb-co__h2",
   h3: "gb-co__h3",
   field: "gb-co__field",
@@ -776,6 +831,7 @@ const BUDDY: CN = {
 };
 
 const KNEELER: CN = {
+  floating: false,
   h2: "",
   h3: "",
   field: "gk-field",
@@ -796,78 +852,219 @@ const KNEELER: CN = {
   grandStyle: { borderTop: "1px solid var(--gk-line)", marginTop: 8, paddingTop: 14, fontWeight: 700 },
 };
 
+/* Stripe's own fields, dressed to match the group next to them: the same 5px
+   radius, the same 16px text, the same neutral ink Shopify uses. */
 const BUDDY_APPEARANCE = {
-  theme: "flat",
+  theme: "stripe",
   variables: {
-    colorPrimary: "#A8F32A",
-    colorText: "#1C2318",
-    colorBackground: "#FFFFFF",
-    fontSizeBase: "17px",
-    borderRadius: "12px",
+    colorPrimary: "#1878b9",
+    colorText: "#1a1a1a",
+    colorTextSecondary: "#6b7177",
+    colorTextPlaceholder: "#6b7177",
+    colorDanger: "#d72c0d",
+    colorBackground: "#ffffff",
+    fontSizeBase: "16px",
+    borderRadius: "5px",
+    spacingUnit: "4px",
   },
 };
 
-const KNEELER_APPEARANCE = { theme: "night", variables: { colorPrimary: "#b6f03c", fontSizeBase: "17px" } };
+const KNEELER_APPEARANCE = { theme: "night", variables: { colorPrimary: "#b6f03c", fontSizeBase: "16px" } };
 
 /* ----------------------------------------------------------------- pieces */
 
-function Field({
+/**
+ * One cell of an address group.
+ *
+ * On the Garden Buddy skin it is a bare input inside a cell that owns the
+ * hairline between it and its neighbour, with the label sitting on top of the
+ * text until there is something to read — floated by CSS alone, off
+ * `:placeholder-shown` and `:focus`, so there is no JavaScript between a
+ * person and the box they are typing in. The kneeler skin has no such rules,
+ * so it renders its own labelled box instead.
+ */
+function Cell({
   cn,
   name,
   label,
   error,
   onValue,
   onTouch,
+  span,
   children,
   ...input
 }: {
   cn: CN;
   name: string;
-  label: React.ReactNode;
+  label: string;
   error?: string;
   onValue: (field: string, value: string) => void;
   onTouch: (field: string) => void;
+  /** how many columns of its row this cell takes, when the row has more than one */
+  span?: number;
   children?: React.ReactNode;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "onBlur" | "name">) {
   const describedBy = error ? `${name}-error` : undefined;
+
+  if (!cn.floating) {
+    return (
+      <label className={cn.field}>
+        <span className={cn.label}>{label}</span>
+        <input
+          {...input}
+          className={cn.input}
+          name={name}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          onChange={(event) => onValue(name, event.currentTarget.value)}
+          onBlur={() => onTouch(name)}
+        />
+        {error ? (
+          <span className={cn.err} style={cn.errStyle} id={describedBy} role="alert">
+            {error}
+          </span>
+        ) : null}
+        {children}
+      </label>
+    );
+  }
+
   return (
-    <label className={cn.field}>
-      <span className={cn.label}>{label}</span>
+    <div
+      className="gb-sf__cell"
+      data-err={error ? "1" : undefined}
+      style={span && span > 1 ? { gridColumn: `span ${span}` } : undefined}
+    >
       <input
         {...input}
-        className={cn.input}
+        id={`f-${name}`}
+        className="gb-sf__in"
         name={name}
+        placeholder=" "
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         onChange={(event) => onValue(name, event.currentTarget.value)}
         onBlur={() => onTouch(name)}
       />
-      {error ? (
-        <span className={cn.err} style={cn.errStyle} id={describedBy} role="alert">
-          {error}
-        </span>
-      ) : null}
+      <label className="gb-sf__lbl" htmlFor={`f-${name}`}>
+        {label}
+      </label>
       {children}
-    </label>
+    </div>
+  );
+}
+
+/** The same cell, holding a select. A select always has a value, so its label
+    is floated from the start rather than waiting on `:placeholder-shown`. */
+function SelectCell({
+  cn,
+  name,
+  label,
+  value,
+  error,
+  onValue,
+  onTouch,
+  options,
+  placeholder,
+  autoComplete,
+}: {
+  cn: CN;
+  name: string;
+  label: string;
+  value: string;
+  error?: string;
+  onValue: (field: string, value: string) => void;
+  onTouch: (field: string) => void;
+  options: [string, string][];
+  placeholder?: string;
+  autoComplete?: string;
+}) {
+  const select = (
+    <select
+      id={`f-${name}`}
+      className={cn.floating ? "gb-sf__in gb-sf__in--sel" : cn.input}
+      name={name}
+      value={value}
+      autoComplete={autoComplete}
+      aria-invalid={error ? true : undefined}
+      onChange={(event) => {
+        onValue(name, event.currentTarget.value);
+        onTouch(name);
+      }}
+      onBlur={() => onTouch(name)}
+    >
+      {placeholder !== undefined ? <option value="">{placeholder}</option> : null}
+      {options.map(([code, text]) => (
+        <option key={code} value={code}>
+          {text}
+        </option>
+      ))}
+    </select>
+  );
+
+  if (!cn.floating) {
+    return (
+      <label className={cn.field}>
+        <span className={cn.label}>{label}</span>
+        {select}
+      </label>
+    );
+  }
+
+  return (
+    <div className="gb-sf__cell" data-err={error ? "1" : undefined}>
+      {select}
+      <label className="gb-sf__lbl gb-sf__lbl--up" htmlFor={`f-${name}`}>
+        {label}
+      </label>
+    </div>
+  );
+}
+
+/** The bordered group the cells sit inside — one border, shared hairlines.
+    The kneeler skin has no rule for it, so it is not drawn there. */
+function Group({ cn, children }: { cn: CN; children: React.ReactNode }) {
+  if (!cn.floating) return <>{children}</>;
+  return <div className="gb-sf__group">{children}</div>;
+}
+
+/** A row inside the group: one, two or three cells divided by hairlines. */
+function Row({ cn, cols, children }: { cn: CN; cols: 1 | 2 | 3; children: React.ReactNode }) {
+  if (!cn.floating) {
+    if (cols === 1) return <>{children}</>;
+    return (
+      <div className={cn.row} style={cn.rowStyle}>
+        {children}
+      </div>
+    );
+  }
+  return <div className={`gb-sf__row gb-sf__row--${cols}`}>{children}</div>;
+}
+
+/** The messages for a group, under it, in the order the boxes are in. */
+function GroupErrors({ cn, errors }: { cn: CN; errors: (string | undefined)[] }) {
+  const shown = errors.filter(Boolean) as string[];
+  if (!cn.floating || shown.length === 0) return null;
+  return (
+    <ul className="gb-sf__errs" role="alert">
+      {shown.map((message) => (
+        <li key={message}>{message}</li>
+      ))}
+    </ul>
   );
 }
 
 /**
- * The two groups of typed details, in the order a person can answer them:
- * who to reach, then where it goes. Four things are asked for and required —
- * name, address, email, phone. Everything else on this page is optional, and
- * the company box only appears at all when this store's settings make the
- * server demand it.
+ * Contact: the one box Shopify asks for here, and the store's marketing
+ * consent under it when the store has that switched on.
  */
 function ContactFields({
   cn,
-  store,
   shownError,
   onField,
   onBlur,
 }: {
   cn: CN;
-  store: LoadedStore;
   shownError: (field: string) => string | undefined;
   onField: (field: string, value: string) => void;
   onBlur: (field: string) => void;
@@ -875,127 +1072,198 @@ function ContactFields({
   const common = { cn, onValue: onField, onTouch: onBlur };
   return (
     <>
-      <Field
-        {...common}
-        name="email"
-        label="Email"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        autoCapitalize="off"
-        autoCorrect="off"
-        spellCheck={false}
-        enterKeyHint="next"
-        error={shownError("email")}
-      />
-      {store.phoneMode !== "hidden" ? (
-        <Field
-          {...common}
-          name="phone"
-          label="Phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          enterKeyHint="next"
-          error={shownError("phone")}
-        />
-      ) : null}
+      <Group cn={cn}>
+        <Row cn={cn} cols={1}>
+          <Cell
+            {...common}
+            name="email"
+            label="Email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="next"
+            error={shownError("email")}
+          />
+        </Row>
+      </Group>
+      <GroupErrors cn={cn} errors={[shownError("email")]} />
     </>
   );
 }
 
-function ShippingFields({
+/**
+ * Delivery: country first, because it decides what the two boxes under the
+ * city are called and whether the state box is a list or a plain line.
+ *
+ * Everything here is required except the second address line, and that is the
+ * only box with "(optional)" on it. Phone is required and is not marked
+ * otherwise — the label and the rule that refuses an empty one now agree.
+ */
+function DeliveryFields({
   cn,
   store,
+  values,
   shownError,
   onField,
   onBlur,
 }: {
   cn: CN;
   store: LoadedStore;
+  values: Record<string, string>;
   shownError: (field: string) => string | undefined;
   onField: (field: string, value: string) => void;
   onBlur: (field: string) => void;
 }) {
   const common = { cn, onValue: onField, onTouch: onBlur };
-  const optional = (label: string) => (
-    <>
-      {label} <span className="gb-co__optional">(optional)</span>
-    </>
-  );
+  const country = values.country || "US";
+  const known = REGIONS[country];
+  const regionLabel = known?.label ?? "State / Region";
+
   return (
     <>
-      <Field
-        {...common}
-        name="name"
-        label={store.nameMode === "full" ? "Full name" : "Name"}
-        autoComplete="name"
-        autoCapitalize="words"
-        enterKeyHint="next"
-        error={shownError("name")}
+      <Group cn={cn}>
+        <Row cn={cn} cols={1}>
+          <SelectCell
+            cn={cn}
+            name="country"
+            label="Country/region"
+            value={country}
+            autoComplete="country"
+            options={COUNTRIES}
+            onValue={onField}
+            onTouch={onBlur}
+          />
+        </Row>
+
+        <Row cn={cn} cols={2}>
+          <Cell
+            {...common}
+            name="firstName"
+            label="First name"
+            autoComplete="given-name"
+            autoCapitalize="words"
+            enterKeyHint="next"
+            error={shownError("firstName")}
+          />
+          <Cell
+            {...common}
+            name="lastName"
+            label="Last name"
+            autoComplete="family-name"
+            autoCapitalize="words"
+            enterKeyHint="next"
+            error={shownError("lastName")}
+          />
+        </Row>
+
+        {/* Only when the server will refuse the order without it. */}
+        {store.companyMode === "required" ? (
+          <Row cn={cn} cols={1}>
+            <Cell {...common} name="company" label="Company" autoComplete="organization" error={shownError("company")} />
+          </Row>
+        ) : null}
+
+        <Row cn={cn} cols={1}>
+          <Cell
+            {...common}
+            name="address1"
+            label="Address"
+            autoComplete="address-line1"
+            autoCapitalize="words"
+            enterKeyHint="next"
+            error={shownError("address1")}
+          />
+        </Row>
+
+        <Row cn={cn} cols={1}>
+          <Cell
+            {...common}
+            name="address2"
+            label="Apartment, suite, etc. (optional)"
+            autoComplete="address-line2"
+            autoCapitalize="words"
+            enterKeyHint="next"
+          />
+        </Row>
+
+        <Row cn={cn} cols={3}>
+          <Cell
+            {...common}
+            name="city"
+            label="City"
+            autoComplete="address-level2"
+            autoCapitalize="words"
+            enterKeyHint="next"
+            error={shownError("city")}
+          />
+          {known ? (
+            <SelectCell
+              cn={cn}
+              name="region"
+              label={regionLabel}
+              value={values.region ?? ""}
+              placeholder=""
+              autoComplete="address-level1"
+              options={known.options}
+              error={shownError("region")}
+              onValue={onField}
+              onTouch={onBlur}
+            />
+          ) : (
+            <Cell
+              {...common}
+              name="region"
+              label={regionLabel}
+              autoComplete="address-level1"
+              autoCapitalize="characters"
+              enterKeyHint="next"
+              error={shownError("region")}
+            />
+          )}
+          <Cell
+            {...common}
+            name="postalCode"
+            label={postalLabel(country)}
+            inputMode={country === "US" ? "numeric" : undefined}
+            autoComplete="postal-code"
+            autoCapitalize="characters"
+            enterKeyHint="next"
+            error={shownError("postalCode")}
+          />
+        </Row>
+
+        {store.phoneMode !== "hidden" ? (
+          <Row cn={cn} cols={1}>
+            <Cell
+              {...common}
+              name="phone"
+              label="Phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              enterKeyHint="done"
+              error={shownError("phone")}
+            />
+          </Row>
+        ) : null}
+      </Group>
+
+      <GroupErrors
+        cn={cn}
+        errors={[
+          shownError("firstName"),
+          shownError("lastName"),
+          shownError("company"),
+          shownError("address1"),
+          shownError("city"),
+          shownError("region"),
+          shownError("postalCode"),
+          shownError("phone"),
+        ]}
       />
-      {/* Only when the server will refuse the order without it. */}
-      {store.companyMode === "required" ? (
-        <Field {...common} name="company" label="Company" autoComplete="organization" error={shownError("company")} />
-      ) : null}
-      <Field
-        {...common}
-        name="address1"
-        label="Address"
-        autoComplete="address-line1"
-        autoCapitalize="words"
-        enterKeyHint="next"
-        error={shownError("address1")}
-      />
-      <Field
-        {...common}
-        name="address2"
-        label={cn === BUDDY ? optional("Apartment, suite") : "Apartment, suite (optional)"}
-        autoComplete="address-line2"
-        autoCapitalize="words"
-        enterKeyHint="next"
-      />
-      <div className={cn.row} style={cn.rowStyle}>
-        <Field
-          {...common}
-          name="city"
-          label="City"
-          autoComplete="address-level2"
-          autoCapitalize="words"
-          enterKeyHint="next"
-          error={shownError("city")}
-        />
-        <Field
-          {...common}
-          name="region"
-          label="State"
-          autoComplete="address-level1"
-          autoCapitalize="characters"
-          enterKeyHint="next"
-          error={shownError("region")}
-        />
-      </div>
-      <div className={cn.row} style={cn.rowStyle}>
-        <Field
-          {...common}
-          name="postalCode"
-          label="ZIP code"
-          inputMode="numeric"
-          autoComplete="postal-code"
-          enterKeyHint="done"
-          error={shownError("postalCode")}
-        />
-        <label className={cn.field}>
-          <span className={cn.label}>Country</span>
-          <select className={cn.input} name="country" defaultValue="US" autoComplete="country">
-            {COUNTRIES.map(([code, name]) => (
-              <option key={code} value={code}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
     </>
   );
 }
@@ -1050,6 +1318,8 @@ function Summary({
         ))}
       </ul>
 
+      <DiscountBox cn={cn} applied={cart.discount} reason={cart.discountReason} locked={locked} />
+
       <div className={buddy ? "gb-co__totals" : undefined} style={buddy ? undefined : { marginTop: 12 }}>
         <div className={cn.tot}>
           <span>Subtotal</span>
@@ -1082,11 +1352,12 @@ function Summary({
 
         <div className={cn.grand} style={cn.grandStyle}>
           <span>Total</span>
-          <b>{money(cart.totalCents)}</b>
+          <b>
+            {buddy ? <span className="gb-co__grand-cc">{cart.currency}</span> : null}
+            {money(cart.totalCents)}
+          </b>
         </div>
       </div>
-
-      <DiscountBox cn={cn} applied={cart.discount} reason={cart.discountReason} locked={locked} />
     </>
   );
 }
@@ -1113,6 +1384,7 @@ function DiscountBox({
   const fetcher = useFetcher<{ discountError?: string | null }>();
   const busy = fetcher.state !== "idle";
   const error = fetcher.data?.discountError ?? reason;
+  const buddy = cn === BUDDY;
 
   if (locked) {
     return applied ? (
@@ -1124,7 +1396,7 @@ function DiscountBox({
 
   if (applied) {
     return (
-      <fetcher.Form method="post" style={{ marginTop: 12 }}>
+      <fetcher.Form method="post" style={{ marginTop: 16 }}>
         <input type="hidden" name="intent" value="discount-remove" />
         <p className={cn.note} style={{ margin: 0 }}>
           {applied.code} applied.{" "}
@@ -1140,34 +1412,59 @@ function DiscountBox({
     );
   }
 
-  return (
-    <fetcher.Form method="post" style={{ marginTop: 12 }}>
-      <input type="hidden" name="intent" value="discount" />
-      <label className={cn.field}>
-        <span className={cn.label}>Discount code</span>
-        <span style={{ display: "flex", gap: 8 }}>
-          <input
-            className={cn.input}
-            type="text"
-            name="code"
-            aria-invalid={error ? "true" : undefined}
-            style={{ flex: 1 }}
-          />
-          <button
-            type="submit"
-            className={cn.btn}
-            disabled={busy}
-            style={{ width: "auto", marginTop: 0, minHeight: 56, padding: "0 22px" }}
-          >
-            Apply
-          </button>
-        </span>
-        {error ? (
-          <span className={cn.err} style={cn.errStyle} role="alert">
-            {error}
+  if (!buddy) {
+    return (
+      <fetcher.Form method="post" style={{ marginTop: 12 }}>
+        <input type="hidden" name="intent" value="discount" />
+        <label className={cn.field}>
+          <span className={cn.label}>Discount code</span>
+          <span style={{ display: "flex", gap: 8 }}>
+            <input className={cn.input} type="text" name="code" aria-invalid={error ? "true" : undefined} style={{ flex: 1 }} />
+            <button type="submit" className={cn.btn} disabled={busy} style={{ width: "auto", marginTop: 0, minHeight: 44, padding: "0 18px" }}>
+              Apply
+            </button>
           </span>
-        ) : null}
-      </label>
+          {error ? (
+            <span className={cn.err} style={cn.errStyle} role="alert">
+              {error}
+            </span>
+          ) : null}
+        </label>
+      </fetcher.Form>
+    );
+  }
+
+  return (
+    <fetcher.Form method="post" className="gb-co__disc">
+      <input type="hidden" name="intent" value="discount" />
+      <div className="gb-co__disc-row">
+        <div className="gb-sf__group gb-sf__group--one">
+          <div className="gb-sf__cell" data-err={error ? "1" : undefined}>
+            {/* The summary is rendered twice — pinned on a desk, folded on a
+                phone — so this box carries its label in aria rather than in an
+                id that would then exist twice on the page. */}
+            <input
+              className="gb-sf__in"
+              type="text"
+              name="code"
+              placeholder=" "
+              aria-label="Discount code"
+              aria-invalid={error ? "true" : undefined}
+            />
+            <span className="gb-sf__lbl" aria-hidden="true">
+              Discount code
+            </span>
+          </div>
+        </div>
+        <button type="submit" className="gb-co__disc-btn" disabled={busy}>
+          Apply
+        </button>
+      </div>
+      {error ? (
+        <ul className="gb-sf__errs" role="alert">
+          <li>{error}</li>
+        </ul>
+      ) : null}
     </fetcher.Form>
   );
 }
@@ -1232,7 +1529,7 @@ function OnePage({
   /** resolves the in-flight details post, so a wallet's confirm can await it */
   const replyRef = useRef<((reply: ActionReply) => void) | null>(null);
 
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>({ country: "US" });
   const [touched, setTouched] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
   const [ready, setReady] = useState(false);
@@ -1252,7 +1549,16 @@ function OnePage({
     (submitted || touched[field] ? clientErrors[field] : undefined) ??
     (serverField === field ? serverMessage ?? undefined : undefined);
 
-  const onField = (field: string, value: string) => setValues((prev) => ({ ...prev, [field]: value }));
+  const onField = (field: string, value: string) => {
+    setValues((prev) => {
+      const next = { ...prev, [field]: value };
+      // A different country has a different list of states, so the one chosen
+      // for the old country is dropped rather than posted against the new one.
+      if (field === "country" && value !== prev.country) next.region = "";
+      return next;
+    });
+  };
+
   const onBlur = (field: string) => {
     setTouched((prev) => ({ ...prev, [field]: "1" }));
     // Leaving the state box re-prices the cart on the server for that state,
@@ -1374,9 +1680,18 @@ function OnePage({
   }, [cart.totalCents]);
 
   /** Reads the typed fields. The amounts are not among them — they are the
-      server's, always. */
+      server's, always.
+
+      The name is two boxes on screen and one field on the wire: they are
+      joined here, so the action keeps reading the single `name` it always
+      read. */
   const detailsFromForm = (): FormData => {
     const body = new FormData(formRef.current!);
+    const first = String(body.get("firstName") ?? "").trim();
+    const last = String(body.get("lastName") ?? "").trim();
+    body.delete("firstName");
+    body.delete("lastName");
+    body.set("name", [first, last].filter(Boolean).join(" "));
     body.set("intent", "pay");
     return body;
   };
@@ -1489,11 +1804,9 @@ function OnePage({
     if (!shell) return stopped;
     return (
       <div className="gb-co__grid">
-        <div className="gb-co__main">
-          <section className="gb-co__panel">{stopped}</section>
-        </div>
+        <div className="gb-co__main">{stopped}</div>
         <aside className="gb-co__aside">
-          <div className="gb-co__panel">
+          <div className="gb-co__sum">
             <h2 className="gb-co__h3">Order summary</h2>
             {summary}
           </div>
@@ -1513,35 +1826,26 @@ function OnePage({
         style={wallets ? undefined : { display: "none" }}
         aria-label="Express checkout"
       >
-        {buddy ? <p className="gb-co__express-lead">Express checkout</p> : (
-          <h2 className={cn.h2} style={{ marginTop: 0 }}>
-            Express checkout
-          </h2>
-        )}
+        <p className={buddy ? "gb-co__express-lead" : undefined} style={buddy ? undefined : { textAlign: "center" }}>
+          Express checkout
+        </p>
         <div className={buddy ? "gb-co__express-row" : undefined} ref={walletRef} />
       </section>
       <div
         className={buddy ? "gb-co__or" : undefined}
         style={wallets ? (buddy ? undefined : { textAlign: "center", margin: "18px 0" }) : { display: "none" }}
       >
-        or pay with card
+        OR
       </div>
     </>
   );
 
-  const group = (step: string, title: string, note: string | null, children: React.ReactNode) => (
-    <section className={buddy ? "gb-co__group" : undefined} style={buddy ? undefined : { marginTop: 26 }}>
-      <div className={buddy ? "gb-co__group-head" : undefined}>
-        {buddy ? (
-          <span className="gb-co__step" aria-hidden="true">
-            {step}
-          </span>
-        ) : null}
-        <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
-          {title}
-        </h2>
-      </div>
-      {note ? <p className={buddy ? "gb-co__group-note" : cn.note}>{note}</p> : null}
+  const section = (title: string, note: string | null, children: React.ReactNode) => (
+    <section className={buddy ? "gb-co__sec" : undefined} style={buddy ? undefined : { marginTop: 26 }}>
+      <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
+        {title}
+      </h2>
+      {note ? <p className={buddy ? "gb-co__secure" : cn.note}>{note}</p> : null}
       {children}
     </section>
   );
@@ -1555,40 +1859,44 @@ function OnePage({
         void pay();
       }}
     >
-      {group(
-        "1",
+      {section(
         "Contact",
-        "Your receipt goes to this address, and we only call about this order.",
+        null,
         <>
-          <ContactFields cn={cn} store={store} shownError={shownError} onField={onField} onBlur={onBlur} />
+          <ContactFields cn={cn} shownError={shownError} onField={onField} onBlur={onBlur} />
           {store.consent ? (
             <label
               className={cn.check}
-              style={buddy ? undefined : { display: "flex", gap: 10, alignItems: "center", fontSize: 17, marginBottom: 14 }}
+              style={buddy ? undefined : { display: "flex", gap: 10, alignItems: "center", fontSize: 16, marginBottom: 14 }}
             >
               <input
                 type="checkbox"
                 name="consent"
-                style={buddy ? undefined : { width: 22, height: 22 }}
+                style={buddy ? undefined : { width: 20, height: 20 }}
                 onChange={(event) => onField("consent", event.currentTarget.checked ? "on" : "")}
               />
-              Email me about new offers
+              Email me with news and offers
             </label>
           ) : null}
         </>,
       )}
 
-      {group(
-        "2",
-        "Shipping address",
+      {section(
+        "Delivery",
         null,
-        <ShippingFields cn={cn} store={store} shownError={shownError} onField={onField} onBlur={onBlur} />,
+        <DeliveryFields
+          cn={cn}
+          store={store}
+          values={values}
+          shownError={shownError}
+          onField={onField}
+          onBlur={onBlur}
+        />,
       )}
 
-      {group(
-        "3",
+      {section(
         "Payment",
-        null,
+        "All transactions are secure and encrypted.",
         <>
           <div className={buddy ? "gb-co__card" : undefined} ref={cardRef} style={buddy ? undefined : { minHeight: 200 }} />
 
@@ -1608,7 +1916,7 @@ function OnePage({
           ) : null}
 
           <button
-            className={buddy ? `${cn.btn} gb-co__pay` : cn.btn}
+            className={buddy ? "gb-co__pay" : cn.btn}
             type="submit"
             disabled={!ready || working}
             aria-busy={working || undefined}
@@ -1620,7 +1928,7 @@ function OnePage({
                 Paying…
               </>
             ) : (
-              `Pay ${money(total)}`
+              "Pay now"
             )}
           </button>
 
@@ -1652,10 +1960,10 @@ function OnePage({
           </summary>
           <div className="gb-co__msum-body">{summary}</div>
         </details>
-        <section className="gb-co__panel">{form}</section>
+        {form}
       </div>
       <aside className="gb-co__aside">
-        <div className="gb-co__panel">
+        <div className="gb-co__sum">
           <h2 className="gb-co__h3">Order summary</h2>
           {summary}
         </div>
