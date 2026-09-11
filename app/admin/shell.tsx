@@ -98,6 +98,30 @@ export function AdminShell({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  /**
+   * The sale sound, on every order notification.
+   *
+   * The service worker that draws the notification cannot play audio, so it
+   * messages every open admin window instead and this plays sale.mp3 — the
+   * same file Live View uses. If the browser refuses (no click on the page
+   * yet), it fails silently: the banner is still there.
+   */
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "shop-admin:push") return;
+      try {
+        const audio = new Audio("/sale.mp3");
+        audio.volume = 0.9;
+        void audio.play().catch(() => undefined);
+      } catch {
+        /* sound is never worth an error */
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, []);
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
     check();

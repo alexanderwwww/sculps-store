@@ -48,7 +48,21 @@ self.addEventListener("push", (event) => {
         });
       })
       .then(function () {
-        return say("shown", title);
+        // A worker cannot make a sound. An open admin window can — so every
+        // one of them (the installed app counts, minimised or not) is told,
+        // and plays the same cha-ching Live View plays.
+        return self.clients
+          .matchAll({ type: "window", includeUncontrolled: true })
+          .then(function (windows) {
+            windows.forEach(function (client) {
+              try {
+                client.postMessage({ type: "shop-admin:push", title: title, body: data.body || "" });
+              } catch (_) {}
+            });
+          })
+          .then(function () {
+            return say("shown", title);
+          });
       })
       .catch(function (error) {
         return say("failed", (error && error.message) || String(error));
