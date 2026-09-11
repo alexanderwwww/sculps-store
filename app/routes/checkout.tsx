@@ -34,10 +34,9 @@ import {
   priceCart,
   markCartConverted,
   setCartDiscount,
+  cartPaymentIntentId,
   newCartToken,
   cartCookie,
-  cartPaymentIntentId,
-  setCartPaymentIntentId,
   setCartProtection,
   currentLines,
   addLine,
@@ -63,18 +62,29 @@ import { pixelScript, readMetaCookies, trackFunnelEvent } from "~/lib/meta.serve
 import { formatMoney } from "~/lib/money";
 import { CheckoutHeader, CheckoutFooter, TrustRow } from "~/storefronts/garden-buddy/checkout-chrome";
 import kneelerHref from "~/storefronts/garden-kneeler/theme.css?url";
-import buddyHref from "~/storefronts/garden-buddy/theme.css?url";
+import buddyHref from "~/storefronts/garden-buddy/checkout.css?url";
 
 const GARDEN_BUDDY = "garden-buddy";
 
-export function links() {
-  return [
-    {
-      rel: "stylesheet",
-      href: "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap",
-    },
-    { rel: "stylesheet", href: kneelerHref },
-  ];
+/**
+ * The other skin's stylesheet and fonts used to be declared here, which meant
+ * every Garden Buddy checkout downloaded a theme and two font families it
+ * never used before it could paint. They are rendered inside the skin that
+ * actually needs them instead — the same way this page already brings in
+ * Garden Buddy's own.
+ */
+function KneelerFonts() {
+  return (
+    <>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      />
+      <link rel="stylesheet" href={kneelerHref} />
+    </>
+  );
 }
 
 export function meta({ data }: Route.MetaArgs) {
@@ -139,7 +149,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let paymentsReady = true;
   let paymentsMessage: string | null = null;
   let publishableKey: string | null = null;
-  let clientSecret: string | null = null;
 
   try {
     const provider = await providerForStore(context.db, context.cloudflare.env, store.id);
@@ -147,60 +156,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (!publishableKey) {
       paymentsReady = false;
       paymentsMessage = "This store has no Stripe publishable key set in Settings → Payments.";
-    } else if (cart.lines.length && token) {
-      // The intent exists before anything is typed, because that is the only
-      // way a wallet button can be drawn at all. Its amount is this cart's
-      // total, worked out above from the database.
-      const existingId = await cartPaymentIntentId(context.db, store.id, token);
-      let intent = null;
-      if (existingId) {
-        try {
-          const found = await provider.readIntent(existingId);
-          // An intent that has already been paid, or is being paid, belongs to
-          // a charge that happened. It is never reused or written over.
-          if (PAYABLE_INTENT_STATUSES.has(found.status)) intent = found;
-        } catch {
-          // Gone from Stripe (wrong account, deleted test data). Make a new one.
-          intent = null;
-        }
-      }
-
-      if (intent) {
-        if (intent.amountCents !== cart.totalCents) {
-          intent = await provider.updateIntent(intent.id, {
-            amountCents: cart.totalCents,
-            currency: cart.currency,
-          });
-        }
-      } else {
-        intent = await provider.createIntent({
-          amountCents: cart.totalCents,
-          currency: cart.currency,
-          orderReference: `${store.name} order`,
-          metadata: { storeId: store.id },
-        });
-        await setCartPaymentIntentId(context.db, store.id, token, intent.id);
-      }
-
-      clientSecret = intent.clientSecret;
     }
   } catch (error) {
     paymentsReady = false;
-    clientSecret = null;
     paymentsMessage =
       error instanceof PaymentsNotConfigured
         ? error.message
         : `Payments are not available right now: ${
             error instanceof Error ? error.message : "Stripe did not answer."
           }`;
-  }
-
-  // A cart with something in it and no client secret means the payment could
-  // not be started. The page says so rather than drawing a form that cannot
-  // take money.
-  if (paymentsReady && cart.lines.length && !clientSecret) {
-    paymentsReady = false;
-    paymentsMessage = "The payment could not be started, so there is nothing here to pay with yet.";
   }
 
   // Reaching checkout is itself the event, the way Shopify counts it: the
@@ -309,7 +273,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     paymentsReady,
     paymentsMessage,
     publishableKey,
-    clientSecret,
   };
 }
 
@@ -748,7 +711,7 @@ function fieldForMessage(message: string): string | null {
 /* --------------------------------------------------------------- the page */
 
 export default function Checkout({ loaderData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, paymentsMessage, publishableKey, clientSecret, pixel, footerLinks, photo } =
+  const { store, cart, paymentsReady, paymentsMessage, publishableKey, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = store.slug === GARDEN_BUDDY;
@@ -765,23 +728,26 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
           <BuddyFonts />
           {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
           <link rel="stylesheet" href={buddyHref} />
-          <div className="gb gb-co-sec">
-            <CheckoutHeader store={store} home={home} />
-            <div className="gb-co">
+          <div className="gb-co-sec">
+            <div className="gb-co__pane">
+              <div className="gb-co__pane-in">
+                <CheckoutHeader store={store} home={home} />
               <div className="gb-co__empty">
                 <p>Your cart is empty.</p>
                 <Link className="gb-co__btn" to={home} style={{ textDecoration: "none", maxWidth: 320, margin: "0 auto" }}>
                   Back to the product
                 </Link>
               </div>
+              </div>
+              <CheckoutFooter store={store} links={footerLinks.map(withParam(storeParam))} contactEmail={store.contactEmail} />
             </div>
-            <CheckoutFooter store={store} links={footerLinks.map(withParam(storeParam))} contactEmail={store.contactEmail} />
           </div>
         </>
       );
     }
     return (
       <div className="gk">
+        <KneelerFonts />
         <header className="gk-header">
           <Link className="gk-logo" to={home} style={{ textDecoration: "none" }}>
             {store.name}
@@ -812,13 +778,26 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       paymentsReady={paymentsReady}
       paymentsMessage={paymentsMessage}
       publishableKey={publishableKey}
-      clientSecret={clientSecret}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
       summary={summary}
       under={buddy ? <Upsell items={loaderData.upsells} photo={photo} money={money} /> : null}
       scratchOdds={loaderData.scratchOdds}
+      chrome={
+        buddy
+          ? {
+              header: <CheckoutHeader store={store} home={home} />,
+              footer: (
+                <CheckoutFooter
+                  store={store}
+                  links={footerLinks.map(withParam(storeParam))}
+                  contactEmail={store.contactEmail}
+                />
+              ),
+            }
+          : null
+      }
     />
   );
 
@@ -829,14 +808,10 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
         <link rel="stylesheet" href={buddyHref} />
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
-        <div className="gb gb-co-sec">
-          <CheckoutHeader store={store} home={home} />
-          {/* The wallets, the folded summary and the form are all laid out
-              inside OnePage, because the wallet row has to come above the
-              summary row as well as above the fields. */}
-          <main className="gb-co">{left}</main>
-          <CheckoutFooter store={store} links={footerLinks.map(withParam(storeParam))} contactEmail={store.contactEmail} />
-        </div>
+        {/* Two halves of the screen. OnePage lays out both of them, because
+            the same pieces have to sit in different places on a phone: the
+            summary folds to the top, the suggestions fall below the form. */}
+        <div className="gb-co-sec">{left}</div>
       </>
     );
   }
@@ -845,6 +820,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
      beside a summary that stays put, and a header that is the logo only. */
   return (
     <div className="gk">
+      <KneelerFonts />
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       <header className="gk-header">
         <Link className="gk-logo" to={home} style={{ textDecoration: "none" }}>
@@ -890,7 +866,7 @@ function BuddyFonts() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap"
       />
     </>
   );
@@ -1574,7 +1550,7 @@ function Upsell({
   if (!items.length) return null;
 
   return (
-    <section className="gb-co__up gb-co__glass" aria-label="Add to your order">
+    <section className="gb-co__up" aria-label="Add to your order">
       <h2 className="gb-co__up-h">Just one more thing</h2>
       <p className="gb-co__up-sub">Goes in the same parcel. Shipping does not change.</p>
       <ul className="gb-co__up-list">
@@ -1631,77 +1607,141 @@ function ScratchCard({
   odds,
   applied,
   locked,
+  logoUrl,
 }: {
   odds: { percent: number; weight: number }[];
   applied: string | null;
   locked: boolean;
+  logoUrl: string | null;
 }) {
   const fetcher = useFetcher<ActionReply>();
   const apply = useFetcher<ActionReply>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [prize, setPrize] = useState<{ percent: number; code: string } | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [touched, setTouched] = useState(false);
   const [showOdds, setShowOdds] = useState(false);
   const cleared = useRef(false);
+  /** set the instant a finger lands, so the sheen stops before it can paint
+      over the first scratch — state lands a render too late for that. */
+  const touchedRef = useRef(false);
 
   const data = fetcher.data;
   useEffect(() => {
     if (data && "scratch" in data && data.scratch) setPrize(data.scratch);
   }, [data]);
 
-  /** Ask for the card once — on mount, so the foil is already live to touch. */
+  /** Ask for the card once, so the foil is live the moment it is touched. */
   useEffect(() => {
     if (locked || applied) return;
     fetcher.submit({ intent: "scratch" }, { method: "post" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Paint the foil. Re-painted on resize so it always covers exactly. */
+  /**
+   * The foil: brown metal with the store's own mark stamped through it in
+   * gold, and a sheen crossing it slowly so it reads as foil rather than a
+   * grey rectangle. Repainted on resize so it always covers exactly.
+   */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !prize || revealed) return;
-    const paint = () => {
+    let frame = 0;
+    let stopped = false;
+    const mark = new Image();
+    let markReady = false;
+    if (logoUrl) {
+      mark.crossOrigin = "anonymous";
+      mark.onload = () => {
+        markReady = true;
+      };
+      mark.src = logoUrl;
+    }
+
+    const paint = (time: number) => {
+      if (stopped || touchedRef.current) return;
       const rect = canvas.getBoundingClientRect();
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.max(1, Math.round(rect.width * ratio));
-      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      if (canvas.width !== Math.round(rect.width * ratio)) {
+        canvas.width = Math.max(1, Math.round(rect.width * ratio));
+        canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      }
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      ctx.scale(ratio, ratio);
-      const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
-      gradient.addColorStop(0, "#3B2A1B");
-      gradient.addColorStop(0.45, "#5B4630");
-      gradient.addColorStop(0.55, "#7A6244");
-      gradient.addColorStop(1, "#3B2A1B");
-      ctx.fillStyle = gradient;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.globalCompositeOperation = "source-over";
+
+      const metal = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+      metal.addColorStop(0, "#2A1D11");
+      metal.addColorStop(0.42, "#4A3626");
+      metal.addColorStop(0.5, "#6B5238");
+      metal.addColorStop(0.58, "#4A3626");
+      metal.addColorStop(1, "#241809");
+      ctx.fillStyle = metal;
       ctx.fillRect(0, 0, rect.width, rect.height);
-      // The store's mark, tiled faintly across the foil.
-      ctx.fillStyle = "rgba(168, 243, 42, .16)";
-      ctx.font = "600 11px system-ui, sans-serif";
-      for (let y = 14; y < rect.height + 14; y += 22) {
-        for (let x = -10; x < rect.width; x += 74) {
-          ctx.fillText("GARDEN BUDDY", x + ((y / 22) % 2) * 36, y);
+
+      // the store's mark, stamped faintly across the foil
+      ctx.globalAlpha = 0.14;
+      if (markReady) {
+        const h = 22;
+        const w = (mark.width / mark.height) * h || 60;
+        for (let y = 6; y < rect.height; y += h + 14) {
+          for (let x = -w; x < rect.width; x += w + 22) {
+            ctx.drawImage(mark, x + (((y / (h + 14)) | 0) % 2) * ((w + 22) / 2), y, w, h);
+          }
+        }
+      } else {
+        ctx.fillStyle = "#FFC72C";
+        ctx.font = "800 11px system-ui, sans-serif";
+        for (let y = 16; y < rect.height + 16; y += 24) {
+          for (let x = -20; x < rect.width; x += 96) {
+            ctx.fillText("GARDEN BUDDY", x + (((y / 24) | 0) % 2) * 48, y);
+          }
         }
       }
-      ctx.fillStyle = "rgba(255,255,255,.92)";
-      ctx.font = "800 14px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("SCRATCH HERE", rect.width / 2, rect.height / 2 + 5);
-    };
-    paint();
-    window.addEventListener("resize", paint);
-    return () => window.removeEventListener("resize", paint);
-  }, [prize, revealed]);
+      ctx.globalAlpha = 1;
 
-  /** How much has been rubbed off — the reveal happens at just over half. */
+      // the sheen, travelling
+      const sweep = ((time / 2600) % 1) * (rect.width * 1.8) - rect.width * 0.4;
+      const sheen = ctx.createLinearGradient(sweep - 60, 0, sweep + 60, rect.height);
+      sheen.addColorStop(0, "rgba(255,255,255,0)");
+      sheen.addColorStop(0.5, "rgba(255, 226, 150, .28)");
+      sheen.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+
+      frame = requestAnimationFrame(paint);
+    };
+
+    // Once a finger is on it the animation stops: an animated layer cannot be
+    // scratched, because every frame would paint the scratches back in.
+    if (!touched) frame = requestAnimationFrame(paint);
+    else paintStatic();
+
+    function paintStatic() {
+      const ctx = canvas!.getContext("2d");
+      if (ctx) ctx.globalCompositeOperation = "destination-out";
+    }
+
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [prize, revealed, touched, logoUrl]);
+
+  /** How much has been rubbed off — it opens at just over half. */
   const measure = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || cleared.current) return;
     const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     let clear = 0;
-    for (let i = 3; i < pixels.length; i += 4 * 16) if (pixels[i]! < 32) clear++;
-    if (clear / (pixels.length / (4 * 16)) > 0.52) {
+    let seen = 0;
+    for (let i = 3; i < pixels.length; i += 4 * 16) {
+      seen++;
+      if (pixels[i]! < 32) clear++;
+    }
+    if (seen && clear / seen > 0.52) {
       cleared.current = true;
       setRevealed(true);
     }
@@ -1709,14 +1749,19 @@ function ScratchCard({
 
   const rub = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (event.buttons === 0 && event.pointerType === "mouse") return;
+    if (!touchedRef.current) {
+      touchedRef.current = true;
+      setTouched(true);
+    }
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const rect = canvas.getBoundingClientRect();
     const ratio = canvas.width / rect.width;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc((event.clientX - rect.left) * ratio, (event.clientY - rect.top) * ratio, 20 * ratio, 0, Math.PI * 2);
+    ctx.arc((event.clientX - rect.left) * ratio, (event.clientY - rect.top) * ratio, 22 * ratio, 0, Math.PI * 2);
     ctx.fill();
     measure();
   };
@@ -1728,38 +1773,47 @@ function ScratchCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealed, prize]);
 
-  if (applied) return null;
+  if (applied || locked) return null;
 
   return (
-    <div className="gb-co__scratch gb-co__glass gb-co__glass--tight">
+    <section className="gb-co__scratch" aria-label="Try your luck">
       <p className="gb-co__scratch-h">Try your luck</p>
-      <p className="gb-co__scratch-sub">Every card wins. Scratch it to see what this order gets.</p>
+      <p className="gb-co__scratch-sub">Every card wins. Scratch to see what this order gets.</p>
 
-      <div className="gb-co__scratch-box">
+      <div className="gb-co__scratch-box" data-won={revealed ? "1" : undefined} data-touched={touched ? "1" : undefined}>
         <div className="gb-co__scratch-prize" aria-live="polite">
           {prize ? (
             <>
               <b>{prize.percent}% off</b>
-              <span>{revealed ? "Applied to this order" : "Rub the panel to reveal"}</span>
+              {revealed ? (
+                <span className="gb-co__scratch-applied">Applied to this order</span>
+              ) : (
+                <span>your discount</span>
+              )}
             </>
           ) : (
             <span>Preparing your card…</span>
           )}
         </div>
         {prize && !revealed ? (
-          <canvas
-            ref={canvasRef}
-            className="gb-co__scratch-foil"
-            onPointerMove={rub}
-            onPointerDown={rub}
-            aria-label="Scratch panel"
-          />
+          <>
+            <canvas
+              ref={canvasRef}
+              className="gb-co__scratch-foil"
+              onPointerMove={rub}
+              onPointerDown={rub}
+              aria-label="Scratch panel"
+            />
+            <span className="gb-co__scratch-hint">SCRATCH</span>
+          </>
         ) : null}
       </div>
 
-      <button type="button" className="gb-co__scratch-odds-btn" onClick={() => setShowOdds((v) => !v)}>
-        {showOdds ? "Hide odds" : "See the odds"}
-      </button>
+      <div className="gb-co__scratch-foot">
+        <button type="button" className="gb-co__scratch-odds-btn" onClick={() => setShowOdds((v) => !v)}>
+          {showOdds ? "Hide odds" : "See the odds"}
+        </button>
+      </div>
       {showOdds ? (
         <ul className="gb-co__scratch-odds">
           {odds.map((o) => (
@@ -1769,11 +1823,12 @@ function ScratchCard({
             </li>
           ))}
           <li className="gb-co__scratch-odds-note">
-            The prize is drawn at random when the card is made, before you scratch it. One card per order.
+            The prize is drawn at random when the card is made, before you scratch it. One card per
+            order.
           </li>
         </ul>
       ) : null}
-    </div>
+    </section>
   );
 }
 
@@ -1911,13 +1966,13 @@ function OnePage({
   paymentsReady,
   paymentsMessage,
   publishableKey,
-  clientSecret,
   appearance,
   trust,
   shell,
   summary,
   under,
   scratchOdds,
+  chrome,
 }: {
   cn: CN;
   store: LoadedStore;
@@ -1926,7 +1981,6 @@ function OnePage({
   paymentsReady: boolean;
   paymentsMessage: string | null;
   publishableKey: string | null;
-  clientSecret: string | null;
   appearance: unknown;
   trust: React.ReactNode;
   /** this skin lays the whole page out from in here, so the wallets can sit
@@ -1937,6 +1991,8 @@ function OnePage({
   under: React.ReactNode;
   /** the published scratch-card odds, straight from the server's table */
   scratchOdds: { percent: number; weight: number }[];
+  /** the header and footer of the white half, when this skin lays out the page */
+  chrome: { header: React.ReactNode; footer: React.ReactNode } | null;
 }) {
   const buddy = cn === BUDDY;
   const fetcher = useFetcher<ActionReply>();
@@ -1954,6 +2010,15 @@ function OnePage({
   const [touched, setTouched] = useState<Errors>({});
   const identified = useRef<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  /**
+   * The payment intent, fetched the moment this page is on screen rather than
+   * before it is sent. The HTML no longer waits on Stripe — measured on the
+   * live store, that was about half a second of blank page — and this request
+   * runs while Stripe's own script is still downloading, so by the time the
+   * form can be drawn the secret is usually already here.
+   */
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [intentError, setIntentError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [wallets, setWallets] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
@@ -2056,7 +2121,13 @@ function OnePage({
       // The card comes first in the code, even though the wallets sit above it
       // on screen. Whatever happens to the wallet row, there must always be a
       // way to pay: a customer with a blank payment box cannot buy anything.
-      const payment = elements.create("payment", { layout: "tabs" });
+      // Radio rows that open when chosen — "pay with card", and any other
+      // method the account has actually enabled — instead of one wall of
+      // fields. Stripe builds the list, so nothing is drawn that cannot be
+      // paid with.
+      const payment = elements.create("payment", {
+        layout: { type: "accordion", defaultCollapsed: false, radios: true, spacedAccordionItems: true },
+      });
       if (cardRef.current) payment.mount(cardRef.current);
 
       // Wallets: a person who has one is done in two taps. The wallet is asked
@@ -2108,16 +2179,44 @@ function OnePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publishableKey, clientSecret]);
 
-  /* The total moved — a discount applied, a quantity changed. The server has
-     already moved the intent to match; this pulls the new amount into the
-     mounted elements so the wallet sheet can never show yesterday's price. */
+  /* Ask for the intent as soon as this page exists. */
+  const askForIntent = useCallback(
+    async (region: string) => {
+      const body = new URLSearchParams();
+      if (region) body.set("region", region);
+      const res = await fetch("/checkout/intent", { method: "POST", body });
+      const data = (await res.json()) as { clientSecret: string | null; error: string | null };
+      if (data.clientSecret) {
+        setClientSecret((current) => current ?? data.clientSecret);
+        setIntentError(null);
+      } else if (data.error) {
+        setIntentError(data.error);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!publishableKey || cart.lines.length === 0) return;
+    askForIntent((params.get("region") ?? "").trim()).catch(() =>
+      setIntentError("The payment could not be started. Please reload the page."),
+    );
+    // Once per page: the intent belongs to the cart, not to a render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publishableKey]);
+
+  /* The total moved — a discount applied, a quantity changed. The intent is
+     moved to the new amount on the server, then the mounted elements are told
+     to re-read it, so the wallet sheet can never show yesterday's price. */
   const lastTotal = useRef(cart.totalCents);
   useEffect(() => {
     if (lastTotal.current === cart.totalCents) return;
     lastTotal.current = cart.totalCents;
     setServerTotal(null);
     setRepriced(false);
-    elementsRef.current?.fetchUpdates?.();
+    void askForIntent((params.get("region") ?? "").trim())
+      .then(() => elementsRef.current?.fetchUpdates?.())
+      .catch(() => undefined);
   }, [cart.totalCents]);
 
   /** Reads the typed fields. The amounts are not among them — they are the
@@ -2229,7 +2328,7 @@ function OnePage({
 
   /* No intent, no form. A page that cannot take money does not draw a box
      that looks like it can. */
-  if (!paymentsReady || !publishableKey || !clientSecret) {
+  if (!paymentsReady || !publishableKey) {
     const stopped = (
       <div>
         <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
@@ -2244,13 +2343,16 @@ function OnePage({
     );
     if (!shell) return stopped;
     return (
-      <div className="gb-co__grid">
-        <div className="gb-co__main">{stopped}</div>
-        <aside className="gb-co__aside">
-          <div className="gb-co__sum gb-co__glass">
-            <h2 className="gb-co__h3">Order summary</h2>
-            {summary}
+      <div className="gb-co-split">
+        <div className="gb-co__pane">
+          <div className="gb-co__pane-in">
+            {chrome?.header}
+            {stopped}
           </div>
+          {chrome?.footer}
+        </div>
+        <aside className="gb-co__rail" aria-label="Order summary">
+          <div className="gb-co__rail-in">{summary}</div>
         </aside>
       </div>
     );
@@ -2263,7 +2365,7 @@ function OnePage({
   const express = (
     <>
       <section
-        className={buddy ? "gb-co__express gb-co__glass" : undefined}
+        className={buddy ? "gb-co__express" : undefined}
         style={wallets ? undefined : { display: "none" }}
         aria-label="Express checkout"
       >
@@ -2288,7 +2390,7 @@ function OnePage({
   );
 
   const section = (title: string, note: string | null, children: React.ReactNode) => (
-    <section className={buddy ? "gb-co__sec gb-co__glass" : undefined} style={buddy ? undefined : { marginTop: 26 }}>
+    <section className={buddy ? "gb-co__sec" : undefined} style={buddy ? undefined : { marginTop: 26 }}>
       <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
         {title}
       </h2>
@@ -2307,8 +2409,8 @@ function OnePage({
       }}
     >
       {section(
-        "Contact",
-        null,
+        "Delivery",
+        "Where the order goes, and where the receipt goes.",
         <>
           <ContactFields cn={cn} shownError={shownError} onField={onField} onBlur={onBlur} />
           {store.consent ? (
@@ -2325,27 +2427,37 @@ function OnePage({
               Email me with news and offers
             </label>
           ) : null}
+          <div style={{ height: 9 }} />
+          <DeliveryFields
+            cn={cn}
+            store={store}
+            values={values}
+            shownError={shownError}
+            onField={onField}
+            onBlur={onBlur}
+          />
         </>,
-      )}
-
-      {section(
-        "Delivery",
-        null,
-        <DeliveryFields
-          cn={cn}
-          store={store}
-          values={values}
-          shownError={shownError}
-          onField={onField}
-          onBlur={onBlur}
-        />,
       )}
 
       {section(
         "Payment",
         "All transactions are secure and encrypted.",
         <>
-          <div className={buddy ? "gb-co__card" : undefined} ref={cardRef} style={buddy ? undefined : { minHeight: 200 }} />
+          {/* Stripe mounts into the box below. It is never hidden — an element
+              with no size measures wrong — so while the secret is on its way
+              the waiting state is laid over the top of it. */}
+          <div className={buddy ? "gb-co__card" : undefined} style={{ position: "relative", minHeight: buddy ? undefined : 200 }}>
+            <div ref={cardRef} />
+            {!ready ? (
+              <div
+                className="gb-co__card--wait"
+                style={{ position: "absolute", inset: 0, background: "#fff", borderRadius: 8 }}
+                aria-live="polite"
+              >
+                {intentError ? intentError : <span className="gb-co__skel" />}
+              </div>
+            ) : null}
+          </div>
 
           {/* Stripe's own words, under Stripe's own fields — a declined card is
               about what is in that box, not about the page. */}
@@ -2395,30 +2507,39 @@ function OnePage({
     );
   }
 
+  /* The rail: everything about the order, in the order he asked for — what
+     is being bought, the discount, the protection, the totals, the scratch
+     card, then the suggestions. On a phone this is the folded summary at the
+     top of the page instead, so the first thing on screen is still the
+     wallet button. */
+  const rail = (
+    <>
+      {summary}
+      <ScratchCard odds={scratchOdds} applied={cart.discount?.code ?? null} locked={false} logoUrl={store.logoUrl} />
+      {under}
+    </>
+  );
+
   return (
-    <div className="gb-co__grid">
-      <div className="gb-co__main">
-        {express}
-        <ScratchCard odds={scratchOdds} applied={cart.discount?.code ?? null} locked={false} />
-        <details className="gb-co__msum gb-co__glass gb-co__glass--tight">
-          <summary>
-            <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
-            Order summary
-            <span className="gb-co__msum-total">{money(total)}</span>
-          </summary>
-          <div className="gb-co__msum-body">
-            {summary}
-            {under}
-          </div>
-        </details>
-        {form}
-      </div>
-      <aside className="gb-co__aside">
-        <div className="gb-co__sum gb-co__glass">
-          <h2 className="gb-co__h3">Order summary</h2>
-          {summary}
+    <div className="gb-co-split">
+      <div className="gb-co__pane">
+        <div className="gb-co__pane-in">
+          {chrome?.header}
+          <details className="gb-co__msum">
+            <summary>
+              <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
+              Order summary
+              <span className="gb-co__msum-total">{money(total)}</span>
+            </summary>
+            <div className="gb-co__msum-body">{rail}</div>
+          </details>
+          {express}
+          {form}
         </div>
-        {under}
+        {chrome?.footer}
+      </div>
+      <aside className="gb-co__rail" aria-label="Order summary">
+        <div className="gb-co__rail-in">{rail}</div>
       </aside>
     </div>
   );

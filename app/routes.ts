@@ -13,6 +13,7 @@ export default [
   // Checkout posts the email here the moment it is completed, so the cart has
   // a person on it before an order exists.
   route("checkout/identify", "routes/checkout.identify.tsx"),
+  route("checkout/intent", "routes/checkout.intent.tsx"),
   route("thanks", "routes/thanks.tsx"),
   route("pages/:handle", "routes/pages.$handle.tsx"),
   // The shapes Shopify used. Old links stay alive rather than dying in the
