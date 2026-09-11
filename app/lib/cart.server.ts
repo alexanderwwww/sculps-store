@@ -274,3 +274,37 @@ export async function markCartConverted(
     .set({ status: "converted", orderId, updatedAt: new Date() })
     .where(and(eq(carts.token, token), eq(carts.storeId, storeId)));
 }
+
+/**
+ * The PaymentIntent this cart is paying with.
+ *
+ * Checkout is one page, so the intent is made when the page loads rather than
+ * when the details are submitted. Keeping its id on the cart row is what makes
+ * a reload reuse the intent it already has: the amount is updated when the
+ * total moves, and Stripe is not left holding an abandoned intent per refresh.
+ */
+export async function cartPaymentIntentId(
+  db: DB,
+  storeId: string,
+  token: string | null,
+): Promise<string | null> {
+  const row = await loadCartRow(db, storeId, token);
+  return row?.paymentIntentId ?? null;
+}
+
+export async function setCartPaymentIntentId(
+  db: DB,
+  storeId: string,
+  token: string,
+  intentId: string | null,
+): Promise<void> {
+  const existing = await loadCartRow(db, storeId, token);
+  if (existing) {
+    await db
+      .update(carts)
+      .set({ paymentIntentId: intentId, updatedAt: new Date() })
+      .where(eq(carts.id, existing.id));
+  } else {
+    await db.insert(carts).values({ storeId, token, items: [], status: "open", paymentIntentId: intentId });
+  }
+}

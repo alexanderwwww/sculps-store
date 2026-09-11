@@ -1,9 +1,16 @@
 /**
  * Checkout, on our own domain.
  *
- * Two steps in one page: the customer's details, then Stripe's payment element
- * mounted with a client secret for an amount computed on the server. The
- * browser never tells us what anything costs.
+ * One page, the way Shopify's is: the wallets at the top, the contact and
+ * shipping fields under them, the card fields under those, and one button that
+ * pays. Nothing is behind a "continue" step.
+ *
+ * That shape needs the PaymentIntent to exist before anyone has typed
+ * anything, because a wallet button cannot be drawn without one. So the loader
+ * makes it — for an amount computed on the server, from the cart row — and
+ * keeps its id on the cart so a reload reuses it instead of littering Stripe
+ * with one intent per refresh. When the total moves, that same intent is moved
+ * with it. The browser still never tells us what anything costs.
  *
  * The order row is written before payment is confirmed, with paymentStatus
  * "pending". An order that exists and is unpaid is recoverable; a payment with
@@ -15,18 +22,34 @@
  * It used to import the garden kneeler stylesheet unconditionally, so every
  * store's checkout came out brown.
  */
-import { Form, Link, useFetcher, useNavigation } from "react-router";
+import { Link, useFetcher, useRevalidator } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import type { Route } from "./+types/checkout";
 import { resolveStore, storeNav } from "~/lib/store.server";
 import type { NavLink } from "~/lib/store.server";
 import { liveTheme } from "~/lib/admin.server";
-import { readCartToken, priceCart, markCartConverted, setCartDiscount, newCartToken, cartCookie } from "~/lib/cart.server";
+import {
+  readCartToken,
+  priceCart,
+  markCartConverted,
+  setCartDiscount,
+  newCartToken,
+  cartCookie,
+  cartPaymentIntentId,
+  setCartPaymentIntentId,
+} from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
-import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
-import { placeOrder } from "~/lib/admin.server";
+import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
+import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { deviceFromRequest, geoFromRequest, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
-import { metaConfig, pages as pagesTable, sections as sectionsTable, blocks as blocksTable } from "~/db/schema";
+import {
+  metaConfig,
+  orders as ordersTable,
+  orderItems as orderItemsTable,
+  pages as pagesTable,
+  sections as sectionsTable,
+  blocks as blocksTable,
+} from "~/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { pixelScript, readMetaCookies, trackFunnelEvent } from "~/lib/meta.server";
 import { formatMoney } from "~/lib/money";
@@ -96,24 +119,74 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const store = await resolveStore(context.db, context.hostname, url);
   if (!store) throw new Response("No store for this domain.", { status: 404 });
 
-  const cart = await priceCart(context.db, store, readCartToken(request));
+  const token = readCartToken(request);
+  const cart = await priceCart(context.db, store, token);
 
   let paymentsReady = true;
   let paymentsMessage: string | null = null;
   let publishableKey: string | null = null;
+  let clientSecret: string | null = null;
+
   try {
     const provider = await providerForStore(context.db, context.cloudflare.env, store.id);
     publishableKey = provider.publishableKey;
     if (!publishableKey) {
       paymentsReady = false;
       paymentsMessage = "This store has no Stripe publishable key set in Settings → Payments.";
+    } else if (cart.lines.length && token) {
+      // The intent exists before anything is typed, because that is the only
+      // way a wallet button can be drawn at all. Its amount is this cart's
+      // total, worked out above from the database.
+      const existingId = await cartPaymentIntentId(context.db, store.id, token);
+      let intent = null;
+      if (existingId) {
+        try {
+          const found = await provider.readIntent(existingId);
+          // An intent that has already been paid, or is being paid, belongs to
+          // a charge that happened. It is never reused or written over.
+          if (PAYABLE_INTENT_STATUSES.has(found.status)) intent = found;
+        } catch {
+          // Gone from Stripe (wrong account, deleted test data). Make a new one.
+          intent = null;
+        }
+      }
+
+      if (intent) {
+        if (intent.amountCents !== cart.totalCents) {
+          intent = await provider.updateIntent(intent.id, {
+            amountCents: cart.totalCents,
+            currency: cart.currency,
+          });
+        }
+      } else {
+        intent = await provider.createIntent({
+          amountCents: cart.totalCents,
+          currency: cart.currency,
+          orderReference: `${store.name} order`,
+          metadata: { storeId: store.id },
+        });
+        await setCartPaymentIntentId(context.db, store.id, token, intent.id);
+      }
+
+      clientSecret = intent.clientSecret;
     }
   } catch (error) {
     paymentsReady = false;
+    clientSecret = null;
     paymentsMessage =
       error instanceof PaymentsNotConfigured
         ? error.message
-        : "Payments are not available right now.";
+        : `Payments are not available right now: ${
+            error instanceof Error ? error.message : "Stripe did not answer."
+          }`;
+  }
+
+  // A cart with something in it and no client secret means the payment could
+  // not be started. The page says so rather than drawing a form that cannot
+  // take money.
+  if (paymentsReady && cart.lines.length && !clientSecret) {
+    paymentsReady = false;
+    paymentsMessage = "The payment could not be started, so there is nothing here to pay with yet.";
   }
 
   // Reaching checkout is itself the event, the way Shopify counts it: the
@@ -187,6 +260,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     paymentsReady,
     paymentsMessage,
     publishableKey,
+    clientSecret,
+    returnTo: `${url.origin}/thanks`,
   };
 }
 

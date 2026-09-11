@@ -17,7 +17,20 @@ export interface PaymentIntent {
   id: string;
   clientSecret: string;
   status: string;
+  /** what Stripe currently holds this intent at, in the smallest unit */
+  amountCents: number;
 }
+
+/**
+ * The statuses an intent can still be paid from. Anything else — succeeded,
+ * processing, canceled — belongs to a payment that has already happened, so
+ * checkout starts a fresh one rather than writing over it.
+ */
+export const PAYABLE_INTENT_STATUSES = new Set([
+  "requires_payment_method",
+  "requires_confirmation",
+  "requires_action",
+]);
 
 export interface RefundResult {
   id: string;
@@ -31,10 +44,26 @@ export interface PaymentProvider {
   createIntent(input: {
     amountCents: number;
     currency: string;
-    email: string;
+    /** not known yet when the intent is made on page load */
+    email?: string | null;
     orderReference: string;
     metadata?: Record<string, string>;
   }): Promise<PaymentIntent>;
+  /**
+   * Moves an existing intent to a new amount — and, once checkout knows them,
+   * the receipt address and the metadata. One intent per cart: the total
+   * changing must never leave a second intent behind, and must never let the
+   * old amount reach confirmation.
+   */
+  updateIntent(
+    intentId: string,
+    input: {
+      amountCents?: number;
+      currency?: string;
+      email?: string | null;
+      metadata?: Record<string, string>;
+    },
+  ): Promise<PaymentIntent>;
   capture(intentId: string): Promise<PaymentIntent>;
   refund(intentId: string, amountCents: number | undefined, idempotencyKey: string): Promise<RefundResult>;
   readIntent(intentId: string): Promise<PaymentIntent>;
@@ -123,7 +152,7 @@ class StripeProvider implements PaymentProvider {
   async createIntent(input: {
     amountCents: number;
     currency: string;
-    email: string;
+    email?: string | null;
     orderReference: string;
     metadata?: Record<string, string>;
   }): Promise<PaymentIntent> {
@@ -132,25 +161,47 @@ class StripeProvider implements PaymentProvider {
       currency: input.currency.toLowerCase(),
       "automatic_payment_methods[enabled]": "true",
       capture_method: this.manualCapture ? "manual" : "automatic",
-      receipt_email: input.email,
       description: input.orderReference,
     };
+    if (input.email) body.receipt_email = input.email;
     for (const [key, value] of Object.entries(input.metadata ?? {})) {
       body[`metadata[${key}]`] = value;
     }
 
     const intent = await this.call("payment_intents", body);
-    return { id: intent.id, clientSecret: intent.client_secret, status: intent.status };
+    return toIntent(intent);
+  }
+
+  async updateIntent(
+    intentId: string,
+    input: {
+      amountCents?: number;
+      currency?: string;
+      email?: string | null;
+      metadata?: Record<string, string>;
+    },
+  ): Promise<PaymentIntent> {
+    const body: Record<string, string> = {};
+    if (input.amountCents !== undefined) body.amount = String(input.amountCents);
+    if (input.currency) body.currency = input.currency.toLowerCase();
+    if (input.email) body.receipt_email = input.email;
+    for (const [key, value] of Object.entries(input.metadata ?? {})) {
+      body[`metadata[${key}]`] = value;
+    }
+    // Nothing to change is not a reason to spend a round trip.
+    if (!Object.keys(body).length) return this.readIntent(intentId);
+    const intent = await this.call(`payment_intents/${intentId}`, body);
+    return toIntent(intent);
   }
 
   async capture(intentId: string): Promise<PaymentIntent> {
     const intent = await this.call(`payment_intents/${intentId}/capture`, {});
-    return { id: intent.id, clientSecret: intent.client_secret, status: intent.status };
+    return toIntent(intent);
   }
 
   async readIntent(intentId: string): Promise<PaymentIntent> {
     const intent = await this.call(`payment_intents/${intentId}`);
-    return { id: intent.id, clientSecret: intent.client_secret, status: intent.status };
+    return toIntent(intent);
   }
 
   async testConnection(): Promise<{ ok: true; account: string } | { ok: false; reason: string }> {
@@ -171,4 +222,14 @@ class StripeProvider implements PaymentProvider {
     const refund = await this.call("refunds", body, idempotencyKey);
     return { id: refund.id, status: refund.status, amountCents: refund.amount };
   }
+}
+
+/** Stripe's intent shape, narrowed to the four things anything here needs. */
+function toIntent(intent: any): PaymentIntent {
+  return {
+    id: intent.id,
+    clientSecret: intent.client_secret,
+    status: intent.status,
+    amountCents: Number(intent.amount ?? 0),
+  };
 }

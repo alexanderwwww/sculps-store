@@ -430,6 +430,14 @@ export const carts = pgTable(
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
     /** the discount code applied to this cart, so it survives a reload */
     discountCode: text("discount_code"),
+    /**
+     * The Stripe PaymentIntent this cart is paying with.
+     *
+     * Kept on the cart so a reload of the one-page checkout reuses the intent
+     * it already has — its amount is updated when the total moves — instead of
+     * leaving a trail of abandoned intents behind every refresh.
+     */
+    paymentIntentId: text("payment_intent_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
