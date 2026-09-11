@@ -598,20 +598,23 @@
 .gb-drawer .gb-co__input:focus{border-color:var(--brown);box-shadow:0 0 0 1px var(--brown)}
 .gb-drawer .gb-co__err{display:block;color:#B3341C;font-size:13px}
 
-/* On a phone the bundle cards were tall and the picture tiny. Half the
-   padding, the type a size down, and the picture the thing you notice. */
+/* On a phone: a short card, the picture big on the right. The radio, then
+   the name with the price under it, then the photo filling the height of the
+   card on the right-hand side. */
 @media(max-width:640px){
   .gb-packs{gap:7px}
-  .gb-pack{padding:9px 12px;gap:6px;border-radius:11px}
+  .gb-pack{padding:7px 10px 7px 12px;gap:0;border-radius:11px}
   .gb-pack.is-flagged{margin-top:9px}
-  .gb-pack__head{gap:10px;min-height:56px}
-  .gb-pack__thumb{width:56px;height:56px}
-  .gb-pack__mark{width:20px;height:20px}
+  .gb-pack__head{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"mark body thumb" "mark price thumb";column-gap:10px;row-gap:2px;align-items:center;min-height:0}
+  .gb-pack__mark{grid-area:mark;width:20px;height:20px}
   .gb-pack.is-selected .gb-pack__mark:after{width:10px;height:10px}
-  .gb-pack__name{font-size:16px}
-  .gb-pack__incl,.gb-product .gb-pack__each{font-size:12.5px}
-  .gb-pack__now{font-size:21px}
-  .gb-pack__was{font-size:13px}
-  .gb-pack__save{font-size:11px;padding:3px 9px}
+  .gb-pack__body{grid-area:body;align-self:end}
+  .gb-pack__price{grid-area:price;justify-items:start;text-align:left;align-self:start;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 8px}
+  .gb-pack__thumb{grid-area:thumb;width:72px;height:72px;border-radius:10px;align-self:center}
+  .gb-pack__name{font-size:16px;line-height:1.15}
+  .gb-pack__incl,.gb-product .gb-pack__each{font-size:12px;line-height:1.25}
+  .gb-pack__now{font-size:20px}
+  .gb-pack__was{font-size:12.5px}
+  .gb-pack__save{font-size:10.5px;padding:2px 8px}
   .gb-pack__flag{top:-11px;left:12px;font-size:10.5px;padding:3px 10px}
 }
