@@ -1257,33 +1257,44 @@ function OnePage({
       stripeRef.current = stripe;
       elementsRef.current = elements;
 
-      // Wallets first, because a person who has one is done in two taps. The
-      // wallet is asked for the address as well, because it is the only address
-      // that flow ever has — and the order cannot be shipped without one.
-      const express = elements.create("expressCheckout", {
-        buttonHeight: 56,
-        emailRequired: true,
-        phoneNumberRequired: store.phoneMode === "required",
-        billingAddressRequired: true,
-      });
-
-      express.on("ready", (event: any) => {
-        const available = event?.availablePaymentMethods;
-        const any = available && Object.values(available).some(Boolean);
-        if (!cancelled) setWallets(Boolean(any));
-      });
-
-      express.on("confirm", async (event: any) => {
-        setPayError(null);
-        setWorking(true);
-        const done = await payWithWallet(event);
-        if (!done) setWorking(false);
-      });
-
-      if (walletRef.current) express.mount(walletRef.current);
-
-      const payment = elements.create("payment");
+      // The card comes first in the code, even though the wallets sit above it
+      // on screen. Whatever happens to the wallet row, there must always be a
+      // way to pay: a customer with a blank payment box cannot buy anything.
+      const payment = elements.create("payment", { layout: "tabs" });
       if (cardRef.current) payment.mount(cardRef.current);
+
+      // Wallets: a person who has one is done in two taps. The wallet is asked
+      // for the address too, because it is the only address that flow ever has
+      // and the order cannot be shipped without one.
+      try {
+        const express = elements.create("expressCheckout", {
+          // Stripe accepts 40–55 here and throws outside it.
+          buttonHeight: 52,
+          emailRequired: true,
+          phoneNumberRequired: store.phoneMode === "required",
+          billingAddressRequired: true,
+        });
+
+        express.on("ready", (event: any) => {
+          const available = event?.availablePaymentMethods;
+          const any = available && Object.values(available).some(Boolean);
+          if (!cancelled) setWallets(Boolean(any));
+        });
+
+        express.on("confirm", async (event: any) => {
+          setPayError(null);
+          setWorking(true);
+          const done = await payWithWallet(event);
+          if (!done) setWorking(false);
+        });
+
+        if (walletRef.current) express.mount(walletRef.current);
+      } catch (error) {
+        // No wallet row, and nothing said about it — the card is already there
+        // and that is what matters.
+        console.error("Express checkout unavailable", error);
+        if (!cancelled) setWallets(false);
+      }
 
       if (!cancelled) setReady(true);
     };
