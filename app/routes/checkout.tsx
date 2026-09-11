@@ -2600,7 +2600,19 @@ function OnePage({
   /** the fallback wallet's request object, so its total can follow the cart */
   const requestRef = useRef<any>(null);
   const walletsAnsweredRef = useRef(false);
-  const [payError, setPayError] = useState<string | null>(null);
+  const [payError, setPayErrorState] = useState<string | null>(null);
+  /**
+   * Every sentence shown at the pay button is also reported, so a failed
+   * attempt can be read here instead of retold from memory. The order, the
+   * intent and the wallet's own report already are; this was the gap.
+   */
+  const setPayError = useCallback(
+    (message: string | null) => {
+      setPayErrorState(message);
+      if (message) report("pay-error", message);
+    },
+    [report],
+  );
   const [working, setWorking] = useState(false);
   /** the server's figure when it differs from the one the page loaded with */
   const [serverTotal, setServerTotal] = useState<number | null>(null);
