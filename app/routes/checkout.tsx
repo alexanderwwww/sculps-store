@@ -1034,7 +1034,8 @@ const BUDDY_APPEARANCE = {
     colorDanger: "#B3341C",
     colorBackground: "#ffffff",
     fontSizeBase: "16px",
-    borderRadius: "10px",
+    // Rounds Stripe's own boxes and, in the express row, the wallet buttons.
+    borderRadius: "999px",
     spacingUnit: "4px",
   },
 };
@@ -2325,6 +2326,8 @@ function OnePage({
   const [wallets, setWallets] = useState(false);
   /** Stripe has said something about wallets — until then, show the space. */
   const [walletsAnswered, setWalletsAnswered] = useState(false);
+  /** the payment section, so "Pay with card" has somewhere to scroll to */
+  const paymentRef = useRef<HTMLDivElement | null>(null);
   const walletsAnsweredRef = useRef(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -2385,6 +2388,24 @@ function OnePage({
   };
 
   const total = serverTotal ?? cart.totalCents;
+
+  /**
+   * "Pay with card" — not a payment, a shortcut. It puts the payment section
+   * on screen and opens the card row inside Stripe's own list, so the person
+   * who was never going to tap a wallet is typing a number one press later.
+   */
+  const goToCard = () => {
+    try {
+      paymentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Stripe's accordion opens on its own when a method is selected; this
+      // is the same selection, made for them.
+      const element = elementsRef.current?.getElement?.("payment");
+      element?.collapse?.();
+      window.setTimeout(() => element?.focus?.(), 260);
+    } catch {
+      /* the scroll is the part that matters */
+    }
+  };
 
   /* Hand the action's answer back to whoever is waiting on it. */
   useEffect(() => {
@@ -2486,7 +2507,11 @@ function OnePage({
           rich
             ? {
                 // Stripe accepts 40–55 here and throws outside it.
-                buttonHeight: 55,
+                buttonHeight: 48,
+                // Black, like Apple Pay's, instead of Google's white pill —
+                // two buttons that look like a pair rather than two brands
+                // arguing.
+                buttonTheme: { googlePay: "black", applePay: "black", paypal: "black" },
                 // Every wallet laid out at once. Stripe's default folds them
                 // into a "See more" menu, which is how Google Pay ended up
                 // hidden on his own checkout.
@@ -2507,7 +2532,7 @@ function OnePage({
                 phoneNumberRequired: store.phoneMode !== "hidden",
                 billingAddressRequired: true,
               }
-            : { buttonHeight: 55 },
+            : { buttonHeight: 48 },
         );
 
       let express: any = null;
@@ -2794,7 +2819,7 @@ function OnePage({
 
       const button = elements.create("paymentRequestButton", {
         paymentRequest: request,
-        style: { paymentRequestButton: { type: "buy", theme: "dark", height: "55px" } },
+        style: { paymentRequestButton: { type: "buy", theme: "dark", height: "48px" } },
       });
       if (walletRef.current) {
         button.mount(walletRef.current);
@@ -2937,11 +2962,26 @@ function OnePage({
         <p className={buddy ? "gb-co__express-lead" : undefined} style={buddy ? undefined : { textAlign: "center" }}>
           Express checkout
         </p>
-        <div
-          className={buddy ? "gb-co__express-row" : undefined}
-          data-waiting={wallets ? undefined : "1"}
-          ref={walletRef}
-        />
+        <div className={buddy ? "gb-co__express-grid" : undefined}>
+          <div
+            className={buddy ? "gb-co__express-row" : undefined}
+            data-waiting={wallets ? undefined : "1"}
+            ref={walletRef}
+          />
+          {/* Our own, next to theirs: the same shape and the same height, for
+              the customer who is not going to use a wallet and should not
+              have to scroll to work that out. It does not pay anything — it
+              takes them to the card fields and opens them. */}
+          {buddy ? (
+            <button type="button" className="gb-co__express-card" onClick={goToCard}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <rect x="2.5" y="5" width="19" height="14" rx="2.6" />
+                <path d="M2.5 9.5h19" />
+              </svg>
+              Pay with card
+            </button>
+          ) : null}
+        </div>
         {buddy ? (
           <p className="gb-co__express-note">
             Pay with the card already on your phone — your address comes with it, so there is
@@ -3018,6 +3058,7 @@ function OnePage({
         "Payment",
         "All transactions are secure and encrypted.",
         <>
+          <div ref={paymentRef} style={{ scrollMarginTop: 12 }} />
           {/* Stripe mounts into the box below. It is never hidden — an element
               with no size measures wrong — so while the secret is on its way
               the waiting state is laid over the top of it. */}
