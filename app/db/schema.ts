@@ -930,3 +930,25 @@ export const scratchPlays = pgTable(
   },
   (t) => [uniqueIndex("scratch_plays_cart_idx").on(t.storeId, t.cartToken)],
 );
+
+/**
+ * Something went wrong in a customer's browser.
+ *
+ * Written by the checkout when a wallet fails to draw, a script fails to
+ * load, or anything else that only exists on the other side of the screen.
+ * Without it the only evidence is the owner saying "it did not render", which
+ * is not enough to fix anything. No personal data: what broke, what it said,
+ * and which browser said it.
+ */
+export const clientEvents = pgTable(
+  "client_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id").references(() => stores.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    detail: text("detail"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("client_events_store_idx").on(t.storeId, t.createdAt)],
+);

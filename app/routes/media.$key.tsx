@@ -33,12 +33,35 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
   // A range request is how a browser scrubs a video. Without honouring it the
   // whole file is sent for every seek.
   const range = request.headers.get("Range");
-  const object = await bucket.get(key, range ? { range: request.headers } : undefined);
+
+  /**
+   * The same picture, a tenth of the weight.
+   *
+   * The store's photography arrived as PNGs straight off the old platform —
+   * 2.5MB each, 49MB across the shop — and that, not the code, was the 3.6
+   * second largest-paint the store's own vitals were reporting. A WebP copy
+   * of every one of them sits beside it under the same key with `.webp` on
+   * the end, and any browser that says it can read WebP (every browser made
+   * this decade) is given that instead. The original stays exactly where it
+   * was for anything that cannot, so nothing can break: worst case, a browser
+   * gets the same file it got yesterday.
+   */
+  const wantsWebp = (request.headers.get("Accept") ?? "").includes("image/webp");
+  const isImage = /\.(png|jpe?g)$/i.test(key);
+  let object = null;
+  if (wantsWebp && isImage && !range) {
+    object = await bucket.get(`${key}.webp`);
+  }
+  const servedWebp = Boolean(object);
+  if (!object) object = await bucket.get(key, range ? { range: request.headers } : undefined);
   if (!object) throw new Response("Not found", { status: 404 });
 
-  const extension = key.split(".").pop()?.toLowerCase() ?? "";
+  const extension = servedWebp ? "webp" : (key.split(".").pop()?.toLowerCase() ?? "");
   const headers = new Headers({
     "Content-Type": TYPES[extension] ?? object.httpMetadata?.contentType ?? "application/octet-stream",
+    // Two different files answer the same URL depending on this header, so
+    // every cache between here and the browser has to key on it.
+    Vary: "Accept",
     "Cache-Control": "public, max-age=31536000, immutable",
     ETag: object.httpEtag,
     "Accept-Ranges": "bytes",

@@ -1652,6 +1652,91 @@ function Upsell({
  * the same card back. The odds are printed under the card because a prize
  * promotion that hides its odds is the kind that gets an account closed.
  */
+/**
+ * The sound of the card.
+ *
+ * Made in the browser rather than downloaded: a checkout that has to fetch
+ * two audio files before it can feel good is a checkout that got slower for a
+ * nice-to-have. The scratch is filtered noise, shaped to the movement; the
+ * win is two soft bell notes a fifth apart, which is the interval that reads
+ * as "good news" in every phone in the world.
+ *
+ * Browsers refuse to make sound until the person has touched the page, which
+ * here they have — they are scratching it.
+ */
+function useScratchSound() {
+  const ctxRef = useRef<AudioContext | null>(null);
+  const lastRef = useRef(0);
+
+  const context = () => {
+    if (!ctxRef.current) {
+      const Ctor = (window as any).AudioContext ?? (window as any).webkitAudioContext;
+      if (!Ctor) return null;
+      ctxRef.current = new Ctor();
+    }
+    if (ctxRef.current?.state === "suspended") void ctxRef.current.resume();
+    return ctxRef.current;
+  };
+
+  /** A short rasp, at most every 90ms so a fast drag does not become a roar. */
+  const scratch = useCallback(() => {
+    const now = Date.now();
+    if (now - lastRef.current < 90) return;
+    lastRef.current = now;
+    try {
+      const audio = context();
+      if (!audio) return;
+      const length = Math.floor(audio.sampleRate * 0.09);
+      const buffer = audio.createBuffer(1, length, audio.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i++) {
+        // noise that fades out, so it reads as one stroke rather than static
+        data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 2;
+      }
+      const source = audio.createBufferSource();
+      source.buffer = buffer;
+      const filter = audio.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = 1700 + Math.random() * 600;
+      filter.Q.value = 0.8;
+      const gain = audio.createGain();
+      gain.gain.value = 0.06;
+      source.connect(filter).connect(gain).connect(audio.destination);
+      source.start();
+    } catch {
+      /* sound is never worth an error */
+    }
+  }, []);
+
+  /** Two bell notes: the reveal. */
+  const win = useCallback(() => {
+    try {
+      const audio = context();
+      if (!audio) return;
+      const at = audio.currentTime;
+      [
+        [880, 0],
+        [1318.5, 0.11],
+      ].forEach(([frequency, delay]) => {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = "sine";
+        osc.frequency.value = frequency!;
+        gain.gain.setValueAtTime(0.0001, at + delay!);
+        gain.gain.exponentialRampToValueAtTime(0.16, at + delay! + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + delay! + 0.55);
+        osc.connect(gain).connect(audio.destination);
+        osc.start(at + delay!);
+        osc.stop(at + delay! + 0.6);
+      });
+    } catch {
+      /* sound is never worth an error */
+    }
+  }, []);
+
+  return { scratch, win };
+}
+
 function ScratchCard({
   odds,
   applied,
@@ -1673,6 +1758,7 @@ function ScratchCard({
   const [touched, setTouched] = useState(false);
   const [showOdds, setShowOdds] = useState(false);
   const cleared = useRef(false);
+  const sound = useScratchSound();
   /** set the instant a finger lands, so the sheen stops before it can paint
       over the first scratch — state lands a render too late for that. */
   const touchedRef = useRef(false);
@@ -1684,7 +1770,11 @@ function ScratchCard({
 
   /* Both halves have to be true: scratched off, and an answer in hand. */
   useEffect(() => {
-    if (scratchedThrough && prize) setRevealed(true);
+    if (scratchedThrough && prize && !revealed) {
+      setRevealed(true);
+      sound.win();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scratchedThrough, prize]);
 
   /**
@@ -1820,6 +1910,7 @@ function ScratchCard({
     ctx.beginPath();
     ctx.arc((event.clientX - rect.left) * ratio, (event.clientY - rect.top) * ratio, 28 * ratio, 0, Math.PI * 2);
     ctx.fill();
+    sound.scratch();
     // A drag that leaves the panel and comes back would otherwise stop
     // erasing; the pointer is captured so the whole gesture belongs to it.
     if (event.type === "pointerdown") canvas.setPointerCapture?.(event.pointerId);
@@ -2077,10 +2168,35 @@ function OnePage({
    * runs while Stripe's own script is still downloading, so by the time the
    * form can be drawn the secret is usually already here.
    */
+  /**
+   * Tell the shop when something in the browser goes wrong here.
+   *
+   * The wallet row lives or dies inside a browser I cannot open from this
+   * machine, so the alternative to this is guessing, and guessing has already
+   * cost him a day. Nothing personal is sent: what failed, what it said, and
+   * which browser.
+   */
+  const report = useCallback((kind: string, detail: unknown) => {
+    try {
+      const text = detail instanceof Error ? detail.message : typeof detail === "string" ? detail : JSON.stringify(detail);
+      console.warn(`[checkout] ${kind}`, detail);
+      navigator.sendBeacon?.(
+        "/checkout/diag",
+        new Blob([new URLSearchParams({ kind, detail: String(text).slice(0, 500) }).toString()], {
+          type: "application/x-www-form-urlencoded",
+        }),
+      );
+    } catch {
+      /* reporting must never break the page it is reporting on */
+    }
+  }, []);
+
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentError, setIntentError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [wallets, setWallets] = useState(false);
+  /** Stripe has said something about wallets — until then, show the space. */
+  const [walletsAnswered, setWalletsAnswered] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   /** the server's figure when it differs from the one the page loaded with */
@@ -2206,57 +2322,86 @@ function OnePage({
       // Wallets: a person who has one is done in two taps. The wallet is asked
       // for the address too, because it is the only address that flow ever has
       // and the order cannot be shipped without one.
+      /**
+       * The wallet row, built so that it cannot end up empty.
+       *
+       * Every option below is a request, not a requirement: a Stripe.js that
+       * does not know one of them throws, and a throw used to take the whole
+       * row with it — which is exactly what "express checkout did not render
+       * at all" looks like. So it is created with everything asked for, and
+       * if that fails it is created again with nothing but a height, which
+       * every version accepts. One of the two always mounts.
+       *
+       * Whatever goes wrong is reported to the shop, because this is a
+       * browser I cannot open from here and a guess about it is worth
+       * nothing.
+       */
+      const makeExpress = (rich: boolean) =>
+        elements.create(
+          "expressCheckout",
+          rich
+            ? {
+                // Stripe accepts 40–55 here and throws outside it.
+                buttonHeight: 55,
+                // Every wallet laid out at once. Stripe's default folds them
+                // into a "See more" menu, which is how Google Pay ended up
+                // hidden on his own checkout.
+                layout: { maxColumns: 2, maxRows: 2, overflow: "never" },
+                // "always" means draw it wherever the browser can do it at
+                // all, rather than only where Stripe is certain. Link stays on
+                // so the row is never empty on a browser with no wallet.
+                paymentMethods: { applePay: "always", googlePay: "always", link: "auto" },
+                buttonType: { applePay: "buy", googlePay: "buy" },
+                emailRequired: true,
+                phoneNumberRequired: store.phoneMode !== "hidden",
+                billingAddressRequired: true,
+              }
+            : { buttonHeight: 55 },
+        );
+
+      let express: any = null;
       try {
-        const express = elements.create("expressCheckout", {
-          // Stripe accepts 40–55 here and throws outside it.
-          buttonHeight: 55,
-          /**
-           * Every wallet at once, no "See more".
-           *
-           * Stripe collapses the row into a menu as soon as more than one or
-           * two buttons fit, which is how Google Pay ended up hidden behind a
-           * link on his own checkout. `overflow: "never"` lays them all out.
-           *
-           * `applePay: "always"` and `googlePay: "always"` tell Stripe to draw
-           * those buttons wherever the browser can do them at all rather than
-           * only where it is certain — Chrome on a Mac can do Apple Pay, and
-           * that is most of his customers. A browser that genuinely cannot
-           * still draws nothing, because the button belongs to the browser,
-           * not to us: there is no way to paint one that would not work.
-           *
-           * Link is off here. It is Stripe's own wallet, it was taking the
-           * whole row, and it is still offered inside the card form below for
-           * anyone who actually uses it.
-           */
-          layout: { maxColumns: 2, maxRows: 2, overflow: "never" },
-          paymentMethods: { applePay: "always", googlePay: "always", link: "never" },
-          buttonType: { applePay: "buy", googlePay: "buy" },
-          emailRequired: true,
-          // Phone is one of the four we ask for, so the sheet collects it too
-          // wherever this store shows a phone field at all.
-          phoneNumberRequired: store.phoneMode !== "hidden",
-          billingAddressRequired: true,
-        });
-
-        express.on("ready", (event: any) => {
-          const available = event?.availablePaymentMethods;
-          const any = available && Object.values(available).some(Boolean);
-          if (!cancelled) setWallets(Boolean(any));
-        });
-
-        express.on("confirm", async (event: any) => {
-          setPayError(null);
-          setWorking(true);
-          const done = await payWithWallet(event);
-          if (!done) setWorking(false);
-        });
-
-        if (walletRef.current) express.mount(walletRef.current);
+        express = makeExpress(true);
       } catch (error) {
-        // No wallet row, and nothing said about it — the card is already there
-        // and that is what matters.
-        console.error("Express checkout unavailable", error);
-        if (!cancelled) setWallets(false);
+        report("express-options", error);
+        try {
+          express = makeExpress(false);
+        } catch (fallbackError) {
+          report("express-create", fallbackError);
+        }
+      }
+
+      if (express) {
+        try {
+          express.on("ready", (event: any) => {
+            const available = event?.availablePaymentMethods;
+            const any = available && Object.values(available).some(Boolean);
+            if (!cancelled) {
+              setWallets(Boolean(any));
+              setWalletsAnswered(true);
+            }
+            if (!any) report("express-empty", available ?? "no methods");
+          });
+
+          express.on("loaderror", (event: any) => {
+            report("express-loaderror", event?.error?.message ?? event);
+            if (!cancelled) setWalletsAnswered(true);
+          });
+
+          express.on("confirm", async (event: any) => {
+            setPayError(null);
+            setWorking(true);
+            const done = await payWithWallet(event);
+            if (!done) setWorking(false);
+          });
+
+          if (walletRef.current) express.mount(walletRef.current);
+        } catch (error) {
+          report("express-mount", error);
+          if (!cancelled) setWalletsAnswered(true);
+        }
+      } else if (!cancelled) {
+        setWalletsAnswered(true);
       }
 
       if (!cancelled) setReady(true);
@@ -2472,15 +2617,20 @@ function OnePage({
      they have read a single label. */
   const express = (
     <>
+      {/* The space is held from the first paint. Hiding it until Stripe
+          answered meant the page visibly jumped when the wallets arrived —
+          and when they were slow, it looked like nothing was coming at all.
+          It collapses only once Stripe has actually said there are none. */}
       <section
         className={buddy ? "gb-co__express" : undefined}
-        style={wallets ? undefined : { display: "none" }}
+        style={walletsAnswered && !wallets ? { display: "none" } : undefined}
         aria-label="Express checkout"
       >
         <p className={buddy ? "gb-co__express-lead" : undefined} style={buddy ? undefined : { textAlign: "center" }}>
           Express checkout
         </p>
         <div className={buddy ? "gb-co__express-row" : undefined} ref={walletRef} />
+        {!wallets ? <div className="gb-co__express-wait" aria-hidden="true" /> : null}
         {buddy ? (
           <p className="gb-co__express-note">
             Pay with the card already on your phone — your address comes with it, so there is
@@ -2490,7 +2640,13 @@ function OnePage({
       </section>
       <div
         className={buddy ? "gb-co__or" : undefined}
-        style={wallets ? (buddy ? undefined : { textAlign: "center", margin: "18px 0" }) : { display: "none" }}
+        style={
+          walletsAnswered && !wallets
+            ? { display: "none" }
+            : buddy
+              ? undefined
+              : { textAlign: "center", margin: "18px 0" }
+        }
       >
         OR
       </div>
