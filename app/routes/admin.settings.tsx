@@ -1812,9 +1812,22 @@ function PushCard() {
     let cancelled = false;
     (async () => {
       try {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (!registration) return;
-        const subscription = await registration.pushManager.getSubscription();
+        const registration =
+          (await navigator.serviceWorker.getRegistration()) ?? (await navigator.serviceWorker.register("/sw.js"));
+        if (!registration || cancelled) return;
+        /**
+         * Permission granted but no subscription is exactly what is left
+         * behind when notifications were blocked and then allowed again:
+         * Chrome retires the token on "block" and does not bring it back on
+         * "allow". Permission is the consent; the subscription is minted
+         * here without a click.
+         */
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) {
+          const raw = atob(state.publicKey.replace(/-/g, "+").replace(/_/g, "/"));
+          const key = Uint8Array.from(raw, (ch) => ch.charCodeAt(0));
+          subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+        }
         if (!subscription || cancelled) return;
         const json = subscription.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
         if (!json.endpoint) return;
