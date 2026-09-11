@@ -612,14 +612,8 @@
 .gb-co__h2 { font-family: var(--font-h); font-weight: 800; font-size: clamp(21px, 2.2vw, 26px); line-height: 1.15; letter-spacing: -.01em; color: var(--ink); margin: 0 0 20px; }
 .gb-co__h3 { font-family: var(--font-h); font-weight: 800; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 0 0 14px; }
 
-/* progress — two steps, the one you are on and the one that comes next */
-.gb-co__steps { list-style: none; display: flex; align-items: center; gap: 12px; margin: 0 0 clamp(16px, 2.4vw, 26px); padding: 0; }
-.gb-co__steps li { display: flex; align-items: center; gap: 10px; color: var(--dim); font-size: 15px; font-weight: 600; }
-.gb-co__steps li + li:before { content: ""; width: clamp(16px, 4vw, 44px); height: 2px; background: var(--rule); margin-right: 2px; }
-.gb-co__dot { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--sand-2); color: var(--ink); font-size: 14px; font-weight: 800; }
-.gb-co__steps li.is-now { color: var(--ink); }
-.gb-co__steps li.is-now .gb-co__dot { background: var(--lime); color: var(--lime-ink); }
-.gb-co__steps li.is-done .gb-co__dot { background: var(--leaf); color: #fff; }
+/* No progress steps: checkout is one page, so there is nothing to step
+   through. The rules that drew them are gone rather than left behind. */
 
 /* fields */
 .gb-co__field { display: block; margin-bottom: 16px; }
@@ -653,8 +647,10 @@ select.gb-co__input { padding-right: 42px; background-image: url("data:image/svg
 .gb-co__trust svg { width: 24px; height: 24px; flex: 0 0 24px; color: var(--leaf); }
 .gb-co__trust strong { display: block; color: var(--ink); font-weight: 800; }
 
-/* wallets — only ever rendered when Stripe reports one is actually available */
+/* wallets — at the top of the page, and only ever rendered when Stripe
+   reports this browser actually has one to offer */
 .gb-co__wallet { margin-bottom: 20px; }
+.gb-co__wallet .gb-co__h2 { margin-bottom: 14px; }
 .gb-co__or { display: flex; align-items: center; gap: 14px; margin: 20px 0; color: var(--dim); font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .gb-co__or:before, .gb-co__or:after { content: ""; flex: 1 1 auto; height: 1px; background: var(--rule); }
 

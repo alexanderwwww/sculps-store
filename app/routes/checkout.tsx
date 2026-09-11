@@ -22,7 +22,7 @@
  * It used to import the garden kneeler stylesheet unconditionally, so every
  * store's checkout came out brown.
  */
-import { Link, useFetcher, useRevalidator } from "react-router";
+import { Link, useFetcher, useSearchParams } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import type { Route } from "./+types/checkout";
 import { resolveStore, storeNav } from "~/lib/store.server";
@@ -120,7 +120,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!store) throw new Response("No store for this domain.", { status: 404 });
 
   const token = readCartToken(request);
-  const cart = await priceCart(context.db, store, token);
+  // The destination state, once the page knows it. It picks a manual state tax
+  // rate — it never sets a price. The rate itself, like every other number
+  // here, is read from the database. Pricing with it is what keeps the amount
+  // on screen, the amount on the intent and the amount the action confirms all
+  // the same figure.
+  const region = (url.searchParams.get("region") || "").trim().toUpperCase().slice(0, 3) || null;
+  const cart = await priceCart(context.db, store, token, region);
 
   let paymentsReady = true;
   let paymentsMessage: string | null = null;
@@ -192,8 +198,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // Reaching checkout is itself the event, the way Shopify counts it: the
   // customer got here with a cart, whether or not they go on to pay. Live View
   // counts distinct sessions, so the submit below cannot double count this.
+  // Only on the way in. Re-pricing for the state they just typed reloads this
+  // loader, and a tax lookup is not a second visit to checkout.
+  const firstView = !url.searchParams.has("region");
   const checkoutSession = readVisitorSession(request);
-  if (checkoutSession && cart.lines.length && shouldTrack(request, url)) {
+  if (firstView && checkoutSession && cart.lines.length && shouldTrack(request, url)) {
     track(context.db, context.cloudflare.ctx, {
       storeId: store.id,
       sessionId: checkoutSession,
@@ -214,7 +223,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     .limit(1);
 
   let pixel = meta?.pixelId ? pixelScript(meta.pixelId) : null;
-  if (pixel && cart.lines.length) {
+  if (pixel && firstView && cart.lines.length) {
     const initiate = await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
       storeId: store.id,
       pixelId: meta?.pixelId ?? null,
@@ -1164,6 +1173,7 @@ function OnePage({
 }) {
   const buddy = cn === BUDDY;
   const fetcher = useFetcher<ActionReply>();
+  const [params, setParams] = useSearchParams();
 
   const formRef = useRef<HTMLFormElement>(null);
   const walletRef = useRef<HTMLDivElement>(null);
@@ -1194,7 +1204,19 @@ function OnePage({
     (serverField === field ? serverMessage ?? undefined : undefined);
 
   const onField = (field: string, value: string) => setValues((prev) => ({ ...prev, [field]: value }));
-  const onBlur = (field: string) => setTouched((prev) => ({ ...prev, [field]: "1" }));
+  const onBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: "1" }));
+    // Leaving the state box re-prices the cart on the server for that state,
+    // which moves the intent with it. The browser sends the two letters and
+    // nothing else — what they are worth is worked out there.
+    if (field !== "region") return;
+    const next = (values.region ?? "").trim().toUpperCase();
+    if (next === (params.get("region") ?? "")) return;
+    const nextParams = new URLSearchParams(params);
+    if (next) nextParams.set("region", next);
+    else nextParams.delete("region");
+    setParams(nextParams, { replace: true, preventScrollReset: true });
+  };
 
   const total = serverTotal ?? cart.totalCents;
 
@@ -1335,7 +1357,15 @@ function OnePage({
     setServerTotal(answer.totalCents);
     if (answer.repriced) {
       // The address changed the tax. Nobody is charged an amount they have not
-      // been shown, so the new one is shown and the button is pressed again.
+      // been shown, so the new one is shown and the button is pressed again —
+      // and the state goes into the URL so this page prices the same way the
+      // action just did, rather than asking twice for the same reason.
+      const state = String(body.get("region") ?? "").trim().toUpperCase();
+      if (state && state !== (params.get("region") ?? "")) {
+        const nextParams = new URLSearchParams(params);
+        nextParams.set("region", state);
+        setParams(nextParams, { replace: true, preventScrollReset: true });
+      }
       setRepriced(true);
       return false;
     }
@@ -1417,9 +1447,6 @@ function OnePage({
         Where it goes
       </h2>
 
-      {payError ? <div className={cn.alert}>{payError}</div> : null}
-      {serverMessage && !serverField ? <div className={cn.alert}>{serverMessage}</div> : null}
-
       <Fields cn={cn} store={store} shownError={shownError} onField={onField} onBlur={onBlur} />
 
       {store.consent ? (
@@ -1439,6 +1466,14 @@ function OnePage({
       </h2>
 
       <div ref={cardRef} style={{ minHeight: 200 }} />
+
+      {/* Stripe's own words, under Stripe's own fields — a declined card is
+          about what is in that box, not about the page. */}
+      {payError || (serverMessage && !serverField) ? (
+        <div className={cn.alert} style={{ marginTop: 16, marginBottom: 0 }} role="alert">
+          {payError ?? serverMessage}
+        </div>
+      ) : null}
 
       {repriced ? (
         <div className={cn.alert} style={{ marginTop: 16 }}>
