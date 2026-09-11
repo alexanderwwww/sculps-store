@@ -296,10 +296,10 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
   }
 
   const newest = board.recent[0]?.at;
-  const funnel = buildFunnel(board.activeCarts, board.checkingOut, board.purchased, board.sessionsToday);
+  const funnel = buildFunnel(board.activeCarts, board.checkingOut, board.purchased);
   const behaviour = [
-    { label: "Active carts", value: board.activeCarts, note: board.activeCarts ? "carts with items" : "nothing yet" },
-    { label: "Checking out", value: board.checkingOut, note: board.checkingOut ? "reached checkout" : "nothing yet" },
+    { label: "Active carts", value: board.activeCarts, note: board.activeCarts ? "carts holding items now" : "nothing yet" },
+    { label: "Checking out", value: board.checkingOut, note: board.checkingOut ? "on checkout right now" : "nothing yet" },
     { label: "Purchased", value: board.purchased, note: board.purchased ? "paid orders today" : "nothing yet" },
   ];
   const locMax = Math.max(1, ...board.byLocation.map((row) => row.count));
@@ -414,7 +414,7 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "15px", overflowWrap: "anywhere" }}>{column.label}</span>
                 </div>
-                <div style={{ fontSize: 20, lineHeight: "26px", fontWeight: 650, letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums", paddingTop: 2 }}>{column.value}</div>
+                <LiveCount value={column.value} />
               </div>
             ))}
           </div>
@@ -703,6 +703,37 @@ function GlobeButton({ children, title, active, onClick }: { children: React.Rea
   );
 }
 
+/**
+ * A number that shows it moved.
+ *
+ * The poll is every five seconds, so without this a count can change with the
+ * page looking completely static. On a rise it bumps up and lights green, on a
+ * fall it settles down and greys — the same movement a person expects from a
+ * cart being filled or emptied. First render never animates.
+ */
+function LiveCount({ value }: { value: number }) {
+  const previous = useRef<number | null>(null);
+  const [move, setMove] = useState<"up" | "down" | null>(null);
+
+  useEffect(() => {
+    const was = previous.current;
+    previous.current = value;
+    if (was === null || was === value) return;
+    setMove(value > was ? "up" : "down");
+    const timer = setTimeout(() => setMove(null), 620);
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  return (
+    <div
+      className={move ? `k-count k-count--${move}` : "k-count"}
+      style={{ fontSize: 20, lineHeight: "26px", fontWeight: 650, letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums", paddingTop: 2 }}
+    >
+      {value}
+    </div>
+  );
+}
+
 function LegendChip({ color, label }: { color: string; label: string }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 30, padding: "0 12px", borderRadius: 15, background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow)", fontSize: 12, fontWeight: 550 }}>
@@ -712,10 +743,17 @@ function LegendChip({ color, label }: { color: string; label: string }) {
   );
 }
 
-/** The prototype's own funnel arithmetic, so the bars have the same shape. */
-function buildFunnel(carts: number, checkouts: number, purchases: number, sessions: number) {
-  const max = Math.max(carts, checkouts, purchases, sessions, 1);
-  const height = (value: number) => (value ? Math.max(58, Math.round(38 + (value / max) * (122 - 38))) : 0);
+/**
+ * The funnel's arithmetic.
+ *
+ * The three bars are scaled against each other, not against the day's session
+ * count — scaling against sessions pinned every bar to the floor and the chart
+ * never appeared to move. The floor is small so one cart and five carts are
+ * visibly different heights, and a zero draws nothing at all.
+ */
+function buildFunnel(carts: number, checkouts: number, purchases: number) {
+  const max = Math.max(carts, checkouts, purchases, 1);
+  const height = (value: number) => (value ? Math.max(16, Math.round((value / max) * 122)) : 0);
   const h0 = height(carts);
   const h1 = height(checkouts);
   const h2 = height(purchases);

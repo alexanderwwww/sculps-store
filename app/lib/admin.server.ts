@@ -24,6 +24,7 @@ import {
   metaConfig,
   themes,
   events,
+  carts,
   taxRates,
   users,
   sessions,
@@ -1495,9 +1496,10 @@ export async function recordVisitorEvent(
 export async function liveBoard(db: DB, storeId: string) {
   const window = new Date(Date.now() - 30 * 60_000);
   const fiveMinutes = new Date(Date.now() - 5 * 60_000);
+  const checkoutWindow = new Date(Date.now() - 3 * 60_000);
   const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
 
-  const [recent, active, sessions, today, funnel, byLocation] = await Promise.all([
+  const [recent, active, sessions, today, openCarts, atCheckout, byLocation] = await Promise.all([
     db
       .select()
       .from(events)
@@ -1530,14 +1532,35 @@ export async function liveBoard(db: DB, storeId: string) {
         ),
       ),
 
+    // Carts that exist RIGHT NOW: still open, still holding something, and
+    // touched in the last half hour. Emptying a cart writes `items: []` and
+    // stamps updatedAt, so this number falls the moment a line is deleted —
+    // which is the whole point. A distinct-session count over the day only
+    // ever climbed, so the tile never moved and looked dead.
     db
-      .select({
-        carts: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'cart') as int)`,
-        checkouts: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'checkout') as int)`,
-        purchases: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'purchase') as int)`,
-      })
+      .select({ n: sql<number>`cast(count(*) as int)` })
+      .from(carts)
+      .where(
+        and(
+          eq(carts.storeId, storeId),
+          eq(carts.status, "open"),
+          gte(carts.updatedAt, window),
+          sql`jsonb_array_length(${carts.items}) > 0`,
+        ),
+      ),
+
+    // Sessions on the checkout in the last three minutes. Same idea: it comes
+    // on when someone reaches checkout and goes off again when they leave.
+    db
+      .select({ n: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
       .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, startOfToday))),
+      .where(
+        and(
+          eq(events.storeId, storeId),
+          eq(events.type, "checkout"),
+          gte(events.at, checkoutWindow),
+        ),
+      ),
 
     db
       .select({
@@ -1558,9 +1581,10 @@ export async function liveBoard(db: DB, storeId: string) {
     sessionsToday: sessions[0]?.n ?? 0,
     ordersToday: today[0]?.orders ?? 0,
     revenueToday: today[0]?.revenue ?? 0,
-    activeCarts: funnel[0]?.carts ?? 0,
-    checkingOut: funnel[0]?.checkouts ?? 0,
-    purchased: funnel[0]?.purchases ?? 0,
+    activeCarts: openCarts[0]?.n ?? 0,
+    checkingOut: atCheckout[0]?.n ?? 0,
+    // Purchases are the one number that stays: a sale today is a sale today.
+    purchased: today[0]?.orders ?? 0,
     byLocation: byLocation
       .filter((row) => row.city || row.country)
       .map((row) => ({

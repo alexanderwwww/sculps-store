@@ -54,6 +54,17 @@ button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .k-funnel-slope{transition:opacity .55s ease-out}
 @media (prefers-reduced-motion:reduce){.k-funnel-bar{transition:none}}
 
+/* The counts above the bars. They move when the number moves: up and green
+   when the funnel gains someone, down and grey when it loses them. Held for
+   just over half a second, which is long enough to catch out of the corner of
+   an eye and short enough not to be a distraction on a busy day. */
+.k-count{transition:color .4s ease-out;will-change:transform}
+.k-count--up{animation:k-count-up .6s cubic-bezier(.22,.8,.28,1);color:#0B7A3B}
+.k-count--down{animation:k-count-down .6s cubic-bezier(.22,.8,.28,1);color:var(--ink-3)}
+@keyframes k-count-up{0%{transform:translateY(6px);opacity:.35}55%{transform:translateY(-2px);opacity:1}100%{transform:none}}
+@keyframes k-count-down{0%{transform:translateY(-6px);opacity:.35}55%{transform:translateY(2px);opacity:1}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.k-count--up,.k-count--down{animation:none}}
+
 /* ---------------------------------------------------------------- glass ---
    One material, used everywhere. It is the recipe from the Live View
    notification cards, the one that was signed off, scaled to panel size.
