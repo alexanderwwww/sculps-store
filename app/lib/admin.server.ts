@@ -1434,7 +1434,9 @@ export async function markOrderPaid(db: DB, orderId: string, note: string): Prom
   const [paid] = await db
     .update(orders)
     .set({ paymentStatus: "paid", paidAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(orders.id, orderId), sql`${orders.paymentStatus} <> 'paid'`))
+    // Only an unpaid order becomes paid. A refunded one stays refunded, whatever
+    // Stripe retries afterwards.
+    .where(and(eq(orders.id, orderId), sql`${orders.paymentStatus} in ('pending','failed')`))
     .returning({ storeId: orders.storeId, email: orders.email });
   if (!paid) return false;
   await recordOrderEvent(db, orderId, "payment:confirmed", note);

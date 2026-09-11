@@ -15,7 +15,7 @@
  */
 import type { ActionFunctionArgs } from "react-router";
 import { resolveStore } from "~/lib/store.server";
-import { priceCart, readCartToken, cartIntentState, setCartPaymentIntentId } from "~/lib/cart.server";
+import { priceCart, readCartToken, cartIntentState, setCartPaymentIntentId, closeCartForPaidIntent } from "~/lib/cart.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 
 /** Intent states that still belong to a payment that has not happened. */
@@ -50,10 +50,19 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const known = await cartIntentState(context.db, store.id, token);
 
-    // The fast path, and the common one: this cart already has an intent and
-    // it is already worth exactly what the cart is worth. Nothing to ask
-    // Stripe — the browser gets its secret straight out of the database.
-    if (known.id && known.clientSecret && known.amountCents === cart.totalCents) {
+    /**
+     * The fast path: this cart already has an intent worth exactly what the
+     * cart is worth, so the browser gets its secret with no call to Stripe.
+     *
+     * With one guard. If that intent has already been paid — the customer
+     * paid and never reached the thank-you page, so nothing marked the cart
+     * finished — handing its secret back leaves them stuck on "this payment
+     * has already been taken" forever, with the bought items still in the
+     * cart. So a stored intent is trusted only while it is young; past that
+     * it is read back from Stripe before it is trusted again.
+     */
+    const fresh = known.updatedAt ? Date.now() - known.updatedAt.getTime() < 15 * 60_000 : false;
+    if (known.id && known.clientSecret && known.amountCents === cart.totalCents && fresh) {
       return Response.json({ clientSecret: known.clientSecret, amountCents: cart.totalCents, error: null });
     }
 
@@ -62,8 +71,10 @@ export async function action({ context, request }: ActionFunctionArgs) {
       try {
         const found = await provider.readIntent(known.id);
         // An intent that is already being paid belongs to a charge that is
-        // happening. It is never reused or written over.
+        // happening. It is never reused or written over — and a cart still
+        // holding one is a cart whose order went through, so it is closed.
         if (PAYABLE.has(found.status)) intent = found;
+        else await closeCartForPaidIntent(context.db, store.id, token, found.id);
       } catch {
         intent = null;
       }

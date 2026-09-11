@@ -63,6 +63,16 @@ export function ProductExpress(props: Props) {
   const stripeRef = useRef<any>(null);
   const latest = useRef({ variantId, amountCents, label });
   latest.current = { variantId, amountCents, label };
+  /**
+   * What the sheet is actually showing.
+   *
+   * It starts as the bundle's price and becomes the server's figure the
+   * moment the server re-prices (a discount on the cart, a state tax). Sent
+   * as `shownTotal`, it is what stops the second tap being refused for the
+   * same reason as the first — which is what made "tap once more" a loop
+   * with no end.
+   */
+  const shownRef = useRef(amountCents + shippingCents);
   const [error, setError] = useState<string | null>(null);
 
   const href = (path: string) => `${path}${storeParam}`;
@@ -159,7 +169,7 @@ export function ProductExpress(props: Props) {
           const body = new URLSearchParams({
             intent: "pay",
             source: "wallet",
-            shownTotal: String(latest.current.amountCents + shippingCents),
+            shownTotal: String(shownRef.current),
             name: String(shipping?.name ?? details.name ?? "").trim(),
             email: String(details.email ?? "").trim(),
             phone: String(details.phone ?? "").trim(),
@@ -174,12 +184,14 @@ export function ProductExpress(props: Props) {
           const answer = (await payRes.json()) as any;
           if (!answer?.ok) {
             if (answer?.repriced && typeof answer.totalCents === "number") {
+              shownRef.current = answer.totalCents;
               elements.update({ amount: Math.max(50, answer.totalCents) });
               throw new Error(`The total is ${(answer.totalCents / 100).toFixed(2)} ${currency.toUpperCase()} — tap the button once more to pay that amount.`);
             }
             throw new Error(answer?.error ?? "The order could not be placed.");
           }
           if (answer.repriced) {
+            shownRef.current = answer.totalCents;
             elements.update({ amount: Math.max(50, answer.totalCents) });
             throw new Error(`The total is ${(answer.totalCents / 100).toFixed(2)} ${currency.toUpperCase()} — tap the button once more to pay that amount.`);
           }
@@ -222,12 +234,13 @@ export function ProductExpress(props: Props) {
 
   // A different bundle: the sheet must say its price.
   useEffect(() => {
+    shownRef.current = amountCents + shippingCents;
     try {
       elementsRef.current?.update?.({ amount: Math.max(50, amountCents) });
     } catch {
       /* not mounted yet */
     }
-  }, [amountCents]);
+  }, [amountCents, shippingCents]);
 
   return (
     <>

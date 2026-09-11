@@ -643,6 +643,45 @@ export async function action({ request, context }: Route.ActionArgs) {
     return Response.json({ added: true }, setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined);
   }
 
+  /**
+   * From here to the end is the payment itself, and none of it may throw.
+   *
+   * A thrown error inside a fetcher action is not an answer: React Router
+   * deletes the fetcher and renders the error boundary, so the promise the
+   * wallet sheet is waiting on never resolves, the sheet spins until Apple
+   * gives up, and the customer is told "payment not completed" with no
+   * reason anywhere. Every failure below comes back as a sentence instead.
+   */
+  try {
+    return await payAction({ context, request, url, store, token, form, cart });
+  } catch (error) {
+    console.error("checkout pay", error);
+    return {
+      error: `The order could not be placed: ${
+        error instanceof Error ? error.message : "unexpected error"
+      }. Nothing has been charged.`,
+    };
+  }
+}
+
+/** The pay branch itself. Called only from the action, inside its try. */
+async function payAction({
+  context,
+  request,
+  url,
+  store,
+  token,
+  form,
+  cart,
+}: {
+  context: Route.ActionArgs["context"];
+  request: Request;
+  url: URL;
+  store: NonNullable<Awaited<ReturnType<typeof resolveStore>>>;
+  token: string | null;
+  form: FormData;
+  cart: Awaited<ReturnType<typeof priceCart>>;
+}) {
   if (cart.lines.length === 0) {
     return { error: "Your cart is empty." };
   }
@@ -774,12 +813,20 @@ export async function action({ request, context }: Route.ActionArgs) {
   const geo = geoFromContext(context, request);
   const metaCookies = readMetaCookies(request);
   const countryGiven = String(form.get("country") || "").trim().toUpperCase();
-  if (!COUNTRIES.some(([code]) => code === countryGiven)) {
-    // A wallet can hand over any country on earth. Rewriting an unknown one
-    // to the United States would ship a parcel to the wrong continent.
+  const knownCountry = COUNTRIES.some(([code]) => code === countryGiven);
+  if (!knownCountry && !fromWallet) {
+    // From the form, an unknown country is a mistake worth stopping: the
+    // list is the list. Rewriting it to the United States would ship a
+    // parcel to the wrong continent.
     return { error: "We cannot ship to that country yet." };
   }
-  const country = countryGiven;
+  if (!knownCountry) missing.push(countryGiven ? `an unrecognised country (${countryGiven})` : "country");
+  // A wallet order is taken exactly as the wallet gave it — an odd country
+  // code, or none at all, is written down rather than refused. The owner
+  // would rather have the money and message the customer.
+  // Empty is written as "??" rather than null: the column is not nullable,
+  // and a visible placeholder on the order is what tells him to ask.
+  const country = knownCountry ? countryGiven : countryGiven || "??";
   const address2 =
     [String(form.get("company") || "").trim(), String(form.get("address2") || "").trim()]
       .filter(Boolean)
@@ -2784,16 +2831,40 @@ function OnePage({
 
   /* Hand the action's answer back to whoever is waiting on it. */
   useEffect(() => {
-    if (fetcher.state !== "idle" || !fetcher.data) return;
+    if (fetcher.state !== "idle") return;
     const resolve = replyRef.current;
     if (!resolve) return;
     replyRef.current = null;
-    resolve(fetcher.data);
+    // Idle with no data at all means the action threw and React Router
+    // removed the fetcher. Left unanswered, the wallet sheet would spin
+    // until Apple timed it out — so it is answered, with a sentence.
+    resolve(
+      fetcher.data ?? { error: "The order could not be placed. Nothing has been charged — please try again." },
+    );
   }, [fetcher.state, fetcher.data]);
 
+  /**
+   * Post the details and wait for the answer, with a deadline.
+   *
+   * An Apple Pay sheet gives us about thirty seconds. Whatever happens —
+   * a slow database, a dropped connection, a fetcher that never settles —
+   * this resolves well inside that, so the sheet is always told something.
+   */
   const postDetails = (body: FormData) =>
     new Promise<ActionReply>((resolve) => {
-      replyRef.current = resolve;
+      let settled = false;
+      const answer = (reply: ActionReply) => {
+        if (settled) return;
+        settled = true;
+        replyRef.current = null;
+        window.clearTimeout(deadline);
+        resolve(reply);
+      };
+      const deadline = window.setTimeout(
+        () => answer({ error: "That took too long. Nothing has been charged — please try again." }),
+        20_000,
+      );
+      replyRef.current = answer;
       fetcher.submit(body, { method: "post" });
     });
 
@@ -2964,7 +3035,17 @@ function OnePage({
 
           express.on("loaderror", (event: any) => {
             report("express-loaderror", event?.error?.message ?? event);
-            if (!cancelled && !fellBack && live === express) setWalletsAnswered(true);
+            if (cancelled || fellBack) return;
+            // The element itself has failed — not merely been slow. Now, and
+            // only now, the older Payment Request Button takes the row.
+            fellBack = true;
+            try {
+              express.unmount();
+              express.destroy();
+            } catch {
+              /* it may never have mounted */
+            }
+            void mountRequestButton(stripe, elements);
           });
 
           // The wallet asks where to ship; the store has one rate, so that is
@@ -3015,84 +3096,22 @@ function OnePage({
           }
 
           /**
-           * The safety net.
+           * No ladder.
            *
-           * If the Express Checkout Element has not reported itself ready
-           * within three seconds, the older Payment Request Button is mounted
-           * in its place. It is a different element with a different code
-           * path inside Stripe, it has existed for years, and his browser
-           * reports it as available — so whatever is wrong with the new one,
-           * this one still puts a real Google Pay (or Apple Pay, on Safari)
-           * button on the page.
+           * There used to be one: if the element had not said "ready" within
+           * 1.2 seconds it was destroyed and replaced by a bare one, and then
+           * by the older Payment Request Button. On a phone over cellular the
+           * first rung is routinely slower than that — Apple's own
+           * "is there a card on this device" round trip happens inside it —
+           * so a working element was being torn down and replaced by one that
+           * asks the sheet for no address and no email at all. That is a
+           * wallet payment which cannot be shipped, and it is what a tap
+           * became on a slow connection.
+           *
+           * Stripe is left to do its job. If the element genuinely fails it
+           * says so through `loaderror`, and only then does the old button
+           * take the row.
            */
-          /**
-           * The ladder. The rich element gets 1.2 seconds to say "ready".
-           * If it stays silent it is taken down and a bare express element —
-           * nothing but a height, the shape that rendered instantly before
-           * any option was added — gets 1.5 seconds. Only if that is silent
-           * too does the older Payment Request Button take the row. Every
-           * rung reports, so the next silent row says which rung it was.
-           */
-          window.setTimeout(() => {
-            if (cancelled || walletsAnsweredRef.current) return;
-            // Stripe allows one express element per Elements instance: the
-            // silent one has to be destroyed, not merely unmounted, or the
-            // next line throws "Can only create one Element".
-            try {
-              express.unmount();
-              express.destroy();
-            } catch {
-              /* it may never have got that far */
-            }
-            let minimal: any = null;
-            try {
-              minimal = makeExpress(false);
-            } catch (error) {
-              report("express-minimal-create", error);
-            }
-            if (minimal && walletRef.current) {
-              live = minimal;
-              minimal.on("ready", (event: any) => {
-                if (cancelled || fellBack || live !== minimal) return;
-                const available = event?.availablePaymentMethods;
-                const any = available && Object.values(available).some(Boolean);
-                walletsAnsweredRef.current = true;
-                setWallets(Boolean(any));
-                setWalletsAnswered(true);
-                report("express-minimal-ready", JSON.stringify(available ?? "none"));
-              });
-              minimal.on("confirm", async (event: any) => {
-                setPayError(null);
-                setWorking(true);
-                const done = await payWithWallet(event);
-                if (!done) setWorking(false);
-              });
-              minimal.on("shippingaddresschange", (event: any) => {
-                try {
-                  event.resolve({
-                    shippingRates: [{ id: "standard", amount: cart.shippingCents, displayName: "Shipping" }],
-                  });
-                } catch {
-                  /* nothing to do */
-                }
-              });
-              minimal.mount(walletRef.current);
-              report("express-minimal-mounted", "ok");
-            }
-
-            window.setTimeout(() => {
-              if (cancelled || walletsAnsweredRef.current) return;
-              fellBack = true;
-              try {
-                minimal?.unmount();
-              } catch {
-                /* never mounted */
-              }
-              report("express-minimal-timeout", JSON.stringify({ children: walletRef.current?.childElementCount ?? -1 }));
-              void mountRequestButton(stripe, elements);
-            }, 1500);
-          }, 1200);
-
           /**
            * If Stripe has said nothing at all after five seconds, say so —
            * with what is actually inside the box. "It did not render" is not

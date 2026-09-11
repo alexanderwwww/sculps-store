@@ -11,7 +11,7 @@
 import { notifyAdmins, money } from "~/lib/notify.server";
 import type { Route } from "./+types/webhooks.stripe";
 import { and, eq, sql } from "drizzle-orm";
-import { orders, paymentProviders, stores } from "~/db/schema";
+import { carts, orders, paymentProviders, stores } from "~/db/schema";
 import { recomputeCustomerTotals } from "~/lib/customers.server";
 import { decryptSecret } from "~/lib/crypto.server";
 import { orderByPaymentRef, markOrderPaid, recordOrderEvent, recordVisitorEvent } from "~/lib/admin.server";
@@ -143,6 +143,16 @@ export async function action({ request, context }: Route.ActionArgs) {
         });
       } catch (error) {
         await recordOrderEvent(context.db, order.id, "event:failed", `Purchase event not written · ${String(error)}`).catch(() => undefined);
+      }
+      // The cart that produced this payment is finished, whether or not the
+      // customer ever reaches the thank-you page.
+      try {
+        await context.db
+          .update(carts)
+          .set({ status: "converted", orderId: order.id, updatedAt: new Date() })
+          .where(and(eq(carts.storeId, order.storeId), eq(carts.paymentIntentId, intentId)));
+      } catch {
+        /* the cart is a convenience; the order is the record */
       }
       try {
         await afterPaymentConfirmed(context.db, context.cloudflare.env, order.id, request);

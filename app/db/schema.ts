@@ -19,7 +19,7 @@ import {
   uniqueIndex,
   real,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 /* ------------------------------------------------------------------ stores */
 
@@ -384,6 +384,17 @@ export const orders = pgTable(
     uniqueIndex("orders_store_number_idx").on(t.storeId, t.number),
     index("orders_store_created_idx").on(t.storeId, t.createdAt),
     index("orders_state_idx").on(t.state),
+    /**
+     * One order per payment. Two submits of the same intent used to race the
+     * "does an order already exist?" read and both insert, leaving two rows
+     * for one charge — and the webhook would mark whichever it found paid.
+     * The database settles it: the second insert simply fails.
+     */
+    uniqueIndex("orders_payment_ref_idx")
+      .on(t.paymentRef)
+      // Real Stripe payments only: the simulated orders seeded for the Live
+      // View demo all share one reference and are not payments at all.
+      .where(sql`${t.paymentRef} like 'pi_%'`),
   ],
 );
 

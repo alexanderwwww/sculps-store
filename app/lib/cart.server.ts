@@ -403,11 +403,35 @@ export async function cartIntentState(
   db: DB,
   storeId: string,
   token: string | null,
-): Promise<{ id: string | null; amountCents: number | null; clientSecret: string | null }> {
+): Promise<{ id: string | null; amountCents: number | null; clientSecret: string | null; updatedAt: Date | null }> {
   const row = await loadCartRow(db, storeId, token);
   return {
     id: row?.paymentIntentId ?? null,
     amountCents: row?.paymentIntentAmount ?? null,
     clientSecret: row?.paymentIntentSecret ?? null,
+    updatedAt: row?.updatedAt ?? null,
   };
+}
+
+/**
+ * The payment on this cart already went through, so the cart is finished —
+ * wherever we find that out.
+ *
+ * Normally the thank-you page closes it. When the customer never lands there
+ * (the sheet dismissed on the redirect, the tab closed, the connection
+ * dropped) the cart would otherwise keep the paid intent forever, and every
+ * later visit would be told the payment had already been taken with the
+ * bought items still sitting in the basket.
+ */
+export async function closeCartForPaidIntent(
+  db: DB,
+  storeId: string,
+  token: string | null,
+  intentId: string,
+): Promise<void> {
+  if (!token) return;
+  await db
+    .update(carts)
+    .set({ status: "converted", updatedAt: new Date() })
+    .where(and(eq(carts.token, token), eq(carts.storeId, storeId), eq(carts.paymentIntentId, intentId)));
 }
