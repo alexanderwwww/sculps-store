@@ -23,6 +23,20 @@ export interface Geo {
   lon: number | null;
 }
 
+/**
+ * Where the visitor is.
+ *
+ * Prefer what the Worker read at the edge — `context.geo` — because the
+ * request a loader is handed is not always the one Cloudflare annotated, and
+ * `cf` does not survive being rebuilt. This falls back to reading the request
+ * directly so callers that have no context still work.
+ */
+export function geoFromContext(context: { geo?: Geo }, request: Request): Geo {
+  const edge = context.geo;
+  if (edge && (edge.lat != null || edge.city || edge.country)) return edge;
+  return geoFromRequest(request);
+}
+
 /** Reads the geolocation Cloudflare attaches to every request at the edge. */
 export function geoFromRequest(request: Request): Geo {
   const cf = (request as Request & { cf?: Record<string, unknown> }).cf ?? {};

@@ -9,6 +9,23 @@ declare module "react-router" {
     db: ReturnType<typeof makeDb>;
     /** hostname the visitor arrived on — decides which store we serve */
     hostname: string;
+    /**
+     * Where the visitor is, read at the edge.
+     *
+     * Cloudflare attaches this to the request it hands the Worker, but the
+     * request a loader receives is not always that same object — React Router
+     * rebuilds it in places, and `cf` does not survive being rebuilt. Reading
+     * it here, once, is the only place it is guaranteed to exist. Every event
+     * written with no coordinates is a visitor the globe cannot draw, which is
+     * exactly what was happening.
+     */
+    geo: {
+      city: string | null;
+      region: string | null;
+      country: string | null;
+      lat: number | null;
+      lon: number | null;
+    };
   }
 }
 
@@ -39,9 +56,28 @@ export default {
       cloudflare: { env, ctx },
       db,
       hostname: url.hostname,
+      geo: edgeGeo(request),
     });
   },
 } satisfies ExportedHandler<Env>;
+
+/** Cloudflare's own geolocation, read from the request it actually gave us. */
+function edgeGeo(request: Request) {
+  const cf = (request as Request & { cf?: Record<string, unknown> }).cf ?? {};
+  const number = (value: unknown) => {
+    const n = typeof value === "string" ? Number(value) : (value as number);
+    return Number.isFinite(n) ? n : null;
+  };
+  return {
+    city: (cf.city as string) ?? null,
+    region: (cf.region as string) ?? (cf.regionCode as string) ?? null,
+    // The header is there even when cf is not, so a country is almost always
+    // knowable even if the precise point is not.
+    country: (cf.country as string) ?? request.headers.get("CF-IPCountry") ?? null,
+    lat: number(cf.latitude),
+    lon: number(cf.longitude),
+  };
+}
 
 /**
  * The primary hostname for whichever store answers on this one, or null when

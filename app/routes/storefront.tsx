@@ -9,7 +9,7 @@ import { pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { vitalsScript } from "~/lib/vitals";
 import {
   deviceFromRequest,
-  geoFromRequest,
+  geoFromContext,
   readVisitorSession,
   newVisitorSession,
   visitorCookie,
@@ -146,7 +146,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       sessionId,
       type: "view",
       path: url.pathname,
-      geo: geoFromRequest(request),
+      geo: geoFromContext(context, request),
       device: deviceFromRequest(request),
       ...attribution(url),
     });
