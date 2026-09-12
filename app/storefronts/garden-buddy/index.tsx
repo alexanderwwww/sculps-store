@@ -93,10 +93,12 @@ export function GardenBuddyStorefront({
   page,
   storeParam = "",
   publishableKey = null,
+  paypalClientId = null,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
   publishableKey?: string | null;
+  paypalClientId?: string | null;
 }) {
   // Which store answers is decided by the hostname, except on the built-in
   // address where it comes from ?store=. Without carrying that through, every
@@ -115,7 +117,13 @@ export function GardenBuddyStorefront({
     : null;
 
   return (
-    <CartDrawerProvider page={page} storeParam={storeParam} photo={photo} publishableKey={publishableKey}>
+    <CartDrawerProvider
+      page={page}
+      storeParam={storeParam}
+      photo={photo}
+      publishableKey={publishableKey}
+      paypalClientId={paypalClientId}
+    >
       {/* The theme's own fonts and stylesheet, in the order the live page loads
           them. React hoists both into <head>. */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />

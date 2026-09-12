@@ -704,3 +704,11 @@
 .gb-recall__go:hover{transform:translateY(-1px);filter:brightness(1.04)}
 .gb-recall__no{border:0;background:none;color:var(--dim);font-size:13px;font-weight:650;cursor:pointer;padding:0 4px}
 .gb-recall__no:hover{color:var(--ink)}
+
+/* PayPal's own buttons in the cart drawer. They bring their own colours and
+   shape; all this does is give them the width and the rhythm of the rest of
+   the drawer's footer, and hold the height while the iframe loads so the
+   Checkout button underneath does not jump. */
+.gb-ppx{width:100%;margin:10px 0 2px;min-height:46px}
+.gb-ppx > div{width:100%}
+.gb-ppx__err{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:#B3261E;text-align:center}

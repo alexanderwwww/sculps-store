@@ -2,6 +2,7 @@ import type { Route } from "./+types/storefront";
 import { data } from "react-router";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { providerForStore } from "~/lib/payments.server";
+import { paypalFor } from "~/lib/paypal.server";
 import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig, themes } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
@@ -191,11 +192,17 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   } catch {
     publishableKey = null;
   }
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey }, { headers });
+
+  // PayPal's client id is public by design — it is what the SDK script is
+  // addressed with. Its absence must never take the rest of the page down.
+  const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
+    .then((client) => client?.clientId ?? null)
+    .catch(() => null);
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId } = loaderData;
 
   if (!page) {
     return (
@@ -229,7 +236,12 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
       <>
         <link rel="stylesheet" href={gardenBuddyThemeHref} />
         {head}
-        <GardenBuddyStorefront page={page} storeParam={storeParam} publishableKey={publishableKey} />
+        <GardenBuddyStorefront
+          page={page}
+          storeParam={storeParam}
+          publishableKey={publishableKey}
+          paypalClientId={paypalClientId}
+        />
       </>
     );
   }

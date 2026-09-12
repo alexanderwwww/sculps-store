@@ -25,6 +25,7 @@
  *     its `/cart` link, so the old flow still works untouched.
  */
 import { ProductExpress } from "./product-express";
+import { PayPalExpress } from "./paypal-express";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
@@ -88,6 +89,7 @@ export function CartDrawerProvider({
   storeParam = "",
   photo,
   publishableKey = null,
+  paypalClientId = null,
   children,
 }: {
   page: LoadedProductPage;
@@ -96,6 +98,8 @@ export function CartDrawerProvider({
   photo?: { src: string; alt: string } | null;
   /** the store's Stripe publishable key, for the wallet buttons above Checkout */
   publishableKey?: string | null;
+  /** PayPal's public client id, when the store has PayPal connected */
+  paypalClientId?: string | null;
   children: React.ReactNode;
 }) {
   const href = (path: string) => `${path}${storeParam}`;
@@ -435,6 +439,16 @@ export function CartDrawerProvider({
                 shippingCents={0}
                 storeParam={storeParam}
                 onReady={() => undefined}
+              />
+            ) : null}
+            {/* PayPal, Pay Later and Venmo, on the cart as it stands. Their
+                own SDK draws them, and they only appear when the store has
+                PayPal connected. */}
+            {paypalClientId && cart && cart.lines.length > 0 ? (
+              <PayPalExpress
+                clientId={paypalClientId}
+                currency={cart.currency ?? page.store.currency}
+                storeParam={storeParam}
               />
             ) : null}
             <a
