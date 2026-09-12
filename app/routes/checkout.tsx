@@ -2041,22 +2041,30 @@ function Upsell({
               : 0;
           const shot = item.imageUrl ?? photo?.src ?? null;
           return (
-            <li className="gb-co__up-item" key={item.id}>
+            <li className={`gb-co__up-item${off >= 40 ? " gb-co__up-item--deal" : ""}`} key={item.id}>
               <span className="gb-co__up-shot">
                 {shot ? (
                   <img src={shot} alt={item.imageUrl ? item.label : photo?.alt || item.productTitle} loading="lazy" />
                 ) : (
                   <span className="gb-ph">No photo</span>
                 )}
-                {off > 0 ? <span className="gb-co__up-flag">{off}% off</span> : null}
+                {off > 0 ? <span className="gb-co__up-flag">−{off}%</span> : null}
               </span>
               <span className="gb-co__up-body">
                 <span className="gb-co__up-name">{item.label}</span>
-                {item.sublabel ? <span className="gb-co__up-note">{item.sublabel}</span> : null}
                 <span className="gb-co__up-price">
                   <b>{money(item.priceCents)}</b>
                   {off > 0 ? <s>{money(item.compareAtCents!)}</s> : null}
                 </span>
+                {/* Half price or better is the whole reason to look twice, so
+                    it is said in words as well as in the badge. */}
+                {off >= 40 ? (
+                  <span className="gb-co__up-deal">
+                    Save {money(item.compareAtCents! - item.priceCents)} — only with this order
+                  </span>
+                ) : item.sublabel ? (
+                  <span className="gb-co__up-note">{item.sublabel}</span>
+                ) : null}
               </span>
               <button
                 type="button"
@@ -2070,7 +2078,7 @@ function Upsell({
                   fetcher.submit(body, { method: "post" });
                 }}
               >
-                {adding === item.id ? "Adding…" : "Add"}
+                {adding === item.id ? "Adding…" : "+ Add"}
               </button>
             </li>
           );

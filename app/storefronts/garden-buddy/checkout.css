@@ -254,19 +254,22 @@
 .gb-co__up-list { list-style: none; margin: 0 -4px; padding: 0 4px 6px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(216px, 1fr); gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--field) transparent; }
 .gb-co__up-list::-webkit-scrollbar { height: 5px; }
 .gb-co__up-list::-webkit-scrollbar-thumb { background: var(--field); border-radius: 999px; }
-.gb-co__up-item { scroll-snap-align: start; display: grid; justify-items: center; gap: 8px; padding: 14px 12px 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; text-align: center; }
+.gb-co__up-item { scroll-snap-align: start; transition: box-shadow .16s var(--ease); display: grid; justify-items: center; gap: 8px; padding: 14px 12px 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; text-align: center; }
 .gb-co__up-shot { position: relative; width: 100%; aspect-ratio: 1; max-width: 132px; border-radius: 10px; overflow: hidden; background: #fff; }
 .gb-co__up-shot img { width: 100%; height: 100%; object-fit: contain; }
 /* The saving, stated once, on the picture — not as a third price to read. */
-.gb-co__up-flag { position: absolute; left: 6px; top: 6px; padding: 4px 8px; border-radius: 999px; background: var(--brown, #3B2A1B); color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.gb-co__up-flag { position: absolute; left: 6px; top: 6px; padding: 4px 9px; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--font-h); font-size: 11px; font-weight: 800; line-height: 1; }
 .gb-co__up-body { display: grid; gap: 3px; justify-items: center; min-width: 0; width: 100%; }
 .gb-co__up-name { margin: 0; font-weight: 700; font-size: 13.5px; line-height: 1.3; color: var(--ink); }
 .gb-co__up-note { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.35; }
+/* Half price or better gets the lime edge — one card stands out, not all. */
+.gb-co__up-item--deal { border-color: var(--lime); box-shadow: 0 0 0 1px var(--lime); }
+.gb-co__up-deal { margin: 0; font-size: 11.5px; font-weight: 700; line-height: 1.35; color: var(--leaf); }
 .gb-co__up-price { margin: 2px 0 0; display: flex; gap: 7px; align-items: baseline; justify-content: center; font-size: 14.5px; color: var(--ink); }
 .gb-co__up-price b { font-weight: 800; }
 .gb-co__up-price s { color: var(--dim); font-weight: 400; font-size: 12.5px; }
-.gb-co__up-add { width: 100%; margin-top: 4px; min-height: 38px; padding: 0 16px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-family: var(--font-b); font-size: 13px; font-weight: 700; cursor: pointer; transition: background .16s var(--ease), color .16s var(--ease); }
-.gb-co__up-add:hover { background: var(--ink); color: #fff; }
+.gb-co__up-add { width: 100%; margin-top: 6px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--font-h); font-size: 14px; font-weight: 800; cursor: pointer; transition: background .16s var(--ease); }
+.gb-co__up-add:hover { background: var(--lime-2); }
 .gb-co__up-add[disabled] { opacity: .5; cursor: not-allowed; }
 
 /* ---- the folded summary, phones only ----------------------------------- */

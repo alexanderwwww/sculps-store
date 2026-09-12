@@ -743,30 +743,38 @@ function Upsell({
             variant.compareAtCents && variant.compareAtCents > variant.priceCents
               ? Math.round(((variant.compareAtCents - variant.priceCents) / variant.compareAtCents) * 100)
               : 0;
+          const saved = variant.compareAtCents ? variant.compareAtCents - variant.priceCents : 0;
           return (
-            <li className="gb-drawer__up-item" key={variant.id}>
+            <li className={`gb-drawer__up-item${off >= 40 ? " gb-drawer__up-item--deal" : ""}`} key={variant.id}>
               <span className="gb-drawer__up-shot">
                 {variant.imageUrl ? (
                   <img src={variant.imageUrl} alt={variant.label} loading="lazy" />
                 ) : (
                   <span className="gb-ph">No photo</span>
                 )}
-                {off > 0 ? <span className="gb-drawer__up-flag">{off}% off</span> : null}
+                {off > 0 ? <span className="gb-drawer__up-flag">−{off}%</span> : null}
               </span>
-              <span className="gb-drawer__up-body">
-                <span className="gb-drawer__up-name">{variant.label}</span>
-                {variant.sublabel ? <span className="gb-drawer__up-sub">{variant.sublabel}</span> : null}
-                <span className="gb-drawer__up-price">
-                  <b>{formatMoney(variant.priceCents, currency)}</b>
-                  {off > 0 ? <s>{formatMoney(variant.compareAtCents!, currency)}</s> : null}
+              <span className="gb-drawer__up-name">{variant.label}</span>
+              <span className="gb-drawer__up-price">
+                <b>{formatMoney(variant.priceCents, currency)}</b>
+                {off > 0 ? <s>{formatMoney(variant.compareAtCents!, currency)}</s> : null}
+              </span>
+              {/* Half price or better is the whole reason to look twice, so it
+                  is said in words as well as in the badge. */}
+              {off >= 40 ? (
+                <span className="gb-drawer__up-deal">
+                  Save {formatMoney(saved, currency)} — only with this order
                 </span>
-              </span>
+              ) : variant.sublabel ? (
+                <span className="gb-drawer__up-sub">{variant.sublabel}</span>
+              ) : null}
               <button
                 type="button"
                 className="gb-drawer__up-add"
                 onClick={(event) => onAdd(variant.id, event.currentTarget)}
                 aria-label={`Add ${variant.label}`}
               >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                 Add
               </button>
             </li>
