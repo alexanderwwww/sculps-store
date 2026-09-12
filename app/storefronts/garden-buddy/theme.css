@@ -739,3 +739,77 @@
 .gb-ppx{width:100%;margin:10px 0 2px;min-height:46px}
 .gb-ppx > div{width:100%}
 .gb-ppx__err{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:#B3261E;text-align:center}
+
+/* ------------------------------------------------------------ robot mower */
+/* The second product's page. Same tokens as the shop, held quieter: more air,
+   finer type, hairline rules instead of filled blocks. Expensive reads as
+   restraint — the photography carries it, the page gets out of the way. */
+.gb-mow{--mow-air:clamp(56px,7vw,120px)}
+.gb-mow-buy{padding:clamp(30px,4vw,58px) 0 var(--mow-air)}
+.gb-mow-buy__grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(30px,5vw,84px);align-items:start}
+
+.gb-mow-gal__stage{background:var(--paper);border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.gb-mow-gal__stage img{width:100%;height:100%;aspect-ratio:1;object-fit:contain}
+.gb-mow-gal__thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.gb-mow-gal__thumb{padding:0;border:0;background:var(--sand);border-radius:3px;overflow:hidden;cursor:pointer;opacity:.55;transition:opacity .2s}
+.gb-mow-gal__thumb img{width:100%;height:100%;aspect-ratio:1;object-fit:cover;display:block}
+.gb-mow-gal__thumb:hover{opacity:.8}
+.gb-mow-gal__thumb[aria-selected="true"]{opacity:1}
+.gb-mow-gal__thumb:focus-visible{outline:2px solid var(--night);outline-offset:2px}
+
+.gb-mow-buy__panel{padding-top:clamp(6px,1.5vw,22px)}
+.gb-mow-buy__eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 22px;font-weight:600}
+.gb-mow-buy__h{font-family:var(--font-h);font-size:clamp(30px,3.6vw,44px);line-height:1.1;letter-spacing:-.03em;margin:0;font-weight:600;text-wrap:balance}
+.gb-mow-buy__sub{color:var(--dim);max-width:40ch;margin:18px 0 0;font-size:17px;line-height:1.6}
+.gb-mow-buy__price{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:30px 0 0;padding-top:26px;border-top:1px solid var(--rule)}
+.gb-mow-buy__price s{color:var(--dim);font-size:18px;font-weight:400}
+.gb-mow-buy__price b{font-family:var(--font-h);font-size:clamp(27px,2.8vw,34px);font-weight:600;letter-spacing:-.02em}
+.gb-mow-buy__save{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--leaf)}
+.gb-mow-buy__facts{list-style:none;margin:26px 0 30px;padding:0;display:grid;gap:14px;font-size:15.5px;font-weight:400;color:var(--ink)}
+.gb-mow-buy__facts .gb-check:before{transform:scale(.82);transform-origin:center}
+.gb-mow-buy__cta{font-family:var(--font-b);display:flex;width:100%;align-items:center;justify-content:center;min-height:64px;padding:0 32px;border:0;border-radius:2px;background:var(--night);color:var(--night-ink);font-size:15px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s,transform .05s}
+.gb-mow-buy__cta:hover{background:var(--night-2)}
+.gb-mow-buy__cta:active{transform:translateY(1px)}
+.gb-mow-buy__cta[disabled]{opacity:.45;cursor:not-allowed}
+.gb-mow-buy__trust{list-style:none;display:flex;flex-wrap:wrap;gap:10px 26px;margin:22px 0 0;padding:0;color:var(--dim);font-size:13.5px;font-weight:500}
+
+.gb-mow-scene{padding:var(--mow-air) 0;background:var(--paper)}
+.gb-mow-scene--flip{background:var(--sand)}
+.gb-mow-scene__in{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,5vw,86px);align-items:center}
+.gb-mow-scene--flip .gb-mow-scene__shot{order:2}
+.gb-mow-scene__shot{border-radius:4px;overflow:hidden}
+.gb-mow-scene__shot img{width:100%;height:auto;aspect-ratio:1;object-fit:cover}
+.gb-mow-scene__script{font-size:clamp(23px,2.6vw,30px);color:var(--leaf);margin:0 0 14px}
+.gb-mow-scene__copy .gb-h2{font-weight:600;letter-spacing:-.03em}
+.gb-mow-scene__copy .gb-lede{margin-top:16px;line-height:1.65}
+
+.gb-mow-pts{padding:var(--mow-air) 0;background:var(--paper);border-top:1px solid var(--rule)}
+.gb-mow-pts__h{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:600;margin:0 0 clamp(32px,4vw,56px);text-align:center}
+.gb-mow-pts__list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(20px,3.4vw,48px)}
+.gb-mow-pts__item{padding:0}
+.gb-mow-pts__ico{display:block;font-size:30px;line-height:1;margin-bottom:20px}
+.gb-mow-pts__item h3{font-family:var(--font-h);font-size:18px;font-weight:600;margin:0 0 10px;letter-spacing:-.015em}
+.gb-mow-pts__item p{margin:0;color:var(--dim);font-size:15px;line-height:1.65}
+
+.gb-mow-end{background:var(--night);color:var(--night-ink);padding:var(--mow-air) 0}
+.gb-mow-end__in{display:grid;justify-items:center;text-align:center;gap:0}
+.gb-mow-end__script{font-size:clamp(25px,3vw,34px);color:var(--lime);margin:0 0 14px}
+.gb-mow-end__h{font-family:var(--font-h);font-size:clamp(25px,2.8vw,36px);line-height:1.14;letter-spacing:-.03em;margin:0;font-weight:600}
+.gb-mow-end__price{font-family:var(--font-h);font-size:22px;font-weight:500;margin:14px 0 30px;color:#ffffffbf;letter-spacing:.02em}
+.gb-mow-end__cta{font-family:var(--font-b);display:inline-flex;align-items:center;justify-content:center;min-height:62px;padding:0 52px;border:0;border-radius:2px;background:var(--lime);color:var(--lime-ink);font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s,transform .05s}
+.gb-mow-end__cta:hover{background:var(--lime-2)}
+.gb-mow-end__cta:active{transform:translateY(1px)}
+.gb-mow-end__cta[disabled]{opacity:.45;cursor:not-allowed}
+.gb-mow-buy__cta:focus-visible{outline:2px solid var(--leaf);outline-offset:3px}
+.gb-mow-end__cta:focus-visible{outline:2px solid var(--night-ink);outline-offset:3px}
+
+@media(max-width:900px){
+  .gb-mow-buy__grid{grid-template-columns:1fr}
+  .gb-mow-scene__in{grid-template-columns:1fr}
+  .gb-mow-scene--flip .gb-mow-scene__shot{order:0}
+  .gb-mow-pts__list{grid-template-columns:repeat(2,1fr);gap:34px}
+}
+@media(max-width:560px){
+  .gb-mow-pts__list{grid-template-columns:1fr}
+  .gb-mow-end__cta{width:100%;padding:0 24px}
+}

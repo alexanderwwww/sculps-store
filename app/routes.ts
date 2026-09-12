@@ -20,6 +20,8 @@ export default [
   route("checkout/diag", "routes/checkout.diag.tsx"),
   route("push/log", "routes/push.log.tsx"),
   route("thanks", "routes/thanks.tsx"),
+  // The store's second product. The root sells the first one.
+  route("mower", "routes/mower.tsx"),
   route("pages/:handle", "routes/pages.$handle.tsx"),
   // The shapes Shopify used. Old links stay alive rather than dying in the
   // index and in every ad that already points at them.
