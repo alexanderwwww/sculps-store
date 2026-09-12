@@ -158,6 +158,10 @@ export function GardenBuddyStorefront({
       {/* The bar that follows the page down once the buy box is gone, and the
           help panel. Both need a variant to talk about, so a store with no
           variants gets neither rather than an empty shell. */}
+      {/* Both live in a .gb of their own: the theme's colours are variables
+          declared on .gb, so anything rendered outside it paints with no
+          palette at all. */}
+      <div className="gb">
       {stickyVariant ? (
         <StickyCart
           label={page.product.title}
@@ -168,6 +172,7 @@ export function GardenBuddyStorefront({
         />
       ) : null}
       <SupportChat email={page.store.contactEmail} />
+      </div>
     </CartDrawerProvider>
   );
 }

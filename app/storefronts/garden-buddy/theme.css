@@ -827,46 +827,59 @@
 }
 
 /* ------------------------------------------------- support chat + sticky cart */
-.gb-chat{position:fixed;right:clamp(14px,3vw,26px);bottom:clamp(14px,3vw,26px);z-index:60;display:grid;justify-items:end;gap:12px}
-.gb-chat__btn{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 22px;border:0;border-radius:999px;background:var(--night);color:var(--night-ink);font-family:var(--font-b);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(28,35,24,.22);transition:transform .15s,background .15s}
-.gb-chat__btn:hover{transform:translateY(-1px)}
-.gb-chat__btn svg{width:21px;height:21px;flex:0 0 21px;color:var(--lime)}
-.gb-chat__btn:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
-.gb-chat__panel{width:min(360px,calc(100vw - 28px));max-height:min(72vh,540px);display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--rule);border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(28,35,24,.22)}
-.gb-chat__head{display:flex;align-items:center;gap:11px;padding:14px 14px 13px;background:var(--night);color:var(--night-ink)}
-.gb-chat__dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:var(--lime)}
-.gb-chat__title{display:grid;gap:1px;flex:1 1 auto;min-width:0}
-.gb-chat__title strong{font-family:var(--font-h);font-size:15px;font-weight:700}
-.gb-chat__title span{font-size:12px;color:#ffffffa6}
-.gb-chat__x{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border:0;border-radius:50%;background:#ffffff1f;color:inherit;cursor:pointer}
-.gb-chat__x svg{width:16px;height:16px}
-.gb-chat__body{flex:1 1 auto;overflow-y:auto;padding:16px 14px;display:grid;gap:10px;justify-items:start;background:var(--sand)}
-.gb-chat__msg{margin:0;max-width:86%;padding:10px 14px;border-radius:16px;font-size:14.5px;line-height:1.5}
-.gb-chat__msg--them{background:var(--paper);border:1px solid var(--rule);border-bottom-left-radius:5px}
-.gb-chat__msg--you{justify-self:end;background:var(--night);color:var(--night-ink);border-bottom-right-radius:5px}
-.gb-chat__asks{padding:12px 14px 14px;display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid var(--rule)}
-.gb-chat__ask{padding:9px 15px;border:1px solid var(--rule);border-radius:999px;background:var(--paper);color:var(--ink);font-family:var(--font-b);font-size:13.5px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
-.gb-chat__ask:hover{background:var(--sand);border-color:var(--ink)}
-.gb-chat__done{margin:0;font-size:13.5px;color:var(--dim);line-height:1.55}
-.gb-chat__done a{color:var(--leaf);font-weight:700}
+/* Both are fixed to the viewport, so they are the two pieces most likely to
+   end up outside a .gb scope one day. Every colour here carries a literal
+   fallback for exactly that reason — a floating panel with no palette paints
+   as transparent serif text, which is what happened once already. */
+.gb-chat{position:fixed;right:clamp(14px,3vw,26px);bottom:clamp(14px,3vw,26px);z-index:60;display:grid;justify-items:end;gap:12px;font-family:var(--font-b,system-ui,-apple-system,"Segoe UI",sans-serif);color:var(--ink,#1C2318)}
+.gb-chat__btn{display:inline-flex;align-items:center;gap:11px;min-height:56px;padding:0 22px 0 10px;border:0;border-radius:999px;background:var(--night,#2A1D11);color:var(--night-ink,#F6EEE2);font-family:inherit;font-size:15.5px;font-weight:700;cursor:pointer;box-shadow:0 12px 34px rgba(28,35,24,.30);transition:transform .15s}
+.gb-chat__btn:hover{transform:translateY(-2px)}
+.gb-chat__btn svg{width:22px;height:22px;flex:0 0 22px;margin-inline:6px}
+.gb-chat__btn:focus-visible{outline:3px solid var(--lime,#A8F32A);outline-offset:3px}
+.gb-chat__face{width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:var(--yellow,#FFC72C);object-fit:cover;display:block}
 
-.gb-sticky{position:fixed;left:0;right:0;bottom:0;z-index:55;background:var(--paper);border-top:1px solid var(--rule);box-shadow:0 -8px 30px rgba(28,35,24,.10);transform:translateY(110%);transition:transform .25s ease;pointer-events:none}
+.gb-chat__panel{width:min(370px,calc(100vw - 28px));max-height:min(74vh,560px);display:flex;flex-direction:column;background:var(--paper,#FFFFFF);border:2px solid var(--night,#2A1D11);border-radius:20px;overflow:hidden;box-shadow:0 26px 64px rgba(28,35,24,.30)}
+.gb-chat__head{display:flex;align-items:center;gap:12px;padding:14px;background:var(--night,#2A1D11);color:var(--night-ink,#F6EEE2)}
+.gb-chat__head .gb-chat__face{width:44px;height:44px;flex:0 0 44px;box-shadow:0 0 0 2px var(--lime,#A8F32A)}
+.gb-chat__title{display:grid;gap:2px;flex:1 1 auto;min-width:0}
+.gb-chat__title strong{font-family:var(--font-h,inherit);font-size:16px;font-weight:800;letter-spacing:-.01em}
+.gb-chat__title span{font-size:12.5px;color:var(--lime,#A8F32A);font-weight:600}
+.gb-chat__x{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:inherit;cursor:pointer}
+.gb-chat__x svg{width:16px;height:16px}
+.gb-chat__x:hover{background:rgba(255,255,255,.26)}
+
+.gb-chat__body{flex:1 1 auto;overflow-y:auto;padding:16px 14px;display:grid;gap:11px;background:var(--sand,#F4EEE2)}
+.gb-chat__row{display:flex;align-items:flex-end;gap:8px;max-width:92%}
+.gb-chat__row--you{justify-self:end;flex-direction:row-reverse}
+.gb-chat__pip{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:var(--yellow,#FFC72C);object-fit:cover;display:block}
+.gb-chat__msg{margin:0;padding:11px 15px;border-radius:18px;font-size:14.5px;line-height:1.5}
+.gb-chat__msg--them{background:var(--paper,#FFFFFF);border:1px solid var(--rule,rgba(28,35,24,.12));border-bottom-left-radius:6px;color:var(--ink,#1C2318)}
+.gb-chat__msg--you{background:var(--lime,#A8F32A);color:var(--lime-ink,#12290C);font-weight:600;border-bottom-right-radius:6px}
+
+.gb-chat__asks{padding:12px 14px 14px;display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid var(--rule,rgba(28,35,24,.12));background:var(--paper,#FFFFFF)}
+.gb-chat__ask{padding:9px 15px;border:1.5px solid var(--night,#2A1D11);border-radius:999px;background:var(--paper,#FFFFFF);color:var(--ink,#1C2318);font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+.gb-chat__ask:hover{background:var(--night,#2A1D11);color:var(--night-ink,#F6EEE2)}
+.gb-chat__done{margin:0;font-size:13.5px;color:var(--dim,#5D6657);line-height:1.55}
+.gb-chat__done a{color:var(--leaf,#5C8C1E);font-weight:700}
+
+.gb-sticky{position:fixed;left:0;right:0;bottom:0;z-index:55;background:var(--paper,#FFFFFF);border-top:1px solid var(--rule,rgba(28,35,24,.12));box-shadow:0 -8px 30px rgba(28,35,24,.14);transform:translateY(110%);transition:transform .25s ease;pointer-events:none;font-family:var(--font-b,system-ui,-apple-system,"Segoe UI",sans-serif);color:var(--ink,#1C2318)}
 .gb-sticky--on{transform:translateY(0);pointer-events:auto}
 .gb-sticky__in{display:flex;align-items:center;gap:16px;padding-block:11px}
 .gb-sticky__body{display:grid;gap:1px;flex:1 1 auto;min-width:0}
 .gb-sticky__name{font-weight:700;font-size:15px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gb-sticky__price{display:flex;align-items:baseline;gap:8px}
-.gb-sticky__price b{font-family:var(--font-h);font-size:18px;font-weight:800}
-.gb-sticky__price s{color:var(--dim);font-size:13.5px}
-.gb-sticky__add{flex:0 0 auto;min-height:48px;padding:0 30px;border:0;border-radius:999px;background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-size:16px;font-weight:800;cursor:pointer;transition:background .15s}
-.gb-sticky__add:hover{background:var(--lime-2)}
-.gb-sticky__add:focus-visible{outline:3px solid var(--night);outline-offset:3px}
+.gb-sticky__price b{font-family:var(--font-h,inherit);font-size:18px;font-weight:800}
+.gb-sticky__price s{color:var(--dim,#5D6657);font-size:13.5px}
+.gb-sticky__add{flex:0 0 auto;min-height:48px;padding:0 30px;border:0;border-radius:999px;background:var(--lime,#A8F32A);color:var(--lime-ink,#12290C);font-family:var(--font-h,inherit);font-size:16px;font-weight:800;cursor:pointer;transition:background .15s}
+.gb-sticky__add:hover{background:var(--lime-2,#93DC17)}
+.gb-sticky__add:focus-visible{outline:3px solid var(--night,#2A1D11);outline-offset:3px}
 /* The chat sits above the bar rather than under it. */
 .gb-sticky--on ~ .gb-chat,.gb-chat:has(~ .gb-sticky--on){bottom:calc(clamp(14px,3vw,26px) + 74px)}
 @media(max-width:560px){
   .gb-chat__btn span{display:none}
-  .gb-chat__btn{min-height:54px;width:54px;padding:0;justify-content:center}
+  .gb-chat__btn{min-height:58px;width:58px;padding:0;justify-content:center}
+  .gb-chat__btn .gb-chat__face{width:40px;height:40px;flex:0 0 40px}
   .gb-sticky__add{padding:0 22px;font-size:15px}
   .gb-sticky__name{font-size:14px}
 }
-@media(prefers-reduced-motion:reduce){.gb-sticky{transition:none}}
+@media(prefers-reduced-motion:reduce){.gb-sticky{transition:none}.gb-chat__btn:hover{transform:none}}

@@ -51,6 +51,9 @@ const ANSWERS: Answer[] = [
 
 type Line = { from: "them" | "you"; text: string };
 
+/** The face from the logo, cropped out of it — not a redrawn lookalike. */
+const FACE = "/media/gb-face.png";
+
 export function SupportChat({ email }: { email: string | null }) {
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState<Line[]>([
@@ -77,10 +80,10 @@ export function SupportChat({ email }: { email: string | null }) {
       {open ? (
         <div className="gb-chat__panel" role="dialog" aria-label="Support">
           <div className="gb-chat__head">
-            <span className="gb-chat__dot" aria-hidden="true" />
+            <img className="gb-chat__face" src={FACE} alt="" width={44} height={44} />
             <span className="gb-chat__title">
               <strong>Garden Buddy help</strong>
-              <span>Answers to the common questions</span>
+              <span>Quick answers, right away</span>
             </span>
             <button type="button" className="gb-chat__x" onClick={() => setOpen(false)} aria-label="Close">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -89,9 +92,12 @@ export function SupportChat({ email }: { email: string | null }) {
 
           <div className="gb-chat__body">
             {lines.map((line, i) => (
-              <p className={`gb-chat__msg gb-chat__msg--${line.from}`} key={i}>
-                {line.text}
-              </p>
+              <div className={`gb-chat__row gb-chat__row--${line.from}`} key={i}>
+                {line.from === "them" ? (
+                  <img className="gb-chat__pip" src={FACE} alt="" width={28} height={28} loading="lazy" />
+                ) : null}
+                <p className={`gb-chat__msg gb-chat__msg--${line.from}`}>{line.text}</p>
+              </div>
             ))}
             <div ref={endRef} />
           </div>
@@ -130,7 +136,7 @@ export function SupportChat({ email }: { email: string | null }) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         ) : (
           <>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.2 9.2 0 0 1-3.3-.6L3 21l1.8-5.1A8.1 8.1 0 0 1 4 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8 8.4z" /></svg>
+            <img className="gb-chat__face" src={FACE} alt="" width={36} height={36} />
             <span>Need help?</span>
           </>
         )}
