@@ -29,11 +29,8 @@
   --dim: #6B6559;
   --line: rgba(59, 42, 27, .14);
   --field: rgba(59, 42, 27, .22);
-  /* the right half — the store's own night, the colour of its footer */
-  --rail: #2A1D11;
-  --night: #2A1D11;
-  --night-2: #3B2A1B;
-  --night-ink: #F6EEE2;
+  /* the right half — a plain neutral grey, the classic checkout summary */
+  --rail: #F5F5F5;
   --yellow: #FFC72C;
   --bad: #B3341C;
   --r: 8px;
@@ -336,42 +333,19 @@
 .gb-co__express-err { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--danger, #B3261E); text-align: center; }
 
 
-/* ---- the rail, in the dark -------------------------------------------- *
- * The summary side is the store's night, the same colour as its footer, so
- * the checkout reads as the shop rather than as a beige form. Everything
- * inside it is coloured by redefining the palette on this one element —
- * ink, dim and line all flip, and every rule underneath follows without
- * being rewritten. Only the few hard-coded whites are named again below. */
-.gb-co__rail,
-.gb-co__msum {
-  --ink: #F6EEE2;
-  --dim: #B9AE9C;
-  --line: rgba(246, 238, 226, .16);
-  --field: rgba(246, 238, 226, .34);
-  --leaf: #A8F32A;
-  --bad: #FF9C86;
-  color: #F6EEE2;
-}
-.gb-co__rail { background: var(--night); }
-.gb-co-split > .gb-co__rail { border-left: 0; }
-/* Product photos still sit on white — a navy kneeler on a brown panel is a
-   silhouette, not a photograph. */
-.gb-co__rail .gb-co__shot { background: #fff; border-color: rgba(246, 238, 226, .2); }
-.gb-co__rail .gb-co__qty { background: var(--lime); color: var(--lime-ink); }
-.gb-co__rail .gb-co__prot-row { background: var(--night-2); border-color: rgba(246, 238, 226, .16); }
-.gb-co__rail .gb-co__up-item { background: var(--night-2); border-color: rgba(246, 238, 226, .14); }
-.gb-co__rail .gb-co__up-flag { background: var(--lime); color: var(--lime-ink); }
-.gb-co__rail .gb-co__up-add { border-color: var(--lime); color: var(--lime); }
-.gb-co__rail .gb-co__up-add:hover { background: var(--lime); color: var(--lime-ink); }
-.gb-co__rail .gb-co__disc .gb-sf__in { background: var(--night-2); border-color: rgba(246, 238, 226, .22); color: #F6EEE2; }
-.gb-co__rail .gb-co__disc-btn { background: var(--lime); color: var(--lime-ink); }
-.gb-co__rail .gb-co__disc-btn:hover { background: var(--lime-2); }
-.gb-co__rail .gb-co__tot--free b { color: var(--lime); }
-.gb-co__rail .gb-co__grand b { color: #fff; }
-.gb-co__rail .gb-co__prot-row input { accent-color: var(--lime); }
-/* The folded phone summary is the same panel, so it matches the rail it
-   stands in for. */
-.gb-co__msum { background: var(--night); border-color: rgba(246, 238, 226, .18); }
+/* ---- the rail --------------------------------------------------------- *
+ * The summary side is a plain neutral grey with a hairline edge — the shape
+ * every buyer has already seen a hundred times. Nothing on this half has to
+ * be recoloured: it keeps the page's own ink, dim and line. Only the two
+ * panels that sit on it are lifted to white so they read as cards. */
+.gb-co__rail { background: var(--rail); }
+.gb-co-split > .gb-co__rail { border-left: 1px solid #E4E4E4; }
+.gb-co__rail { --line: #E2E0DC; --field: #C9C6C0; }
+.gb-co__rail .gb-co__shot { background: #fff; border-color: #E2E0DC; }
+.gb-co__rail .gb-co__prot-row,
+.gb-co__rail .gb-co__up-item { background: #fff; }
+.gb-co__rail .gb-co__disc .gb-sf__in { background: #fff; }
+.gb-co__msum { background: var(--rail); border-color: #E2E0DC; }
 
 /* One sweep that only ever moves a layer, so the browser composites it
    instead of repainting a gradient on every frame of an endless loop. */
