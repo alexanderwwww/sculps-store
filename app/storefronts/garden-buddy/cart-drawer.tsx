@@ -305,22 +305,33 @@ export function CartDrawerProvider({
       {children}
 
       {recall ? (
-        <div className="gb gb-recall" role="dialog" aria-label="Your cart is still here">
-          <button type="button" className="gb-recall__x" onClick={dismissRecall} aria-label="Close">
-            {IcoClose}
-          </button>
-          <div className="gb-recall__row">
-            {photo ? <img className="gb-recall__img" src={photo.src} alt="" /> : null}
-            <div className="gb-recall__body">
-              <div className="gb-recall__kicker">Still in your cart</div>
-              <div className="gb-recall__title">{recall.lines[0]?.productTitle ?? page.product.title}</div>
-              <div className="gb-recall__meta">
-                {recall.itemCount} item{recall.itemCount === 1 ? "" : "s"} ·{" "}
-                <strong>{formatMoney(recall.totalCents, recall.currency)}</strong>
+        <div className="gb gb-recall" role="dialog" aria-modal="true" aria-label="Your cart is still here">
+          <div className="gb-recall__scrim" onClick={dismissRecall} />
+          <div className="gb-recall__box">
+            <button type="button" className="gb-recall__x" onClick={dismissRecall} aria-label="Close">
+              {IcoClose}
+            </button>
+
+            {page.store.logoUrl ? (
+              <img className="gb-recall__logo" src={page.store.logoUrl} alt={page.store.name} />
+            ) : (
+              <div className="gb-recall__word">{page.store.name}</div>
+            )}
+
+            <div className="gb-recall__kicker">Still in your cart</div>
+            <h2 className="gb-recall__title">You left this behind.</h2>
+
+            <div className="gb-recall__row">
+              {photo ? <img className="gb-recall__img" src={photo.src} alt="" /> : null}
+              <div className="gb-recall__body">
+                <div className="gb-recall__name">{recall.lines[0]?.productTitle ?? page.product.title}</div>
+                <div className="gb-recall__meta">
+                  {recall.itemCount} item{recall.itemCount === 1 ? "" : "s"} ·{" "}
+                  <strong>{formatMoney(recall.totalCents, recall.currency)}</strong>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="gb-recall__acts">
+
             <button
               type="button"
               className="gb-recall__go"

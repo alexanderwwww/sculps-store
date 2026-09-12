@@ -556,7 +556,7 @@ function BuyBox({
                           onChange={() => setSelected(i)}
                           className="gb-pack__radio"
                         />
-                        {variant.isDefault && <span className="gb-pack__flag">Our pick</span>}
+                        {variant.isDefault && <span className="gb-pack__flag">Most popular</span>}
                         <span className="gb-pack__head">
                           <span className="gb-pack__mark" aria-hidden="true" />
                           {variant.imageUrl || fallbackSrc ? (
