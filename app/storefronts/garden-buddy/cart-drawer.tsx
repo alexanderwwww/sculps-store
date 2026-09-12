@@ -503,16 +503,12 @@ export function CartDrawerProvider({
               </ul>
             )}
 
-            <Upsell
-              heading="Add another bundle"
-              variants={page.variants}
-              currency={page.store.currency}
-              inCart={cart ? cart.lines.map((l) => l.variantId) : []}
-              onAdd={(variantId, from) => add(variantId, from)}
-            />
-
-            {/* The store's other products, offered once the cart has something
-                in it — an empty drawer is not the place to cross-sell. */}
+            {/* The other products first. Someone with a kneeler in the cart
+                has already chosen a kneeler — the thing they have not seen is
+                the one worth putting at the top, and buried under the bundles
+                it was not being seen at all. Offered only once the cart has
+                something in it: an empty drawer is not the place to
+                cross-sell. */}
             {cart && cart.lines.length > 0 ? (
               <Upsell
                 heading="Goes with it"
@@ -522,6 +518,14 @@ export function CartDrawerProvider({
                 onAdd={(variantId, from) => add(variantId, from)}
               />
             ) : null}
+
+            <Upsell
+              heading="Add another bundle"
+              variants={page.variants}
+              currency={page.store.currency}
+              inCart={cart ? cart.lines.map((l) => l.variantId) : []}
+              onAdd={(variantId, from) => add(variantId, from)}
+            />
           </div>
 
           <div className="gb-drawer__foot">
@@ -639,8 +643,11 @@ function DiscountField({
 
   return (
     <>
-      <p className="gb-drawer__up-head">Discount code</p>
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+      {/* Its own row and its own button. It used to borrow the upsell card's
+          Add, which is full width by design, so the button swallowed the row
+          the moment that card was restyled. */}
+      <p className="gb-drawer__code-lbl">Have a discount code?</p>
+      <div className="gb-drawer__code">
         <input
           className="gb-co__input"
           type="text"
@@ -655,11 +662,10 @@ function DiscountField({
           placeholder="Discount code"
           aria-label="Discount code"
           aria-invalid={error ? "true" : undefined}
-          style={{ minHeight: 48, flex: 1 }}
         />
         <button
           type="button"
-          className="gb-drawer__up-add"
+          className="gb-drawer__apply"
           onClick={() => onApply(code.trim())}
           disabled={busy || !code.trim()}
         >

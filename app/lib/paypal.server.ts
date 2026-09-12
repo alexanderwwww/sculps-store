@@ -163,6 +163,27 @@ export class PayPalClient {
   }
 
   /**
+   * What PayPal is holding, in the smallest unit.
+   *
+   * /v1/reporting/balances needs a permission most checkout apps are not
+   * granted, so a refusal here is ordinary and not an error: null means "do
+   * not show a figure", never "show a zero".
+   */
+  async balance(currency: string): Promise<{ availableCents: number } | null> {
+    try {
+      const payload = await this.call(`/v1/reporting/balances?currency_code=${encodeURIComponent(currency)}`);
+      const rows: any[] = payload?.balances ?? [];
+      const row =
+        rows.find((r) => String(r?.currency).toUpperCase() === currency.toUpperCase()) ?? rows[0];
+      const value = row?.available_balance?.value ?? row?.total_balance?.value;
+      if (value == null) return null;
+      return { availableCents: Math.round(Number(value) * 100) };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * The order the buyer approves in the PayPal window.
    *
    * Amounts are sent as a decimal string because that is what PayPal takes —

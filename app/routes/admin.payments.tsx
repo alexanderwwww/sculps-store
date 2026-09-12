@@ -47,7 +47,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   await requireUser(context.db, request);
   const url = new URL(request.url);
   const { store } = await resolveAdminStore(context.db, url);
-  if (!store) return { store: null, stripe: null, paypal: null, encryption: false };
+  if (!store) return { store: null, stripe: null, paypal: null, encryption: false, balances: null };
 
   const rows = await context.db
     .select()
@@ -60,9 +60,30 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const stripeSecret = await decryptSecret(context.cloudflare.env, stripeRow?.secretKeyEnc ?? null);
   const paypalSecret = await decryptSecret(context.cloudflare.env, paypalRow?.secretKeyEnc ?? null);
 
+  /**
+   * What each side is holding. Both are asked at once and both are allowed to
+   * say nothing: Stripe needs a working key, and PayPal's balances endpoint
+   * needs a permission most checkout apps are never granted. A provider that
+   * cannot answer is simply left out — nothing here ever shows a zero it
+   * guessed at.
+   */
+  const [stripeBalance, paypalBalance] = await Promise.all([
+    stripeRow?.secretKeyEnc
+      ? providerForStore(context.db, context.cloudflare.env, store.id)
+          .then((client) => client.balance?.(store.currency) ?? null)
+          .catch(() => null)
+      : Promise.resolve(null),
+    paypalRow?.secretKeyEnc
+      ? paypalFor(context.db, context.cloudflare.env, store.id)
+          .then((client) => client?.balance(store.currency) ?? null)
+          .catch(() => null)
+      : Promise.resolve(null),
+  ]);
+
   return {
     store: { slug: store.slug, name: store.name, currency: store.currency },
     encryption: encryptionReady(context.cloudflare.env),
+    balances: { stripe: stripeBalance, paypal: paypalBalance },
     stripe: {
       publishableKey: stripeRow?.publishableKey ?? "",
       secretMask: maskSecret(stripeSecret),
@@ -246,6 +267,7 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
 
   const stripeState: ConnState = stripe.connectedAt ? "on" : stripe.hasSecret ? "connecting" : "off";
   const paypalState: ConnState = paypal.connectedAt ? "on" : paypal.hasSecret ? "connecting" : "off";
+  const balances = loaderData.balances ?? null;
   const live = stripeState === "on" || paypalState === "on";
 
   return (
@@ -265,8 +287,13 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
         {result?.error ? <HandshakeResult kind="error">{result.error}</HandshakeResult> : null}
         {result?.ok ? <HandshakeResult kind="ok">{result.ok}</HandshakeResult> : null}
 
+        {/* ------------------------------------------------------- the money */}
+        <Payout balances={balances} currency={store.currency} />
+
         {/* ---------------------------------------------------------- stripe */}
         <GlassPanel
+          halo
+          lift
           title="Stripe"
           sub="Cards, Apple Pay, Google Pay and Link. The secret key is stored encrypted and never shown again."
           aside={
@@ -330,6 +357,8 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
 
         {/* ---------------------------------------------------------- paypal */}
         <GlassPanel
+          halo
+          lift
           title="PayPal"
           sub="The button people already trust. Brings Pay Later and Venmo with it at no extra cost — the only buy-now-pay-later this store can offer US customers."
           aside={
@@ -415,5 +444,56 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
         </GlassPanel>
       </GlassGround>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ payout */
+
+/**
+ * What is waiting to land in his bank, both sides added up.
+ *
+ * Nothing here is estimated. Stripe answers with what is available and what
+ * is still settling; PayPal's balances endpoint needs a permission most
+ * checkout apps are never granted, so it usually answers with nothing. A
+ * provider that did not answer is left out of the sum and named as such, and
+ * when neither answered the panel does not render at all — an empty payout
+ * box is worse than no payout box.
+ */
+function Payout({
+  balances,
+  currency,
+}: {
+  balances: { stripe: { availableCents: number; pendingCents?: number } | null; paypal: { availableCents: number } | null } | null;
+  currency: string;
+}) {
+  const stripe = balances?.stripe ?? null;
+  const paypal = balances?.paypal ?? null;
+  if (!stripe && !paypal) return null;
+
+  const available = (stripe?.availableCents ?? 0) + (paypal?.availableCents ?? 0);
+  const pending = stripe?.pendingCents ?? 0;
+  const money = (cents: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
+
+  return (
+    <GlassPanel halo lift title="Next payout" sub="Cleared and ready to reach your bank.">
+      <div style={{ ...glassBody, display: "flex", alignItems: "flex-end", gap: 24, flexWrap: "wrap" }}>
+        <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <span style={{ fontSize: 32, fontWeight: 680, letterSpacing: "-.02em", lineHeight: "36px" }}>
+            {money(available)}
+          </span>
+          <span style={{ fontSize: 12, color: "var(--ink-2)" }}>
+            {[stripe ? "Stripe" : null, paypal ? "PayPal" : null].filter(Boolean).join(" + ")}
+            {stripe && !paypal ? " · PayPal does not report a balance" : ""}
+          </span>
+        </span>
+        {pending > 0 ? (
+          <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ fontSize: 18, fontWeight: 620, lineHeight: "24px" }}>{money(pending)}</span>
+            <span style={{ fontSize: 12, color: "var(--ink-2)" }}>still settling</span>
+          </span>
+        ) : null}
+      </div>
+    </GlassPanel>
   );
 }

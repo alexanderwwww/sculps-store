@@ -46,6 +46,7 @@ export function GlassPanel({
   children,
   tight,
   lift,
+  halo,
   style,
 }: {
   title?: ReactNode;
@@ -54,12 +55,15 @@ export function GlassPanel({
   children?: ReactNode;
   tight?: boolean;
   lift?: boolean;
+  /** Carry the page's colour around this card instead of borrowing the
+   *  ground's, so a panel low on the page is lit like the one at the top. */
+  halo?: boolean;
   style?: CSSProperties;
 }) {
   return (
     <section
-      className={`k-glass${tight ? " k-glass--tight" : ""}${lift ? " k-lift" : ""}`}
-      style={{ overflow: "hidden", ...style }}
+      className={`k-glass${tight ? " k-glass--tight" : ""}${lift ? " k-lift" : ""}${halo ? " k-glass--halo" : ""}`}
+      style={{ overflow: halo ? "visible" : "hidden", ...style }}
     >
       {title ? (
         <header
@@ -72,7 +76,7 @@ export function GlassPanel({
             flexWrap: "wrap",
           }}
         >
-          <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+          <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: "1 1 260px" }}>
             <span style={{ fontSize: 15, fontWeight: 650, lineHeight: "22px" }}>{title}</span>
             {sub ? <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: "18px" }}>{sub}</span> : null}
           </span>

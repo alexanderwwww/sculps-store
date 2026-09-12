@@ -96,6 +96,24 @@ button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
   mask-composite: exclude;
   pointer-events: none;
 }
+/* A card that carries its own light instead of borrowing the ground's.
+   The ground paints one wash across the whole page, so whichever panel sat
+   below the fold of that wash looked flat next to the one above it. This
+   puts the same colour just outside each panel, so every card is lit the
+   same way wherever it lands. */
+.k-glass--halo::after {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  z-index: -1;
+  border-radius: 32px;
+  background:
+    radial-gradient(48% 60% at 8% 0%, rgba(96, 165, 250, .34), transparent 68%),
+    radial-gradient(46% 58% at 92% 4%, rgba(244, 114, 182, .28), transparent 70%),
+    radial-gradient(52% 62% at 62% 100%, rgba(52, 211, 153, .26), transparent 68%);
+  filter: blur(16px);
+  pointer-events: none;
+}
 .k-glass--tight { border-radius: 16px; }
 .k-glass--flat { box-shadow: 0 6px 20px rgba(20, 16, 40, .10), inset 0 1px 0 rgba(255, 255, 255, .9); }
 

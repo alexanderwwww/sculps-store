@@ -510,12 +510,12 @@
 .gb-drawer__x svg{width:20px;height:20px}
 .gb-drawer__x:hover{background:var(--sand-2)}
 
-.gb-drawer__ship{margin:0;padding:13px var(--pad);background:var(--lime-soft);color:#2F5A17;font-size:15px;font-weight:700;display:grid;gap:8px;text-align:center}
+.gb-drawer__ship{margin:0;padding:13px var(--pad);background:var(--night);color:var(--night-ink);font-size:15px;font-weight:700;display:grid;gap:8px;text-align:center}
 .gb-drawer__ship p{margin:0}
 .gb-drawer__ship--done{font-weight:800;letter-spacing:.01em}
 .gb-drawer__ship strong{font-weight:800}
-.gb-drawer__bar{display:block;height:6px;border-radius:999px;background:#ffffffb8;overflow:hidden}
-.gb-drawer__bar i{display:block;height:100%;background:var(--leaf)}
+.gb-drawer__bar{display:block;height:6px;border-radius:999px;background:rgba(255,255,255,.22);overflow:hidden}
+.gb-drawer__bar i{display:block;height:100%;background:var(--lime)}
 
 .gb-drawer__body{flex:1 1 auto;overflow-y:auto;padding:0 var(--pad)}
 .gb-drawer__note{margin:26px 0;color:var(--dim);font-size:17px}
@@ -619,6 +619,13 @@
 /* the discount box in the cart drawer — 16px text, or iOS zooms the page when it is tapped */
 .gb-drawer .gb-co__input{display:block;width:100%;min-height:48px;padding:0 14px;border:1px solid var(--rule);border-radius:10px;background:#fff;color:var(--ink);font-family:var(--font-b);font-size:16px;outline:0}
 .gb-drawer .gb-co__input:focus{border-color:var(--brown);box-shadow:0 0 0 1px var(--brown)}
+.gb-drawer__code-lbl{margin:0 0 8px;font-size:14px;font-weight:600;color:var(--ink)}
+.gb-drawer__code{display:flex;gap:8px;align-items:stretch;margin-bottom:12px}
+.gb-drawer__code .gb-co__input{flex:1 1 auto;min-width:0}
+.gb-drawer__code .gb-co__input::placeholder{color:var(--dim);font-size:15px}
+.gb-drawer__apply{flex:0 0 auto;min-height:48px;padding:0 22px;border:0;border-radius:10px;background:var(--night);color:var(--night-ink);font-family:var(--font-b);font-size:15px;font-weight:700;cursor:pointer;transition:background .16s}
+.gb-drawer__apply:hover{background:var(--night-2)}
+.gb-drawer__apply[disabled]{opacity:.45;cursor:not-allowed}
 .gb-drawer .gb-co__err{display:block;color:#B3341C;font-size:13px}
 
 /* On a phone: a short card, the picture big on the right.

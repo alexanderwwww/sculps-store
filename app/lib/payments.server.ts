@@ -41,6 +41,11 @@ export interface RefundResult {
 export interface PaymentProvider {
   name: string;
   publishableKey: string | null;
+  /**
+   * What the provider is holding, in the smallest unit, or null when it will
+   * not say. Null means "show nothing" — never "show a zero".
+   */
+  balance?(currency: string): Promise<{ availableCents: number; pendingCents?: number } | null>;
   createIntent(input: {
     amountCents: number;
     currency: string;
@@ -213,6 +218,29 @@ class StripeProvider implements PaymentProvider {
       return { ok: true, account: currency };
     } catch (error) {
       return { ok: false, reason: error instanceof Error ? error.message : "Stripe refused the key." };
+    }
+  }
+
+  /**
+   * What Stripe is holding for this account, in the smallest unit.
+   * `available` is what is clear to be paid out; `pending` is what is still
+   * settling. Null when the key cannot read it — a figure is only ever shown
+   * when Stripe actually gave one.
+   */
+  async balance(currency: string): Promise<{ availableCents: number; pendingCents: number } | null> {
+    try {
+      const balance = await this.call("balance");
+      const want = currency.toLowerCase();
+      const sum = (rows: any[] | undefined) =>
+        (rows ?? [])
+          .filter((row) => String(row?.currency).toLowerCase() === want)
+          .reduce((total, row) => total + (Number(row?.amount) || 0), 0);
+      const available = sum(balance?.available);
+      const pending = sum(balance?.pending);
+      if (!balance?.available && !balance?.pending) return null;
+      return { availableCents: available, pendingCents: pending };
+    } catch {
+      return null;
     }
   }
 
