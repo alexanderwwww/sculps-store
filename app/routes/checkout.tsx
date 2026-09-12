@@ -2956,8 +2956,18 @@ function OnePage({
        * Apple Pay appearing here as well as in the row at the top is on
        * purpose: two chances to use the one he cares about.
        */
+      /**
+       * Open, not collapsed.
+       *
+       * In USD this account offers card and Link, and nothing else. Hiding the
+       * card fields behind a tap on a "Card" row bought nothing and cost the
+       * customer a step — and this store's customer is often 65+ on a phone.
+       * The collapsed state also kept the fields out of existence until she
+       * tapped, so iOS could not offer its own "Scan Credit Card" on the
+       * number field until after that tap.
+       */
       const payment = elements.create("payment", {
-        layout: { type: "accordion", defaultCollapsed: true, radios: true, spacedAccordionItems: true },
+        layout: { type: "accordion", defaultCollapsed: false, radios: true, spacedAccordionItems: true },
         wallets: { applePay: "auto", googlePay: "auto" },
       });
       if (cardRef.current) payment.mount(cardRef.current);
