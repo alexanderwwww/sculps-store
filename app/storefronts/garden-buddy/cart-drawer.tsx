@@ -461,8 +461,14 @@ export function CartDrawerProvider({
                 {cart.lines.map((line) => (
                   <li className="gb-drawer__line" key={line.variantId}>
                     <div className="gb-drawer__shot">
-                      {photo ? (
-                        <img src={photo.src} alt={photo.alt} loading="lazy" />
+                      {/* The variant's own picture when it has one — the
+                          bundles differ, so one shared photo would lie. */}
+                      {line.imageUrl || photo ? (
+                        <img
+                          src={line.imageUrl ?? photo!.src}
+                          alt={line.imageUrl ? line.label : photo!.alt}
+                          loading="lazy"
+                        />
                       ) : (
                         <div className="gb-ph">Product photo not added yet</div>
                       )}
@@ -717,6 +723,11 @@ function Upsell({
       <ul className="gb-drawer__up-list">
         {rest.map((variant) => (
           <li className="gb-drawer__up-item" key={variant.id}>
+            {variant.imageUrl ? (
+              <span className="gb-drawer__up-shot">
+                <img src={variant.imageUrl} alt={variant.label} loading="lazy" />
+              </span>
+            ) : null}
             <span className="gb-drawer__up-body">
               <span className="gb-drawer__up-name">{variant.label}</span>
               {variant.sublabel ? (
