@@ -127,7 +127,7 @@ function Buy({
   const current = SHOTS[shot];
 
   return (
-    <section className="gb-mow-buy" id="gb-buy">
+    <section className="gb-mow-buy gb-product" id="gb-buy">
       <div className="gb-wrap gb-mow-buy__grid">
         <div className="gb-mow-gal">
           <div className="gb-mow-gal__stage">
@@ -177,19 +177,28 @@ function Buy({
             action={href("/cart/add")}
             onSubmit={(event) => {
               const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
-              if (submitter?.classList.contains("gb-mow-buy__now")) {
+              if (submitter?.classList.contains("gb-buy__express")) {
                 event.currentTarget.action = `${href("/cart/add")}${storeParam ? "&" : "?"}next=checkout`;
                 return;
               }
               if (!drawer) return;
               event.preventDefault();
-              drawer.add(variant.id, event.currentTarget.querySelector<HTMLButtonElement>(".gb-mow-buy__cta"));
+              drawer.add(variant.id, event.currentTarget.querySelector<HTMLButtonElement>(".gb-buy__add"));
             }}
           >
             <input type="hidden" name="variantId" value={variant.id} />
 
-            <button type="submit" className="gb-mow-buy__cta" disabled={sold}>
-              {sold ? "Sold out" : `Add to cart · ${formatMoney(variant.priceCents, currency)}`}
+            <button type="submit" className="gb-buy__add" disabled={sold}>
+              <svg className="gb-buy__cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 3.5h2.2l2.3 11.2h10.3" /><path d="M6.4 6.6h14l-1.6 6.4H7.7" /><circle cx="9.5" cy="19.2" r="1.5" /><circle cx="17.5" cy="19.2" r="1.5" /></svg>
+              <span>{sold ? "Sold out" : "Add to cart"}</span>
+              {sold ? null : (
+                <>
+                  <span className="gb-buy__dot" aria-hidden="true">
+                    &middot;
+                  </span>
+                  <span>{formatMoney(variant.priceCents, currency)}</span>
+                </>
+              )}
             </button>
 
             {/* Apple Pay on an iPhone or Safari, Google Pay elsewhere —
@@ -208,8 +217,8 @@ function Buy({
               />
             ) : null}
 
-            <button type="submit" className="gb-mow-buy__now" disabled={sold} hidden={walletReady}>
-              Buy now
+            <button type="submit" className="gb-buy__express" disabled={sold} hidden={walletReady}>
+              <span>Buy now</span>
             </button>
           </form>
 

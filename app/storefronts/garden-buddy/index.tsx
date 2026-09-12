@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ProductExpress } from "./product-express";
+import { PayPalExpress } from "./paypal-express";
 import type { LoadedProductPage, LoadedSection, NavLink } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
@@ -137,7 +138,14 @@ export function GardenBuddyStorefront({
 
       <main id="MainContent" className="content-for-layout" role="main" data-template="product">
         {sections.map((s) => (
-          <Section key={s.id} section={s} page={page} storeParam={storeParam} publishableKey={publishableKey} />
+          <Section
+            key={s.id}
+            section={s}
+            page={page}
+            storeParam={storeParam}
+            publishableKey={publishableKey}
+            paypalClientId={paypalClientId}
+          />
         ))}
       </main>
 
@@ -151,16 +159,24 @@ function Section({
   page,
   storeParam = "",
   publishableKey = null,
+  paypalClientId = null,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
   storeParam?: string;
   publishableKey?: string | null;
+  paypalClientId?: string | null;
 }) {
   if (section.type === "buy_box") {
     return (
       <section className="shopify-section gb-section">
-        <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} />
+        <BuyBox
+          section={section}
+          page={page}
+          storeParam={storeParam}
+          publishableKey={publishableKey}
+          paypalClientId={paypalClientId}
+        />
       </section>
     );
   }
@@ -371,11 +387,13 @@ function BuyBox({
   page,
   storeParam = "",
   publishableKey = null,
+  paypalClientId = null,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
   storeParam?: string;
   publishableKey?: string | null;
+  paypalClientId?: string | null;
 }) {
   // True once Stripe has put a real wallet button on the page; until then
   // the plain Buy now underneath is what the customer sees.
@@ -649,6 +667,24 @@ function BuyBox({
                   <span>Buy now</span>
                 )}
               </button>
+
+              {/* PayPal, the same button the drawer shows. It charges for
+                  what is in the cart, so the chosen bundle goes in first. */}
+              {paypalClientId && chosen ? (
+                <PayPalExpress
+                  clientId={paypalClientId}
+                  currency={store.currency}
+                  storeParam={storeParam}
+                  beforeCreate={async () => {
+                    await fetch(href("/cart/add"), {
+                      method: "POST",
+                      body: new URLSearchParams({ variantId: chosen.id }),
+                      credentials: "same-origin",
+                      redirect: "manual",
+                    }).catch(() => {});
+                  }}
+                />
+              ) : null}
 
               {/* Secure checkout: the padlock, what protects the card, and
                   the ways to pay. Plain facts — Stripe handles the card, the
