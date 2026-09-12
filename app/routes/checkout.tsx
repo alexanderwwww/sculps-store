@@ -501,6 +501,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           priceCents: variantsTable.priceCents,
           compareAtCents: variantsTable.compareAtCents,
           available: variantsTable.available,
+          imageUrl: variantsTable.imageUrl,
           productTitle: productsTable.title,
         })
         .from(variantsTable)
@@ -2028,40 +2029,49 @@ function Upsell({
       <h2 className="gb-co__up-h">Just one more thing</h2>
       <p className="gb-co__up-sub">Goes in the same parcel. Shipping does not change.</p>
       <ul className="gb-co__up-list">
-        {items.map((item) => (
-          <li className="gb-co__up-item" key={item.id}>
-            <span className="gb-co__up-shot">
-              {photo ? (
-                <img src={photo.src} alt={photo.alt || item.productTitle} loading="lazy" />
-              ) : (
-                <span className="gb-ph">No photo</span>
-              )}
-            </span>
-            <span className="gb-co__up-body">
-              <span className="gb-co__up-name">{item.label}</span>
-              <span className="gb-co__up-price">
-                {money(item.priceCents)}
-                {item.compareAtCents && item.compareAtCents > item.priceCents ? (
-                  <span className="gb-co__up-was">{money(item.compareAtCents)}</span>
-                ) : null}
+        {items.map((item) => {
+          // Only a real compare-at earns a badge, and the number is worked out
+          // from the two prices rather than written anywhere.
+          const off =
+            item.compareAtCents && item.compareAtCents > item.priceCents
+              ? Math.round(((item.compareAtCents - item.priceCents) / item.compareAtCents) * 100)
+              : 0;
+          const shot = item.imageUrl ?? photo?.src ?? null;
+          return (
+            <li className="gb-co__up-item" key={item.id}>
+              <span className="gb-co__up-shot">
+                {shot ? (
+                  <img src={shot} alt={item.imageUrl ? item.label : photo?.alt || item.productTitle} loading="lazy" />
+                ) : (
+                  <span className="gb-ph">No photo</span>
+                )}
+                {off > 0 ? <span className="gb-co__up-flag">{off}% off</span> : null}
               </span>
-            </span>
-            <button
-              type="button"
-              className="gb-co__up-add"
-              disabled={busy}
-              aria-label={`Add ${item.label} to your order`}
-              onClick={() => {
-                const body = new FormData();
-                body.set("intent", "upsell");
-                body.set("variantId", item.id);
-                fetcher.submit(body, { method: "post" });
-              }}
-            >
-              {adding === item.id ? "Adding…" : "Add"}
-            </button>
-          </li>
-        ))}
+              <span className="gb-co__up-body">
+                <span className="gb-co__up-name">{item.label}</span>
+                {item.sublabel ? <span className="gb-co__up-note">{item.sublabel}</span> : null}
+                <span className="gb-co__up-price">
+                  <b>{money(item.priceCents)}</b>
+                  {off > 0 ? <s>{money(item.compareAtCents!)}</s> : null}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="gb-co__up-add"
+                disabled={busy}
+                aria-label={`Add ${item.label} to your order`}
+                onClick={() => {
+                  const body = new FormData();
+                  body.set("intent", "upsell");
+                  body.set("variantId", item.id);
+                  fetcher.submit(body, { method: "post" });
+                }}
+              >
+                {adding === item.id ? "Adding…" : "Add"}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

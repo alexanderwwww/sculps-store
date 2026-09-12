@@ -5,6 +5,7 @@ import type { LoadedProductPage, LoadedSection, NavLink } from "~/lib/store.serv
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
+import { SupportChat, StickyCart } from "./support";
 
 /**
  * Garden Buddy storefront — store two.
@@ -111,6 +112,9 @@ export function GardenBuddyStorefront({
   // The one picture of this product we hold: the buy box's first gallery
   // photo. The drawer shows it beside each line; there is no per-variant image
   // in the database, so there is nothing else to show and nothing is invented.
+  // What the sticky bar sells: the bundle the buy box starts on.
+  const stickyVariant = page.variants.find((v) => v.isDefault) ?? page.variants[0] ?? null;
+
   const buyBox = sections.find((s) => s.type === "buy_box");
   const firstShot = buyBox?.blocks.find((b) => has(b.values, "image"));
   const photo = firstShot
@@ -150,6 +154,20 @@ export function GardenBuddyStorefront({
       </main>
 
       <Footer page={page} storeParam={storeParam} />
+
+      {/* The bar that follows the page down once the buy box is gone, and the
+          help panel. Both need a variant to talk about, so a store with no
+          variants gets neither rather than an empty shell. */}
+      {stickyVariant ? (
+        <StickyCart
+          label={page.product.title}
+          priceCents={stickyVariant.priceCents}
+          compareAtCents={stickyVariant.compareAtCents}
+          currency={page.store.currency}
+          variantId={stickyVariant.id}
+        />
+      ) : null}
+      <SupportChat email={page.store.contactEmail} />
     </CartDrawerProvider>
   );
 }
@@ -189,6 +207,28 @@ function Section({
   );
 }
 
+/* One run of the moving top bar. Printed twice to make the loop seamless. */
+const TBAR_ITEMS = (
+  <>
+    <li>
+      {IcoTruck}
+      <span>Free Shipping Worldwide</span>
+    </li>
+    <li>
+      {IcoShield}
+      <span>30-Day Money Back Guarantee</span>
+    </li>
+    <li>
+      {IcoHeadset}
+      <span>24/7 Support</span>
+    </li>
+    <li>
+      {IcoTruck}
+      <span>Ships in 24 Hours</span>
+    </li>
+  </>
+);
+
 /* ----------------------------------------------------------------- header */
 
 export function Header({ page, storeParam = "" }: { page: ChromeInput; storeParam?: string }) {
@@ -200,21 +240,17 @@ export function Header({ page, storeParam = "" }: { page: ChromeInput; storePara
   return (
     <div className="shopify-section shopify-section-group-header-group">
       <div className="gb gb-hdr-sec">
-        <div className="gb-tbar">
-          <ul className="gb-wrap gb-tbar__row">
-            <li>
-              {IcoTruck}
-              <span>Free Shipping</span>
-            </li>
-            <li>
-              {IcoShield}
-              <span>30-Day Money Back Guarantee</span>
-            </li>
-            <li>
-              {IcoHeadset}
-              <span>24/7 Support</span>
-            </li>
-          </ul>
+        {/* The promises, moving. The run is printed twice and the track is
+            slid by exactly half its width, so the loop has no seam; the
+            second copy is hidden from screen readers because it is the same
+            three sentences again. Motion stops for anyone who asked it to. */}
+        <div className="gb-tbar" role="region" aria-label="Store promises">
+          <div className="gb-tbar__track">
+            <ul className="gb-tbar__run">{TBAR_ITEMS}</ul>
+            <ul className="gb-tbar__run" aria-hidden="true">
+              {TBAR_ITEMS}
+            </ul>
+          </div>
         </div>
         <header className="gb-hdr">
           <div className="gb-wrap gb-hdr__in">

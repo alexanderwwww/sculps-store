@@ -736,34 +736,42 @@ function Upsell({
     <div className="gb-drawer__up">
       <p className="gb-drawer__up-head">{heading}</p>
       <ul className="gb-drawer__up-list">
-        {rest.map((variant) => (
-          <li className="gb-drawer__up-item" key={variant.id}>
-            {variant.imageUrl ? (
+        {rest.map((variant) => {
+          // The badge is worked out from the two prices. A variant with no
+          // compare-at gets none rather than a made-up one.
+          const off =
+            variant.compareAtCents && variant.compareAtCents > variant.priceCents
+              ? Math.round(((variant.compareAtCents - variant.priceCents) / variant.compareAtCents) * 100)
+              : 0;
+          return (
+            <li className="gb-drawer__up-item" key={variant.id}>
               <span className="gb-drawer__up-shot">
-                <img src={variant.imageUrl} alt={variant.label} loading="lazy" />
+                {variant.imageUrl ? (
+                  <img src={variant.imageUrl} alt={variant.label} loading="lazy" />
+                ) : (
+                  <span className="gb-ph">No photo</span>
+                )}
+                {off > 0 ? <span className="gb-drawer__up-flag">{off}% off</span> : null}
               </span>
-            ) : null}
-            <span className="gb-drawer__up-body">
-              <span className="gb-drawer__up-name">{variant.label}</span>
-              {variant.sublabel ? (
-                <span className="gb-drawer__up-sub">{variant.sublabel}</span>
-              ) : null}
-            </span>
-            <span className="gb-drawer__up-price">
-              {variant.compareAtCents ? (
-                <s>{formatMoney(variant.compareAtCents, currency)}</s>
-              ) : null}
-              <b>{formatMoney(variant.priceCents, currency)}</b>
-            </span>
-            <button
-              type="button"
-              className="gb-drawer__up-add"
-              onClick={(event) => onAdd(variant.id, event.currentTarget)}
-            >
-              Add
-            </button>
-          </li>
-        ))}
+              <span className="gb-drawer__up-body">
+                <span className="gb-drawer__up-name">{variant.label}</span>
+                {variant.sublabel ? <span className="gb-drawer__up-sub">{variant.sublabel}</span> : null}
+                <span className="gb-drawer__up-price">
+                  <b>{formatMoney(variant.priceCents, currency)}</b>
+                  {off > 0 ? <s>{formatMoney(variant.compareAtCents!, currency)}</s> : null}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="gb-drawer__up-add"
+                onClick={(event) => onAdd(variant.id, event.currentTarget)}
+                aria-label={`Add ${variant.label}`}
+              >
+                Add
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

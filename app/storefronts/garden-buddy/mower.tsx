@@ -17,6 +17,7 @@ import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { Header, Footer } from "./index";
 import { ProductExpress } from "./product-express";
 import { PayPalExpress } from "./paypal-express";
+import { SupportChat, StickyCart } from "./support";
 
 /** The gallery, in the order it is shown. The first is the variant's own shot. */
 const SHOTS = [
@@ -94,6 +95,15 @@ export function MowerPage({
           <Close variant={variant} currency={page.store.currency} />
         </main>
         <Footer page={page} storeParam={storeParam} />
+
+        <StickyCart
+          label={variant.label}
+          priceCents={variant.priceCents}
+          compareAtCents={variant.compareAtCents}
+          currency={page.store.currency}
+          variantId={variant.id}
+        />
+        <SupportChat email={page.store.contactEmail} />
       </div>
     </CartDrawerProvider>
   );
