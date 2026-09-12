@@ -482,10 +482,24 @@ export const carts = pgTable(
      */
     paymentIntentAmount: integer("payment_intent_amount"),
     paymentIntentSecret: text("payment_intent_secret"),
+    /**
+     * When a recovery email was sent for this cart, and which one.
+     *
+     * One per cart, ever. A second chase is spam, she marks it as such, and
+     * that costs every future email from this domain its place in the inbox.
+     * Stamped before the send so a retry of the same scheduled run cannot
+     * send twice.
+     */
+    recoveryEmailedAt: timestamp("recovery_emailed_at", { withTimezone: true }),
+    /** cart | checkout — which message went */
+    recoveryStage: text("recovery_stage"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("carts_store_idx").on(t.storeId, t.status)],
+  (t) => [
+    index("carts_store_idx").on(t.storeId, t.status),
+    index("carts_recovery_idx").on(t.status, t.recoveryEmailedAt, t.updatedAt),
+  ],
 );
 
 /**

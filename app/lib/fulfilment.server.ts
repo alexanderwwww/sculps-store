@@ -68,6 +68,12 @@ export async function afterPaymentConfirmed(
         storeName: store.name,
         fromAddress: store.emailFrom,
         replyTo: store.contactEmail,
+        // The store's own look, so the receipt is recognisably from the shop
+        // she just bought from rather than from a white box with a name on it.
+        domain: store.domain,
+        logoUrl: store.logoUrl,
+        brandColor: store.brandColor,
+        accentColor: store.accentColor,
         orderNumber: order.number,
         currency: order.currency,
         lines: items.map((item) => ({

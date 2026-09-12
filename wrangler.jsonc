@@ -18,6 +18,15 @@
    * which is why the Live View globe still knows where they are.
    */
   "placement": { "mode": "smart" },
+  /*
+   * Abandoned cart recovery. Every fifteen minutes: a cart is only ever
+   * picked up once, and the windows it looks at (one hour past a started
+   * checkout, four hours past a filled cart) are wide enough that a missed
+   * run still catches it on the next one.
+   */
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
   // Store media: product photos and video, served from the Worker so the
   // files belong to us rather than to whichever platform hosted them before.
   "r2_buckets": [

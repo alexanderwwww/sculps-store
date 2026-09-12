@@ -228,9 +228,96 @@ export function CartDrawerProvider({
   const cart = (fetcher.data as CartPayload | undefined)?.cart ?? null;
   const loading = fetcher.state !== "idle" || busy;
 
+  /**
+   * The welcome-back card.
+   *
+   * Someone who filled a cart and came back later is the single warmest
+   * visitor a store gets, and the old behaviour was to show her the home page
+   * as though nothing had happened. This says "it is still here" once and
+   * then never again that session — a popup that keeps reappearing is the
+   * reason people hate popups.
+   *
+   * It only ever shows for a cart that already has something in it, so it
+   * cannot fire at a first-time visitor.
+   */
+  const [recall, setRecall] = useState<null | CartPayload["cart"]>(null);
+  const recallAsked = useRef(false);
+
+  useEffect(() => {
+    if (recallAsked.current) return;
+    recallAsked.current = true;
+
+    let dismissed = false;
+    try {
+      dismissed = sessionStorage.getItem("gb:recall") === "1";
+    } catch {
+      /* private mode — treat as not dismissed */
+    }
+    if (dismissed) return;
+
+    // The drawer opening on its own would be worse than a card: it covers the
+    // page and it looks like a bug. So this asks the server quietly instead.
+    const timer = setTimeout(() => {
+      fetch(href("/cart"), { headers: { Accept: "application/json" } })
+        .then((response) => (response.ok ? (response.json() as Promise<CartPayload>) : null))
+        .then((payload) => {
+          const found = payload?.cart;
+          if (found && found.itemCount > 0) setRecall(found);
+        })
+        .catch(() => undefined);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dismissRecall = useCallback(() => {
+    setRecall(null);
+    try {
+      sessionStorage.setItem("gb:recall", "1");
+    } catch {
+      /* nothing to remember it with; it simply shows once per load */
+    }
+  }, []);
+
   return (
     <Ctx.Provider value={api}>
       {children}
+
+      {recall ? (
+        <div className="gb gb-recall" role="dialog" aria-label="Your cart is still here">
+          <button type="button" className="gb-recall__x" onClick={dismissRecall} aria-label="Close">
+            {IcoClose}
+          </button>
+          <div className="gb-recall__row">
+            {photo ? <img className="gb-recall__img" src={photo.src} alt="" /> : null}
+            <div className="gb-recall__body">
+              <div className="gb-recall__kicker">Still in your cart</div>
+              <div className="gb-recall__title">{recall.lines[0]?.productTitle ?? page.product.title}</div>
+              <div className="gb-recall__meta">
+                {recall.itemCount} item{recall.itemCount === 1 ? "" : "s"} ·{" "}
+                <strong>{formatMoney(recall.totalCents, recall.currency)}</strong>
+              </div>
+            </div>
+          </div>
+          <div className="gb-recall__acts">
+            <button
+              type="button"
+              className="gb-recall__go"
+              onClick={() => {
+                dismissRecall();
+                show(null);
+              }}
+            >
+              Back to my cart
+            </button>
+            <button type="button" className="gb-recall__no" onClick={dismissRecall}>
+              Keep looking
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <dialog
         ref={dialogRef}
         className="gb gb-drawer"

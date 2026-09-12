@@ -54,6 +54,29 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const isNavigation =
     request.headers.get("sec-fetch-dest") === "document" ||
     (!request.headers.has("sec-fetch-dest") && (request.headers.get("accept") ?? "").includes("text/html"));
+
+  /**
+   * The link out of a recovery email.
+   *
+   * `?recover=<cart token>` hands the browser back the cart she left, by
+   * setting the cookie to the token the email was sent about. She may be on
+   * a different device from the one she filled it on — that is the whole
+   * point — so this cannot rely on anything already in the browser. The
+   * token is opaque and random, and the only thing it grants is a cart.
+   */
+  const recover = url.searchParams.get("recover");
+  if (recover && isNavigation) {
+    const to = new URL(store.slug === "garden-buddy" ? "/" : "/cart", url);
+    if (store.slug === "garden-buddy") to.searchParams.set("cart", "1");
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: to.pathname + to.search,
+        "Set-Cookie": cartCookie(recover, url),
+      },
+    });
+  }
+
   if (store.slug === "garden-buddy" && isNavigation) {
     // Garden Buddy's cart is the drawer: the home page with it open, where
     // lines can be changed or removed and nobody is hurried anywhere.

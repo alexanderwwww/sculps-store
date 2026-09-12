@@ -2,6 +2,7 @@ import { createRequestHandler } from "react-router";
 import { eq } from "drizzle-orm";
 import { makeDb } from "../app/db/client";
 import { domains, stores } from "../app/db/schema";
+import { runRecovery } from "../app/lib/recovery.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -95,6 +96,34 @@ export default {
     const secured = new Response(response.body, response);
     secured.headers.set("Strict-Transport-Security", HSTS);
     return secured;
+  },
+
+  /**
+   * The scheduled half of the Worker.
+   *
+   * Abandoned cart recovery cannot run from a request: the person it is for
+   * has left, and nobody else's page load should be paying for her email.
+   * Cloudflare wakes this on the cron in wrangler.jsonc instead.
+   *
+   * It is deliberately quiet. What it did is written to the log and nothing
+   * else — a scheduled run has no screen to report to, and a thrown error
+   * here would simply vanish, so it catches its own.
+   */
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      (async () => {
+        try {
+          const db = makeDb(env.DATABASE_URL);
+          const summary = await runRecovery(db, env);
+          console.log(
+            `recovery ${event.cron} · considered ${summary.considered} · sent ${summary.sent} · failed ${summary.failed}`,
+            ...summary.reasons,
+          );
+        } catch (error) {
+          console.error("recovery run failed", error);
+        }
+      })(),
+    );
   },
 } satisfies ExportedHandler<Env>;
 
