@@ -627,7 +627,9 @@ function CardFace({
             backgroundBlendMode: "normal",
           }}
         />
-        <span style={{ fontSize: 15, fontWeight: 680, letterSpacing: "-.01em" }}>{skin.name}</span>
+        <span style={{ fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: skin.sub, fontWeight: 600, paddingTop: 4 }}>
+          {live ? "Connected" : "Not connected"}
+        </span>
       </span>
 
       <span style={{ position: "relative", display: "flex", flexDirection: "column", gap: 4 }}>
@@ -657,13 +659,53 @@ function CardFace({
             {holder}
           </span>
         </span>
-        <span style={{ display: "flex", flexDirection: "column", gap: 1, alignItems: "flex-end" }}>
-          <span style={{ fontSize: 9.5, letterSpacing: ".16em", textTransform: "uppercase", color: skin.sub }}>
-            {currency}
+        {/* The brand sits where the network's mark sits on a real card:
+            bottom right, and big enough to be the thing you see first. */}
+        <span style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "flex-end" }}>
+          <Wordmark brand={brand} ink={skin.ink} sub={skin.sub} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: skin.sub }}>
+            {currency} · {note}
           </span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: live ? skin.ink : skin.sub }}>{note}</span>
         </span>
       </span>
     </div>
+  );
+}
+
+/**
+ * The provider's name, set the way each brand sets it — Stripe in one tight
+ * weight, PayPal in its two-tone italic. Type rather than a traced logo: an
+ * approximate redraw of somebody's trademark looks worse than their name
+ * written properly, and this cannot drift out of date.
+ */
+function Wordmark({ brand, ink, sub }: { brand: "stripe" | "paypal"; ink: string; sub: string }) {
+  if (brand === "paypal") {
+    return (
+      <span
+        style={{
+          fontSize: 30,
+          fontWeight: 800,
+          fontStyle: "italic",
+          letterSpacing: "-.035em",
+          lineHeight: "32px",
+        }}
+      >
+        <span style={{ color: ink }}>Pay</span>
+        <span style={{ color: sub }}>Pal</span>
+      </span>
+    );
+  }
+  return (
+    <span
+      style={{
+        fontSize: 30,
+        fontWeight: 800,
+        letterSpacing: "-.04em",
+        lineHeight: "32px",
+        color: ink,
+      }}
+    >
+      stripe
+    </span>
   );
 }
