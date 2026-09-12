@@ -55,6 +55,10 @@ export default [
       route("marketing", "routes/admin.marketing.tsx"),
       route("discounts", "routes/admin.discounts.tsx"),
       route("meta", "routes/admin.meta.tsx"),
+      // Payments has its own screen rather than a panel inside Settings: it is
+      // the part that decides whether money arrives, and there is more than
+      // one provider now.
+      route("payments", "routes/admin.payments.tsx"),
       route("media", "routes/admin.media.tsx"),
       route("analytics", "routes/admin.analytics.tsx"),
       route("live", "routes/admin.live.tsx"),

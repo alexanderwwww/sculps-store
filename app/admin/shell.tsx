@@ -268,6 +268,20 @@ export function AdminShell({
       ),
     },
     {
+      to: withStore("/admin/payments"),
+      label: "Payments",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke}>
+          {/* A card. The part of the shop that decides whether money
+              arrives deserves its own entry rather than a panel inside
+              Settings. */}
+          <rect x="2" y="5" width="16" height="11" rx="2.5" />
+          <path d="M2 9h16" />
+          <path d="M5.5 13h3" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
       to: withStore("/admin/meta"),
       label: "Meta",
       icon: (
@@ -1246,6 +1260,7 @@ function CommandPalette({
       ["Reviews", `/admin/reviews${suffix}`],
       ["Analytics", `/admin/analytics${suffix}`],
       ["Live View", `/admin/live${suffix}`],
+      ["Payments", `/admin/payments${suffix}`],
       ["Meta", `/admin/meta${suffix}`],
       ["Online Store", `/admin/online-store${suffix}`],
       ["Media", `/admin/media${suffix}`],
