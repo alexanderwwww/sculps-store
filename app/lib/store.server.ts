@@ -1,4 +1,4 @@
-import { eq, and, asc, inArray } from "drizzle-orm";
+import { eq, and, asc, ne, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { stores, pages, sections, blocks, products, variants, reviews, themes, menus, menuLinks } from "~/db/schema";
 import { SECTIONS } from "./sections";
@@ -56,6 +56,12 @@ export interface LoadedProductPage {
   nav: { main: NavLink[]; footer: NavLink[] };
   product: ProductRow;
   variants: VariantRow[];
+  /**
+   * Other products this store sells, as their default variant — offered in the
+   * cart drawer beside the bundles. Not part of the buy box: the page sells one
+   * product, these ride along with it.
+   */
+  addOns: VariantRow[];
   sections: LoadedSection[];
   reviews: ReviewRow[];
 }
@@ -128,7 +134,24 @@ export async function loadProductPage(
   }));
 
   const nav = await storeNav(db, store.id);
-  return { store, nav, product, variants: variantRows, sections: loaded, reviews: publishedReviews };
+
+  // Everything else the store has live, one row each — the cart drawer's
+  // add-ons. A store selling a single product simply has none.
+  const otherProducts = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.storeId, store.id), eq(products.status, "active"), ne(products.id, product.id)));
+  const addOns = otherProducts.length
+    ? (
+        await db
+          .select()
+          .from(variants)
+          .where(inArray(variants.productId, otherProducts.map((p) => p.id)))
+          .orderBy(asc(variants.position))
+      ).filter((v, i, all) => all.findIndex((o) => o.productId === v.productId) === i)
+    : [];
+
+  return { store, nav, product, variants: variantRows, addOns, sections: loaded, reviews: publishedReviews };
 }
 
 /**

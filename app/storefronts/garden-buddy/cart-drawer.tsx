@@ -504,11 +504,24 @@ export function CartDrawerProvider({
             )}
 
             <Upsell
+              heading="Add another bundle"
               variants={page.variants}
               currency={page.store.currency}
               inCart={cart ? cart.lines.map((l) => l.variantId) : []}
               onAdd={(variantId, from) => add(variantId, from)}
             />
+
+            {/* The store's other products, offered once the cart has something
+                in it — an empty drawer is not the place to cross-sell. */}
+            {cart && cart.lines.length > 0 ? (
+              <Upsell
+                heading="Goes with it"
+                variants={page.addOns}
+                currency={page.store.currency}
+                inCart={cart.lines.map((l) => l.variantId)}
+                onAdd={(variantId, from) => add(variantId, from)}
+              />
+            ) : null}
           </div>
 
           <div className="gb-drawer__foot">
@@ -704,11 +717,13 @@ function Shipping({
 
 /** The bundles this cart does not have yet — real variants, real prices. */
 function Upsell({
+  heading,
   variants,
   currency,
   inCart,
   onAdd,
 }: {
+  heading: string;
   variants: VariantRow[];
   currency: string;
   inCart: string[];
@@ -719,7 +734,7 @@ function Upsell({
 
   return (
     <div className="gb-drawer__up">
-      <p className="gb-drawer__up-head">Add another bundle</p>
+      <p className="gb-drawer__up-head">{heading}</p>
       <ul className="gb-drawer__up-list">
         {rest.map((variant) => (
           <li className="gb-drawer__up-item" key={variant.id}>
