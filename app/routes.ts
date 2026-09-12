@@ -25,6 +25,9 @@ export default [
   route("collections/:handle", "routes/collections.$handle.tsx"),
   route("password", "routes/password.tsx"),
   route("vitals", "routes/vitals.tsx"),
+  // The storefront heartbeat: who is on the site right now, and proof that a
+  // browser — not a scanner — is the one asking.
+  route("seen", "routes/seen.tsx"),
   route("media/:key", "routes/media.$key.tsx"),
   route("webhooks/stripe", "routes/webhooks.stripe.tsx"),
 

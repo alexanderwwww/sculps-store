@@ -32,7 +32,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const { store, all } = await resolveAdminStore(context.db, url);
   if (!store) return { store: null, stores: [], board: null, now: Date.now() };
 
-  const board = await liveBoard(context.db, store.id);
+  const board = await liveBoard(context.db, store.id, store.timezone);
   return {
     now: Date.now(),
     store: {
@@ -56,6 +56,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       activeCarts: board.activeCarts,
       checkingOut: board.checkingOut,
       purchased: board.purchased,
+      // The live crowd. Every dot on the globe is one of these.
+      online: board.online,
       byLocation: board.byLocation,
       recent: board.recent.map((event) => ({
         id: event.id,
@@ -194,6 +196,42 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
     }
   };
 
+  // Presence: who is on the site right now, redrawn on every poll.
+  //
+  // The dots used to be history — an event pushed a marker that expired on a
+  // timer, so a scanner that hit the page once left a dot for two minutes and
+  // a real customer reading a page for ten disappeared after two. Now the
+  // board carries the live list, so a dot is on the globe exactly while the
+  // person is, and a `leave` takes it off within half a second of their tab
+  // closing.
+  const present = useRef(new Set<string>());
+  useEffect(() => {
+    const globe = globeRef.current;
+    if (!globe || !board) return;
+    if (!dotsOn) {
+      present.current.clear();
+      return;
+    }
+
+    const nowHere = new Set<string>();
+    for (const person of board.online) {
+      nowHere.add(person.sessionId);
+      if (person.lat == null || person.lon == null) continue;
+      globe.push({
+        type: GLOBE_TYPE[person.stage] ?? "visitor",
+        id: person.sessionId,
+        lat: person.lat,
+        lon: person.lon,
+        city: [person.city, person.region].filter(Boolean).join(", ") || person.country || "",
+      });
+    }
+
+    for (const id of present.current) {
+      if (!nowHere.has(id)) globe.push({ type: "leave", id });
+    }
+    present.current = nowHere;
+  }, [board, dotsOn]);
+
   useEffect(() => {
     const globe = globeRef.current;
     if (!globe || !board) return;
@@ -207,7 +245,10 @@ export default function LiveViewScreen({ loaderData }: Route.ComponentProps) {
       if (!dotsOn) continue;
       seen.current.set(event.id, event.at);
       fresh.push(event);
-      if (event.lat != null && event.lon != null) {
+      // A plain view is presence's to draw, not history's. Carts, checkouts
+      // and sales still come through here: they are moments, and the moment
+      // is what the globe should show.
+      if (event.lat != null && event.lon != null && event.type !== "view") {
         globe.push({
           type: GLOBE_TYPE[event.type] ?? "visitor",
           id: event.sessionId,

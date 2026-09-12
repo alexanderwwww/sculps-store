@@ -28,6 +28,7 @@ import { Link, useNavigate } from "react-router";
 import { eq, and, gte, sql } from "drizzle-orm";
 import type { Route } from "./+types/admin.analytics";
 import { requireUser } from "~/lib/auth.server";
+import { startOfDayIn } from "~/lib/day";
 import { resolveAdminStore, analytics } from "~/lib/admin.server";
 import { events, orders, metaConfig } from "~/db/schema";
 import { formatMoney } from "~/lib/money";
@@ -65,9 +66,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const rangeKey = url.searchParams.get("range") || "30d";
   const range = RANGES[rangeKey] ?? RANGES["30d"];
 
-  const since = new Date();
-  since.setHours(0, 0, 0, 0);
-  since.setDate(since.getDate() - (range.days - 1));
+  // The store's own midnight, not the Worker's UTC one.
+  const since = startOfDayIn(store.timezone, range.days - 1);
 
   // The doubled window minus the current one is the previous period. Only the
   // order-derived figures are read back out of it: sums and counts subtract
@@ -85,8 +85,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     pathResult,
     dwellResult,
   ] = await Promise.all([
-    analytics(context.db, store.id, range.days),
-    analytics(context.db, store.id, range.days * 2),
+    analytics(context.db, store.id, range.days, store.timezone),
+    analytics(context.db, store.id, range.days * 2, store.timezone),
     context.db
       .select({ n: sql<number>`cast(count(*) as int)` })
       .from(orders)
@@ -109,7 +109,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
         sessions: sql<number>`cast(count(distinct ${events.sessionId}) as int)`,
       })
       .from(events)
-      .where(and(eq(events.storeId, store.id), gte(events.at, since)))
+      .where(and(eq(events.storeId, store.id), eq(events.human, true), gte(events.at, since)))
       .groupBy(events.source)
       .orderBy(sql`2 desc`)
       .limit(8),
@@ -124,7 +124,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
         sessions: sql<number>`cast(count(distinct ${events.sessionId}) as int)`,
       })
       .from(events)
-      .where(and(eq(events.storeId, store.id), gte(events.at, since)))
+      .where(and(eq(events.storeId, store.id), eq(events.human, true), gte(events.at, since)))
       .groupBy(sql`1, 2`),
 
     // The journey. A step only counts when it happened *after* the step before

@@ -52,7 +52,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   }
 
   const [board, todo, productRows, domainRows, providerRows, themeRows] = await Promise.all([
-    liveBoard(context.db, store.id),
+    liveBoard(context.db, store.id, store.timezone),
     todos(context.db, store.id),
     context.db
       .select({ status: products.status, n: sql<number>`cast(count(*) as int)` })

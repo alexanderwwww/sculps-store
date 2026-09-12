@@ -47,3 +47,35 @@ export function p75(values: number[]): number | null {
   const index = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.75));
   return sorted[index];
 }
+
+
+/**
+ * The heartbeat behind the globe's dots and the traffic numbers.
+ *
+ * It says "I am a browser and I am still here" on arrival, then every twenty
+ * seconds while the tab is visible. A hidden tab stops beating — someone who
+ * left the page open in another window is not on the site — and starts again
+ * when it comes back. sendBeacon on pagehide is the last word, so the dot
+ * does not hang around after they go.
+ *
+ * Nothing here identifies anyone: the visit cookie the server already set is
+ * the whole of it.
+ */
+export function presenceScript(): string {
+  return `(function(){
+var EVERY=20000,last=0,timer=0;
+function beat(final){
+  var now=Date.now();
+  if(!final&&now-last<EVERY-2000)return;
+  last=now;
+  var body=JSON.stringify({path:location.pathname});
+  if(final&&navigator.sendBeacon){navigator.sendBeacon('/seen',new Blob([body],{type:'application/json'}));return}
+  fetch('/seen',{method:'POST',body:body,keepalive:!!final,headers:{'Content-Type':'application/json'}}).catch(function(){});
+}
+function start(){if(timer)return;beat();timer=setInterval(function(){if(document.visibilityState==='visible')beat()},EVERY)}
+function stop(){if(timer){clearInterval(timer);timer=0}}
+addEventListener('visibilitychange',function(){document.visibilityState==='visible'?start():stop()});
+addEventListener('pagehide',function(){stop()});
+if(document.visibilityState==='visible')start();
+})();`;
+}

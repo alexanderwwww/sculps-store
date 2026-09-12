@@ -123,6 +123,12 @@ const TIMEZONES = [
   { value: "America/Los_Angeles", label: "(GMT−08:00) Pacific Time" },
   { value: "Europe/London", label: "(GMT+00:00) London" },
   { value: "Europe/Berlin", label: "(GMT+01:00) Central Europe" },
+  { value: "Europe/Athens", label: "(GMT+02:00) Athens" },
+  { value: "Europe/Istanbul", label: "(GMT+03:00) Istanbul" },
+  { value: "Asia/Dubai", label: "(GMT+04:00) Dubai" },
+  { value: "Asia/Singapore", label: "(GMT+08:00) Singapore" },
+  { value: "Australia/Sydney", label: "(GMT+11:00) Sydney" },
+  { value: "UTC", label: "(GMT+00:00) UTC" },
 ];
 
 const TRANSFER_STEPS = [

@@ -7,11 +7,12 @@ import { pages, metaConfig, themes } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
 import { eq } from "drizzle-orm";
 import { pixelScript, trackFunnelEvent } from "~/lib/meta.server";
-import { vitalsScript } from "~/lib/vitals";
+import { presenceScript, vitalsScript } from "~/lib/vitals";
 import {
   deviceFromRequest,
   geoFromContext,
   readVisitorSession,
+  readVisitorHuman,
   newVisitorSession,
   visitorCookie,
   shouldTrack,
@@ -166,6 +167,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       path: url.pathname,
       geo: geoFromContext(context, request),
       device: deviceFromRequest(request),
+      human: readVisitorHuman(request),
       ...attribution(url),
     });
   }
@@ -173,7 +175,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   // Core Web Vitals, measured on this visit. Only on a real, tracked view —
   // a preview or a thumbnail render is not a visitor and must not move the
   // store's numbers.
-  const vitals = shouldTrack(request, url) && !isThumb && !previewThemeId ? vitalsScript() : null;
+  const tracked = shouldTrack(request, url) && !isThumb && !previewThemeId;
+  const vitals = tracked ? `${vitalsScript()}\n${presenceScript()}` : null;
 
   // On the built-in address the store is chosen by ?store=; carry it so an
   // internal link cannot wander into a different shop.

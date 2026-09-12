@@ -557,12 +557,56 @@ export const events = pgTable(
     device: text("device"),
     amountCents: integer("amount_cents"),
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+    /**
+     * A browser ran JavaScript on this visit and said so.
+     *
+     * A loader records a view for anything that asks for the HTML, and a
+     * public domain is scanned around the clock by things that send a
+     * browser's user agent and never run a line of script. Those were being
+     * counted as visitors — 287 of one day's 305 "sessions" were single hits
+     * on `/` from datacentres — which put phantom dots on the globe and made
+     * the traffic numbers fiction. Nothing is deleted and nothing is guessed:
+     * the row is written either way, and only a confirmed one is counted.
+     */
+    human: boolean("human").notNull().default(false),
     at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("events_store_at_idx").on(t.storeId, t.at),
     index("events_session_idx").on(t.sessionId),
+    index("events_human_idx").on(t.storeId, t.human, t.at),
   ],
+);
+
+/**
+ * Who is on the storefront right now.
+ *
+ * One row per visitor, rewritten by a heartbeat from their own browser while
+ * the tab is open and visible. This is what the globe's dots are: presence,
+ * not history. A visitor who closes the tab stops beating and drops off the
+ * map on their own, which is the only honest way to draw "who is here now" —
+ * the events table can only ever say what already happened.
+ */
+export const presence = pgTable(
+  "presence",
+  {
+    sessionId: text("session_id").primaryKey(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    /** view | cart | checkout — where they are, for the dot's colour */
+    stage: text("stage").notNull().default("view"),
+    path: text("path"),
+    city: text("city"),
+    region: text("region"),
+    country: text("country"),
+    lat: real("lat"),
+    lon: real("lon"),
+    device: text("device"),
+    firstSeen: timestamp("first_seen", { withTimezone: true }).notNull().defaultNow(),
+    lastSeen: timestamp("last_seen", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("presence_store_seen_idx").on(t.storeId, t.lastSeen)],
 );
 
 /* ------------------------------------------------------------------- media */

@@ -24,6 +24,7 @@ import {
   metaConfig,
   themes,
   events,
+  presence,
   carts,
   taxRates,
   users,
@@ -37,6 +38,7 @@ import { SECTIONS } from "./sections";
 import { MENU_HANDLES } from "./menus";
 import { recomputeCustomerTotals, upsertCustomer } from "./customers.server";
 import { money } from "./money";
+import { startOfDayIn } from "./day";
 
 export type StoreRow = typeof stores.$inferSelect;
 export type OrderRow = typeof orders.$inferSelect;
@@ -549,11 +551,13 @@ export interface Metric {
   color: string;
 }
 
-function startOfDay(offsetDays = 0): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - offsetDays);
-  return d;
+/**
+ * Midnight in the store's own timezone, not the Worker's. A Worker runs on
+ * UTC, so every "today" here used to begin at 2am or 7pm wherever the
+ * merchant actually is.
+ */
+function startOfDay(timezone: string, offsetDays = 0): Date {
+  return startOfDayIn(timezone, offsetDays);
 }
 
 /**
@@ -563,9 +567,9 @@ function startOfDay(offsetDays = 0): Date {
  * $0.00 and 0 — deliberately, rather than being hidden, so an empty store
  * looks like an empty store instead of a broken screen.
  */
-export async function dashboard(db: DB, storeId: string | null, rangeDays: number) {
-  const since = startOfDay(rangeDays - 1);
-  const previousSince = startOfDay(rangeDays * 2 - 1);
+export async function dashboard(db: DB, storeId: string | null, rangeDays: number, timezone = "UTC") {
+  const since = startOfDay(timezone, rangeDays - 1);
+  const previousSince = startOfDay(timezone, rangeDays * 2 - 1);
 
   const scope = storeId ? [eq(orders.storeId, storeId)] : [];
 
@@ -589,7 +593,7 @@ export async function dashboard(db: DB, storeId: string | null, rangeDays: numbe
   const sessionRows = await db
     .select({ count: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
     .from(events)
-    .where(and(...sessionScope, gte(events.at, since)));
+    .where(and(...sessionScope, eq(events.human, true), gte(events.at, since)));
 
   const salesCents = current[0]?.total ?? 0;
   const orderCount = current[0]?.count ?? 0;
@@ -605,10 +609,10 @@ export async function dashboard(db: DB, storeId: string | null, rangeDays: numbe
       total: sql<number>`cast(coalesce(sum(${orders.totalCents}), 0) as int)`,
     })
     .from(orders)
-    .where(and(...scope, gte(orders.createdAt, startOfDay(1))))
+    .where(and(...scope, gte(orders.createdAt, startOfDay(timezone, 1))))
     .groupBy(sql`1`, sql`2`);
 
-  const todayKey = startOfDay(0).toISOString().slice(0, 10);
+  const todayKey = startOfDay(timezone, 0).toISOString().slice(0, 10);
   const today = new Array(24).fill(0);
   const yesterday = new Array(24).fill(0);
   for (const row of hourly) {
@@ -1139,10 +1143,8 @@ export interface AnalyticsRange {
  * figure is null and the screen says so, rather than showing a zero that reads
  * like a measurement.
  */
-export async function analytics(db: DB, storeId: string, days: number) {
-  const since = new Date();
-  since.setHours(0, 0, 0, 0);
-  since.setDate(since.getDate() - (days - 1));
+export async function analytics(db: DB, storeId: string, days: number, timezone = "UTC") {
+  const since = startOfDayIn(timezone, days - 1);
 
   /**
    * Only money that was actually taken counts. Every checkout submit writes
@@ -1206,7 +1208,7 @@ export async function analytics(db: DB, storeId: string, days: number) {
         checkouts: sql<number>`cast(count(distinct ${events.sessionId}) filter (where ${events.type} = 'checkout') as int)`,
       })
       .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, since))),
+      .where(and(eq(events.storeId, storeId), eq(events.human, true), gte(events.at, since))),
   ]);
 
   const orderCount = totals[0]?.orders ?? 0;
@@ -1245,21 +1247,21 @@ export async function analytics(db: DB, storeId: string, days: number) {
  * Reads the last half hour of events. There is no simulator: what is on this
  * screen either happened or the screen is empty.
  */
-export async function liveView(db: DB, storeId: string) {
+export async function liveView(db: DB, storeId: string, timezone = "UTC") {
   const since = new Date(Date.now() - 30 * 60_000);
 
   const [recent, active, todayTotals] = await Promise.all([
     db
       .select()
       .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, since)))
+      .where(and(eq(events.storeId, storeId), eq(events.human, true), gte(events.at, since)))
       .orderBy(desc(events.at))
       .limit(60),
 
     db
       .select({ n: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
       .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, new Date(Date.now() - 5 * 60_000)))),
+      .where(and(eq(events.storeId, storeId), eq(events.human, true), gte(events.at, new Date(Date.now() - 5 * 60_000)))),
 
     db
       .select({
@@ -1270,7 +1272,7 @@ export async function liveView(db: DB, storeId: string) {
       .where(
         and(
           eq(orders.storeId, storeId),
-          gte(orders.createdAt, new Date(new Date().setHours(0, 0, 0, 0))),
+          gte(orders.createdAt, startOfDayIn(timezone, 0)),
         ),
       ),
   ]);
@@ -1496,29 +1498,38 @@ export async function recordVisitorEvent(
  * thirty minutes (today, for money). Nothing here is simulated; when the
  * store has no traffic every list is empty and every number is zero.
  */
-export async function liveBoard(db: DB, storeId: string) {
+export async function liveBoard(db: DB, storeId: string, timezone = "UTC") {
   const window = new Date(Date.now() - 30 * 60_000);
   const fiveMinutes = new Date(Date.now() - 5 * 60_000);
   const checkoutWindow = new Date(Date.now() - 3 * 60_000);
-  const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
+  // Two missed beats. A tab that closed drops off inside a minute; a phone
+  // that dipped through a tunnel does not.
+  const liveWindow = new Date(Date.now() - 45_000);
+  const startOfToday = startOfDayIn(timezone, 0);
 
-  const [recent, active, sessions, today, openCarts, atCheckout, byLocation] = await Promise.all([
+  const [recent, online, sessions, today, openCarts, atCheckout, byLocation] = await Promise.all([
     db
       .select()
       .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, window)))
+      .where(and(eq(events.storeId, storeId), eq(events.human, true), gte(events.at, window)))
       .orderBy(desc(events.at))
       .limit(120),
 
+    // Who is on the site this second, from the heartbeat their own browser
+    // sends. Not "had an event in the last five minutes" — that counted
+    // people who had already left, and counted scanners that were never
+    // there at all.
     db
-      .select({ n: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
-      .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, fiveMinutes))),
+      .select()
+      .from(presence)
+      .where(and(eq(presence.storeId, storeId), gte(presence.lastSeen, liveWindow)))
+      .orderBy(desc(presence.lastSeen))
+      .limit(200),
 
     db
       .select({ n: sql<number>`cast(count(distinct ${events.sessionId}) as int)` })
       .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, startOfToday))),
+      .where(and(eq(events.storeId, storeId), eq(events.human, true), gte(events.at, startOfToday))),
 
     db
       .select({
@@ -1561,6 +1572,7 @@ export async function liveBoard(db: DB, storeId: string) {
         and(
           eq(events.storeId, storeId),
           eq(events.type, "checkout"),
+          eq(events.human, true),
           gte(events.at, checkoutWindow),
         ),
       ),
@@ -1573,14 +1585,25 @@ export async function liveBoard(db: DB, storeId: string) {
         n: sql<number>`cast(count(distinct ${events.sessionId}) as int)`,
       })
       .from(events)
-      .where(and(eq(events.storeId, storeId), gte(events.at, startOfToday)))
+      .where(and(eq(events.storeId, storeId), eq(events.human, true), gte(events.at, startOfToday)))
       .groupBy(events.city, events.region, events.country)
       .orderBy(desc(sql`4`))
       .limit(8),
   ]);
 
   return {
-    activeVisitors: active[0]?.n ?? 0,
+    activeVisitors: online.length,
+    // Everyone on the site right now, for the globe. These are the dots.
+    online: online.map((row) => ({
+      sessionId: row.sessionId,
+      stage: row.stage,
+      city: row.city,
+      region: row.region,
+      country: row.country,
+      lat: row.lat,
+      lon: row.lon,
+      at: row.lastSeen.getTime(),
+    })),
     sessionsToday: sessions[0]?.n ?? 0,
     ordersToday: today[0]?.orders ?? 0,
     revenueToday: today[0]?.revenue ?? 0,

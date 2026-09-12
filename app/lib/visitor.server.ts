@@ -13,6 +13,7 @@ import type { DB } from "~/db/client";
 import { events } from "~/db/schema";
 
 const SESSION_COOKIE = "kerberos_visit";
+const HUMAN_COOKIE = "kerberos_real";
 const SESSION_DAYS = 30;
 
 export interface Geo {
@@ -69,6 +70,24 @@ export function newVisitorSession(): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Whether this browser has already proved it runs JavaScript.
+ *
+ * Set by the heartbeat on a visitor's first beat, so every later view of
+ * theirs is counted the moment it is written rather than waiting to be
+ * vouched for.
+ */
+export function readVisitorHuman(request: Request): boolean {
+  const header = request.headers.get("Cookie");
+  if (!header) return false;
+  return header.split(";").some((part) => part.trim().split("=")[0] === HUMAN_COOKIE);
+}
+
+export function humanCookie(url: URL): string {
+  const secure = url.protocol === "https:" ? "; Secure" : "";
+  return `${HUMAN_COOKIE}=1; Path=/; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${secure}`;
+}
+
 export function visitorCookie(sessionId: string, url: URL): string {
   const secure = url.protocol === "https:" ? "; Secure" : "";
   return `${SESSION_COOKIE}=${encodeURIComponent(sessionId)}; Path=/; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${secure}`;
@@ -108,6 +127,8 @@ export interface TrackInput {
   amountCents?: number | null;
   orderId?: string | null;
   device?: "desktop" | "mobile" | "tablet" | null;
+  /** true once this browser has proved it runs JavaScript */
+  human?: boolean;
 }
 
 export function track(db: DB, ctx: ExecutionContext, input: TrackInput): void {
@@ -128,6 +149,7 @@ export function track(db: DB, ctx: ExecutionContext, input: TrackInput): void {
       device: input.device ?? null,
       amountCents: input.amountCents ?? null,
       orderId: input.orderId ?? null,
+      human: input.human ?? false,
     })
     .catch(() => undefined);
   ctx.waitUntil(write);

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { Form, Link, useNavigate, useSearchParams } from "react-router";
 import type { Route } from "./+types/admin.orders._index";
 import { requireUser } from "~/lib/auth.server";
+import { startOfDayIn } from "~/lib/day";
 import { resolveAdminStore, listOrders, setOrderState } from "~/lib/admin.server";
 import { money } from "~/lib/money";
 import { orderEvents } from "~/db/schema";
@@ -101,8 +102,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
   const bundleNames = [...new Set(rows.flatMap((row) => labelsOf(row.itemSummary)))].sort();
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const startOfToday = startOfDayIn(store.timezone);
   const dayMs = 24 * 60 * 60 * 1000;
 
   let list = rows;
