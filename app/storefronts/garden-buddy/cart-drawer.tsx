@@ -246,34 +246,50 @@ export function CartDrawerProvider({
    */
   const [recall, setRecall] = useState<null | CartPayload["cart"]>(null);
   const recallAsked = useRef(false);
+  const recallShown = useRef(false);
 
+  /**
+   * Ask, once, whether there is already a cart.
+   *
+   * Through the fetcher, not a bare `fetch("/cart")` — that address answers a
+   * navigation with a whole HTML document, so parsing it as JSON threw and the
+   * card silently never appeared. React Router's loader call is the only thing
+   * that returns the cart as data.
+   */
   useEffect(() => {
     if (recallAsked.current) return;
     recallAsked.current = true;
 
-    let dismissed = false;
     try {
-      dismissed = sessionStorage.getItem("gb:recall") === "1";
+      if (sessionStorage.getItem("gb:recall") === "1") return;
     } catch {
       /* private mode — treat as not dismissed */
     }
-    if (dismissed) return;
 
-    // The drawer opening on its own would be worse than a card: it covers the
-    // page and it looks like a bug. So this asks the server quietly instead.
-    const timer = setTimeout(() => {
-      fetch(href("/cart"), { headers: { Accept: "application/json" } })
-        .then((response) => (response.ok ? (response.json() as Promise<CartPayload>) : null))
-        .then((payload) => {
-          const found = payload?.cart;
-          if (found && found.itemCount > 0) setRecall(found);
-        })
-        .catch(() => undefined);
-    }, 1200);
-
+    const timer = setTimeout(() => reload(), 1000);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reload]);
+
+  /**
+   * The welcome-back card.
+   *
+   * Someone who filled a cart and came back later is the warmest visitor a
+   * store gets, and the old behaviour was to show her the home page as though
+   * nothing had happened. This says "it is still here" once and then never
+   * again that session — a popup that keeps reappearing is the reason people
+   * hate popups. It never shows while the drawer is open, and never for an
+   * empty cart, so it cannot fire at a first-time visitor.
+   */
+  useEffect(() => {
+    if (recallShown.current || open || !cart || cart.itemCount < 1) return;
+    try {
+      if (sessionStorage.getItem("gb:recall") === "1") return;
+    } catch {
+      /* nothing to remember it with */
+    }
+    recallShown.current = true;
+    setRecall(cart);
+  }, [cart, open]);
 
   const dismissRecall = useCallback(() => {
     setRecall(null);
