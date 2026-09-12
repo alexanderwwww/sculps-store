@@ -242,11 +242,18 @@ export function Header({ page, storeParam = "" }: { page: ChromeInput; storePara
                 }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 7h12l1 14H5L6 7z" /><path d="M9 7a3 3 0 0 1 6 0" /></svg>
+                {/* Nothing in the cart, nothing to count — the badge is the
+                    number itself, so an empty cart simply has none. */}
+                {drawer && drawer.itemCount > 0 ? (
+                  <span className="gb-hdr__cart-count" aria-hidden="true">
+                    {drawer.itemCount}
+                  </span>
+                ) : null}
               </a>
               {/* From a policy page this has to travel to the home page first;
                   on the home page it is the same in-page jump it always was. */}
-              <a className="gb-hdr__cta" href={`${href("/")}#gb-buy`}>
-                <span className="gb-hdr__cta-txt">Order Now</span>
+              <a className="gb-hdr__cta" href={`${href("/")}${storeParam ? "&" : "?"}discount=GET10#gb-buy`}>
+                <span className="gb-hdr__cta-txt">Get $10 Off</span>
               </a>
             </div>
           </div>

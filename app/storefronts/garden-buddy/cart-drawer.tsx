@@ -64,6 +64,8 @@ interface CartDrawerApi {
   add: (variantId: string, opener: HTMLElement | null) => void;
   /** Show the drawer without adding anything (the header's cart button). */
   open: (opener: HTMLElement | null) => void;
+  /** How many items are in the cart, for the header's badge. 0 until loaded. */
+  itemCount: number;
 }
 
 const Ctx = createContext<CartDrawerApi | null>(null);
@@ -149,12 +151,27 @@ export function CartDrawerProvider({
         .catch(() => {})
         .finally(() => {
           setBusy(false);
+          const code = pending.current;
+          if (code) {
+            pending.current = null;
+            try {
+              sessionStorage.removeItem("gb:offer");
+            } catch {
+              /* it was never stored */
+            }
+            sendDiscountRef.current?.({ intent: "discount", code });
+            return;
+          }
           reload();
         });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [storeParam, reload, show],
   );
+
+  // `add` is defined before `sendDiscount`; the ref lets it reach the finished
+  // function without reordering the two.
+  const sendDiscountRef = useRef<((body: Record<string, string>) => void) | null>(null);
 
   const setQuantity = useCallback(
     (variantId: string, quantity: number) => {
@@ -205,7 +222,39 @@ export function CartDrawerProvider({
     [storeParam, reload],
   );
 
+  sendDiscountRef.current = sendDiscount;
+
   const close = useCallback(() => setOpen(false), []);
+
+  // The header's offer button carries its code in the address. The cart may
+  // not exist yet, so the code is remembered and applied on the first add —
+  // the server still decides what it is worth.
+  const pending = useRef<string | null>(null);
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("discount");
+    if (!code) return;
+    pending.current = code;
+    try {
+      sessionStorage.setItem("gb:offer", code);
+    } catch {
+      /* nothing to remember it with; the click still works in this page */
+    }
+  }, []);
+  useEffect(() => {
+    if (pending.current) return;
+    try {
+      pending.current = sessionStorage.getItem("gb:offer");
+    } catch {
+      /* no storage, no carried-over offer */
+    }
+  }, []);
+
+  // The header's badge needs the count before anything is opened, so the cart
+  // is read once on mount.
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Opening loads the cart; the storefront's own loader does not carry it.
   useEffect(() => {
@@ -230,8 +279,8 @@ export function CartDrawerProvider({
     opener.current?.focus();
   }, [open]);
 
-  const api: CartDrawerApi = { add, open: show };
   const cart = (fetcher.data as CartPayload | undefined)?.cart ?? null;
+  const api: CartDrawerApi = { add, open: show, itemCount: cart?.itemCount ?? 0 };
   const loading = fetcher.state !== "idle" || busy;
 
   /**
