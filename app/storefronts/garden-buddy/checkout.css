@@ -29,8 +29,12 @@
   --dim: #6B6559;
   --line: rgba(59, 42, 27, .14);
   --field: rgba(59, 42, 27, .22);
-  /* the right half — the store's own sand, not a neutral grey */
-  --rail: #F4EEE2;
+  /* the right half — the store's own night, the colour of its footer */
+  --rail: #2A1D11;
+  --night: #2A1D11;
+  --night-2: #3B2A1B;
+  --night-ink: #F6EEE2;
+  --yellow: #FFC72C;
   --bad: #B3341C;
   --r: 8px;
   --font-h: "Poppins", system-ui, "Segoe UI", sans-serif;
@@ -68,7 +72,7 @@
 @media (min-width: 960px) { .gb-co__pane-in { margin: 0 0 0 auto; padding-right: 48px; } }
 
 .gb-co__rail { min-width: 0; background: var(--rail); }
-.gb-co__rail-in { width: 100%; max-width: 460px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 40px) 40px; }
+.gb-co__rail-in { width: 100%; max-width: 520px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 40px) 40px; }
 @media (min-width: 960px) {
   .gb-co__rail-in { margin: 0 auto 0 0; padding-left: 48px; position: sticky; top: 0; max-height: 100vh; overflow-y: auto; }
   /* on a phone the rail is the folded summary instead */
@@ -120,21 +124,25 @@
    thing that converts. It appears on the wide layout, where the wallet button
    does not need the whole width and plenty of people are going to type a card
    anyway. */
+/* Stripe stacks its own wallets, so it takes the full width and the two
+   buttons we own sit side by side beneath it. Side-by-side with Stripe left
+   one tall column next to one short one, which is what looked ragged on a
+   wide screen. */
 .gb-co__express-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
-@media (min-width: 960px) {
-  /* Room for two wallet pills beside ours. At half the width Stripe had space
-     for one button and quietly dropped Google Pay. */
-  .gb-co__express-grid { grid-template-columns: 2fr 1fr; }
-}
-
-.gb-co__express-row { min-height: 48px; border-radius: 999px; }
-.gb-co__express-row[data-waiting="1"] { background: linear-gradient(100deg, #EFEBE3 30%, #F8F5EF 50%, #EFEBE3 70%); background-size: 220% 100%; animation: gb-co-shine 1.3s linear infinite; }
-
-.gb-co__express-card { display: none; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 18px; border: 1px solid var(--ink); border-radius: 999px; background: var(--ink); color: #fff; font-family: var(--font-b); font-size: 15px; font-weight: 700; cursor: pointer; transition: background .16s var(--ease), transform .16s var(--ease); }
+.gb-co__express-row { min-height: 48px; border-radius: 10px; }
+.gb-co__express-row[data-waiting="1"] { position: relative; overflow: hidden; background: #EFEBE3; border-radius: 10px; }
+.gb-co__express-row[data-waiting="1"]::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, #F8F5EF 50%, transparent 80%); animation: gb-co-sweep 1.3s linear infinite; }
+.gb-co__paypal { min-height: 48px; }
+.gb-co__express-card { display: none; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 48px; padding: 0 18px; border: 1px solid var(--ink); border-radius: 10px; background: var(--ink); color: #fff; font-family: var(--font-b); font-size: 15px; font-weight: 700; cursor: pointer; transition: background .16s var(--ease); }
 .gb-co__express-card svg { width: 19px; height: 19px; flex: 0 0 19px; }
-.gb-co__express-card:hover { background: #000; transform: translateY(-1px); }
+.gb-co__express-card:hover { background: #000; }
 .gb-co__express-card:focus-visible { outline: 2px solid var(--brown); outline-offset: 3px; }
-@media (min-width: 960px) { .gb-co__express-card { display: inline-flex; } }
+@media (min-width: 860px) {
+  .gb-co__express-grid { grid-template-columns: 1fr 1fr; }
+  /* Stripe's stack spans both columns; ours pair up under it. */
+  .gb-co__express-row { grid-column: 1 / -1; }
+  .gb-co__express-card { display: inline-flex; }
+}
 .gb-co__express-note { margin: 10px 0 0; text-align: center; font-size: 12px; color: var(--dim); }
 .gb-co__or { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; color: var(--dim); font-size: 11.5px; letter-spacing: .1em; font-weight: 600; }
 .gb-co__or:before, .gb-co__or:after { content: ""; flex: 1 1 auto; height: 1px; background: var(--line); }
@@ -178,7 +186,8 @@
    invents a method: a row that is drawn is a row that can take money. */
 .gb-co__card { border: 1px solid var(--field); border-radius: var(--r); background: #fff; padding: 12px; min-height: 160px; }
 .gb-co__card--wait { display: grid; place-items: center; color: var(--dim); font-size: 13px; min-height: 160px; }
-.gb-co__skel { width: 100%; height: 100%; min-height: 136px; border-radius: var(--r); background: linear-gradient(100deg, #F6F4EF 30%, #FBFAF7 50%, #F6F4EF 70%); background-size: 220% 100%; animation: gb-co-shine 1.3s linear infinite; }
+.gb-co__skel { position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 136px; border-radius: var(--r); background: #F6F4EF; }
+.gb-co__skel::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, #FBFAF7 50%, transparent 80%); animation: gb-co-sweep 1.3s linear infinite; }
 @keyframes gb-co-shine { to { background-position: -120% 0; } }
 
 .gb-co__pay { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 52px; margin-top: 16px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--font-h); font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 22px rgba(92, 140, 30, .22); transition: background .16s var(--ease), transform .16s var(--ease); }
@@ -238,25 +247,30 @@
 .gb-co__grand-cc { font-size: 11.5px; color: var(--dim); font-weight: 500; margin-right: 6px; }
 
 /* ---- suggestions ------------------------------------------------------- */
-.gb-co__up { margin: 26px 0 0; padding: 18px 16px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+/* A carousel, not a list. Three suggestions stacked vertically pushed the
+   totals off the screen; swiped sideways they cost one card's height however
+   many there are. Scroll-snap does the paging — no script, and it keeps
+   working with the keyboard and a trackpad. */
+.gb-co__up { margin: 26px 0 0; padding: 18px 0 16px; border-top: 1px solid var(--line); }
 .gb-co__up-h { font-family: var(--font-h); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; text-align: left; margin: 0 0 3px; color: var(--dim); }
 .gb-co__up-sub { display: block; margin: 0 0 14px; font-size: 12.5px; color: var(--dim); }
-.gb-co__up-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.gb-co__up-item { display: grid; grid-template-columns: 82px 1fr auto; align-items: center; gap: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--rail); text-align: left; }
-.gb-co__up-shot { position: relative; width: 82px; height: 82px; border-radius: 9px; overflow: hidden; background: #fff; }
+.gb-co__up-list { list-style: none; margin: 0 -4px; padding: 0 4px 6px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(216px, 1fr); gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--field) transparent; }
+.gb-co__up-list::-webkit-scrollbar { height: 5px; }
+.gb-co__up-list::-webkit-scrollbar-thumb { background: var(--field); border-radius: 999px; }
+.gb-co__up-item { scroll-snap-align: start; display: grid; justify-items: center; gap: 8px; padding: 14px 12px 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; text-align: center; }
+.gb-co__up-shot { position: relative; width: 100%; aspect-ratio: 1; max-width: 132px; border-radius: 10px; overflow: hidden; background: #fff; }
 .gb-co__up-shot img { width: 100%; height: 100%; object-fit: contain; }
 /* The saving, stated once, on the picture — not as a third price to read. */
-.gb-co__up-flag { position: absolute; left: 5px; top: 5px; padding: 3px 7px; border-radius: 999px; background: var(--brown, #3B2A1B); color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-.gb-co__up-body { display: grid; gap: 3px; min-width: 0; }
+.gb-co__up-flag { position: absolute; left: 6px; top: 6px; padding: 4px 8px; border-radius: 999px; background: var(--brown, #3B2A1B); color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.gb-co__up-body { display: grid; gap: 3px; justify-items: center; min-width: 0; width: 100%; }
 .gb-co__up-name { margin: 0; font-weight: 700; font-size: 13.5px; line-height: 1.3; color: var(--ink); }
 .gb-co__up-note { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.35; }
-.gb-co__up-price { margin: 2px 0 0; display: flex; gap: 7px; align-items: baseline; font-size: 14px; color: var(--ink); }
+.gb-co__up-price { margin: 2px 0 0; display: flex; gap: 7px; align-items: baseline; justify-content: center; font-size: 14.5px; color: var(--ink); }
 .gb-co__up-price b { font-weight: 800; }
 .gb-co__up-price s { color: var(--dim); font-weight: 400; font-size: 12.5px; }
-.gb-co__up-add { min-height: 38px; padding: 0 20px; border: 1px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-family: var(--font-b); font-size: 13px; font-weight: 700; cursor: pointer; transition: background .16s var(--ease), color .16s var(--ease); }
+.gb-co__up-add { width: 100%; margin-top: 4px; min-height: 38px; padding: 0 16px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); font-family: var(--font-b); font-size: 13px; font-weight: 700; cursor: pointer; transition: background .16s var(--ease), color .16s var(--ease); }
 .gb-co__up-add:hover { background: var(--ink); color: #fff; }
 .gb-co__up-add[disabled] { opacity: .5; cursor: not-allowed; }
-@media (max-width: 380px) { .gb-co__up-item { grid-template-columns: 64px 1fr; } .gb-co__up-shot { width: 64px; height: 64px; } .gb-co__up-add { grid-column: 1 / -1; width: 100%; } }
 
 /* ---- the folded summary, phones only ----------------------------------- */
 .gb-co__msum { margin: 0 0 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--rail); }
@@ -310,7 +324,7 @@
 @media (prefers-reduced-motion: reduce) {
   .gb-sf__lbl, .gb-sf__cell, .gb-co__msum-caret, .gb-co__pay, .gb-co__up-add, .gb-co__disc-btn, .gb-co__prot-row, .gb-co__scratch-foil { transition: none; }
   .gb-co__pay:hover { transform: none; }
-  .gb-co__skel, .gb-co__scratch-prize, .gb-co__scratch-applied { animation: none; }
+  .gb-co__skel::after, .gb-co__express-row[data-waiting="1"]::after, .gb-co__scratch-prize, .gb-co__scratch-applied { animation: none; }
   .gb-co__spin { animation-duration: 2.4s; }
 }
 
@@ -320,3 +334,45 @@
 .gb-co__paypal { width: 100%; min-height: 48px; }
 .gb-co__paypal > div { width: 100%; }
 .gb-co__express-err { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--danger, #B3261E); text-align: center; }
+
+
+/* ---- the rail, in the dark -------------------------------------------- *
+ * The summary side is the store's night, the same colour as its footer, so
+ * the checkout reads as the shop rather than as a beige form. Everything
+ * inside it is coloured by redefining the palette on this one element —
+ * ink, dim and line all flip, and every rule underneath follows without
+ * being rewritten. Only the few hard-coded whites are named again below. */
+.gb-co__rail,
+.gb-co__msum {
+  --ink: #F6EEE2;
+  --dim: #B9AE9C;
+  --line: rgba(246, 238, 226, .16);
+  --field: rgba(246, 238, 226, .34);
+  --leaf: #A8F32A;
+  --bad: #FF9C86;
+  color: #F6EEE2;
+}
+.gb-co__rail { background: var(--night); }
+.gb-co-split > .gb-co__rail { border-left: 0; }
+/* Product photos still sit on white — a navy kneeler on a brown panel is a
+   silhouette, not a photograph. */
+.gb-co__rail .gb-co__shot { background: #fff; border-color: rgba(246, 238, 226, .2); }
+.gb-co__rail .gb-co__qty { background: var(--lime); color: var(--lime-ink); }
+.gb-co__rail .gb-co__prot-row { background: var(--night-2); border-color: rgba(246, 238, 226, .16); }
+.gb-co__rail .gb-co__up-item { background: var(--night-2); border-color: rgba(246, 238, 226, .14); }
+.gb-co__rail .gb-co__up-flag { background: var(--lime); color: var(--lime-ink); }
+.gb-co__rail .gb-co__up-add { border-color: var(--lime); color: var(--lime); }
+.gb-co__rail .gb-co__up-add:hover { background: var(--lime); color: var(--lime-ink); }
+.gb-co__rail .gb-co__disc .gb-sf__in { background: var(--night-2); border-color: rgba(246, 238, 226, .22); color: #F6EEE2; }
+.gb-co__rail .gb-co__disc-btn { background: var(--lime); color: var(--lime-ink); }
+.gb-co__rail .gb-co__disc-btn:hover { background: var(--lime-2); }
+.gb-co__rail .gb-co__tot--free b { color: var(--lime); }
+.gb-co__rail .gb-co__grand b { color: #fff; }
+.gb-co__rail .gb-co__prot-row input { accent-color: var(--lime); }
+/* The folded phone summary is the same panel, so it matches the rail it
+   stands in for. */
+.gb-co__msum { background: var(--night); border-color: rgba(246, 238, 226, .18); }
+
+/* One sweep that only ever moves a layer, so the browser composites it
+   instead of repainting a gradient on every frame of an endless loop. */
+@keyframes gb-co-sweep { from { transform: translate3d(-100%, 0, 0); } to { transform: translate3d(100%, 0, 0); } }

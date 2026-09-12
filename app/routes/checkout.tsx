@@ -1420,8 +1420,12 @@ const KNEELER: CN = {
   grandStyle: { borderTop: "1px solid var(--gk-line)", marginTop: 8, paddingTop: 14, fontWeight: 700 },
 };
 
-/* Stripe's own fields, dressed to match the boxes next to them: the same 10px
-   radius, the same 16px text, the store's own ink and dim. */
+/* Stripe's own fields, dressed to match the boxes next to them: the same
+   radius, the same 16px text, the store's own ink and dim.
+   borderRadius is not only the inputs — Stripe puts it on the accordion, the
+   tab panel and the Link block too, so a pill value drew giant ellipses
+   across the card form. It is a box radius, and it stays one. The express
+   buttons are rounded on their own below, where it means the button. */
 const BUDDY_APPEARANCE = {
   theme: "stripe",
   variables: {
@@ -1432,8 +1436,7 @@ const BUDDY_APPEARANCE = {
     colorDanger: "#B3341C",
     colorBackground: "#ffffff",
     fontSizeBase: "16px",
-    // Rounds Stripe's own boxes and, in the express row, the wallet buttons.
-    borderRadius: "999px",
+    borderRadius: "10px",
     spacingUnit: "4px",
   },
 };
