@@ -30,6 +30,14 @@ export interface BrandFields {
   logoUrl?: string | null;
   brandColor?: string | null;
   accentColor?: string | null;
+  /**
+   * The product, large, at the top of the message.
+   *
+   * Nobody knows this shop's logo and nobody opens an email to look at one.
+   * They open it to see the thing they nearly bought. So the picture leads
+   * and the wordmark sits at the bottom where a signature belongs.
+   */
+  heroImageUrl?: string | null;
 }
 
 export interface OrderEmailInput extends BrandFields {
@@ -127,36 +135,54 @@ export interface EmailBrand {
   logoUrl: string | null;
   brandColor: string | null;
   accentColor: string | null;
+  heroImageUrl: string | null;
 }
 
-/** Inline styles only, tables for layout — Outlook understands nothing else. */
-function shell(brand: EmailBrand, body: string, preheader = ""): string {
-  const ink = brand.brandColor || "#2E2A24";
-  const accent = brand.accentColor || "#5C8C1E";
+/**
+ * The frame every message sits in.
+ *
+ * Inline styles only and tables for layout, because Outlook understands
+ * nothing else. The product picture, when there is one, is the first thing
+ * in the card and it runs edge to edge — no padding, no rounded inset, no
+ * logo above it competing for the first second of attention.
+ */
+function shell(brand: EmailBrand, body: string, preheader = "", hero = true): string {
+  const ink = brand.brandColor || "#16223A";
   const site = brand.domain ? `https://${brand.domain}` : null;
-  const logo =
-    brand.logoUrl && site
-      ? `<img src="${esc(brand.logoUrl.startsWith("http") ? brand.logoUrl : site + brand.logoUrl)}" alt="${esc(brand.storeName)}" height="34" style="display:block;height:34px;width:auto;border:0;margin:0 auto">`
-      : `<div style="font-size:20px;font-weight:800;letter-spacing:-.01em;color:${ink}">${esc(brand.storeName)}</div>`;
+  const heroSrc = hero ? abs(brand, brand.heroImageUrl) : null;
+  const logoSrc = abs(brand, brand.logoUrl);
 
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"></head>
-<body style="margin:0;padding:0;background:#F4F1EA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${ink};-webkit-font-smoothing:antialiased">
+<body style="margin:0;padding:0;background:#EFECE4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${ink};-webkit-font-smoothing:antialiased">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F1EA">
-<tr><td align="center" style="padding:28px 16px 40px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EFECE4">
+<tr><td align="center" style="padding:24px 14px 36px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px">
 
-<tr><td align="center" style="padding:6px 0 20px">${site ? `<a href="${site}" style="text-decoration:none">${logo}</a>` : logo}</td></tr>
-
-<tr><td style="background:#FFFFFF;border-radius:16px;padding:32px 28px;box-shadow:0 1px 2px rgba(46,42,36,.06)">
+<tr><td style="background:#FFFFFF;border-radius:20px;overflow:hidden;box-shadow:0 2px 10px rgba(22,34,58,.08)">
+${
+  heroSrc
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0;font-size:0;line-height:0">
+${site ? `<a href="${site}">` : ""}<img src="${esc(heroSrc)}" width="580" alt="${esc(brand.storeName)}" style="display:block;width:100%;max-width:580px;height:auto;border:0">${site ? `</a>` : ""}
+</td></tr></table>`
+    : ""
+}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:30px 28px 32px">
 ${body}
+</td></tr></table>
 </td></tr>
 
-<tr><td style="padding:20px 8px 0;text-align:center;color:#8C8678;font-size:12px;line-height:1.6">
-${site ? `<a href="${site}" style="color:#8C8678;text-decoration:none;font-weight:600">${esc(brand.storeName)}</a><br>` : `${esc(brand.storeName)}<br>`}
+<tr><td style="padding:22px 8px 0;text-align:center">
+${
+  logoSrc
+    ? `${site ? `<a href="${site}">` : ""}<img src="${esc(logoSrc)}" height="26" alt="${esc(brand.storeName)}" style="display:block;height:26px;width:auto;border:0;margin:0 auto;opacity:.75">${site ? `</a>` : ""}`
+    : `<div style="font-size:14px;font-weight:700;color:#8C8678">${esc(brand.storeName)}</div>`
+}
+<div style="margin-top:8px;color:#8C8678;font-size:12px;line-height:1.6">
 You are receiving this because you shopped with us.
+</div>
 </td></tr>
 
 </table></td></tr></table></body></html>`;
@@ -170,14 +196,30 @@ function brandOf(input: BrandFields & { storeName: string }): EmailBrand {
     logoUrl: input.logoUrl ?? null,
     brandColor: input.brandColor ?? null,
     accentColor: input.accentColor ?? null,
+    heroImageUrl: input.heroImageUrl ?? null,
   };
+}
+
+/** Absolute or nothing — an email client has no origin to resolve against. */
+function abs(brand: EmailBrand, url: string | null | undefined): string | null {
+  if (!url) return null;
+  // Already absolute, or inlined. Only a site-relative path needs the origin
+  // bolted on — prefixing anything else produced a broken image.
+  if (/^(https?:|data:|cid:)/i.test(url)) return url;
+  if (!brand.domain) return null;
+  return `https://${brand.domain}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
 /** The one button shape every message uses. */
 function button(label: string, href: string, accent: string): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 4px"><tr>
-<td align="center" style="background:${accent};border-radius:999px">
-<a href="${esc(href)}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none">${esc(label)}</a>
+  // Centred with an outer full-width table: `margin:auto` is ignored by
+  // Outlook, and a bare table hugs the left edge, which is what this looked
+  // like before.
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0 4px"><tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td align="center" style="background:${accent};border-radius:999px;box-shadow:0 6px 18px rgba(232,179,60,.35)">
+<a href="${esc(href)}" style="display:inline-block;padding:17px 44px;font-size:16.5px;font-weight:800;letter-spacing:-.01em;color:#16223A;text-decoration:none">${esc(label)}</a>
+</td></tr></table>
 </td></tr></table>`;
 }
 
@@ -224,34 +266,52 @@ export async function sendOrderConfirmation(
     .filter(Boolean)
     .join("\n");
 
-  const accent = input.accentColor || "#5C8C1E";
-  const site = input.domain ? `https://${input.domain}` : null;
+  const accent = input.accentColor || "#E8B33C";
+  const ink = input.brandColor || "#16223A";
   const html = shell(
     brandOf(input),
-    `<div style="text-align:center;margin:0 0 24px">
-<div style="display:inline-block;width:52px;height:52px;line-height:52px;border-radius:50%;background:${accent};color:#fff;font-size:26px;font-weight:700">&#10003;</div>
-<h1 style="margin:16px 0 6px;font-size:23px;font-weight:800;letter-spacing:-.02em">Thanks, ${esc(input.customerName)}.</h1>
-<p style="margin:0;font-size:15px;color:#6B6559">Order <strong>#${input.orderNumber}</strong> is confirmed and we are packing it.</p>
+    `<div style="text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">Order confirmed</div>
+<h1 style="margin:10px 0 8px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">It's yours, ${esc(input.customerName)}.</h1>
+<p style="margin:0 0 26px;font-size:15.5px;line-height:1.6;color:#6E7480">Order <strong style="color:${ink}">#${input.orderNumber}</strong> is paid and we are packing it now.</p>
 </div>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F3;border-radius:12px;padding:4px 16px">
-${lineRows(input.lines, input.currency)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0;border-radius:14px">
+<tr><td style="padding:18px 20px">
+${input.lines
+  .map(
+    (line) =>
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="font-size:15.5px;font-weight:700;line-height:1.4;color:${ink}">${esc(line.label)}<span style="color:#8C8678;font-weight:600"> &times;${line.quantity}</span></td>
+<td width="90" style="text-align:right;font-size:15.5px;font-weight:700;white-space:nowrap;color:${ink}">${formatMoney(line.lineTotalCents, input.currency)}</td>
+</tr></table>`,
+  )
+  .join('<div style="height:1px;background:#E6E1D6;margin:12px 0"></div>')}
+<div style="height:1px;background:#E6E1D6;margin:14px 0"></div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Subtotal</td><td style="padding:3px 0;text-align:right;font-size:14px">${formatMoney(input.subtotalCents, input.currency)}</td></tr>
+${input.discountCode && input.discountCents ? `<tr><td style="padding:3px 0;font-size:14px;font-weight:700;color:#2F8A4C">${esc(input.discountCode)}</td><td style="padding:3px 0;text-align:right;font-size:14px;font-weight:700;color:#2F8A4C">&minus;${formatMoney(input.discountCents, input.currency)}</td></tr>` : ""}
+<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Shipping</td><td style="padding:3px 0;text-align:right;font-size:14px;font-weight:700;color:#2F8A4C">${input.shippingCents ? formatMoney(input.shippingCents, input.currency) : "Free"}</td></tr>
+${input.taxCents ? `<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Tax</td><td style="padding:3px 0;text-align:right;font-size:14px">${formatMoney(input.taxCents, input.currency)}</td></tr>` : ""}
+<tr><td style="padding:12px 0 0;font-weight:800;font-size:18px;color:${ink}">Total</td><td style="padding:12px 0 0;text-align:right;font-weight:800;font-size:18px;color:${ink}">${formatMoney(input.totalCents, input.currency)}</td></tr>
 </table>
+</td></tr></table>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;padding:0 16px">
-<tr><td style="padding:5px 0;color:#6B6559;font-size:14px">Subtotal</td><td style="padding:5px 0;text-align:right;font-size:14px">${formatMoney(input.subtotalCents, input.currency)}</td></tr>
-${input.discountCode && input.discountCents ? `<tr><td style="padding:5px 0;color:${accent};font-size:14px;font-weight:600">${esc(input.discountCode)}</td><td style="padding:5px 0;text-align:right;font-size:14px;color:${accent};font-weight:600">&minus;${formatMoney(input.discountCents, input.currency)}</td></tr>` : ""}
-${input.shippingCents ? `<tr><td style="padding:5px 0;color:#6B6559;font-size:14px">Shipping</td><td style="padding:5px 0;text-align:right;font-size:14px">${formatMoney(input.shippingCents, input.currency)}</td></tr>` : `<tr><td style="padding:5px 0;color:#6B6559;font-size:14px">Shipping</td><td style="padding:5px 0;text-align:right;font-size:14px;color:${accent};font-weight:600">Free</td></tr>`}
-${input.taxCents ? `<tr><td style="padding:5px 0;color:#6B6559;font-size:14px">Tax</td><td style="padding:5px 0;text-align:right;font-size:14px">${formatMoney(input.taxCents, input.currency)}</td></tr>` : ""}
-<tr><td style="padding:12px 0 0;border-top:1px solid #EDE8DE;font-weight:800;font-size:16px">Total</td><td style="padding:12px 0 0;border-top:1px solid #EDE8DE;text-align:right;font-weight:800;font-size:16px">${formatMoney(input.totalCents, input.currency)}</td></tr>
-</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;background:${ink};border-radius:14px">
+<tr><td style="padding:20px 22px">
+<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:${accent}">What happens next</div>
+<div style="margin-top:8px;font-size:14.5px;line-height:1.65;color:#E7EAF0">
+We pack it, then we email you a tracking number the moment it leaves. Nothing else is needed from you &mdash; just reply to this email if anything comes up.
+</div>
+</td></tr></table>
 
-<p style="margin:26px 0 0;padding:14px 16px;background:#FAF8F3;border-radius:12px;font-size:14px;line-height:1.6;color:#6B6559">
-<strong style="color:#2E2A24">What happens next</strong><br>
-We will email you a tracking number the moment it ships. Nothing else is needed from you.
-</p>
-${site ? `<p style="margin:22px 0 0;font-size:13px;color:#8C8678;text-align:center">Questions? Just reply to this email.</p>` : ""}`,
-    `Order #${input.orderNumber} is confirmed — ${formatMoney(input.totalCents, input.currency)}`,
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;border-top:1px solid #EEEAE0">
+<tr>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Free shipping</strong>already included</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">30-day returns</strong>no questions</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Real people</strong>reply to this email</td>
+</tr></table>`,
+    `Order #${input.orderNumber} confirmed — ${formatMoney(input.totalCents, input.currency)}`,
   );
 
   const result = await send(env, {
@@ -304,22 +364,24 @@ export async function sendShippingNotice(
     .filter(Boolean)
     .join("\n");
 
-  const accent = input.accentColor || "#5C8C1E";
+  const accent = input.accentColor || "#E8B33C";
+  const ink = input.brandColor || "#16223A";
   const html = shell(
     brandOf(input),
     `<div style="text-align:center;margin:0 0 22px">
-<div style="font-size:34px;line-height:1">&#128230;</div>
-<h1 style="margin:12px 0 6px;font-size:22px;font-weight:800;letter-spacing:-.02em">It's on the way, ${esc(input.customerName)}.</h1>
-<p style="margin:0;font-size:15px;color:#6B6559">Order <strong>#${input.orderNumber}</strong> has shipped${esc(carrier)}.</p>
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">On its way</div>
+<h1 style="margin:10px 0 8px;font-size:28px;line-height:1.14;font-weight:800;letter-spacing:-.03em;color:${ink}">It shipped, ${esc(input.customerName)}.</h1>
+<p style="margin:0;font-size:15.5px;color:#6E7480">Order <strong style="color:${ink}">#${input.orderNumber}</strong> is on its way${esc(carrier)}.</p>
 </div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F3;border-radius:12px">
-<tr><td style="padding:18px 16px;text-align:center">
-<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8C8678;text-transform:uppercase">Tracking number</div>
-<div style="margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;font-weight:700;word-break:break-all">${esc(input.tracking)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${ink};border-radius:14px">
+<tr><td style="padding:20px 16px;text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.12em;color:${accent};text-transform:uppercase">Tracking number</div>
+<div style="margin-top:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;font-weight:800;letter-spacing:.04em;color:#ffffff;word-break:break-all">${esc(input.tracking)}</div>
 </td></tr></table>
 ${link ? button("Track your parcel", link, accent) : ""}
-<p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8C8678;text-align:center">Tracking can take a day or two to start updating after it is scanned.</p>`,
+<p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8C8678;text-align:center">Tracking can take a day or two to start updating after the first scan. That is normal.</p>`,
     `Order #${input.orderNumber} has shipped — tracking ${input.tracking}`,
+    false,
   );
 
   const result = await send(env, {
@@ -507,52 +569,68 @@ function abandonedBody(
     imageUrl?: string | null;
   },
 ): string {
-  const accent = input.accentColor || "#5C8C1E";
-  const hi = input.customerName ? `${esc(input.customerName)}, you` : "You";
-  const heading =
-    input.kind === "checkout"
-      ? "You were one step away"
-      : "You left something behind";
+  const brand = brandOf({ ...input, heroImageUrl: input.imageUrl ?? input.heroImageUrl });
+  const accent = input.accentColor || "#E8B33C";
+  const ink = input.brandColor || "#16223A";
+  const heading = input.kind === "checkout" ? "You were one tap away." : "It's still in your cart.";
   const lead =
     input.kind === "checkout"
-      ? `${hi} got as far as the checkout and then stopped. Your cart is still saved &mdash; picking it up takes one tap.`
-      : `${hi} left this in your cart. We have kept it for you.`;
+      ? "You got all the way to payment and stopped. Nothing is lost — everything is exactly where you left it."
+      : "We saved it for you. One tap and it's yours.";
 
   return shell(
-    brandOf(input),
-    `<h1 style="margin:0 0 10px;font-size:23px;font-weight:800;letter-spacing:-.02em">${heading}</h1>
-<p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#6B6559">${lead}</p>
+    brand,
+    `<div style="text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">
+${input.kind === "checkout" ? "Almost yours" : "Still waiting"}
+</div>
+<h1 style="margin:10px 0 10px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">${heading}</h1>
+<p style="margin:0 0 24px;font-size:15.5px;line-height:1.6;color:#6E7480">${lead}</p>
+</div>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F3;border-radius:12px">
-<tr>
-${input.imageUrl ? `<td width="88" style="padding:14px 0 14px 14px"><img src="${esc(input.imageUrl)}" width="74" alt="" style="display:block;width:74px;height:74px;object-fit:cover;border-radius:9px;border:0"></td>` : ""}
-<td style="padding:14px 16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0;border-radius:14px">
+<tr><td style="padding:18px 20px">
 ${input.lines
   .map(
     (line) =>
-      `<div style="font-size:15px;font-weight:650;line-height:1.4">${esc(line.label)}</div>
-<div style="font-size:13px;color:#8C8678;margin-top:2px">Qty ${line.quantity} &middot; ${formatMoney(line.lineTotalCents, input.currency)}</div>`,
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="font-size:16px;font-weight:700;line-height:1.4;color:${ink}">${esc(line.label)}</td>
+<td width="90" style="text-align:right;font-size:16px;font-weight:800;white-space:nowrap;color:${ink}">${formatMoney(line.lineTotalCents, input.currency)}</td>
+</tr></table>`,
   )
-  .join('<div style="height:10px"></div>')}
+  .join('<div style="height:1px;background:#E6E1D6;margin:12px 0"></div>')}
+<div style="height:1px;background:#E6E1D6;margin:14px 0"></div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="font-size:13px;color:#8C8678;font-weight:600">Free shipping included</td>
+<td style="text-align:right;font-size:13px;color:#8C8678">Total <strong style="color:${ink};font-size:15px">${formatMoney(input.totalCents, input.currency)}</strong></td>
+</tr></table>
 </td></tr></table>
 
 ${
   input.discountCode && input.discountPercent
-    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px"><tr>
-<td style="padding:16px;border:2px dashed ${accent};border-radius:12px;text-align:center">
-<div style="font-size:13px;color:#6B6559">Here is <strong>${input.discountPercent}% off</strong> to finish it</div>
-<div style="margin-top:6px;font-family:ui-monospace,monospace;font-size:20px;font-weight:800;letter-spacing:.06em;color:${accent}">${esc(input.discountCode)}</div>
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
+<td style="padding:18px;background:${ink};border-radius:14px;text-align:center">
+<div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${accent}">Take ${input.discountPercent}% off</div>
+<div style="margin-top:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:26px;font-weight:800;letter-spacing:.08em;color:#ffffff">${esc(input.discountCode)}</div>
+<div style="margin-top:6px;font-size:12px;color:#A9B0BE">Applied automatically when you tap below</div>
 </td></tr></table>`
     : ""
 }
 
-${button(input.kind === "checkout" ? "Finish my order" : "Back to my cart", input.recoverUrl, accent)}
+${button(input.kind === "checkout" ? "Finish my order" : "Take me back to it", input.recoverUrl, accent)}
 
-<p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#8C8678;text-align:center">
-Only one of these is ever sent. If you have changed your mind, ignore it &mdash; we will not chase you.
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:26px;border-top:1px solid #EEEAE0">
+<tr>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Free shipping</strong>on every order</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">30-day returns</strong>no questions</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Secure checkout</strong>Apple&nbsp;Pay &amp; card</td>
+</tr></table>
+
+<p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#A3A79E;text-align:center">
+This is the only reminder we send. Changed your mind? Ignore it and we will leave you alone.
 </p>`,
     input.kind === "checkout"
-      ? "Your order is one tap from done"
+      ? `Your order is one tap from done${input.discountCode ? ` — and here is ${input.discountPercent}% off` : ""}`
       : "Your cart is still saved",
   );
 }
@@ -612,33 +690,40 @@ export function previewEmail(
   input: { storeName: string; currency: string } & BrandFields,
 ): string {
   const brand = brandOf(input);
-  const accent = input.accentColor || "#5C8C1E";
-  const lines: EmailLine[] = [{ label: "Garden Buddy — 2 pack", quantity: 1, lineTotalCents: 12900 }];
+  const accent = input.accentColor || "#E8B33C";
+  const ink = input.brandColor || "#16223A";
+  const lines: EmailLine[] = [
+    { label: "Garden Buddy + Tool Set", quantity: 1, lineTotalCents: 9999 },
+  ];
 
   if (kind === "shipping") {
     const link = trackingUrl("USPS", "9400100000000000000000");
     return shell(
       brand,
       `<div style="text-align:center;margin:0 0 22px">
-<div style="font-size:34px;line-height:1">&#128230;</div>
-<h1 style="margin:12px 0 6px;font-size:22px;font-weight:800;letter-spacing:-.02em">It's on the way, Alex.</h1>
-<p style="margin:0;font-size:15px;color:#6B6559">Order <strong>#1001</strong> has shipped with USPS.</p>
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">On its way</div>
+<h1 style="margin:10px 0 8px;font-size:28px;line-height:1.14;font-weight:800;letter-spacing:-.03em;color:${ink}">It shipped, Alex.</h1>
+<p style="margin:0;font-size:15.5px;color:#6E7480">Order <strong style="color:${ink}">#1001</strong> is on its way with USPS.</p>
 </div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F3;border-radius:12px">
-<tr><td style="padding:18px 16px;text-align:center">
-<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#8C8678;text-transform:uppercase">Tracking number</div>
-<div style="margin-top:6px;font-family:ui-monospace,monospace;font-size:16px;font-weight:700">9400 1000 0000 0000 0000 00</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${ink};border-radius:14px">
+<tr><td style="padding:20px 16px;text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.12em;color:${accent};text-transform:uppercase">Tracking number</div>
+<div style="margin-top:8px;font-family:ui-monospace,monospace;font-size:18px;font-weight:800;letter-spacing:.04em;color:#fff">9400 1000 0000 0000 0000 00</div>
 </td></tr></table>
-${link ? button("Track your parcel", link, accent) : ""}`,
+${link ? button("Track my parcel", link, accent) : ""}`,
+      "",
+      false,
     );
   }
 
   if (kind === "refund") {
     return shell(
       brand,
-      `<h1 style="margin:0 0 14px;font-size:21px;font-weight:800;letter-spacing:-.02em">Your refund is on its way</h1>
-<p style="margin:0 0 14px;font-size:15px;line-height:1.6">Hi Alex, we have refunded <strong>${formatMoney(12900, input.currency)}</strong> on order <strong>#1001</strong>.</p>
-<p style="margin:0;padding:14px 16px;background:#FAF8F3;border-radius:12px;font-size:14px;line-height:1.6;color:#6B6559">It usually shows on your card within 5&ndash;10 business days.</p>`,
+      `<h1 style="margin:0 0 12px;font-size:26px;font-weight:800;letter-spacing:-.03em;color:${ink}">Your refund is on its way</h1>
+<p style="margin:0 0 16px;font-size:15.5px;line-height:1.6;color:#6E7480">Hi Alex, we have refunded <strong style="color:${ink}">${formatMoney(9999, input.currency)}</strong> on order <strong style="color:${ink}">#1001</strong>.</p>
+<p style="margin:0;padding:16px 18px;background:#F7F5F0;border-radius:14px;font-size:14px;line-height:1.65;color:#6E7480">It usually shows on your card within 5&ndash;10 business days. Nothing else is needed from you.</p>`,
+      "",
+      false,
     );
   }
 
@@ -648,8 +733,8 @@ ${link ? button("Track your parcel", link, accent) : ""}`,
       kind: kind === "abandoned_cart" ? "cart" : "checkout",
       customerName: "Alex",
       lines,
-      totalCents: 12900,
-      recoverUrl: input.domain ? `https://${input.domain}/cart` : "#",
+      totalCents: 9999,
+      recoverUrl: input.domain ? `https://${input.domain}/` : "#",
       discountCode: kind === "abandoned_checkout" ? "COMEBACK10" : null,
       discountPercent: kind === "abandoned_checkout" ? 10 : null,
     });
@@ -657,19 +742,34 @@ ${link ? button("Track your parcel", link, accent) : ""}`,
 
   return shell(
     brand,
-    `<div style="text-align:center;margin:0 0 24px">
-<div style="display:inline-block;width:52px;height:52px;line-height:52px;border-radius:50%;background:${accent};color:#fff;font-size:26px;font-weight:700">&#10003;</div>
-<h1 style="margin:16px 0 6px;font-size:23px;font-weight:800;letter-spacing:-.02em">Thanks, Alex.</h1>
-<p style="margin:0;font-size:15px;color:#6B6559">Order <strong>#1001</strong> is confirmed and we are packing it.</p>
+    `<div style="text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">Order confirmed</div>
+<h1 style="margin:10px 0 8px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">It's yours, Alex.</h1>
+<p style="margin:0 0 26px;font-size:15.5px;line-height:1.6;color:#6E7480">Order <strong style="color:${ink}">#1001</strong> is paid and we are packing it now.</p>
 </div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F3;border-radius:12px;padding:4px 16px">${lineRows(lines, input.currency)}</table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;padding:0 16px">
-<tr><td style="padding:5px 0;color:#6B6559;font-size:14px">Subtotal</td><td style="padding:5px 0;text-align:right;font-size:14px">${formatMoney(12900, input.currency)}</td></tr>
-<tr><td style="padding:5px 0;color:#6B6559;font-size:14px">Shipping</td><td style="padding:5px 0;text-align:right;font-size:14px;color:${accent};font-weight:600">Free</td></tr>
-<tr><td style="padding:12px 0 0;border-top:1px solid #EDE8DE;font-weight:800;font-size:16px">Total</td><td style="padding:12px 0 0;border-top:1px solid #EDE8DE;text-align:right;font-weight:800;font-size:16px">${formatMoney(12900, input.currency)}</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0;border-radius:14px">
+<tr><td style="padding:18px 20px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="font-size:15.5px;font-weight:700;color:${ink}">Garden Buddy + Tool Set<span style="color:#8C8678;font-weight:600"> &times;1</span></td>
+<td width="90" style="text-align:right;font-size:15.5px;font-weight:700;color:${ink}">${formatMoney(9999, input.currency)}</td>
+</tr></table>
+<div style="height:1px;background:#E6E1D6;margin:14px 0"></div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Subtotal</td><td style="padding:3px 0;text-align:right;font-size:14px">${formatMoney(9999, input.currency)}</td></tr>
+<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Shipping</td><td style="padding:3px 0;text-align:right;font-size:14px;font-weight:700;color:#2F8A4C">Free</td></tr>
+<tr><td style="padding:12px 0 0;font-weight:800;font-size:18px;color:${ink}">Total</td><td style="padding:12px 0 0;text-align:right;font-weight:800;font-size:18px;color:${ink}">${formatMoney(9999, input.currency)}</td></tr>
 </table>
-<p style="margin:26px 0 0;padding:14px 16px;background:#FAF8F3;border-radius:12px;font-size:14px;line-height:1.6;color:#6B6559">
-<strong style="color:#2E2A24">What happens next</strong><br>
-We will email you a tracking number the moment it ships.</p>`,
+</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;background:${ink};border-radius:14px">
+<tr><td style="padding:20px 22px">
+<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:${accent}">What happens next</div>
+<div style="margin-top:8px;font-size:14.5px;line-height:1.65;color:#E7EAF0">We pack it, then we email you a tracking number the moment it leaves. Just reply to this email if anything comes up.</div>
+</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;border-top:1px solid #EEEAE0">
+<tr>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Free shipping</strong>already included</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">30-day returns</strong>no questions</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Real people</strong>reply to this email</td>
+</tr></table>`,
   );
 }

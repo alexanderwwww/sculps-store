@@ -33,6 +33,14 @@ interface CartLine {
 
 const HOUR = 3_600_000;
 
+/**
+ * The picture every recovery email leads with when a cart line has none.
+ *
+ * A resized copy lives in R2 next to the original: the storefront photo is
+ * 2.2MB, which no inbox should be asked to download.
+ */
+const EMAIL_HERO = "/media/em-0e08493005adb744.jpg";
+
 export interface RecoverySummary {
   considered: number;
   sent: number;
@@ -107,9 +115,11 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
       recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}`,
       discountCode: kind === "checkout" ? "COMEBACK10" : null,
       discountPercent: kind === "checkout" ? 10 : null,
-      imageUrl: absolute(site, firstImage(cart.items as CartLine[])),
+      // The cart's own photo when it has one, otherwise the store's hero —
+      // an email about a product with no product in it is a wasted send.
+      imageUrl: absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
       domain: store.domain,
-      logoUrl: store.logoUrl,
+      logoUrl: "/media/em-967546d2b092584a.jpg",
       brandColor: store.brandColor,
       accentColor: store.accentColor,
     });

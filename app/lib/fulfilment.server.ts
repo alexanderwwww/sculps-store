@@ -71,9 +71,11 @@ export async function afterPaymentConfirmed(
         // The store's own look, so the receipt is recognisably from the shop
         // she just bought from rather than from a white box with a name on it.
         domain: store.domain,
-        logoUrl: store.logoUrl,
+        // the 25KB copy, not the 778KB storefront original
+        logoUrl: "/media/em-967546d2b092584a.jpg",
         brandColor: store.brandColor,
         accentColor: store.accentColor,
+        heroImageUrl: "/media/em-0e08493005adb744.jpg",
         orderNumber: order.number,
         currency: order.currency,
         lines: items.map((item) => ({
