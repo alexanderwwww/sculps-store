@@ -45,13 +45,24 @@ export function PayPalExpress({
   clientId,
   currency,
   storeParam = "",
+  beforeCreate,
 }: {
   clientId: string;
   currency: string;
   storeParam?: string;
+  /**
+   * Run before the PayPal order is created. The drawer needs nothing here —
+   * what it shows is already the cart. A product page does: the thing being
+   * bought has to be in the cart before PayPal is asked for a total.
+   */
+  beforeCreate?: () => Promise<void>;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const drawn = useRef(false);
+  // The buttons are rendered once; this keeps the callback current without
+  // tearing them down and drawing them again.
+  const latest = useRef(beforeCreate);
+  latest.current = beforeCreate;
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,6 +80,7 @@ export function PayPalExpress({
           .Buttons({
             style: { layout: "vertical", shape: "pill", height: 46, label: "paypal", tagline: false },
             createOrder: async () => {
+              if (latest.current) await latest.current();
               const response = await fetch(`/checkout/paypal${storeParam}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

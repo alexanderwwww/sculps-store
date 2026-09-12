@@ -772,6 +772,17 @@
 .gb-mow-buy__cta:active{transform:translateY(1px)}
 .gb-mow-buy__cta[disabled]{opacity:.45;cursor:not-allowed}
 .gb-mow-buy__trust{list-style:none;display:flex;flex-wrap:wrap;gap:10px 26px;margin:22px 0 0;padding:0;color:var(--dim);font-size:13.5px;font-weight:500}
+/* Buy now, the wallet sheet and PayPal, in the same square, quiet language
+   as the Add button above them. */
+.gb-mow-buy__now{font-family:var(--font-b);display:flex;width:100%;align-items:center;justify-content:center;min-height:58px;margin-top:10px;padding:0 32px;border:1px solid var(--ink);border-radius:2px;background:transparent;color:var(--ink);font-size:14px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s,color .2s,transform .05s}
+.gb-mow-buy__now:hover{background:var(--ink);color:var(--paper)}
+.gb-mow-buy__now:active{transform:translateY(1px)}
+.gb-mow-buy__now[disabled]{opacity:.4;cursor:not-allowed}
+.gb-mow-buy__now:focus-visible{outline:2px solid var(--leaf);outline-offset:3px}
+.gb-mow .gb-buy__wallet{margin-top:10px;border-radius:2px;overflow:hidden}
+.gb-mow .gb-buy__wallet:empty{display:none}
+.gb-mow .gb-buy__wallet-err{margin:8px 0 0;color:#B3341C;font-size:14px;line-height:1.4}
+.gb-mow .gb-ppx{margin-top:10px}
 
 .gb-mow-scene{padding:var(--mow-air) 0;background:var(--paper)}
 .gb-mow-scene--flip{background:var(--sand)}

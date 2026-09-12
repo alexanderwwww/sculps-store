@@ -15,6 +15,8 @@ import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
 import { formatMoney } from "~/lib/money";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { Header, Footer } from "./index";
+import { ProductExpress } from "./product-express";
+import { PayPalExpress } from "./paypal-express";
 
 /** The gallery, in the order it is shown. The first is the variant's own shot. */
 const SHOTS = [
@@ -65,7 +67,14 @@ export function MowerPage({
       <div className="gb gb-mow">
         <Header page={page} storeParam={storeParam} />
         <main>
-          <Buy variant={variant} currency={page.store.currency} />
+          <Buy
+            variant={variant}
+            currency={page.store.currency}
+            storeName={page.store.name}
+            storeParam={storeParam}
+            publishableKey={publishableKey}
+            paypalClientId={paypalClientId}
+          />
           <Scene
             src={SHOTS[2].src}
             alt={SHOTS[2].alt}
@@ -92,9 +101,28 @@ export function MowerPage({
 
 /* ------------------------------------------------------------- buy section */
 
-function Buy({ variant, currency }: { variant: VariantRow; currency: string }) {
+function Buy({
+  variant,
+  currency,
+  storeName,
+  storeParam,
+  publishableKey,
+  paypalClientId,
+}: {
+  variant: VariantRow;
+  currency: string;
+  storeName: string;
+  storeParam: string;
+  publishableKey: string | null;
+  paypalClientId: string | null;
+}) {
   const drawer = useCartDrawer();
   const [shot, setShot] = useState(0);
+  // Hide the plain "Buy now" the moment Stripe draws a real wallet sheet —
+  // two buttons that mean the same thing is a choice nobody wants.
+  const [walletReady, setWalletReady] = useState(false);
+  const href = (path: string) => `${path}${storeParam}`;
+  const sold = variant.available <= 0;
   const save = variant.compareAtCents ? variant.compareAtCents - variant.priceCents : 0;
   const current = SHOTS[shot];
 
@@ -141,22 +169,67 @@ function Buy({ variant, currency }: { variant: VariantRow; currency: string }) {
             <li className="gb-check">Rain-proof — it lives outside all season</li>
           </ul>
 
-          {/* Without JavaScript this still posts; with it the drawer opens in
-              place, the same as every other Add on the site. */}
+          {/* The same three ways to pay as the shop's own buy box. Without
+              JavaScript the form still posts; with it the drawer opens in
+              place, and "Buy now" goes straight through to the checkout. */}
           <form
             method="post"
-            action="/cart/add"
+            action={href("/cart/add")}
             onSubmit={(event) => {
+              const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
+              if (submitter?.classList.contains("gb-mow-buy__now")) {
+                event.currentTarget.action = `${href("/cart/add")}${storeParam ? "&" : "?"}next=checkout`;
+                return;
+              }
               if (!drawer) return;
               event.preventDefault();
               drawer.add(variant.id, event.currentTarget.querySelector<HTMLButtonElement>(".gb-mow-buy__cta"));
             }}
           >
             <input type="hidden" name="variantId" value={variant.id} />
-            <button type="submit" className="gb-mow-buy__cta" disabled={variant.available <= 0}>
-              {variant.available > 0 ? "Add to cart" : "Sold out"}
+
+            <button type="submit" className="gb-mow-buy__cta" disabled={sold}>
+              {sold ? "Sold out" : `Add to cart · ${formatMoney(variant.priceCents, currency)}`}
+            </button>
+
+            {/* Apple Pay on an iPhone or Safari, Google Pay elsewhere —
+                mounted by Stripe only once it knows this browser has one. */}
+            {publishableKey && !sold ? (
+              <ProductExpress
+                publishableKey={publishableKey}
+                currency={currency}
+                variantId={variant.id}
+                amountCents={variant.priceCents}
+                label={variant.label}
+                storeName={storeName}
+                shippingCents={0}
+                storeParam={storeParam}
+                onReady={setWalletReady}
+              />
+            ) : null}
+
+            <button type="submit" className="gb-mow-buy__now" disabled={sold} hidden={walletReady}>
+              Buy now
             </button>
           </form>
+
+          {/* PayPal has to be given something to charge for, so the mower goes
+              into the cart before the order is opened. */}
+          {paypalClientId && !sold ? (
+            <PayPalExpress
+              clientId={paypalClientId}
+              currency={currency}
+              storeParam={storeParam}
+              beforeCreate={async () => {
+                await fetch(href("/cart/add"), {
+                  method: "POST",
+                  body: new URLSearchParams({ variantId: variant.id }),
+                  credentials: "same-origin",
+                  redirect: "manual",
+                }).catch(() => {});
+              }}
+            />
+          ) : null}
 
           <ul className="gb-mow-buy__trust">
             <li>🚚 Free shipping</li>
