@@ -304,12 +304,15 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
           }
         >
           <div style={glassBody}>
-            <FactGrid>
-              <Fact label="Publishable key" value={stripe.publishableKey || null} mono reason="Not saved yet" />
-              <Fact label="Secret key" value={stripe.hasSecret ? stripe.secretMask : null} mono reason="Not saved yet" />
-              <Fact label="Webhook secret" value={stripe.hasWebhook ? "Stored" : null} reason="Not saved yet" />
-              <Fact label="Currency" value={store.currency} />
-            </FactGrid>
+            <CardFace
+              brand="stripe"
+              live={stripeState === "on"}
+              number={stripe.publishableKey}
+              holder={store.name}
+              currency={store.currency}
+              note={stripe.hasWebhook ? "Webhook stored" : "No webhook yet"}
+              secret={stripe.hasSecret ? stripe.secretMask : null}
+            />
 
             <hr style={glassRule} />
 
@@ -369,12 +372,15 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
           }
         >
           <div style={glassBody}>
-            <FactGrid>
-              <Fact label="Client ID" value={paypal.clientId ? `${paypal.clientId.slice(0, 22)}…` : null} mono reason="Not saved yet" />
-              <Fact label="Secret" value={paypal.hasSecret ? paypal.secretMask : null} mono reason="Not saved yet" />
-              <Fact label="Mode" value={paypal.mode === "sandbox" ? "Sandbox — test money" : "Live — real money"} />
-              <Fact label="Currency" value={store.currency} />
-            </FactGrid>
+            <CardFace
+              brand="paypal"
+              live={paypalState === "on"}
+              number={paypal.clientId}
+              holder={store.name}
+              currency={store.currency}
+              note={paypal.mode === "sandbox" ? "Sandbox — test money" : "Live — real money"}
+              secret={paypal.hasSecret ? paypal.secretMask : null}
+            />
 
             {paypal.mode === "sandbox" && paypal.hasSecret ? (
               <GlassNotice kind="warning">
@@ -476,24 +482,188 @@ function Payout({
     new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
 
   return (
-    <GlassPanel halo lift title="Next payout" sub="Cleared and ready to reach your bank.">
-      <div style={{ ...glassBody, display: "flex", alignItems: "flex-end", gap: 24, flexWrap: "wrap" }}>
-        <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontSize: 32, fontWeight: 680, letterSpacing: "-.02em", lineHeight: "36px" }}>
+    <GlassPanel halo lift tight>
+      <div
+        style={{
+          padding: "22px 22px 20px",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: 28,
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <span style={{ fontSize: 10.5, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-2)", fontWeight: 600 }}>
+            Next payout
+          </span>
+          <span style={{ fontSize: 40, fontWeight: 680, letterSpacing: "-.03em", lineHeight: "42px" }}>
             {money(available)}
           </span>
           <span style={{ fontSize: 12, color: "var(--ink-2)" }}>
+            Cleared and ready to reach your bank ·{" "}
             {[stripe ? "Stripe" : null, paypal ? "PayPal" : null].filter(Boolean).join(" + ")}
             {stripe && !paypal ? " · PayPal does not report a balance" : ""}
           </span>
         </span>
         {pending > 0 ? (
-          <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <span style={{ fontSize: 18, fontWeight: 620, lineHeight: "24px" }}>{money(pending)}</span>
-            <span style={{ fontSize: 12, color: "var(--ink-2)" }}>still settling</span>
+          <span style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+            <span style={{ fontSize: 10.5, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--ink-2)", fontWeight: 600 }}>
+              Settling
+            </span>
+            <span style={{ fontSize: 22, fontWeight: 640, lineHeight: "26px" }}>{money(pending)}</span>
           </span>
         ) : null}
       </div>
     </GlassPanel>
+  );
+}
+
+/* -------------------------------------------------------------- card face */
+
+/**
+ * The connection, drawn as the thing it actually is: a payment card.
+ *
+ * A key is a long meaningless string, and four of them in a row of labelled
+ * cells reads like a config file. On a card the same facts land where the eye
+ * already expects them — the number across the middle, the holder and the
+ * currency along the bottom, the brand in the corner — so the panel can be
+ * understood at a glance instead of read.
+ *
+ * Nothing here is decoration over missing data: an unconnected provider gets
+ * a dimmed card with dots where the number would be, never a fake one.
+ */
+const CARD_SKIN = {
+  stripe: {
+    name: "Stripe",
+    ink: "#F4F3FF",
+    sub: "rgba(244,243,255,.62)",
+    background:
+      "radial-gradient(120% 130% at 8% 0%, #8C84FF 0%, #635BFF 38%, #4B45C6 68%, #2E2A7A 100%)",
+    sheen: "linear-gradient(122deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 46%)",
+    glow: "0 18px 44px rgba(99,91,255,.34)",
+  },
+  paypal: {
+    name: "PayPal",
+    ink: "#F2F8FF",
+    sub: "rgba(242,248,255,.66)",
+    background:
+      "radial-gradient(120% 130% at 8% 0%, #37B6F0 0%, #0F8FE0 34%, #0A4EA8 70%, #012169 100%)",
+    sheen: "linear-gradient(122deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 46%)",
+    glow: "0 18px 44px rgba(10,78,168,.34)",
+  },
+} as const;
+
+/**
+ * A key, printed the way a card number is: the start it is recognised by, a
+ * masked middle, and the last four. Grouping the raw string instead cut words
+ * in half — "pk_l ive_ …hXI" — which reads as broken rather than as a number.
+ */
+function grouped(key: string): string {
+  if (key.length <= 16) return key.replace(/(.{4})/g, "$1 ").trim();
+  const head = key.slice(0, 8).replace(/(.{4})/g, "$1 ").trim();
+  const tail = key.slice(-4);
+  return `${head} •••• •••• ${tail}`;
+}
+
+function CardFace({
+  brand,
+  live,
+  number,
+  holder,
+  currency,
+  note,
+  secret,
+}: {
+  brand: keyof typeof CARD_SKIN;
+  live: boolean;
+  number: string;
+  holder: string;
+  currency: string;
+  note: string;
+  secret: string | null;
+}) {
+  const skin = CARD_SKIN[brand];
+  const connected = Boolean(number);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: 420,
+        aspectRatio: "1.586",
+        borderRadius: 18,
+        padding: 20,
+        color: skin.ink,
+        background: skin.background,
+        boxShadow: connected ? `${skin.glow}, inset 0 1px 0 rgba(255,255,255,.28)` : "inset 0 1px 0 rgba(255,255,255,.18)",
+        filter: connected ? undefined : "saturate(.35)",
+        opacity: connected ? 1 : 0.7,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        overflow: "hidden",
+        isolation: "isolate",
+      }}
+    >
+      {/* the light across the face — the thing that makes it read as an object */}
+      <span
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0, background: skin.sheen, pointerEvents: "none" }}
+      />
+
+      <span style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, position: "relative" }}>
+        {/* the chip */}
+        <span
+          aria-hidden="true"
+          style={{
+            width: 42,
+            height: 32,
+            borderRadius: 6,
+            background:
+              "linear-gradient(150deg, #F7E9B0, #D8B355 46%, #C9A23F 58%, #EFDFA4)",
+            boxShadow: "inset 0 0 0 1px rgba(0,0,0,.18), inset 0 -6px 10px rgba(0,0,0,.10)",
+            backgroundBlendMode: "normal",
+          }}
+        />
+        <span style={{ fontSize: 15, fontWeight: 680, letterSpacing: "-.01em" }}>{skin.name}</span>
+      </span>
+
+      <span style={{ position: "relative", display: "flex", flexDirection: "column", gap: 4 }}>
+        <span
+          style={{
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            fontSize: 15,
+            letterSpacing: ".06em",
+            wordBreak: "break-all",
+          }}
+        >
+          {connected ? grouped(number) : "•••• •••• •••• ••••"}
+        </span>
+        {secret ? (
+          <span style={{ fontSize: 11, color: skin.sub, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+            secret {secret}
+          </span>
+        ) : null}
+      </span>
+
+      <span style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+        <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 9.5, letterSpacing: ".16em", textTransform: "uppercase", color: skin.sub }}>
+            Account
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 620, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {holder}
+          </span>
+        </span>
+        <span style={{ display: "flex", flexDirection: "column", gap: 1, alignItems: "flex-end" }}>
+          <span style={{ fontSize: 9.5, letterSpacing: ".16em", textTransform: "uppercase", color: skin.sub }}>
+            {currency}
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: live ? skin.ink : skin.sub }}>{note}</span>
+        </span>
+      </span>
+    </div>
   );
 }
