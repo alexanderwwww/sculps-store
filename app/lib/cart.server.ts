@@ -27,6 +27,13 @@ export interface PricedLine {
   productTitle: string;
   unitPriceCents: number;
   lineTotalCents: number;
+  /**
+   * What it was before, and the picture of it — so anything showing a cart
+   * can show a real saving and a real photograph rather than a bare number.
+   * Null when the variant has no compare-at price and no image of its own.
+   */
+  compareAtCents: number | null;
+  imageUrl: string | null;
 }
 
 export interface AppliedDiscount {
@@ -154,6 +161,8 @@ export async function priceCart(
       productTitle: product.title,
       unitPriceCents: variant.priceCents,
       lineTotalCents: variant.priceCents * quantity,
+      compareAtCents: variant.compareAtCents ?? null,
+      imageUrl: variant.imageUrl ?? null,
     });
   }
 

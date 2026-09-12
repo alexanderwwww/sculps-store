@@ -41,6 +41,8 @@ interface DrawerLine {
   productTitle: string;
   unitPriceCents: number;
   lineTotalCents: number;
+  compareAtCents: number | null;
+  imageUrl: string | null;
 }
 
 /** The shape of what `/cart`'s loader returns, as far as the drawer reads it. */
@@ -305,48 +307,65 @@ export function CartDrawerProvider({
       {children}
 
       {recall ? (
-        <div className="gb gb-recall" role="dialog" aria-modal="true" aria-label="Your cart is still here">
-          <div className="gb-recall__scrim" onClick={dismissRecall} />
-          <div className="gb-recall__box">
-            <button type="button" className="gb-recall__x" onClick={dismissRecall} aria-label="Close">
-              {IcoClose}
-            </button>
+        (() => {
+          const line = recall.lines[0];
+          const shot = line?.imageUrl ?? photo?.src ?? null;
+          // What it was, against what it is. Shown only when there is a real
+          // saving — an invented one is worse than none.
+          const was = line?.compareAtCents ?? null;
+          const now = line?.unitPriceCents ?? 0;
+          const saved = was && was > now ? was - now : 0;
+          return (
+            <div className="gb gb-recall" role="dialog" aria-modal="true" aria-label="Your cart is still here">
+              <div className="gb-recall__scrim" onClick={dismissRecall} />
+              <div className="gb-recall__box">
+                <button type="button" className="gb-recall__x" onClick={dismissRecall} aria-label="Close">
+                  {IcoClose}
+                </button>
 
-            {page.store.logoUrl ? (
-              <img className="gb-recall__logo" src={page.store.logoUrl} alt={page.store.name} />
-            ) : (
-              <div className="gb-recall__word">{page.store.name}</div>
-            )}
+                {/* The product, big, on white — the way it looks in the shop. */}
+                <div className="gb-recall__shot">
+                  {shot ? <img src={shot} alt="" /> : null}
+                  {saved > 0 ? (
+                    <span className="gb-recall__save">Save {formatMoney(saved, recall.currency)}</span>
+                  ) : null}
+                </div>
 
-            <div className="gb-recall__kicker">Still in your cart</div>
-            <h2 className="gb-recall__title">You left this behind.</h2>
+                <div className="gb-recall__panel">
+                  {page.store.logoUrl ? (
+                    <img className="gb-recall__logo" src={page.store.logoUrl} alt={page.store.name} />
+                  ) : (
+                    <div className="gb-recall__word">{page.store.name}</div>
+                  )}
 
-            <div className="gb-recall__row">
-              {photo ? <img className="gb-recall__img" src={photo.src} alt="" /> : null}
-              <div className="gb-recall__body">
-                <div className="gb-recall__name">{recall.lines[0]?.productTitle ?? page.product.title}</div>
-                <div className="gb-recall__meta">
-                  {recall.itemCount} item{recall.itemCount === 1 ? "" : "s"} ·{" "}
-                  <strong>{formatMoney(recall.totalCents, recall.currency)}</strong>
+                  <div className="gb-recall__kicker">Still in your cart</div>
+                  <h2 className="gb-recall__title">You left this behind.</h2>
+
+                  <div className="gb-recall__name">{line?.label ?? page.product.title}</div>
+
+                  <div className="gb-recall__price">
+                    {was && was > now ? <s>{formatMoney(was, recall.currency)}</s> : null}
+                    <strong>{formatMoney(recall.totalCents, recall.currency)}</strong>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="gb-recall__go"
+                    onClick={() => {
+                      dismissRecall();
+                      show(null);
+                    }}
+                  >
+                    Back to my cart
+                  </button>
+                  <button type="button" className="gb-recall__no" onClick={dismissRecall}>
+                    Keep looking
+                  </button>
                 </div>
               </div>
             </div>
-
-            <button
-              type="button"
-              className="gb-recall__go"
-              onClick={() => {
-                dismissRecall();
-                show(null);
-              }}
-            >
-              Back to my cart
-            </button>
-            <button type="button" className="gb-recall__no" onClick={dismissRecall}>
-              Keep looking
-            </button>
-          </div>
-        </div>
+          );
+        })()
       ) : null}
 
       <dialog

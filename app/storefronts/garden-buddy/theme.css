@@ -671,49 +671,63 @@
 .gb-drawer__wallet-err{margin:0 0 10px;color:#B3341C;font-size:14px;line-height:1.4}
 
 /* -------------------------------------------------------------- recall ---
-   The welcome-back card: shown once a session to someone who comes back with
-   a cart already filled. Centred rather than tucked in a corner, and dressed
-   in the footer's own colours — dark brown, cream, lime — so it reads as part
-   of the shop rather than as a third-party popup. */
+   The welcome-back card: shown once a session to someone who returns with a
+   cart already filled.
+
+   The product leads, large, on white — the way it looks in the shop — and the
+   brown panel underneath carries the words. The scrim is deliberately light:
+   this is a reminder, not a wall, and the page behind it must stay visible or
+   it reads as a takeover ad. */
 .gb-recall{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:20px}
-.gb-recall__scrim{position:absolute;inset:0;background:rgba(20,13,6,.55);backdrop-filter:blur(3px);
+.gb-recall__scrim{position:absolute;inset:0;background:rgba(20,13,6,.28);
   animation:gbRecallFade .3s ease-out both}
-.gb-recall__box{position:relative;width:100%;max-width:380px;text-align:center;
-  background:var(--night);color:var(--night-ink);border-radius:24px;
-  padding:26px 24px 22px;box-shadow:0 30px 70px rgba(20,13,6,.45);
-  animation:gbRecallIn .42s cubic-bezier(.22,.9,.28,1) both}
+.gb-recall__box{position:relative;width:100%;max-width:460px;overflow:hidden;
+  background:var(--night);color:var(--night-ink);border-radius:26px;
+  box-shadow:0 34px 80px rgba(20,13,6,.38);
+  animation:gbRecallIn .44s cubic-bezier(.22,.9,.28,1) both}
 @keyframes gbRecallFade{from{opacity:0}to{opacity:1}}
-@keyframes gbRecallIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes gbRecallIn{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.gb-recall__box,.gb-recall__scrim{animation:none}}
 
-.gb-recall__x{position:absolute;top:12px;right:12px;width:32px;height:32px;display:grid;place-items:center;
-  border:0;border-radius:50%;background:#ffffff14;color:var(--night-ink);cursor:pointer;padding:0}
-.gb-recall__x svg{width:15px;height:15px}
-.gb-recall__x:hover{background:#ffffff26}
+.gb-recall__x{position:absolute;top:12px;right:12px;z-index:3;width:34px;height:34px;display:grid;
+  place-items:center;border:0;border-radius:50%;background:rgba(28,35,24,.10);color:var(--ink);
+  cursor:pointer;padding:0;backdrop-filter:blur(6px)}
+.gb-recall__x svg{width:16px;height:16px}
+.gb-recall__x:hover{background:rgba(28,35,24,.18)}
 
-.gb-recall__logo{height:30px;width:auto;margin:0 auto 16px;display:block}
-.gb-recall__word{font-family:var(--font-h);font-size:19px;font-weight:800;letter-spacing:-.01em;margin-bottom:16px}
+/* The product, big, on white. */
+.gb-recall__shot{position:relative;background:#fff;padding:22px 22px 14px;display:grid;place-items:center}
+.gb-recall__shot img{width:100%;max-width:340px;height:225px;object-fit:contain;display:block}
+.gb-recall__save{position:absolute;left:18px;top:18px;background:var(--yellow);color:var(--yellow-ink);
+  font-family:var(--font-h);font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 13px;border-radius:999px;box-shadow:0 3px 10px rgba(20,13,6,.18)}
+
+.gb-recall__panel{padding:20px 24px 22px;text-align:center}
+.gb-recall__logo{height:26px;width:auto;margin:0 auto 14px;display:block;opacity:.9}
+.gb-recall__word{font-family:var(--font-h);font-size:18px;font-weight:800;margin-bottom:14px}
 
 .gb-recall__kicker{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}
-.gb-recall__title{font-family:var(--font-h);font-size:26px;line-height:1.12;letter-spacing:-.02em;
-  font-weight:800;margin:8px 0 18px;color:var(--night-ink)}
+.gb-recall__title{font-family:var(--font-h);font-size:27px;line-height:1.1;letter-spacing:-.02em;
+  font-weight:800;margin:7px 0 10px;color:var(--night-ink)}
+.gb-recall__name{font-size:14.5px;color:#ffffffbd;margin-bottom:10px}
 
-.gb-recall__row{display:flex;gap:13px;align-items:center;text-align:left;
-  background:#ffffff12;border-radius:16px;padding:12px 14px}
-.gb-recall__img{width:58px;height:58px;flex:none;border-radius:12px;object-fit:cover;background:#ffffff1a}
-.gb-recall__body{min-width:0}
-.gb-recall__name{font-family:var(--font-h);font-size:15px;font-weight:700;letter-spacing:-.01em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gb-recall__meta{font-size:13px;color:#ffffffb5;margin-top:3px}
-.gb-recall__meta strong{color:var(--lime);font-weight:800}
+.gb-recall__price{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-bottom:4px}
+.gb-recall__price s{font-size:16px;color:#ffffff7a;text-decoration-thickness:2px}
+.gb-recall__price strong{font-family:var(--font-h);font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--lime)}
 
-.gb-recall__go{width:100%;min-height:54px;margin-top:18px;border:0;border-radius:999px;
-  background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-size:17px;font-weight:800;
+.gb-recall__go{width:100%;min-height:56px;margin-top:16px;border:0;border-radius:999px;
+  background:var(--lime);color:var(--lime-ink);font-family:var(--font-h);font-size:17.5px;font-weight:800;
   cursor:pointer;transition:background .16s var(--ease),transform .16s var(--ease)}
 .gb-recall__go:hover{background:var(--lime-2);transform:translateY(-1px)}
 .gb-recall__no{margin-top:10px;border:0;background:none;color:#ffffff8f;font-size:13.5px;font-weight:600;
   cursor:pointer;padding:6px}
 .gb-recall__no:hover{color:var(--night-ink)}
+
+@media(max-width:520px){
+  .gb-recall__box{max-width:100%}
+  .gb-recall__shot img{height:190px}
+  .gb-recall__title{font-size:24px}
+}
 
 /* PayPal's own buttons in the cart drawer. They bring their own colours and
    shape; all this does is give them the width and the rhythm of the rest of
