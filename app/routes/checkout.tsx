@@ -46,6 +46,7 @@ import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.serv
 import { scratchPlayFor, SCRATCH_PRIZES } from "~/lib/scratch.server";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
+import { paypalFor } from "~/lib/paypal.server";
 import { deviceFromRequest, geoFromContext, readVisitorSession, shouldTrack, track } from "~/lib/visitor.server";
 import {
   metaConfig,
@@ -419,6 +420,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let paymentsMessage: string | null = null;
   let publishableKey: string | null = null;
 
+  // PayPal is a second, independent provider — a store can have it, Stripe,
+  // or both. Its absence must never take the card path down.
+  const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
+    .then((client) => client?.clientId ?? null)
+    .catch(() => null);
+
   if (providerResult.ok) {
     publishableKey = providerResult.value.publishableKey;
     if (!publishableKey) {
@@ -531,6 +538,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     paymentsReady,
     paymentsMessage,
     publishableKey,
+    /**
+     * PayPal's client id is public by design — it is what the SDK script is
+     * addressed with. The secret never leaves the Worker.
+     */
+    paypalClientId,
   };
 }
 
@@ -1122,7 +1134,7 @@ function fieldForMessage(message: string): string | null {
 /* --------------------------------------------------------------- the page */
 
 export default function Checkout({ loaderData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, paymentsMessage, publishableKey, pixel, footerLinks, photo } =
+  const { store, cart, paymentsReady, paymentsMessage, publishableKey, paypalClientId, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = store.slug === GARDEN_BUDDY;
@@ -1189,6 +1201,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       paymentsReady={paymentsReady}
       paymentsMessage={paymentsMessage}
       publishableKey={publishableKey}
+      paypalClientId={paypalClientId}
       appearance={buddy ? BUDDY_APPEARANCE : KNEELER_APPEARANCE}
       trust={buddy ? <TrustRow /> : null}
       shell={buddy}
@@ -2677,6 +2690,7 @@ function OnePage({
   paymentsReady,
   paymentsMessage,
   publishableKey,
+  paypalClientId,
   appearance,
   trust,
   shell,
@@ -2692,6 +2706,7 @@ function OnePage({
   paymentsReady: boolean;
   paymentsMessage: string | null;
   publishableKey: string | null;
+  paypalClientId: string | null;
   appearance: unknown;
   trust: React.ReactNode;
   /** this skin lays the whole page out from in here, so the wallets can sit
@@ -3548,6 +3563,99 @@ function OnePage({
      this browser has one — and rendered outside the form, above everything,
      because someone holding a phone with Apple Pay should be finished before
      they have read a single label. */
+  /**
+   * PayPal, Pay Later and Venmo.
+   *
+   * Their own SDK, their own window, their own money — nothing about this
+   * goes through Stripe. The script is loaded once and only when the store
+   * actually has PayPal connected, so a store without it pays nothing for
+   * the privilege.
+   *
+   * The amount is never sent from here. The server prices the cart on both
+   * calls, so what the buyer approves inside PayPal is what the cart says and
+   * not what a tampered page claims.
+   */
+  const paypalRef = useRef<HTMLDivElement>(null);
+  const paypalDone = useRef(false);
+  const [paypalError, setPaypalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!paypalClientId || paypalDone.current) return;
+    const host = paypalRef.current;
+    if (!host) return;
+    paypalDone.current = true;
+
+    const params = new URLSearchParams({
+      "client-id": paypalClientId,
+      currency: (cart.currency || "USD").toUpperCase(),
+      components: "buttons",
+      // Pay Later is the reason this is worth having: instalments for US
+      // customers, which this merchant's Stripe account cannot offer.
+      "enable-funding": "venmo,paylater",
+      "disable-funding": "card",
+    });
+
+    const src = `https://www.paypal.com/sdk/js?${params}`;
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
+    const script = existing ?? document.createElement("script");
+
+    const render = () => {
+      const sdk = (window as any).paypal;
+      if (!sdk?.Buttons || !host.isConnected) return;
+      try {
+        sdk
+          .Buttons({
+            style: { layout: "vertical", shape: "pill", height: 48, label: "paypal", tagline: false },
+            createOrder: async () => {
+              const response = await fetch("/checkout/paypal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ step: "create" }),
+              });
+              const payload = (await response.json()) as { id?: string; error?: string };
+              if (!response.ok || !payload.id) throw new Error(payload.error ?? "PayPal could not start.");
+              return payload.id;
+            },
+            onApprove: async (data: { orderID: string }) => {
+              const response = await fetch("/checkout/paypal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ step: "capture", orderID: data.orderID }),
+              });
+              const payload = (await response.json()) as { ok?: boolean; orderId?: string; error?: string };
+              if (!response.ok || !payload.ok || !payload.orderId) {
+                setPaypalError(payload.error ?? "PayPal could not take the payment. Nothing has been charged.");
+                return;
+              }
+              window.location.href = `/thanks?order=${encodeURIComponent(payload.orderId)}`;
+            },
+            onError: () => {
+              setPaypalError("PayPal could not be reached. Nothing has been charged — try a card instead.");
+            },
+            // Closing the PayPal window is not an error and must not look
+            // like one. Nothing was charged; say nothing.
+            onCancel: () => setPaypalError(null),
+          })
+          .render(host)
+          .catch(() => undefined);
+      } catch {
+        /* the SDK refused to draw; the card form below is untouched */
+      }
+    };
+
+    if (existing && (window as any).paypal) {
+      render();
+      return;
+    }
+    script.src = src;
+    script.async = true;
+    script.addEventListener("load", render);
+    script.addEventListener("error", () =>
+      setPaypalError(null /* silent: a blocked SDK must not shout at a customer */),
+    );
+    if (!existing) document.head.appendChild(script);
+  }, [paypalClientId, cart.currency]);
+
   const express = (
     <>
       {/* The space is held from the first paint. Hiding it until Stripe
@@ -3556,7 +3664,7 @@ function OnePage({
           It collapses only once Stripe has actually said there are none. */}
       <section
         className={buddy ? "gb-co__express" : undefined}
-        style={walletsAnswered && !wallets ? { display: "none" } : undefined}
+        style={walletsAnswered && !wallets && !paypalClientId ? { display: "none" } : undefined}
         aria-label="Express checkout"
       >
         <p className={buddy ? "gb-co__express-lead" : undefined} style={buddy ? undefined : { textAlign: "center" }}>
@@ -3572,6 +3680,11 @@ function OnePage({
               the customer who is not going to use a wallet and should not
               have to scroll to work that out. It does not pay anything — it
               takes them to the card fields and opens them. */}
+          {/* PayPal's own buttons — PayPal, Pay Later and Venmo. Rendered by
+              their SDK, so they look exactly like the ones people already
+              know, and they are only here when the store has PayPal
+              connected. */}
+          {paypalClientId ? <div className="gb-co__paypal" ref={paypalRef} /> : null}
           {buddy ? (
             <button type="button" className="gb-co__express-card" onClick={goToCard}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -3582,6 +3695,11 @@ function OnePage({
             </button>
           ) : null}
         </div>
+        {paypalError ? (
+          <p className="gb-co__express-err" role="alert">
+            {paypalError}
+          </p>
+        ) : null}
         {buddy ? (
           <p className="gb-co__express-note">
             Pay with the card already on your phone — your address comes with it, so there is
@@ -3592,7 +3710,7 @@ function OnePage({
       <div
         className={buddy ? "gb-co__or" : undefined}
         style={
-          walletsAnswered && !wallets
+          walletsAnswered && !wallets && !paypalClientId
             ? { display: "none" }
             : buddy
               ? undefined

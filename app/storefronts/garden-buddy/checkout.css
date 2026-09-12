@@ -308,3 +308,10 @@
   .gb-co__skel, .gb-co__scratch-prize, .gb-co__scratch-applied { animation: none; }
   .gb-co__spin { animation-duration: 2.4s; }
 }
+
+/* PayPal's own buttons, drawn by their SDK. They bring their own colours and
+   shapes — all this does is give them the same width and rhythm as the rest
+   of the express row, and stop the iframe from collapsing while it loads. */
+.gb-co__paypal { width: 100%; min-height: 48px; }
+.gb-co__paypal > div { width: 100%; }
+.gb-co__express-err { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--danger, #B3261E); text-align: center; }
