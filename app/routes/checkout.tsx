@@ -2652,25 +2652,21 @@ function DiscountBox({
   return (
     <fetcher.Form method="post" className="gb-co__disc">
       <input type="hidden" name="intent" value="discount" />
+      {/* A box and a button side by side. It used to be a floating-label
+          field with the button laid on top of it, which left the typing area
+          narrow and the button oversized. The summary is rendered twice —
+          pinned on a desk, folded on a phone — so the label is in aria rather
+          than an id that would then exist twice on the page. */}
       <div className="gb-co__disc-row">
-        <div className="gb-sf__group gb-sf__group--one">
-          <div className="gb-sf__cell" data-err={error ? "1" : undefined}>
-            {/* The summary is rendered twice — pinned on a desk, folded on a
-                phone — so this box carries its label in aria rather than in an
-                id that would then exist twice on the page. */}
-            <input
-              className="gb-sf__in"
-              type="text"
-              name="code"
-              placeholder=" "
-              aria-label="Discount code"
-              aria-invalid={error ? "true" : undefined}
-            />
-            <span className="gb-sf__lbl" aria-hidden="true">
-              Discount code
-            </span>
-          </div>
-        </div>
+        <input
+          className="gb-co__disc-in"
+          type="text"
+          name="code"
+          placeholder="Discount code"
+          aria-label="Discount code"
+          aria-invalid={error ? "true" : undefined}
+          data-err={error ? "1" : undefined}
+        />
         <button type="submit" className="gb-co__disc-btn" disabled={busy}>
           Apply
         </button>

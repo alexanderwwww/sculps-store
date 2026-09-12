@@ -33,6 +33,7 @@
   --rail: #F5F5F5;
   --yellow: #FFC72C;
   --bad: #B3341C;
+  --sale: #C8321B;
   --r: 8px;
   --font-h: "Poppins", system-ui, "Segoe UI", sans-serif;
   --font-b: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -215,12 +216,13 @@
 
 /* ---- discount ---------------------------------------------------------- */
 .gb-co__disc { margin: 16px 0 0; }
-.gb-co__disc-row { position: relative; }
-.gb-co__disc .gb-sf__in { height: 46px; padding: 12px 92px 12px 12px; font-size: 14px; }
-.gb-co__disc .gb-sf__lbl { top: 14px; font-size: 14px; }
-.gb-co__disc .gb-sf__in:focus + .gb-sf__lbl, .gb-co__disc .gb-sf__in:not(:placeholder-shown) + .gb-sf__lbl { opacity: 0; }
-.gb-co__disc-btn { position: absolute; top: 5px; right: 5px; bottom: 5px; z-index: 4; padding: 0 16px; border: 0; border-radius: 6px; background: rgba(59, 42, 27, .08); color: var(--ink); font-family: var(--font-b); font-size: 13px; font-weight: 700; cursor: pointer; transition: background .16s var(--ease); }
-.gb-co__disc-btn:hover { background: rgba(59, 42, 27, .16); }
+.gb-co__disc-row { display: flex; gap: 8px; align-items: stretch; }
+.gb-co__disc-in { flex: 1 1 auto; min-width: 0; height: 46px; padding: 0 14px; border: 1px solid var(--field); border-radius: var(--r); background: #fff; color: var(--ink); font-family: var(--font-b); /* 16px or iOS zooms the page when it is tapped */ font-size: 16px; outline: 0; transition: border-color .16s var(--ease); }
+.gb-co__disc-in::placeholder { color: var(--dim); font-size: 14.5px; }
+.gb-co__disc-in:focus { border-color: var(--ink); }
+.gb-co__disc-in[data-err="1"] { border-color: var(--bad); }
+.gb-co__disc-btn { flex: 0 0 auto; height: 46px; padding: 0 20px; border: 0; border-radius: var(--r); background: var(--ink); color: #fff; font-family: var(--font-b); font-size: 14px; font-weight: 700; cursor: pointer; transition: background .16s var(--ease); }
+.gb-co__disc-btn:hover { background: #000; }
 .gb-co__disc-btn[disabled] { opacity: .5; cursor: not-allowed; }
 
 /* ---- package protection ------------------------------------------------ */
@@ -258,18 +260,18 @@
 .gb-co__up-shot { position: relative; width: 100%; aspect-ratio: 1; max-width: 132px; border-radius: 10px; overflow: hidden; background: #fff; }
 .gb-co__up-shot img { width: 100%; height: 100%; object-fit: contain; }
 /* The saving, stated once, on the picture — not as a third price to read. */
-.gb-co__up-flag { position: absolute; left: 6px; top: 6px; padding: 4px 9px; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--font-h); font-size: 11px; font-weight: 800; line-height: 1; }
+.gb-co__up-flag { position: absolute; left: 6px; top: 6px; padding: 4px 9px; border-radius: 999px; background: var(--sale); color: #fff; font-family: var(--font-h); font-size: 11px; font-weight: 800; line-height: 1; }
 .gb-co__up-body { display: grid; gap: 3px; justify-items: center; min-width: 0; width: 100%; }
 .gb-co__up-name { margin: 0; font-weight: 700; font-size: 13.5px; line-height: 1.3; color: var(--ink); }
 .gb-co__up-note { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.35; }
 /* Half price or better gets the lime edge — one card stands out, not all. */
-.gb-co__up-item--deal { border-color: var(--lime); box-shadow: 0 0 0 1px var(--lime); }
-.gb-co__up-deal { margin: 0; font-size: 11.5px; font-weight: 700; line-height: 1.35; color: var(--leaf); }
+.gb-co__up-item--deal { border-color: var(--sale); box-shadow: 0 0 0 1px var(--sale); }
+.gb-co__up-deal { margin: 0; font-size: 11.5px; font-weight: 700; line-height: 1.35; color: var(--sale); }
 .gb-co__up-price { margin: 2px 0 0; display: flex; gap: 7px; align-items: baseline; justify-content: center; font-size: 14.5px; color: var(--ink); }
 .gb-co__up-price b { font-weight: 800; }
 .gb-co__up-price s { color: var(--dim); font-weight: 400; font-size: 12.5px; }
-.gb-co__up-add { width: 100%; margin-top: 6px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--font-h); font-size: 14px; font-weight: 800; cursor: pointer; transition: background .16s var(--ease); }
-.gb-co__up-add:hover { background: var(--lime-2); }
+.gb-co__up-add { width: 100%; margin-top: 6px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-family: var(--font-h); font-size: 14px; font-weight: 800; cursor: pointer; transition: background .16s var(--ease); }
+.gb-co__up-add:hover { background: #000; }
 .gb-co__up-add[disabled] { opacity: .5; cursor: not-allowed; }
 
 /* ---- the folded summary, phones only ----------------------------------- */
@@ -347,7 +349,7 @@
 .gb-co__rail .gb-co__shot { background: #fff; border-color: #E2E0DC; }
 .gb-co__rail .gb-co__prot-row,
 .gb-co__rail .gb-co__up-item { background: #fff; }
-.gb-co__rail .gb-co__disc .gb-sf__in { background: #fff; }
+
 .gb-co__msum { background: var(--rail); border-color: #E2E0DC; }
 
 /* One sweep that only ever moves a layer, so the browser composites it
