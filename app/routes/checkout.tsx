@@ -1867,8 +1867,16 @@ function Summary({
           <li className={cn.line} key={line.variantId}>
             {buddy ? (
               <span className="gb-co__shot">
-                {photo ? (
-                  <img src={photo.src} alt={photo.alt || line.productTitle} loading="lazy" />
+                {/* The variant's own picture when it has one. The page photo
+                    is the product being sold from the root, so a second
+                    product added from the suggestions was showing the
+                    kneeler. */}
+                {line.imageUrl || photo ? (
+                  <img
+                    src={line.imageUrl ?? photo!.src}
+                    alt={line.imageUrl ? line.label : photo!.alt || line.productTitle}
+                    loading="lazy"
+                  />
                 ) : (
                   <span className="gb-ph">No photo</span>
                 )}

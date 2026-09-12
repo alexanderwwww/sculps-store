@@ -6,9 +6,9 @@
  * returning from Stripe, and the webhook — must do exactly the same thing, and
  * must do it only once however many times they fire.
  */
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { orders, orderEvents, stores } from "~/db/schema";
+import { orders, orderEvents, stores, variants } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
 import { sendOrderConfirmation, sendMerchantNewOrder, emailReady } from "./email.server";
 import { metaSettings, sendPurchase } from "./meta.server";
@@ -75,7 +75,7 @@ export async function afterPaymentConfirmed(
         logoUrl: "/media/em-967546d2b092584a.jpg",
         brandColor: store.brandColor,
         accentColor: store.accentColor,
-        heroImageUrl: "/media/em-0e08493005adb744.jpg",
+        heroImageUrl: await receiptHero(db, items),
         orderNumber: order.number,
         currency: order.currency,
         lines: items.map((item) => ({
@@ -184,4 +184,36 @@ export async function afterPaymentConfirmed(
       );
     }
   }
+}
+
+/**
+ * The picture at the top of the receipt.
+ *
+ * It is whatever the customer actually bought — the first line's variant
+ * photo — because a mower order arriving with a photograph of a kneeler is
+ * the kind of detail that makes a real shop look like a template. The
+ * storefront's own files are 1-2MB, far too heavy for an inbox, so an
+ * email-sized copy is used where one exists and the store's default hero
+ * otherwise. Nothing is ever invented: no image, no swap.
+ */
+const EMAIL_COPIES: Record<string, string> = {
+  "/media/gb-mower.png": "/media/em-gb-mower.jpg",
+  "/media/gb-variant-single.jpg": "/media/em-gb-variant-single.jpg",
+  "/media/gb-variant-double.jpg": "/media/em-gb-variant-double.jpg",
+  "/media/0e08493005adb744.png": "/media/em-0e08493005adb744.jpg",
+};
+const DEFAULT_HERO = "/media/em-0e08493005adb744.jpg";
+
+async function receiptHero(db: DB, items: { variantId: string | null }[]): Promise<string> {
+  const ids = items.map((item) => item.variantId).filter((id): id is string => Boolean(id));
+  if (!ids.length) return DEFAULT_HERO;
+  const rows = await db
+    .select({ id: variants.id, imageUrl: variants.imageUrl })
+    .from(variants)
+    .where(inArray(variants.id, ids));
+  for (const id of ids) {
+    const found = rows.find((row) => row.id === id)?.imageUrl;
+    if (found) return EMAIL_COPIES[found] ?? found;
+  }
+  return DEFAULT_HERO;
 }
