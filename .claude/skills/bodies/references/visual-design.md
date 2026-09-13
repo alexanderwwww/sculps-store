@@ -104,31 +104,51 @@ That contrast is the whole point. A crisp product shot next to a raw phone photo
 reads as a real brand with real customers. Making *everything* raw reads as a
 dropshipper who could not afford photography.
 
+### Casting
+The cast is **mixed, and Latinas lead it**. Latina, white and Black women, across
+the set. Never four versions of the same girl.
+
+She is a New York content-creator type: Instagram and TikTok, skincare, clean
+aesthetic, knows what she is doing with a camera. Mid-twenties to mid-thirties.
+
 ### Woman
-- Real, not model-perfect. Mid-twenties to late thirties.
-- Ordinary good looks. Visible skin texture. No retouching.
-- Hair not done. Sometimes mid-workout messy.
-- Contemporary workout sets, but worn-in, not a styled outfit.
-- Caught mid-movement or mid-nothing, never posing for a camera.
+- Real, not catalogue-model perfect. Visible skin texture, no retouching.
+- Styled the way she styles herself: a **matching activewear set** that fits,
+  a soft **headband**, and **grip Pilates socks in the same colourway as her board**.
+  Light natural makeup, good hair.
+- Fit and put together — someone with 40k followers, not someone who was hired.
+- Caught mid-movement or mid-task, never presenting to a camera.
 
 ### How the shot should read
-- Taken on a phone propped against something, or held by a friend.
-- Window light only. Blown highlights and dark corners are fine and wanted.
-- Slight motion blur, slight tilt, autofocus hunting: all fine.
-- A cup on the floor, a laundry pile just out of frame, a normal apartment.
-- Mirror selfies, with the phone visible in the mirror.
+An iPhone photo in good light — **not a photoshoot**. The difference is the angle
+and the moment, not the mess.
+
+- The camera sits where a phone actually sits: propped on a sofa arm, on the
+  floor, held overhead, handed to a friend. Never on a tripod at eye level.
+- Off-centre framing. Limbs cut by the edge. A corner of a doorway in shot.
+- She is not looking at the lens unless it is a mirror selfie.
+- Window light only. A blown highlight is fine and wanted.
+- Slight motion blur, slight tilt, the mild wide-angle a phone gives.
+- Mirror selfies with the phone visible in the mirror.
 
 ### Locations
-Real homes. Small apartments. A bedroom with the bed unmade. A living room with
-the sofa pushed back to make space. Sunlight through a normal window. Never a
-studio, never a set, never a resort.
+Beautiful, clean, aspirational apartments — the kind she would post. Pale wood or
+herringbone floors, sheer linen curtains, one good plant, art books, calm neutral
+furniture. Tidy, not styled to death, and never messy. A real home that happens
+to look good. Never a studio, never a set, never a resort.
 
 ### Never
 - Editorial campaign lighting on a person.
 - Retouched skin.
-- A model who looks hired.
+- A model who looks hired, or a posed photoshoot composition.
 - Colour grading or filters.
 - Stock fitness photography of any kind.
+- An all-white cast.
+
+### Product accuracy in lifestyle shots
+The screen is **hinged to the board**. It is never a separate tablet lying on the
+floor or propped beside it — that mistake has appeared repeatedly and it makes
+the product look like an accessory instead of a machine.
 
 ## Product photography
 The machine should be the hero when the section is product-focused.
