@@ -112,6 +112,7 @@ Feedback decoder:
 
 Read the file that matches the task — don't load all of them.
 
+- `references/style-guide.md` — **read first for any build**: the live tokens, type, buttons, section catalogue, image map, and every decision already rejected
 - `references/brand.md` — name, architecture, personality, audience, emotional promise
 - `references/product-spec.md` — physical form, screen, resistance, accessories, materials, colorway specs, render requirements
 - `references/visual-design.md` — layout, colour strategy, typography, photography direction, page rhythm
