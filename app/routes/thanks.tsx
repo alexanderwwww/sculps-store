@@ -17,6 +17,7 @@ import { providerForStore } from "~/lib/payments.server";
 import { afterPaymentConfirmed } from "~/lib/fulfilment.server";
 import { metaConfig } from "~/db/schema";
 import { pixelScript, purchasePixelScript } from "~/lib/meta.server";
+import { readVisitorSession } from "~/lib/visitor.server";
 import { formatMoney } from "~/lib/money";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -95,7 +96,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   const pixel =
     metaRow?.pixelId && paymentStatus === "paid" && loaded.order.metaEventId
-      ? `${pixelScript(metaRow.pixelId)}\n${purchasePixelScript({
+      ? `${pixelScript(metaRow.pixelId, {
+          match: {
+            externalId: readVisitorSession(request),
+            email: loaded.order.email,
+            phone: loaded.order.phone,
+            firstName: loaded.order.customerName.split(" ")[0] || null,
+            lastName: loaded.order.customerName.split(" ").slice(1).join(" ") || null,
+            city: loaded.order.city,
+            region: loaded.order.region,
+            postalCode: loaded.order.postalCode,
+            country: loaded.order.country,
+          },
+        })}\n${purchasePixelScript({
           eventId: loaded.order.metaEventId,
           valueCents: loaded.order.totalCents,
           currency: loaded.order.currency,

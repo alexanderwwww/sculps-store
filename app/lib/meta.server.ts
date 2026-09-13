@@ -26,7 +26,28 @@ async function hash(value: string | null | undefined): Promise<string | null> {
  * whole funnel, not just the sale — a pixel that only ever reports Purchase
  * gives the algorithm almost nothing to work with.
  */
-export type MetaEventName = "ViewContent" | "AddToCart" | "InitiateCheckout" | "Purchase";
+export type MetaEventName =
+  | "PageView"
+  | "ViewContent"
+  | "AddToCart"
+  | "InitiateCheckout"
+  | "AddPaymentInfo"
+  | "Lead"
+  | "Purchase";
+
+/** What is known about the person, sent hashed on every event that has it. */
+export interface MetaIdentity {
+  email?: string | null;
+  phone?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  city?: string | null;
+  region?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  /** our own visitor id — ties the whole visit to one person for Meta */
+  externalId?: string | null;
+}
 
 export interface MetaEvent {
   eventId: string;
@@ -41,6 +62,7 @@ export interface MetaEvent {
   region?: string | null;
   postalCode?: string | null;
   country?: string | null;
+  externalId?: string | null;
   valueCents: number;
   currency: string;
   contents: { id: string; quantity: number; itemPrice: number }[];
@@ -87,7 +109,7 @@ export async function sendEvent(
   name: MetaEventName,
   event: MetaEvent,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
-  const [em, ph, fn, ln, ct, st, zp, country] = await Promise.all([
+  const [em, ph, fn, ln, ct, st, zp, country, externalId] = await Promise.all([
     hash(event.email),
     hash(event.phone?.replace(/[^0-9]/g, "")),
     hash(event.firstName),
@@ -96,6 +118,7 @@ export async function sendEvent(
     hash(event.region),
     hash(event.postalCode),
     hash(event.country),
+    hash(event.externalId),
   ]);
 
   const userData: Record<string, unknown> = {};
@@ -107,6 +130,7 @@ export async function sendEvent(
   if (st) userData.st = [st];
   if (zp) userData.zp = [zp];
   if (country) userData.country = [country];
+  if (externalId) userData.external_id = [externalId];
   if (event.clientIp) userData.client_ip_address = event.clientIp;
   if (event.userAgent) userData.client_user_agent = event.userAgent;
   if (event.fbp) userData.fbp = event.fbp;
@@ -122,18 +146,22 @@ export async function sendEvent(
         event_source_url: event.sourceUrl,
         action_source: "website",
         user_data: userData,
-        custom_data: {
-          currency: event.currency.toUpperCase(),
-          value: (event.valueCents / 100).toFixed(2),
-          contents: event.contents.map((item) => ({
-            id: item.id,
-            quantity: item.quantity,
-            item_price: (item.itemPrice / 100).toFixed(2),
-          })),
-          content_type: "product",
-          content_ids: event.contents.map((item) => item.id),
-          num_items: event.contents.reduce((sum, item) => sum + item.quantity, 0),
-        },
+        ...(event.contents.length
+          ? {
+              custom_data: {
+                currency: event.currency.toUpperCase(),
+                value: (event.valueCents / 100).toFixed(2),
+                contents: event.contents.map((item) => ({
+                  id: item.id,
+                  quantity: item.quantity,
+                  item_price: (item.itemPrice / 100).toFixed(2),
+                })),
+                content_type: "product",
+                content_ids: event.contents.map((item) => item.id),
+                num_items: event.contents.reduce((sum, item) => sum + item.quantity, 0),
+              },
+            }
+          : {}),
       },
     ],
   };
@@ -170,13 +198,40 @@ export function sendPurchase(settings: MetaSettings, event: PurchaseEvent) {
  * Returned as a string of JavaScript for the storefront to inline, so there is
  * one place that decides what the pixel does.
  */
-export function pixelScript(pixelId: string): string {
+/**
+ * The pixel bootstrap.
+ *
+ * `match` is Meta's advanced matching: whatever we know about the person is
+ * handed to the pixel in the clear and it hashes it in the browser. Our own
+ * visitor id goes as external_id on every page, the email once checkout has
+ * it. `pageViewEventId` is shared with the server-side PageView so Meta
+ * counts one view, not two.
+ */
+export function pixelScript(
+  pixelId: string,
+  options: { match?: MetaIdentity | null; pageViewEventId?: string | null } = {},
+): string {
+  const match: Record<string, string> = {};
+  const m = options.match;
+  if (m?.externalId) match.external_id = m.externalId;
+  if (m?.email) match.em = m.email.trim().toLowerCase();
+  if (m?.phone) match.ph = m.phone.replace(/[^0-9]/g, "");
+  if (m?.firstName) match.fn = m.firstName.trim().toLowerCase();
+  if (m?.lastName) match.ln = m.lastName.trim().toLowerCase();
+  if (m?.city) match.ct = m.city.replace(/\s/g, "").toLowerCase();
+  if (m?.region) match.st = m.region.trim().toLowerCase();
+  if (m?.postalCode) match.zp = m.postalCode.trim();
+  if (m?.country) match.country = m.country.trim().toLowerCase();
+  const init = Object.keys(match).length ? `fbq('init','${pixelId}',${JSON.stringify(match)});` : `fbq('init','${pixelId}');`;
+  const view = options.pageViewEventId
+    ? `fbq('track','PageView',{},{eventID:${JSON.stringify(options.pageViewEventId)}});`
+    : `fbq('track','PageView');`;
   return `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
 document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','${pixelId}');fbq('track','PageView');`;
+${init}${view}`;
 }
 
 /**
@@ -194,6 +249,9 @@ export function eventPixelScript(input: {
   currency: string;
   contents: { id: string; quantity: number; itemPrice: number }[];
 }): string {
+  if (!input.contents.length) {
+    return `if(window.fbq){fbq('track',${JSON.stringify(input.name)},{},{eventID:${JSON.stringify(input.eventId)}});}`;
+  }
   const customData = {
     value: Number((input.valueCents / 100).toFixed(2)),
     currency: input.currency.toUpperCase(),
@@ -224,9 +282,41 @@ export function newMetaEventId(): string {
 }
 
 /** Reads the pixel's own cookies, which improve Meta's match rate. */
-export function readMetaCookies(request: Request): { fbp: string | null; fbc: string | null } {
+/**
+ * The pixel's two cookies, with two of our own on top.
+ *
+ * Safari caps a script-set cookie at 7 days and sometimes blocks it; a cookie
+ * set by the server on our own domain lives as long as we say. So on every
+ * tracked page the server writes `_fbp` (if the pixel has not yet) and `_fbc`
+ * (built from the fbclid on the ad click) for 90 days, in Meta's own format,
+ * which the pixel then reuses instead of minting its own. Attribution survives
+ * the week.
+ */
+export function metaCookieHeaders(request: Request, url: URL): string[] {
+  const have = readMetaCookies(request);
+  const secure = url.protocol === "https:" ? "; Secure" : "";
+  const ninetyDays = 90 * 86400;
+  const out: string[] = [];
+  const fbclid = url.searchParams.get("fbclid");
+  if (fbclid && !have.fbc) {
+    out.push(`_fbc=fb.1.${Date.now()}.${encodeURIComponent(fbclid)}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
+  } else if (have.fbc) {
+    out.push(`_fbc=${have.fbc}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
+  }
+  if (have.fbp) {
+    out.push(`_fbp=${have.fbp}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
+  } else {
+    const random = Math.floor(Math.random() * 1e10);
+    out.push(`_fbp=fb.1.${Date.now()}.${random}; Path=/; SameSite=Lax; Max-Age=${ninetyDays}${secure}`);
+  }
+  return out;
+}
+
+export function readMetaCookies(request: Request, url?: URL): { fbp: string | null; fbc: string | null } {
   const header = request.headers.get("Cookie");
-  if (!header) return { fbp: null, fbc: null };
+  const fbclid = url?.searchParams.get("fbclid") ?? null;
+  const fromClick = fbclid ? `fb.1.${Date.now()}.${fbclid}` : null;
+  if (!header) return { fbp: null, fbc: fromClick };
 
   let fbp: string | null = null;
   let fbc: string | null = null;
@@ -236,7 +326,7 @@ export function readMetaCookies(request: Request): { fbp: string | null; fbc: st
     if (key === "_fbp") fbp = value;
     if (key === "_fbc") fbc = value;
   }
-  return { fbp, fbc };
+  return { fbp, fbc: fbc ?? fromClick };
 }
 
 /**
@@ -265,11 +355,16 @@ export async function trackFunnelEvent(
     valueCents: number;
     currency: string;
     contents: { id: string; quantity: number; itemPrice: number }[];
+    /** whatever is known about the person — visitor id always, email once typed */
+    identity?: MetaIdentity | null;
+    /** when the browser half was already written with an id (PageView) */
+    eventId?: string;
   },
 ): Promise<string | null> {
-  if (!input.pixelId || !input.contents.length) return null;
+  if (!input.pixelId) return null;
+  if (!input.contents.length && input.name !== "PageView") return null;
 
-  const eventId = newMetaEventId();
+  const eventId = input.eventId ?? newMetaEventId();
   const script = eventPixelScript({
     name: input.name,
     eventId,
@@ -278,7 +373,7 @@ export async function trackFunnelEvent(
     contents: input.contents,
   });
 
-  const { fbp, fbc } = readMetaCookies(input.request);
+  const { fbp, fbc } = readMetaCookies(input.request, input.url);
   ctx.waitUntil(
     (async () => {
       const settings = await metaSettings(db, env, input.storeId);
@@ -287,6 +382,7 @@ export async function trackFunnelEvent(
         eventId,
         eventTime: Math.floor(Date.now() / 1000),
         sourceUrl: input.url.toString(),
+        ...(input.identity ?? {}),
         valueCents: input.valueCents,
         currency: input.currency,
         contents: input.contents,
@@ -299,4 +395,45 @@ export async function trackFunnelEvent(
   );
 
   return script;
+}
+
+/**
+ * A server-only event: Lead when an email lands, AddPaymentInfo when the
+ * order is placed. Nothing to deduplicate against, so no browser half.
+ */
+export function sendServerEvent(
+  db: DB,
+  env: Env,
+  ctx: { waitUntil(promise: Promise<unknown>): void },
+  input: {
+    storeId: string;
+    request: Request;
+    url: URL;
+    name: MetaEventName;
+    identity: MetaIdentity;
+    valueCents?: number;
+    currency?: string;
+    contents?: { id: string; quantity: number; itemPrice: number }[];
+  },
+): void {
+  const { fbp, fbc } = readMetaCookies(input.request, input.url);
+  ctx.waitUntil(
+    (async () => {
+      const settings = await metaSettings(db, env, input.storeId);
+      if (!settings) return;
+      await sendEvent(settings, input.name, {
+        eventId: newMetaEventId(),
+        eventTime: Math.floor(Date.now() / 1000),
+        sourceUrl: input.url.toString(),
+        ...input.identity,
+        valueCents: input.valueCents ?? 0,
+        currency: input.currency ?? "USD",
+        contents: input.contents ?? [],
+        clientIp: input.request.headers.get("CF-Connecting-IP"),
+        userAgent: input.request.headers.get("User-Agent"),
+        fbp,
+        fbc,
+      });
+    })(),
+  );
 }

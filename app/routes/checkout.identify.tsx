@@ -18,6 +18,7 @@ import type { Route } from "./+types/checkout.identify";
 import { resolveStore } from "~/lib/store.server";
 import { cartRowByToken, readCartToken } from "~/lib/cart.server";
 import { geoFromContext, readVisitorSession } from "~/lib/visitor.server";
+import { sendServerEvent } from "~/lib/meta.server";
 import {
   attachCartToCustomer,
   looksLikeEmail,
@@ -56,6 +57,23 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   const cart = await cartRowByToken(context.db, store.id, readCartToken(request));
   if (cart) await attachCartToCustomer(context.db, cart.id, customer.id, email);
+
+  // Lead: an email typed into checkout is the first moment there is a person
+  // to match. Server only, with everything just typed.
+  const [first, ...rest] = String(form.get("name") ?? "").trim().split(" ");
+  sendServerEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+    storeId: store.id,
+    request,
+    url,
+    name: "Lead",
+    identity: {
+      externalId: readVisitorSession(request),
+      email,
+      phone: String(form.get("phone") ?? "").trim() || null,
+      firstName: first || null,
+      lastName: rest.join(" ") || null,
+    },
+  });
 
   return Response.json({ ok: true });
 }

@@ -64,7 +64,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     .from(metaConfig)
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
-  const pixel = meta?.pixelId ? pixelScript(meta.pixelId) : null;
+  const pixel = meta?.pixelId ? pixelScript(meta.pixelId, { match: { externalId: readVisitorSession(request) } }) : null;
 
   const headers = new Headers();
   const tracked = shouldTrack(request, url);

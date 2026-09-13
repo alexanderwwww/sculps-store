@@ -82,7 +82,7 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
     const [variant] = await context.db.select().from(variants).where(eq(variants.id, variantId)).limit(1);
     if (variant) {
       const eventId = newMetaEventId();
-      const { fbp, fbc } = readMetaCookies(request);
+      const { fbp, fbc } = readMetaCookies(request, url);
       context.cloudflare.ctx.waitUntil(
         (async () => {
           const settings = await metaSettings(context.db, context.cloudflare.env, store.id);
@@ -94,6 +94,7 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
             valueCents: variant.priceCents,
             currency: store.currency,
             contents: [{ id: variant.id, quantity: 1, itemPrice: variant.priceCents }],
+            externalId: sessionId,
             clientIp: request.headers.get("CF-Connecting-IP"),
             userAgent: request.headers.get("User-Agent"),
             fbp,

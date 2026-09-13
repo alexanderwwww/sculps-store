@@ -31,6 +31,7 @@ import type { NavLink } from "~/lib/store.server";
 import { liveTheme, recordOrderEvent } from "~/lib/admin.server";
 import {
   readCartToken,
+  cartRowByToken,
   priceCart,
   setCartDiscount,
   cartPaymentIntentId,
@@ -57,9 +58,10 @@ import {
   blocks as blocksTable,
   products as productsTable,
   variants as variantsTable,
+  customers,
 } from "~/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { pixelScript, readMetaCookies, trackFunnelEvent } from "~/lib/meta.server";
+import { newMetaEventId, pixelScript, readMetaCookies, sendServerEvent, trackFunnelEvent } from "~/lib/meta.server";
 import { formatMoney } from "~/lib/money";
 import { CheckoutHeader, CheckoutFooter, TrustRow } from "~/storefronts/garden-buddy/checkout-chrome";
 import kneelerHref from "~/storefronts/garden-kneeler/theme.css?url";
@@ -467,7 +469,38 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // halves, one shared id, the whole cart as contents.
   const [meta] = metaRows;
 
-  let pixel = meta?.pixelId ? pixelScript(meta.pixelId) : null;
+  // Who this is, as far as checkout knows: the visitor id always, and the
+  // email plus name once they have been typed (identify stores them on the
+  // cart). Every event from here carries it, hashed, so Meta matches the
+  // person and not only the cookie.
+  const cartRow = token ? await cartRowByToken(context.db, store.id, token) : null;
+  const known = cartRow?.customerId
+    ? (await context.db.select({ name: customers.name, phone: customers.phone }).from(customers).where(eq(customers.id, cartRow.customerId)).limit(1))[0]
+    : null;
+  const [knownFirst, ...knownRest] = (known?.name ?? "").trim().split(" ");
+  const identity = {
+    externalId: checkoutSession,
+    email: cartRow?.email ?? null,
+    phone: known?.phone ?? null,
+    firstName: knownFirst || null,
+    lastName: knownRest.join(" ") || null,
+  };
+  const pageViewEventId = newMetaEventId();
+  let pixel = meta?.pixelId ? pixelScript(meta.pixelId, { match: identity, pageViewEventId }) : null;
+  if (pixel && firstView && shouldTrack(request, url)) {
+    await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+      storeId: store.id,
+      pixelId: meta?.pixelId ?? null,
+      request,
+      url,
+      name: "PageView",
+      valueCents: 0,
+      currency: cart.currency,
+      contents: [],
+      identity,
+      eventId: pageViewEventId,
+    });
+  }
   if (pixel && firstView && cart.lines.length) {
     const initiate = await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
       storeId: store.id,
@@ -482,6 +515,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         quantity: line.quantity,
         itemPrice: line.unitPriceCents,
       })),
+      identity,
     });
     if (initiate) pixel = `${pixel}\n${initiate}`;
   }
@@ -857,7 +891,32 @@ async function payAction({
   }
 
   const geo = geoFromContext(context, request);
-  const metaCookies = readMetaCookies(request);
+  const metaCookies = readMetaCookies(request, url);
+  // AddPaymentInfo: they filled the form and pressed pay. Full identity,
+  // server only — there is no browser event to deduplicate against.
+  {
+    const [first, ...rest] = name.split(" ");
+    sendServerEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+      storeId: store.id,
+      request,
+      url,
+      name: "AddPaymentInfo",
+      identity: {
+        externalId: readVisitorSession(request),
+        email,
+        phone: String(form.get("phone") || "").trim() || null,
+        firstName: first || null,
+        lastName: rest.join(" ") || null,
+        city: String(form.get("city") || "").trim() || null,
+        region: String(form.get("region") || "").trim() || null,
+        postalCode: String(form.get("postalCode") || "").trim() || null,
+        country: String(form.get("country") || "").trim() || null,
+      },
+      valueCents: cart.totalCents,
+      currency: cart.currency,
+      contents: cart.lines.map((line) => ({ id: line.variantId, quantity: line.quantity, itemPrice: line.unitPriceCents })),
+    });
+  }
   const countryGiven = String(form.get("country") || "").trim().toUpperCase();
   const knownCountry = COUNTRIES.some(([code]) => code === countryGiven);
   if (!knownCountry && !fromWallet) {

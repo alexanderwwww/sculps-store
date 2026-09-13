@@ -21,6 +21,7 @@ import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.serv
 import { eq } from "drizzle-orm";
 import { metaConfig, variants } from "~/db/schema";
 import { eventPixelScript, pixelScript } from "~/lib/meta.server";
+import { readVisitorSession } from "~/lib/visitor.server";
 import { formatMoney } from "~/lib/money";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
@@ -97,7 +98,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
 
-  let pixel = meta?.pixelId ? pixelScript(meta.pixelId) : null;
+  let pixel = meta?.pixelId ? pixelScript(meta.pixelId, { match: { externalId: readVisitorSession(request) } }) : null;
   const eventId = url.searchParams.get("fbe");
   const addedVariantId = url.searchParams.get("fbv");
   if (pixel && eventId && addedVariantId) {

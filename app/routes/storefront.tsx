@@ -7,7 +7,7 @@ import { currentUser } from "~/lib/auth.server";
 import { pages, metaConfig, themes } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
 import { eq } from "drizzle-orm";
-import { pixelScript, trackFunnelEvent } from "~/lib/meta.server";
+import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
 import {
   deviceFromRequest,
@@ -138,7 +138,31 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     .where(eq(metaConfig.storeId, store.id))
     .limit(1);
   const live = !previewPageId && !previewThemeId && !isThumb;
-  let pixel = meta?.pixelId && live ? pixelScript(meta.pixelId) : null;
+  // The visitor id is decided here so the pixel can carry it as external_id.
+  const trackedVisit = shouldTrack(request, url) && !isThumb && !previewThemeId;
+  const sessionId = trackedVisit ? (readVisitorSession(request) ?? newVisitorSession()) : readVisitorSession(request);
+  const pageViewEventId = newMetaEventId();
+  let pixel =
+    meta?.pixelId && live
+      ? pixelScript(meta.pixelId, { match: { externalId: sessionId }, pageViewEventId })
+      : null;
+
+  // PageView, server half, same id as the browser's — so Meta counts one
+  // view and keeps the richer of the two.
+  if (pixel && trackedVisit) {
+    await trackFunnelEvent(context.db, context.cloudflare.env, context.cloudflare.ctx, {
+      storeId: store.id,
+      pixelId: meta?.pixelId ?? null,
+      request,
+      url,
+      name: "PageView",
+      valueCents: 0,
+      currency: store.currency,
+      contents: [],
+      identity: { externalId: sessionId },
+      eventId: pageViewEventId,
+    });
+  }
 
   // ViewContent. Someone looking at the product is the top of the funnel, and
   // it is the event Meta needs most after Purchase to find more people like
@@ -155,15 +179,17 @@ export async function loader({ context, request }: Route.LoaderArgs) {
         valueCents: shown.priceCents,
         currency: store.currency,
         contents: [{ id: shown.id, quantity: 1, itemPrice: shown.priceCents }],
+        identity: { externalId: sessionId },
       });
       if (viewContent) pixel = `${pixel}\n${viewContent}`;
     }
   }
   // Record the visit. This is what Live View and Analytics are made of.
   const headers = new Headers();
-  if (shouldTrack(request, url) && !isThumb && !previewThemeId) {
-    const sessionId = readVisitorSession(request) ?? newVisitorSession();
+  if (trackedVisit && sessionId) {
     headers.append("Set-Cookie", visitorCookie(sessionId, url));
+    // Our own long-lived copies of Meta's cookies, so attribution outlives Safari's week.
+    if (meta?.pixelId) for (const cookie of metaCookieHeaders(request, url)) headers.append("Set-Cookie", cookie);
     track(context.db, context.cloudflare.ctx, {
       storeId: store.id,
       sessionId,
