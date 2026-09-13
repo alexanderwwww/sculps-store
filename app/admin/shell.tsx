@@ -106,6 +106,48 @@ export function AdminShell({
    * same file Live View uses. If the browser refuses (no click on the page
    * yet), it fails silently: the banner is still there.
    */
+  /**
+   * A deploy makes the bundle this tab loaded disappear from the server, so
+   * the next click asks for files that are gone and the page looks broken
+   * until it is closed and reopened. Every minute the tab checks that its own
+   * manifest is still there; when it is not, a new version is live and the
+   * tab reloads itself — at once if nothing is being typed, otherwise the
+   * moment the field loses focus or the tab comes back into view.
+   */
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const manifest = Array.from(document.querySelectorAll<HTMLLinkElement | HTMLScriptElement>("link[rel=modulepreload], script[src]"))
+      .map((el) => ("href" in el ? el.href : el.src))
+      .find((href) => /\/assets\/manifest-[^/]+\.js$/.test(href));
+    if (!manifest) return;
+    let stale = false;
+    const reloadIfIdle = () => {
+      if (!stale) return;
+      const active = document.activeElement;
+      const typing = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as HTMLElement).isContentEditable);
+      if (!typing && !document.hidden) window.location.reload();
+    };
+    const check = async () => {
+      try {
+        const res = await fetch(manifest, { method: "HEAD", cache: "no-store" });
+        if (res.status === 404) {
+          stale = true;
+          reloadIfIdle();
+        }
+      } catch {
+        /* offline; try again next minute */
+      }
+    };
+    const timer = window.setInterval(check, 60_000);
+    document.addEventListener("visibilitychange", reloadIfIdle);
+    document.addEventListener("focusout", reloadIfIdle);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", reloadIfIdle);
+      document.removeEventListener("focusout", reloadIfIdle);
+    };
+  }, []);
+
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     // Registered on every load: installing the admin as an app and receiving
