@@ -66,6 +66,8 @@ export default [
       // one provider now.
       route("payments", "routes/admin.payments.tsx"),
       route("media", "routes/admin.media.tsx"),
+      route("studio", "routes/admin.studio.tsx"),
+      route("studio/status", "routes/admin.studio.status.tsx"),
       route("analytics", "routes/admin.analytics.tsx"),
       route("live", "routes/admin.live.tsx"),
       route("notifications", "routes/admin.notifications.tsx"),

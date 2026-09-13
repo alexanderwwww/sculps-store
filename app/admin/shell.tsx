@@ -306,6 +306,15 @@ export function AdminShell({
       trailing: <CustomizeShortcut suffix={suffix} />,
     },
     {
+      to: withStore("/admin/studio"),
+      label: "Studio",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" {...iconStroke} strokeLinecap="round">
+          <path d="M10 3l1.6 3.6L15.5 8l-3.9 1.4L10 13l-1.6-3.6L4.5 8l3.9-1.4zM15.5 13l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z" />
+        </svg>
+      ),
+    },
+    {
       to: withStore("/admin/media"),
       label: "Media",
       icon: (
@@ -1264,6 +1273,7 @@ function CommandPalette({
       ["Meta", `/admin/meta${suffix}`],
       ["Online Store", `/admin/online-store${suffix}`],
       ["Media", `/admin/media${suffix}`],
+      ["Studio", `/admin/studio${suffix}`],
       ["Settings", `/admin/settings${suffix}`],
       ["Add store", "/admin/stores/new"],
     ].filter(([label]) => !q || label.toLowerCase().includes(q)) as [string, string][];

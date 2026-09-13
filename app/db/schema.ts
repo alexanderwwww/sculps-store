@@ -1024,3 +1024,57 @@ export const clientEvents = pgTable(
   },
   (t) => [index("client_events_store_idx").on(t.storeId, t.createdAt)],
 );
+
+/* ------------------------------------------------------------------ studio */
+
+/**
+ * Studio: image, video and UGC ad generation through Higgsfield's API.
+ *
+ * The key pair is per store and the secret is encrypted at rest with the same
+ * master key as the payment secrets. Nothing here runs without a real key.
+ */
+export const studioConfig = pgTable("studio_config", {
+  storeId: uuid("store_id")
+    .primaryKey()
+    .references(() => stores.id, { onDelete: "cascade" }),
+  keyId: text("key_id").notNull(),
+  secretEnc: text("secret_enc").notNull(),
+  connectedAt: timestamp("connected_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * One row per generation the owner asked for. The request id is Higgsfield's;
+ * the outputs are copied into R2 the moment they complete because their CDN
+ * keeps them for seven days only. A UGC ad is a chain: an image stage, then a
+ * video stage on top of it — `stage` says which is running.
+ */
+export const generations = pgTable(
+  "generations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    /** image | video | ugc */
+    kind: text("kind").notNull(),
+    model: text("model").notNull(),
+    prompt: text("prompt").notNull(),
+    params: jsonb("params").$type<Record<string, unknown>>().notNull().default({}),
+    /** /media key of the input picture, when there was one */
+    inputKey: text("input_key"),
+    /** 1 = first request, 2 = the video stage of a UGC ad */
+    stage: integer("stage").notNull().default(1),
+    requestId: text("request_id"),
+    /** queued | in_progress | completed | failed | nsfw | canceled */
+    status: text("status").notNull().default("queued"),
+    error: text("error"),
+    /** /media keys of the finished files */
+    outputKeys: jsonb("output_keys").$type<string[]>().notNull().default([]),
+    /** the image the video stage was built on, for a UGC ad */
+    stillKey: text("still_key"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("generations_store_idx").on(t.storeId, t.createdAt)],
+);
