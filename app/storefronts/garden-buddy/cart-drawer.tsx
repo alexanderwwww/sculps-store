@@ -696,7 +696,21 @@ function Shipping({
   subtotalCents: number;
 }) {
   if (store.shipAlwaysFree) {
-    return <p className="gb-drawer__ship gb-drawer__ship--done">Free shipping on every order.</p>;
+    // A small moving strip, like the site's announcement bar. GET10 is a
+    // real code on this store.
+    const items = ["10% off with code GET10", "Free shipping USA-wide", "Today only"];
+    return (
+      <div className="gb-drawer__ann" aria-label="10% off with code GET10 plus free shipping USA-wide, today">
+        <div className="gb-drawer__ann-track" aria-hidden="true">
+          {[0, 1].map((run) => (
+            <ul className="gb-drawer__ann-run" key={run}>
+              {items.map((t) => <li key={t}>{t}</li>)}
+              {items.map((t) => <li key={`${t}-2`}>{t}</li>)}
+            </ul>
+          ))}
+        </div>
+      </div>
+    );
   }
   const threshold = store.shipFreeOverCents;
   if (threshold == null || threshold <= 0) return null;

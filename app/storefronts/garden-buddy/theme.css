@@ -510,6 +510,14 @@
 .gb-drawer__x svg{width:20px;height:20px}
 .gb-drawer__x:hover{background:var(--sand)}
 
+.gb-drawer__ann{background:var(--ink);color:#fff;overflow:hidden}
+.gb-drawer__ann-track{display:flex;width:max-content;animation:gb-ann-slide 22s linear infinite}
+.gb-drawer__ann:hover .gb-drawer__ann-track{animation-play-state:paused}
+.gb-drawer__ann-run{display:flex;align-items:center;gap:26px;list-style:none;margin:0;padding:7px 13px}
+.gb-drawer__ann-run li{font-family:var(--font-h);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.gb-drawer__ann-run li::after{content:"•";margin-left:26px;color:var(--lime)}
+@keyframes gb-ann-slide{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@media(prefers-reduced-motion:reduce){.gb-drawer__ann-track{animation:none}}
 .gb-drawer__ship{margin:0;padding:10px var(--pad);background:var(--lime-soft);color:#2F5A17;font-size:14px;font-weight:700;display:grid;gap:8px;text-align:center}
 .gb-drawer__ship p{margin:0}
 .gb-drawer__ship--done{font-weight:700}
