@@ -25,7 +25,9 @@ export default [
   route("pages/:handle", "routes/pages.$handle.tsx"),
   // The shapes Shopify used. Old links stay alive rather than dying in the
   // index and in every ad that already points at them.
-  route("products/:handle", "routes/products.$handle.tsx"),
+  // bodies sells one board in four colours, so each colour has its own
+  // address. Every other store still redirects its old Shopify links home.
+  route("products/:handle", "routes/products.bodies.tsx"),
   route("collections/:handle", "routes/collections.$handle.tsx"),
   route("password", "routes/password.tsx"),
   route("vitals", "routes/vitals.tsx"),

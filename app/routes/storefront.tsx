@@ -25,6 +25,8 @@ import { GardenKneelerStorefront } from "~/storefronts/garden-kneeler";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 import { GardenBuddyStorefront } from "~/storefronts/garden-buddy";
 import gardenBuddyThemeHref from "~/storefronts/garden-buddy/theme.css?url";
+import { BodiesHome } from "~/storefronts/bodies";
+import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
 
 /**
  * Which theme a store gets. Design lives in code, one theme per store, so this
@@ -32,6 +34,7 @@ import gardenBuddyThemeHref from "~/storefronts/garden-buddy/theme.css?url";
  * else keeps the generic one.
  */
 const GARDEN_BUDDY = "garden-buddy";
+const BODIES = "bodies";
 
 export function links() {
   return [
@@ -230,6 +233,27 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
     </>
   );
+
+  if (store.slug === BODIES) {
+    return (
+      <>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap"
+        />
+        <link rel="stylesheet" href={bodiesThemeHref} />
+        {head}
+        <BodiesHome
+          page={page}
+          storeParam={storeParam}
+          publishableKey={publishableKey}
+          paypalClientId={paypalClientId}
+        />
+      </>
+    );
+  }
 
   if (store.slug === GARDEN_BUDDY) {
     return (

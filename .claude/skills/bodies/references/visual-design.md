@@ -120,22 +120,37 @@ aesthetic, knows what she is doing with a camera. Mid-twenties to mid-thirties.
 - Caught mid-movement or mid-task, never presenting to a camera.
 
 ### How the shot should read
-An iPhone photo in good light — **not a photoshoot**. The difference is the angle
-and the moment, not the mess.
 
-- The camera sits where a phone actually sits: propped on a sofa arm, on the
-  floor, held overhead, handed to a friend. Never on a tripod at eye level.
-- Off-centre framing. Limbs cut by the edge. A corner of a doorway in shot.
-- She is not looking at the lens unless it is a mirror selfie.
-- Window light only. A blown highlight is fine and wanted.
-- Slight motion blur, slight tilt, the mild wide-angle a phone gives.
-- Mirror selfies with the phone visible in the mirror.
+**It is her BTS, or it is the post itself. Nothing in between.**
+
+The repeated failure is producing a good photograph of a real-looking scene.
+What is wanted is a real photo that happens to be of a good scene. A real phone
+photo has technical faults, and those faults are the point:
+
+- **Imperfect light.** The overhead ceiling light on at night. A window blowing
+  out behind her so she is half in silhouette. Mixed daylight and warm bulb so
+  the white balance is visibly wrong. Underexposed corners. Phone flash.
+- **Imperfect framing.** Shot from wherever the phone was put down. Her head
+  cut off. The board cut off. Dead space on one side. A doorframe in the way.
+- **Imperfect focus.** Autofocus on the wrong thing. Motion blur on a moving arm.
+  Grain in the shadows, the way a phone sensor handles a dim room.
+- Never on a tripod at eye level, never balanced, never lit.
+
+She is not looking at the lens unless it is a mirror selfie.
+
+### Wardrobe
+They do **not** all wear the same thing, and they do not wear head-to-toe
+colour-matched sets that match their board. Real creators own clothes from
+different brands in different colours. Vary it across the set: a black set with
+a coloured sports bra, grey marl, an oversized tee over leggings, a cropped
+hoodie, different shades. Only the **grip socks** tie back to the colourway, and
+only sometimes.
 
 ### Locations
-Beautiful, clean, aspirational apartments — the kind she would post. Pale wood or
-herringbone floors, sheer linen curtains, one good plant, art books, calm neutral
-furniture. Tidy, not styled to death, and never messy. A real home that happens
-to look good. Never a studio, never a set, never a resort.
+Real rented apartments. Ordinary flooring, a radiator, a plug socket with cables
+in it, an IKEA shelf, a normal sofa. She keeps it nice, but nobody styled it and
+nothing was moved for the camera. Never a showroom, never a magazine interior,
+never a set.
 
 ### Never
 - Editorial campaign lighting on a person.
@@ -144,6 +159,8 @@ to look good. Never a studio, never a set, never a resort.
 - Colour grading or filters.
 - Stock fitness photography of any kind.
 - An all-white cast.
+- Everyone dressed identically, or dressed to match the product.
+- Balanced, well-lit, well-composed photography of any kind.
 
 ### Product accuracy in lifestyle shots
 The screen is **hinged to the board**. It is never a separate tablet lying on the
