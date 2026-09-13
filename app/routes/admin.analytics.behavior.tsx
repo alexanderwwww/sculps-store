@@ -16,7 +16,7 @@ import type { Route } from "./+types/admin.analytics.behavior";
 import { requireUser } from "~/lib/auth.server";
 import { startOfDayIn } from "~/lib/day";
 import { resolveAdminStore } from "~/lib/admin.server";
-import { events, visits, carts, orderItems, orders, variants, products } from "~/db/schema";
+import { events, visits, carts, orders, variants, customers } from "~/db/schema";
 import { formatMoney } from "~/lib/money";
 import { Empty, card } from "~/admin/ui";
 import world from "~/admin/world-hex.json";
@@ -49,13 +49,17 @@ interface SessionRow {
   seconds: number | null;
   scroll: number | null;
   lastPath: string | null;
+  email: string | null;
+  name: string | null;
+  /** what this visitor put in a bag, by variant id */
+  added: string[];
 }
 
 export async function loader({ context, request }: Route.LoaderArgs) {
   await requireUser(context.db, request);
   const url = new URL(request.url);
   const { store } = await resolveAdminStore(context.db, url);
-  if (!store) return { store: null, range: null, sessions: [], added: [], hours: [], summary: null, cities: [] };
+  if (!store) return { store: null, range: null, sessions: [], catalogue: {}, added: [], hours: [], summary: null, cities: [] };
 
   // The window, in the store's own days.
   const preset = url.searchParams.get("range") || "today";
@@ -98,8 +102,17 @@ export async function loader({ context, request }: Route.LoaderArgs) {
           and ${events.at} < ${until}
         group by 1
       )
-      select e.*, v.${sql.raw("seconds")} as seconds, v.${sql.raw("scroll_max")} as scroll, v.${sql.raw("last_path")} as last_path
-      from e left join ${visits} v on v.${sql.raw("session_id")} = e.sid and v.${sql.raw("store_id")} = ${store.id}
+      select e.*, v.${sql.raw("seconds")} as seconds, v.${sql.raw("scroll_max")} as scroll, v.${sql.raw("last_path")} as last_path,
+             coalesce(cu.${sql.raw("email")}, ca.${sql.raw("email")}) as email, cu.${sql.raw("name")} as name,
+             ca.${sql.raw("items")} as items,
+             (select array_agg(substring(${events.path} from '/cart/add/(.*)$')) from ${events}
+               where ${events.sessionId} = e.sid and ${events.type} = 'cart' and ${events.path} like '/cart/add/%') as adds
+      from e
+      left join ${visits} v on v.${sql.raw("session_id")} = e.sid and v.${sql.raw("store_id")} = ${store.id}
+      left join lateral (select ${customers.email} as email, ${customers.name} as name from ${customers}
+                          where ${customers.storeId} = ${store.id} and ${customers.lastSessionId} = e.sid limit 1) cu on true
+      left join lateral (select ${carts.email} as email, ${carts.items} as items from ${carts}
+                          where ${carts.storeId} = ${store.id} and ${carts.sessionId} = e.sid order by ${carts.updatedAt} desc limit 1) ca on true
       order by e.first desc
       limit 3000
     `),
@@ -140,7 +153,20 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     seconds: r.seconds == null ? null : Number(r.seconds),
     scroll: r.scroll == null ? null : Number(r.scroll),
     lastPath: r.last_path ?? null,
+    email: r.email ?? null,
+    name: r.name ?? null,
+    added: Array.from(new Set([
+      ...((r.adds as string[] | null) ?? []).filter(Boolean),
+      ...(((r.items as { variantId?: string }[] | null) ?? []).map((i) => i.variantId).filter(Boolean) as string[]),
+    ])),
   }));
+
+  // Names and pictures for whatever anyone added, so the table can show the bag.
+  const variantIds = Array.from(new Set(sessions.flatMap((s) => s.added))).filter((id) => /^[0-9a-f-]{36}$/.test(id));
+  const variantRows = variantIds.length
+    ? await context.db.select({ id: variants.id, label: variants.label, image: variants.imageUrl }).from(variants).where(sql`${variants.id} in ${variantIds}`)
+    : [];
+  const catalogue = Object.fromEntries(variantRows.map((v) => [v.id, { label: v.label, image: v.image }]));
 
   // Hours in the store's zone, so "morning" means the customer's morning.
   const hours = Array.from({ length: 24 }, () => 0);
@@ -167,6 +193,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     store: { slug: store.slug, name: store.name, timezone: store.timezone, currency: store.currency },
     range: { key: preset, label, from: since.toISOString(), to: until.toISOString(), fromParam, toParam },
     sessions,
+    catalogue,
     added: (addedRows.rows as any[]).map((r) => ({ id: String(r.id), label: String(r.label), image: r.image ?? null, price: Number(r.price), qty: Number(r.qty), carts: Number(r.carts) })),
     hours,
     cities,
@@ -199,7 +226,8 @@ function secondsLabel(s: number | null): string {
 }
 
 export default function Behaviour({ loaderData }: Route.ComponentProps) {
-  const { store, range, sessions, added, hours, cities, summary } = loaderData as Data;
+  const { store, range, sessions, catalogue, added, hours, cities, summary } = loaderData as Data;
+  const cat = catalogue as Record<string, { label: string; image: string | null }>;
   const navigate = useNavigate();
   const [from, setFrom] = useState(range?.fromParam ?? "");
   const [to, setTo] = useState(range?.toParam ?? "");
@@ -267,7 +295,7 @@ export default function Behaviour({ loaderData }: Route.ComponentProps) {
         ))}
       </div>
 
-      <WorldMap sessions={sessions} />
+      <WorldMap sessions={sessions} timezone={store.timezone} />
 
       <div style={{ ...card, padding: 16 }}>
         <div style={{ fontSize: 12, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ink-3)", fontWeight: 600, marginBottom: 12 }}>The path</div>
@@ -339,12 +367,13 @@ export default function Behaviour({ loaderData }: Route.ComponentProps) {
         <div style={{ overflowX: "auto" }}>
           <table className="tb-table">
             <thead>
-              <tr><th>Arrived</th><th>Where</th><th>Device</th><th>Source</th><th>Path</th><th>Time</th><th>Scroll</th><th>Views</th></tr>
+              <tr><th>Arrived</th><th>Who</th><th>Where</th><th>Device</th><th>Source</th><th>Path</th><th>In the bag</th><th>Time</th><th>Scroll</th><th>Views</th></tr>
             </thead>
             <tbody>
               {sessions.slice(0, 80).map((s) => (
                 <tr key={s.sid}>
                   <td className="tb-num">{new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", month: "short", day: "numeric", timeZone: store.timezone }).format(new Date(s.first))}</td>
+                  <td>{s.email ? <span>{s.name ? <b style={{ fontWeight: 600 }}>{s.name} </b> : null}<span style={{ color: "var(--ink-2)" }}>{s.email}</span></span> : <span style={{ color: "var(--ink-3)" }}>no email yet</span>}</td>
                   <td>{s.city ?? "—"}{s.country ? <span style={{ color: "var(--ink-3)" }}> {s.country}</span> : null}</td>
                   <td>{s.device ?? "—"}</td>
                   <td>{s.source ?? <span style={{ color: "var(--ink-3)" }}>direct</span>}</td>
@@ -354,12 +383,23 @@ export default function Behaviour({ loaderData }: Route.ComponentProps) {
                     <span className={`tb-chip${s.checked ? " on" : ""}`}>Checkout</span>
                     <span className={`tb-chip${s.paid ? " pay" : ""}`}>Paid</span>
                   </td>
+                  <td>
+                    {s.added.length ? (
+                      <span style={{ display: "inline-flex", gap: 4 }}>
+                        {s.added.map((id) => (
+                          <span key={id} title={cat[id]?.label ?? id} style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--border)", background: "#fff", overflow: "hidden", display: "inline-block" }}>
+                            {cat[id]?.image ? <img src={cat[id].image!} alt={cat[id].label} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : null}
+                          </span>
+                        ))}
+                      </span>
+                    ) : <span style={{ color: "var(--ink-3)" }}>—</span>}
+                  </td>
                   <td className="tb-num">{secondsLabel(s.seconds)}</td>
                   <td className="tb-num">{s.scroll == null ? "—" : `${s.scroll}%`}</td>
                   <td className="tb-num">{s.views}</td>
                 </tr>
               ))}
-              {!sessions.length ? <tr><td colSpan={8} style={{ color: "var(--ink-3)", padding: 24, textAlign: "center" }}>No visitors in this window.</td></tr> : null}
+              {!sessions.length ? <tr><td colSpan={10} style={{ color: "var(--ink-3)", padding: 24, textAlign: "center" }}>No visitors in this window.</td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -414,7 +454,11 @@ function Buckets({ sessions }: { sessions: SessionRow[] }) {
 
 /* ------------------------------------------------------------------- map */
 
-function WorldMap({ sessions }: { sessions: SessionRow[] }) {
+const BLUE = "#3B7BFF";
+const YELLOW = "#F5C518";
+const GOLD = "#C9A227";
+
+function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: string }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
 
@@ -426,22 +470,27 @@ function WorldMap({ sessions }: { sessions: SessionRow[] }) {
     const R = W / (cols * Math.sqrt(3));
     const dx = R * Math.sqrt(3);
     const dy = R * 1.5;
-    const map = new Map<string, { r: number; c: number; n: number; cart: number; paid: number; city: string | null; order: number }>();
+    const map = new Map<string, { r: number; c: number; n: number; cart: number; paid: number; city: string | null; arrivals: number[]; cartAt: number[]; paidAt: number[] }>();
     const ordered = sessions.slice().sort((a, b) => a.first.localeCompare(b.first));
-    ordered.forEach((s, i) => {
+    ordered.forEach((s) => {
       if (s.lat == null || s.lon == null) return;
       const x = ((s.lon - lon0) / (lon1 - lon0)) * W;
       const y = ((lat1 - s.lat) / (lat1 - lat0)) * H;
       const r = Math.round(y / dy);
       const c = Math.round((x - (r % 2 ? dx / 2 : 0)) / dx);
       const key = `${r}:${c}`;
-      const cur = map.get(key) ?? { r, c, n: 0, cart: 0, paid: 0, city: s.city, order: i };
+      const cur = map.get(key) ?? { r, c, n: 0, cart: 0, paid: 0, city: s.city, arrivals: [], cartAt: [], paidAt: [] };
+      const at = Date.parse(s.first);
       cur.n += 1;
-      if (s.carted) cur.cart += 1;
-      if (s.paid) cur.paid += 1;
+      cur.arrivals.push(at);
+      if (s.carted) { cur.cart += 1; cur.cartAt.push(Date.parse(s.last)); }
+      if (s.paid) { cur.paid += 1; cur.paidAt.push(Date.parse(s.last)); }
       map.set(key, cur);
     });
-    return { map, W, H, R, dx, dy, rows, total: ordered.length };
+    const times = ordered.map((s) => Date.parse(s.first));
+    const start = times.length ? Math.min(...times) : Date.now();
+    const end = times.length ? Math.max(...ordered.map((s) => Date.parse(s.last))) : Date.now();
+    return { map, W, H, R, dx, dy, rows, total: ordered.length, start, end };
   }, [sessions]);
 
   useEffect(() => {
@@ -449,7 +498,7 @@ function WorldMap({ sessions }: { sessions: SessionRow[] }) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const { map, W, H, R, dx, dy, total } = lit;
+    const { map, W, H, R, dx, dy, start, end } = lit;
     canvas.width = W * 2;
     canvas.height = H * 2;
     ctx.scale(2, 2);
@@ -468,35 +517,57 @@ function WorldMap({ sessions }: { sessions: SessionRow[] }) {
       ctx.fillStyle = fill;
       ctx.fill();
     };
+    // The replay runs on the real clock of the window: 24 seconds of screen
+    // time for the whole span, arrivals appearing at their true moment, a
+    // ring spreading out from each new one, then the tile settles and
+    // breathes. The clock in the corner shows the replayed time.
+    const LOOP = 24 * 60;
+    const t0 = start;
+    const t1 = Math.max(start + 1, end);
+    const clock = new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", timeZone: timezone });
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
       const grey = css("--border") || "#e5e5e5";
-      const accent = css("--accent") || "#8ad13a";
-      const ink = css("--ink") || "#111";
-      for (const [r, c] of land) hex(c * dx + (r % 2 ? dx / 2 : 0), r * dy, R - 0.6, grey);
-      // Arrivals replay in order over a 12-second loop; a tile that has
-      // "arrived" stays lit and pulses.
-      const cycle = reduce ? 1 : (t % 720) / 720;
+      for (const [r, c] of land) hex(c * dx + (r % 2 ? dx / 2 : 0), r * dy, R - 0.35, grey);
+      const frac = reduce ? 1 : (t % LOOP) / LOOP;
+      const nowMs = t0 + frac * (t1 - t0);
       for (const cell of map.values()) {
         const x = cell.c * dx + (cell.r % 2 ? dx / 2 : 0);
         const y = cell.r * dy;
-        const shown = reduce || cell.order / Math.max(1, total) <= cycle;
-        if (!shown) continue;
-        const pulse = reduce ? 0 : 0.5 + 0.5 * Math.sin(t / 25 + cell.r);
-        const size = Math.min(R * 2.4, R + Math.log2(cell.n + 1) * 1.6 + pulse * 1.2);
-        if (pulse > 0.85 && !reduce) {
-          ctx.globalAlpha = 0.18;
-          hex(x, y, size + 6, accent);
+        const seen = cell.arrivals.filter((ms) => ms <= nowMs);
+        if (!seen.length) continue;
+        const n = seen.length;
+        const carted = cell.cartAt.some((ms) => ms <= nowMs);
+        const paid = cell.paidAt.some((ms) => ms <= nowMs);
+        const colour = paid ? GOLD : carted ? YELLOW : BLUE;
+        const latest = seen[seen.length - 1];
+        const age = ((nowMs - latest) / (t1 - t0)) * LOOP;
+        if (!reduce && age < 72) {
+          ctx.globalAlpha = 0.5 * (1 - age / 72);
+          ctx.lineWidth = 1.4;
+          ctx.strokeStyle = colour;
+          ctx.beginPath();
+          const rr = R + age * 0.35;
+          for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); ctx.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); }
+          ctx.closePath();
+          ctx.stroke();
           ctx.globalAlpha = 1;
         }
-        hex(x, y, size, cell.paid ? ink : cell.cart ? "#F2A69A" : accent);
+        const breathe = reduce ? 0 : 0.5 + 0.5 * Math.sin(t / 30 + cell.r * 0.4);
+        const size = Math.min(R * 2.2, R * 0.9 + Math.log2(n + 1) * 1.3 + breathe * 0.8);
+        hex(x, y, size, colour);
       }
+      ctx.font = "600 12px system-ui, sans-serif";
+      ctx.fillStyle = css("--ink-2") || "#666";
+      ctx.textAlign = "right";
+      ctx.fillText(reduce ? "" : clock.format(new Date(nowMs)), W - 12, 16);
+      ctx.textAlign = "left";
       t += 1;
       if (!reduce) raf = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [lit]);
+  }, [lit, timezone]);
 
   const onMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = ref.current;
@@ -522,9 +593,9 @@ function WorldMap({ sessions }: { sessions: SessionRow[] }) {
         <div style={{ position: "absolute", left: tip.x + 12, top: tip.y - 30, background: "var(--ink)", color: "var(--surface)", fontSize: 12, padding: "4px 8px", borderRadius: 6, pointerEvents: "none", whiteSpace: "nowrap" }}>{tip.text}</div>
       ) : null}
       <div style={{ position: "absolute", left: 14, bottom: 12, display: "flex", gap: 14, fontSize: 12, color: "var(--ink-2)" }}>
-        <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "var(--accent)", marginRight: 6, verticalAlign: -1 }} />visitor</span>
-        <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "#F2A69A", marginRight: 6, verticalAlign: -1 }} />added to cart</span>
-        <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "var(--ink)", marginRight: 6, verticalAlign: -1 }} />paid</span>
+        <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: BLUE, marginRight: 6, verticalAlign: -1 }} />visitor</span>
+        <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: YELLOW, marginRight: 6, verticalAlign: -1 }} />added to cart</span>
+        <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: GOLD, marginRight: 6, verticalAlign: -1 }} />paid</span>
       </div>
     </div>
   );

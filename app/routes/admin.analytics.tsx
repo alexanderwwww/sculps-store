@@ -588,10 +588,6 @@ export default function Analytics({ loaderData }: Route.ComponentProps) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <Link to={`/admin/analytics/behavior?store=${store.slug}`} style={{ ...chipButton, textDecoration: "none", background: "var(--ink)", color: "var(--surface)", borderColor: "var(--ink)" }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="M8 1.5 13.6 4.75v6.5L8 14.5 2.4 11.25v-6.5z" /><path d="M8 5v6M5.4 6.5 8 8l2.6-1.5" /></svg>
-              Tracking behaviour
-            </Link>
             <div style={{ position: "relative" }}>
               <button type="button" onClick={() => setRangeOpen((open) => !open)} style={chipButton}>
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">

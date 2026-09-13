@@ -454,6 +454,8 @@ export const carts = pgTable(
     email: text("email"),
     /** set at the same moment the email is, so the cart has a person on it */
     customerId: uuid("customer_id"),
+    /** the visitor session that last touched this cart — links behaviour to bags */
+    sessionId: text("session_id"),
     items: jsonb("items").notNull().default([]),
     /** open | converted | abandoned */
     status: text("status").notNull().default("open"),

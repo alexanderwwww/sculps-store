@@ -293,6 +293,12 @@ export function AdminShell({
       ),
     },
     {
+      to: withStore("/admin/analytics/behavior"),
+      label: "Tracking behaviour",
+      indent: true,
+      icon: null,
+    },
+    {
       to: withStore("/admin/live"),
       label: "Live View",
       indent: true,
@@ -371,6 +377,8 @@ export function AdminShell({
   const isActive = (to: string) => {
     const path = to.split("?")[0];
     if (path === "/admin") return location.pathname === "/admin";
+    // Analytics has its own children in the sidebar; the parent lights only for itself.
+    if (path === "/admin/analytics") return location.pathname === path;
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
@@ -1316,6 +1324,7 @@ function CommandPalette({
       ["Online Store", `/admin/online-store${suffix}`],
       ["Media", `/admin/media${suffix}`],
       ["Studio", `/admin/studio${suffix}`],
+      ["Tracking behaviour", `/admin/analytics/behavior${suffix}`],
       ["Settings", `/admin/settings${suffix}`],
       ["Add store", "/admin/stores/new"],
     ].filter(([label]) => !q || label.toLowerCase().includes(q)) as [string, string][];

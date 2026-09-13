@@ -8,7 +8,7 @@ import type { Route } from "./+types/cart.add";
 import { resolveStore } from "~/lib/store.server";
 import { deviceFromRequest, geoFromContext, readVisitorSession, track } from "~/lib/visitor.server";
 import { metaSettings, newMetaEventId, readMetaCookies, sendEvent } from "~/lib/meta.server";
-import { metaConfig, products, variants } from "~/db/schema";
+import { metaConfig, products, variants, carts } from "~/db/schema";
 import { and, eq } from "drizzle-orm";
 import {
   readCartToken,
@@ -59,11 +59,16 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
 
   const sessionId = readVisitorSession(request);
   if (sessionId) {
+    // The cart remembers which visitor it belongs to, so the behaviour page
+    // can say who put what in a bag. The event path carries the variant.
+    context.cloudflare.ctx.waitUntil(
+      context.db.update(carts).set({ sessionId }).where(and(eq(carts.storeId, store.id), eq(carts.token, token))).catch(() => undefined),
+    );
     track(context.db, context.cloudflare.ctx, {
       storeId: store.id,
       sessionId,
       type: "cart",
-      path: "/cart/add",
+      path: `/cart/add/${variantId}`,
       geo: geoFromContext(context, request),
       device: deviceFromRequest(request),
       request,
