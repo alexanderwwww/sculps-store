@@ -18,6 +18,7 @@ import {
   index,
   uniqueIndex,
   real,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
@@ -1078,4 +1079,38 @@ export const generations = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("generations_store_idx").on(t.storeId, t.createdAt)],
+);
+
+/* ------------------------------------------------------------------ visits */
+
+/**
+ * One row per visitor session, kept for good. The events table says what
+ * happened; this says how long they were actually there and how far they
+ * scrolled, fed by the page's 20-second heartbeat. `seconds` only counts
+ * time with the tab visible.
+ */
+export const visits = pgTable(
+  "visits",
+  {
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    sessionId: text("session_id").notNull(),
+    firstAt: timestamp("first_at", { withTimezone: true }).notNull().defaultNow(),
+    lastAt: timestamp("last_at", { withTimezone: true }).notNull().defaultNow(),
+    /** active seconds, tab visible */
+    seconds: integer("seconds").notNull().default(0),
+    /** deepest scroll on any page, 0–100 */
+    scrollMax: integer("scroll_max").notNull().default(0),
+    /** heartbeats received */
+    beats: integer("beats").notNull().default(0),
+    lastPath: text("last_path"),
+    device: text("device"),
+    city: text("city"),
+    region: text("region"),
+    country: text("country"),
+    lat: real("lat"),
+    lon: real("lon"),
+  },
+  (t) => [primaryKey({ columns: [t.storeId, t.sessionId] }), index("visits_store_first_idx").on(t.storeId, t.firstAt)],
 );

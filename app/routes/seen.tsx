@@ -13,9 +13,9 @@
  * It answers 204 and never blocks: a failed heartbeat costs a dot, nothing
  * more, and is not worth an error on a customer's screen.
  */
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
 import type { Route } from "./+types/seen";
-import { events, presence } from "~/db/schema";
+import { events, presence, visits } from "~/db/schema";
 import { resolveStore } from "~/lib/store.server";
 import {
   deviceFromRequest,
@@ -43,9 +43,14 @@ export async function action({ context, request }: Route.ActionArgs) {
   if (!store) return new Response(null, NO_CONTENT);
 
   let path = "/";
+  let scroll = 0;
+  let active = 0;
   try {
-    const body = (await request.json()) as { path?: unknown };
+    const body = (await request.json()) as { path?: unknown; scroll?: unknown; active?: unknown };
     if (typeof body?.path === "string" && body.path.startsWith("/")) path = body.path.slice(0, 256);
+    if (typeof body?.scroll === "number") scroll = Math.max(0, Math.min(100, Math.round(body.scroll)));
+    // A beat can vouch for at most its own interval of attention.
+    if (typeof body?.active === "number") active = Math.max(0, Math.min(25, Math.round(body.active)));
   } catch {
     /* a beacon with no body still counts as presence */
   }
@@ -83,6 +88,36 @@ export async function action({ context, request }: Route.ActionArgs) {
           lon: row.lon,
           device: row.device,
           lastSeen: now,
+        },
+      });
+
+    // The durable record: seconds of attention and scroll depth, per session,
+    // kept after the presence row is gone.
+    await context.db
+      .insert(visits)
+      .values({
+        storeId: store.id,
+        sessionId,
+        seconds: active,
+        scrollMax: scroll,
+        beats: 1,
+        lastPath: path,
+        device: row.device,
+        city: geo.city,
+        region: geo.region,
+        country: geo.country,
+        lat: geo.lat,
+        lon: geo.lon,
+        lastAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [visits.storeId, visits.sessionId],
+        set: {
+          seconds: sql`${visits.seconds} + ${active}`,
+          scrollMax: sql`greatest(${visits.scrollMax}, ${scroll})`,
+          beats: sql`${visits.beats} + 1`,
+          lastPath: path,
+          lastAt: now,
         },
       });
 

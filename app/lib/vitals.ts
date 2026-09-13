@@ -63,18 +63,22 @@ export function p75(values: number[]): number | null {
  */
 export function presenceScript(): string {
   return `(function(){
-var EVERY=20000,last=0,timer=0;
+var EVERY=20000,last=0,timer=0,scrollMax=0,visibleSince=Date.now(),active=0;
+function depth(){var h=document.documentElement,s=h.scrollHeight-innerHeight;if(s<=0)return 100;return Math.min(100,Math.round((scrollY+innerHeight)/h.scrollHeight*100))}
+addEventListener('scroll',function(){var d=depth();if(d>scrollMax)scrollMax=d},{passive:true});
 function beat(final){
   var now=Date.now();
   if(!final&&now-last<EVERY-2000)return;
   last=now;
-  var body=JSON.stringify({path:location.pathname});
+  if(document.visibilityState==='visible'){active+=Math.min(EVERY,now-visibleSince);visibleSince=now}
+  var d=depth();if(d>scrollMax)scrollMax=d;
+  var body=JSON.stringify({path:location.pathname,scroll:scrollMax,active:Math.round(active/1000)});active=0;
   if(final&&navigator.sendBeacon){navigator.sendBeacon('/seen',new Blob([body],{type:'application/json'}));return}
   fetch('/seen',{method:'POST',body:body,keepalive:!!final,headers:{'Content-Type':'application/json'}}).catch(function(){});
 }
 function start(){if(timer)return;beat();timer=setInterval(function(){if(document.visibilityState==='visible')beat()},EVERY)}
 function stop(){if(timer){clearInterval(timer);timer=0}}
-addEventListener('visibilitychange',function(){document.visibilityState==='visible'?start():stop()});
+addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){visibleSince=Date.now();start()}else{beat(true);stop()}});
 addEventListener('pagehide',function(){stop()});
 if(document.visibilityState==='visible')start();
 })();`;

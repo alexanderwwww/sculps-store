@@ -69,6 +69,7 @@ export default [
       route("studio", "routes/admin.studio.tsx"),
       route("studio/status", "routes/admin.studio.status.tsx"),
       route("analytics", "routes/admin.analytics.tsx"),
+      route("analytics/behavior", "routes/admin.analytics.behavior.tsx"),
       route("live", "routes/admin.live.tsx"),
       route("notifications", "routes/admin.notifications.tsx"),
       route("push", "routes/admin.push.tsx"),
