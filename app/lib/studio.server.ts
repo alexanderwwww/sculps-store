@@ -1,22 +1,16 @@
 /**
  * The Studio's own logic: start a generation, poll it, keep what it made.
  *
+ * `origin` is the public https origin this Worker answers on, so the model
+ * makers can fetch input pictures from /media.
+ *
  * Shared by the page action (start) and the status route (poll), so the UGC
  * chain — still first, then the video on that still — lives in one place.
  */
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { generations, media } from "~/db/schema";
-import {
-  credentialsFor,
-  modelById,
-  submit,
-  status as remoteStatus,
-  uploadInput,
-  type Credentials,
-  type ModelDef,
-  type BodyInput,
-} from "./higgsfield.server";
+import { keyFor, modelById, submit, status as remoteStatus, type ModelDef, type BodyInput } from "./fal.server";
 
 export type GenerationRow = typeof generations.$inferSelect;
 
@@ -26,13 +20,9 @@ export async function listGenerations(db: DB, storeId: string, limit = 60): Prom
   return db.select().from(generations).where(eq(generations.storeId, storeId)).orderBy(desc(generations.createdAt)).limit(limit);
 }
 
-/** Reads a stored file back out of R2 and hands Higgsfield a URL it can fetch. */
-async function publicInputUrl(bucket: R2Bucket, creds: Credentials, key: string): Promise<string> {
-  const object = await bucket.get(key);
-  if (!object) throw new Error("The input picture is no longer in storage.");
-  const bytes = await object.arrayBuffer();
-  const type = object.httpMetadata?.contentType ?? "image/png";
-  return uploadInput(creds, bytes, type);
+/** Our /media route serves every stored file publicly, so the model fetches it from there. */
+function publicInputUrl(origin: string, key: string): string {
+  return `${origin}/media/${key}`;
 }
 
 export interface StartInput {
@@ -51,11 +41,11 @@ export interface StartInput {
   videoModel?: string;
 }
 
-export async function startGeneration(db: DB, env: Env, storeId: string, input: StartInput): Promise<GenerationRow> {
-  const creds = await credentialsFor(db, env, storeId);
+export async function startGeneration(db: DB, env: Env, origin: string, storeId: string, input: StartInput): Promise<GenerationRow> {
+  const key = await keyFor(db, env, storeId);
   if (input.model.needsImage && !input.inputKey) throw new Error(`${input.model.label} needs a picture to start from.`);
 
-  const imageUrl = input.inputKey ? await publicInputUrl(env.MEDIA, creds, input.inputKey) : null;
+  const imageUrl = input.inputKey ? publicInputUrl(origin, input.inputKey) : null;
   const bodyInput: BodyInput = {
     prompt: input.requestPrompt ?? input.prompt,
     aspect: input.aspect,
@@ -64,7 +54,7 @@ export async function startGeneration(db: DB, env: Env, storeId: string, input: 
     audio: input.audio,
     count: input.count,
   };
-  const submitted = await submit(creds, input.model, input.model.body(bodyInput));
+  const submitted = await submit(key, input.model, input.model.body(bodyInput));
 
   const [row] = await db
     .insert(generations)
@@ -78,12 +68,14 @@ export async function startGeneration(db: DB, env: Env, storeId: string, input: 
         duration: input.duration,
         audio: input.audio,
         count: input.count,
-        ...(input.kind === "ugc" ? { videoPrompt: input.videoPrompt ?? "", videoModel: input.videoModel ?? "veo-i2v" } : {}),
+        ...(input.kind === "ugc" ? { videoPrompt: input.videoPrompt ?? "", videoModel: input.videoModel ?? "seedance-2" } : {}),
+        statusUrl: submitted.statusUrl,
+        responseUrl: submitted.responseUrl,
       },
       inputKey: input.inputKey,
       stage: 1,
       requestId: submitted.requestId,
-      status: submitted.status,
+      status: "queued",
     })
     .returning();
   return row;
@@ -96,7 +88,7 @@ function extensionFor(url: string, contentType: string | null): string {
   return fromUrl && fromUrl.length <= 4 ? fromUrl.toLowerCase() : "bin";
 }
 
-/** Copies one finished file from Higgsfield's CDN into R2 and the media table. */
+/** Copies one finished file from fal's CDN into R2 and the media table. */
 async function keep(db: DB, bucket: R2Bucket, storeId: string, url: string, row: GenerationRow, index: number): Promise<string> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Could not download the result (${response.status}).`);
@@ -125,10 +117,10 @@ async function keep(db: DB, bucket: R2Bucket, storeId: string, url: string, row:
 }
 
 /**
- * Asks Higgsfield about every unfinished generation of this store, keeps what
+ * Asks fal about every unfinished generation of this store, keeps what
  * finished, and moves UGC ads on to their video stage.
  */
-export async function refreshPending(db: DB, env: Env, storeId: string): Promise<GenerationRow[]> {
+export async function refreshPending(db: DB, env: Env, origin: string, storeId: string): Promise<GenerationRow[]> {
   const pending = await db
     .select()
     .from(generations)
@@ -136,25 +128,28 @@ export async function refreshPending(db: DB, env: Env, storeId: string): Promise
     .limit(20);
   if (!pending.length) return [];
 
-  const creds = await credentialsFor(db, env, storeId);
+  const key = await keyFor(db, env, storeId);
   const updated: GenerationRow[] = [];
 
   for (const row of pending) {
     if (!row.requestId) continue;
     let patch: Partial<typeof generations.$inferInsert> = {};
     try {
-      const result = await remoteStatus(creds, row.requestId);
+      const statusUrl = String(row.params.statusUrl ?? "");
+      const responseUrl = String(row.params.responseUrl ?? "");
+      if (!statusUrl || !responseUrl) throw new Error("This generation has no status address.");
+      const result = await remoteStatus(key, statusUrl, responseUrl);
       if (result.status === "completed") {
         const keys: string[] = [];
         for (const [i, url] of result.urls.entries()) keys.push(await keep(db, env.MEDIA, storeId, url, row, i));
 
         if (row.kind === "ugc" && row.stage === 1 && keys[0]) {
           // The still is done: build the video on it.
-          const videoModel = modelById(String(row.params.videoModel ?? "veo-i2v"));
+          const videoModel = modelById(String(row.params.videoModel ?? "seedance-2"));
           if (!videoModel) throw new Error("Unknown video model for the UGC ad.");
-          const imageUrl = await publicInputUrl(env.MEDIA, creds, keys[0]);
+          const imageUrl = publicInputUrl(origin, keys[0]);
           const submitted = await submit(
-            creds,
+            key,
             videoModel,
             videoModel.body({
               prompt: String(row.params.videoPrompt || row.prompt),
@@ -165,12 +160,19 @@ export async function refreshPending(db: DB, env: Env, storeId: string): Promise
               count: 1,
             }),
           );
-          patch = { stillKey: keys[0], stage: 2, requestId: submitted.requestId, status: submitted.status, model: videoModel.id };
+          patch = {
+            stillKey: keys[0],
+            stage: 2,
+            requestId: submitted.requestId,
+            status: "queued",
+            model: videoModel.id,
+            params: { ...row.params, statusUrl: submitted.statusUrl, responseUrl: submitted.responseUrl },
+          };
         } else {
           patch = { status: "completed", outputKeys: keys };
         }
-      } else if (result.status === "failed" || result.status === "nsfw" || result.status === "canceled") {
-        patch = { status: result.status, error: result.error ?? (result.status === "nsfw" ? "Flagged by Higgsfield's moderation." : null) };
+      } else if (result.status === "failed") {
+        patch = { status: "failed", error: result.error };
       } else if (result.status !== row.status) {
         patch = { status: result.status };
       }

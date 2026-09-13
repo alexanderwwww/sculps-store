@@ -1,5 +1,5 @@
 /**
- * Polled by the Studio while anything is still generating. Asks Higgsfield,
+ * Polled by the Studio while anything is still generating. Asks fal,
  * keeps finished files, and answers with the rows that changed.
  */
 import type { Route } from "./+types/admin.studio.status";
@@ -13,7 +13,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const { store } = await resolveAdminStore(context.db, url);
   if (!store) return { rows: [], pending: 0 };
   try {
-    await refreshPending(context.db, context.cloudflare.env, store.id);
+    await refreshPending(context.db, context.cloudflare.env, url.origin, store.id);
   } catch {
     // A network blip: the next poll tries again. The rows below still answer.
   }

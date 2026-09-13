@@ -1,11 +1,12 @@
 /**
- * Studio — image, video and UGC ads, generated through Higgsfield's API.
+ * Studio — our own image, video and UGC ad generator.
  *
- * Three tabs, one gallery. Image and Video map one to one onto the models in
- * their developer API. UGC ad is this app's own two-step chain (a Soul still
- * of a creator with the product, then Veo talks over it), because Marketing
- * Studio itself is not in their API. Everything that finishes is copied into
- * this store's media so the editor can use it.
+ * Three tabs, one gallery. The models are the makers' own — Seedance,
+ * Kling, Veo, GPT Image — reached through fal's queue with one pay-per-use
+ * key. UGC ad is a two-step chain: GPT Image puts a real-looking creator
+ * with the product from your product picture, then Seedance makes her say
+ * the script with sound. Everything that finishes is copied into this
+ * store's media so the editor can use it.
  */
 import * as React from "react";
 import { Form, useFetcher, useNavigation, useRevalidator } from "react-router";
@@ -15,7 +16,7 @@ import { requireUser } from "~/lib/auth.server";
 import { resolveAdminStore, listMedia, addMedia } from "~/lib/admin.server";
 import { studioConfig } from "~/db/schema";
 import { encryptSecret, encryptionReady } from "~/lib/crypto.server";
-import { MODELS, modelById, testKey, StudioNotConfigured } from "~/lib/higgsfield.server";
+import { MODELS, modelById, testKey, StudioNotConfigured } from "~/lib/fal.server";
 import { listGenerations, startGeneration, deleteGeneration } from "~/lib/studio.server";
 import type { GenerationRow } from "~/lib/studio.server";
 import { card, Empty, primaryButton, secondaryButton, criticalButton, input, textarea, fieldLabel } from "~/admin/ui";
@@ -65,19 +66,19 @@ export async function action({ context, request }: Route.ActionArgs): Promise<Re
   const intent = text("intent");
 
   if (intent === "connect") {
-    const keyId = text("keyId");
     const secret = text("secret");
-    if (!keyId || !secret) return { error: "Both the key id and the secret are needed." };
-    if (!encryptionReady(env)) return { error: "Not saved: no ENCRYPTION_KEY on the Worker, and an API secret will not be stored in the clear." };
-    const check = await testKey({ keyId, secret });
+    if (!secret) return { error: "Paste the fal key." };
+    if (!encryptionReady(env)) return { error: "Not saved: no ENCRYPTION_KEY on the Worker, and an API key will not be stored in the clear." };
+    const check = await testKey(secret);
     if (!check.ok) return { error: check.reason };
     const secretEnc = await encryptSecret(env, secret);
-    if (!secretEnc) return { error: "Could not encrypt the secret." };
+    if (!secretEnc) return { error: "Could not encrypt the key." };
+    const keyId = `fal …${secret.slice(-4)}`;
     await context.db
       .insert(studioConfig)
       .values({ storeId: store.id, keyId, secretEnc, connectedAt: new Date(), updatedAt: new Date() })
       .onConflictDoUpdate({ target: studioConfig.storeId, set: { keyId, secretEnc, connectedAt: new Date(), updatedAt: new Date() } });
-    return { ok: "Connected. Higgsfield accepted the key." };
+    return { ok: "Connected. fal accepted the key." };
   }
 
   if (intent === "disconnect") {
@@ -120,15 +121,15 @@ export async function action({ context, request }: Route.ActionArgs): Promise<Re
         if (!product) return { error: "Say what the product is." };
         if (!script) return { error: "Write what she says. That is the ad." };
         if (!inputKey) return { error: "A UGC ad starts from a picture of the product." };
-        const still = modelById("soul-reference")!;
+        const still = modelById("gpt-image-2-edit")!;
         const imagePrompt =
-          `Candid iPhone photo, no retouching, slightly imperfect light. ${creator} in ${setting}, ` +
-          `holding and showing ${product} to the camera as if filming a selfie video. Keep the product exactly as in the reference picture. ` +
+          `Candid iPhone photo, no retouching, slightly imperfect light, vertical 9:16. ${creator} in ${setting}, ` +
+          `holding and showing ${product} to the camera as if filming a selfie video. The product must look exactly like the reference picture: same shape, colour, logo, proportions. ` +
           `Real skin, real clothes, nothing staged, no studio.`;
         const videoPrompt =
-          `She talks directly to the camera like a TikTok, natural handheld phone movement, casual energy. ` +
-          `She says: "${script}". Keep the product exactly as shown. Ambient room sound.`;
-        await startGeneration(context.db, env, store.id, {
+          `She talks directly to the camera like a TikTok, natural handheld phone movement, casual energy, lip sync. ` +
+          `She says: "${script}". Keep the product exactly as shown. Real room sound.`;
+        await startGeneration(context.db, env, url.origin, store.id, {
           kind: "ugc",
           model: still,
           prompt: `${product} — ${script.slice(0, 120)}`,
@@ -139,7 +140,7 @@ export async function action({ context, request }: Route.ActionArgs): Promise<Re
           count: 1,
           inputKey,
           videoPrompt,
-          videoModel: text("videoModel") || "veo-i2v",
+          videoModel: text("videoModel") || "seedance-2",
         });
         return { ok: "Started. The still comes first, then the video on top of it." };
       }
@@ -148,7 +149,7 @@ export async function action({ context, request }: Route.ActionArgs): Promise<Re
       if (!model || model.kind !== kind) return { error: "Pick a model." };
       const prompt = text("prompt");
       if (!prompt) return { error: "Write a prompt." };
-      await startGeneration(context.db, env, store.id, {
+      await startGeneration(context.db, env, url.origin, store.id, {
         kind,
         model,
         prompt,
@@ -161,7 +162,7 @@ export async function action({ context, request }: Route.ActionArgs): Promise<Re
       return { ok: "Started." };
     } catch (error) {
       if (error instanceof StudioNotConfigured) return { error: error.message };
-      return { error: error instanceof Error ? error.message : "Higgsfield did not accept the request." };
+      return { error: error instanceof Error ? error.message : "The model did not accept the request." };
     }
   }
 
@@ -237,9 +238,9 @@ export default function Studio({ loaderData, actionData }: Route.ComponentProps)
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <h1 style={{ margin: 0, fontSize: 20, lineHeight: "28px", fontWeight: 650 }}>Studio</h1>
         {config ? (
-          <Form method="post" onSubmit={(e) => (window.confirm("Remove the Higgsfield key?") ? undefined : e.preventDefault())}>
+          <Form method="post" onSubmit={(e) => (window.confirm("Remove the fal key?") ? undefined : e.preventDefault())}>
             <input type="hidden" name="intent" value="disconnect" />
-            <span style={{ fontSize: 12, color: "var(--ink-2)", marginRight: 10 }}>Higgsfield key …{config.keyId.slice(-4)}</span>
+            <span style={{ fontSize: 12, color: "var(--ink-2)", marginRight: 10 }}>{config.keyId}</span>
             <button style={secondaryButton} disabled={busy}>Disconnect</button>
           </Form>
         ) : null}
@@ -250,19 +251,15 @@ export default function Studio({ loaderData, actionData }: Route.ComponentProps)
 
       {!config ? (
         <div style={{ ...card, padding: 20, maxWidth: 560 }}>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>Connect Higgsfield</div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>Connect the models</div>
           <div style={{ fontSize: 13, color: "var(--ink-2)", marginBottom: 14 }}>
-            Create an API key in your Higgsfield dashboard and load API credits there. The secret is encrypted before it is stored.
+            Seedance, Kling, Veo and GPT Image, pay per use through one fal.ai key. Make a key at fal.ai/dashboard/keys and add a card there. The key is encrypted before it is stored.
           </div>
-          {!encryption ? <Notice kind="critical">The Worker has no ENCRYPTION_KEY, so the secret cannot be stored yet.</Notice> : null}
+          {!encryption ? <Notice kind="critical">The Worker has no ENCRYPTION_KEY, so the key cannot be stored yet.</Notice> : null}
           <Form method="post" style={{ display: "grid", gap: 10 }}>
             <input type="hidden" name="intent" value="connect" />
             <div>
-              <label style={fieldLabel}>Key id</label>
-              <input name="keyId" style={input} autoComplete="off" required />
-            </div>
-            <div>
-              <label style={fieldLabel}>Key secret</label>
+              <label style={fieldLabel}>fal key</label>
               <input name="secret" type="password" style={input} autoComplete="off" required />
             </div>
             <div>
@@ -317,14 +314,16 @@ export default function Studio({ loaderData, actionData }: Route.ComponentProps)
                   </Field>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     <Field label="Video model">
-                      <select name="videoModel" style={input} defaultValue="veo-i2v">
-                        <option value="veo-i2v">Veo 3.1</option>
-                        <option value="veo-fast-i2v">Veo 3.1 Fast</option>
+                      <select name="videoModel" style={input} defaultValue="seedance-2">
+                        <option value="seedance-2">Seedance 2.0</option>
+                        <option value="seedance-2-fast">Seedance 2.0 Fast</option>
+                        <option value="veo-3-1">Veo 3.1</option>
+                        <option value="kling-3-pro">Kling 3.0 Pro</option>
                       </select>
                     </Field>
                     <Field label="Length">
                       <select name="duration" style={input} defaultValue="8">
-                        {["4", "6", "8"].map((d) => <option key={d} value={d}>{d}s</option>)}
+                        {["5", "6", "8", "10", "12", "15"].map((d) => <option key={d} value={d}>{d}s</option>)}
                       </select>
                     </Field>
                   </div>
@@ -337,7 +336,7 @@ export default function Studio({ loaderData, actionData }: Route.ComponentProps)
                   <Field label="Model">
                     <select name="model" style={input} defaultValue={tabModels[0]?.id}>
                       {tabModels.map((m) => (
-                        <option key={m.id} value={m.id}>{m.label} — {m.note}</option>
+                        <option key={m.id} value={m.id}>{m.label} ({m.maker}) — {m.note}</option>
                       ))}
                     </select>
                   </Field>
@@ -350,7 +349,7 @@ export default function Studio({ loaderData, actionData }: Route.ComponentProps)
                     {tab === "video" ? (
                       <Field label="Length">
                         <select name="duration" style={input} defaultValue="6">
-                          {["4", "5", "6", "8", "10"].map((d) => <option key={d} value={d}>{d}s</option>)}
+                          {["4", "5", "6", "8", "10", "12", "15"].map((d) => <option key={d} value={d}>{d}s</option>)}
                         </select>
                       </Field>
                     ) : (

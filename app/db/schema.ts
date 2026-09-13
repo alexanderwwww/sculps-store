@@ -1028,10 +1028,11 @@ export const clientEvents = pgTable(
 /* ------------------------------------------------------------------ studio */
 
 /**
- * Studio: image, video and UGC ad generation through Higgsfield's API.
+ * Studio: image, video and UGC ad generation through the model makers
+ * (Seedance, Kling, Veo, GPT Image) via fal's queue.
  *
- * The key pair is per store and the secret is encrypted at rest with the same
- * master key as the payment secrets. Nothing here runs without a real key.
+ * One pay-per-use key per store, encrypted at rest with the same master key
+ * as the payment secrets. `key_id` is only a label. Nothing runs without it.
  */
 export const studioConfig = pgTable("studio_config", {
   storeId: uuid("store_id")
@@ -1044,9 +1045,9 @@ export const studioConfig = pgTable("studio_config", {
 });
 
 /**
- * One row per generation the owner asked for. The request id is Higgsfield's;
- * the outputs are copied into R2 the moment they complete because their CDN
- * keeps them for seven days only. A UGC ad is a chain: an image stage, then a
+ * One row per generation the owner asked for. The request id is fal's, with
+ * its status and response addresses in `params`; the outputs are copied into
+ * R2 the moment they complete rather than trusting a CDN link. A UGC ad is a chain: an image stage, then a
  * video stage on top of it — `stage` says which is running.
  */
 export const generations = pgTable(
