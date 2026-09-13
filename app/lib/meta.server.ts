@@ -10,7 +10,7 @@
  */
 import { eq } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { metaConfig } from "~/db/schema";
+import { metaConfig, clientEvents } from "~/db/schema";
 import { decryptSecret } from "./crypto.server";
 
 async function hash(value: string | null | undefined): Promise<string | null> {
@@ -342,6 +342,19 @@ export function readMetaCookies(request: Request, url?: URL): { fbp: string | nu
  * what the pixel's own cookies and the request give us — fbp, fbc, IP and user
  * agent. That is what Meta expects for these events; nothing is invented.
  */
+
+/**
+ * A refused server event is written down, so the Meta page can say so
+ * instead of the failure vanishing into a background task.
+ */
+async function noteFailure(db: DB, storeId: string, name: MetaEventName, reason: string): Promise<void> {
+  try {
+    await db.insert(clientEvents).values({ storeId, kind: "meta-capi-failed", detail: `${name}: ${reason}`.slice(0, 500) });
+  } catch {
+    /* the log must never break the page */
+  }
+}
+
 export async function trackFunnelEvent(
   db: DB,
   env: Env,
@@ -378,7 +391,7 @@ export async function trackFunnelEvent(
     (async () => {
       const settings = await metaSettings(db, env, input.storeId);
       if (!settings) return;
-      await sendEvent(settings, input.name, {
+      const result = await sendEvent(settings, input.name, {
         eventId,
         eventTime: Math.floor(Date.now() / 1000),
         sourceUrl: input.url.toString(),
@@ -391,6 +404,7 @@ export async function trackFunnelEvent(
         fbp,
         fbc,
       });
+      if (!result.ok) await noteFailure(db, input.storeId, input.name, result.reason);
     })(),
   );
 
@@ -421,7 +435,7 @@ export function sendServerEvent(
     (async () => {
       const settings = await metaSettings(db, env, input.storeId);
       if (!settings) return;
-      await sendEvent(settings, input.name, {
+      const result = await sendEvent(settings, input.name, {
         eventId: newMetaEventId(),
         eventTime: Math.floor(Date.now() / 1000),
         sourceUrl: input.url.toString(),
@@ -434,6 +448,7 @@ export function sendServerEvent(
         fbp,
         fbc,
       });
+      if (!result.ok) await noteFailure(db, input.storeId, input.name, result.reason);
     })(),
   );
 }
