@@ -92,6 +92,33 @@ export async function action({ context, request }: Route.ActionArgs) {
     return { ok: "Added." };
   }
 
+  if (intent === "fetch") {
+    // Pull a file from the internet into our own storage, streamed through
+    // the Worker so a 500 MB video never has to pass through a browser.
+    const bucket = context.cloudflare.env.MEDIA;
+    if (!bucket) return { error: "No media bucket is bound to this Worker yet." };
+    const link = String(form.get("url") || "").trim();
+    if (!/^https:\/\//i.test(link)) return { error: "Use a full https:// address." };
+    const wanted = String(form.get("key") || "").trim().replace(/[^A-Za-z0-9._-]/g, "");
+    const filename = link.split("/").pop()?.split("?")[0] || "file";
+    const key = wanted || filename;
+
+    const upstream = await fetch(link);
+    if (!upstream.ok || !upstream.body) return { error: `The address answered ${upstream.status}.` };
+    const length = Number(upstream.headers.get("content-length") || 0);
+    const type = upstream.headers.get("content-type") || "application/octet-stream";
+    if (!length) return { error: "The address did not say how big the file is, so it cannot be streamed in." };
+
+    // R2 needs to know the length of a stream up front.
+    const { readable, writable } = new FixedLengthStream(length);
+    const pumping = upstream.body.pipeTo(writable);
+    await bucket.put(key, readable, { httpMetadata: { contentType: type } });
+    await pumping;
+
+    await addMedia(context.db, store.id, { key, filename: key, mime: type, sizeBytes: length, alt: null }).catch(() => null);
+    return { ok: `Stored as /media/${key} (${Math.round(length / 1048576)} MB).` };
+  }
+
   if (intent === "delete") {
     await deleteMedia(context.db, form.getAll("mediaId").map(String));
     return { ok: "Deleted." };
