@@ -459,6 +459,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       geo: geoFromContext(context, request),
       device: deviceFromRequest(request),
       amountCents: cart.totalCents,
+      request,
     });
   }
 
@@ -983,6 +984,7 @@ async function payAction({
     device: deviceFromRequest(request),
     amountCents: cart.totalCents,
     orderId,
+    request,
   });
 
   return {

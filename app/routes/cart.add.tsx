@@ -66,6 +66,7 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
       path: "/cart/add",
       geo: geoFromContext(context, request),
       device: deviceFromRequest(request),
+      request,
     });
   }
 

@@ -127,8 +127,18 @@ export interface TrackInput {
   amountCents?: number | null;
   orderId?: string | null;
   device?: "desktop" | "mobile" | "tablet" | null;
-  /** true once this browser has proved it runs JavaScript */
+  /**
+   * True once this browser has proved it runs JavaScript.
+   *
+   * Pass the request instead and it is read from the cookie here. Three of the
+   * five call sites forgot this flag and their events were stored as bot
+   * traffic, which is why Live View's "Checking out" tile could never light
+   * up: it counts human events only. A default that has to be remembered at
+   * every call site is a default that will be forgotten again.
+   */
   human?: boolean;
+  /** the request the event came from, used to read the human cookie */
+  request?: Request;
 }
 
 export function track(db: DB, ctx: ExecutionContext, input: TrackInput): void {
@@ -149,7 +159,7 @@ export function track(db: DB, ctx: ExecutionContext, input: TrackInput): void {
       device: input.device ?? null,
       amountCents: input.amountCents ?? null,
       orderId: input.orderId ?? null,
-      human: input.human ?? false,
+      human: input.human ?? (input.request ? readVisitorHuman(input.request) : false),
     })
     .catch(() => undefined);
   ctx.waitUntil(write);

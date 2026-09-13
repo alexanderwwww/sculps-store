@@ -12,6 +12,7 @@ import { orders, orderEvents, stores, variants } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
 import { sendOrderConfirmation, sendMerchantNewOrder, emailReady } from "./email.server";
 import { metaSettings, sendPurchase } from "./meta.server";
+import { notifyAdmins, money } from "./notify.server";
 import { redeemDiscount } from "./discounts.server";
 
 /**
@@ -59,7 +60,26 @@ export async function afterPaymentConfirmed(
     );
   }
 
-  // 1. The receipt.
+  // 1. The sound on his phone.
+  //
+  // This lived in the Stripe webhook, which meant a PayPal sale rang nothing
+  // at all and a card sale only rang if the webhook arrived. Every payment
+  // path ends up here, and the timeline makes it fire exactly once.
+  if (!(await alreadyDone(db, orderId, "notified"))) {
+    try {
+      await notifyAdmins(db, env, {
+        title: "Order paid",
+        body: `#${order.number} · ${money(order.totalCents, order.currency ?? "USD")}`,
+        url: `/admin/orders/${orderId}?store=${store.slug}`,
+        tag: `order-${orderId}`,
+      });
+      await recordOrderEvent(db, orderId, "notified", "Admins notified of the paid order.");
+    } catch {
+      /* a missed ping is not a missed order */
+    }
+  }
+
+  // 2. The receipt.
   if (!(await alreadyDone(db, orderId, "email:confirmation"))) {
     if (emailReady(env)) {
       await sendOrderConfirmation(db, env, orderId, {

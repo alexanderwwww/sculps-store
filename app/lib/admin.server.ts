@@ -1473,6 +1473,11 @@ export async function recordVisitorEvent(
   },
 ): Promise<void> {
   await db.insert(events).values({
+    // Only the server writes these, and only for something that actually
+    // happened — a payment confirmed. Left at the column default they were
+    // stored as bot traffic, so no sale ever reached Live View's map, which
+    // counts human events only.
+    human: true,
     storeId,
     type: input.type,
     sessionId: input.sessionId,

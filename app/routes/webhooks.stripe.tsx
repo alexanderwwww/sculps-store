@@ -8,7 +8,6 @@
  * The signature is verified before anything is written, so a forged POST
  * cannot mark orders paid.
  */
-import { notifyAdmins, money } from "~/lib/notify.server";
 import type { Route } from "./+types/webhooks.stripe";
 import { and, eq, sql } from "drizzle-orm";
 import { carts, orders, paymentProviders, stores } from "~/db/schema";
@@ -159,17 +158,9 @@ export async function action({ request, context }: Route.ActionArgs) {
       } catch (error) {
         await recordOrderEvent(context.db, order.id, "after-payment:failed", `After-payment steps failed · ${String(error)}`).catch(() => undefined);
       }
-      // The sound on his phone and his laptop. Last, and never fatal.
-      try {
-        await notifyAdmins(context.db, context.cloudflare.env, {
-          title: "Order paid",
-          body: `#${order.number} · ${money(order.totalCents, order.currency ?? "USD")}`,
-          url: `/admin/orders/${order.id}${store ? `?store=${store.slug}` : ""}`,
-          tag: `order-${order.id}`,
-        });
-      } catch {
-        /* a missed ping is not a missed order */
-      }
+      // The sound on his phone is sent by afterPaymentConfirmed above, so a
+      // PayPal sale rings too and a card sale rings whichever path confirms
+      // it first. Sending it here as well would ring twice.
     }
   }
 
