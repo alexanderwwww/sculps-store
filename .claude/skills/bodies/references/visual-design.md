@@ -85,56 +85,50 @@ Examples:
 They should feel like editorial markup, not childish doodles.
 
 ## Photography
-This is one of the highest-priority elements.
+
+**The weapon of this brand is relatability, not polish.**
+
+Every image with a person in it is shot the way she shoots herself: iPhone, raw,
+unedited. Imperfect light. Slightly off framing. A real room with real things in
+it. No retouching, no colour grade, no studio lighting, no art director.
+
+She is on Instagram all day. She photographs herself all day. She knows exactly
+what a paid campaign looks like and she scrolls past it. What stops her is
+something that looks like it came from someone she follows.
+
+### The rule
+- **Anything with a human in it:** iPhone RAW. Amateur. Unedited.
+- **Anything that is only the product:** clean render. Sharp, lit, correct.
+
+That contrast is the whole point. A crisp product shot next to a raw phone photo
+reads as a real brand with real customers. Making *everything* raw reads as a
+dropshipper who could not afford photography.
 
 ### Woman
-The women should look like:
-- Aesthetic Instagram Pilates girls.
-- Young adult.
-- Modern.
-- Stylish.
-- Healthy and strong.
-- Natural but polished.
-- Comfortable in aspirational interiors.
-- Wearing contemporary Pilates/athleisure sets.
+- Real, not model-perfect. Mid-twenties to late thirties.
+- Ordinary good looks. Visible skin texture. No retouching.
+- Hair not done. Sometimes mid-workout messy.
+- Contemporary workout sets, but worn-in, not a styled outfit.
+- Caught mid-movement or mid-nothing, never posing for a camera.
 
-### Styling
-Use:
-- Clean fitted workout sets.
-- Socks or barefoot depending on scene.
-- Minimal jewelry.
-- Modern hair.
-- Natural/glowy skin.
-- Tasteful styling.
+### How the shot should read
+- Taken on a phone propped against something, or held by a friend.
+- Window light only. Blown highlights and dark corners are fine and wanted.
+- Slight motion blur, slight tilt, autofocus hunting: all fine.
+- A cup on the floor, a laundry pile just out of frame, a normal apartment.
+- Mirror selfies, with the phone visible in the mirror.
 
 ### Locations
-Prioritize:
-- Beautiful apartments.
-- Modern bedrooms.
-- Living rooms.
-- Sunlit interiors.
-- Small-space apartment setups.
-- Clean kitchens/living spaces where appropriate.
-- Hotel/apartment/travel environments for portability.
+Real homes. Small apartments. A bedroom with the bed unmade. A living room with
+the sofa pushed back to make space. Sunlight through a normal window. Never a
+studio, never a set, never a resort.
 
-Avoid making the brand primarily about:
-- Beaches.
-- Tropical resorts.
-- Outdoor summer scenes.
-
-The brand is fundamentally **at home**.
-
-### Image language
-Mix:
-- Editorial campaign photography.
-- Candid-feeling movement shots.
-- Mirror/phone imagery.
-- Close-up product shots.
-- Detail shots.
-- Lifestyle compositions.
-- Product-in-room photography.
-
-The image should feel like something a Gen-Z wellness customer might save to Instagram or Pinterest.
+### Never
+- Editorial campaign lighting on a person.
+- Retouched skin.
+- A model who looks hired.
+- Colour grading or filters.
+- Stock fitness photography of any kind.
 
 ## Product photography
 The machine should be the hero when the section is product-focused.

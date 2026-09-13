@@ -70,10 +70,13 @@ rhythm, bold black type, saturated blocks and Gen-Z energy. Never copy its skinc
 Rhythm: white → saturated colour → white → photographic colour → white → neon. Not every
 section gets a coloured background.
 
-Photography is the highest-priority element: **aesthetic Instagram Pilates girls** in
-beautiful apartments, bedrooms, sunlit living rooms. Contemporary workout sets, glowy skin,
-natural poses. Never generic gym stock, never middle-aged corporate wellness, never beach
-or tropical — **the brand is fundamentally at home**.
+Photography is the highest-priority element, and the brand's weapon is **relatability, not
+polish**. Anything with a person in it is shot the way she shoots herself: **iPhone, raw,
+unedited** — imperfect light, off framing, a real apartment with real mess. She scrolls past
+anything that looks like an ad. Anything that is **only the product** stays a clean, sharp
+render; that contrast is what makes the raw shots read as real rather than cheap. Never
+generic gym stock, never retouched models, never beach or tropical — **the brand is
+fundamentally at home**.
 
 Handwritten annotations used sparingly, as editorial markup, never childish doodles.
 
@@ -100,7 +103,7 @@ Experiment reference.
 Feedback decoder:
 - *"more vibrant"* → raise intentional colour contrast and saturation
 - *"too summer"* → drop beach/outdoor; use colourful home interiors
-- *"not Gen Z"* → better styling, composition, colour blocking, social-native imagery
+- *"not Gen Z"* → more social-native, less art-directed; it should look shot on a phone
 - *"doesn't breathe"* → more white space, more section spacing, less clutter
 - *"too generic"* → more distinctive editorial art direction
 - *"accurate"* → return to the established product geometry
