@@ -67,7 +67,7 @@ export interface Way {
 }
 export const WAYS: Record<string, Way> = {
   "Icy Swan": {
-    disc: "#D6E9F6", ink: "#2E5570", card: `${M}/bd-cut-swan.png`, studio: `${M}/bd-studio-swan.jpg`,
+    disc: "#D6E9F6", ink: "#2E5570", card: `${M}/bd-cut-swan.png`, studio: `${M}/bd-studio-swan.jpg`, ad: `${M}/bd-ad-swan.jpg`,
     life: [`${M}/bd-e-swan-night.png`, `${M}/bd-c-swan-latina.png`, `${M}/bd-b-swan-socks.png`, `${M}/bd-d-swan-underbed.png`],
   },
   "Lilac Heat": {
