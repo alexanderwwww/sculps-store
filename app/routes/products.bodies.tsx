@@ -66,7 +66,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   // Signed-in admins get a live-reloading page, and ?samples=1 fills the
   // data-only sections with clearly stamped placeholders.
   const admin = await currentUser(context.db, request).catch(() => null);
-  if (admin && url.searchParams.get("samples") === "1") page = withSamples(page);
+  const samples = Boolean(admin && url.searchParams.get("samples") !== "0");
+  if (samples) page = withSamples(page);
   const liveReload = admin ? liveReloadScript() : null;
 
   const variant = page.variants.find((v) => slug(v.label) === params.handle);
@@ -117,13 +118,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     .catch(() => null);
 
   return withHeaders(
-    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload },
+    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload, samples },
     { headers },
   );
 }
 
 export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
-  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload } = loaderData;
+  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload, samples } = loaderData;
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -137,6 +138,11 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
       {liveReload ? <script dangerouslySetInnerHTML={{ __html: liveReload }} /> : null}
+      {samples ? (
+        <a href="?samples=0" style={{ position: "fixed", left: 12, bottom: 12, zIndex: 60, background: "#0B0C0E", color: "#C6FF3D", font: "700 10px/1 Archivo, sans-serif", letterSpacing: ".12em", textTransform: "uppercase", padding: "8px 11px", borderRadius: 999, textDecoration: "none", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }} title="You see SAMPLE cards because you are signed in. Shoppers see real data only. Click to view as a shopper.">
+          Sample cards · admin view
+        </a>
+      ) : null}
       <BodiesProduct
         page={page}
         variant={variant}
