@@ -86,6 +86,11 @@ export function meta({ data: loaded }: Route.MetaArgs) {
   return tags;
 }
 
+/** Forward the loader's headers (no-store, cookies) onto the document response. */
+export function headers({ loaderHeaders }: { loaderHeaders: Headers }) {
+  return loaderHeaders;
+}
+
 export async function loader({ context, request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const store = await resolveStore(context.db, context.hostname, url);
