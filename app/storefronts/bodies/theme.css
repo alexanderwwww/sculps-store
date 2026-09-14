@@ -374,6 +374,11 @@
 .bd-offer .bd-pdp__price { margin-top: 0; }
 .bd-pdp__save { font-family: var(--sans); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; background: var(--ink); color: var(--lime); padding: 6px 10px; border-radius: 999px; }
 .bd-pdp__h1 { font-size: clamp(32px, 3.6vw, 52px); margin-top: 8px; }
+.bd-pdp__rating { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; text-decoration: none; font-family: var(--sans); font-size: 13px; }
+.bd-pdp__rating b { font-weight: 800; }
+.bd-pdp__rating span { color: var(--ink-2); font-weight: 500; }
+.bd-pdp__facts { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.bd-pdp__facts li::before { content: "●"; color: var(--lime); margin-right: 6px; font-size: 9px; vertical-align: 1px; }
 .bd-pdp__tag { margin: 6px 0 0; font-size: 15px; color: var(--ink-2); }
 .bd-pdp__price { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0; }
 .bd-pdp__price b { font-family: var(--sans); font-size: 30px; font-weight: 800; letter-spacing: -.02em; }

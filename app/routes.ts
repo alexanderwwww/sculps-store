@@ -68,6 +68,8 @@ export default [
       route("media", "routes/admin.media.tsx"),
       route("studio", "routes/admin.studio.tsx"),
       route("studio/status", "routes/admin.studio.status.tsx"),
+      route("studio/chat", "routes/admin.studio.chat.tsx"),
+      route("studio/batch", "routes/admin.studio.batch.tsx"),
       route("analytics", "routes/admin.analytics.tsx"),
       route("analytics/behavior", "routes/admin.analytics.behavior.tsx"),
       route("live", "routes/admin.live.tsx"),

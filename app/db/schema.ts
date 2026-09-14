@@ -1044,8 +1044,80 @@ export const studioConfig = pgTable("studio_config", {
   keyId: text("key_id").notNull(),
   secretEnc: text("secret_enc").notNull(),
   connectedAt: timestamp("connected_at", { withTimezone: true }),
+  /** the Anthropic key behind the Marketing Studio chat, encrypted like the fal key */
+  anthropicKeyEnc: text("anthropic_key_enc"),
+  /** claude-sonnet-5 | claude-opus-5 */
+  model: text("model").notNull().default("claude-sonnet-5"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/* ------------------------------------------------------- marketing studio */
+
+/** The sections of the Marketing Studio sidebar. Each thread belongs to one. */
+export const STUDIO_SECTIONS = ["meta_photos", "ugc_videos", "product_photos", "website_photos", "organic"] as const;
+export type StudioSection = (typeof STUDIO_SECTIONS)[number];
+
+/** One chat with Claude, per store and section. */
+export const studioThreads = pgTable(
+  "studio_threads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    section: text("section").$type<StudioSection>().notNull(),
+    title: text("title").notNull().default("New chat"),
+    /** notes the agent saved with save_note */
+    summary: text("summary"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("studio_threads_store_idx").on(t.storeId, t.section, t.updatedAt)],
+);
+
+/**
+ * Every message of a thread, in Anthropic content-block form so the same rows
+ * are both the transcript on screen and the history sent back to the model.
+ * `tool` rows carry the tool_result blocks (they are sent as `user` turns).
+ */
+export const studioMessages = pgTable(
+  "studio_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => studioThreads.id, { onDelete: "cascade" }),
+    /** user | assistant | tool */
+    role: text("role").$type<"user" | "assistant" | "tool">().notNull(),
+    content: jsonb("content").$type<unknown[]>().notNull().default([]),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("studio_messages_thread_idx").on(t.threadId, t.createdAt)],
+);
+
+/** A trained LoRA of a product or person, so it can be drawn again accurately. */
+export const studioSubjects = pgTable(
+  "studio_subjects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storeId: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    triggerWord: text("trigger_word").notNull(),
+    /** /media keys the training zip was built from */
+    mediaKeys: jsonb("media_keys").$type<string[]>().notNull().default([]),
+    loraUrl: text("lora_url"),
+    /** queued | in_progress | ready | failed */
+    status: text("status").notNull().default("queued"),
+    error: text("error"),
+    /** fal request addresses while training */
+    params: jsonb("params").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("studio_subjects_store_idx").on(t.storeId)],
+);
 
 /**
  * One row per generation the owner asked for. The request id is fal's, with

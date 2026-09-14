@@ -56,6 +56,10 @@ export interface BodyInput {
   imageUrl: string | null;
   audio: boolean;
   count: number;
+  /** GPT Image: low | medium | high (defaults to high) */
+  quality?: string;
+  /** flux-lora: trained subject weights */
+  loras?: Array<{ path: string; scale: number }>;
 }
 
 /** GPT Image sizes are named, not ratios. */
@@ -81,7 +85,7 @@ export const MODELS: ModelDef[] = [
     note: "Product shots, typography, clean renders",
     needsImage: false,
     aspects: ["1:1", "4:3", "3:4", "16:9", "9:16"],
-    body: ({ prompt, aspect, count }) => ({ prompt, image_size: gptSize(aspect), quality: "high", num_images: count, output_format: "png" }),
+    body: ({ prompt, aspect, count, quality }) => ({ prompt, image_size: gptSize(aspect), quality: quality ?? "high", num_images: count, output_format: "png" }),
   },
   {
     id: "gpt-image-2-edit",
@@ -92,11 +96,28 @@ export const MODELS: ModelDef[] = [
     note: "Keeps your product or a face from the picture",
     needsImage: true,
     aspects: ["1:1", "4:3", "3:4", "16:9", "9:16"],
-    body: ({ prompt, aspect, count, imageUrl }) => ({
+    body: ({ prompt, aspect, count, imageUrl, quality }) => ({
       prompt,
       image_urls: [imageUrl],
       image_size: gptSize(aspect),
-      quality: "high",
+      quality: quality ?? "high",
+      num_images: count,
+      output_format: "png",
+    }),
+  },
+  {
+    id: "flux-lora",
+    endpoint: "fal-ai/flux-lora",
+    kind: "image",
+    label: "FLUX with a trained subject",
+    maker: "Black Forest Labs",
+    note: "Draws a product or person it was trained on",
+    needsImage: false,
+    aspects: ["1:1", "4:3", "3:4", "16:9", "9:16"],
+    body: ({ prompt, aspect, count, loras }) => ({
+      prompt,
+      loras: loras ?? [],
+      image_size: gptSize(aspect),
       num_images: count,
       output_format: "png",
     }),
@@ -273,4 +294,44 @@ export async function testKey(key: string): Promise<{ ok: true } | { ok: false; 
   if (response.status === 401 || response.status === 403) return { ok: false, reason: `fal refused the key (${response.status}).` };
   if (response.status >= 500) return { ok: false, reason: `fal is unreachable (${response.status}).` };
   return { ok: true };
+}
+
+/* --------------------------------------------------------------- training */
+
+export const TRAINING_ENDPOINT = "fal-ai/flux-lora-fast-training";
+
+/**
+ * Starts a LoRA training on fal. `zipUrl` is a public https address of a zip
+ * of pictures; fal answers with a queue request like any other model.
+ */
+export async function submitTraining(key: string, zipUrl: string, triggerWord: string): Promise<Submitted> {
+  const model: ModelDef = {
+    id: "flux-lora-training",
+    endpoint: TRAINING_ENDPOINT,
+    kind: "image",
+    label: "LoRA training",
+    maker: "fal",
+    note: "",
+    needsImage: true,
+    aspects: [],
+    body: () => ({}),
+  };
+  return submit(key, model, { images_data_url: zipUrl, trigger_word: triggerWord, steps: 1000, create_masks: true });
+}
+
+/** A training result carries `diffusion_lora_file.url` rather than images. */
+export async function trainingStatus(key: string, statusUrl: string, responseUrl: string): Promise<{ status: StatusResult["status"]; loraUrl: string | null; error: string | null }> {
+  const response = await fetch(statusUrl, { headers: headers(key) });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`fal status ${response.status}: ${detail(text)}`);
+  const json = JSON.parse(text) as { status?: string; error?: string };
+  if (json.status === "IN_QUEUE") return { status: "queued", loraUrl: null, error: null };
+  if (json.status !== "COMPLETED") return { status: "in_progress", loraUrl: null, error: null };
+  const result = await fetch(responseUrl, { headers: headers(key) });
+  const body = await result.text();
+  if (!result.ok) return { status: "failed", loraUrl: null, error: detail(body) || json.error || "Training failed." };
+  const out = JSON.parse(body) as { diffusion_lora_file?: { url?: string }; error?: string };
+  const url = out.diffusion_lora_file?.url ?? null;
+  if (!url) return { status: "failed", loraUrl: null, error: out.error ?? "Training returned no weights." };
+  return { status: "completed", loraUrl: url, error: null };
 }

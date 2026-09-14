@@ -174,6 +174,8 @@ const COMPARE = {
   ],
 };
 /** The captions that ride the UGC marquee: product facts, two lines each, rotated through. */
+/** Above-the-fold shipping facts. Real ones only: delivery time and returns days are added when confirmed. */
+const SHIP_FACTS = ["Free shipping worldwide", "Pay in 4 with PayPal", "Folds flat, 30-second setup"];
 const FEED_LINES: { big: string; small: string; style: "stack" | "outline" | "tag" | "corner" }[] = [
   { big: "SCREEN BUILT IN", small: "press play. she tells you what to do.", style: "stack" },
   { big: "FOLDS FLAT", small: "under the bed by 9pm", style: "outline" },
@@ -1204,7 +1206,17 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
         <div className="bd-pdp__buybox">
           <p className="bd-eyebrow">{page.product.title}</p>
           <h1 className="bd-h1 bd-pdp__h1">{variant.label}</h1>
+          {page.reviews.length > 0 ? (
+            <a className="bd-pdp__rating" href="#reviews">
+              <Stars n={Math.round(page.reviews.reduce((a, r) => a + Math.max(1, Math.min(5, r.rating)), 0) / page.reviews.length)} />
+              <b>{(page.reviews.reduce((a, r) => a + Math.max(1, Math.min(5, r.rating)), 0) / page.reviews.length).toFixed(1)}</b>
+              <span>· {page.reviews.length} review{page.reviews.length === 1 ? "" : "s"}</span>
+            </a>
+          ) : null}
           <p className="bd-pdp__tag">A reformer-style Pilates board with a built-in screen and a real instructor on it. Folds flat, lives in a small apartment.</p>
+          <ul className="bd-pdp__facts" aria-label="Shipping and payment">
+            {SHIP_FACTS.map((f) => <li key={f}>{f}</li>)}
+          </ul>
           <div className="bd-pdp__ways" role="list" aria-label="Colourway">
             {page.variants.map((other) => (
               <a key={other.id} role="listitem" aria-current={other.id === variant.id} className="bd-pdp__way" href={`/products/${slug(other.label)}${storeParam}`}>
@@ -1248,7 +1260,6 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
               </button>
             </div>
           </div>
-          <p className="bd-pdp__ship">Free shipping worldwide · 30-second setup</p>
           <PayMarks />
         </div>
       </div>

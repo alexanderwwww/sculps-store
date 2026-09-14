@@ -9,8 +9,9 @@
  */
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { generations, media } from "~/db/schema";
-import { keyFor, modelById, submit, status as remoteStatus, type ModelDef, type BodyInput } from "./fal.server";
+import { generations, media, studioSubjects } from "~/db/schema";
+import { keyFor, modelById, submit, status as remoteStatus, submitTraining, trainingStatus, type ModelDef, type BodyInput } from "./fal.server";
+import { zipSync } from "fflate";
 
 export type GenerationRow = typeof generations.$inferSelect;
 
@@ -39,6 +40,12 @@ export interface StartInput {
   /** for a UGC ad: the video prompt used on the still once it exists */
   videoPrompt?: string;
   videoModel?: string;
+  /** GPT Image quality */
+  quality?: string;
+  /** trained subject weights for flux-lora */
+  loras?: Array<{ path: string; scale: number }>;
+  /** Marketing Studio: section, thread and batch this belongs to */
+  meta?: { section?: string; threadId?: string; batchId?: string; label?: string };
 }
 
 export async function startGeneration(db: DB, env: Env, origin: string, storeId: string, input: StartInput): Promise<GenerationRow> {
@@ -53,6 +60,8 @@ export async function startGeneration(db: DB, env: Env, origin: string, storeId:
     imageUrl,
     audio: input.audio,
     count: input.count,
+    quality: input.quality,
+    loras: input.loras,
   };
   const submitted = await submit(key, input.model, input.model.body(bodyInput));
 
@@ -69,6 +78,7 @@ export async function startGeneration(db: DB, env: Env, origin: string, storeId:
         audio: input.audio,
         count: input.count,
         ...(input.kind === "ugc" ? { videoPrompt: input.videoPrompt ?? "", videoModel: input.videoModel ?? "seedance-2" } : {}),
+        ...(input.meta ?? {}),
         statusUrl: submitted.statusUrl,
         responseUrl: submitted.responseUrl,
       },
@@ -99,7 +109,10 @@ async function keep(db: DB, bucket: R2Bucket, storeId: string, url: string, row:
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
   const ext = extensionFor(url, type);
-  const key = `studio-${hash}.${ext}`;
+  // Marketing Studio outputs carry their section in the key, so Assets can
+  // filter by it: ms-<section>-<hash>.<ext>. Older Studio outputs stay studio-*.
+  const section = typeof row.params.section === "string" ? row.params.section : null;
+  const key = section ? `ms-${section}-${hash}.${ext}` : `studio-${hash}.${ext}`;
   await bucket.put(key, bytes, { httpMetadata: { contentType: type ?? "application/octet-stream" } });
   const label = row.prompt.slice(0, 40).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "studio";
   await db
@@ -185,6 +198,86 @@ export async function refreshPending(db: DB, env: Env, origin: string, storeId: 
         .set({ ...patch, updatedAt: new Date() })
         .where(eq(generations.id, row.id))
         .returning();
+      updated.push(next);
+    }
+  }
+  return updated;
+}
+
+/* ---------------------------------------------------------------- subjects */
+
+export type SubjectRow = typeof studioSubjects.$inferSelect;
+
+export async function listSubjects(db: DB, storeId: string): Promise<SubjectRow[]> {
+  return db.select().from(studioSubjects).where(eq(studioSubjects.storeId, storeId)).orderBy(desc(studioSubjects.createdAt));
+}
+
+/**
+ * Trains a subject: zips the chosen pictures from R2 (store-only zip, built
+ * in the Worker), parks the zip in R2 so fal can fetch it from /media, and
+ * queues the training. Progress is picked up by refreshSubjects.
+ */
+export async function startTraining(
+  db: DB,
+  env: Env,
+  origin: string,
+  storeId: string,
+  input: { name: string; triggerWord: string; mediaKeys: string[] },
+): Promise<SubjectRow> {
+  const key = await keyFor(db, env, storeId);
+  const keys = input.mediaKeys.filter((k) => k && !k.startsWith("http")).slice(0, 30);
+  if (keys.length < 3) throw new Error("Pick at least three pictures to train from.");
+  const files: Record<string, Uint8Array> = {};
+  for (const k of keys) {
+    const object = await env.MEDIA.get(k);
+    if (!object) throw new Error(`Missing picture ${k}.`);
+    files[k.replace(/[^A-Za-z0-9._-]/g, "_")] = new Uint8Array(await object.arrayBuffer());
+  }
+  const zipped = zipSync(files, { level: 0 });
+  const digest = await crypto.subtle.digest("SHA-256", zipped);
+  const hash = Array.from(new Uint8Array(digest).slice(0, 10))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const zipKey = `ms-train-${hash}.zip`;
+  await env.MEDIA.put(zipKey, zipped, { httpMetadata: { contentType: "application/zip" } });
+
+  const trigger = input.triggerWord.trim().replace(/\s+/g, "_").toUpperCase() || "SUBJECT";
+  const submitted = await submitTraining(key, publicInputUrl(origin, zipKey), trigger);
+  const [row] = await db
+    .insert(studioSubjects)
+    .values({
+      storeId,
+      name: input.name.trim() || trigger,
+      triggerWord: trigger,
+      mediaKeys: keys,
+      status: "queued",
+      params: { zipKey, requestId: submitted.requestId, statusUrl: submitted.statusUrl, responseUrl: submitted.responseUrl },
+    })
+    .returning();
+  return row;
+}
+
+/** Asks fal about every subject still training and records the weights when done. */
+export async function refreshSubjects(db: DB, env: Env, storeId: string): Promise<SubjectRow[]> {
+  const pending = await db
+    .select()
+    .from(studioSubjects)
+    .where(and(eq(studioSubjects.storeId, storeId), inArray(studioSubjects.status, PENDING)));
+  if (!pending.length) return [];
+  const key = await keyFor(db, env, storeId);
+  const updated: SubjectRow[] = [];
+  for (const row of pending) {
+    let patch: Partial<typeof studioSubjects.$inferInsert> = {};
+    try {
+      const result = await trainingStatus(key, String(row.params.statusUrl ?? ""), String(row.params.responseUrl ?? ""));
+      if (result.status === "completed") patch = { status: "ready", loraUrl: result.loraUrl };
+      else if (result.status === "failed") patch = { status: "failed", error: result.error };
+      else if (result.status !== row.status) patch = { status: result.status };
+    } catch (error) {
+      patch = { status: "failed", error: error instanceof Error ? error.message : String(error) };
+    }
+    if (Object.keys(patch).length) {
+      const [next] = await db.update(studioSubjects).set({ ...patch, updatedAt: new Date() }).where(eq(studioSubjects.id, row.id)).returning();
       updated.push(next);
     }
   }
