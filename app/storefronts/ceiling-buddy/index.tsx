@@ -23,6 +23,8 @@ const has = (v: Vals, ...keys: string[]) => keys.some((k) => val(v, k) !== "");
 
 /** The store's own logo, in R2. Chrome, not content — it never changes per page. */
 const LOGO = "/media/3958921693410617.webp";
+/** The cut-out, on its transparent background — the only shot that can float. */
+const HERO = "/media/69a1b0cad0438d42.webp";
 
 /* ------------------------------------------------------------------ icons */
 
@@ -139,7 +141,7 @@ function Section({
     case "buy_box":       return <BuyBox section={section} page={page} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
-    case "product_grid":  return <ProductGrid section={section} />;
+    case "product_grid":  return <LockScreen section={section} />;
     case "trust_icons":   return <TrustBand section={section} />;
     case "three_steps":   return <Steps section={section} />;
     case "benefits":      return <Benefits section={section} />;
@@ -524,30 +526,79 @@ function ProofWall({ section }: { section: LoadedSection }) {
   );
 }
 
-/* ------------------------------------------------------------ product grid */
+/* ------------------------------------------------------------ lock screen */
+/**
+ * The night it happens, drawn as a phone's lock screen.
+ *
+ * It is the one piece of the page that shows the product being wanted rather
+ * than being used: the plan being made in the afternoon, and two people saying
+ * so afterwards. Built in markup rather than shipped as a flat image so it
+ * reflows on a phone and the words stay editable.
+ *
+ * `product_grid` carries it — this store sells one thing and has no grid — with
+ * the mapping documented in the seed: `note` says which side a row belongs to
+ * and when, `image` is the story screenshot.
+ */
+function LockScreen({ section }: { section: LoadedSection }) {
+  const v = section.values;
+  const rows = section.blocks.filter((b) => has(b.values, "title"));
+  const lines = val(v, "heading").split(String.fromCharCode(10)).filter(Boolean);
+  const texts = rows.filter((b) => !val(b.values, "note").startsWith("story"));
+  const stories = rows.filter((b) => val(b.values, "note").startsWith("story"));
+  if (!rows.length) return null;
 
-function ProductGrid({ section }: { section: LoadedSection }) {
-  const items = section.blocks.filter((b) => has(b.values, "title"));
-  if (!items.length) return null;
+  const side = (b: (typeof rows)[number]) => val(b.values, "note").split(" ")[0];
+  const when = (b: (typeof rows)[number]) => val(b.values, "note").split(" ").slice(1).join(" ");
+
   return (
-    <section className="cb-section">
-      <div className="cb-wrap">
-        <Head section={section} />
-        <div className="cb-grid cb-grid--3">
-          {items.map((b) => (
-            <div className="cb-card" key={b.id} style={{ padding: 0, overflow: "hidden" }}>
-              {has(b.values, "image") ? (
-                <div className="cb-ben__pic" style={{ aspectRatio: "4 / 3" }}>
-                  <img src={val(b.values, "image")} alt="" loading="lazy" />
-                </div>
-              ) : null}
-              <div style={{ padding: "20px 22px 24px" }}>
-                <h3 className="cb-h3">{val(b.values, "title")}</h3>
-                {has(b.values, "note") ? <p>{val(b.values, "note")}</p> : null}
-              </div>
+    <section className="cb-lock">
+      <div className="cb-lock__in">
+        <div className="cb-lock__clock">
+          {has(v, "subheading") ? <span>{val(v, "subheading")}</span> : null}
+          <time>9:27</time>
+        </div>
+
+        <div className="cb-lock__notif">
+          <img src={LOGO} alt="" />
+          <div>
+            <b>Ceiling Buddy<i>now</i></b>
+            {has(v, "footnote") ? <p>{val(v, "footnote")}</p> : null}
+          </div>
+        </div>
+
+        <div className="cb-lock__texts">
+          {texts.map((b) => (
+            <div className="cb-lock__msg" data-side={side(b)} key={b.id}>
+              <p>{val(b.values, "title")}</p>
+              <span>{when(b)}</span>
             </div>
           ))}
         </div>
+
+        <figure className="cb-lock__hero">
+          <img src={HERO} alt="" />
+        </figure>
+
+        <div className="cb-lock__stories">
+          {stories.map((b) => (
+            <article className="cb-lock__story" key={b.id}>
+              <header>
+                <span className="cb-lock__who">{when(b)}</span>
+                <span className="cb-lock__what">replied to your story</span>
+              </header>
+              <div className="cb-lock__body">
+                {has(b.values, "image") ? <img src={val(b.values, "image")} alt="" loading="lazy" /> : null}
+                <p>{val(b.values, "title")}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {lines.length ? (
+          <p className="cb-lock__tag">
+            {lines.map((line) => <span key={line}>{line}</span>)}
+          </p>
+        ) : null}
       </div>
     </section>
   );

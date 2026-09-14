@@ -183,6 +183,15 @@ https://kerberos.gardenbuddystore.workers.dev/?store=ceiling-buddy
   make people hungry". Heavy black keylines survive nowhere except the logo.
 - **Proportion** the gallery takes the fold; the buy column is deliberately the
   smaller half.
+- **The lock-screen section** is the one dark, saturated moment on an otherwise
+  white page: a phone's lock screen, with the plan being made in the afternoon
+  on the left and two people saying it was worth it on the right. It carries
+  `product_grid`, which this one-product store has no other use for, with this
+  mapping: `heading` is the tagline (one line per row), `subheading` the date,
+  `footnote` the notification line, `block.title` the message text, `block.note`
+  is `them <time>` / `us <time>` / `story <handle>`, and `block.image` the story
+  screenshot. The projector beam is drawn in CSS, not baked into the photo, so
+  it scales with the section.
 
 - **Media** 10 assets in R2 as webp — logo (background keyed out), hero cut-out,
   feature card, and six iPhone-UGC lifestyle shots.

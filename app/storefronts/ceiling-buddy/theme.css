@@ -704,3 +704,93 @@
   font-size: 13px; color: var(--dim);
 }
 .cb-chat__foot a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ------------------------------------------------------------ lock screen */
+/* The one dark, saturated moment on the page. Everything else is white, so
+   this reads as the night itself rather than as another section. */
+
+.cb-lock {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(70% 55% at 50% 42%, #1E63C8 0%, #124395 42%, #08245C 74%, #05173F 100%);
+  color: #fff; padding: clamp(40px, 6vw, 72px) 0 clamp(36px, 5vw, 60px);
+}
+.cb-lock__in {
+  position: relative; width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 20px;
+  display: grid; gap: 22px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.55fr) minmax(0, 0.92fr);
+  grid-template-areas: "clock clock clock" "notif hero story" "texts hero story" "tag hero story";
+  align-items: start;
+}
+
+.cb-lock__clock { grid-area: clock; text-align: center; margin-bottom: 4px; }
+.cb-lock__clock span { display: block; font-size: 17px; opacity: .92; }
+.cb-lock__clock time {
+  display: block; font-family: var(--display); font-weight: 500;
+  font-size: clamp(56px, 8vw, 104px); line-height: 1; letter-spacing: -0.04em;
+}
+
+/* The glass of iOS: a translucent fill, a hairline, and a real blur. */
+.cb-lock__notif, .cb-lock__story, .cb-lock__msg p {
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+.cb-lock__notif { grid-area: notif; display: flex; gap: 12px; align-items: center; border-radius: 20px; padding: 13px 15px; }
+.cb-lock__notif img { width: 42px; height: 42px; border-radius: 10px; background: #fff; padding: 4px; object-fit: contain; flex: 0 0 auto; }
+.cb-lock__notif b { display: flex; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 15px; }
+.cb-lock__notif i { margin-left: auto; font-style: normal; font-size: 12.5px; opacity: .7; }
+.cb-lock__notif p { margin: 2px 0 0; font-size: 14px; opacity: .92; }
+
+.cb-lock__texts { grid-area: texts; display: grid; gap: 12px; align-content: start; }
+.cb-lock__msg { display: grid; gap: 4px; max-width: 300px; }
+.cb-lock__msg p { margin: 0; padding: 10px 15px; border-radius: 19px; font-size: 15px; line-height: 1.35; width: fit-content; }
+.cb-lock__msg span { font-size: 11.5px; opacity: .62; }
+/* Ours is the blue bubble, on the right, the way a sent message reads. */
+.cb-lock__msg[data-side="us"] { justify-items: end; margin-left: auto; }
+.cb-lock__msg[data-side="us"] p { background: #2C7DF6; border-color: transparent; }
+
+.cb-lock__hero { grid-area: hero; margin: 0; position: relative; }
+.cb-lock__hero::after {
+  content: ""; position: absolute; left: 50%; bottom: 2%; transform: translateX(-50%);
+  width: 78%; height: 26%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,214,150,.55), transparent 72%);
+  filter: blur(14px); pointer-events: none;
+}
+.cb-lock__hero img { width: 100%; height: auto; position: relative; z-index: 1; }
+.cb-lock__hero::before {
+  content: ""; position: absolute; z-index: 0;
+  left: 50.2%; bottom: 62%; transform: translateX(-50%);
+  width: 34%; height: 190%;
+  background: linear-gradient(to top, rgba(150, 205, 255, .85), rgba(120, 180, 255, .16) 55%, transparent 88%);
+  clip-path: polygon(44% 100%, 56% 100%, 100% 0, 0 0);
+  filter: blur(7px);
+  pointer-events: none;
+}
+
+.cb-lock__stories { grid-area: story; display: grid; gap: 14px; align-content: start; }
+.cb-lock__story { border-radius: 20px; padding: 13px 14px; }
+.cb-lock__story header { display: grid; margin-bottom: 10px; }
+.cb-lock__who { font-family: var(--display); font-weight: 600; font-size: 14.5px; }
+.cb-lock__what { font-size: 12.5px; opacity: .7; }
+.cb-lock__body { display: flex; gap: 12px; align-items: center; }
+.cb-lock__body img { width: 92px; flex: 0 0 auto; border-radius: 12px; aspect-ratio: 3/4; object-fit: cover; }
+.cb-lock__body p { margin: 0; font-size: 14px; line-height: 1.4; }
+
+.cb-lock__tag { grid-area: tag; align-self: end; margin: 0; }
+.cb-lock__tag span {
+  display: block; font-family: var(--display); font-weight: 700;
+  font-size: clamp(26px, 3vw, 38px); line-height: 1.04; letter-spacing: -0.035em;
+}
+
+/* On a phone it becomes what it is: the product, then what people said. */
+@media (max-width: 1000px) {
+  .cb-lock__in {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "clock" "hero" "notif" "texts" "story" "tag";
+    gap: 18px; max-width: 520px;
+  }
+  .cb-lock__msg { max-width: 82%; }
+  .cb-lock__tag { margin-top: 6px; }
+}
