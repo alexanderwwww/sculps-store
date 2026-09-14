@@ -232,19 +232,26 @@ function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: str
 }
 
 function Announce() {
+  // Two kinds of item: the promises, and the lines that sell. They alternate,
+  // and every third one is inverted so the bar keeps catching the eye instead
+  // of becoming wallpaper after two seconds.
   const says = [
-    [IcoTruck, "Free US shipping"],
-    [IcoReturn, "30 days to change your mind"],
-    [IcoShield, "1-year warranty"],
-    [IcoBolt, "Ships in 3-5 business days"],
+    [IcoTruck, "Free US shipping", false],
+    [null, "Your ceiling is the biggest screen you own", true],
+    [IcoReturn, "30 nights to change your mind", false],
+    [IcoBolt, "Ships in 3-5 business days", false],
+    [null, "Movies. Snacks. Closer.", true],
+    [IcoShield, "1-year warranty", false],
   ] as const;
   return (
-    <div className="cb-ann" aria-label="Free US shipping, 30 day returns, 1 year warranty">
+    <div className="cb-ann" aria-label="Free US shipping, 30 day returns, 1 year warranty, ships in 3 to 5 business days">
       <div className="cb-ann__t" aria-hidden="true">
         {[0, 1].map((n) => (
           <span key={n}>
-            {says.map(([ico, text]) => (
-              <i key={text}>{ico}{text}</i>
+            {says.map(([ico, text, loud]) => (
+              <i key={text} data-loud={loud ? "" : undefined}>
+                {ico}{text}
+              </i>
             ))}
           </span>
         ))}
@@ -881,16 +888,24 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
 
   return (
     <div className="cb-chat" id="faq" ref={thread} suppressHydrationWarning>
+      {/* The status bar and the contact header, so the frame reads as the
+          phone someone actually asked this on rather than a widget. */}
+      <div className="cb-chat__status">
+        <span>9:41</span>
+        <span className="cb-chat__icons">
+          <svg viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="7" width="3" height="5" rx="1" /><rect x="5" y="5" width="3" height="7" rx="1" /><rect x="10" y="2.5" width="3" height="9.5" rx="1" /><rect x="15" y="0" width="3" height="12" rx="1" /></svg>
+          <svg viewBox="0 0 16 12" aria-hidden="true"><path d="M8 10.6l2.2-2.3a3.1 3.1 0 0 0-4.4 0zM8 6.2a5.9 5.9 0 0 1 4.2 1.8l1.6-1.7a8.2 8.2 0 0 0-11.6 0l1.6 1.7A5.9 5.9 0 0 1 8 6.2z" /></svg>
+          <svg viewBox="0 0 26 12" aria-hidden="true"><rect x="0.5" y="0.5" width="21" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".45" /><rect x="2" y="2" width="16" height="8" rx="2" /><path d="M23 4v4a2 2 0 0 0 0-4z" opacity=".45" /></svg>
+        </span>
+      </div>
+
       <div className="cb-chat__head">
         <img className="cb-chat__av cb-chat__av--lg" src={LOGO} alt="" />
-        <div>
-          <div className="cb-chat__name">Ceiling Buddy</div>
-          <div className="cb-chat__live"><i />Usually replies in a few minutes</div>
-        </div>
+        <div className="cb-chat__name">Ceiling Buddy</div>
       </div>
 
       <div className="cb-chat__body" ref={body}>
-      <div className="cb-chat__day">Last night</div>
+      <div className="cb-chat__day">Last night <b>11:04 PM</b></div>
 
       {blocks.map((b, i) => (
         <div className="cb-chat__pair" key={b.id}>
@@ -915,9 +930,15 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
       ) : null}
       </div>
 
+      {/* The compose bar. It is not a form — there is nothing to send to — but
+          without it the screen is obviously not a phone. */}
       <div className="cb-chat__foot">
-        {email ? <a href={`mailto:${email}`}>Ask us anything</a> : "Ask us anything"} — a real
-        person answers, same day. 🤍
+        <span className="cb-chat__field">
+          {email ? <a href={`mailto:${email}`}>Ask us anything…</a> : "Ask us anything…"}
+        </span>
+        <span className="cb-chat__send" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
+        </span>
       </div>
     </div>
   );

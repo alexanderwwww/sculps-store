@@ -163,6 +163,11 @@ https://kerberos.gardenbuddystore.workers.dev/?store=ceiling-buddy
   logo sky #8FC7F2 for badges, and the product's LED amber #FFC169 kept only
   for the announcement bar and the glow beneath photography.
   Fredoka (rounded, matches the logo) over Inter.
+- **Bundles** the second option is never a second projector — nobody wants two.
+  It is **Ceiling Buddy + Home Cinema**, adding a 100" fold-out white screen, so
+  the product works on a wall that is not white and works outside. $109.99
+  against $181.98. The single stays the default so the page still leads on
+  $79.99, which is the number someone reads in two seconds.
 - **Price** $79.99 against $131.99 — the gap is exactly $52 because the page
   leads on dollars saved, not a percentage. Pair: $139.98, $69.99 each, sold as
   "keep one, gift one". **Two bundles maximum, ever** — a third tier puts a
