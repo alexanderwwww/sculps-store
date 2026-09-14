@@ -137,7 +137,7 @@ function Section({
 }) {
   switch (section.type) {
     case "buy_box":       return <BuyBox section={section} page={page} />;
-    case "video_faq":     return <><UgcRail section={section} page={page} /><Faq section={section} /></>;
+    case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <ProductGrid section={section} />;
     case "trust_icons":   return <TrustBand section={section} />;
@@ -664,7 +664,7 @@ function Specs({ section }: { section: LoadedSection }) {
  * TikTok or Instagram, then a video we host, then the best photograph. The
  * rest of the photography already has its own section further down.
  */
-function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+function ProofAndAnswers({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   // Three kinds of thing can ride this rail, in this order of preference:
   //   1. real posts, embedded from TikTok / Instagram / YouTube
   //   2. a video file we host ourselves
@@ -685,7 +685,8 @@ function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProduc
   const post = posts[0] ?? null;
   const video = own[0] ?? null;
   const shot = shots[0] ?? null;
-  if (!post && !video && !shot) return null;
+  const asked = section.blocks.filter((b) => has(b.values, "question"));
+  if (!post && !video && !shot && !asked.length) return null;
 
   return (
     <section className="cb-ugc" id="ugc">
@@ -694,6 +695,8 @@ function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProduc
           <h2 className="cb-h2">See it working</h2>
           <p className="cb-lede">Shot on a phone, in a real bedroom, with the lights off.</p>
         </div>
+
+        <div className="cb-proof">
         <div className="cb-ugc__one">
           {post ? (
             <div className={`cb-ugc__i${post.vertical ? "" : " cb-ugc__i--wide"}`}>
@@ -710,11 +713,36 @@ function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProduc
             <figure className="cb-ugc__i">
               <video src={video} autoPlay muted loop playsInline preload="metadata" />
             </figure>
-          ) : (
+          ) : shot ? (
             <figure className="cb-ugc__i">
-              <img src={val(shot!.values, "image")} alt={val(shot!.values, "caption")} loading="lazy" />
+              <img src={val(shot.values, "image")} alt={val(shot.values, "caption")} loading="lazy" />
             </figure>
-          )}
+          ) : null}
+        </div>
+
+        {/* The answers, as the conversation people actually have before they
+            buy: they ask, someone from the brand replies. Every one is open —
+            an accordion hides the reassurance behind a click, which is the
+            opposite of what this section is for. */}
+        {asked.length ? (
+          <div className="cb-chat" id="faq">
+            <div className="cb-chat__day">Questions people ask first</div>
+            {asked.map((b) => (
+              <div className="cb-chat__pair" key={b.id}>
+                <p className="cb-chat__q">{val(b.values, "question")}</p>
+                <div className="cb-chat__a">
+                  <img className="cb-chat__av" src={LOGO} alt="" />
+                  <p>{val(b.values, "answer")}</p>
+                </div>
+              </div>
+            ))}
+            <div className="cb-chat__foot">
+              Still unsure? {page.store.contactEmail ? (
+                <a href={`mailto:${page.store.contactEmail}`}>Ask us anything</a>
+              ) : "Ask us anything"} — a person answers, same day.
+            </div>
+          </div>
+        ) : null}
         </div>
       </div>
     </section>
@@ -787,27 +815,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
   );
 }
 
-/* -------------------------------------------------------------------- faq */
 
-function Faq({ section }: { section: LoadedSection }) {
-  const items = section.blocks.filter((b) => has(b.values, "question"));
-  if (!items.length) return null;
-  return (
-    <section className="cb-section cb-section--cream" id="faq">
-      <div className="cb-wrap">
-        <Head section={section} />
-        <div className="cb-faq">
-          {items.map((b) => (
-            <details key={b.id}>
-              <summary>{val(b.values, "question")}</summary>
-              <div className="cb-faq__a">{val(b.values, "answer")}</div>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ---------------------------------------------------------------- closing */
 
