@@ -65,7 +65,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const liveReload = admin ? liveReloadScript() : null;
 
   const variant = page.variants.find((v) => slug(v.label) === params.handle);
-  if (!variant) throw new Response("Not found", { status: 404 });
+  if (!variant) {
+    // A renamed colourway keeps its old address alive.
+    const renamed: Record<string, string> = { "lilac-heat": "strawberry-milk" };
+    const to = renamed[params.handle ?? ""];
+    if (to) return new Response(null, { status: 301, headers: { Location: `/products/${to}${url.search}` } });
+    throw new Response("Not found", { status: 404 });
+  }
 
   const [meta] = await context.db
     .select({ pixelId: metaConfig.pixelId })
@@ -75,6 +81,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const pixel = meta?.pixelId ? pixelScript(meta.pixelId, { match: { externalId: readVisitorSession(request) } }) : null;
 
   const headers = new Headers();
+  // Never let a browser, a home-screen app or a proxy keep an old copy of the page.
+  headers.set("Cache-Control", "no-store, must-revalidate");
   const tracked = shouldTrack(request, url);
   if (tracked) {
     const sessionId = readVisitorSession(request) ?? newVisitorSession();

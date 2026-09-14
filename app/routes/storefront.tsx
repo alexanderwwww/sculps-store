@@ -192,6 +192,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   }
   // Record the visit. This is what Live View and Analytics are made of.
   const headers = new Headers();
+  headers.set("Cache-Control", "no-store, must-revalidate");
   if (trackedVisit && sessionId) {
     headers.append("Set-Cookie", visitorCookie(sessionId, url));
     // Our own long-lived copies of Meta's cookies, so attribution outlives Safari's week.
