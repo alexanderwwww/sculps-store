@@ -180,3 +180,11 @@ records consent on the cart only).
 - Vibrancy = vivid gradients + bold accurate product + liquid-chrome blobs/rings + glows. Current set: `bd-g-hero.jpg` (21:9 hero), `bd-g-band.jpg` (21:9 band), `bd-g-screen.jpg` (4:5 instructor on screen), `bd-g-fold.jpg` (4:5 folded board), `bd-box-{board,cables,straps,pads,charger}.jpg` (crops of the kit shot).
 - PDP = one carousel + white buybox with lime `.bd-offer` box, then claim line with chrome object, "What the others don't have" proof tiles, "In the box" item grid, workouts, steps, comparison, feed, FAQ.
 - Clarity beats words: what it does, what's in the box, what others don't have, all shown in pictures.
+
+## State at the end of the team build (2026-09-14)
+- Second product: Grip socks (handle grip-socks), four colourways, $24; bundle toggle in the buybox sells them at $19 with the board (server-side `bundle=1`, honoured only while the board is in the cart). Sock images: swan + lilac generated, matcha + bare are PIL recolours of the swan render.
+- Board product is `active` (was draft: Add to cart silently failed).
+- Carousel order per colourway: cut-out → before/after pair (real only) → ad shot (lilac, swan) → girl → macro (lilac) → exploded (none yet) → socks → studio → screen.
+- Sections built but hidden until real data: before_after (editor → Before & after → Add pair), reviews (Reviews screen), video_clips (clip + bullets). Preview with SAMPLE data: scratchpad/preview-sections.html.
+- Cheapest accurate render: gpt_image_2, low, 1k = 0.5 credit. Never sky/clouds; one hue family; chrome + glow.
+- Still owed by the owner: $999 compare confirmation, returns policy, specs, FIRSTCLASS code yes/no, real reviews / pairs / video, remaining 11 renders (5.5 credits).
