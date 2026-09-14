@@ -756,6 +756,15 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
   });
   const [typing, setTyping] = useState(false);
   const thread = useRef<HTMLDivElement | null>(null);
+  const body = useRef<HTMLDivElement | null>(null);
+
+  // The card is a fixed height now, so a message arriving below the fold would
+  // never be seen. Follow it down — but only the card, never the page.
+  useEffect(() => {
+    const el = body.current;
+    if (!el || shown === 0) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [shown, typing]);
 
   useEffect(() => {
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -814,6 +823,7 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
         </div>
       </div>
 
+      <div className="cb-chat__body" ref={body}>
       <div className="cb-chat__day">Last night</div>
 
       {blocks.map((b, i) => (
@@ -837,6 +847,7 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
           <span><i /><i /><i /></span>
         </div>
       ) : null}
+      </div>
 
       <div className="cb-chat__foot">
         {email ? <a href={`mailto:${email}`}>Ask us anything</a> : "Ask us anything"} — a real
