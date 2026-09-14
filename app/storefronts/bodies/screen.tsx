@@ -91,6 +91,8 @@ const DENSE = `
   .bd-scr__lvl__foot .bd-scr__caps { font-size: 11px; }
 `;
 
+const VIRTUAL_W = 720;
+const VIRTUAL_H = 450; // 16:10, the bezel ratio
 const CSS = `
 .bd-scr { background: #fff; color: var(--ink, #0B0C0E); padding-block: clamp(56px, 8vw, 104px); overflow: hidden; }
 .bd-scr *, .bd-scr *::before, .bd-scr *::after { box-sizing: border-box; }
@@ -115,8 +117,9 @@ const CSS = `
 /* The UI, sat on the photographed screen. Calibrate with the four custom
  * properties (percentages of the photo) and the rotation; keep the aspect of
  * the box close to the real screen's. */
-.bd-app__onscreen { --l: 24%; --t: 8%; --w: 54%; --h: 30%; position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); transform-origin: 50% 50%; transform: perspective(1400px) rotateY(-14deg) rotateX(4deg) skewY(2deg); border-radius: 2.5% / 4%; overflow: hidden; background: #121316; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 18px 40px rgba(11,12,14,.35); }
-.bd-app__onscreen .bd-scr__panel { position: absolute; inset: 0; border-radius: 0; }
+.bd-app__onscreen { --l: 57.5%; --t: 14.5%; --w: 37%; --h: 19%; position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); transform-origin: 50% 50%; transform: perspective(1600px) rotateY(-6deg) skewY(6.5deg); border-radius: 2.5% / 4%; overflow: hidden; background: #121316; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 18px 40px rgba(11,12,14,.35); }
+.bd-app__virtual { position: absolute; left: 0; top: 0; width: ${VIRTUAL_W}px; height: ${VIRTUAL_H}px; transform-origin: 0 0; transform: scale(var(--s, .25)); }
+.bd-app__virtual .bd-scr__panel { position: absolute; inset: 0; border-radius: 0; }
 .bd-app__onscreen::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 70%, rgba(255,255,255,.06) 100%); }
 .bd-app__cap { position: absolute; left: 14px; bottom: 14px; font-family: var(--sans, Archivo, sans-serif); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2, #4E525B); background: rgba(255,255,255,.88); padding: 6px 10px; border-radius: 999px; }
 @media (max-width: 900px) {
@@ -425,6 +428,19 @@ export function Screen({ id = "screen" }: { id?: string }) {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reduced, setReduced] = useState(false);
+  // The on-screen copy renders at a fixed virtual size and is scaled to the
+  // photographed screen, so the UI reads like a real 10-inch panel, not a
+  // phone layout crammed into a thumbnail.
+  const onscreenRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = onscreenRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const fit = () => el.style.setProperty("--s", String(el.clientWidth / VIRTUAL_W));
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [tick, setTick] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -489,8 +505,10 @@ export function Screen({ id = "screen" }: { id?: string }) {
           {/* the app, inside the photographed screen */}
           <figure className="bd-app__board">
             <img src={BOARD_PHOTO} alt="The bodies board with its screen up, the class library showing" loading="lazy" />
-            <div className="bd-app__onscreen" aria-hidden="true">
-              <Panel id={id} active={active} running={running} tick={tick} a11y={false} />
+            <div className="bd-app__onscreen" aria-hidden="true" ref={onscreenRef}>
+              <div className="bd-app__virtual">
+                <Panel id={id} active={active} running={running} tick={tick} a11y={false} />
+              </div>
             </div>
             <figcaption className="bd-app__cap">Built-in screen</figcaption>
           </figure>
