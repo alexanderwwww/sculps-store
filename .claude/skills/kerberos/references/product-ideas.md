@@ -24,12 +24,20 @@ screen*. Gift-shaped, which is why Q4 matters.
 buddy: plain, warm, says what it does, cute enough to repost. Lowercase like
 bodies. Trademark and domain still to be checked.
 
+**Industrial design: Mac mini (owner, 2026-09-14).** The device is a small flat
+aluminium square with rounded corners, about 16cm wide and 4cm tall, matte
+silver or space grey, one circular glass lens set flush into the TOP, a single
+small white LED, a knurled aluminium dial on one edge. Nothing else on it.
+The snack tray is a SEPARATE matching accessory: a low aluminium-and-cream
+dock with two drink wells and a centre bowl, and the slab sits into a recess in
+the middle of it. Sold together, works without it.
+
 **Built for two (owner, 2026-09-14).** This is the whole point, not a detail:
 
-- It sits BETWEEN two people, on the bed, not on one person's nightstand. Wide
-  weighted base with a soft underside so it does not tip on a duvet.
-- Two drink wells, one facing each side. One shared snack bowl in the middle,
-  removable, dishwasher safe.
+- It sits BETWEEN two people, on the bed, not on one person's nightstand. The
+  dock is wide and weighted with a soft underside so it does not tip on a duvet.
+- Two drink wells on the dock, one facing each side. One shared snack bowl in
+  the middle, removable, dishwasher safe.
 - The lens tilts, so the picture lands on the ceiling above the bed or angled
   toward the foot of it, depending on how you lie.
 - Scrolling is a small magnetic puck remote that lives on the body. Either
