@@ -794,3 +794,8 @@
   .cb-lock__msg { max-width: 82%; }
   .cb-lock__tag { margin-top: 6px; }
 }
+
+/* When the section is a finished picture, it is the whole section: edge to
+   edge, no padding, nothing layered over it. */
+.cb-lock--art { padding: 0; background: #05173F; }
+.cb-lock--art img { width: 100%; height: auto; display: block; }

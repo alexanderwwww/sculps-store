@@ -541,6 +541,19 @@ function ProofWall({ section }: { section: LoadedSection }) {
  */
 function LockScreen({ section }: { section: LoadedSection }) {
   const v = section.values;
+
+  // Artwork wins. When a finished picture of this scene exists it beats
+  // anything rebuilt out of divs, so the section simply shows it — full width,
+  // on the same dark ground, with nothing drawn on top.
+  const art = val(v, "image");
+  if (art) {
+    return (
+      <section className="cb-lock cb-lock--art">
+        <img src={art} alt={val(v, "heading").split(String.fromCharCode(10)).join(" ")} />
+      </section>
+    );
+  }
+
   const rows = section.blocks.filter((b) => has(b.values, "title"));
   const lines = val(v, "heading").split(String.fromCharCode(10)).filter(Boolean);
   const texts = rows.filter((b) => !val(b.values, "note").startsWith("story"));
