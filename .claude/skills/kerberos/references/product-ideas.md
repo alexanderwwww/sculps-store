@@ -24,6 +24,21 @@ screen*. Gift-shaped, which is why Q4 matters.
 buddy: plain, warm, says what it does, cute enough to repost. Lowercase like
 bodies. Trademark and domain still to be checked.
 
+**Built for two (owner, 2026-09-14).** This is the whole point, not a detail:
+
+- It sits BETWEEN two people, on the bed, not on one person's nightstand. Wide
+  weighted base with a soft underside so it does not tip on a duvet.
+- Two drink wells, one facing each side. One shared snack bowl in the middle,
+  removable, dishwasher safe.
+- The lens tilts, so the picture lands on the ceiling above the bed or angled
+  toward the foot of it, depending on how you lie.
+- Scrolling is a small magnetic puck remote that lives on the body. Either
+  person grabs it; nobody reaches over the other. The dial on the unit stays
+  as a backup.
+- The phone docks at the back and charges while it plays.
+- Warm underglow so you can find it in the dark.
+- Silent: fanless or near-silent, because it runs 30cm from your head.
+
 **Status.** Idea only. No store, no supplier, no renders yet. Next step when
 revived: one hero render, check AliExpress/Alibaba for a base unit with
 ceiling mount and a snack tray, decide whether auto-scroll is a real BLE
