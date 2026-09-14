@@ -1258,6 +1258,12 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
               <button type="button" className="bd-btn bd-btn--big bd-btn--ghost" disabled={sold} onClick={(event) => addSelected(event.currentTarget)}>
                 Add to cart
               </button>
+              {page.reviews.length > 0 ? (
+                <a className="bd-pdp__proofline" href="#reviews">
+                  <Stars n={Math.round(page.reviews.reduce((a, r) => a + Math.max(1, Math.min(5, r.rating)), 0) / page.reviews.length)} />
+                  <span>{page.reviews.length} real review{page.reviews.length === 1 ? "" : "s"} · see their photos</span>
+                </a>
+              ) : null}
             </div>
           </div>
           <PayMarks />

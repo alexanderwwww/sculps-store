@@ -125,3 +125,10 @@ Read the file that matches the task — don't load all of them.
 Alex owns his own e-commerce platform (the `kerberos` skill) — storefronts, checkout,
 Stripe with Apple Pay, Meta pixel + CAPI, Live View. It already runs multiple stores from
 one codebase. A bodies storefront belongs there, not on Shopify, unless he says otherwise.
+
+## Owner's standing orders (saved 2026-09-14, obey without being reminded)
+
+Product page order, fixed: **buybox → before/after (real customer pairs, weeks 0 and 4–8) → reviews as Instagram-style liquid-glass cards (story cards with photos, notification/comment cards, story-reply feel, flowing marquee motion) → UGC video with bullets → real-girl feed → the screen → proof → made → in the box → FAQ → steps → comparison → specs → join.**
+Reviews also appear as a rating line next to the title and a compact rating pill beside the buy buttons. All of these render only with real data; never fake them, but they are BUILT and must stay in this order.
+Hero breathes. Installments visible. Buy now first. Shipping facts above the fold. No sky, no clouds, no AI lifestyle renders; only gradient clean-gear renders and real iPhone-look girls. Style training = the bodies look (gradients, chrome, glow), never a person.
+The Marketing Studio in Shop Admin is the owner's asset home; Claude generates from the session on the owner's fal key; every spend over $1 needs an explicit yes on the exact number.
