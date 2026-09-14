@@ -188,7 +188,8 @@ const CSS = `
   .bd-scr__nav a { padding: 4px 6px; font-size: 11px; }
   .bd-scr__nav a:nth-child(n+6) { display: none; }
   .bd-scr__logo { font-size: 13px; margin-bottom: 8px; }
-  .bd-scr__grid { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .bd-scr__grid { grid-template-columns: repeat(2, 1fr); gap: 5px; }
+  .bd-scr__grid > :nth-child(n+5) { display: none; }
   .bd-scr__card { padding: 7px; gap: 3px; }
   .bd-scr__card h4 { font-size: 11px; }
   .bd-scr__card .bd-scr__chip { display: none; }
