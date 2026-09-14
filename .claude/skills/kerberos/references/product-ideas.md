@@ -149,3 +149,30 @@ on the ceiling at the top of frame. Messy real bedroom behind.
    only after it sells.
 Ask suppliers "do you have this projector, and can you supply or modify a tray
 like this image" — not for a quote on a new product.
+
+### Ceiling Buddy — store built (2026-09-14)
+
+Store four on Kerberos. Slug `ceiling-buddy`, domain placeholder
+`ceiling-buddy.pending`. Live at
+https://kerberos.gardenbuddystore.workers.dev/?store=ceiling-buddy
+
+- **Theme** `app/storefronts/ceiling-buddy/` — dark by design. Every photo the
+  store owns is a dark bedroom lit by the product's own LED; a white page would
+  make the photography look like a mistake. Palette is the product's: warm LED
+  amber #FFC169 accent, logo sky #8FC7F2, cream #F7F2E7 on near-black.
+  Fredoka (rounded, matches the logo) over Inter.
+- **Price** $129.99, compare-at $179. Second variant: 2 for $219.98.
+- **Media** 10 assets in R2 as webp — logo (background keyed out), hero cut-out,
+  feature card, and six iPhone-UGC lifestyle shots.
+- **Honesty** No reviews, no before/after, no video — those sections are seeded
+  hidden rather than filled. Five specs are blank and render "Spec pending":
+  tray width, tray depth, weight, projector resolution, throw distance. They
+  stay blank until the product is measured.
+- **Verified** home/cart/checkout all 200; add-to-cart carries $129.99 through
+  to checkout; all 10 media files 200; zero horizontal overflow at 400px.
+- **Still needed from Alex** domain + email, Meta pixel id, Stripe account,
+  the five measurements, real reviews once orders land.
+- **Known risk** the product photography shows third-party packaging (Doritos,
+  Coca-Cola, McDonald's, Oreo, Cheetos). Fine as lifestyle dressing, but it is
+  other companies' trademarks on a commercial page and in paid ads. Worth a
+  clean set without branded packs before scaling spend.

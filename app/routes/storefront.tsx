@@ -28,6 +28,8 @@ import { GardenBuddyStorefront } from "~/storefronts/garden-buddy";
 import gardenBuddyThemeHref from "~/storefronts/garden-buddy/theme.css?url";
 import { BodiesHome } from "~/storefronts/bodies";
 import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
+import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
+import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 
 /**
  * Which theme a store gets. Design lives in code, one theme per store, so this
@@ -36,6 +38,7 @@ import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
  */
 const GARDEN_BUDDY = "garden-buddy";
 const BODIES = "bodies";
+const CEILING_BUDDY = "ceiling-buddy";
 
 export function links() {
   return [
@@ -287,6 +290,16 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
         />
+      </>
+    );
+  }
+
+  if (store.slug === CEILING_BUDDY) {
+    return (
+      <>
+        <link rel="stylesheet" href={ceilingBuddyThemeHref} />
+        {head}
+        <CeilingBuddyStorefront page={page} storeParam={storeParam} />
       </>
     );
   }
