@@ -539,9 +539,9 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
                   <h1 className="bd-h1">{HERO.heading}</h1>
                   <div className="bd-hero__cta">
                     <a className="bd-btn bd-btn--big" href={lead ? `/products/${slug(lead.label)}${storeParam}` : `${href("/")}#shop`}>
-                      {HERO.cta}{lead ? ` · ${installments(lead.priceCents, cur)}` : ""}
+                      {HERO.cta}{lead ? ` · ${whole(lead.priceCents, cur)}` : ""}
                     </a>
-                    {lead ? <span className="bd-hero__pay">{whole(lead.priceCents, cur)} · Pay in 4 with PayPal</span> : null}
+                    {lead ? <span className="bd-hero__pay">or {installments(lead.priceCents, cur)} with PayPal</span> : null}
                   </div>
                 </div>
               </div>
@@ -916,9 +916,9 @@ function WayCard({ variant, currency, storeParam }: { variant: VariantRow; curre
       <span className="bd-way__name">{variant.label}</span>
       {variant.sublabel ? <span className="bd-way__note">{variant.sublabel}</span> : null}
       <span className="bd-way__price">
-        <b>{installments(variant.priceCents, currency)}</b>
-        <span>{whole(variant.priceCents, currency)}</span>
+        <b>{whole(variant.priceCents, currency)}</b>
         {saving ? <s>{whole(variant.compareAtCents!, currency)}</s> : null}
+        <span>or {installments(variant.priceCents, currency)}</span>
       </span>
       <button type="button" className="bd-btn" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
         {sold ? "Sold out" : "Add to cart"}
@@ -1055,36 +1055,35 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
             ))}
           </div>
 
-          {canBundle && socks ? (
-            <div className="bd-bundle" role="radiogroup" aria-label="With or without grip socks">
-              <button type="button" role="radio" aria-checked={!withSocks} className="bd-bundle__opt" onClick={() => setWithSocks(false)}>
-                <span className="bd-bundle__what">Board only</span>
-                <span className="bd-bundle__pay">{installments(variant.priceCents, cur)}</span>
-              </button>
-              <button type="button" role="radio" aria-checked={withSocks} className="bd-bundle__opt" onClick={() => setWithSocks(true)}>
-                <span className="bd-bundle__what">Board + grip socks</span>
-                <span className="bd-bundle__pay">{installments(variant.priceCents + bundleSocksCents(socks), cur)}</span>
-              </button>
-              <p className="bd-bundle__note">
-                socks {whole(bundleSocksCents(socks), cur)} in the bundle · {whole(socks.priceCents, cur)} alone
-              </p>
-            </div>
-          ) : null}
-
           <div className="bd-offer">
-            <div className="bd-pdp__price">
-              <b>{pay4}</b>
-              <span className="bd-pdp__with">with PayPal Pay in 4</span>
-            </div>
-            <div className="bd-pdp__full">
-              <span>{whole(totalCents, cur)}</span>
-              {saving ? <s>{whole(variant.compareAtCents! + (bundled && socks ? bundleSocksCents(socks) : 0), cur)}</s> : null}
-              {saving ? <span className="bd-pdp__save">Save {whole(saving, cur)}</span> : null}
-              {bundled && socks ? <span className="bd-pdp__incl">board {whole(variant.priceCents, cur)} + socks {whole(bundleSocksCents(socks), cur)}</span> : null}
-            </div>
+            {canBundle && socks ? (
+              <div className="bd-pick" role="radiogroup" aria-label="Choose your set">
+                <button type="button" role="radio" aria-checked={!withSocks} className="bd-pick__row" onClick={() => setWithSocks(false)}>
+                  <span className="bd-pick__dot" aria-hidden="true" />
+                  <span className="bd-pick__what"><b>The board</b><small>Screen, cables, straps, pads, charger</small></span>
+                  <span className="bd-pick__price"><b>{whole(variant.priceCents, cur)}</b>{saving ? <s>{whole(variant.compareAtCents!, cur)}</s> : null}</span>
+                </button>
+                <button type="button" role="radio" aria-checked={withSocks} className="bd-pick__row" onClick={() => setWithSocks(true)}>
+                  <span className="bd-pick__dot" aria-hidden="true" />
+                  <span className="bd-pick__what">
+                    <b>The board + grip socks <em>Most picked</em></b>
+                    <small>Matching {variant.label} socks · {whole(socks.priceCents, cur)} alone, {whole(bundleSocksCents(socks), cur)} here</small>
+                  </span>
+                  {socks.imageUrl ? <img className="bd-pick__thumb" src={socks.imageUrl} alt="" loading="lazy" /> : null}
+                  <span className="bd-pick__price"><b>{whole(variant.priceCents + bundleSocksCents(socks), cur)}</b>{saving ? <s>{whole(variant.compareAtCents! + socks.priceCents, cur)}</s> : null}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="bd-pdp__full">
+                <b className="bd-pdp__big">{whole(totalCents, cur)}</b>
+                {saving ? <s>{whole(variant.compareAtCents!, cur)}</s> : null}
+                {saving ? <span className="bd-pdp__save">Save {whole(saving, cur)}</span> : null}
+              </div>
+            )}
+            <p className="bd-pdp__later">or 4 payments of <b>{whole(Math.round(totalCents / 4), cur)}</b> with PayPal Pay in 4 · no interest</p>
             <div className="bd-pdp__buy" ref={buyRef}>
               <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => addSelected(event.currentTarget)}>
-                {sold ? "Sold out" : bundled ? "Add board + socks to cart" : "Add to cart"}
+                {sold ? "Sold out" : `Add to cart · ${whole(totalCents, cur)}`}
               </button>
             </div>
           </div>
@@ -1119,7 +1118,7 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
         <div className="bd-wrap bd-stick__in">
           {way.card ? <img src={way.card} alt="" /> : null}
           <span className="bd-stick__name">{variant.label}{bundled ? " + socks" : ""}</span>
-          <span className="bd-stick__price"><b>{pay4}</b><small>{whole(totalCents, cur)}</small></span>
+          <span className="bd-stick__price"><b>{whole(totalCents, cur)}</b><small>or {pay4}</small></span>
           <button type="button" className="bd-btn" disabled={sold} tabIndex={stuck ? 0 : -1} onClick={(event) => addSelected(event.currentTarget)}>
             {sold ? "Sold out" : "Add to cart"}
           </button>
