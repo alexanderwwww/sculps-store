@@ -156,10 +156,12 @@ Store four on Kerberos. Slug `ceiling-buddy`, domain placeholder
 `ceiling-buddy.pending`. Live at
 https://kerberos.gardenbuddystore.workers.dev/?store=ceiling-buddy
 
-- **Theme** `app/storefronts/ceiling-buddy/` — dark by design. Every photo the
-  store owns is a dark bedroom lit by the product's own LED; a white page would
-  make the photography look like a mistake. Palette is the product's: warm LED
-  amber #FFC169 accent, logo sky #8FC7F2, cream #F7F2E7 on near-black.
+- **Theme** `app/storefronts/ceiling-buddy/` — **white page**, night
+  photography. Alex rejected the dark version outright; do not propose it
+  again. On white the dark bedroom shots read as lit windows. Button blue
+  #1B8DE0 (the logo's sky, darkened until white type on it is readable), pale
+  logo sky #8FC7F2 for badges, and the product's LED amber #FFC169 kept only
+  for the announcement bar and the glow beneath photography.
   Fredoka (rounded, matches the logo) over Inter.
 - **Price** $129.99, compare-at $179. Second variant: 2 for $219.98.
 - **Media** 10 assets in R2 as webp — logo (background keyed out), hero cut-out,

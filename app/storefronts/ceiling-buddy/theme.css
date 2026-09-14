@@ -1,28 +1,34 @@
 /**
  * Ceiling Buddy — store four.
  *
- * Dark first, on purpose. The product only exists in a dark room, every
- * photograph we have is shot at night, and a white page would make the
- * photography look like a mistake. The palette is taken from the product
- * itself: the warm LED underglow is the accent, the sky blue is the logo's,
- * the cream is the logo's other half.
+ * White page, night photography. The shots are all dark bedrooms, so the page
+ * around them is bright and clean and lets each one read as a lit window
+ * rather than blending into the background. Colour comes from the logo: its
+ * sky blue is the button, and the product's warm LED amber is kept for the
+ * glow beneath the photography and nothing else.
  */
 
 .cb {
-  --night: #0B0D12;
-  --night-2: #12151C;
-  --night-3: #1A1E27;
-  --line: rgba(255, 255, 255, 0.10);
-  --line-2: rgba(255, 255, 255, 0.18);
+  /* Surfaces, lightest first. `night` names are kept so the rules below read
+     the same; what changed is which end of the scale they point at. */
+  --night: #FFFFFF;
+  --night-2: #F6F8FA;
+  --night-3: #EDF1F5;
+  --line: rgba(16, 19, 26, 0.10);
+  --line-2: rgba(16, 19, 26, 0.20);
 
-  --cream: #F7F2E7;
-  --dim: rgba(247, 242, 231, 0.62);
-  --dimmer: rgba(247, 242, 231, 0.40);
+  /* Text. `cream` is the strong colour, `dim` the secondary. */
+  --cream: #10131A;
+  --dim: rgba(16, 19, 26, 0.64);
+  --dimmer: rgba(16, 19, 26, 0.42);
 
-  --glow: #FFC169;       /* the LED underglow */
-  --glow-soft: rgba(255, 193, 105, 0.16);
-  --sky: #8FC7F2;        /* the logo's blue */
-  --ink: #10131A;
+  /* The button blue is the logo's sky, darkened until white type on it is
+     readable; the pale logo blue stays for badges where it sits on white. */
+  --glow: #1B8DE0;
+  --glow-soft: rgba(27, 141, 224, 0.10);
+  --sky: #8FC7F2;
+  --amber: #FFC169;      /* the product's LED, used under photography only */
+  --ink: #FFFFFF;        /* what sits on top of --glow */
 
   --display: "Fredoka", "Baloo 2", ui-rounded, system-ui, sans-serif;
   --body: "Inter", system-ui, -apple-system, sans-serif;
@@ -70,7 +76,7 @@
 
 .cb-section { padding: clamp(56px, 8vw, 104px) 0; position: relative; }
 .cb-section--tight { padding: clamp(40px, 5vw, 64px) 0; }
-.cb-section--lit { background: linear-gradient(180deg, var(--night) 0%, var(--night-2) 50%, var(--night) 100%); }
+.cb-section--lit { background: var(--night-2); border-block: 1px solid var(--line); }
 .cb-head { text-align: center; max-width: 720px; margin: 0 auto clamp(32px, 4vw, 56px); }
 .cb-head .cb-lede { margin-left: auto; margin-right: auto; text-align: center; }
 
@@ -81,24 +87,24 @@
   font-family: var(--display); font-weight: 600; font-size: 17px;
   padding: 17px 30px; border-radius: 999px; border: 0; cursor: pointer;
   background: var(--glow); color: var(--ink);
-  box-shadow: 0 0 0 0 var(--glow-soft), 0 10px 30px -8px rgba(255, 193, 105, 0.5);
+  box-shadow: 0 0 0 0 var(--glow-soft), 0 10px 26px -10px rgba(27, 141, 224, 0.55);
   transition: transform .14s ease, box-shadow .2s ease, filter .14s ease;
   width: 100%; text-align: center;
 }
-.cb-btn:hover { filter: brightness(1.06); box-shadow: 0 0 0 10px var(--glow-soft), 0 12px 34px -8px rgba(255,193,105,.55); }
+.cb-btn:hover { filter: brightness(1.05); box-shadow: 0 0 0 8px var(--glow-soft), 0 12px 30px -10px rgba(27,141,224,.6); }
 .cb-btn:active { transform: translateY(1px); }
 .cb-btn--ghost {
   background: transparent; color: var(--cream);
   border: 1px solid var(--line-2); box-shadow: none;
 }
-.cb-btn--ghost:hover { background: rgba(255,255,255,.05); box-shadow: none; filter: none; }
+.cb-btn--ghost:hover { background: var(--night-2); box-shadow: none; filter: none; }
 .cb-btn--sm { padding: 12px 20px; font-size: 15px; width: auto; }
 
 /* ---------------------------------------------------------------- header */
 
 .cb-header {
   position: sticky; top: 0; z-index: 40;
-  background: rgba(11, 13, 18, 0.82);
+  background: rgba(255, 255, 255, 0.86);
   backdrop-filter: saturate(160%) blur(14px);
   border-bottom: 1px solid var(--line);
 }
@@ -112,7 +118,7 @@
 .cb-cart {
   position: relative; display: grid; place-items: center;
   width: 42px; height: 42px; border-radius: 999px;
-  background: rgba(255,255,255,.06); border: 1px solid var(--line); cursor: pointer;
+  background: var(--night-2); border: 1px solid var(--line); cursor: pointer;
 }
 .cb-cart svg { width: 20px; height: 20px; }
 .cb-cart__n {
@@ -121,7 +127,7 @@
   font-size: 11.5px; font-weight: 700; display: grid; place-items: center; padding: 0 5px;
 }
 .cb-ticker {
-  background: var(--glow); color: var(--ink);
+  background: var(--amber); color: #10131A;
   font-family: var(--display); font-weight: 500; font-size: 13px;
   text-align: center; padding: 9px 16px; letter-spacing: .01em;
 }
@@ -145,7 +151,7 @@
 .cb-gal__main img { width: 100%; height: 100%; object-fit: contain; }
 .cb-gal__glow {
   position: absolute; inset: auto 0 -40% 0; height: 70%;
-  background: radial-gradient(60% 100% at 50% 100%, rgba(255,193,105,.22), transparent 70%);
+  background: radial-gradient(60% 100% at 50% 100%, rgba(255,193,105,.30), transparent 70%);
   pointer-events: none;
 }
 .cb-gal__strip { display: flex; gap: 10px; margin-top: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; max-width: 100%; }
@@ -160,14 +166,14 @@
 .cb-badge {
   display: inline-flex; align-items: center; gap: 7px;
   font-family: var(--display); font-size: 12.5px; font-weight: 500; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--glow);
-  background: var(--glow-soft); border-radius: 999px; padding: 7px 14px; margin-bottom: 16px;
+  text-transform: uppercase; color: #0F6AAC;
+  background: rgba(143, 199, 242, .28); border-radius: 999px; padding: 7px 14px; margin-bottom: 16px;
 }
 .cb-price { display: flex; align-items: baseline; gap: 12px; margin: 18px 0 6px; flex-wrap: wrap; }
 .cb-price__now { font-family: var(--display); font-size: 38px; font-weight: 600; }
 .cb-price__was { font-size: 19px; color: var(--dimmer); text-decoration: line-through; }
 .cb-price__off {
-  font-family: var(--display); font-size: 13px; font-weight: 600; color: var(--ink);
+  font-family: var(--display); font-size: 13px; font-weight: 600; color: #0B4E7F;
   background: var(--sky); border-radius: 999px; padding: 4px 11px;
 }
 .cb-stars { display: flex; align-items: center; gap: 8px; color: var(--glow); font-size: 14px; }
@@ -181,7 +187,7 @@
   transition: border-color .15s, background .15s;
 }
 .cb-opt:hover { border-color: var(--line-2); }
-.cb-opt[aria-checked="true"] { border-color: var(--glow); background: rgba(255,193,105,.07); }
+.cb-opt[aria-checked="true"] { border-color: var(--glow); background: rgba(27,141,224,.05); }
 .cb-opt__dot {
   width: 20px; height: 20px; flex: 0 0 auto; border-radius: 999px;
   border: 2px solid var(--line-2); display: grid; place-items: center;
@@ -290,8 +296,8 @@
 .cb-cmp__row:last-child { border-bottom: 0; }
 .cb-cmp__row > * { padding: 16px 18px; font-size: 14.8px; display: flex; align-items: center; gap: 9px; }
 .cb-cmp__row--h > * { font-family: var(--display); font-weight: 600; font-size: 15px; background: var(--night-3); }
-.cb-cmp__us { color: var(--cream); background: rgba(255,193,105,.05); }
-.cb-cmp__row--h .cb-cmp__us { color: var(--glow); background: rgba(255,193,105,.10); }
+.cb-cmp__us { color: var(--cream); background: rgba(27,141,224,.05); }
+.cb-cmp__row--h .cb-cmp__us { color: var(--glow); background: rgba(27,141,224,.10); }
 .cb-cmp__them { color: var(--dimmer); }
 .cb-cmp__l { color: var(--dim); }
 .cb-cmp svg { width: 17px; height: 17px; flex: 0 0 auto; }
@@ -322,7 +328,7 @@
 .cb-close { position: relative; text-align: center; overflow: hidden; }
 .cb-close::before {
   content: ""; position: absolute; inset: 0;
-  background: radial-gradient(50% 70% at 50% 100%, rgba(255,193,105,.20), transparent 70%);
+  background: radial-gradient(50% 70% at 50% 100%, rgba(255,193,105,.28), transparent 70%);
   pointer-events: none;
 }
 .cb-close__in { position: relative; max-width: 640px; margin: 0 auto; }
@@ -344,7 +350,7 @@
 
 .cb-sticky {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
-  background: rgba(11,13,18,.92); backdrop-filter: blur(14px);
+  background: rgba(255,255,255,.94); backdrop-filter: blur(14px);
   border-top: 1px solid var(--line); padding: 11px 0;
   transform: translateY(110%); transition: transform .24s ease;
 }
@@ -359,10 +365,10 @@
 
 .cb-drawer { position: fixed; inset: 0; z-index: 60; display: none; }
 .cb-drawer.is-open { display: block; }
-.cb-drawer__veil { position: absolute; inset: 0; background: rgba(0,0,0,.6); }
+.cb-drawer__veil { position: absolute; inset: 0; background: rgba(16,19,26,.45); }
 .cb-drawer__panel {
   position: absolute; top: 0; right: 0; bottom: 0; width: min(430px, 100%);
-  background: var(--night-2); border-left: 1px solid var(--line);
+  background: #FFFFFF; border-left: 1px solid var(--line);
   display: flex; flex-direction: column; animation: cb-in .22s ease;
 }
 @keyframes cb-in { from { transform: translateX(100%); } }
