@@ -304,6 +304,9 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending]);
 
+  const needsAnthropic = !config?.hasAnthropic;
+  const needsFal = !config?.falKeyId;
+
   /* ---------------------------------------------------------- actions */
   function openThread(id: string | null, sec?: StudioSection) {
     const next = new URLSearchParams(params);
@@ -356,6 +359,33 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
     setDraft((d) => d || `Make a short video from this still.`);
   }
 
+  /** A bubble on the home grid: sections open a fresh chat, presets prefill the composer, utilities focus a panel. */
+  function tapBubble(b: Bubble) {
+    if (b.kind === "util") {
+      if (b.id === "train") setPicker("train");
+      else {
+        setRightTab(b.id === "batches" ? "batches" : "assets");
+        setMobileTab("assets");
+      }
+      return;
+    }
+    if (needsFal || needsAnthropic) {
+      setShowSettings(true);
+      setFlash(needsFal ? "Connect your fal.ai key first — it runs every model." : "Add your Anthropic key to chat here.");
+      return;
+    }
+    const sec = b.section ?? section;
+    if (b.section && b.section !== section) setSection(b.section);
+    if (b.kind === "section") {
+      openThread(null, sec);
+      return;
+    }
+    if (!threadId || messages.length === 0) openThread(threadId ?? null, b.section ? sec : undefined);
+    if (b.prompt) setDraft(b.prompt);
+    setMobileTab("chat");
+    setTimeout(() => composerRef.current?.focus(), 0);
+  }
+
   const composerRef = React.useRef<HTMLTextAreaElement>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
@@ -372,9 +402,6 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
       </div>
     );
   }
-
-  const needsAnthropic = !config?.hasAnthropic;
-  const needsFal = !config?.falKeyId;
 
   return (
     <div className="ms-desk">
@@ -393,6 +420,14 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
             <span className="ms-store">{store.name}</span>
           </div>
           <div className="ms-titlebar-right">
+            <div className="ms-pills" aria-label="Keys">
+              <button type="button" className={`ms-pill ${needsFal ? "ms-pill-off" : "ms-pill-on"}`} onClick={() => setShowSettings(true)} title={needsFal ? "fal.ai key missing" : `fal connected: ${config?.falKeyId}`}>
+                <span className="ms-pill-dot" />fal
+              </button>
+              <button type="button" className={`ms-pill ${needsAnthropic ? "ms-pill-off" : "ms-pill-on"}`} onClick={() => setShowSettings(true)} title={needsAnthropic ? "Anthropic key missing" : "Anthropic key saved"}>
+                <span className="ms-pill-dot" />Anthropic
+              </button>
+            </div>
             <div className="ms-seg ms-seg-model" role="radiogroup" aria-label="Model">
               {[
                 ["claude-sonnet-5", "Sonnet"],
@@ -488,31 +523,13 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
               {thread?.summary ? <NotesPopover text={thread.summary} /> : null}
             </div>
 
-            <div className="ms-scroll" ref={scrollRef}>
-              {needsAnthropic ? (
-                <div className="ms-hero">
-                  <GoldMark size={44} />
-                  <div className="ms-hero-title">Tell Claude what you need</div>
-                  <div className="ms-hero-sub">
-                    Ask Claude in Claude Code. Everything it makes on your fal key lands in these tabs. To chat right here instead, add an Anthropic API key in settings. {needsFal ? "The fal.ai key is needed for the models either way." : ""}
-                  </div>
-                  <button type="button" className="ms-btn ms-btn-gold" onClick={() => setShowSettings(true)}>
-                    Open settings
-                  </button>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="ms-hero ms-hero-soft">
-                  <GoldMark size={36} />
-                  <div className="ms-hero-title">{SECTION_INFO[section].label}</div>
-                  <div className="ms-hero-sub">{SECTION_INFO[section].purpose}</div>
-                  <div className="ms-starters">
-                    {STARTERS[section].map((s) => (
-                      <button key={s} type="button" className="ms-starter" onClick={() => setDraft(s)}>
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            <div className={`ms-scroll ${messages.length === 0 ? "ms-scroll-home" : ""}`} ref={scrollRef}>
+              {messages.length === 0 ? (
+                <BubbleHome
+                  media={media}
+                  note={needsAnthropic ? "Add your Anthropic key in settings to chat here" : needsFal ? "Add your fal.ai key in settings to run the models" : null}
+                  onTap={tapBubble}
+                />
               ) : null}
 
               {messages.map((m) => (
@@ -618,14 +635,6 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
   );
 }
 
-const STARTERS: Record<StudioSection, string[]> = {
-  meta_photos: ["Make 2 ad photos of the product on a one-hue background, 4:5", "Show me the product pictures you can work from"],
-  ugc_videos: ["A creator in her apartment shows the product and says why she loves it, 8s", "List the product pictures first"],
-  product_photos: ["Clean white-background shots of the product, three angles", "Same product, matcha green background"],
-  website_photos: ["A wide hero photo of the product in a calm living room, 16:9, room for a headline", "Two lifestyle photos for the homepage"],
-  organic: ["Plan 6 organic clips for TikTok with hooks, then quote the price", "Write 8 hooks about the product for Reels"],
-};
-
 function SectionIcon({ id }: { id: StudioSection }) {
   const common = { width: 16, height: 16, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   switch (id) {
@@ -664,6 +673,220 @@ function SectionIcon({ id }: { id: StudioSection }) {
         </svg>
       );
   }
+}
+
+/* ------------------------------------------------------------- bubble home */
+
+type Bubble = {
+  id: string;
+  label: string;
+  kind: "section" | "preset" | "util";
+  section?: StudioSection;
+  prompt?: string;
+  match: RegExp;
+  icon: string; // SVG path data, 20×20 box
+  weight: number; // 1 = big (section), .78 = preset, .66 = utility
+};
+
+/** One bubble per thing to make. Row layout below is the honeycomb order. */
+const BUBBLES: Bubble[] = [
+  { id: "exploded", label: "Exploded view", kind: "preset", section: "product_photos", prompt: "An exploded view of the product: every part floating apart in a neat vertical stack, one hue background, 1:1", match: /explod|box|kit|cables|straps|pads|charger/i, icon: "M10 3v3 M10 8v4 M10 14v3 M5 6h10 M5 11h10 M5 16h10", weight: 0.78 },
+  { id: "meta_shot", label: "Meta ad shot", kind: "preset", section: "meta_photos", prompt: "Make 2 ad photos of the product on a bold one-hue background with two short sticker lines, 4:5", match: /\bad\b|-ad-|_ad_|ads?\b|band|hero|bd-g-|bd-x-/i, icon: "M3 5h14v10H3z M6 12l3-3 3 2 2-1", weight: 0.78 },
+  { id: "socks", label: "Socks / accessory", kind: "preset", section: "product_photos", prompt: "A clean white-background shot of the accessory (socks/straps), recoloured to match the product, 1:1", match: /sock|strap|pad|accessor/i, icon: "M7 3h6v7l3 3v4H8l-3-3v-4l2-2z", weight: 0.78 },
+
+  { id: "clean", label: "Clean product shot", kind: "preset", section: "product_photos", prompt: "Clean white-background shots of the product, three angles, exact product, 1:1", match: /studio|cut|render|macro/i, icon: "M4 6h12v10H4z M7 16v1h6v-1", weight: 0.78 },
+  { id: "product_photos", label: "Product photos", kind: "section", section: "product_photos", match: /studio|macro|fold|screen/i, icon: "M3 6.5 10 3l7 3.5v7L10 17l-7-3.5zM3 6.5 10 10l7-3.5M10 10v7", weight: 1 },
+  { id: "website_photos", label: "Website photos", kind: "section", section: "website_photos", match: /hero|web|home|life/i, icon: "M2.5 4h15v12h-15z M2.5 8h15", weight: 1 },
+  { id: "video", label: "Product video", kind: "preset", section: "website_photos", prompt: "A short 8s product video from the best hero still: slow push-in, soft light, with sound, 16:9", match: /studio|hero|band|bd-g-/i, icon: "M4 5h9v10H4z M13 8l3-2v8l-3-2", weight: 0.78 },
+
+  { id: "ugc_still", label: "UGC still", kind: "preset", section: "ugc_videos", prompt: "A real-phone UGC still: a creator in her apartment holding the product, natural light, no studio, 9:16", match: /real|life|girl|apt|bd-[a-f]-/i, icon: "M7 3h6v14H7z M9 15h2", weight: 0.78 },
+  { id: "ugc_videos", label: "UGC videos", kind: "section", section: "ugc_videos", match: /girl|bd-c-|bd-d-|real|apt/i, icon: "M6 2.5h8v15H6z M9 15h2", weight: 1 },
+  { id: "meta_photos", label: "Meta ad photos", kind: "section", section: "meta_photos", match: /\bad\b|-ad-|_ad_|ads?\b|hero|bd-g-/i, icon: "M3 4h14v12H3z m0 9 4-4 3 3 2-2 5 5 M13 8h.01", weight: 1 },
+  { id: "organic", label: "Organic clips", kind: "section", section: "organic", match: /clip|reel|tiktok|organic|fold|bd-d-/i, icon: "M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z", weight: 1 },
+  { id: "ugc_ad", label: "UGC ad", kind: "preset", section: "ugc_videos", prompt: "A creator in her apartment shows the product and says why she loves it, 8s, 9:16", match: /girl|real|life|bd-[a-f]-/i, icon: "M10 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z M4 17c0-3 3-5 6-5s6 2 6 5", weight: 0.78 },
+
+  { id: "assets", label: "Assets", kind: "util", match: /$^/, icon: "M4 5h12v10H4z M4 12l3-3 3 3 2-2 4 4", weight: 0.66 },
+  { id: "custom", label: "Write your own", kind: "preset", match: /$^/, icon: "M4 15l9-9 2 2-9 9H4z", weight: 0.7 },
+  { id: "train", label: "Train a style", kind: "util", match: /$^/, icon: "M10 3l2 4.5 5 .5-3.7 3.4 1.1 5L10 14l-4.4 2.4 1.1-5L3 8l5-.5z", weight: 0.66 },
+  { id: "batches", label: "Batches", kind: "util", match: /$^/, icon: "M3 6h6v6H3z M11 6h6v6h-6z M3 14h14", weight: 0.66 },
+];
+/** Honeycomb rows: 3 / 4 / 5 / 4 — each row centred, so odd rows sit half a step over. */
+const BUBBLE_ROWS = [3, 4, 5, 4];
+
+const BUB_MOTION = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? false : true;
+
+function bubbleThumb(b: Bubble, media: MediaItem[]): string | null {
+  if (b.kind === "util" || b.id === "custom") return null;
+  const hit = media.find((m) => m.mime.startsWith("image/") && (b.match.test(m.filename) || b.match.test(m.key)));
+  return hit ? `/media/${hit.key}` : null;
+}
+
+function BubbleHome({ media, note, onTap }: { media: MediaItem[]; note: string | null; onTap: (b: Bubble) => void }) {
+  const wrap = React.useRef<HTMLDivElement>(null);
+  const els = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const pan = React.useRef({ x: 0, y: 0, vx: 0, vy: 0 });
+  const drag = React.useRef<{ id: number; x: number; y: number; moved: boolean; lx: number; ly: number; lt: number } | null>(null);
+  const raf = React.useRef(0);
+  const thumbs = React.useMemo(() => BUBBLES.map((b) => bubbleThumb(b, media)), [media]);
+
+  // Nominal (unpanned) slot centres in grid units; (0,0) is the grid's centre.
+  const slots = React.useMemo(() => {
+    const out: { x: number; y: number }[] = [];
+    const rowsY = (BUBBLE_ROWS.length - 1) / 2;
+    BUBBLE_ROWS.forEach((n, r) => {
+      for (let i = 0; i < n; i++) out.push({ x: i - (n - 1) / 2, y: (r - rowsY) * 0.88 });
+    });
+    return out;
+  }, []);
+
+  const layout = React.useCallback(() => {
+    const box = wrap.current;
+    if (!box) return;
+    const W = box.clientWidth;
+    const H = box.clientHeight;
+    if (!W || !H) return;
+    const big = Math.max(64, Math.min(120, W * 0.2, H * 0.24));
+    const small = Math.max(36, big * 0.47);
+    const step = big * 1.02;
+    const reach = Math.min(W, H) * 0.62;
+    // Keep the grid on screen: clamp the pan to the grid's extent plus a margin.
+    const maxX = (Math.max(...BUBBLE_ROWS) - 1) / 2 * step + big * 0.2;
+    const maxY = ((BUBBLE_ROWS.length - 1) / 2) * 0.88 * step + big * 0.2;
+    const p = pan.current;
+    p.x = Math.max(-maxX, Math.min(maxX, p.x));
+    p.y = Math.max(-maxY, Math.min(maxY, p.y));
+    slots.forEach((s, i) => {
+      const el = els.current[i];
+      if (!el) return;
+      const cx = W / 2 + p.x + s.x * step;
+      const cy = H / 2 + p.y + s.y * step;
+      const d = Math.hypot(cx - W / 2, cy - H / 2);
+      const t = Math.min(1, d / reach);
+      const ease = t * t * (3 - 2 * t); // smoothstep fisheye
+      const size = (big - (big - small) * ease) * BUBBLES[i].weight;
+      el.style.width = `${size}px`;
+      el.style.height = `${size}px`;
+      el.style.left = `${cx - size / 2}px`;
+      el.style.top = `${cy - size / 2}px`;
+      el.style.opacity = `${1 - ease * 0.35}`;
+      el.classList.toggle("ms-bub-far", size < 62);
+    });
+  }, [slots]);
+
+  React.useEffect(() => {
+    layout();
+    const ro = new ResizeObserver(layout);
+    if (wrap.current) ro.observe(wrap.current);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf.current);
+    };
+  }, [layout]);
+
+  const glide = React.useCallback(() => {
+    cancelAnimationFrame(raf.current);
+    const p = pan.current;
+    const tick = () => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.92;
+      p.vy *= 0.92;
+      layout();
+      if (Math.abs(p.vx) > 0.2 || Math.abs(p.vy) > 0.2) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+  }, [layout]);
+
+  const onDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    cancelAnimationFrame(raf.current);
+    pan.current.vx = pan.current.vy = 0;
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, lx: e.clientX, ly: e.clientY, lt: performance.now() };
+    wrap.current?.setPointerCapture(e.pointerId);
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.lx;
+    const dy = e.clientY - d.ly;
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) {
+      d.moved = true;
+      wrap.current?.classList.add("ms-home-drag");
+    }
+    if (!d.moved) return;
+    const now = performance.now();
+    const dt = Math.max(1, now - d.lt);
+    pan.current.x += dx;
+    pan.current.y += dy;
+    pan.current.vx = (dx / dt) * 12;
+    pan.current.vy = (dy / dt) * 12;
+    d.lx = e.clientX;
+    d.ly = e.clientY;
+    d.lt = now;
+    layout();
+  };
+  const onUp = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    wrap.current?.classList.remove("ms-home-drag");
+    if (d.moved) {
+      if (BUB_MOTION) glide();
+      else layout();
+      return;
+    }
+    // A tap: the bubble under the pointer.
+    const target = (e.target as HTMLElement).closest<HTMLButtonElement>(".ms-bub");
+    const i = target ? els.current.indexOf(target) : -1;
+    if (i >= 0) onTap(BUBBLES[i]);
+  };
+  const onWheel = (e: React.WheelEvent) => {
+    cancelAnimationFrame(raf.current);
+    pan.current.x -= e.deltaX;
+    pan.current.y -= e.deltaY;
+    layout();
+  };
+
+  return (
+    <div className="ms-home">
+      <div ref={wrap} className="ms-home-grid" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} role="group" aria-label="What to make">
+        {BUBBLES.map((b, i) => (
+          <button
+            key={b.id}
+            ref={(el) => {
+              els.current[i] = el;
+            }}
+            type="button"
+            className={`ms-bub ms-bub-${b.kind}${thumbs[i] ? " ms-bub-photo" : ""}`}
+            style={BUB_MOTION ? { animationDelay: `${40 + i * 35}ms` } : { animation: "none" }}
+            title={b.label}
+            aria-label={b.label}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onTap(b);
+              }
+            }}
+          >
+            <span className="ms-bub-in">
+              {thumbs[i] ? <img src={thumbs[i]!} alt="" draggable={false} loading="lazy" /> : null}
+              <span className="ms-bub-shine" />
+              <span className="ms-bub-body">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d={b.icon} />
+                </svg>
+                <span className="ms-bub-label">{b.label}</span>
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="ms-home-hint">
+        <span>Drag around · tap a bubble</span>
+        {note ? <span className="ms-home-note">{note}</span> : null}
+      </div>
+    </div>
+  );
 }
 
 /* --------------------------------------------------------------- messages */
@@ -1195,12 +1418,6 @@ const STYLE = `
 .ms-chat-title{font-weight:600}
 .ms-chat-sub{font-size:11px;color:var(--ink-3)}
 .ms-scroll{flex:1;min-height:0;overflow:auto;padding:18px 18px 8px;display:flex;flex-direction:column;gap:6px}
-.ms-hero{margin:auto;text-align:center;max-width:460px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:30px 10px}
-.ms-hero-title{font-weight:600;font-size:16px}
-.ms-hero-sub{color:var(--ink-2)}
-.ms-starters{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:8px}
-.ms-starter{padding:6px 11px;border-radius:14px;border:1px solid var(--line-2);color:var(--ink-2);font-size:12px;text-align:left}
-.ms-starter:hover{color:var(--ink);border-color:var(--gold);background:rgba(201,162,39,.08)}
 .ms-row{display:flex;animation:msSpring .32s cubic-bezier(.2,1.2,.4,1) both;transform-origin:bottom}
 .ms-row-user{justify-content:flex-end;transform-origin:bottom right}
 .ms-row-assistant{justify-content:flex-start;transform-origin:bottom left}
@@ -1298,11 +1515,46 @@ const STYLE = `
 .ms-pick.on{border-color:#F5D67A;box-shadow:0 0 0 2px rgba(245,214,122,.3)}
 .ms-modal-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid rgba(255,255,255,.08)}
 .ms-empty-page{color:#A7A7AD;padding:40px;text-align:center}
+.ms-scroll-home{padding:0;overflow:hidden}
+.ms-home{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;background:radial-gradient(60% 55% at 50% 48%,rgba(201,162,39,.10) 0%,rgba(201,162,39,0) 70%)}
+.ms-home-grid{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;mask-image:radial-gradient(70% 70% at 50% 50%,#000 55%,transparent 100%);-webkit-mask-image:radial-gradient(70% 70% at 50% 50%,#000 55%,transparent 100%)}
+.ms-home-grid.ms-home-drag{cursor:grabbing}
+.ms-home-grid.ms-home-drag .ms-bub{pointer-events:none}
+.ms-bub{position:absolute;width:80px;height:80px;padding:0;border-radius:50%;animation:msBubIn .6s cubic-bezier(.2,1.3,.4,1) both;will-change:left,top,width,height;-webkit-tap-highlight-color:transparent}
+.ms-bub:focus-visible{outline:2px solid #F5D67A;outline-offset:3px}
+@keyframes msBubIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.ms-bub-in{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:linear-gradient(160deg,#2A2A30,#141416);box-shadow:0 0 0 1px rgba(255,255,255,.14) inset,0 10px 26px rgba(0,0,0,.5);transition:transform .18s cubic-bezier(.2,1.2,.4,1),box-shadow .18s}
+.ms-bub:hover .ms-bub-in{transform:scale(1.06);box-shadow:0 0 0 1px rgba(255,255,255,.24) inset,0 14px 30px rgba(0,0,0,.55)}
+.ms-bub:active .ms-bub-in{transform:scale(.96)}
+.ms-bub-section .ms-bub-in{background:linear-gradient(160deg,#F5D67A 0%,#C9A227 60%,#8A6A12 100%);color:#2B1F03;box-shadow:0 0 0 1px rgba(255,244,200,.45) inset,0 12px 30px rgba(201,162,39,.25)}
+.ms-bub-preset .ms-bub-in{background:linear-gradient(160deg,#3A3325,#1C1913);color:#F5D67A;box-shadow:0 0 0 1px rgba(245,214,122,.22) inset,0 10px 26px rgba(0,0,0,.5)}
+.ms-bub-util .ms-bub-in{color:var(--ink-2)}
+.ms-bub-in img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.ms-bub-photo .ms-bub-in::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.72) 100%);border-radius:50%}
+.ms-bub-photo.ms-bub-section .ms-bub-in{box-shadow:0 0 0 2px #F5D67A inset,0 0 0 3px rgba(201,162,39,.35),0 12px 30px rgba(201,162,39,.25)}
+.ms-bub-shine{position:absolute;inset:0;border-radius:50%;background:radial-gradient(60% 55% at 30% 22%,rgba(255,255,255,.14),rgba(255,255,255,0) 70%);pointer-events:none;z-index:2}
+.ms-bub-body{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8%;text-align:center;pointer-events:none}
+.ms-bub-photo .ms-bub-body{justify-content:flex-end;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);padding-bottom:12%}
+.ms-bub-photo .ms-bub-body svg{display:none}
+.ms-bub-label{font-size:11px;line-height:13px;font-weight:600;letter-spacing:-.01em;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ms-bub-section .ms-bub-label{font-size:12px;line-height:14px}
+.ms-bub-far .ms-bub-label{display:none}
+.ms-bub-far.ms-bub-photo .ms-bub-body svg{display:block}
+.ms-home-hint{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px 10px;font-size:11.5px;color:var(--ink-3)}
+.ms-home-note{color:var(--gold-2)}
+.ms-pills{display:flex;gap:4px}
+.ms-pill{height:22px;padding:0 8px 0 6px;border-radius:11px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);color:var(--ink-2)}
+.ms-pill:hover{background:rgba(255,255,255,.1);color:var(--ink)}
+.ms-pill-dot{width:6px;height:6px;border-radius:50%;background:#28C840;box-shadow:0 0 6px rgba(40,200,64,.6)}
+.ms-pill-off .ms-pill-dot{background:#FF5F57;box-shadow:0 0 6px rgba(255,95,87,.6)}
+.ms-pill-off{color:var(--gold-2)}
+@media (prefers-reduced-motion: reduce){.ms-bub{animation:none}.ms-bub-in{transition:none}}
 @media (max-width: 900px){
   .ms-desk{padding:0}
   .ms-window{border-radius:0;border:0}
   .ms-title{position:static;transform:none}
   .ms-store,.ms-seg-model{display:none}
+  .ms-pill{padding:0 6px;font-size:10px}
   .ms-mobilebar{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
   .ms-seg-sections{overflow:auto}
   .ms-seg-sections button{flex:none}
