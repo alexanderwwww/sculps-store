@@ -685,33 +685,55 @@ type Bubble = {
   prompt?: string;
   match: RegExp;
   icon: string; // SVG path data, 20×20 box
-  weight: number; // 1 = big (section), .78 = preset, .66 = utility
 };
 
-/** One bubble per thing to make. Row layout below is the honeycomb order. */
+/** One bubble per thing to make, in honeycomb order (rows of 3 / 4 / 5 / 4; the gold sections sit in the middle row). */
 const BUBBLES: Bubble[] = [
-  { id: "exploded", label: "Exploded view", kind: "preset", section: "product_photos", prompt: "An exploded view of the product: every part floating apart in a neat vertical stack, one hue background, 1:1", match: /explod|box|kit|cables|straps|pads|charger/i, icon: "M10 3v3 M10 8v4 M10 14v3 M5 6h10 M5 11h10 M5 16h10", weight: 0.78 },
-  { id: "meta_shot", label: "Meta ad shot", kind: "preset", section: "meta_photos", prompt: "Make 2 ad photos of the product on a bold one-hue background with two short sticker lines, 4:5", match: /\bad\b|-ad-|_ad_|ads?\b|band|hero|bd-g-|bd-x-/i, icon: "M3 5h14v10H3z M6 12l3-3 3 2 2-1", weight: 0.78 },
-  { id: "socks", label: "Socks / accessory", kind: "preset", section: "product_photos", prompt: "A clean white-background shot of the accessory (socks/straps), recoloured to match the product, 1:1", match: /sock|strap|pad|accessor/i, icon: "M7 3h6v7l3 3v4H8l-3-3v-4l2-2z", weight: 0.78 },
+  { id: "exploded", label: "Exploded view", kind: "preset", section: "product_photos", prompt: "An exploded view of the product: every part floating apart in a neat vertical stack, one hue background, 1:1", match: /explod|box|kit|cables|straps|pads|charger/i, icon: "M10 3v3 M10 8v4 M10 14v3 M5 6h10 M5 11h10 M5 16h10" },
+  { id: "meta_shot", label: "Meta ad shot", kind: "preset", section: "meta_photos", prompt: "Make 2 ad photos of the product on a bold one-hue background with two short sticker lines, 4:5", match: /\bad\b|-ad-|_ad_|ads?\b|band|hero|bd-g-|bd-x-/i, icon: "M3 5h14v10H3z M6 12l3-3 3 2 2-1" },
+  { id: "socks", label: "Socks / accessory", kind: "preset", section: "product_photos", prompt: "A clean white-background shot of the accessory (socks/straps), recoloured to match the product, 1:1", match: /sock|strap|pad|accessor/i, icon: "M7 3h6v7l3 3v4H8l-3-3v-4l2-2z" },
 
-  { id: "clean", label: "Clean product shot", kind: "preset", section: "product_photos", prompt: "Clean white-background shots of the product, three angles, exact product, 1:1", match: /studio|cut|render|macro/i, icon: "M4 6h12v10H4z M7 16v1h6v-1", weight: 0.78 },
-  { id: "product_photos", label: "Product photos", kind: "section", section: "product_photos", match: /studio|macro|fold|screen/i, icon: "M3 6.5 10 3l7 3.5v7L10 17l-7-3.5zM3 6.5 10 10l7-3.5M10 10v7", weight: 1 },
-  { id: "website_photos", label: "Website photos", kind: "section", section: "website_photos", match: /hero|web|home|life/i, icon: "M2.5 4h15v12h-15z M2.5 8h15", weight: 1 },
-  { id: "video", label: "Product video", kind: "preset", section: "website_photos", prompt: "A short 8s product video from the best hero still: slow push-in, soft light, with sound, 16:9", match: /studio|hero|band|bd-g-/i, icon: "M4 5h9v10H4z M13 8l3-2v8l-3-2", weight: 0.78 },
+  { id: "clean", label: "Clean product shot", kind: "preset", section: "product_photos", prompt: "Clean white-background shots of the product, three angles, exact product, 1:1", match: /studio|cut|render|macro/i, icon: "M4 6h12v10H4z M7 16v1h6v-1" },
+  { id: "product_photos", label: "Product photos", kind: "section", section: "product_photos", match: /studio|macro|fold|screen/i, icon: "M3 6.5 10 3l7 3.5v7L10 17l-7-3.5zM3 6.5 10 10l7-3.5M10 10v7" },
+  { id: "website_photos", label: "Website photos", kind: "section", section: "website_photos", match: /hero|web|home|life/i, icon: "M2.5 4h15v12h-15z M2.5 8h15" },
+  { id: "video", label: "Product video", kind: "preset", section: "website_photos", prompt: "A short 8s product video from the best hero still: slow push-in, soft light, with sound, 16:9", match: /studio|hero|band|bd-g-/i, icon: "M4 5h9v10H4z M13 8l3-2v8l-3-2" },
 
-  { id: "ugc_still", label: "UGC still", kind: "preset", section: "ugc_videos", prompt: "A real-phone UGC still: a creator in her apartment holding the product, natural light, no studio, 9:16", match: /real|life|girl|apt|bd-[a-f]-/i, icon: "M7 3h6v14H7z M9 15h2", weight: 0.78 },
-  { id: "ugc_videos", label: "UGC videos", kind: "section", section: "ugc_videos", match: /girl|bd-c-|bd-d-|real|apt/i, icon: "M6 2.5h8v15H6z M9 15h2", weight: 1 },
-  { id: "meta_photos", label: "Meta ad photos", kind: "section", section: "meta_photos", match: /\bad\b|-ad-|_ad_|ads?\b|hero|bd-g-/i, icon: "M3 4h14v12H3z m0 9 4-4 3 3 2-2 5 5 M13 8h.01", weight: 1 },
-  { id: "organic", label: "Organic clips", kind: "section", section: "organic", match: /clip|reel|tiktok|organic|fold|bd-d-/i, icon: "M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z", weight: 1 },
-  { id: "ugc_ad", label: "UGC ad", kind: "preset", section: "ugc_videos", prompt: "A creator in her apartment shows the product and says why she loves it, 8s, 9:16", match: /girl|real|life|bd-[a-f]-/i, icon: "M10 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z M4 17c0-3 3-5 6-5s6 2 6 5", weight: 0.78 },
+  { id: "ugc_still", label: "UGC still", kind: "preset", section: "ugc_videos", prompt: "A real-phone UGC still: a creator in her apartment holding the product, natural light, no studio, 9:16", match: /real|life|girl|apt|bd-[a-f]-/i, icon: "M7 3h6v14H7z M9 15h2" },
+  { id: "ugc_videos", label: "UGC videos", kind: "section", section: "ugc_videos", match: /girl|bd-c-|bd-d-|real|apt/i, icon: "M6 2.5h8v15H6z M9 15h2" },
+  { id: "meta_photos", label: "Meta ad photos", kind: "section", section: "meta_photos", match: /\bad\b|-ad-|_ad_|ads?\b|hero|bd-g-/i, icon: "M3 4h14v12H3z m0 9 4-4 3 3 2-2 5 5 M13 8h.01" },
+  { id: "organic", label: "Organic clips", kind: "section", section: "organic", match: /clip|reel|tiktok|organic|fold|bd-d-/i, icon: "M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z" },
+  { id: "ugc_ad", label: "UGC ad", kind: "preset", section: "ugc_videos", prompt: "A creator in her apartment shows the product and says why she loves it, 8s, 9:16", match: /girl|real|life|bd-[a-f]-/i, icon: "M10 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z M4 17c0-3 3-5 6-5s6 2 6 5" },
 
-  { id: "assets", label: "Assets", kind: "util", match: /$^/, icon: "M4 5h12v10H4z M4 12l3-3 3 3 2-2 4 4", weight: 0.66 },
-  { id: "custom", label: "Write your own", kind: "preset", match: /$^/, icon: "M4 15l9-9 2 2-9 9H4z", weight: 0.7 },
-  { id: "train", label: "Train a style", kind: "util", match: /$^/, icon: "M10 3l2 4.5 5 .5-3.7 3.4 1.1 5L10 14l-4.4 2.4 1.1-5L3 8l5-.5z", weight: 0.66 },
-  { id: "batches", label: "Batches", kind: "util", match: /$^/, icon: "M3 6h6v6H3z M11 6h6v6h-6z M3 14h14", weight: 0.66 },
+  { id: "assets", label: "Assets", kind: "util", match: /$^/, icon: "M4 5h12v10H4z M4 12l3-3 3 3 2-2 4 4" },
+  { id: "custom", label: "Write your own", kind: "preset", match: /$^/, icon: "M4 15l9-9 2 2-9 9H4z" },
+  { id: "train", label: "Train a style", kind: "util", match: /$^/, icon: "M10 3l2 4.5 5 .5-3.7 3.4 1.1 5L10 14l-4.4 2.4 1.1-5L3 8l5-.5z" },
+  { id: "batches", label: "Batches", kind: "util", match: /$^/, icon: "M3 6h6v6H3z M11 6h6v6h-6z M3 14h14" },
 ];
-/** Honeycomb rows: 3 / 4 / 5 / 4 — each row centred, so odd rows sit half a step over. */
 const BUBBLE_ROWS = [3, 4, 5, 4];
+/** Base size per ring from the centre slot, in px: the CSS layout uses these before any JS runs. */
+const RING_SIZE = [120, 96, 72, 56];
+const BIG = RING_SIZE[0];
+const SMALL = RING_SIZE[3];
+
+type Slot = { i: number; row: number; x: number; y: number; ring: number };
+/** Rows of slots. (x, y) are grid units from the centre slot; y is squashed for hex packing. */
+const BUBBLE_SLOTS: Slot[][] = (() => {
+  const rows: Slot[][] = [];
+  let i = 0;
+  const midRow = (BUBBLE_ROWS.length - 1) / 2;
+  BUBBLE_ROWS.forEach((n, row) => {
+    const list: Slot[] = [];
+    for (let c = 0; c < n; c++) {
+      const x = c - (n - 1) / 2;
+      const y = (row - midRow) * 0.88;
+      const d = Math.hypot(x, y);
+      const ring = d < 0.5 ? 0 : d < 1.4 ? 1 : d < 2.2 ? 2 : 3;
+      list.push({ i: i++, row, x, y, ring });
+    }
+    rows.push(list);
+  });
+  return rows;
+})();
 
 const BUB_MOTION = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? false : true;
 
@@ -721,23 +743,21 @@ function bubbleThumb(b: Bubble, media: MediaItem[]): string | null {
   return hit ? `/media/${hit.key}` : null;
 }
 
+/**
+ * The honeycomb is plain CSS: flex rows, centred, odd rows shifted half a
+ * step, every bubble sized by its ring through an inline `--size`. So the
+ * grid is right on first paint and without JS. Once mounted, layout() only
+ * refines sizes and opacity from the pan (the fisheye) and moves the rows.
+ */
 function BubbleHome({ media, note, onTap }: { media: MediaItem[]; note: string | null; onTap: (b: Bubble) => void }) {
   const wrap = React.useRef<HTMLDivElement>(null);
+  const rowsEl = React.useRef<HTMLDivElement>(null);
   const els = React.useRef<(HTMLButtonElement | null)[]>([]);
   const pan = React.useRef({ x: 0, y: 0, vx: 0, vy: 0 });
   const drag = React.useRef<{ id: number; x: number; y: number; moved: boolean; lx: number; ly: number; lt: number } | null>(null);
   const raf = React.useRef(0);
   const thumbs = React.useMemo(() => BUBBLES.map((b) => bubbleThumb(b, media)), [media]);
-
-  // Nominal (unpanned) slot centres in grid units; (0,0) is the grid's centre.
-  const slots = React.useMemo(() => {
-    const out: { x: number; y: number }[] = [];
-    const rowsY = (BUBBLE_ROWS.length - 1) / 2;
-    BUBBLE_ROWS.forEach((n, r) => {
-      for (let i = 0; i < n; i++) out.push({ x: i - (n - 1) / 2, y: (r - rowsY) * 0.88 });
-    });
-    return out;
-  }, []);
+  const flat = React.useMemo(() => BUBBLE_SLOTS.flat(), []);
 
   const layout = React.useCallback(() => {
     const box = wrap.current;
@@ -745,33 +765,30 @@ function BubbleHome({ media, note, onTap }: { media: MediaItem[]; note: string |
     const W = box.clientWidth;
     const H = box.clientHeight;
     if (!W || !H) return;
-    const big = Math.max(64, Math.min(120, W * 0.2, H * 0.24));
-    const small = Math.max(36, big * 0.47);
+    const k = Math.max(0.5, Math.min(1, W / 620, H / 460)); // the CSS --k scale, mirrored here
+    const big = BIG * k;
+    const small = SMALL * k;
     const step = big * 1.02;
     const reach = Math.min(W, H) * 0.62;
-    // Keep the grid on screen: clamp the pan to the grid's extent plus a margin.
-    const maxX = (Math.max(...BUBBLE_ROWS) - 1) / 2 * step + big * 0.2;
+    const maxX = ((Math.max(...BUBBLE_ROWS) - 1) / 2) * step + big * 0.2;
     const maxY = ((BUBBLE_ROWS.length - 1) / 2) * 0.88 * step + big * 0.2;
     const p = pan.current;
     p.x = Math.max(-maxX, Math.min(maxX, p.x));
     p.y = Math.max(-maxY, Math.min(maxY, p.y));
-    slots.forEach((s, i) => {
-      const el = els.current[i];
+    if (rowsEl.current) rowsEl.current.style.transform = `translate(${p.x}px,${p.y}px)`;
+    flat.forEach((s) => {
+      const el = els.current[s.i];
       if (!el) return;
       const cx = W / 2 + p.x + s.x * step;
       const cy = H / 2 + p.y + s.y * step;
-      const d = Math.hypot(cx - W / 2, cy - H / 2);
-      const t = Math.min(1, d / reach);
+      const t = Math.min(1, Math.hypot(cx - W / 2, cy - H / 2) / reach);
       const ease = t * t * (3 - 2 * t); // smoothstep fisheye
-      const size = (big - (big - small) * ease) * BUBBLES[i].weight;
-      el.style.width = `${size}px`;
-      el.style.height = `${size}px`;
-      el.style.left = `${cx - size / 2}px`;
-      el.style.top = `${cy - size / 2}px`;
+      const size = (big - (big - small) * ease) / k; // stored unscaled; CSS multiplies by --k
+      el.style.setProperty("--size", `${size.toFixed(1)}px`);
       el.style.opacity = `${1 - ease * 0.35}`;
-      el.classList.toggle("ms-bub-far", size < 62);
+      el.classList.toggle("ms-bub-far", size * k < 62);
     });
-  }, [slots]);
+  }, [flat]);
 
   React.useEffect(() => {
     layout();
@@ -850,36 +867,45 @@ function BubbleHome({ media, note, onTap }: { media: MediaItem[]; note: string |
   return (
     <div className="ms-home">
       <div ref={wrap} className="ms-home-grid" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} role="group" aria-label="What to make">
-        {BUBBLES.map((b, i) => (
-          <button
-            key={b.id}
-            ref={(el) => {
-              els.current[i] = el;
-            }}
-            type="button"
-            className={`ms-bub ms-bub-${b.kind}${thumbs[i] ? " ms-bub-photo" : ""}`}
-            style={BUB_MOTION ? { animationDelay: `${40 + i * 35}ms` } : { animation: "none" }}
-            title={b.label}
-            aria-label={b.label}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onTap(b);
-              }
-            }}
-          >
-            <span className="ms-bub-in">
-              {thumbs[i] ? <img src={thumbs[i]!} alt="" draggable={false} loading="lazy" /> : null}
-              <span className="ms-bub-shine" />
-              <span className="ms-bub-body">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d={b.icon} />
-                </svg>
-                <span className="ms-bub-label">{b.label}</span>
-              </span>
-            </span>
-          </button>
-        ))}
+        <div ref={rowsEl} className="ms-home-rows">
+          {BUBBLE_SLOTS.map((row, r) => (
+            <div key={r} className="ms-home-row" style={{ "--row-shift": row.length === BUBBLE_SLOTS[r - 1]?.length ? (r % 2 ? "0.5" : "-0.5") : "0" } as unknown as React.CSSProperties}>
+              {row.map((s) => {
+                const b = BUBBLES[s.i];
+                return (
+                  <button
+                    key={b.id}
+                    ref={(el) => {
+                      els.current[s.i] = el;
+                    }}
+                    type="button"
+                    className={`ms-bub ms-bub-${b.kind}${thumbs[s.i] ? " ms-bub-photo" : ""}${s.ring === 3 ? " ms-bub-far" : ""}`}
+                    style={{ "--size": `${RING_SIZE[s.ring]}px`, ...(BUB_MOTION ? { animationDelay: `${40 + s.i * 35}ms` } : { animation: "none" }) } as unknown as React.CSSProperties}
+                    title={b.label}
+                    aria-label={b.label}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onTap(b);
+                      }
+                    }}
+                  >
+                    <span className="ms-bub-in">
+                      {thumbs[s.i] ? <img src={thumbs[s.i]!} alt="" draggable={false} loading="lazy" /> : null}
+                      <span className="ms-bub-shine" />
+                      <span className="ms-bub-body">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d={b.icon} />
+                        </svg>
+                        <span className="ms-bub-label">{b.label}</span>
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="ms-home-hint">
         <span>Drag around · tap a bubble</span>
@@ -1517,13 +1543,15 @@ const STYLE = `
 .ms-empty-page{color:#A7A7AD;padding:40px;text-align:center}
 .ms-scroll-home{padding:0;overflow:hidden}
 .ms-home{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;background:radial-gradient(60% 55% at 50% 48%,rgba(201,162,39,.10) 0%,rgba(201,162,39,0) 70%)}
-.ms-home-grid{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;mask-image:radial-gradient(70% 70% at 50% 50%,#000 55%,transparent 100%);-webkit-mask-image:radial-gradient(70% 70% at 50% 50%,#000 55%,transparent 100%)}
+.ms-home-grid{--k:1;--step:calc(120px * var(--k) * 1.02);flex:1;min-height:320px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;mask-image:radial-gradient(70% 70% at 50% 50%,#000 55%,transparent 100%);-webkit-mask-image:radial-gradient(70% 70% at 50% 50%,#000 55%,transparent 100%)}
 .ms-home-grid.ms-home-drag{cursor:grabbing}
 .ms-home-grid.ms-home-drag .ms-bub{pointer-events:none}
-.ms-bub{position:absolute;width:80px;height:80px;padding:0;border-radius:50%;animation:msBubIn .6s cubic-bezier(.2,1.3,.4,1) both;will-change:left,top,width,height;-webkit-tap-highlight-color:transparent}
+.ms-home-rows{display:flex;flex-direction:column;align-items:center;flex:none;will-change:transform}
+.ms-home-row{display:flex;align-items:center;justify-content:center;height:calc(var(--step) * .88);margin-left:calc(var(--row-shift,0) * var(--step) * -1)}
+.ms-bub{--size:72px;position:relative;flex:none;width:var(--step);height:var(--step);padding:0;border-radius:50%;animation:msBubIn .6s cubic-bezier(.2,1.3,.4,1) both;-webkit-tap-highlight-color:transparent}
 .ms-bub:focus-visible{outline:2px solid #F5D67A;outline-offset:3px}
 @keyframes msBubIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
-.ms-bub-in{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:linear-gradient(160deg,#2A2A30,#141416);box-shadow:0 0 0 1px rgba(255,255,255,.14) inset,0 10px 26px rgba(0,0,0,.5);transition:transform .18s cubic-bezier(.2,1.2,.4,1),box-shadow .18s}
+.ms-bub-in{position:absolute;left:50%;top:50%;width:calc(var(--size) * var(--k));height:calc(var(--size) * var(--k));margin:calc(var(--size) * var(--k) / -2) 0 0 calc(var(--size) * var(--k) / -2);border-radius:50%;overflow:hidden;background:linear-gradient(160deg,#2A2A30,#141416);box-shadow:0 0 0 1px rgba(255,255,255,.14) inset,0 10px 26px rgba(0,0,0,.5);transition:transform .18s cubic-bezier(.2,1.2,.4,1),box-shadow .18s}
 .ms-bub:hover .ms-bub-in{transform:scale(1.06);box-shadow:0 0 0 1px rgba(255,255,255,.24) inset,0 14px 30px rgba(0,0,0,.55)}
 .ms-bub:active .ms-bub-in{transform:scale(.96)}
 .ms-bub-section .ms-bub-in{background:linear-gradient(160deg,#F5D67A 0%,#C9A227 60%,#8A6A12 100%);color:#2B1F03;box-shadow:0 0 0 1px rgba(255,244,200,.45) inset,0 12px 30px rgba(201,162,39,.25)}
@@ -1555,6 +1583,7 @@ const STYLE = `
   .ms-title{position:static;transform:none}
   .ms-store,.ms-seg-model{display:none}
   .ms-pill{padding:0 6px;font-size:10px}
+  .ms-home-grid{--k:.62;min-height:260px}
   .ms-mobilebar{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
   .ms-seg-sections{overflow:auto}
   .ms-seg-sections button{flex:none}
