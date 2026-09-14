@@ -117,12 +117,12 @@
 .bd-hero__cta .bd-btn--big { width: auto; }
 .bd-hero__sure { margin: 18px 0 0; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
 .bd-hero__ways { display: flex; align-items: center; gap: 6px; margin-top: 22px; }
-  .bd-hero__pic { aspect-ratio: 4 / 3.2; min-height: 0; }
-  .bd-hero__pic img { object-position: 82% center; }
+.bd-hero__way { margin-left: 6px; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.bd-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--rule); display: block; }
 .bd-dot:hover { transform: scale(1.12); }
 @media (max-width: 860px) {
-  .bd-hero__pic { aspect-ratio: 4 / 4.2; min-height: 0; }
-  .bd-hero__pic img { object-position: 72% 45%; }
+  .bd-hero__pic { aspect-ratio: 4 / 3.2; min-height: 0; }
+  .bd-hero__pic img { object-position: 82% center; }
   .bd-hero__panel { position: static; padding-block: 34px; }
   .bd-hero__copy { max-width: none; }
 }
