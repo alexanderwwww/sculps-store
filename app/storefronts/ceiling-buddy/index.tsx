@@ -720,32 +720,129 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
           ) : null}
         </div>
 
-        {/* The answers, as the conversation people actually have before they
-            buy: they ask, someone from the brand replies. Every one is open —
-            an accordion hides the reassurance behind a click, which is the
-            opposite of what this section is for. */}
-        {asked.length ? (
-          <div className="cb-chat" id="faq">
-            <div className="cb-chat__day">Questions people ask first</div>
-            {asked.map((b) => (
-              <div className="cb-chat__pair" key={b.id}>
-                <p className="cb-chat__q">{val(b.values, "question")}</p>
-                <div className="cb-chat__a">
-                  <img className="cb-chat__av" src={LOGO} alt="" />
-                  <p>{val(b.values, "answer")}</p>
-                </div>
-              </div>
-            ))}
-            <div className="cb-chat__foot">
-              Still unsure? {page.store.contactEmail ? (
-                <a href={`mailto:${page.store.contactEmail}`}>Ask us anything</a>
-              ) : "Ask us anything"} — a person answers, same day.
-            </div>
-          </div>
-        ) : null}
+        {asked.length ? <Chat blocks={asked} email={page.store.contactEmail} /> : null}
         </div>
       </div>
     </section>
+  );
+}
+
+/* ------------------------------------------------------------------- chat */
+/**
+ * The answers, as the conversation people actually have before they buy.
+ *
+ * It plays rather than sits there: as the thread scrolls into view the
+ * messages arrive one at a time, with our side pausing on a typing indicator
+ * first. That pause is the whole trick — a message that appears while you are
+ * looking at it gets read, and someone who reads all six has answered every
+ * objection they had without being sold to.
+ *
+ * Every message is in the markup from the first render, so this costs nothing
+ * in SEO and nothing to a reader who never sees the animation. Anyone who has
+ * asked for less motion gets the finished thread immediately.
+ */
+function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: string | null }) {
+  // How many messages have landed. Two per exchange: theirs, then ours.
+  const total = blocks.length * 2;
+
+  // The server renders the whole thread, so it is in the HTML for a reader with
+  // no JavaScript and for a crawler. The browser starts it empty instead — and
+  // decides that on the very first render rather than in an effect, because
+  // emptying it afterwards paints every message for one frame and then
+  // swallows them, which looks like a bug.
+  const [shown, setShown] = useState(() => {
+    if (typeof document === "undefined") return total;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? total : 0;
+  });
+  const [typing, setTyping] = useState(false);
+  const thread = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (calm || !thread.current) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+    let step = 0;
+
+    const advance = () => {
+      if (step >= total) { setTyping(false); return; }
+      const ours = step % 2 === 1;
+      // Our replies pause on the dots first; theirs land straight away, the
+      // way a question you already typed does.
+      if (ours) {
+        setTyping(true);
+        timer = setTimeout(() => {
+          setTyping(false);
+          setShown((n) => n + 1);
+          step += 1;
+          timer = setTimeout(advance, 420);
+        }, 900);
+      } else {
+        setShown((n) => n + 1);
+        step += 1;
+        timer = setTimeout(advance, 620);
+      }
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        timer = setTimeout(advance, 300);
+      },
+      { threshold: 0.25 },
+    );
+    io.observe(thread.current);
+    return () => { io.disconnect(); clearTimeout(timer); };
+  }, [total]);
+
+  // Times run backwards from "now" so the thread always reads as last night.
+  const at = (i: number) => {
+    const start = 23 * 60 + 4;
+    const m = (start + i * 3) % (24 * 60);
+    const h = Math.floor(m / 60);
+    return `${((h + 11) % 12) + 1}:${String(m % 60).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`;
+  };
+
+  return (
+    <div className="cb-chat" id="faq" ref={thread} suppressHydrationWarning>
+      <div className="cb-chat__head">
+        <img className="cb-chat__av cb-chat__av--lg" src={LOGO} alt="" />
+        <div>
+          <div className="cb-chat__name">Ceiling Buddy</div>
+          <div className="cb-chat__live"><i />Usually replies in a few minutes</div>
+        </div>
+      </div>
+
+      <div className="cb-chat__day">Last night</div>
+
+      {blocks.map((b, i) => (
+        <div className="cb-chat__pair" key={b.id}>
+          <p className="cb-chat__q" data-in={shown > i * 2 ? "" : undefined}>
+            {val(b.values, "question")}
+          </p>
+          <div className="cb-chat__a" data-in={shown > i * 2 + 1 ? "" : undefined}>
+            <img className="cb-chat__av" src={LOGO} alt="" />
+            <div>
+              <p>{val(b.values, "answer")}</p>
+              <span className="cb-chat__time">{at(i)}</span>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {typing ? (
+        <div className="cb-chat__typing" aria-hidden="true">
+          <img className="cb-chat__av" src={LOGO} alt="" />
+          <span><i /><i /><i /></span>
+        </div>
+      ) : null}
+
+      <div className="cb-chat__foot">
+        {email ? <a href={`mailto:${email}`}>Ask us anything</a> : "Ask us anything"} — a real
+        person answers, same day. 🤍
+      </div>
+    </div>
   );
 }
 
