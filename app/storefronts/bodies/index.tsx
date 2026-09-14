@@ -1007,7 +1007,7 @@ function StoryCard({ r, i }: { r: ReviewLike; i: number }) {
       <div className="bd-story__top">
         <span className="bd-story__av" aria-hidden="true">{(r.name.trim()[0] || "b").toUpperCase()}</span>
         <b>{handle}</b>
-        <span>{ago(r.reviewedOn ?? r.createdAt)}</span>
+        <span suppressHydrationWarning>{ago(r.reviewedOn ?? r.createdAt)}</span>
       </div>
       <span className="bd-story__heart" aria-hidden="true">♥</span>
       <div className="bd-story__bar">
@@ -1028,7 +1028,7 @@ function NoteCard({ r, i }: { r: ReviewLike; i: number }) {
       <div className="bd-note__head">
         <span className="bd-note__av" aria-hidden="true">{(r.name.trim()[0] || "b").toUpperCase()}</span>
         <span className="bd-note__app">bodies · review</span>
-        <span className="bd-note__when">{ago(r.reviewedOn ?? r.createdAt)}</span>
+        <span className="bd-note__when" suppressHydrationWarning>{ago(r.reviewedOn ?? r.createdAt)}</span>
       </div>
       <b className="bd-note__name">{r.name}{r.verified ? <span className="bd-story__ok" title="Verified">✓</span> : null}</b>
       <p>{r.title ? `${r.title} — ` : ""}{r.body}</p>

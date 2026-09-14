@@ -408,7 +408,9 @@ interface ToolContext {
 
 function guard(ctx: ToolContext, estimate: number, quoted: unknown): { needs_approval: true; estimated_cost_usd: string; message: string } | null {
   if (estimate <= APPROVAL_LIMIT_USD) return null;
-  if (ctx.approvedByOwner && typeof quoted === "number" && quoted > 0) return null;
+  // The owner said yes to the price that was quoted, not to any price: a
+  // call whose real estimate outgrows the quote goes back for a fresh yes.
+  if (ctx.approvedByOwner && typeof quoted === "number" && quoted > 0 && quoted >= estimate * 0.9) return null;
   return {
     needs_approval: true,
     estimated_cost_usd: usd(estimate),

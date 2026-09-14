@@ -1172,7 +1172,7 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
           </nav>
 
           {/* ------------------------------------------------- pane */}
-          <main className="ms-pane">
+          <section className="ms-pane" aria-label="Studio">
             {!app ? <BubbleHome media={media} onTap={tapBubble} /> : null}
             {app ? (
               <div key={app} className="ms-sheet">
@@ -1191,7 +1191,7 @@ export default function MarketingStudio({ loaderData }: Route.ComponentProps) {
                 )}
               </div>
             ) : null}
-          </main>
+          </section>
         </div>
       </div>
     </div>
@@ -1268,12 +1268,16 @@ function timeAgo(date: Date | string): string {
 /** "1:23" since a timestamp, ticking every second while mounted. */
 function useElapsed(since: Date | string | null): string {
   const [, tick] = React.useReducer((n: number) => n + 1, 0);
+  // Empty until mounted: the server's clock and the browser's differ, and a
+  // seconds counter rendered on both sides never hydrates cleanly.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
   React.useEffect(() => {
     if (!since) return;
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, [since]);
-  if (!since) return "";
+  if (!since || !mounted) return "";
   const s = Math.max(0, Math.floor((Date.now() - new Date(since).getTime()) / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
