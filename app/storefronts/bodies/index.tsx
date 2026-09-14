@@ -174,11 +174,11 @@ const COMPARE = {
   ],
 };
 /** The captions that ride the UGC marquee: product facts, two lines each, rotated through. */
-const FEED_LINES: [string, string][] = [
-  ["SCREEN", "BUILT IN."],
-  ["FOLDS", "FLAT."],
-  ["NO", "MEMBERSHIP."],
-  ["HER ROOM.", "HER TIMING."],
+const FEED_LINES: { big: string; small: string; style: "stack" | "outline" | "tag" | "corner" }[] = [
+  { big: "SCREEN BUILT IN", small: "press play. she tells you what to do.", style: "stack" },
+  { big: "FOLDS FLAT", small: "under the bed by 9pm", style: "outline" },
+  { big: "NO MEMBERSHIP", small: "one board. every class.", style: "tag" },
+  { big: "HER ROOM", small: "her timing", style: "corner" },
 ];
 
 /* --------------------------------------------------------------- orders */
@@ -969,10 +969,11 @@ function Feed({ items }: { items: { id: string; src: string; caption: string }[]
         <img src={it.src} alt={it.caption} loading="lazy" />
         {captioned ? (
           <>
-            <figcaption className="bd-feed__big" aria-hidden="true"><span>{lines[0]}</span><span>{lines[1]}</span></figcaption>
-            <span className={`bd-feed__chrome bd-feed__chrome--${i % 4 === 1 ? "tr" : "bl"}`}>
-              <Chrome variant={i % 4 === 1 ? "ring" : "blob"} size={i % 4 === 1 ? 96 : 120} />
-            </span>
+            <figcaption className={`bd-feed__type bd-feed__type--${lines.style}`} aria-hidden="true">
+              <b>{lines.big}</b>
+              <i>{lines.small}</i>
+            </figcaption>
+            <span className="bd-feed__time">0:{String(12 + i * 7).padStart(2, "0")}</span>
           </>
         ) : it.caption ? (
           <figcaption className="bd-feed__cap">{it.caption}</figcaption>
