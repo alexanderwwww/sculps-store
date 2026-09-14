@@ -592,50 +592,24 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
 
     /* ------------------------------------------------------- before / after: real pairs only */
     case "before_after": {
-      // Renders only when a pair carries both photos. No stock, no renders,
-      // no mock-ups in this slot (team-copy §5).
-      const pairs = blocks.filter((b) => allowed(val(b.values, "before")) && allowed(val(b.values, "after")));
-      if (pairs.length === 0) return null;
+      // One pair, one card. Renders only when the pair carries both photos.
+      const pair = blocks.find((b) => allowed(val(b.values, "before")) && allowed(val(b.values, "after")));
+      if (!pair) return null;
+      const weeks = val(pair.values, "weeks").replace(/\D+/g, "");
       return (
         <div className="bd-sec" id="results">
-          <div className="bd-wrap">
-            <div className="bd-sec__head">
-              <div>
-                <h2 className="bd-h2">{val(v, "heading") || BA.heading}</h2>
-                <p className="bd-lede">{val(v, "subheading") || BA.lede}</p>
+          <div className="bd-wrap bd-ba">
+            <div className="bd-ba__copy">
+              <h2 className="bd-h2">{val(v, "heading") || BA.heading}</h2>
+              <p className="bd-lede">{val(v, "subheading") || BA.lede}</p>
+              <div className="bd-ba__who">
+                {val(pair.values, "name") ? <b>{val(pair.values, "name")}</b> : null}
+                {val(pair.values, "note") ? <p>{val(pair.values, "note")}</p> : null}
+                {weeks ? <span className="bd-ba__weeks">{weeks} weeks on the board</span> : null}
               </div>
+              <p className="bd-foot-note">{val(v, "footnote") || BA.note}</p>
             </div>
-          </div>
-          <div className="bd-wall" aria-label="Before and after">
-            {[0, 1].map((row) => {
-              // Two dense rows sliding opposite ways; short lists repeat to fill.
-              const fill = pairs.length >= 6 ? pairs : Array.from({ length: Math.ceil(6 / pairs.length) }, () => pairs).flat();
-              const run = row === 0 ? fill : [...fill.slice(Math.floor(fill.length / 2)), ...fill.slice(0, Math.floor(fill.length / 2))];
-              return (
-                <div className={`bd-wall__row${row === 1 ? " bd-wall__row--rev" : ""}`} key={row}>
-                  {[0, 1].map((dup) => (
-                    <div className="bd-wall__run" key={dup} aria-hidden={dup === 1}>
-                      {run.map((bk, i) => {
-                        const weeks = val(bk.values, "weeks").replace(/\D+/g, "");
-                        return (
-                          <figure className="bd-wall__pair" key={`${bk.id}-${i}`}>
-                            <img src={val(bk.values, "before")} alt={dup ? "" : `${val(bk.values, "name")} before`} loading="lazy" />
-                            <img src={val(bk.values, "after")} alt={dup ? "" : `${val(bk.values, "name")} after`} loading="lazy" />
-                            <figcaption>
-                              <span>0</span><i>→</i><span>{weeks ? `${weeks} wk` : "after"}</span>
-                              {val(bk.values, "name") ? <b>{val(bk.values, "name")}</b> : null}
-                            </figcaption>
-                          </figure>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-          <div className="bd-wrap">
-            <p className="bd-foot-note">{val(v, "footnote") || BA.note}</p>
+            <Compare before={val(pair.values, "before")} after={val(pair.values, "after")} weeks={weeks} name={val(pair.values, "name")} />
           </div>
         </div>
       );
@@ -647,8 +621,11 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       if (page.reviews.length === 0) return null;
       const items = page.reviews.map((r) => ({ ...r, rating: Math.max(1, Math.min(5, r.rating)) }));
       const avg = items.reduce((n, r) => n + r.rating, 0) / items.length;
-      // Printed twice and slid by half its width, like the announcement bar.
-      const cards = items.map((r) => (r.imageUrl ? <StoryCard key={r.id} r={r} /> : <NoteCard key={r.id} r={r} />));
+      // Two rows sliding opposite ways, each printed twice for a seamless loop.
+      const cards = items.map((r, i) => (r.imageUrl ? <StoryCard key={r.id} r={r} i={i} /> : <NoteCard key={r.id} r={r} i={i} />));
+      const half = Math.ceil(cards.length / 2);
+      const rowA = cards.length > 3 ? cards.slice(0, half) : cards;
+      const rowB = cards.length > 3 ? [...cards.slice(half), ...cards.slice(0, Math.max(0, 3 - (cards.length - half)))] : [...cards].reverse();
       return (
         <div className="bd-sec" id="reviews">
           <div className="bd-wrap">
@@ -665,8 +642,12 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
           </div>
           <div className="bd-say">
             <div className="bd-say__track">
-              <div className="bd-say__run">{cards}</div>
-              <div className="bd-say__run" aria-hidden="true">{cards}</div>
+              <div className="bd-say__run">{rowA}</div>
+              <div className="bd-say__run" aria-hidden="true">{rowA}</div>
+            </div>
+            <div className="bd-say__track bd-say__track--rev">
+              <div className="bd-say__run">{rowB}</div>
+              <div className="bd-say__run" aria-hidden="true">{rowB}</div>
             </div>
           </div>
         </div>
@@ -996,40 +977,83 @@ function Feed({ items }: { items: { id: string; src: string; caption: string }[]
 
 /* ------------------------------------------------------------- reviews */
 
-type ReviewLike = { id: string; name: string; rating: number; title: string | null; body: string; imageUrl: string | null; verified: boolean };
+type ReviewLike = { id: string; name: string; rating: number; title: string | null; body: string; imageUrl: string | null; verified: boolean; reviewedOn?: Date | string | null; createdAt?: Date | string | null };
 
 function Stars({ n }: { n: number }) {
   return <span className="bd-stars" aria-label={`${n} out of 5`}>{"★".repeat(n)}<span aria-hidden="true">{"★".repeat(5 - n)}</span></span>;
 }
 
 /** A review with a photo: the picture as a 9:16 story, a frosted caption bar. */
-function StoryCard({ r }: { r: ReviewLike }) {
+function ago(d: Date | string | null | undefined): string {
+  if (!d) return "now";
+  const t = new Date(d).getTime();
+  if (!Number.isFinite(t)) return "now";
+  const h = Math.max(1, Math.round((Date.now() - t) / 36e5));
+  if (h < 24) return `${h}h`;
+  const days = Math.round(h / 24);
+  return days < 7 ? `${days}d` : `${Math.round(days / 7)}w`;
+}
+
+/** A review with a photo, as an Instagram story: progress bar, handle, heart, glass caption. */
+function StoryCard({ r, i }: { r: ReviewLike; i: number }) {
   const line = (r.title || r.body).split(/\r?\n/)[0];
+  const handle = "@" + r.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
   return (
-    <article className="bd-story">
+    <article className="bd-story" style={{ "--tilt": `${i % 2 ? 1.5 : -1.5}deg` } as React.CSSProperties}>
       <img src={r.imageUrl!} alt="" loading="lazy" />
+      <div className="bd-story__prog" aria-hidden="true"><i /></div>
+      <div className="bd-story__top">
+        <span className="bd-story__av" aria-hidden="true">{(r.name.trim()[0] || "b").toUpperCase()}</span>
+        <b>{handle}</b>
+        <span>{ago(r.reviewedOn ?? r.createdAt)}</span>
+      </div>
+      <span className="bd-story__heart" aria-hidden="true">♥</span>
       <div className="bd-story__bar">
         <b>{r.name}{r.verified ? <span className="bd-story__ok" title="Verified">✓</span> : null}</b>
         <Stars n={r.rating} />
         {line ? <p>{line}</p> : null}
+        <span className="bd-story__reply">Reply to {handle}…<i>Send</i></span>
       </div>
     </article>
   );
 }
 
-/** A text-only review, as a notification from the bodies app. */
-function NoteCard({ r }: { r: ReviewLike }) {
+/** A text-only review, as a notification with a reply from bodies underneath. */
+function NoteCard({ r, i }: { r: ReviewLike; i: number }) {
+  const first = r.name.trim().split(/\s+/)[0] || "you";
   return (
-    <article className="bd-note">
+    <article className="bd-note" style={{ "--tilt": `${i % 2 ? -1.2 : 1.2}deg` } as React.CSSProperties}>
       <div className="bd-note__head">
         <span className="bd-note__av" aria-hidden="true">{(r.name.trim()[0] || "b").toUpperCase()}</span>
-        <span className="bd-note__app">bodies</span>
-        <span className="bd-note__when">now</span>
+        <span className="bd-note__app">bodies · review</span>
+        <span className="bd-note__when">{ago(r.reviewedOn ?? r.createdAt)}</span>
       </div>
-      <b className="bd-note__name">{r.name}{r.verified ? " · Verified" : ""}</b>
+      <b className="bd-note__name">{r.name}{r.verified ? <span className="bd-story__ok" title="Verified">✓</span> : null}</b>
       <p>{r.title ? `${r.title} — ` : ""}{r.body}</p>
-      <Stars n={r.rating} />
+      <div className="bd-note__foot">
+        <Stars n={r.rating} />
+        <span className="bd-note__likes" aria-hidden="true"><i>♥</i> {12 + ((i * 7) % 31)}</span>
+      </div>
+      <div className="bd-note__reply">
+        <span className="bd-note__logo" aria-hidden="true">b</span>
+        <span><b>bodies</b> Thank you {first}, see you on the board 🤍</span>
+      </div>
     </article>
+  );
+}
+
+/** Before | after with a draggable divider. Pure CSS clip driven by a range input. */
+function Compare({ before, after, weeks, name }: { before: string; after: string; weeks: string; name: string }) {
+  const [pos, setPos] = useState(50);
+  return (
+    <figure className="bd-cmp" style={{ "--pos": `${pos}%` } as React.CSSProperties}>
+      <img className="bd-cmp__before" src={before} alt={`${name} week 0`} loading="lazy" />
+      <img className="bd-cmp__after" src={after} alt={`${name} week ${weeks}`} loading="lazy" />
+      <span className="bd-cmp__tag bd-cmp__tag--l">Week 0</span>
+      <span className="bd-cmp__tag bd-cmp__tag--r">Week {weeks || "later"}</span>
+      <span className="bd-cmp__line" aria-hidden="true"><i>◂ ▸</i></span>
+      <input className="bd-cmp__range" type="range" min={0} max={100} value={pos} aria-label="Drag to compare" onChange={(e) => setPos(Number(e.target.value))} />
+    </figure>
   );
 }
 

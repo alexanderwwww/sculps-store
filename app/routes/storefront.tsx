@@ -5,7 +5,6 @@ import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { currentUser } from "~/lib/auth.server";
 import { liveReloadScript } from "~/lib/live-reload";
-import { withSamples } from "~/storefronts/bodies/samples.server";
 import { pages, metaConfig, themes } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
 import { eq } from "drizzle-orm";
@@ -86,19 +85,6 @@ export function meta({ data: loaded }: Route.MetaArgs) {
   return tags;
 }
 
-/** Admin-only notice: the SAMPLE cards on this page are placeholders. */
-function SampleRibbon() {
-  return (
-    <a
-      href="?samples=0"
-      style={{ position: "fixed", left: 12, bottom: 12, zIndex: 60, background: "#0B0C0E", color: "#C6FF3D", font: "700 10px/1 Archivo, sans-serif", letterSpacing: ".12em", textTransform: "uppercase", padding: "8px 11px", borderRadius: 999, textDecoration: "none", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }}
-      title="You see SAMPLE cards because you are signed in. Shoppers see real data only. Click to view as a shopper."
-    >
-      Sample cards · admin view
-    </a>
-  );
-}
-
 /** Forward the loader's headers (no-store, cookies) onto the document response. */
 export function headers({ loaderHeaders }: { loaderHeaders: Headers }) {
   return loaderHeaders;
@@ -148,13 +134,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     }
   }
 
-  let page = await loadProductPage(context.db, store, { themeId, includeHidden });
-  // Signed-in admins see changes the moment they deploy, and ?samples=1 fills
-  // the data-only sections with clearly stamped placeholders (bodies).
-  // Signed-in admins always see the data-only sections with stamped SAMPLE
-  // cards (shoppers never do). ?samples=0 shows the page exactly as shoppers see it.
-  const samples = Boolean(page && admin && store.slug === "bodies" && url.searchParams.get("samples") !== "0");
-  if (page && samples) page = withSamples(page);
+  const page = await loadProductPage(context.db, store, { themeId, includeHidden });
+  // Signed-in admins see changes the moment they deploy.
   const liveReload = admin && !isThumb ? liveReloadScript() : null;
 
   // The browser pixel. Only rendered when this store actually has one, so a
@@ -255,11 +236,11 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
     .then((client) => client?.clientId ?? null)
     .catch(() => null);
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload, samples }, { headers });
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload, samples } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload } = loaderData;
 
   if (!page) {
     return (
@@ -286,7 +267,6 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
       {liveReload ? <script dangerouslySetInnerHTML={{ __html: liveReload }} /> : null}
-      {samples ? <SampleRibbon /> : null}
     </>
   );
 
