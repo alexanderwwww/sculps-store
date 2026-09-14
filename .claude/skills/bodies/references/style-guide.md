@@ -174,3 +174,9 @@ records consent on the cart only).
 - Shop cards: white, hairline, board alone on white, name, one line, price, lime pill. Nothing behind the product.
 - PDP: white buybox, `.bd-offer` lime-bordered box around price + Pay in 4 + Add to cart, checklist, then `.bd-claim` big line, then every homepage section repeated.
 - Owner's words: "clarity in a vibrant package". Never mix the colourways as panels.
+
+## Vibrancy rules (owner, final)
+- NEVER sky, NEVER clouds, NEVER AI "lifestyle girl" renders. Real Instagram/TikTok clean-girl photos only for people.
+- Vibrancy = vivid gradients + bold accurate product + liquid-chrome blobs/rings + glows. Current set: `bd-g-hero.jpg` (21:9 hero), `bd-g-band.jpg` (21:9 band), `bd-g-screen.jpg` (4:5 instructor on screen), `bd-g-fold.jpg` (4:5 folded board), `bd-box-{board,cables,straps,pads,charger}.jpg` (crops of the kit shot).
+- PDP = one carousel + white buybox with lime `.bd-offer` box, then claim line with chrome object, "What the others don't have" proof tiles, "In the box" item grid, workouts, steps, comparison, feed, FAQ.
+- Clarity beats words: what it does, what's in the box, what others don't have, all shown in pictures.

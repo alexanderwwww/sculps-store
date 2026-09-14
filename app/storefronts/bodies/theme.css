@@ -64,9 +64,11 @@
   background: var(--lime); color: var(--lime-ink);
   font-family: var(--sans); font-size: 11px; font-weight: 700; font-stretch: 110%;
   letter-spacing: .12em; text-transform: uppercase; text-decoration: none;
-  cursor: pointer; transition: background .16s, transform .06s;
+  cursor: pointer; transition: background .16s, transform .06s, box-shadow .25s;
 }
 .bd-btn:hover { background: var(--lime-2); }
+.bd-btn:not(.bd-btn--ghost):hover { box-shadow: 0 8px 28px rgba(198,255,61,.55); }
+.bd-btn--big:not(.bd-btn--ghost) { box-shadow: 0 8px 28px rgba(198,255,61,.35); }
 .bd-btn:active { transform: translateY(1px); }
 .bd-btn[disabled] { opacity: .45; cursor: not-allowed; }
 .bd-btn--ghost { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
@@ -107,14 +109,16 @@
 .bd-hero__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; }
 .bd-hero__panel { position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none; }
 .bd-hero__panel > .bd-wrap { pointer-events: auto; }
-.bd-hero__copy { max-width: 560px; }
+.bd-hero__copy { position: relative; max-width: 560px; }
+.bd-sticker { position: absolute; top: -34px; right: 0; transform: rotate(-8deg); display: inline-block; padding: 7px 12px; border-radius: 999px; background: var(--lime); color: var(--lime-ink); font-family: var(--sans); font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; line-height: 1; white-space: nowrap; box-shadow: 0 6px 18px rgba(11,12,14,.16); z-index: 1; }
+@media (max-width: 860px) { .bd-sticker { position: static; display: inline-block; margin-bottom: 14px; } }
 .bd-hero__sub { margin: 18px 0 0; font-size: 18px; line-height: 1.45; max-width: 36ch; }
 .bd-hero__cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
 .bd-hero__cta .bd-btn--big { width: auto; }
 .bd-hero__sure { margin: 18px 0 0; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
 .bd-hero__ways { display: flex; align-items: center; gap: 6px; margin-top: 22px; }
-.bd-hero__way { margin-left: 6px; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-.bd-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--rule); display: block; }
+  .bd-hero__pic { aspect-ratio: 4 / 3.2; min-height: 0; }
+  .bd-hero__pic img { object-position: 82% center; }
 .bd-dot:hover { transform: scale(1.12); }
 @media (max-width: 860px) {
   .bd-hero__pic { aspect-ratio: 4 / 4.2; min-height: 0; }
@@ -137,6 +141,8 @@
 .bd-way__badge { position: absolute; top: 12px; left: 12px; z-index: 1; font-family: var(--sans); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #fff; background: var(--badge); padding: 5px 9px; border-radius: 999px; }
 .bd-way__pic { position: relative; aspect-ratio: 1; display: grid; place-items: center; text-decoration: none; margin-bottom: 8px; }
 .bd-way__pic img { position: relative; width: 92%; height: 92%; object-fit: contain; filter: drop-shadow(0 18px 20px rgba(11,12,14,.22)); transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+.bd-way__pic::before { content: ""; position: absolute; inset: 0; margin: auto; width: 70%; height: 70%; border-radius: 50%; background: radial-gradient(circle, rgba(217,190,232,.7) 0%, rgba(217,190,232,0) 70%); opacity: 0; transition: opacity .35s; pointer-events: none; }
+.bd-way:hover .bd-way__pic::before { opacity: 1; }
 .bd-way__pic:hover img { transform: translateY(-5px) rotate(-2deg); }
 .bd-way__name { font-family: var(--sans); font-weight: 800; font-stretch: 112%; font-size: 15px; letter-spacing: 0; text-transform: uppercase; line-height: 1.1; }
 .bd-way__note { color: var(--ink-2); font-size: 13px; }
@@ -298,7 +304,8 @@
 .bd-car__main figure { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity .25s; }
 .bd-car__main figure.is-on { opacity: 1; }
 .bd-car__main img { width: 100%; height: 100%; object-fit: cover; }
-.bd-car__main figure.is-product img { object-fit: contain; padding: 6%; }
+.bd-car__main figure.is-product::before { content: ""; position: absolute; inset: 0; margin: auto; width: 70%; height: 70%; border-radius: 50%; background: radial-gradient(circle, rgba(217,190,232,.7) 0%, rgba(217,190,232,0) 70%); opacity: .5; pointer-events: none; }
+.bd-car__main figure.is-product img { position: relative; object-fit: contain; padding: 6%; }
 .bd-car__arr { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: var(--ink); font-size: 24px; line-height: 1; cursor: pointer; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(11,12,14,.14); }
 .bd-car__arr--l { left: 12px; } .bd-car__arr--r { right: 12px; }
 .bd-car__thumbs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
@@ -357,8 +364,15 @@
 @media (max-width: 860px) { .bd-pdp { grid-template-columns: 1fr } .bd-pdp__buybox { position: static } }
 
 /* ---- the big claim --------------------------------------------------- */
-.bd-claim { background: var(--paper); text-align: center; padding-block: clamp(72px, 10vw, 140px); }
-.bd-claim .bd-h1 { margin-inline: auto; max-width: 18ch; }
+.bd-claim { background: var(--paper); text-align: center; padding-block: clamp(72px, 10vw, 140px); overflow: hidden; }
+.bd-claim__in { position: relative; }
+.bd-claim .bd-h1 { position: relative; z-index: 1; margin-inline: auto; max-width: 18ch; }
+.bd-claim__obj { position: absolute; top: 50%; right: var(--pad); width: 220px; margin-top: -110px; pointer-events: none; user-select: none; animation: bd-float 8s ease-in-out infinite, bd-turn 40s linear infinite; }
+@keyframes bd-float { 0%, 100% { translate: 0 -10px } 50% { translate: 0 10px } }
+@keyframes bd-turn { from { rotate: 0deg } to { rotate: 360deg } }
+@media (prefers-reduced-motion: reduce) { .bd-claim__obj { animation: none } }
+@media (max-width: 1100px) { .bd-claim__obj { width: 150px; margin-top: -75px; opacity: .9; } }
+@media (max-width: 720px) { .bd-claim__obj { display: none } }
 
 /* ---- sticky buy bar -------------------------------------------------- */
 .bd-stick { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--paper); border-top: 1px solid var(--rule); transform: translateY(110%); transition: transform .28s cubic-bezier(.2,.7,.2,1); padding-bottom: env(safe-area-inset-bottom); }

@@ -46,8 +46,8 @@ export const WAYS: Record<string, { disc: string; ink: string; card: string; sky
 const PDP_SECTIONS = ["product_grid", "three_steps", "comparison_table", "social_proof_images", "reviews", "specifications", "video_faq", "closing_cta"];
 /** What it has that the others don't: shown, not told. Real files only. */
 const PROOF = [
-  { src: `${M}/bd-pdp-detail.jpg`, title: "An instructor, on the board", text: "The screen is built in. Press play and she tells you what to do, rep by rep." },
-  { src: `${M}/bd-pdp-folded.jpg`, title: "Fold it. It's gone.", text: "Screen folds flat, board stands up. Under the bed, behind the door, until tomorrow." },
+  { src: `${M}/bd-g-screen.jpg`, title: "An instructor, on the board", text: "The screen is built in. Press play and she tells you what to do, rep by rep." },
+  { src: `${M}/bd-g-fold.jpg`, title: "Fold it. It's gone.", text: "Screen folds flat, board stands up. Under the bed, behind the door, until tomorrow." },
   { src: `${M}/bd-c-swan-latina.png`, title: "Your room. Your timing.", text: "No membership. No booking. Nobody watching. Pilates when you want it." },
 ];
 /** Every item in the box, shown. Cut from the kit photograph. */
@@ -251,7 +251,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
             <div className="bd-hero__panel">
               <div className="bd-wrap">
               <div className="bd-hero__copy">
-                {val(v, "badge") ? <p className="bd-eyebrow">{val(v, "badge")}</p> : null}
+                {val(v, "badge") ? <span className="bd-sticker">{val(v, "badge")}</span> : null}
                 {val(v, "heading") ? <h1 className="bd-h1">{val(v, "heading")}</h1> : null}
                 {val(v, "subheading") ? <p className="bd-hero__sub">{val(v, "subheading")}</p> : null}
                 <div className="bd-hero__cta">
@@ -791,8 +791,9 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
       </div>
 
       <div className="bd-claim">
-        <div className="bd-wrap">
+        <div className="bd-wrap bd-claim__in">
           <h2 className="bd-h1">Same studio feeling. Different location.</h2>
+          <img className="bd-claim__obj" src={`${M}/bd-chrome.jpg`} alt="" aria-hidden="true" loading="lazy" />
         </div>
       </div>
 
