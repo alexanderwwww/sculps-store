@@ -31,6 +31,9 @@ const IcoCart = (
 const IcoCheck = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
 );
+const IcoClose = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+);
 const IcoCross = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
 );
@@ -45,6 +48,22 @@ const IcoShield = (
 );
 const IcoChat = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.5 12.3c0 4-3.8 7.2-8.5 7.2a9.9 9.9 0 0 1-2.9-.4L4 20.5l1.3-3.6A6.9 6.9 0 0 1 3.5 12.3C3.5 8.3 7.3 5 12 5s8.5 3.3 8.5 7.3z" /></svg>
+);
+
+const IcoBurger = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+);
+const IcoStar = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.3l6.1-.9z" /></svg>
+);
+const IcoVerified = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.7-1.2 2.8 1.2 2.8-2.5 1.7-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9-2.5-1.7L4.4 13 3.2 10.2l2.5-1.7.9-2.9 3 .2z" fill="#1B8DE0" /><path d="M8.6 12.2l2.2 2.2 4.4-4.6" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+);
+const IcoLike = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 21V10l4.5-8a2.4 2.4 0 0 1 2.3 3l-.9 3.6h5a2 2 0 0 1 2 2.4l-1.6 7.4A2 2 0 0 1 16.4 21z" /><path d="M7 10H4.5v11H7" /></svg>
+);
+const IcoComment = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.5 12c0 4-3.8 7.2-8.5 7.2a9.9 9.9 0 0 1-2.9-.4L4 20.5l1.3-3.6A6.9 6.9 0 0 1 3.5 12C3.5 8 7.3 4.8 12 4.8S20.5 8 20.5 12z" /></svg>
 );
 
 const IcoBolt = (
@@ -114,7 +133,7 @@ function Section({
 }) {
   switch (section.type) {
     case "buy_box":       return <BuyBox section={section} page={page} />;
-    case "video_faq":     return <Faq section={section} />;
+    case "video_faq":     return <><ProductVideo section={section} /><Faq section={section} /></>;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <ProductGrid section={section} />;
     case "trust_icons":   return <TrustBand section={section} />;
@@ -125,6 +144,7 @@ function Section({
     case "who_its_for":   return <WhoFor section={section} />;
     case "whats_in_the_box": return <InTheBox section={section} />;
     case "specifications": return <Specs section={section} />;
+    case "reviews":       return <Reviews section={section} page={page} />;
     case "closing_cta":   return <Closing section={section} page={page} />;
     default:              return null;
   }
@@ -132,9 +152,26 @@ function Section({
 
 /* ----------------------------------------------------------------- header */
 
+const NAV = [
+  ["How it works", "#how"],
+  ["Real nights", "#proof"],
+  ["Reviews", "#reviews"],
+  ["FAQ", "#faq"],
+] as const;
+
 function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: string }) {
   const drawer = useCartDrawer();
+  const [menu, setMenu] = useState(false);
   const href = (p: string) => `${p}${storeParam}`;
+
+  // Escape closes it, and so does following a link — otherwise the panel stays
+  // over the section it just jumped to.
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenu(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menu]);
   return (
     <>
       <Announce />
@@ -144,18 +181,46 @@ function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: str
             <img src={LOGO} alt={page.store.name} />
           </a>
           <nav className="cb-nav">
-            <a href="#how">How it works</a>
-            <a href="#proof">Real nights</a>
-            <a href="#faq">FAQ</a>
+            {NAV.map(([label, to]) => (
+              <a key={to} href={to}>{label}</a>
+            ))}
           </nav>
           <div className="cb-header__right">
             <button type="button" className="cb-cart" onClick={() => drawer?.open()} aria-label="Open cart">
               {IcoCart}
               {drawer && drawer.itemCount > 0 ? <span className="cb-cart__n">{drawer.itemCount}</span> : null}
             </button>
+            <button
+              type="button"
+              className="cb-burger"
+              onClick={() => setMenu(true)}
+              aria-label="Open menu"
+              aria-expanded={menu}
+            >
+              {IcoBurger}
+            </button>
           </div>
         </div>
       </header>
+
+      <div className={`cb-menu${menu ? " is-open" : ""}`} role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="cb-menu__veil" onClick={() => setMenu(false)} />
+        <div className="cb-menu__panel">
+          <div className="cb-menu__head">
+            <img src={LOGO} alt={page.store.name} />
+            <button type="button" className="cb-menu__x" onClick={() => setMenu(false)} aria-label="Close menu">
+              {IcoClose}
+            </button>
+          </div>
+          {NAV.map(([label, to]) => (
+            <a key={to} href={to} onClick={() => setMenu(false)}>{label}</a>
+          ))}
+          <a href={href("/cart")} onClick={() => setMenu(false)}>Cart</a>
+          <button type="button" className="cb-btn" onClick={() => { setMenu(false); document.getElementById("buy")?.scrollIntoView({ behavior: "smooth" }); }}>
+            Buy now
+          </button>
+        </div>
+      </div>
     </>
   );
 }
@@ -246,21 +311,36 @@ function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProduct
 
           {variants.length > 1 ? (
             <div className="cb-opts" role="radiogroup" aria-label="Choose a bundle">
-              {variants.map((x) => {
+              {variants.map((x, i) => {
                 const on = x.id === picked;
+                // The flags are worked out here, never typed into the data:
+                // the default bundle is the one being pushed, and the deepest
+                // discount is the best value. Change a price and they follow.
+                const deepest = variants.reduce((best, v) =>
+                  (savedPercent(v.priceCents, v.compareAtCents) ?? 0) > (savedPercent(best.priceCents, best.compareAtCents) ?? 0) ? v : best,
+                  variants[0]);
+                const flag =
+                  x.id === deepest.id && !x.isDefault && (savedPercent(x.priceCents, x.compareAtCents) ?? 0) > 0
+                    ? ["best", "Best value"] as const
+                    : x.isDefault && variants.length > 1
+                      ? ["pop", "Most popular"] as const
+                      : null;
+                const off = savedPercent(x.priceCents, x.compareAtCents);
                 return (
                   <button
                     key={x.id}
                     type="button"
                     role="radio"
                     aria-checked={on}
-                    className="cb-opt"
+                    className={`cb-opt${flag ? " cb-opt--flagged" : ""}`}
                     onClick={() => setPicked(x.id)}
                   >
+                    {flag ? <span className={`cb-opt__flag cb-opt__flag--${flag[0]}`}>{flag[1]}</span> : null}
                     <span className="cb-opt__dot" />
                     <span>
                       <span className="cb-opt__t">{x.label}</span>
                       {x.sublabel ? <span className="cb-opt__s">{x.sublabel}</span> : null}
+                      {off ? <span className="cb-opt__save">Save {off}%</span> : null}
                     </span>
                     <span className="cb-opt__p">
                       <b>{formatMoney(x.priceCents, currency)}</b>
@@ -544,6 +624,93 @@ function Specs({ section }: { section: LoadedSection }) {
             );
           })}
         </dl>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ video */
+/**
+ * The clip of the thing working, directly under the price.
+ *
+ * It renders only when a video has actually been uploaded to this section. No
+ * video means no section — never a grey box with a play triangle on it.
+ */
+function ProductVideo({ section }: { section: LoadedSection }) {
+  const src = val(section.values, "video");
+  if (!src) return null;
+  return (
+    <section className="cb-section cb-section--tight">
+      <div className="cb-wrap cb-vid">
+        <div className="cb-vid__frame">
+          <video src={src} autoPlay muted loop playsInline preload="metadata" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------------------------------------------- reviews */
+/**
+ * Laid out like a feed post, because that is the format this customer already
+ * reads without thinking about it.
+ *
+ * The content comes from the Reviews screen and nowhere else. An empty Reviews
+ * screen renders nothing at all — no filler people, no invented stars. The
+ * score below is the arithmetic mean of what is actually published.
+ */
+function Reviews({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+  const rows = page.reviews;
+  if (!rows.length) return null;
+  const mean = rows.reduce((n, r) => n + r.rating, 0) / rows.length;
+  return (
+    <section className="cb-section" id="reviews">
+      <div className="cb-wrap">
+        <Head section={section} />
+        <div className="cb-revs__head">
+          <span className="cb-revs__score">{mean.toFixed(1)}</span>
+          <span className="cb-rev__stars" style={{ padding: 0 }}>
+            {[0, 1, 2, 3, 4].map((n) => (
+              <span key={n} style={{ opacity: n < Math.round(mean) ? 1 : 0.25 }}>{IcoStar}</span>
+            ))}
+          </span>
+          <span className="cb-revs__of">
+            {rows.length} {rows.length === 1 ? "review" : "reviews"}
+          </span>
+        </div>
+        <div className="cb-revs">
+          {rows.map((r) => (
+            <article className="cb-rev" key={r.id}>
+              <div className="cb-rev__top">
+                <div className="cb-rev__av">{r.name.trim().charAt(0).toUpperCase()}</div>
+                <div>
+                  <div className="cb-rev__who">{r.name}</div>
+                  <div className="cb-rev__meta">
+                    {r.verified ? <>{IcoVerified} Verified buyer</> : <span>{r.country ?? ""}</span>}
+                  </div>
+                </div>
+              </div>
+              <div className="cb-rev__stars">
+                {[0, 1, 2, 3, 4].map((n) => (
+                  <span key={n} style={{ opacity: n < r.rating ? 1 : 0.22 }}>{IcoStar}</span>
+                ))}
+              </div>
+              <div className="cb-rev__body">
+                {r.title ? <b>{r.title}</b> : null}
+                {r.body}
+              </div>
+              {r.imageUrl ? (
+                <div className="cb-rev__pic">
+                  <img src={r.imageUrl} alt="" loading="lazy" />
+                </div>
+              ) : null}
+              <div className="cb-rev__bar">
+                <span>{IcoLike} Helpful</span>
+                <span>{IcoComment} Reply</span>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

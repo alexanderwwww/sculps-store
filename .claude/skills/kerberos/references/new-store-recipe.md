@@ -87,6 +87,36 @@ Other rules learned the hard way:
 - Anything rendered outside the theme's root div has no palette at all,
   because the custom properties are declared on that div.
 
+### Every storefront must have these — checked, not assumed
+
+Alex has had to ask for these more than once. They are not Shopify defaults
+here, because there is no theme doing them for us. Tick every line before
+showing him a store.
+
+- [ ] **A burger menu under 880px.** The desktop nav is hidden on a phone and
+      without a burger the links are simply gone — and most traffic is phone.
+      Panel, veil, Escape to close, close on link tap, and a buy button in it.
+- [ ] Sticky add-to-cart bar once the buy box scrolls off.
+- [ ] Cart drawer opens on add, and shows the item and the subtotal.
+- [ ] Zero horizontal scroll at 400px.
+- [ ] Every image has alt text, every icon button an `aria-label`.
+- [ ] At most **two** bundle options. Three tiers of a $100+ product puts a
+      number at the top of the page nobody will pay and kills the sale before
+      the cheap option is read. Badge the upsell, never the default.
+- [ ] Section headings anchor the nav links (`#how`, `#proof`, `#reviews`,
+      `#faq`) and those anchors actually exist.
+
+### Where the brand stops and the buying starts
+
+The lesson from Ceiling Buddy, in one line: **character on the things being
+looked at, quiet confidence on the things being clicked.**
+
+Heavy keylines, hard offset shadows and tilted stickers belong on chips,
+photo tiles, steps and the FAQ. The gallery, the bundle rows and the buy
+button get hairline borders, soft shadows and one strong colour — a cartoon
+buy box reads as a toy and does not convert. Do not strip the personality to
+fix this; move it.
+
 ## 4. Wire it up
 
 In `app/routes/storefront.tsx`: import the component and its

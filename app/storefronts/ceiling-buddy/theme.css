@@ -28,7 +28,10 @@
   --dim: rgba(14, 17, 22, 0.62);
   --dimmer: rgba(14, 17, 22, 0.40);
 
-  --key: 3px;              /* the keyline weight, everywhere */
+  --key: 3px;              /* the sticker keyline — decoration only */
+  --hair: rgba(14, 17, 22, 0.12);       /* the buy column's border */
+  --lift: 0 1px 2px rgba(14,17,22,.05), 0 12px 28px -14px rgba(14,17,22,.22);
+  --lift-lg: 0 2px 4px rgba(14,17,22,.05), 0 26px 60px -26px rgba(14,17,22,.30);
   --pop: 6px 6px 0 var(--ink);
   --pop-sm: 4px 4px 0 var(--ink);
   --r: 22px;
@@ -87,14 +90,13 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   font-family: var(--display); font-weight: 600; font-size: 19px;
   padding: 18px 32px; border-radius: 999px; cursor: pointer;
-  background: var(--sky-deep); color: #fff;
-  border: var(--key) solid var(--ink);
-  box-shadow: var(--pop);
-  transition: transform .12s ease, box-shadow .12s ease;
+  background: var(--sky-deep); color: #fff; border: 0;
+  box-shadow: 0 1px 2px rgba(11,78,127,.2), 0 14px 28px -12px rgba(27,141,224,.55);
+  transition: transform .12s ease, box-shadow .16s ease, filter .12s ease;
   width: 100%;
 }
-.cb-btn:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--ink); }
-.cb-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
+.cb-btn:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 2px 4px rgba(11,78,127,.2), 0 18px 34px -12px rgba(27,141,224,.6); }
+.cb-btn:active { transform: translateY(1px); }
 .cb-btn--cream { background: var(--cream); color: var(--ink); }
 .cb-btn--sm { padding: 12px 22px; font-size: 16px; width: auto; box-shadow: var(--pop-sm); }
 
@@ -120,15 +122,15 @@
 .cb-cart {
   position: relative; display: grid; place-items: center;
   width: 46px; height: 46px; border-radius: 999px;
-  background: var(--cream); border: var(--key) solid var(--ink);
-  box-shadow: var(--pop-sm); cursor: pointer;
+  background: var(--paper); border: 1.5px solid var(--hair);
+  box-shadow: var(--lift); cursor: pointer;
 }
-.cb-cart:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+.cb-cart:active { transform: translateY(1px); }
 .cb-cart svg { width: 20px; height: 20px; }
 .cb-cart__n {
   position: absolute; top: -7px; right: -7px; min-width: 22px; height: 22px;
   border-radius: 999px; background: var(--sky-deep); color: #fff;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--paper);
   font-family: var(--display); font-size: 12px; font-weight: 600;
   display: grid; place-items: center; padding: 0 5px;
 }
@@ -145,8 +147,8 @@
 @media (max-width: 940px) { .cb-gal { position: static; } }
 .cb-gal__main {
   position: relative; border-radius: var(--r); overflow: hidden;
-  background: var(--cream); border: var(--key) solid var(--ink);
-  box-shadow: var(--pop); aspect-ratio: 1 / 1;
+  background: var(--cream); border: 1px solid var(--hair);
+  box-shadow: var(--lift-lg); aspect-ratio: 1 / 1;
 }
 .cb-gal__main img { width: 100%; height: 100%; object-fit: contain; }
 .cb-gal__glow {
@@ -158,40 +160,41 @@
 .cb-gal__strip::-webkit-scrollbar { display: none; }
 .cb-gal__thumb {
   flex: 0 0 auto; width: 76px; height: 76px; border-radius: 14px; overflow: hidden;
-  border: var(--key) solid var(--ink); background: var(--cream); padding: 0; cursor: pointer;
+  border: 1px solid var(--hair); background: var(--cream); padding: 0; cursor: pointer;
+  transition: box-shadow .14s, border-color .14s;
 }
 .cb-gal__thumb img { width: 100%; height: 100%; object-fit: cover; }
-.cb-gal__thumb[aria-current="true"] { box-shadow: 0 0 0 3px var(--sky); }
+.cb-gal__thumb[aria-current="true"] { border-color: var(--sky-deep); box-shadow: 0 0 0 2px var(--sky-deep); }
 
 .cb-badge {
   display: inline-flex; align-items: center;
   font-family: var(--display); font-size: 13px; font-weight: 600; letter-spacing: .06em;
   text-transform: uppercase; color: var(--ink);
-  background: var(--sky); border: var(--key) solid var(--ink); border-radius: 999px;
-  padding: 7px 16px; margin-bottom: 18px; box-shadow: var(--pop-sm);
-  transform: rotate(-2deg);
+  background: var(--sky); border: 0; border-radius: 999px;
+  padding: 8px 16px; margin-bottom: 18px; color: var(--sky-ink);
 }
 .cb-price { display: flex; align-items: baseline; gap: 12px; margin: 20px 0 4px; flex-wrap: wrap; }
 .cb-price__now { font-family: var(--display); font-size: clamp(38px, 5vw, 50px); font-weight: 600; }
 .cb-price__was { font-size: 20px; color: var(--dimmer); text-decoration: line-through; }
 .cb-price__off {
   font-family: var(--display); font-size: 14px; font-weight: 600; color: var(--ink);
-  background: var(--amber); border: 2px solid var(--ink); border-radius: 999px; padding: 4px 12px;
-  transform: rotate(3deg);
+  background: var(--amber); border: 0; border-radius: 999px; padding: 5px 13px;
 }
 
 .cb-opts { display: grid; gap: 12px; margin: 26px 0; }
 .cb-opt {
   display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
   padding: 16px 18px; border-radius: 16px; cursor: pointer;
-  background: var(--paper); border: var(--key) solid var(--ink);
-  transition: box-shadow .12s, transform .12s, background .12s;
+  background: var(--paper); border: 1.5px solid var(--hair);
+  transition: box-shadow .14s, border-color .14s, background .14s;
 }
-.cb-opt[aria-checked="true"] { background: var(--cream); box-shadow: var(--pop-sm); }
+.cb-opt:hover { border-color: rgba(14,17,22,.26); }
+.cb-opt[aria-checked="true"] { border-color: var(--sky-deep); box-shadow: 0 0 0 1.5px var(--sky-deep), var(--lift); background: #F7FBFF; }
 .cb-opt__dot {
   width: 22px; height: 22px; flex: 0 0 auto; border-radius: 999px;
-  border: var(--key) solid var(--ink); display: grid; place-items: center; background: #fff;
+  border: 2px solid rgba(14,17,22,.28); display: grid; place-items: center; background: #fff;
 }
+.cb-opt[aria-checked="true"] .cb-opt__dot { border-color: var(--sky-deep); }
 .cb-opt[aria-checked="true"] .cb-opt__dot::after { content: ""; width: 10px; height: 10px; border-radius: 999px; background: var(--sky-deep); }
 .cb-opt__t { display: block; font-family: var(--display); font-weight: 600; font-size: 17px; }
 .cb-opt__s { display: block; font-size: 13.5px; color: var(--dim); line-height: 1.3; }
@@ -204,9 +207,30 @@
 .cb-ship span {
   display: inline-flex; gap: 8px; align-items: center; font-family: var(--display);
   font-weight: 500; font-size: 14px;
-  border: 2px solid var(--ink); border-radius: 999px; padding: 7px 14px; background: var(--paper);
+  border: 1.5px solid var(--hair); border-radius: 999px; padding: 7px 14px; background: var(--paper);
+  color: var(--dim);
 }
+.cb-ship svg { color: var(--sky-deep); }
 .cb-ship svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* A row can carry one flag: most popular, or best value. It sits on the top
+   edge of the row it belongs to, so it reads as part of that option. */
+.cb-opt { position: relative; }
+.cb-opt__flag {
+  position: absolute; top: -11px; left: 16px;
+  font-family: var(--display); font-weight: 600; font-size: 11.5px;
+  letter-spacing: .08em; text-transform: uppercase;
+  border-radius: 999px; padding: 4px 12px; white-space: nowrap;
+}
+.cb-opt__flag--pop { background: var(--sky-deep); color: #fff; }
+.cb-opt__flag--best { background: var(--amber); color: var(--ink); }
+.cb-opt--flagged { margin-top: 8px; }
+.cb-opt__save {
+  display: inline-block; margin-top: 4px;
+  font-family: var(--display); font-weight: 600; font-size: 12.5px;
+  background: rgba(27,141,224,.10); color: var(--sky-ink);
+  border-radius: 999px; padding: 3px 10px;
+}
 
 /* --------------------------------------------------------------- marquee */
 
@@ -434,3 +458,85 @@
 .cb-ann__t i::after { content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--ink); margin-left: 26px; }
 .cb-ann__t i svg { width: 17px; height: 17px; flex: 0 0 auto; }
 @media (prefers-reduced-motion: reduce) { .cb-ann__t { animation: none; } }
+
+/* ----------------------------------------------------------- burger menu */
+/* Every store needs one. The desktop nav disappears under 880px and without
+   this the links are simply gone on a phone, which is most of the traffic. */
+
+.cb-burger {
+  display: none; width: 46px; height: 46px; border-radius: 999px;
+  background: var(--paper); border: 1.5px solid var(--hair); box-shadow: var(--lift);
+  cursor: pointer; place-items: center;
+}
+.cb-burger svg { width: 22px; height: 22px; }
+@media (max-width: 880px) { .cb-burger { display: grid; } }
+
+.cb-menu { position: fixed; inset: 0; z-index: 55; display: none; }
+.cb-menu.is-open { display: block; }
+.cb-menu__veil { position: absolute; inset: 0; background: rgba(14,17,22,.45); }
+.cb-menu__panel {
+  position: absolute; top: 0; left: 0; right: 0;
+  background: var(--paper); border-bottom: var(--key) solid var(--ink);
+  padding: 18px 20px 26px; animation: cb-drop .2s ease;
+}
+@keyframes cb-drop { from { transform: translateY(-100%); } }
+.cb-menu__head { display: flex; align-items: center; margin-bottom: 18px; }
+.cb-menu__head img { height: 34px; }
+.cb-menu__x { margin-left: auto; background: none; border: 0; cursor: pointer; display: grid; place-items: center; }
+.cb-menu__x svg { width: 26px; height: 26px; }
+.cb-menu__panel a {
+  display: block; font-family: var(--display); font-weight: 600; font-size: 22px;
+  padding: 14px 0; border-bottom: 1.5px solid var(--hair);
+}
+.cb-menu__panel .cb-btn { margin-top: 20px; }
+
+/* ------------------------------------------------------------------ video */
+/* Sits directly under the buy box: the first thing after the price is the
+   thing working. Vertical, because every clip this brand has is a phone clip. */
+
+.cb-vid { max-width: 420px; margin: 0 auto; }
+.cb-vid__frame {
+  position: relative; border-radius: var(--r); overflow: hidden;
+  border: var(--key) solid var(--ink); box-shadow: var(--pop);
+  background: var(--ink); aspect-ratio: 9 / 16;
+}
+.cb-vid__frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ---------------------------------------------------------------- reviews */
+/* Built to read like a feed post, because that is the format this customer
+   already trusts. Nothing here is generated: it renders whatever is published
+   on the Reviews screen, and shows nothing at all when that is empty. */
+
+.cb-revs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+@media (max-width: 980px) { .cb-revs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 660px) { .cb-revs { grid-template-columns: minmax(0, 1fr); } }
+
+.cb-rev {
+  background: var(--paper); border: 1px solid var(--hair); border-radius: 14px;
+  box-shadow: var(--lift); overflow: hidden;
+}
+.cb-rev__top { display: flex; align-items: center; gap: 11px; padding: 14px 16px 10px; }
+.cb-rev__av {
+  width: 42px; height: 42px; border-radius: 999px; flex: 0 0 auto;
+  display: grid; place-items: center; background: var(--sky); color: var(--sky-ink);
+  font-family: var(--display); font-weight: 600; font-size: 17px;
+}
+.cb-rev__who { font-family: var(--display); font-weight: 600; font-size: 15.5px; line-height: 1.2; }
+.cb-rev__meta { display: flex; align-items: center; gap: 6px; color: var(--dim); font-size: 12.5px; }
+.cb-rev__meta svg { width: 12px; height: 12px; }
+.cb-rev__stars { display: flex; gap: 2px; padding: 0 16px 8px; color: #F5A623; }
+.cb-rev__stars svg { width: 16px; height: 16px; }
+.cb-rev__body { padding: 0 16px 14px; font-size: 15px; line-height: 1.5; }
+.cb-rev__body b { font-family: var(--display); display: block; margin-bottom: 4px; font-size: 15.5px; }
+.cb-rev__pic { border-top: 1px solid var(--hair); background: var(--ink); }
+.cb-rev__pic img { width: 100%; display: block; }
+.cb-rev__bar {
+  display: flex; gap: 20px; padding: 10px 16px; border-top: 1px solid var(--hair);
+  color: var(--dim); font-size: 13px; font-family: var(--display); font-weight: 500;
+}
+.cb-rev__bar span { display: inline-flex; align-items: center; gap: 6px; }
+.cb-rev__bar svg { width: 15px; height: 15px; }
+
+.cb-revs__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; margin-bottom: 30px; }
+.cb-revs__score { font-family: var(--display); font-weight: 600; font-size: 38px; line-height: 1; }
+.cb-revs__of { color: var(--dim); font-size: 14.5px; }
