@@ -142,10 +142,18 @@ repeatable blocks inside a fixed structure. It cannot reorder sections, change l
 alter colors. Shopify's theme editor overwrote his developer's work more than once; keeping
 structure in code and content in the database makes that class of bug impossible.
 
-**2. Fifteen sections, fixed order, every store.** Buy box, Video with FAQ, Social proof
-images, Video clips, Product grid, Trust icons, Three steps, Benefits, Features, Comparison
-table, Reviews, Who it's for, What's in the box, Specifications, Closing CTA. Sections can
-be *hidden*, never moved, added, or deleted.
+**2. A fixed set of sections, every store — but Alex reorders them.** Buy box, Video with
+FAQ, Social proof images, Video clips, Product grid, Trust icons, Three steps, Benefits,
+Features, Comparison table, Reviews, Who it's for, What's in the box, Specifications,
+Closing CTA. Sections can be *hidden* and **dragged into any order** in the theme editor;
+they can never be added or deleted. He asked for the drag on 14 Sep 2026 and it is built —
+do not reinstate the old "order is fixed in code" copy or behaviour.
+
+The set staying closed is what stops a layout being overwritten; the order is his to
+choose. **A storefront theme must therefore render sections in the order the database
+gives them.** Ceiling Buddy and Garden Buddy do. **`bodies` does not** — it has hardcoded
+`HOME_ORDER` / `PDP_ORDER` arrays, so dragging has no effect on that store until those are
+replaced with the loaded order. Say so rather than letting him drag and see nothing move.
 
 **3. Small on purpose.** No app store, no staff accounts, no POS, no permissions, no
 inventory forecasting, no B2B, no gift cards, no customers screen, no discounts. One user.

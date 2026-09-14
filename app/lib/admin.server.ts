@@ -947,6 +947,38 @@ export async function saveSection(
   }
 }
 
+/**
+ * Writes a page's section order.
+ *
+ * `order` is the complete list of section ids as they should now read, top to
+ * bottom. The caller validates that it matches the page; this only writes.
+ *
+ * (page_id, position) is unique, so the rows cannot simply be walked to their
+ * new numbers — the first write would collide with a row that has not moved
+ * yet. Every row is parked above the range first, then brought down into it.
+ */
+export async function reorderSections(db: DB, pageId: string, order: string[]): Promise<void> {
+  const PARK = 1000;
+  for (let index = 0; index < order.length; index++) {
+    await db
+      .update(sections)
+      .set({ position: PARK + index })
+      .where(and(eq(sections.id, order[index]), eq(sections.pageId, pageId)));
+  }
+  for (let index = 0; index < order.length; index++) {
+    await db
+      .update(sections)
+      .set({ position: index })
+      .where(and(eq(sections.id, order[index]), eq(sections.pageId, pageId)));
+  }
+
+  // Same reason as saveSection: "last updated" on the Themes screen has to move.
+  const [page] = await db.select().from(pages).where(eq(pages.id, pageId)).limit(1);
+  if (page?.themeId) {
+    await db.update(themes).set({ updatedAt: new Date() }).where(eq(themes.id, page.themeId));
+  }
+}
+
 /** The product page of a theme — what "Customize" opens. */
 export async function productPageOfTheme(db: DB, themeId: string) {
   const [row] = await db

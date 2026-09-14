@@ -36,6 +36,7 @@ import { requireUser } from "~/lib/auth.server";
 import {
   loadPageWithSections,
   saveSection,
+  reorderSections,
   resolveAdminStore,
   reviewStats,
   addMedia,
@@ -133,6 +134,27 @@ export async function action({ context, request }: Route.ActionArgs) {
     }
 
     return { ok: "Uploaded.", url: `/media/${key}` };
+  }
+
+  // Drag to reorder. The order arrives as the full list of section ids in the
+  // order they now sit, so a partial or stale list cannot half-apply.
+  //
+  // (page_id, position) is unique, so the rows cannot be walked to their new
+  // numbers one at a time — the first write would collide with a row that has
+  // not moved yet. They are parked above the range first, then brought down.
+  if (intent === "reorder") {
+    const pageId = String(form.get("pageId") || "");
+    const order = form.getAll("order").map(String).filter(Boolean);
+    const loaded = await loadPageWithSections(context.db, pageId);
+    if (!loaded) return { error: "Page not found." };
+
+    const known = new Set(loaded.sections.map((x) => x.id));
+    if (order.length !== known.size || order.some((id) => !known.has(id))) {
+      return { error: "That order does not match this page. Reload and try again." };
+    }
+
+    await reorderSections(context.db, pageId, order);
+    return { ok: "Order saved." };
   }
 
   const sectionId = String(form.get("sectionId") || "");
@@ -279,6 +301,36 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
     navigation.state === "submitting" && navigation.formData?.get("intent") === "save";
 
   const selectedId = params.get("section") || "";
+  // The list the rail draws. It follows the server until a drag moves it, then
+  // leads — so the row lands where it was dropped instead of snapping back
+  // while the save is in flight.
+  const [order, setOrder] = useState(sections);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const reorder = useFetcher<typeof action>();
+
+  useEffect(() => {
+    if (reorder.state === "idle") setOrder(sections);
+  }, [sections, reorder.state]);
+
+  const drop = (to: number) => {
+    const from = dragIndex;
+    setDragIndex(null);
+    setOverIndex(null);
+    if (from === null || from === to) return;
+
+    const next = order.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setOrder(next);
+
+    const body = new FormData();
+    body.set("intent", "reorder");
+    body.set("pageId", page.id);
+    for (const section of next) body.append("order", section.id);
+    reorder.submit(body, { method: "post" });
+  };
+
   const selected = sections.find((section) => section.id === selectedId);
   const definition = SECTIONS.find((s) => s.type === selected?.type);
 
@@ -662,7 +714,7 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
           </div>
 
           <div className="ed-scroll">
-            {sections.map((section) => {
+            {order.map((section, index) => {
               const sectionDef = SECTIONS.find((s) => s.type === section.type);
               const active = section.id === selectedId;
               return (
@@ -671,7 +723,33 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
                   className="ed-row"
                   data-active={active}
                   data-hidden={section.hidden}
+                  data-drag={dragIndex === index ? "" : undefined}
+                  data-over={overIndex === index && dragIndex !== index ? "" : undefined}
+                  draggable
+                  onDragStart={(e) => {
+                    setDragIndex(index);
+                    e.dataTransfer.effectAllowed = "move";
+                    // Firefox will not start a drag without payload.
+                    e.dataTransfer.setData("text/plain", section.id);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    setOverIndex(index);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    drop(index);
+                  }}
+                  onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
                 >
+                  <span className="ed-grip" aria-hidden="true" title="Drag to reorder">
+                    <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+                      <circle cx="3" cy="3" r="1.4" /><circle cx="9" cy="3" r="1.4" />
+                      <circle cx="3" cy="8" r="1.4" /><circle cx="9" cy="8" r="1.4" />
+                      <circle cx="3" cy="13" r="1.4" /><circle cx="9" cy="13" r="1.4" />
+                    </svg>
+                  </span>
                   <button
                     type="button"
                     className="ed-row-name"
@@ -711,8 +789,8 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
           </div>
 
           <div className="ed-note">
-            Fifteen sections, fixed order — written in code. You can hide one and change what it
-            says. Moving, adding and deleting are not possible here, and that is what stops a
+            Drag a section by its handle to move it. You can hide one and change what it says.
+            Sections cannot be added or deleted — the set is fixed in code, which is what stops a
             layout being overwritten by accident.
           </div>
         </div>
