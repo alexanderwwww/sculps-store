@@ -67,7 +67,7 @@ export const WAYS: Record<string, Way> = {
     disc: "#D6E9F6", ink: "#2E5570", card: `${M}/bd-cut-swan.png`, studio: `${M}/bd-studio-swan.jpg`, ad: `${M}/bd-ad-swan.jpg`,
     life: [`${M}/bd-e-swan-night.png`, `${M}/bd-c-swan-latina.png`, `${M}/bd-b-swan-socks.png`, `${M}/bd-d-swan-underbed.png`],
   },
-  "Lilac Heat": {
+  "Strawberry Milk": {
     disc: "#EEDCF5", ink: "#4A2357", card: `${M}/bd-cut-lilac.png`, studio: `${M}/bd-studio-lilac.jpg`,
     life: [`${M}/bd-e-lilac-evening.png`, `${M}/bd-a-lilac-top.png`, `${M}/bd-c-lilac-mirror2.png`, `${M}/bd-d-lilac-socks.png`],
     ad: `${M}/bd-ad-lilac.jpg`,
@@ -85,7 +85,7 @@ export const WAYS: Record<string, Way> = {
 const fallbackWay: Way = { disc: "#EFEFEF", ink: "#0E0F12", card: "", studio: "", life: [] };
 export const wayOf = (label: string) => WAYS[label] ?? fallbackWay;
 /** The tint behind a socks picture that has not been shot yet. Lilac, like the renders. */
-const SOCKS_TINT = WAYS["Lilac Heat"].disc;
+const SOCKS_TINT = WAYS["Strawberry Milk"].disc;
 
 /**
  * The grip socks in this colourway: the add-on variant whose label matches
@@ -1140,6 +1140,21 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
     if (bundled && socks) drawer.addMany([{ variantId: variant.id }, { variantId: socks.id, bundle: true }], from);
     else drawer.add(variant.id, from);
   };
+  // Buy now: this set and nothing else, straight to the checkout. The board
+  // replaces whatever was in the bag; the socks ride along at the bundle price.
+  const [buying, setBuying] = useState(false);
+  const buyNow = async () => {
+    if (buying) return;
+    setBuying(true);
+    const post = (id: string, q: string) => {
+      const u = new URL(`/cart/add${storeParam}`, window.location.origin);
+      for (const [k, v] of new URLSearchParams(q)) u.searchParams.set(k, v);
+      return fetch(u.toString(), { method: "POST", body: new URLSearchParams({ variantId: id }), credentials: "same-origin", redirect: "manual" }).catch(() => undefined);
+    };
+    await post(variant.id, "replace=1");
+    if (bundled && socks) await post(socks.id, "bundle=1");
+    window.location.assign(`/checkout${storeParam}`);
+  };
   const buyRef = useRef<HTMLDivElement | null>(null);
   const [stuck, setStuck] = useState(false);
 
@@ -1178,6 +1193,11 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
               </button>
             ))}
           </div>
+          <p className="bd-car__pay">
+            <b>Take it home for {whole(Math.round(totalCents / 4), cur)} today</b>
+            <span>3 more payments, no interest · PayPal Pay in 4</span>
+            <svg viewBox="0 0 64 16" aria-label="PayPal" role="img"><text x="0" y="13" fontFamily="Arial, sans-serif" fontStyle="italic" fontWeight="800" fontSize="14" fill="#003087">Pay</text><text x="30" y="13" fontFamily="Arial, sans-serif" fontStyle="italic" fontWeight="800" fontSize="14" fill="#009CDE">Pal</text></svg>
+          </p>
         </div>
 
         {/* Mobile thumb-zone order (team-copy §11): photo → swatches → offer → button → one shipping line → payment marks. Nothing else: the rest of the page says the rest. */}
@@ -1200,7 +1220,7 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
                 <button type="button" role="radio" aria-checked={!withSocks} className="bd-pick__row" onClick={() => setWithSocks(false)}>
                   <span className="bd-pick__dot" aria-hidden="true" />
                   <span className="bd-pick__what"><b>The board</b><small>Screen, cables, straps, pads, charger</small></span>
-                  <span className="bd-pick__price"><b>{whole(variant.priceCents, cur)}</b>{saving ? <s>{whole(variant.compareAtCents!, cur)}</s> : null}</span>
+                  <span className="bd-pick__price"><b>{whole(variant.priceCents, cur)}</b>{saving ? <s>{whole(variant.compareAtCents!, cur)}</s> : null}<em>{whole(Math.round(variant.priceCents / 4), cur)} × 4</em></span>
                 </button>
                 <button type="button" role="radio" aria-checked={withSocks} className="bd-pick__row" onClick={() => setWithSocks(true)}>
                   <span className="bd-pick__dot" aria-hidden="true" />
@@ -1209,7 +1229,7 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
                     <small>Matching {variant.label} socks · {whole(socks.priceCents, cur)} alone, {whole(bundleSocksCents(socks), cur)} here</small>
                   </span>
                   {socks.imageUrl ? <img className="bd-pick__thumb" src={socks.imageUrl} alt="" loading="lazy" /> : null}
-                  <span className="bd-pick__price"><b>{whole(variant.priceCents + bundleSocksCents(socks), cur)}</b>{saving ? <s>{whole(variant.compareAtCents! + socks.priceCents, cur)}</s> : null}</span>
+                  <span className="bd-pick__price"><b>{whole(variant.priceCents + bundleSocksCents(socks), cur)}</b>{saving ? <s>{whole(variant.compareAtCents! + socks.priceCents, cur)}</s> : null}<em>{whole(Math.round((variant.priceCents + bundleSocksCents(socks)) / 4), cur)} × 4</em></span>
                 </button>
               </div>
             ) : (
@@ -1219,10 +1239,12 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
                 {saving ? <span className="bd-pdp__save">Save {whole(saving, cur)}</span> : null}
               </div>
             )}
-            <p className="bd-pdp__later">or 4 payments of <b>{whole(Math.round(totalCents / 4), cur)}</b> with PayPal Pay in 4 · no interest</p>
             <div className="bd-pdp__buy" ref={buyRef}>
-              <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => addSelected(event.currentTarget)}>
-                {sold ? "Sold out" : `Add to cart · ${whole(totalCents, cur)}`}
+              <button type="button" className="bd-btn bd-btn--big" disabled={sold || buying} onClick={buyNow}>
+                {sold ? "Sold out" : buying ? "One moment…" : `Buy now · ${whole(totalCents, cur)}`}
+              </button>
+              <button type="button" className="bd-btn bd-btn--big bd-btn--ghost" disabled={sold} onClick={(event) => addSelected(event.currentTarget)}>
+                Add to cart
               </button>
             </div>
           </div>
@@ -1237,8 +1259,8 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
           {way.card ? <img src={way.card} alt="" /> : null}
           <span className="bd-stick__name">{variant.label}{bundled ? " + socks" : ""}</span>
           <span className="bd-stick__price"><b>{whole(totalCents, cur)}</b><small>or {pay4}</small></span>
-          <button type="button" className="bd-btn" disabled={sold} tabIndex={stuck ? 0 : -1} onClick={(event) => addSelected(event.currentTarget)}>
-            {sold ? "Sold out" : "Add to cart"}
+          <button type="button" className="bd-btn" disabled={sold || buying} tabIndex={stuck ? 0 : -1} onClick={buyNow}>
+            {sold ? "Sold out" : "Buy now"}
           </button>
         </div>
       </div>
