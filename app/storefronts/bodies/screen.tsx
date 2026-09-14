@@ -19,14 +19,21 @@ const PHOTO_ALT = "A customer on the bodies board, lilac colourway, shot on a ph
 const INSTRUCTOR_CAPTION = "Real instructor. Real cues. Not a cartoon, not an AI voice.";
 
 /* The programme design, one array. Edit here, everything follows. */
-interface ClassRow { name: string; category: string; level: string; minutes: number; }
+interface ClassRow { name: string; category: string; level: string; minutes: number; photo: string; }
 const CLASSES: ClassRow[] = [
-  { name: "First Footwork", category: "Pilates", level: "Beginner", minutes: 20 },
-  { name: "Bridge & Burn", category: "Glutes", level: "All levels", minutes: 15 },
-  { name: "Long Arms", category: "Arms", level: "Beginner", minutes: 10 },
-  { name: "Slow Core", category: "Core", level: "Intermediate", minutes: 20 },
-  { name: "Full Body Flow", category: "Full body", level: "Intermediate", minutes: 30 },
-  { name: "Sunday Stretch", category: "Recovery", level: "All levels", minutes: 10 },
+  { name: "First Footwork", category: "Pilates", level: "Beginner", minutes: 20, photo: "/media/bd-a-lilac-top.png" },
+  { name: "Bridge & Burn", category: "Glutes", level: "All levels", minutes: 15, photo: "/media/bd-c-matcha-black.png" },
+  { name: "Long Arms", category: "Arms", level: "Beginner", minutes: 10, photo: "/media/bd-c-lilac-core.png" },
+  { name: "Slow Core", category: "Core", level: "Intermediate", minutes: 20, photo: "/media/bd-d-matcha-stretch.png" },
+  { name: "Full Body Flow", category: "Full body", level: "Intermediate", minutes: 30, photo: "/media/bd-c-swan-latina.png" },
+  { name: "Sunday Stretch", category: "Recovery", level: "All levels", minutes: 10, photo: "/media/bd-d-bare-rest.png" },
+];
+/* Next-move slots in the in-class rail: label, length, thumb (reuses library photos). */
+const UP_NEXT = [
+  { name: "Toe press", time: "1:00", photo: CLASSES[1].photo },
+  { name: "Arches", time: "1:00", photo: CLASSES[2].photo },
+  { name: "Single leg", time: "2:00", photo: CLASSES[3].photo },
+  { name: "Bridging", time: "2:00", photo: CLASSES[4].photo },
 ];
 const FEATURED = CLASSES[0];
 
@@ -116,9 +123,11 @@ const CSS = `
 .bd-scr__cont small { font-size: 11px; color: rgba(255,255,255,.5); white-space: nowrap; }
 .bd-scr__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(6px, 1vw, 10px); flex: 1 1 auto; min-height: 0; }
 .bd-scr__card { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: clamp(8px, 1.2vw, 12px); border-radius: 10px; background: #1A1B20; border: 1px solid rgba(255,255,255,.06); overflow: hidden; min-height: 0; }
-.bd-scr__card::before { content: ""; position: absolute; right: -30px; top: -30px; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, rgba(183,139,224,.28) 0%, rgba(183,139,224,0) 70%); pointer-events: none; }
+.bd-scr__card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.bd-scr__card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(11,12,14,.9) 0%, rgba(11,12,14,.45) 45%, rgba(11,12,14,.1) 100%); pointer-events: none; z-index: 1; }
+.bd-scr__card > :not(img) { position: relative; z-index: 2; }
 .bd-scr__card h4 { margin: 0; font-size: clamp(11px, 1.3vw, 14px); }
-.bd-scr__card p { margin: 0; font-size: 11px; color: rgba(255,255,255,.6); }
+.bd-scr__card p { margin: 0; font-size: 11px; color: rgba(255,255,255,.75); }
 .bd-scr__card p b { color: #fff; font-weight: 600; }
 .bd-scr__card__row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 
@@ -149,7 +158,9 @@ const CSS = `
 .bd-scr__cue { display: inline-flex; margin-top: 10px; padding: 7px 12px; border-radius: 999px; background: #fff; color: #0B0C0E; font-family: var(--sans, Archivo, sans-serif); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .bd-scr__rail { flex: 0 0 auto; width: clamp(120px, 24%, 200px); padding: 10px 12px; border-radius: 10px; background: rgba(18,19,22,.85); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.08); }
 .bd-scr__rail ol { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-.bd-scr__rail li { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: rgba(255,255,255,.7); }
+.bd-scr__rail li { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,.7); }
+.bd-scr__rail li img { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; flex: 0 0 auto; }
+.bd-scr__rail li span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bd-scr__rail li:first-child { color: #fff; font-weight: 600; }
 .bd-scr__rail li time { font-variant-numeric: tabular-nums; color: rgba(255,255,255,.5); }
 
@@ -300,6 +311,7 @@ export function Screen({ id = "screen" }: { id?: string }) {
                     <div className="bd-scr__grid">
                       {CLASSES.map((c) => (
                         <article key={c.name} className="bd-scr__card">
+                          <img src={c.photo} alt="" aria-hidden="true" loading="lazy" />
                           <div className="bd-scr__card__row">
                             <span className="bd-scr__chip bd-scr__chip--lilac">{c.category}</span>
                           </div>
@@ -365,10 +377,9 @@ export function Screen({ id = "screen" }: { id?: string }) {
                     <aside className="bd-scr__rail">
                       <span className="bd-scr__eyebrow">Up next</span>
                       <ol>
-                        <li>Toe press <time>1:00</time></li>
-                        <li>Arches <time>1:00</time></li>
-                        <li>Single leg <time>2:00</time></li>
-                        <li>Bridging <time>2:00</time></li>
+                        {UP_NEXT.map((n) => (
+                          <li key={n.name}><img src={n.photo} alt="" aria-hidden="true" loading="lazy" /><span>{n.name}</span><time>{n.time}</time></li>
+                        ))}
                       </ol>
                     </aside>
                   </div>
