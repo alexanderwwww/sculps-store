@@ -202,3 +202,10 @@ pick up. Don't re-explain the project to him.
   credential to collect, and where to click to get it.
 - `references/data-model.md` — the tables and the shape of the fifteen sections.
 - `references/store-one.md` — the garden kneeler store: audience, palette, bundles, tone.
+- `references/new-store-recipe.md` — **the fixed order for standing up a new
+  store**: media into R2, seed, theme, wire, gate/build/deploy, the exact
+  verification commands, and the traps that have each cost a session (draft
+  products, `1fr` grid tracks, concurrent builds). Read this before starting
+  any new storefront.
+- `references/product-ideas.md` — parked and live product ideas, including
+  Ceiling Buddy's locked design, pricing and sourcing route.
