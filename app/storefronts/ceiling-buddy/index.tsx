@@ -15,6 +15,7 @@ import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
+import { embedFor, isOwnVideo } from "./embeds";
 
 type Vals = Record<string, string>;
 const val = (v: Vals, k: string) => (v[k] ?? "").trim();
@@ -108,7 +109,7 @@ export function CeilingBuddyStorefront({
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap"
       />
 
       <div className="cb">
@@ -365,14 +366,25 @@ function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProduct
             </div>
           ) : null}
 
-          <button
-            type="button"
-            className="cb-btn"
-            onClick={() => picked && drawer?.add(picked)}
-            disabled={!picked}
-          >
-            {val(v, "ctaLabel") || "Add to cart"}
-          </button>
+          <div className="cb-acts">
+            <button
+              type="button"
+              className="cb-btn"
+              onClick={() => picked && drawer?.add(picked)}
+              disabled={!picked}
+            >
+              {val(v, "ctaLabel") || "Add to cart"}
+            </button>
+            {/* Straight to the checkout with this bundle and nothing else.
+                `replace=1` clears whatever was in the cart, so the wallet sheet
+                shows the price the customer was just looking at. */}
+            <form method="post" action={`/cart/add?next=checkout&replace=1`}>
+              <input type="hidden" name="variantId" value={picked} />
+              <button type="submit" className="cb-btn cb-btn--ghost" disabled={!picked}>
+                Buy now
+              </button>
+            </form>
+          </div>
           {has(v, "reassurance") ? <div className="cb-reassure">{val(v, "reassurance")}</div> : null}
 
           <div className="cb-ship">
@@ -652,13 +664,25 @@ function Specs({ section }: { section: LoadedSection }) {
  * never a play button over a still pretending to be one.
  */
 function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
-  const video = val(section.values, "video");
-  // The vertical shots live on the social proof section — that is where the
-  // store's phone photography is, and duplicating it into a second section
-  // would mean two places to keep in step.
+  // Three kinds of thing can ride this rail, in this order of preference:
+  //   1. real posts, embedded from TikTok / Instagram / YouTube
+  //   2. a video file we host ourselves
+  //   3. the vertical photographs, until either of the above exists
+  // A post is the strongest of the three because its handle and its counts are
+  // the platform's own and cannot be written by us.
+  const clips = page.sections.find((x) => x.type === "video_clips");
+  const links = (clips?.blocks ?? [])
+    .map((b) => val(b.values, "video"))
+    .filter(Boolean);
+
+  const own = [val(section.values, "video"), ...links].filter(isOwnVideo);
+  const posts = links.map(embedFor).filter((e): e is NonNullable<typeof e> => e !== null);
+
   const proof = page.sections.find((x) => x.type === "social_proof_images");
   const shots = (proof?.blocks ?? []).filter((b) => has(b.values, "image"));
-  if (!video && !shots.length) return null;
+
+  if (!own.length && !posts.length && !shots.length) return null;
+
   return (
     <section className="cb-ugc" id="ugc">
       <div className="cb-wrap">
@@ -668,12 +692,24 @@ function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProduc
         </div>
       </div>
       <div className="cb-ugc__rail">
-        {video ? (
-          <figure className="cb-ugc__i">
-            <video src={video} autoPlay muted loop playsInline preload="metadata" />
+        {posts.map((e) => (
+          <div className={`cb-ugc__i${e.vertical ? "" : " cb-ugc__i--wide"}`} key={e.src}>
+            <iframe
+              src={e.src}
+              title={e.title}
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </div>
+        ))}
+        {own.map((src) => (
+          <figure className="cb-ugc__i" key={src}>
+            <video src={src} autoPlay muted loop playsInline preload="metadata" />
             <figcaption className="cb-ugc__tag">Ceiling Buddy, on</figcaption>
           </figure>
-        ) : null}
+        ))}
         {shots.map((b) => (
           <figure className="cb-ugc__i" key={b.id}>
             <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />

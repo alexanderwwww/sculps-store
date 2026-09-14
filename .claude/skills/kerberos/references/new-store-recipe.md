@@ -82,6 +82,14 @@ Other rules learned the hard way:
 
 - A negative `z-index` on a `::after` highlight paints behind the section's
   own background. Use a `linear-gradient` on the element instead.
+- **A scoped reset outranks your components.** `.cb button { color: inherit }`
+  is specificity (0,1,1) and beats `.cb-btn` at (0,1,0), so the theme's own
+  button label was repainted with the inherited ink — white text on a black
+  button rendered black on black, and it looked like a missing label rather
+  than a cascade problem. Any component that sets a colour the reset also sets
+  must be written `.cb .cb-btn`, or the reset must not set that property.
+  Check this by asking the browser which rules actually match:
+  `el.matches(rule.selectorText) && rule.style.color` over `document.styleSheets`.
 - Contain, don't cover, product photography whose subject is at one edge —
   cropping the ceiling out of a ceiling product is the whole failure.
 - Anything rendered outside the theme's root div has no palette at all,
@@ -160,9 +168,15 @@ draft or the variant is out of stock.
 The browser here cannot reach the live site, so pull the page into one
 self-contained file and render that: inline the `/assets/*.css`, base64 every
 `/media` file, strip remote scripts, drop `loading="lazy"` so the whole page
-photographs. **Check each fetch** — a stylesheet that comes back as HTML gives
-a page with no layout and a 77,000px screenshot, which looks like a code bug
-and is not one. `scratchpad/render.sh` does this.
+photographs. **Check each fetch, and retry** — a stylesheet that comes back as HTML gives a
+page with no layout and a 77,000px screenshot, which looks like a code bug and
+is not one. Deploys also race: a page fetched mid-deploy references an asset
+hash that is not live yet. `scratchpad/render.sh` retries six times before
+giving up.
+
+When a rendered page disagrees with the served CSS, do not keep re-rendering
+the whole page. Pull the one fragment and the live stylesheet into a small test
+file and inspect that — it isolates the bug in one step instead of five.
 
 Then assert, in the page: `document.documentElement.scrollWidth -
 clientWidth === 0` at 400px wide. Screenshot desktop and mobile and actually
