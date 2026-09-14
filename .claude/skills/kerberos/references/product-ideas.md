@@ -1,6 +1,6 @@
 # Product ideas parked for later
 
-## Ceiling TikTok projector (Q4 idea, locked 2026-09-14)
+## ceiling buddy — the ceiling TikTok projector (Q4 idea, locked 2026-09-14)
 
 **What it is.** A small bedside projector that connects to an iPhone and throws
 short-form video on the ceiling. Three things make it its own product rather
@@ -20,9 +20,9 @@ popcorn between them.
 **Angle.** Not "a projector". A night-in ritual: *the ceiling is the new
 screen*. Gift-shaped, which is why Q4 matters.
 
-**Name shortlist (owner picks).** CEILO · Lyra · Loop · Nocturne · UpLate ·
-Halo. First pick: **CEILO** — short, sounds like ceiling, easy on a box, free
-of obvious trademarks to check.
+**Name: ceiling buddy.** Chosen by the owner 2026-09-14. Same family as garden
+buddy: plain, warm, says what it does, cute enough to repost. Lowercase like
+bodies. Trademark and domain still to be checked.
 
 **Status.** Idea only. No store, no supplier, no renders yet. Next step when
 revived: one hero render, check AliExpress/Alibaba for a base unit with
