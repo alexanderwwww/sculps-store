@@ -24,27 +24,27 @@ const has = (v: Vals, ...keys: string[]) => keys.some((k) => val(v, k) !== "");
 const M = "/media";
 
 /** What each colourway looks like, keyed by the variant label. */
-export const WAYS: Record<string, { disc: string; ink: string; card: string; sky: string; skyTall: string; life: string[] }> = {
+export const WAYS: Record<string, { disc: string; ink: string; card: string; sky: string; skyTall: string; studio: string; life: string[] }> = {
   "Icy Swan": {
-    disc: "#D6E9F6", ink: "#2E5570", card: `${M}/bd-cut-swan.png`, sky: `${M}/bd-sky-swan.jpg`, skyTall: `${M}/bd-sky-swan-tall.jpg`,
+    disc: "#D6E9F6", ink: "#2E5570", card: `${M}/bd-cut-swan.png`, sky: `${M}/bd-sky-swan.jpg`, skyTall: `${M}/bd-sky-swan-tall.jpg`, studio: `${M}/bd-studio-swan.jpg`,
     life: [`${M}/bd-hero-real.png`, `${M}/bd-c-swan-latina.png`, `${M}/bd-b-swan-socks.png`, `${M}/bd-d-swan-underbed.png`],
   },
   "Lilac Heat": {
-    disc: "#EEDCF5", ink: "#4A2357", card: `${M}/bd-cut-lilac.png`, sky: `${M}/bd-sky-lilac.jpg`, skyTall: `${M}/bd-sky-lilac-tall.jpg`,
+    disc: "#EEDCF5", ink: "#4A2357", card: `${M}/bd-cut-lilac.png`, sky: `${M}/bd-sky-lilac.jpg`, skyTall: `${M}/bd-sky-lilac-tall.jpg`, studio: `${M}/bd-studio-lilac.jpg`,
     life: [`${M}/bd-hero-real-2.png`, `${M}/bd-a-lilac-top.png`, `${M}/bd-c-lilac-mirror2.png`, `${M}/bd-d-lilac-socks.png`],
   },
   Matcha: {
-    disc: "#D8EDC4", ink: "#1E4636", card: `${M}/bd-cut-matcha.png`, sky: `${M}/bd-sky-matcha.jpg`, skyTall: `${M}/bd-sky-matcha-tall.jpg`,
+    disc: "#D8EDC4", ink: "#1E4636", card: `${M}/bd-cut-matcha.png`, sky: `${M}/bd-sky-matcha.jpg`, skyTall: `${M}/bd-sky-matcha-tall.jpg`, studio: "",
     life: [`${M}/bd-c-matcha-black.png`, `${M}/bd-d-matcha-stretch.png`, `${M}/bd-e-matcha-backlit.png`, `${M}/bd-b-matcha-carry.png`],
   },
   Bare: {
-    disc: "#F0E9DE", ink: "#4A4034", card: `${M}/bd-cut-bare.png`, sky: `${M}/bd-sky-bare.jpg`, skyTall: `${M}/bd-sky-bare-tall.jpg`,
+    disc: "#F0E9DE", ink: "#4A4034", card: `${M}/bd-cut-bare.png`, sky: `${M}/bd-sky-bare.jpg`, skyTall: `${M}/bd-sky-bare-tall.jpg`, studio: "",
     life: [`${M}/bd-d-bare-rest.png`, `${M}/bd-c-bare-latina.png`, `${M}/bd-f-bare-fold.png`, `${M}/bd-d-bare-hallway.png`],
   },
 };
 /** The three "who it's for" cards each sit on a colourway tint. */
 const WHO_TINTS = ["#D6E9F6", "#EEDCF5", "#F0E9DE"];
-const fallbackWay = { disc: "#EFEFEF", ink: "#0E0F12", card: "", sky: "", skyTall: "", life: [] as string[] };
+const fallbackWay = { disc: "#EFEFEF", ink: "#0E0F12", card: "", sky: "", skyTall: "", studio: "", life: [] as string[] };
 export const wayOf = (label: string) => WAYS[label] ?? fallbackWay;
 
 /** A colourway's own address. "Icy Swan" becomes "icy-swan". */
@@ -128,13 +128,19 @@ export function Foot({ page, storeParam = "" }: { page: Chrome; storeParam?: str
       <div className="bd-wrap">
         <div className="bd-foot__grid">
           <div>
-            <h4>bodies</h4>
-            <p className="bd-foot__say">Pilates at home. A stronger, happier you — anytime, anywhere.</p>
+            <h2 className="bd-h3" style={{ fontSize: 18 }}>Join bodies.</h2>
+            <p className="bd-foot__say" style={{ marginTop: 8 }}>New workouts, new colourways, and nothing else. No spam.</p>
+            <form className="bd-foot__form" method="post" action={href("/checkout/identify")}>
+              <input type="hidden" name="consent" value="1" />
+              <input id="bd-foot-email" type="email" name="email" placeholder="enter your email here" aria-label="Your email" required />
+              <button type="submit" className="bd-btn bd-btn--sm" aria-label="Join">→</button>
+            </form>
             <div className="bd-foot__social" aria-label="Social">
               <a href="https://instagram.com" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" /></svg></a>
               <a href="https://tiktok.com" aria-label="TikTok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"><path d="M14 3v11.5a3.5 3.5 0 1 1-3-3.46" /><path d="M14 6.2A5.6 5.6 0 0 0 19.5 10" /></svg></a>
             </div>
           </div>
+          <img className="bd-foot__obj" src={`${M}/bd-chrome.jpg`} alt="" loading="lazy" />
           <div>
             <h4>Shop</h4>
             <ul>
@@ -144,30 +150,20 @@ export function Foot({ page, storeParam = "" }: { page: Chrome; storeParam?: str
             </ul>
           </div>
           <div>
-            <h4>Learn</h4>
-            <ul>
-              <li><a href={`${href("/")}#how`}>How it works</a></li>
-              <li><a href={`${href("/")}#workouts`}>Workouts</a></li>
-              <li><a href={`${href("/")}#faq`}>Questions</a></li>
-            </ul>
-          </div>
-          <div>
             <h4>Help</h4>
             <ul>
-              {page.nav.footer.length ? (
-                page.nav.footer.map((l) => <li key={`${l.href}${l.label}`}><a href={href(l.href)}>{l.label}</a></li>)
-              ) : (
-                <li><a href={href("/cart")}>Cart</a></li>
-              )}
+              <li><a href={`${href("/")}#how`}>How it works</a></li>
+              <li><a href={`${href("/")}#faq`}>FAQs</a></li>
+              {page.nav.footer.map((l) => <li key={`${l.href}${l.label}`}><a href={href(l.href)}>{l.label}</a></li>)}
+              <li><a href={href("/cart")}>Cart</a></li>
             </ul>
           </div>
         </div>
         <div className="bd-foot__legal">
           <span>© {year} {page.store.name}</span>
-          <span>Pilates for a brighter you.</span>
+          <span>Pilates at home.</span>
         </div>
       </div>
-      {/* the signature: the wordmark, oversized, bleeding off the bottom edge */}
       <div className="bd-foot__mark" aria-hidden="true">bodies</div>
     </footer>
   );
@@ -210,46 +206,68 @@ function Section({ section, page, storeParam }: { section: LoadedSection; page: 
   return <section className="shopify-section bd-section">{body}</section>;
 }
 
-/* Positional, like Garden Buddy's: the fifth icon goes with the fifth block. */
+/* Positional: the fifth icon goes with the fifth block. Thin line icons. */
 const TRUST_ICONS = [
-  <svg viewBox="0 0 24 24" key="screen"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8" /></svg>,
-  <svg viewBox="0 0 24 24" key="fold"><path d="M4 12h16" /><path d="M7 8l-3 4 3 4" /><path d="M17 8l3 4-3 4" /></svg>,
-  <svg viewBox="0 0 24 24" key="resist"><path d="M5 9v6M19 9v6" /><path d="M8 12h8" /><rect x="2.5" y="10" width="3" height="4" rx="1" /><rect x="18.5" y="10" width="3" height="4" rx="1" /></svg>,
-  <svg viewBox="0 0 24 24" key="studio"><circle cx="12" cy="12" r="9" /><path d="M10 9l5 3-5 3z" /></svg>,
-  <svg viewBox="0 0 24 24" key="space"><path d="M4 4h6M4 4v6M20 20h-6M20 20v-6" /><rect x="8" y="8" width="8" height="8" rx="1" /></svg>,
+  <svg viewBox="0 0 48 48" key="screen"><rect x="6" y="9" width="36" height="24" rx="3" /><path d="M18 40h12M24 33v7" /><path d="M18 21l4 4 8-8" /></svg>,
+  <svg viewBox="0 0 48 48" key="fold"><path d="M8 30h32" /><path d="M14 30V16h20v14" /><path d="M14 16l10-6 10 6" /></svg>,
+  <svg viewBox="0 0 48 48" key="resist"><path d="M10 18v12M38 18v12" /><path d="M14 24h20" /><rect x="6" y="20" width="4" height="8" rx="1" /><rect x="38" y="20" width="4" height="8" rx="1" /></svg>,
+  <svg viewBox="0 0 48 48" key="studio"><circle cx="24" cy="24" r="17" /><path d="M20 17l11 7-11 7z" /></svg>,
+  <svg viewBox="0 0 48 48" key="space"><path d="M8 8h10M8 8v10M40 40H30M40 40V30" /><rect x="16" y="16" width="16" height="16" rx="2" /></svg>,
 ];
+
+/** A soft colour splash behind a product, like the reference's cards. */
+function Splash({ colour }: { colour: string }) {
+  return (
+    <svg className="bd-way__splash" viewBox="0 0 200 200" aria-hidden="true">
+      <path fill={colour} d="M46 38c25-26 71-24 96-6 22 16 42 44 33 78-9 33-40 56-78 55-38 0-62-24-74-52C12 84 24 61 46 38z" />
+    </svg>
+  );
+}
 
 function renderSection(section: LoadedSection, page: LoadedProductPage, storeParam: string) {
   const v = section.values;
   const blocks = section.blocks;
   const href = (p: string) => `${p}${storeParam}`;
+  const lead = page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
+  const leadWay = lead ? wayOf(lead.label) : fallbackWay;
 
   switch (section.type) {
     /* ---------------------------------------------------------- hero + shop */
     case "buy_box": {
-      const shot = blocks.map((b) => val(b.values, "image")).find(Boolean) ?? "";
+      const shot = blocks.map((b) => val(b.values, "image")).find(Boolean) || `${M}/bd-hero-apt.jpg`;
       const alt = blocks.map((b) => val(b.values, "alt")).find(Boolean) ?? "";
       return (
         <>
-          <SkyHero
-            variants={page.variants}
-            fallback={shot}
-            alt={alt}
-            badge={val(v, "badge")}
-            heading={val(v, "heading")}
-            sub={val(v, "subheading")}
-            cta={val(v, "ctaLabel") || "Shop now"}
-            sure={val(v, "reassurance")}
-            href={href}
-          />
+          <div className="bd-hero">
+            <div className="bd-hero__pic">
+              <img src={shot} alt={alt} fetchPriority="high" />
+            </div>
+            <div className="bd-hero__in">
+              <div className="bd-wrap">
+                <div className="bd-hero__copy">
+                  {val(v, "badge") ? <p className="bd-eyebrow">{val(v, "badge")}</p> : null}
+                  {val(v, "heading") ? <h1 className="bd-h1">{val(v, "heading")}</h1> : null}
+                  {val(v, "subheading") ? <p className="bd-hero__sub">{val(v, "subheading")}</p> : null}
+                  <div className="bd-hero__cta">
+                    <a className="bd-btn" href={lead ? `/products/${slug(lead.label)}${storeParam}` : `${href("/")}#shop`}>
+                      {val(v, "ctaLabel") || "Shop the board"}{lead ? ` · ${formatMoney(lead.priceCents, page.store.currency)}` : ""}
+                    </a>
+                    <a className="bd-btn bd-btn--ghost" href={`${href("/")}#how`}>How it works</a>
+                  </div>
+                  {val(v, "reassurance") ? <p className="bd-hero__sure">{val(v, "reassurance")}</p> : null}
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="bd-sec" id="shop">
             <div className="bd-wrap">
               <div className="bd-sec__head">
                 <div>
-                  <h2 className="bd-h2">Four colourways.<br />One studio.</h2>
-                  <p className="bd-lede">Same board, same screen, same workouts. Pick the one you want to look at every day.</p>
+                  <h2 className="bd-h2">Shop the board</h2>
+                  <p className="bd-lede">One board, four colourways. Same screen, same workouts, same price.</p>
                 </div>
+                <a className="bd-sec__all" href={lead ? `/products/${slug(lead.label)}${storeParam}` : "#shop"}>Shop all →</a>
               </div>
               <div className="bd-ways">
                 {page.variants.map((variant) => (
@@ -267,12 +285,12 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       const items = blocks.filter((b) => has(b.values, "title", "text"));
       if (items.length === 0) return null;
       return (
-        <div className="bd-sec bd-sec--block bd-sec--matcha" id="how">
+        <div className="bd-sec" id="how">
           <div className="bd-wrap">
             <div className="bd-sec__head">
               <div>
-                <p className="bd-eyebrow">Thirty seconds, start to finish</p>
                 {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
+                <p className="bd-lede">Thirty seconds from under the bed to a class.</p>
               </div>
             </div>
             <ol className="bd-steps">
@@ -303,7 +321,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
             <div className="bd-split__pic">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
             <div className="bd-split__copy">
               {val(v, "subheading") ? <p className="bd-eyebrow">{val(v, "subheading")}</p> : null}
-              {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
+              {val(v, "heading") ? <h2 className="bd-h2" style={{ marginTop: 10 }}>{val(v, "heading")}</h2> : null}
               <ul className="bd-list">
                 {items.map((b) => (
                   <li key={b.id}>
@@ -312,14 +330,14 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
                   </li>
                 ))}
               </ul>
-              <a className="bd-btn" href={`${href("/")}#shop`}>See the colourways</a>
+              <a className="bd-btn" href={`${href("/")}#shop`}>Shop the board</a>
             </div>
           </div>
         </div>
       );
     }
 
-    /* ------------------------------------------------------- workouts */
+    /* ------------------------------------------------------- the workouts */
     case "product_grid": {
       const items = blocks.filter((b) => has(b.values, "image", "title"));
       if (items.length === 0) return null;
@@ -336,8 +354,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
               {items.map((b) => (
                 <figure className="bd-move" key={b.id}>
                   {val(b.values, "image") ? <img src={val(b.values, "image")} alt={val(b.values, "title")} loading="lazy" /> : null}
-                  <i>{String(items.indexOf(b) + 1).padStart(2, "0")}</i>
-                  <span>{val(b.values, "title")}{val(b.values, "note") ? ` · ${val(b.values, "note")}` : ""}</span>
+                  <span>{val(b.values, "title")}</span>
                 </figure>
               ))}
             </div>
@@ -347,45 +364,47 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       );
     }
 
-    /* ------------------------------------------------------- split, photo right */
+    /* ------------------------------------------------------- the band */
     case "features": {
       const items = blocks.filter((b) => has(b.values, "title", "text"));
       if (items.length === 0) return null;
-      const shot = items.map((b) => val(b.values, "image")).find(Boolean);
       return (
-        <div className="bd-sec bd-sec--block bd-sec--swan">
-          <div className="bd-wrap bd-split bd-split--flip">
-            <div className="bd-split__pic">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
-            <div className="bd-split__copy">
+        <div className="bd-band">
+          <div className="bd-wrap bd-band__in">
+            <div className="bd-band__copy">
               {val(v, "subheading") ? <p className="bd-eyebrow">{val(v, "subheading")}</p> : null}
-              {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
-              <ul className="bd-list">
-                {items.map((b) => (
-                  <li key={b.id}>
-                    <h3 className="bd-h3">{val(b.values, "title")}</h3>
-                    <p>{val(b.values, "text")}</p>
-                  </li>
-                ))}
-              </ul>
+              {val(v, "heading") ? <h2 className="bd-h2" style={{ marginTop: 10 }}>{val(v, "heading")}</h2> : null}
+              {items.slice(0, 2).map((b) => (
+                <p key={b.id}><b style={{ fontWeight: 600 }}>{val(b.values, "title")}.</b> {val(b.values, "text")}</p>
+              ))}
+              <a className="bd-btn" href={`${href("/")}#shop`}>Shop now</a>
+            </div>
+            <div className="bd-band__art">
+              {leadWay.card ? <img src={leadWay.card} alt="" loading="lazy" /> : null}
+              <span className="bd-band__seal" aria-hidden="true"><span>Folds<b>flat</b>stands up</span></span>
             </div>
           </div>
         </div>
       );
     }
 
-    /* ------------------------------------------------------- feature strip */
+    /* ------------------------------------------------------- icon row */
     case "trust_icons": {
       const items = blocks.filter((b) => has(b.values, "title"));
       if (items.length === 0) return null;
       return (
-        <div className="bd-sec bd-sec--tight" id="story">
-          <div className="bd-wrap bd-feats">
-            {items.map((b, i) => (
-              <div className="bd-feat" key={b.id}>
-                {TRUST_ICONS[i] ?? TRUST_ICONS[0]}
-                <span>{val(b.values, "title")}</span>
-              </div>
-            ))}
+        <div className="bd-sec bd-center" id="story">
+          <div className="bd-wrap">
+            <h2 className="bd-h2">{val(v, "heading") || "Everything the studio has."}</h2>
+            <p className="bd-lede">{val(v, "subheading") || "Built for a small apartment and a full workout."}</p>
+            <div className="bd-feats">
+              {items.map((b, i) => (
+                <div className="bd-feat" key={b.id}>
+                  {TRUST_ICONS[i] ?? TRUST_ICONS[0]}
+                  <span>{val(b.values, "title")}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       );
@@ -423,9 +442,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       return (
         <div className="bd-sec">
           <div className="bd-wrap">
-            <div className="bd-sec__head">
-              {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
-            </div>
+            <div className="bd-sec__head">{val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}</div>
             <div className="bd-ugc">
               {page.reviews.map((r) => (
                 <article className="bd-ugc__card" key={r.id}>
@@ -447,11 +464,15 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       const rows = blocks.filter((b) => has(b.values, "label"));
       if (rows.length === 0) return null;
       return (
-        <div className="bd-sec bd-sec--block bd-sec--lilac">
-          <div className="bd-wrap bd-cmp">
-            <p className="bd-eyebrow">No membership. No booking.</p>
-            {val(v, "heading") ? <h2 className="bd-h2" style={{ marginTop: 10 }}>{val(v, "heading")}</h2> : null}
-            <div className="bd-cmp__scroll bd-card">
+        <div className="bd-sec">
+          <div className="bd-wrap">
+            <div className="bd-sec__head">
+              <div>
+                {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
+                <p className="bd-lede">No membership. No booking. No commute.</p>
+              </div>
+            </div>
+            <div className="bd-card bd-cmp__scroll">
               <table className="bd-cmp__table">
                 <thead>
                   <tr>
@@ -483,12 +504,10 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       return (
         <div className="bd-sec">
           <div className="bd-wrap">
-            <div className="bd-sec__head">
-              {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
-            </div>
+            <div className="bd-sec__head">{val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}</div>
             <div className="bd-who">
               {items.map((b, i) => (
-                <div className="bd-who__item" key={b.id} style={{ background: WHO_TINTS[i % WHO_TINTS.length] }}>
+                <div className="bd-who__item" key={b.id}>
                   <span className="bd-who__n">{String(i + 1).padStart(2, "0")}</span>
                   <h3 className="bd-h3">{val(b.values, "title")}</h3>
                   <p>{val(b.values, "text")}</p>
@@ -504,11 +523,11 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
     case "whats_in_the_box": {
       const items = blocks.filter((b) => has(b.values, "title"));
       if (items.length === 0) return null;
-      const shot = items.map((b) => val(b.values, "image")).find(Boolean);
+      const shot = items.map((b) => val(b.values, "image")).find(Boolean) || leadWay.card;
       return (
-        <div className="bd-sec bd-sec--block bd-sec--bare">
+        <div className="bd-sec">
           <div className="bd-wrap bd-split">
-            <div className="bd-split__pic bd-split__pic--disc">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
+            <div className="bd-split__pic bd-split__pic--product">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
             <div className="bd-split__copy">
               {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
               <ul className="bd-box">
@@ -567,126 +586,31 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       );
     }
 
-    /* ------------------------------------------------------- the loud one, then join */
+    /* ------------------------------------------------------- email card on a photo */
     case "closing_cta":
       return (
-        <>
-          <div className="bd-band bd-band--right">
-            <div className="bd-band__pic"><img src={`${M}/bd-hero-real-2.png`} alt="" loading="lazy" /></div>
-            <div className="bd-band__in">
-              <div className="bd-wrap bd-band__wrap">
-                {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
-                {val(v, "subheading") ? <p>{val(v, "subheading")}</p> : null}
-                <a className="bd-btn" href={`${href("/")}#shop`}>{val(v, "ctaLabel") || "Shop bodies"}</a>
+        <div className="bd-join">
+          <div className="bd-join__pic"><img src={`${M}/bd-hero-real-2.png`} alt="" loading="lazy" /></div>
+          <div className="bd-join__in">
+            <div className="bd-wrap">
+              <div className="bd-join__card">
+                <h2 className="bd-h2" style={{ fontSize: 28 }}>{val(v, "heading") || "Join bodies."}</h2>
+                <p>{val(v, "subheading") || "First to know about new workouts and colourways. Nothing else."}</p>
+                <form className="bd-join__form" method="post" action={href("/checkout/identify")}>
+                  <input type="hidden" name="consent" value="1" />
+                  <input id="bd-join-email" type="email" name="email" placeholder="enter your email here" aria-label="Your email" required />
+                  <button type="submit" className="bd-btn">Get in</button>
+                </form>
               </div>
             </div>
           </div>
-
-          {/* A white card over a photograph, the way the reference does it.
-              It records the address on the visitor's cart, so the recovery
-              email can reach them — there is no separate mailing list yet. */}
-          <div className="bd-join">
-            <div className="bd-join__pic"><img src={`${M}/bd-a-lilac-top.png`} alt="" loading="lazy" /></div>
-            <div className="bd-join__in">
-              <div className="bd-wrap">
-                <div className="bd-join__card">
-                  <h2 className="bd-h3">Join bodies.</h2>
-                  <p>First to know about new workouts, colourways and everything else.</p>
-                  <form className="bd-join__form" method="post" action={href("/checkout/identify")}>
-                    <input type="hidden" name="consent" value="1" />
-                    <input id="bd-join-email" type="email" name="email" placeholder="Your email" aria-label="Your email" required />
-                    <button type="submit" className="bd-btn">Join</button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
+        </div>
       );
 
-    /* no videos exist yet — nothing is drawn rather than an empty player */
     case "video_clips":
     default:
       return null;
   }
-}
-
-/**
- * The campaign hero: the board floating over a saturated sky, one shot per
- * colourway, the headline cut over the empty side of the sky. The swatches
- * swap the shot in place. The section's own image is the fallback when a
- * colourway has no sky shot.
- */
-function SkyHero({
-  variants,
-  fallback,
-  alt,
-  badge,
-  heading,
-  sub,
-  cta,
-  sure,
-  href,
-}: {
-  variants: VariantRow[];
-  fallback: string;
-  alt: string;
-  badge: string;
-  heading: string;
-  sub: string;
-  cta: string;
-  sure: string;
-  href: (p: string) => string;
-}) {
-  const skies = variants.filter((variant) => wayOf(variant.label).sky);
-  const [picked, setPicked] = useState(0);
-  const current = skies[picked] ?? null;
-  const src = current ? wayOf(current.label).sky : fallback;
-  return (
-    <div className={`bd-hero${current ? " bd-hero--sky" : ""}`}>
-      <div className="bd-hero__pic">
-        {src ? (
-          <picture>
-            {current && wayOf(current.label).skyTall ? <source media="(max-width: 720px)" srcSet={wayOf(current.label).skyTall} /> : null}
-            <img src={src} alt={current ? `The bodies board in ${current.label}` : alt} fetchPriority="high" />
-          </picture>
-        ) : null}
-      </div>
-      <div className="bd-hero__in">
-        <div className="bd-wrap">
-          <div className="bd-hero__copy">
-            {badge ? <p className="bd-eyebrow">{badge}</p> : null}
-            {heading ? <h1 className="bd-h1">{heading}</h1> : null}
-            {sub ? <p className="bd-hero__sub">{sub}</p> : null}
-            <div className="bd-hero__cta">
-              <a className="bd-btn" href={current ? `/products/${slug(current.label)}${href("").replace(/^\//, "")}` : `${href("/")}#shop`}>
-                {cta}
-              </a>
-              <a className="bd-btn bd-btn--ghost" href={`${href("/")}#how`}>How it works</a>
-            </div>
-            {skies.length > 1 ? (
-              <div className="bd-hero__ways" role="tablist" aria-label="Colourway">
-                {skies.map((variant, i) => (
-                  <button
-                    key={variant.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={i === picked}
-                    aria-label={variant.label}
-                    className="bd-swatch"
-                    style={{ background: wayOf(variant.label).disc }}
-                    onClick={() => setPicked(i)}
-                  />
-                ))}
-                <span className="bd-hero__way">{current?.label}</span>
-              </div>
-            ) : null}
-            {sure ? <p className="bd-hero__sure">{sure}</p> : null}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function WayCard({ variant, currency, storeParam }: { variant: VariantRow; currency: string; storeParam: string }) {
@@ -694,16 +618,21 @@ function WayCard({ variant, currency, storeParam }: { variant: VariantRow; curre
   const way = wayOf(variant.label);
   const sold = variant.available <= 0;
   const shot = way.card || variant.imageUrl;
+  const saving = variant.compareAtCents && variant.compareAtCents > variant.priceCents;
 
   return (
     <div className="bd-way">
+      <span className="bd-way__badge">New</span>
       <a className="bd-way__pic" href={`/products/${slug(variant.label)}${storeParam}`} aria-label={variant.label}>
-        <span className="bd-way__blob" style={{ background: way.disc }} aria-hidden="true" />
+        <Splash colour={way.disc} />
         {shot ? <img src={shot} alt={variant.label} loading="lazy" /> : null}
       </a>
       <span className="bd-way__name">{variant.label}</span>
       {variant.sublabel ? <span className="bd-way__note">{variant.sublabel}</span> : null}
-      <span className="bd-way__price">{formatMoney(variant.priceCents, currency)}</span>
+      <span className="bd-way__price">
+        {formatMoney(variant.priceCents, currency)}
+        {saving ? <s>{formatMoney(variant.compareAtCents!, currency)}</s> : null}
+      </span>
       <button type="button" className="bd-btn" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
         {sold ? "Sold out" : "Add to cart"}
       </button>
@@ -743,17 +672,19 @@ export function BodiesProduct({
 function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: VariantRow; storeParam: string }) {
   const drawer = useCartDrawer();
   const way = wayOf(variant.label);
-  // Five shots: the card render, then the phone photos. One row of thumbs.
-  const shots = [way.sky, way.card || variant.imageUrl, ...way.life, variant.imageUrl]
-    .filter((src, i, all): src is string => Boolean(src) && all.indexOf(src) === i)
-    .slice(0, 5);
-  const [shot, setShot] = useState(0);
+  // The gallery: the studio shot leads, then the product cut-out, the folded
+  // shot, the screen detail, then two phone photos. Real files only.
+  const gallery: { src: string; product?: boolean }[] = [
+    ...(way.studio ? [{ src: way.studio }] : way.card ? [{ src: way.card, product: true }] : []),
+    { src: `${M}/bd-pdp-folded.jpg` },
+    { src: `${M}/bd-pdp-detail.jpg` },
+    ...way.life.slice(0, 2).map((src) => ({ src })),
+  ].filter((g, i, all) => all.findIndex((x) => x.src === g.src) === i);
   const sold = variant.available <= 0;
   const monthly = Math.round(variant.priceCents / 12);
   const buyRef = useRef<HTMLDivElement | null>(null);
   const [stuck, setStuck] = useState(false);
 
-  // The sticky bar appears once the real Add to cart has scrolled away.
   useEffect(() => {
     const target = buyRef.current;
     if (!target || typeof IntersectionObserver === "undefined") return;
@@ -764,64 +695,80 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
 
   return (
     <>
-    <div className="bd-wrap bd-pdp">
-      <div>
-        <div className="bd-pdp__stage">{shots[shot] ? <img src={shots[shot]} alt={variant.label} /> : null}</div>
-        {shots.length > 1 ? (
-          <div className="bd-pdp__thumbs" role="tablist" aria-label="Photos">
-            {shots.map((src, i) => (
-              <button type="button" role="tab" key={src} className="bd-pdp__thumb" aria-selected={i === shot} aria-label={`Photo ${i + 1}`} onClick={() => setShot(i)}>
-                <img src={src} alt="" loading="lazy" />
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div>
-        <p className="bd-eyebrow">{page.product.title}</p>
-        <h1 className="bd-h2" style={{ marginTop: 10 }}>{variant.label}</h1>
-        {variant.sublabel ? <p className="bd-lede">{variant.sublabel}</p> : null}
-
-        <div className="bd-pdp__price">
-          <b>{formatMoney(variant.priceCents, page.store.currency)}</b>
-          {variant.compareAtCents && variant.compareAtCents > variant.priceCents ? <s>{formatMoney(variant.compareAtCents, page.store.currency)}</s> : null}
-        </div>
-        {/* PayPal Pay Later is connected on this store, so the monthly figure is real. */}
-        <p className="bd-pdp__later">or about {formatMoney(monthly, page.store.currency)}/month with PayPal Pay Later</p>
-
-        <div className="bd-pdp__swatches" role="tablist" aria-label="Colourway">
-          {page.variants.map((other) => (
-            <a key={other.id} role="tab" aria-selected={other.id === variant.id} aria-label={other.label} className="bd-swatch" href={`/products/${slug(other.label)}${storeParam}`} style={{ background: wayOf(other.label).disc }} />
+      <div className="bd-wrap bd-pdp">
+        <div className="bd-pdp__gallery">
+          {gallery.map((g, i) => (
+            <figure key={g.src} className={g.product ? "is-product" : undefined}>
+              <img src={g.src} alt={i === 0 ? `${variant.label} board` : ""} loading={i === 0 ? "eager" : "lazy"} />
+            </figure>
           ))}
         </div>
-        <p className="bd-pdp__chosen" style={{ color: way.ink }}>{variant.label}</p>
 
-        <div className="bd-pdp__buy" ref={buyRef}>
-          <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
+        <div className="bd-pdp__buybox">
+          <p className="bd-eyebrow">{page.product.title}</p>
+          <h1 className="bd-h2" style={{ marginTop: 8 }}>{variant.label}</h1>
+          <div className="bd-pdp__price">
+            <b>{formatMoney(variant.priceCents, page.store.currency)}</b>
+            {variant.compareAtCents && variant.compareAtCents > variant.priceCents ? <s>{formatMoney(variant.compareAtCents, page.store.currency)}</s> : null}
+          </div>
+          <p className="bd-pdp__later">or about {formatMoney(monthly, page.store.currency)}/month with PayPal Pay Later</p>
+          <p className="bd-pdp__desc">
+            {variant.sublabel ? `${variant.sublabel}. ` : ""}A full Pilates board with a built-in screen, two resistance cables, ankle straps and two pads. Folds flat and stands on its end.
+          </p>
+
+          <div className="bd-pdp__ways" role="list" aria-label="Colourway">
+            {page.variants.map((other) => (
+              <a key={other.id} role="listitem" aria-current={other.id === variant.id} className="bd-pdp__way" href={`/products/${slug(other.label)}${storeParam}`}>
+                {wayOf(other.label).card ? <img src={wayOf(other.label).card} alt="" loading="lazy" /> : null}
+                <span>{other.label}</span>
+              </a>
+            ))}
+          </div>
+
+          <div className="bd-pdp__buy" ref={buyRef}>
+            <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
+              {sold ? "Sold out" : `Add to cart · ${formatMoney(variant.priceCents, page.store.currency)}`}
+            </button>
+          </div>
+          <p className="bd-pdp__sure">Free shipping worldwide · Card, Apple Pay, Google Pay, PayPal</p>
+
+          <div className="bd-acc">
+            <details open>
+              <summary>What's in the box</summary>
+              <ul>
+                <li>The board with the built-in screen</li>
+                <li>Two resistance cables with foam handles</li>
+                <li>Two ankle straps</li>
+                <li>Two pads</li>
+                <li>Charging cable</li>
+              </ul>
+            </details>
+            <details>
+              <summary>Workouts</summary>
+              <p>Pilates, sculpt, core, stretch and recovery, led on the screen. Every level, no phone propped on a chair.</p>
+            </details>
+            <details>
+              <summary>Size & storage</summary>
+              <p>The screen folds flat and the board stands on its end, so it lives under a bed or against a wall. Exact dimensions and weight are being confirmed.</p>
+            </details>
+            <details>
+              <summary>Shipping & returns</summary>
+              <p>Free shipping worldwide. Pay in 4 with PayPal Pay Later at checkout.</p>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <div className={`bd-stick${stuck ? " bd-stick--on" : ""}`} aria-hidden={!stuck}>
+        <div className="bd-wrap bd-stick__in">
+          {way.card ? <img src={way.card} alt="" /> : null}
+          <span className="bd-stick__name">{variant.label}</span>
+          <span className="bd-stick__price">{formatMoney(variant.priceCents, page.store.currency)}</span>
+          <button type="button" className="bd-btn" disabled={sold} tabIndex={stuck ? 0 : -1} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
             {sold ? "Sold out" : "Add to cart"}
           </button>
         </div>
-
-        <ul className="bd-pdp__facts">
-          <li>Built-in screen, hinged to the board — Pilates, strength, sculpt, stretch and recovery</li>
-          <li>Full-body resistance: two cables with handles, two ankle straps</li>
-          <li>Folds flat and stands on its end</li>
-          <li>In the box: the board, cables, straps, two pads, charging cable</li>
-          <li>Free shipping worldwide</li>
-        </ul>
       </div>
-    </div>
-    <div className={`bd-stick${stuck ? " bd-stick--on" : ""}`} aria-hidden={!stuck}>
-      <div className="bd-wrap bd-stick__in">
-        {shots[1] ? <img src={shots[1]} alt="" /> : null}
-        <span className="bd-stick__name">{variant.label}</span>
-        <span className="bd-stick__price">{formatMoney(variant.priceCents, page.store.currency)}</span>
-        <button type="button" className="bd-btn" disabled={sold} tabIndex={stuck ? 0 : -1} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
-          {sold ? "Sold out" : "Add to cart"}
-        </button>
-      </div>
-    </div>
     </>
   );
 }

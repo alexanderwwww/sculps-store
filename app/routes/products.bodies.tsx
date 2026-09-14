@@ -109,7 +109,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..800&family=Instrument+Sans:wght@400;500;600&display=swap"
       />
       <link rel="stylesheet" href={bodiesThemeHref} />
       {favicon ? <link rel="icon" href={favicon} /> : null}
