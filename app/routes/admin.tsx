@@ -124,7 +124,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 }
 
 /** Screens that fill the whole area and manage their own scrolling. */
-const FULL_BLEED = ["/admin/online-store/editor", "/admin/live", "/admin/studio"];
+const FULL_BLEED = ["/admin/online-store/editor", "/admin/live"];
 
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {
   const { user, stores, store, counts } = loaderData;
