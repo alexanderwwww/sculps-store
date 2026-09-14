@@ -169,19 +169,20 @@ https://kerberos.gardenbuddystore.workers.dev/?store=ceiling-buddy
   price at the top of the page nobody will pay and kills the sale before the
   cheap option is read. At $79.99 the margin only works if the projector lands
   at or under ~$40 in bulk; get the quote before scaling spend.
-- **Palette — the brand's own colours, mixed 60 cozy / 20 appetite / 20 Gen-Z.**
-  60% warm cream `#FFFCF7`, sand `#FBF3E7`, warm near-black `#17120E`. 20%
-  appetite: honey `#F2A93B` (the LED, and popcorn under it) on the saving and
-  the top bar. 20%: the logo's blue pushed deep to `#1668C6` for every action —
-  button, price, selection — plus electric violet `#7C4DFF` on heading swipes
-  and every third sticker.
-  **Rejected, do not propose again:** an all-dark page; green savings badges;
-  a red-and-yellow McDonald's palette. Alex's actual note was that he wants
-  McDonald's *clarity and appetite* — one price, one button, one promise, warm
-  light — **not their colours**. Colour comes from the brand.
+- **Palette — clean, three colours, nothing else.** Near-white `#FFFFFF`, a
+  quiet band `#F7F7F5`, the logo's cream `#FBF7EF` on one or two surfaces, ink
+  `#14161A`, and the logo's blue pushed to `#1471D6` for anything that can be
+  acted on. One border weight (1px hairline) and two shadows for the whole page.
+  **The lesson, in Alex's words: appetite and cleanness are not colour
+  psychology.** Craving comes from craft — the product photographed well and
+  given room, a real type hierarchy, hairline rules, and the nerve to leave a
+  section almost blank. Restraint reads as expensive and expensive reads as
+  trustworthy.
+  **Rejected, do not propose again:** a dark page; green savings badges; a
+  red-and-yellow McDonald's palette; warm honey buttons "because warm colours
+  make people hungry". Heavy black keylines survive nowhere except the logo.
 - **Proportion** the gallery takes the fold; the buy column is deliberately the
-  smaller half. The photograph sells this product, the price only has to be
-  findable.
+  smaller half.
 
 - **Media** 10 assets in R2 as webp — logo (background keyed out), hero cut-out,
   feature card, and six iPhone-UGC lifestyle shots.
