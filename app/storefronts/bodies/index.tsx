@@ -43,7 +43,21 @@ export const WAYS: Record<string, { disc: string; ink: string; card: string; sky
   },
 };
 /** The product page shows everything: these home sections, in this order, under the buybox. */
-const PDP_SECTIONS = ["benefits", "three_steps", "product_grid", "features", "trust_icons", "whats_in_the_box", "specifications", "comparison_table", "social_proof_images", "reviews", "video_faq", "closing_cta"];
+const PDP_SECTIONS = ["product_grid", "three_steps", "comparison_table", "social_proof_images", "reviews", "specifications", "video_faq", "closing_cta"];
+/** What it has that the others don't: shown, not told. Real files only. */
+const PROOF = [
+  { src: `${M}/bd-pdp-detail.jpg`, title: "An instructor, on the board", text: "The screen is built in. Press play and she tells you what to do, rep by rep." },
+  { src: `${M}/bd-pdp-folded.jpg`, title: "Fold it. It's gone.", text: "Screen folds flat, board stands up. Under the bed, behind the door, until tomorrow." },
+  { src: `${M}/bd-c-swan-latina.png`, title: "Your room. Your timing.", text: "No membership. No booking. Nobody watching. Pilates when you want it." },
+];
+/** Every item in the box, shown. Cut from the kit photograph. */
+const BOX = [
+  { src: `${M}/bd-box-board.jpg`, title: "The board", text: "with the built-in screen" },
+  { src: `${M}/bd-box-cables.jpg`, title: "Two cables", text: "with foam handles" },
+  { src: `${M}/bd-box-straps.jpg`, title: "Two ankle straps", text: "" },
+  { src: `${M}/bd-box-pads.jpg`, title: "Two pads", text: "" },
+  { src: `${M}/bd-box-charger.jpg`, title: "Charging cable", text: "" },
+];
 const fallbackWay = { disc: "#EFEFEF", ink: "#0E0F12", card: "", sky: "", skyTall: "", studio: "", life: [] as string[] };
 export const wayOf = (label: string) => WAYS[label] ?? fallbackWay;
 
@@ -677,10 +691,12 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
   const gallery: { src: string; product?: boolean }[] = [
     ...(way.studio ? [{ src: way.studio }] : []),
     ...(way.card ? [{ src: way.card, product: true }] : []),
-    { src: `${M}/bd-pdp-folded.jpg` },
     { src: `${M}/bd-pdp-detail.jpg` },
-    ...way.life.slice(0, 3).map((src) => ({ src })),
+    { src: `${M}/bd-pdp-folded.jpg` },
+    ...way.life.slice(0, 2).map((src) => ({ src })),
   ].filter((g, i, all) => all.findIndex((x) => x.src === g.src) === i);
+  const [slide, setSlide] = useState(0);
+  const go = (n: number) => setSlide((n + gallery.length) % gallery.length);
   const sold = variant.available <= 0;
   const monthly = Math.round(variant.priceCents / 4);
   const saving = variant.compareAtCents && variant.compareAtCents > variant.priceCents ? variant.compareAtCents - variant.priceCents : 0;
@@ -701,12 +717,23 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
   return (
     <>
       <div className="bd-wrap bd-pdp">
-        <div className="bd-pdp__gallery">
-          {gallery.map((g, i) => (
-            <figure key={g.src} className={g.product ? "is-product" : undefined}>
-              <img src={g.src} alt={i === 0 ? `${variant.label} board` : ""} loading={i === 0 ? "eager" : "lazy"} />
-            </figure>
-          ))}
+        <div className="bd-car">
+          <div className="bd-car__main">
+            {gallery.map((g, i) => (
+              <figure key={g.src} className={`${g.product ? "is-product" : ""}${i === slide ? " is-on" : ""}`} aria-hidden={i !== slide}>
+                <img src={g.src} alt={i === 0 ? `${variant.label} board` : ""} loading={i === 0 ? "eager" : "lazy"} />
+              </figure>
+            ))}
+            <button type="button" className="bd-car__arr bd-car__arr--l" aria-label="Previous" onClick={() => go(slide - 1)}>‹</button>
+            <button type="button" className="bd-car__arr bd-car__arr--r" aria-label="Next" onClick={() => go(slide + 1)}>›</button>
+          </div>
+          <div className="bd-car__thumbs" role="tablist">
+            {gallery.map((g, i) => (
+              <button type="button" role="tab" key={g.src} aria-selected={i === slide} className={g.product ? "is-product" : undefined} onClick={() => setSlide(i)}>
+                <img src={g.src} alt="" loading="lazy" />
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="bd-pdp__buybox">
@@ -766,6 +793,47 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
       <div className="bd-claim">
         <div className="bd-wrap">
           <h2 className="bd-h1">Same studio feeling. Different location.</h2>
+        </div>
+      </div>
+
+      <div className="bd-sec bd-sec--tight" id="proof">
+        <div className="bd-wrap">
+          <div className="bd-sec__head">
+            <div>
+              <h2 className="bd-h2">What the others don't have.</h2>
+              <p className="bd-lede">A reformer, an instructor and a place to put it away. Any girl can do Pilates at home now.</p>
+            </div>
+          </div>
+          <div className="bd-proof">
+            {PROOF.map((x) => (
+              <figure className="bd-proof__item" key={x.src}>
+                <div className="bd-proof__pic"><img src={x.src} alt={x.title} loading="lazy" /></div>
+                <figcaption>
+                  <h3 className="bd-h3">{x.title}</h3>
+                  <p>{x.text}</p>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bd-sec bd-sec--tight" id="box">
+        <div className="bd-wrap">
+          <div className="bd-sec__head">
+            <div>
+              <h2 className="bd-h2">In the box.</h2>
+              <p className="bd-lede">Everything you need. Nothing to buy after.</p>
+            </div>
+          </div>
+          <div className="bd-boxgrid">
+            {BOX.map((x) => (
+              <figure className="bd-boxgrid__item" key={x.src}>
+                <div className="bd-boxgrid__pic"><img src={x.src} alt={x.title} loading="lazy" /></div>
+                <figcaption><b>{x.title}</b>{x.text ? <span>{x.text}</span> : null}</figcaption>
+              </figure>
+            ))}
+          </div>
         </div>
       </div>
 

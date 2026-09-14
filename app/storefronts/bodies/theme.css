@@ -104,7 +104,7 @@
 /* A full-width photograph. The headline sits on the empty left side. */
 .bd-hero { position: relative; overflow: hidden; background: var(--paper); }
 .bd-hero__pic { position: relative; aspect-ratio: 16 / 7.5; min-height: 440px; }
-.bd-hero__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% center; }
+.bd-hero__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; }
 .bd-hero__panel { position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none; }
 .bd-hero__panel > .bd-wrap { pointer-events: auto; }
 .bd-hero__copy { max-width: 560px; }
@@ -293,12 +293,37 @@
 /* The buybox is white; the offer box inside it is the one lime-bordered
  * element. Everything else the homepage says is repeated underneath. */
 .bd-pdp { display: grid; grid-template-columns: 1.1fr .9fr; gap: clamp(16px, 2.5vw, 36px); align-items: start; padding-block: clamp(14px, 2vw, 28px) var(--gap); }
-.bd-pdp__gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.bd-pdp__gallery figure { margin: 0; aspect-ratio: 1; overflow: hidden; border-radius: var(--r); }
-.bd-pdp__gallery figure:first-child { grid-column: 1 / -1; aspect-ratio: 4 / 3; }
-.bd-pdp__gallery img { width: 100%; height: 100%; object-fit: cover; }
-.bd-pdp__gallery figure.is-product { display: grid; place-items: center; background: var(--paper); border: 1px solid var(--rule); }
-.bd-pdp__gallery figure.is-product img { width: 90%; height: 90%; object-fit: contain; filter: drop-shadow(0 18px 22px rgba(11,12,14,.2)); }
+.bd-car { display: grid; gap: 10px; }
+.bd-car__main { position: relative; aspect-ratio: 1; border-radius: var(--r); overflow: hidden; background: var(--paper); border: 1px solid var(--rule); }
+.bd-car__main figure { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity .25s; }
+.bd-car__main figure.is-on { opacity: 1; }
+.bd-car__main img { width: 100%; height: 100%; object-fit: cover; }
+.bd-car__main figure.is-product img { object-fit: contain; padding: 6%; }
+.bd-car__arr { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: var(--ink); font-size: 24px; line-height: 1; cursor: pointer; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(11,12,14,.14); }
+.bd-car__arr--l { left: 12px; } .bd-car__arr--r { right: 12px; }
+.bd-car__thumbs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.bd-car__thumbs::-webkit-scrollbar { display: none; }
+.bd-car__thumbs button { flex: 0 0 64px; width: 64px; height: 64px; padding: 0; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper); cursor: pointer; }
+.bd-car__thumbs button[aria-selected="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.bd-car__thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.bd-car__thumbs button.is-product img { object-fit: contain; padding: 4px; }
+.bd-proof { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.bd-proof__item { margin: 0; }
+.bd-proof__pic { aspect-ratio: 4 / 4.4; border-radius: var(--r); overflow: hidden; border: 1px solid var(--rule-2); }
+.bd-proof__pic img { width: 100%; height: 100%; object-fit: cover; }
+.bd-proof figcaption { padding-top: 14px; }
+.bd-proof figcaption p { margin: 6px 0 0; color: var(--ink-2); font-size: 15px; max-width: 34ch; }
+@media (max-width: 760px) { .bd-proof { grid-template-columns: 1fr } }
+.bd-boxgrid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 12px; }
+.bd-boxgrid__item { margin: 0; }
+.bd-boxgrid__pic { aspect-ratio: 1; border-radius: var(--r); overflow: hidden; border: 1px solid var(--rule); background: var(--paper); }
+.bd-boxgrid__item:first-child .bd-boxgrid__pic { aspect-ratio: auto; height: 100%; }
+.bd-boxgrid__item:first-child { display: grid; grid-template-rows: 1fr auto; }
+.bd-boxgrid__pic img { width: 100%; height: 100%; object-fit: cover; }
+.bd-boxgrid figcaption { padding-top: 10px; display: grid; }
+.bd-boxgrid figcaption b { font-family: var(--sans); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.bd-boxgrid figcaption span { color: var(--ink-2); font-size: 13px; }
+@media (max-width: 860px) { .bd-boxgrid { grid-template-columns: 1fr 1fr } .bd-boxgrid__item:first-child { grid-column: 1 / -1 } .bd-boxgrid__item:first-child .bd-boxgrid__pic { aspect-ratio: 16 / 10; height: auto } }
 .bd-pdp__buybox { position: sticky; top: 72px; background: var(--paper); border-radius: var(--r); padding: clamp(20px, 2.6vw, 34px) 0 0; }
 .bd-offer { border: 1.5px solid var(--lime); border-radius: var(--r); background: rgba(198,255,61,.12); padding: 16px; margin-top: 22px; }
 .bd-offer .bd-pdp__price { margin-top: 0; }
