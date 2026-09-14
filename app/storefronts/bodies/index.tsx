@@ -115,15 +115,18 @@ const BOX = [
   { src: `${M}/bd-box-pads.jpg`, title: "Two pads", text: "" },
   { src: `${M}/bd-box-charger.jpg`, title: "Charging cable", text: "" },
 ];
-/** The visual FAQ: a photo tile per question, flips to the answer. Q&As from team-copy §6. */
+/** The FAQ: six Q&As from team-copy §6, one photo beside them. */
 const ASK = [
-  { q: "Do I need an app or a subscription?", a: "No. The classes are on the board's screen. Whether new classes ship as free updates is being confirmed.", src: R.screen },
-  { q: "I've never done Pilates. Will I be lost?", a: "No. There's a beginner path and the instructor cues every move. Start with First Footwork.", src: `${M}/bd-d-matcha-stretch.png` },
-  { q: "How big is it and how heavy?", a: "Built for one person to carry and store under a bed. Exact numbers are being confirmed.", src: `${M}/bd-b-matcha-carry.png` },
-  { q: "Does it need Wi-Fi?", a: "Being confirmed. The plan is classes stored on the board, with Wi-Fi only for updates.", src: R.gScreen },
-  { q: "Is it a real reformer?", a: "It's a reformer-style board: cables, straps and pads for the same movements, in a fraction of the space.", src: R.macro },
-  { q: "What if I don't like it?", a: "Returns window and process are being confirmed and will be published here before launch.", src: `${M}/bd-box-board.jpg` },
+  { q: "Do I need an app or a subscription?", a: "No. The classes are on the board's screen. Whether new classes ship as free updates is being confirmed." },
+  { q: "I've never done Pilates. Will I be lost?", a: "No. There's a beginner path and the instructor cues every move. Start with First Footwork." },
+  { q: "How big is it and how heavy?", a: "Built for one person to carry and store under a bed. Exact numbers are being confirmed." },
+  { q: "Does it need Wi-Fi?", a: "Being confirmed. The plan is classes stored on the board, with Wi-Fi only for updates." },
+  { q: "Is it a real reformer?", a: "It's a reformer-style board: cables, straps and pads for the same movements, in a fraction of the space." },
+  { q: "What if I don't like it?", a: "Returns window and process are being confirmed and will be published here before launch." },
 ];
+const BA = { heading: "One month on the board.", lede: "Shot on their phones, sent to us, unedited.", note: "Real customers, first name and weeks between photos exactly as they gave them. Same spot, same light. Nothing edited." };
+const SAY = { heading: "What they say.", lede: "Real customers, real apartments, unedited." };
+const CLIP = { eyebrow: "On the board", heading: "See it in a real room." };
 /** bodies vs studio vs a mat — team-copy §7. Facts only. */
 const COMPARE = {
   cols: ["Studio", "A mat"],
@@ -147,13 +150,13 @@ const ACCORDIONS = [
 /* --------------------------------------------------------------- orders */
 /*
  * Section keys: a page.sections type, or one of the code-driven sections
- * (screen, made, proof, box, before_after). "reviews" renders only when
- * page.reviews has items; "before_after" is a slot that renders nothing until
- * real customer pairs exist (see BeforeAfter).
+ * (screen, made, proof, box). "reviews" renders only when page.reviews has
+ * items; "before_after" only when a pair has both photos; "video_clips" only
+ * when the first clip has a video. Nothing is ever shown without real data.
  */
-const HOME_ORDER = ["buy_box", "social_proof_images", "reviews", "before_after", "screen", "made", "proof", "video_faq", "three_steps", "comparison_table", "closing_cta"];
-const PDP_ORDER = ["social_proof_images", "reviews", "before_after", "screen", "proof", "made", "box", "video_faq", "three_steps", "comparison_table", "specifications", "closing_cta"];
-const CODE_SECTIONS = new Set(["screen", "made", "proof", "box", "before_after"]);
+const HOME_ORDER = ["buy_box", "before_after", "reviews", "video_clips", "social_proof_images", "screen", "made", "proof", "video_faq", "three_steps", "comparison_table", "closing_cta"];
+const PDP_ORDER = ["before_after", "reviews", "video_clips", "social_proof_images", "screen", "proof", "made", "box", "video_faq", "three_steps", "comparison_table", "specifications", "closing_cta"];
+const CODE_SECTIONS = new Set(["screen", "made", "proof", "box"]);
 
 /* --------------------------------------------------------------- chrome */
 
@@ -420,18 +423,6 @@ function renderCode(key: string, page: LoadedProductPage, storeParam: string) {
         </div>
       );
 
-    /* ------------------------------------------------------- before / after: real pairs only */
-    case "before_after":
-      /*
-       * SLOT — "Real girls. Real rooms. Real results." (team-copy §5).
-       * Renders nothing until at least three customer photo pairs exist with
-       * written permission (first name, city, weeks between photos). No stock,
-       * no renders, no mock-ups in this slot. When the pairs land, add a
-       * `beforeAfter` list to the page loader and render two 4:5 phone photos
-       * side by side per pair, DAY 1 / DAY N captions, name · city under.
-       */
-      return null;
-
     default:
       return null;
   }
@@ -519,75 +510,149 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       );
     }
 
-    /* ------------------------------------------------------- reviews: real ones only */
-    case "reviews": {
-      // SLOT — renders only when published reviews exist. Never seeded.
-      if (page.reviews.length === 0) return null;
-      const withPhoto = page.reviews.filter((r) => r.imageUrl);
-      const textOnly = page.reviews.filter((r) => !r.imageUrl);
+    /* ------------------------------------------------------- before / after: real pairs only */
+    case "before_after": {
+      // Renders only when a pair carries both photos. No stock, no renders,
+      // no mock-ups in this slot (team-copy §5).
+      const pairs = blocks.filter((b) => allowed(val(b.values, "before")) && allowed(val(b.values, "after")));
+      if (pairs.length === 0) return null;
       return (
-        <div className="bd-sec" id="reviews">
+        <div className="bd-sec" id="results">
           <div className="bd-wrap">
             <div className="bd-sec__head">
               <div>
-                <h2 className="bd-h2">{val(v, "heading") || "They bought it. They use it."}</h2>
-                <p className="bd-lede">Real customers, real apartments, unedited.</p>
+                <h2 className="bd-h2">{val(v, "heading") || BA.heading}</h2>
+                <p className="bd-lede">{val(v, "subheading") || BA.lede}</p>
               </div>
             </div>
-            {withPhoto.length ? (
-              <div className="bd-ugc">
-                {withPhoto.map((r) => (
-                  <article className="bd-ugc__card" key={r.id}>
-                    <div className="bd-ugc__pic"><img src={r.imageUrl!} alt="" loading="lazy" /></div>
-                    <div className="bd-ugc__stars" aria-label={`${r.rating} stars`}>{"★".repeat(Math.max(1, Math.min(5, r.rating)))}</div>
-                    {r.title ? <h3 className="bd-h3">{r.title}</h3> : null}
-                    <p>{r.body}</p>
-                    <cite>{r.name}{r.verified ? " · Verified" : ""}</cite>
+          </div>
+          <div className="bd-ba">
+            <div className="bd-wrap bd-ba__row">
+              {pairs.map((b) => {
+                const weeks = val(b.values, "weeks").replace(/\D+/g, "");
+                return (
+                  <article className="bd-ba__card" key={b.id}>
+                    <div className="bd-ba__pics">
+                      <figure className="bd-ba__pic">
+                        <img src={val(b.values, "before")} alt={`${val(b.values, "name")} before`} loading="lazy" />
+                        <span className="bd-ba__tag">Before</span>
+                        <span className="bd-ba__week">Week 0</span>
+                      </figure>
+                      <figure className="bd-ba__pic">
+                        <img src={val(b.values, "after")} alt={`${val(b.values, "name")} after`} loading="lazy" />
+                        <span className="bd-ba__tag">After</span>
+                        {weeks ? <span className="bd-ba__week">Week {weeks}</span> : null}
+                      </figure>
+                    </div>
+                    <div className="bd-ba__meta">
+                      {val(b.values, "name") ? <b>{val(b.values, "name")}</b> : null}
+                      {val(b.values, "note") ? <p>{val(b.values, "note")}</p> : null}
+                    </div>
                   </article>
-                ))}
-              </div>
-            ) : null}
-            {textOnly.length ? (
-              <ul className="bd-ugc__list">
-                {textOnly.map((r) => (
-                  <li key={r.id}>
-                    <span className="bd-ugc__stars" aria-label={`${r.rating} stars`}>{"★".repeat(Math.max(1, Math.min(5, r.rating)))}</span>
-                    {r.title ? <b>{r.title}</b> : null}
-                    <p>{r.body}</p>
-                    <cite>{r.name}{r.verified ? " · Verified" : ""}</cite>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+                );
+              })}
+            </div>
+          </div>
+          <div className="bd-wrap">
+            <p className="bd-foot-note">{val(v, "footnote") || BA.note}</p>
           </div>
         </div>
       );
     }
 
-    /* ------------------------------------------------------- visual FAQ */
+    /* ------------------------------------------------------- reviews: real ones only */
+    case "reviews": {
+      // Renders only when published reviews exist. Never seeded.
+      if (page.reviews.length === 0) return null;
+      const items = page.reviews.map((r) => ({ ...r, rating: Math.max(1, Math.min(5, r.rating)) }));
+      const avg = items.reduce((n, r) => n + r.rating, 0) / items.length;
+      // Printed twice and slid by half its width, like the announcement bar.
+      const cards = items.map((r) => (r.imageUrl ? <StoryCard key={r.id} r={r} /> : <NoteCard key={r.id} r={r} />));
+      return (
+        <div className="bd-sec" id="reviews">
+          <div className="bd-wrap">
+            <div className="bd-sec__head">
+              <div>
+                <h2 className="bd-h2">{val(v, "heading") || SAY.heading}</h2>
+                <p className="bd-lede">{val(v, "subheading") || SAY.lede}</p>
+                <p className="bd-say__sum">
+                  <Stars n={Math.round(avg)} />
+                  <b>{avg.toFixed(1)}</b> · {items.length} {items.length === 1 ? "review" : "reviews"}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bd-say">
+            <div className="bd-say__track">
+              <div className="bd-say__run">{cards}</div>
+              <div className="bd-say__run" aria-hidden="true">{cards}</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ------------------------------------------------------- one clip, the bullets, the button */
+    case "video_clips": {
+      // Renders only when the first clip has a video. The bullets come from
+      // the editor, one per line.
+      const first = blocks[0];
+      const src = first ? val(first.values, "video") : "";
+      if (!src) return null;
+      const bullets = val(v, "bullets").split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+      const embed = embedUrl(src);
+      return (
+        <div className="bd-sec" id="clip">
+          <div className="bd-wrap bd-clip">
+            <div className="bd-clip__frame">
+              {embed ? (
+                <iframe src={embed} title={val(first.values, "caption") || "Video"} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+              ) : (
+                <video src={src} controls playsInline preload="metadata" />
+              )}
+            </div>
+            <div className="bd-clip__copy">
+              <p className="bd-eyebrow">{CLIP.eyebrow}</p>
+              <h2 className="bd-h2">{val(v, "heading") || CLIP.heading}</h2>
+              {val(v, "subheading") ? <p className="bd-lede">{val(v, "subheading")}</p> : null}
+              {bullets.length ? (
+                <ul className="bd-pdp__get bd-clip__list">
+                  {bullets.map((b) => <li key={b}>{b}</li>)}
+                </ul>
+              ) : null}
+              <a className="bd-btn bd-btn--big bd-clip__btn" href={lead ? `/products/${slug(lead.label)}${storeParam}` : `${href("/")}#shop`}>
+                Shop the board{lead ? ` · ${installments(lead.priceCents, cur)}` : ""}
+              </a>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ------------------------------------------------------- FAQ: one photo, one list */
     case "video_faq": {
-      // Photo tiles carry the customer-voice questions (team-copy §6); the
-      // editor's plain Q&As (box, fold, colourways, payment) sit under it.
+      // The six customer-voice questions (team-copy §6) first, the first one
+      // open; the editor's own Q&As follow in the same list.
       const items = blocks.filter((b) => has(b.values, "question", "answer"));
+      const all = [
+        ...ASK.map((x) => ({ key: x.q, q: x.q, a: x.a })),
+        ...items.map((b) => ({ key: b.id, q: val(b.values, "question"), a: val(b.values, "answer") })),
+      ];
       return (
         <div className="bd-sec" id="faq">
-          <div className="bd-wrap">
-            <h2 className="bd-h2 bd-ask__h">{ASK_H}</h2>
-            <div className="bd-ask">
-              {ASK.map((x) => <AskTile key={x.q} {...x} />)}
-            </div>
-            {items.length ? (
-              <div className="bd-faq">
-                <div className="bd-faq__list">
-                  {items.map((b) => (
-                    <details className="bd-faq__item" key={b.id}>
-                      <summary>{val(b.values, "question")}</summary>
-                      <p>{val(b.values, "answer")}</p>
-                    </details>
-                  ))}
-                </div>
+          <div className="bd-wrap bd-ask">
+            <div className="bd-ask__pic"><img src={R.screen} alt="" loading="lazy" /></div>
+            <div className="bd-ask__list">
+              <h2 className="bd-h2 bd-ask__h">{ASK_H}</h2>
+              <div className="bd-faq__list">
+                {all.map((x, i) => (
+                  <details className="bd-faq__item" key={x.key} open={i === 0}>
+                    <summary>{x.q}</summary>
+                    <p>{x.a}</p>
+                  </details>
+                ))}
               </div>
-            ) : null}
+            </div>
           </div>
         </div>
       );
@@ -703,25 +768,52 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
   }
 }
 
-/** A FAQ tile: the question on the photo, the answer on the back. */
-function AskTile({ q, a, src }: { q: string; a: string; src: string }) {
-  const [open, setOpen] = useState(false);
+/* ------------------------------------------------------------- reviews */
+
+type ReviewLike = { id: string; name: string; rating: number; title: string | null; body: string; imageUrl: string | null; verified: boolean };
+
+function Stars({ n }: { n: number }) {
+  return <span className="bd-stars" aria-label={`${n} out of 5`}>{"★".repeat(n)}<span aria-hidden="true">{"★".repeat(5 - n)}</span></span>;
+}
+
+/** A review with a photo: the picture as a 9:16 story, a frosted caption bar. */
+function StoryCard({ r }: { r: ReviewLike }) {
+  const line = (r.title || r.body).split(/\r?\n/)[0];
   return (
-    <div className={`bd-ask__tile${open ? " is-open" : ""}`}>
-      <div className="bd-ask__card">
-        <button type="button" className="bd-ask__front" aria-expanded={open} onClick={() => setOpen(true)} tabIndex={open ? -1 : 0}>
-          <img src={src} alt="" loading="lazy" />
-          <span className="bd-ask__q">{q}</span>
-          <span className="bd-ask__plus" aria-hidden="true">+</span>
-        </button>
-        <div className="bd-ask__back" aria-hidden={!open}>
-          <span className="bd-cap">{q}</span>
-          <p>{a}</p>
-          <button type="button" className="bd-ask__x" onClick={() => setOpen(false)} aria-label="Close" tabIndex={open ? 0 : -1}>×</button>
-        </div>
+    <article className="bd-story">
+      <img src={r.imageUrl!} alt="" loading="lazy" />
+      <div className="bd-story__bar">
+        <b>{r.name}{r.verified ? <span className="bd-story__ok" title="Verified">✓</span> : null}</b>
+        <Stars n={r.rating} />
+        {line ? <p>{line}</p> : null}
       </div>
-    </div>
+    </article>
   );
+}
+
+/** A text-only review, as a notification from the bodies app. */
+function NoteCard({ r }: { r: ReviewLike }) {
+  return (
+    <article className="bd-note">
+      <div className="bd-note__head">
+        <span className="bd-note__av" aria-hidden="true">{(r.name.trim()[0] || "b").toUpperCase()}</span>
+        <span className="bd-note__app">bodies</span>
+        <span className="bd-note__when">now</span>
+      </div>
+      <b className="bd-note__name">{r.name}{r.verified ? " · Verified" : ""}</b>
+      <p>{r.title ? `${r.title} — ` : ""}{r.body}</p>
+      <Stars n={r.rating} />
+    </article>
+  );
+}
+
+/** A YouTube or Vimeo link becomes a privacy-friendly embed; anything else is a file. */
+function embedUrl(src: string): string | null {
+  const yt = src.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{6,})/);
+  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}?rel=0&modestbranding=1`;
+  const vm = src.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?dnt=1`;
+  return null;
 }
 
 function WayCard({ variant, currency, storeParam }: { variant: VariantRow; currency: string; storeParam: string }) {

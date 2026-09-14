@@ -98,7 +98,11 @@ export const SECTIONS: SectionDef[] = [
     type: "video_clips",
     label: "Video clips",
     hint: "Short clips of the product in use",
-    fields: [heading, subheading],
+    fields: [
+      heading,
+      subheading,
+      { name: "bullets", label: "Bullet points", kind: "textarea", help: "One per line" },
+    ],
     blocks: {
       label: "Clip",
       addLabel: "Add clip",
@@ -255,6 +259,23 @@ export const SECTIONS: SectionDef[] = [
           kind: "text",
           help: "Leave blank if you haven't measured it. It shows as 'Spec pending' on the live page — never guess a number.",
         },
+      ],
+    },
+  },
+  {
+    type: "before_after",
+    label: "Before & after",
+    hint: "Real customer pairs only",
+    fields: [heading, subheading, { name: "footnote", label: "Footnote", kind: "text" }],
+    blocks: {
+      label: "Pair",
+      addLabel: "Add pair",
+      fields: [
+        { name: "before", label: "Before image", kind: "image" },
+        { name: "after", label: "After image", kind: "image" },
+        { name: "name", label: "Name", kind: "text" },
+        { name: "weeks", label: "Weeks", kind: "text", help: "Weeks between the two photos, as the customer gave it" },
+        { name: "note", label: "Note", kind: "text" },
       ],
     },
   },
