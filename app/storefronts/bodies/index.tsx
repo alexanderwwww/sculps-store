@@ -606,32 +606,33 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
               </div>
             </div>
           </div>
-          <div className="bd-ba">
-            <div className="bd-wrap bd-ba__row">
-              {pairs.map((b) => {
-                const weeks = val(b.values, "weeks").replace(/\D+/g, "");
-                return (
-                  <article className="bd-ba__card" key={b.id}>
-                    <div className="bd-ba__pics">
-                      <figure className="bd-ba__pic">
-                        <img src={val(b.values, "before")} alt={`${val(b.values, "name")} before`} loading="lazy" />
-                        <span className="bd-ba__tag">Before</span>
-                        <span className="bd-ba__week">Week 0</span>
-                      </figure>
-                      <figure className="bd-ba__pic">
-                        <img src={val(b.values, "after")} alt={`${val(b.values, "name")} after`} loading="lazy" />
-                        <span className="bd-ba__tag">After</span>
-                        {weeks ? <span className="bd-ba__week">Week {weeks}</span> : null}
-                      </figure>
+          <div className="bd-wall" aria-label="Before and after">
+            {[0, 1].map((row) => {
+              // Two dense rows sliding opposite ways; short lists repeat to fill.
+              const fill = pairs.length >= 6 ? pairs : Array.from({ length: Math.ceil(6 / pairs.length) }, () => pairs).flat();
+              const run = row === 0 ? fill : [...fill.slice(Math.floor(fill.length / 2)), ...fill.slice(0, Math.floor(fill.length / 2))];
+              return (
+                <div className={`bd-wall__row${row === 1 ? " bd-wall__row--rev" : ""}`} key={row}>
+                  {[0, 1].map((dup) => (
+                    <div className="bd-wall__run" key={dup} aria-hidden={dup === 1}>
+                      {run.map((bk, i) => {
+                        const weeks = val(bk.values, "weeks").replace(/\D+/g, "");
+                        return (
+                          <figure className="bd-wall__pair" key={`${bk.id}-${i}`}>
+                            <img src={val(bk.values, "before")} alt={dup ? "" : `${val(bk.values, "name")} before`} loading="lazy" />
+                            <img src={val(bk.values, "after")} alt={dup ? "" : `${val(bk.values, "name")} after`} loading="lazy" />
+                            <figcaption>
+                              <span>0</span><i>→</i><span>{weeks ? `${weeks} wk` : "after"}</span>
+                              {val(bk.values, "name") ? <b>{val(bk.values, "name")}</b> : null}
+                            </figcaption>
+                          </figure>
+                        );
+                      })}
                     </div>
-                    <div className="bd-ba__meta">
-                      {val(b.values, "name") ? <b>{val(b.values, "name")}</b> : null}
-                      {val(b.values, "note") ? <p>{val(b.values, "note")}</p> : null}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
           <div className="bd-wrap">
             <p className="bd-foot-note">{val(v, "footnote") || BA.note}</p>

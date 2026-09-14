@@ -16,6 +16,9 @@ import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { pixelScript } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
+import { liveReloadScript } from "~/lib/live-reload";
+import { currentUser } from "~/lib/auth.server";
+import { withSamples } from "~/storefronts/bodies/samples.server";
 import {
   deviceFromRequest,
   geoFromContext,
@@ -53,8 +56,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     return new Response(null, { status: 301, headers: { Location: `/${url.search}` } });
   }
 
-  const page = await loadProductPage(context.db, store);
+  let page = await loadProductPage(context.db, store);
   if (!page) throw new Response("Not found", { status: 404 });
+  // Signed-in admins get a live-reloading page, and ?samples=1 fills the
+  // data-only sections with clearly stamped placeholders.
+  const admin = await currentUser(context.db, request).catch(() => null);
+  if (admin && url.searchParams.get("samples") === "1") page = withSamples(page);
+  const liveReload = admin ? liveReloadScript() : null;
 
   const variant = page.variants.find((v) => slug(v.label) === params.handle);
   if (!variant) throw new Response("Not found", { status: 404 });
@@ -96,13 +104,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     .catch(() => null);
 
   return withHeaders(
-    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId },
+    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload },
     { headers },
   );
 }
 
 export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
-  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId } = loaderData;
+  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload } = loaderData;
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -115,6 +123,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
       {favicon ? <link rel="icon" href={favicon} /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
+      {liveReload ? <script dangerouslySetInnerHTML={{ __html: liveReload }} /> : null}
       <BodiesProduct
         page={page}
         variant={variant}

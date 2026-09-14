@@ -138,7 +138,7 @@ export function AdminShell({
         /* offline; try again next minute */
       }
     };
-    const timer = window.setInterval(check, 60_000);
+    const timer = window.setInterval(check, 10_000);
     document.addEventListener("visibilitychange", reloadIfIdle);
     document.addEventListener("focusout", reloadIfIdle);
     return () => {
