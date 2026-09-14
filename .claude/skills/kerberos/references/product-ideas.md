@@ -47,7 +47,26 @@ the middle of it. Sold together, works without it.
 - Warm underglow so you can find it in the dark.
 - Silent: fanless or near-silent, because it runs 30cm from your head.
 
-**Status.** Idea only. No store, no supplier, no renders yet. Next step when
+**Research done 2026-09-14** by five specialists (hardware, sourcing, industrial
+design, CAD, brand). Full reports: `ceiling-buddy-research.md`. Four of the
+original assumptions were disproved:
+
+1. It already exists. Magcubic HY300 Pro, $35-56, rotates 180 degrees for
+   ceiling projection, Amazon Best Seller, 10k+ units a month.
+2. Bluetooth cannot carry video. Wireless mirroring needs AirPlay and Apple
+   does not license video AirPlay to small hardware firms. The answer is a
+   wired USB-C/Lightning to HDMI cable: under 20ms and it charges the phone.
+3. Unattended auto-scroll is impossible. Clips run 7 seconds to 10 minutes and
+   the phone reports nothing back, so a timer cuts punchlines. A one-press
+   BLE clicker is the honest version and it works today.
+4. Snacks and projector cannot be one object: the beam leaves the top face,
+   which is where a plate would sit.
+
+**Route chosen if revived:** rebrand an existing rotating unit, bundle a tray
+and a clicker, sell the ritual not the optics. ~$52-68 landed, no tooling,
+MOQ 20-100, 30-45 days. Custom tooling is $105k and lands H2 2027.
+
+**Status.** Researched, parked. No store, no supplier, no renders yet. Next step when
 revived: one hero render, check AliExpress/Alibaba for a base unit with
 ceiling mount and a snack tray, decide whether auto-scroll is a real BLE
 remote or a phone-side app.
