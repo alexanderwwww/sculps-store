@@ -1,39 +1,45 @@
 /**
  * bodies — THE SCREEN.
  *
- * The board's screen, alone and big, with the class UI running inside it in
- * plain HTML and CSS. Four moments (library, class, in class, levels) cycle on
- * a timer with a lime progress line; the tabs above the frame jump between
- * them; hover or focus pauses; reduced-motion switches the timer off and
- * leaves the tabs.
+ * The class UI running inside the board's screen, in plain HTML and CSS. Four
+ * moments (library, class, in class, levels) cycle on a timer with a lime
+ * progress line; the tabs above jump between them; hover or focus pauses;
+ * reduced-motion switches the timer off and leaves the tabs.
+ *
+ * The UI is drawn twice from one state: once inside the photographed screen
+ * of the board (`.bd-app__onscreen`, a 3D-transformed box calibrated with
+ * --l/--t/--w/--h), and once big in a bezel frame beside/below it, which is
+ * the accessible copy (tabs point at it).
  *
  * Nothing in here is invented: classes, categories, levels and lengths are the
- * programme design from team-copy.md, the categories come from workouts.md,
- * and the only photograph is an existing phone photo, captioned honestly. No
- * instructor names until real ones exist.
+ * programme design from team-copy.md, the categories come from workouts.md.
+ * There are no photographs in the app — the website's pictures are not the
+ * app's pictures. Cards are designed tiles; the instructor tile is an honest
+ * "coming with launch" frame. No instructor names until real ones exist.
  */
 import { useEffect, useRef, useState } from "react";
 
-const PHOTO = "/media/bd-a-lilac-top.png";
-const PHOTO_ALT = "A customer on the bodies board, lilac colourway, shot on a phone";
-const INSTRUCTOR_CAPTION = "Real instructor. Real cues. Not a cartoon, not an AI voice.";
+/** The board photographed with its screen up, angled. 4:5. */
+const BOARD_PHOTO = "/media/bd-g-screen.jpg";
+const INSTRUCTOR_CAPTION = "Instructor video · coming with launch";
 
 /* The programme design, one array. Edit here, everything follows. */
-interface ClassRow { name: string; category: string; level: string; minutes: number; photo: string; }
+type Glyph = "pilates" | "glutes" | "arms" | "core" | "full" | "recovery";
+interface ClassRow { name: string; category: string; level: string; minutes: number; glyph: Glyph; }
 const CLASSES: ClassRow[] = [
-  { name: "First Footwork", category: "Pilates", level: "Beginner", minutes: 20, photo: "/media/bd-a-lilac-top.png" },
-  { name: "Bridge & Burn", category: "Glutes", level: "All levels", minutes: 15, photo: "/media/bd-c-matcha-black.png" },
-  { name: "Long Arms", category: "Arms", level: "Beginner", minutes: 10, photo: "/media/bd-c-lilac-core.png" },
-  { name: "Slow Core", category: "Core", level: "Intermediate", minutes: 20, photo: "/media/bd-d-matcha-stretch.png" },
-  { name: "Full Body Flow", category: "Full body", level: "Intermediate", minutes: 30, photo: "/media/bd-c-swan-latina.png" },
-  { name: "Sunday Stretch", category: "Recovery", level: "All levels", minutes: 10, photo: "/media/bd-d-bare-rest.png" },
+  { name: "First Footwork", category: "Pilates", level: "Beginner", minutes: 20, glyph: "pilates" },
+  { name: "Bridge & Burn", category: "Glutes", level: "All levels", minutes: 15, glyph: "glutes" },
+  { name: "Long Arms", category: "Arms", level: "Beginner", minutes: 10, glyph: "arms" },
+  { name: "Slow Core", category: "Core", level: "Intermediate", minutes: 20, glyph: "core" },
+  { name: "Full Body Flow", category: "Full body", level: "Intermediate", minutes: 30, glyph: "full" },
+  { name: "Sunday Stretch", category: "Recovery", level: "All levels", minutes: 10, glyph: "recovery" },
 ];
-/* Next-move slots in the in-class rail: label, length, thumb (reuses library photos). */
-const UP_NEXT = [
-  { name: "Toe press", time: "1:00", photo: CLASSES[1].photo },
-  { name: "Arches", time: "1:00", photo: CLASSES[2].photo },
-  { name: "Single leg", time: "2:00", photo: CLASSES[3].photo },
-  { name: "Bridging", time: "2:00", photo: CLASSES[4].photo },
+/* Next-move slots in the in-class rail: label, length, glyph. */
+const UP_NEXT: { name: string; time: string; glyph: Glyph }[] = [
+  { name: "Toe press", time: "1:00", glyph: "pilates" },
+  { name: "Arches", time: "1:00", glyph: "pilates" },
+  { name: "Single leg", time: "2:00", glyph: "glutes" },
+  { name: "Bridging", time: "2:00", glyph: "glutes" },
 ];
 const FEATURED = CLASSES[0];
 
@@ -59,16 +65,42 @@ const MOMENTS = [
 
 const CYCLE_MS = 4000;
 
+/* The UI at phone density: used both under a viewport query (the big frame on
+ * a phone) and a container query (the small on-screen copy on any device). */
+const DENSE = `
+  .bd-scr__panel { font-size: 12px; }
+  .bd-scr__nav { padding: 10px 6px; }
+  .bd-scr__nav a { padding: 4px 6px; font-size: 11px; }
+  .bd-scr__nav a:nth-child(n+6) { display: none; }
+  .bd-scr__logo { font-size: 13px; margin-bottom: 8px; }
+  .bd-scr__grid { grid-template-columns: repeat(2, 1fr); gap: 5px; }
+  .bd-scr__grid > :nth-child(n+5) { display: none; }
+  .bd-scr__card { padding: 7px; gap: 3px; }
+  .bd-scr__card h4 { font-size: 11px; }
+  .bd-scr__card .bd-scr__chip { display: none; }
+  .bd-scr__cont { display: none; }
+  .bd-scr__apptabs { font-size: 11px; }
+  .bd-scr__cls { grid-template-columns: 42% 1fr; }
+  .bd-scr__detail > p { display: none; }
+  .bd-scr__need span { font-size: 11px; padding: 4px 8px; }
+  .bd-scr__pill { min-height: 28px; padding: 0 12px; }
+  .bd-scr__tile figcaption { font-size: 11px; padding: 8px; }
+  .bd-scr__rail { display: none; }
+  .bd-scr__row { gap: 10px; padding: 8px 10px; }
+  .bd-scr__row__body p { white-space: normal; overflow: visible; }
+  .bd-scr__lvl__foot .bd-scr__caps { font-size: 11px; }
+`;
+
 const CSS = `
 .bd-scr { background: #fff; color: var(--ink, #0B0C0E); padding-block: clamp(56px, 8vw, 104px); overflow: hidden; }
 .bd-scr *, .bd-scr *::before, .bd-scr *::after { box-sizing: border-box; }
-.bd-scr__wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); }
+.bd-scr__wrap { width: 100%; max-width: 1320px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 56px); }
 .bd-scr__head { text-align: center; margin-bottom: clamp(24px, 4vw, 40px); }
 .bd-scr__h2 { font-family: var(--sans, Archivo, sans-serif); font-weight: 800; font-stretch: 118%; text-transform: uppercase; margin: 0; font-size: clamp(26px, 3.4vw, 42px); line-height: 1; letter-spacing: -.015em; text-wrap: balance; }
 .bd-scr__sub { margin: 12px auto 0; color: var(--ink-2, #4E525B); font-family: var(--body, "Instrument Sans", sans-serif); font-size: 16px; line-height: 1.5; max-width: 60ch; }
 
 /* tabs above the frame */
-.bd-scr__tabs { display: flex; gap: 6px; justify-content: flex-start; margin: 0 auto 14px; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.bd-scr__tabs { display: flex; gap: 6px; justify-content: flex-start; margin: 0 auto 18px; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .bd-scr__tabs::-webkit-scrollbar { display: none; }
 @media (min-width: 640px) { .bd-scr__tabs { justify-content: center; } }
 .bd-scr__tab { flex: 0 0 auto; appearance: none; border: 1.5px solid rgba(11,12,14,.14); background: #fff; color: var(--ink, #0B0C0E); border-radius: 999px; min-height: 36px; padding: 0 16px; font-family: var(--sans, Archivo, sans-serif); font-size: 11px; font-weight: 700; font-stretch: 110%; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: background .16s, border-color .16s; }
@@ -76,11 +108,27 @@ const CSS = `
 .bd-scr__tab[aria-selected="true"] { background: var(--ink, #0B0C0E); color: #fff; border-color: var(--ink, #0B0C0E); }
 .bd-scr__tab:focus-visible { outline: 3px solid var(--ink, #0B0C0E); outline-offset: 2px; }
 
+/* the app in the product: photo left, frame right; stacked on a phone */
+.bd-app { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(20px, 3vw, 44px); align-items: center; }
+.bd-app__board { position: relative; margin: 0; aspect-ratio: 4 / 5; border-radius: 14px; overflow: hidden; border: 1px solid rgba(11,12,14,.06); background: #fff; }
+.bd-app__board > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The UI, sat on the photographed screen. Calibrate with the four custom
+ * properties (percentages of the photo) and the rotation; keep the aspect of
+ * the box close to the real screen's. */
+.bd-app__onscreen { --l: 24%; --t: 8%; --w: 54%; --h: 30%; position: absolute; left: var(--l); top: var(--t); width: var(--w); height: var(--h); transform-origin: 50% 50%; transform: perspective(1400px) rotateY(-14deg) rotateX(4deg) skewY(2deg); border-radius: 2.5% / 4%; overflow: hidden; background: #121316; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 18px 40px rgba(11,12,14,.35); }
+.bd-app__onscreen .bd-scr__panel { position: absolute; inset: 0; border-radius: 0; }
+.bd-app__onscreen::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 70%, rgba(255,255,255,.06) 100%); }
+.bd-app__cap { position: absolute; left: 14px; bottom: 14px; font-family: var(--sans, Archivo, sans-serif); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2, #4E525B); background: rgba(255,255,255,.88); padding: 6px 10px; border-radius: 999px; }
+@media (max-width: 900px) {
+  .bd-app { grid-template-columns: 1fr; }
+  .bd-app__board { max-width: 440px; margin: 0 auto; width: 100%; }
+}
+
 /* the frame */
 .bd-scr__stage { position: relative; }
 .bd-scr__stage::before { content: ""; position: absolute; left: 50%; top: 50%; width: 120%; height: 120%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(217,190,232,.7) 0%, rgba(217,190,232,0) 70%); opacity: .5; pointer-events: none; }
 .bd-scr__frame { position: relative; aspect-ratio: 16 / 10; width: 100%; border-radius: 18px; background: #0B0C0E; padding: clamp(6px, 1.1vw, 12px); box-shadow: 0 30px 80px rgba(11,12,14,.22), 0 2px 0 rgba(255,255,255,.06) inset; }
-.bd-scr__panel { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: clamp(8px, 1vw, 10px); background: #121316; color: #fff; font-family: var(--body, "Instrument Sans", sans-serif); font-size: 13px; line-height: 1.35; -webkit-font-smoothing: antialiased; }
+.bd-scr__panel { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: clamp(8px, 1vw, 10px); background: #121316; color: #fff; font-family: var(--body, "Instrument Sans", sans-serif); font-size: 13px; line-height: 1.35; -webkit-font-smoothing: antialiased; container-type: inline-size; }
 .bd-scr__progress { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.08); z-index: 3; }
 .bd-scr__progress i { display: block; height: 100%; width: 100%; background: var(--lime, #C6FF3D); transform-origin: left; transform: scaleX(0); }
 .bd-scr__progress i.is-running { animation: bd-scr-fill ${CYCLE_MS}ms linear forwards; }
@@ -107,6 +155,12 @@ const CSS = `
 .bd-scr__meter { height: 4px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
 .bd-scr__meter i { display: block; height: 100%; background: var(--lime, #C6FF3D); border-radius: 999px; }
 .bd-scr__panel svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+/* the designed dark tile: #1A1B20 with a lilac glow in one corner (UI, not the site) */
+.bd-scr__dark { position: relative; background: #1A1B20; border: 1px solid rgba(255,255,255,.06); overflow: hidden; isolation: isolate; }
+.bd-scr__dark::before { content: ""; position: absolute; width: 80%; aspect-ratio: 1; right: -30%; top: -35%; border-radius: 50%; background: radial-gradient(circle, rgba(183,139,224,.55) 0%, rgba(183,139,224,.18) 40%, rgba(183,139,224,0) 70%); pointer-events: none; z-index: 0; }
+.bd-scr__dark > * { position: relative; z-index: 1; }
+.bd-scr__glyph { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,.06); color: #D9BEE8; }
+.bd-scr__glyph svg { width: 16px; height: 16px; }
 
 /* 1 · library */
 .bd-scr__lib { display: grid; grid-template-columns: 22% 1fr; height: 100%; }
@@ -122,10 +176,7 @@ const CSS = `
 .bd-scr__cont .bd-scr__meter { flex: 1 1 auto; }
 .bd-scr__cont small { font-size: 11px; color: rgba(255,255,255,.5); white-space: nowrap; }
 .bd-scr__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(6px, 1vw, 10px); flex: 1 1 auto; min-height: 0; }
-.bd-scr__card { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: clamp(8px, 1.2vw, 12px); border-radius: 10px; background: #1A1B20; border: 1px solid rgba(255,255,255,.06); overflow: hidden; min-height: 0; }
-.bd-scr__card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
-.bd-scr__card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(11,12,14,.9) 0%, rgba(11,12,14,.45) 45%, rgba(11,12,14,.1) 100%); pointer-events: none; z-index: 1; }
-.bd-scr__card > :not(img) { position: relative; z-index: 2; }
+.bd-scr__card { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; padding: clamp(8px, 1.2vw, 12px); border-radius: 10px; min-height: 0; }
 .bd-scr__card h4 { margin: 0; font-size: clamp(11px, 1.3vw, 14px); }
 .bd-scr__card p { margin: 0; font-size: 11px; color: rgba(255,255,255,.75); }
 .bd-scr__card p b { color: #fff; font-weight: 600; }
@@ -133,9 +184,11 @@ const CSS = `
 
 /* 2 · class */
 .bd-scr__cls { display: grid; grid-template-columns: 46% 1fr; height: 100%; }
-.bd-scr__tile { position: relative; margin: 0; overflow: hidden; }
-.bd-scr__tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.bd-scr__tile figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(10px, 2vw, 18px); font-size: 11px; color: #fff; background: linear-gradient(to top, rgba(11,12,14,.85), rgba(11,12,14,0)); }
+.bd-scr__tile { margin: 0; border: 0; border-radius: 0; display: grid; place-items: center; }
+.bd-scr__tile::before { right: -20%; top: -20%; width: 90%; }
+.bd-scr__tile__play { width: clamp(40px, 6vw, 64px); height: clamp(40px, 6vw, 64px); border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.35); color: #fff; }
+.bd-scr__tile__play svg { width: 40%; height: 40%; fill: currentColor; stroke: none; }
+.bd-scr__tile figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: clamp(10px, 2vw, 18px); font-size: 11px; color: rgba(255,255,255,.75); }
 .bd-scr__tile figcaption b { display: block; font-family: var(--sans, Archivo, sans-serif); font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--lime, #C6FF3D); margin-bottom: 4px; }
 .bd-scr__detail { padding: clamp(12px, 2.2vw, 28px); display: flex; flex-direction: column; gap: clamp(8px, 1.4vw, 14px); min-width: 0; }
 .bd-scr__detail h3 { margin: 0; font-size: clamp(18px, 3vw, 34px); }
@@ -146,8 +199,9 @@ const CSS = `
 .bd-scr__cta { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
 
 /* 3 · in class */
-.bd-scr__live { position: relative; height: 100%; }
-.bd-scr__live img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .8; }
+.bd-scr__live { position: relative; height: 100%; border: 0; border-radius: 0; }
+.bd-scr__live::before { width: 70%; right: 10%; top: -10%; }
+.bd-scr__live__mid { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.5); }
 .bd-scr__live__top { position: absolute; left: 0; right: 0; top: 0; padding: clamp(10px, 1.6vw, 18px) clamp(12px, 2vw, 24px); display: flex; align-items: center; gap: 12px; background: linear-gradient(to bottom, rgba(11,12,14,.75), rgba(11,12,14,0)); }
 .bd-scr__live__top .bd-scr__meter { flex: 1 1 auto; background: rgba(255,255,255,.2); }
 .bd-scr__live__top time { font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600; }
@@ -159,8 +213,9 @@ const CSS = `
 .bd-scr__rail { flex: 0 0 auto; width: clamp(120px, 24%, 200px); padding: 10px 12px; border-radius: 10px; background: rgba(18,19,22,.85); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.08); }
 .bd-scr__rail ol { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .bd-scr__rail li { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,.7); }
-.bd-scr__rail li img { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; flex: 0 0 auto; }
-.bd-scr__rail li span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd-scr__rail li .bd-scr__glyph { width: 24px; height: 24px; border-radius: 6px; }
+.bd-scr__rail li .bd-scr__glyph svg { width: 13px; height: 13px; }
+.bd-scr__rail li span:not(.bd-scr__glyph) { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bd-scr__rail li:first-child { color: #fff; font-weight: 600; }
 .bd-scr__rail li time { font-variant-numeric: tabular-nums; color: rgba(255,255,255,.5); }
 
@@ -181,30 +236,9 @@ const CSS = `
 .bd-scr__lvl__foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .bd-scr__lvl__foot .bd-scr__caps { font-size: 12px; }
 
-/* phone */
-@media (max-width: 640px) {
-  .bd-scr__panel { font-size: 12px; }
-  .bd-scr__nav { padding: 10px 6px; }
-  .bd-scr__nav a { padding: 4px 6px; font-size: 11px; }
-  .bd-scr__nav a:nth-child(n+6) { display: none; }
-  .bd-scr__logo { font-size: 13px; margin-bottom: 8px; }
-  .bd-scr__grid { grid-template-columns: repeat(2, 1fr); gap: 5px; }
-  .bd-scr__grid > :nth-child(n+5) { display: none; }
-  .bd-scr__card { padding: 7px; gap: 3px; }
-  .bd-scr__card h4 { font-size: 11px; }
-  .bd-scr__card .bd-scr__chip { display: none; }
-  .bd-scr__cont { display: none; }
-  .bd-scr__apptabs { font-size: 11px; }
-  .bd-scr__cls { grid-template-columns: 42% 1fr; }
-  .bd-scr__detail > p { display: none; }
-  .bd-scr__need span { font-size: 11px; padding: 4px 8px; }
-  .bd-scr__pill { min-height: 28px; padding: 0 12px; }
-  .bd-scr__tile figcaption { font-size: 11px; padding: 8px; }
-  .bd-scr__rail { display: none; }
-  .bd-scr__row { gap: 10px; padding: 8px 10px; }
-  .bd-scr__row__body p { white-space: normal; overflow: visible; }
-  .bd-scr__lvl__foot .bd-scr__caps { font-size: 11px; }
-}
+/* phone (the big frame) and any small copy of the panel (on the photo) */
+@media (max-width: 640px) { ${DENSE} }
+@container (max-width: 520px) { ${DENSE} .bd-scr__panel { font-size: 10px; } .bd-scr__detail h3 { font-size: 15px; } .bd-scr__reps { font-size: 26px; } .bd-scr__row__tag { font-size: 15px; } .bd-scr__lvl__head h3 { font-size: 14px; } .bd-scr__main, .bd-scr__detail, .bd-scr__lvl { padding: 8px 10px; gap: 6px; } .bd-scr__nav { padding: 8px 4px; } .bd-scr__tile__play { width: 34px; height: 34px; } }
 `;
 
 /* simple line icons for the kit */
@@ -220,6 +254,172 @@ const IcoPad = () => (
 const IcoPlay = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg>
 );
+
+/* category glyphs: one simple line icon per category, no pictures */
+const GLYPHS: Record<Glyph, React.ReactNode> = {
+  pilates: <><path d="M3 15h18" /><path d="M6 15V9h12v6" /><circle cx="9" cy="12" r="1.2" /><circle cx="15" cy="12" r="1.2" /></>,
+  glutes: <><path d="M4 16c2-6 6-6 8-2 2-4 6-4 8 2" /><path d="M4 16h16" /></>,
+  arms: <><path d="M4 12h4l3-4 3 8 3-4h3" /></>,
+  core: <><circle cx="12" cy="12" r="7" /><path d="M12 5v14M5 12h14" /></>,
+  full: <><circle cx="12" cy="5" r="2" /><path d="M12 7v6M8 10l4 3 4-3M12 13l-3 7M12 13l3 7" /></>,
+  recovery: <><path d="M4 16c3 0 3-6 8-6s5 6 8 6" /><path d="M4 20h16" /></>,
+};
+const CatGlyph = ({ g }: { g: Glyph }) => (
+  <span className="bd-scr__glyph" aria-hidden="true"><svg viewBox="0 0 24 24">{GLYPHS[g]}</svg></span>
+);
+
+/**
+ * The four moments in one panel. `a11y` marks the accessible copy that the
+ * tabs control; the other copy (on the photo) is decoration.
+ */
+function Panel({ id, active, running, tick, a11y }: { id: string; active: number; running: boolean; tick: number; a11y: boolean }) {
+  const done = LEVELS[0].done;
+  const moment = (i: number, key: (typeof MOMENTS)[number]["key"], body: React.ReactNode) => (
+    <div
+      id={a11y ? `${id}-m-${key}` : undefined}
+      role={a11y ? "tabpanel" : undefined}
+      aria-labelledby={a11y ? `${id}-tab-${key}` : undefined}
+      className={`bd-scr__moment${active === i ? " is-on" : ""}`}
+      aria-hidden={active !== i || !a11y}
+    >
+      {body}
+    </div>
+  );
+
+  return (
+    <div className="bd-scr__panel" aria-hidden={!a11y}>
+      {/* 1 · Library */}
+      {moment(0, "library", (
+        <div className="bd-scr__lib">
+          <nav className="bd-scr__nav" aria-label="Categories">
+            <div className="bd-scr__logo">bodies</div>
+            {NAV.map((n, i) => (
+              <a key={n} href="#" onClick={(e) => e.preventDefault()} className={i === 0 ? "is-on" : undefined} tabIndex={-1}>{n}</a>
+            ))}
+          </nav>
+          <div className="bd-scr__main">
+            <div className="bd-scr__apptabs">
+              {APP_TABS.map((t, i) => (i === 0 ? <b key={t}>{t}</b> : <span key={t}>{t}</span>))}
+            </div>
+            <div className="bd-scr__cont">
+              <span className="bd-scr__eyebrow">Continue</span>
+              <span style={{ fontWeight: 600 }}>{FEATURED.name}</span>
+              <span className="bd-scr__meter" aria-hidden="true"><i style={{ width: "40%" }} /></span>
+              <small>12 min left</small>
+            </div>
+            <div className="bd-scr__grid">
+              {CLASSES.map((c) => (
+                <article key={c.name} className="bd-scr__card bd-scr__dark" style={{ borderRadius: 10 }}>
+                  <div className="bd-scr__card__row">
+                    <CatGlyph g={c.glyph} />
+                    <span className="bd-scr__chip bd-scr__chip--lilac">{c.category}</span>
+                  </div>
+                  <div>
+                    <h4 className="bd-scr__caps">{c.name}</h4>
+                    <p><b>{c.minutes} min</b> · {c.level}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* 2 · Class */}
+      {moment(1, "class", (
+        <div className="bd-scr__cls">
+          <figure className="bd-scr__tile bd-scr__dark">
+            <span className="bd-scr__tile__play" aria-hidden="true"><IcoPlay /></span>
+            <figcaption><b>Your instructor</b>{INSTRUCTOR_CAPTION}</figcaption>
+          </figure>
+          <div className="bd-scr__detail">
+            <span className="bd-scr__eyebrow">{FEATURED.category}</span>
+            <h3 className="bd-scr__caps">{FEATURED.name}</h3>
+            <div className="bd-scr__chips">
+              <span className="bd-scr__chip bd-scr__chip--lime">{FEATURED.minutes} min</span>
+              <span className="bd-scr__chip">{FEATURED.level}</span>
+              <span className="bd-scr__chip">Level 1 · Start</span>
+            </div>
+            <p>Footwork on the board: heels, toes, arches. Slow, cued, every rep counted for you.</p>
+            <div>
+              <div className="bd-scr__eyebrow" style={{ marginBottom: 6 }}>What you'll need</div>
+              <div className="bd-scr__need">
+                <span><IcoCable /> Two cables</span>
+                <span><IcoStrap /> Ankle straps</span>
+                <span><IcoPad /> Both pads</span>
+              </div>
+            </div>
+            <div className="bd-scr__cta">
+              <span className="bd-scr__pill"><IcoPlay /> Start</span>
+              <span className="bd-scr__pill bd-scr__pill--ghost">Add to programme</span>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* 3 · In class */}
+      {moment(2, "inclass", (
+        <div className="bd-scr__live bd-scr__dark">
+          <div className="bd-scr__live__mid" aria-hidden="true">
+            <span className="bd-scr__tile__play"><IcoPlay /></span>
+          </div>
+          <div className="bd-scr__live__top">
+            <span className="bd-scr__pause" aria-hidden="true" />
+            <span className="bd-scr__caps" style={{ fontSize: 12 }}>{FEATURED.name}</span>
+            <span className="bd-scr__meter" aria-hidden="true"><i style={{ width: "62%" }} /></span>
+            <time>07:42 left</time>
+          </div>
+          <div className="bd-scr__live__bot">
+            <div>
+              <div className="bd-scr__eyebrow">Heel press</div>
+              <div className="bd-scr__reps">8 <small>/ 12</small></div>
+              <div className="bd-scr__cue">Press through the heels</div>
+            </div>
+            <aside className="bd-scr__rail">
+              <span className="bd-scr__eyebrow">Up next</span>
+              <ol>
+                {UP_NEXT.map((n) => (
+                  <li key={n.name}><CatGlyph g={n.glyph} /><span>{n.name}</span><time>{n.time}</time></li>
+                ))}
+              </ol>
+            </aside>
+          </div>
+        </div>
+      ))}
+
+      {/* 4 · Levels */}
+      {moment(3, "levels", (
+        <div className="bd-scr__lvl">
+          <div className="bd-scr__lvl__head">
+            <h3 className="bd-scr__caps">Your path</h3>
+            <span className="bd-scr__eyebrow">{done} of {LEVELS[0].of} in Level 1</span>
+          </div>
+          <div className="bd-scr__lvl__rows">
+            {LEVELS.map((l, i) => (
+              <div key={l.tag} className={`bd-scr__row${i === 0 ? " is-you" : ""}`}>
+                <span className="bd-scr__row__tag">{l.tag}</span>
+                <div className="bd-scr__row__body">
+                  <h4 className="bd-scr__caps">{l.name} <span style={{ fontFamily: "var(--body, 'Instrument Sans', sans-serif)", fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,.6)", fontSize: "0.85em" }}>— {l.line}</span></h4>
+                  <p>{l.classes.join(" · ")}</p>
+                  <span className="bd-scr__meter" aria-hidden="true"><i style={{ width: `${Math.round((l.done / l.of) * 100)}%` }} /></span>
+                </div>
+                <span className="bd-scr__row__count"><b>{l.done}</b> / {l.of}</span>
+              </div>
+            ))}
+          </div>
+          <div className="bd-scr__lvl__foot">
+            <span className="bd-scr__caps">Same board. Your pace.</span>
+            <span className="bd-scr__eyebrow">No membership</span>
+          </div>
+        </div>
+      ))}
+
+      <div className="bd-scr__progress" aria-hidden="true">
+        <i key={`${active}-${tick}`} className={running ? "is-running" : undefined} />
+      </div>
+    </div>
+  );
+}
 
 export function Screen({ id = "screen" }: { id?: string }) {
   const [active, setActive] = useState(0);
@@ -252,7 +452,6 @@ export function Screen({ id = "screen" }: { id?: string }) {
   };
 
   const running = !reduced;
-  const done = LEVELS[0].done;
 
   return (
     <section id={id} className={`bd-scr${paused ? " bd-scr--paused" : ""}`} aria-labelledby={`${id}-h2`}>
@@ -283,143 +482,26 @@ export function Screen({ id = "screen" }: { id?: string }) {
         </div>
 
         <div
-          className="bd-scr__stage"
+          className="bd-app"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          <div className="bd-scr__frame">
-            <div className="bd-scr__panel">
-
-              {/* 1 · Library */}
-              <div id={`${id}-m-library`} role="tabpanel" aria-labelledby={`${id}-tab-library`} className={`bd-scr__moment${active === 0 ? " is-on" : ""}`} aria-hidden={active !== 0}>
-                <div className="bd-scr__lib">
-                  <nav className="bd-scr__nav" aria-label="Categories">
-                    <div className="bd-scr__logo">bodies</div>
-                    {NAV.map((n, i) => (
-                      <a key={n} href="#" onClick={(e) => e.preventDefault()} className={i === 0 ? "is-on" : undefined} tabIndex={-1}>{n}</a>
-                    ))}
-                  </nav>
-                  <div className="bd-scr__main">
-                    <div className="bd-scr__apptabs">
-                      {APP_TABS.map((t, i) => (i === 0 ? <b key={t}>{t}</b> : <span key={t}>{t}</span>))}
-                    </div>
-                    <div className="bd-scr__cont">
-                      <span className="bd-scr__eyebrow">Continue</span>
-                      <span style={{ fontWeight: 600 }}>{FEATURED.name}</span>
-                      <span className="bd-scr__meter" aria-hidden="true"><i style={{ width: "40%" }} /></span>
-                      <small>12 min left</small>
-                    </div>
-                    <div className="bd-scr__grid">
-                      {CLASSES.map((c) => (
-                        <article key={c.name} className="bd-scr__card">
-                          <img src={c.photo} alt="" aria-hidden="true" loading="lazy" />
-                          <div className="bd-scr__card__row">
-                            <span className="bd-scr__chip bd-scr__chip--lilac">{c.category}</span>
-                          </div>
-                          <div>
-                            <h4 className="bd-scr__caps">{c.name}</h4>
-                            <p><b>{c.minutes} min</b> · {c.level}</p>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2 · Class */}
-              <div id={`${id}-m-class`} role="tabpanel" aria-labelledby={`${id}-tab-class`} className={`bd-scr__moment${active === 1 ? " is-on" : ""}`} aria-hidden={active !== 1}>
-                <div className="bd-scr__cls">
-                  <figure className="bd-scr__tile">
-                    <img src={PHOTO} alt={PHOTO_ALT} loading="lazy" />
-                    <figcaption><b>Your instructor</b>{INSTRUCTOR_CAPTION}</figcaption>
-                  </figure>
-                  <div className="bd-scr__detail">
-                    <span className="bd-scr__eyebrow">{FEATURED.category}</span>
-                    <h3 className="bd-scr__caps">{FEATURED.name}</h3>
-                    <div className="bd-scr__chips">
-                      <span className="bd-scr__chip bd-scr__chip--lime">{FEATURED.minutes} min</span>
-                      <span className="bd-scr__chip">{FEATURED.level}</span>
-                      <span className="bd-scr__chip">Level 1 · Start</span>
-                    </div>
-                    <p>Footwork on the board: heels, toes, arches. Slow, cued, every rep counted for you.</p>
-                    <div>
-                      <div className="bd-scr__eyebrow" style={{ marginBottom: 6 }}>What you'll need</div>
-                      <div className="bd-scr__need">
-                        <span><IcoCable /> Two cables</span>
-                        <span><IcoStrap /> Ankle straps</span>
-                        <span><IcoPad /> Both pads</span>
-                      </div>
-                    </div>
-                    <div className="bd-scr__cta">
-                      <span className="bd-scr__pill"><IcoPlay /> Start</span>
-                      <span className="bd-scr__pill bd-scr__pill--ghost">Add to programme</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3 · In class */}
-              <div id={`${id}-m-inclass`} role="tabpanel" aria-labelledby={`${id}-tab-inclass`} className={`bd-scr__moment${active === 2 ? " is-on" : ""}`} aria-hidden={active !== 2}>
-                <div className="bd-scr__live">
-                  <img src={PHOTO} alt="" aria-hidden="true" loading="lazy" />
-                  <div className="bd-scr__live__top">
-                    <span className="bd-scr__pause" aria-hidden="true" />
-                    <span className="bd-scr__caps" style={{ fontSize: 12 }}>{FEATURED.name}</span>
-                    <span className="bd-scr__meter" aria-hidden="true"><i style={{ width: "62%" }} /></span>
-                    <time>07:42 left</time>
-                  </div>
-                  <div className="bd-scr__live__bot">
-                    <div>
-                      <div className="bd-scr__eyebrow">Heel press</div>
-                      <div className="bd-scr__reps">8 <small>/ 12</small></div>
-                      <div className="bd-scr__cue">Press through the heels</div>
-                    </div>
-                    <aside className="bd-scr__rail">
-                      <span className="bd-scr__eyebrow">Up next</span>
-                      <ol>
-                        {UP_NEXT.map((n) => (
-                          <li key={n.name}><img src={n.photo} alt="" aria-hidden="true" loading="lazy" /><span>{n.name}</span><time>{n.time}</time></li>
-                        ))}
-                      </ol>
-                    </aside>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4 · Levels */}
-              <div id={`${id}-m-levels`} role="tabpanel" aria-labelledby={`${id}-tab-levels`} className={`bd-scr__moment${active === 3 ? " is-on" : ""}`} aria-hidden={active !== 3}>
-                <div className="bd-scr__lvl">
-                  <div className="bd-scr__lvl__head">
-                    <h3 className="bd-scr__caps">Your path</h3>
-                    <span className="bd-scr__eyebrow">{done} of {LEVELS[0].of} in Level 1</span>
-                  </div>
-                  <div className="bd-scr__lvl__rows">
-                    {LEVELS.map((l, i) => (
-                      <div key={l.tag} className={`bd-scr__row${i === 0 ? " is-you" : ""}`}>
-                        <span className="bd-scr__row__tag">{l.tag}</span>
-                        <div className="bd-scr__row__body">
-                          <h4 className="bd-scr__caps">{l.name} <span style={{ fontFamily: "var(--body, 'Instrument Sans', sans-serif)", fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,.6)", fontSize: "0.85em" }}>— {l.line}</span></h4>
-                          <p>{l.classes.join(" · ")}</p>
-                          <span className="bd-scr__meter" aria-hidden="true"><i style={{ width: `${Math.round((l.done / l.of) * 100)}%` }} /></span>
-                        </div>
-                        <span className="bd-scr__row__count"><b>{l.done}</b> / {l.of}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bd-scr__lvl__foot">
-                    <span className="bd-scr__caps">Same board. Your pace.</span>
-                    <span className="bd-scr__eyebrow">No membership</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bd-scr__progress" aria-hidden="true">
-                <i key={`${active}-${tick}`} className={running ? "is-running" : undefined} />
-              </div>
+          {/* the app, inside the photographed screen */}
+          <figure className="bd-app__board">
+            <img src={BOARD_PHOTO} alt="The bodies board with its screen up, the class library showing" loading="lazy" />
+            <div className="bd-app__onscreen" aria-hidden="true">
+              <Panel id={id} active={active} running={running} tick={tick} a11y={false} />
             </div>
+            <figcaption className="bd-app__cap">Built-in screen</figcaption>
+          </figure>
+
+          {/* the same app, big, in the bezel frame: the copy the tabs control */}
+          <div className="bd-scr__stage">
+            <div className="bd-scr__frame">
+              <Panel id={id} active={active} running={running} tick={tick} a11y />
+            </div>
+            <div className="bd-scr__hinge" aria-hidden="true" />
           </div>
-          <div className="bd-scr__hinge" aria-hidden="true" />
         </div>
 
         <ul className="bd-scr__facts">

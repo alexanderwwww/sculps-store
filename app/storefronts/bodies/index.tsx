@@ -22,9 +22,6 @@ import { useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection, VariantRow, NavLink } from "~/lib/store.server";
 import { BUNDLE_OFF_CENTS, formatMoney } from "~/lib/money";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
-// TODO(screen): app/storefronts/bodies/screen.tsx is being written by another
-// hire. It exports `Screen({ id })`, self-contained with its own <style>.
-// Until it lands, tsc fails on this import — re-run once it exists.
 import { Screen } from "./screen";
 
 type Vals = Record<string, string>;
@@ -156,6 +153,11 @@ const ASK = [
   { q: "Does it need Wi-Fi?", a: "Being confirmed. The plan is classes stored on the board, with Wi-Fi only for updates." },
   { q: "Is it a real reformer?", a: "It's a reformer-style board: cables, straps and pads for the same movements, in a fraction of the space." },
   { q: "What if I don't like it?", a: "Returns window and process are being confirmed and will be published here before launch." },
+  /* The four that used to sit under the buy button, kept here so nothing is lost. */
+  { q: "Which workouts are on the screen?", a: "Pilates, sculpt, core, glutes, arms, legs, stretch and recovery, led by instructors on the built-in screen. Class count and how new classes arrive are being confirmed." },
+  { q: "Size, weight, storage?", a: "Screen folds flat, board stands on its end: under a bed or against a wall. Exact dimensions and weight are being confirmed." },
+  { q: "Battery and setup?", a: "Charges with the included cable. Battery life and charging time are being confirmed. Setup is unfold, switch on, press play." },
+  { q: "Shipping and returns?", a: "Free shipping worldwide. Pay in 4 with PayPal at checkout. Delivery times and the returns window are being confirmed." },
 ];
 const BA = { heading: "One month on the board.", lede: "Shot on their phones, sent to us, unedited.", note: "Real customers, first name and weeks between photos exactly as they gave them. Same spot, same light. Nothing edited." };
 const SAY = { heading: "What they say.", lede: "Real customers, real apartments, unedited." };
@@ -171,13 +173,12 @@ const COMPARE = {
     { label: "Where it goes", us: "Folds flat, under the bed", them: ["Across town", "Rolled in a corner"] },
   ],
 };
-/** What ships. team-copy §2. */
-const GET = ["The board with the built-in screen", "Two resistance cables with foam handles", "Two ankle straps", "Two pads", "Charging cable"];
-const ACCORDIONS = [
-  { t: "Workouts on the screen", p: "Pilates, sculpt, core, glutes, arms, legs, stretch and recovery, led by instructors on the built-in screen. Class count and how new classes arrive are being confirmed." },
-  { t: "Size, weight, storage", p: "Screen folds flat, board stands on its end: under a bed or against a wall. Exact dimensions and weight are being confirmed." },
-  { t: "Battery and setup", p: "Charges with the included cable. Battery life and charging time are being confirmed. Setup is unfold, switch on, press play." },
-  { t: "Shipping and returns", p: "Free shipping worldwide. Pay in 4 with PayPal at checkout. Delivery times and the returns window are being confirmed." },
+/** The captions that ride the UGC marquee: product facts, two lines each, rotated through. */
+const FEED_LINES: [string, string][] = [
+  ["SCREEN", "BUILT IN."],
+  ["FOLDS", "FLAT."],
+  ["NO", "MEMBERSHIP."],
+  ["HER ROOM.", "HER TIMING."],
 ];
 
 /* --------------------------------------------------------------- orders */
@@ -581,15 +582,8 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
                 <p className="bd-lede">{FEED.lede}</p>
               </div>
             </div>
-            <div className="bd-grid4">
-              {items.map((b) => (
-                <figure className="bd-grid4__tile" key={b.id}>
-                  <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
-                  {val(b.values, "caption") ? <figcaption>{val(b.values, "caption")}</figcaption> : null}
-                </figure>
-              ))}
-            </div>
           </div>
+          <Feed items={items.map((b) => ({ id: b.id, src: val(b.values, "image"), caption: val(b.values, "caption") }))} />
         </div>
       );
     }
@@ -852,6 +846,150 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
   }
 }
 
+/* ------------------------------------------------------- payment marks */
+
+/**
+ * The payment banner under the buy button: six small badges, inline SVG,
+ * hairline border, each brand's wordmark in its own colour. No image files.
+ */
+function PayMarks() {
+  const W = 38, H = 24;
+  const Badge = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <svg className="bd-pay__mark" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={label}>
+      <rect x=".5" y=".5" width={W - 1} height={H - 1} rx="6" fill="#fff" stroke="rgba(11,12,14,.18)" />
+      {children}
+    </svg>
+  );
+  return (
+    <div className="bd-pay" aria-label="Ways to pay">
+      <Badge label="Apple Pay">
+        {/* the apple: a leaf and a bitten circle, then "Pay" */}
+        <path d="M12.6 8.1c.5-.6 1.2-1 1.7-1 .1.6-.2 1.2-.6 1.6-.4.5-1 .8-1.6.7-.1-.5.1-1 .5-1.3Z" fill="#0B0C0E" />
+        <path d="M14.6 9.7c-1 0-1.6.6-2.1.6-.5 0-1.2-.6-2-.6-1 0-2 .6-2.5 1.6-1 1.9-.3 4.6.7 6.1.5.7 1.1 1.5 1.9 1.5.7 0 1-.5 1.9-.5.9 0 1.1.5 1.9.5.8 0 1.3-.7 1.8-1.4.5-.8.8-1.6.8-1.6s-1.6-.6-1.6-2.4c0-1.5 1.2-2.2 1.3-2.3-.7-1.1-1.8-1.5-2.1-1.5Z" fill="#0B0C0E" />
+        <text x="19" y="16.6" fontFamily="-apple-system, Helvetica, Arial, sans-serif" fontSize="9.5" fontWeight="600" fill="#0B0C0E">Pay</text>
+      </Badge>
+      <Badge label="Google Pay">
+        <text x="6" y="16.4" fontFamily="Arial, Helvetica, sans-serif" fontSize="10" fontWeight="700" fill="#4285F4">G</text>
+        <text x="15" y="16.4" fontFamily="Arial, Helvetica, sans-serif" fontSize="9" fontWeight="600" fill="#5F6368">Pay</text>
+      </Badge>
+      <Badge label="PayPal">
+        <text x="5" y="16" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.4" fontWeight="700" fontStyle="italic" fill="#003087">Pay</text>
+        <text x="19.5" y="16" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.4" fontWeight="700" fontStyle="italic" fill="#009CDE">Pal</text>
+      </Badge>
+      <Badge label="Visa">
+        <text x="19" y="16.6" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="10.5" fontWeight="800" fontStyle="italic" fill="#1A1F71">VISA</text>
+      </Badge>
+      <Badge label="Mastercard">
+        <circle cx="15" cy="12" r="6" fill="#EB001B" />
+        <circle cx="23" cy="12" r="6" fill="#F79E1B" />
+        <path d="M19 7.4a6 6 0 0 1 0 9.2 6 6 0 0 1 0-9.2Z" fill="#FF5F00" />
+      </Badge>
+      <Badge label="American Express">
+        <text x="19" y="16" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.6" fontWeight="800" fill="#016FD0">AMEX</text>
+      </Badge>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------- liquid chrome */
+
+/**
+ * A liquid-chrome shape, drawn: SVG gradients only (white → #C9CCD6 → #6E7280
+ * → white highlights, a faint lilac reflection), so it reads as metal on any
+ * photograph. Two variants: a blob and a ring. Decorative, always aria-hidden.
+ */
+export function Chrome({ variant = "blob", size = 110, className = "" }: { variant?: "blob" | "ring"; size?: number; className?: string }) {
+  const uid = `bdc-${variant}-${size}`;
+  const defs = (
+    <defs>
+      <linearGradient id={`${uid}-body`} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#FFFFFF" />
+        <stop offset=".22" stopColor="#C9CCD6" />
+        <stop offset=".48" stopColor="#6E7280" />
+        <stop offset=".62" stopColor="#F4F5F8" />
+        <stop offset=".8" stopColor="#8C90A0" />
+        <stop offset="1" stopColor="#FFFFFF" />
+      </linearGradient>
+      <radialGradient id={`${uid}-hi`} cx=".3" cy=".25" r=".5">
+        <stop offset="0" stopColor="#FFFFFF" stopOpacity=".95" />
+        <stop offset=".5" stopColor="#FFFFFF" stopOpacity=".15" />
+        <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id={`${uid}-lilac`} cx=".75" cy=".8" r=".5">
+        <stop offset="0" stopColor="#D9BEE8" stopOpacity=".75" />
+        <stop offset="1" stopColor="#D9BEE8" stopOpacity="0" />
+      </radialGradient>
+      <linearGradient id={`${uid}-edge`} x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stopColor="#3B3F4A" stopOpacity=".6" />
+        <stop offset=".5" stopColor="#FFFFFF" stopOpacity=".9" />
+        <stop offset="1" stopColor="#3B3F4A" stopOpacity=".6" />
+      </linearGradient>
+    </defs>
+  );
+  if (variant === "ring") {
+    return (
+      <svg className={`bd-chrome ${className}`} viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
+        {defs}
+        <path d="M50 8a42 42 0 1 0 0 84 42 42 0 1 0 0-84Zm0 24a18 18 0 1 1 0 36 18 18 0 1 1 0-36Z" fill={`url(#${uid}-body)`} fillRule="evenodd" />
+        <path d="M50 8a42 42 0 1 0 0 84 42 42 0 1 0 0-84Zm0 24a18 18 0 1 1 0 36 18 18 0 1 1 0-36Z" fill={`url(#${uid}-lilac)`} fillRule="evenodd" />
+        <path d="M50 8a42 42 0 1 0 0 84 42 42 0 1 0 0-84Zm0 24a18 18 0 1 1 0 36 18 18 0 1 1 0-36Z" fill={`url(#${uid}-hi)`} fillRule="evenodd" />
+        <circle cx="50" cy="50" r="42" fill="none" stroke={`url(#${uid}-edge)`} strokeWidth="1.2" />
+        <circle cx="50" cy="50" r="18" fill="none" stroke={`url(#${uid}-edge)`} strokeWidth="1" />
+      </svg>
+    );
+  }
+  const blob = "M62 8c14 2 28 14 30 30 2 17-8 30-20 40-11 9-26 16-40 10C16 81 6 64 8 46 10 26 24 12 42 8c7-1 14-1 20 0Z";
+  return (
+    <svg className={`bd-chrome ${className}`} viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
+      {defs}
+      <path d={blob} fill={`url(#${uid}-body)`} />
+      <path d={blob} fill={`url(#${uid}-lilac)`} />
+      <path d={blob} fill={`url(#${uid}-hi)`} />
+      <path d={blob} fill="none" stroke={`url(#${uid}-edge)`} strokeWidth="1.2" />
+      <ellipse cx="34" cy="30" rx="12" ry="6" transform="rotate(-30 34 30)" fill="#fff" opacity=".7" />
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------- UGC marquee */
+
+/**
+ * "Shot in your apartment": the section's real phone photos as 4:5 tiles on an
+ * auto-scrolling marquee. Every second tile carries two lines of huge
+ * condensed caps (product facts) over a dark scrim, with one small chrome
+ * shape floating on its corner. Printed twice and slid by half its width, so
+ * the loop has no seam; hover pauses; reduced-motion makes it a snap row.
+ */
+function Feed({ items }: { items: { id: string; src: string; caption: string }[] }) {
+  const tiles = items.map((it, i) => {
+    const captioned = i % 2 === 1;
+    const lines = FEED_LINES[Math.floor(i / 2) % FEED_LINES.length];
+    return (
+      <figure className={`bd-feed__tile${captioned ? " bd-feed__tile--cap" : ""}`} key={it.id}>
+        <img src={it.src} alt={it.caption} loading="lazy" />
+        {captioned ? (
+          <>
+            <figcaption className="bd-feed__big" aria-hidden="true"><span>{lines[0]}</span><span>{lines[1]}</span></figcaption>
+            <span className={`bd-feed__chrome bd-feed__chrome--${i % 4 === 1 ? "tr" : "bl"}`}>
+              <Chrome variant={i % 4 === 1 ? "ring" : "blob"} size={i % 4 === 1 ? 96 : 120} />
+            </span>
+          </>
+        ) : it.caption ? (
+          <figcaption className="bd-feed__cap">{it.caption}</figcaption>
+        ) : null}
+      </figure>
+    );
+  });
+  return (
+    <div className="bd-feed">
+      <div className="bd-feed__track">
+        <div className="bd-feed__run">{tiles}</div>
+        <div className="bd-feed__run" aria-hidden="true">{tiles}</div>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------- reviews */
 
 type ReviewLike = { id: string; name: string; rating: number; title: string | null; body: string; imageUrl: string | null; verified: boolean };
@@ -1041,7 +1179,7 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
           </div>
         </div>
 
-        {/* Mobile thumb-zone order (team-copy §11): photo → swatches → price → button → trust → what you get → accordions. */}
+        {/* Mobile thumb-zone order (team-copy §11): photo → swatches → offer → button → one shipping line → payment marks. Nothing else: the rest of the page says the rest. */}
         <div className="bd-pdp__buybox">
           <p className="bd-eyebrow">{page.product.title}</p>
           <h1 className="bd-h1 bd-pdp__h1">{variant.label}</h1>
@@ -1087,29 +1225,8 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
               </button>
             </div>
           </div>
-          <ul className="bd-pdp__sure" aria-label="Good to know">
-            <li>Free shipping worldwide</li>
-            <li>Secure checkout</li>
-            <li>Apple Pay &amp; Google Pay</li>
-            <li>PayPal Pay in 4</li>
-          </ul>
-          <p className="bd-pdp__returns">
-            Returns: policy being finalised before launch.
-            {page.store.contactEmail ? <> Questions: <a href={`mailto:${page.store.contactEmail}`}>{page.store.contactEmail}</a></> : null}
-          </p>
-
-          <ul className="bd-pdp__get">
-            {GET.map((g) => <li key={g}>{g}</li>)}
-          </ul>
-
-          <div className="bd-acc">
-            {ACCORDIONS.map((a) => (
-              <details key={a.t}>
-                <summary>{a.t}</summary>
-                <p>{a.p}</p>
-              </details>
-            ))}
-          </div>
+          <p className="bd-pdp__ship">Free shipping worldwide · 30-second setup</p>
+          <PayMarks />
         </div>
       </div>
 
