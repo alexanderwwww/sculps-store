@@ -70,3 +70,51 @@ MOQ 20-100, 30-45 days. Custom tooling is $105k and lands H2 2027.
 revived: one hero render, check AliExpress/Alibaba for a base unit with
 ceiling mount and a snack tray, decide whether auto-scroll is a real BLE
 remote or a phone-side app.
+
+---
+
+## Ceiling Buddy — design LOCKED (2026-09-14)
+
+**Name:** Ceiling Buddy. Rejected "Bed Daddy" — reads sexual, Meta ad review
+risk on a bed/couples product, and pulls the wrong search traffic. Keep
+"bed daddy" as an ad hook or caption only, never the brand.
+
+**The design Alex approved** (after ~8 render rounds):
+
+Rounded-rectangle bed tray, warm-white moulded plastic, soft continuous
+outer lip, generous corner radius. One large recessed snack deck taking the
+left two-thirds. Two round cup holders stacked on the right side. A long
+shallow channel across the front. Projector sits at the BACK on a raised
+pedestal in a white swivel cradle. "Ceiling Buddy" debossed into the top-left
+of the deck in a soft rounded sans.
+
+Projector is a Magcubic HY300-class unit: white cylinder, black perforated
+grille ring, blue-tinted lens, swivel yoke.
+
+**Decisions made and why — do not re-litigate:**
+
+- **No phone pad, no phone slot, no USB port on the tray.** Mirroring is
+  wireless, so the phone can be anywhere in the room. A dedicated phone spot
+  solved nothing and made the tray look busy. Alex caught this; he was right.
+- **No wireless charging.** Qi gives 5-7.5W, mirroring burns more, so the
+  phone still drains and both sides make heat. Would have shipped a feature
+  that doesn't work.
+- **No remote slot.** Cut for the same reason — clutter.
+- **White, not silver.** Silver-painted plastic is the cheapest-looking finish
+  there is and reads $12 Amazon gadget at a $129 price. If metal is ever
+  revisited it must be REAL anodized aluminium (Mac mini finish is anodizing,
+  not colour) as a top deck over a white plastic base, +$5-9/unit. Never fake
+  it with paint.
+- **Mains powered, one cable.** HY300 class is 35-45W with no battery. A
+  battery adds $18-25, weight and lithium shipping rules — not for v1. Cable
+  must be 3m minimum, flat and white, or the tray can't reach the middle of
+  the bed. Ads should show it beside someone, not centred on the mattress.
+
+**Pricing (COGS estimated, NOT sourced yet):**
+Projector bulk $32-42 · tray moulding $6-11 at 1k + $3-5k tooling ·
+box/remote/cable $3-5 · freight+duty $5-8 → landed ~$48-65.
+**Launch at $129.99, compare-at $179.** $89.99 is too thin to survive a
+$35-45 Meta CPA. Needs real factory quotes before locking.
+
+**Next:** sourcing brief to Alibaba — projector quote at 500/1000 units,
+tooling quote on the tray.
