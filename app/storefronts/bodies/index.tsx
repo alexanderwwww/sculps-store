@@ -622,10 +622,12 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       const items = page.reviews.map((r) => ({ ...r, rating: Math.max(1, Math.min(5, r.rating)) }));
       const avg = items.reduce((n, r) => n + r.rating, 0) / items.length;
       // Two rows sliding opposite ways, each printed twice for a seamless loop.
-      const cards = items.map((r, i) => (r.imageUrl ? <StoryCard key={r.id} r={r} i={i} /> : <NoteCard key={r.id} r={r} i={i} />));
-      const half = Math.ceil(cards.length / 2);
-      const rowA = cards.length > 3 ? cards.slice(0, half) : cards;
-      const rowB = cards.length > 3 ? [...cards.slice(half), ...cards.slice(0, Math.max(0, 3 - (cards.length - half)))] : [...cards].reverse();
+      const half = Math.ceil(items.length / 2);
+      // Each row needs at least six cards to loop without a gap; short lists repeat.
+      const fill = (list: typeof items) => { let out = list; while (out.length && out.length < 6) out = [...out, ...list]; return out; };
+      const render = (list: typeof items, tag: string) => list.map((r, i) => (r.imageUrl ? <StoryCard key={`${tag}${i}`} r={r} i={i} /> : <NoteCard key={`${tag}${i}`} r={r} i={i} />));
+      const rowA = render(fill(items.length > 3 ? items.slice(0, half) : items), "a");
+      const rowB = render(fill(items.length > 3 ? items.slice(half) : [...items].reverse()), "b");
       return (
         <div className="bd-sec" id="reviews">
           <div className="bd-wrap">
