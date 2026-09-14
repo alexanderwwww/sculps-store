@@ -542,29 +542,30 @@ function ProofWall({ section }: { section: LoadedSection }) {
 function LockScreen({ section }: { section: LoadedSection }) {
   const v = section.values;
 
-  // Artwork wins. When a finished picture of this scene exists it beats
-  // anything rebuilt out of divs, so the section simply shows it — full width,
-  // on the same dark ground, with nothing drawn on top.
+  // Artwork wins on a wide screen — a finished picture of this scene beats
+  // anything rebuilt out of divs. It cannot win on a phone: the composition is
+  // 16:9 and three columns wide, so it shrinks to a couple of hundred pixels
+  // and every message in it becomes unreadable. So both exist, and CSS picks.
   const art = val(v, "image");
-  if (art) {
-    return (
-      <section className="cb-lock cb-lock--art">
-        <img src={art} alt={val(v, "heading").split(String.fromCharCode(10)).join(" ")} />
-      </section>
-    );
-  }
-
   const rows = section.blocks.filter((b) => has(b.values, "title"));
+  const alt = val(v, "heading").split(String.fromCharCode(10)).join(" ");
   const lines = val(v, "heading").split(String.fromCharCode(10)).filter(Boolean);
   const texts = rows.filter((b) => !val(b.values, "note").startsWith("story"));
   const stories = rows.filter((b) => val(b.values, "note").startsWith("story"));
-  if (!rows.length) return null;
+  if (!rows.length && !art) return null;
 
   const side = (b: (typeof rows)[number]) => val(b.values, "note").split(" ")[0];
   const when = (b: (typeof rows)[number]) => val(b.values, "note").split(" ").slice(1).join(" ");
 
   return (
-    <section className="cb-lock">
+    <>
+      {art ? (
+        <section className="cb-lock cb-lock--art">
+          <img src={art} alt={alt} />
+        </section>
+      ) : null}
+
+    <section className={`cb-lock${art ? " cb-lock--small" : ""}`}>
       <div className="cb-lock__in">
         <div className="cb-lock__clock">
           {has(v, "subheading") ? <span>{val(v, "subheading")}</span> : null}
@@ -614,6 +615,7 @@ function LockScreen({ section }: { section: LoadedSection }) {
         ) : null}
       </div>
     </section>
+    </>
   );
 }
 

@@ -82,6 +82,15 @@ Other rules learned the hard way:
 
 - A negative `z-index` on a `::after` highlight paints behind the section's
   own background. Use a `linear-gradient` on the element instead.
+- **A string replace in a large component can match more than one function.**
+  Adding `&& !art` to `if (!rows.length) return null;` silently added it to
+  three other sections too, which would have thrown a ReferenceError and taken
+  the comparison table, the specs and the reviews off the page. `tsc` caught it;
+  `npm run build` did not, because Vite does not typecheck. **The gate is
+  `npx tsc -b --force` and a deploy is not allowed past a failing one** — this
+  one shipped for four minutes because the build and deploy were chained after
+  it with `&&` on a line where tsc's failure was not fatal.
+
 - **A scoped reset outranks your components.** `.cb button { color: inherit }`
   is specificity (0,1,1) and beats `.cb-btn` at (0,1,0), so the theme's own
   button label was repainted with the inherited ink — white text on a black

@@ -799,3 +799,9 @@
    edge, no padding, nothing layered over it. */
 .cb-lock--art { padding: 0; background: #05173F; }
 .cb-lock--art img { width: 100%; height: auto; display: block; }
+
+/* The artwork is a 16:9 three-column composition. Wide, it is the section;
+   narrow, it would be 200px tall with unreadable messages in it, so the built
+   layout takes over instead. Only ever one of the two is on the page. */
+@media (max-width: 1000px) { .cb-lock--art { display: none; } }
+@media (min-width: 1001px) { .cb-lock--small { display: none; } }
