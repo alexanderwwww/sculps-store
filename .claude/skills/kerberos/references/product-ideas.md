@@ -118,3 +118,34 @@ $35-45 Meta CPA. Needs real factory quotes before locking.
 
 **Next:** sourcing brief to Alibaba — projector quote at 500/1000 units,
 tooling quote on the tray.
+
+### Ceiling Buddy — ambient light added, hero shot locked
+
+**LED underglow added to the tray.** Soft warm glow strip under the outer lip.
+~$1-2 in parts, runs off the power the tray already has. It is what makes the
+product read in a dark room and it carries the whole hero shot — not optional.
+
+**"iPhone UGC" — named photo style, reuse this term.**
+
+> Shot on an iPhone, handheld, slightly off-level. Real bedroom, real mess in
+> the edges. Only light is what's in the room — a lamp, the projector glow, the
+> LED underglow. Visible sensor noise in the shadows, slight motion blur, mixed
+> white balance. No studio lights, no seamless backdrop, no colour grade, no
+> retouching, no bokeh. Composition a bit careless — something cropped at the
+> edge, a hand or a foot in frame. Looks like a person took it, not a brand.
+
+**Hero shot (approved) — "the reveal":** vertical, camera at the foot of the
+bed looking down the duvet. Tray centred with popcorn, open chip bag, a can in
+one cup holder, warm LED glow under the lip, "Ceiling Buddy" logo on the front
+face. Projector at the back pointing straight up, visible beam. TikTok glowing
+on the ceiling at the top of frame. Messy real bedroom behind.
+
+**Sourcing route (decided, cheapest first — do NOT tool first):**
+1. Existing bed tray ($3-6 on Alibaba) + HY300 in one box. No tooling, ~2-3
+   weeks. Test demand.
+2. Same tray with logo deboss + projector recess. A few hundred in mould mods,
+   MOQ ~500.
+3. Full custom tool of the approved design. $3-5k, 30-45 days, MOQ ~1000 —
+   only after it sells.
+Ask suppliers "do you have this projector, and can you supply or modify a tray
+like this image" — not for a quote on a new product.
