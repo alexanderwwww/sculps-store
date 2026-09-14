@@ -6,11 +6,11 @@
  * section value or a block value. What is not editable is what should not be —
  * the colourway cards, their prices and their stock come from the variants.
  *
- * Built against the Experiment reference section for section. The discipline
- * is what is borrowed, not the colour: one accent does every button, the
- * headline sits on the photograph rather than beside it, product cards have no
- * border, no two saturated sections touch, and the wordmark signs the page off
- * oversized at the bottom.
+ * Built against the Experiment reference section for section: clarity in a
+ * vibrant package. White ground, one lime for every button, one blue for
+ * badges, and all the colour inside the photographs. The headline sits on the
+ * photograph, cards are white with a hairline border, sections are white, and
+ * the wordmark signs the page off oversized at the bottom.
  */
 import { useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection, VariantRow, NavLink } from "~/lib/store.server";
@@ -42,18 +42,6 @@ export const WAYS: Record<string, { disc: string; ink: string; card: string; sky
     life: [`${M}/bd-d-bare-rest.png`, `${M}/bd-c-bare-latina.png`, `${M}/bd-f-bare-fold.png`, `${M}/bd-d-bare-hallway.png`],
   },
 };
-/** Cards and steps rotate through the colourway tints. */
-const WHO_TINTS = ["#D6E9F6", "#EEDCF5", "#F0E9DE"];
-/** Workout chips: one strong colour each. */
-const CHIPS = ["#C6FF3D", "#FF3FA4", "#BBD9EE", "#D9BEE8"];
-/** The feature tiles: five flat colour blocks. */
-const TILES = [
-  { bg: "#C6FF3D", fg: "#0E1600" },
-  { bg: "#BBD9EE", fg: "#0B0C0E" },
-  { bg: "#1E4636", fg: "#C3F53C" },
-  { bg: "#D9BEE8", fg: "#0B0C0E" },
-  { bg: "#FF3FA4", fg: "#FFFFFF" },
-];
 /** The product page shows everything: these home sections, in this order, under the buybox. */
 const PDP_SECTIONS = ["benefits", "three_steps", "product_grid", "features", "trust_icons", "whats_in_the_box", "specifications", "comparison_table", "social_proof_images", "reviews", "video_faq", "closing_cta"];
 const fallbackWay = { disc: "#EFEFEF", ink: "#0E0F12", card: "", sky: "", skyTall: "", studio: "", life: [] as string[] };
@@ -243,7 +231,11 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       return (
         <>
           <div className="bd-hero">
+            <div className="bd-hero__pic">
+              <img src={shot} alt={alt} fetchPriority="high" />
+            </div>
             <div className="bd-hero__panel">
+              <div className="bd-wrap">
               <div className="bd-hero__copy">
                 {val(v, "badge") ? <p className="bd-eyebrow">{val(v, "badge")}</p> : null}
                 {val(v, "heading") ? <h1 className="bd-h1">{val(v, "heading")}</h1> : null}
@@ -262,9 +254,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
                 </div>
                 {val(v, "reassurance") ? <p className="bd-hero__sure">{val(v, "reassurance")}</p> : null}
               </div>
-            </div>
-            <div className="bd-hero__pic">
-              <img src={shot} alt={alt} fetchPriority="high" />
+              </div>
             </div>
           </div>
 
@@ -303,7 +293,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
             </div>
             <ol className="bd-steps">
               {items.map((b, i) => (
-                <li className="bd-step" key={b.id} style={{ background: WHO_TINTS[i % WHO_TINTS.length] }}>
+                <li className="bd-step" key={b.id}>
                   <div className="bd-step__pic">
                     {val(b.values, "image") ? <img src={val(b.values, "image")} alt={val(b.values, "title")} loading="lazy" /> : null}
                   </div>
@@ -324,7 +314,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       if (items.length === 0) return null;
       const shot = items.map((b) => val(b.values, "image")).find(Boolean);
       return (
-        <div className="bd-sec bd-sec--matcha">
+        <div className="bd-sec">
           <div className="bd-wrap bd-split">
             <div className="bd-split__pic">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
             <div className="bd-split__copy">
@@ -359,10 +349,10 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
               </div>
             </div>
             <div className="bd-moves">
-              {items.map((b, i) => (
+              {items.map((b) => (
                 <figure className="bd-move" key={b.id}>
                   {val(b.values, "image") ? <img src={val(b.values, "image")} alt={val(b.values, "title")} loading="lazy" /> : null}
-                  <span style={{ background: CHIPS[i % CHIPS.length] }}>{val(b.values, "title")}</span>
+                  <span>{val(b.values, "title")}</span>
                 </figure>
               ))}
             </div>
@@ -376,9 +366,12 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
     case "features": {
       const items = blocks.filter((b) => has(b.values, "title", "text"));
       if (items.length === 0) return null;
+      const shot = items.map((b) => val(b.values, "image")).find(Boolean) || leadWay.life[0] || `${M}/bd-hero-real.png`;
       return (
         <div className="bd-band">
-          <div className="bd-wrap bd-band__in">
+          <div className="bd-band__pic"><img src={shot} alt="" loading="lazy" /></div>
+          <div className="bd-band__in">
+            <div className="bd-wrap">
             <div className="bd-band__copy">
               {val(v, "subheading") ? <p className="bd-eyebrow">{val(v, "subheading")}</p> : null}
               {val(v, "heading") ? <h2 className="bd-h2" style={{ marginTop: 10 }}>{val(v, "heading")}</h2> : null}
@@ -387,9 +380,6 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
               ))}
               <a className="bd-btn" href={`${href("/")}#shop`}>Shop now</a>
             </div>
-            <div className="bd-band__art">
-              {leadWay.card ? <img src={leadWay.card} alt="" loading="lazy" /> : null}
-              <span className="bd-band__seal" aria-hidden="true"><span>Folds<b>flat</b>stands up</span></span>
             </div>
           </div>
         </div>
@@ -403,22 +393,17 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       return (
         <div className="bd-sec" id="story">
           <div className="bd-wrap">
-            <div className="bd-sec__head">
-              <div>
-                <h2 className="bd-h2">{val(v, "heading") || "Everything the studio has."}</h2>
-                <p className="bd-lede">{val(v, "subheading") || "Built for a small apartment and a full workout."}</p>
-              </div>
+            <div className="bd-center" style={{ marginBottom: 28 }}>
+              <h2 className="bd-h2">{val(v, "heading") || "Everything the studio has."}</h2>
+              <p className="bd-lede">{val(v, "subheading") || "Built for a small apartment and a full workout."}</p>
             </div>
             <div className="bd-tiles">
-              {items.map((b, i) => {
-                const t = TILES[i % TILES.length];
-                return (
-                  <div className="bd-tile" key={b.id} style={{ background: t.bg, color: t.fg }}>
-                    {TRUST_ICONS[i] ?? TRUST_ICONS[0]}
-                    <span>{val(b.values, "title")}</span>
-                  </div>
-                );
-              })}
+              {items.map((b, i) => (
+                <div className="bd-tile" key={b.id}>
+                  {TRUST_ICONS[i] ?? TRUST_ICONS[0]}
+                  <span>{val(b.values, "title")}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -479,7 +464,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       const rows = blocks.filter((b) => has(b.values, "label"));
       if (rows.length === 0) return null;
       return (
-        <div className="bd-sec bd-sec--bare">
+        <div className="bd-sec">
           <div className="bd-wrap">
             <div className="bd-sec__head">
               <div>
@@ -522,7 +507,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
             <div className="bd-sec__head">{val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}</div>
             <div className="bd-who">
               {items.map((b, i) => (
-                <div className="bd-who__item" key={b.id} style={{ background: WHO_TINTS[i % WHO_TINTS.length] }}>
+                <div className="bd-who__item" key={b.id}>
                   <span className="bd-who__n">{String(i + 1).padStart(2, "0")}</span>
                   <h3 className="bd-h3">{val(b.values, "title")}</h3>
                   <p>{val(b.values, "text")}</p>
@@ -542,7 +527,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       return (
         <div className="bd-sec">
           <div className="bd-wrap bd-split">
-            <div className="bd-split__pic bd-split__pic--product" style={{ background: leadWay.disc }}>{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
+            <div className="bd-split__pic bd-split__pic--product">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
             <div className="bd-split__copy">
               {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
               <ul className="bd-box">
@@ -686,8 +671,8 @@ export function BodiesProduct({
 function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: VariantRow; storeParam: string }) {
   const drawer = useCartDrawer();
   const way = wayOf(variant.label);
-  // The gallery: the studio shot leads, then the cut-out on the colourway
-  // tint, the folded shot, the screen detail, then the phone photos. Real
+  // The gallery: the studio shot leads, then the cut-out in a white bordered
+  // square, the folded shot, the screen detail, then the phone photos. Real
   // files only.
   const gallery: { src: string; product?: boolean }[] = [
     ...(way.studio ? [{ src: way.studio }] : []),
@@ -724,19 +709,13 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
           ))}
         </div>
 
-        <div className="bd-pdp__buybox" style={{ background: way.disc }}>
+        <div className="bd-pdp__buybox">
           <div className="bd-pdp__top">
             <p className="bd-eyebrow">{page.product.title}</p>
             {saving ? <span className="bd-pdp__save">Save {formatMoney(saving, page.store.currency)}</span> : null}
           </div>
           <h1 className="bd-h1 bd-pdp__h1">{variant.label}</h1>
           {variant.sublabel ? <p className="bd-pdp__tag">{variant.sublabel}</p> : null}
-          <div className="bd-pdp__price">
-            <b>{formatMoney(variant.priceCents, page.store.currency)}</b>
-            {saving ? <s>{formatMoney(variant.compareAtCents!, page.store.currency)}</s> : null}
-          </div>
-          <p className="bd-pdp__later">or 4 × {formatMoney(monthly, page.store.currency)} with PayPal Pay in 4</p>
-
           <div className="bd-pdp__ways" role="list" aria-label="Colourway">
             {page.variants.map((other) => (
               <a key={other.id} role="listitem" aria-current={other.id === variant.id} className="bd-pdp__way" href={`/products/${slug(other.label)}${storeParam}`}>
@@ -746,10 +725,17 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
             ))}
           </div>
 
-          <div className="bd-pdp__buy" ref={buyRef}>
-            <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
-              {sold ? "Sold out" : `Add to cart · ${formatMoney(variant.priceCents, page.store.currency)}`}
-            </button>
+          <div className="bd-offer">
+            <div className="bd-pdp__price">
+              <b>{formatMoney(variant.priceCents, page.store.currency)}</b>
+              {saving ? <s>{formatMoney(variant.compareAtCents!, page.store.currency)}</s> : null}
+            </div>
+            <p className="bd-pdp__later">or 4 × {formatMoney(monthly, page.store.currency)} with PayPal Pay in 4</p>
+            <div className="bd-pdp__buy" ref={buyRef}>
+              <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
+                {sold ? "Sold out" : `Add to cart · ${formatMoney(variant.priceCents, page.store.currency)}`}
+              </button>
+            </div>
           </div>
           <p className="bd-pdp__sure">Free shipping worldwide · Card, Apple Pay, Google Pay, PayPal</p>
 
@@ -774,6 +760,12 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
               <p>Free shipping worldwide. Pay in 4 with PayPal Pay Later at checkout.</p>
             </details>
           </div>
+        </div>
+      </div>
+
+      <div className="bd-claim">
+        <div className="bd-wrap">
+          <h2 className="bd-h1">Same studio feeling. Different location.</h2>
         </div>
       </div>
 

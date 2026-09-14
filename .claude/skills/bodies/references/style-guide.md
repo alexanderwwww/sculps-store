@@ -165,3 +165,12 @@ Section heads are in `website.md`. Voice rules in `copy-voice.md`.
 Domain · landed cost per board · the six spec numbers · real reviews ·
 final price ($699 live, $349 discussed) · a mailing-list store (join form
 records consent on the cart only).
+
+
+## Rebuilt again (Experiment discipline, verified against their real pixels)
+
+- CSS palette is ONLY white, near-black wide type, lime `#C6FF3D` buttons, blue `#2F6BFF` badges. No coloured section backgrounds, no tinted cards, no colour tiles. The colourway tints were removed from the theme entirely.
+- All colour lives inside the photographs, in ONE colour world per page (lilac/pink today): `bd-x-hero.jpg` (board in lilac-pink sky, empty left), `bd-x-band.jpg` (board on flat lilac gradient, empty left), `bd-x-box.jpg` (kit on white with lilac glow), `bd-x-life.jpg` (editorial apartment shot). Generated with gpt_image_2_5 low/2k at 1 credit each from the lilac reference.
+- Shop cards: white, hairline, board alone on white, name, one line, price, lime pill. Nothing behind the product.
+- PDP: white buybox, `.bd-offer` lime-bordered box around price + Pay in 4 + Add to cart, checklist, then `.bd-claim` big line, then every homepage section repeated.
+- Owner's words: "clarity in a vibrant package". Never mix the colourways as panels.
