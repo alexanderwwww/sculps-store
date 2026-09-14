@@ -258,7 +258,7 @@ const LAYOUTS = [
   { value: "9:16", label: "Story" },
   { value: "16:9", label: "Wide" },
 ];
-const VIDEO_MODELS = ["seedance-2", "kling-3", "veo-3-1"];
+const VIDEO_MODELS = ["ltx-2-pro", "wan-2-5", "kling-3", "seedance-2", "kling-3-pro", "veo-3-1"];
 
 const PRESETS: Preset[] = [
   {
@@ -411,7 +411,7 @@ const PRESETS: Preset[] = [
     refLabel: "Source picture",
     cta: "Make the video",
     fields: [
-      { key: "model", label: "Model", type: "model", ids: VIDEO_MODELS, def: "seedance-2" },
+      { key: "model", label: "Model", type: "model", ids: VIDEO_MODELS, def: "ltx-2-pro" },
       {
         key: "motion",
         label: "Motion",
@@ -445,7 +445,7 @@ const PRESETS: Preset[] = [
       { key: "script", label: "What she says", type: "text", def: "", long: true, placeholder: "okay this folds under my bed and I did 20 minutes before work, I'm never going back to the studio", hint: "8 seconds is about 20 words." },
       { key: "creator", label: "Creator (optional)", type: "text", def: "", placeholder: "Latina, mid twenties, claw clip" },
       { key: "setting", label: "Where (optional)", type: "text", def: "", placeholder: "small living room, morning light" },
-      { key: "model", label: "Video model", type: "model", ids: VIDEO_MODELS, def: "seedance-2" },
+      { key: "model", label: "Video model", type: "model", ids: VIDEO_MODELS, def: "kling-3" },
       { key: "duration", label: "Length", type: "length", def: "8" },
     ],
     compose: (o) =>
