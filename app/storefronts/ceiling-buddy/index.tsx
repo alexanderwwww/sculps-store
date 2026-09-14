@@ -136,7 +136,7 @@ function Section({
 }) {
   switch (section.type) {
     case "buy_box":       return <BuyBox section={section} page={page} />;
-    case "video_faq":     return <><ProductVideo section={section} /><Faq section={section} /></>;
+    case "video_faq":     return <><UgcRail section={section} page={page} /><Faq section={section} /></>;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <ProductGrid section={section} />;
     case "trust_icons":   return <TrustBand section={section} />;
@@ -642,22 +642,44 @@ function Specs({ section }: { section: LoadedSection }) {
   );
 }
 
-/* ------------------------------------------------------------------ video */
+/* -------------------------------------------------------------- UGC frame */
 /**
- * The clip of the thing working, directly under the price.
+ * The proof, directly under the price — phone-shaped, on a dark band, so the
+ * night photography has something to sit against.
  *
- * It renders only when a video has actually been uploaded to this section. No
- * video means no section — never a grey box with a play triangle on it.
+ * The first frame plays a video when one has been uploaded to this section;
+ * the rest are the vertical photographs. No video simply means no first frame,
+ * never a play button over a still pretending to be one.
  */
-function ProductVideo({ section }: { section: LoadedSection }) {
-  const src = val(section.values, "video");
-  if (!src) return null;
+function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+  const video = val(section.values, "video");
+  // The vertical shots live on the social proof section — that is where the
+  // store's phone photography is, and duplicating it into a second section
+  // would mean two places to keep in step.
+  const proof = page.sections.find((x) => x.type === "social_proof_images");
+  const shots = (proof?.blocks ?? []).filter((b) => has(b.values, "image"));
+  if (!video && !shots.length) return null;
   return (
-    <section className="cb-section cb-section--tight">
-      <div className="cb-wrap cb-vid">
-        <div className="cb-vid__frame">
-          <video src={src} autoPlay muted loop playsInline preload="metadata" />
+    <section className="cb-ugc" id="ugc">
+      <div className="cb-wrap">
+        <div className="cb-head">
+          <h2 className="cb-h2">See it working</h2>
+          <p className="cb-lede">Shot on a phone, in a real bedroom, with the lights off.</p>
         </div>
+      </div>
+      <div className="cb-ugc__rail">
+        {video ? (
+          <figure className="cb-ugc__i">
+            <video src={video} autoPlay muted loop playsInline preload="metadata" />
+            <figcaption className="cb-ugc__tag">Ceiling Buddy, on</figcaption>
+          </figure>
+        ) : null}
+        {shots.map((b) => (
+          <figure className="cb-ugc__i" key={b.id}>
+            <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
+            {has(b.values, "caption") ? <figcaption className="cb-ugc__tag">{val(b.values, "caption")}</figcaption> : null}
+          </figure>
+        ))}
       </div>
     </section>
   );
