@@ -584,35 +584,19 @@
    the one thing that makes it look real. A video fills the first frame when
    one exists; until then the frames hold the vertical photographs. */
 
-.cb-ugc { background: var(--ink); color: #fff; padding: clamp(56px, 7vw, 96px) 0; }
-.cb-ugc .cb-head h2 { color: #fff; background: none; }
-.cb-ugc .cb-lede { color: rgba(255,255,255,.6); }
+.cb-ugc { background: var(--paper); padding: clamp(56px, 7vw, 96px) 0; }
+.cb-ugc__one { display: flex; justify-content: center; }
 
-.cb-ugc__rail {
-  display: flex; gap: 18px; overflow-x: auto; padding: 4px 20px 14px;
-  scroll-snap-type: x mandatory; scrollbar-width: none;
-  max-width: 100%;
-}
-.cb-ugc__rail::-webkit-scrollbar { display: none; }
 .cb-ugc__i {
-  position: relative; flex: 0 0 auto; width: min(320px, 76vw);
-  aspect-ratio: 9 / 16; border-radius: 26px; overflow: hidden; margin: 0;
-  background: #000; border: 0; scroll-snap-align: center;
-  box-shadow: 0 20px 44px -20px rgba(0,0,0,.8);
+  position: relative; width: min(340px, 82vw);
+  aspect-ratio: 9 / 16; border-radius: 22px; overflow: hidden; margin: 0;
+  background: var(--action-soft); border: 1px solid var(--hair);
+  box-shadow: var(--lift-lg);
 }
 .cb-ugc__i img, .cb-ugc__i video { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* The notch, so the frame reads as a phone without a picture of one. */
-.cb-ugc__i::before {
-  content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-  width: 64px; height: 7px; border-radius: 999px; background: rgba(255,255,255,.22); z-index: 2;
-}
-.cb-ugc__tag {
-  position: absolute; left: 12px; bottom: 12px; z-index: 2;
-  font-family: var(--display); font-weight: 600; font-size: 13px;
-  background: rgba(23,18,14,.62); color: #fff; backdrop-filter: blur(6px);
-  border-radius: 999px; padding: 6px 13px;
-}
-.cb-ugc__note { text-align: center; margin-top: 10px; font-size: 13.5px; color: rgba(255,255,255,.45); }
+
+
 
 /* An embedded post keeps the platform's own chrome, so the frame around it is
    just a white card at the same size as the photo frames beside it. */

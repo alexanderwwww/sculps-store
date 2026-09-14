@@ -656,12 +656,13 @@ function Specs({ section }: { section: LoadedSection }) {
 
 /* -------------------------------------------------------------- UGC frame */
 /**
- * The proof, directly under the price — phone-shaped, on a dark band, so the
- * night photography has something to sit against.
+ * The proof, directly under the price. One phone-shaped frame, centred, on
+ * white — a rail of six competed with the gallery immediately above it and
+ * made the page feel like it was starting over.
  *
- * The first frame plays a video when one has been uploaded to this section;
- * the rest are the vertical photographs. No video simply means no first frame,
- * never a play button over a still pretending to be one.
+ * Whatever is strongest goes in it, in this order: a real post embedded from
+ * TikTok or Instagram, then a video we host, then the best photograph. The
+ * rest of the photography already has its own section further down.
  */
 function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   // Three kinds of thing can ride this rail, in this order of preference:
@@ -681,7 +682,10 @@ function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProduc
   const proof = page.sections.find((x) => x.type === "social_proof_images");
   const shots = (proof?.blocks ?? []).filter((b) => has(b.values, "image"));
 
-  if (!own.length && !posts.length && !shots.length) return null;
+  const post = posts[0] ?? null;
+  const video = own[0] ?? null;
+  const shot = shots[0] ?? null;
+  if (!post && !video && !shot) return null;
 
   return (
     <section className="cb-ugc" id="ugc">
@@ -690,32 +694,28 @@ function UgcRail({ section, page }: { section: LoadedSection; page: LoadedProduc
           <h2 className="cb-h2">See it working</h2>
           <p className="cb-lede">Shot on a phone, in a real bedroom, with the lights off.</p>
         </div>
-      </div>
-      <div className="cb-ugc__rail">
-        {posts.map((e) => (
-          <div className={`cb-ugc__i${e.vertical ? "" : " cb-ugc__i--wide"}`} key={e.src}>
-            <iframe
-              src={e.src}
-              title={e.title}
-              loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
-          </div>
-        ))}
-        {own.map((src) => (
-          <figure className="cb-ugc__i" key={src}>
-            <video src={src} autoPlay muted loop playsInline preload="metadata" />
-            <figcaption className="cb-ugc__tag">Ceiling Buddy, on</figcaption>
-          </figure>
-        ))}
-        {shots.map((b) => (
-          <figure className="cb-ugc__i" key={b.id}>
-            <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
-            {has(b.values, "caption") ? <figcaption className="cb-ugc__tag">{val(b.values, "caption")}</figcaption> : null}
-          </figure>
-        ))}
+        <div className="cb-ugc__one">
+          {post ? (
+            <div className={`cb-ugc__i${post.vertical ? "" : " cb-ugc__i--wide"}`}>
+              <iframe
+                src={post.src}
+                title={post.title}
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+          ) : video ? (
+            <figure className="cb-ugc__i">
+              <video src={video} autoPlay muted loop playsInline preload="metadata" />
+            </figure>
+          ) : (
+            <figure className="cb-ugc__i">
+              <img src={val(shot!.values, "image")} alt={val(shot!.values, "caption")} loading="lazy" />
+            </figure>
+          )}
+        </div>
       </div>
     </section>
   );
