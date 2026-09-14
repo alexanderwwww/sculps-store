@@ -8,6 +8,14 @@ export function formatMoney(cents: number, currency = "USD") {
   }).format(cents / 100);
 }
 
+/**
+ * What comes off an add-on when it is bought together with the main product
+ * (the bodies socks: $24 alone, $19 in the bundle). One number, shared by the
+ * storefront that prints it and the cart that charges it, so the two can
+ * never disagree.
+ */
+export const BUNDLE_OFF_CENTS = 500;
+
 /** Shorter alias used across the admin, where this appears on every screen. */
 export const money = formatMoney;
 

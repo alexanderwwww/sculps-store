@@ -57,9 +57,10 @@ export interface LoadedProductPage {
   product: ProductRow;
   variants: VariantRow[];
   /**
-   * Other products this store sells, as their default variant — offered in the
-   * cart drawer beside the bundles. Not part of the buy box: the page sells one
-   * product, these ride along with it.
+   * Every variant of every other live product this store sells, ordered by
+   * product then position — the cart drawer's add-ons, the bodies socks.
+   * Not part of the buy box: the page sells one product, these ride along
+   * with it. A storefront that wants one row per product de-dupes itself.
    */
   addOns: VariantRow[];
   sections: LoadedSection[];
@@ -135,12 +136,14 @@ export async function loadProductPage(
 
   const nav = await storeNav(db, store.id);
 
-  // Everything else the store has live, one row each — the cart drawer's
+  // Everything else the store has live, every variant — the cart drawer's
   // add-ons. A store selling a single product simply has none.
   const otherProducts = await db
     .select({ id: products.id })
     .from(products)
-    .where(and(eq(products.storeId, store.id), eq(products.status, "active"), ne(products.id, product.id)));
+    .where(and(eq(products.storeId, store.id), eq(products.status, "active"), ne(products.id, product.id)))
+    .orderBy(asc(products.createdAt));
+  const productOrder = new Map(otherProducts.map((p, i) => [p.id, i] as const));
   const addOns = otherProducts.length
     ? (
         await db
@@ -148,7 +151,7 @@ export async function loadProductPage(
           .from(variants)
           .where(inArray(variants.productId, otherProducts.map((p) => p.id)))
           .orderBy(asc(variants.position))
-      ).filter((v, i, all) => all.findIndex((o) => o.productId === v.productId) === i)
+      ).sort((a, b) => (productOrder.get(a.productId) ?? 0) - (productOrder.get(b.productId) ?? 0) || a.position - b.position)
     : [];
 
   return { store, nav, product, variants: variantRows, addOns, sections: loaded, reviews: publishedReviews };

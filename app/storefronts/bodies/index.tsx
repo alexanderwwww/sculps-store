@@ -20,7 +20,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection, VariantRow, NavLink } from "~/lib/store.server";
-import { formatMoney } from "~/lib/money";
+import { BUNDLE_OFF_CENTS, formatMoney } from "~/lib/money";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 // TODO(screen): app/storefronts/bodies/screen.tsx is being written by another
 // hire. It exports `Screen({ id })`, self-contained with its own <style>.
@@ -45,8 +45,27 @@ export const whole = (cents: number, currency: string) => formatMoney(cents, cur
 
 /* ------------------------------------------------------------- pictures */
 
-/** What each colourway looks like, keyed by the variant label. */
-export const WAYS: Record<string, { disc: string; ink: string; card: string; studio: string; life: string[] }> = {
+/**
+ * What each colourway looks like, keyed by the variant label.
+ *
+ * `ad`, `macro` and `exploded` are per-colourway shots that exist for some
+ * ways and not yet for others; an undefined one is simply left out of the
+ * carousel rather than guessed at.
+ */
+export interface Way {
+  disc: string;
+  ink: string;
+  card: string;
+  studio: string;
+  life: string[];
+  /** the Meta-ad style board shot */
+  ad?: string;
+  /** pads and rails, close */
+  macro?: string;
+  /** the board taken apart */
+  exploded?: string;
+}
+export const WAYS: Record<string, Way> = {
   "Icy Swan": {
     disc: "#D6E9F6", ink: "#2E5570", card: `${M}/bd-cut-swan.png`, studio: `${M}/bd-studio-swan.jpg`,
     life: [`${M}/bd-e-swan-night.png`, `${M}/bd-c-swan-latina.png`, `${M}/bd-b-swan-socks.png`, `${M}/bd-d-swan-underbed.png`],
@@ -54,6 +73,8 @@ export const WAYS: Record<string, { disc: string; ink: string; card: string; stu
   "Lilac Heat": {
     disc: "#EEDCF5", ink: "#4A2357", card: `${M}/bd-cut-lilac.png`, studio: `${M}/bd-studio-lilac.jpg`,
     life: [`${M}/bd-e-lilac-evening.png`, `${M}/bd-a-lilac-top.png`, `${M}/bd-c-lilac-mirror2.png`, `${M}/bd-d-lilac-socks.png`],
+    ad: `${M}/bd-ad-lilac.jpg`,
+    macro: `${M}/bd-r-macro.jpg`,
   },
   Matcha: {
     disc: "#D8EDC4", ink: "#1E4636", card: `${M}/bd-cut-matcha.png`, studio: `${M}/bd-studio-matcha.jpg`,
@@ -64,8 +85,19 @@ export const WAYS: Record<string, { disc: string; ink: string; card: string; stu
     life: [`${M}/bd-d-bare-rest.png`, `${M}/bd-c-bare-latina.png`, `${M}/bd-f-bare-fold.png`, `${M}/bd-d-bare-hallway.png`],
   },
 };
-const fallbackWay = { disc: "#EFEFEF", ink: "#0E0F12", card: "", studio: "", life: [] as string[] };
+const fallbackWay: Way = { disc: "#EFEFEF", ink: "#0E0F12", card: "", studio: "", life: [] };
 export const wayOf = (label: string) => WAYS[label] ?? fallbackWay;
+/** The tint behind a socks picture that has not been shot yet. Lilac, like the renders. */
+const SOCKS_TINT = WAYS["Lilac Heat"].disc;
+
+/**
+ * The grip socks in this colourway: the add-on variant whose label matches
+ * the board's. Null until the socks product carries that colourway.
+ */
+const socksFor = (page: LoadedProductPage, label: string): VariantRow | null =>
+  page.addOns.find((v) => v.label === label) ?? null;
+/** What the socks cost inside the bundle. Computed from the row, never typed. */
+const bundleSocksCents = (socks: VariantRow) => Math.max(0, socks.priceCents - BUNDLE_OFF_CENTS);
 
 /** A colourway's own address. "Icy Swan" becomes "icy-swan". */
 export function slug(label: string): string {
@@ -91,6 +123,7 @@ const HERO = { sticker: "Screen built in", heading: "The Pilates board with the 
 const SHOP = { heading: "Shop the board", lede: "One board, every colourway. Same screen, same classes, same price." };
 const FEED = { heading: "Shot in your apartment.", lede: "Tag @bodies. Phone photos only. We post the real ones." };
 const MADE = { heading: "A Pilates studio that fits in a drawer.", lede: "Two pads, two rails, two cables, one screen. Nothing else in the room." };
+const SOCKS = { heading: "Grip socks. Same four colours.", lede: "Silicone dots on the sole. Your feet stay on the pads." };
 const STEPS = { heading: "Under the bed to a class in 30 seconds." };
 const CMP = { heading: "What a studio costs you." };
 const ASK_H = "Ask.";
@@ -154,9 +187,9 @@ const ACCORDIONS = [
  * items; "before_after" only when a pair has both photos; "video_clips" only
  * when the first clip has a video. Nothing is ever shown without real data.
  */
-const HOME_ORDER = ["buy_box", "before_after", "reviews", "video_clips", "social_proof_images", "screen", "made", "proof", "video_faq", "three_steps", "comparison_table", "closing_cta"];
-const PDP_ORDER = ["before_after", "reviews", "video_clips", "social_proof_images", "screen", "proof", "made", "box", "video_faq", "three_steps", "comparison_table", "specifications", "closing_cta"];
-const CODE_SECTIONS = new Set(["screen", "made", "proof", "box"]);
+const HOME_ORDER = ["buy_box", "before_after", "reviews", "video_clips", "social_proof_images", "screen", "made", "socks", "proof", "video_faq", "three_steps", "comparison_table", "closing_cta"];
+const PDP_ORDER = ["before_after", "reviews", "video_clips", "social_proof_images", "screen", "proof", "made", "box", "socks", "video_faq", "three_steps", "comparison_table", "specifications", "closing_cta"];
+const CODE_SECTIONS = new Set(["screen", "made", "proof", "box", "socks"]);
 
 /* --------------------------------------------------------------- chrome */
 
@@ -423,9 +456,60 @@ function renderCode(key: string, page: LoadedProductPage, storeParam: string) {
         </div>
       );
 
+    /* ------------------------------------------------------- grip socks */
+    case "socks": {
+      // The socks product's variants, from the loader. No socks in the
+      // database, no section.
+      const socks = page.addOns.filter((v) => WAYS[v.label]);
+      if (socks.length === 0) return null;
+      return (
+        <div className="bd-sec bd-sec--tight" id="socks">
+          <div className="bd-wrap">
+            <div className="bd-sec__head">
+              <div>
+                <h2 className="bd-h2">{SOCKS.heading}</h2>
+                <p className="bd-lede">{SOCKS.lede}</p>
+              </div>
+            </div>
+            <div className="bd-socks">
+              {socks.map((v) => (
+                <SockCard key={v.id} variant={v} currency={page.store.currency} />
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     default:
       return null;
   }
+}
+
+/** A socks picture, or the lilac tint with the label when it has not been shot yet. */
+function SockPic({ variant }: { variant: VariantRow }) {
+  return variant.imageUrl ? (
+    <img src={variant.imageUrl} alt={`${variant.label} grip socks`} loading="lazy" />
+  ) : (
+    <span className="bd-tint" style={{ background: SOCKS_TINT }} aria-label={`${variant.label} grip socks`}>
+      {variant.label}
+    </span>
+  );
+}
+
+function SockCard({ variant, currency }: { variant: VariantRow; currency: string }) {
+  const drawer = useCartDrawer();
+  const sold = variant.available <= 0;
+  return (
+    <div className="bd-sock">
+      <div className="bd-sock__pic"><SockPic variant={variant} /></div>
+      <span className="bd-sock__name">{variant.label}</span>
+      <span className="bd-sock__price">{whole(variant.priceCents, currency)}</span>
+      <button type="button" className="bd-btn bd-btn--sm" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
+        {sold ? "Sold out" : "Add to cart"}
+      </button>
+    </div>
+  );
 }
 
 function renderSection(section: LoadedSection, page: LoadedProductPage, storeParam: string) {
@@ -877,22 +961,46 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
   const drawer = useCartDrawer();
   const way = wayOf(variant.label);
   const cur = page.store.currency;
-  // The gallery: the studio still leads, then the pads-and-rails macro, the
-  // cut-out on white, the rear of the screen, the instructor on the screen,
-  // then two phone photos. Real files only.
-  const gallery: { src: string; product?: boolean }[] = [
-    ...(way.studio ? [{ src: way.studio }] : []),
-    { src: R.macro },
-    ...(way.card ? [{ src: way.card, product: true }] : []),
-    { src: R.screen },
-    { src: R.gScreen },
-    ...way.life.slice(0, 2).map((src) => ({ src })),
-  ].filter((g, i, all) => all.findIndex((x) => x.src === g.src) === i);
+  const socks = socksFor(page, variant.label);
+
+  // The gallery, in order: the clean cut-out, a real before|after pair when
+  // the page has one, the ad shot, the first phone photo, the macro, the
+  // exploded view, the socks, then the studio still and the rear of the
+  // screen. Anything this colourway does not have yet is left out.
+  const firstPair = page.sections
+    .find((s) => s.type === "before_after")
+    ?.blocks.find((b) => allowed(val(b.values, "before")) && allowed(val(b.values, "after")));
+  const gallery: { key: string; src: string; product?: boolean; pair?: [string, string]; alt?: string }[] = [
+    ...(way.card ? [{ key: way.card, src: way.card, product: true, alt: `${variant.label} board` }] : []),
+    ...(firstPair
+      ? [{ key: firstPair.id, src: val(firstPair.values, "after"), pair: [val(firstPair.values, "before"), val(firstPair.values, "after")] as [string, string], alt: `${val(firstPair.values, "name") || "A customer"} before and after` }]
+      : []),
+    ...(way.ad ? [{ key: way.ad, src: way.ad }] : []),
+    ...(way.life[0] ? [{ key: way.life[0], src: way.life[0] }] : []),
+    ...(way.macro ? [{ key: way.macro, src: way.macro, alt: "Pads and rails" }] : []),
+    ...(way.exploded ? [{ key: way.exploded, src: way.exploded, alt: "The board, taken apart" }] : []),
+    ...(socks?.imageUrl ? [{ key: socks.imageUrl, src: socks.imageUrl, alt: `${socks.label} grip socks` }] : []),
+    ...(way.studio ? [{ key: way.studio, src: way.studio }] : []),
+    { key: R.screen, src: R.screen, alt: "The rear of the screen" },
+  ].filter((g, i, all) => all.findIndex((x) => x.key === g.key) === i);
   const [slide, setSlide] = useState(0);
   const go = (n: number) => setSlide((n + gallery.length) % gallery.length);
   const sold = variant.available <= 0;
-  const pay4 = installments(variant.priceCents, cur);
+
+  // "Board only" or "Board + grip socks". The bundle exists only when the
+  // socks product carries this colourway with stock; the total is the two
+  // rows added, the socks at the bundle price.
+  const canBundle = Boolean(socks && socks.available > 0);
+  const [withSocks, setWithSocks] = useState(false);
+  const bundled = canBundle && withSocks;
+  const totalCents = variant.priceCents + (bundled && socks ? bundleSocksCents(socks) : 0);
+  const pay4 = installments(totalCents, cur);
   const saving = variant.compareAtCents && variant.compareAtCents > variant.priceCents ? variant.compareAtCents - variant.priceCents : 0;
+  const addSelected = (from: HTMLElement | null) => {
+    if (!drawer) return;
+    if (bundled && socks) drawer.addMany([{ variantId: variant.id }, { variantId: socks.id, bundle: true }], from);
+    else drawer.add(variant.id, from);
+  };
   const buyRef = useRef<HTMLDivElement | null>(null);
   const [stuck, setStuck] = useState(false);
 
@@ -910,8 +1018,15 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
         <div className="bd-car">
           <div className="bd-car__main">
             {gallery.map((g, i) => (
-              <figure key={g.src} className={`${g.product ? "is-product" : ""}${i === slide ? " is-on" : ""}`} aria-hidden={i !== slide}>
-                <img src={g.src} alt={i === 0 ? `${variant.label} board` : ""} loading={i === 0 ? "eager" : "lazy"} />
+              <figure key={g.key} className={`${g.product ? "is-product" : ""}${g.pair ? "is-pair" : ""}${i === slide ? " is-on" : ""}`} aria-hidden={i !== slide}>
+                {g.pair ? (
+                  <>
+                    <img src={g.pair[0]} alt={g.alt ? `${g.alt}: before` : ""} loading="lazy" />
+                    <img src={g.pair[1]} alt={g.alt ? `${g.alt}: after` : ""} loading="lazy" />
+                  </>
+                ) : (
+                  <img src={g.src} alt={g.alt ?? ""} loading={i === 0 ? "eager" : "lazy"} />
+                )}
               </figure>
             ))}
             <button type="button" className="bd-car__arr bd-car__arr--l" aria-label="Previous" onClick={() => go(slide - 1)}>‹</button>
@@ -919,8 +1034,8 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
           </div>
           <div className="bd-car__thumbs" role="tablist">
             {gallery.map((g, i) => (
-              <button type="button" role="tab" key={g.src} aria-selected={i === slide} className={g.product ? "is-product" : undefined} onClick={() => setSlide(i)}>
-                <img src={g.src} alt="" loading="lazy" />
+              <button type="button" role="tab" key={g.key} aria-selected={i === slide} className={g.product ? "is-product" : g.pair ? "is-pair" : undefined} onClick={() => setSlide(i)}>
+                {g.pair ? <><img src={g.pair[0]} alt="" loading="lazy" /><img src={g.pair[1]} alt="" loading="lazy" /></> : <img src={g.src} alt="" loading="lazy" />}
               </button>
             ))}
           </div>
@@ -940,19 +1055,36 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
             ))}
           </div>
 
+          {canBundle && socks ? (
+            <div className="bd-bundle" role="radiogroup" aria-label="With or without grip socks">
+              <button type="button" role="radio" aria-checked={!withSocks} className="bd-bundle__opt" onClick={() => setWithSocks(false)}>
+                <span className="bd-bundle__what">Board only</span>
+                <span className="bd-bundle__pay">{installments(variant.priceCents, cur)}</span>
+              </button>
+              <button type="button" role="radio" aria-checked={withSocks} className="bd-bundle__opt" onClick={() => setWithSocks(true)}>
+                <span className="bd-bundle__what">Board + grip socks</span>
+                <span className="bd-bundle__pay">{installments(variant.priceCents + bundleSocksCents(socks), cur)}</span>
+              </button>
+              <p className="bd-bundle__note">
+                socks {whole(bundleSocksCents(socks), cur)} in the bundle · {whole(socks.priceCents, cur)} alone
+              </p>
+            </div>
+          ) : null}
+
           <div className="bd-offer">
             <div className="bd-pdp__price">
               <b>{pay4}</b>
               <span className="bd-pdp__with">with PayPal Pay in 4</span>
             </div>
             <div className="bd-pdp__full">
-              <span>{whole(variant.priceCents, cur)}</span>
-              {saving ? <s>{whole(variant.compareAtCents!, cur)}</s> : null}
+              <span>{whole(totalCents, cur)}</span>
+              {saving ? <s>{whole(variant.compareAtCents! + (bundled && socks ? bundleSocksCents(socks) : 0), cur)}</s> : null}
               {saving ? <span className="bd-pdp__save">Save {whole(saving, cur)}</span> : null}
+              {bundled && socks ? <span className="bd-pdp__incl">board {whole(variant.priceCents, cur)} + socks {whole(bundleSocksCents(socks), cur)}</span> : null}
             </div>
             <div className="bd-pdp__buy" ref={buyRef}>
-              <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
-                {sold ? "Sold out" : "Add to cart"}
+              <button type="button" className="bd-btn bd-btn--big" disabled={sold} onClick={(event) => addSelected(event.currentTarget)}>
+                {sold ? "Sold out" : bundled ? "Add board + socks to cart" : "Add to cart"}
               </button>
             </div>
           </div>
@@ -986,9 +1118,9 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
       <div className={`bd-stick${stuck ? " bd-stick--on" : ""}`} aria-hidden={!stuck}>
         <div className="bd-wrap bd-stick__in">
           {way.card ? <img src={way.card} alt="" /> : null}
-          <span className="bd-stick__name">{variant.label}</span>
-          <span className="bd-stick__price"><b>{pay4}</b><small>{whole(variant.priceCents, cur)}</small></span>
-          <button type="button" className="bd-btn" disabled={sold} tabIndex={stuck ? 0 : -1} onClick={(event) => drawer?.add(variant.id, event.currentTarget)}>
+          <span className="bd-stick__name">{variant.label}{bundled ? " + socks" : ""}</span>
+          <span className="bd-stick__price"><b>{pay4}</b><small>{whole(totalCents, cur)}</small></span>
+          <button type="button" className="bd-btn" disabled={sold} tabIndex={stuck ? 0 : -1} onClick={(event) => addSelected(event.currentTarget)}>
             {sold ? "Sold out" : "Add to cart"}
           </button>
         </div>

@@ -17,6 +17,13 @@ const CART_COOKIE = "kerberos_cart";
 export interface CartLine {
   variantId: string;
   quantity: number;
+  /**
+   * The bundle price this line was added at, in cents — set by /cart/add
+   * when the line came in as part of a bundle. It is only honoured while the
+   * cart also holds a line from another product (the thing it was bundled
+   * with); on its own the line goes back to the variant's full price.
+   */
+  bundlePriceCents?: number;
 }
 
 export interface PricedLine {
@@ -142,7 +149,7 @@ export async function priceCart(
   const row = await loadCartRow(db, store.id, token);
   const stored = (row?.items ?? []) as CartLine[];
 
-  const lines: PricedLine[] = [];
+  const resolved: { line: CartLine; variant: typeof variants.$inferSelect; product: typeof products.$inferSelect }[] = [];
   for (const line of stored) {
     if (!line?.variantId || !Number.isFinite(line.quantity) || line.quantity < 1) continue;
 
@@ -152,16 +159,29 @@ export async function priceCart(
     const [product] = await db.select().from(products).where(eq(products.id, variant.productId)).limit(1);
     if (!product || product.storeId !== store.id) continue;
 
+    resolved.push({ line, variant, product });
+  }
+
+  const lines: PricedLine[] = [];
+  for (const { line, variant, product } of resolved) {
     const quantity = Math.min(20, Math.floor(line.quantity));
+    // A bundle price holds only while something from another product is in
+    // the cart with it. Remove the board and the socks are socks again.
+    const bundled =
+      Number.isFinite(line.bundlePriceCents) &&
+      (line.bundlePriceCents as number) >= 0 &&
+      (line.bundlePriceCents as number) < variant.priceCents &&
+      resolved.some((other) => other.product.id !== product.id);
+    const unitPriceCents = bundled ? (line.bundlePriceCents as number) : variant.priceCents;
     lines.push({
       variantId: variant.id,
       quantity,
       label: variant.label,
       sublabel: variant.sublabel,
       productTitle: product.title,
-      unitPriceCents: variant.priceCents,
-      lineTotalCents: variant.priceCents * quantity,
-      compareAtCents: variant.compareAtCents ?? null,
+      unitPriceCents,
+      lineTotalCents: unitPriceCents * quantity,
+      compareAtCents: bundled ? variant.priceCents : (variant.compareAtCents ?? null),
       imageUrl: variant.imageUrl ?? null,
     });
   }
@@ -333,13 +353,20 @@ export async function currentLines(db: DB, storeId: string, token: string | null
   );
 }
 
-export function addLine(lines: CartLine[], variantId: string, quantity = 1): CartLine[] {
+export function addLine(
+  lines: CartLine[],
+  variantId: string,
+  quantity = 1,
+  /** the bundle price this add carries, when it came in as part of a bundle */
+  bundlePriceCents?: number,
+): CartLine[] {
   const next = lines.map((line) => ({ ...line }));
   const found = next.find((line) => line.variantId === variantId);
   if (found) {
     found.quantity = Math.min(20, found.quantity + quantity);
+    if (bundlePriceCents != null) found.bundlePriceCents = bundlePriceCents;
   } else {
-    next.push({ variantId, quantity: Math.min(20, quantity) });
+    next.push({ variantId, quantity: Math.min(20, quantity), ...(bundlePriceCents != null ? { bundlePriceCents } : {}) });
   }
   return next;
 }

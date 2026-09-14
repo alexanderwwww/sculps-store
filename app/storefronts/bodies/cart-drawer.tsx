@@ -33,8 +33,19 @@ interface CartPayload {
   };
 }
 
+/** One thing to put in the cart. `bundle` asks /cart/add for the bundle price. */
+export interface AddItem {
+  variantId: string;
+  bundle?: boolean;
+}
 interface Api {
   add: (variantId: string, from: HTMLElement | null) => void;
+  /**
+   * Several lines, one after the other. The cart row is read-modify-write on
+   * the server, so two adds in flight at once would lose one — these go in
+   * sequence and the drawer reloads once at the end.
+   */
+  addMany: (items: AddItem[], from: HTMLElement | null) => void;
   open: (from: HTMLElement | null) => void;
   itemCount: number;
 }
@@ -81,25 +92,36 @@ export function CartDrawerProvider({
     setOpen(true);
   }, []);
 
-  const add = useCallback(
-    (variantId: string, from: HTMLElement | null) => {
-      show(from);
-      setBusy(true);
-      fetch(href("/cart/add"), {
+  const post = useCallback(
+    (item: AddItem) => {
+      const url = new URL(href("/cart/add"), window.location.origin);
+      if (item.bundle) url.searchParams.set("bundle", "1");
+      return fetch(url.toString(), {
         method: "POST",
-        body: new URLSearchParams({ variantId }),
+        body: new URLSearchParams({ variantId: item.variantId }),
         credentials: "same-origin",
         redirect: "manual",
-      })
-        .catch(() => {})
+      }).catch(() => {});
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storeParam],
+  );
+
+  const addMany = useCallback(
+    (items: AddItem[], from: HTMLElement | null) => {
+      show(from);
+      setBusy(true);
+      items
+        .reduce<Promise<unknown>>((chain, item) => chain.then(() => post(item)), Promise.resolve())
         .finally(() => {
           setBusy(false);
           reload();
         });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [storeParam, reload, show],
+    [post, reload, show],
   );
+
+  const add = useCallback((variantId: string, from: HTMLElement | null) => addMany([{ variantId }], from), [addMany]);
 
   const setQuantity = useCallback(
     (variantId: string, quantity: number) => {
@@ -137,7 +159,7 @@ export function CartDrawerProvider({
   }, [open]);
 
   const cart = (fetcher.data as CartPayload | undefined)?.cart ?? null;
-  const api: Api = { add, open: show, itemCount: cart?.itemCount ?? 0 };
+  const api: Api = { add, addMany, open: show, itemCount: cart?.itemCount ?? 0 };
   const loading = busy || fetcher.state !== "idle";
   const currency = cart?.currency ?? page.store.currency;
 

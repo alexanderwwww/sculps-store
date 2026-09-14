@@ -308,6 +308,11 @@
 .bd-car__thumbs button[aria-selected="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .bd-car__thumbs img { width: 100%; height: 100%; object-fit: cover; }
 .bd-car__thumbs button.is-product img { object-fit: contain; padding: 4px; }
+/* A before|after pair as one slide: two photographs side by side, a hairline between. */
+.bd-car__main figure.is-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--rule); }
+.bd-car__main figure.is-pair img { position: static; height: 100%; }
+.bd-car__thumbs button.is-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule); }
+.bd-car__thumbs button.is-pair img { height: 100%; }
 .bd-proof { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .bd-proof__item { margin: 0; }
 .bd-proof__pic { aspect-ratio: 4 / 4.4; border-radius: var(--r); overflow: hidden; border: 1px solid var(--rule-2); }
@@ -325,8 +330,29 @@
 .bd-boxgrid figcaption { padding-top: 10px; display: grid; }
 .bd-boxgrid figcaption b { font-family: var(--sans); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
 .bd-boxgrid figcaption span { color: var(--ink-2); font-size: 13px; }
+/* ---- grip socks: four white hairline cards ---------------------------- */
+.bd-socks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.bd-sock { display: flex; flex-direction: column; gap: 6px; padding: 14px 14px 16px; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; }
+.bd-sock__pic { aspect-ratio: 1; border-radius: 8px; overflow: hidden; margin-bottom: 6px; }
+.bd-sock__pic img { width: 100%; height: 100%; object-fit: cover; }
+.bd-tint { display: grid; place-items: center; width: 100%; height: 100%; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.bd-sock__name { font-family: var(--sans); font-weight: 800; font-stretch: 112%; font-size: 14px; text-transform: uppercase; line-height: 1.1; }
+.bd-sock__price { font-family: var(--sans); font-size: 13px; color: var(--ink-2); }
+.bd-sock .bd-btn { width: 100%; margin-top: 8px; }
+@media (max-width: 860px) { .bd-socks { grid-template-columns: repeat(2, 1fr) } }
 @media (max-width: 860px) { .bd-boxgrid { grid-template-columns: 1fr 1fr } .bd-boxgrid__item:first-child { grid-column: 1 / -1 } .bd-boxgrid__item:first-child .bd-boxgrid__pic { aspect-ratio: 16 / 10; height: auto } }
 .bd-pdp__buybox { position: sticky; top: 72px; background: var(--paper); border-radius: var(--r); padding: clamp(20px, 2.6vw, 34px) 0 0; }
+/* ---- with socks / without: a two-option segmented control ------------ */
+.bd-bundle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.bd-bundle__opt { display: grid; gap: 4px; padding: 12px 12px; border: 0; border-radius: 10px; background: var(--paper); color: var(--ink); text-align: left; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(11,12,14,.1); font-family: var(--sans); }
+.bd-bundle__opt[aria-checked="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
+.bd-bundle__opt:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.bd-bundle__what { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.bd-bundle__pay { font-size: 14px; font-weight: 800; letter-spacing: -.01em; }
+.bd-bundle__note { grid-column: 1 / -1; margin: 2px 0 0; font-size: 12px; color: var(--ink-2); }
+.bd-pdp__incl { flex-basis: 100%; font-size: 12px; font-weight: 500; color: var(--ink-2); }
+.bd-pdp__full { flex-wrap: wrap; }
+
 .bd-offer { border: 1.5px solid var(--lime); border-radius: var(--r); background: rgba(198,255,61,.12); padding: 16px; margin-top: 22px; }
 .bd-offer .bd-pdp__price { margin-top: 0; }
 .bd-pdp__save { font-family: var(--sans); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; background: var(--ink); color: var(--lime); padding: 6px 10px; border-radius: 999px; }

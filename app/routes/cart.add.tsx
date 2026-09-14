@@ -10,6 +10,7 @@ import { deviceFromRequest, geoFromContext, readVisitorSession, track } from "~/
 import { metaSettings, newMetaEventId, readMetaCookies, sendEvent } from "~/lib/meta.server";
 import { metaConfig, products, variants, carts } from "~/db/schema";
 import { and, eq } from "drizzle-orm";
+import { BUNDLE_OFF_CENTS } from "~/lib/money";
 import {
   readCartToken,
   newCartToken,
@@ -40,7 +41,7 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
   // dropped at pricing time, which left the drawer saying "empty" with no
   // explanation.
   const [sellable] = await context.db
-    .select({ id: variants.id, available: variants.available })
+    .select({ id: variants.id, available: variants.available, priceCents: variants.priceCents })
     .from(variants)
     .innerJoin(products, eq(products.id, variants.productId))
     .where(and(eq(variants.id, variantId), eq(products.storeId, store.id), eq(products.status, "active")))
@@ -55,7 +56,11 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
   // product page shows one price, and the cart it pays for must be that.
   const replace = url.searchParams.get("replace") === "1";
   const lines = replace ? [] : await currentLines(context.db, store.id, token);
-  await saveCart(context.db, store.id, token, addLine(lines, variantId, 1));
+  // `bundle=1`: this line rides along with the main product at the bundle
+  // price. The amount is the server's, never the browser's, and priceCart
+  // only honours it while something else is in the cart with it.
+  const bundlePriceCents = url.searchParams.get("bundle") === "1" ? Math.max(0, sellable.priceCents - BUNDLE_OFF_CENTS) : undefined;
+  await saveCart(context.db, store.id, token, addLine(lines, variantId, 1, bundlePriceCents));
 
   const sessionId = readVisitorSession(request);
   if (sessionId) {

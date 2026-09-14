@@ -512,7 +512,7 @@ export function CartDrawerProvider({
             {cart && cart.lines.length > 0 ? (
               <Upsell
                 heading="Goes with it"
-                variants={page.addOns}
+                variants={page.addOns.filter((v, i, all) => all.findIndex((o) => o.productId === v.productId) === i)}
                 currency={page.store.currency}
                 inCart={cart.lines.map((l) => l.variantId)}
                 onAdd={(variantId, from) => add(variantId, from)}
