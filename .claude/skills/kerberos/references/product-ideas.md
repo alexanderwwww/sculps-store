@@ -169,9 +169,15 @@ https://kerberos.gardenbuddystore.workers.dev/?store=ceiling-buddy
   price at the top of the page nobody will pay and kills the sale before the
   cheap option is read. At $79.99 the margin only works if the projector lands
   at or under ~$40 in bulk; get the quote before scaling spend.
-- **Badge colours** green for money saved, red for the deal flag, sky blue for
-  the shipping badge. Amber is the announcement bar and the LED glow only —
-  Alex rejected it next to the price.
+- **Palette — mixed to a ratio Alex set: 60 cozy / 20 Gen-Z / 20 McDonald's.**
+  60% is warm cream `#FFFCF7`, sand `#FBF3E7` and a warm near-black `#17120E` —
+  almost the whole page, because it is a bedroom at night. 20% McDonald's is
+  red `#D62300` for every action (button, price, deal flag) and golden yellow
+  `#FFC72C` for the saving and the top bar. 20% Gen-Z is electric violet
+  `#7C4DFF` on heading swipes, every third sticker and the review avatars —
+  never near the price. Nothing grey, nothing cold.
+  **Rejected: green** (money-saved badges) and **sky blue as a UI colour** —
+  the logo's blue is for the logo only.
 - **Media** 10 assets in R2 as webp — logo (background keyed out), hero cut-out,
   feature card, and six iPhone-UGC lifestyle shots.
 - **Reviews** Six drafts are published so the feed layout could be judged.
