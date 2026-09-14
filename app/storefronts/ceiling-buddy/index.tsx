@@ -47,6 +47,10 @@ const IcoChat = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.5 12.3c0 4-3.8 7.2-8.5 7.2a9.9 9.9 0 0 1-2.9-.4L4 20.5l1.3-3.6A6.9 6.9 0 0 1 3.5 12.3C3.5 8.3 7.3 5 12 5s8.5 3.3 8.5 7.3z" /></svg>
 );
 
+const IcoBolt = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M13 2.5L4.5 13.5H11l-1 8 8.5-11H12z" /></svg>
+);
+
 /** The four trust-band icons, in the order the band renders them. */
 const TRUST_ICONS = [IcoTruck, IcoReturn, IcoShield, IcoChat];
 
@@ -133,7 +137,7 @@ function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: str
   const href = (p: string) => `${p}${storeParam}`;
   return (
     <>
-      <div className="cb-ticker">Free US shipping · 30-day returns · Ships in 3-5 business days</div>
+      <Announce />
       <header className="cb-header">
         <div className="cb-wrap cb-header__in">
           <a className="cb-logo" href={href("/")} aria-label={page.store.name}>
@@ -153,6 +157,28 @@ function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: str
         </div>
       </header>
     </>
+  );
+}
+
+function Announce() {
+  const says = [
+    [IcoTruck, "Free US shipping"],
+    [IcoReturn, "30 days to change your mind"],
+    [IcoShield, "1-year warranty"],
+    [IcoBolt, "Ships in 3-5 business days"],
+  ] as const;
+  return (
+    <div className="cb-ann" aria-label="Free US shipping, 30 day returns, 1 year warranty">
+      <div className="cb-ann__t" aria-hidden="true">
+        {[0, 1].map((n) => (
+          <span key={n}>
+            {says.map(([ico, text]) => (
+              <i key={text}>{ico}{text}</i>
+            ))}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -277,7 +303,7 @@ function Marquee() {
     <div className="cb-marq" aria-hidden="true">
       <div className="cb-marq__t">
         {[0, 1].map((n) => (
-          <span key={n}>{line.map((t) => <span key={t}>{t}</span>)}</span>
+          <span key={n}>{line.map((t) => <i key={t}>{t}</i>)}</span>
         ))}
       </div>
     </div>
@@ -293,16 +319,13 @@ function TrustBand({ section }: { section: LoadedSection }) {
     <>
       <Marquee />
       <section className="cb-section cb-section--tight">
-        <div className="cb-wrap">
-          <div className="cb-grid cb-grid--4">
-            {items.map((b, i) => (
-              <div className="cb-card" key={b.id}>
-                <div className="cb-card__ico">{TRUST_ICONS[i % TRUST_ICONS.length]}</div>
-                <h3 className="cb-h3">{val(b.values, "title")}</h3>
-                {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
-              </div>
-            ))}
-          </div>
+        <div className="cb-wrap cb-chips">
+          {items.map((b, i) => (
+            <span className="cb-chip" key={b.id}>
+              {TRUST_ICONS[i % TRUST_ICONS.length]}
+              {val(b.values, "title")}
+            </span>
+          ))}
         </div>
       </section>
     </>
@@ -315,7 +338,7 @@ function Steps({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
   return (
-    <section className="cb-section cb-section--lit" id="how">
+    <section className="cb-section cb-section--cream" id="how">
       <div className="cb-wrap">
         <Head section={section} />
         <div className="cb-steps">
@@ -323,7 +346,6 @@ function Steps({ section }: { section: LoadedSection }) {
             <div className="cb-step" key={b.id}>
               <div className="cb-step__n">{i + 1}</div>
               <h3 className="cb-h3">{val(b.values, "title")}</h3>
-              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
             </div>
           ))}
         </div>
@@ -341,19 +363,12 @@ function Benefits({ section }: { section: LoadedSection }) {
     <section className="cb-section">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-ben">
+        <div className="cb-tiles">
           {items.map((b) => (
-            <article className="cb-ben__it" key={b.id}>
-              {has(b.values, "image") ? (
-                <div className="cb-ben__pic">
-                  <img src={val(b.values, "image")} alt="" loading="lazy" />
-                </div>
-              ) : null}
-              <div className="cb-ben__txt">
-                <h3 className="cb-h3">{val(b.values, "title")}</h3>
-                {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
-              </div>
-            </article>
+            <figure className="cb-tile" key={b.id}>
+              {has(b.values, "image") ? <img src={val(b.values, "image")} alt="" loading="lazy" /> : null}
+              <figcaption>{val(b.values, "title")}</figcaption>
+            </figure>
           ))}
         </div>
       </div>
@@ -367,16 +382,15 @@ function Features({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
   return (
-    <section className="cb-section cb-section--lit">
+    <section className="cb-section cb-section--sky">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-grid cb-grid--3">
+        <div className="cb-chips">
           {items.map((b, i) => (
-            <div className="cb-card" key={b.id}>
-              <div className="cb-card__ico">{FEATURE_ICONS[i % FEATURE_ICONS.length]}</div>
-              <h3 className="cb-h3">{val(b.values, "title")}</h3>
-              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
-            </div>
+            <span className="cb-chip" key={b.id}>
+              {FEATURE_ICONS[i % FEATURE_ICONS.length]}
+              {val(b.values, "title")}
+            </span>
           ))}
         </div>
       </div>
@@ -441,7 +455,7 @@ function Compare({ section }: { section: LoadedSection }) {
   if (!rows.length) return null;
   const v = section.values;
   return (
-    <section className="cb-section cb-section--lit">
+    <section className="cb-section">
       <div className="cb-wrap">
         <Head section={section} />
         <div className="cb-cmp">
@@ -472,12 +486,9 @@ function WhoFor({ section }: { section: LoadedSection }) {
     <section className="cb-section">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-grid cb-grid--4">
+        <div className="cb-chips">
           {items.map((b) => (
-            <div className="cb-card" key={b.id}>
-              <h3 className="cb-h3">{val(b.values, "title")}</h3>
-              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
-            </div>
+            <span className="cb-chip" key={b.id}>{val(b.values, "title")}</span>
           ))}
         </div>
       </div>
@@ -492,7 +503,7 @@ function InTheBox({ section }: { section: LoadedSection }) {
   if (!items.length) return null;
   const v = section.values;
   return (
-    <section className="cb-section cb-section--lit">
+    <section className="cb-section cb-section--sky">
       <div className="cb-wrap cb-box">
         {has(v, "image") ? (
           <div className="cb-box__pic">
@@ -504,13 +515,7 @@ function InTheBox({ section }: { section: LoadedSection }) {
           {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
           <ul>
             {items.map((b) => (
-              <li key={b.id}>
-                {IcoCheck}
-                <div>
-                  <b>{val(b.values, "title")}</b>
-                  {has(b.values, "text") ? <span>{val(b.values, "text")}</span> : null}
-                </div>
-              </li>
+              <li key={b.id}>{IcoCheck}{val(b.values, "title")}</li>
             ))}
           </ul>
         </div>
@@ -550,7 +555,7 @@ function Faq({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "question"));
   if (!items.length) return null;
   return (
-    <section className="cb-section cb-section--lit" id="faq">
+    <section className="cb-section cb-section--cream" id="faq">
       <div className="cb-wrap">
         <Head section={section} />
         <div className="cb-faq">
@@ -576,6 +581,7 @@ function Closing({ section, page }: { section: LoadedSection; page: LoadedProduc
   return (
     <section className="cb-section cb-close">
       <div className="cb-wrap cb-close__in">
+        <img src={LOGO} alt="" />
         <h2 className="cb-h2">{val(v, "heading")}</h2>
         {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
         {buy ? (
