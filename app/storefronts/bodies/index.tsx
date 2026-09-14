@@ -34,11 +34,11 @@ export const WAYS: Record<string, { disc: string; ink: string; card: string; sky
     life: [`${M}/bd-hero-real-2.png`, `${M}/bd-a-lilac-top.png`, `${M}/bd-c-lilac-mirror2.png`, `${M}/bd-d-lilac-socks.png`],
   },
   Matcha: {
-    disc: "#D8EDC4", ink: "#1E4636", card: `${M}/bd-cut-matcha.png`, sky: `${M}/bd-sky-matcha.jpg`, skyTall: `${M}/bd-sky-matcha-tall.jpg`, studio: "",
+    disc: "#D8EDC4", ink: "#1E4636", card: `${M}/bd-cut-matcha.png`, sky: `${M}/bd-sky-matcha.jpg`, skyTall: `${M}/bd-sky-matcha-tall.jpg`, studio: `${M}/bd-studio-matcha.jpg`,
     life: [`${M}/bd-c-matcha-black.png`, `${M}/bd-d-matcha-stretch.png`, `${M}/bd-e-matcha-backlit.png`, `${M}/bd-b-matcha-carry.png`],
   },
   Bare: {
-    disc: "#F0E9DE", ink: "#4A4034", card: `${M}/bd-cut-bare.png`, sky: `${M}/bd-sky-bare.jpg`, skyTall: `${M}/bd-sky-bare-tall.jpg`, studio: "",
+    disc: "#F0E9DE", ink: "#4A4034", card: `${M}/bd-cut-bare.png`, sky: `${M}/bd-sky-bare.jpg`, skyTall: `${M}/bd-sky-bare-tall.jpg`, studio: `${M}/bd-studio-bare.jpg`,
     life: [`${M}/bd-d-bare-rest.png`, `${M}/bd-c-bare-latina.png`, `${M}/bd-f-bare-fold.png`, `${M}/bd-d-bare-hallway.png`],
   },
 };
