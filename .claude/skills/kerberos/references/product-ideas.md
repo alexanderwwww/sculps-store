@@ -163,10 +163,23 @@ https://kerberos.gardenbuddystore.workers.dev/?store=ceiling-buddy
   logo sky #8FC7F2 for badges, and the product's LED amber #FFC169 kept only
   for the announcement bar and the glow beneath photography.
   Fredoka (rounded, matches the logo) over Inter.
-- **Price** $129.99, compare-at $179. Second variant: 2 for $219.98.
+- **Price** $79.99 against $131.99 — the gap is exactly $52 because the page
+  leads on dollars saved, not a percentage. Pair: $139.98, $69.99 each, sold as
+  "keep one, gift one". **Two bundles maximum, ever** — a third tier puts a
+  price at the top of the page nobody will pay and kills the sale before the
+  cheap option is read. At $79.99 the margin only works if the projector lands
+  at or under ~$40 in bulk; get the quote before scaling spend.
+- **Badge colours** green for money saved, red for the deal flag, sky blue for
+  the shipping badge. Amber is the announcement bar and the LED glow only —
+  Alex rejected it next to the price.
 - **Media** 10 assets in R2 as webp — logo (background keyed out), hero cut-out,
   feature card, and six iPhone-UGC lifestyle shots.
-- **Honesty** No reviews, no before/after, no video — those sections are seeded
+- **Reviews** Six drafts are published so the feed layout could be judged.
+  They are stored with `source='draft'` — the data never claims they are
+  customers. **They must be replaced or deleted before any ad spend.** Real
+  ones come from the supplier's listing (`source='supplier_listing'`) or the
+  first customers.
+- **Honesty** No before/after, no video — those sections are seeded
   hidden rather than filled. Five specs are blank and render "Spec pending":
   tray width, tray depth, weight, projector resolution, throw distance. They
   stay blank until the product is measured.

@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
-import { formatMoney, savedPercent } from "~/lib/money";
+import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 
@@ -50,6 +50,9 @@ const IcoChat = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.5 12.3c0 4-3.8 7.2-8.5 7.2a9.9 9.9 0 0 1-2.9-.4L4 20.5l1.3-3.6A6.9 6.9 0 0 1 3.5 12.3C3.5 8.3 7.3 5 12 5s8.5 3.3 8.5 7.3z" /></svg>
 );
 
+const IcoTag = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3.5 11.6V4.5a1 1 0 0 1 1-1h7.1a1 1 0 0 1 .7.3l8 8a1 1 0 0 1 0 1.4l-7.1 7.1a1 1 0 0 1-1.4 0l-8-8a1 1 0 0 1-.3-.7z" /><circle cx="8" cy="8" r="1.5" /></svg>
+);
 const IcoBurger = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
 );
@@ -308,6 +311,12 @@ function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProduct
               {off ? <span className="cb-price__off">Save {off}%</span> : null}
             </div>
           ) : null}
+          {chosen && savedAmount(chosen.priceCents, chosen.compareAtCents) ? (
+            <div className="cb-price__save">
+              {IcoTag}
+              You save {formatMoney(savedAmount(chosen.priceCents, chosen.compareAtCents)!, currency)}
+            </div>
+          ) : null}
 
           {variants.length > 1 ? (
             <div className="cb-opts" role="radiogroup" aria-label="Choose a bundle">
@@ -340,7 +349,11 @@ function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProduct
                     <span>
                       <span className="cb-opt__t">{x.label}</span>
                       {x.sublabel ? <span className="cb-opt__s">{x.sublabel}</span> : null}
-                      {off ? <span className="cb-opt__save">Save {off}%</span> : null}
+                      {savedAmount(x.priceCents, x.compareAtCents) ? (
+                        <span className="cb-opt__save">
+                          Save {formatMoney(savedAmount(x.priceCents, x.compareAtCents)!, currency)}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="cb-opt__p">
                       <b>{formatMoney(x.priceCents, currency)}</b>

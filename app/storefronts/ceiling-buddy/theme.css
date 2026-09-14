@@ -22,7 +22,10 @@
   --sky: #8FC7F2;          /* the logo's bottom half */
   --sky-deep: #1B8DE0;
   --sky-ink: #0B4E7F;
-  --amber: #FFC169;        /* the product's LED */
+  --amber: #FFC169;        /* the product's LED — the top bar and nothing else */
+  --green: #14874B;        /* money saved */
+  --green-soft: #E6F5EC;
+  --red: #D92D20;          /* the deal, and the clock */
   --ink: #0E1116;          /* the logo's outline */
 
   --dim: rgba(14, 17, 22, 0.62);
@@ -177,9 +180,17 @@
 .cb-price__now { font-family: var(--display); font-size: clamp(38px, 5vw, 50px); font-weight: 600; }
 .cb-price__was { font-size: 20px; color: var(--dimmer); text-decoration: line-through; }
 .cb-price__off {
-  font-family: var(--display); font-size: 14px; font-weight: 600; color: var(--ink);
-  background: var(--amber); border: 0; border-radius: 999px; padding: 5px 13px;
+  font-family: var(--display); font-size: 14px; font-weight: 600; color: #fff;
+  background: var(--red); border: 0; border-radius: 999px; padding: 5px 13px;
 }
+/* The headline number: how many dollars come off, not a percentage. */
+.cb-price__save {
+  display: inline-flex; align-items: center; gap: 7px; margin-top: 10px;
+  font-family: var(--display); font-weight: 600; font-size: 15.5px;
+  color: var(--green); background: var(--green-soft);
+  border-radius: 999px; padding: 7px 15px; white-space: nowrap;
+}
+.cb-price__save svg { width: 18px; height: 18px; flex: 0 0 auto; }
 
 .cb-opts { display: grid; gap: 12px; margin: 26px 0; }
 .cb-opt {
@@ -222,13 +233,13 @@
   letter-spacing: .08em; text-transform: uppercase;
   border-radius: 999px; padding: 4px 12px; white-space: nowrap;
 }
-.cb-opt__flag--pop { background: var(--sky-deep); color: #fff; }
-.cb-opt__flag--best { background: var(--amber); color: var(--ink); }
+.cb-opt__flag--pop { background: var(--green); color: #fff; }
+.cb-opt__flag--best { background: var(--red); color: #fff; }
 .cb-opt--flagged { margin-top: 8px; }
 .cb-opt__save {
-  display: inline-block; margin-top: 4px;
+  display: inline-block; margin-top: 5px;
   font-family: var(--display); font-weight: 600; font-size: 12.5px;
-  background: rgba(27,141,224,.10); color: var(--sky-ink);
+  background: var(--green-soft); color: var(--green);
   border-radius: 999px; padding: 3px 10px;
 }
 
@@ -507,13 +518,15 @@
    already trusts. Nothing here is generated: it renders whatever is published
    on the Reviews screen, and shows nothing at all when that is empty. */
 
-.cb-revs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
-@media (max-width: 980px) { .cb-revs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 660px) { .cb-revs { grid-template-columns: minmax(0, 1fr); } }
+.cb-revs { columns: 3; column-gap: 20px; }
+@media (max-width: 980px) { .cb-revs { columns: 2; } }
+@media (max-width: 660px) { .cb-revs { columns: 1; } }
 
 .cb-rev {
   background: var(--paper); border: 1px solid var(--hair); border-radius: 14px;
   box-shadow: var(--lift); overflow: hidden;
+  break-inside: avoid; -webkit-column-break-inside: avoid;
+  margin: 0 0 20px; width: 100%;
 }
 .cb-rev__top { display: flex; align-items: center; gap: 11px; padding: 14px 16px 10px; }
 .cb-rev__av {
@@ -528,8 +541,8 @@
 .cb-rev__stars svg { width: 16px; height: 16px; }
 .cb-rev__body { padding: 0 16px 14px; font-size: 15px; line-height: 1.5; }
 .cb-rev__body b { font-family: var(--display); display: block; margin-bottom: 4px; font-size: 15.5px; }
-.cb-rev__pic { border-top: 1px solid var(--hair); background: var(--ink); }
-.cb-rev__pic img { width: 100%; display: block; }
+.cb-rev__pic { border-top: 1px solid var(--hair); background: var(--ink); aspect-ratio: 4 / 3; }
+.cb-rev__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cb-rev__bar {
   display: flex; gap: 20px; padding: 10px 16px; border-top: 1px solid var(--hair);
   color: var(--dim); font-size: 13px; font-family: var(--display); font-weight: 500;
