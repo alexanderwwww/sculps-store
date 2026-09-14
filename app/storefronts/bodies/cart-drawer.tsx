@@ -207,6 +207,13 @@ export function CartDrawerProvider({
               <span>Subtotal</span>
               <span>{formatMoney(cart?.subtotalCents ?? 0, currency)}</span>
             </div>
+            {cart && cart.lines.length > 0 ? (
+              <>
+                {/* Installments first, everywhere: the subtotal split four ways, computed. */}
+                <p className="bd-drawer__pay">or 4 × {formatMoney(Math.round(cart.subtotalCents / 4), currency)} with PayPal</p>
+                <p className="bd-drawer__ship">Free shipping is on. Pay in 4 at checkout.</p>
+              </>
+            ) : null}
 
             {publishableKey && cart && cart.lines.length > 0 ? (
               <ProductExpress
