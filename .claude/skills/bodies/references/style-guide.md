@@ -15,15 +15,21 @@ building anything for bodies — a page, an email, an ad, a render — match thi
   The contrast is the brand. Never a magazine photoshoot with people in it.
 - **Headline sits on the photograph.** A hero with text beside a picture is a
   product listing, not a campaign.
-- **Hero is the board floating over a saturated cobalt sky**, one shot per
-  colourway, swatches swap it in place. A lifestyle photo in the hero slot was
-  tried and rejected ("not that either").
-- **Sections alternate white → flat colour block → white.** Two blocks never
-  touch. Not every section gets colour.
-- **Four colourways, one row, no borders**, the board floats on a disc of its
-  own tint. Cards with borders or shadows were rejected.
-- **Footer is flat lime** with the wordmark oversized and bleeding off the
-  bottom edge.
+- **Hero is a crisp apartment photograph** (`bd-hero-apt.jpg`): the board on
+  oak floor by a window, right half; headline on the empty left. Two earlier
+  heroes were rejected: a lifestyle photo with a person ("not that either")
+  and the board floating over a sky ("I hate the picture in the sky").
+- **Copy Experiment literally.** Wide heavy grotesque (Archivo, wdth 118,
+  800) for every heading; white shop cards with a hairline border, a blue
+  badge, the product on a colour splash, caps name, price, lime pill; rounded
+  photos (14px) everywhere; ONE flat saturated band (swan) with the product
+  floating and a black seal; an icon row; the email card on a photograph; a
+  light footer with a chrome object and the wordmark bleeding off the bottom.
+- **Two blocks never touch.** White between everything coloured.
+- **Product photography is studio-flat**: each colourway has a flat-backdrop
+  studio still with the accessories laid out (`bd-studio-*.jpg`) that leads
+  its product page. People photos are iPhone BTS and live in steps, split,
+  workouts and the feed.
 - **No dummy data.** Specs say "Spec pending" until Alex sends them; the
   reviews section does not render with zero reviews; no fake stars, counts or
   press logos.
@@ -83,24 +89,34 @@ One primary and one ghost per view, never two primaries side by side.
 
 | # | type | look |
 |---|---|---|
-| 0 | buy_box | **Sky hero** (`.bd-hero--sky`): 16:9 board over cobalt sky, white type on the left third, eyebrow, h1, sub, lime + ghost buttons, four swatches that swap the colourway, reassurance line. Then **Four colourways** row (`.bd-ways`): disc tint, board, name, note, price, full-width Add to cart. Hover: board lifts and tilts −2°, disc grows. |
-| 1 | three_steps | **Matcha block.** Eyebrow in neon, h2, three 4:5 photos with 18px corners, big display numbers under each. |
-| 2 | benefits | White. Split, photo left 4:5, eyebrow + h2 + titled list + button right. |
-| 3 | product_grid | White. Four 3:4 tiles, `01–04` top-left, workout name in display caps bottom-left, image scales on hover. |
-| 4 | features | **Icy Swan block.** Split flipped, photo right, list left. |
-| 5 | trust_icons | White strip, five items, hairline top and bottom, hairline dividers between. |
-| 6 | social_proof_images | White. Heading, then a **horizontal snap strip** of 4:5 phone photos, 14px corners, colourway caption in caps. Bleeds off the right edge. |
-| 7 | reviews | Only renders with real reviews. Four-across cards. |
-| 8 | comparison_table | **Lilac block.** Eyebrow, h2, table inside a white 18px card; our column header is a lime pill. |
-| 9 | who_its_for | White. Three tinted cards (swan, lilac, bare tints), number top, title and copy bottom. |
-| 10 | whats_in_the_box | **Bare block.** Product render on a white disc left, hairline list right. |
+| 0 | buy_box | **Hero**: apartment photo 16:8.2, eyebrow, h1, sub, lime pill "Shop the board · $699" + ghost "How it works", caps reassurance line. Then **Shop the board** (`.bd-ways`): "SHOP ALL →" right; four white cards, 1px hairline, 10px radius, blue NEW badge, board cut-out on an SVG colour splash, caps name, note, price with compare struck, lime pill. Hover: board lifts and tilts. |
+| 1 | three_steps | White. h2 + lede, three 4:5 photos with 14px corners, `01 02 03`, caps h3, copy. |
+| 2 | benefits | White. Split, rounded photo left, eyebrow + h2 + titled list + lime pill right. |
+| 3 | product_grid | White. Four 3:4 rounded tiles, workout name in wide caps bottom-left, image scales on hover. |
+| 4 | features | **The band.** Flat swan block, eyebrow, h2, two bold-lead sentences, lime pill; the board cut-out floats right (rotated −8°, slow bob) with a spinning black seal "FOLDS FLAT STANDS UP". |
+| 5 | trust_icons | White, centred: h2, lede, five thin line icons with caps labels. |
+| 6 | social_proof_images | White. h2 + lede, horizontal snap strip of 4:5 phone photos, colourway captions in caps, bleeds right. |
+| 7 | reviews | Only with real reviews. Four bordered cards. |
+| 8 | comparison_table | White. h2 + lede, table inside a white bordered card; our column header is a lime pill. |
+| 9 | who_its_for | White. Three bordered cards, number top, caps title and copy bottom. |
+| 10 | whats_in_the_box | White. Product cut-out inside a bordered square left, hairline list right. |
 | 11 | specifications | White, tight. Two-column dl, blanks say "Spec pending". |
 | 12 | video_faq | White. `<details>` list, + / – markers. |
-| 14 | closing_cta | Photo band 21:9, copy right-aligned, then the **Join card**: white card over a photo, email + lime button. |
-| — | footer | Flat lime, four columns, legal row, oversized wordmark bleeding off the bottom. |
+| 14 | closing_cta | **Email card on a photograph**: white 14px card with shadow, h2, one line, pill input + lime "Get in". Posts to `/checkout/identify` with consent. |
+| — | footer | White. Join heading + pill email + socials, chrome object (`bd-chrome.jpg`), Shop and Help caps columns, legal row, wordmark at 22vw bleeding off the bottom. |
 
-Rhythm check: 0 white/sky · 1 **matcha** · 2 white · 3 white · 4 **swan** · 5 white ·
-6 white · 8 **lilac** · 9 white · 10 **bare** · 11 white · 12 white · 14 photo · foot lime.
+Rhythm check: 0 photo · 1 white · 2 white · 3 white · 4 **swan** · 5 white · 6 white ·
+8 white · 9 white · 10 white · 11 white · 12 white · 14 photo · foot white. One band.
+
+## Product page
+
+Two columns. Left: photo grid, the studio still full width on top, then the
+folded-against-the-wall shot, the screen detail, two phone photos, all 14px
+corners. Right, sticky: eyebrow, h2 colourway, price + compare, Pay Later
+line, one-paragraph description, four colourway tiles with cut-outs (current
+one outlined), full-width lime "Add to cart · $699", caps trust line, four
+accordions (In the box open by default, Workouts, Size & storage, Shipping).
+Sticky buy bar slides up when the button scrolls off.
 
 ## Product page
 
@@ -113,9 +129,14 @@ price, lime button.
 
 ## Images (what goes where)
 
-- `bd-sky-{swan,lilac,matcha,bare}.jpg` — hero composites, 2688×1520, board
-  three-quarter angle, sky on the left third empty.
-- `bd-card-*.png` — clean board render for the colourway row.
+- `bd-hero-apt.jpg` — the hero. Lilac board in a bright apartment, right half.
+- `bd-studio-{swan,lilac,matcha,bare}.jpg` — flat-backdrop studio stills with
+  accessories; lead each product page.
+- `bd-pdp-folded.jpg`, `bd-pdp-detail.jpg` — product page shots 2 and 3.
+- `bd-cut-*.png` — transparent board cut-outs: shop cards, band, colourway
+  tiles, cart lines, sticky bar.
+- `bd-chrome.jpg` — the footer object.
+- `bd-sky-*.jpg` — retired sky heroes, not used.
 - `bodies-*.png` — flat product render with accessories (variant image, in the
   box, cart lines).
 - `bd-hero-real*.png`, `bd-[a-f]-*.png` — iPhone lifestyle photos, people only.
