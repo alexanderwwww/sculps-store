@@ -42,8 +42,20 @@ export const WAYS: Record<string, { disc: string; ink: string; card: string; sky
     life: [`${M}/bd-d-bare-rest.png`, `${M}/bd-c-bare-latina.png`, `${M}/bd-f-bare-fold.png`, `${M}/bd-d-bare-hallway.png`],
   },
 };
-/** The three "who it's for" cards each sit on a colourway tint. */
+/** Cards and steps rotate through the colourway tints. */
 const WHO_TINTS = ["#D6E9F6", "#EEDCF5", "#F0E9DE"];
+/** Workout chips: one strong colour each. */
+const CHIPS = ["#C6FF3D", "#FF3FA4", "#BBD9EE", "#D9BEE8"];
+/** The feature tiles: five flat colour blocks. */
+const TILES = [
+  { bg: "#C6FF3D", fg: "#0E1600" },
+  { bg: "#BBD9EE", fg: "#0B0C0E" },
+  { bg: "#1E4636", fg: "#C3F53C" },
+  { bg: "#D9BEE8", fg: "#0B0C0E" },
+  { bg: "#FF3FA4", fg: "#FFFFFF" },
+];
+/** The product page shows everything: these home sections, in this order, under the buybox. */
+const PDP_SECTIONS = ["benefits", "three_steps", "product_grid", "features", "trust_icons", "whats_in_the_box", "specifications", "comparison_table", "social_proof_images", "reviews", "video_faq", "closing_cta"];
 const fallbackWay = { disc: "#EFEFEF", ink: "#0E0F12", card: "", sky: "", skyTall: "", studio: "", life: [] as string[] };
 export const wayOf = (label: string) => WAYS[label] ?? fallbackWay;
 
@@ -215,14 +227,6 @@ const TRUST_ICONS = [
   <svg viewBox="0 0 48 48" key="space"><path d="M8 8h10M8 8v10M40 40H30M40 40V30" /><rect x="16" y="16" width="16" height="16" rx="2" /></svg>,
 ];
 
-/** A soft colour splash behind a product, like the reference's cards. */
-function Splash({ colour }: { colour: string }) {
-  return (
-    <svg className="bd-way__splash" viewBox="0 0 200 200" aria-hidden="true">
-      <path fill={colour} d="M46 38c25-26 71-24 96-6 22 16 42 44 33 78-9 33-40 56-78 55-38 0-62-24-74-52C12 84 24 61 46 38z" />
-    </svg>
-  );
-}
 
 function renderSection(section: LoadedSection, page: LoadedProductPage, storeParam: string) {
   const v = section.values;
@@ -239,24 +243,28 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       return (
         <>
           <div className="bd-hero">
+            <div className="bd-hero__panel">
+              <div className="bd-hero__copy">
+                {val(v, "badge") ? <p className="bd-eyebrow">{val(v, "badge")}</p> : null}
+                {val(v, "heading") ? <h1 className="bd-h1">{val(v, "heading")}</h1> : null}
+                {val(v, "subheading") ? <p className="bd-hero__sub">{val(v, "subheading")}</p> : null}
+                <div className="bd-hero__cta">
+                  <a className="bd-btn bd-btn--big" href={lead ? `/products/${slug(lead.label)}${storeParam}` : `${href("/")}#shop`}>
+                    {val(v, "ctaLabel") || "Shop the board"}{lead ? ` · ${formatMoney(lead.priceCents, page.store.currency)}` : ""}
+                  </a>
+                  <a className="bd-btn bd-btn--big bd-btn--ghost" href={`${href("/")}#how`}>How it works</a>
+                </div>
+                <div className="bd-hero__ways" aria-label="Colourways">
+                  {page.variants.map((x) => (
+                    <a key={x.id} className="bd-dot" style={{ background: wayOf(x.label).disc }} href={`/products/${slug(x.label)}${storeParam}`} aria-label={x.label} title={x.label} />
+                  ))}
+                  <span className="bd-hero__way">{page.variants.length} colourways</span>
+                </div>
+                {val(v, "reassurance") ? <p className="bd-hero__sure">{val(v, "reassurance")}</p> : null}
+              </div>
+            </div>
             <div className="bd-hero__pic">
               <img src={shot} alt={alt} fetchPriority="high" />
-            </div>
-            <div className="bd-hero__in">
-              <div className="bd-wrap">
-                <div className="bd-hero__copy">
-                  {val(v, "badge") ? <p className="bd-eyebrow">{val(v, "badge")}</p> : null}
-                  {val(v, "heading") ? <h1 className="bd-h1">{val(v, "heading")}</h1> : null}
-                  {val(v, "subheading") ? <p className="bd-hero__sub">{val(v, "subheading")}</p> : null}
-                  <div className="bd-hero__cta">
-                    <a className="bd-btn" href={lead ? `/products/${slug(lead.label)}${storeParam}` : `${href("/")}#shop`}>
-                      {val(v, "ctaLabel") || "Shop the board"}{lead ? ` · ${formatMoney(lead.priceCents, page.store.currency)}` : ""}
-                    </a>
-                    <a className="bd-btn bd-btn--ghost" href={`${href("/")}#how`}>How it works</a>
-                  </div>
-                  {val(v, "reassurance") ? <p className="bd-hero__sure">{val(v, "reassurance")}</p> : null}
-                </div>
-              </div>
             </div>
           </div>
 
@@ -295,7 +303,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
             </div>
             <ol className="bd-steps">
               {items.map((b, i) => (
-                <li className="bd-step" key={b.id}>
+                <li className="bd-step" key={b.id} style={{ background: WHO_TINTS[i % WHO_TINTS.length] }}>
                   <div className="bd-step__pic">
                     {val(b.values, "image") ? <img src={val(b.values, "image")} alt={val(b.values, "title")} loading="lazy" /> : null}
                   </div>
@@ -316,7 +324,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       if (items.length === 0) return null;
       const shot = items.map((b) => val(b.values, "image")).find(Boolean);
       return (
-        <div className="bd-sec">
+        <div className="bd-sec bd-sec--matcha">
           <div className="bd-wrap bd-split">
             <div className="bd-split__pic">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
             <div className="bd-split__copy">
@@ -351,10 +359,10 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
               </div>
             </div>
             <div className="bd-moves">
-              {items.map((b) => (
+              {items.map((b, i) => (
                 <figure className="bd-move" key={b.id}>
                   {val(b.values, "image") ? <img src={val(b.values, "image")} alt={val(b.values, "title")} loading="lazy" /> : null}
-                  <span>{val(b.values, "title")}</span>
+                  <span style={{ background: CHIPS[i % CHIPS.length] }}>{val(b.values, "title")}</span>
                 </figure>
               ))}
             </div>
@@ -393,17 +401,24 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       const items = blocks.filter((b) => has(b.values, "title"));
       if (items.length === 0) return null;
       return (
-        <div className="bd-sec bd-center" id="story">
+        <div className="bd-sec" id="story">
           <div className="bd-wrap">
-            <h2 className="bd-h2">{val(v, "heading") || "Everything the studio has."}</h2>
-            <p className="bd-lede">{val(v, "subheading") || "Built for a small apartment and a full workout."}</p>
-            <div className="bd-feats">
-              {items.map((b, i) => (
-                <div className="bd-feat" key={b.id}>
-                  {TRUST_ICONS[i] ?? TRUST_ICONS[0]}
-                  <span>{val(b.values, "title")}</span>
-                </div>
-              ))}
+            <div className="bd-sec__head">
+              <div>
+                <h2 className="bd-h2">{val(v, "heading") || "Everything the studio has."}</h2>
+                <p className="bd-lede">{val(v, "subheading") || "Built for a small apartment and a full workout."}</p>
+              </div>
+            </div>
+            <div className="bd-tiles">
+              {items.map((b, i) => {
+                const t = TILES[i % TILES.length];
+                return (
+                  <div className="bd-tile" key={b.id} style={{ background: t.bg, color: t.fg }}>
+                    {TRUST_ICONS[i] ?? TRUST_ICONS[0]}
+                    <span>{val(b.values, "title")}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -464,7 +479,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       const rows = blocks.filter((b) => has(b.values, "label"));
       if (rows.length === 0) return null;
       return (
-        <div className="bd-sec">
+        <div className="bd-sec bd-sec--bare">
           <div className="bd-wrap">
             <div className="bd-sec__head">
               <div>
@@ -507,7 +522,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
             <div className="bd-sec__head">{val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}</div>
             <div className="bd-who">
               {items.map((b, i) => (
-                <div className="bd-who__item" key={b.id}>
+                <div className="bd-who__item" key={b.id} style={{ background: WHO_TINTS[i % WHO_TINTS.length] }}>
                   <span className="bd-who__n">{String(i + 1).padStart(2, "0")}</span>
                   <h3 className="bd-h3">{val(b.values, "title")}</h3>
                   <p>{val(b.values, "text")}</p>
@@ -527,7 +542,7 @@ function renderSection(section: LoadedSection, page: LoadedProductPage, storePar
       return (
         <div className="bd-sec">
           <div className="bd-wrap bd-split">
-            <div className="bd-split__pic bd-split__pic--product">{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
+            <div className="bd-split__pic bd-split__pic--product" style={{ background: leadWay.disc }}>{shot ? <img src={shot} alt={val(v, "heading")} loading="lazy" /> : null}</div>
             <div className="bd-split__copy">
               {val(v, "heading") ? <h2 className="bd-h2">{val(v, "heading")}</h2> : null}
               <ul className="bd-box">
@@ -624,7 +639,6 @@ function WayCard({ variant, currency, storeParam }: { variant: VariantRow; curre
     <div className="bd-way">
       <span className="bd-way__badge">New</span>
       <a className="bd-way__pic" href={`/products/${slug(variant.label)}${storeParam}`} aria-label={variant.label}>
-        <Splash colour={way.disc} />
         {shot ? <img src={shot} alt={variant.label} loading="lazy" /> : null}
       </a>
       <span className="bd-way__name">{variant.label}</span>
@@ -672,16 +686,19 @@ export function BodiesProduct({
 function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: VariantRow; storeParam: string }) {
   const drawer = useCartDrawer();
   const way = wayOf(variant.label);
-  // The gallery: the studio shot leads, then the product cut-out, the folded
-  // shot, the screen detail, then two phone photos. Real files only.
+  // The gallery: the studio shot leads, then the cut-out on the colourway
+  // tint, the folded shot, the screen detail, then the phone photos. Real
+  // files only.
   const gallery: { src: string; product?: boolean }[] = [
-    ...(way.studio ? [{ src: way.studio }] : way.card ? [{ src: way.card, product: true }] : []),
+    ...(way.studio ? [{ src: way.studio }] : []),
+    ...(way.card ? [{ src: way.card, product: true }] : []),
     { src: `${M}/bd-pdp-folded.jpg` },
     { src: `${M}/bd-pdp-detail.jpg` },
-    ...way.life.slice(0, 2).map((src) => ({ src })),
+    ...way.life.slice(0, 3).map((src) => ({ src })),
   ].filter((g, i, all) => all.findIndex((x) => x.src === g.src) === i);
   const sold = variant.available <= 0;
-  const monthly = Math.round(variant.priceCents / 12);
+  const monthly = Math.round(variant.priceCents / 4);
+  const saving = variant.compareAtCents && variant.compareAtCents > variant.priceCents ? variant.compareAtCents - variant.priceCents : 0;
   const buyRef = useRef<HTMLDivElement | null>(null);
   const [stuck, setStuck] = useState(false);
 
@@ -692,6 +709,9 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
     observer.observe(target);
     return () => observer.disconnect();
   }, []);
+
+  const byType = new Map(page.sections.map((x) => [x.type, x] as const));
+  const below = PDP_SECTIONS.map((t) => byType.get(t)).filter((x): x is LoadedSection => Boolean(x));
 
   return (
     <>
@@ -704,17 +724,18 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
           ))}
         </div>
 
-        <div className="bd-pdp__buybox">
-          <p className="bd-eyebrow">{page.product.title}</p>
-          <h1 className="bd-h2" style={{ marginTop: 8 }}>{variant.label}</h1>
+        <div className="bd-pdp__buybox" style={{ background: way.disc }}>
+          <div className="bd-pdp__top">
+            <p className="bd-eyebrow">{page.product.title}</p>
+            {saving ? <span className="bd-pdp__save">Save {formatMoney(saving, page.store.currency)}</span> : null}
+          </div>
+          <h1 className="bd-h1 bd-pdp__h1">{variant.label}</h1>
+          {variant.sublabel ? <p className="bd-pdp__tag">{variant.sublabel}</p> : null}
           <div className="bd-pdp__price">
             <b>{formatMoney(variant.priceCents, page.store.currency)}</b>
-            {variant.compareAtCents && variant.compareAtCents > variant.priceCents ? <s>{formatMoney(variant.compareAtCents, page.store.currency)}</s> : null}
+            {saving ? <s>{formatMoney(variant.compareAtCents!, page.store.currency)}</s> : null}
           </div>
-          <p className="bd-pdp__later">or about {formatMoney(monthly, page.store.currency)}/month with PayPal Pay Later</p>
-          <p className="bd-pdp__desc">
-            {variant.sublabel ? `${variant.sublabel}. ` : ""}A full Pilates board with a built-in screen, two resistance cables, ankle straps and two pads. Folds flat and stands on its end.
-          </p>
+          <p className="bd-pdp__later">or 4 × {formatMoney(monthly, page.store.currency)} with PayPal Pay in 4</p>
 
           <div className="bd-pdp__ways" role="list" aria-label="Colourway">
             {page.variants.map((other) => (
@@ -732,17 +753,14 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
           </div>
           <p className="bd-pdp__sure">Free shipping worldwide · Card, Apple Pay, Google Pay, PayPal</p>
 
+          <ul className="bd-pdp__get">
+            <li>The board with the built-in screen</li>
+            <li>Two resistance cables with foam handles</li>
+            <li>Two ankle straps · two pads</li>
+            <li>Charging cable</li>
+          </ul>
+
           <div className="bd-acc">
-            <details open>
-              <summary>What's in the box</summary>
-              <ul>
-                <li>The board with the built-in screen</li>
-                <li>Two resistance cables with foam handles</li>
-                <li>Two ankle straps</li>
-                <li>Two pads</li>
-                <li>Charging cable</li>
-              </ul>
-            </details>
             <details>
               <summary>Workouts</summary>
               <p>Pilates, sculpt, core, stretch and recovery, led on the screen. Every level, no phone propped on a chair.</p>
@@ -758,6 +776,10 @@ function Pdp({ page, variant, storeParam }: { page: LoadedProductPage; variant: 
           </div>
         </div>
       </div>
+
+      {below.map((section) => (
+        <Section key={section.id} section={section} page={page} storeParam={storeParam} />
+      ))}
 
       <div className={`bd-stick${stuck ? " bd-stick--on" : ""}`} aria-hidden={!stuck}>
         <div className="bd-wrap bd-stick__in">
