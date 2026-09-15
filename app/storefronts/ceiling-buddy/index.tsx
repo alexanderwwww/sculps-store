@@ -180,7 +180,7 @@ function Section({
     case "who_its_for":   return <WhoFor section={section} />;
     case "whats_in_the_box": return <InTheBox section={section} />;
     case "specifications": return <Specs section={section} />;
-    case "reviews":       return <Reviews section={section} page={page} />;
+    case "reviews":       return <><Reviews section={section} page={page} /><PayLater page={page} /></>;
     case "closing_cta":   return <Closing section={section} page={page} storeParam={storeParam} />;
     default:              return null;
   }
@@ -895,6 +895,41 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
 
         {asked.length ? <Chat blocks={asked} email={page.store.contactEmail} /> : null}
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------- pay later */
+/**
+ * Straight after the wall, where someone has just decided they want it and is
+ * about to look at the price again.
+ *
+ * The instalment is arithmetic on the real price, not a claim — four equal
+ * payments is what PayPal's Pay in 4 is. The eligibility line is there because
+ * it is genuinely PayPal's decision, not ours, and a promise we cannot keep is
+ * worse than no promise.
+ */
+function PayLater({ page }: { page: LoadedProductPage }) {
+  const buy = page.variants.find((v) => v.isDefault) ?? page.variants[0] ?? null;
+  if (!buy) return null;
+  const each = Math.round(buy.priceCents / 4);
+  return (
+    <section className="cb-pay4">
+      <div className="cb-wrap cb-pay4__in">
+        <span className="cb-pay4__mark">
+          <svg viewBox="0 0 24 28" aria-hidden="true">
+            <path d="M6.6 26.6H2.4L6 2.2h8.1c4.3 0 6.9 2.2 6.3 6.2-.6 4.4-4 6.7-8.5 6.7H8.5z" fill="#002C8A" />
+            <path d="M10.2 20.9H6l3.6-24.4" fill="none" />
+            <path d="M9.9 26.6H5.7L9.3 2.2h8.1c4.3 0 6.9 2.2 6.3 6.2-.6 4.4-4 6.7-8.5 6.7h-3.4z" fill="#009BE1" opacity=".85" />
+          </svg>
+          PayPal
+        </span>
+        <p>
+          Pay in 4. <b>{formatMoney(each, page.store.currency)}</b> today, then three more —
+          <span> interest free.</span>
+        </p>
+        <span className="cb-pay4__small">Subject to PayPal approval at checkout.</span>
       </div>
     </section>
   );

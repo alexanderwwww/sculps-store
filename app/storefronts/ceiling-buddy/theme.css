@@ -627,7 +627,7 @@
 .cb-ann__t i {
   font-style: normal; font-family: var(--display); font-weight: 600; font-size: 13px;
   letter-spacing: -0.005em;
-  display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px;
+  display: inline-flex; align-items: center; gap: 8px; padding: 16px 20px;
   white-space: nowrap; color: rgba(255,255,255,.82);
 }
 .cb-ann__t i::after {
@@ -643,17 +643,17 @@
    reads as the one thing being handed to you. */
 /* The offer, and only the offer. Flat neon on black — no gradient, no glow,
    no logo crammed inside it. */
+/* One green pill, nothing inside it. A chip within a chip is two shapes doing
+   the job of one. */
 .cb-ann__t i[data-pill] {
   color: #08130B; background: #A8FF2E;
-  border-radius: 999px; margin: 5px 14px; padding: 5px 6px 5px 14px;
-  gap: 9px; font-weight: 700; letter-spacing: -0.01em;
+  border-radius: 999px; margin: 5px 14px; padding: 6px 16px;
+  gap: 8px; font-weight: 700; letter-spacing: -0.01em;
 }
 .cb-ann__t i[data-pill]::after { content: none; }
 .cb-ann__t i[data-pill] code {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11.5px;
-  font-weight: 700; letter-spacing: .1em;
-  background: #08130B; color: #A8FF2E;
-  border-radius: 999px; padding: 4px 11px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+  font-weight: 700; letter-spacing: .1em; color: inherit; background: none; padding: 0;
 }
 
 /* The mark, riding the rail on its own. It keeps the wordmark's real
@@ -661,10 +661,12 @@
    becomes unreadable, so it simply rolls past with everything else. */
 .cb-ann__t i[data-logo] { padding: 0 18px; }
 .cb-ann__t i[data-logo]::after { content: none; }
+/* No badge behind it. The mark's own outline is black and disappears against
+   the bar, which is what lets the cream and the blue read as the logo rather
+   than as a sticker someone put there. */
 .cb-ann__t i[data-logo] img {
-  height: 21px; width: auto; display: block;
-  background: #fff; border-radius: 7px; padding: 4px 9px;
-  box-sizing: content-box; /* the height is the wordmark, not the badge */
+  flex: 0 0 auto; display: block;
+  height: 28px; width: 48px; max-width: none; object-fit: contain;
 }
 
 @media (prefers-reduced-motion: reduce) { .cb-ann__t i[data-logo] img { animation: none; } }
@@ -996,47 +998,6 @@
    one is under the eye on each visit. Amber, because it is the product's own
    light and the only place on the page warm enough to carry it. */
 
-.cb-ann {
-  display: flex; align-items: stretch;
-  background: var(--ink); color: #fff;
-  overflow: hidden;
-}
-
-/* The offer holds still on the left. A code that scrolls past is a code nobody
-   manages to read, let alone type. */
-.cb-ann__offer {
-  display: flex; align-items: center; gap: 10px; flex: 0 0 auto;
-  padding: 9px 18px; background: var(--cream); color: var(--ink);
-}
-.cb-ann__offer img { height: 20px; width: auto; }
-.cb-ann__amount { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: -0.02em; }
-.cb-ann__code {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; font-weight: 600;
-  letter-spacing: .06em;
-  border: 1px dashed rgba(20,22,26,.42); border-radius: 7px; padding: 4px 9px;
-  background: rgba(255,255,255,.7);
-}
-@media (max-width: 720px) {
-  .cb-ann__offer { padding: 8px 12px; gap: 8px; }
-  .cb-ann__offer img { height: 17px; }
-  .cb-ann__amount { font-size: 13px; }
-  .cb-ann__code { font-size: 11.5px; padding: 3px 7px; }
-}
-/* Under about 480px the promises have nowhere to go; the offer is the part
-   worth keeping. */
-@media (max-width: 480px) { .cb-ann__rail { display: none; } .cb-ann__offer { flex: 1; justify-content: center; } }
-
-.cb-ann__rail { position: relative; flex: 1; min-width: 0; overflow: hidden; display: flex; align-items: center; }
-.cb-ann__t { display: flex; width: max-content; animation: cb-slide 30s linear infinite; }
-.cb-ann__t > span { display: inline-flex; align-items: center; }
-.cb-ann__t i {
-  font-style: normal; font-family: var(--display); font-weight: 600; font-size: 13.5px;
-  letter-spacing: -0.01em;
-  display: inline-flex; align-items: center; gap: 8px; padding: 0 22px;
-  white-space: nowrap;
-}
-.cb-ann__t i::after { content: ""; width: 3px; height: 3px; border-radius: 999px; background: rgba(255,255,255,.45); margin-left: 22px; }
-.cb-ann__t i svg { width: 15px; height: 15px; flex: 0 0 auto; opacity: .8; }
 @media (prefers-reduced-motion: reduce) { .cb-ann__t { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .cb-ann__t { animation: none; } }
 
@@ -1565,3 +1526,22 @@
 .cb-card__cmt b { font-family: var(--display); font-weight: 700; }
 .cb-card__cmt span { font-size: 11.5px; color: #8A8D91; flex: 0 0 auto; padding-top: 2px; }
 .cb-card--ig .cb-card__more { padding-bottom: 8px; }
+
+/* ------------------------------------------------------------- pay later */
+/* A band, not a card: it is the one line between wanting it and looking at
+   the price again, and it should feel like part of the page rather than an
+   advertisement someone dropped in. */
+
+.cb-pay4 { background: var(--paper-2); border-block: 1px solid var(--hair); padding: 22px 0; }
+.cb-pay4__in { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 20px; }
+.cb-pay4__mark {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -0.02em;
+  color: #002C8A;
+}
+.cb-pay4__mark svg { width: 20px; height: 23px; }
+.cb-pay4__in p { margin: 0; font-size: clamp(16px, 2vw, 19px); }
+.cb-pay4__in p b { font-family: var(--display); font-weight: 700; }
+.cb-pay4__in p span { color: var(--dim); }
+.cb-pay4__small { font-size: 12.5px; color: var(--dimmer); }
+@media (max-width: 640px) { .cb-pay4__in { text-align: center; } }
