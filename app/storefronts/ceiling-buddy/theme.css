@@ -577,64 +577,69 @@
    already trusts. Nothing here is generated: it renders whatever is published
    on the Reviews screen, and shows nothing at all when that is empty. */
 
-.cb-revs { display: grid; gap: 18px; }
-/* Full bleed, with the ends faded, so the rows read as a stream that carries
-   on past the page rather than two lists that happen to move. */
+.cb-revs { display: grid; gap: 16px; }
+/* Full bleed with the ends faded, so the rows read as a stream carrying on
+   past the page rather than two lists that happen to move. */
 .cb-revs__row {
-  display: flex; gap: 18px; width: 100%; overflow: hidden;
-  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  display: flex; gap: 16px; width: 100%; overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
 }
-.cb-revs__track {
-  display: flex; gap: 18px; flex: 0 0 auto;
-  animation: cb-drift 46s linear infinite;
-}
+.cb-revs__track { display: flex; gap: 16px; flex: 0 0 auto; animation: cb-drift 64s linear infinite; }
 .cb-revs__row[data-track="1"] .cb-revs__track { animation-direction: reverse; }
-@keyframes cb-drift { to { transform: translateX(calc(-100% - 18px)); } }
-/* Stop it so a card can actually be read. */
+@keyframes cb-drift { to { transform: translateX(calc(-100% - 16px)); } }
 .cb-revs:hover .cb-revs__track, .cb-revs:focus-within .cb-revs__track { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .cb-revs__track { animation: none; } }
 
+/* One card, made of nothing: a hairline, a generous radius, a shadow you can
+   barely see. The restraint is what makes it read as true — a review that has
+   been designed hard looks like an advertisement. */
 .cb-rev {
-  /* A comment, not a testimonial card: no border, no shadow, just the text
-     sitting on the page the way it would under a post. */
-  background: transparent; border: 0; box-shadow: none;
-  width: 360px; flex: 0 0 auto; align-self: flex-start;
-  padding: 0 4px;
+  width: 380px; flex: 0 0 auto; align-self: flex-start;
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(20,22,26,.04), 0 12px 32px -22px rgba(20,22,26,.28);
+  padding: 20px 22px;
+  display: grid; gap: 14px;
 }
-@media (max-width: 520px) { .cb-rev { width: 84vw; } }
+@media (max-width: 520px) { .cb-rev { width: 86vw; padding: 18px 18px; } }
 
-.cb-rev__top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.cb-rev__top { display: flex; align-items: center; gap: 12px; }
 .cb-rev__av {
-  width: 36px; height: 36px; border-radius: 999px; flex: 0 0 auto;
-  display: grid; place-items: center; background: var(--paper-2); color: var(--dim);
-  font-family: var(--display); font-weight: 700; font-size: 15px;
+  width: 40px; height: 40px; border-radius: 999px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  background: var(--paper-2); color: var(--dim);
+  font-family: var(--display); font-weight: 700; font-size: 16px;
+  border: 1px solid var(--hair);
 }
-.cb-rev__id { display: grid; gap: 1px; min-width: 0; }
-.cb-rev__who { font-family: var(--display); font-weight: 700; font-size: 14.5px; letter-spacing: -0.02em; }
-.cb-rev__stars { display: flex; gap: 1px; color: #F0A500; }
-.cb-rev__stars svg { width: 12px; height: 12px; }
+.cb-rev__id { display: grid; gap: 3px; min-width: 0; }
+.cb-rev__who { font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+.cb-rev__stars { display: flex; gap: 2px; color: #F0A500; }
+.cb-rev__stars svg { width: 13px; height: 13px; }
 
-.cb-rev__body {
-  font-size: 15px; line-height: 1.5; color: var(--ink);
-  padding: 0 0 0 46px; margin-bottom: 10px;
-}
+.cb-rev__body { font-size: 15.5px; line-height: 1.55; color: var(--ink); margin: 0; }
+
 .cb-rev__pic {
-  margin-left: 46px; border-radius: 12px; overflow: hidden;
-  background: var(--ink); aspect-ratio: 4 / 3; margin-bottom: 10px;
+  border-radius: 14px; overflow: hidden; background: var(--ink);
+  aspect-ratio: 4 / 3; border: 1px solid var(--hair);
 }
 .cb-rev__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .cb-rev__bar {
-  display: flex; align-items: center; gap: 14px; padding-left: 46px;
+  display: flex; align-items: center; gap: 12px;
+  padding-top: 13px; border-top: 1px solid var(--hair);
   font-size: 12.5px; color: var(--dim);
 }
-.cb-rev__ok { display: inline-flex; align-items: center; gap: 5px; }
-.cb-rev__ok svg { width: 14px; height: 14px; }
-.cb-rev__when { color: var(--dimmer); }
+.cb-rev__ok { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.cb-rev__ok svg { width: 15px; height: 15px; }
+.cb-rev__when { margin-left: auto; color: var(--dimmer); }
 
-.cb-revs__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; margin-bottom: 30px; }
-.cb-revs__score { font-family: var(--display); font-weight: 600; font-size: 38px; line-height: 1; }
-.cb-revs__of { color: var(--dim); font-size: 14.5px; }
+.cb-revs__head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px;
+  margin-bottom: 34px;
+}
+.cb-revs__score { font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1; letter-spacing: -0.03em; }
+.cb-revs__of { color: var(--dim); font-size: 14px; }
 
 /* -------------------------------------------------------------- UGC frame */
 /* Sits directly under the buy box. Phone-shaped, because every piece of media

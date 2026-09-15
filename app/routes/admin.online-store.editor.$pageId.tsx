@@ -61,6 +61,14 @@ export function links() {
   return [{ rel: "stylesheet", href: editorHref }];
 }
 
+/**
+ * The admin is never cached. A stale screen here is not a slow screen, it is a
+ * screen showing a feature that no longer exists — or hiding one that does.
+ */
+export function headers() {
+  return { "Cache-Control": "no-store, must-revalidate" };
+}
+
 export async function loader({ context, request, params }: Route.LoaderArgs) {
   await requireUser(context.db, request);
   const url = new URL(request.url);
