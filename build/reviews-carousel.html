@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reviews Carousel</title>
+
+<!-- =====================================================================
+     REVIEWS CAROUSEL - reusable component
+
+     Two card types, one marquee:
+       .rv-social   social post - avatar, verified tick, star row, like count
+       .rv-thread   iMessage-style conversation
+
+     The row scrolls with `marquee`; each card also bobs on its own with
+     `bob`, staggered by a negative animation-delay so they never move in
+     lockstep. Duplicate the whole set of cards once inside .rv-track so the
+     loop is seamless at translateX(-50%).
+
+     THE CONTENT BELOW IS PLACEHOLDER. Replace it with real reviews tied to
+     verified orders - a review app is the right source. Never ship invented
+     names, handles, verified ticks or like counts: fake reviews are separately
+     actionable in the US, UK and EU, and payment processors treat them as
+     disqualifying rather than fixable.
+     ===================================================================== -->
+
+<style>
+:root{
+  --pg:#1a1b1f;
+  --card:rgba(26,27,32,.74);
+  --txt:#f4f4f6;
+  --txt2:#a9aab1;
+  --txt3:#74757c;
+  --hair:rgba(255,255,255,.085);
+  --rvb:rgba(255,255,255,.08);
+  --gloss:rgba(255,255,255,.09);
+  --glow:rgba(255,255,255,.04);
+  --sheen:rgba(255,255,255,.17);
+  --shadow:rgba(0,0,0,.45);
+  --blue:#3a82fb;
+  --star:#f5a623;
+  --heart:#ec4a5e;
+  --bubble:rgba(125,125,138,.19);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--pg);color:var(--txt);
+  font-family:system-ui,-apple-system,'SF Pro Display','SF Pro Text','Helvetica Neue',Helvetica,sans-serif;
+  letter-spacing:-.011em;
+}
+
+/* ---------- section head ---------- */
+.rv-sec{position:relative;width:100%;background:var(--pg);padding:5.4rem 0 0}
+.rv-head{padding:0 2.06rem;text-align:center}
+.rv-head h2{
+  margin:0;font-size:clamp(2.4rem,5.4vw,4.4rem);font-weight:700;
+  letter-spacing:-.04em;line-height:1;color:var(--txt);
+}
+.rv-head p{
+  margin:1rem auto 0;max-width:32rem;font-size:1.14rem;line-height:1.45;
+  letter-spacing:-.015em;color:var(--txt2);text-wrap:pretty;
+}
+
+/* ---------- the marquee ---------- */
+.rv-coaster{position:relative;padding:4.6rem 0 5.2rem;overflow:hidden;cursor:grab;touch-action:pan-y}
+.rv-line{position:absolute;left:0;right:0;top:50%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--hair) 12%,var(--hair) 88%,transparent)}
+.rv-mask{
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+  transform:translateZ(0);
+}
+.rv-track{display:flex;align-items:center;width:max-content;animation:marquee 72s linear infinite}
+.rv-coaster:hover .rv-track{animation-play-state:paused}
+@keyframes marquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@keyframes bob{
+  0%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+  25%{transform:translate3d(0,0,0) rotate(3deg)}
+  50%{transform:translate3d(0,2.6rem,0) rotate(0deg)}
+  75%{transform:translate3d(0,0,0) rotate(-3deg)}
+  100%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+}
+@media (prefers-reduced-motion:reduce){
+  .rv-track,.rv-card{animation:none !important}
+}
+
+/* ---------- the card ---------- */
+.rv-card{flex:0 0 auto;width:17.2rem;margin-right:1.05rem;animation:bob 24s linear infinite}
+.rv-card--narrow{width:15.4rem}
+.rv-inner{
+  padding:.95rem 1rem;border-radius:1.15rem;
+  background:linear-gradient(180deg,var(--gloss),rgba(255,255,255,0) 44%,var(--glow)),var(--card);
+  border:1px solid var(--rvb);
+  box-shadow:inset 0 1px 0 var(--sheen),inset 0 -1px 0 var(--glow),0 .5rem 1.6rem var(--shadow);
+}
+
+/* social card */
+.rv-top{display:flex;align-items:center;gap:.6rem}
+.rv-av{flex:0 0 auto;width:2.15rem;height:2.15rem;border-radius:50%;overflow:hidden;display:block}
+.rv-id{flex:1;min-width:0;display:flex;flex-direction:column;gap:.05rem}
+.rv-name-row{display:flex;align-items:center;gap:.3rem}
+.rv-name{font-size:.88rem;font-weight:600;letter-spacing:-.015em;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-handle{font-size:.7rem;color:var(--txt3)}
+.rv-stars{font-size:.68rem;letter-spacing:.04em;color:var(--star)}
+.rv-text{margin:.62rem 0 0;font-size:.99rem;font-weight:450;line-height:1.42;
+  letter-spacing:-.014em;color:var(--txt);text-wrap:pretty}
+.rv-photo{position:relative;margin-top:.68rem;width:100%;aspect-ratio:4/3;border-radius:.72rem;overflow:hidden}
+.rv-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.rv-meta{margin-top:.68rem;display:flex;align-items:center;gap:.85rem;font-size:.72rem;color:var(--txt2)}
+.rv-likes{display:inline-flex;align-items:center;gap:.24rem}
+.rv-time{margin-left:auto;color:var(--txt3)}
+
+/* iMessage card */
+.rv-thread-top{display:flex;align-items:center;gap:.45rem;padding-bottom:.6rem;border-bottom:1px solid var(--hair)}
+.rv-thread-av{flex:0 0 auto;width:1.65rem;height:1.65rem;border-radius:50%;overflow:hidden;display:block}
+.rv-thread-name{font-size:.8rem;font-weight:600;letter-spacing:-.015em;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-thread-app{margin-left:auto;font-size:.6rem;letter-spacing:.06em;color:var(--txt3)}
+.rv-chat{margin-top:.62rem;display:flex;flex-direction:column;gap:.28rem}
+.rv-in,.rv-out{max-width:82%;padding:.38rem .66rem;font-size:.89rem;line-height:1.34}
+.rv-in{align-self:flex-start;border-radius:1rem 1rem 1rem .28rem;background:var(--bubble);color:var(--txt)}
+.rv-out{align-self:flex-end;border-radius:1rem 1rem .28rem 1rem;background:var(--blue);color:#fff}
+.rv-chat-photo{align-self:flex-end;position:relative;width:62%;aspect-ratio:4/3;
+  border-radius:1rem 1rem .28rem 1rem;overflow:hidden}
+.rv-chat-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.rv-inputbar{margin-top:.5rem;height:1.5rem;border-radius:.75rem;background:rgba(125,125,138,.13);
+  display:flex;align-items:center;padding:0 .5rem}
+.rv-inputbar span{font-size:.66rem;color:var(--txt3)}
+</style>
+</head>
+<body>
+
+<section class="rv-sec">
+  <div class="rv-head">
+    <h2>Ride to the stars.</h2>
+    <p>Placeholder heading copy — swap for your own line.</p>
+  </div>
+
+  <div class="rv-coaster">
+    <div class="rv-line"></div>
+    <div class="rv-mask">
+      <div class="rv-track">
+
+        <!-- ===== SOCIAL CARD ===== -->
+        <div class="rv-card" style="animation-delay:0s">
+          <div class="rv-inner">
+            <div class="rv-top">
+              <span class="rv-av" style="background:linear-gradient(158deg,oklch(.72 .14 248),oklch(.55 .16 274))"></span>
+              <span class="rv-id">
+                <span class="rv-name-row">
+                  <span class="rv-name">Reviewer name</span>
+                  <svg width="11" height="11" viewBox="0 0 12 12" style="flex:0 0 auto"><circle cx="6" cy="6" r="6" fill="#3a82fb"></circle><polyline points="3 6.2 5.3 8.5 9 4.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+                </span>
+                <span class="rv-handle">@handle · Instagram</span>
+              </span>
+              <span class="rv-stars">★★★★★</span>
+            </div>
+            <p class="rv-text">Short review quote goes here — two or three lines reads best in this card width.</p>
+            <div class="rv-meta">
+              <span class="rv-likes"><svg width="11" height="11" viewBox="0 0 12 12" fill="#ec4a5e"><path d="M6 10.6S.9 7.4.9 4.2A2.7 2.7 0 0 1 6 2.9a2.7 2.7 0 0 1 5.1 1.3c0 3.2-5.1 6.4-5.1 6.4z"></path></svg>0</span>
+              <span>Reply</span>
+              <span class="rv-time">2d</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== SOCIAL CARD WITH PHOTO ===== -->
+        <div class="rv-card" style="animation-delay:-5.667s">
+          <div class="rv-inner">
+            <div class="rv-top">
+              <span class="rv-av" style="background:linear-gradient(158deg,oklch(.72 .14 196),oklch(.55 .16 222))"></span>
+              <span class="rv-id">
+                <span class="rv-name-row">
+                  <span class="rv-name">Reviewer name</span>
+                  <svg width="11" height="11" viewBox="0 0 12 12" style="flex:0 0 auto"><circle cx="6" cy="6" r="6" fill="#3a82fb"></circle><polyline points="3 6.2 5.3 8.5 9 4.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+                </span>
+                <span class="rv-handle">@handle · Instagram</span>
+              </span>
+              <span class="rv-stars">★★★★★</span>
+            </div>
+            <p class="rv-text">A review with a customer photo attached below it.</p>
+            <div class="rv-photo"><img src="PHOTO_URL" alt=""></div>
+            <div class="rv-meta">
+              <span class="rv-likes"><svg width="11" height="11" viewBox="0 0 12 12" fill="#ec4a5e"><path d="M6 10.6S.9 7.4.9 4.2A2.7 2.7 0 0 1 6 2.9a2.7 2.7 0 0 1 5.1 1.3c0 3.2-5.1 6.4-5.1 6.4z"></path></svg>0</span>
+              <span>Reply</span>
+              <span class="rv-time">3d</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== iMESSAGE THREAD CARD ===== -->
+        <div class="rv-card rv-card--narrow" style="animation-delay:-11.335s">
+          <div class="rv-inner">
+            <div class="rv-thread-top">
+              <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="#3a82fb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><polyline points="6.2 1.4 1.6 6.5 6.2 11.6"></polyline></svg>
+              <span class="rv-thread-av" style="background:linear-gradient(158deg,oklch(.72 .14 22),oklch(.55 .16 48))"></span>
+              <span class="rv-thread-name">Name</span>
+              <span class="rv-thread-app">iMESSAGE</span>
+            </div>
+            <div class="rv-chat">
+              <span class="rv-in">incoming message</span>
+              <span class="rv-out">outgoing reply</span>
+              <span class="rv-in">another question</span>
+              <span class="rv-out">the payoff line</span>
+              <span class="rv-chat-photo"><img src="PHOTO_URL" alt=""></span>
+            </div>
+            <div class="rv-inputbar"><span>iMessage</span></div>
+          </div>
+        </div>
+
+        <!-- ===== SOCIAL CARD ===== -->
+        <div class="rv-card" style="animation-delay:-16.443s">
+          <div class="rv-inner">
+            <div class="rv-top">
+              <span class="rv-av" style="background:linear-gradient(158deg,oklch(.72 .14 312),oklch(.55 .16 338))"></span>
+              <span class="rv-id">
+                <span class="rv-name-row">
+                  <span class="rv-name">Reviewer name</span>
+                  <svg width="11" height="11" viewBox="0 0 12 12" style="flex:0 0 auto"><circle cx="6" cy="6" r="6" fill="#3a82fb"></circle><polyline points="3 6.2 5.3 8.5 9 4.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+                </span>
+                <span class="rv-handle">@handle · Facebook</span>
+              </span>
+              <span class="rv-stars">★★★★★</span>
+            </div>
+            <p class="rv-text">A slightly longer quote, so you can see how the card grows with the text it holds.</p>
+            <div class="rv-meta">
+              <span class="rv-likes"><svg width="11" height="11" viewBox="0 0 12 12" fill="#ec4a5e"><path d="M6 10.6S.9 7.4.9 4.2A2.7 2.7 0 0 1 6 2.9a2.7 2.7 0 0 1 5.1 1.3c0 3.2-5.1 6.4-5.1 6.4z"></path></svg>0</span>
+              <span>Reply</span>
+              <span class="rv-time">5d</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== iMESSAGE THREAD CARD ===== -->
+        <div class="rv-card rv-card--narrow" style="animation-delay:-3.778s">
+          <div class="rv-inner">
+            <div class="rv-thread-top">
+              <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="#3a82fb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><polyline points="6.2 1.4 1.6 6.5 6.2 11.6"></polyline></svg>
+              <span class="rv-thread-av" style="background:linear-gradient(158deg,oklch(.72 .14 150),oklch(.55 .16 176))"></span>
+              <span class="rv-thread-name">Name</span>
+              <span class="rv-thread-app">iMESSAGE</span>
+            </div>
+            <div class="rv-chat">
+              <span class="rv-in">a short incoming line</span>
+              <span class="rv-chat-photo"><img src="PHOTO_URL" alt=""></span>
+              <span class="rv-out">reply</span>
+              <span class="rv-in">closing line</span>
+            </div>
+            <div class="rv-inputbar"><span>iMessage</span></div>
+          </div>
+        </div>
+
+        <!-- ===== SOCIAL CARD WITH PHOTO ===== -->
+        <div class="rv-card" style="animation-delay:-22.111s">
+          <div class="rv-inner">
+            <div class="rv-top">
+              <span class="rv-av" style="background:linear-gradient(158deg,oklch(.72 .14 34),oklch(.55 .16 60))"></span>
+              <span class="rv-id">
+                <span class="rv-name-row">
+                  <span class="rv-name">Reviewer name</span>
+                  <svg width="11" height="11" viewBox="0 0 12 12" style="flex:0 0 auto"><circle cx="6" cy="6" r="6" fill="#3a82fb"></circle><polyline points="3 6.2 5.3 8.5 9 4.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+                </span>
+                <span class="rv-handle">@handle · Instagram</span>
+              </span>
+              <span class="rv-stars">★★★★★</span>
+            </div>
+            <p class="rv-text">Another quote with a photo below.</p>
+            <div class="rv-photo"><img src="PHOTO_URL" alt=""></div>
+            <div class="rv-meta">
+              <span class="rv-likes"><svg width="11" height="11" viewBox="0 0 12 12" fill="#ec4a5e"><path d="M6 10.6S.9 7.4.9 4.2A2.7 2.7 0 0 1 6 2.9a2.7 2.7 0 0 1 5.1 1.3c0 3.2-5.1 6.4-5.1 6.4z"></path></svg>0</span>
+              <span>Reply</span>
+              <span class="rv-time">1w</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== SOCIAL CARD ===== -->
+        <div class="rv-card" style="animation-delay:-8.887s">
+          <div class="rv-inner">
+            <div class="rv-top">
+              <span class="rv-av" style="background:linear-gradient(158deg,oklch(.72 .14 96),oklch(.55 .16 122))"></span>
+              <span class="rv-id">
+                <span class="rv-name-row">
+                  <span class="rv-name">Reviewer name</span>
+                  <svg width="11" height="11" viewBox="0 0 12 12" style="flex:0 0 auto"><circle cx="6" cy="6" r="6" fill="#3a82fb"></circle><polyline points="3 6.2 5.3 8.5 9 4.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+                </span>
+                <span class="rv-handle">@handle · Facebook</span>
+              </span>
+              <span class="rv-stars">★★★★★</span>
+            </div>
+            <p class="rv-text">Keep quotes under about twenty words so every card stays a similar height.</p>
+            <div class="rv-meta">
+              <span class="rv-likes"><svg width="11" height="11" viewBox="0 0 12 12" fill="#ec4a5e"><path d="M6 10.6S.9 7.4.9 4.2A2.7 2.7 0 0 1 6 2.9a2.7 2.7 0 0 1 5.1 1.3c0 3.2-5.1 6.4-5.1 6.4z"></path></svg>0</span>
+              <span>Reply</span>
+              <span class="rv-time">1w</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== SOCIAL CARD ===== -->
+        <div class="rv-card" style="animation-delay:-14.554s">
+          <div class="rv-inner">
+            <div class="rv-top">
+              <span class="rv-av" style="background:linear-gradient(158deg,oklch(.72 .14 268),oklch(.55 .16 294))"></span>
+              <span class="rv-id">
+                <span class="rv-name-row">
+                  <span class="rv-name">Reviewer name</span>
+                  <svg width="11" height="11" viewBox="0 0 12 12" style="flex:0 0 auto"><circle cx="6" cy="6" r="6" fill="#3a82fb"></circle><polyline points="3 6.2 5.3 8.5 9 4.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+                </span>
+                <span class="rv-handle">@handle · Instagram</span>
+              </span>
+              <span class="rv-stars">★★★★★</span>
+            </div>
+            <p class="rv-text">Mix card widths and add photos to some, so the row never looks uniform.</p>
+            <div class="rv-meta">
+              <span class="rv-likes"><svg width="11" height="11" viewBox="0 0 12 12" fill="#ec4a5e"><path d="M6 10.6S.9 7.4.9 4.2A2.7 2.7 0 0 1 6 2.9a2.7 2.7 0 0 1 5.1 1.3c0 3.2-5.1 6.4-5.1 6.4z"></path></svg>0</span>
+              <span>Reply</span>
+              <span class="rv-time">2w</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duplicate every card above, in the same order, right here.
+             The marquee ends at translateX(-50%), so the second copy is what
+             makes the loop seamless. -->
+
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
