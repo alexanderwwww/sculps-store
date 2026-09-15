@@ -288,16 +288,29 @@ function Announce({
   // The code rides the rail with everything else, as a pill. Holding it still
   // on a cream block made a beige bar; on black it can move and still be read,
   // because it is the only coloured thing going past.
-  const items: { key: string; node: React.ReactNode; pill?: boolean }[] = [
+  // The pill says the offer and nothing else. The logo rides the rail on its
+  // own, turning as it goes — a mark rolling past is brand; a mark crammed
+  // into the offer is clutter.
+  const mark = { key: "mark", logo: true, node: <img src={LOGO} alt="" /> };
+  const pill = (key: string) => ({
+    key,
+    pill: true,
+    node: (
+      <>
+        {amount}
+        <code>{offer!.code}</code>
+      </>
+    ),
+  });
+
+  const items: { key: string; node: React.ReactNode; pill?: boolean; logo?: boolean }[] = [
     { key: "ship", node: <>{IcoTruck} Free US shipping</> },
-    ...(offer && amount
-      ? [{ key: "code", pill: true, node: <><img src={LOGO} alt="" />{amount}<code>{offer.code}</code></> }]
-      : []),
+    ...(offer && amount ? [pill("code")] : []),
+    { ...mark, key: "mark1" },
     { key: "ret", node: <>{IcoReturn} 30 nights to change your mind</> },
     { key: "war", node: <>{IcoShield} 1-year warranty</> },
-    ...(offer && amount
-      ? [{ key: "code2", pill: true, node: <><img src={LOGO} alt="" />{amount}<code>{offer.code}</code></> }]
-      : []),
+    ...(offer && amount ? [pill("code2")] : []),
+    { ...mark, key: "mark2" },
     { key: "fast", node: <>{IcoBolt} Ships in 3-5 business days</> },
   ];
 
@@ -314,7 +327,9 @@ function Announce({
         {[0, 1].map((n) => (
           <span key={n}>
             {items.map((it) => (
-              <i key={it.key} data-pill={it.pill ? "" : undefined}>{it.node}</i>
+              <i key={it.key} data-pill={it.pill ? "" : undefined} data-logo={it.logo ? "" : undefined}>
+                {it.node}
+              </i>
             ))}
           </span>
         ))}
