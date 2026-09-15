@@ -258,8 +258,6 @@ function Announce({
   offer: { code: string; kind: string; value: number } | null;
   currency: string;
 }) {
-  // The offer sits still on the left where it can be read and copied; the
-  // promises scroll past it. A code that moves is a code nobody uses.
   const amount =
     offer && offer.kind === "fixed"
       ? `${formatMoney(offer.value, currency)} off`
@@ -269,32 +267,39 @@ function Announce({
           ? "Free shipping"
           : null;
 
-  const says = [
-    [IcoTruck, "Free US shipping"],
-    [IcoReturn, "30 nights to change your mind"],
-    [IcoShield, "1-year warranty"],
-    [IcoBolt, "Ships in 3-5 business days"],
-  ] as const;
+  // The code rides the rail with everything else, as a pill. Holding it still
+  // on a cream block made a beige bar; on black it can move and still be read,
+  // because it is the only coloured thing going past.
+  const items: { key: string; node: React.ReactNode; pill?: boolean }[] = [
+    { key: "ship", node: <>{IcoTruck} Free US shipping</> },
+    ...(offer && amount
+      ? [{ key: "code", pill: true, node: <>{amount} · <code>{offer.code}</code></> }]
+      : []),
+    { key: "ret", node: <>{IcoReturn} 30 nights to change your mind</> },
+    { key: "war", node: <>{IcoShield} 1-year warranty</> },
+    ...(offer && amount
+      ? [{ key: "code2", pill: true, node: <>{amount} · <code>{offer.code}</code></> }]
+      : []),
+    { key: "fast", node: <>{IcoBolt} Ships in 3-5 business days</> },
+  ];
 
   return (
-    <div className="cb-ann">
-      {offer && amount ? (
-        <div className="cb-ann__offer">
-          <img src={LOGO} alt="" />
-          <span className="cb-ann__amount">{amount}</span>
-          <code className="cb-ann__code">{offer.code}</code>
-        </div>
-      ) : null}
-      <div className="cb-ann__rail" aria-label="Free US shipping, 30 nights to change your mind, 1 year warranty, ships in 3 to 5 business days">
-        <div className="cb-ann__t" aria-hidden="true">
-          {[0, 1].map((n) => (
-            <span key={n}>
-              {says.map(([ico, text]) => (
-                <i key={text}>{ico}{text}</i>
-              ))}
-            </span>
-          ))}
-        </div>
+    <div
+      className="cb-ann"
+      aria-label={
+        amount
+          ? `${amount} with code ${offer!.code}. Free US shipping, 30 nights to change your mind, 1 year warranty.`
+          : "Free US shipping, 30 nights to change your mind, 1 year warranty"
+      }
+    >
+      <div className="cb-ann__t" aria-hidden="true">
+        {[0, 1].map((n) => (
+          <span key={n}>
+            {items.map((it) => (
+              <i key={it.key} data-pill={it.pill ? "" : undefined}>{it.node}</i>
+            ))}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -525,20 +530,17 @@ function Steps({ section }: { section: LoadedSection }) {
 /* --------------------------------------------------------------- benefits */
 
 function Benefits({ section }: { section: LoadedSection }) {
-  const items = section.blocks.filter((b) => has(b.values, "title"));
-  if (!items.length) return null;
+  const shot = section.blocks.find((b) => has(b.values, "image"));
+  if (!shot) return null;
   return (
-    <section className="cb-section">
+    <section className="cb-hero">
       <div className="cb-wrap">
-        <Head section={section} />
-        <div className="cb-tiles">
-          {items.map((b) => (
-            <figure className="cb-tile" key={b.id}>
-              {has(b.values, "image") ? <img src={val(b.values, "image")} alt="" loading="lazy" /> : null}
-              <figcaption>{val(b.values, "title")}</figcaption>
-            </figure>
-          ))}
-        </div>
+        <figure className="cb-hero__pic">
+          <img src={val(shot.values, "image")} alt={val(shot.values, "title")} loading="lazy" />
+        </figure>
+        {has(section.values, "heading") ? (
+          <h2 className="cb-h2 cb-hero__line">{val(section.values, "heading")}</h2>
+        ) : null}
       </div>
     </section>
   );
@@ -569,24 +571,13 @@ function Features({ section }: { section: LoadedSection }) {
 /* ------------------------------------------------------------- proof wall */
 
 function ProofWall({ section }: { section: LoadedSection }) {
-  const shots = section.blocks.filter((b) => has(b.values, "image"));
-  if (!shots.length) return null;
+  const shot = section.blocks.find((b) => has(b.values, "image"));
+  if (!shot) return null;
+  // One photograph, edge to edge, nothing written on it. Six of them read as a
+  // contact sheet; one reads as the night.
   return (
-    <section className="cb-section" id="proof">
-      <div className="cb-wrap">
-        <Head section={section} />
-      </div>
-      {/* Edge to edge, one uniform crop, no gaps. The mosaic of different
-          shapes made six good photographs look like a contact sheet; a single
-          tall crop repeated reads as a wall of the same night, which is what
-          it is. */}
-      <div className="cb-wall">
-        {shots.map((b) => (
-          <figure className="cb-wall__i" key={b.id}>
-            <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
-          </figure>
-        ))}
-      </div>
+    <section className="cb-night" id="proof">
+      <img src={val(shot.values, "image")} alt={val(shot.values, "caption")} loading="lazy" />
     </section>
   );
 }
@@ -1071,57 +1062,54 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
   if (!rows.length) return null;
   const mean = rows.reduce((n, r) => n + r.rating, 0) / rows.length;
   return (
-    <section className="cb-section" id="reviews">
+    <section className="cb-revs-s" id="reviews">
       <div className="cb-wrap">
-        <Head section={section} />
         <div className="cb-revs__head">
           <span className="cb-revs__score">{mean.toFixed(1)}</span>
-          <span className="cb-rev__stars" style={{ padding: 0 }}>
+          <span className="cb-revs__stars" aria-hidden="true">
             {[0, 1, 2, 3, 4].map((n) => (
-              <span key={n} style={{ opacity: n < Math.round(mean) ? 1 : 0.25 }}>{IcoStar}</span>
+              <span key={n} style={{ opacity: n < Math.round(mean) ? 1 : 0.28 }}>{IcoStar}</span>
             ))}
           </span>
           <span className="cb-revs__of">
             {rows.length} {rows.length === 1 ? "review" : "reviews"}
           </span>
         </div>
-        {/* Two tracks, drifting opposite ways. Each is printed twice so the
-            loop has no seam; the copy is hidden from screen readers and the
-            whole thing stops on hover so a card can actually be read. */}
-        <div className="cb-revs">
-          {[0, 1].map((track) => (
-            <div className="cb-revs__row" data-track={track} key={track}>
-              {[0, 1].map((pass) => (
-                <div className="cb-revs__track" key={pass} aria-hidden={pass === 1 ? true : undefined}>
-                  {rows.filter((_, i) => i % 2 === track).map((r) => (
-            <article className="cb-rev" key={`${pass}-${r.id}`}>
-              <div className="cb-rev__top">
-                <div className="cb-rev__av">{r.name.trim().charAt(0).toUpperCase()}</div>
-                <div className="cb-rev__id">
-                  <span className="cb-rev__who">{r.name}</span>
-                  <span className="cb-rev__stars" aria-label={`${r.rating} out of 5`}>
-                    {[0, 1, 2, 3, 4].map((n) => (
-                      <span key={n} style={{ opacity: n < r.rating ? 1 : 0.2 }}>{IcoStar}</span>
-                    ))}
-                  </span>
-                </div>
-              </div>
-              <div className="cb-rev__body">{r.body}</div>
-              {r.imageUrl ? (
-                <div className="cb-rev__pic">
-                  <img src={r.imageUrl} alt="" loading="lazy" />
-                </div>
-              ) : null}
-              <div className="cb-rev__bar">
-                {/* A count that is drawn rather than stored would be a number we
-                    made up, so this shows the two things we actually know: that
-                    the buyer was verified, and when they wrote. */}
-                {r.verified ? <span className="cb-rev__ok">{IcoVerified} Verified buyer</span> : null}
-                <span className="cb-rev__when">{sinceText(r.reviewedOn)}</span>
-              </div>
-            </article>
-                  ))}
-                </div>
+      </div>
+
+      {/* One row, moving. Printed twice so the loop has no seam; the second
+          pass is hidden from screen readers. It stops on hover so a card can
+          actually be read. */}
+      <div className="cb-revs">
+        <div className="cb-revs__track">
+          {[0, 1].map((pass) => (
+            <div className="cb-revs__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+              {rows.map((r) => (
+                <article className="cb-rev" key={`${pass}-${r.id}`}>
+                  <div className="cb-rev__top">
+                    <div className="cb-rev__av">{r.name.trim().charAt(0).toUpperCase()}</div>
+                    <div className="cb-rev__id">
+                      <span className="cb-rev__who">{r.name}</span>
+                      <span className="cb-rev__stars" aria-label={`${r.rating} out of 5`}>
+                        {[0, 1, 2, 3, 4].map((n) => (
+                          <span key={n} style={{ opacity: n < r.rating ? 1 : 0.24 }}>{IcoStar}</span>
+                        ))}
+                      </span>
+                    </div>
+                  </div>
+                  {/* The comment itself sits in a bubble, because that is the
+                      shape people read other people's words in. */}
+                  <p className="cb-rev__bubble">{r.body}</p>
+                  {r.imageUrl ? (
+                    <div className="cb-rev__pic">
+                      <img src={r.imageUrl} alt="" loading="lazy" />
+                    </div>
+                  ) : null}
+                  <div className="cb-rev__bar">
+                    {r.verified ? <span className="cb-rev__ok">{IcoVerified} Verified buyer</span> : null}
+                    <span className="cb-rev__when">{sinceText(r.reviewedOn)}</span>
+                  </div>
+                </article>
               ))}
             </div>
           ))}

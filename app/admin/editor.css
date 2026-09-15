@@ -359,21 +359,36 @@
    moving placeholder: the list is short enough that the insertion point is
    easier to read than an animated hole. */
 .ed-row[data-drag] {
-  opacity: 0.4;
+  opacity: 0.35;
+  background: rgba(0, 0, 0, 0.03);
 }
 
+/* Where it would land, drawn as the line between two rows. */
 .ed-row[data-over] {
   box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.ed-row[data-drag] .ed-grip {
+  cursor: grabbing;
 }
 
 .ed-grip {
   display: grid;
   place-items: center;
-  width: 22px;
+  width: 26px;
   height: 40px;
   flex: 0 0 auto;
-  color: rgba(0, 0, 0, 0.26);
+  color: rgba(0, 0, 0, 0.3);
   cursor: grab;
+  border-radius: 7px;
+  touch-action: none; /* the pointer drag owns the gesture, not the scroller */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ed-grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .ed-row:hover .ed-grip {

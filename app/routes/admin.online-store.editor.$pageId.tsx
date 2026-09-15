@@ -321,22 +321,73 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
     if (reorder.state === "idle") setOrder(sections);
   }, [sections, reorder.state]);
 
-  const drop = (to: number) => {
-    const from = dragIndex;
-    setDragIndex(null);
-    setOverIndex(null);
-    if (from === null || from === to) return;
+  // Pointer drag, started from the grip.
+  //
+  // The HTML5 drag API was the wrong tool here: the row contains a button, and
+  // a native button swallows the gesture before a drag ever begins, so nothing
+  // moved. Pointer events have no such argument with their children, and they
+  // work under a finger as well as a cursor.
+  const rail = useRef<HTMLDivElement | null>(null);
+  const from = useRef<number | null>(null);
 
-    const next = order.slice();
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
+  const rowTops = () => {
+    const host = rail.current;
+    if (!host) return [];
+    return [...host.querySelectorAll<HTMLElement>(".ed-row")].map((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top, mid: r.top + r.height / 2, bottom: r.bottom };
+    });
+  };
+
+  const commit = (next: typeof order) => {
     setOrder(next);
-
     const body = new FormData();
     body.set("intent", "reorder");
     body.set("pageId", page.id);
     for (const section of next) body.append("order", section.id);
     reorder.submit(body, { method: "post" });
+  };
+
+  const onGripDown = (index: number) => (event: React.PointerEvent) => {
+    event.preventDefault();
+    const grip = event.currentTarget as HTMLElement;
+    grip.setPointerCapture(event.pointerId);
+    from.current = index;
+    setDragIndex(index);
+    setOverIndex(index);
+
+    const move = (e: PointerEvent) => {
+      const rows = rowTops();
+      if (!rows.length) return;
+      // Which gap the pointer is closest to, top to bottom.
+      let to = rows.findIndex((r) => e.clientY < r.mid);
+      if (to === -1) to = rows.length - 1;
+      setOverIndex(to);
+    };
+
+    const up = () => {
+      grip.releasePointerCapture(event.pointerId);
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", up);
+      grip.removeEventListener("pointercancel", up);
+
+      const start = from.current;
+      from.current = null;
+      setDragIndex(null);
+      setOverIndex((target) => {
+        if (start !== null && target !== null && start !== target) {
+          const next = order.slice();
+          const [moved] = next.splice(start, 1);
+          next.splice(target, 0, moved);
+          commit(next);
+        }
+        return null;
+      });
+    };
+
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", up);
+    grip.addEventListener("pointercancel", up);
   };
 
   const selected = sections.find((section) => section.id === selectedId);
@@ -721,7 +772,7 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
             </span>
           </div>
 
-          <div className="ed-scroll">
+          <div className="ed-scroll" ref={rail}>
             {order.map((section, index) => {
               const sectionDef = SECTIONS.find((s) => s.type === section.type);
               const active = section.id === selectedId;
@@ -733,25 +784,28 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
                   data-hidden={section.hidden}
                   data-drag={dragIndex === index ? "" : undefined}
                   data-over={overIndex === index && dragIndex !== index ? "" : undefined}
-                  draggable
-                  onDragStart={(e) => {
-                    setDragIndex(index);
-                    e.dataTransfer.effectAllowed = "move";
-                    // Firefox will not start a drag without payload.
-                    e.dataTransfer.setData("text/plain", section.id);
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    setOverIndex(index);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    drop(index);
-                  }}
-                  onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
                 >
-                  <span className="ed-grip" aria-hidden="true" title="Drag to reorder">
+                  <span
+                    className="ed-grip"
+                    title="Drag to reorder"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Move ${sectionDef?.label ?? section.type}`}
+                    onPointerDown={onGripDown(index)}
+                    // Keyboard is the other half of this: the grip moves the
+                    // row up and down without a pointer at all.
+                    onKeyDown={(e) => {
+                      const delta = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+                      if (!delta) return;
+                      e.preventDefault();
+                      const to = index + delta;
+                      if (to < 0 || to >= order.length) return;
+                      const next = order.slice();
+                      const [moved] = next.splice(index, 1);
+                      next.splice(to, 0, moved);
+                      commit(next);
+                    }}
+                  >
                     <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
                       <circle cx="3" cy="3" r="1.4" /><circle cx="9" cy="3" r="1.4" />
                       <circle cx="3" cy="8" r="1.4" /><circle cx="9" cy="8" r="1.4" />
