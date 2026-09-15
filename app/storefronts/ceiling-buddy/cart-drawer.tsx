@@ -8,8 +8,9 @@
  */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import type { LoadedProductPage } from "~/lib/store.server";
-import { formatMoney } from "~/lib/money";
+import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
+import { formatMoney, savedAmount } from "~/lib/money";
+import { PayPalExpress } from "../garden-buddy/paypal-express";
 
 interface DrawerLine {
   variantId: string;
@@ -52,15 +53,21 @@ const IcoClose = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
 );
 
+/** The store's logo, so the drawer is obviously this shop and not a template. */
+const LOGO = "/media/3958921693410617.webp";
+
 export function CartDrawerProvider({
   page,
   storeParam = "",
   photo,
+  paypalClientId = null,
   children,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
   photo?: { src: string; alt: string } | null;
+  /** PayPal's public client id, when the store has PayPal connected. */
+  paypalClientId?: string | null;
   children: React.ReactNode;
 }) {
   const href = (path: string) => `${path}${storeParam}`;
@@ -114,6 +121,30 @@ export function CartDrawerProvider({
   const lines = cart?.lines ?? [];
   const currency = cart?.currency ?? page.store.currency;
 
+  // The upgrade: the dearer bundle, when the cart is not already on it.
+  const inCart = new Set(lines.map((l) => l.variantId));
+  const upsell: VariantRow | null =
+    lines.length && page.variants.length > 1
+      ? page.variants
+          .filter((v) => !inCart.has(v.id))
+          .reduce<VariantRow | null>((best, v) => (!best || v.priceCents > best.priceCents ? v : best), null)
+      : null;
+
+  // Swapping a bundle replaces the cart rather than adding a second one —
+  // nobody wants the tray twice.
+  const swap = useCallback(
+    (variantId: string) => {
+      setBusy(true);
+      const body = new FormData();
+      body.set("variantId", variantId);
+      fetch(href(`/cart/add?replace=1`), { method: "POST", body })
+        .then(() => reload())
+        .finally(() => setBusy(false));
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [reload, storeParam],
+  );
+
   return (
     <Ctx.Provider value={{ add, open: show, itemCount: cart?.itemCount ?? 0 }}>
       {children}
@@ -122,6 +153,7 @@ export function CartDrawerProvider({
         <div className="cb-drawer__veil" onClick={() => setOpen(false)} />
         <div className="cb-drawer__panel">
           <div className="cb-drawer__head">
+            <img className="cb-drawer__logo" src={LOGO} alt={page.store.name} />
             <h3>Your cart</h3>
             <button type="button" className="cb-drawer__x" onClick={() => setOpen(false)} aria-label="Close">
               {IcoClose}
@@ -152,6 +184,26 @@ export function CartDrawerProvider({
             )}
           </div>
 
+          {/* The upgrade, offered where the decision is still open. It is the
+              other bundle, not an unrelated product — and only when it is not
+              already the thing in the cart. */}
+          {upsell ? (
+            <button type="button" className="cb-up" onClick={() => swap(upsell.id)} disabled={busy}>
+              <span className="cb-up__pic">
+                {upsell.imageUrl ? <img src={upsell.imageUrl} alt="" /> : null}
+              </span>
+              <span className="cb-up__txt">
+                <b>Add the 100" screen</b>
+                <i>{upsell.label}</i>
+              </span>
+              <span className="cb-up__add">
+                {savedAmount(upsell.priceCents, upsell.compareAtCents)
+                  ? `+${formatMoney(upsell.priceCents - (lines[0]?.unitPriceCents ?? 0), currency)}`
+                  : formatMoney(upsell.priceCents, currency)}
+              </span>
+            </button>
+          ) : null}
+
           <div className="cb-drawer__foot">
             <div className="cb-drawer__sum">
               <span>Subtotal</span>
@@ -160,6 +212,15 @@ export function CartDrawerProvider({
             <a className="cb-btn" href={href("/checkout")} aria-disabled={lines.length === 0}>
               Checkout
             </a>
+            {/* Their own buttons, so the wallet someone already trusts is one
+                tap away instead of a form. Nothing is priced here — the server
+                prices the cart for both the create and the capture. */}
+            {paypalClientId && lines.length ? (
+              <div className="cb-drawer__wallets">
+                <span className="cb-drawer__or">or pay with</span>
+                <PayPalExpress clientId={paypalClientId} currency={currency} storeParam={storeParam} />
+              </div>
+            ) : null}
             <div className="cb-reassure">Free shipping · 30-day returns</div>
           </div>
         </div>

@@ -299,7 +299,12 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
       <>
         <link rel="stylesheet" href={ceilingBuddyThemeHref} />
         {head}
-        <CeilingBuddyStorefront page={page} storeParam={storeParam} />
+        <CeilingBuddyStorefront
+          page={page}
+          storeParam={storeParam}
+          publishableKey={publishableKey}
+          paypalClientId={paypalClientId}
+        />
       </>
     );
   }

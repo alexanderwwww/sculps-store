@@ -336,21 +336,20 @@
 .cb-tile figcaption { background: rgba(255,255,255,.94); backdrop-filter: blur(8px); }
 
 /* -------------------------------------------------------------- the wall */
+/* Edge to edge, one uniform crop, no gaps. A mosaic of different shapes made
+   six good photographs look like a contact sheet; the same tall crop repeated
+   reads as a wall of one night, which is what it is. */
 
-.cb-wall { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; }
-.cb-wall__i {
-  border-radius: var(--r); overflow: hidden; background: var(--ink);
-  border: var(--key) solid var(--ink); box-shadow: var(--pop-sm); aspect-ratio: 3 / 4; margin: 0;
+.cb-wall { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; width: 100%; }
+.cb-wall__i { margin: 0; aspect-ratio: 3 / 4; overflow: hidden; background: var(--ink); }
+.cb-wall__i img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform .5s cubic-bezier(.2,.8,.3,1);
 }
-.cb-wall__i img { width: 100%; height: 100%; object-fit: cover; }
-.cb-wall__i:nth-child(1) { grid-column: span 3; grid-row: span 2; aspect-ratio: auto; }
-.cb-wall__i:nth-child(2), .cb-wall__i:nth-child(3) { grid-column: span 3; aspect-ratio: 16 / 10; }
-.cb-wall__i:nth-child(n+4) { grid-column: span 2; }
-@media (max-width: 760px) {
-  .cb-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cb-wall__i, .cb-wall__i:nth-child(1), .cb-wall__i:nth-child(2),
-  .cb-wall__i:nth-child(3), .cb-wall__i:nth-child(n+4) { grid-column: span 1; grid-row: auto; aspect-ratio: 3/4; }
-}
+.cb-wall__i:hover img { transform: scale(1.04); }
+@media (max-width: 1100px) { .cb-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .cb-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 
 /* ------------------------------------------------------------------- faq */
 
@@ -850,3 +849,37 @@
    layout takes over instead. Only ever one of the two is on the page. */
 @media (max-width: 1000px) { .cb-lock--art { display: none; } }
 @media (min-width: 1001px) { .cb-lock--small { display: none; } }
+
+/* ------------------------------------------------------- drawer additions */
+
+.cb-drawer__logo { height: 26px; width: auto; margin-right: 10px; }
+
+/* The upgrade, between the lines and the total: the last place the decision
+   is still open, and the only place a bigger basket is an easy yes. */
+.cb-up {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  margin: 0; padding: 12px 22px; cursor: pointer;
+  background: var(--cream); border: 0; border-top: 1px solid var(--hair);
+  transition: background .14s ease;
+}
+.cb-up:hover { background: #F6EFE2; }
+.cb-up:disabled { opacity: .55; cursor: default; }
+.cb-up__pic {
+  width: 46px; height: 46px; flex: 0 0 auto; border-radius: 10px; overflow: hidden;
+  background: var(--paper); border: 1px solid var(--hair);
+}
+.cb-up__pic img { width: 100%; height: 100%; object-fit: contain; }
+.cb-up__txt { display: grid; min-width: 0; }
+.cb-up__txt b { font-family: var(--display); font-weight: 700; font-size: 14.5px; letter-spacing: -0.02em; }
+.cb-up__txt i { font-style: normal; font-size: 12.5px; color: var(--dim); }
+.cb-up__add {
+  margin-left: auto; flex: 0 0 auto;
+  font-family: var(--display); font-weight: 700; font-size: 14px;
+  background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 13px;
+}
+
+.cb-drawer__wallets { margin-top: 12px; }
+.cb-drawer__or {
+  display: block; text-align: center; font-size: 12.5px; color: var(--dim);
+  margin-bottom: 9px;
+}

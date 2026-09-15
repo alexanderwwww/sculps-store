@@ -94,9 +94,13 @@ const FEATURE_ICONS = [
 export function CeilingBuddyStorefront({
   page,
   storeParam = "",
+  publishableKey = null,
+  paypalClientId = null,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
+  publishableKey?: string | null;
+  paypalClientId?: string | null;
 }) {
   const { sections } = page;
   const buyBox = sections.find((s) => s.type === "buy_box");
@@ -106,7 +110,12 @@ export function CeilingBuddyStorefront({
     : null;
 
   return (
-    <CartDrawerProvider page={page} storeParam={storeParam} photo={photo}>
+    <CartDrawerProvider
+      page={page}
+      storeParam={storeParam}
+      photo={photo}
+      paypalClientId={paypalClientId}
+    >
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
@@ -122,7 +131,7 @@ export function CeilingBuddyStorefront({
           ))}
         </main>
         <Footer page={page} storeParam={storeParam} />
-        <StickyBuy page={page} />
+        <StickyBuy page={page} storeParam={storeParam} />
       </div>
     </CartDrawerProvider>
   );
@@ -138,7 +147,7 @@ function Section({
   storeParam: string;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <LockScreen section={section} />;
@@ -151,7 +160,7 @@ function Section({
     case "whats_in_the_box": return <InTheBox section={section} />;
     case "specifications": return <Specs section={section} />;
     case "reviews":       return <Reviews section={section} page={page} />;
-    case "closing_cta":   return <Closing section={section} page={page} />;
+    case "closing_cta":   return <Closing section={section} page={page} storeParam={storeParam} />;
     default:              return null;
   }
 }
@@ -262,7 +271,7 @@ function Announce() {
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
   const v = section.values;
   const drawer = useCartDrawer();
   const shots = section.blocks.filter((b) => has(b.values, "image"));
@@ -384,18 +393,24 @@ function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProduct
           ) : null}
 
           <div className="cb-acts">
-            <button
-              type="button"
-              className="cb-btn"
-              onClick={() => picked && drawer?.add(picked)}
-              disabled={!picked}
+            <form
+              method="post"
+              action={`/cart/add${storeParam}`}
+              onSubmit={(e) => {
+                if (!drawer || !picked) return; // no JS, or nothing chosen: let it post
+                e.preventDefault();
+                drawer.add(picked);
+              }}
             >
-              {val(v, "ctaLabel") || "Add to cart"}
-            </button>
+              <input type="hidden" name="variantId" value={picked} />
+              <button type="submit" className="cb-btn" disabled={!picked}>
+                {val(v, "ctaLabel") || "Add to cart"}
+              </button>
+            </form>
             {/* Straight to the checkout with this bundle and nothing else.
                 `replace=1` clears whatever was in the cart, so the wallet sheet
                 shows the price the customer was just looking at. */}
-            <form method="post" action={`/cart/add?next=checkout&replace=1`}>
+            <form method="post" action={`/cart/add${storeParam ? storeParam + "&" : "?"}next=checkout&replace=1`}>
               <input type="hidden" name="variantId" value={picked} />
               <button type="submit" className="cb-btn cb-btn--ghost" disabled={!picked}>
                 Buy now
@@ -529,13 +544,17 @@ function ProofWall({ section }: { section: LoadedSection }) {
     <section className="cb-section" id="proof">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-wall">
-          {shots.map((b) => (
-            <figure className="cb-wall__i" key={b.id}>
-              <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
-            </figure>
-          ))}
-        </div>
+      </div>
+      {/* Edge to edge, one uniform crop, no gaps. The mosaic of different
+          shapes made six good photographs look like a contact sheet; a single
+          tall crop repeated reads as a wall of the same night, which is what
+          it is. */}
+      <div className="cb-wall">
+        {shots.map((b) => (
+          <figure className="cb-wall__i" key={b.id}>
+            <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
+          </figure>
+        ))}
       </div>
     </section>
   );
@@ -941,20 +960,27 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
       <div className="cb-chat__body" ref={body}>
       <div className="cb-chat__day">Last night <b>11:04 PM</b></div>
 
-      {blocks.map((b, i) => (
+      {blocks.map((b, i) => {
+        const askedYet = shown > i * 2;
+        const answered = shown > i * 2 + 1;
+        if (!askedYet) return null;
+        return (
         <div className="cb-chat__pair" key={b.id}>
-          <p className="cb-chat__q" data-in={shown > i * 2 ? "" : undefined}>
+          <p className="cb-chat__q" data-in="">
             {val(b.values, "question")}
           </p>
-          <div className="cb-chat__a" data-in={shown > i * 2 + 1 ? "" : undefined}>
+          {answered ? (
+          <div className="cb-chat__a" data-in="">
             <img className="cb-chat__av" src={LOGO} alt="" />
             <div>
               <p>{val(b.values, "answer")}</p>
               <span className="cb-chat__time">{at(i)}</span>
             </div>
           </div>
+          ) : null}
         </div>
-      ))}
+        );
+      })}
 
       {typing ? (
         <div className="cb-chat__typing" aria-hidden="true">
@@ -1059,7 +1085,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
 
 /* ---------------------------------------------------------------- closing */
 
-function Closing({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+function Closing({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
   const v = section.values;
   const drawer = useCartDrawer();
   const buy = page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
@@ -1071,9 +1097,14 @@ function Closing({ section, page }: { section: LoadedSection; page: LoadedProduc
         <h2 className="cb-h2">{val(v, "heading")}</h2>
         {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
         {buy ? (
-          <button type="button" className="cb-btn" onClick={() => drawer?.add(buy.id)}>
-            {val(v, "ctaLabel") || "Add to cart"}
-          </button>
+          <form
+            method="post"
+            action={`/cart/add${storeParam}`}
+            onSubmit={(e) => { if (drawer) { e.preventDefault(); drawer.add(buy.id); } }}
+          >
+            <input type="hidden" name="variantId" value={buy.id} />
+            <button type="submit" className="cb-btn">{val(v, "ctaLabel") || "Add to cart"}</button>
+          </form>
         ) : null}
       </div>
     </section>
@@ -1082,7 +1113,7 @@ function Closing({ section, page }: { section: LoadedSection; page: LoadedProduc
 
 /* --------------------------------------------------------------- sticky */
 
-function StickyBuy({ page }: { page: LoadedProductPage }) {
+function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storeParam?: string }) {
   const drawer = useCartDrawer();
   const [on, setOn] = useState(false);
   const seen = useRef(false);
@@ -1115,9 +1146,14 @@ function StickyBuy({ page }: { page: LoadedProductPage }) {
             {buy.compareAtCents ? <s style={{ marginLeft: 8, opacity: 0.6 }}>{formatMoney(buy.compareAtCents, page.store.currency)}</s> : null}
           </div>
         </div>
-        <button type="button" className="cb-btn" onClick={() => drawer?.add(buy.id)}>
-          Add to cart
-        </button>
+        <form
+          method="post"
+          action={`/cart/add${storeParam}`}
+          onSubmit={(e) => { if (drawer) { e.preventDefault(); drawer.add(buy.id); } }}
+        >
+          <input type="hidden" name="variantId" value={buy.id} />
+          <button type="submit" className="cb-btn">Add to cart</button>
+        </form>
       </div>
     </div>
   );
