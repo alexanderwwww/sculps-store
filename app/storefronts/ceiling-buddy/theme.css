@@ -643,10 +643,12 @@
    reads as the one thing being handed to you. */
 /* The offer, and only the offer. Flat neon on black — no gradient, no glow,
    no logo crammed inside it. */
-/* One green pill, nothing inside it. A chip within a chip is two shapes doing
-   the job of one. */
+/* One pill, nothing inside it — a chip within a chip is two shapes doing the
+   job of one. The blue is sampled straight out of the logo file (#B0DDF9, its
+   most common blue), so the bar and the mark beside it are the same colour
+   rather than two blues that nearly match. */
 .cb-ann__t i[data-pill] {
-  color: #08130B; background: #A8FF2E;
+  color: #0A2C44; background: #B0DDF9;
   border-radius: 999px; margin: 5px 14px; padding: 6px 16px;
   gap: 8px; font-weight: 700; letter-spacing: -0.01em;
 }
@@ -1534,14 +1536,18 @@
 
 .cb-pay4 { background: var(--paper-2); border-block: 1px solid var(--hair); padding: 22px 0; }
 .cb-pay4__in { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 20px; }
-.cb-pay4__mark {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -0.02em;
-  color: #002C8A;
-}
-.cb-pay4__mark svg { width: 20px; height: 23px; }
+.cb-pp--word { height: 24px; width: 85px; max-width: none; flex: 0 0 auto; }
 .cb-pay4__in p { margin: 0; font-size: clamp(16px, 2vw, 19px); }
 .cb-pay4__in p b { font-family: var(--display); font-weight: 700; }
 .cb-pay4__in p span { color: var(--dim); }
 .cb-pay4__small { font-size: 12.5px; color: var(--dimmer); }
 @media (max-width: 640px) { .cb-pay4__in { text-align: center; } }
+
+/* The same offer in the buy box, said quietly — the band below the wall makes
+   the case, this only has to be present while the price is on screen. */
+.cb-pay4__line {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  margin-top: 12px; font-size: 14px; color: var(--dim);
+}
+.cb-pay4__line b { font-family: var(--display); font-weight: 700; color: var(--ink); }
+.cb-pay4__line .cb-pp { width: 16px; height: 16px; flex: 0 0 auto; max-width: none; }

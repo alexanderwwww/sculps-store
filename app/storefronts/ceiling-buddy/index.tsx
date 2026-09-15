@@ -486,6 +486,12 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
               </button>
             </form>
           </div>
+          {chosen ? (
+            <div className="cb-pay4__line">
+              {IcoPaypal}
+              or 4 payments of <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
+            </div>
+          ) : null}
           {has(v, "reassurance") ? <div className="cb-reassure">{val(v, "reassurance")}</div> : null}
 
           <div className="cb-ship">
@@ -910,6 +916,12 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
  * it is genuinely PayPal's decision, not ours, and a promise we cannot keep is
  * worse than no promise.
  */
+/** PayPal's own marks, from their brand host, served from our bucket. */
+const PAYPAL_MARK = "/media/8766a4211434d2c3.svg";
+const PAYPAL_WORDMARK = "/media/cda7704463471358.svg";
+
+const IcoPaypal = <img className="cb-pp" src={PAYPAL_MARK} alt="PayPal" />;
+
 function PayLater({ page }: { page: LoadedProductPage }) {
   const buy = page.variants.find((v) => v.isDefault) ?? page.variants[0] ?? null;
   if (!buy) return null;
@@ -917,14 +929,7 @@ function PayLater({ page }: { page: LoadedProductPage }) {
   return (
     <section className="cb-pay4">
       <div className="cb-wrap cb-pay4__in">
-        <span className="cb-pay4__mark">
-          <svg viewBox="0 0 24 28" aria-hidden="true">
-            <path d="M6.6 26.6H2.4L6 2.2h8.1c4.3 0 6.9 2.2 6.3 6.2-.6 4.4-4 6.7-8.5 6.7H8.5z" fill="#002C8A" />
-            <path d="M10.2 20.9H6l3.6-24.4" fill="none" />
-            <path d="M9.9 26.6H5.7L9.3 2.2h8.1c4.3 0 6.9 2.2 6.3 6.2-.6 4.4-4 6.7-8.5 6.7h-3.4z" fill="#009BE1" opacity=".85" />
-          </svg>
-          PayPal
-        </span>
+        <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
         <p>
           Pay in 4. <b>{formatMoney(each, page.store.currency)}</b> today, then three more —
           <span> interest free.</span>
