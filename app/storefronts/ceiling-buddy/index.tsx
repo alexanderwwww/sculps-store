@@ -96,11 +96,14 @@ export function CeilingBuddyStorefront({
   storeParam = "",
   publishableKey = null,
   paypalClientId = null,
+  offer = null,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
   publishableKey?: string | null;
   paypalClientId?: string | null;
+  /** The live code the bar is shouting about, straight from the database. */
+  offer?: { code: string; kind: string; value: number } | null;
 }) {
   const { sections } = page;
   const buyBox = sections.find((s) => s.type === "buy_box");
@@ -124,7 +127,7 @@ export function CeilingBuddyStorefront({
       />
 
       <div className="cb">
-        <Header page={page} storeParam={storeParam} />
+        <Header page={page} storeParam={storeParam} offer={offer} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
             <Section key={s.id} section={s} page={page} storeParam={storeParam} />
@@ -174,7 +177,15 @@ const NAV = [
   ["FAQ", "#faq"],
 ] as const;
 
-function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: string }) {
+function Header({
+  page,
+  storeParam,
+  offer,
+}: {
+  page: LoadedProductPage;
+  storeParam: string;
+  offer: { code: string; kind: string; value: number } | null;
+}) {
   const drawer = useCartDrawer();
   const [menu, setMenu] = useState(false);
   const href = (p: string) => `${p}${storeParam}`;
@@ -189,7 +200,7 @@ function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: str
   }, [menu]);
   return (
     <>
-      <Announce />
+      <Announce offer={offer} currency={page.store.currency} />
       <header className="cb-header">
         <div className="cb-wrap cb-header__in">
           <a className="cb-logo" href={href("/")} aria-label={page.store.name}>
@@ -240,30 +251,50 @@ function Header({ page, storeParam }: { page: LoadedProductPage; storeParam: str
   );
 }
 
-function Announce() {
-  // Two kinds of item: the promises, and the lines that sell. They alternate,
-  // and every third one is inverted so the bar keeps catching the eye instead
-  // of becoming wallpaper after two seconds.
+function Announce({
+  offer,
+  currency,
+}: {
+  offer: { code: string; kind: string; value: number } | null;
+  currency: string;
+}) {
+  // The offer sits still on the left where it can be read and copied; the
+  // promises scroll past it. A code that moves is a code nobody uses.
+  const amount =
+    offer && offer.kind === "fixed"
+      ? `${formatMoney(offer.value, currency)} off`
+      : offer && offer.kind === "percentage"
+        ? `${offer.value}% off`
+        : offer
+          ? "Free shipping"
+          : null;
+
   const says = [
-    [IcoTruck, "Free US shipping", false],
-    [null, "Your ceiling is the biggest screen you own", true],
-    [IcoReturn, "30 nights to change your mind", false],
-    [IcoBolt, "Ships in 3-5 business days", false],
-    [null, "Movies. Snacks. Closer.", true],
-    [IcoShield, "1-year warranty", false],
+    [IcoTruck, "Free US shipping"],
+    [IcoReturn, "30 nights to change your mind"],
+    [IcoShield, "1-year warranty"],
+    [IcoBolt, "Ships in 3-5 business days"],
   ] as const;
+
   return (
-    <div className="cb-ann" aria-label="Free US shipping, 30 day returns, 1 year warranty, ships in 3 to 5 business days">
-      <div className="cb-ann__t" aria-hidden="true">
-        {[0, 1].map((n) => (
-          <span key={n}>
-            {says.map(([ico, text, loud]) => (
-              <i key={text} data-loud={loud ? "" : undefined}>
-                {ico}{text}
-              </i>
-            ))}
-          </span>
-        ))}
+    <div className="cb-ann">
+      {offer && amount ? (
+        <div className="cb-ann__offer">
+          <img src={LOGO} alt="" />
+          <span className="cb-ann__amount">{amount}</span>
+          <code className="cb-ann__code">{offer.code}</code>
+        </div>
+      ) : null}
+      <div className="cb-ann__rail" aria-label="Free US shipping, 30 nights to change your mind, 1 year warranty, ships in 3 to 5 business days">
+        <div className="cb-ann__t" aria-hidden="true">
+          {[0, 1].map((n) => (
+            <span key={n}>
+              {says.map(([ico, text]) => (
+                <i key={text}>{ico}{text}</i>
+              ))}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -860,13 +891,22 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
 
   // The card is a fixed height now, so a message arriving below the fold would
   // never be seen. Follow it down — but only the card, never the page.
+  // Follow the thread down when a message lands — but not while the dots are
+  // showing, and never once the reader has scrolled up to re-read something.
+  // Being yanked back to a typing indicator is the annoying part.
+  const stick = useRef(true);
+  const onScroll = () => {
+    const el = body.current;
+    if (!el) return;
+    stick.current = el.scrollHeight - el.clientHeight - el.scrollTop < 48;
+  };
   useEffect(() => {
     const el = body.current;
-    if (!el || shown === 0) return;
+    if (!el || shown === 0 || !stick.current) return;
     const overflow = el.scrollHeight - el.clientHeight;
     if (overflow <= 0) return;
     el.scrollTo({ top: overflow, behavior: shown <= 1 ? "auto" : "smooth" });
-  }, [shown, typing]);
+  }, [shown]);
 
   useEffect(() => {
     const node = thread.current;
@@ -957,7 +997,7 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
         <div className="cb-chat__name">Ceiling Buddy</div>
       </div>
 
-      <div className="cb-chat__body" ref={body}>
+      <div className="cb-chat__body" ref={body} onScroll={onScroll}>
       <div className="cb-chat__day">Last night <b>11:04 PM</b></div>
 
       {blocks.map((b, i) => {
@@ -988,6 +1028,7 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
           <span><i /><i /><i /></span>
         </div>
       ) : null}
+
       </div>
 
       {/* The compose bar. It is not a form — there is nothing to send to — but
@@ -1013,6 +1054,18 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
  * screen renders nothing at all — no filler people, no invented stars. The
  * score below is the arithmetic mean of what is actually published.
  */
+/** "3 days ago", from a real date. Nothing here is invented. */
+function sinceText(when: Date | string | null): string {
+  if (!when) return "";
+  const days = Math.max(0, Math.round((Date.now() - new Date(when).getTime()) / 86_400_000));
+  if (days === 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days} days ago`;
+  if (days < 14) return "last week";
+  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
+  return `${Math.round(days / 30)} months ago`;
+}
+
 function Reviews({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   const rows = page.reviews;
   if (!rows.length) return null;
@@ -1044,30 +1097,27 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
             <article className="cb-rev" key={`${pass}-${r.id}`}>
               <div className="cb-rev__top">
                 <div className="cb-rev__av">{r.name.trim().charAt(0).toUpperCase()}</div>
-                <div>
-                  <div className="cb-rev__who">{r.name}</div>
-                  <div className="cb-rev__meta">
-                    {r.verified ? <>{IcoVerified} Verified buyer</> : <span>{r.country ?? ""}</span>}
-                  </div>
+                <div className="cb-rev__id">
+                  <span className="cb-rev__who">{r.name}</span>
+                  <span className="cb-rev__stars" aria-label={`${r.rating} out of 5`}>
+                    {[0, 1, 2, 3, 4].map((n) => (
+                      <span key={n} style={{ opacity: n < r.rating ? 1 : 0.2 }}>{IcoStar}</span>
+                    ))}
+                  </span>
                 </div>
               </div>
-              <div className="cb-rev__stars">
-                {[0, 1, 2, 3, 4].map((n) => (
-                  <span key={n} style={{ opacity: n < r.rating ? 1 : 0.22 }}>{IcoStar}</span>
-                ))}
-              </div>
-              <div className="cb-rev__body">
-                {r.title ? <b>{r.title}</b> : null}
-                {r.body}
-              </div>
+              <div className="cb-rev__body">{r.body}</div>
               {r.imageUrl ? (
                 <div className="cb-rev__pic">
                   <img src={r.imageUrl} alt="" loading="lazy" />
                 </div>
               ) : null}
               <div className="cb-rev__bar">
-                <span>{IcoLike} Helpful</span>
-                <span>{IcoComment} Reply</span>
+                {/* A count that is drawn rather than stored would be a number we
+                    made up, so this shows the two things we actually know: that
+                    the buyer was verified, and when they wrote. */}
+                {r.verified ? <span className="cb-rev__ok">{IcoVerified} Verified buyer</span> : null}
+                <span className="cb-rev__when">{sinceText(r.reviewedOn)}</span>
               </div>
             </article>
                   ))}

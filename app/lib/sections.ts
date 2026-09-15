@@ -77,6 +77,12 @@ export const SECTIONS: SectionDef[] = [
       fields: [
         { name: "question", label: "Question", kind: "text" },
         { name: "answer", label: "Answer", kind: "textarea" },
+        {
+          name: "quick",
+          label: "Tappable",
+          kind: "text",
+          help: "Put yes here and this one waits as a button the visitor can tap, instead of playing automatically.",
+        },
       ],
     },
   },

@@ -167,7 +167,12 @@ account can't kill the others. Adding PayPal later must not touch orders or chec
 **5. Orders are permanent and exportable.** Every state change timestamped, nothing deleted.
 This is the evidence that wins a processor review.
 
-**6. Honesty is enforced by the system.** Never generate fake reviews. Never invent
+**6. Discounts are in dollars, never percentages.** Every store, every code:
+"$12 off", not "15% off". Alex's rule, stated 15 Sep 2026 — a dollar figure is
+a thing someone can picture and a percentage is arithmetic. The `discounts`
+table supports both; only use `kind: "fixed"`.
+
+**7. Honesty is enforced by the system.** Never generate fake reviews. Never invent
 specification numbers. An empty spec field renders as a visible "spec pending" placeholder
 on the live page — not a guess, not a hidden gap.
 

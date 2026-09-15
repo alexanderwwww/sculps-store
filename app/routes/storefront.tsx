@@ -5,9 +5,9 @@ import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { currentUser } from "~/lib/auth.server";
 import { liveReloadScript } from "~/lib/live-reload";
-import { pages, metaConfig, themes } from "~/db/schema";
+import { pages, metaConfig, themes, discounts } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { metaCookieHeaders, newMetaEventId, pixelScript, trackFunnelEvent } from "~/lib/meta.server";
 import { presenceScript, vitalsScript } from "~/lib/vitals";
 import {
@@ -224,6 +224,15 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   // internal link cannot wander into a different shop.
   const storeParam = url.searchParams.get("store") ? `?store=${store.slug}` : "";
 
+  // The code the store is currently shouting about, if it has one. The
+  // storefront only ever prints it; the cart re-reads the row and prices it,
+  // so a code shown here can never be a code the checkout honours by mistake.
+  const [offer] = await context.db
+    .select({ code: discounts.code, kind: discounts.kind, value: discounts.value })
+    .from(discounts)
+    .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true)))
+    .limit(1);
+
   // The publishable key only — it is public by design — so the product page
   // can draw a wallet button. No key, no button; nothing is drawn that
   // cannot take money.
@@ -239,11 +248,11 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
     .then((client) => client?.clientId ?? null)
     .catch(() => null);
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload }, { headers });
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload, offer: offer ?? null }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload, offer } = loaderData;
 
   if (!page) {
     return (
@@ -304,6 +313,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           storeParam={storeParam}
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
+          offer={offer}
         />
       </>
     );
