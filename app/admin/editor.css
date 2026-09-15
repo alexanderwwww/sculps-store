@@ -353,7 +353,13 @@
   height: 40px;
   border-radius: 12px;
   transition: background 0.15s var(--ease);
+  cursor: grab;
+  touch-action: none; /* the row owns the vertical gesture */
+  -webkit-user-select: none;
+  user-select: none;
 }
+
+.ed-row:active { cursor: grabbing; }
 
 /* The row being carried, and the gap it would drop into. A line rather than a
    moving placeholder: the list is short enough that the insertion point is

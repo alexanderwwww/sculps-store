@@ -982,45 +982,72 @@
 .cb-revs:hover .cb-revs__track, .cb-revs:focus-within .cb-revs__track { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .cb-revs__track { animation: none; } }
 
-.cb-rev {
-  width: 340px; flex: 0 0 auto; align-self: flex-start;
-  background: rgba(255, 255, 255, 0.11);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(22px) saturate(160%);
-  border-radius: 22px; padding: 16px 16px 14px;
-  display: grid; gap: 12px;
-}
-@media (max-width: 520px) { .cb-rev { width: 82vw; } }
+/* Four shapes, one wall. Each is drawn the way its own platform draws it —
+   that recognition is the whole point, and a house style would erase it. */
 
-.cb-rev__top { display: flex; align-items: center; gap: 10px; }
-.cb-rev__av {
+.cb-card { width: 330px; flex: 0 0 auto; align-self: flex-start; border-radius: 18px; overflow: hidden; }
+@media (max-width: 520px) { .cb-card { width: 82vw; } }
+
+/* the order notification — iOS glass over the blue */
+.cb-card--notif {
+  display: flex; align-items: center; gap: 12px; padding: 13px 15px;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(22px) saturate(160%); color: #fff; border-radius: 22px;
+}
+.cb-card__app { width: 40px; height: 40px; border-radius: 10px; background: #fff; padding: 4px; object-fit: contain; flex: 0 0 auto; }
+.cb-card__notif { min-width: 0; }
+.cb-card__notif b { display: flex; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 14.5px; }
+.cb-card__notif i { margin-left: auto; font-style: normal; font-size: 11.5px; opacity: .7; }
+.cb-card__notif p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.35; opacity: .92; }
+
+/* a text from someone */
+.cb-card--msg { display: grid; gap: 5px; }
+.cb-card__from { font-size: 12px; color: rgba(255,255,255,.65); padding-left: 4px; }
+.cb-card__bubble {
+  margin: 0; background: #E9E9EB; color: #101114;
+  border-radius: 20px 20px 20px 6px; padding: 11px 15px;
+  font-size: 14.5px; line-height: 1.4; letter-spacing: -0.01em;
+}
+.cb-card__when { font-size: 11.5px; color: rgba(255,255,255,.5); padding-left: 4px; }
+
+/* the white ones — Facebook and Instagram, on paper */
+.cb-card--fb, .cb-card--ig {
+  background: #fff; color: #0B0C0F;
+  box-shadow: 0 1px 2px rgba(0,0,0,.14), 0 18px 40px -22px rgba(0,0,0,.5);
+}
+.cb-card--fb { padding: 14px 15px 10px; display: grid; gap: 10px; }
+.cb-card--fb header, .cb-card--ig header { display: flex; align-items: center; gap: 10px; }
+.cb-card__av {
   width: 36px; height: 36px; border-radius: 999px; flex: 0 0 auto;
-  display: grid; place-items: center;
-  background: rgba(255,255,255,.2); color: #fff;
+  display: grid; place-items: center; background: #E8EAEE; color: #5A6270;
   font-family: var(--display); font-weight: 700; font-size: 15px;
 }
-.cb-rev__id { display: grid; gap: 2px; min-width: 0; }
-.cb-rev__who { font-family: var(--display); font-weight: 700; font-size: 14.5px; letter-spacing: -0.02em; }
-.cb-rev__stars { display: flex; gap: 2px; color: #FFCB45; }
-.cb-rev__stars svg { width: 12px; height: 12px; }
+.cb-card__id { display: grid; gap: 1px; min-width: 0; }
+.cb-card__who { font-family: var(--display); font-weight: 700; font-size: 14.5px; letter-spacing: -0.02em; }
+.cb-card__ok { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: #65676B; }
+.cb-card__ok svg { width: 13px; height: 13px; }
+.cb-card__body { margin: 0; font-size: 14.5px; line-height: 1.45; }
+.cb-card__pic { border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
+.cb-card--ig .cb-card__pic { border-radius: 0; aspect-ratio: 1 / 1; }
+.cb-card__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* The words, in the shape people read other people's words in. */
-.cb-rev__bubble {
-  margin: 0; background: rgba(255,255,255,.14);
-  border-radius: 18px 18px 18px 6px; padding: 12px 15px;
-  font-size: 14.5px; line-height: 1.45; letter-spacing: -0.01em;
+.cb-card--fb footer {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding-top: 9px; border-top: 1px solid #E4E6EB; font-size: 12.5px; color: #65676B;
 }
+.cb-card__react { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: #050505; }
+.cb-card__react svg { width: 16px; height: 16px; }
+.cb-card__link { font-weight: 600; }
+.cb-card--fb .cb-card__when { margin-left: auto; color: #8A8D91; padding: 0; }
 
-.cb-rev__pic { border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
-.cb-rev__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-.cb-rev__bar {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 12px; color: rgba(255,255,255,.66);
-}
-.cb-rev__ok { display: inline-flex; align-items: center; gap: 5px; }
-.cb-rev__ok svg { width: 14px; height: 14px; }
-.cb-rev__when { margin-left: auto; color: rgba(255,255,255,.5); }
+.cb-card--ig { display: grid; gap: 0; }
+.cb-card--ig header { padding: 12px 14px; }
+.cb-card__acts { display: flex; gap: 14px; padding: 11px 14px 6px; color: #0B0C0F; }
+.cb-card__acts svg { width: 21px; height: 21px; }
+.cb-card__likes { padding: 0 14px 4px; font-family: var(--display); font-weight: 700; font-size: 13.5px; }
+.cb-card__cap { margin: 0; padding: 0 14px 6px; font-size: 14px; line-height: 1.4; }
+.cb-card__cap b { font-family: var(--display); font-weight: 700; }
+.cb-card__more { padding: 0 14px 13px; font-size: 13px; color: #8A8D91; }
 
 .cb-revs__head {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px;

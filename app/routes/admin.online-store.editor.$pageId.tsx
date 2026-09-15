@@ -348,46 +348,60 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
     reorder.submit(body, { method: "post" });
   };
 
-  const onGripDown = (index: number) => (event: React.PointerEvent) => {
-    event.preventDefault();
-    const grip = event.currentTarget as HTMLElement;
-    grip.setPointerCapture(event.pointerId);
-    from.current = index;
-    setDragIndex(index);
-    setOverIndex(index);
+  // The whole row is the handle, the way it is in Shopify — grabbing a section
+  // anywhere along it, not on a 26px grip.
+  //
+  // The move and release listeners go on the document, not on the row. A row
+  // only sees the pointer while it is still under it, so the moment the drag
+  // travels past its own edge the gesture goes quiet and nothing happens —
+  // which is exactly how this failed twice. The document always sees it.
+  //
+  // A press only becomes a drag after a few pixels, so a plain click still
+  // selects the section for editing.
+  const onRowDown = (index: number) => (event: React.PointerEvent) => {
+    if ((event.target as HTMLElement).closest(".ed-eye")) return; // the eye is its own button
+    if (event.button !== 0) return;
+
+    const startY = event.clientY;
+    let dragging = false;
+    let target = index;
 
     const move = (e: PointerEvent) => {
+      if (!dragging) {
+        if (Math.abs(e.clientY - startY) < 4) return;
+        dragging = true;
+        from.current = index;
+        setDragIndex(index);
+      }
       const rows = rowTops();
       if (!rows.length) return;
-      // Which gap the pointer is closest to, top to bottom.
       let to = rows.findIndex((r) => e.clientY < r.mid);
       if (to === -1) to = rows.length - 1;
+      target = to;
       setOverIndex(to);
     };
 
     const up = () => {
-      grip.releasePointerCapture(event.pointerId);
-      grip.removeEventListener("pointermove", move);
-      grip.removeEventListener("pointerup", up);
-      grip.removeEventListener("pointercancel", up);
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", up);
+      document.removeEventListener("pointercancel", up);
+      if (!dragging) return; // a click, not a drag
 
-      const start = from.current;
+      const startIndex = from.current;
       from.current = null;
       setDragIndex(null);
-      setOverIndex((target) => {
-        if (start !== null && target !== null && start !== target) {
-          const next = order.slice();
-          const [moved] = next.splice(start, 1);
-          next.splice(target, 0, moved);
-          commit(next);
-        }
-        return null;
-      });
+      setOverIndex(null);
+      if (startIndex === null || startIndex === target) return;
+
+      const next = order.slice();
+      const [moved] = next.splice(startIndex, 1);
+      next.splice(target, 0, moved);
+      commit(next);
     };
 
-    grip.addEventListener("pointermove", move);
-    grip.addEventListener("pointerup", up);
-    grip.addEventListener("pointercancel", up);
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", up);
+    document.addEventListener("pointercancel", up);
   };
 
   const selected = sections.find((section) => section.id === selectedId);
@@ -784,6 +798,7 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
                   data-hidden={section.hidden}
                   data-drag={dragIndex === index ? "" : undefined}
                   data-over={overIndex === index && dragIndex !== index ? "" : undefined}
+                  onPointerDown={onRowDown(index)}
                 >
                   <span
                     className="ed-grip"
@@ -791,7 +806,6 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
                     role="button"
                     tabIndex={0}
                     aria-label={`Move ${sectionDef?.label ?? section.type}`}
-                    onPointerDown={onGripDown(index)}
                     // Keyboard is the other half of this: the grip moves the
                     // row up and down without a pointer at all.
                     onKeyDown={(e) => {

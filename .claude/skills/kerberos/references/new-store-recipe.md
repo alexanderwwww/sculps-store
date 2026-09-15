@@ -91,6 +91,25 @@ Other rules learned the hard way:
   one shipped for four minutes because the build and deploy were chained after
   it with `&&` on a line where tsc's failure was not fatal.
 
+- **Drag and drop: put the move and release listeners on the document.** A
+  row only receives pointer events while the pointer is still over it, so a
+  drag goes silent the moment it travels past that row's own edge — the
+  gesture starts and then nothing happens. This cost three attempts here. Also:
+  the HTML5 drag API is the wrong tool when the row contains a button, because
+  a native button swallows the gesture before a drag begins. Make the whole row
+  the handle, not a small grip, and only treat a press as a drag after a few
+  pixels so a plain click still selects.
+
+- **To test admin JavaScript, stand up a local server, not a static file.**
+  React Router will not hydrate without `/__manifest`, which `python -m
+  http.server` cannot answer — so the page looks dead and every interaction
+  test lies. A ~30 line node server that serves `build/client`, answers
+  `/__manifest` with 204 and returns the saved HTML for everything else makes
+  the admin fully testable in Playwright. `scratchpad/serve.mjs`.
+
+- **Never run `pkill -f <script>` from the agent shell** — it matches and kills
+  the shell running the command, and the rest of the line never executes.
+
 - **A scoped reset outranks your components.** `.cb button { color: inherit }`
   is specificity (0,1,1) and beats `.cb-btn` at (0,1,0), so the theme's own
   button label was repainted with the inherited ink — white text on a black

@@ -65,6 +65,15 @@ const IcoStar = (
 const IcoVerified = (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.7-1.2 2.8 1.2 2.8-2.5 1.7-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9-2.5-1.7L4.4 13 3.2 10.2l2.5-1.7.9-2.9 3 .2z" fill="#1B8DE0" /><path d="M8.6 12.2l2.2 2.2 4.4-4.6" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
 );
+const IcoHeart = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.3l-7.2-6.8a4.5 4.5 0 0 1 7.2-5.3 4.5 4.5 0 0 1 7.2 5.3z" /></svg>
+);
+const IcoSend = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21.5 3.5L10.5 14M21.5 3.5l-7 17-3.5-7-7-3.5z" /></svg>
+);
+const IcoThumb = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1877F2" /><path d="M7.4 10.6h1.9v6.3H7.4zM10.6 16.9v-6.3l2.6-4a1.3 1.3 0 0 1 1.3 1.6l-.5 2h3a1.1 1.1 0 0 1 1.1 1.3l-.9 4a1.1 1.1 0 0 1-1.1.9z" fill="#fff" /></svg>
+);
 const IcoLike = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 21V10l4.5-8a2.4 2.4 0 0 1 2.3 3l-.9 3.6h5a2 2 0 0 1 2 2.4l-1.6 7.4A2 2 0 0 1 16.4 21z" /><path d="M7 10H4.5v11H7" /></svg>
 );
@@ -1045,6 +1054,90 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
  * screen renders nothing at all — no filler people, no invented stars. The
  * score below is the arithmetic mean of what is actually published.
  */
+/**
+ * One post, drawn in the shape of wherever it was written.
+ *
+ * Four shapes, because four places is where a product like this gets talked
+ * about: the order notification on your own phone, a Facebook comment, an
+ * Instagram post, and a text from someone's mother. Counts are printed only
+ * when the row carries them — a number drawn from nothing is a number we made
+ * up, so a post with no engagement recorded simply shows none.
+ */
+function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
+  const when = sinceText(r.reviewedOn);
+
+  if (r.channel === "notification") {
+    return (
+      <article className="cb-card cb-card--notif">
+        <img className="cb-card__app" src={LOGO} alt="" />
+        <div className="cb-card__notif">
+          <b>{r.name}<i>{when === "today" ? "now" : when}</i></b>
+          <p>{r.body}</p>
+        </div>
+      </article>
+    );
+  }
+
+  if (r.channel === "imessage") {
+    return (
+      <article className="cb-card cb-card--msg">
+        <span className="cb-card__from">{r.name}</span>
+        <p className="cb-card__bubble">{r.body}</p>
+        <span className="cb-card__when">{when}</span>
+      </article>
+    );
+  }
+
+  if (r.channel === "instagram") {
+    return (
+      <article className="cb-card cb-card--ig">
+        <header>
+          <span className="cb-card__av">{r.name.trim().charAt(0).toUpperCase()}</span>
+          <span className="cb-card__who">{r.name}</span>
+        </header>
+        {r.imageUrl ? (
+          <div className="cb-card__pic">
+            <img src={r.imageUrl} alt="" loading="lazy" />
+          </div>
+        ) : null}
+        <div className="cb-card__acts">{IcoHeart}{IcoComment}{IcoSend}</div>
+        {r.likes != null ? <div className="cb-card__likes">{r.likes.toLocaleString()} likes</div> : null}
+        <p className="cb-card__cap"><b>{r.name}</b> {r.body}</p>
+        {r.replies != null ? (
+          <div className="cb-card__more">View all {r.replies} comments</div>
+        ) : null}
+      </article>
+    );
+  }
+
+  return (
+    <article className="cb-card cb-card--fb">
+      <header>
+        <span className="cb-card__av">{r.name.trim().charAt(0).toUpperCase()}</span>
+        <span className="cb-card__id">
+          <span className="cb-card__who">{r.name}</span>
+          {r.verified ? <span className="cb-card__ok">{IcoVerified} Verified buyer</span> : null}
+        </span>
+      </header>
+      <p className="cb-card__body">{r.body}</p>
+      {r.imageUrl ? (
+        <div className="cb-card__pic">
+          <img src={r.imageUrl} alt="" loading="lazy" />
+        </div>
+      ) : null}
+      <footer>
+        {r.likes != null ? (
+          <span className="cb-card__react">{IcoThumb}{r.likes.toLocaleString()}</span>
+        ) : null}
+        <span className="cb-card__link">Like</span>
+        <span className="cb-card__link">Reply</span>
+        {r.replies != null ? <span className="cb-card__link">{r.replies} replies</span> : null}
+        <span className="cb-card__when">{when}</span>
+      </footer>
+    </article>
+  );
+}
+
 /** "3 days ago", from a real date. Nothing here is invented. */
 function sinceText(when: Date | string | null): string {
   if (!when) return "";
@@ -1060,19 +1153,25 @@ function sinceText(when: Date | string | null): string {
 function Reviews({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   const rows = page.reviews;
   if (!rows.length) return null;
-  const mean = rows.reduce((n, r) => n + r.rating, 0) / rows.length;
+  // Only the starred reviews count toward the score. A shipping notification
+  // and an Instagram post carry no rating, and averaging their zeros in would
+  // print a number that is simply false.
+  const rated = rows.filter((r) => r.rating > 0);
+  const mean = rated.length ? rated.reduce((n, r) => n + r.rating, 0) / rated.length : 0;
   return (
     <section className="cb-revs-s" id="reviews">
       <div className="cb-wrap">
         <div className="cb-revs__head">
-          <span className="cb-revs__score">{mean.toFixed(1)}</span>
-          <span className="cb-revs__stars" aria-hidden="true">
-            {[0, 1, 2, 3, 4].map((n) => (
-              <span key={n} style={{ opacity: n < Math.round(mean) ? 1 : 0.28 }}>{IcoStar}</span>
-            ))}
-          </span>
+          {rated.length ? <span className="cb-revs__score">{mean.toFixed(1)}</span> : null}
+          {rated.length ? (
+            <span className="cb-revs__stars" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((n) => (
+                <span key={n} style={{ opacity: n < Math.round(mean) ? 1 : 0.28 }}>{IcoStar}</span>
+              ))}
+            </span>
+          ) : null}
           <span className="cb-revs__of">
-            {rows.length} {rows.length === 1 ? "review" : "reviews"}
+            {rated.length} {rated.length === 1 ? "review" : "reviews"}
           </span>
         </div>
       </div>
@@ -1085,31 +1184,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
           {[0, 1].map((pass) => (
             <div className="cb-revs__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
               {rows.map((r) => (
-                <article className="cb-rev" key={`${pass}-${r.id}`}>
-                  <div className="cb-rev__top">
-                    <div className="cb-rev__av">{r.name.trim().charAt(0).toUpperCase()}</div>
-                    <div className="cb-rev__id">
-                      <span className="cb-rev__who">{r.name}</span>
-                      <span className="cb-rev__stars" aria-label={`${r.rating} out of 5`}>
-                        {[0, 1, 2, 3, 4].map((n) => (
-                          <span key={n} style={{ opacity: n < r.rating ? 1 : 0.24 }}>{IcoStar}</span>
-                        ))}
-                      </span>
-                    </div>
-                  </div>
-                  {/* The comment itself sits in a bubble, because that is the
-                      shape people read other people's words in. */}
-                  <p className="cb-rev__bubble">{r.body}</p>
-                  {r.imageUrl ? (
-                    <div className="cb-rev__pic">
-                      <img src={r.imageUrl} alt="" loading="lazy" />
-                    </div>
-                  ) : null}
-                  <div className="cb-rev__bar">
-                    {r.verified ? <span className="cb-rev__ok">{IcoVerified} Verified buyer</span> : null}
-                    <span className="cb-rev__when">{sinceText(r.reviewedOn)}</span>
-                  </div>
-                </article>
+                <SocialCard key={`${pass}-${r.id}`} r={r} />
               ))}
             </div>
           ))}

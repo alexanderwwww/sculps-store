@@ -671,8 +671,21 @@ export const reviews = pgTable(
     country: text("country"),
     imageUrl: text("image_url"),
     verified: boolean("verified").notNull().default(false),
-    /** "customer" | "supplier_listing" — required, never defaulted */
+    /** "customer" | "supplier_listing" | "draft" — required, never defaulted */
     source: text("source").notNull(),
+    /**
+     * Where this came from, so the storefront can draw it in that platform's
+     * shape: "review" | "facebook" | "instagram" | "imessage" | "notification".
+     * Presentation, not provenance — `source` is still what says whether a
+     * real customer wrote it.
+     */
+    channel: text("channel").notNull().default("review"),
+    /**
+     * Engagement as it stands on the original post. Null means we do not know,
+     * and the storefront prints nothing rather than a number we invented.
+     */
+    likes: integer("likes"),
+    replies: integer("replies"),
     published: boolean("published").notNull().default(false),
     position: integer("position").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
