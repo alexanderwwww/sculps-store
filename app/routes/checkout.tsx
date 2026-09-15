@@ -70,6 +70,16 @@ import buddyHref from "~/storefronts/garden-buddy/checkout.css?url";
 const GARDEN_BUDDY = "garden-buddy";
 
 /**
+ * Which stores get the branded checkout rather than the plain one.
+ *
+ * It is a set, not a slug test, because every new store wants this checkout —
+ * the plain one is the fallback for a store that has not been skinned yet, and
+ * leaving a store out of here is how a customer ends up paying on a page that
+ * looks like a different shop.
+ */
+const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy"]);
+
+/**
  * The other skin's stylesheet and fonts used to be declared here, which meant
  * every Garden Buddy checkout downloaded a theme and two font families it
  * never used before it could paint. They are rendered inside the skin that
@@ -1199,7 +1209,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
   const { store, cart, paymentsReady, paymentsMessage, publishableKey, paypalClientId, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
-  const buddy = store.slug === GARDEN_BUDDY;
+  const buddy = BRANDED_CHECKOUT.has(store.slug);
   const home = `/${storeParam}`;
   const href = (path: string) => `${path}${storeParam}`;
   const cn = buddy ? BUDDY : KNEELER;

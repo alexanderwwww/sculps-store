@@ -39,6 +39,13 @@ export function meta({ data }: Route.MetaArgs) {
   return [{ title: data?.store ? `Cart — ${data.store.name}` : "Cart" }];
 }
 
+/**
+ * Stores whose theme has a cart drawer. They never show the /cart page: a
+ * customer who lands there goes back to the product with the drawer open,
+ * which is where they already were.
+ */
+const DRAWER_STORES = new Set(["garden-buddy", "ceiling-buddy"]);
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const store = await resolveStore(context.db, context.hostname, url);
@@ -67,8 +74,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
    */
   const recover = url.searchParams.get("recover");
   if (recover && isNavigation) {
-    const to = new URL(store.slug === "garden-buddy" ? "/" : "/cart", url);
-    if (store.slug === "garden-buddy") to.searchParams.set("cart", "1");
+    // Stores with a cart drawer never show a cart page: the customer goes back
+    // to the product with the drawer open, which is where they were.
+    const drawer = DRAWER_STORES.has(store.slug);
+    const to = new URL(drawer ? "/" : "/cart", url);
+    if (drawer) to.searchParams.set("cart", "1");
     return new Response(null, {
       status: 302,
       headers: {
@@ -78,7 +88,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     });
   }
 
-  if (store.slug === "garden-buddy" && isNavigation) {
+  if (DRAWER_STORES.has(store.slug) && isNavigation) {
     // Garden Buddy's cart is the drawer: the home page with it open, where
     // lines can be changed or removed and nobody is hurried anywhere.
     const to = new URL("/", url);

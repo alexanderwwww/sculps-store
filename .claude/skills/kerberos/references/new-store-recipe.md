@@ -7,6 +7,15 @@ because skipping it cost a session once.
 **What Alex supplies:** a logo, product photos, a price, and a name. Nothing
 else is needed to get a store live. Domain, Stripe and the pixel come after.
 
+**The template is `app/storefronts/ceiling-buddy/`.** For any new one-product
+store of this kind, copy that whole folder — `index.tsx`, `theme.css`,
+`cart-drawer.tsx`, `embeds.ts` — rename the classes from `cb-` to the new
+prefix, repaint the palette block at the top of `theme.css` from the new logo,
+and swap the four media constants. It is the only storefront in the repo whose
+full money path (form post → drawer → upsell → branded checkout → PayPal
+express) has been clicked through in a browser. Do not start a one-product
+store from Garden Buddy or from scratch.
+
 ---
 
 ## 0. Before touching anything
@@ -169,11 +178,36 @@ button get hairline borders, soft shadows and one strong colour — a cartoon
 buy box reads as a toy and does not convert. Do not strip the personality to
 fix this; move it.
 
-## 4. Wire it up
+## 4. Wire it up — all four places, not just the storefront
 
-In `app/routes/storefront.tsx`: import the component and its
-`theme.css?url`, add the slug constant, add the branch **above** the existing
-ones. Then `npx react-router typegen` if routes changed.
+A storefront branch alone gets you a pretty product page that cannot take
+money. There are **four** registrations, and a one-product store needs all of
+them. Ceiling Buddy shipped with three of them and the cart was dead.
+
+1. `app/routes/storefront.tsx` — import the component and its
+   `theme.css?url`, add the slug constant, add the branch **above** the
+   existing ones. Pass `publishableKey`, `paypalClientId` and the active
+   `offer` through, or the buy box has no prices and no express buttons.
+2. `app/routes/checkout.tsx` — add the slug to `BRANDED_CHECKOUT`. Miss this
+   and the customer pays on the plain grey `gk-` chrome that belongs to no
+   brand.
+3. `app/routes/cart.tsx` — add the slug to `DRAWER_STORES`, so `/cart` bounces
+   to `/?cart=1` and the drawer opens instead of a bare cart page.
+4. The theme's own `cart-drawer.tsx` — the drawer with the logo, the bundle
+   upsell and PayPal express. Copy `ceiling-buddy/cart-drawer.tsx`; it is the
+   template.
+
+Then `npx react-router typegen` if routes changed.
+
+**Add to cart must be a real `<form>`**, posting to `/cart/add`, with the JS
+drawer as an enhancement on `onSubmit`. A bare `onClick` button is dead for
+anyone whose JS has not hydrated yet — which is every visitor for the first
+second.
+
+**Carry `?store=<slug>` into every cart form action.** On workers.dev there is
+no domain to resolve the store from, so a form posting to a bare `/cart/add`
+drops the line into whichever store is oldest. This looked exactly like "add
+to cart does nothing".
 
 ## 5. Gate, build, deploy — in this order, never two at once
 
@@ -206,6 +240,29 @@ curl -s -b $J "$B/checkout?store=<slug>" | grep -oE '\$[0-9]+\.[0-9]{2}' | sort 
 
 The checkout must print the price you seeded. If it does not, the product is
 draft or the variant is out of stock.
+
+`curl` is not a browser. `/cart` only redirects to the drawer for a real
+navigation, so send the headers one has, or you will read a `200` and go
+hunting for a bug that is not there:
+
+```bash
+curl -s -b $J -H 'Accept: text/html' -H 'Sec-Fetch-Dest: document' \
+  -o /dev/null -w '%{http_code} %{redirect_url}\n' "$B/cart?store=<slug>"
+# expect: 302 .../?store=<slug>&cart=1
+```
+
+Then click it in a real browser, because a 302 is not a working button:
+
+```bash
+# chromium needs the proxy's CA waived, or every goto fails ERR_CERT_AUTHORITY_INVALID
+chromium.launch({ args: ['--ignore-certificate-errors'],
+  executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
+```
+
+Click Add to cart, assert the drawer opens with the upsell in it, click
+Checkout, and assert the checkout page carries the branded classes and **zero**
+`gk-` ones. Listen on `pageerror` while you do: a hydration mismatch takes the
+whole tree down and working buttons with it, and it is silent otherwise.
 
 ## 7. Look at it
 

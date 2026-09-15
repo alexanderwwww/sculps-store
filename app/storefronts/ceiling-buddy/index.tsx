@@ -959,14 +959,11 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
   const total = blocks.length * 2;
 
   // The server renders the whole thread, so it is in the HTML for a reader with
-  // no JavaScript and for a crawler. The browser starts it empty instead — and
-  // decides that on the very first render rather than in an effect, because
-  // emptying it afterwards paints every message for one frame and then
-  // swallows them, which looks like a bug.
-  const [shown, setShown] = useState(() => {
-    if (typeof document === "undefined") return total;
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? total : 0;
-  });
+  // no JavaScript and for a crawler. The browser's first render has to match
+  // that markup exactly or React throws away the whole tree and rebuilds it —
+  // which cost us working buttons. So the thread starts full here too, and the
+  // effect below empties it and plays it back once hydration is done.
+  const [shown, setShown] = useState(total);
   const [typing, setTyping] = useState(false);
   const thread = useRef<HTMLDivElement | null>(null);
   const body = useRef<HTMLDivElement | null>(null);
@@ -993,17 +990,15 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
   useEffect(() => {
     const node = thread.current;
     if (!node) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShown(total);
+    // Anyone who has asked for less motion, or whose browser has no observer to
+    // start the thread with, keeps the finished conversation.
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      typeof IntersectionObserver === "undefined"
+    ) {
       return;
     }
-    // Without an observer there is nothing to start the thread, and the client
-    // has already emptied it — so the whole conversation would simply never
-    // appear. Show it all rather than show nothing.
-    if (typeof IntersectionObserver === "undefined") {
-      setShown(total);
-      return;
-    }
+    setShown(0);
 
     // One scheduler, one timer handle, one cancelled flag. The earlier version
     // chained timeouts and kept its own counter, which meant a second run of
@@ -1064,7 +1059,7 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
   };
 
   return (
-    <div className="cb-chat" id="faq" ref={thread} suppressHydrationWarning>
+    <div className="cb-chat" id="faq" ref={thread}>
       {/* The status bar and the contact header, so the frame reads as the
           phone someone actually asked this on rather than a widget. */}
       <div className="cb-chat__status">
