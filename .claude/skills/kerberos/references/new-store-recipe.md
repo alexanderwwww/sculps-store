@@ -110,6 +110,16 @@ Other rules learned the hard way:
 - **Never run `pkill -f <script>` from the agent shell** — it matches and kills
   the shell running the command, and the rest of the line never executes.
 
+- **A theme stylesheet can quietly grow a second copy of itself.** Ceiling
+  Buddy's was 20% duplicate — three verbatim blocks totalling 323 lines. The
+  later copy wins on source order, so edits made to the first copy silently did
+  nothing, and every one of those looked like "the deploy didn't work". Check
+  with `grep -oE "^\.[a-z0-9_-]+ \{" theme.css | sort | uniq -d`.
+  To remove it safely: snapshot every element's computed styles in the browser,
+  delete the later copies, then diff the snapshot. On this file 191 class
+  signatures were compared and only the 2 intended ones changed, which is the
+  proof the deletion was a no-op. `scratchpad/styles.mjs` does the snapshot.
+
 - **When you rewrite a component's CSS, delete the old block.** Twice here a
   stale rule further down the same stylesheet quietly won on source order: the
   new dark steps rendered white on white, and the new dark footer rendered
