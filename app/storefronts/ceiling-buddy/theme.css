@@ -302,20 +302,82 @@
 .cb-chip:nth-child(3n+2), .cb-chip:nth-child(3n) { background: var(--paper); }
 
 /* ---------------------------------------------------------------- steps */
+/* Three stops on a line. The old version was three identical boxes, which
+   reads as a form to fill in rather than a thing that takes ten seconds. */
 
-.cb-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-@media (max-width: 780px) { .cb-steps { grid-template-columns: minmax(0, 1fr); } }
+.cb-steps-s { background: var(--ink); color: #fff; padding: clamp(64px, 8vw, 110px) 0; }
+.cb-steps-s .cb-head h2 { color: #fff; background: linear-gradient(to top, #A8FF2E 0 26%, transparent 26%); }
+.cb-steps-s .cb-head h2 { -webkit-text-fill-color: #fff; }
+.cb-steps-s .cb-lede { color: rgba(255,255,255,.6); }
+
+.cb-steps {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0;
+  position: relative;
+}
+/* The line they sit on. */
+.cb-steps::before {
+  content: ""; position: absolute; left: 12%; right: 12%; top: 27px; height: 2px;
+  background: linear-gradient(90deg, rgba(168,255,46,.15), #A8FF2E 50%, rgba(168,255,46,.15));
+}
+@media (max-width: 780px) {
+  .cb-steps { grid-template-columns: minmax(0, 1fr); gap: 34px; }
+  .cb-steps::before { left: 27px; right: auto; top: 10%; bottom: 10%; width: 2px; height: auto;
+    background: linear-gradient(180deg, rgba(168,255,46,.15), #A8FF2E 50%, rgba(168,255,46,.15)); }
+}
+
 .cb-step {
-  background: var(--paper); border: var(--key) solid var(--ink); border-radius: var(--r);
-  box-shadow: var(--pop); padding: 30px 26px; display: flex; align-items: center; gap: 18px;
+  position: relative; text-align: center; padding: 0 18px;
+  animation: cb-step-in .6s cubic-bezier(.2,.8,.3,1) both;
+  animation-delay: calc(var(--i) * 140ms);
 }
-.cb-step:nth-child(1), .cb-step:nth-child(2) { background: var(--paper); }
-.cb-step:nth-child(3) { background: var(--paper); }
+@keyframes cb-step-in { from { opacity: 0; transform: translateY(14px); } }
+@media (prefers-reduced-motion: reduce) { .cb-step { animation: none; } }
+@media (max-width: 780px) { .cb-step { text-align: left; padding: 0 0 0 62px; } }
+
 .cb-step__n {
-  font-family: var(--display); font-size: 26px; font-weight: 600;
-  width: 58px; height: 58px; flex: 0 0 auto; border-radius: 999px; display: grid; place-items: center;
-  background: var(--paper); color: var(--ink); border: var(--key) solid var(--ink);
+  position: relative; z-index: 1;
+  display: grid; place-items: center; width: 54px; height: 54px; margin: 0 auto 20px;
+  border-radius: 999px; background: #A8FF2E; color: #08130B;
+  font-family: var(--display); font-weight: 700; font-size: 21px;
+  box-shadow: 0 0 0 8px var(--ink), 0 0 28px -4px rgba(168,255,46,.7);
 }
+@media (max-width: 780px) { .cb-step__n { position: absolute; left: 0; top: 0; margin: 0; width: 54px; } }
+.cb-step h3 { font-size: clamp(18px, 2.2vw, 23px); }
+.cb-step p { margin: 8px 0 0; color: rgba(255,255,255,.62); font-size: 14.5px; }
+
+/* --------------------------------------------------------------- versus */
+/* Two columns arguing, not a spreadsheet. */
+
+.cb-vs-s { padding: clamp(64px, 8vw, 110px) 0; background: var(--paper-2); }
+.cb-vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; max-width: 940px; margin: 0 auto; }
+@media (max-width: 720px) { .cb-vs { grid-template-columns: minmax(0, 1fr); } }
+
+.cb-vs__side { border-radius: 22px; padding: 26px 24px 20px; }
+.cb-vs__side--us {
+  background: var(--ink); color: #fff;
+  box-shadow: 0 2px 4px rgba(20,22,26,.1), 0 30px 60px -30px rgba(20,22,26,.5);
+}
+.cb-vs__side--them { background: var(--paper); border: 1px solid var(--hair); color: var(--dim); }
+
+.cb-vs__cap {
+  font-family: var(--display); font-weight: 700; font-size: 19px; letter-spacing: -0.02em;
+  margin: 0 0 18px; padding-bottom: 14px; border-bottom: 1px solid currentColor;
+  border-color: rgba(255,255,255,.14);
+}
+.cb-vs__side--them .cb-vs__cap { border-color: var(--hair); }
+
+.cb-vs__row { display: grid; gap: 3px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.cb-vs__side--them .cb-vs__row { border-bottom-color: var(--hair); }
+.cb-vs__row:last-child { border-bottom: 0; }
+.cb-vs__what { font-size: 12.5px; text-transform: uppercase; letter-spacing: .08em; opacity: .55; }
+.cb-vs__val {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--display); font-weight: 600; font-size: 16.5px; letter-spacing: -0.02em;
+}
+.cb-vs__val svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.cb-vs__side--us .cb-vs__val svg { color: #A8FF2E; }
+.cb-vs__side--them .cb-vs__val { opacity: .62; }
 
 /* ------------------------------------------------------------- big tiles */
 
@@ -506,18 +568,32 @@
 
 /* The offer, as a pill riding past with everything else. It is the only
    coloured thing on the bar, which is what makes it readable in motion. */
+/* Neon on black, with the logo riding in it. Green because nothing else on
+   this page is green, so it cannot be mistaken for part of the design — it
+   reads as the one thing being handed to you. */
 .cb-ann__t i[data-pill] {
-  color: #fff; background: linear-gradient(95deg, #1471D6, #4AA3FF);
-  border-radius: 999px; margin: 6px 10px; padding: 5px 15px;
-  font-weight: 700; letter-spacing: -0.01em;
-  box-shadow: 0 0 18px -4px rgba(74,163,255,.6);
+  color: #08130B; background: linear-gradient(95deg, #A8FF2E, #5BF08A);
+  border-radius: 999px; margin: 5px 12px; padding: 4px 6px 4px 5px;
+  gap: 7px; font-weight: 700; letter-spacing: -0.01em;
+  box-shadow: 0 0 22px -3px rgba(168,255,46,.55);
+  animation: cb-neon 3.2s ease-in-out infinite;
+}
+@keyframes cb-neon {
+  0%, 100% { box-shadow: 0 0 22px -3px rgba(168,255,46,.5); }
+  50% { box-shadow: 0 0 30px -1px rgba(168,255,46,.85); }
 }
 .cb-ann__t i[data-pill]::after { content: none; }
+.cb-ann__t i[data-pill] img {
+  width: 26px; height: 26px; border-radius: 999px; flex: 0 0 auto;
+  background: #fff; padding: 3px; object-fit: contain;
+}
 .cb-ann__t i[data-pill] code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
-  letter-spacing: .08em;
-  background: rgba(255,255,255,.22); border-radius: 6px; padding: 2px 7px; margin-left: 2px;
+  font-weight: 700; letter-spacing: .1em;
+  background: #08130B; color: #A8FF2E;
+  border-radius: 999px; padding: 4px 11px;
 }
+@media (prefers-reduced-motion: reduce) { .cb-ann__t i[data-pill] { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .cb-ann__t { animation: none; } }
 
 .cb-header {
@@ -684,22 +760,6 @@
 .cb-chip svg { width: 21px; height: 21px; color: var(--action); flex: 0 0 auto; }
 .cb-chip:nth-child(3n+1) { transform: none; }
 .cb-chip:nth-child(3n+2), .cb-chip:nth-child(3n) { background: var(--paper); }
-
-/* ---------------------------------------------------------------- steps */
-
-.cb-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-@media (max-width: 780px) { .cb-steps { grid-template-columns: minmax(0, 1fr); } }
-.cb-step {
-  background: var(--paper); border: var(--key) solid var(--ink); border-radius: var(--r);
-  box-shadow: var(--pop); padding: 30px 26px; display: flex; align-items: center; gap: 18px;
-}
-.cb-step:nth-child(1), .cb-step:nth-child(2) { background: var(--paper); }
-.cb-step:nth-child(3) { background: var(--paper); }
-.cb-step__n {
-  font-family: var(--display); font-size: 26px; font-weight: 600;
-  width: 58px; height: 58px; flex: 0 0 auto; border-radius: 999px; display: grid; place-items: center;
-  background: var(--paper); color: var(--ink); border: var(--key) solid var(--ink);
-}
 
 /* ------------------------------------------------------------- big tiles */
 

@@ -282,12 +282,12 @@ function Announce({
   const items: { key: string; node: React.ReactNode; pill?: boolean }[] = [
     { key: "ship", node: <>{IcoTruck} Free US shipping</> },
     ...(offer && amount
-      ? [{ key: "code", pill: true, node: <>{amount} · <code>{offer.code}</code></> }]
+      ? [{ key: "code", pill: true, node: <><img src={LOGO} alt="" />{amount}<code>{offer.code}</code></> }]
       : []),
     { key: "ret", node: <>{IcoReturn} 30 nights to change your mind</> },
     { key: "war", node: <>{IcoShield} 1-year warranty</> },
     ...(offer && amount
-      ? [{ key: "code2", pill: true, node: <>{amount} · <code>{offer.code}</code></> }]
+      ? [{ key: "code2", pill: true, node: <><img src={LOGO} alt="" />{amount}<code>{offer.code}</code></> }]
       : []),
     { key: "fast", node: <>{IcoBolt} Ships in 3-5 business days</> },
   ];
@@ -520,17 +520,21 @@ function Steps({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
   return (
-    <section className="cb-section cb-section--cream" id="how">
+    <section className="cb-steps-s" id="how">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-steps">
+        {/* A line with three stops on it. The old version was three identical
+            boxes, which reads as a form to fill in rather than a thing that
+            takes ten seconds. */}
+        <ol className="cb-steps">
           {items.map((b, i) => (
-            <div className="cb-step" key={b.id}>
-              <div className="cb-step__n">{i + 1}</div>
+            <li className="cb-step" key={b.id} style={{ ["--i" as string]: i }}>
+              <span className="cb-step__n">{i + 1}</span>
               <h3 className="cb-h3">{val(b.values, "title")}</h3>
-            </div>
+              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );
@@ -691,22 +695,30 @@ function Compare({ section }: { section: LoadedSection }) {
   if (!rows.length) return null;
   const v = section.values;
   return (
-    <section className="cb-section">
+    <section className="cb-vs-s">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-cmp">
-          <div className="cb-cmp__row cb-cmp__row--h">
-            <div className="cb-cmp__l" />
-            <div className="cb-cmp__us">{val(v, "usLabel") || "Us"}</div>
-            <div className="cb-cmp__them">{val(v, "themLabel") || "Them"}</div>
+        {/* Two columns arguing, not a spreadsheet. Ours is lit, theirs is
+            greyed, and the rows arrive one after another as you reach them. */}
+        <div className="cb-vs">
+          <div className="cb-vs__side cb-vs__side--us">
+            <h3 className="cb-vs__cap">{val(v, "usLabel") || "Us"}</h3>
+            {rows.map((b) => (
+              <div className="cb-vs__row" key={b.id}>
+                <span className="cb-vs__what">{val(b.values, "label")}</span>
+                <span className="cb-vs__val">{IcoCheck}{val(b.values, "us")}</span>
+              </div>
+            ))}
           </div>
-          {rows.map((b) => (
-            <div className="cb-cmp__row" key={b.id}>
-              <div className="cb-cmp__l">{val(b.values, "label")}</div>
-              <div className="cb-cmp__us">{IcoCheck}{val(b.values, "us")}</div>
-              <div className="cb-cmp__them">{IcoCross}{val(b.values, "them")}</div>
-            </div>
-          ))}
+          <div className="cb-vs__side cb-vs__side--them">
+            <h3 className="cb-vs__cap">{val(v, "themLabel") || "Them"}</h3>
+            {rows.map((b) => (
+              <div className="cb-vs__row" key={b.id}>
+                <span className="cb-vs__what">{val(b.values, "label")}</span>
+                <span className="cb-vs__val">{IcoCross}{val(b.values, "them")}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

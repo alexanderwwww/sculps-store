@@ -663,6 +663,21 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
     wasPosting.current = posting;
   }, [posting, navigation.state, previewSrc]);
 
+  // A reorder goes through a fetcher, and a fetcher never touches
+  // `navigation.state` — which is why dragging a section saved the new order
+  // but left the preview showing the old one until the page was reopened.
+  const wasReordering = useRef(false);
+  useEffect(() => {
+    if (wasReordering.current && reorder.state === "idle") {
+      const win = frameRef.current?.contentWindow;
+      if (win) {
+        scrollBack.current = win.scrollY;
+        win.location.replace(previewSrc);
+      }
+    }
+    wasReordering.current = reorder.state !== "idle";
+  }, [reorder.state, previewSrc]);
+
   return (
     <div className="ed">
       {/* ------------------------------------------------------- top bar */}
