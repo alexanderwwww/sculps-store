@@ -68,8 +68,17 @@ const IcoVerified = (
 const IcoHeart = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20.3l-7.2-6.8a4.5 4.5 0 0 1 7.2-5.3 4.5 4.5 0 0 1 7.2 5.3z" /></svg>
 );
+const IcoThumb2 = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 21V10l4.5-8a2.4 2.4 0 0 1 2.3 3l-.9 3.6h5a2 2 0 0 1 2 2.4l-1.6 7.4A2 2 0 0 1 16.4 21z" /><path d="M7 10H4.5v11H7" /></svg>
+);
 const IcoSend = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21.5 3.5L10.5 14M21.5 3.5l-7 17-3.5-7-7-3.5z" /></svg>
+);
+const IcoHeartFill = (
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#F3425F" /><path d="M12 17.6l-4.6-4.4a2.9 2.9 0 0 1 4.6-3.4 2.9 2.9 0 0 1 4.6 3.4z" fill="#fff" /></svg>
+);
+const IcoCareFill = (
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#F7B125" /><circle cx="8.6" cy="10" r="1.3" fill="#2A2013" /><circle cx="15.4" cy="10" r="1.3" fill="#2A2013" /><path d="M8.4 14.4a4.4 4.4 0 0 0 7.2 0" stroke="#2A2013" strokeWidth="1.6" fill="none" strokeLinecap="round" /></svg>
 );
 const IcoThumb = (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1877F2" /><path d="M7.4 10.6h1.9v6.3H7.4zM10.6 16.9v-6.3l2.6-4a1.3 1.3 0 0 1 1.3 1.6l-.5 2h3a1.1 1.1 0 0 1 1.1 1.3l-.9 4a1.1 1.1 0 0 1-1.1.9z" fill="#fff" /></svg>
@@ -500,13 +509,13 @@ function TrustBand({ section }: { section: LoadedSection }) {
   return (
     <>
       <Marquee />
-      <section className="cb-section cb-section--tight">
-        <div className="cb-wrap cb-chips">
+      <section className="cb-band">
+        <div className="cb-wrap cb-band__in">
           {items.map((b, i) => (
-            <span className="cb-chip" key={b.id}>
-              {TRUST_ICONS[i % TRUST_ICONS.length]}
-              {val(b.values, "title")}
-            </span>
+            <div className="cb-band__it" key={b.id}>
+              <span className="cb-band__ico">{TRUST_ICONS[i % TRUST_ICONS.length]}</span>
+              <span className="cb-band__t">{val(b.values, "title")}</span>
+            </div>
           ))}
         </div>
       </section>
@@ -564,16 +573,19 @@ function Benefits({ section }: { section: LoadedSection }) {
 function Features({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
+  // A grid of numbered lines on black. Chips read as filler; a list someone
+  // bothered to number reads as a spec.
   return (
-    <section className="cb-section cb-section--sky">
+    <section className="cb-spec-s">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-chips">
+        <div className="cb-specgrid">
           {items.map((b, i) => (
-            <span className="cb-chip" key={b.id}>
-              {FEATURE_ICONS[i % FEATURE_ICONS.length]}
-              {val(b.values, "title")}
-            </span>
+            <div className="cb-specgrid__it" key={b.id}>
+              <span className="cb-specgrid__n">{String(i + 1).padStart(2, "0")}</span>
+              <span className="cb-specgrid__t">{val(b.values, "title")}</span>
+              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
+            </div>
           ))}
         </div>
       </div>
@@ -731,12 +743,15 @@ function WhoFor({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
   return (
-    <section className="cb-section">
+    <section className="cb-for-s">
       <div className="cb-wrap">
         <Head section={section} />
-        <div className="cb-chips">
-          {items.map((b) => (
-            <span className="cb-chip" key={b.id}>{val(b.values, "title")}</span>
+        <div className="cb-for">
+          {items.map((b, i) => (
+            <div className="cb-for__it" key={b.id} data-i={i}>
+              <h3 className="cb-h3">{val(b.values, "title")}</h3>
+              {has(b.values, "text") ? <p>{val(b.values, "text")}</p> : null}
+            </div>
           ))}
         </div>
       </div>
@@ -953,8 +968,10 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
         setTyping(true);
         // Longer replies take longer to type, within reason. A fixed pause on
         // a two-line answer reads as a loading spinner rather than a person.
-        const words = (blocks[(step - 1) / 2]?.values.answer ?? "").length;
-        wait(Math.min(1500, 650 + words * 6), () => {
+        const block = blocks[(step - 1) / 2];
+        const words = (block?.values.answer ?? "").length;
+        const sendsPhoto = Boolean((block?.values.image ?? "").trim());
+        wait(Math.min(1600, 600 + words * 8 + (sendsPhoto ? 350 : 0)), () => {
           setTyping(false);
           setShown(step + 1);
           wait(480, () => play(step + 1));
@@ -1026,6 +1043,14 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
             <img className="cb-chat__av" src={LOGO} alt="" />
             <div>
               <p>{val(b.values, "answer")}</p>
+              {/* The photograph is the answer; the words above it are the nod
+                  before it. Sent as its own bubble, the way a picture arrives
+                  in a real thread. */}
+              {has(b.values, "image") ? (
+                <figure className="cb-chat__photo">
+                  <img src={val(b.values, "image")} alt="" loading="lazy" />
+                </figure>
+              ) : null}
               <span className="cb-chat__time">{at(i)}</span>
             </div>
           </div>
@@ -1139,13 +1164,19 @@ function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
       ) : null}
       <footer>
         {r.likes != null ? (
-          <span className="cb-card__react">{IcoThumb}{r.likes.toLocaleString()}</span>
+          <span className="cb-card__react">
+            <span className="cb-card__marks">{IcoThumb}{IcoHeartFill}{IcoCareFill}</span>
+            {r.likes.toLocaleString()}
+          </span>
         ) : null}
-        <span className="cb-card__link">Like</span>
-        <span className="cb-card__link">Reply</span>
-        {r.replies != null ? <span className="cb-card__link">{r.replies} replies</span> : null}
-        <span className="cb-card__when">{when}</span>
+        {r.replies != null ? <span className="cb-card__when">{r.replies} comments</span> : null}
       </footer>
+      <div className="cb-card__acts cb-card__acts--fb">
+        <span>{IcoThumb2} Like</span>
+        <span>{IcoComment} Comment</span>
+        <span>{IcoSend} Share</span>
+      </div>
+      <div className="cb-card__stamp">{when}</div>
     </article>
   );
 }
@@ -1293,29 +1324,81 @@ function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storePa
 
 function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: string }) {
   const href = (p: string) => `${p}${storeParam}`;
-  const year = 2026;
+  const drawer = useCartDrawer();
+  const buy = page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
   return (
-    <footer className="cb-footer">
-      <div className="cb-wrap">
-        <div className="cb-footer__top">
-          <a href={href("/")} aria-label={page.store.name}>
+    <>
+      {/* One last offer, made properly, before the small print. */}
+      <section className="cb-last">
+        <div className="cb-wrap cb-last__in">
+          <img className="cb-last__logo" src={LOGO} alt="" />
+          <h2 className="cb-h2">Your ceiling is the biggest screen you own</h2>
+          {buy ? (
+            <form
+              method="post"
+              action={`/cart/add${storeParam}`}
+              onSubmit={(e) => { if (drawer) { e.preventDefault(); drawer.add(buy.id); } }}
+            >
+              <input type="hidden" name="variantId" value={buy.id} />
+              <button type="submit" className="cb-btn">
+                Get Ceiling Buddy — {formatMoney(buy.priceCents, page.store.currency)}
+              </button>
+            </form>
+          ) : null}
+          <ul className="cb-last__trust">
+            <li>{IcoTruck}<b>Free</b> US shipping</li>
+            <li>{IcoReturn}<b>30 nights</b> to change your mind</li>
+            <li>{IcoShield}<b>1 year</b> warranty</li>
+          </ul>
+        </div>
+      </section>
+
+      <footer className="cb-footer">
+        <div className="cb-wrap cb-footer__cols">
+          <div className="cb-footer__brand">
             <img src={LOGO} alt={page.store.name} />
-          </a>
-          <nav className="cb-footer__links">
-            {page.nav.footer.map((l) => (
-              <a key={l.href} href={`${l.href}${storeParam}`}>{l.label}</a>
-            ))}
-            {page.store.contactEmail ? (
-              <a href={`mailto:${page.store.contactEmail}`}>Contact</a>
-            ) : null}
-          </nav>
+            <p>A tray, a projector and a strip of warm light. Made for people who watch
+            lying down.</p>
+          </div>
+
+          {page.nav.footer.length ? (
+            <nav className="cb-footer__col" aria-label="Footer">
+              <h3>Help</h3>
+              <ul>
+                {page.nav.footer.map((l) => (
+                  <li key={l.href + l.label}><a href={`${l.href}${storeParam}`}>{l.label}</a></li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
+
+          <div className="cb-footer__col">
+            <h3>The store</h3>
+            <ul>
+              <li><a href={href("/")}>Ceiling Buddy</a></li>
+              <li><a href="#how">How it works</a></li>
+              <li><a href="#reviews">Reviews</a></li>
+              <li><a href="#faq">Questions</a></li>
+            </ul>
+          </div>
+
+          <div className="cb-footer__col">
+            <h3>Talk to a person</h3>
+            <ul>
+              {page.store.contactEmail ? (
+                <li><a href={`mailto:${page.store.contactEmail}`}>{page.store.contactEmail}</a></li>
+              ) : null}
+              <li>Same-day replies, most days</li>
+            </ul>
+          </div>
         </div>
-        <div className="cb-footer__bar">
-          <span>© {year} {page.store.name}</span>
-          <span>Free US shipping · 30-day returns</span>
+
+        <div className="cb-wrap cb-footer__bar">
+          <span>© 2026 {page.store.name}</span>
+          <span>Free US shipping · 30-night returns · 1-year warranty</span>
         </div>
-      </div>
-    </footer>
+      </footer>
+    </>
   );
 }
 

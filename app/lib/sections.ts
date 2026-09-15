@@ -78,6 +78,12 @@ export const SECTIONS: SectionDef[] = [
         { name: "question", label: "Question", kind: "text" },
         { name: "answer", label: "Answer", kind: "textarea" },
         {
+          name: "image",
+          label: "Photo reply",
+          kind: "image",
+          help: "Sent as a picture straight after the answer. A photo answers 'does it need plugging in' faster than a sentence does.",
+        },
+        {
           name: "quick",
           label: "Tappable",
           kind: "text",

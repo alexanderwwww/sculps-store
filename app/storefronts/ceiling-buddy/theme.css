@@ -491,15 +491,85 @@
 .cb-close .cb-btn { width: auto; padding-inline: 52px; margin-top: 30px; }
 .cb-close img { height: 54px; width: auto; margin: 0 auto 22px; }
 
+/* ------------------------------------------------------------- the tail */
+
+/* trust, as a band rather than a row of chips */
+.cb-band { background: var(--ink); color: #fff; padding: 22px 0; }
+.cb-band__in { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 40px; }
+.cb-band__it { display: inline-flex; align-items: center; gap: 10px; }
+.cb-band__ico { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; background: rgba(168,255,46,.14); color: #A8FF2E; }
+.cb-band__ico svg { width: 16px; height: 16px; }
+.cb-band__t { font-family: var(--display); font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em; }
+
+/* features, as a numbered spec sheet */
+.cb-spec-s { padding: clamp(60px, 8vw, 100px) 0; background: var(--paper-2); }
+.cb-specgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: 20px; overflow: hidden; }
+@media (max-width: 860px) { .cb-specgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .cb-specgrid { grid-template-columns: minmax(0, 1fr); } }
+.cb-specgrid__it { background: var(--paper); padding: 26px 24px; display: grid; gap: 6px; align-content: start; transition: background .2s ease; }
+.cb-specgrid__it:hover { background: #fff; }
+.cb-specgrid__n { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--dimmer); letter-spacing: .1em; }
+.cb-specgrid__t { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+.cb-specgrid__it p { margin: 0; font-size: 14.5px; color: var(--dim); }
+
+/* who it's for, as four cards that lean */
+.cb-for-s { padding: clamp(60px, 8vw, 100px) 0; }
+.cb-for { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .cb-for { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .cb-for { grid-template-columns: minmax(0, 1fr); } }
+.cb-for__it {
+  border-radius: 20px; padding: 26px 22px; background: var(--paper-2);
+  border: 1px solid var(--hair); display: grid; gap: 8px; align-content: start;
+  transition: transform .25s cubic-bezier(.2,.8,.3,1), box-shadow .25s ease;
+}
+.cb-for__it:hover { transform: translateY(-4px); box-shadow: 0 20px 44px -26px rgba(20,22,26,.4); }
+.cb-for__it[data-i="0"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.cb-for__it[data-i="0"] p { color: rgba(255,255,255,.66); }
+.cb-for__it[data-i="3"] { background: #A8FF2E; border-color: #A8FF2E; }
+.cb-for__it p { margin: 0; font-size: 14.5px; color: var(--dim); }
+
+/* -------------------------------------------------------------- the last */
+
+.cb-last {
+  position: relative; overflow: hidden; text-align: center;
+  background: var(--ink); color: #fff; padding: clamp(60px, 8vw, 104px) 0;
+}
+.cb-last::before {
+  content: ""; position: absolute; inset: auto 0 -40% 0; height: 80%;
+  background: radial-gradient(50% 100% at 50% 100%, rgba(168,255,46,.22), transparent 70%);
+}
+.cb-last__in { position: relative; max-width: 720px; }
+.cb-last__logo { height: 52px; width: auto; margin: 0 auto 22px; }
+.cb-last .cb-btn { width: auto; padding-inline: 40px; margin-top: 28px; background: #A8FF2E; color: #08130B; border-color: #A8FF2E; }
+.cb-last .cb-btn:hover { background: #BCFF54; }
+.cb-last__trust {
+  list-style: none; margin: 30px 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px;
+  font-size: 14px; color: rgba(255,255,255,.7);
+}
+.cb-last__trust li { display: inline-flex; align-items: center; gap: 8px; }
+.cb-last__trust b { color: #fff; }
+.cb-last__trust svg { width: 17px; height: 17px; color: #A8FF2E; }
+
 /* ---------------------------------------------------------------- footer */
 
-.cb-footer { border-top: 1px solid var(--hair); background: var(--paper); color: var(--ink); padding: 56px 0 34px; }
-.cb-footer__top { display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; align-items: center; }
-.cb-footer img { height: 38px; }
-.cb-footer__links { display: flex; flex-wrap: wrap; gap: 10px 26px; }
-.cb-footer__links a { font-family: var(--body); font-weight: 500; font-size: 15px; }
-.cb-footer__links a:hover { color: var(--action); }
-.cb-footer__bar { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--hair); display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; font-size: 13.5px; opacity: .72; }
+.cb-footer { background: var(--ink); color: rgba(255,255,255,.72); padding: clamp(44px, 6vw, 72px) 0 28px; border-top: 1px solid rgba(255,255,255,.08); }
+.cb-footer__cols { display: grid; grid-template-columns: 1.6fr repeat(3, 1fr); gap: 34px; }
+@media (max-width: 900px) { .cb-footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .cb-footer__cols { grid-template-columns: minmax(0, 1fr); gap: 26px; } }
+.cb-footer__brand img { height: 40px; width: auto; margin-bottom: 14px; }
+.cb-footer__brand p { margin: 0; font-size: 14px; line-height: 1.55; max-width: 34ch; }
+.cb-footer__col h3 { font-family: var(--display); font-weight: 700; font-size: 14px; color: #fff; margin: 0 0 12px; letter-spacing: -0.01em; }
+.cb-footer__col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.cb-footer__col a { font-size: 14px; }
+.cb-footer__col a:hover { color: #A8FF2E; }
+.cb-footer__col li { font-size: 14px; }
+.cb-footer__bar {
+  margin-top: clamp(32px, 4vw, 48px); padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between;
+  font-size: 13px; color: rgba(255,255,255,.5);
+}
 
 /* ------------------------------------------------------------ sticky buy */
 
@@ -875,13 +945,6 @@
 
 /* ---------------------------------------------------------------- footer */
 
-.cb-footer { border-top: 1px solid var(--hair); background: var(--paper); color: var(--ink); padding: 56px 0 34px; }
-.cb-footer__top { display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; align-items: center; }
-.cb-footer img { height: 38px; }
-.cb-footer__links { display: flex; flex-wrap: wrap; gap: 10px 26px; }
-.cb-footer__links a { font-family: var(--body); font-weight: 500; font-size: 15px; }
-.cb-footer__links a:hover { color: var(--action); }
-.cb-footer__bar { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--hair); display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; font-size: 13.5px; opacity: .72; }
 
 /* ------------------------------------------------------------ sticky buy */
 
@@ -1028,8 +1091,8 @@
 
 .cb-revs-s {
   position: relative; overflow: hidden;
-  background: radial-gradient(75% 60% at 50% 34%, #1E63C8 0%, #124395 44%, #08245C 76%, #05173F 100%);
-  color: #fff; padding: clamp(56px, 7vw, 92px) 0;
+  background: var(--paper); color: var(--ink);
+  padding: clamp(56px, 7vw, 92px) 0;
 }
 
 /* Three columns, drifting up and down. Sideways, a short notification beside a
@@ -1040,7 +1103,7 @@
   gap: 16px; align-items: start;
   width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 20px;
   height: clamp(520px, 62vh, 700px); overflow: hidden;
-  mask-image: linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
 }
 .cb-wallcol { display: grid; gap: 16px; animation: cb-rise 58s linear infinite; }
 .cb-wallcol__pass { display: grid; gap: 16px; }
@@ -1069,31 +1132,37 @@
 /* the order notification — iOS glass over the blue */
 .cb-card--notif {
   display: flex; align-items: center; gap: 12px; padding: 13px 15px;
-  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
-  backdrop-filter: blur(22px) saturate(160%); color: #fff; border-radius: 22px;
+  background: rgba(244,246,250,.72); border: 1px solid rgba(20,22,26,.08);
+  backdrop-filter: blur(22px) saturate(180%); color: var(--ink); border-radius: 22px;
+  box-shadow: 0 1px 2px rgba(20,22,26,.04), 0 14px 30px -20px rgba(20,22,26,.3);
 }
-.cb-card__app { width: 40px; height: 40px; border-radius: 10px; background: #fff; padding: 4px; object-fit: contain; flex: 0 0 auto; }
+.cb-card__app {
+  width: 42px; height: 42px; border-radius: 11px; flex: 0 0 auto; object-fit: contain;
+  background: #fff; padding: 4px; border: 1px solid rgba(20,22,26,.07);
+}
 .cb-card__notif { min-width: 0; }
 .cb-card__notif b { display: flex; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 14.5px; }
-.cb-card__notif i { margin-left: auto; font-style: normal; font-size: 11.5px; opacity: .7; }
-.cb-card__notif p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.35; opacity: .92; }
+.cb-card__notif i { margin-left: auto; font-style: normal; font-size: 11.5px; color: var(--dimmer); }
+.cb-card__notif p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.35; color: var(--dim); }
 
 /* a text from someone */
 .cb-card--msg { display: grid; gap: 5px; }
-.cb-card__from { font-size: 12px; color: rgba(255,255,255,.65); padding-left: 4px; }
+.cb-card__from { font-size: 12px; color: var(--dim); padding-left: 4px; }
 .cb-card__bubble {
   margin: 0; background: #E9E9EB; color: #101114;
+  border: 1px solid rgba(20,22,26,.05);
   border-radius: 20px 20px 20px 6px; padding: 11px 15px;
   font-size: 14.5px; line-height: 1.4; letter-spacing: -0.01em;
 }
-.cb-card__when { font-size: 11.5px; color: rgba(255,255,255,.5); padding-left: 4px; }
+.cb-card__when { font-size: 11.5px; color: var(--dimmer); padding-left: 4px; }
 
 /* the white ones — Facebook and Instagram, on paper */
 .cb-card--fb, .cb-card--ig {
   background: #fff; color: #0B0C0F;
-  box-shadow: 0 1px 2px rgba(0,0,0,.14), 0 18px 40px -22px rgba(0,0,0,.5);
+  border: 1px solid var(--hair);
+  box-shadow: 0 1px 2px rgba(20,22,26,.04), 0 16px 36px -26px rgba(20,22,26,.3);
 }
-.cb-card--fb { padding: 14px 15px 10px; display: grid; gap: 10px; }
+.cb-card--fb { padding: 14px 15px 8px; display: grid; gap: 10px; }
 .cb-card--fb header, .cb-card--ig header { display: flex; align-items: center; gap: 10px; }
 .cb-card__av {
   width: 36px; height: 36px; border-radius: 999px; flex: 0 0 auto;
@@ -1109,14 +1178,26 @@
 .cb-card--ig .cb-card__pic { border-radius: 0; aspect-ratio: 1 / 1; }
 .cb-card__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* The reaction cluster: overlapping marks, then the count — the shape people
+   read as "other people agreed" without reading a word of it. */
 .cb-card--fb footer {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  padding-top: 9px; border-top: 1px solid #E4E6EB; font-size: 12.5px; color: #65676B;
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 8px; font-size: 12.5px; color: #65676B;
 }
-.cb-card__react { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: #050505; }
-.cb-card__react svg { width: 16px; height: 16px; }
-.cb-card__link { font-weight: 600; }
-.cb-card--fb .cb-card__when { margin-left: auto; color: #8A8D91; padding: 0; }
+.cb-card__react { display: inline-flex; align-items: center; gap: 6px; color: #65676B; }
+.cb-card__marks { display: inline-flex; }
+.cb-card__marks svg { width: 17px; height: 17px; border-radius: 999px; }
+.cb-card__marks svg + svg { margin-left: -5px; }
+.cb-card--fb .cb-card__when { margin-left: auto; color: #65676B; padding: 0; }
+
+.cb-card__acts--fb {
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 4px 0; border-top: 1px solid #E4E6EB;
+  font-size: 13px; font-weight: 600; color: #65676B;
+}
+.cb-card__acts--fb span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; }
+.cb-card__acts--fb svg { width: 17px; height: 17px; }
+.cb-card__stamp { padding: 6px 0 2px; font-size: 11.5px; color: #8A8D91; }
 
 .cb-card--ig { display: grid; gap: 0; }
 .cb-card--ig header { padding: 12px 14px; }
@@ -1132,9 +1213,9 @@
   margin-bottom: clamp(28px, 4vw, 44px);
 }
 .cb-revs__score { font-family: var(--display); font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: -0.03em; }
-.cb-revs__head .cb-revs__stars { display: flex; gap: 2px; color: #FFCB45; }
+.cb-revs__head .cb-revs__stars { display: flex; gap: 2px; color: #F0A500; }
 .cb-revs__head .cb-revs__stars svg { width: 15px; height: 15px; }
-.cb-revs__of { color: rgba(255,255,255,.7); font-size: 14px; }
+.cb-revs__of { color: var(--dim); font-size: 14px; }
 
 /* -------------------------------------------------------------- UGC frame */
 /* Sits directly under the buy box. Phone-shaped, because every piece of media
@@ -1434,3 +1515,13 @@
 
 .cb-night { display: block; width: 100%; line-height: 0; background: var(--ink); }
 .cb-night img { width: 100%; height: clamp(360px, 46vw, 620px); object-fit: cover; display: block; }
+
+/* A photograph sent into the thread. Rounded like a bubble, capped in height
+   so one tall phone shot cannot own the whole screen. */
+.cb-chat__photo {
+  margin: 7px 0 0; border-radius: 16px; overflow: hidden;
+  background: #1C1C1E; max-width: 200px;
+}
+.cb-chat__photo img {
+  width: 100%; height: auto; max-height: 260px; object-fit: cover; display: block;
+}

@@ -110,6 +110,12 @@ Other rules learned the hard way:
 - **Never run `pkill -f <script>` from the agent shell** — it matches and kills
   the shell running the command, and the rest of the line never executes.
 
+- **When you rewrite a component's CSS, delete the old block.** Twice here a
+  stale rule further down the same stylesheet quietly won on source order: the
+  new dark steps rendered white on white, and the new dark footer rendered
+  white. Both looked like the new code had not deployed. After any rewrite,
+  `grep -n "^\.cb-thing" theme.css` and make sure there is exactly one.
+
 - **A scoped reset outranks your components.** `.cb button { color: inherit }`
   is specificity (0,1,1) and beats `.cb-btn` at (0,1,0), so the theme's own
   button label was repainted with the inherited ink — white text on a black
