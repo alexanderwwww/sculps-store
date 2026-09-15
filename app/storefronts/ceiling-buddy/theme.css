@@ -233,6 +233,11 @@
 }
 .cb-opt[aria-checked="true"] .cb-opt__dot { border-color: var(--action); }
 .cb-opt[aria-checked="true"] .cb-opt__dot::after { content: ""; width: 10px; height: 10px; border-radius: 999px; background: var(--action); }
+.cb-opt__pic {
+  width: 52px; height: 52px; flex: 0 0 auto; border-radius: 10px; overflow: hidden;
+  background: var(--cream); border: 1px solid var(--hair);
+}
+.cb-opt__pic img { width: 100%; height: 100%; object-fit: contain; }
 .cb-opt__t { display: block; font-family: var(--display); font-weight: 600; font-size: 15px; }
 .cb-opt__s { display: block; font-family: var(--body); font-size: 12.5px; color: var(--dim); line-height: 1.35; }
 .cb-opt__p { margin-left: auto; text-align: right; }
@@ -564,16 +569,29 @@
    already trusts. Nothing here is generated: it renders whatever is published
    on the Reviews screen, and shows nothing at all when that is empty. */
 
-.cb-revs { columns: 3; column-gap: 20px; }
-@media (max-width: 980px) { .cb-revs { columns: 2; } }
-@media (max-width: 660px) { .cb-revs { columns: 1; } }
+.cb-revs { display: grid; gap: 18px; }
+/* Full bleed, with the ends faded, so the rows read as a stream that carries
+   on past the page rather than two lists that happen to move. */
+.cb-revs__row {
+  display: flex; gap: 18px; width: 100%; overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+.cb-revs__track {
+  display: flex; gap: 18px; flex: 0 0 auto;
+  animation: cb-drift 46s linear infinite;
+}
+.cb-revs__row[data-track="1"] .cb-revs__track { animation-direction: reverse; }
+@keyframes cb-drift { to { transform: translateX(calc(-100% - 18px)); } }
+/* Stop it so a card can actually be read. */
+.cb-revs:hover .cb-revs__track, .cb-revs:focus-within .cb-revs__track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .cb-revs__track { animation: none; } }
 
 .cb-rev {
   background: var(--paper); border: 1px solid var(--hair); border-radius: 14px;
   box-shadow: var(--lift); overflow: hidden;
-  break-inside: avoid; -webkit-column-break-inside: avoid;
-  margin: 0 0 20px; width: 100%;
+  width: 340px; flex: 0 0 auto; align-self: flex-start;
 }
+@media (max-width: 520px) { .cb-rev { width: 82vw; } }
 .cb-rev__top { display: flex; align-items: center; gap: 11px; padding: 14px 16px 10px; }
 .cb-rev__av {
   width: 42px; height: 42px; border-radius: 999px; flex: 0 0 auto;

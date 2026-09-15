@@ -356,6 +356,14 @@ function BuyBox({ section, page }: { section: LoadedSection; page: LoadedProduct
                   >
                     {flag ? <span className={`cb-opt__flag cb-opt__flag--${flag[0]}`}>{flag[1]}</span> : null}
                     <span className="cb-opt__dot" />
+                    {/* What this option actually is. The bundles differ by what
+                        is in the box, and a line of text is a poor way to say
+                        that when a picture can. */}
+                    {x.imageUrl ? (
+                      <span className="cb-opt__pic">
+                        <img src={x.imageUrl} alt="" loading="lazy" />
+                      </span>
+                    ) : null}
                     <span>
                       <span className="cb-opt__t">{x.label}</span>
                       {x.sublabel ? <span className="cb-opt__s">{x.sublabel}</span> : null}
@@ -836,33 +844,53 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
   useEffect(() => {
     const el = body.current;
     if (!el || shown === 0) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    const overflow = el.scrollHeight - el.clientHeight;
+    if (overflow <= 0) return;
+    el.scrollTo({ top: overflow, behavior: shown <= 1 ? "auto" : "smooth" });
   }, [shown, typing]);
 
   useEffect(() => {
-    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (calm || !thread.current) return;
+    const node = thread.current;
+    if (!node) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(total);
+      return;
+    }
+    // Without an observer there is nothing to start the thread, and the client
+    // has already emptied it — so the whole conversation would simply never
+    // appear. Show it all rather than show nothing.
+    if (typeof IntersectionObserver === "undefined") {
+      setShown(total);
+      return;
+    }
 
-    let timer: ReturnType<typeof setTimeout>;
-    let step = 0;
+    // One scheduler, one timer handle, one cancelled flag. The earlier version
+    // chained timeouts and kept its own counter, which meant a second run of
+    // this effect — a remount, a fast scroll away and back — could leave an
+    // orphaned chain still calling setState against a stale count. Nothing here
+    // survives cleanup.
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const wait = (ms: number, then: () => void) => {
+      timer = setTimeout(() => { if (!cancelled) then(); }, ms);
+    };
 
-    const advance = () => {
-      if (step >= total) { setTyping(false); return; }
+    const play = (step: number) => {
+      if (cancelled || step >= total) { setTyping(false); return; }
       const ours = step % 2 === 1;
-      // Our replies pause on the dots first; theirs land straight away, the
-      // way a question you already typed does.
       if (ours) {
         setTyping(true);
-        timer = setTimeout(() => {
+        // Longer replies take longer to type, within reason. A fixed pause on
+        // a two-line answer reads as a loading spinner rather than a person.
+        const words = (blocks[(step - 1) / 2]?.values.answer ?? "").length;
+        wait(Math.min(1500, 650 + words * 6), () => {
           setTyping(false);
-          setShown((n) => n + 1);
-          step += 1;
-          timer = setTimeout(advance, 420);
-        }, 900);
+          setShown(step + 1);
+          wait(480, () => play(step + 1));
+        });
       } else {
-        setShown((n) => n + 1);
-        step += 1;
-        timer = setTimeout(advance, 620);
+        setShown(step + 1);
+        wait(700, () => play(step + 1));
       }
     };
 
@@ -870,13 +898,19 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
       ([entry]) => {
         if (!entry.isIntersecting) return;
         io.disconnect();
-        timer = setTimeout(advance, 300);
+        wait(350, () => play(0));
       },
-      { threshold: 0.25 },
+      // A third of the phone showing is enough to have started reading it.
+      { threshold: 0.33 },
     );
-    io.observe(thread.current);
-    return () => { io.disconnect(); clearTimeout(timer); };
-  }, [total]);
+    io.observe(node);
+
+    return () => {
+      cancelled = true;
+      io.disconnect();
+      clearTimeout(timer);
+    };
+  }, [total, blocks]);
 
   // Times run backwards from "now" so the thread always reads as last night.
   const at = (i: number) => {
@@ -972,9 +1006,16 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
             {rows.length} {rows.length === 1 ? "review" : "reviews"}
           </span>
         </div>
+        {/* Two tracks, drifting opposite ways. Each is printed twice so the
+            loop has no seam; the copy is hidden from screen readers and the
+            whole thing stops on hover so a card can actually be read. */}
         <div className="cb-revs">
-          {rows.map((r) => (
-            <article className="cb-rev" key={r.id}>
+          {[0, 1].map((track) => (
+            <div className="cb-revs__row" data-track={track} key={track}>
+              {[0, 1].map((pass) => (
+                <div className="cb-revs__track" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+                  {rows.filter((_, i) => i % 2 === track).map((r) => (
+            <article className="cb-rev" key={`${pass}-${r.id}`}>
               <div className="cb-rev__top">
                 <div className="cb-rev__av">{r.name.trim().charAt(0).toUpperCase()}</div>
                 <div>
@@ -1003,6 +1044,10 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
                 <span>{IcoComment} Reply</span>
               </div>
             </article>
+                  ))}
+                </div>
+              ))}
+            </div>
           ))}
         </div>
       </div>
