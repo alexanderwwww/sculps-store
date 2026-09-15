@@ -1176,19 +1176,24 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
         </div>
       </div>
 
-      {/* One row, moving. Printed twice so the loop has no seam; the second
-          pass is hidden from screen readers. It stops on hover so a card can
-          actually be read. */}
-      <div className="cb-revs">
-        <div className="cb-revs__track">
-          {[0, 1].map((pass) => (
-            <div className="cb-revs__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
-              {rows.map((r) => (
-                <SocialCard key={`${pass}-${r.id}`} r={r} />
-              ))}
-            </div>
-          ))}
-        </div>
+      {/* Columns, drifting vertically, alternate directions.
+          Moving sideways, a short notification beside a tall Instagram post
+          leaves ragged holes at every height change. Stacked in columns the
+          cards pack tight against each other and the difference in size stops
+          being a gap and starts being texture. Each column is printed twice so
+          its loop has no seam; the copy is hidden from screen readers. */}
+      <div className="cb-wallgrid">
+        {[0, 1, 2].map((col) => (
+          <div className="cb-wallcol" data-col={col} key={col}>
+            {[0, 1].map((pass) => (
+              <div className="cb-wallcol__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+                {rows.filter((_, i) => i % 3 === col).map((r) => (
+                  <SocialCard key={`${pass}-${r.id}`} r={r} />
+                ))}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </section>
   );

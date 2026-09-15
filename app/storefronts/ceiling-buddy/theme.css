@@ -972,21 +972,39 @@
   color: #fff; padding: clamp(56px, 7vw, 92px) 0;
 }
 
-.cb-revs {
-  width: 100%; overflow: hidden;
-  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+/* Three columns, drifting up and down. Sideways, a short notification beside a
+   tall post leaves a hole at every height change; stacked, the cards pack
+   against each other and the size difference becomes texture instead. */
+.cb-wallgrid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px; align-items: start;
+  width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 20px;
+  height: clamp(520px, 62vh, 700px); overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
 }
-.cb-revs__track { display: flex; width: max-content; animation: cb-drift 70s linear infinite; }
-.cb-revs__pass { display: flex; gap: 16px; padding-right: 16px; }
-@keyframes cb-drift { to { transform: translateX(-50%); } }
-.cb-revs:hover .cb-revs__track, .cb-revs:focus-within .cb-revs__track { animation-play-state: paused; }
-@media (prefers-reduced-motion: reduce) { .cb-revs__track { animation: none; } }
+.cb-wallcol { display: grid; gap: 16px; animation: cb-rise 58s linear infinite; }
+.cb-wallcol__pass { display: grid; gap: 16px; }
+/* The middle column runs the other way, so the wall never reads as one sheet
+   sliding past. */
+.cb-wallcol[data-col="1"] { animation-direction: reverse; animation-duration: 66s; }
+.cb-wallcol[data-col="2"] { animation-duration: 74s; }
+@keyframes cb-rise { to { transform: translateY(calc(-50% - 8px)); } }
+.cb-wallgrid:hover .cb-wallcol, .cb-wallgrid:focus-within .cb-wallcol { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .cb-wallcol { animation: none; } }
+
+@media (max-width: 900px) {
+  .cb-wallgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: clamp(460px, 68vh, 620px); }
+  .cb-wallcol[data-col="2"] { display: none; }
+}
+@media (max-width: 560px) {
+  .cb-wallgrid { grid-template-columns: minmax(0, 1fr); height: 520px; }
+  .cb-wallcol[data-col="1"] { display: none; }
+}
 
 /* Four shapes, one wall. Each is drawn the way its own platform draws it —
    that recognition is the whole point, and a house style would erase it. */
 
-.cb-card { width: 330px; flex: 0 0 auto; align-self: flex-start; border-radius: 18px; overflow: hidden; }
-@media (max-width: 520px) { .cb-card { width: 82vw; } }
+.cb-card { width: 100%; border-radius: 18px; overflow: hidden; }
 
 /* the order notification — iOS glass over the blue */
 .cb-card--notif {
