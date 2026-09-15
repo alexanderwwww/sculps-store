@@ -1102,25 +1102,25 @@
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px; align-items: start;
   width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 20px;
-  height: clamp(520px, 62vh, 700px); overflow: hidden;
+  height: clamp(620px, 78vh, 900px); overflow: hidden;
   mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
 }
-.cb-wallcol { display: grid; gap: 16px; animation: cb-rise 58s linear infinite; }
+.cb-wallcol { display: grid; gap: 16px; animation: cb-rise 34s linear infinite; }
 .cb-wallcol__pass { display: grid; gap: 16px; }
 /* The middle column runs the other way, so the wall never reads as one sheet
    sliding past. */
-.cb-wallcol[data-col="1"] { animation-direction: reverse; animation-duration: 66s; }
-.cb-wallcol[data-col="2"] { animation-duration: 74s; }
+.cb-wallcol[data-col="1"] { animation-direction: reverse; animation-duration: 40s; }
+.cb-wallcol[data-col="2"] { animation-duration: 46s; }
 @keyframes cb-rise { to { transform: translateY(calc(-50% - 8px)); } }
 .cb-wallgrid:hover .cb-wallcol, .cb-wallgrid:focus-within .cb-wallcol { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .cb-wallcol { animation: none; } }
 
 @media (max-width: 900px) {
-  .cb-wallgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: clamp(460px, 68vh, 620px); }
+  .cb-wallgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: clamp(560px, 80vh, 760px); }
   .cb-wallcol[data-col="2"] { display: none; }
 }
 @media (max-width: 560px) {
-  .cb-wallgrid { grid-template-columns: minmax(0, 1fr); height: 520px; }
+  .cb-wallgrid { grid-template-columns: minmax(0, 1fr); height: 620px; }
   .cb-wallcol[data-col="1"] { display: none; }
 }
 
@@ -1525,3 +1525,39 @@
 .cb-chat__photo img {
   width: 100%; height: auto; max-height: 260px; object-fit: cover; display: block;
 }
+
+/* ---------------------------------------------------- tiktok + threads */
+
+/* A TikTok comment: handle, comment, time and Reply on one line, the heart
+   and its count pinned right. */
+.cb-card--tt {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #fff; border: 1px solid var(--hair); padding: 14px 14px 13px;
+  box-shadow: 0 1px 2px rgba(20,22,26,.04), 0 16px 36px -26px rgba(20,22,26,.3);
+}
+.cb-card__av--tt { background: #FE2C55; color: #fff; }
+.cb-card__ttbody { min-width: 0; flex: 1; }
+.cb-card__handle { font-size: 12.5px; color: #8A8D91; font-weight: 500; }
+.cb-card__ttbody p { margin: 3px 0 6px; font-size: 14.5px; line-height: 1.4; color: #0B0C0F; }
+.cb-card__ttmeta { display: flex; gap: 14px; font-size: 12px; color: #8A8D91; }
+.cb-card__ttmeta b { font-weight: 600; }
+.cb-card__ttlike { display: grid; justify-items: center; gap: 3px; flex: 0 0 auto; color: #8A8D91; padding-top: 2px; }
+.cb-card__ttlike svg { width: 17px; height: 17px; }
+.cb-card__ttlike b { font-size: 11.5px; font-weight: 600; }
+
+/* A text exchange rather than one bubble: theirs grey on the left, ours blue
+   on the right, the way the screenshot would actually look. */
+.cb-card__thread { display: grid; gap: 4px; }
+.cb-card__theirs, .cb-card__mine {
+  margin: 0; max-width: 84%; padding: 9px 13px;
+  font-size: 14.5px; line-height: 1.38; letter-spacing: -0.01em;
+}
+.cb-card__theirs { background: #E9E9EB; color: #101114; border-radius: 18px 18px 18px 5px; justify-self: start; }
+.cb-card__mine { background: #0A84FF; color: #fff; border-radius: 18px 18px 5px 18px; justify-self: end; }
+
+/* Instagram's comment list under the caption. */
+.cb-card__cmt { display: flex; gap: 10px; align-items: flex-start; padding: 0 14px 7px; }
+.cb-card__cmt p { margin: 0; font-size: 13.5px; line-height: 1.4; flex: 1; }
+.cb-card__cmt b { font-family: var(--display); font-weight: 700; }
+.cb-card__cmt span { font-size: 11.5px; color: #8A8D91; flex: 0 0 auto; padding-top: 2px; }
+.cb-card--ig .cb-card__more { padding-bottom: 8px; }

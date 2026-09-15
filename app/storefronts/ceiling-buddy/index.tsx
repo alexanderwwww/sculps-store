@@ -1102,6 +1102,7 @@ function Chat({ blocks, email }: { blocks: LoadedSection["blocks"]; email: strin
  */
 function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
   const when = sinceText(r.reviewedOn);
+  const val = (x: string | null) => (x ?? "").trim();
 
   if (r.channel === "notification") {
     return (
@@ -1116,11 +1117,37 @@ function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
   }
 
   if (r.channel === "imessage") {
+    // One line per message, starting with them; odd lines are ours. A single
+    // bubble reads as a pull quote — an exchange reads as a screenshot.
+    const lines = r.body.split(String.fromCharCode(10)).filter(Boolean);
     return (
       <article className="cb-card cb-card--msg">
         <span className="cb-card__from">{r.name}</span>
-        <p className="cb-card__bubble">{r.body}</p>
+        <div className="cb-card__thread">
+          {lines.map((line, i) => (
+            <p className={i % 2 ? "cb-card__mine" : "cb-card__theirs"} key={line}>{line}</p>
+          ))}
+        </div>
         <span className="cb-card__when">{when}</span>
+      </article>
+    );
+  }
+
+  if (r.channel === "tiktok") {
+    return (
+      <article className="cb-card cb-card--tt">
+        <span className="cb-card__av cb-card__av--tt">{r.name.replace("@", "").charAt(0).toUpperCase()}</span>
+        <div className="cb-card__ttbody">
+          <span className="cb-card__handle">{val(r.title ?? "")}</span>
+          <p>{r.body}</p>
+          <span className="cb-card__ttmeta">{when}<b>Reply</b></span>
+        </div>
+        {r.likes != null ? (
+          <span className="cb-card__ttlike">
+            {IcoHeart}
+            <b>{r.likes >= 1000 ? `${(r.likes / 1000).toFixed(1)}K` : r.likes}</b>
+          </span>
+        ) : null}
       </article>
     );
   }
@@ -1143,6 +1170,16 @@ function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
         {r.replies != null ? (
           <div className="cb-card__more">View all {r.replies} comments</div>
         ) : null}
+        {/* `title` is the comment list: handle|text|likes, one per line. */}
+        {(r.title ?? "").split(String.fromCharCode(10)).filter(Boolean).map((line) => {
+          const [handle, text, likes] = line.split("|");
+          return (
+            <div className="cb-card__cmt" key={line}>
+              <p><b>{handle}</b> {text}</p>
+              {likes ? <span>{likes}</span> : null}
+            </div>
+          );
+        })}
       </article>
     );
   }
