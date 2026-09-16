@@ -13,7 +13,7 @@ import { and, eq } from "drizzle-orm";
 import { BUNDLE_OFF_CENTS } from "~/lib/money";
 import {
   readCartToken,
-  newCartToken,
+  cartTokenForStore,
   cartCookie,
   currentLines,
   addLine,
@@ -51,7 +51,9 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
     return new Response(null, { status: 302, headers: { Location: back.toString() } });
   }
 
-  const token = readCartToken(request) ?? newCartToken();
+  // Not simply the cookie's token: it may belong to another store on this
+  // same domain, and that collides on insert. See cartTokenForStore.
+  const token = await cartTokenForStore(context.db, store.id, readCartToken(request));
   // "Buy now" means this bundle and nothing else: the wallet sheet on the
   // product page shows one price, and the cart it pays for must be that.
   const replace = url.searchParams.get("replace") === "1";

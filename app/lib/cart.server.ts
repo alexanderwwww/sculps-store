@@ -96,6 +96,37 @@ export function newCartToken(): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * The token this store may write a cart under.
+ *
+ * One cookie is shared by every store on a domain — which is normal in dev and
+ * on the workers.dev fallback, where several stores answer on one host, and
+ * possible in production whenever two stores share a domain. But `carts.token`
+ * is unique across the whole table while a cart is looked up by token *and*
+ * store, so a token minted on one store looked empty on the next and then
+ * collided on insert. The add failed, nothing was written, and the drawer
+ * opened saying "Nothing in here yet" with no error anywhere — the customer
+ * pressing Add to cart simply watched nothing happen.
+ *
+ * So: keep the cookie's token when it is free or already this store's, and
+ * mint a new one when it belongs to somebody else. The caller writes the
+ * returned token straight back to the cookie.
+ */
+export async function cartTokenForStore(
+  db: DB,
+  storeId: string,
+  token: string | null,
+): Promise<string> {
+  if (!token) return newCartToken();
+  const [row] = await db
+    .select({ storeId: carts.storeId })
+    .from(carts)
+    .where(eq(carts.token, token))
+    .limit(1);
+  if (!row) return token;
+  return row.storeId === storeId ? token : newCartToken();
+}
+
 async function loadCartRow(db: DB, storeId: string, token: string | null) {
   if (!token) return null;
   const [row] = await db
