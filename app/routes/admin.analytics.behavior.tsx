@@ -458,11 +458,43 @@ const BLUE = "#3B7BFF";
 const YELLOW = "#F5C518";
 const GOLD = "#C9A227";
 
+/**
+ * Where the visitors are, framed on the market the store actually sells to.
+ *
+ * The same hexagons either way — this is a zoom, not invented detail. Anyone
+ * outside the frame is still counted and said out loud underneath, so a
+ * narrower view never quietly hides a visitor.
+ */
+const VIEWS = {
+  us: { label: "United States", inSentence: "the United States", lon: [-128, -64] as const, lat: [22, 52] as const },
+  americas: { label: "Americas", inSentence: "the Americas", lon: [-170, -30] as const, lat: [-56, 72] as const },
+  world: { label: "World", inSentence: "this view", lon: [-180, 180] as const, lat: [-58, 84] as const },
+};
+type ViewKey = keyof typeof VIEWS;
+
 function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: string }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
+  /**
+   * Opens on the market the store sells to. But a map with nothing on it
+   * teaches nobody anything, so when the United States has no visitors and
+   * somewhere else does, it opens wide instead. Only the first render decides
+   * this — once someone has chosen a view, it is theirs.
+   */
+  const [view, setView] = useState<ViewKey>(() => {
+    const us = VIEWS.us;
+    let here = 0;
+    let anywhere = 0;
+    for (const s of sessions) {
+      if (s.lat == null || s.lon == null) continue;
+      anywhere += 1;
+      if (s.lon >= us.lon[0] && s.lon <= us.lon[1] && s.lat >= us.lat[0] && s.lat <= us.lat[1]) here += 1;
+    }
+    return here === 0 && anywhere > 0 ? "world" : "us";
+  });
 
-  // Visitors onto tiles, once per data change.
+  // Visitors onto tiles, once per data change. World space is fixed; the view
+  // only changes how much of it the canvas shows.
   const lit = useMemo(() => {
     const { cols, rows, lon0, lon1, lat0, lat1 } = world as { cols: number; rows: number; lon0: number; lon1: number; lat0: number; lat1: number; cells: number[][] };
     const W = 1000;
@@ -470,7 +502,7 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
     const R = W / (cols * Math.sqrt(3));
     const dx = R * Math.sqrt(3);
     const dy = R * 1.5;
-    const map = new Map<string, { r: number; c: number; n: number; cart: number; paid: number; city: string | null; arrivals: number[]; cartAt: number[]; paidAt: number[] }>();
+    const map = new Map<string, { r: number; c: number; n: number; cart: number; paid: number; city: string | null; lon: number; lat: number; arrivals: number[]; cartAt: number[]; paidAt: number[] }>();
     const ordered = sessions.slice().sort((a, b) => a.first.localeCompare(b.first));
     ordered.forEach((s) => {
       if (s.lat == null || s.lon == null) return;
@@ -479,7 +511,7 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
       const r = Math.round(y / dy);
       const c = Math.round((x - (r % 2 ? dx / 2 : 0)) / dx);
       const key = `${r}:${c}`;
-      const cur = map.get(key) ?? { r, c, n: 0, cart: 0, paid: 0, city: s.city, arrivals: [], cartAt: [], paidAt: [] };
+      const cur = map.get(key) ?? { r, c, n: 0, cart: 0, paid: 0, city: s.city, lon: s.lon, lat: s.lat, arrivals: [], cartAt: [], paidAt: [] };
       const at = Date.parse(s.first);
       cur.n += 1;
       cur.arrivals.push(at);
@@ -490,21 +522,48 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
     const times = ordered.map((s) => Date.parse(s.first));
     const start = times.length ? Math.min(...times) : Date.now();
     const end = times.length ? Math.max(...ordered.map((s) => Date.parse(s.last))) : Date.now();
-    return { map, W, H, R, dx, dy, rows, total: ordered.length, start, end };
+    return { map, W, H, R, dx, dy, rows, lon0, lon1, lat0, lat1, total: ordered.length, start, end };
   }, [sessions]);
+
+  // How much of the world this view shows, in world-space pixels.
+  const frame = useMemo(() => {
+    const v = VIEWS[view];
+    const { W, H, lon0, lon1, lat0, lat1 } = lit;
+    const x0 = ((v.lon[0] - lon0) / (lon1 - lon0)) * W;
+    const x1 = ((v.lon[1] - lon0) / (lon1 - lon0)) * W;
+    const y0 = ((lat1 - v.lat[1]) / (lat1 - lat0)) * H;
+    const y1 = ((lat1 - v.lat[0]) / (lat1 - lat0)) * H;
+    const scale = 1000 / (x1 - x0);
+    return { x0, y0, scale, cw: 1000, ch: (y1 - y0) * scale };
+  }, [lit, view]);
+
+  // Visitors the current frame cannot show. Said out loud rather than dropped.
+  const outside = useMemo(() => {
+    const v = VIEWS[view];
+    let n = 0;
+    for (const cell of lit.map.values()) {
+      if (cell.lon < v.lon[0] || cell.lon > v.lon[1] || cell.lat < v.lat[0] || cell.lat > v.lat[1]) n += cell.n;
+    }
+    return n;
+  }, [lit, view]);
 
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const { map, W, H, R, dx, dy, start, end } = lit;
-    canvas.width = W * 2;
-    canvas.height = H * 2;
-    ctx.scale(2, 2);
+    const { map, R, dx, dy, start, end } = lit;
+    const { x0, y0, scale, cw, ch } = frame;
+    const dpr = Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1);
+    canvas.width = cw * dpr;
+    canvas.height = ch * dpr;
     const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     const land = (world as { cells: number[][] }).cells;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Hexes are drawn a touch under their true size so the gaps between them
+    // read as a grid rather than a solid mass — and the gap has to hold at
+    // every zoom, so it scales with the tiles.
+    const gap = 0.35 / scale;
     let t = 0;
     let raf = 0;
     const hex = (x: number, y: number, r: number, fill: string) => {
@@ -526,9 +585,19 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
     const t1 = Math.max(start + 1, end);
     const clock = new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", timeZone: timezone });
     const draw = () => {
-      ctx.clearRect(0, 0, W, H);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.setTransform(scale * dpr, 0, 0, scale * dpr, -x0 * scale * dpr, -y0 * scale * dpr);
+
       const grey = css("--border") || "#e5e5e5";
-      for (const [r, c] of land) hex(c * dx + (r % 2 ? dx / 2 : 0), r * dy, R - 0.35, grey);
+      for (const [r, c] of land) {
+        const x = c * dx + (r % 2 ? dx / 2 : 0);
+        const y = r * dy;
+        // Only what the frame can see, so a zoomed view costs no more to draw.
+        if (x < x0 - dx || x > x0 + cw / scale + dx || y < y0 - dy || y > y0 + ch / scale + dy) continue;
+        hex(x, y, R - gap, grey);
+      }
+
       const frac = reduce ? 1 : (t % LOOP) / LOOP;
       const nowMs = t0 + frac * (t1 - t0);
       for (const cell of map.values()) {
@@ -543,8 +612,8 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
         const latest = seen[seen.length - 1];
         const age = ((nowMs - latest) / (t1 - t0)) * LOOP;
         if (!reduce && age < 72) {
-          ctx.globalAlpha = 0.5 * (1 - age / 72);
-          ctx.lineWidth = 1.4;
+          ctx.globalAlpha = 0.45 * (1 - age / 72);
+          ctx.lineWidth = 1.4 / scale;
           ctx.strokeStyle = colour;
           ctx.beginPath();
           const rr = R + age * 0.35;
@@ -555,47 +624,80 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
         }
         const breathe = reduce ? 0 : 0.5 + 0.5 * Math.sin(t / 30 + cell.r * 0.4);
         const size = Math.min(R * 2.2, R * 0.9 + Math.log2(n + 1) * 1.3 + breathe * 0.8);
+        // A live tile glows. It is what separates "someone is there right now"
+        // from "this pixel is a different colour".
+        ctx.shadowColor = colour;
+        ctx.shadowBlur = (10 + breathe * 6) / scale;
         hex(x, y, size, colour);
+        ctx.shadowBlur = 0;
       }
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.font = "600 12px system-ui, sans-serif";
       ctx.fillStyle = css("--ink-2") || "#666";
       ctx.textAlign = "right";
-      ctx.fillText(reduce ? "" : clock.format(new Date(nowMs)), W - 12, 16);
+      ctx.fillText(reduce ? "" : clock.format(new Date(nowMs)), cw - 12, 18);
       ctx.textAlign = "left";
       t += 1;
       if (!reduce) raf = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [lit, timezone]);
+  }, [lit, frame, timezone]);
 
   const onMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = ref.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const sx = lit.W / rect.width;
-    const x = (e.clientX - rect.left) * sx;
-    const y = (e.clientY - rect.top) * sx;
+    // Screen to world: undo the frame's zoom, not just the canvas's own scale.
+    const px = ((e.clientX - rect.left) / rect.width) * frame.cw;
+    const py = ((e.clientY - rect.top) / rect.width) * frame.cw;
+    const x = px / frame.scale + frame.x0;
+    const y = py / frame.scale + frame.y0;
     let best: { d: number; text: string } | null = null;
     for (const cell of lit.map.values()) {
       const cx = cell.c * lit.dx + (cell.r % 2 ? lit.dx / 2 : 0);
       const cy = cell.r * lit.dy;
       const d = Math.hypot(cx - x, cy - y);
-      if (d < lit.R * 3 && (!best || d < best.d)) best = { d, text: `${cell.city ?? "Unknown"} · ${cell.n} visitor${cell.n === 1 ? "" : "s"}${cell.cart ? ` · ${cell.cart} cart` : ""}${cell.paid ? ` · ${cell.paid} paid` : ""}` };
+      if (d < (lit.R * 3) / frame.scale && (!best || d < best.d)) best = { d, text: `${cell.city ?? "Unknown"} · ${cell.n} visitor${cell.n === 1 ? "" : "s"}${cell.cart ? ` · ${cell.cart} cart` : ""}${cell.paid ? ` · ${cell.paid} paid` : ""}` };
     }
     setTip(best ? { x: e.clientX - rect.left, y: e.clientY - rect.top, text: best.text } : null);
   };
 
   return (
     <div style={{ ...card, position: "relative", background: "var(--surface)" }}>
-      <canvas ref={ref} onMouseMove={onMove} onMouseLeave={() => setTip(null)} style={{ width: "100%", height: "auto", display: "block" }} aria-label="Visitors on a world map" />
+      <div style={{ position: "absolute", left: 14, top: 12, zIndex: 2, display: "flex", gap: 2, padding: 2, borderRadius: 9, background: "var(--bg)", border: "1px solid var(--border)" }}>
+        {(Object.keys(VIEWS) as ViewKey[]).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setView(key)}
+            style={{
+              border: 0,
+              cursor: "pointer",
+              borderRadius: 7,
+              padding: "4px 10px",
+              fontSize: 12,
+              fontWeight: view === key ? 650 : 500,
+              fontFamily: "inherit",
+              background: view === key ? "var(--surface)" : "transparent",
+              color: view === key ? "var(--ink)" : "var(--ink-2)",
+              boxShadow: view === key ? "0 1px 2px rgba(16,20,28,.12)" : "none",
+            }}
+          >
+            {VIEWS[key].label}
+          </button>
+        ))}
+      </div>
+      <canvas ref={ref} onMouseMove={onMove} onMouseLeave={() => setTip(null)} style={{ width: "100%", height: "auto", display: "block" }} aria-label="Visitors on a map" />
       {tip ? (
         <div style={{ position: "absolute", left: tip.x + 12, top: tip.y - 30, background: "var(--ink)", color: "var(--surface)", fontSize: 12, padding: "4px 8px", borderRadius: 6, pointerEvents: "none", whiteSpace: "nowrap" }}>{tip.text}</div>
       ) : null}
-      <div style={{ position: "absolute", left: 14, bottom: 12, display: "flex", gap: 14, fontSize: 12, color: "var(--ink-2)" }}>
+      <div style={{ position: "absolute", left: 14, bottom: 12, display: "flex", gap: 14, fontSize: 12, color: "var(--ink-2)", alignItems: "center", flexWrap: "wrap" }}>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: BLUE, marginRight: 6, verticalAlign: -1 }} />visitor</span>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: YELLOW, marginRight: 6, verticalAlign: -1 }} />added to cart</span>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: GOLD, marginRight: 6, verticalAlign: -1 }} />paid</span>
+        {outside ? <span style={{ opacity: 0.8 }}>· {outside} outside {VIEWS[view].inSentence}</span> : null}
       </div>
     </div>
   );
