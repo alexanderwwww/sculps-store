@@ -859,12 +859,17 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
   const own = [val(section.values, "video"), ...links].filter(isOwnVideo);
   const posts = links.map(embedFor).filter((e): e is NonNullable<typeof e> => e !== null);
 
+  // This section's own still comes first. It used to reach into the social
+  // proof section for a photograph, which meant hiding that section silently
+  // emptied the phone frame here — a section should not be able to break a
+  // different one by being switched off.
+  const still = val(section.values, "still");
   const proof = page.sections.find((x) => x.type === "social_proof_images");
   const shots = (proof?.blocks ?? []).filter((b) => has(b.values, "image"));
 
   const post = posts[0] ?? null;
   const video = own[0] ?? null;
-  const shot = shots[0] ?? null;
+  const shot = still ? { id: "still", values: { image: still } } : (shots[0] ?? null);
   const asked = section.blocks.filter((b) => has(b.values, "question"));
   if (!post && !video && !shot && !asked.length) return null;
 

@@ -70,7 +70,17 @@ export const SECTIONS: SectionDef[] = [
     type: "video_faq",
     label: "Video with FAQ",
     hint: "A video beside the questions people ask before buying",
-    fields: [heading, subheading, { name: "video", label: "Video", kind: "video" }],
+    fields: [
+      heading,
+      subheading,
+      { name: "video", label: "Video", kind: "video" },
+      {
+        name: "still",
+        label: "Photo instead of the video",
+        kind: "image",
+        help: "Shown in the phone frame until there is a clip to put there. Its own picture, so hiding another section can never empty this one.",
+      },
+    ],
     blocks: {
       label: "Question",
       addLabel: "Add question",
