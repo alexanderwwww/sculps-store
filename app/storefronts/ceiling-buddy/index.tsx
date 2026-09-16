@@ -148,7 +148,14 @@ export function CeilingBuddyStorefront({
         <Header page={page} storeParam={storeParam} offer={offer} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
-            <Section key={s.id} section={s} page={page} storeParam={storeParam} />
+            // `display: contents` so the wrapper marks the section for the
+            // theme editor without adding a box: the theme's own full-bleed
+            // sections and sibling selectors lay out exactly as before. The
+            // editor finds a section by this attribute and cannot make
+            // anything inside it clickable without one.
+            <div key={s.id} data-section={s.type} style={{ display: "contents" }}>
+              <Section section={s} page={page} storeParam={storeParam} />
+            </div>
           ))}
         </main>
         <Footer page={page} storeParam={storeParam} />
