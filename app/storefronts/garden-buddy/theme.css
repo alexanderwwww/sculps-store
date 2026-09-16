@@ -928,7 +928,11 @@
   /* A phone, the same size as the clip beside it. Dark, because iOS is dark at
      11pm and because a black screen next to a black-screened phone reads as
      two phones rather than a phone and a card. */
-  width: min(340px, 82vw); height: calc(min(340px, 82vw) * 16 / 9); flex: 0 0 auto;
+  /* The same size as the clip beside it. Two frames of different heights
+     standing side by side is the thing that looked wrong — matched, they read
+     as two phones on a table. */
+  width: min(420px, 100%); aspect-ratio: 420 / 747; height: auto; flex: 0 0 auto;
+  margin-inline: auto;
   display: flex; flex-direction: column;
   background: #000; color: #fff;
   border-radius: 40px; overflow: hidden;
