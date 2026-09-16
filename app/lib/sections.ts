@@ -302,6 +302,26 @@ export const SECTIONS: SectionDef[] = [
     },
   },
   {
+    /**
+     * One photograph the size of the screen, with the words laid over it in
+     * real type rather than burnt into the picture. The words stay editable
+     * here and stay sharp on a phone, and a price that changes later does not
+     * mean regenerating a photo.
+     */
+    type: "photo_banner",
+    label: "Photo banner",
+    hint: "One full-width photo with a headline and a button over it",
+    fields: [
+      { name: "image", label: "Photo", kind: "image" },
+      heading,
+      subheading,
+      { name: "ctaLabel", label: "Button label", kind: "text" },
+      { name: "ctaHref", label: "Button link", kind: "url" },
+      { name: "note", label: "Line under the button", kind: "text" },
+    ],
+    blocks: null,
+  },
+  {
     type: "closing_cta",
     label: "Closing CTA",
     hint: "Last call to buy",

@@ -1228,3 +1228,90 @@
 }
 .cb-pay4__line b { font-family: var(--display); font-weight: 700; color: var(--ink); }
 .cb-pay4__line .cb-pp { width: 16px; height: 16px; flex: 0 0 auto; max-width: none; }
+
+/* ------------------------------------------------------- photo banner */
+/* One photograph the width of the page with real type over it. The words are
+   never burnt into the picture: they stay sharp, and they stay editable. */
+.cb-bn { padding: 0; }
+.cb-bn__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cb-bn__img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  max-width: none;
+}
+/* The photo is dark on the left where the words sit, but only just. A scrim
+   guarantees the contrast instead of hoping for it. */
+.cb-bn__scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    100deg,
+    rgba(8, 10, 14, 0.78) 0%,
+    rgba(8, 10, 14, 0.55) 34%,
+    rgba(8, 10, 14, 0.12) 62%,
+    rgba(8, 10, 14, 0) 88%
+  );
+}
+.cb-bn__copy {
+  position: absolute;
+  left: clamp(18px, 5vw, 64px);
+  bottom: clamp(18px, 5vw, 56px);
+  width: min(460px, 72%);
+  color: #fff;
+}
+.cb-bn__h {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(24px, 4.2vw, 44px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: #fff;
+  text-wrap: balance;
+}
+.cb-bn__sub {
+  margin: 10px 0 0;
+  font-size: clamp(14px, 1.5vw, 17px);
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.86);
+}
+.cb-bn__copy form { margin-top: clamp(12px, 2vw, 20px); }
+/* White on the photo, because the page's black button disappears into a night
+   shot. Specificity has to beat `.cb .cb-btn`, hence the doubled class. */
+.cb .cb-bn__btn.cb-bn__btn {
+  background: #fff;
+  color: var(--ink);
+  width: auto;
+  padding: 14px 26px;
+}
+.cb .cb-bn__btn.cb-bn__btn:hover { background: #f1f1ef; }
+.cb-bn__note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.78);
+}
+/* On a phone a 16:9 crop leaves the words almost no room, so the frame gets
+   taller and the photo is allowed to crop instead. */
+@media (max-width: 720px) {
+  /* A 16:9 photo in a taller frame crops sideways, never top-down, so
+     object-position does nothing here — the frame's own ratio is the only
+     lever. 3:4 keeps enough width to read the screen and the tray together
+     while still leaving room for the words underneath. */
+  .cb-bn__frame { aspect-ratio: 3 / 4; }
+  .cb-bn__copy { width: auto; right: clamp(18px, 5vw, 64px); }
+  .cb-bn__scrim {
+    background: linear-gradient(
+      to top,
+      rgba(8, 10, 14, 0.86) 0%,
+      rgba(8, 10, 14, 0.55) 38%,
+      rgba(8, 10, 14, 0.06) 72%,
+      rgba(8, 10, 14, 0) 100%
+    );
+  }
+}

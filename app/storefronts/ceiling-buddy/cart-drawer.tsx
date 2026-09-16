@@ -122,11 +122,18 @@ export function CartDrawerProvider({
   const currency = cart?.currency ?? page.store.currency;
 
   // The upgrade: the dearer bundle, when the cart is not already on it.
+  //
+  // "Not in the cart" is not enough on its own. Once someone has taken the
+  // bundle, the only variant left is the cheaper base one — and offering that
+  // is asking them to spend less, under a heading that says "Add". So the
+  // upsell has to cost more than what they are already holding, or there is
+  // no upsell to make.
   const inCart = new Set(lines.map((l) => l.variantId));
+  const paying = lines.reduce((top, l) => Math.max(top, l.unitPriceCents), 0);
   const upsell: VariantRow | null =
     lines.length && page.variants.length > 1
       ? page.variants
-          .filter((v) => !inCart.has(v.id))
+          .filter((v) => !inCart.has(v.id) && v.priceCents > paying)
           .reduce<VariantRow | null>((best, v) => (!best || v.priceCents > best.priceCents ? v : best), null)
       : null;
 
@@ -197,9 +204,10 @@ export function CartDrawerProvider({
                 <i>{upsell.label}</i>
               </span>
               <span className="cb-up__add">
-                {savedAmount(upsell.priceCents, upsell.compareAtCents)
-                  ? `+${formatMoney(upsell.priceCents - (lines[0]?.unitPriceCents ?? 0), currency)}`
-                  : formatMoney(upsell.priceCents, currency)}
+                {/* What the swap actually costs on top of what is in the cart.
+                    The upsell is only ever dearer than that, so this reads as
+                    a plus and never as a minus with a plus in front of it. */}
+                +{formatMoney(Math.max(0, upsell.priceCents - paying), currency)}
               </span>
             </button>
           ) : null}

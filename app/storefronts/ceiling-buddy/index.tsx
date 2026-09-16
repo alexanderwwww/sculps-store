@@ -181,6 +181,7 @@ function Section({
     case "whats_in_the_box": return <InTheBox section={section} />;
     case "specifications": return <Specs section={section} />;
     case "reviews":       return <><Reviews section={section} page={page} /><PayLater page={page} /></>;
+    case "photo_banner":  return <PhotoBanner section={section} page={page} storeParam={storeParam} />;
     case "closing_cta":   return <Closing section={section} page={page} storeParam={storeParam} />;
     default:              return null;
   }
@@ -1354,6 +1355,73 @@ function Closing({ section, page, storeParam = "" }: { section: LoadedSection; p
             <button type="submit" className="cb-btn">{val(v, "ctaLabel") || "Add to cart"}</button>
           </form>
         ) : null}
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------------------------------------- photo banner */
+
+/**
+ * One photograph the width of the screen with the words over it.
+ *
+ * The type is real type, not painted into the picture: it stays sharp on a
+ * phone, it stays editable in the admin, and a price that moves later does not
+ * mean generating the photo again.
+ *
+ * The button adds whichever variant the section names, so this banner can sell
+ * the bundle from the middle of the page. Falling back to the default variant
+ * means it always sells something rather than rendering a dead button.
+ */
+function PhotoBanner({
+  section,
+  page,
+  storeParam = "",
+}: {
+  section: LoadedSection;
+  page: LoadedProductPage;
+  storeParam?: string;
+}) {
+  const v = section.values;
+  const drawer = useCartDrawer();
+  if (!has(v, "image")) return null;
+
+  // The link field doubles as a variant picker: "variant:<id>" adds to the
+  // cart, anything else is an ordinary link.
+  const href = val(v, "ctaHref");
+  const wanted = href.startsWith("variant:") ? href.slice(8) : "";
+  const pick =
+    page.variants.find((x) => x.id === wanted) ??
+    page.variants.find((x) => x.isDefault) ??
+    page.variants[0] ??
+    null;
+
+  return (
+    <section className="cb-section cb-bn">
+      <div className="cb-bn__frame">
+        <img className="cb-bn__img" src={val(v, "image")} alt={val(v, "heading")} />
+        <div className="cb-bn__scrim" />
+        <div className="cb-bn__copy">
+          {has(v, "heading") ? <h2 className="cb-bn__h">{val(v, "heading")}</h2> : null}
+          {has(v, "subheading") ? <p className="cb-bn__sub">{val(v, "subheading")}</p> : null}
+          {pick ? (
+            <form
+              method="post"
+              action={`/cart/add${storeParam}`}
+              onSubmit={(e) => {
+                if (!drawer) return;
+                e.preventDefault();
+                drawer.add(pick.id);
+              }}
+            >
+              <input type="hidden" name="variantId" value={pick.id} />
+              <button type="submit" className="cb-btn cb-bn__btn">
+                {val(v, "ctaLabel") || "Add to cart"}
+              </button>
+            </form>
+          ) : null}
+          {has(v, "note") ? <p className="cb-bn__note">{val(v, "note")}</p> : null}
+        </div>
       </div>
     </section>
   );
