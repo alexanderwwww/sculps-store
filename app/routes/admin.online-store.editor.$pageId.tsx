@@ -40,6 +40,8 @@ import {
   resolveAdminStore,
   reviewStats,
   addMedia,
+  setSectionField,
+  listMedia,
 } from "~/lib/admin.server";
 import { SECTIONS, type SectionDef, type FieldDef } from "~/lib/sections";
 import { SECTION_ICON_SET, type IconDef } from "~/admin/section-icons";
@@ -79,6 +81,10 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
   // The Reviews section's panel shows how many reviews it will render.
   const stats = await reviewStats(context.db, store.id);
 
+  // Every picture this store already owns, so clicking one in the preview can
+  // offer the rest immediately instead of sending anyone to the Media screen.
+  const library = await listMedia(context.db, store.id);
+
   return {
     store: { slug: store.slug, name: store.name, domain: store.domain },
     page: { id: loaded.page.id, title: loaded.page.title },
@@ -86,6 +92,11 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
     // Whether the R2 bucket is bound decides if Replace can really upload.
     // When it is not, the button says so rather than failing silently.
     mediaReady: "MEDIA" in context.cloudflare.env,
+    library: library.map((row) => ({
+      url: `/media/${row.key}`,
+      name: row.filename,
+      alt: row.alt ?? "",
+    })),
     sections: loaded.sections.map((section) => ({
       id: section.id,
       type: section.type,
@@ -181,6 +192,28 @@ export async function action({ context, request }: Route.ActionArgs) {
       section.blocks.map((block) => ({ id: block.id, values: (block.values ?? {}) as Record<string, string> })),
     );
     return { ok: section.hidden ? "Section shown." : "Section hidden." };
+  }
+
+  /**
+   * One field, written where it stands.
+   *
+   * Clicking a picture in the preview and choosing another one should not mean
+   * opening the section, finding the field and pressing Save — so this writes
+   * exactly the field that was clicked and touches nothing else. Narrow on
+   * purpose: it cannot blank a section the way a full save with a stale form
+   * behind it could.
+   */
+  if (intent === "setField") {
+    const field = String(form.get("field") || "");
+    const value = String(form.get("value") ?? "");
+    const blockId = String(form.get("blockId") || "");
+    if (!field) return { error: "Nothing to change." };
+    const known = blockId
+      ? definition?.blocks?.fields.some((f) => f.name === field)
+      : definition?.fields.some((f) => f.name === field);
+    if (!known) return { error: "That field does not belong to this section." };
+    await setSectionField(context.db, sectionId, blockId || null, field, value);
+    return { ok: "Saved." };
   }
 
   if (intent === "save") {
@@ -302,7 +335,7 @@ function same(a: Draft, b: Draft): boolean {
 }
 
 export default function ThemeEditor({ loaderData, actionData }: Route.ComponentProps) {
-  const { store, page, sections, reviews, mediaReady } = loaderData;
+  const { store, page, sections, reviews, mediaReady, library } = loaderData;
   const [params, setParams] = useSearchParams();
   const navigation = useNavigation();
   const saving =
@@ -532,6 +565,21 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
     if (index >= 0) setOpenBlock(index);
   }, [focus, selectedId, draft.blocks]);
 
+  /**
+   * The picture picker: what was clicked, and where on the screen it sits.
+   *
+   * Kept in a ref as well as state for the same reason as openHit — the click
+   * listener is bound once per document load and must not go stale.
+   */
+  const swapper = useFetcher<{ ok?: string; error?: string; url?: string }>();
+  const uploader = useFetcher<{ ok?: string; error?: string; url?: string }>();
+  const pickFileRef = useRef<HTMLInputElement>(null);
+  const [picker, setPicker] = useState<
+    { hit: PreviewHit; current: string; x: number; y: number } | null
+  >(null);
+  const pickerRef = useRef(setPicker);
+  pickerRef.current = setPicker;
+
   // The click listener is bound once per document load; the ref keeps it
   // pointing at the current handler without rebinding.
   const openHitRef = useRef(openHit);
@@ -553,6 +601,24 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
         // Links and video controls inside the preview would otherwise
         // navigate the frame away from the page being edited.
         event.preventDefault();
+
+        // A picture answers the click itself: the library opens where the
+        // click landed and the swap happens there. Anything else selects its
+        // section and opens its field on the right, as before.
+        const node = event.target as Element | null;
+        const picture = node?.closest?.("[data-ed-media]");
+        if (picture && hit.field) {
+          const frame = frameRef.current;
+          const box = picture.getBoundingClientRect();
+          const outer = frame?.getBoundingClientRect();
+          pickerRef.current({
+            hit,
+            current: picture.getAttribute("src") ?? "",
+            x: (outer?.x ?? 0) + box.x + box.width / 2,
+            y: (outer?.y ?? 0) + box.y + box.height / 2,
+          });
+          return;
+        }
         openHitRef.current(hit);
       },
       true,
@@ -701,6 +767,87 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
   }, [previewSrc, revalidator]);
 
   const refreshing = revalidator.state !== "idle";
+
+  /**
+   * Swap the clicked picture for another one, there and then.
+   *
+   * Three things have to happen and they have to happen in this order: the
+   * preview shows the new picture immediately so the click feels answered, the
+   * one field is written on the server, and the frame reloads once the write
+   * lands so what is on screen is the saved page rather than a patch over an
+   * old one.
+   */
+  const swap = useCallback(
+    (url: string) => {
+      const open = picker;
+      if (!open) return;
+      const section = sections.find((row) => row.id === open.hit.sectionId);
+      if (!section || !open.hit.field) return;
+
+      const doc = frameRef.current?.contentDocument;
+      const win = frameRef.current?.contentWindow;
+      if (doc && win) {
+        sendPatch(doc, win, {
+          sectionId: open.hit.sectionId,
+          field: open.hit.field,
+          blockId: open.hit.blockId,
+          value: url,
+          media: true,
+        });
+      }
+
+      const body = new FormData();
+      body.set("intent", "setField");
+      body.set("sectionId", open.hit.sectionId);
+      body.set("sectionType", section.type);
+      body.set("field", open.hit.field);
+      if (open.hit.blockId) body.set("blockId", open.hit.blockId);
+      body.set("value", url);
+      swapper.submit(body, { method: "post" });
+
+      setPicker(null);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [picker, sections],
+  );
+
+  // A freshly uploaded file goes straight into the picture that was clicked.
+  // Uploading and then having to pick it out of the grid is a step nobody
+  // wants and half of them would miss.
+  const usedUpload = useRef<string | null>(null);
+  useEffect(() => {
+    const url = uploader.data?.url;
+    if (!url || usedUpload.current === url) return;
+    usedUpload.current = url;
+    swap(url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploader.data]);
+
+  // Escape closes the picker, the way it closes the drawer on the storefront.
+  useEffect(() => {
+    if (!picker) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPicker(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [picker]);
+
+  // Once the write has landed, re-read the page and the frame, so nothing on
+  // screen is a patch sitting on top of stale markup.
+  const wasSwapping = useRef(false);
+  useEffect(() => {
+    if (wasSwapping.current && swapper.state === "idle") {
+      const win = frameRef.current?.contentWindow;
+      if (win) {
+        scrollBack.current = win.scrollY;
+        win.location.replace(`${previewSrc}&t=${Date.now()}`);
+      }
+      revalidator.revalidate();
+    }
+    wasSwapping.current = swapper.state !== "idle";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swapper.state, previewSrc]);
 
   return (
     <div className="ed">
@@ -920,6 +1067,77 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
             layout being overwritten by accident.
           </div>
         </div>
+
+        {/* THE PICTURE PICKER
+            Anchored to the picture that was clicked, clamped to the window so
+            it never opens off-screen, and closed by Escape or by clicking
+            away — the things a popover has to do to feel like part of the app
+            rather than a dialog dropped on top of it. */}
+        {picker ? (
+          <>
+            <div className="ed-pick__veil" onClick={() => setPicker(null)} />
+            <div
+              className="ed-pick"
+              style={{
+                left: Math.min(Math.max(picker.x - 190, 12), window.innerWidth - 392),
+                top: Math.min(Math.max(picker.y - 150, 60), window.innerHeight - 340),
+              }}
+            >
+              <div className="ed-pick__head">
+                <b>Swap this picture</b>
+                <button type="button" onClick={() => setPicker(null)} aria-label="Close">
+                  ✕
+                </button>
+              </div>
+
+              <div className="ed-pick__grid">
+                {library.length === 0 ? (
+                  <p className="ed-help" style={{ gridColumn: "1 / -1", margin: 0 }}>
+                    Nothing in this store's media yet. Upload one below.
+                  </p>
+                ) : (
+                  library.map((item) => (
+                    <button
+                      key={item.url}
+                      type="button"
+                      className={`ed-pick__tile${item.url === picker.current ? " is-current" : ""}`}
+                      style={{ backgroundImage: `url("${item.url}")` }}
+                      title={item.alt || item.name}
+                      onClick={() => swap(item.url)}
+                    />
+                  ))
+                )}
+              </div>
+
+              <div className="ed-pick__foot">
+                <button
+                  type="button"
+                  className="ed-text-btn"
+                  disabled={!mediaReady || uploader.state !== "idle"}
+                  title={mediaReady ? undefined : "No media bucket is bound to this Worker yet."}
+                  onClick={() => pickFileRef.current?.click()}
+                >
+                  {uploader.state !== "idle" ? "Uploading…" : "Upload a new one"}
+                </button>
+                <input
+                  ref={pickFileRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  hidden
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    if (!file) return;
+                    const body = new FormData();
+                    body.set("intent", "upload");
+                    body.set("file", file);
+                    uploader.submit(body, { method: "post", encType: "multipart/form-data" });
+                  }}
+                />
+              </div>
+            </div>
+          </>
+        ) : null}
 
         {/* PREVIEW */}
         <div className="ed-stage">

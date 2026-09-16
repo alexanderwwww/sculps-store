@@ -908,6 +908,35 @@ export async function createStandalonePage(
  * seed time and are the reason a theme editor can no longer overwrite the
  * layout — the admin can only reach the words.
  */
+/**
+ * Change one field, on a section or on one of its blocks, and nothing else.
+ *
+ * The editor's Save writes a whole section from the form it has in hand. That
+ * is right when someone has been editing it, and wrong when they have only
+ * clicked a picture in the preview and picked another one: the rest of the
+ * form may be stale, and a whole-section write would push that staleness live.
+ * This reads the row, changes the one key, and puts it back.
+ */
+export async function setSectionField(
+  db: DB,
+  sectionId: string,
+  blockId: string | null,
+  field: string,
+  value: string,
+): Promise<void> {
+  if (blockId) {
+    const [row] = await db.select().from(blocks).where(eq(blocks.id, blockId)).limit(1);
+    if (!row || row.sectionId !== sectionId) return;
+    const values = { ...((row.values ?? {}) as Record<string, string>), [field]: value };
+    await db.update(blocks).set({ values }).where(eq(blocks.id, blockId));
+    return;
+  }
+  const [row] = await db.select().from(sections).where(eq(sections.id, sectionId)).limit(1);
+  if (!row) return;
+  const values = { ...((row.values ?? {}) as Record<string, string>), [field]: value };
+  await db.update(sections).set({ values }).where(eq(sections.id, sectionId));
+}
+
 export async function saveSection(
   db: DB,
   sectionId: string,

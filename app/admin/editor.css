@@ -752,3 +752,77 @@
     animation: none;
   }
 }
+
+/* ------------------------------------------------- the picture picker */
+/* Opens on the picture that was clicked in the preview: the store's own
+   pictures, and one button to add another. Swapping happens here, not on the
+   right-hand panel — the click is the whole interaction. */
+.ed-pick__veil {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.ed-pick {
+  position: fixed;
+  z-index: 41;
+  width: 380px;
+  max-width: calc(100vw - 24px);
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 24px 60px rgba(16, 20, 28, 0.26);
+}
+.ed-pick__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.ed-pick__head button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink, #1c1c1e);
+  opacity: 0.55;
+}
+.ed-pick__head button:hover { opacity: 1; }
+
+.ed-pick__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 264px;
+  overflow-y: auto;
+}
+.ed-pick__tile {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 10px;
+  background-color: rgba(120, 120, 128, 0.12);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.14s ease, transform 0.14s ease;
+}
+.ed-pick__tile:hover { transform: scale(1.04); }
+/* The one already in place, so nobody picks what they already have. */
+.ed-pick__tile.is-current { outline-color: #0A84FF; }
+
+.ed-pick__foot {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(120, 120, 128, 0.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ed-pick__tile { transition: none; }
+  .ed-pick__tile:hover { transform: none; }
+}

@@ -230,9 +230,15 @@ export function markPreview(doc: Document, sections: IndexSection[]): void {
 
 /** What the editor should open for a click that landed on `target`. */
 export function hitFor(target: EventTarget | null): PreviewHit | null {
-  if (!(target instanceof Element)) return null;
+  // Not `target instanceof Element`. The preview is an iframe, so its nodes
+  // come from a different realm with its own Element constructor, and that
+  // test is false for every node in it — which discarded every click on the
+  // preview and made the whole page look unclickable. Ask what the node can
+  // do instead of which window it came from.
+  const node = target as Element | null;
+  if (!node || typeof node.closest !== "function") return null;
 
-  const field = target.closest<HTMLElement>("[data-ed-field]");
+  const field = node.closest<HTMLElement>("[data-ed-field]");
   if (field) {
     return {
       sectionId: field.getAttribute("data-ed-section") ?? "",
@@ -241,7 +247,7 @@ export function hitFor(target: EventTarget | null): PreviewHit | null {
     };
   }
 
-  const section = target.closest<HTMLElement>("[data-section]");
+  const section = node.closest<HTMLElement>("[data-section]");
   if (!section) return null;
   return { sectionId: section.dataset.section ?? "", field: null, blockId: null };
 }
