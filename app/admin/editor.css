@@ -146,6 +146,22 @@
   cursor: default;
 }
 
+/* The refresh glyph turns while the reload is in flight, so a press that is
+   working looks different from a press that did nothing. Disabled dims it, so
+   it keeps its own opacity here rather than inheriting the 0.32. */
+.ed-glyph.is-spinning {
+  opacity: 0.75;
+}
+.ed-glyph.is-spinning svg {
+  animation: ed-spin 0.7s linear infinite;
+}
+@keyframes ed-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ed-glyph.is-spinning svg { animation: none; }
+}
+
 /* pill segmented control */
 .ed-seg {
   display: flex;

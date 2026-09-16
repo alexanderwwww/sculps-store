@@ -29,7 +29,7 @@
  * Undo/redo are real: they walk the edits you have made to the section you
  * are editing, before you save it.
  */
-import { Form, Link, useFetcher, useNavigation, useSearchParams } from "react-router";
+import { Form, Link, useFetcher, useNavigation, useRevalidator, useSearchParams } from "react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "./+types/admin.online-store.editor.$pageId";
 import { requireUser } from "~/lib/auth.server";
@@ -678,6 +678,30 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
     wasReordering.current = reorder.state !== "idle";
   }, [reorder.state, previewSrc]);
 
+  /**
+   * Reload the preview by hand.
+   *
+   * A write reloads it on its own, but not everything that changes a store is
+   * a write from this screen — media uploaded in another tab, a discount that
+   * started, a deploy — and closing the editor and opening it again to see
+   * those is a silly way to spend a minute. This re-fetches the editor's own
+   * data too, so the section list and the preview agree afterwards.
+   */
+  const revalidator = useRevalidator();
+  const refresh = useCallback(() => {
+    const win = frameRef.current?.contentWindow;
+    if (win) {
+      scrollBack.current = win.scrollY;
+      // replace(), not reload(): reload() re-posts if the frame's last
+      // navigation was a form, and cache-busting the URL is what guarantees a
+      // genuinely fresh render rather than the one bfcache kept.
+      win.location.replace(`${previewSrc}&t=${Date.now()}`);
+    }
+    revalidator.revalidate();
+  }, [previewSrc, revalidator]);
+
+  const refreshing = revalidator.state !== "idle";
+
   return (
     <div className="ed">
       {/* ------------------------------------------------------- top bar */}
@@ -747,6 +771,17 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
             </button>
           </div>
         </div>
+
+        <button
+          type="button"
+          className={`ed-glyph${refreshing ? " is-spinning" : ""}`}
+          onClick={refresh}
+          disabled={refreshing}
+          title="Refresh the preview"
+          aria-label="Refresh the preview"
+        >
+          <Glyph d="M15.5 8a5.5 5.5 0 1 1-1.7-4M15.5 3v4h-4" />
+        </button>
 
         <button
           type="button"
