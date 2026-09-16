@@ -1158,12 +1158,31 @@ export async function reviewStats(db: DB, storeId: string) {
 
 /* ---------------------------------------------------------- media writes */
 
+/**
+ * Record a file in the library.
+ *
+ * The key is the file's own content hash, so uploading a picture the store
+ * already has produces a key it already has — and `media.key` is unique, so
+ * the plain insert threw. Nothing above it caught that, which meant uploading
+ * any picture already in the library failed with a server error and, on
+ * screen, simply did nothing at all.
+ *
+ * The same file is the same row: keep the one that is there, and hand it
+ * back, so the caller can go on and use the address either way.
+ */
 export async function addMedia(
   db: DB,
   storeId: string,
   input: { key: string; filename: string; mime: string; sizeBytes: number; alt: string | null },
 ) {
-  const [row] = await db.insert(media).values({ storeId, ...input }).returning();
+  const [row] = await db
+    .insert(media)
+    .values({ storeId, ...input })
+    .onConflictDoUpdate({
+      target: media.key,
+      set: { filename: input.filename, mime: input.mime, sizeBytes: input.sizeBytes },
+    })
+    .returning();
   return row;
 }
 
