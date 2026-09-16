@@ -840,7 +840,7 @@ function renderSection(s: LoadedSection, page: LoadedProductPage): React.ReactNo
                     email={page.store.contactEmail}
                     brand="Garden Buddy"
                     logo={page.store.logoUrl ?? ""}
-                    prefix="gb"
+                    prefix="gbp"
                   />
                 </div>
               )}

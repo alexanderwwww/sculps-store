@@ -73,8 +73,6 @@ export function PhoneChat({
     ) {
       return;
     }
-    setShown(0);
-
     // One scheduler, one timer handle, one cancelled flag. The earlier version
     // chained timeouts and kept its own counter, which meant a second run of
     // this effect — a remount, a fast scroll away and back — could leave an
@@ -113,6 +111,18 @@ export function PhoneChat({
       started = true;
       io.disconnect();
       clearTimeout(failsafe);
+      /**
+       * Emptied here and nowhere else.
+       *
+       * It used to be emptied the moment this effect ran, and only refilled
+       * once something said the phone was on screen. So before you scrolled
+       * to it — and for the whole life of the theme editor's preview, where
+       * that signal may never come — the section was a phone-shaped black
+       * rectangle with nothing in it. Clearing it at the instant the replay
+       * starts means it is either the finished thread or a thread being
+       * typed, and never empty.
+       */
+      setShown(0);
       wait(350, () => play(0));
     };
 
@@ -135,7 +145,7 @@ export function PhoneChat({
      * like. Two and a half seconds is long enough for a real scroll to have
      * fired first, and short enough that a stuck one is never seen.
      */
-    const failsafe = setTimeout(begin, 2_500);
+    const failsafe = setTimeout(begin, 1_200);
 
     return () => {
       cancelled = true;
