@@ -16,6 +16,7 @@ import {
   setCartDiscount,
   newCartToken,
   cartCookie,
+  cartRowByToken,
 } from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
 import { eq } from "drizzle-orm";
@@ -72,7 +73,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
    * point — so this cannot rely on anything already in the browser. The
    * token is opaque and random, and the only thing it grants is a cart.
    */
-  const recover = url.searchParams.get("recover");
+  const recoverParam = url.searchParams.get("recover");
+  /**
+   * A recovery link may only hand back a cart that is actually open on this
+   * store. The token used to be written to the cookie unchecked, which meant
+   * a link carrying somebody else's token put the reader inside that cart:
+   * their name, address and email were then written onto a stranger's row,
+   * and whoever held the other cookie could read the payment intent on it.
+   *
+   * Resolving it first costs one query and makes the link inert unless it
+   * names a real, open, unconverted cart here.
+   */
+  const recover = recoverParam
+    ? (await cartRowByToken(context.db, store.id, recoverParam))
+      ? recoverParam
+      : null
+    : null;
   if (recover && isNavigation) {
     // Stores with a cart drawer never show a cart page: the customer goes back
     // to the product with the drawer open, which is where they were.

@@ -128,7 +128,17 @@ export async function action({ context, request }: Route.ActionArgs) {
       await context.db
         .update(events)
         .set({ human: true })
-        .where(and(eq(events.sessionId, sessionId), eq(events.human, false)));
+        .where(
+          and(
+            // Scoped to this store. The visitor cookie is set by the browser
+            // and the same id can exist under two stores on one domain, so
+            // without this a beat here marked another store's rows human and
+            // inflated its visitor counts, its funnel and its live view.
+            eq(events.storeId, store.id),
+            eq(events.sessionId, sessionId),
+            eq(events.human, false),
+          ),
+        );
     }
 
     // Anyone who stopped beating five minutes ago is gone. Cleaning here

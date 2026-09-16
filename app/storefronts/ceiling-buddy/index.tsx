@@ -1238,7 +1238,11 @@ function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
           </div>
         ) : null}
         <div className="cb-card__acts">{IcoHeart}{IcoComment}{IcoSend}</div>
-        {r.likes != null ? <div className="cb-card__likes">{r.likes.toLocaleString()} likes</div> : null}
+        {/* Pinned to en-US. Bare toLocaleString() formats in the *reader's*
+            locale, so the Worker rendered "1,240" and a browser in Berlin
+            hydrated "1.240" — a text mismatch, React #418, and the whole tree
+            thrown away and rebuilt with every handler on it. */}
+        {r.likes != null ? <div className="cb-card__likes">{r.likes.toLocaleString("en-US")} likes</div> : null}
         <p className="cb-card__cap"><b>{r.name}</b> {r.body}</p>
         {r.replies != null ? (
           <div className="cb-card__more">View all {r.replies} comments</div>
@@ -1276,7 +1280,7 @@ function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
         {r.likes != null ? (
           <span className="cb-card__react">
             <span className="cb-card__marks">{IcoThumb}{IcoHeartFill}{IcoCareFill}</span>
-            {r.likes.toLocaleString()}
+            {r.likes.toLocaleString("en-US")}
           </span>
         ) : null}
         {r.replies != null ? <span className="cb-card__when">{r.replies} comments</span> : null}

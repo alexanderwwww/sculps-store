@@ -491,7 +491,15 @@ function BehaviourGlobe({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const globeRef = useRef<LiveGlobeHandle | null>(null);
   const [tip, setTip] = useState<GlobeTip | null>(null);
-  const [clock, setClock] = useState("");
+  /**
+   * The clock is written straight into its node, never through React state.
+   *
+   * It used to be `setClock()` inside the animation frame — sixty re-renders
+   * a second of a page carrying stat tiles, four charts, a city list and up
+   * to eighty session rows. That, not the globe, is what made this page
+   * crawl. The globe was never the problem; the re-render around it was.
+   */
+  const clockRef = useRef<HTMLDivElement>(null);
 
   // Every arrival, cart and sale in the window, on one timeline. Built once
   // per data change — the replay only reads it.
@@ -516,7 +524,19 @@ function BehaviourGlobe({
     let alive = true;
     let raf = 0;
 
-    mountLiveGlobe(canvas, { onTip: setTip, home })
+    // A globe in a card on a busy page, not the whole screen: lite.
+    // Same reasoning as the clock: the globe hit-tests on every mouse move,
+    // and passing each result straight to React re-rendered the page for a
+    // tooltip that had not changed. Only a different tooltip is news.
+    let lastTip = "";
+    const onTip = (next: GlobeTip | null) => {
+      const key = next ? `${next.label}|${next.amount}|${Math.round(next.x)}|${Math.round(next.y)}` : "";
+      if (key === lastTip) return;
+      lastTip = key;
+      setTip(next);
+    };
+
+    mountLiveGlobe(canvas, { onTip, home, quality: "lite" })
       .then((globe) => {
         if (!alive) {
           globe.destroy();
@@ -533,13 +553,17 @@ function BehaviourGlobe({
         // leave it there. A replay nobody wants is just a flicker.
         if (reduce || !beats.length) {
           for (const b of beats) globe.push({ type: b.type, id: b.id + b.type, lat: b.lat, lon: b.lon, city: b.city });
-          setClock("");
           return;
         }
 
+        // The replay does not need a frame loop of its own — the globe already
+        // has one. Ten checks a second is finer than anything the eye reads on
+        // a clock showing minutes, and it leaves the frames to the renderer.
         let next = 0;
         let t0 = performance.now();
-        const tick = (now: number) => {
+        let shown = "";
+        raf = window.setInterval(() => {
+          const now = performance.now();
           const frac = ((now - t0) % LOOP) / LOOP;
           // Wrapped: clear the globe and play it again from the top.
           if (now - t0 >= LOOP) {
@@ -552,16 +576,18 @@ function BehaviourGlobe({
             const b = beats[next++];
             globe.push({ type: b.type, id: b.id + b.type, lat: b.lat, lon: b.lon, city: b.city });
           }
-          setClock(fmt.format(new Date(cursor)));
-          raf = requestAnimationFrame(tick);
-        };
-        raf = requestAnimationFrame(tick);
+          const text = fmt.format(new Date(cursor));
+          if (text !== shown && clockRef.current) {
+            shown = text;
+            clockRef.current.textContent = text;
+          }
+        }, 100);
       })
       .catch(() => undefined);
 
     return () => {
       alive = false;
-      cancelAnimationFrame(raf);
+      clearInterval(raf);
       globeRef.current?.destroy();
       globeRef.current = null;
     };
@@ -579,9 +605,7 @@ function BehaviourGlobe({
       ) : null}
 
       {/* The replayed clock, so it is obvious this is the window and not now. */}
-      {clock ? (
-        <div className="tb-num" style={{ position: "absolute", right: 14, top: 12, fontSize: 12, fontWeight: 600, color: "var(--ink-2)", pointerEvents: "none" }}>{clock}</div>
-      ) : null}
+      <div ref={clockRef} className="tb-num" style={{ position: "absolute", right: 14, top: 12, fontSize: 12, fontWeight: 600, color: "var(--ink-2)", pointerEvents: "none" }} />
 
       <div style={{ position: "absolute", left: 14, bottom: 12, display: "flex", gap: 14, fontSize: 12, color: "var(--ink-2)", alignItems: "center", flexWrap: "wrap", pointerEvents: "none" }}>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: BLUE, marginRight: 6, verticalAlign: -1 }} />visitor</span>

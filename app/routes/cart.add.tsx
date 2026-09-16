@@ -54,14 +54,28 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
   // Not simply the cookie's token: it may belong to another store on this
   // same domain, and that collides on insert. See cartTokenForStore.
   const token = await cartTokenForStore(context.db, store.id, readCartToken(request));
-  // "Buy now" means this bundle and nothing else: the wallet sheet on the
-  // product page shows one price, and the cart it pays for must be that.
-  const replace = url.searchParams.get("replace") === "1";
+  /**
+   * `replace` and `bundle` are honoured on a POST and never on a GET.
+   *
+   * Both used to be read straight from the query string on either method, and
+   * the cart cookie is SameSite=Lax, which a browser still sends on a
+   * top-level link. So a link in an email or a comment was enough to do two
+   * things to a stranger's cart:
+   *
+   *   /cart/add?variant=…&replace=1  threw away everything they had chosen
+   *   /cart/add?variant=…&bundle=1   took the bundle discount off any variant
+   *                                  in the shop, on demand, repeatedly
+   *
+   * Nothing in the shop links to either with a GET — the drawers and the buy
+   * box post. Ignoring them on GET costs nothing and closes both.
+   */
+  const trusted = request.method.toUpperCase() === "POST";
+  const replace = trusted && url.searchParams.get("replace") === "1";
   const lines = replace ? [] : await currentLines(context.db, store.id, token);
-  // `bundle=1`: this line rides along with the main product at the bundle
-  // price. The amount is the server's, never the browser's, and priceCart
-  // only honours it while something else is in the cart with it.
-  const bundlePriceCents = url.searchParams.get("bundle") === "1" ? Math.max(0, sellable.priceCents - BUNDLE_OFF_CENTS) : undefined;
+  const bundlePriceCents =
+    trusted && url.searchParams.get("bundle") === "1"
+      ? Math.max(0, sellable.priceCents - BUNDLE_OFF_CENTS)
+      : undefined;
   await saveCart(context.db, store.id, token, addLine(lines, variantId, 1, bundlePriceCents));
 
   const sessionId = readVisitorSession(request);

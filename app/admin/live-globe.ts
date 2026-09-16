@@ -54,6 +54,13 @@ export interface LiveGlobeOptions {
   onTip?: (tip: GlobeTip | null) => void;
   /** Where this store sits. A sale flies home to it; without it, no arc. */
   home?: { lat: number; lon: number } | null;
+  /**
+   * "lite" draws the same globe with fewer dots and at a lower pixel ratio.
+   * Live View is the whole screen and deserves every dot. A globe sitting in
+   * a card on a page full of other charts does not, and paying for them there
+   * is what makes the page feel heavy.
+   */
+  quality?: "full" | "lite";
 }
 
 declare global {
@@ -98,6 +105,8 @@ class LiveGlobe {
   onTip: (tip: GlobeTip | null) => void;
   /** where this store sits; a sale flies home to it */
   home: { lat: number; lon: number } | null = null;
+  /** Fewer dots, lower pixel ratio. See LiveGlobeOptions.quality. */
+  lite = false;
 
   rot = { lam: 98, phi: 38 };
   zoom = 1;
@@ -132,6 +141,7 @@ class LiveGlobe {
     this.canvas = canvas;
     this.onTip = options.onTip ?? (() => undefined);
     this.home = options.home ?? null;
+    this.lite = options.quality === "lite";
     this.bindPointer();
     this.startGlobe();
   }
@@ -175,9 +185,9 @@ class LiveGlobe {
       if (this._lastFrame && tNow - this._lastFrame < 30) return;
       this._lastFrame = tNow;
       const cv = cv0;
-      if (!this.tiles) { if (!(window.ShopGlobe && window.ShopGlobe.isLand)) return; this.tiles = this.buildTiles(1.25); this.dotPts = this.tiles; }
+      if (!this.tiles) { if (!(window.ShopGlobe && window.ShopGlobe.isLand)) return; this.tiles = this.buildTiles(this.lite ? 2.1 : 1.25); this.dotPts = this.tiles; }
       const tiles = this.tiles;
-      const dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
+      const dpr = Math.min(this.lite ? 1.5 : 2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
       if (!w || !h) return;
       if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
       const g = cv.getContext("2d");

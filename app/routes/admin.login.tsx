@@ -76,6 +76,16 @@ export async function action({ context, request }: Route.ActionArgs) {
   }
 
   if (intent === "code") {
+    /**
+     * When Google is configured it is the only door, and the server has to
+     * say so — not just the template. The field is hidden in the UI either
+     * way, but a hand-made POST does not read the UI, and the access code
+     * signs in as the oldest user rather than the code's owner, which would
+     * walk straight past the Google allow-list.
+     */
+    if (googleConfig(context.cloudflare.env)) {
+      return { error: "Sign in with Google." };
+    }
     const ip = clientIp(request);
     if (!(await loginAllowed(context.db, ip))) {
       return { error: "Too many attempts. Wait fifteen minutes and try again." };
