@@ -39,7 +39,7 @@ import {
   reorderSections,
   resolveAdminStore,
   reviewStats,
-  addMedia,
+  uploadMedia,
   setSectionField,
   listMedia,
 } from "~/lib/admin.server";
@@ -122,37 +122,13 @@ export async function action({ context, request }: Route.ActionArgs) {
   if (intent === "upload") {
     const bucket = context.cloudflare.env.MEDIA;
     if (!bucket) return { error: "No media bucket is bound to this Worker yet." };
-
     const file = form.get("file");
-    if (!(file instanceof File) || file.size === 0) return { error: "Choose a file first." };
-    if (file.size > 25 * 1024 * 1024) return { error: "That file is over 25 MB." };
-
-    const buffer = await file.arrayBuffer();
-    const digest = await crypto.subtle.digest("SHA-256", buffer);
-    const hash = Array.from(new Uint8Array(digest).slice(0, 10))
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
-    const extension = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const key = `${hash}.${extension}`;
-
-    await bucket.put(key, buffer, {
-      httpMetadata: { contentType: file.type || "application/octet-stream" },
-    });
-
-    // Record it in the media table so it also shows on the Media screen.
+    if (!(file instanceof File)) return { error: "Choose a file first." };
     const url = new URL(request.url);
     const { store } = await resolveAdminStore(context.db, url);
-    if (store) {
-      await addMedia(context.db, store.id, {
-        key,
-        filename: file.name,
-        mime: file.type || "application/octet-stream",
-        sizeBytes: file.size,
-        alt: null,
-      });
-    }
-
-    return { ok: "Uploaded.", url: `/media/${key}` };
+    if (!store) return { error: "No store." };
+    const result = await uploadMedia(bucket, context.db, store.id, file);
+    return "error" in result ? result : { ok: "Uploaded.", url: result.url };
   }
 
   // Drag to reorder. The order arrives as the full list of section ids in the

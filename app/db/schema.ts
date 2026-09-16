@@ -215,6 +215,13 @@ export const products = pgTable(
     supplierUrl: text("supplier_url"),
     /** what the product costs him, in cents — drives the live margin readout */
     costCents: integer("cost_cents"),
+    /**
+     * The product's own pictures, in the order they are shown. The first is
+     * the thumbnail. Managed on the Products screen — the storefront's
+     * carousel reads these, so changing a product's pictures is a product
+     * task, not a theme task.
+     */
+    images: jsonb("images").$type<{ url: string; alt: string }[]>().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("products_store_handle_idx").on(t.storeId, t.handle)],

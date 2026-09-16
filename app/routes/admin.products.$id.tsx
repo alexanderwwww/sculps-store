@@ -6,12 +6,12 @@
  * disagreeing with the price beside it. Margin is calculated the same way,
  * from unit cost against the default option's price.
  */
-import { Form, Link, useNavigation } from "react-router";
-import { useState } from "react";
+import { Form, Link, useFetcher, useNavigation } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { eq } from "drizzle-orm";
 import type { Route } from "./+types/admin.products.$id";
 import { requireUser } from "~/lib/auth.server";
-import { loadProduct, updateProduct, saveVariants, unitsSold, addMedia, deleteMedia } from "~/lib/admin.server";
+import { loadProduct, updateProduct, saveVariants, unitsSold, addMedia, deleteMedia, setProductImages, uploadMedia, type ProductImage } from "~/lib/admin.server";
 import { media as mediaTable, products as productsTable } from "~/db/schema";
 import { centsFromInput, centsToInput, savedPercent, formatMoney } from "~/lib/money";
 import { primaryButton } from "~/admin/ui";
@@ -69,7 +69,8 @@ export async function loader({ context, request, params }: Route.LoaderArgs) {
     // Uploads need a Cloudflare R2 bucket; the binding is added to
     // wrangler.jsonc when the bucket exists.
     storageReady: "MEDIA" in context.cloudflare.env,
-    media: mediaRows.map((row) => ({ id: row.id, url: row.key, filename: row.filename })),
+    media: mediaRows.map((row) => ({ id: row.id, url: `/media/${row.key}`, filename: row.filename })),
+    images: (loaded.product.images ?? []) as ProductImage[],
     product: {
       id: loaded.product.id,
       title: loaded.product.title,
@@ -110,6 +111,29 @@ export async function action({ context, request, params }: Route.ActionArgs) {
       status: 302,
       headers: { Location: `/admin/products?store=${storeSlug}` },
     });
+  }
+
+  // A file straight into the store's library, answered with its address so
+  // the picture grid can take it without a round trip through the form.
+  if (intent === "upload") {
+    const bucket = context.cloudflare.env.MEDIA;
+    if (!bucket) return { error: "No media bucket is bound to this Worker yet." };
+    const file = form.get("file");
+    if (!(file instanceof File)) return { error: "Choose a file first." };
+    const result = await uploadMedia(bucket, context.db, loaded.product.storeId, file);
+    return "error" in result ? result : { ok: "Uploaded.", url: result.url };
+  }
+
+  // The product's pictures, as an ordered list. Saved on their own, the
+  // moment they change, so a reorder or a swap never waits on the big Save.
+  if (intent === "setImages") {
+    const urls = form.getAll("imageUrl").map(String);
+    const alts = form.getAll("imageAlt").map(String);
+    const images: ProductImage[] = urls
+      .map((url, i) => ({ url: url.trim(), alt: (alts[i] ?? "").trim() }))
+      .filter((x) => x.url);
+    await setProductImages(context.db, params.id, images);
+    return { ok: "Pictures saved." };
   }
 
   if (intent === "addMedia") {
@@ -200,7 +224,7 @@ interface Row {
 }
 
 export default function ProductDetail({ loaderData, actionData }: Route.ComponentProps) {
-  const { product, variants, storeSlug, media, storageReady } = loaderData;
+  const { product, variants, storeSlug, media, storageReady, images: savedImages } = loaderData;
   const navigation = useNavigation();
   const busy = navigation.state === "submitting";
 
@@ -268,9 +292,6 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
       ? "set a price and cost"
       : `${formatMoney(defaultPriceCents - costCents)} per unit on ${rows[defaultIndex]?.label || "default option"}`;
 
-  const mediaNote = media.length
-    ? `${media.length} image${media.length === 1 ? "" : "s"} · first one is the thumbnail`
-    : "PNG or JPG. The first image is used as the thumbnail.";
 
   return (
     <Form method="post" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -368,91 +389,18 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
             </label>
           </div>
 
+          <ProductPictures
+            productId={product.id}
+            storeSlug={storeSlug}
+            saved={savedImages}
+            library={media}
+            storageReady={storageReady}
+          />
+
           <div style={{ ...panel, padding: 16 }}>
-            <div style={{ fontWeight: 650, marginBottom: 10 }}>Media</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(96px,1fr))", gap: 10 }}>
-              {media.map((m) => (
-                <span
-                  key={m.id}
-                  style={{
-                    position: "relative",
-                    aspectRatio: 1,
-                    borderRadius: 10,
-                    border: "1px solid var(--border)",
-                    background: "var(--bg)",
-                    overflow: "hidden",
-                    display: "block",
-                    maxWidth: "100%",
-                  }}
-                >
-                  <span
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      backgroundImage: `url("${m.url}")`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      display: "block",
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    name="intent"
-                    value="removeMedia"
-                    onClick={(event) => {
-                      const form = event.currentTarget.form;
-                      if (form) (form.elements.namedItem("mediaId") as HTMLInputElement).value = m.id;
-                    }}
-                    title="Remove"
-                    style={{
-                      position: "absolute",
-                      top: 4,
-                      right: 4,
-                      width: 22,
-                      height: 22,
-                      borderRadius: 6,
-                      border: 0,
-                      background: "rgba(0,0,0,.6)",
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: 11,
-                    }}
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-              <input type="hidden" name="mediaId" value="" />
-              {/* Rule 2: file upload needs a Cloudflare R2 bucket, which is not
-                  bound to the Worker yet, so the tile is visibly disabled. */}
-              <label
-                style={{
-                  aspectRatio: 1,
-                  maxWidth: "100%",
-                  borderRadius: 10,
-                  border: "1px dashed var(--border-strong)",
-                  background: "var(--bg)",
-                  color: "var(--ink-2)",
-                  cursor: "not-allowed",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 2,
-                  fontSize: 12,
-                  opacity: 0.5,
-                }}
-              >
-                <span style={{ fontSize: 18 }}>＋</span>
-                Upload
-                <input type="file" accept="image/*" multiple disabled style={{ display: "none" }} />
-              </label>
-            </div>
-            <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 8 }}>{mediaNote}</div>
-            <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 8 }}>
-              {storageReady
-                ? "Uploads are disabled here until this panel is wired to the media library."
-                : "Uploading a file needs a Cloudflare R2 bucket, which is not connected yet. Until it is, add an image that is already on the internet by its address."}
+            <div style={{ fontWeight: 650, marginBottom: 10 }}>Add a picture by address</div>
+            <div style={{ fontSize: 12, color: "var(--ink-2)", marginBottom: 8 }}>
+              Something already on the internet. It goes into the library above, where it can be added to this product.
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
               <input
@@ -794,5 +742,198 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
         </div>
       </div>
     </Form>
+  );
+}
+
+
+/* --------------------------------------------------------- the pictures */
+
+/**
+ * The product's pictures, the way Shopify's product page has them: a grid in
+ * the order the storefront shows them, the first one being the thumbnail.
+ * Add from what the store already has, upload something new, move a picture
+ * left or right, take one out. Every change is saved the moment it is made —
+ * there is no separate Save to remember, and the carousel on the site is
+ * reading this list.
+ */
+function ProductPictures({
+  productId,
+  storeSlug,
+  saved,
+  library,
+  storageReady,
+}: {
+  productId: string;
+  storeSlug: string;
+  saved: ProductImage[];
+  library: { id: string; url: string; filename: string }[];
+  storageReady: boolean;
+}) {
+  const [images, setImages] = useState<ProductImage[]>(saved);
+  const [picking, setPicking] = useState(false);
+  const save = useFetcher<{ ok?: string; error?: string }>();
+  const upload = useFetcher<{ ok?: string; error?: string; url?: string }>();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const action = `/admin/products/${productId}?store=${storeSlug}`;
+
+  // Saved from the server after a full page save; keep in step.
+  useEffect(() => setImages(saved), [saved]);
+
+  const commit = useCallback(
+    (next: ProductImage[]) => {
+      setImages(next);
+      const body = new FormData();
+      body.set("intent", "setImages");
+      body.set("storeSlug", storeSlug);
+      for (const x of next) {
+        body.append("imageUrl", x.url);
+        body.append("imageAlt", x.alt);
+      }
+      save.submit(body, { method: "post", action });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storeSlug, action],
+  );
+
+  // A fresh upload joins the end of the list on its own.
+  const taken = useRef<string | null>(null);
+  useEffect(() => {
+    const url = upload.data?.url;
+    if (!url || taken.current === url) return;
+    taken.current = url;
+    commit([...images, { url, alt: "" }]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upload.data]);
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= images.length) return;
+    const next = images.slice();
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    commit(next);
+  };
+  const remove = (index: number) => commit(images.filter((_, i) => i !== index));
+  const add = (url: string) => {
+    if (images.some((x) => x.url === url)) return;
+    commit([...images, { url, alt: "" }]);
+    setPicking(false);
+  };
+
+  const have = new Set(images.map((x) => x.url));
+  const tile: React.CSSProperties = {
+    position: "relative",
+    aspectRatio: 1,
+    borderRadius: 10,
+    border: "1px solid var(--border)",
+    background: "var(--bg)",
+    overflow: "hidden",
+    display: "block",
+  };
+  const pic = (url: string): React.CSSProperties => ({
+    position: "absolute",
+    inset: 0,
+    backgroundImage: `url("${url}")`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    display: "block",
+  });
+  const chip: React.CSSProperties = {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    border: 0,
+    background: "rgba(0,0,0,.6)",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 11,
+    lineHeight: 1,
+  };
+  const busy = save.state !== "idle" || upload.state !== "idle";
+
+  return (
+    <div style={{ ...panel, padding: 16 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ fontWeight: 650 }}>Pictures</div>
+        <div style={{ fontSize: 12, color: "var(--ink-2)" }}>
+          {busy ? "Saving…" : save.data?.error || upload.data?.error || `${images.length} on the product · first one is the thumbnail`}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(110px,1fr))", gap: 10 }}>
+        {images.map((x, i) => (
+          <span key={x.url} style={tile}>
+            <span style={pic(x.url)} />
+            {i === 0 ? (
+              <span style={{ position: "absolute", left: 6, top: 6, fontSize: 10, fontWeight: 650, padding: "2px 7px", borderRadius: 999, background: "rgba(0,0,0,.6)", color: "#fff" }}>
+                Thumbnail
+              </span>
+            ) : null}
+            <span style={{ position: "absolute", right: 4, bottom: 4, display: "flex", gap: 4 }}>
+              <button type="button" style={chip} title="Move left" disabled={i === 0 || busy} onClick={() => move(i, i - 1)}>‹</button>
+              <button type="button" style={chip} title="Move right" disabled={i === images.length - 1 || busy} onClick={() => move(i, i + 1)}>›</button>
+              <button type="button" style={chip} title="Remove from product" disabled={busy} onClick={() => remove(i)}>✕</button>
+            </span>
+          </span>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setPicking((on) => !on)}
+          style={{ ...tile, border: "1px dashed var(--border-strong)", color: "var(--ink-2)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, fontSize: 12 }}
+        >
+          <span style={{ fontSize: 18 }}>＋</span>
+          {picking ? "Close" : "Add from library"}
+        </button>
+
+        <button
+          type="button"
+          disabled={!storageReady || busy}
+          title={storageReady ? undefined : "Uploading needs the media bucket, which is not connected yet."}
+          onClick={() => fileRef.current?.click()}
+          style={{ ...tile, border: "1px dashed var(--border-strong)", color: "var(--ink-2)", cursor: storageReady ? "pointer" : "not-allowed", opacity: storageReady ? 1 : 0.5, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, fontSize: 12 }}
+        >
+          <span style={{ fontSize: 18 }}>↑</span>
+          {upload.state !== "idle" ? "Uploading…" : "Upload"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (!file) return;
+            const body = new FormData();
+            body.set("intent", "upload");
+            body.set("storeSlug", storeSlug);
+            body.set("file", file);
+            upload.submit(body, { method: "post", action, encType: "multipart/form-data" });
+          }}
+        />
+      </div>
+
+      {picking ? (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+          <div style={{ fontSize: 12, color: "var(--ink-2)", marginBottom: 8 }}>
+            Everything in this store's library. Click one to put it on the product.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(84px,1fr))", gap: 8, maxHeight: 280, overflowY: "auto" }}>
+            {library.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                title={m.filename}
+                disabled={have.has(m.url) || busy}
+                onClick={() => add(m.url)}
+                style={{ ...tile, cursor: have.has(m.url) ? "default" : "pointer", opacity: have.has(m.url) ? 0.35 : 1, padding: 0 }}
+              >
+                <span style={pic(m.url)} />
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

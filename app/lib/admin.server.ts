@@ -734,6 +734,49 @@ export interface ProductInput {
   supplierName: string | null;
   supplierUrl: string | null;
   costCents: number | null;
+  images?: ProductImage[];
+}
+
+export interface ProductImage {
+  url: string;
+  alt: string;
+}
+
+/** Replace the product's pictures with this ordered list. */
+export async function setProductImages(db: DB, productId: string, images: ProductImage[]): Promise<void> {
+  await db.update(products).set({ images }).where(eq(products.id, productId));
+}
+
+/**
+ * Put a file in R2 under a content-hashed key and record it in the media
+ * table, returning the /media/:key address the storefront reads. One place
+ * for this: the theme editor and the Products screen both upload, and they
+ * must produce identical keys for identical files.
+ */
+export async function uploadMedia(
+  bucket: R2Bucket,
+  db: DB,
+  storeId: string,
+  file: File,
+): Promise<{ url: string } | { error: string }> {
+  if (file.size === 0) return { error: "Choose a file first." };
+  if (file.size > 25 * 1024 * 1024) return { error: "That file is over 25 MB." };
+  const buffer = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
+  const hash = Array.from(new Uint8Array(digest).slice(0, 10))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  const extension = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const key = `${hash}.${extension}`;
+  await bucket.put(key, buffer, { httpMetadata: { contentType: file.type || "application/octet-stream" } });
+  await addMedia(db, storeId, {
+    key,
+    filename: file.name,
+    mime: file.type || "application/octet-stream",
+    sizeBytes: file.size,
+    alt: null,
+  });
+  return { url: `/media/${key}` };
 }
 
 export async function createProduct(

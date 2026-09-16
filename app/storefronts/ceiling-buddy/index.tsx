@@ -354,7 +354,14 @@ function Announce({
 function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
   const v = section.values;
   const drawer = useCartDrawer();
-  const shots = section.blocks.filter((b) => has(b.values, "image"));
+  // The product's own pictures come first — they are managed on the Products
+  // screen, which is where someone changing a product's pictures will look.
+  // The section's blocks remain as the fallback, so a store that has not set
+  // any yet shows exactly what it showed before.
+  const own = (page.product.images ?? []).filter((x) => x.url);
+  const shots = own.length
+    ? own.map((x, i) => ({ id: `p${i}`, values: { image: x.url, alt: x.alt } }))
+    : section.blocks.filter((b) => has(b.values, "image"));
   const [shot, setShot] = useState(0);
   const variants = page.variants;
   const [picked, setPicked] = useState(

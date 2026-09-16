@@ -456,7 +456,12 @@ function BuyBox({
   const { product, variants, store } = page;
   const drawer = useCartDrawer();
   const v = section.values;
-  const images = section.blocks.filter((b) => has(b.values, "image"));
+  // Product pictures first (managed on the Products screen), the section's
+  // own blocks as the fallback so nothing changes until some are set.
+  const own = (page.product.images ?? []).filter((x) => x.url);
+  const images = own.length
+    ? own.map((x, i) => ({ id: `p${i}`, values: { image: x.url, alt: x.alt } }))
+    : section.blocks.filter((b) => has(b.values, "image"));
 
   const defaultIndex = Math.max(
     0,
