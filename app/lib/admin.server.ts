@@ -760,7 +760,10 @@ export async function uploadMedia(
   file: File,
 ): Promise<{ url: string } | { error: string }> {
   if (file.size === 0) return { error: "Choose a file first." };
-  if (file.size > 25 * 1024 * 1024) return { error: "That file is over 25 MB." };
+  // 60 MB, because these are videos now, not only photographs. R2 takes far
+  // more than this in one put; the cap is here so a mis-picked 4K original
+  // fails fast with a sentence rather than after a two-minute upload.
+  if (file.size > 60 * 1024 * 1024) return { error: "That file is over 60 MB." };
   const buffer = await file.arrayBuffer();
   const digest = await crypto.subtle.digest("SHA-256", buffer);
   const hash = Array.from(new Uint8Array(digest).slice(0, 10))

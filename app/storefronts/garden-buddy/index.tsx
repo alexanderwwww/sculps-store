@@ -6,6 +6,7 @@ import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { SupportChat, StickyCart } from "./support";
+import { PhoneChat } from "../shared/phone-chat";
 
 /**
  * Garden Buddy storefront — store two.
@@ -831,19 +832,16 @@ function renderSection(s: LoadedSection, page: LoadedProductPage): React.ReactNo
 
               {questions.length > 0 && (
                 <div className="gb-watch__faq">
-                  <div className="gb-watch__list">
-                    {questions.map((b, i) => (
-                      <details className="gb-watch__item" open={i === 0} key={b.id}>
-                        <summary>
-                          <span>{val(b.values, "question")}</span>
-                          <i aria-hidden="true" />
-                        </summary>
-                        <div className="gb-watch__a">
-                          <p>{val(b.values, "answer")}</p>
-                        </div>
-                      </details>
-                    ))}
-                  </div>
+                  {/* The same phone thread Ceiling Buddy uses — one component,
+                      this theme's own palette. An accordion makes someone work
+                      for an answer; a thread hands it over. */}
+                  <PhoneChat
+                    blocks={questions}
+                    email={page.store.contactEmail}
+                    brand="Garden Buddy"
+                    logo={page.store.logoUrl ?? ""}
+                    prefix="gb"
+                  />
                 </div>
               )}
             </div>

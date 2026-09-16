@@ -912,3 +912,113 @@
   .gb-sticky__name{font-size:14px}
 }
 @media(prefers-reduced-motion:reduce){.gb-sticky{transition:none}.gb-chat__btn:hover{transform:none}}
+
+
+/* ------------------------------------------------------- the phone thread */
+/* Ported from Ceiling Buddy's chat: identical markup from the shared
+   PhoneChat component, this store's palette. The reply bubble is the neon
+   green rather than iMessage blue, because this store's action colour is the
+   green and a blue bubble here would belong to a different brand. */
+.gb-chat {
+  /* A phone, the same size as the clip beside it. Dark, because iOS is dark at
+     11pm and because a black screen next to a black-screened phone reads as
+     two phones rather than a phone and a card. */
+  width: min(340px, 82vw); height: calc(min(340px, 82vw) * 16 / 9); flex: 0 0 auto;
+  display: flex; flex-direction: column;
+  background: #000; color: #fff;
+  border-radius: 40px; overflow: hidden;
+  border: 8px solid #17181C;
+  box-shadow: 0 30px 70px rgba(12, 8, 4, .38), inset 0 0 0 1px rgba(255,255,255,.08);
+  font-family: -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+}
+.gb-chat__status {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 20px 4px; font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em;
+}
+.gb-chat__icons { display: inline-flex; align-items: center; gap: 5px; }
+.gb-chat__icons svg { height: 11px; width: auto; fill: currentColor; }
+.gb-chat__head {
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  background: rgba(28,28,30,.72); backdrop-filter: blur(20px);
+}
+.gb-chat__name { font-size: 12.5px; font-weight: 500; letter-spacing: -0.01em; }
+.gb-chat__av {
+  width: 26px; height: 26px; flex: 0 0 auto; border-radius: 999px;
+  object-fit: contain; background: #fff; padding: 2px;
+}
+.gb-chat__av--lg { width: 42px; height: 42px; padding: 4px; }
+.gb-chat__body {
+  flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;
+  padding: 10px 12px 4px;
+}
+.gb-chat__body::-webkit-scrollbar { display: none; }
+.gb-chat__day { text-align: center; font-size: 11px; color: rgba(255,255,255,.44); margin: 6px 0 14px; }
+.gb-chat__day b { font-weight: 600; color: rgba(255,255,255,.6); }
+.gb-chat__pair { margin-bottom: 12px; }
+.gb-chat__q, .gb-chat__a {
+  opacity: 0; transform: translateY(10px) scale(.96); transform-origin: bottom;
+  transition: opacity .28s ease, transform .34s cubic-bezier(.2,.9,.3,1.1);
+}
+.gb-chat__q[data-in], .gb-chat__a[data-in] { opacity: 1; transform: none; }
+.gb-chat__q {
+  margin: 0 0 6px auto; width: fit-content; max-width: 78%;
+  background: var(--lime); color: var(--lime-ink);
+  font-size: 14px; line-height: 1.32; letter-spacing: -0.01em;
+  padding: 8px 13px; border-radius: 19px 19px 5px 19px;
+}
+.gb-chat__a { display: flex; gap: 7px; align-items: flex-end; max-width: 88%; }
+.gb-chat__a p {
+  margin: 0; background: #262629; color: #fff;
+  font-size: 14px; line-height: 1.35; letter-spacing: -0.01em;
+  padding: 9px 13px; border-radius: 19px 19px 19px 5px;
+}
+.gb-chat__time { display: block; margin: 4px 0 0 6px; font-size: 10.5px; color: rgba(255,255,255,.4); }
+.gb-chat__typing { display: flex; align-items: flex-end; gap: 7px; margin: -4px 0 12px; }
+.gb-chat__typing span {
+  display: inline-flex; gap: 4px; align-items: center;
+  background: #262629; border-radius: 19px 19px 19px 5px; padding: 12px 14px;
+}
+.gb-chat__typing i {
+  width: 7px; height: 7px; border-radius: 999px; background: rgba(255,255,255,.55);
+  animation: cb-dot 1.25s ease-in-out infinite;
+}
+.gb-chat__typing i:nth-child(2) { animation-delay: .16s; }
+.gb-chat__typing i:nth-child(3) { animation-delay: .32s; }
+.gb-chat__foot {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px 16px; border-top: 1px solid rgba(255,255,255,.08);
+}
+.gb-chat__field {
+  flex: 1; min-width: 0; border: 1px solid rgba(255,255,255,.2); border-radius: 999px;
+  padding: 8px 14px; font-size: 13.5px; color: rgba(255,255,255,.5);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gb-chat__field a { color: inherit; }
+.gb-chat__send {
+  width: 28px; height: 28px; flex: 0 0 auto; border-radius: 999px;
+  background: var(--lime); display: grid; place-items: center;
+}
+.gb-chat__send svg { width: 15px; height: 15px; color: #fff; }
+.gb-chat__taps {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px;
+  margin: 10px 0 4px;
+}
+.gb-chat__tap {
+  background: transparent; color: var(--lime);
+  border: 1px solid rgba(10,132,255,.55); border-radius: 999px;
+  padding: 7px 12px; font-size: 12.5px; line-height: 1.2; letter-spacing: -0.01em;
+  cursor: pointer; text-align: left;
+  transition: background .14s ease, transform .1s ease;
+}
+.gb-chat__tap:hover { background: rgba(10,132,255,.14); }
+.gb-chat__tap:active { transform: translateY(1px); }
+.gb-chat__tap:disabled { opacity: .4; cursor: default; }
+.gb-chat__photo {
+  margin: 7px 0 0; border-radius: 16px; overflow: hidden;
+  background: #1C1C1E; max-width: 200px;
+}
+.gb-chat__photo img {
+  width: 100%; height: auto; max-height: 260px; object-fit: cover; display: block;
+}
