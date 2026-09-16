@@ -53,6 +53,11 @@
   --display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --body: "Inter", system-ui, -apple-system, sans-serif;
   --wrap: 1200px;
+  /* The one dark colour the whole night chapter is built on. Three photos
+     butted edge to edge in three different colours read as three unrelated
+     posters; sharing one ground makes them one place. */
+  --night: #06142A;
+  --night-r: clamp(16px, 2.2vw, 26px);
 
   background: var(--paper);
   color: var(--ink);
@@ -997,11 +1002,22 @@
 /* The one dark, saturated moment on the page. Everything else is white, so
    this reads as the night itself rather than as another section. */
 
+/* The middle card. The blue gradient is the lock screen's own light, so it
+   stays — but inside the card now, not spilling to the edges of the browser,
+   which is what made it collide with the photograph above it. */
 .cb-lock {
-  position: relative; overflow: hidden;
+  position: relative;
+  background: var(--night);
+  color: #fff;
+  padding: clamp(10px, 1.6vw, 16px) clamp(14px, 3vw, 28px);
+}
+.cb-lock__in {
+  border-radius: var(--night-r);
+  overflow: hidden;
   background:
     radial-gradient(70% 55% at 50% 42%, #1E63C8 0%, #124395 42%, #08245C 74%, #05173F 100%);
-  color: #fff; padding: clamp(40px, 6vw, 72px) 0 clamp(36px, 5vw, 60px);
+  padding-top: clamp(32px, 4.5vw, 56px);
+  padding-bottom: clamp(30px, 4vw, 48px);
 }
 .cb-lock__in {
   position: relative; width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 20px;
@@ -1085,8 +1101,12 @@
 
 /* When the section is a finished picture, it is the whole section: edge to
    edge, no padding, nothing layered over it. */
-.cb-lock--art { padding: 0; background: #05173F; }
-.cb-lock--art img { width: 100%; height: auto; display: block; }
+.cb-lock--art { padding: clamp(10px, 1.6vw, 16px) clamp(14px, 3vw, 28px); }
+.cb-lock--art img {
+  width: 100%; max-width: var(--wrap); margin: 0 auto;
+  height: auto; display: block;
+  border-radius: var(--night-r);
+}
 
 /* The artwork is a 16:9 three-column composition. Wide, it is the section;
    narrow, it would be 200px tall with unreadable messages in it, so the built
@@ -1157,8 +1177,19 @@
 /* ---------------------------------------------------------------- a night */
 /* One photograph, edge to edge, nothing written on it. */
 
-.cb-night { display: block; width: 100%; line-height: 0; background: var(--ink); }
-.cb-night img { width: 100%; height: clamp(360px, 46vw, 620px); object-fit: cover; display: block; }
+/* The first card of the night chapter: the ground opens here, so the padding
+   is bigger at the top than the bottom — the sections below continue it. */
+.cb-night {
+  display: block; width: 100%; line-height: 0;
+  background: var(--night);
+  padding: clamp(28px, 4vw, 52px) clamp(14px, 3vw, 28px) clamp(10px, 1.6vw, 16px);
+}
+.cb-night img {
+  width: 100%; max-width: var(--wrap); margin: 0 auto;
+  height: clamp(300px, 40vw, 520px);
+  object-fit: cover; display: block;
+  border-radius: var(--night-r);
+}
 
 /* A photograph sent into the thread. Rounded like a bubble, capped in height
    so one tall phone shot cannot own the whole screen. */
@@ -1232,13 +1263,21 @@
 /* ------------------------------------------------------- photo banner */
 /* One photograph the width of the page with real type over it. The words are
    never burnt into the picture: they stay sharp, and they stay editable. */
-.cb-bn { padding: 0; }
+/* The last card of the night chapter, and the one that closes it — so the
+   padding is bigger at the bottom, where the page goes back to white. */
+.cb-bn {
+  background: var(--night);
+  padding: clamp(10px, 1.6vw, 16px) clamp(14px, 3vw, 28px) clamp(28px, 4vw, 52px);
+}
 .cb-bn__frame {
   position: relative;
   width: 100%;
+  max-width: var(--wrap);
+  margin: 0 auto;
   aspect-ratio: 16 / 9;
   overflow: hidden;
   isolation: isolate;
+  border-radius: var(--night-r);
 }
 .cb-bn__img {
   position: absolute; inset: 0;
