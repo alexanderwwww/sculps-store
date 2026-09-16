@@ -6,8 +6,8 @@
  * the events table (who arrived, added, reached checkout, paid), the visits
  * table (seconds with the tab visible and how far they scrolled, from the
  * page's 20-second heartbeat) and the carts/orders tables (which products
- * were actually put in a bag). The map's land is real coastline rasterised
- * into hexagons at build time; a visitor lights the tile they were in.
+ * were actually put in a bag). The globe is Live View's globe — the same
+ * renderer, the same land — replaying the window instead of streaming now.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -19,7 +19,8 @@ import { resolveAdminStore } from "~/lib/admin.server";
 import { events, visits, carts, orders, variants, customers } from "~/db/schema";
 import { formatMoney } from "~/lib/money";
 import { Empty, card } from "~/admin/ui";
-import world from "~/admin/world-hex.json";
+import { mountLiveGlobe, type LiveGlobeHandle, type GlobeTip } from "~/admin/live-globe";
+import { pointForAddress } from "~/lib/places";
 
 export function meta() {
   return [{ title: "Tracking behaviour — Shop Admin" }];
@@ -190,7 +191,19 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const paid = (paidRows.rows[0] as any) ?? { n: 0, revenue: 0 };
 
   return {
-    store: { slug: store.slug, name: store.name, timezone: store.timezone, currency: store.currency },
+    store: {
+      slug: store.slug,
+      name: store.name,
+      timezone: store.timezone,
+      currency: store.currency,
+      // Same rule as Live View: the point he set, else the centre of his
+      // business address, else nothing — and then no arc rather than a
+      // made-up one.
+      home:
+        store.lat != null && store.lon != null
+          ? { lat: store.lat, lon: store.lon }
+          : pointForAddress(store.region, store.country),
+    },
     range: { key: preset, label, from: since.toISOString(), to: until.toISOString(), fromParam, toParam },
     sessions,
     catalogue,
@@ -295,7 +308,7 @@ export default function Behaviour({ loaderData }: Route.ComponentProps) {
         ))}
       </div>
 
-      <WorldMap sessions={sessions} timezone={store.timezone} />
+      <BehaviourGlobe sessions={sessions} timezone={store.timezone} home={store.home} />
 
       <div style={{ ...card, padding: 16 }}>
         <div style={{ fontSize: 12, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ink-3)", fontWeight: 600, marginBottom: 12 }}>The path</div>
@@ -452,305 +465,128 @@ function Buckets({ sessions }: { sessions: SessionRow[] }) {
   );
 }
 
-/* ------------------------------------------------------------------- map */
+/* ----------------------------------------------------------------- globe */
 
 const BLUE = "#3B7BFF";
 const YELLOW = "#F5C518";
 const GOLD = "#C9A227";
 
 /**
- * Where the visitors are, framed on the market the store actually sells to.
+ * Live View's globe, replaying a window instead of streaming the present.
  *
- * The same hexagons either way — this is a zoom, not invented detail. Anyone
- * outside the frame is still counted and said out loud underneath, so a
- * narrower view never quietly hides a visitor.
+ * Deliberately the same renderer and the same land — one globe in this admin,
+ * not two that disagree. The only difference is the clock driving it: Live
+ * View pushes events as they happen, this pushes them at the moment they
+ * happened, compressed into 24 seconds, and starts over.
  */
-const VIEWS = {
-  us: { label: "United States", inSentence: "the United States", lon: [-133, -60] as const, lat: [23, 51] as const },
-  americas: { label: "Americas", inSentence: "the Americas", lon: [-172, -28] as const, lat: [-56, 74] as const },
-  world: { label: "World", inSentence: "this view", lon: [-180, 180] as const, lat: [-58, 84] as const },
-};
-type ViewKey = keyof typeof VIEWS;
+function BehaviourGlobe({
+  sessions,
+  timezone,
+  home,
+}: {
+  sessions: SessionRow[];
+  timezone: string;
+  home: { lat: number; lon: number } | null;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const globeRef = useRef<LiveGlobeHandle | null>(null);
+  const [tip, setTip] = useState<GlobeTip | null>(null);
+  const [clock, setClock] = useState("");
 
-function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: string }) {
-  const ref = useRef<HTMLCanvasElement | null>(null);
-  const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
-  /**
-   * Opens on the market the store sells to. But a map with nothing on it
-   * teaches nobody anything, so when the United States has no visitors and
-   * somewhere else does, it opens wide instead. Only the first render decides
-   * this — once someone has chosen a view, it is theirs.
-   */
-  const [view, setView] = useState<ViewKey>(() => {
-    const us = VIEWS.us;
-    let here = 0;
-    let anywhere = 0;
+  // Every arrival, cart and sale in the window, on one timeline. Built once
+  // per data change — the replay only reads it.
+  const script = useMemo(() => {
+    const beats: { at: number; type: "visitor" | "cart" | "order"; id: string; lat: number; lon: number; city?: string }[] = [];
     for (const s of sessions) {
       if (s.lat == null || s.lon == null) continue;
-      anywhere += 1;
-      if (s.lon >= us.lon[0] && s.lon <= us.lon[1] && s.lat >= us.lat[0] && s.lat <= us.lat[1]) here += 1;
+      const where = { lat: s.lat, lon: s.lon, city: s.city ?? undefined };
+      beats.push({ at: Date.parse(s.first), type: "visitor", id: s.sid, ...where });
+      if (s.carted) beats.push({ at: Date.parse(s.last), type: "cart", id: s.sid, ...where });
+      if (s.paid) beats.push({ at: Date.parse(s.last), type: "order", id: s.sid, ...where });
     }
-    return here === 0 && anywhere > 0 ? "world" : "us";
-  });
-
-  // Visitors onto tiles, once per data change. World space is fixed; the view
-  // only changes how much of it the canvas shows.
-  const lit = useMemo(() => {
-    const { cols, rows, lon0, lon1, lat0, lat1 } = world as { cols: number; rows: number; lon0: number; lon1: number; lat0: number; lat1: number; cells: number[][] };
-    const W = 1000;
-    const H = (W * (lat1 - lat0)) / (lon1 - lon0);
-    const R = W / (cols * Math.sqrt(3));
-    const dx = R * Math.sqrt(3);
-    const dy = R * 1.5;
-    const map = new Map<string, { r: number; c: number; n: number; cart: number; paid: number; city: string | null; lon: number; lat: number; arrivals: number[]; cartAt: number[]; paidAt: number[] }>();
-    const ordered = sessions.slice().sort((a, b) => a.first.localeCompare(b.first));
-    ordered.forEach((s) => {
-      if (s.lat == null || s.lon == null) return;
-      const x = ((s.lon - lon0) / (lon1 - lon0)) * W;
-      const y = ((lat1 - s.lat) / (lat1 - lat0)) * H;
-      const r = Math.round(y / dy);
-      const c = Math.round((x - (r % 2 ? dx / 2 : 0)) / dx);
-      const key = `${r}:${c}`;
-      const cur = map.get(key) ?? { r, c, n: 0, cart: 0, paid: 0, city: s.city, lon: s.lon, lat: s.lat, arrivals: [], cartAt: [], paidAt: [] };
-      const at = Date.parse(s.first);
-      cur.n += 1;
-      cur.arrivals.push(at);
-      if (s.carted) { cur.cart += 1; cur.cartAt.push(Date.parse(s.last)); }
-      if (s.paid) { cur.paid += 1; cur.paidAt.push(Date.parse(s.last)); }
-      map.set(key, cur);
-    });
-    const times = ordered.map((s) => Date.parse(s.first));
-    const start = times.length ? Math.min(...times) : Date.now();
-    const end = times.length ? Math.max(...ordered.map((s) => Date.parse(s.last))) : Date.now();
-    return { map, W, H, R, dx, dy, rows, lon0, lon1, lat0, lat1, total: ordered.length, start, end };
+    beats.sort((a, b) => a.at - b.at);
+    const start = beats.length ? beats[0].at : Date.now();
+    const end = beats.length ? Math.max(start + 1, beats[beats.length - 1].at) : start + 1;
+    return { beats, start, end };
   }, [sessions]);
 
-  // How much of the world this view shows, in world-space pixels.
-  const frame = useMemo(() => {
-    const v = VIEWS[view];
-    const { W, H, lon0, lon1, lat0, lat1 } = lit;
-    const x0 = ((v.lon[0] - lon0) / (lon1 - lon0)) * W;
-    const x1 = ((v.lon[1] - lon0) / (lon1 - lon0)) * W;
-    const y0 = ((lat1 - v.lat[1]) / (lat1 - lat0)) * H;
-    const y1 = ((lat1 - v.lat[0]) / (lat1 - lat0)) * H;
-    const scale = 1000 / (x1 - x0);
-    return { x0, y0, scale, cw: 1000, ch: (y1 - y0) * scale };
-  }, [lit, view]);
-
-  // Visitors the current frame cannot show. Said out loud rather than dropped.
-  const outside = useMemo(() => {
-    const v = VIEWS[view];
-    let n = 0;
-    for (const cell of lit.map.values()) {
-      if (cell.lon < v.lon[0] || cell.lon > v.lon[1] || cell.lat < v.lat[0] || cell.lat > v.lat[1]) n += cell.n;
-    }
-    return n;
-  }, [lit, view]);
-
   useEffect(() => {
-    const canvas = ref.current;
+    const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const { map, R, dx, dy, start, end } = lit;
-    const { x0, y0, scale, cw, ch } = frame;
-    const dpr = Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1);
-    canvas.width = cw * dpr;
-    canvas.height = ch * dpr;
-    const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    const land = (world as { cells: number[][] }).cells;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Hexes are drawn a touch under their true size so the gaps between them
-    // read as a grid rather than a solid mass — and the gap has to hold at
-    // every zoom, so it scales with the tiles.
-    const gap = 0.35 / scale;
-    let t = 0;
+    let alive = true;
     let raf = 0;
-    const hex = (x: number, y: number, r: number, fill: string) => {
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const a = (Math.PI / 180) * (60 * i - 30);
-        ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
-      }
-      ctx.closePath();
-      ctx.fillStyle = fill;
-      ctx.fill();
-    };
-    // The replay runs on the real clock of the window: 24 seconds of screen
-    // time for the whole span, arrivals appearing at their true moment, a
-    // ring spreading out from each new one, then the tile settles and
-    // breathes. The clock in the corner shows the replayed time.
-    const LOOP = 24 * 60;
-    const t0 = start;
-    const t1 = Math.max(start + 1, end);
-    const clock = new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", timeZone: timezone });
-    const draw = () => {
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, cw, ch);
-      ctx.setTransform(scale * dpr, 0, 0, scale * dpr, -x0 * scale * dpr, -y0 * scale * dpr);
 
-      const grey = css("--border") || "#e5e5e5";
-      for (const [r, c] of land) {
-        const x = c * dx + (r % 2 ? dx / 2 : 0);
-        const y = r * dy;
-        // Only what the frame can see, so a zoomed view costs no more to draw.
-        if (x < x0 - dx || x > x0 + cw / scale + dx || y < y0 - dy || y > y0 + ch / scale + dy) continue;
-        hex(x, y, R - gap, grey);
-      }
-
-      const frac = reduce ? 1 : (t % LOOP) / LOOP;
-      const nowMs = t0 + frac * (t1 - t0);
-      for (const cell of map.values()) {
-        const x = cell.c * dx + (cell.r % 2 ? dx / 2 : 0);
-        const y = cell.r * dy;
-        const seen = cell.arrivals.filter((ms) => ms <= nowMs);
-        if (!seen.length) continue;
-        const n = seen.length;
-        const carted = cell.cartAt.some((ms) => ms <= nowMs);
-        const paid = cell.paidAt.some((ms) => ms <= nowMs);
-        const colour = paid ? GOLD : carted ? YELLOW : BLUE;
-        const latest = seen[seen.length - 1];
-        const age = ((nowMs - latest) / (t1 - t0)) * LOOP;
-        if (!reduce && age < 72) {
-          ctx.globalAlpha = 0.45 * (1 - age / 72);
-          ctx.lineWidth = 1.4 / scale;
-          ctx.strokeStyle = colour;
-          ctx.beginPath();
-          // The ring spreads by screen pixels, not world pixels. Left in world
-          // units it grew with the zoom, so on the United States view one
-          // arrival threw a hexagon the size of three states.
-          const rr = R + (age * 0.35) / scale;
-          for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); ctx.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); }
-          ctx.closePath();
-          ctx.stroke();
-          ctx.globalAlpha = 1;
+    mountLiveGlobe(canvas, { onTip: setTip, home })
+      .then((globe) => {
+        if (!alive) {
+          globe.destroy();
+          return;
         }
-        const breathe = reduce ? 0 : 0.5 + 0.5 * Math.sin(t / 30 + cell.r * 0.4);
-        const size = Math.min(R * 2.2, R * 0.9 + (Math.log2(n + 1) * 1.3 + breathe * 0.8) / scale);
-        // A live tile glows. It is what separates "someone is there right now"
-        // from "this pixel is a different colour".
-        ctx.shadowColor = colour;
-        ctx.shadowBlur = (10 + breathe * 6) / scale;
-        hex(x, y, size, colour);
-        ctx.shadowBlur = 0;
-      }
+        globeRef.current = globe;
 
-      // Names, drawn back in screen space so the type stays the same size at
-      // every zoom. A coloured hexagon nobody can place on a map teaches
-      // nothing; "Austin" does. The busiest few only, and never one on top of
-      // another — a pile of overlapping labels is worse than none.
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const named: { x: number; y: number }[] = [];
-      const labelled = [...map.values()]
-        .filter((cell) => cell.city && cell.arrivals.some((ms) => ms <= nowMs))
-        .sort((a, b) => b.n - a.n)
-        .slice(0, 8);
-      ctx.font = "600 11px system-ui, sans-serif";
-      ctx.textAlign = "left";
-      for (const cell of labelled) {
-        const wx = cell.c * dx + (cell.r % 2 ? dx / 2 : 0);
-        const wy = cell.r * dy;
-        const x = (wx - x0) * scale;
-        const y = (wy - y0) * scale;
-        if (x < 0 || x > cw || y < 0 || y > ch) continue;
-        if (named.some((p) => Math.abs(p.x - x) < 90 && Math.abs(p.y - y) < 16)) continue;
-        named.push({ x, y });
-        const text = cell.city as string;
-        const tx = x + R * scale + 7;
-        const w = ctx.measureText(text).width;
-        // A plate under the words, so a name over pale land is still readable.
-        ctx.fillStyle = "rgba(255,255,255,.82)";
-        ctx.beginPath();
-        const rx = tx - 5;
-        const ry = y - 9;
-        const rw = w + 10;
-        const rh = 18;
-        const rr2 = 5;
-        ctx.moveTo(rx + rr2, ry);
-        ctx.arcTo(rx + rw, ry, rx + rw, ry + rh, rr2);
-        ctx.arcTo(rx + rw, ry + rh, rx, ry + rh, rr2);
-        ctx.arcTo(rx, ry + rh, rx, ry, rr2);
-        ctx.arcTo(rx, ry, rx + rw, ry, rr2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = css("--ink") || "#1c1c1e";
-        ctx.fillText(text, tx, y + 4);
-      }
+        const { beats, start, end } = script;
+        const LOOP = 24_000;
+        const fmt = new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", timeZone: timezone });
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      ctx.font = "600 12px system-ui, sans-serif";
-      ctx.fillStyle = css("--ink-2") || "#666";
-      ctx.textAlign = "right";
-      ctx.fillText(reduce ? "" : clock.format(new Date(nowMs)), cw - 12, 18);
-      ctx.textAlign = "left";
-      t += 1;
-      if (!reduce) raf = requestAnimationFrame(draw);
+        // No motion asked for: put the whole window on the globe at once and
+        // leave it there. A replay nobody wants is just a flicker.
+        if (reduce || !beats.length) {
+          for (const b of beats) globe.push({ type: b.type, id: b.id + b.type, lat: b.lat, lon: b.lon, city: b.city });
+          setClock("");
+          return;
+        }
+
+        let next = 0;
+        let t0 = performance.now();
+        const tick = (now: number) => {
+          const frac = ((now - t0) % LOOP) / LOOP;
+          // Wrapped: clear the globe and play it again from the top.
+          if (now - t0 >= LOOP) {
+            t0 = now;
+            next = 0;
+            globe.clear();
+          }
+          const cursor = start + frac * (end - start);
+          while (next < beats.length && beats[next].at <= cursor) {
+            const b = beats[next++];
+            globe.push({ type: b.type, id: b.id + b.type, lat: b.lat, lon: b.lon, city: b.city });
+          }
+          setClock(fmt.format(new Date(cursor)));
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      globeRef.current?.destroy();
+      globeRef.current = null;
     };
-    draw();
-    return () => cancelAnimationFrame(raf);
-  }, [lit, frame, timezone]);
-
-  const onMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    // Screen to world: undo the frame's zoom, not just the canvas's own scale.
-    const px = ((e.clientX - rect.left) / rect.width) * frame.cw;
-    const py = ((e.clientY - rect.top) / rect.width) * frame.cw;
-    const x = px / frame.scale + frame.x0;
-    const y = py / frame.scale + frame.y0;
-    let best: { d: number; text: string } | null = null;
-    for (const cell of lit.map.values()) {
-      const cx = cell.c * lit.dx + (cell.r % 2 ? lit.dx / 2 : 0);
-      const cy = cell.r * lit.dy;
-      const d = Math.hypot(cx - x, cy - y);
-      if (d < (lit.R * 3) / frame.scale && (!best || d < best.d)) best = { d, text: `${cell.city ?? "Unknown"} · ${cell.n} visitor${cell.n === 1 ? "" : "s"}${cell.cart ? ` · ${cell.cart} cart` : ""}${cell.paid ? ` · ${cell.paid} paid` : ""}` };
-    }
-    setTip(best ? { x: e.clientX - rect.left, y: e.clientY - rect.top, text: best.text } : null);
-  };
+  }, [script, timezone, home]);
 
   return (
-    <div style={{ ...card, position: "relative", background: "var(--surface)" }}>
-      <div style={{ position: "absolute", left: 14, top: 12, zIndex: 2, display: "flex", gap: 2, padding: 2, borderRadius: 9, background: "var(--bg)", border: "1px solid var(--border)" }}>
-        {(Object.keys(VIEWS) as ViewKey[]).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setView(key)}
-            style={{
-              border: 0,
-              cursor: "pointer",
-              borderRadius: 7,
-              padding: "4px 10px",
-              fontSize: 12,
-              fontWeight: view === key ? 650 : 500,
-              fontFamily: "inherit",
-              background: view === key ? "var(--surface)" : "transparent",
-              color: view === key ? "var(--ink)" : "var(--ink-2)",
-              boxShadow: view === key ? "0 1px 2px rgba(16,20,28,.12)" : "none",
-            }}
-          >
-            {VIEWS[key].label}
-          </button>
-        ))}
-      </div>
-      <canvas ref={ref} onMouseMove={onMove} onMouseLeave={() => setTip(null)} style={{ width: "100%", height: "auto", display: "block" }} aria-label="Visitors on a map" />
+    <div style={{ ...card, position: "relative", background: "var(--surface)", height: 460, overflow: "hidden" }}>
+      <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block", cursor: "grab", touchAction: "none" }} />
+
       {tip ? (
-        <div style={{ position: "absolute", left: tip.x + 12, top: tip.y - 30, background: "var(--ink)", color: "var(--surface)", fontSize: 12, padding: "4px 8px", borderRadius: 6, pointerEvents: "none", whiteSpace: "nowrap" }}>{tip.text}</div>
+        <div style={{ position: "absolute", left: `${tip.x}px`, top: `${Math.max(6, tip.y - 44)}px`, transform: "translateX(-50%)", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 9, boxShadow: "var(--shadow-lg)", padding: "6px 10px", pointerEvents: "none", whiteSpace: "nowrap", zIndex: 3 }}>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>{tip.label}</div>
+          {tip.amount ? <div style={{ fontSize: 12, fontWeight: 700, color: "#FF2FB9", fontVariantNumeric: "tabular-nums" }}>{tip.amount}</div> : null}
+        </div>
       ) : null}
-      <div style={{ position: "absolute", left: 14, bottom: 12, display: "flex", gap: 14, fontSize: 12, color: "var(--ink-2)", alignItems: "center", flexWrap: "wrap" }}>
+
+      {/* The replayed clock, so it is obvious this is the window and not now. */}
+      {clock ? (
+        <div className="tb-num" style={{ position: "absolute", right: 14, top: 12, fontSize: 12, fontWeight: 600, color: "var(--ink-2)", pointerEvents: "none" }}>{clock}</div>
+      ) : null}
+
+      <div style={{ position: "absolute", left: 14, bottom: 12, display: "flex", gap: 14, fontSize: 12, color: "var(--ink-2)", alignItems: "center", flexWrap: "wrap", pointerEvents: "none" }}>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: BLUE, marginRight: 6, verticalAlign: -1 }} />visitor</span>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: YELLOW, marginRight: 6, verticalAlign: -1 }} />added to cart</span>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: GOLD, marginRight: 6, verticalAlign: -1 }} />paid</span>
-        {/* Not a footnote — the way to go and look at them. */}
-        {outside ? (
-          <button
-            type="button"
-            onClick={() => setView("world")}
-            style={{ border: 0, background: "none", padding: 0, cursor: "pointer", font: "inherit", color: "var(--ink-2)", textDecoration: "underline", textUnderlineOffset: 3 }}
-          >
-            · {outside} outside {VIEWS[view].inSentence} — show them
-          </button>
-        ) : null}
       </div>
     </div>
   );
