@@ -466,8 +466,8 @@ const GOLD = "#C9A227";
  * narrower view never quietly hides a visitor.
  */
 const VIEWS = {
-  us: { label: "United States", inSentence: "the United States", lon: [-128, -64] as const, lat: [22, 52] as const },
-  americas: { label: "Americas", inSentence: "the Americas", lon: [-170, -30] as const, lat: [-56, 72] as const },
+  us: { label: "United States", inSentence: "the United States", lon: [-133, -60] as const, lat: [23, 51] as const },
+  americas: { label: "Americas", inSentence: "the Americas", lon: [-172, -28] as const, lat: [-56, 74] as const },
   world: { label: "World", inSentence: "this view", lon: [-180, 180] as const, lat: [-58, 84] as const },
 };
 type ViewKey = keyof typeof VIEWS;
@@ -616,14 +616,17 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
           ctx.lineWidth = 1.4 / scale;
           ctx.strokeStyle = colour;
           ctx.beginPath();
-          const rr = R + age * 0.35;
+          // The ring spreads by screen pixels, not world pixels. Left in world
+          // units it grew with the zoom, so on the United States view one
+          // arrival threw a hexagon the size of three states.
+          const rr = R + (age * 0.35) / scale;
           for (let i = 0; i < 6; i++) { const a = (Math.PI / 180) * (60 * i - 30); ctx.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); }
           ctx.closePath();
           ctx.stroke();
           ctx.globalAlpha = 1;
         }
         const breathe = reduce ? 0 : 0.5 + 0.5 * Math.sin(t / 30 + cell.r * 0.4);
-        const size = Math.min(R * 2.2, R * 0.9 + Math.log2(n + 1) * 1.3 + breathe * 0.8);
+        const size = Math.min(R * 2.2, R * 0.9 + (Math.log2(n + 1) * 1.3 + breathe * 0.8) / scale);
         // A live tile glows. It is what separates "someone is there right now"
         // from "this pixel is a different colour".
         ctx.shadowColor = colour;
@@ -632,7 +635,48 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
         ctx.shadowBlur = 0;
       }
 
+      // Names, drawn back in screen space so the type stays the same size at
+      // every zoom. A coloured hexagon nobody can place on a map teaches
+      // nothing; "Austin" does. The busiest few only, and never one on top of
+      // another — a pile of overlapping labels is worse than none.
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const named: { x: number; y: number }[] = [];
+      const labelled = [...map.values()]
+        .filter((cell) => cell.city && cell.arrivals.some((ms) => ms <= nowMs))
+        .sort((a, b) => b.n - a.n)
+        .slice(0, 8);
+      ctx.font = "600 11px system-ui, sans-serif";
+      ctx.textAlign = "left";
+      for (const cell of labelled) {
+        const wx = cell.c * dx + (cell.r % 2 ? dx / 2 : 0);
+        const wy = cell.r * dy;
+        const x = (wx - x0) * scale;
+        const y = (wy - y0) * scale;
+        if (x < 0 || x > cw || y < 0 || y > ch) continue;
+        if (named.some((p) => Math.abs(p.x - x) < 90 && Math.abs(p.y - y) < 16)) continue;
+        named.push({ x, y });
+        const text = cell.city as string;
+        const tx = x + R * scale + 7;
+        const w = ctx.measureText(text).width;
+        // A plate under the words, so a name over pale land is still readable.
+        ctx.fillStyle = "rgba(255,255,255,.82)";
+        ctx.beginPath();
+        const rx = tx - 5;
+        const ry = y - 9;
+        const rw = w + 10;
+        const rh = 18;
+        const rr2 = 5;
+        ctx.moveTo(rx + rr2, ry);
+        ctx.arcTo(rx + rw, ry, rx + rw, ry + rh, rr2);
+        ctx.arcTo(rx + rw, ry + rh, rx, ry + rh, rr2);
+        ctx.arcTo(rx, ry + rh, rx, ry, rr2);
+        ctx.arcTo(rx, ry, rx + rw, ry, rr2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = css("--ink") || "#1c1c1e";
+        ctx.fillText(text, tx, y + 4);
+      }
+
       ctx.font = "600 12px system-ui, sans-serif";
       ctx.fillStyle = css("--ink-2") || "#666";
       ctx.textAlign = "right";
@@ -697,7 +741,16 @@ function WorldMap({ sessions, timezone }: { sessions: SessionRow[]; timezone: st
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: BLUE, marginRight: 6, verticalAlign: -1 }} />visitor</span>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: YELLOW, marginRight: 6, verticalAlign: -1 }} />added to cart</span>
         <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: GOLD, marginRight: 6, verticalAlign: -1 }} />paid</span>
-        {outside ? <span style={{ opacity: 0.8 }}>· {outside} outside {VIEWS[view].inSentence}</span> : null}
+        {/* Not a footnote — the way to go and look at them. */}
+        {outside ? (
+          <button
+            type="button"
+            onClick={() => setView("world")}
+            style={{ border: 0, background: "none", padding: 0, cursor: "pointer", font: "inherit", color: "var(--ink-2)", textDecoration: "underline", textUnderlineOffset: 3 }}
+          >
+            · {outside} outside {VIEWS[view].inSentence} — show them
+          </button>
+        ) : null}
       </div>
     </div>
   );
