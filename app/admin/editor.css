@@ -826,3 +826,6 @@
   .ed-pick__tile { transition: none; }
   .ed-pick__tile:hover { transform: none; }
 }
+/* The panel is focused on open so Escape reaches it; the ring the browser
+   draws for that is not wanted on a popover that already has a shadow. */
+.ed-pick:focus { outline: none; }

@@ -30,7 +30,7 @@
  * are editing, before you save it.
  */
 import { Form, Link, useFetcher, useNavigation, useRevalidator, useSearchParams } from "react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "./+types/admin.online-store.editor.$pageId";
 import { requireUser } from "~/lib/auth.server";
 import {
@@ -252,6 +252,40 @@ export async function action({ context, request }: Route.ActionArgs) {
   }
 
   return { error: "Unknown action." };
+}
+
+/**
+ * If anything inside the picker throws while rendering, this shows a line
+ * saying so and a way out, instead of React unmounting the whole editor —
+ * which reads, from the outside, as "the admin crashed".
+ */
+class PickerBoundary extends Component<
+  { onClose: () => void; children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.error("picture picker", error);
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="ed-pick" style={{ left: 24, top: 80 }}>
+        <div className="ed-pick__head">
+          <b>The picker hit an error</b>
+          <button type="button" onClick={this.props.onClose} aria-label="Close">
+            ✕
+          </button>
+        </div>
+        <p className="ed-help" style={{ margin: 0 }}>
+          The page is fine. Close this and open the picture from the panel on the right.
+        </p>
+      </div>
+    );
+  }
 }
 
 /* ------------------------------------------------------------------ chrome */
@@ -596,6 +630,10 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
     doc.addEventListener(
       "click",
       (event) => {
+        // Nothing thrown in here may reach the frame: an error in a click
+        // handler on the preview document surfaces as the storefront
+        // breaking, and the editor around it going blank with it.
+        try {
         const hit = hitFor(event.target);
         if (!hit) return;
         // Links and video controls inside the preview would otherwise
@@ -620,6 +658,9 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
           return;
         }
         openHitRef.current(hit);
+        } catch (error) {
+          console.error("preview click", error);
+        }
       },
       true,
     );
@@ -824,13 +865,27 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
   }, [uploader.data]);
 
   // Escape closes the picker, the way it closes the drawer on the storefront.
+  //
+  // Listening on this document alone was not enough: the click that opens the
+  // picker lands in the preview, so keyboard focus is inside the frame, and
+  // the Escape goes to the frame's document — where nobody was listening.
+  // Meanwhile the veil covers the whole editor. From the outside that reads
+  // as the admin freezing. So the panel takes focus when it opens, and the
+  // frame's document is listened to as well, for good measure.
+  const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!picker) return;
+    panelRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setPicker(null);
     };
+    const frameDoc = frameRef.current?.contentDocument ?? null;
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    frameDoc?.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      frameDoc?.removeEventListener("keydown", onKey);
+    };
   }, [picker]);
 
   // Once the write has landed, re-read the page and the frame, so nothing on
@@ -1074,9 +1129,13 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
             away — the things a popover has to do to feel like part of the app
             rather than a dialog dropped on top of it. */}
         {picker ? (
-          <>
+          <PickerBoundary onClose={() => setPicker(null)}>
             <div className="ed-pick__veil" onClick={() => setPicker(null)} />
             <div
+              ref={panelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-label="Swap this picture"
               className="ed-pick"
               style={{
                 left: Math.min(Math.max(picker.x - 190, 12), window.innerWidth - 392),
@@ -1136,7 +1195,7 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
                 />
               </div>
             </div>
-          </>
+          </PickerBoundary>
         ) : null}
 
         {/* PREVIEW */}

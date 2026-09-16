@@ -148,12 +148,14 @@ export function CeilingBuddyStorefront({
         <Header page={page} storeParam={storeParam} offer={offer} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
-            // `display: contents` so the wrapper marks the section for the
-            // theme editor without adding a box: the theme's own full-bleed
-            // sections and sibling selectors lay out exactly as before. The
-            // editor finds a section by this attribute and cannot make
-            // anything inside it clickable without one.
-            <div key={s.id} data-section={s.type} style={{ display: "contents" }}>
+            // A plain block wrapper carrying the attribute the theme editor
+            // looks for. It was `display: contents` for a while, to add no
+            // box — but the editor puts `position: relative`, an outline and
+            // an absolutely-positioned label on this node, and a node with no
+            // box cannot hold any of those; Safari in particular misbehaves.
+            // Every section here is block-level anyway, so a block wrapper
+            // changes nothing about the layout.
+            <div key={s.id} data-section={s.type}>
               <Section section={s} page={page} storeParam={storeParam} />
             </div>
           ))}
