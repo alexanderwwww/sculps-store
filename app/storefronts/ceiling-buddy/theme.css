@@ -1354,3 +1354,85 @@
     );
   }
 }
+
+/* --------------------------------------------------------- hers / his */
+/* One photograph split two ways, with the messages that arranged the night
+   drifting around it. White ground: the tray is the colour here. */
+.cb-hh { background: var(--paper); }
+.cb-hh__stage {
+  position: relative;
+  margin: clamp(10px, 2vw, 22px) auto 0;
+  max-width: 920px;
+}
+.cb-hh__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: clamp(14px, 1.8vw, 20px);
+}
+
+/* A bubble. Placed as a percentage of the frame so it keeps its relationship
+   to the picture at every width, and sized in ch so a long line wraps rather
+   than stretching across the tray. */
+.cb-hh__msg {
+  position: absolute;
+  max-width: 21ch;
+  padding: 9px 13px;
+  border-radius: 17px;
+  background: #EAEAEC;
+  color: var(--ink);
+  font-size: clamp(12px, 1.15vw, 14px);
+  line-height: 1.32;
+  box-shadow: 0 10px 26px rgba(16, 20, 28, 0.13);
+  animation: cb-drift 7s ease-in-out infinite;
+}
+.cb-hh__msg p { margin: 0; }
+.cb-hh__msg span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--dim);
+}
+/* Ours: blue, and the tail on the other side, the way the thread reads. */
+.cb-hh__msg.is-mine {
+  background: #0A84FF;
+  color: #fff;
+}
+.cb-hh__msg.is-mine span { color: rgba(255, 255, 255, 0.72); }
+
+@keyframes cb-drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-hh__msg { animation: none; }
+}
+
+/* The two labels under the picture, one per half. */
+.cb-hh__legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 2vw, 22px);
+  max-width: 920px;
+  margin: clamp(14px, 2vw, 22px) auto 0;
+  text-align: center;
+}
+.cb-hh__legend b {
+  display: block;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(16px, 2vw, 22px);
+  letter-spacing: -0.01em;
+}
+.cb-hh__legend span {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(13px, 1.3vw, 15px);
+  color: var(--dim);
+}
+
+/* Below this the bubbles would sit on the tray rather than around it, so they
+   step out of the way and the photograph does the talking. */
+@media (max-width: 860px) {
+  .cb-hh__msg { display: none; }
+}

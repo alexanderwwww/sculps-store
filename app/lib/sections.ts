@@ -313,6 +313,40 @@ export const SECTIONS: SectionDef[] = [
   },
   {
     /**
+     * Two sides of the same product, with the photograph between them and the
+     * messages that led to the night floating around it. Built as a section
+     * type rather than a one-off because "his and hers", "work and play" and
+     * "indoors and out" are the same shape every time.
+     */
+    type: "split_picks",
+    label: "This side / that side",
+    hint: "One photo split two ways, with messages floating around it",
+    fields: [
+      { name: "image", label: "Photo", kind: "image" },
+      heading,
+      subheading,
+      { name: "leftTitle", label: "Left label", kind: "text" },
+      { name: "leftNote", label: "Left line", kind: "text" },
+      { name: "rightTitle", label: "Right label", kind: "text" },
+      { name: "rightNote", label: "Right line", kind: "text" },
+    ],
+    blocks: {
+      label: "Message",
+      addLabel: "Add message",
+      fields: [
+        { name: "text", label: "Message", kind: "text" },
+        {
+          name: "side",
+          label: "Who sent it",
+          kind: "text",
+          help: "them or us — 'us' is the blue bubble on the right, 'them' the grey one on the left",
+        },
+        { name: "at", label: "Time", kind: "text" },
+      ],
+    },
+  },
+  {
+    /**
      * One photograph the size of the screen, with the words laid over it in
      * real type rather than burnt into the picture. The words stay editable
      * here and stay sharp on a phone, and a price that changes later does not

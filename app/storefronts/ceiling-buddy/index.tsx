@@ -189,6 +189,7 @@ function Section({
     case "specifications": return <Specs section={section} />;
     case "reviews":       return <><Reviews section={section} page={page} /><PayLater page={page} /></>;
     case "photo_banner":  return <PhotoBanner section={section} page={page} storeParam={storeParam} />;
+    case "split_picks":   return <HersHis section={section} />;
     case "closing_cta":   return <Closing section={section} page={page} storeParam={storeParam} />;
     default:              return null;
   }
@@ -1367,6 +1368,76 @@ function Closing({ section, page, storeParam = "" }: { section: LoadedSection; p
             <button type="submit" className="cb-btn">{val(v, "ctaLabel") || "Add to cart"}</button>
           </form>
         ) : null}
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------ hers / his */
+
+/**
+ * The same tray, two completely different nights — and the messages that
+ * arranged one of them drifting around the picture.
+ *
+ * The bubbles are placed as percentages of the frame rather than pinned to
+ * corners, so they keep their relationship to the photograph at every width,
+ * and they are hidden below the photo's own breakpoint instead of piling up
+ * on top of it. The drift is a few pixels over several seconds: enough to
+ * read as alive, not enough to fight the thing being sold.
+ */
+const BUBBLE_SPOTS = [
+  { top: "6%", left: "1%" },
+  { top: "26%", left: "-2%" },
+  { top: "60%", left: "0%" },
+  { top: "10%", right: "1%" },
+  { top: "38%", right: "-2%" },
+  { top: "68%", right: "0%" },
+];
+
+function HersHis({ section }: { section: LoadedSection }) {
+  const v = section.values;
+  if (!has(v, "image")) return null;
+  const notes = section.blocks.filter((b) => has(b.values, "text")).slice(0, BUBBLE_SPOTS.length);
+
+  return (
+    <section className="cb-section cb-hh" id="hers-his">
+      <div className="cb-wrap">
+        {has(v, "heading") ? (
+          <div className="cb-head">
+            <h2 className="cb-h2">{val(v, "heading")}</h2>
+            {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
+          </div>
+        ) : null}
+
+        <div className="cb-hh__stage">
+          <img className="cb-hh__img" src={val(v, "image")} alt={val(v, "heading")} loading="lazy" />
+
+          {notes.map((b, i) => {
+            const spot = BUBBLE_SPOTS[i];
+            const mine = val(b.values, "side") === "us";
+            return (
+              <div
+                key={b.id}
+                className={`cb-hh__msg${mine ? " is-mine" : ""}`}
+                style={{ ...spot, animationDelay: `${(i % 3) * 1.1}s` }}
+              >
+                <p>{val(b.values, "text")}</p>
+                {has(b.values, "at") ? <span>{val(b.values, "at")}</span> : null}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="cb-hh__legend">
+          <div>
+            <b>{val(v, "leftTitle") || "For her"}</b>
+            {has(v, "leftNote") ? <span>{val(v, "leftNote")}</span> : null}
+          </div>
+          <div>
+            <b>{val(v, "rightTitle") || "For him"}</b>
+            {has(v, "rightNote") ? <span>{val(v, "rightNote")}</span> : null}
+          </div>
+        </div>
       </div>
     </section>
   );
