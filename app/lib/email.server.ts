@@ -18,6 +18,8 @@ export interface EmailLine {
   label: string;
   quantity: number;
   lineTotalCents: number;
+  /** The picture on the variant that was bought, so the line shows that. */
+  imageUrl?: string | null;
 }
 
 /**
@@ -56,6 +58,41 @@ export interface OrderEmailInput extends BrandFields {
   /** the code used, and what it took off — so the receipt adds up */
   discountCode?: string | null;
   discountCents?: number;
+  /**
+   * The customer's own town, written under the tracking line: "on its way to
+   * Oviedo, FL". The animation is one file for everyone; this is the part
+   * that is theirs, and it costs a string rather than a render per order.
+   */
+  shipCity?: string | null;
+  shipRegion?: string | null;
+  /** "GB084107" — the reference the customer quotes, not the row number. */
+  reference?: string | null;
+  /** The standing thank-you code, in dollars. */
+  giftCode?: string | null;
+  giftLabel?: string | null;
+}
+
+/**
+ * The reference a customer sees.
+ *
+ * Deliberately not the order number: sequential numbering tells anyone who
+ * looks that they are the fourth person to ever buy. Two letters for the
+ * store and six random digits reads like a real system and gives nothing
+ * away. Uniqueness does not matter — the row id is the key, this is a label.
+ */
+export function orderReference(storeSlug: string, orderNumber: number): string {
+  const prefix = storeSlug
+    .split("-")
+    .map((part) => part[0] ?? "")
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+    .padEnd(2, "X");
+  // Seeded off the order number so the same order always shows the same
+  // reference, on the receipt, in the admin, and on a second send.
+  let h = orderNumber * 2654435761;
+  h = (h ^ (h >>> 15)) >>> 0;
+  return `${prefix}${String(h % 1_000_000).padStart(6, "0")}`;
 }
 
 export function emailReady(env: Env): boolean {
@@ -266,53 +303,123 @@ export async function sendOrderConfirmation(
     .filter(Boolean)
     .join("\n");
 
-  const accent = input.accentColor || "#E8B33C";
-  const ink = input.brandColor || "#16223A";
-  const html = shell(
-    brandOf(input),
-    `<div style="text-align:center">
-<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">Order confirmed</div>
-<h1 style="margin:10px 0 8px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">It's yours, ${esc(input.customerName)}.</h1>
-<p style="margin:0 0 26px;font-size:15.5px;line-height:1.6;color:#6E7480">Order <strong style="color:${ink}">#${input.orderNumber}</strong> is paid and we are packing it now.</p>
-</div>
+  const base = abs(brandOf(input), "") ?? "";
+  const ref = input.reference ?? String(input.orderNumber);
+  const city = [input.shipCity, input.shipRegion].filter(Boolean).join(", ");
+  const first = (input.customerName || "").split(" ")[0] || "there";
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0;border-radius:14px">
-<tr><td style="padding:18px 20px">
-${input.lines
-  .map(
-    (line) =>
-      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td style="font-size:15.5px;font-weight:700;line-height:1.4;color:${ink}">${esc(line.label)}<span style="color:#8C8678;font-weight:600"> &times;${line.quantity}</span></td>
-<td width="90" style="text-align:right;font-size:15.5px;font-weight:700;white-space:nowrap;color:${ink}">${formatMoney(line.lineTotalCents, input.currency)}</td>
-</tr></table>`,
-  )
-  .join('<div style="height:1px;background:#E6E1D6;margin:12px 0"></div>')}
-<div style="height:1px;background:#E6E1D6;margin:14px 0"></div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Subtotal</td><td style="padding:3px 0;text-align:right;font-size:14px">${formatMoney(input.subtotalCents, input.currency)}</td></tr>
-${input.discountCode && input.discountCents ? `<tr><td style="padding:3px 0;font-size:14px;font-weight:700;color:#2F8A4C">${esc(input.discountCode)}</td><td style="padding:3px 0;text-align:right;font-size:14px;font-weight:700;color:#2F8A4C">&minus;${formatMoney(input.discountCents, input.currency)}</td></tr>` : ""}
-<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Shipping</td><td style="padding:3px 0;text-align:right;font-size:14px;font-weight:700;color:#2F8A4C">${input.shippingCents ? formatMoney(input.shippingCents, input.currency) : "Free"}</td></tr>
-${input.taxCents ? `<tr><td style="padding:3px 0;color:#6E7480;font-size:14px">Tax</td><td style="padding:3px 0;text-align:right;font-size:14px">${formatMoney(input.taxCents, input.currency)}</td></tr>` : ""}
-<tr><td style="padding:12px 0 0;font-weight:800;font-size:18px;color:${ink}">Total</td><td style="padding:12px 0 0;text-align:right;font-weight:800;font-size:18px;color:${ink}">${formatMoney(input.totalCents, input.currency)}</td></tr>
+  /* Three browns, not one. The page and footer sit on the darkest, the
+     tracking strip on the mid, the thread on the near-black — a single brown
+     everywhere reads as one flat slab. */
+  const DARKEST = "#1A1006";
+  const PANEL = "#3B2A1B";
+  const CHAT = "#120B03";
+  const LIME = "#A8F32A";
+  const LIMEINK = "#12290C";
+  const YELLOW = "#FFC72C";
+  const YELLOWINK = "#2B1D08";
+  const SAND = "#F4EEE2";
+
+  const line = (l: EmailLine) => `<tr>
+<td valign="top">
+<div style="font-size:22px;font-weight:800;letter-spacing:-.03em;color:#1C2318">${esc(l.label)}</div>
+<div style="margin-top:6px;font-size:14.5px;color:#5D6657">Qty ${l.quantity}</div>
+</td>
+<td valign="top" align="right" style="font-size:22px;font-weight:800;color:#1C2318;white-space:nowrap">${formatMoney(l.lineTotalCents, input.currency)}</td>
+</tr>`;
+
+  const bubbleThem = (t: string) => `<tr><td style="padding:0 0 9px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td style="background:#2C2C2E;border-radius:19px 19px 19px 5px;padding:11px 16px;font-size:15px;line-height:1.4;color:#fff;max-width:340px">${t}</td>
+</tr></table></td></tr>`;
+  const bubbleUs = (t: string) => `<tr><td align="right" style="padding:0 0 9px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td style="background:${LIME};border-radius:19px 19px 5px 19px;padding:11px 16px;font-size:15px;line-height:1.4;color:${LIMEINK};max-width:340px">${t}</td>
+</tr></table></td></tr>`;
+
+  const hero = abs(brandOf(input), input.heroImageUrl);
+  const logo = abs(brandOf(input), input.logoUrl);
+
+  const html = `<!doctype html><html><body style="margin:0;padding:0;background:${DARKEST};font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">Order ${ref} confirmed &mdash; ${formatMoney(input.totalCents, input.currency)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${DARKEST}"><tr><td align="center">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%">
+
+${logo ? `<tr><td style="background:${DARKEST};padding:22px 0;text-align:center">
+<img src="${logo}" width="168" alt="${esc(input.storeName)}" style="width:168px;height:auto;display:inline-block">
+</td></tr>` : ""}
+
+<tr><td style="background:${LIME};padding:40px 34px 36px;text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:${LIMEINK};opacity:.6">Order received</div>
+<div style="margin:14px 0 8px;font-size:40px;line-height:1.05;font-weight:800;letter-spacing:-.04em;color:${LIMEINK}">We&rsquo;ve got it, ${esc(first)}.</div>
+<div style="font-size:16px;line-height:1.6;color:${LIMEINK};opacity:.72">Our team is packing your order right now.</div>
+<div style="display:inline-block;margin-top:22px;padding:13px 26px;background:${DARKEST};border-radius:999px">
+<span style="font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:${YELLOW}">Order</span>
+<span style="font-size:19px;font-weight:800;letter-spacing:.11em;color:#F6EEE2;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">&nbsp;&nbsp;${esc(ref)}</span>
+</div>
+</td></tr>
+
+<tr><td style="background:${PANEL};padding:0;font-size:0;line-height:0">
+<img src="${base}/media/gb-email-line.gif" width="640" alt="On its way" style="width:100%;max-width:640px;height:auto;display:block">
+</td></tr>
+${city ? `<tr><td style="background:${PANEL};padding:4px 34px 28px;text-align:center">
+<div style="font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:${YELLOW}">On its way to</div>
+<div style="margin-top:7px;font-size:26px;font-weight:800;letter-spacing:-.03em;color:#F6EEE2">${esc(city)}</div>
+</td></tr>` : ""}
+
+${hero ? `<tr><td style="background:${SAND};padding:0;font-size:0;line-height:0">
+<img src="${hero}" width="640" alt="" style="width:100%;max-width:640px;height:auto;display:block">
+</td></tr>` : ""}
+
+<tr><td style="background:#ffffff;padding:30px 34px 6px">
+<div style="font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#5C8C1E;margin-bottom:14px">Your order</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${input.lines.map(line).join('<tr><td colspan="2" style="height:14px"></td></tr>')}</table>
+</td></tr>
+
+<tr><td style="background:#ffffff;padding:14px 34px 32px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E8E3D6">
+<tr><td style="padding:16px 0 3px;font-size:14.5px;color:#5D6657">Subtotal</td><td style="padding:16px 0 3px;text-align:right;font-size:14.5px;color:#1C2318">${formatMoney(input.subtotalCents, input.currency)}</td></tr>
+${input.discountCode && input.discountCents ? `<tr><td style="padding:3px 0;font-size:14.5px;font-weight:700;color:#5C8C1E">${esc(input.discountCode)}</td><td style="padding:3px 0;text-align:right;font-size:14.5px;font-weight:700;color:#5C8C1E">&minus;${formatMoney(input.discountCents, input.currency)}</td></tr>` : ""}
+<tr><td style="padding:3px 0;font-size:14.5px;color:#5D6657">Shipping</td><td style="padding:3px 0;text-align:right;font-size:14.5px;font-weight:700;color:#5C8C1E">${input.shippingCents ? formatMoney(input.shippingCents, input.currency) : "Free"}</td></tr>
+${input.taxCents ? `<tr><td style="padding:3px 0;font-size:14.5px;color:#5D6657">Tax</td><td style="padding:3px 0;text-align:right;font-size:14.5px;color:#1C2318">${formatMoney(input.taxCents, input.currency)}</td></tr>` : ""}
+<tr><td style="padding:14px 0 0;font-size:21px;font-weight:800;color:#1C2318">Total</td><td style="padding:14px 0 0;text-align:right;font-size:21px;font-weight:800;color:#1C2318">${formatMoney(input.totalCents, input.currency)}</td></tr>
 </table>
-</td></tr></table>
+</td></tr>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;background:${ink};border-radius:14px">
-<tr><td style="padding:20px 22px">
-<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:${accent}">What happens next</div>
-<div style="margin-top:8px;font-size:14.5px;line-height:1.65;color:#E7EAF0">
-We pack it, then we email you a tracking number the moment it leaves. Nothing else is needed from you &mdash; just reply to this email if anything comes up.
+<tr><td style="background:${CHAT};padding:30px 34px 26px">
+<div style="font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:${YELLOW};text-align:center;margin-bottom:22px">Questions? Just reply</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+${bubbleUs("just ordered 🙌 how long till it gets here?")}
+${bubbleThem("1&ndash;2 days to leave us, then your tracking lands by email.")}
+${bubbleUs("perfect 😅")}
+${bubbleThem("that&rsquo;s the idea. shout if you need anything.")}
+</table>
+</td></tr>
+
+${input.giftCode ? `<tr><td style="background:#ECFCD2;padding:36px 34px;text-align:center">
+<div style="font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#5C8C1E">A thank you</div>
+<div style="margin:12px 0 6px;font-size:32px;font-weight:800;letter-spacing:-.035em;color:${LIMEINK}">${esc(input.giftLabel ?? "$10 off your next one.")}</div>
+<div style="font-size:15px;line-height:1.6;color:#4A5544">No minimum, no expiry. Use it whenever you like.</div>
+<div style="display:inline-block;margin-top:20px;padding:16px 38px;background:${YELLOW};border-radius:16px">
+<span style="font-size:25px;font-weight:800;letter-spacing:.2em;color:${YELLOWINK};font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${esc(input.giftCode)}</span>
 </div>
-</td></tr></table>
+</td></tr>` : ""}
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;border-top:1px solid #EEEAE0">
-<tr>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Free shipping</strong>already included</td>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">30-day returns</strong>no questions</td>
-<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Real people</strong>reply to this email</td>
-</tr></table>`,
-    `Order #${input.orderNumber} confirmed — ${formatMoney(input.totalCents, input.currency)}`,
-  );
+<tr><td style="background:${SAND};padding:26px 20px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td width="33%" style="text-align:center;font-size:12.5px;line-height:1.5;color:#5D6657"><strong style="display:block;color:#1C2318;font-size:13.5px;margin-bottom:2px">Free shipping</strong>already included</td>
+<td width="33%" style="text-align:center;font-size:12.5px;line-height:1.5;color:#5D6657"><strong style="display:block;color:#1C2318;font-size:13.5px;margin-bottom:2px">30-day returns</strong>no questions</td>
+<td width="33%" style="text-align:center;font-size:12.5px;line-height:1.5;color:#5D6657"><strong style="display:block;color:#1C2318;font-size:13.5px;margin-bottom:2px">Real people</strong>reply to this email</td>
+</tr></table>
+</td></tr>
+
+<tr><td style="background:${DARKEST};padding:34px 34px 28px;text-align:center">
+${logo ? `<img src="${logo}" width="128" alt="" style="width:128px;height:auto;display:inline-block;margin-bottom:14px">` : ""}
+<div style="font-size:13.5px;line-height:1.7;color:#F6EEE2;opacity:.7">
+Questions? Just reply &mdash; a person reads it.<br>
+<span style="color:#F6EEE2;font-weight:700;opacity:1">${esc(input.storeName)}</span>${input.domain ? ` &middot; ${esc(input.domain)}` : ""}
+</div>
+</td></tr>
+
+</table></td></tr></table></body></html>`;
 
   const result = await send(env, {
     from: `${input.storeName} <${from}>`,

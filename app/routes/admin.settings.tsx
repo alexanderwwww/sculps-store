@@ -12,7 +12,7 @@
 import * as React from "react";
 import { Form, Link, useNavigation } from "react-router";
 import type { Route } from "./+types/admin.settings";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { requireUser } from "~/lib/auth.server";
 import {
   resolveAdminStore,
@@ -31,7 +31,7 @@ import {
   policyPages,
   savePolicies,
 } from "~/lib/admin.server";
-import { paymentProviders, domains as domainsTable, users, sessions as sessionsTable } from "~/db/schema";
+import { domains as domainsTable, paymentProviders, products, sessions as sessionsTable, users, variants } from "~/db/schema";
 import { encryptSecret, decryptSecret, encryptionReady, maskSecret } from "~/lib/crypto.server";
 import { providerForStore, PaymentsNotConfigured } from "~/lib/payments.server";
 import {
@@ -44,7 +44,7 @@ import {
   rootDomain,
 } from "~/lib/cloudflare.server";
 import { createSenderDomain, readSenderDomain, verifySenderDomain } from "~/lib/resend-domains.server";
-import { emailReady, sendOrderConfirmation, sendShippingNotice, sendRefundNotice } from "~/lib/email.server";
+import { emailReady, orderReference, sendOrderConfirmation, sendShippingNotice, sendRefundNotice } from "~/lib/email.server";
 import { centsFromInput, centsToInput } from "~/lib/money";
 import { input } from "~/admin/ui";
 import {
@@ -611,11 +611,41 @@ export async function action({ context, request }: Route.ActionArgs) {
     if (!emailReady(env)) return { error: "Email is not configured on the Worker yet." };
     const kind = text("kind");
     const to = user.email;
-    const common = { to, customerName: "Test Customer", storeName: store.name, fromAddress: store.emailFrom, replyTo: store.contactEmail, orderNumber: 1001 };
+    // The test has to carry everything a real order carries — brand, hero,
+    // city, reference — or it proves nothing about what a customer receives.
+    const common = {
+      to,
+      customerName: "Test Customer",
+      storeName: store.name,
+      fromAddress: store.emailFrom,
+      replyTo: store.contactEmail,
+      orderNumber: 1001,
+      domain: store.domain,
+      logoUrl: "/media/em-967546d2b092584a.jpg",
+      brandColor: store.brandColor,
+      accentColor: store.accentColor,
+    };
     const probe = "settings-test";
     let ok = false;
     if (kind === "confirmation") {
-      ok = await sendOrderConfirmation(context.db, env, probe, { ...common, currency: store.currency, lines: [{ label: "Example bundle", quantity: 1, lineTotalCents: 12900 }], subtotalCents: 12900, taxCents: 0, shippingCents: 0, totalCents: 12900 }).catch(() => false);
+      const [top] = await context.db
+        .select({ label: variants.label, price: variants.priceCents, image: variants.imageUrl })
+        .from(variants)
+        .innerJoin(products, eq(products.id, variants.productId))
+        .where(and(eq(products.storeId, store.id), eq(products.status, "active")))
+        .orderBy(desc(variants.isDefault))
+        .limit(1);
+      const price = top?.price ?? 12900;
+      ok = await sendOrderConfirmation(context.db, env, probe, {
+        ...common,
+        currency: store.currency,
+        heroImageUrl: top?.image ?? null,
+        lines: [{ label: top?.label ?? "Example bundle", quantity: 1, lineTotalCents: price, imageUrl: top?.image ?? null }],
+        subtotalCents: price, taxCents: 0, shippingCents: 0, totalCents: price,
+        shipCity: "Oviedo", shipRegion: "FL",
+        reference: orderReference(store.slug, 1001),
+        giftCode: "GET10", giftLabel: "$10 off your next one.",
+      }).catch(() => false);
     } else if (kind === "shipping") {
       ok = await sendShippingNotice(context.db, env, probe, { ...common, tracking: "9400 1000 0000 0000 0000 00", carrier: "USPS" }).catch(() => false);
     } else if (kind === "refund") {

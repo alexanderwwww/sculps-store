@@ -10,7 +10,7 @@ import { eq, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { orders, orderEvents, stores, variants } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
-import { sendOrderConfirmation, sendMerchantNewOrder, emailReady } from "./email.server";
+import { sendOrderConfirmation, sendMerchantNewOrder, emailReady, orderReference } from "./email.server";
 import { metaSettings, sendPurchase } from "./meta.server";
 import { notifyAdmins, money } from "./notify.server";
 import { redeemDiscount } from "./discounts.server";
@@ -109,6 +109,14 @@ export async function afterPaymentConfirmed(
         totalCents: order.totalCents,
         discountCode: order.discountCode,
         discountCents: order.discountCents,
+        // Theirs, out of the shipping address — the tracking animation is one
+        // file for everyone and this is the line that makes it personal.
+        shipCity: order.city,
+        shipRegion: order.region,
+        reference: orderReference(store.slug, order.number),
+        // The standing thank-you. In dollars, never a percentage.
+        giftCode: "GET10",
+        giftLabel: "$10 off your next one.",
       });
     } else {
       // Say so on the timeline rather than leaving a silent gap that looks
