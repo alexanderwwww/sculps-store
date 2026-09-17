@@ -27,7 +27,12 @@ export interface Stage {
   destroy(): void;
 }
 
-const MODEL = "/media/xero-chiron.glb";
+/**
+ * Textures re-encoded at 1024 and the file repacked: 5.8 MB to 3.6 MB.
+ * The bike is never more than a third of a 1440px viewport, so 2048 maps were
+ * resolution nobody could see, paid for on every first load.
+ */
+const MODEL = "/media/xero-chiron-v2.glb";
 
 export async function mountStage(
   canvas: HTMLCanvasElement,

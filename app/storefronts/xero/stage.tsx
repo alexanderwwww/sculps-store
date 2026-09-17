@@ -54,6 +54,7 @@ export function HeroStage() {
   const [shot, setShot] = useState(0);
   const [spin, setSpin] = useState(false);
   const [ready, setReady] = useState(false);
+  const [slow, setSlow] = useState(false);
 
   const canvas = useRef<HTMLCanvasElement>(null);
   const stage = useRef<Stage | null>(null);
@@ -66,6 +67,12 @@ export function HeroStage() {
 
     const boot = async () => {
       // Never on the server, and never before the stage is actually looked at.
+      // Say something if it is taking a while. An empty dark rectangle is
+      // indistinguishable from a broken stage, and on a slow connection this
+      // is a multi-megabyte download.
+      const saySlow = setTimeout(() => { if (!dead) setSlow(true); }, 1_500);
+      // And if it never arrives, show the photographs rather than nothing.
+      const giveUp = setTimeout(() => { if (!dead && !stage.current) setView("photos"); }, 20_000);
       try {
         const mod = await import("./stage-3d");
         if (dead) return;
@@ -78,6 +85,10 @@ export function HeroStage() {
         // rather than leaving a dark empty stage: the photographs are shot on
         // white, so they belong in the Photos view and nowhere else.
         setView("photos");
+      } finally {
+        clearTimeout(saySlow);
+        clearTimeout(giveUp);
+        if (!dead) setSlow(false);
       }
     };
 
@@ -131,6 +142,10 @@ export function HeroStage() {
       </div>
 
       <canvas ref={canvas} className="x-stage__canvas" aria-label="Rotatable model of the XERO Chiron" />
+
+      {slow && !ready && view === "3d" ? (
+        <p className="x-stage__wait" role="status">Loading the model…</p>
+      ) : null}
 
       <Pill
         className="x-pill--tl"

@@ -375,3 +375,13 @@ figure{ margin:0; }
   .x-pill--tr{ right:1.1rem; }
   .x-stage__foot{ left:50%; }
 }
+
+/* Said out loud while the model downloads. An empty dark rectangle and a
+   broken stage look exactly the same, and this is a few megabytes. */
+.x-stage__wait{
+  position:absolute; left:30.9%; top:50%; transform:translate(-50%,-50%); z-index:20;
+  margin:0; padding:.5rem 1rem; border-radius:999px;
+  background:var(--chip); border:1px solid var(--pill-b); color:var(--txt2);
+  font:500 .8rem/1 system-ui,sans-serif;
+}
+@media (max-width:900px){ .x-stage__wait{ left:50%; } }
