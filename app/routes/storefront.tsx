@@ -30,6 +30,8 @@ import { BodiesHome } from "~/storefronts/bodies";
 import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
 import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
 import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
+import { XeroStorefront } from "~/storefronts/xero";
+import xeroThemeHref from "~/storefronts/xero/theme.css?url";
 
 /**
  * Which theme a store gets. Design lives in code, one theme per store, so this
@@ -39,6 +41,7 @@ import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 const GARDEN_BUDDY = "garden-buddy";
 const BODIES = "bodies";
 const CEILING_BUDDY = "ceiling-buddy";
+const XERO = "xero";
 
 export function links() {
   return [
@@ -299,6 +302,16 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
         />
+      </>
+    );
+  }
+
+  if (store.slug === XERO) {
+    return (
+      <>
+        <link rel="stylesheet" href={xeroThemeHref} />
+        {head}
+        <XeroStorefront page={page} storeParam={storeParam} />
       </>
     );
   }

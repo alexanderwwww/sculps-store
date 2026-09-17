@@ -1,0 +1,175 @@
+/**
+ * XERO Chiron — store five.
+ *
+ * The whole page is scaled by one clamped root font-size, so every measurement
+ * below is in rem and the layout rescales as a single object between a phone
+ * and a 2560px display rather than stepping at breakpoints. Adding a px
+ * measurement here breaks that; use rem unless it is a hairline.
+ *
+ * Night is the boot state and the fallback tokens on :root exist to stop a
+ * one-frame white flash. Everything under the hero redeclares those tokens on
+ * itself via .xero-night, so the hero's day/night swap can never leak down the
+ * page.
+ *
+ * Tokens, resets and keyframes below are ported from the reference build. The
+ * section rules after them are written for this markup.
+ */
+:root{
+  font-size:clamp(8.5px, min(calc(100vw / 90.5), calc(100vh / 62)), 16.6px);
+  /* NIGHT is the boot state — these fallbacks stop a one-frame white flash. */
+  --pg:rgba(26,27,31,1);--glass:rgba(13,13,15,.88);--glass-b:rgba(255,255,255,.075);--solid:rgba(20,20,23,1);--pill:rgba(30,31,36,.8);--pill-b:rgba(255,255,255,.08);--knob:rgba(46,47,55,1);--chip:rgba(30,31,37,.88);--txt:rgba(244,244,246,1);--txt2:rgba(169,170,177,1);--txt3:rgba(116,117,124,1);--acc:rgba(244,244,246,1);--acc-fill:rgba(200,201,208,1);--hair:rgba(255,255,255,.085);--card:rgba(26,27,32,.74);--sub:rgba(255,255,255,.05);--ok:rgba(52,208,88,1);--shadow:rgba(0,0,0,.45);--vsel:rgba(255,255,255,.045);--vidle:rgba(255,255,255,.035);--vb:rgba(255,255,255,.08);--sheen:rgba(255,255,255,.17);--gloss:rgba(255,255,255,.09);--glow:rgba(255,255,255,.04);--liq1:rgba(255,255,255,.1);--liq2:rgba(150,190,255,.14);--stickybg:rgba(22,22,26,.26);--stickyrim:rgba(255,255,255,.11);--pg2:rgba(16,16,19,1);--rvb:rgba(255,255,255,.08);
+  --nite:1;
+}
+
+.xero-night{--pg:rgba(26,27,31,1);--glass:rgba(13,13,15,.88);--glass-b:rgba(255,255,255,.075);--solid:rgba(20,20,23,1);--pill:rgba(30,31,36,.8);--pill-b:rgba(255,255,255,.08);--knob:rgba(46,47,55,1);--chip:rgba(30,31,37,.88);--txt:rgba(244,244,246,1);--txt2:rgba(169,170,177,1);--txt3:rgba(116,117,124,1);--acc:rgba(244,244,246,1);--acc-fill:rgba(200,201,208,1);--hair:rgba(255,255,255,.085);--card:rgba(26,27,32,.74);--sub:rgba(255,255,255,.05);--ok:rgba(52,208,88,1);--shadow:rgba(0,0,0,.45);--vsel:rgba(255,255,255,.045);--vidle:rgba(255,255,255,.035);--vb:rgba(255,255,255,.08);--sheen:rgba(255,255,255,.17);--gloss:rgba(255,255,255,.09);--glow:rgba(255,255,255,.04);--liq1:rgba(255,255,255,.1);--liq2:rgba(150,190,255,.14);--stickybg:rgba(22,22,26,.26);--stickyrim:rgba(255,255,255,.11);--pg2:rgba(16,16,19,1);--rvb:rgba(255,255,255,.08);--nite:1}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--pg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{overflow-x:hidden;font-family:system-ui,-apple-system,'SF Pro Display','SF Pro Text','Helvetica Neue',Helvetica,sans-serif;letter-spacing:-.011em;color:var(--txt)}
+a{color:var(--acc);text-decoration:none}
+a:hover{color:var(--acc-fill)}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+img{max-width:100%}
+.xero-ph span{font:500 .8rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;color:var(--txt3);text-align:center;padding:0 1rem}
+.xero-ph--circle{border-radius:50%}
+.xero-fill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.xero-fill--contain{object-fit:contain}
+.xero-play{width:4.4rem;height:4.4rem;border-radius:50%;background:var(--acc);box-shadow:0 .6rem 2rem rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
+:root{font-size:clamp(12.2px, calc(100vw / 30.2), 15px)}
+body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
+
+@keyframes xmarqA{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@keyframes xmarqB{from{transform:translate3d(-50%,0,0)}to{transform:translate3d(0,0,0)}}
+@keyframes xcoast{
+  0%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+  12.5%{transform:translate3d(0,-1.84rem,0) rotate(2.1deg)}
+  25%{transform:translate3d(0,0,0) rotate(3deg)}
+  37.5%{transform:translate3d(0,1.84rem,0) rotate(2.1deg)}
+  50%{transform:translate3d(0,2.6rem,0) rotate(0deg)}
+  62.5%{transform:translate3d(0,1.84rem,0) rotate(-2.1deg)}
+  75%{transform:translate3d(0,0,0) rotate(-3deg)}
+  87.5%{transform:translate3d(0,-1.84rem,0) rotate(-2.1deg)}
+  100%{transform:translate3d(0,-2.6rem,0) rotate(0deg)}
+}
+@keyframes xtick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@keyframes xliqA{0%{transform:translate3d(-38%,-14%,0) scale(1)}50%{transform:translate3d(46%,10%,0) scale(1.18)}100%{transform:translate3d(-38%,-14%,0) scale(1)}}
+@keyframes xliqB{0%{transform:translate3d(58%,12%,0) scale(1.1)}50%{transform:translate3d(-26%,-10%,0) scale(.92)}100%{transform:translate3d(58%,12%,0) scale(1.1)}}
+
+/* Button tokens. Graphite, never blue — purple on this page is the bike's LED
+   and nothing else. */
+:root{
+  --btnbg:#111116; --btnbg-h:#26272e; --btnink:#f4f4f6; --btnb:#2c2d34;
+  --btn2b:#8c8e98; --cartbadge:#ff3b30;
+  --gut:clamp(1rem, 4vw, 4rem);
+}
+
+/* ------------------------------------------------------------------ chrome */
+.x-hdr{
+  position:fixed; inset:0 0 auto; z-index:60;
+  display:flex; align-items:center; gap:1.4rem;
+  padding:.85rem var(--gut);
+  background:var(--glass); border-bottom:1px solid var(--glass-b);
+  backdrop-filter:saturate(1.6) blur(18px); -webkit-backdrop-filter:saturate(1.6) blur(18px);
+}
+.x-brand{ font:700 1.25rem/1 system-ui,sans-serif; letter-spacing:.14em; color:var(--txt); }
+.x-nav{ display:flex; gap:1.5rem; margin-left:auto; }
+.x-nav a{ font-size:.92rem; color:var(--txt2); letter-spacing:-.01em; }
+.x-nav a:hover{ color:var(--txt); }
+@media (max-width:760px){ .x-nav{ display:none; } }
+.x-cart{
+  margin-left:1.2rem; position:relative; display:inline-flex; align-items:center; justify-content:center;
+  width:2.4rem; height:2.4rem; border-radius:999px; border:1px solid var(--pill-b); background:var(--pill);
+}
+.x-cart svg{ width:1.15rem; height:1.15rem; }
+.x-cart__n{
+  position:absolute; top:-.28rem; right:-.28rem; min-width:1.15rem; height:1.15rem; padding:0 .3rem;
+  border-radius:999px; background:var(--cartbadge); color:#fff;
+  font:700 .7rem/1.15rem system-ui,sans-serif; text-align:center;
+}
+
+/* The sticky buy bar, once the hero's own buy box has gone by. */
+.x-sticky{
+  position:fixed; left:0; right:0; bottom:0; z-index:58;
+  display:flex; align-items:center; gap:1rem; padding:.8rem var(--gut) calc(.8rem + env(safe-area-inset-bottom));
+  background:var(--glass); border-top:1px solid var(--glass-b);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  transform:translateY(110%); transition:transform .32s cubic-bezier(.28,.11,.32,1);
+}
+.x-sticky.is-on{ transform:none; }
+.x-sticky__t{ font-size:.95rem; font-weight:600; }
+.x-sticky__p{ font-size:.95rem; color:var(--txt2); margin-left:.5rem; }
+.x-sticky form{ margin-left:auto; }
+
+/* -------------------------------------------------------------------- hero */
+.x-hero{
+  position:relative; min-height:100svh; display:grid; align-items:center;
+  grid-template-columns:1fr 26rem; gap:2rem;
+  padding:5.5rem var(--gut) 3rem;
+}
+@media (max-width:900px){
+  .x-hero{ grid-template-columns:1fr; min-height:auto; padding-top:4.8rem; }
+}
+.x-stage{ position:relative; aspect-ratio:4/3; border-radius:1.4rem; overflow:hidden; background:var(--card); }
+.x-stage__shot{
+  position:absolute; inset:0; opacity:0; transition:opacity .5s cubic-bezier(.28,.11,.32,1);
+}
+/* Visible by default: if the script never runs, the first frame is still the
+   one showing rather than an empty box. */
+.x-stage__shot:first-child, .x-stage__shot.is-on{ opacity:1; }
+.x-stage__shot img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.x-rail{ display:flex; gap:.5rem; margin-top:.8rem; }
+.x-rail button{
+  flex:1; aspect-ratio:1; border-radius:.6rem; overflow:hidden; position:relative;
+  border:1px solid var(--vb); background:var(--vidle); opacity:.55; transition:opacity .2s, border-color .2s;
+}
+.x-rail button.is-on{ opacity:1; border-color:var(--acc); }
+.x-rail img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+
+.x-buy h1{ font:600 clamp(2.4rem,5vw,3.6rem)/1.02 system-ui,sans-serif; letter-spacing:-.03em; margin:0 0 .35rem; }
+.x-buy__sub{ font-size:1.05rem; color:var(--txt2); margin:0 0 1rem; }
+.x-buy__body{ font-size:.95rem; line-height:1.55; color:var(--txt2); margin:0 0 1.2rem; }
+.x-proc{ display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 1.2rem; padding:0; list-style:none; }
+.x-proc li{ font-size:.78rem; letter-spacing:.02em; color:var(--txt3); }
+.x-proc li+li::before{ content:"·"; margin-right:.4rem; }
+.x-price{ font:600 2rem/1 system-ui,sans-serif; letter-spacing:-.02em; margin:0 0 1rem; }
+
+.x-opts{ display:grid; gap:.5rem; margin:0 0 1rem; }
+.x-opt{
+  display:block; padding:.85rem 1rem; border-radius:.9rem; cursor:pointer;
+  border:1px solid var(--vb); background:var(--vidle); transition:border-color .18s, background .18s;
+}
+.x-opt.is-on{ border-color:var(--acc); background:var(--vsel); }
+.x-opt input{ position:absolute; opacity:0; pointer-events:none; }
+.x-opt__row{ display:flex; align-items:baseline; gap:.6rem; }
+.x-opt__name{ font-size:.95rem; font-weight:600; }
+.x-opt__price{ margin-left:auto; font-size:.95rem; }
+.x-opt__note{ display:block; margin-top:.25rem; font-size:.78rem; line-height:1.4; color:var(--txt3); }
+
+.x-addon{
+  display:flex; align-items:center; gap:.7rem; padding:.8rem 1rem; margin:0 0 1rem;
+  border:1px solid var(--vb); border-radius:.9rem; background:var(--vidle); cursor:pointer;
+}
+.x-addon__name{ font-size:.9rem; }
+.x-addon__price{ margin-left:auto; font-size:.9rem; color:var(--txt2); }
+
+.x-btn{
+  display:block; width:100%; padding:.95rem 1.2rem; border-radius:.9rem;
+  background:var(--btnbg); color:var(--btnink); border:1px solid var(--btnb);
+  font:600 1rem/1 system-ui,sans-serif; letter-spacing:-.01em;
+  transition:background .18s;
+}
+.x-btn:hover{ background:var(--btnbg-h); }
+.x-btn--ghost{ background:transparent; border-color:var(--btn2b); margin-top:.5rem; }
+.x-btn[disabled]{ opacity:.45; cursor:default; }
+.x-bullets{ margin:1.2rem 0 0; padding:0; list-style:none; display:grid; gap:.55rem; }
+.x-bullets li{ font-size:.85rem; line-height:1.45; color:var(--txt2); padding-left:1.1rem; position:relative; }
+.x-bullets li::before{ content:""; position:absolute; left:0; top:.55em; width:.35rem; height:.35rem; border-radius:999px; background:var(--acc-fill); }
+
+/* ------------------------------------------------------------------ footer */
+.x-foot{ padding:4rem var(--gut) 3rem; border-top:1px solid var(--hair); background:var(--pg2); }
+.x-foot__mark{ font:700 clamp(3rem,14vw,10rem)/.9 system-ui,sans-serif; letter-spacing:.06em; color:var(--txt); margin:0 0 1.5rem; }
+.x-foot__cols{ display:flex; flex-wrap:wrap; gap:2.5rem; }
+.x-foot__col h4{ font:600 .78rem/1 system-ui,sans-serif; letter-spacing:.12em; color:var(--txt3); margin:0 0 .8rem; }
+.x-foot__col a{ display:block; font-size:.88rem; color:var(--txt2); margin-bottom:.45rem; }
+.x-foot__col a:hover{ color:var(--txt); }
+.x-foot__sign{ margin-top:2.5rem; font-size:.88rem; color:var(--txt3); }

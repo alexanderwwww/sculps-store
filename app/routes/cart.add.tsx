@@ -20,7 +20,19 @@ import {
   saveCart,
 } from "~/lib/cart.server";
 
-async function add(request: Request, context: Route.LoaderArgs["context"], variantId: string) {
+async function add(
+  request: Request,
+  context: Route.LoaderArgs["context"],
+  variantId: string,
+  /**
+   * An optional second line added in the same submit — XERO's $99 key, ticked
+   * beside the bike. It is a separate product, so it rides as its own line at
+   * its own price and can never change what the bike costs. Validated exactly
+   * like the first one: a variant that is not this store's, not live, or out
+   * of stock is dropped rather than written.
+   */
+  alsoVariantId = "",
+) {
   const url = new URL(request.url);
   const store = await resolveStore(context.db, context.hostname, url);
   if (!store) throw new Response("No store for this domain.", { status: 404 });
@@ -76,7 +88,19 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
     trusted && url.searchParams.get("bundle") === "1"
       ? Math.max(0, sellable.priceCents - BUNDLE_OFF_CENTS)
       : undefined;
-  await saveCart(context.db, store.id, token, addLine(lines, variantId, 1, bundlePriceCents));
+  let next = addLine(lines, variantId, 1, bundlePriceCents);
+
+  if (alsoVariantId && alsoVariantId !== variantId) {
+    const [extra] = await context.db
+      .select({ id: variants.id, available: variants.available })
+      .from(variants)
+      .innerJoin(products, eq(products.id, variants.productId))
+      .where(and(eq(variants.id, alsoVariantId), eq(products.storeId, store.id), eq(products.status, "active")))
+      .limit(1);
+    if (extra && extra.available > 0) next = addLine(next, alsoVariantId, 1);
+  }
+
+  await saveCart(context.db, store.id, token, next);
 
   const sessionId = readVisitorSession(request);
   if (sessionId) {
@@ -141,7 +165,12 @@ async function add(request: Request, context: Route.LoaderArgs["context"], varia
 
 export async function action({ request, context }: Route.ActionArgs) {
   const form = await request.formData();
-  return add(request, context, String(form.get("variantId") || ""));
+  return add(
+    request,
+    context,
+    String(form.get("variantId") || ""),
+    String(form.get("alsoVariantId") || ""),
+  );
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
