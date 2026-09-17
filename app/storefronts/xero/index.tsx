@@ -20,6 +20,11 @@ import { href } from "react-router";
 import type { LoadedProductPage, VariantRow } from "~/lib/store.server";
 import { formatMoney } from "~/lib/money";
 import { BRAND, HERO, FOOTER } from "./copy";
+import { HeroStage } from "./stage";
+import {
+  Astra, Box, Faq, Film, Gallery, IPhoneKey, Reel, Security,
+  Specs, Track, Updates, Vibes, Visuals,
+} from "./sections";
 
 const IcoCart = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -61,6 +66,24 @@ export function XeroStorefront({
           setWantKey={setWantKey}
           storeParam={storeParam}
         />
+
+        {/* The order is the brief's, and the two films are placed at the two
+            points in the scroll it asks for rather than side by side. */}
+        <Gallery />
+        <IPhoneKey />
+        <Reel index={0} />
+        <Specs />
+        <Box />
+        <Astra />
+        <Reel index={1} />
+        <Vibes />
+        <Faq />
+        <Film index={0} />
+        <Security />
+        <Visuals />
+        <Updates />
+        <Film index={1} />
+        <Track />
       </main>
       <Footer />
       <StickyBar variant={variant} storeParam={storeParam} />
@@ -98,33 +121,11 @@ function Hero({
   setWantKey: (v: boolean) => void;
   storeParam: string;
 }) {
-  const [shot, setShot] = useState(0);
   const soldOut = (variant?.available ?? 0) <= 0;
 
   return (
     <section className="x-hero" id="top">
-      <div>
-        <div className="x-stage">
-          {HERO.shots.map((src, i) => (
-            <div key={src} className={`x-stage__shot${i === shot ? " is-on" : ""}`}>
-              <img src={src} alt="" loading={i === 0 ? "eager" : "lazy"} decoding="async" />
-            </div>
-          ))}
-        </div>
-        <div className="x-rail">
-          {HERO.shots.map((src, i) => (
-            <button
-              key={src}
-              type="button"
-              className={i === shot ? "is-on" : ""}
-              aria-label={`View ${i + 1}`}
-              onClick={() => setShot(i)}
-            >
-              <img src={src} alt="" loading="lazy" />
-            </button>
-          ))}
-        </div>
-      </div>
+      <HeroStage />
 
       <div className="x-buy" id="buy">
         <h1>{HERO.title}</h1>
