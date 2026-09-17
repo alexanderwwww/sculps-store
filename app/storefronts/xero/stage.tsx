@@ -71,9 +71,13 @@ export function HeroStage() {
         if (dead) return;
         const s = await mod.mountStage(el, { night, onReady: () => setReady(true) });
         if (dead) { s?.destroy(); return; }
+        if (!s) { setView("photos"); return; }
         stage.current = s;
       } catch {
-        // The photographs are already on screen. Nothing to do.
+        // No WebGL, or the model would not load. Fall back to the white room
+        // rather than leaving a dark empty stage: the photographs are shot on
+        // white, so they belong in the Photos view and nowhere else.
+        setView("photos");
       }
     };
 
