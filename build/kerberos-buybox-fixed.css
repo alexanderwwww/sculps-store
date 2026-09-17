@@ -1,0 +1,43 @@
+/* Buy box corrections to pair with kerberos-buybox-fixed.tsx.
+   Append after the existing .x-buy rules. */
+
+/* 1. The radio and checkbox were pointer-events:none, so a click never reached
+      them. Keep them invisible, keep them hittable: the label covers the card,
+      and the input sits under it at full size rather than being taken out of
+      hit testing. */
+.x-opt input[type="radio"],
+.x-addon input[type="checkbox"]{
+  position:absolute; inset:0; width:100%; height:100%;
+  opacity:0; margin:0; cursor:pointer;
+  pointer-events:auto;          /* was none - this is the bug */
+  appearance:none; -webkit-appearance:none;
+}
+.x-opt, .x-addon{ position:relative; }
+
+/* 2. Selected state driven by :checked, so it is correct before React runs
+      and cannot disagree with what the form will post. */
+.x-opt:has(input:checked){ border-color:#111116; }
+.x-opt:has(input:checked) .x-opt__price{ color:#111116; }
+.x-addon:has(input:checked){ border-color:#111116; }
+
+/* 3. Section labels, restored. */
+.x-buy__label{
+  margin:1.05rem 0 .5rem;
+  font-size:.82rem; font-weight:600; letter-spacing:.055em;
+  color:var(--x-ink-2,#55565c);
+}
+
+/* 4. The blurb and bullets now sit after the button, so they need their own
+      top spacing rather than inheriting the old stacking. */
+.x-buy__body{ margin:1.1rem 0 0; font-size:.92rem; line-height:1.55; color:var(--x-ink-2,#55565c); }
+.x-points{ margin:.85rem 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:.5rem; }
+.x-points li{ display:flex; align-items:flex-start; gap:.55rem; font-size:.86rem; line-height:1.45; color:var(--x-ink-2,#55565c); }
+.x-points svg{ flex:0 0 auto; margin-top:.15rem; color:#111116; }
+
+/* 5. Wallet button sits above Add to cart and owns the primary weight. */
+.x-paybtn{ min-height:3.25rem; margin-top:1rem; }
+.x-btn--secondary{
+  width:100%; margin-top:.55rem; height:3.25rem; border-radius:1.63rem;
+  background:transparent; border:1.6px solid var(--x-btn2b,rgba(140,142,152,.55));
+  color:var(--x-ink,#0e0e0e); font-size:1.1rem; font-weight:600; letter-spacing:-.01em;
+}
