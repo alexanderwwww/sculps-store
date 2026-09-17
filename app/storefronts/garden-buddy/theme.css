@@ -1031,3 +1031,43 @@
 .gbp-chat__photo img {
   width: 100%; height: auto; max-height: 260px; object-fit: cover; display: block;
 }
+
+/* ---- thread rows -------------------------------------------------------
+   Alignment lives on the row. The bubble is just a bubble. */
+.gbp-chat__pair { margin-bottom: 10px; }
+.gbp-chat__row {
+  display: flex; align-items: flex-end; gap: 7px; margin-bottom: 2px;
+  opacity: 0; transform: translateY(10px) scale(.96); transform-origin: bottom;
+  transition: opacity .28s ease, transform .34s cubic-bezier(.2,.9,.3,1.1);
+}
+.gbp-chat__row[data-in] { opacity: 1; transform: none; }
+.gbp-chat__row--out { justify-content: flex-end; margin-bottom: 6px; }
+.gbp-chat__row--in { justify-content: flex-start; }
+@media (prefers-reduced-motion: reduce) {
+  .gbp-chat__row { opacity: 1; transform: none; transition: none; }
+}
+.gbp-chat__stack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.gbp-chat__b {
+  margin: 0; width: fit-content; max-width: 100%;
+  font-size: 14px; line-height: 1.34; letter-spacing: -0.01em;
+  padding: 8px 13px;
+}
+.gbp-chat__row--out .gbp-chat__b { max-width: 74%; }
+.gbp-chat__stack { max-width: calc(100% - 35px); }
+/* Theirs is the coloured one on the right — on your own phone, the messages
+   you sent are the coloured ones. Ours is the grey reply on the left. */
+.gbp-chat__b--out {
+  background: var(--lime); color: var(--lime-ink);
+  border-radius: 18px 18px 4px 18px;
+}
+.gbp-chat__b--in {
+  background: #262629; color: #fff;
+  border-radius: 18px 18px 18px 4px;
+}
+/* Past the avatar, under the group it belongs to. */
+.gbp-chat__time {
+  display: block; margin: 1px 0 0 42px;
+  font-size: 10.5px; color: rgba(255,255,255,.4);
+}
+.gbp-chat__typing { margin-bottom: 12px; }
+.gbp-chat__photo { margin: 0; }

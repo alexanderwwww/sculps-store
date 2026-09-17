@@ -190,32 +190,41 @@ export function PhoneChat({
         if (!askedYet) return null;
         return (
         <div className={c("__pair")} key={b.id}>
-          <p className={c("__q")} data-in="">
-            {val(b.values, "question")}
-          </p>
-          {answered ? (
-          <div className={c("__a")} data-in="">
-            <img className={c("__av")} src={logo} alt="" />
-            <div>
-              <p>{val(b.values, "answer")}</p>
-              {/* The photograph is the answer; the words above it are the nod
-                  before it. Sent as its own bubble, the way a picture arrives
-                  in a real thread. */}
-              {has(b.values, "image") ? (
-                <figure className={c("__photo")}>
-                  <img src={val(b.values, "image")} alt="" loading="lazy" />
-                </figure>
-              ) : null}
-              <span className={c("__time")}>{at(i)}</span>
-            </div>
+          {/* Two rows, the way the phone lays them out: yours on the right,
+              theirs on the left behind the avatar. The alignment lives on the
+              row, not on a margin on the bubble — a margin is one stray
+              reset away from collapsing and putting both sides flush left,
+              which is exactly what it had done. */}
+          <div className={`${c("__row")} ${c("__row--out")}`} data-in="">
+            <p className={`${c("__b")} ${c("__b--out")}`}>{val(b.values, "question")}</p>
           </div>
+          {answered ? (
+          <>
+            <div className={`${c("__row")} ${c("__row--in")}`} data-in="">
+              <img className={c("__av")} src={logo} alt="" />
+              <div className={c("__stack")}>
+                <p className={`${c("__b")} ${c("__b--in")}`}>{val(b.values, "answer")}</p>
+                {/* The photograph is the answer; the words above it are the
+                    nod before it. Its own bubble, the way a picture arrives. */}
+                {has(b.values, "image") ? (
+                  <figure className={c("__photo")}>
+                    <img src={val(b.values, "image")} alt="" loading="lazy" />
+                  </figure>
+                ) : null}
+              </div>
+            </div>
+            {/* Under the group, past the avatar — not inside the row, or the
+                avatar bottom-aligns to the timestamp and floats below the
+                bubble it belongs to. */}
+            <span className={c("__time")}>{at(i)}</span>
+          </>
           ) : null}
         </div>
         );
       })}
 
       {typing ? (
-        <div className={c("__typing")} aria-hidden="true">
+        <div className={`${c("__row")} ${c("__row--in")} ${c("__typing")}`} aria-hidden="true">
           <img className={c("__av")} src={logo} alt="" />
           <span><i /><i /><i /></span>
         </div>
