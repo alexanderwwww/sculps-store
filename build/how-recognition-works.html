@@ -189,18 +189,12 @@ h2.section{
       </div>
     </div>
 
-    <div class="step step--seen">
+    <div class="step step--auto">
       <div class="n">3</div>
       <div>
-        <h2>One small tick box at checkout.</h2>
-        <p>This is the only thing you add to the page, and the only thing they ever see about it. If they tick it, they are agreeing to be recognised on your other stores. If they don't, nothing carries across — and that is what keeps this legal.</p>
-        <div class="build">
-          <span class="build__label">What you add to checkout</span>
-          <div class="tickrow">
-            <span class="tickbox" aria-hidden="true"></span>
-            <span>Remember me for faster checkout on other stores in this group.</span>
-          </div>
-        </div>
+        <h2>Catch the email before they reach the address step.</h2>
+        <p>Put the email field first and save it the moment it is a valid address — before they finish, before they pay. Most people leave at the shipping form. This is how you keep the ones who almost bought.</p>
+        <span class="tag tag--auto">Abandoned cart, recoverable</span>
       </div>
     </div>
 
@@ -208,7 +202,7 @@ h2.section{
       <div class="n">4</div>
       <div>
         <h2>You leave a tag in their browser.</h2>
-        <p>A long random string — not their email — saved by your own identity service. Their email stays in your database; the browser only carries the tag that points to it.</p>
+        <p>A long random string — not their email — set by that store, for that store. Their details stay in your database; the browser only carries the tag that points to them.</p>
         <span class="tag tag--auto">Invisible. Nothing to click.</span>
       </div>
     </div>
@@ -216,16 +210,16 @@ h2.section{
     <div class="step step--auto">
       <div class="n">5</div>
       <div>
-        <h2>Weeks later they open a different store of yours.</h2>
-        <p>Different name, different domain, a shop they have never bought from. Your identity service sees the tag and answers: <em>yes, I know this person</em>.</p>
+        <h2>They come back to the same store.</h2>
+        <p>The tag is recognised and the shop greets them by name. Nothing travels between your stores: each one keeps its own customers, its own list, its own tag. A shopper on one brand has no way to tell it shares an owner with another.</p>
         <div class="stores">
-          <div class="store">
-            <span class="store__dom">xerochiron.com</span>
-            <span class="store__state">Bought here in March</span>
-          </div>
           <div class="store store--known">
+            <span class="store__dom">xerochiron.com</span>
+            <span class="store__state">Knows its own customers</span>
+          </div>
+          <div class="store">
             <span class="store__dom">your-next-store.com</span>
-            <span class="store__state">Recognised on arrival</span>
+            <span class="store__state">Separate. Knows nothing.</span>
           </div>
         </div>
       </div>
@@ -235,7 +229,7 @@ h2.section{
       <div class="n">6</div>
       <div>
         <h2>Checkout is already filled in.</h2>
-        <p>Name, email, phone, shipping address — all there, and they never logged in. To them it feels like the shop knew them. To you, it is a customer you can email, because they gave you the address themselves.</p>
+        <p>Name, email, phone, shipping address — all there, and they never logged in. To them it feels like the shop remembered them. To you, it is a customer you can email, because they gave you the address themselves.</p>
         <span class="tag tag--seen">Welcome back, one-tap checkout</span>
       </div>
     </div>
@@ -251,22 +245,24 @@ h2.section{
   <h2 class="section">So what do you actually build?</h2>
   <div class="sum">
     <div class="sum__col sum__col--seen">
-      <h3>Visible — one checkbox</h3>
+      <h3>Visible — almost nothing</h3>
       <ul>
-        <li>A tick box at checkout, with plain wording</li>
-        <li>An email field placed <em>before</em> the address step, so you catch people who don't finish</li>
-        <li>A line in the privacy policy, and a way to be forgotten</li>
+        <li>The email field moved to the top of checkout</li>
+        <li>A "welcome back" line for a returning shopper</li>
+        <li>A privacy policy line, and a way to be forgotten</li>
       </ul>
     </div>
     <div class="sum__col sum__col--auto">
       <h3>Invisible — the plumbing</h3>
       <ul>
-        <li>One identity service on a domain you own</li>
-        <li>An <span style="font-family:var(--f-mono);font-size:.9em">identities</span> table shared by every store</li>
-        <li>Signed tags, expiring, revocable</li>
-        <li>Each merchant sees only their own customers — never the whole graph</li>
+        <li><span style="font-family:var(--f-mono);font-size:.9em">customers</span>, <span style="font-family:var(--f-mono);font-size:.9em">carts</span> and <span style="font-family:var(--f-mono);font-size:.9em">orders</span> tables, each scoped to one store</li>
+        <li>A signed tag per store — expiring, revocable</li>
+        <li>Carts saved from the first valid email, so the abandoned ones are reachable</li>
       </ul>
     </div>
   </div>
+
+  <h2 class="section">One rule that shapes all of it</h2>
+  <p style="color:var(--ink-2);max-width:58ch;margin:0">Stores never share customers. Each brand stands on its own: its own list, its own tag, its own database rows. Nothing on the page and nothing in a shopper's browser reveals that two of your shops have the same owner — and no shared list exists to leak, be subpoenaed, or be inherited by a buyer if you ever sell one of them.</p>
 
 </div>
