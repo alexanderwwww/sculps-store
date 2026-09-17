@@ -108,20 +108,27 @@ body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
   position:relative; min-height:100svh; width:100%;
   display:grid; grid-template-columns:61.8% 38.2%; align-items:center;
 }
-@media (max-width:900px){
+/* Side by side needs room for both. Under about 1200px the buy box column gets
+   narrow enough that the copy wraps into a panel taller than the stage, which
+   pushed its own heading up under the fixed header and ran the whole hero off
+   the bottom. Below that width the stage takes the full width and the panel
+   sits under it, overlapping slightly. */
+@media (max-width:1200px){
   .x-hero{ grid-template-columns:1fr; min-height:auto; }
 }
 
 /* ------------------------------------------------------------------ stage */
 .x-stage{
-  position:relative; grid-column:1 / -1; grid-row:1;
-  width:100%; height:100svh; overflow:hidden;
+  position:relative; grid-column:1 / -1; grid-row:1; align-self:stretch;
+  /* Stretches with the row rather than being pinned to the viewport, so a tall
+     buy box grows the hero instead of spilling out of it. */
+  width:100%; min-height:100svh; overflow:hidden;
   background:radial-gradient(120% 90% at 50% 42%, #24252c 0%, #111114 58%, #0a0a0c 100%);
   touch-action:pan-y; cursor:grab;
 }
 .x-stage:active{ cursor:grabbing; }
-@media (max-width:900px){
-  .x-stage{ grid-column:1; grid-row:1; height:64svh; }
+@media (max-width:1200px){
+  .x-stage{ grid-column:1; grid-row:1; min-height:0; height:68svh; }
 }
 /* Photos view is a white room: the whole stage turns white and the pictures
    sit on it, contained rather than cropped. */
@@ -169,7 +176,8 @@ body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
 .x-pill button.is-on{ color:var(--txt); }
 .x-pill--tl{ top:4.4rem; left:1.1rem; }
 .x-pill--tr{ top:4.4rem; right:calc(38.2% + 1.1rem); }
-@media (max-width:900px){ .x-pill--tr{ right:1.1rem; } }
+@media (max-width:1200px){ .x-pill--tr{ right:1.1rem; } }
+
 .x-pill--worlds{ position:static; }
 
 /* The turn controls, stacked down the left of the stage. */
@@ -213,7 +221,8 @@ body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
 /* Glass sitting over the stage, light against the dark room. */
 .x-buy{
   position:relative; grid-column:2; grid-row:1; z-index:20;
-  margin:0 clamp(1rem,2.4vw,2.4rem); padding:clamp(1.4rem,2vw,2rem);
+  /* Clears the fixed header when the panel is tall enough to reach it. */
+  margin:3.6rem clamp(1rem,2.4vw,2.4rem) 1.5rem; padding:clamp(1.4rem,2vw,2rem);
   border-radius:1.5rem;
   background:rgba(245,245,247,.9);
   backdrop-filter:blur(14px) saturate(1.7); -webkit-backdrop-filter:blur(14px) saturate(1.7);
@@ -221,8 +230,8 @@ body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
   box-shadow:0 1.4rem 4rem rgba(0,0,0,.34);
   color:#111116;
 }
-@media (max-width:900px){
-  .x-buy{ grid-column:1; grid-row:2; margin:-3rem 1rem 2rem; }
+@media (max-width:1200px){
+  .x-buy{ grid-column:1; grid-row:2; margin:-3.5rem auto 2rem; max-width:32rem; width:calc(100% - 2rem); }
 }
 .x-buy h1{ font:700 2.94rem/1.02 system-ui,sans-serif; letter-spacing:-.032em; margin:0 0 .3rem; color:#111116; }
 .x-buy__sub{ font-size:1.02rem; color:#5b5d67; margin:0 0 1rem; }
