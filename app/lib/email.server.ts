@@ -303,7 +303,14 @@ export async function sendOrderConfirmation(
     .filter(Boolean)
     .join("\n");
 
-  const base = abs(brandOf(input), "") ?? "";
+  /**
+   * Every URL in a message goes through abs().
+   *
+   * There used to be a `base` built by asking abs() to resolve an empty
+   * path — and abs() answers null for an empty path, so it came out as ""
+   * and the tracking image's src was site-relative. A browser resolves that
+   * against the page it is on; an email has no page, so it never loaded.
+   */
   const ref = input.reference ?? String(input.orderNumber);
   const city = [input.shipCity, input.shipRegion].filter(Boolean).join(", ");
   const first = (input.customerName || "").split(" ")[0] || "there";
@@ -372,7 +379,7 @@ ${logo ? `<tr><td style="background:${DARKEST};padding:22px 0;text-align:center"
 </td></tr>
 
 <tr><td style="background:${PANEL};padding:0;font-size:0;line-height:0">
-<img src="${base}/media/gb-email-line.gif" width="640" alt="On its way" style="width:100%;max-width:640px;height:auto;display:block">
+<img src="${abs(brandOf(input), "/media/gb-email-line.gif") ?? ""}" width="640" alt="On its way" style="width:100%;max-width:640px;height:auto;display:block">
 </td></tr>
 ${city ? `<tr><td style="background:${PANEL};padding:4px 34px 28px;text-align:center">
 <div style="font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:${YELLOW}">On its way to</div>
