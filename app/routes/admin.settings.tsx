@@ -610,7 +610,14 @@ export async function action({ context, request }: Route.ActionArgs) {
   if (intent === "send-test-email") {
     if (!emailReady(env)) return { error: "Email is not configured on the Worker yet." };
     const kind = text("kind");
-    const to = user.email;
+    /**
+     * Any address, not only the signed-in admin's.
+     *
+     * The same HTML lands differently in Gmail, Apple Mail and Outlook, and
+     * testing only against your own inbox tells you about one of them.
+     */
+    const typed = text("to").trim();
+    const to = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(typed) ? typed : user.email;
     // The test has to carry everything a real order carries — brand, hero,
     // city, reference — or it proves nothing about what a customer receives.
     const common = {
@@ -2121,7 +2128,31 @@ function NotificationsPane({
         ) : null}
       </SettingsCard>
 
-      <SettingsCard title="Customer emails" sub={`Tests go to ${profileEmail}`}>
+      <SettingsCard title="Customer emails" sub="Send a test to any inbox — they render differently">
+        <div style={listRow}>
+          <span style={listRowMain}>
+            <span style={{ fontWeight: 600 }}>Send tests to</span>
+            <span style={{ fontSize: 12, color: "var(--ink-2)" }}>Leave blank to use {profileEmail}</span>
+          </span>
+          <input
+            name="test-to"
+            type="email"
+            defaultValue=""
+            placeholder={profileEmail}
+            style={{
+              minWidth: 240, padding: "8px 12px", borderRadius: 8,
+              border: "1px solid var(--line)", background: "var(--bg-1)", color: "var(--ink-1)",
+            }}
+            onChange={(event) => {
+              // Mirrored into each form's hidden field so one box drives all
+              // three buttons without lifting state out of this card.
+              const value = event.currentTarget.value;
+              document.querySelectorAll<HTMLInputElement>("input[data-test-to]").forEach((node) => {
+                node.value = value;
+              });
+            }}
+          />
+        </div>
         {[
           ["confirmation", "Order confirmation", "Sent the moment payment is captured"],
           ["shipping", "Shipping confirmation", "Sent when you add a tracking number"],
@@ -2141,6 +2172,7 @@ function NotificationsPane({
             <Form method="post">
               <input type="hidden" name="intent" value="send-test-email" />
               <input type="hidden" name="kind" value={kind} />
+              <input type="hidden" name="to" data-test-to="" defaultValue="" />
               <RowButton disabled={!resend || busy}>Send test</RowButton>
             </Form>
           </div>
