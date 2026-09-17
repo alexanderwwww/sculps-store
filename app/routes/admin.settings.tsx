@@ -628,7 +628,7 @@ export async function action({ context, request }: Route.ActionArgs) {
       replyTo: store.contactEmail,
       orderNumber: 1001,
       domain: store.domain,
-      logoUrl: "/media/em-967546d2b092584a.jpg",
+      logoUrl: "/media/em-logo-brown.jpg",
       brandColor: store.brandColor,
       accentColor: store.accentColor,
     };

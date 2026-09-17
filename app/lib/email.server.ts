@@ -335,7 +335,21 @@ export async function sendOrderConfirmation(
 <td style="background:${LIME};border-radius:19px 19px 5px 19px;padding:11px 16px;font-size:15px;line-height:1.4;color:${LIMEINK};max-width:340px">${t}</td>
 </tr></table></td></tr>`;
 
-  const hero = abs(brandOf(input), input.heroImageUrl);
+  /**
+   * The email-sized copy of a picture.
+   *
+   * The storefront's own files are up to 2.3 MB, and a mail client will not
+   * wait for that — iCloud rendered nothing at all. Every image here points
+   * at `em-<name>.jpg`: 640px, flattened onto white, under 80 KB. If no copy
+   * has been made the original is used, which is slow but not broken.
+   */
+  const emailCopy = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    const m = url.match(/^\/media\/([^/]+)\.(png|jpe?g|webp)$/i);
+    return m ? `/media/em-${m[1]}.jpg` : url;
+  };
+
+  const hero = abs(brandOf(input), emailCopy(input.heroImageUrl));
   const logo = abs(brandOf(input), input.logoUrl);
 
   const html = `<!doctype html><html><body style="margin:0;padding:0;background:${DARKEST};font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif">
@@ -389,7 +403,7 @@ ${input.taxCents ? `<tr><td style="padding:3px 0;font-size:14.5px;color:#5D6657"
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
 ${bubbleUs("just ordered 🙌 how long till it gets here?")}
 ${bubbleThem("1&ndash;2 days to leave us, then your tracking lands by email.")}
-${bubbleUs("perfect 😅")}
+${bubbleUs("perfect")}
 ${bubbleThem("that&rsquo;s the idea. shout if you need anything.")}
 </table>
 </td></tr>

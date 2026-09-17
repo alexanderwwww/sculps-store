@@ -92,7 +92,7 @@ export async function afterPaymentConfirmed(
         // she just bought from rather than from a white box with a name on it.
         domain: store.domain,
         // the 25KB copy, not the 778KB storefront original
-        logoUrl: "/media/em-967546d2b092584a.jpg",
+        logoUrl: "/media/em-logo-brown.jpg",
         brandColor: store.brandColor,
         accentColor: store.accentColor,
         heroImageUrl: await receiptHero(db, items),
