@@ -81,12 +81,38 @@ export function HeroStage() {
       }
     };
 
-    if (typeof IntersectionObserver === "undefined") { void boot(); }
+    let started = false;
+    const begin = () => {
+      if (started || dead) return;
+      started = true;
+      io?.disconnect();
+      clearTimeout(failsafe);
+      void boot();
+    };
+
+    if (typeof IntersectionObserver === "undefined") begin();
     else {
-      io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io?.disconnect(); void boot(); } }, { threshold: 0.05 });
+      io = new IntersectionObserver(([e]) => { if (e.isIntersecting) begin(); }, { threshold: 0.05 });
       io.observe(el);
     }
-    return () => { dead = true; io?.disconnect(); stage.current?.destroy(); stage.current = null; };
+
+    /**
+     * Boot anyway if nothing has said we are on screen.
+     *
+     * Inside the theme editor's preview iframe that callback may never come at
+     * all, and the stage is the first thing on the page, so waiting for it buys
+     * nothing even when it does work. Without this the editor showed an empty
+     * dark box — the same failure the phone thread had, for the same reason.
+     */
+    const failsafe = setTimeout(begin, 1_200);
+
+    return () => {
+      dead = true;
+      io?.disconnect();
+      clearTimeout(failsafe);
+      stage.current?.destroy();
+      stage.current = null;
+    };
   }, []);
 
   useEffect(() => { stage.current?.setNight(night); }, [night]);

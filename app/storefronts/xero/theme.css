@@ -206,9 +206,10 @@ body{overflow:auto;overscroll-behavior-y:contain;-webkit-text-size-adjust:100%}
   padding:1.5rem 1.5rem 1.2rem;
   display:flex; flex-direction:column;
   /* Scrolls inside itself. It never grows the hero and never pushes the page. */
-  overflow-y:auto;
+  overflow-y:auto; scrollbar-width:none;
   color:#111116;
 }
+.x-buy::-webkit-scrollbar{ display:none; }
 .x-buy h1{ font:700 2.94rem/1.02 system-ui,sans-serif; letter-spacing:-.032em; margin:0 0 .3rem; color:#111116; }
 .x-buy__sub{ font-size:1.02rem; color:#5b5d67; margin:0 0 1rem; }
 .x-buy__body{ font-size:.92rem; line-height:1.55; color:#42444d; margin:0 0 1.1rem; }
