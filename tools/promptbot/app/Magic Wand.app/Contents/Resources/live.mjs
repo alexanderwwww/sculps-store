@@ -73,17 +73,46 @@ const run = promisify(execFile);
  * has two buttons. It is the same gate either way — nothing runs until it is
  * answered — and it falls back to the keyboard on anything that isn't a Mac.
  */
+const esc = (t) => t.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+
 async function ask(title, body) {
-  const esc = (t) => t.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const script =
     `display dialog "${esc(body)}" with title "${esc(title)}" ` +
-    `buttons {"Skip", "Run it"} default button "Run it" with icon note giving up after 3600`;
+    `buttons {"Skip", "Pick image…", "Run it"} default button "Run it" ` +
+    `with icon note giving up after 3600`;
   try {
     const { stdout } = await run("osascript", ["-e", script]);
-    return /Run it/.test(stdout);
+    if (/Pick image/.test(stdout)) return "pick";
+    if (/Run it/.test(stdout)) return "run";
+    return "skip";
   } catch {
     // Cancel, a timeout, or no osascript at all — none of which mean yes.
-    return false;
+    return "skip";
+  }
+}
+
+/**
+ * The Finder's own picker.
+ *
+ * Choosing the reference here rather than naming it in the queue means the
+ * picture never has to be uploaded anywhere first, and the person who knows
+ * which photo is the right one is the one choosing it.
+ */
+async function pickImages() {
+  const script =
+    'set f to choose file with prompt "Pick the reference picture" ' +
+    'of type {"public.image"} with multiple selections allowed\n' +
+    'set out to ""\n' +
+    'repeat with i in f\n' +
+    'set out to out & POSIX path of i & linefeed\n' +
+    'end repeat\n' +
+    'return out';
+  try {
+    const { stdout } = await run("osascript", ["-e", script]);
+    return stdout.split("\n").map((l) => l.trim()).filter(Boolean);
+  } catch {
+    // Cancelled the picker.
+    return [];
   }
 }
 
@@ -186,54 +215,70 @@ async function putFiles(page, paths, wand, label) {
   if (box) await box.click().catch(() => {});
   await page.waitForTimeout(300);
 
-  const deliver = (mode) =>
-    page.evaluate(({ files, sels, mode }) => {
-      const dt = new DataTransfer();
-      for (const f of files) {
-        const bin = atob(f.data);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        dt.items.add(new File([bytes], f.name, { type: f.type }));
-      }
+  /**
+   * The attach button, found by where it is rather than what it says.
+   *
+   * Every label-based attempt has broken — English names on a Greek
+   * interface, and they change anyway. But the paperclip is always in the
+   * same place: a button inside the composer, to the left of the text box,
+   * on the same line as it. That is a fact about the layout, and layouts
+   * change far more slowly than markup does.
+   */
+  const plus = async () => {
+    const target = await box?.boundingBox().catch(() => null);
+    if (!target) return null;
+    const buttons = await page.locator("button").all().catch(() => []);
+    for (const b of buttons) {
+      const r = await b.boundingBox().catch(() => null);
+      if (!r) continue;
+      const sameLine = r.y + r.height > target.y && r.y < target.y + target.height;
+      const toTheLeft = r.x < target.x;
+      const small = r.width < 90 && r.height < 90;
+      if (sameLine && toTheLeft && small && (await b.isVisible().catch(() => false))) return b;
+    }
+    return null;
+  };
 
-      const box = sels.map((s) => document.querySelector(s)).find(Boolean);
-      if (!box) return false;
+  // 1 — let Chrome open its own file dialog and answer it.
+  //
+  // This is the only route that works the way a person does: the page opens
+  // the picker it would open for anybody, and we hand it the file. Nothing
+  // about it depends on the site's markup or its language.
+  const clip = await plus();
+  if (clip) {
+    try {
+      const [chooser] = await Promise.all([
+        page.waitForEvent("filechooser", { timeout: 6000 }),
+        wand?.point(clip),
+        clip.click(),
+      ]);
+      await chooser.setFiles(paths);
+      await page.waitForTimeout(2500 + files.length * 1200);
+      if ((await blobCount(page)) > before) return "chosen";
+    } catch {
+      // No dialog appeared — that button was something else. Close whatever
+      // it opened before trying the next way.
+      await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(400);
+    }
+  }
 
-      if (mode === "paste") {
-        box.focus?.();
-        box.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt }));
-        return true;
-      }
-
-      // Drop: walk up from the text box and hit every ancestor, plus the
-      // document itself. Which element carries the handler is an
-      // implementation detail that changes; the ancestor chain does not.
-      const targets = [];
-      for (let el = box; el && targets.length < 8; el = el.parentElement) targets.push(el);
-      targets.push(document.body, document.documentElement);
-      for (const t of targets) {
-        for (const type of ["dragenter", "dragover", "drop"]) {
-          t.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
-        }
-      }
-      return true;
-    }, { files, sels: site.ask, mode }).catch(() => false);
-
-  // 1 — paste
+  // 2 — paste it in, the way you'd paste a screenshot
+  if (box) await box.click().catch(() => {});
   await deliver("paste");
   await page.waitForTimeout(2200 + files.length * 900);
   if ((await blobCount(page)) > before) return "pasted";
 
-  // 2 — drop, everywhere that might be listening
-  await wand?.say(label, "attaching — second try…");
+  // 3 — drop, everywhere that might be listening
+  await wand?.say(label, "attaching — another way…");
   await deliver("drop");
   await page.waitForTimeout(2200 + files.length * 900);
   if ((await blobCount(page)) > before) return "dropped";
 
-  // 3 — a real file input, if the page keeps one
+  // 4 — a real file input, if the page keeps one
   const input = page.locator(site.file).first();
   if (await input.count().then((c) => c > 0).catch(() => false)) {
-    await wand?.say(label, "attaching — third try…");
+    await wand?.say(label, "attaching — last way…");
     await input.setInputFiles(paths).catch(() => {});
     await page.waitForTimeout(2500 + files.length * 1200);
     if ((await blobCount(page)) > before) return "uploaded";
@@ -366,8 +411,25 @@ while (true) {
     `${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}\n\n` +
     job.prompts.map((p, i) => `${i + 1}. ${p.trim().split("\n")[0].slice(0, 70)}…`).join("\n");
 
-  const go = await ask(label, summary);
-  if (!go) {
+  let answer = await ask(label, summary);
+
+  // Picking is not the decision — after choosing, it asks again with the
+  // chosen file named, so the last thing before anything runs is still a yes.
+  let picked = [];
+  if (answer === "pick") {
+    picked = await pickImages();
+    answer = await ask(
+      label,
+      (picked.length
+        ? `Using ${picked.length} picture${picked.length === 1 ? "" : "s"}:\n` +
+          picked.map((p) => "  " + p.split("/").pop()).join("\n")
+        : "No picture chosen — it will run without a reference.") +
+        `\n\n${summary}`,
+    );
+    if (answer === "pick") answer = "run";
+  }
+
+  if (answer !== "run") {
     done.add(job.id);
     await writeFile(DONE_FILE, [...done].join("\n"));
     console.log(`Skipped.\n`);
@@ -381,7 +443,9 @@ while (true) {
   const slug = label.replace(/\W+/g, "-").replace(/^-|-$/g, "").toLowerCase();
   const dir = join(opt.out, slug);
   await mkdir(dir, { recursive: true });
-  const refs = await fetchRefs(job.refs, join(dir, "reference"));
+  // A picture chosen in the Finder wins over anything the queue named: the
+  // person choosing is the one who knows which photo is the right one.
+  const refs = picked.length ? picked : await fetchRefs(job.refs, join(dir, "reference"));
 
   let total = 0;
   for (let i = 0; i < job.prompts.length; i++) {
