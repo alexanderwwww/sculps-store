@@ -274,7 +274,16 @@ function Header({
           </a>
           <nav className="cb-nav">
             {brand.nav.map(([label, to]) => (
-              <a key={to} href={to.startsWith("#") ? to : href(to)}>{label}</a>
+              <a
+                key={to}
+                href={to.startsWith("#") ? to : href(to)}
+                /* The page you are on is marked, so a row of eight products
+                   tells you where you are instead of being eight identical
+                   words. */
+                aria-current={to === `/products/${page.product.handle}` ? "page" : undefined}
+              >
+                {label}
+              </a>
             ))}
           </nav>
           <div className="cb-header__right">

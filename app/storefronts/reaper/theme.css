@@ -610,3 +610,44 @@
   .cb-recs__grid::-webkit-scrollbar { display: none; }
   .cb-rec { flex: 0 0 62%; scroll-snap-align: start; }
 }
+
+/* ----------------------------------------------------------------- the nav */
+
+/*
+ * Eight products is a lot of words to put in one line. The template's nav was
+ * written for a shop with four, where every link can be black and full weight
+ * and the row still reads as navigation. At eight it reads as a wall of
+ * shouting, and the logo beside it stops being the loudest thing in the
+ * header — which it has to be.
+ *
+ * So the links step back: a touch smaller, grey rather than ink, with the
+ * weight moved into the one that matters. The page you are on is the only
+ * black one, underlined in the brand colour; hovering grows the same
+ * underline out from the left, so the row has a state to move between rather
+ * than just a colour change.
+ */
+.cb-nav { gap: 22px; }
+.cb-nav a {
+  position: relative;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--dim);
+  padding: 6px 0;
+  transition: color .14s ease;
+}
+.cb-nav a::after {
+  content: "";
+  position: absolute; left: 0; bottom: 0;
+  height: 2px; width: 100%;
+  background: var(--action);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .18s ease;
+}
+.cb-nav a:hover { color: var(--ink); }
+.cb-nav a:hover::after { transform: scaleX(1); }
+.cb-nav a[aria-current="page"] { color: var(--ink); font-weight: 700; }
+.cb-nav a[aria-current="page"]::after { transform: scaleX(1); }
+
+/* The row still has to fit. Below this the header hands over to the burger,
+   which the template already draws. */
+@media (max-width: 1180px) { .cb-nav { gap: 17px; } .cb-nav a { font-size: 14px; } }
