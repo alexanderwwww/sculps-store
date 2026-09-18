@@ -39,10 +39,20 @@ const chat = createServer((req, res) => {
   res.end(`<!doctype html><html><head><title>fake chat</title></head><body>
     <button data-testid="create-new-chat-button">New chat</button>
     <div id="prompt-textarea" contenteditable="true"></div>
+    <input type="file" id="picker" multiple>
     <button data-testid="send-button">Send</button>
     <div id="thread"></div>
     <script>
       let n = 0;
+      // Anything attached shows as a thumbnail, the way both real sites do.
+      document.getElementById('picker').addEventListener('change', (e) => {
+        for (const f of e.target.files) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f);
+          img.className = 'attached';
+          document.getElementById('thread').appendChild(img);
+        }
+      });
       document.querySelector('[data-testid=send-button]').onclick = () => {
         const box = document.getElementById('prompt-textarea');
         if (!box.textContent.trim()) return;
@@ -63,13 +73,26 @@ const chat = createServer((req, res) => {
 const chatUrl = `http://localhost:${chat.address().port}/`;
 
 /* ------------------------------------------- the queue and the order file */
-let queue = { id: "e2e-1", name: "E2E", site: "fake", prompts: ["draw one", "draw two"] };
+let queue = {
+  id: "e2e-1",
+  name: "E2E",
+  site: "fake",
+  sameChat: true,
+  prompts: ["draw one", "draw two"],
+  refs: [],
+};
 let order = { cmd: "", at: 0 };
 const api = createServer((req, res) => {
+  // The reference picture a job can point at, served from the same place.
+  if (req.url.startsWith("/ref.png")) {
+    res.writeHead(200, { "content-type": "image/png" });
+    return res.end(PNG);
+  }
   res.writeHead(200, { "content-type": "application/json" });
   res.end(JSON.stringify(req.url.startsWith("/control") ? order : queue));
 }).listen(0);
 const apiUrl = `http://localhost:${api.address().port}`;
+queue.refs = [`${apiUrl}/ref.png`];
 
 /* ------------------------------------------------ a Chrome with the door on */
 const browser = await chromium.launchServer({
@@ -131,6 +154,14 @@ await until("pictures land on disk", async () => {
   return files.some((f) => f.endsWith(".png"));
 });
 await until("and it says it is done", async () => /ready|saved/.test(log));
+
+console.log("\nthe references:");
+check("the job's reference was downloaded and attached", /attached 1/.test(log), log.match(/attached[^\n]*/)?.[0] ?? "never");
+check(
+  "and not attached again on the second prompt in the same chat",
+  (log.match(/attached 1/g) ?? []).length === 1 && /already in this chat/.test(log),
+  `${(log.match(/attached 1/g) ?? []).length} times`,
+);
 
 app.kill();
 await driver.close().catch(() => {});

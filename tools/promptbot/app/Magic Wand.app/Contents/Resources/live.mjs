@@ -435,13 +435,17 @@ async function fetchRefs(urls, dir) {
   const out = [];
   for (let i = 0; i < urls.length; i++) {
     try {
-      const res = await fetch(urls[i]);
-      if (!res.ok) continue;
+      const stop = new AbortController();
+      const timer = setTimeout(() => stop.abort(), 20000);
+      const res = await fetch(urls[i], { signal: stop.signal }).finally(() => clearTimeout(timer));
+      if (!res.ok) { log(`  \x1b[31m!! reference ${i + 1} came back ${res.status}\x1b[0m`); continue; }
       const ext = (urls[i].split(".").pop() ?? "jpg").split("?")[0].slice(0, 4);
       const path = join(dir, `ref-${i + 1}.${ext}`);
       await writeFile(path, Buffer.from(await res.arrayBuffer()));
       out.push(path);
-    } catch { /* a reference that won't download isn't worth stopping for */ }
+    } catch {
+      log(`  \x1b[31m!! reference ${i + 1} wouldn't download\x1b[0m`);
+    }
   }
   return out;
 }
@@ -640,8 +644,21 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await wait(1600); await wand.reattach(); }
   }
 
+  /*
+   * The references go in once when the whole run is one conversation.
+   *
+   * Attaching the same two pictures to all forty-four prompts is ten minutes
+   * of waiting, a thread full of duplicates, and a good way to be rate
+   * limited — and pointless, because the model can already see them further
+   * up the same chat.
+   */
+  const skipRefs = sameChat && n > 1;
+  if (skipRefs && (fromCard || refs.length)) {
+    console.log(`  \x1b[2mreferences already in this chat\x1b[0m`);
+  }
+
   // Pictures before words: both sites disable send while an upload is running.
-  if (fromCard) {
+  if (fromCard && !skipRefs) {
     // Straight from the panel that received them — no disk, no file dialog.
     await wand.say(label, `${n} of ${total} — attaching ${fromCard}…`);
     const before = await blobCount(page);
@@ -658,7 +675,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     log(ok
       ? `  attached ${fromCard} (from the card)`
       : `  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
-  } else if (refs.length) {
+  } else if (refs.length && !skipRefs) {
     await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
     const how = await putFiles(page, refs, wand, label);
     if (how) {
@@ -922,12 +939,24 @@ async function holdIfPaused(what = "") {
  * returns only what a person pressed.
  */
 async function decision(label, sub, summary) {
-  if (!wand.mounted) return ask(label, summary);
+  if (!wand.mounted) {
+    // The overlay could not be drawn, so the macOS dialog is the gate. It can
+    // sit there for an hour, and silence for an hour is the thing this whole
+    // status board exists to stop.
+    report("waiting for approval", { job: label, waitingFor: "the dialog on the Mac — the on-screen card could not be drawn" });
+    return ask(label, summary);
+  }
   let beat = 0;
   for (;;) {
     await obey();
     if (await wand.stopped()) return "skip";
-    if (!(await ensurePage())) { await wait(1000); continue; }
+    if (!(await ensurePage())) {
+      // Reported from in here too. Looping quietly on a missing tab was
+      // indistinguishable, from the outside, from having died.
+      report("waiting for a tab", { job: label, waitingFor: `a ${site.name} tab with a message box in it` });
+      await wait(1000);
+      continue;
+    }
     if (!(await wand.present())) { await wand.reattach(); await wand.ask(label, sub); }
     else if (!(await wand.asking())) {
       const a = await wand.answer();
@@ -1127,6 +1156,22 @@ while (true) {
   const inCard = await wand.fileCount();
   const refs = inCard ? [] : picked.length ? picked : await fetchRefs(job.refs, join(dir, "reference"));
   if (inCard) log(`  ${inCard} picture${inCard === 1 ? "" : "s"} from the card`);
+
+  /*
+   * A job that asked for references and got none would draw the wrong thing
+   * forty-four times and spend the day's quota doing it. It stops instead,
+   * says why, and leaves the job to be run again once the pictures are
+   * reachable.
+   */
+  if (job.refs?.length && !inCard && !picked.length && !refs.length) {
+    log(`  \x1b[31m!! none of the ${job.refs.length} reference pictures would download — not running\x1b[0m`);
+    report("error", { job: label, error: "the job's reference pictures could not be downloaded" });
+    await wand.done("Couldn't get the references", "Nothing was run. The pictures the job points at didn't download.");
+    // Written down, or it is offered again every six seconds forever.
+    done.add(job.id);
+    await writeFile(DONE_FILE, [...done].join("\n"));
+    continue;
+  }
 
   await wand.running();
   let total = 0;
