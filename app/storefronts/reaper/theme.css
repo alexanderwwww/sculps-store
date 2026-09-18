@@ -1016,3 +1016,52 @@
 .cb-gal__thumb[aria-current="true"] { border-color: var(--action); box-shadow: 0 0 0 2px var(--action); }
 
 @media (max-width: 900px) { .cb-gal { position: static; } }
+
+/* ------------------------------------------- the bundle box, final shape */
+
+/*
+ * What the trade actually knows about these, applied:
+ *
+ *  - the per-unit price is the number that sells a multi-pack, so it is the
+ *    big one, and the total sits under it rather than disappearing;
+ *  - the saving is stated in money, never a percentage, and wears the one
+ *    colour on the page that means money;
+ *  - exactly one row is flagged, because two recommendations is none;
+ *  - the chosen row earns its space by answering what is included, and only
+ *    the chosen row, because the same three lines on all three is a wall;
+ *  - and nothing here moves on hover except a shadow. A bundle box that
+ *    animates is a bundle box being read instead of used.
+ */
+.cb-tier__price {
+  display: flex; align-items: baseline; gap: 4px;
+  font-size: 21px;
+}
+.cb-tier__price i {
+  font-style: normal; font-family: var(--body);
+  font-size: 12px; font-weight: 700; color: var(--dim);
+  letter-spacing: 0;
+}
+.cb-tier__each {
+  margin-top: 2px;
+  background: none; padding: 0;
+  font-weight: 500; font-size: 12px; color: var(--dimmer);
+}
+.cb-tier[aria-checked="true"] .cb-tier__each { background: none; color: var(--dim); }
+
+.cb-tier__perks {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  margin-top: 8px;
+}
+.cb-tier__perks i {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-style: normal; font-size: 12px; font-weight: 600; color: #0B6E3F;
+}
+.cb-tier__perks svg { width: 13px; height: 13px; color: var(--go); }
+
+/* The row is a column on a phone, or the per-unit price and the name fight
+   over the same forty pixels. */
+@media (max-width: 430px) {
+  .cb-tier__price { font-size: 18px; }
+  .cb-tier__perks { gap: 3px 10px; }
+  .cb-tier__perks i { font-size: 11.5px; }
+}

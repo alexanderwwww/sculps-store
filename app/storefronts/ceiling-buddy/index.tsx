@@ -559,14 +559,38 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
                         {save ? <b>Save {formatMoney(save, currency)}</b> : null}
                         {!save && x.sublabel ? <span>{x.sublabel}</span> : null}
                       </span>
+                      {/* Only on the row that is chosen, and only three
+                          words each: a list on every row is a wall, and a
+                          list on none is a question nobody answers. */}
+                      {on ? (
+                        <span className="cb-tier__perks">
+                          {promises(page).slice(0, 3).map((t) => (
+                            <i key={t}>{IcoCheck}{t}</i>
+                          ))}
+                        </span>
+                      ) : null}
                     </span>
 
+                    {/*
+                      The per-unit price is the headline on a multi-pack, and
+                      the total is the footnote.
+
+                      This is the whole mechanism of a bundle box. Somebody
+                      comparing "$129" against "$199" is comparing two spends
+                      and the cheaper one always wins. Somebody comparing
+                      "$129 each" against "$99.50 each" is comparing two
+                      prices for the same object, and the bigger basket wins —
+                      while the total, which is the thing they will actually
+                      be charged, stays visible underneath so nothing is being
+                      hidden from them.
+                    */}
                     <span className="cb-tier__right">
-                      <span className="cb-tier__price">{formatMoney(x.priceCents, currency)}</span>
+                      <span className="cb-tier__price">
+                        {formatMoney(qty > 1 ? Math.round(x.priceCents / qty) : x.priceCents, currency)}
+                        {qty > 1 ? <i>each</i> : null}
+                      </span>
                       {qty > 1 ? (
-                        <span className="cb-tier__each">
-                          {formatMoney(Math.round(x.priceCents / qty), currency)} each
-                        </span>
+                        <span className="cb-tier__each">{formatMoney(x.priceCents, currency)} total</span>
                       ) : null}
                     </span>
                   </button>
@@ -1330,7 +1354,10 @@ function Score({ page }: { page: LoadedProductPage }) {
         ))}
       </span>
       <b>{mean.toFixed(1)}</b>
-      <span>{rated.length} reviews</span>
+      {/* No count, ever. A number of reviews is a number to be compared
+          against, and for a shop in its first season that comparison is
+          always lost. The score and the wall below say enough. */}
+      <span>Rated by verified buyers</span>
     </a>
   );
 }
@@ -1359,9 +1386,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
               ))}
             </span>
           ) : null}
-          <span className="cb-revs__of">
-            {rated.length} {rated.length === 1 ? "review" : "reviews"}
-          </span>
+          <span className="cb-revs__of">from verified buyers</span>
         </div>
       </div>
 
