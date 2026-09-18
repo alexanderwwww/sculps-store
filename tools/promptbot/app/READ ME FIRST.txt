@@ -1,45 +1,55 @@
 MAGIC WAND
 
 
-INSTALL — the first step matters
+BEFORE ANYTHING — throw away the old one
+
+If you have a folder called "wand" in Downloads, drag it to the Trash and
+empty the Trash. It's the old version and it looks for Node in the wrong
+place. Nothing in it is needed.
+
+
+INSTALL
 
 1. DRAG  Magic Wand.app  INTO YOUR APPLICATIONS FOLDER FIRST.
 
-   Don't open it from Downloads. macOS runs a downloaded app from a
-   locked temporary copy of itself, so it can't finish setting up and
-   you get "Setup failed" for no visible reason. Moving it to
-   Applications is what stops that happening.
+   Not Downloads, not the Desktop. macOS runs a downloaded app from a
+   locked temporary copy of itself, so it can't finish setting up and you
+   get "Setup failed" for no visible reason. Moving it to Applications is
+   what stops that.
 
-2. Open it. macOS will refuse:
+2. Double-click  Install Node  and let it finish.
+
+   If Node is already on your Mac it says so and closes — no harm done.
+   Otherwise it downloads the right version for your chip and opens
+   Apple's installer: Continue, Continue, Agree, Install, your password,
+   Close.
+
+3. Open Magic Wand. macOS will refuse it:
    "cannot be opened because it is from an unidentified developer."
    Expected.
 
-3. Apple menu -> System Settings -> Privacy & Security
+4. Apple menu -> System Settings -> Privacy & Security
    Scroll down. There's a line about Magic Wand being blocked.
    Click OPEN ANYWAY, enter your password.
 
-4. Open Magic Wand again, click Open. Last time it asks.
+5. Open Magic Wand again, click Open. Last time it asks.
 
-5. If it says Node isn't installed it opens nodejs.org for you.
-   Big green LTS button, double-click the .pkg, click through it.
-   Apple signs that one, so no warnings. Then open Magic Wand again.
-
-6. First run sets itself up. A couple of minutes, once only.
+6. It sets itself up. A couple of minutes, once only.
 
 
 USING IT
 
-Open Magic Wand. It asks Gemini or ChatGPT, opens a Chrome window
-(its own — your normal Chrome and your tabs are untouched), and waits
-for you to sign in. Press Return and leave the window open.
+Open Magic Wand. It asks Gemini or ChatGPT, opens a Chrome window (its
+own — your normal Chrome and your tabs are untouched), and waits for you
+to sign in. Press Return and leave the window open.
 
-Then tell Claude what you want, in plain words. Claude writes the
-prompts and queues them. Within a few seconds your screen shows what
-arrived — the name, and the first line of every prompt. Press Return
-and the wand does it.
+Then tell Claude what you want, in plain words. Claude writes the prompts
+and queues them. Within a few seconds your screen shows what arrived —
+the name, and the first line of every prompt. Press Return and the wand
+does it.
 
-One prompt at a time. Fresh chat each time, the full prompt, then it
-waits for the pictures to finish generating before moving to the next.
+One prompt at a time. Fresh chat each time, the full prompt, then it waits
+for the pictures to finish generating before moving to the next.
 
 PRESS ESC IN THE BROWSER TO STOP. Nothing further gets typed.
 
@@ -53,8 +63,8 @@ It opens that folder for you when it finishes.
 
 IF IT SAYS CHROME DIDN'T OPEN
 
-A normal Chrome was still running. Quit it properly — Cmd+Q, not the
-red dot — then open Magic Wand again.
+A normal Chrome was still running. Quit it properly — Cmd+Q, not the red
+dot — then open Magic Wand again.
 
 
 IF IT STILL SAYS SETUP FAILED

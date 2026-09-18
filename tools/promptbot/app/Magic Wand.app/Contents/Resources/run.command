@@ -14,7 +14,8 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-WORK="$HOME/Library/Application Support/Magic Wand"
+BUILD="2"
+WORK="$HOME/Library/Application Support/Magic Wand/$BUILD"
 OUT="$HOME/Pictures/Magic Wand"
 PORT=9222
 PROFILE="$HOME/.magicwand-chrome"
@@ -26,10 +27,31 @@ die() { printf "\n\033[31m%s\033[0m\n\n" "$1"; echo "Press any key to close."; r
 printf "\033]0;Magic Wand\007"
 say "Magic Wand"
 
-# A Dock launch inherits almost no PATH, so a perfectly good install of Node
-# reads as missing unless we go and look where the two installers put it.
+# Finding Node.
+#
+# An app launched from the Dock gets a bare PATH — not the one your Terminal
+# has — so a working install is invisible unless we go looking. There are four
+# ways it lands on a Mac and they all put it somewhere different, which is why
+# this is a search rather than a check.
 if ! command -v node >/dev/null 2>&1; then
-  for c in /usr/local/bin /opt/homebrew/bin; do [ -x "$c/node" ] && PATH="$c:$PATH"; done
+  # The two installers: Apple's .pkg, and Homebrew on Apple Silicon.
+  for c in /usr/local/bin /opt/homebrew/bin /opt/local/bin; do
+    [ -x "$c/node" ] && PATH="$c:$PATH"
+  done
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  # nvm keeps versions in its own tree and only puts them on PATH when a
+  # shell starts, so take the newest it has.
+  NVM_NODE=$(ls -d "$HOME/.nvm/versions/node"/*/bin/node 2>/dev/null | sort -V | tail -1)
+  [ -n "${NVM_NODE:-}" ] && PATH="$(dirname "$NVM_NODE"):$PATH"
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  # Last resort: ask a login shell, which reads the profile files that would
+  # have set this up for a Terminal window.
+  SHELL_PATH=$("$SHELL" -lic 'command -v node' 2>/dev/null | tail -1)
+  [ -x "${SHELL_PATH:-}" ] && PATH="$(dirname "$SHELL_PATH"):$PATH"
 fi
 
 if ! command -v node >/dev/null 2>&1; then
@@ -39,6 +61,9 @@ if ! command -v node >/dev/null 2>&1; then
   echo "no security warning."
   echo
   echo "Then open Magic Wand again."
+  echo
+  echo "Or close this and double-click \"Install Node\" — it fetches the right"
+  echo "version for your Mac and opens Apple's installer for you."
   sleep 2
   open "https://nodejs.org/en/download" 2>/dev/null
   echo "Press any key to close."; read -r -n 1; exit 1
@@ -53,7 +78,7 @@ cp "$BUNDLE"/*.mjs "$BUNDLE/package.json" "$WORK/" 2>/dev/null
 cd "$WORK" || die "Couldn't open $WORK"
 
 if [ ! -d node_modules ]; then
-  say "First run — setting up. A couple of minutes, once only."
+  say "Setting up. A couple of minutes, once only."
   npm install --silent || die "Setup failed. Scroll up for why."
   npx --yes playwright install chromium || die "Couldn't fetch the browser engine."
 fi
