@@ -76,6 +76,24 @@ function report(state, extra = {}) {
   }).catch(() => {});
 }
 
+/**
+ * A finished picture, sent up to the shop as well as saved to disk.
+ *
+ * Fire and forget, with a deadline: the run is not held up by an upload, and
+ * a failed one costs nothing because the picture is on the disk either way.
+ */
+function send(dir, name, bytes) {
+  const job = dir.split("/").filter(Boolean).pop() || "run";
+  const stop = new AbortController();
+  setTimeout(() => stop.abort(), 30000);
+  fetch(`${WAND}/shot?job=${encodeURIComponent(job)}&name=${encodeURIComponent(name)}`, {
+    method: "POST",
+    headers: { "content-type": "image/png" },
+    body: bytes,
+    signal: stop.signal,
+  }).catch(() => {});
+}
+
 /** Printed and reported in one go, so the two can never disagree. */
 function log(line) {
   console.log(line);
@@ -811,6 +829,11 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
 
     saved++;
     console.log(`  \x1b[2m${how}\x1b[0m ${url.slice(0, 70)}`);
+    // Up it goes as well as down. A picture that only exists in a folder on
+    // one laptop has to be found, downloaded and re-uploaded by hand before
+    // the shop can use it; one that is also here can be put on a product the
+    // moment it exists.
+    send(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`, buf);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
     await writeFile(join(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`), buf);

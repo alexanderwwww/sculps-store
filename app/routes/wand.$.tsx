@@ -35,6 +35,9 @@ const FILES = {
   queue: "wand-queue.json",
 } as const;
 
+/** Where finished pictures land, so they come back here instead of only to a Desktop. */
+const SHOTS = "wand-shots/";
+
 type Slot = keyof typeof FILES;
 
 const json = (body: unknown, status = 200) =>
@@ -65,6 +68,40 @@ async function write(env: Env, slot: Slot, value: unknown) {
   await env.MEDIA?.put(FILES[slot], JSON.stringify(value, null, 2), {
     httpMetadata: { contentType: "application/json", cacheControl: "no-store" },
   });
+}
+
+/* ----------------------------------------------------------------- shots */
+
+/**
+ * The pictures themselves, sent up as they are saved.
+ *
+ * A run used to end with a zip on Alex's Desktop and nothing anywhere else,
+ * which meant every picture had to be found, downloaded, re-uploaded and
+ * pointed at a product by hand. They arrive here now, one POST each, as the
+ * run makes them — so by the time it finishes they are already somewhere the
+ * shop can be pointed at and somewhere Claude can look.
+ */
+async function listShots(env: Env, job?: string) {
+  const prefix = job ? `${SHOTS}${job}/` : SHOTS;
+  const out: { key: string; job: string; name: string; size: number; uploaded: string }[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.MEDIA.list({ prefix, cursor, limit: 500 });
+    for (const o of page.objects) {
+      const rest = o.key.slice(SHOTS.length);
+      const cut = rest.indexOf("/");
+      out.push({
+        key: o.key,
+        job: cut < 0 ? "" : rest.slice(0, cut),
+        name: cut < 0 ? rest : rest.slice(cut + 1),
+        size: o.size,
+        uploaded: o.uploaded.toISOString(),
+      });
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  out.sort((a, b) => a.key.localeCompare(b.key));
+  return out;
 }
 
 /* ------------------------------------------------------------------- MCP */
@@ -119,6 +156,13 @@ const TOOLS = [
         site: { type: "string", enum: ["chatgpt", "gemini"] },
         prompts: { type: "array", items: { type: "string" } },
         sameChat: { type: "boolean" },
+        refs: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Urls of reference pictures. The app downloads and attaches them itself, so " +
+            "nothing has to be dropped onto the card by hand.",
+        },
         wait: { type: "number" },
         url: { type: "string" },
         selectors: { type: "object" },
@@ -126,11 +170,32 @@ const TOOLS = [
       required: ["name", "prompts"],
     },
   },
+  {
+    name: "wand_shots",
+    description:
+      "The pictures Magic Wand has sent up from Alex's Mac, newest run included. Each one " +
+      "has a url that can be fetched directly. Use this to see what a run actually " +
+      "produced, and to put the pictures on the shop.",
+    inputSchema: {
+      type: "object",
+      properties: { job: { type: "string", description: "Only this run's pictures." } },
+    },
+  },
 ] as const;
 
 async function callTool(env: Env, name: string, args: Record<string, unknown>) {
   if (name === "wand_status") {
     return (await read(env, "status")) ?? { state: "no report yet — the app has not been opened since this was added" };
+  }
+  if (name === "wand_shots") {
+    const shots = await listShots(env, args.job ? String(args.job) : undefined);
+    return {
+      count: shots.length,
+      shots: shots.map((x) => ({
+        ...x,
+        url: `https://kerberos.gardenbuddystore.workers.dev/wand/${KEY}/file/${x.job}/${x.name}`,
+      })),
+    };
   }
   if (name === "wand_queue_get") {
     return (await read(env, "queue")) ?? { queued: null };
@@ -151,6 +216,7 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
       name: String(args.name ?? "Untitled"),
       site: args.site === "gemini" ? "gemini" : "chatgpt",
       sameChat: Boolean(args.sameChat),
+      ...(Array.isArray(args.refs) && args.refs.length ? { refs: args.refs.map(String) } : {}),
       ...(args.wait ? { wait: Number(args.wait) } : {}),
       ...(args.url ? { url: String(args.url) } : {}),
       ...(args.selectors && typeof args.selectors === "object" ? { selectors: args.selectors } : {}),
@@ -171,7 +237,21 @@ async function mcp(env: Env, body: any) {
     return reply({
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "magic-wand", version: "1.0.0" },
+      serverInfo: {
+        name: "magic-wand",
+        title: "Magic Wand",
+        version: "1.0.0",
+        websiteUrl: "https://kerberos.gardenbuddystore.workers.dev",
+        // Offered the way the spec allows. Whether a given client draws it is
+        // the client's business, and none of this depends on it.
+        icons: [
+          {
+            src: `https://kerberos.gardenbuddystore.workers.dev/wand/${KEY}/icon.png`,
+            mimeType: "image/png",
+            sizes: ["512x512"],
+          },
+        ],
+      },
     });
   }
   if (body?.method === "notifications/initialized") return null;
@@ -199,6 +279,31 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (what === "status") return json((await read(env, "status")) ?? { state: "never reported" });
   if (what === "order") return json((await read(env, "order")) ?? { cmd: "", at: 0 });
   if (what === "queue") return json((await read(env, "queue")) ?? {});
+  if (what === "shots") {
+    const shots = await listShots(env);
+    return json({ count: shots.length, shots });
+  }
+  if (what === "file") {
+    // Everything after /file/ is the picture's own path.
+    const rest = (params["*"] ?? "").split("/").slice(2).join("/");
+    const obj = rest ? await env.MEDIA.get(`${SHOTS}${rest}`) : null;
+    if (!obj) throw new Response("Not found", { status: 404 });
+    return new Response(obj.body, {
+      headers: {
+        "content-type": obj.httpMetadata?.contentType ?? "image/png",
+        "cache-control": "public, max-age=3600",
+        "access-control-allow-origin": "*",
+      },
+    });
+  }
+  if (what === "icon.png" || what === "icon") {
+    // The wand's own mark, for whatever draws the connector.
+    const obj = await env.MEDIA.get("wand-icon.png");
+    if (!obj) throw new Response("Not found", { status: 404 });
+    return new Response(obj.body, {
+      headers: { "content-type": "image/png", "cache-control": "public, max-age=86400" },
+    });
+  }
   if (what === "mcp") {
     // A GET on the MCP endpoint is a client checking it is there.
     return json({ ok: true, server: "magic-wand", tools: TOOLS.map((t) => t.name) });
@@ -211,6 +316,24 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   if (request.method === "OPTIONS") return json({ ok: true });
   if (key !== KEY) throw new Response("Not found", { status: 404 });
   const env = context.cloudflare.env;
+
+  /*
+   * A picture is bytes, not JSON, and it is the one thing posted here that is
+   * — so it is handled before anything tries to parse the body as text.
+   */
+  if (what === "shot") {
+    const url = new URL(request.url);
+    const clean = (v: string) => v.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 80);
+    const job = clean(url.searchParams.get("job") || "run");
+    const name = clean(url.searchParams.get("name") || `${Date.now()}.png`);
+    const bytes = await request.arrayBuffer();
+    if (!bytes.byteLength) return json({ ok: false, error: "empty" }, 400);
+    if (bytes.byteLength > 25_000_000) return json({ ok: false, error: "too big" }, 413);
+    await env.MEDIA.put(`${SHOTS}${job}/${name}`, bytes, {
+      httpMetadata: { contentType: request.headers.get("content-type") ?? "image/png" },
+    });
+    return json({ ok: true, url: `${url.origin}/wand/${KEY}/file/${job}/${name}` });
+  }
 
   let body: any = null;
   try {
