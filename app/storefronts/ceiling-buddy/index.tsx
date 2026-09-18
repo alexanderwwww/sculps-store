@@ -1436,13 +1436,20 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
   const href = (p: string) => `${p}${storeParam}`;
   const drawer = useCartDrawer();
   const buy = page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
+  // The last offer said one store's line no matter whose page it was on. It
+  // borrows the Closing CTA's heading, which the shop already writes.
+  const closing = page.sections.find((x) => x.type === "closing_cta");
   return (
     <>
       {/* One last offer, made properly, before the small print. */}
       <section className="cb-last">
         <div className="cb-wrap cb-last__in">
           <img className="cb-last__logo" src={page.store.logoUrl ?? LOGO} alt="" />
-          <h2 className="cb-h2">Your ceiling is the biggest screen you own</h2>
+          <h2 className="cb-h2">
+            {has(closing?.values ?? {}, "heading")
+              ? val(closing!.values, "heading")
+              : "Your ceiling is the biggest screen you own"}
+          </h2>
           {buy ? (
             <form
               method="post"
@@ -1456,9 +1463,9 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
             </form>
           ) : null}
           <ul className="cb-last__trust">
-            <li>{IcoTruck}<b>Free</b> US shipping</li>
-            <li>{IcoReturn}<b>30 nights</b> to change your mind</li>
-            <li>{IcoShield}<b>1 year</b> warranty</li>
+            {promises(page).map((text, i) => (
+              <li key={text}>{[IcoTruck, IcoReturn, IcoShield][i]}{text}</li>
+            ))}
           </ul>
         </div>
       </section>

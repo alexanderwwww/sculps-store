@@ -1,156 +1,64 @@
 /**
  * Black Reaper — store five.
  *
- * This is not a new theme. It is Ceiling Buddy's theme with the lights turned
- * off. That store's stylesheet is written almost entirely against tokens, so
- * a shop selling five-metre inflatable ghouls can borrow every one of its
- * eighteen sections, its phone-frame FAQ and its cart drawer, and change
- * nothing but the colours. Loaded after ceiling-buddy/theme.css, which is
- * where all the structure still lives.
+ * This is not a new theme. It is Ceiling Buddy's, and it stays near-white for
+ * the same reason that one does: a clean, bright, roomy page is what reads as
+ * a real shop, and a real shop is what converts. Halloween is the product, not
+ * the paint. A black website does not make an inflatable scarier — it makes
+ * the photographs harder to see and the buy button harder to find.
  *
- * Why black and orange and nothing else: Halloween is the one season with a
- * palette everybody already knows. Adding a third colour to it does not make
- * the page more festive, it makes it look like a party-supplies catalogue.
- * The orange is the action colour and the *only* saturated thing on the page,
- * so every orange pixel is either a price or a button. The product photos are
- * lit black-on-black; a dark page makes each one read as a thing glowing in
- * somebody's yard at night, which is the entire product.
+ * So exactly one thing changes: the action colour. Ceiling Buddy's is its ink,
+ * because a black button on white paper asks no questions. Here it is the
+ * orange out of the logo, because on this page orange is the only saturated
+ * thing there is — which means every orange pixel is a price or a button, and
+ * the eye goes straight to it.
+ *
+ * The product photography is dark objects lit at night. A bright page makes
+ * every one of those read as a lit window. That contrast is the design, and it
+ * only works while the page stays light.
+ *
+ * Loaded after ceiling-buddy/theme.css, which is where the structure lives.
  */
 
 .cb {
-  --paper: #0B0B0C;        /* the night the yard is lit against */
-  --paper-2: #121214;      /* the quietest possible band */
-  --cream: #17171A;        /* a surface, one step up from the band */
-
-  --sky: #F5821F;          /* the logo's orange */
+  --sky: #F5821F;          /* the logo's orange, where the blue used to be */
   --amber: #F5821F;
-  --action: #F5821F;       /* the action colour, and the only saturated one */
-  --action-soft: rgba(245, 130, 31, 0.16);
-  --ink: #F7F2E7;          /* bone, not white — white on black is a screen */
-
-  --dim: rgba(247, 242, 231, 0.62);
-  --dimmer: rgba(247, 242, 231, 0.38);
-
-  /* On a dark page a drop shadow is invisible, so the lift has to come from
-     a lighter hairline instead. Same one border weight, same restraint. */
-  --hair: rgba(247, 242, 231, 0.14);
-  --lift: 0 1px 2px rgba(0,0,0,.5), 0 10px 26px -16px rgba(0,0,0,.8);
-  --lift-lg: 0 1px 3px rgba(0,0,0,.5), 0 28px 60px -30px rgba(0,0,0,.9);
-  --pop: var(--lift);
-  --pop-sm: var(--lift);
-
-  --night: #0B0B0C;        /* the night chapter and the page are one place now */
+  --action: #F5821F;
+  --action-soft: rgba(245, 130, 31, 0.15);
+  --cream: #FFF7EE;        /* the logo's warm off-white, on surfaces only */
 }
 
 /* -------------------------------------------------- what tokens can't reach */
 
 /*
- * Ceiling Buddy's button is a black fill with white text, and both of those
- * are written literally because a black button on white paper never needed to
- * change. Here the fill is orange, so the label has to go dark or it vanishes.
+ * The template's button is an ink fill with white text, both written
+ * literally, because a black button never needed to change. Orange needs a
+ * dark label instead — white on this orange is the one pairing that fails to
+ * read at button weight.
  */
 .cb .cb-btn {
   background: var(--action);
   border-color: var(--action);
   color: #140A02;
 }
-.cb .cb-btn:hover { background: #FF9330; }
-.cb .cb-btn--ghost {
-  background: transparent;
-  color: var(--ink);
-  border-color: var(--hair);
-}
-.cb .cb-btn--ghost:hover { background: rgba(247, 242, 231, 0.07); }
+.cb .cb-btn:hover { background: #E4741A; }
+.cb .cb-btn--ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+.cb .cb-btn--ghost:hover { background: var(--action-soft); }
 
-/* The ticker was amber-on-ink. Inverted, it is the loudest strip on the page. */
-.cb-ticker { background: var(--action); color: #140A02; border-bottom-color: transparent; }
+/* Small solid pills that were ink-on-white become the action colour, so the
+   badge on the saving bundle and the button agree with each other. */
+.cb-badge, .cb-opt__flag--pop, .cb-up__add { background: var(--action); color: #140A02; }
 
-/* A white page could underline a heading with a pale wash. A dark one can't —
-   16% orange behind bone type is legible where a light tint would be mud. */
-.cb-head h2 {
-  background: linear-gradient(to top, var(--action-soft) 0 28%, transparent 28%);
-}
-
-/*
- * Every product photo here is a dark object shot at night. Left alone they sit
- * on the page as grey rectangles with visible edges; a faint bone ring gives
- * each one a frame to end at.
- */
-.cb img { background: transparent; }
-
-/* The sticky header is a white wash on a white page. Here it has to be the
-   page's own black, or it floats over the yard photos as a grey band. */
-.cb-header { background: rgba(11, 11, 12, 0.86); border-bottom-color: var(--hair); }
-
-/* No mark yet, so the store's name is the mark: set in the display face,
-   tight and bone-coloured, at the size the logo would have occupied. */
-.cb-logo b {
-  font-family: var(--display); font-weight: 800; font-size: 25px;
-  letter-spacing: -0.04em; color: var(--ink); text-transform: uppercase;
-}
-.cb-logo b::first-letter { color: var(--action); }
-.cb-footer__brand b { color: #fff; display: block; margin-bottom: 14px; }
-
-/* The footer is ink-on-ink now that the ink is bone. Give it the one band
-   colour so it still separates from the last section above it. */
-.cb-footer { background: var(--paper-2); color: var(--dim); border-top-color: var(--hair); }
-.cb-footer__col h3 { color: var(--ink); }
+/* The selected bundle's wash, and the swipe under a section heading. */
+.cb-opt[aria-checked="true"] { background: rgba(245, 130, 31, 0.08); }
+.cb-up:hover { background: rgba(245, 130, 31, 0.08); }
 .cb-footer__col a:hover { color: var(--action); }
 
-/* ------------------------------------------------ dark fills on a dark page */
-
-/*
- * The template paints a handful of sections in the ink colour with white text
- * on top — a black band breaking up a white page. Inverting the palette turns
- * every one of those into a cream band with white text on it, which is the
- * one thing that cannot be read. They become the panel colour instead: a step
- * up from the page, still dark, still a break in the rhythm.
- */
-.cb-steps-s,
-.cb-vs__side--us,
-.cb-band,
-.cb-last,
-.cb-for__it[data-i="0"] {
-  background: var(--cream);
-  color: var(--ink);
-  border-color: var(--hair);
-}
-.cb-steps-s .cb-head h2 {
-  color: var(--ink);
-  -webkit-text-fill-color: var(--ink);
-  background: linear-gradient(to top, var(--action-soft) 0 26%, transparent 26%);
-}
-.cb-steps-s .cb-lede,
-.cb-step p { color: var(--dim); }
-
-/* Small solid pills that were ink-on-white. Orange reads on black; bone does
-   not, because bone is already the body text. */
-.cb-badge, .cb-opt__flag--pop, .cb-up__add {
-  background: var(--action); color: #140A02;
-}
-
-/* The option card's selected state was a warm off-white wash. */
-.cb-opt[aria-checked="true"] { background: rgba(245, 130, 31, 0.10); }
-.cb-opt__dot { background: transparent; border-color: var(--hair); }
-.cb-up:hover { background: rgba(245, 130, 31, 0.10); }
-
-/* Photo wells were ink-coloured so an image had something to sit on while it
-   loaded. On this page that well is the page. */
-.cb-tile, .cb-wall__i, .cb-vid__frame { background: var(--paper-2); }
-
-/* The bar that slides up from the bottom once the buy box scrolls away, and
-   the footer's fine print, were both white washes. */
-.cb-sticky { background: rgba(11, 11, 12, 0.94); border-top-color: var(--hair); }
-.cb-footer__bar { color: var(--dimmer); }
-.cb-specgrid__it:hover { background: var(--cream); }
-.cb-card, .cb-card--fb, .cb-card--ig, .cb-card--tt { background: var(--cream); color: var(--ink); }
-
-/* The photo banner's button is white on purpose, because a dark button
-   disappears into a night photo. Orange does the same job and belongs here. */
+/* The photo banner's button is white on purpose — a dark button disappears
+   into a night shot. Orange does that job and belongs to this store. */
 .cb .cb-bn__btn.cb-bn__btn { background: var(--action); color: #140A02; }
-.cb .cb-bn__btn.cb-bn__btn:hover { background: #FF9330; }
+.cb .cb-bn__btn.cb-bn__btn:hover { background: #E4741A; }
 
-/* Until the store has a mark, the thread's avatar is an empty circle. On a
-   white default that circle is white-on-white and invisible; here it would be
-   a bright dot in the middle of a dark phone. Make it a hole instead. */
-.cb-chat__av { background: rgba(247, 242, 231, 0.10); }
+/* The steps band is ink with a lime swipe under its heading. Orange there
+   instead, or the one green thing on the page is a leftover from another shop. */
+.cb-steps-s .cb-head h2 { background: linear-gradient(to top, var(--action) 0 26%, transparent 26%); }
