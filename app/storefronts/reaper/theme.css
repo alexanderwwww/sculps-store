@@ -289,7 +289,7 @@
 .cb-tier {
   position: relative;
   display: grid;
-  grid-template-columns: 22px 1fr auto;
+  grid-template-columns: 22px auto 1fr auto;
   align-items: center;
   gap: 13px;
   width: 100%;
@@ -322,12 +322,30 @@
   content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--action);
 }
 
-/* A picture only if a variant has one; the row reads fine without. */
+/*
+ * The thumbnails: one per unit, overlapped like cards in a hand.
+ *
+ * A two-pack row with a single picture looks the same as a one-pack row until
+ * you read it, and nobody reads a bundle box — they scan it. Two overlapping
+ * photographs say "two of these" before a word is read, which is the entire
+ * job of this row.
+ */
+.cb-tier__pics { display: inline-flex; flex: 0 0 auto; }
 .cb-tier__pic {
   width: 46px; height: 46px; border-radius: 10px; overflow: hidden;
-  background: var(--cream); border: 1px solid var(--hair);
+  background: #fff; border: 1.5px solid var(--hair);
+  flex: 0 0 auto;
 }
+.cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -20px; }
+/* The one in front is the one in focus; the ones behind step back. */
+.cb-tier__pics .cb-tier__pic { position: relative; }
+.cb-tier__pics--2 .cb-tier__pic:nth-child(1) { z-index: 1; transform: rotate(-4deg); }
+.cb-tier__pics--2 .cb-tier__pic:nth-child(2) { z-index: 2; }
+.cb-tier__pics--3 .cb-tier__pic:nth-child(1) { z-index: 1; transform: rotate(-7deg); }
+.cb-tier__pics--3 .cb-tier__pic:nth-child(2) { z-index: 2; transform: rotate(-3deg); }
+.cb-tier__pics--3 .cb-tier__pic:nth-child(3) { z-index: 3; }
 .cb-tier__pic img { width: 100%; height: 100%; object-fit: cover; }
+.cb-tier[aria-checked="true"] .cb-tier__pic { border-color: rgba(245, 130, 31, .55); }
 
 .cb-tier__main { min-width: 0; display: grid; gap: 4px; }
 .cb-tier__name {
@@ -361,7 +379,7 @@
 .cb-tier--flagged { margin-top: 5px; }
 
 @media (max-width: 430px) {
-  .cb-tier { grid-template-columns: 20px 1fr auto; gap: 10px; padding: 14px 13px; }
+  .cb-tier { grid-template-columns: 20px auto 1fr auto; gap: 10px; padding: 14px 13px; }
   .cb-tier[aria-checked="true"] { padding: 13.5px 12.5px; }
   .cb-tier__pic { width: 40px; height: 40px; }
   .cb-tier__name { font-size: 15.5px; }
@@ -792,3 +810,60 @@
 }
 .cb-card__ok { color: #0B6E3F; }
 .cb-card__ok svg { color: var(--go); }
+
+/* ------------------------------------------------- the drawer's own offers */
+
+/*
+ * The upgrade and the add-ons sit between the cart and the checkout button,
+ * which is the last moment the decision is still open. They are rows, not
+ * cards: a row is something you tap, a card is something you consider, and by
+ * this point nobody wants to consider anything.
+ */
+.cb-ups {
+  border-top: 1px solid var(--hair);
+  padding: 12px 16px 4px;
+  display: grid; gap: 8px;
+}
+.cb-ups__h {
+  font-size: 11.5px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--dim);
+}
+.cb .cb-up {
+  border: 1.5px solid var(--hair); border-radius: 14px;
+  background: #fff; padding: 10px 12px;
+}
+.cb .cb-up:hover { background: rgba(245, 130, 31, .06); border-color: var(--action); }
+.cb-up__pic { border-radius: 10px; background: var(--tint); }
+.cb-up__add {
+  background: var(--action); color: #140A02;
+  border-radius: 999px; padding: 6px 12px;
+  font-weight: 800; font-size: 13px;
+}
+
+/* ---------------------------------------------------- the iMessage card */
+
+/*
+ * The text-message reviews had no card around them — bubbles floating on the
+ * band, which on a wall of framed cards reads as a rendering fault rather
+ * than as a screenshot. It gets the same white card as the rest, plus the
+ * grey bar and the contact name a real thread has at the top of it.
+ */
+.cb-card--msg {
+  background: #fff;
+  border: 1.5px solid var(--hair);
+  border-radius: 16px;
+  padding: 0 0 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px -4px rgba(16, 18, 22, .12);
+}
+.cb-card--msg .cb-card__from {
+  display: block;
+  background: #F2F3F5;
+  border-bottom: 1px solid var(--hair);
+  padding: 9px 14px;
+  font-size: 13px; font-weight: 700; color: var(--ink);
+  text-align: center;
+}
+.cb-card--msg .cb-card__thread { padding: 12px 12px 0; gap: 5px; }
+.cb-card--msg .cb-card__when { display: block; padding: 8px 14px 0; font-size: 11.5px; color: var(--dimmer); text-align: center; }
+.cb-card__theirs, .cb-card__mine { font-size: 14px; line-height: 1.35; }

@@ -532,9 +532,25 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
 
                     <span className="cb-tier__dot" aria-hidden="true" />
 
-                    {x.imageUrl ? (
-                      <span className="cb-tier__pic"><img src={x.imageUrl} alt="" loading="lazy" /></span>
-                    ) : null}
+                    {/* One thumbnail per unit, overlapped like cards in a hand.
+                        A two-pack row that shows one picture is indistinguishable
+                        from a one-pack row at a glance; two pictures say what
+                        the words underneath say, faster. The variant's own
+                        photograph wins when it has one, the product's first
+                        otherwise, so a row is never empty. */}
+                    {(() => {
+                      const pic = x.imageUrl || (page.product.images ?? []).find((i) => i.url)?.url;
+                      if (!pic) return null;
+                      return (
+                        <span className={`cb-tier__pics cb-tier__pics--${Math.min(qty, 3)}`}>
+                          {Array.from({ length: Math.min(qty, 3) }).map((_, k) => (
+                            <span className="cb-tier__pic" key={k}>
+                              <img src={pic} alt="" loading="lazy" />
+                            </span>
+                          ))}
+                        </span>
+                      );
+                    })()}
 
                     <span className="cb-tier__main">
                       <span className="cb-tier__name">{x.label}</span>

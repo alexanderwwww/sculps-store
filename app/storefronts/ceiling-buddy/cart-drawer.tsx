@@ -143,6 +143,31 @@ export function CartDrawerProvider({
           .reduce<VariantRow | null>((best, v) => (!best || v.priceCents > best.priceCents ? v : best), null)
       : null;
 
+  /*
+   * The add-ons, under the upgrade.
+   *
+   * Anything the shop sells that is not already in the cart, cheapest first,
+   * capped at two. Cheapest first is deliberate: the add-on that gets taken is
+   * the one that feels like nothing next to what has already been spent, and
+   * a list of five turns a decision into a shop.
+   */
+  const haveProducts = new Set(lines.map((l) => l.productTitle));
+  const extras = (page.addOnProducts ?? [])
+    .filter((x) => x.variantId && !haveProducts.has(x.title))
+    .slice()
+    .sort((a, b) => a.fromCents - b.fromCents)
+    .slice(0, 2);
+
+  // What the bigger bundle saves against buying the same number singly, so
+  // the upgrade can say why it is worth taking rather than only what it costs.
+  const single = page.variants.reduce<VariantRow | null>(
+    (low, v) => (!low || v.priceCents < low.priceCents ? v : low),
+    null,
+  );
+  const upsellQty = upsell ? Number((upsell.label.match(/^(\d+)/) ?? [])[1] ?? (/^two/i.test(upsell.label) ? 2 : /^three/i.test(upsell.label) ? 3 : 1)) : 1;
+  const upsellSaving =
+    upsell && single && upsellQty > 1 ? Math.max(0, single.priceCents * upsellQty - upsell.priceCents) : 0;
+
   // Swapping a bundle replaces the cart rather than adding a second one —
   // nobody wants the tray twice.
   const swap = useCallback(
@@ -197,25 +222,60 @@ export function CartDrawerProvider({
             )}
           </div>
 
-          {/* The upgrade, offered where the decision is still open. It is the
-              other bundle, not an unrelated product — and only when it is not
-              already the thing in the cart. */}
-          {upsell ? (
-            <button type="button" className="cb-up" onClick={() => swap(upsell.id)} disabled={busy}>
-              <span className="cb-up__pic">
-                {upsell.imageUrl ? <img src={upsell.imageUrl} alt="" /> : null}
-              </span>
-              <span className="cb-up__txt">
-                <b>Add the 100" screen</b>
-                <i>{upsell.label}</i>
-              </span>
-              <span className="cb-up__add">
-                {/* What the swap actually costs on top of what is in the cart.
-                    The upsell is only ever dearer than that, so this reads as
-                    a plus and never as a minus with a plus in front of it. */}
-                +{formatMoney(Math.max(0, upsell.priceCents - paying), currency)}
-              </span>
-            </button>
+          {/*
+            What else, offered where the decision is still open.
+
+            Two different offers, in the order they are worth making. First the
+            bigger bundle of the thing they are already buying, because that is
+            one tap and the cheapest yes there is. Then the other products,
+            smallest first — somebody who has just spent two hundred dollars
+            will add a twenty dollar thing without thinking about it, and will
+            not consider a second two hundred dollar thing at all.
+
+            The heading used to name Ceiling Buddy's screen in hardcoded text,
+            on every store that borrowed this drawer. It names the actual
+            bundle now.
+          */}
+          {lines.length && (upsell || extras.length) ? (
+            <div className="cb-ups">
+              <div className="cb-ups__h">Add to your order</div>
+
+              {upsell ? (
+                <button type="button" className="cb-up" onClick={() => swap(upsell.id)} disabled={busy}>
+                  <span className="cb-up__pic">
+                    {upsell.imageUrl || photo ? <img src={upsell.imageUrl || photo!.src} alt="" /> : null}
+                  </span>
+                  <span className="cb-up__txt">
+                    <b>{upsell.label}</b>
+                    <i>
+                      {upsellSaving
+                        ? `Save ${formatMoney(upsellSaving, currency)} against buying them apart`
+                        : "Upgrade the bundle"}
+                    </i>
+                  </span>
+                  <span className="cb-up__add">
+                    {/* What the swap actually costs on top of what is in the
+                        cart. The upsell is only ever dearer than that, so this
+                        reads as a plus and never as a minus with a plus in
+                        front of it. */}
+                    +{formatMoney(Math.max(0, upsell.priceCents - paying), currency)}
+                  </span>
+                </button>
+              ) : null}
+
+              {extras.map((x) => (
+                <button type="button" className="cb-up" key={x.id} onClick={() => add(x.variantId)} disabled={busy}>
+                  <span className="cb-up__pic">
+                    {x.imageUrl ? <img src={x.imageUrl} alt="" loading="lazy" /> : null}
+                  </span>
+                  <span className="cb-up__txt">
+                    <b>{x.title}</b>
+                    <i>Goes with this</i>
+                  </span>
+                  <span className="cb-up__add">+{formatMoney(x.fromCents, currency)}</span>
+                </button>
+              ))}
+            </div>
           ) : null}
 
           <div className="cb-drawer__foot">

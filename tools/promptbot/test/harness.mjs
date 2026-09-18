@@ -38,6 +38,8 @@ import { basename, extname } from "node:path";
 import { readFile } from "node:fs/promises";
 export function init(s, f) { site = s; find = f; }
 let site, find;
+// Same helper the runner uses, so the code under test is the code that ships.
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 export ${grab("putFiles")}
 export ${grab("blobCount")}
 `;

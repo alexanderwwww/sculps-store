@@ -41,14 +41,35 @@ const POLL_MS = 6000;
 const CONTROL = process.env.CONTROL || "https://kerberos.gardenbuddystore.workers.dev/media/wand-control.json";
 let lastOrder = 0;
 let orderAt = 0;
+/**
+ * Fetch that cannot hang.
+ *
+ * Both the queue and the control file are read from inside loops that the
+ * whole run waits on. A request with no deadline on a flaky connection stops
+ * everything for as long as the network feels like it, which from the outside
+ * is the app locked up doing nothing — so nothing here waits more than five
+ * seconds for a small JSON file.
+ */
+async function getJson(url) {
+  const stop = new AbortController();
+  const timer = setTimeout(() => stop.abort(), 5000);
+  try {
+    const res = await fetch(`${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`, {
+      cache: "no-store",
+      signal: stop.signal,
+    });
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function obey() {
   if (Date.now() - orderAt < 2000) return;
   orderAt = Date.now();
-  let o = null;
-  try {
-    const res = await fetch(`${CONTROL}?t=${Date.now()}`, { cache: "no-store" });
-    if (res.ok) o = await res.json();
-  } catch { return; }
+  const o = await getJson(CONTROL);
   if (!o?.cmd || !(Number(o.at) > lastOrder)) return;
   // Orders older than this launch are history, not instructions.
   if (Number(o.at) < startedAt) { lastOrder = Number(o.at); return; }
@@ -58,6 +79,16 @@ async function obey() {
 }
 const startedAt = Date.now();
 const MIN_PIXELS = 320;
+
+/**
+ * A pause that never throws.
+ *
+ * `page.waitForTimeout` on a tab that has been closed rejects, and every one
+ * of those was sitting unguarded inside the main loop — so closing the tab
+ * killed the app with a stack trace instead of it noticing and finding
+ * another tab.
+ */
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const SITES = {
   gemini: {
@@ -78,7 +109,9 @@ const SITES = {
     url: "https://chatgpt.com/",
     ask: ['div#prompt-textarea[contenteditable="true"]', "textarea#prompt-textarea", "textarea"],
     send: ['button[data-testid="send-button"]', 'button[data-testid="composer-submit-button"]', 'button[aria-label*="Send" i]'],
-    fresh: ['a[href="/"]', 'button[aria-label*="New chat" i]'],
+    // The button first, the logo link only as a fallback: clicking the logo
+    // is a full page load, which throws the overlay out and costs a second.
+    fresh: ['button[data-testid="create-new-chat-button"]', 'a[data-testid="create-new-chat-button"]', 'button[aria-label*="New chat" i]', 'a[aria-label*="New chat" i]', 'a[href="/"]'],
     file: ['input[type="file"]:not([data-wand])'],
     attach: ['button[aria-label*="Upload" i]', 'button[aria-label*="Attach" i]', 'button[data-testid="composer-plus-btn"]'],
     // The plus opens a menu; the first item is the one that takes a file.
@@ -88,6 +121,17 @@ const SITES = {
     images: ['img[alt="Generated image" i]', 'img[src*="oaiusercontent"]', 'img[src*="oaistatic"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
   },
 };
+
+/*
+ * Extra sites, for the test harness.
+ *
+ * The end-to-end test needs somewhere to run that is not somebody's real
+ * ChatGPT account. It hands the runner one through the environment rather
+ * than the code carrying a fake site around in it.
+ */
+if (process.env.WAND_SITES) {
+  try { Object.assign(SITES, JSON.parse(process.env.WAND_SITES)); } catch { /* ignore a bad one */ }
+}
 
 const opt = { site: "gemini", out: "./images", port: 9222, wait: 240 };
 for (let i = 2; i < process.argv.length; i += 2) opt[process.argv[i].slice(2)] = process.argv[i + 1];
@@ -176,7 +220,7 @@ async function find(page, list, timeout = 15000) {
         if (await el.isVisible().catch(() => false)) return el;
       }
     }
-    await page.waitForTimeout(400);
+    await wait(400);
   }
   return null;
 }
@@ -200,13 +244,11 @@ let page = null;
  * moved — which from the outside is the app doing the opposite of what it was
  * told. One look at the queue before anything opens fixes it.
  */
-try {
-  const res = await fetch(`${QUEUE}?t=${Date.now()}`, { cache: "no-store" });
-  if (res.ok) {
-    const first = await res.json();
-    if (first?.site && SITES[first.site] && !done.has(first.id)) site = SITES[first.site];
-  }
-} catch { /* offline: whatever was asked for at launch stands */ }
+{
+  // Offline at launch: whatever was asked for on the command line stands.
+  const first = await getJson(QUEUE);
+  if (first?.site && SITES[first.site] && !done.has(first.id)) site = SITES[first.site];
+}
 
 /*
  * A chat that is already open is the one to work in.
@@ -229,14 +271,56 @@ if (page) {
   await page.goto(site.url, { waitUntil: "domcontentloaded" });
 }
 
+/*
+ * Not signed in, or not on a chat page yet. This used to close the browser and
+ * quit — closing the browser being your Chrome, with your tabs in it. It waits
+ * instead, and says so, because the fix is something you do in that window and
+ * it should be there when you do it.
+ */
 if (!(await find(page, site.ask, 20000))) {
-  console.error(`\nCouldn't find the message box — check you're signed into ${site.name} in that Chrome.\n`);
-  await browser.close();
-  process.exit(1);
+  console.log(`\n\x1b[33mNo message box on ${site.name} yet.\x1b[0m`);
+  console.log(`Sign in, or open a chat, in that Chrome window. This keeps looking.\n`);
 }
 
-const wand = await attachWand(page);
+let wand = await attachWand(page);
 await mkdir(opt.out, { recursive: true });
+
+/**
+ * Make sure we are still working in a tab that exists, on the site we want.
+ *
+ * The runner held on to whichever tab it found at launch. Close that tab, or
+ * open the chat in a second one, and everything after that happened somewhere
+ * nobody was looking: the overlay drew on a dead page, the clicks went
+ * nowhere, and from the front it was an app that had simply stopped caring.
+ *
+ * Every loop asks this first. It prefers the tab already in hand, then any
+ * other open tab on the same site, and only opens a new one when there is
+ * nothing to work with. The overlay follows the page it finds.
+ */
+async function ensurePage() {
+  const host = new URL(site.url).host;
+  const ok = (pg) => {
+    if (!pg || pg.isClosed()) return false;
+    try { return new URL(pg.url()).host === host; } catch { return false; }
+  };
+  if (ok(page)) return true;
+
+  const found = context.pages().filter(ok);
+  // The last one is the most recently opened, which is the one a chat site
+  // puts a new conversation in.
+  const next = found[found.length - 1] ?? null;
+  if (next) {
+    page = next;
+    console.log(`\r\x1b[K  \x1b[2mmoved to your other ${site.name} tab\x1b[0m`);
+  } else {
+    console.log(`\r\x1b[K  \x1b[2mno ${site.name} tab open — opening one\x1b[0m`);
+    page = await context.newPage();
+    await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
+  }
+  await page.bringToFront().catch(() => {});
+  wand = await attachWand(page);
+  return Boolean(await find(page, site.ask, 15000));
+}
 
 console.log(`\n\x1b[1mConnected to ${site.name}.\x1b[0m`);
 console.log(`Tell Claude what you want. It shows up here and you press Return to run it.`);
@@ -294,7 +378,7 @@ async function putFiles(page, paths, wand, label) {
   // Focus first: a paste goes to whatever has the caret.
   const box = await find(page, site.ask, 8000);
   if (box) await box.click().catch(() => {});
-  await page.waitForTimeout(300);
+  await wait(300);
 
   /**
    * The attach button, found by where it is rather than what it says.
@@ -372,7 +456,7 @@ async function putFiles(page, paths, wand, label) {
         clip.click(),
       ]);
       await chooser.setFiles(paths);
-      await page.waitForTimeout(2500 + files.length * 1200);
+      await wait(2500 + files.length * 1200);
       if ((await blobCount(page)) > before) return "chosen";
     } catch {
       // No dialog appeared — that button was something else. Close whatever
@@ -381,20 +465,20 @@ async function putFiles(page, paths, wand, label) {
       // this the tool hears its own keypress and stops itself mid-run.
       await wand?.deafen(2000);
       await page.keyboard.press("Escape").catch(() => {});
-      await page.waitForTimeout(400);
+      await wait(400);
     }
   }
 
   // 2 — paste it in, the way you'd paste a screenshot
   if (box) await box.click().catch(() => {});
   await deliver("paste");
-  await page.waitForTimeout(2200 + files.length * 900);
+  await wait(2200 + files.length * 900);
   if ((await blobCount(page)) > before) return "pasted";
 
   // 3 — drop, everywhere that might be listening
   await wand?.say(label, "attaching — another way…");
   await deliver("drop");
-  await page.waitForTimeout(2200 + files.length * 900);
+  await wait(2200 + files.length * 900);
   if ((await blobCount(page)) > before) return "dropped";
 
   // 4 — a real file input, if the page keeps one
@@ -402,7 +486,7 @@ async function putFiles(page, paths, wand, label) {
   if (await input.count().then((c) => c > 0).catch(() => false)) {
     await wand?.say(label, "attaching — last way…");
     await input.setInputFiles(paths).catch(() => {});
-    await page.waitForTimeout(2500 + files.length * 1200);
+    await wait(2500 + files.length * 1200);
     if ((await blobCount(page)) > before) return "uploaded";
   }
 
@@ -438,6 +522,8 @@ async function blobCount(page) {
 }
 
 async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = false) {
+  if (await holdIfPaused(`before ${n} of ${total}`)) return 0;
+  if (!(await ensurePage())) { console.log(`  \x1b[31m!! lost the ${site.name} tab\x1b[0m`); return 0; }
   await wand.reattach();
   await wand.say(label, `${n} of ${total} — sending…`);
 
@@ -449,7 +535,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   // and starting a new chat for shot twenty-five would throw all of it away.
   if (!sameChat) {
     const nw = await find(page, site.fresh, 4000);
-    if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await page.waitForTimeout(1600); await wand.reattach(); }
+    if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await wait(1600); await wand.reattach(); }
   }
 
   // Pictures before words: both sites disable send while an upload is running.
@@ -460,11 +546,11 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     const box0 = await find(page, site.ask, 8000);
     if (box0) await box0.click().catch(() => {});
     await wand.give(site.ask, "paste");
-    await page.waitForTimeout(2200 + fromCard * 900);
+    await wait(2200 + fromCard * 900);
     let ok = (await blobCount(page)) > before;
     if (!ok) {
       await wand.give(site.ask, "drop");
-      await page.waitForTimeout(2200 + fromCard * 900);
+      await wait(2200 + fromCard * 900);
       ok = (await blobCount(page)) > before;
     }
     console.log(ok
@@ -478,22 +564,31 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     } else {
       console.log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
       await wand.say(label, `${n} of ${total} — couldn't attach, sending anyway`);
-      await page.waitForTimeout(1000);
+      await wait(1000);
     }
   }
 
   const box = await find(page, site.ask, 20000);
-  if (!box) return 0;
+  if (!box) {
+    console.log(`  \x1b[31m!! no message box on ${site.name} — is it signed in and on a chat page?\x1b[0m`);
+    return 0;
+  }
   await wand.point(box);
   await box.click();
   await box.fill("").catch(() => {});
   await page.keyboard.insertText(text);
-  await page.waitForTimeout(400);
+  await wait(400);
 
-  const send = await find(page, site.send, 5000);
-  if (send) { await wand.point(send); await send.click().catch(() => page.keyboard.press("Enter")); }
-  else await page.keyboard.press("Enter");
-
+  /*
+   * Sending, and then checking that it went.
+   *
+   * A click on a send button that is disabled — because an upload is still
+   * running, or because the site re-rendered the composer under us — does
+   * nothing at all, and the old code then sat waiting four minutes for
+   * pictures nobody had asked for. So the composer is read back: empty means
+   * it left, and anything else gets Enter, then a second Enter, before this
+   * is called a failure out loud rather than silently.
+   */
   /**
    * Everything already on screen before the prompt goes out.
    *
@@ -502,6 +597,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    * being collected as a result and then failing to save, once per prompt,
    * with a red line each time. Anything present before the send is not a
    * result of the send.
+   *
+   * This has to be read BEFORE the send, and for a while it was read after.
+   * A site that answers quickly had its answer already on screen by then, so
+   * the picture was written down as something that had always been there and
+   * quietly thrown away — every prompt finishing "0 images" with nothing in
+   * the log to say why.
    */
   const already = new Set(
     await page.evaluate(
@@ -513,6 +614,23 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     ).catch(() => []),
   );
 
+  const typed = async () => (await box.textContent().catch(() => "")) || (await box.inputValue().catch(() => "")) || "";
+  const send = await find(page, site.send, 5000);
+  if (send) { await wand.point(send); await send.click().catch(() => {}); }
+  await wait(900);
+
+  for (let tries = 0; tries < 2 && (await typed()).trim().length > 8; tries++) {
+    console.log(`  \x1b[2mstill in the box — pressing Return\x1b[0m`);
+    await box.click().catch(() => {});
+    await page.keyboard.press("Enter").catch(() => {});
+    await wait(1200);
+  }
+  if ((await typed()).trim().length > 8) {
+    console.log(`  \x1b[31m!! ${site.name} would not send it — skipping this one\x1b[0m`);
+    return 0;
+  }
+  console.log(`  \x1b[2msent\x1b[0m`);
+
   await wand.say(label, `${n} of ${total} — waiting for the pictures…`);
   await wand.idle(true);
   // How long to wait for pictures. A job can set its own, because a site that
@@ -521,8 +639,9 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   const seen = new Set();
   let quiet = 0;
   while (Date.now() < deadline) {
-    await page.waitForTimeout(2000);
+    await wait(2000);
     await obey();
+    if (await holdIfPaused(`waiting for pictures from ${site.name}`)) return 0;
     if (await wand.stopped()) return 0;
     const urls = await page.evaluate(
       ({ sels, min }) =>
@@ -535,6 +654,18 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     fresh.forEach((u) => seen.add(u));
     if (fresh.length) { quiet = 0; await wand.say(label, `${n} of ${total} — ${seen.size} image${seen.size === 1 ? "" : "s"}…`); }
     else if (seen.size) { quiet += 2; if (quiet >= 8) break; }
+    else {
+      // Nothing at all yet. Four minutes of that is the site having refused
+      // the prompt, or having asked a question back — either way, standing
+      // there for the full wait means the next forty shots are four minutes
+      // further away each. Two minutes, then move on and say so.
+      quiet += 2;
+      if (quiet >= 120) {
+        console.log(`  \x1b[33mno picture after two minutes — moving on\x1b[0m`);
+        break;
+      }
+      if (quiet % 30 === 0) await wand.say(label, `${n} of ${total} — still waiting (${quiet}s)`);
+    }
   }
 
   await wand.idle(false);
@@ -633,6 +764,28 @@ async function makeZip(dir, slug) {
 }
 
 /**
+ * Hold here while paused, wherever we are.
+ *
+ * Pause used to be read only between prompts, and a prompt is four minutes of
+ * waiting for pictures — so pressing Pause did nothing at all for minutes,
+ * which from the outside is the app ignoring you. Every wait that matters
+ * calls this now, so Pause bites within a second of being pressed and
+ * Continue picks up in the same place.
+ */
+async function holdIfPaused(what = "") {
+  if (!(await wand.paused())) return false;
+  let said = false;
+  while (await wand.paused()) {
+    if (await wand.stopped()) return true;
+    if (!said) { console.log(`\r\x1b[K  \x1b[33mpaused${what ? " — " + what : ""}. Press Continue, or tell Claude.\x1b[0m`); said = true; }
+    await obey();
+    await wait(600);
+  }
+  console.log(`  \x1b[32mcarrying on.\x1b[0m`);
+  return false;
+}
+
+/**
  * Wait for a yes or a no, from wherever one can come from.
  *
  * The card in the corner of the page is the first choice. It is polled rather
@@ -649,9 +802,11 @@ async function makeZip(dir, slug) {
  */
 async function decision(label, sub, summary) {
   if (!wand.mounted) return ask(label, summary);
+  let beat = 0;
   for (;;) {
     await obey();
     if (await wand.stopped()) return "skip";
+    if (!(await ensurePage())) { await wait(1000); continue; }
     if (!(await wand.present())) { await wand.reattach(); await wand.ask(label, sub); }
     else if (!(await wand.asking())) {
       const a = await wand.answer();
@@ -660,7 +815,12 @@ async function decision(label, sub, summary) {
       // replaced it. Show it again.
       await wand.ask(label, sub);
     }
-    await page.waitForTimeout(400);
+    // Said out loud, because a Terminal with nothing moving in it is the same
+    // as a Terminal that has crashed.
+    if (beat++ % 5 === 0) {
+      process.stdout.write(`\r\x1b[K  waiting for you — press Submit on the card in Chrome, or tell Claude "go"   `);
+    }
+    await wait(400);
   }
 }
 
@@ -673,13 +833,11 @@ let spinner = 0;
 /** Jobs we've already explained are finished, so it is said once. */
 const saidDone = new Set();
 while (true) {
+  await ensurePage();
   if (await wand.stopped()) { console.log("\nStopped from the panel. Everything saved is on your Desktop.\n"); break; }
 
-  let job = null;
-  try {
-    const res = await fetch(`${QUEUE}?t=${Date.now()}`, { cache: "no-store" });
-    if (res.ok) job = await res.json();
-  } catch { /* a moment offline is not a reason to quit */ }
+  // A moment offline is not a reason to quit.
+  const job = await getJson(QUEUE);
 
   if (job?.id && done.has(job.id) && !saidDone.has(job.id)) {
     saidDone.add(job.id);
@@ -694,7 +852,7 @@ while (true) {
       else await run("open", [opt.out]).catch(() => {});
     }
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
-    for (let t = 0; t < POLL_MS; t += 2000) { await obey(); await page.waitForTimeout(2000); }
+    for (let t = 0; t < POLL_MS; t += 2000) { await obey(); await wait(2000); }
     continue;
   }
 
@@ -730,7 +888,7 @@ while (true) {
       site = was;
       await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
       await wand.reattach();
-      await page.waitForTimeout(POLL_MS);
+      await wait(POLL_MS);
       continue;
     }
     console.log(`  now on ${site.name}`);
@@ -754,7 +912,7 @@ while (true) {
   if (job.url) {
     console.log(`  opening the chat the job named`);
     await page.goto(job.url, { waitUntil: "domcontentloaded" }).catch(() => {});
-    await page.waitForTimeout(1500);
+    await wait(1500);
     await wand.reattach();
   }
   console.log(`\r\x1b[K`);
@@ -841,7 +999,7 @@ while (true) {
       }
       process.stdout.write(`\r  paused at ${i + 1}/${job.prompts.length} — press Continue, or tell Claude   `);
       await obey();
-      await page.waitForTimeout(700);
+      await wait(700);
     }
     if (await wand.stopped()) break;
     const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, Boolean(job.sameChat));

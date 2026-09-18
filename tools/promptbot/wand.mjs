@@ -435,11 +435,12 @@ export const OVERLAY = `(() => {
     /** An order from Claude, applied exactly as if the button had been pressed. */
     order(what) {
       if (what === "pause" && !state.paused && !state.stopped) pause();
-      else if (what === "continue" && state.paused) resume();
+      else if ((what === "continue" || what === "go" || what === "run") && state.paused) resume();
       // "continue" on a card that is still asking is a yes: the job runs.
-      else if (what === "continue" && card.style.display === "block") bGo.click();
+      else if ((what === "continue" || what === "go" || what === "run") && card.isConnected && card.style.display === "block") bGo.click();
       else if (what === "stop") halt();
-      else if (what === "pictures") { if (!state.paused) pause(); state.wantsCard = true; }
+      else if (what === "pictures" || what === "images") { if (!state.paused) pause(); state.wantsCard = true; }
+      else if (what === "skip") { if (card.isConnected && card.style.display === "block") bSkip.click(); else return false; }
       else return false;
       hint.textContent = "Claude sent: " + what;
       return true;
@@ -460,7 +461,13 @@ export const OVERLAY = `(() => {
      * answer is a value the page holds until it is read.
      */
     ask(name, sub) {
+      // Put every piece back, not just the outer one: a page that tears the
+      // overlay out can take the buttons with it, and a card with no Submit
+      // on it is the same as no card at all.
+      if (!row.isConnected || row.parentElement !== card) card.append(drop, row, picker);
       if (!card.isConnected) root.appendChild(card);
+      if (!hud.isConnected) root.appendChild(hud);
+      if (!cursor.isConnected) root.appendChild(cursor);
       cName.textContent = name;
       cSub.textContent = sub;
       state.files = [];
@@ -471,8 +478,15 @@ export const OVERLAY = `(() => {
     },
     /** What was pressed on the card, once, or null while it is still open. */
     answer() { const v = state.answer ?? null; state.answer = null; return v; },
-    /** Whether the card is still on screen waiting for a press. */
-    asking: () => card.style.display === "block",
+    /**
+     * Whether the card is really on screen waiting for a press.
+     *
+     * The display flag alone was a lie: a chat page re-renders and throws the card
+     * out of the document while its style still says block, and the runner
+     * then waited forever for a click on something that was not in the page.
+     * Connected and visible, or it is not asking.
+     */
+    asking: () => card.isConnected && card.style.display === "block",
     /** How many pictures are waiting in the card. */
     fileCount: () => state.files.length,
     /** Show what a finished job produced, with a way to go and see it. */
