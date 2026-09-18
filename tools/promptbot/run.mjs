@@ -10,8 +10,8 @@
  */
 import { chromium } from "playwright";
 import { attachWand } from "./wand.mjs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { join, extname } from "node:path";
 
 /* ------------------------------------------------------------------ config */
 
@@ -33,6 +33,8 @@ const SITES = {
     fresh: ['button[aria-label*="New chat" i]', 'a[aria-label*="New chat" i]'],
     /** Where a finished picture ends up. Thumbnails and avatars are filtered out by size. */
     images: ['img[src^="https://lh3.googleusercontent.com"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
+    /** The hidden input behind the paperclip. Every one of these sites has one. */
+    file: ['input[type="file"]'],
   },
   chatgpt: {
     url: "https://chatgpt.com/",
@@ -40,6 +42,7 @@ const SITES = {
     send: ['button[data-testid="send-button"]', 'button[aria-label*="Send" i]'],
     fresh: ['a[href="/"]', 'button[aria-label*="New chat" i]'],
     images: ['img[src*="oaiusercontent"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
+    file: ['input[type="file"]'],
   },
 };
 
@@ -94,6 +97,27 @@ if (!blocks.length) {
 }
 await mkdir(opt.out, { recursive: true });
 
+/**
+ * Reference pictures, attached to every prompt.
+ *
+ * A prompt that says "match the attached product" is worth ten that describe
+ * it, because a description is a new guess each time and a photograph is the
+ * thing itself. Anything dropped in the reference folder rides along with
+ * every prompt in the run; an empty folder changes nothing.
+ */
+const REF_DIR = join(new URL(".", import.meta.url).pathname, "reference");
+const refs = await readdir(REF_DIR)
+  .then((names) =>
+    names
+      .filter((n) => /\.(png|jpe?g|webp|gif)$/i.test(n) && !n.startsWith("."))
+      .sort()
+      .map((n) => join(REF_DIR, n)),
+  )
+  .catch(() => []);
+if (refs.length) {
+  console.log(`${refs.length} reference image${refs.length === 1 ? "" : "s"} will be attached to every prompt.\n`);
+}
+
 let browser;
 try {
   browser = await chromium.connectOverCDP(`http://localhost:${opt.port}`);
@@ -146,6 +170,21 @@ for (let i = 0; i < blocks.length; i++) {
 
   const box = await find(page, site.ask, 20000);
   if (!box) { console.log(`   no message box, skipping`); continue; }
+  // The pictures go on before the words, because both sites disable their send
+  // button while an upload is still going and enable it once the text is in.
+  if (refs.length) {
+    const input = page.locator(site.file).first();
+    const ok = await input.count().then((n) => n > 0).catch(() => false);
+    if (ok) {
+      await wand.say(`Prompt ${n} of ${blocks.length}`, `Attaching ${refs.length} reference image${refs.length === 1 ? "" : "s"}…`);
+      await input.setInputFiles(refs).catch(() => {});
+      // Uploads have to finish before the send button will accept a click.
+      await page.waitForTimeout(2500 + refs.length * 1200);
+    } else {
+      console.log("   (no attachment box found — sending the prompt on its own)");
+    }
+  }
+
   await wand.point(box);
   await box.click();
   // Typed rather than pasted: these editors are rich-text widgets that often
