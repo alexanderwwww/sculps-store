@@ -1065,3 +1065,112 @@
   .cb-tier__perks { gap: 3px 10px; }
   .cb-tier__perks i { font-size: 11.5px; }
 }
+
+
+/* =======================================================================
+   The bundle box, to the reference
+   =======================================================================
+   Alex sent a Shopify box he likes and the differences were all structural,
+   not decorative: a black lid across the top with the offer written in it,
+   one hard black frame around the whole set, rows that are quiet until
+   chosen and then outlined in ink rather than filled with colour, the total
+   as the big number with the per-unit beside it, and the flags riding the
+   row's own top edge.
+
+   Two things stay this store's rather than the reference's: the thumbnails,
+   which he asked to keep, and the saving in neon green rather than red,
+   because he asked for that in the same breath as the announcement bar and
+   red is already spoken for elsewhere on this page. Either is one word to
+   change back. ======================================================== */
+
+.cb-bundle {
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--paper);
+  margin: 16px 0 14px;
+}
+.cb-bundle__lid {
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 13px 16px;
+  text-align: left;
+}
+.cb-bundle__lid em { color: var(--action); font-style: normal; font-weight: 900; }
+.cb-bundle__foot { padding: 0 16px 12px; text-align: center; }
+
+.cb-tiers { padding: 12px; gap: 10px; }
+
+.cb-tier {
+  border: 1.5px solid var(--hair);
+  border-radius: 12px;
+  background: var(--paper);
+  padding: 13px 14px;
+  box-shadow: none;
+  grid-template-columns: 22px auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.cb-tier:hover { transform: none; border-color: rgba(20, 22, 26, .3); }
+
+/* Chosen is outlined, not filled. A tinted row competes with the flag on its
+   own edge; a black frame does not. */
+.cb-tier[aria-checked="true"] {
+  border: 2px solid var(--ink);
+  padding: 12.5px 13.5px;
+  background: var(--paper);
+  box-shadow: none;
+}
+.cb-tier[aria-checked="true"] .cb-tier__dot { border-color: var(--ink); }
+.cb-tier[aria-checked="true"] .cb-tier__dot::after { background: var(--ink); }
+.cb-tier[aria-checked="true"] .cb-tier__pic { border-color: var(--hair); }
+
+.cb-tier__name { font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
+.cb-tier__under { gap: 10px; margin-top: 2px; }
+.cb-tier__under s { font-size: 14px; color: var(--dimmer); }
+.cb-tier__under b {
+  background: none;
+  padding: 0;
+  color: #17400A;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* The total is the big number and the per-unit sits under it in grey, which
+   is the arrangement in the reference and the one people read fastest. */
+.cb-tier__right { text-align: right; display: grid; gap: 1px; }
+.cb-tier__price { font-size: 21px; font-weight: 800; letter-spacing: -.04em; display: block; }
+.cb-tier__each {
+  background: none; padding: 0; margin: 0;
+  font-size: 13px; font-weight: 500; color: var(--dim);
+}
+.cb-tier[aria-checked="true"] .cb-tier__each { background: none; color: var(--dim); }
+
+/* The flags ride the row's edge: the popular one on the left in amber, the
+   best value on the right in the neon. */
+.cb-tier__flag {
+  top: -11px; left: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 10.5px; font-weight: 900; letter-spacing: .06em;
+  background: #FFC83D; color: #2A1B00;
+  box-shadow: 0 2px 6px -2px rgba(0,0,0,.25);
+}
+.cb-tier__flag--best {
+  left: auto; right: 12px;
+  background: var(--neon); color: var(--neon-ink);
+  box-shadow: 0 0 10px -1px rgba(214, 255, 79, .9);
+}
+.cb-tier--flagged { margin-top: 6px; }
+
+@media (max-width: 430px) {
+  .cb-tier { grid-template-columns: 20px auto 1fr auto; gap: 9px; padding: 12px 11px; }
+  .cb-tier__name { font-size: 15.5px; }
+  .cb-tier__price { font-size: 19px; }
+  .cb-tier__each { font-size: 12px; }
+}

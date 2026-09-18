@@ -559,16 +559,6 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
                         {save ? <b>Save {formatMoney(save, currency)}</b> : null}
                         {!save && x.sublabel ? <span>{x.sublabel}</span> : null}
                       </span>
-                      {/* Only on the row that is chosen, and only three
-                          words each: a list on every row is a wall, and a
-                          list on none is a question nobody answers. */}
-                      {on ? (
-                        <span className="cb-tier__perks">
-                          {promises(page).slice(0, 3).map((t) => (
-                            <i key={t}>{IcoCheck}{t}</i>
-                          ))}
-                        </span>
-                      ) : null}
                     </span>
 
                     {/*
@@ -585,13 +575,10 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
                       hidden from them.
                     */}
                     <span className="cb-tier__right">
-                      <span className="cb-tier__price">
-                        {formatMoney(qty > 1 ? Math.round(x.priceCents / qty) : x.priceCents, currency)}
-                        {qty > 1 ? <i>each</i> : null}
+                      <span className="cb-tier__price">{formatMoney(x.priceCents, currency)}</span>
+                      <span className="cb-tier__each">
+                        {formatMoney(Math.round(x.priceCents / qty), currency)} each
                       </span>
-                      {qty > 1 ? (
-                        <span className="cb-tier__each">{formatMoney(x.priceCents, currency)} total</span>
-                      ) : null}
                     </span>
                   </button>
                 );

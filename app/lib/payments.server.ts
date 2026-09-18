@@ -71,6 +71,29 @@ export interface PaymentProvider {
   ): Promise<PaymentIntent>;
   capture(intentId: string): Promise<PaymentIntent>;
   refund(intentId: string, amountCents: number | undefined, idempotencyKey: string): Promise<RefundResult>;
+  /**
+   * Charge the card that paid an earlier intent, without the customer
+   * touching anything.
+   *
+   * This is what a post-purchase offer is: the details are already held, the
+   * customer already consented to this shop taking money, and asking them to
+   * type a card number again for a nineteen dollar add-on is why almost
+   * nobody takes one. It reads the first intent for the customer and the
+   * payment method, and charges off-session against both.
+   *
+   * It can legitimately fail. A card can decline off-session even when it
+   * cleared a minute earlier — some banks require the customer to be present
+   * for anything after the first charge — and that is a normal answer here,
+   * not an error to retry.
+   */
+  chargeSaved(input: {
+    fromIntentId: string;
+    amountCents: number;
+    currency: string;
+    description: string;
+    idempotencyKey: string;
+    metadata?: Record<string, string>;
+  }): Promise<{ ok: true; intentId: string } | { ok: false; reason: string }>;
   readIntent(intentId: string): Promise<PaymentIntent>;
   /** Proves the secret key works, without charging anyone. */
   testConnection(): Promise<{ ok: true; account: string } | { ok: false; reason: string }>;
@@ -167,7 +190,24 @@ class StripeProvider implements PaymentProvider {
       "automatic_payment_methods[enabled]": "true",
       capture_method: this.manualCapture ? "manual" : "automatic",
       description: input.orderReference,
+      /*
+       * Keep the card on file for a later charge.
+       *
+       * Without this the post-purchase offer cannot exist: Stripe discards
+       * the payment method once the intent is done and the only way back is
+       * to ask for the card again, which nobody does for a twenty dollar
+       * add-on. With it, the customer's own bank sees a second charge from a
+       * shop they just bought from, which is exactly what it is.
+       *
+       * The customer is created up front because off-session reuse needs one
+       * — a saved method with nothing to attach it to cannot be charged.
+       */
+      setup_future_usage: "off_session",
     };
+    if (!body.customer) {
+      const customer = await this.call("customers", input.email ? { email: input.email } : {});
+      if (customer?.id) body.customer = String(customer.id);
+    }
     if (input.email) body.receipt_email = input.email;
     for (const [key, value] of Object.entries(input.metadata ?? {})) {
       body[`metadata[${key}]`] = value;
@@ -207,6 +247,48 @@ class StripeProvider implements PaymentProvider {
   async readIntent(intentId: string): Promise<PaymentIntent> {
     const intent = await this.call(`payment_intents/${intentId}`);
     return toIntent(intent);
+  }
+
+  async chargeSaved(input: {
+    fromIntentId: string;
+    amountCents: number;
+    currency: string;
+    description: string;
+    idempotencyKey: string;
+    metadata?: Record<string, string>;
+  }): Promise<{ ok: true; intentId: string } | { ok: false; reason: string }> {
+    try {
+      const first = await this.call(`payment_intents/${input.fromIntentId}`);
+      const customer = first?.customer ? String(first.customer) : "";
+      const method = first?.payment_method ? String(first.payment_method) : "";
+      if (!customer || !method) {
+        return { ok: false, reason: "that order's card was not kept on file" };
+      }
+      if (first?.status !== "succeeded") {
+        return { ok: false, reason: "the first payment has not settled" };
+      }
+
+      const body: Record<string, string> = {
+        amount: String(input.amountCents),
+        currency: input.currency.toLowerCase(),
+        customer,
+        payment_method: method,
+        off_session: "true",
+        confirm: "true",
+        description: input.description,
+      };
+      for (const [k, v] of Object.entries(input.metadata ?? {})) body[`metadata[${k}]`] = v;
+
+      const intent = await this.call("payment_intents", body, input.idempotencyKey);
+      if (intent?.status === "succeeded" || intent?.status === "requires_capture") {
+        return { ok: true, intentId: String(intent.id) };
+      }
+      // Anything else means the bank wants the customer present, which is a
+      // no rather than a fault.
+      return { ok: false, reason: "the bank asked for the card to be confirmed again" };
+    } catch (e) {
+      return { ok: false, reason: e instanceof Error ? e.message : "the card was declined" };
+    }
   }
 
   async testConnection(): Promise<{ ok: true; account: string } | { ok: false; reason: string }> {

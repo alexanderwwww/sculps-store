@@ -384,6 +384,13 @@ export const orders = pgTable(
 
     note: text("note").notNull().default(""),
     /** ticked the marketing box at checkout — never pre-ticked */
+    /**
+     * Whether the thank-you page's one-tap offer was shown, taken, declined
+     * or refused by the bank. It lives on the order rather than in a side
+     * table because an offer belongs to exactly one order and the page has to
+     * know, on every load, whether it has already been answered.
+     */
+    upsellState: text("upsell_state"),
     marketingConsent: boolean("marketing_consent").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
