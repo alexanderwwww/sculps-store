@@ -152,55 +152,100 @@ async function fetchRefs(urls, dir) {
 
 
 /**
- * Puts files into the composer by dropping them on it.
+ * Gets files into the composer.
  *
- * The obvious way is to find the paperclip and click it, and that is what the
- * last version did — by the button's English label. This account runs Gemini
- * in Greek, so the label was "Μεταφόρτωση" and nothing matched; every prompt
- * went out with no reference and the run produced eight pictures of a reaper
- * nobody had ever seen.
+ * This has now failed three ways, so it tries three ways.
  *
- * Dropping needs no button, so it needs no label, so it works in any language
- * and survives the next redesign. The file is read here, handed to the page as
- * base64, rebuilt into a real File there, and dispatched as a genuine drag —
- * enter, over, drop — because a lone drop event is ignored by most editors.
+ * Clicking the paperclip was first and it broke because the button was found
+ * by its English label on an account running Gemini in Greek. Dropping was
+ * second and it broke because the handler isn't on the text box — the event
+ * has to reach a container further up, or the document.
+ *
+ * Pasting is first now because it is the one path every one of these editors
+ * supports deliberately: people paste screenshots into them all day. It needs
+ * no button, no label, and no guess about which element listens.
+ *
+ * Each attempt is checked rather than assumed. The cost of getting this wrong
+ * silently is eight pictures of a product nobody has seen.
  */
-async function dropFiles(page, paths) {
+async function putFiles(page, paths, wand, label) {
   const TYPES = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
-  const items = [];
+  const files = [];
   for (const p of paths) {
-    items.push({
+    files.push({
       name: basename(p),
       type: TYPES[extname(p).toLowerCase()] ?? "image/jpeg",
       data: (await readFile(p)).toString("base64"),
     });
   }
 
-  return page.evaluate(({ files, sels }) => {
-    const target =
-      sels.map((s) => document.querySelector(s)).find(Boolean) ?? document.body;
+  const before = await blobCount(page);
 
-    const dt = new DataTransfer();
-    for (const f of files) {
-      const bin = atob(f.data);
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      dt.items.add(new File([bytes], f.name, { type: f.type }));
-    }
+  // Focus first: a paste goes to whatever has the caret.
+  const box = await find(page, site.ask, 8000);
+  if (box) await box.click().catch(() => {});
+  await page.waitForTimeout(300);
 
-    // The full sequence. Editors that accept drops listen for dragover and
-    // call preventDefault on it; without that step the drop is refused.
-    for (const type of ["dragenter", "dragover", "drop"]) {
-      target.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
-    }
-    return true;
-  }, { files: items, sels: site.ask }).catch(() => false);
+  const deliver = (mode) =>
+    page.evaluate(({ files, sels, mode }) => {
+      const dt = new DataTransfer();
+      for (const f of files) {
+        const bin = atob(f.data);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        dt.items.add(new File([bytes], f.name, { type: f.type }));
+      }
+
+      const box = sels.map((s) => document.querySelector(s)).find(Boolean);
+      if (!box) return false;
+
+      if (mode === "paste") {
+        box.focus?.();
+        box.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt }));
+        return true;
+      }
+
+      // Drop: walk up from the text box and hit every ancestor, plus the
+      // document itself. Which element carries the handler is an
+      // implementation detail that changes; the ancestor chain does not.
+      const targets = [];
+      for (let el = box; el && targets.length < 8; el = el.parentElement) targets.push(el);
+      targets.push(document.body, document.documentElement);
+      for (const t of targets) {
+        for (const type of ["dragenter", "dragover", "drop"]) {
+          t.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+        }
+      }
+      return true;
+    }, { files, sels: site.ask, mode }).catch(() => false);
+
+  // 1 — paste
+  await deliver("paste");
+  await page.waitForTimeout(2200 + files.length * 900);
+  if ((await blobCount(page)) > before) return "pasted";
+
+  // 2 — drop, everywhere that might be listening
+  await wand?.say(label, "attaching — second try…");
+  await deliver("drop");
+  await page.waitForTimeout(2200 + files.length * 900);
+  if ((await blobCount(page)) > before) return "dropped";
+
+  // 3 — a real file input, if the page keeps one
+  const input = page.locator(site.file).first();
+  if (await input.count().then((c) => c > 0).catch(() => false)) {
+    await wand?.say(label, "attaching — third try…");
+    await input.setInputFiles(paths).catch(() => {});
+    await page.waitForTimeout(2500 + files.length * 1200);
+    if ((await blobCount(page)) > before) return "uploaded";
+  }
+
+  return null;
 }
 
 /**
  * Did anything actually attach?
  *
- * Both sites show what you attached as a thumbnail built from a blob URL, and
+ * Both sites show an attachment as a thumbnail built from a blob URL, and
  * neither uses blob URLs anywhere else in an empty composer. Counting them
  * before and after is a cheap, language-proof answer to a question that
  * otherwise only gets answered by the pictures coming out wrong.
@@ -221,28 +266,10 @@ async function runPrompt(text, refs, label, n, total, dir) {
   // Pictures before words: both sites disable send while an upload is running.
   if (refs.length) {
     await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
-    const before = await blobCount(page);
-
-    // Drop first: no button, no label, no language.
-    await dropFiles(page, refs);
-    await page.waitForTimeout(2200 + refs.length * 900);
-    let after = await blobCount(page);
-
-    if (after <= before) {
-      // Fall back to the file input, if the page happens to have one.
-      const input = page.locator(site.file).first();
-      if (await input.count().then((c) => c > 0).catch(() => false)) {
-        await input.setInputFiles(refs).catch(() => {});
-        await page.waitForTimeout(2500 + refs.length * 1200);
-        after = await blobCount(page);
-      }
-    }
-
-    if (after > before) {
-      console.log(`  attached ${refs.length}`);
+    const how = await putFiles(page, refs, wand, label);
+    if (how) {
+      console.log(`  attached ${refs.length} (${how})`);
     } else {
-      // Loud. A run that quietly drops the reference makes eight pictures of
-      // the wrong product and gives nobody a reason why.
       console.log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
       await wand.say(label, `${n} of ${total} — couldn't attach, sending anyway`);
       await page.waitForTimeout(1000);
