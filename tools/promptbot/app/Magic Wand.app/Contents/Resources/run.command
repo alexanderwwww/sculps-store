@@ -2,14 +2,19 @@
 #
 # What the Dock icon starts.
 #
-# Lives inside the bundle so there is one thing to drag to Applications and
-# nothing loose beside it. Everything it writes goes to a folder in Pictures,
-# because an app has no business writing into its own bundle and because that
-# is where somebody looks for pictures.
+# It does its work in Application Support rather than inside the bundle, and
+# that is not tidiness — it is the only thing that works. macOS runs a
+# downloaded, unsigned app from a read-only copy in /var/folders (it calls
+# this App Translocation), so anything that installs into its own Resources
+# folder fails on the first run with a permission error that reads like a
+# broken download. Copying the few small files out and installing there sides
+# steps the whole mechanism, and it means an app update never wipes the
+# hundred megabytes of browser engine underneath it.
 
-cd "$(dirname "$0")" || exit 1
 set -u
 
+BUNDLE="$(cd "$(dirname "$0")" && pwd)"
+WORK="$HOME/Library/Application Support/Magic Wand"
 OUT="$HOME/Pictures/Magic Wand"
 PORT=9222
 PROFILE="$HOME/.magicwand-chrome"
@@ -21,16 +26,17 @@ die() { printf "\n\033[31m%s\033[0m\n\n" "$1"; echo "Press any key to close."; r
 printf "\033]0;Magic Wand\007"
 say "Magic Wand"
 
+# A Dock launch inherits almost no PATH, so a perfectly good install of Node
+# reads as missing unless we go and look where the two installers put it.
 if ! command -v node >/dev/null 2>&1; then
-  # A Dock launch inherits almost no PATH, so a perfectly good Homebrew or
-  # pkg install reads as missing unless we go and look in both places.
   for c in /usr/local/bin /opt/homebrew/bin; do [ -x "$c/node" ] && PATH="$c:$PATH"; done
 fi
 
 if ! command -v node >/dev/null 2>&1; then
   printf "\n\033[31mNode isn't installed — Magic Wand needs it.\033[0m\n\n"
   echo "Opening nodejs.org. Click the big green LTS button, double-click the"
-  echo ".pkg it downloads, click through. Apple signs it, so no warnings."
+  echo ".pkg it downloads, click through it. Apple signs that one, so there's"
+  echo "no security warning."
   echo
   echo "Then open Magic Wand again."
   sleep 2
@@ -40,13 +46,17 @@ fi
 
 [ -d "/Applications/Google Chrome.app" ] || die "Google Chrome isn't installed."
 
+mkdir -p "$WORK" "$OUT" || die "Couldn't create $WORK"
+# Always refresh the scripts, never the installed packages: this is also how
+# an updated app picks up new code without reinstalling anything.
+cp "$BUNDLE"/*.mjs "$BUNDLE/package.json" "$WORK/" 2>/dev/null
+cd "$WORK" || die "Couldn't open $WORK"
+
 if [ ! -d node_modules ]; then
   say "First run — setting up. A couple of minutes, once only."
   npm install --silent || die "Setup failed. Scroll up for why."
   npx --yes playwright install chromium || die "Couldn't fetch the browser engine."
 fi
-
-mkdir -p "$OUT"
 
 echo
 echo "  1   Gemini"

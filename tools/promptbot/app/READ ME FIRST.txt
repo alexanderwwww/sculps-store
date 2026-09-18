@@ -1,22 +1,27 @@
 MAGIC WAND
 
 
-INSTALL
+INSTALL — the first step matters
 
-1. Drag  Magic Wand.app  into your Applications folder.
+1. DRAG  Magic Wand.app  INTO YOUR APPLICATIONS FOLDER FIRST.
 
-2. Open it once. macOS will refuse it:
+   Don't open it from Downloads. macOS runs a downloaded app from a
+   locked temporary copy of itself, so it can't finish setting up and
+   you get "Setup failed" for no visible reason. Moving it to
+   Applications is what stops that happening.
+
+2. Open it. macOS will refuse:
    "cannot be opened because it is from an unidentified developer."
-   That's expected.
+   Expected.
 
 3. Apple menu -> System Settings -> Privacy & Security
    Scroll down. There's a line about Magic Wand being blocked.
    Click OPEN ANYWAY, enter your password.
 
-4. Open Magic Wand again, click Open. That's the last time it asks.
+4. Open Magic Wand again, click Open. Last time it asks.
 
 5. If it says Node isn't installed it opens nodejs.org for you.
-   Big green LTS button, double-click the .pkg, click through.
+   Big green LTS button, double-click the .pkg, click through it.
    Apple signs that one, so no warnings. Then open Magic Wand again.
 
 6. First run sets itself up. A couple of minutes, once only.
@@ -33,8 +38,8 @@ prompts and queues them. Within a few seconds your screen shows what
 arrived — the name, and the first line of every prompt. Press Return
 and the wand does it.
 
-One prompt at a time. Fresh chat each time, full prompt, then it waits
-for the pictures to finish generating before it moves to the next one.
+One prompt at a time. Fresh chat each time, the full prompt, then it
+waits for the pictures to finish generating before moving to the next.
 
 PRESS ESC IN THE BROWSER TO STOP. Nothing further gets typed.
 
@@ -50,3 +55,8 @@ IF IT SAYS CHROME DIDN'T OPEN
 
 A normal Chrome was still running. Quit it properly — Cmd+Q, not the
 red dot — then open Magic Wand again.
+
+
+IF IT STILL SAYS SETUP FAILED
+
+The app isn't in Applications. Drag it there and try again.
