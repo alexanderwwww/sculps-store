@@ -87,9 +87,32 @@ export const OVERLAY = `(() => {
     setTimeout(() => s.remove(), 700);
   }
 
+  /**
+   * Waiting is most of the time this thing spends, and a wand frozen in a
+   * corner for four minutes reads as a crash. While it waits it drifts down
+   * the right-hand edge and drops a spark now and then — out of the way of
+   * the page, but obviously alive.
+   */
+  let idle = null;
+  function stopIdle() { if (idle) { clearInterval(idle); idle = null; } }
+  function startIdle() {
+    stopIdle();
+    let t = 0;
+    idle = setInterval(() => {
+      if (state.stopped) return stopIdle();
+      t += 1;
+      const x = window.innerWidth - 58;
+      const y = window.innerHeight * 0.42 + Math.sin(t / 2.4) * 46;
+      cursor.style.transform = "translate(" + x + "px, " + y + "px)";
+      if (t % 3 === 0) spark(x - 6 + Math.random() * 12, y + 14 + Math.random() * 16);
+    }, 900);
+  }
+
   window.__wand = {
     stopped: () => state.stopped,
+    idle(on) { on ? startIdle() : stopIdle(); },
     to(x, y, act) {
+      stopIdle();
       // Re-attach if the page's own rendering swept the overlay away.
       if (!cursor.isConnected) root.appendChild(cursor);
       if (!hud.isConnected) root.appendChild(hud);
@@ -138,6 +161,8 @@ export async function attachWand(page) {
     mounted,
     stopped: () => safe(() => page.evaluate(() => window.__wand?.stopped() ?? false), false),
     say: (t, b) => safe(() => page.evaluate(([a, c]) => window.__wand?.say(a, c), [t, b])),
+    /** Drift and sparkle at the edge while something slow is happening. */
+    idle: (on) => safe(() => page.evaluate((v) => window.__wand?.idle(v), on)),
     point: async (locator, act = true) => {
       const box = await safe(() => locator.boundingBox(), null);
       if (!box) return;

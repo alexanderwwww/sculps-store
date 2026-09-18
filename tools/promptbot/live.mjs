@@ -21,6 +21,7 @@
 import { chromium } from "playwright";
 import { attachWand } from "./wand.mjs";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { basename, extname } from "node:path";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -149,6 +150,65 @@ async function fetchRefs(urls, dir) {
   return out;
 }
 
+
+/**
+ * Puts files into the composer by dropping them on it.
+ *
+ * The obvious way is to find the paperclip and click it, and that is what the
+ * last version did — by the button's English label. This account runs Gemini
+ * in Greek, so the label was "Μεταφόρτωση" and nothing matched; every prompt
+ * went out with no reference and the run produced eight pictures of a reaper
+ * nobody had ever seen.
+ *
+ * Dropping needs no button, so it needs no label, so it works in any language
+ * and survives the next redesign. The file is read here, handed to the page as
+ * base64, rebuilt into a real File there, and dispatched as a genuine drag —
+ * enter, over, drop — because a lone drop event is ignored by most editors.
+ */
+async function dropFiles(page, paths) {
+  const TYPES = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
+  const items = [];
+  for (const p of paths) {
+    items.push({
+      name: basename(p),
+      type: TYPES[extname(p).toLowerCase()] ?? "image/jpeg",
+      data: (await readFile(p)).toString("base64"),
+    });
+  }
+
+  return page.evaluate(({ files, sels }) => {
+    const target =
+      sels.map((s) => document.querySelector(s)).find(Boolean) ?? document.body;
+
+    const dt = new DataTransfer();
+    for (const f of files) {
+      const bin = atob(f.data);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      dt.items.add(new File([bytes], f.name, { type: f.type }));
+    }
+
+    // The full sequence. Editors that accept drops listen for dragover and
+    // call preventDefault on it; without that step the drop is refused.
+    for (const type of ["dragenter", "dragover", "drop"]) {
+      target.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+    }
+    return true;
+  }, { files: items, sels: site.ask }).catch(() => false);
+}
+
+/**
+ * Did anything actually attach?
+ *
+ * Both sites show what you attached as a thumbnail built from a blob URL, and
+ * neither uses blob URLs anywhere else in an empty composer. Counting them
+ * before and after is a cheap, language-proof answer to a question that
+ * otherwise only gets answered by the pictures coming out wrong.
+ */
+async function blobCount(page) {
+  return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
+}
+
 async function runPrompt(text, refs, label, n, total, dir) {
   await wand.reattach();
   await wand.say(label, `${n} of ${total} — sending…`);
@@ -159,46 +219,33 @@ async function runPrompt(text, refs, label, n, total, dir) {
   if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await page.waitForTimeout(1600); await wand.reattach(); }
 
   // Pictures before words: both sites disable send while an upload is running.
-  //
-  // Gemini keeps no file input in the page until the paperclip menu has been
-  // opened, so the obvious version — find the input, set the files — finds
-  // nothing and, because it was written to fail quietly, sent every prompt
-  // with no reference attached and said nothing about it.
   if (refs.length) {
     await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
-    let input = page.locator(site.file).first();
-    let have = await input.count().then((c) => c > 0).catch(() => false);
+    const before = await blobCount(page);
 
-    if (!have) {
-      const clip = await find(page, site.attach, 6000);
-      if (clip) {
-        await wand.point(clip);
-        await clip.click().catch(() => {});
-        await page.waitForTimeout(900);
-        const item = site.attachItem.length ? await find(page, site.attachItem, 3000) : null;
-        if (item) { await item.click().catch(() => {}); await page.waitForTimeout(700); }
-        input = page.locator(site.file).first();
-        have = await input.count().then((c) => c > 0).catch(() => false);
+    // Drop first: no button, no label, no language.
+    await dropFiles(page, refs);
+    await page.waitForTimeout(2200 + refs.length * 900);
+    let after = await blobCount(page);
+
+    if (after <= before) {
+      // Fall back to the file input, if the page happens to have one.
+      const input = page.locator(site.file).first();
+      if (await input.count().then((c) => c > 0).catch(() => false)) {
+        await input.setInputFiles(refs).catch(() => {});
+        await page.waitForTimeout(2500 + refs.length * 1200);
+        after = await blobCount(page);
       }
     }
 
-    if (!have) {
-      // Loud, not quiet: a run that silently drops the reference produces
-      // seven pictures of the wrong product and nobody knows why.
-      console.log(`  \x1b[31m!! couldn't find the attach box — sending with NO reference image\x1b[0m`);
-      await wand.say(label, `${n} of ${total} — no attach box found, sending without it`);
-      await page.waitForTimeout(1200);
+    if (after > before) {
+      console.log(`  attached ${refs.length}`);
     } else {
-      try {
-        await input.setInputFiles(refs);
-        await page.waitForTimeout(3000 + refs.length * 1500);
-        console.log(`  attached ${refs.length}`);
-      } catch (e) {
-        console.log(`  \x1b[31m!! attach failed: ${e.message.split("\n")[0]}\x1b[0m`);
-      }
-      // Escape closes the menu if clicking it left one open over the box.
-      await page.keyboard.press("Escape").catch(() => {});
-      await page.waitForTimeout(400);
+      // Loud. A run that quietly drops the reference makes eight pictures of
+      // the wrong product and gives nobody a reason why.
+      console.log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
+      await wand.say(label, `${n} of ${total} — couldn't attach, sending anyway`);
+      await page.waitForTimeout(1000);
     }
   }
 
@@ -215,6 +262,7 @@ async function runPrompt(text, refs, label, n, total, dir) {
   else await page.keyboard.press("Enter");
 
   await wand.say(label, `${n} of ${total} — waiting for the pictures…`);
+  await wand.idle(true);
   const deadline = Date.now() + opt.wait * 1000;
   const seen = new Set();
   let quiet = 0;
@@ -233,6 +281,8 @@ async function runPrompt(text, refs, label, n, total, dir) {
     if (fresh.length) { quiet = 0; await wand.say(label, `${n} of ${total} — ${seen.size} image${seen.size === 1 ? "" : "s"}…`); }
     else if (seen.size) { quiet += 2; if (quiet >= 8) break; }
   }
+
+  await wand.idle(false);
 
   let saved = 0;
   for (const url of seen) {
