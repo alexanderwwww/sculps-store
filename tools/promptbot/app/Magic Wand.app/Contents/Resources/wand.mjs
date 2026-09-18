@@ -1,141 +1,152 @@
 /**
- * The overlay you actually see.
+ * The overlay you actually see: a wand that flies to whatever is about to be
+ * clicked, sparkles where it lands, a panel naming the job in flight, and
+ * Escape to stop.
  *
- * Everything in here is injected into the page and runs in the browser, not in
- * node. It draws a wand where the automation is about to act, a small panel
- * saying what it is doing, and it listens for Escape.
+ * Everything here runs inside the page, not in node.
  *
- * Why a visible cursor at all: a script that silently types into your browser
- * is indistinguishable from something going wrong. A wand that travels to the
- * box before the text appears makes every action something you watched happen,
- * and the panel means you can walk away and still know where it got to.
- *
- * Escape is handled in the page rather than in node because that is where your
- * keyboard is. It sets a flag the runner checks between every step, so a stop
- * lands at a step boundary instead of halfway through a sentence.
+ * It is built without a <style> element and without @keyframes, which looks
+ * like the long way round and is the only way that works. Gemini serves a
+ * content security policy with a nonce on its styles, so an injected
+ * stylesheet is dropped on the floor — the first version of this mounted
+ * fine, reported no error, and drew absolutely nothing. Inline style
+ * properties set from script are not covered by that rule, so every rule here
+ * is written straight onto an element and every animation is a transition or
+ * a timer.
  */
 
-/** Injected once per page. Safe to call again — it no-ops if it's already up. */
+/** Injected on every page load. Calling it twice is a no-op. */
 export const OVERLAY = `(() => {
-  if (window.__wand) return;
+  if (window.__wand) return true;
 
-  const css = \`
-    @keyframes wand-pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.18) } }
-    @keyframes wand-spark { 0% { opacity: 1; transform: scale(.4) rotate(0deg) } 100% { opacity: 0; transform: scale(1.8) rotate(90deg) } }
-    #wand-cursor {
-      position: fixed; z-index: 2147483647; pointer-events: none;
-      width: 44px; height: 44px; left: 0; top: 0; margin: -22px 0 0 -22px;
-      transition: transform .45s cubic-bezier(.22,.8,.28,1);
-      font-size: 34px; line-height: 44px; text-align: center;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,.45));
-    }
-    #wand-cursor.is-act { animation: wand-pulse .45s ease }
-    .wand-spark {
-      position: fixed; z-index: 2147483646; pointer-events: none;
-      width: 16px; height: 16px; margin: -8px 0 0 -8px;
-      background: radial-gradient(circle, #FFD76B 0%, #F5821F 55%, transparent 70%);
-      border-radius: 50%; animation: wand-spark .6s ease-out forwards;
-    }
-    #wand-hud {
-      position: fixed; z-index: 2147483647; right: 18px; bottom: 18px;
-      max-width: 340px; padding: 13px 15px; border-radius: 14px;
-      background: rgba(12,12,14,.93); color: #F7F2E7; pointer-events: none;
-      font: 500 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      box-shadow: 0 10px 40px -12px rgba(0,0,0,.7);
-      backdrop-filter: blur(10px);
-    }
-    #wand-hud b { display: block; font-size: 12px; letter-spacing: .04em;
-      text-transform: uppercase; color: #F5821F; margin-bottom: 5px }
-    #wand-hud p { margin: 0; opacity: .88 }
-    #wand-hud small { display: block; margin-top: 8px; opacity: .5; font-size: 11.5px }
-    #wand-hud.is-stop b { color: #FF6B5A }
-  \`;
+  const css = (el, s) => { for (const k in s) el.style[k] = s[k]; return el; };
+  const root = document.documentElement;
+  const TOP = "2147483647";
 
-  const style = document.createElement("style");
-  style.textContent = css;
-  document.documentElement.appendChild(style);
-
-  const cursor = document.createElement("div");
-  cursor.id = "wand-cursor";
+  // The wand. A transition on transform is what makes it travel rather than
+  // jump, and travel is the whole point — you are meant to see where it went.
+  const cursor = css(document.createElement("div"), {
+    position: "fixed", zIndex: TOP, pointerEvents: "none",
+    left: "0", top: "0", width: "46px", height: "46px", margin: "-23px 0 0 -23px",
+    fontSize: "36px", lineHeight: "46px", textAlign: "center",
+    transition: "transform .45s cubic-bezier(.22,.8,.28,1)",
+    filter: "drop-shadow(0 4px 12px rgba(0,0,0,.55))",
+    willChange: "transform",
+  });
   cursor.textContent = "\\u{1FA84}";
-  document.documentElement.appendChild(cursor);
+  root.appendChild(cursor);
 
-  const hud = document.createElement("div");
-  hud.id = "wand-hud";
-  hud.innerHTML = '<b>Ready</b><p>Waiting.</p><small>Press Esc to stop</small>';
-  document.documentElement.appendChild(hud);
+  const hud = css(document.createElement("div"), {
+    position: "fixed", zIndex: TOP, right: "18px", bottom: "18px",
+    maxWidth: "340px", padding: "13px 15px", borderRadius: "14px",
+    background: "rgba(12,12,14,.94)", color: "#F7F2E7", pointerEvents: "none",
+    font: '500 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    boxShadow: "0 10px 40px -12px rgba(0,0,0,.75)",
+  });
+  const title = css(document.createElement("div"), {
+    fontSize: "12px", letterSpacing: ".04em", textTransform: "uppercase",
+    color: "#C9A0FF", marginBottom: "5px", fontWeight: "700",
+  });
+  const body = css(document.createElement("div"), { opacity: ".9" });
+  const hint = css(document.createElement("div"), {
+    marginTop: "8px", opacity: ".5", fontSize: "11.5px",
+  });
+  title.textContent = "Ready";
+  body.textContent = "Waiting.";
+  hint.textContent = "Press Esc to stop";
+  hud.append(title, body, hint);
+  root.appendChild(hud);
 
   const state = { stopped: false };
 
-  // Escape is the whole contract: one key, and nothing further is typed.
-  // Captured on the way down so a page that swallows keys can't eat it.
+  // Captured on the way down, so a page that swallows keys can't eat it.
   window.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || state.stopped) return;
     state.stopped = true;
-    hud.classList.add("is-stop");
-    hud.querySelector("b").textContent = "Stopped";
-    hud.querySelector("p").textContent = "You pressed Escape. Nothing more will be typed.";
-    hud.querySelector("small").textContent = "Close this tab, or run the command again.";
-    cursor.style.opacity = "0.25";
+    css(title, { color: "#FF6B5A" });
+    title.textContent = "Stopped";
+    body.textContent = "You pressed Escape. Nothing more will be typed.";
+    hint.textContent = "Close the Terminal window, or start it again.";
+    css(cursor, { opacity: ".25" });
   }, true);
+
+  function spark(x, y) {
+    const s = css(document.createElement("div"), {
+      position: "fixed", zIndex: String(Number(TOP) - 1), pointerEvents: "none",
+      left: x + "px", top: y + "px", width: "18px", height: "18px",
+      margin: "-9px 0 0 -9px", borderRadius: "50%",
+      background: "radial-gradient(circle, #FFFFFF 0%, #C9A0FF 45%, rgba(201,160,255,0) 70%)",
+      transition: "transform .55s ease-out, opacity .55s ease-out",
+      transform: "scale(.4)", opacity: "1",
+    });
+    root.appendChild(s);
+    // Two frames, so the browser has a start value to transition away from.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      css(s, { transform: "scale(2.1)", opacity: "0" });
+    }));
+    setTimeout(() => s.remove(), 700);
+  }
 
   window.__wand = {
     stopped: () => state.stopped,
-    /** Move the wand to a point and leave a spark where it lands. */
     to(x, y, act) {
-      cursor.style.transform = \`translate(\${x}px, \${y}px)\`;
+      // Re-attach if the page's own rendering swept the overlay away.
+      if (!cursor.isConnected) root.appendChild(cursor);
+      if (!hud.isConnected) root.appendChild(hud);
+      cursor.style.transform = "translate(" + x + "px, " + y + "px)";
       if (!act) return;
-      cursor.classList.remove("is-act");
-      void cursor.offsetWidth;
-      cursor.classList.add("is-act");
-      const s = document.createElement("div");
-      s.className = "wand-spark";
-      s.style.left = x + "px";
-      s.style.top = y + "px";
-      document.documentElement.appendChild(s);
-      setTimeout(() => s.remove(), 620);
+      spark(x, y);
+      // A quick pulse on top of the travel, done with a timer because a
+      // keyframe animation would need a stylesheet.
+      cursor.style.transition = "transform .12s ease";
+      cursor.style.transform = "translate(" + x + "px, " + y + "px) scale(1.25)";
+      setTimeout(() => {
+        cursor.style.transform = "translate(" + x + "px, " + y + "px) scale(1)";
+        setTimeout(() => { cursor.style.transition = "transform .45s cubic-bezier(.22,.8,.28,1)"; }, 140);
+      }, 130);
     },
-    say(title, body) {
+    say(t, b) {
       if (state.stopped) return;
-      hud.querySelector("b").textContent = title;
-      hud.querySelector("p").textContent = body;
+      if (!hud.isConnected) root.appendChild(hud);
+      title.textContent = t;
+      body.textContent = b;
     },
   };
+  return true;
 })()`;
 
 /**
- * Re-injects the overlay after any navigation and gives the caller the three
- * things the runner needs: move the wand, update the panel, and ask whether
- * Escape has been pressed.
+ * Mounts the overlay and hands back the three things the runner needs. It
+ * reports whether the overlay is really there, because one that silently
+ * fails to draw is worse than none — the run looks broken when it isn't.
  */
 export async function attachWand(page) {
-  // addInitScript covers pages loaded later; the eval covers the one already open.
   await page.addInitScript(OVERLAY).catch(() => {});
-  await page.evaluate(OVERLAY).catch(() => {});
+  let mounted = false;
+  try {
+    mounted = Boolean(await page.evaluate(OVERLAY));
+  } catch (e) {
+    console.log(`  (the on-screen wand couldn't be drawn on this page: ${String(e).split("\n")[0]})`);
+  }
+  if (!mounted) {
+    console.log("  (no on-screen wand here — the typing still works, you just won't see the cursor)");
+  }
 
-  const alive = async (fn, fallback) => {
-    try { return await fn(); } catch { return fallback; }
-  };
+  const safe = async (fn, fallback) => { try { return await fn(); } catch { return fallback; } };
 
   return {
-    /** True once the person has pressed Escape in the browser window. */
-    stopped: () => alive(() => page.evaluate(() => window.__wand?.stopped() ?? false), false),
-
-    say: (title, body) =>
-      alive(() => page.evaluate(([t, b]) => window.__wand?.say(t, b), [title, body])),
-
-    /** Fly the wand to an element and spark on it. */
+    mounted,
+    stopped: () => safe(() => page.evaluate(() => window.__wand?.stopped() ?? false), false),
+    say: (t, b) => safe(() => page.evaluate(([a, c]) => window.__wand?.say(a, c), [t, b])),
     point: async (locator, act = true) => {
-      const box = await alive(() => locator.boundingBox(), null);
+      const box = await safe(() => locator.boundingBox(), null);
       if (!box) return;
       const x = box.x + box.width / 2;
       const y = box.y + Math.min(box.height / 2, 40);
-      await alive(() => page.evaluate(([a, b, c]) => window.__wand?.to(a, b, c), [x, y, act]));
-      // Long enough for the travel animation to read as movement, not a jump.
-      await page.waitForTimeout(act ? 520 : 260);
+      await safe(() => page.evaluate(([a, b, c]) => window.__wand?.to(a, b, c), [x, y, act]));
+      // Long enough that the travel reads as movement rather than a jump.
+      await page.waitForTimeout(act ? 540 : 260);
     },
-
-    /** Put it back after a navigation blew the overlay away. */
-    reattach: () => alive(() => page.evaluate(OVERLAY)),
+    reattach: () => safe(() => page.evaluate(OVERLAY)),
   };
 }

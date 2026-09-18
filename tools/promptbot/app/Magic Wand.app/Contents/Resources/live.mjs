@@ -22,7 +22,8 @@ import { chromium } from "playwright";
 import { attachWand } from "./wand.mjs";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { createInterface } from "node:readline/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.dev/media/wand-queue.json";
 const POLL_MS = 6000;
@@ -36,6 +37,10 @@ const SITES = {
     send: ['button[aria-label*="Send" i]', 'button[aria-label*="Submit" i]', "button.send-button"],
     fresh: ['button[aria-label*="New chat" i]', 'a[aria-label*="New chat" i]'],
     file: ['input[type="file"]'],
+    /** The paperclip. Gemini only puts a file input in the page once this is open. */
+    attach: ['button[aria-label*="Open upload" i]', 'button[aria-label*="upload" i]', 'button[aria-label*="Add files" i]', 'uploader-button button', 'button.upload-card-button'],
+    /** And then the menu item inside it. */
+    attachItem: ['button[aria-label*="Upload file" i]', 'text=Upload files', 'text=Μεταφόρτωση αρχείων'],
     images: ['img[src^="https://lh3.googleusercontent.com"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
   },
   chatgpt: {
@@ -45,6 +50,8 @@ const SITES = {
     send: ['button[data-testid="send-button"]', 'button[aria-label*="Send" i]'],
     fresh: ['a[href="/"]', 'button[aria-label*="New chat" i]'],
     file: ['input[type="file"]'],
+    attach: ['button[aria-label*="Upload" i]', 'button[aria-label*="Attach" i]', 'button[data-testid="composer-plus-btn"]'],
+    attachItem: [],
     images: ['img[src*="oaiusercontent"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
   },
 };
@@ -55,7 +62,29 @@ opt.port = Number(opt.port);
 opt.wait = Number(opt.wait);
 const site = SITES[opt.site] ?? SITES.gemini;
 
-const rl = createInterface({ input: process.stdin, output: process.stdout });
+const run = promisify(execFile);
+
+/**
+ * The approval, as a real macOS dialog rather than a keypress in a Terminal.
+ *
+ * Asking someone to find a black window and press Return is asking them to
+ * learn where the window went. A dialog comes to the front, names the job, and
+ * has two buttons. It is the same gate either way — nothing runs until it is
+ * answered — and it falls back to the keyboard on anything that isn't a Mac.
+ */
+async function ask(title, body) {
+  const esc = (t) => t.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const script =
+    `display dialog "${esc(body)}" with title "${esc(title)}" ` +
+    `buttons {"Skip", "Run it"} default button "Run it" with icon note giving up after 3600`;
+  try {
+    const { stdout } = await run("osascript", ["-e", script]);
+    return /Run it/.test(stdout);
+  } catch {
+    // Cancel, a timeout, or no osascript at all — none of which mean yes.
+    return false;
+  }
+}
 
 /** Jobs already run, so a restart doesn't offer you the same one again. */
 const DONE_FILE = ".done-jobs";
@@ -130,12 +159,46 @@ async function runPrompt(text, refs, label, n, total, dir) {
   if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await page.waitForTimeout(1600); await wand.reattach(); }
 
   // Pictures before words: both sites disable send while an upload is running.
+  //
+  // Gemini keeps no file input in the page until the paperclip menu has been
+  // opened, so the obvious version — find the input, set the files — finds
+  // nothing and, because it was written to fail quietly, sent every prompt
+  // with no reference attached and said nothing about it.
   if (refs.length) {
-    const input = page.locator(site.file).first();
-    if (await input.count().then((c) => c > 0).catch(() => false)) {
-      await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
-      await input.setInputFiles(refs).catch(() => {});
-      await page.waitForTimeout(2500 + refs.length * 1200);
+    await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
+    let input = page.locator(site.file).first();
+    let have = await input.count().then((c) => c > 0).catch(() => false);
+
+    if (!have) {
+      const clip = await find(page, site.attach, 6000);
+      if (clip) {
+        await wand.point(clip);
+        await clip.click().catch(() => {});
+        await page.waitForTimeout(900);
+        const item = site.attachItem.length ? await find(page, site.attachItem, 3000) : null;
+        if (item) { await item.click().catch(() => {}); await page.waitForTimeout(700); }
+        input = page.locator(site.file).first();
+        have = await input.count().then((c) => c > 0).catch(() => false);
+      }
+    }
+
+    if (!have) {
+      // Loud, not quiet: a run that silently drops the reference produces
+      // seven pictures of the wrong product and nobody knows why.
+      console.log(`  \x1b[31m!! couldn't find the attach box — sending with NO reference image\x1b[0m`);
+      await wand.say(label, `${n} of ${total} — no attach box found, sending without it`);
+      await page.waitForTimeout(1200);
+    } else {
+      try {
+        await input.setInputFiles(refs);
+        await page.waitForTimeout(3000 + refs.length * 1500);
+        console.log(`  attached ${refs.length}`);
+      } catch (e) {
+        console.log(`  \x1b[31m!! attach failed: ${e.message.split("\n")[0]}\x1b[0m`);
+      }
+      // Escape closes the menu if clicking it left one open over the box.
+      await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(400);
     }
   }
 
@@ -221,8 +284,13 @@ while (true) {
   });
   console.log();
 
-  const answer = (await rl.question(`Run it? [Return to go, s to skip] `)).trim().toLowerCase();
-  if (answer === "s" || answer === "skip" || answer === "n") {
+  const summary =
+    `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"}` +
+    `${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}\n\n` +
+    job.prompts.map((p, i) => `${i + 1}. ${p.trim().split("\n")[0].slice(0, 70)}…`).join("\n");
+
+  const go = await ask(label, summary);
+  if (!go) {
     done.add(job.id);
     await writeFile(DONE_FILE, [...done].join("\n"));
     console.log(`Skipped.\n`);
@@ -252,5 +320,4 @@ while (true) {
   await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);
 }
 
-rl.close();
 await browser.close();

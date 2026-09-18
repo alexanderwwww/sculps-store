@@ -14,7 +14,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="2"
+BUILD="3"
 WORK="$HOME/Library/Application Support/Magic Wand/$BUILD"
 OUT="$HOME/Pictures/Magic Wand"
 PORT=9222
@@ -115,6 +115,7 @@ fi
 
 say "Sign into $SITE in that Chrome window if you aren't already."
 echo "Then press Return here and leave this window open."
+echo "From then on, jobs arrive as a dialog with a Run it button."
 read -r
 
 node live.mjs --site "$SITE" --out "$OUT"
