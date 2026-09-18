@@ -82,7 +82,8 @@ WHERE THE PICTURES GO
 
    Downloads -> Magic Wand -> (a folder per job)
 
-It opens that folder when it finishes.
+When a job finishes, a panel says how many were saved and has a
+button that opens the folder. It opens it for you anyway.
 
 
 WATCH FOR THIS ON THE FIRST PROMPT

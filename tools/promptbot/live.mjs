@@ -427,23 +427,63 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
 
   await wand.idle(false);
 
+  /**
+   * Getting the picture onto the disk.
+   *
+   * This used to fetch the image from inside the page, and a page is the one
+   * place that isn't allowed to: Gemini's content security policy refuses a
+   * request to its own image host from script, the error was swallowed, and
+   * eight generations were thrown away in silence.
+   *
+   * So the first attempt is made from node, through the browser's own request
+   * context — same cookies, same session, no policy in the way. Blob and data
+   * URLs only exist inside the page, so those still go through it. And if
+   * both fail there is always the picture on screen, which can simply be
+   * photographed.
+   */
   let saved = 0;
-  for (const url of seen) {
-    const b64 = await page.evaluate(async (u) => {
-      const r = await fetch(u);
-      const bytes = new Uint8Array(await r.arrayBuffer());
-      let s = "";
-      for (let j = 0; j < bytes.length; j++) s += String.fromCharCode(bytes[j]);
-      return btoa(s);
-    }, url).catch(() => null);
-    if (!b64) continue;
+  const urls = [...seen];
+  for (let k = 0; k < urls.length; k++) {
+    const url = urls[k];
+    let buf = null;
+
+    if (!/^(blob|data):/.test(url)) {
+      buf = await context.request
+        .get(url, { headers: { referer: page.url() } })
+        .then((r) => (r.ok() ? r.body() : null))
+        .catch(() => null);
+    }
+
+    if (!buf) {
+      const b64 = await page.evaluate(async (u) => {
+        const r = await fetch(u);
+        const bytes = new Uint8Array(await r.arrayBuffer());
+        let s = "";
+        for (let j = 0; j < bytes.length; j++) s += String.fromCharCode(bytes[j]);
+        return btoa(s);
+      }, url).catch(() => null);
+      if (b64) buf = Buffer.from(b64, "base64");
+    }
+
+    if (!buf) {
+      // Last resort, and the one that cannot be refused: take a picture of the
+      // picture. Lossier than the original, and far better than nothing.
+      buf = await page
+        .locator(`img[src="${url.replace(/["\\]/g, "\\$&")}"]`)
+        .first()
+        .screenshot()
+        .catch(() => null);
+    }
+
+    if (!buf) {
+      console.log(`  \x1b[31m!! couldn't save one of the pictures\x1b[0m`);
+      continue;
+    }
+
     saved++;
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
-    await writeFile(
-      join(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`),
-      Buffer.from(b64, "base64"),
-    );
+    await writeFile(join(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`), buf);
   }
   return saved;
 }
@@ -461,6 +501,7 @@ while (true) {
   } catch { /* a moment offline is not a reason to quit */ }
 
   if (!job?.id || done.has(job.id) || !job.prompts?.length) {
+    if (await wand.wantsFolder()) await run("open", [opt.out]).catch(() => {});
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
     await page.waitForTimeout(POLL_MS);
     continue;
@@ -559,6 +600,14 @@ while (true) {
   await writeFile(DONE_FILE, [...done].join("\n"));
   console.log(`\n\x1b[1m${total} image${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);
   await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);
+
+  // The panel, with the number and a button that opens the folder — because
+  // a folder you can see beats a sentence saying the folder exists.
+  await wand.done(
+    total ? `${total} picture${total === 1 ? "" : "s"} saved` : "Nothing came back",
+    total ? dir.replace(process.env.HOME ?? "", "~") : "Gemini returned no images for this one.",
+  );
+  if (total) await run("open", [dir]).catch(() => {});
 }
 
 await browser.close();

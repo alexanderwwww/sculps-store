@@ -230,6 +230,39 @@ export const OVERLAY = `(() => {
     }),
   );
   bGo.addEventListener("click", () => { card.style.display = "none"; decide?.("run"); decide = null; });
+
+  /* --------------------------------------------------- the finished panel */
+
+  /*
+   * What happened, and a way to go and look at it.
+   *
+   * The runner saves every picture as it arrives, but "it saved them" is a
+   * claim, and a claim about a folder you cannot see is worth very little.
+   * This says the number and opens the folder, so the answer is the folder
+   * itself rather than a sentence about it.
+   */
+  const doneCard = css(document.createElement("div"), {
+    position: "fixed", zIndex: TOP, right: "18px", top: "18px",
+    width: "330px", padding: "16px", borderRadius: "16px",
+    background: "rgba(14,14,17,.97)", color: "#F7F2E7",
+    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)", display: "none",
+  });
+  const dName = css(document.createElement("div"), { fontSize: "15px", fontWeight: "700", marginBottom: "3px" });
+  const dSub = css(document.createElement("div"), { opacity: ".6", fontSize: "12px", marginBottom: "12px" });
+  const dRow = css(document.createElement("div"), { display: "flex", gap: "8px" });
+  const bOpen = mkBtn("Open the folder", true);
+  const bClose = mkBtn("Close", false);
+  bOpen.setAttribute("data-wand", "");
+  bClose.setAttribute("data-wand", "");
+  dRow.append(bClose, bOpen);
+  doneCard.append(dName, dSub, dRow);
+  root.appendChild(doneCard);
+
+  state.open = false;
+  bOpen.addEventListener("click", () => { state.open = true; doneCard.style.display = "none"; });
+  bClose.addEventListener("click", () => { doneCard.style.display = "none"; });
+
   bSkip.addEventListener("click", () => { card.style.display = "none"; decide?.("skip"); decide = null; });
 
   window.__wand = {
@@ -246,6 +279,16 @@ export const OVERLAY = `(() => {
     },
     /** How many pictures are waiting in the card. */
     fileCount: () => state.files.length,
+    /** Show what a finished job produced, with a way to go and see it. */
+    done(name, sub) {
+      if (!doneCard.isConnected) root.appendChild(doneCard);
+      dName.textContent = name;
+      dSub.textContent = sub;
+      state.open = false;
+      doneCard.style.display = "block";
+    },
+    /** True once Open the folder has been clicked. */
+    wantsFolder() { const v = state.open; state.open = false; return v; },
     /**
      * Push the card's pictures into the composer, as a paste or a drag.
      * They never touch the disk: the File objects go straight from the panel
@@ -342,6 +385,8 @@ export async function attachWand(page) {
     ask: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.ask(a, b), [name, sub]), null),
     fileCount: () => safe(() => page.evaluate(() => window.__wand?.fileCount() ?? 0), 0),
     give: (sels, mode) => safe(() => page.evaluate(([s, m]) => window.__wand?.give(s, m), [sels, mode]), false),
+    done: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.done(a, b), [name, sub])),
+    wantsFolder: () => safe(() => page.evaluate(() => window.__wand?.wantsFolder() ?? false), false),
     reattach: () => safe(() => page.evaluate(OVERLAY)),
   };
 }
