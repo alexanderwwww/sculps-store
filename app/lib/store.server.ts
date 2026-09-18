@@ -142,6 +142,13 @@ export async function loadProductPage(
       .orderBy(asc(reviews.position)),
   ]);
 
+  // A review of the reaper does not belong on the zombie's page. Reviews are
+  // kept per store because most of these shops sell one thing, so the rule is:
+  // whatever was written about this product if anything was, and the store's
+  // own wall otherwise.
+  const mine = publishedReviews.filter((r) => r.productId === product.id);
+  const pageReviews = mine.length ? mine : publishedReviews.filter((r) => !r.productId);
+
   const visible = options.includeHidden ? sectionRows : sectionRows.filter((s) => !s.hidden);
   const blockRows = visible.length
     ? await db
@@ -200,7 +207,7 @@ export async function loadProductPage(
     };
   }).filter((p) => p.variantId);
 
-  return { store, nav, product, variants: variantRows, addOns, addOnProducts, sections: loaded, reviews: publishedReviews };
+  return { store, nav, product, variants: variantRows, addOns, addOnProducts, sections: loaded, reviews: pageReviews };
 }
 
 /**
