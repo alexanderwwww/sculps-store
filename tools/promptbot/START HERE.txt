@@ -1,0 +1,70 @@
+BLACK REAPER — IMAGE WAND
+
+
+FIRST TIME
+
+1. Double-click  wand.command
+
+   Mac will refuse it: "cannot be opened because it is from an unidentified
+   developer". That's expected. Now go to:
+
+       Apple menu -> System Settings -> Privacy & Security
+
+   Scroll down. There's a line saying wand.command was blocked.
+   Click OPEN ANYWAY, enter your password.
+
+   Double-click wand.command again, click Open. That's the last time.
+
+2. If it says Node isn't installed, it opens nodejs.org for you.
+   Click the big green LTS button, double-click the .pkg that downloads,
+   click through the installer. No warnings on that one - Apple signs it.
+   Then double-click wand.command again.
+
+3. It installs itself. A couple of minutes, once only.
+
+4. It asks which one to use:
+
+       1  Gemini
+       2  ChatGPT
+       3  Both - every prompt through each, saved to separate folders
+
+   Type the number and press Return.
+
+5. A Chrome window opens. LOG IN there.
+   It's its own profile - your normal Chrome and your tabs are untouched.
+   If you picked 3, log into BOTH, one tab each.
+
+6. Back to the black Terminal window, press Return to start.
+
+
+EVERY TIME AFTER THAT
+
+   Just double-click wand.command.
+
+
+WHAT YOU'LL SEE
+
+   A magic wand flies to the message box, types the prompt, sends it, and
+   waits for the pictures. A panel bottom-right says where it's up to. It
+   moves to the next prompt on its own.
+
+   PRESS ESC IN THE BROWSER TO STOP. Nothing more gets typed.
+
+   Your images land in the  images  folder next to this file.
+   Send them to Claude and they go on the store.
+
+
+THE PROMPTS
+
+   It fetches Claude's latest prompts every time it runs. So when you ask
+   Claude for new shots, they're loaded the next time you double-click.
+
+   Want to write your own instead? Edit prompts.txt in TextEdit - one prompt
+   per block, a BLANK LINE between blocks - then make an empty file next to
+   it called  .prompts-edited  and it'll stop fetching and leave yours alone.
+
+
+IF IT SAYS CHROME DIDN'T OPEN
+
+   A normal Chrome was still running. Quit it properly - Cmd+Q, not the red
+   dot - then double-click wand.command again.
