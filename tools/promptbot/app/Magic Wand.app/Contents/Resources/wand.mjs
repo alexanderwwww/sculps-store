@@ -149,29 +149,79 @@ export const OVERLAY = `(() => {
    * than as a loading indicator. Drawn with a clip-path so it stays a real
    * star at any size and needs no image.
    */
-  const STAR = "polygon(50% 0%, 60% 38%, 100% 50%, 60% 62%, 50% 100%, 40% 62%, 0% 50%, 40% 38%)";
+  /*
+   * The sparkle shape.
+   *
+   * Long thin spikes with a pinched waist, not a fat eight-pointed star: at
+   * six pixels a chunky star is a dot, and a dot is a loading indicator. The
+   * spikes are what still read as magic when the whole thing is the size of a
+   * full stop.
+   */
+  const STAR = "polygon(50% 0%, 54% 41%, 100% 50%, 54% 59%, 50% 100%, 46% 59%, 0% 50%, 46% 41%)";
+
+  /* Fairy dust is not one colour. Three, picked at random, all pale. */
+  const DUST = [
+    "radial-gradient(circle at 50% 50%, #FFFFFF 0%, #FFF8D8 40%, #FFE49A 75%, rgba(255,205,110,0) 100%)",
+    "radial-gradient(circle at 50% 50%, #FFFFFF 0%, #F2EBFF 40%, #D8C4FF 75%, rgba(190,160,255,0) 100%)",
+    "radial-gradient(circle at 50% 50%, #FFFFFF 0%, #E8FBFF 40%, #B6ECFF 75%, rgba(150,220,255,0) 100%)",
+  ];
 
   function one(x, y, size, dx, dy, spin, life) {
+    const tint = DUST[(Math.random() * DUST.length) | 0];
     const s = css(document.createElement("div"), {
       position: "fixed", zIndex: String(Number(TOP) - 1), pointerEvents: "none",
       left: x + "px", top: y + "px", width: size + "px", height: size + "px",
       margin: (-size / 2) + "px 0 0 " + (-size / 2) + "px",
-      background: "radial-gradient(circle at 50% 50%, #FFFFFF 0%, #FFF3C4 34%, #FFD76B 62%, #F5A623 100%)",
+      background: tint,
       clipPath: STAR,
       WebkitClipPath: STAR,
-      filter: "drop-shadow(0 0 6px rgba(255, 214, 107, .95))",
+      // A small, tight glow. The old one was six pixels of halo around an
+      // eleven pixel star, which is most of what made them look heavy.
+      filter: "drop-shadow(0 0 3px rgba(255, 236, 190, .9))",
       transition: "transform " + life + "ms cubic-bezier(.16,.8,.3,1), opacity " + life + "ms ease-out",
-      transform: "translate(0,0) scale(.15) rotate(0deg)", opacity: "1",
+      transform: "translate(0,0) scale(.2) rotate(0deg)", opacity: "1",
     });
     root.appendChild(s);
     // Two frames, so the browser has a start value to transition away from.
     requestAnimationFrame(() => requestAnimationFrame(() => {
       css(s, {
-        transform: "translate(" + dx + "px, " + dy + "px) scale(" + (1.1 + Math.random() * 0.9) + ") rotate(" + spin + "deg)",
+        transform: "translate(" + dx + "px, " + dy + "px) scale(" + (0.5 + Math.random() * 0.6) + ") rotate(" + spin + "deg)",
         opacity: "0",
       });
     }));
     setTimeout(() => s.remove(), life + 60);
+  }
+
+  /*
+   * The tail.
+   *
+   * A wand that arrives somewhere and only then sparkles is a wand that
+   * teleports. Dust dropped along the path it just took is what makes the
+   * travel itself readable — and the drift is deliberately downward and slow,
+   * because dust falls.
+   */
+  let lastAt = null;
+  function trail(x, y) {
+    const from = lastAt;
+    lastAt = { x, y };
+    if (!from) return;
+    const far = Math.hypot(x - from.x, y - from.y);
+    if (far < 24) return;
+    // One speck every twenty-odd pixels, capped so a jump across the screen
+    // does not cost a hundred elements.
+    const n = Math.min(14, Math.max(3, Math.round(far / 26)));
+    for (let i = 1; i <= n; i++) {
+      const t = i / (n + 1);
+      const px = from.x + (x - from.x) * t + (Math.random() - 0.5) * 7;
+      const py = from.y + (y - from.y) * t + (Math.random() - 0.5) * 7;
+      setTimeout(
+        () => one(px, py, 3 + Math.random() * 4,
+                  (Math.random() - 0.5) * 12, 10 + Math.random() * 16,
+                  (Math.random() - 0.5) * 120, 620 + Math.random() * 420),
+        // Later along the path means later in time: the tail catches up.
+        Math.round(t * 260),
+      );
+    }
   }
 
   /**
@@ -199,19 +249,35 @@ export const OVERLAY = `(() => {
       audio = audio || new Ctx();
       if (audio.state === "suspended") audio.resume();
       const t = audio.currentTime;
-      // A rising third and a fifth, struck in quick succession with a shimmer
-      // on top — a small bell rather than a single ping. Still quiet enough to
-      // sit under whatever else is playing.
-      for (const [hz, when, level] of [
-        [783.99,  0,     0.048],
-        [1046.5,  0.045, 0.055],
-        [1318.5,  0.090, 0.050],
-        [1568.0,  0.135, 0.044],
-        [2093.0,  0.180, 0.030],
-        [2637.0,  0.225, 0.020],
-        [3136.0,  0.270, 0.013],
-        [4186.0,  0.315, 0.008],
-      ]) {
+      /*
+       * A rising arpeggio with a scatter of tiny high bells over it.
+       *
+       * The tuned notes carry the shape; the scatter is what makes it sound
+       * like dust rather than like a xylophone. Every note is struck a few
+       * milliseconds off the beat and a few cents off pitch, because nothing
+       * that sparkles is exactly on time.
+       */
+      const notes = [
+        [783.99,  0,     0.042],
+        [1046.5,  0.040, 0.050],
+        [1318.5,  0.078, 0.046],
+        [1568.0,  0.116, 0.040],
+        [2093.0,  0.154, 0.028],
+        [2637.0,  0.192, 0.019],
+        [3136.0,  0.230, 0.012],
+        [4186.0,  0.268, 0.008],
+      ];
+      // Six specks of high bell, scattered through the same third of a second.
+      for (let i = 0; i < 6; i++) {
+        notes.push([
+          2600 + Math.random() * 3400,
+          0.02 + Math.random() * 0.34,
+          0.004 + Math.random() * 0.005,
+        ]);
+      }
+      for (const [hzRaw, whenRaw, level] of notes) {
+        const hz = hzRaw * (1 + (Math.random() - 0.5) * 0.006);
+        const when = whenRaw + Math.random() * 0.012;
         // Two oscillators per note, a few cents apart: one sine for the body
         // and a much quieter triangle above it for the shimmer. The detune is
         // what stops it sounding like a phone notification.
@@ -233,16 +299,23 @@ export const OVERLAY = `(() => {
     }
   }
 
-  /** A burst of them, thrown outward from wherever the wand just landed. */
+  /**
+   * A burst, thrown outward from wherever the wand just landed.
+   *
+   * More of them, much smaller, and they fall rather than fly: twenty specks
+   * of four pixels reads as a puff of dust, where nine of twenty pixels read
+   * as confetti.
+   */
   function spark(x, y, n) {
-    const count = n || 9;
+    const count = n || 16;
     for (let i = 0; i < count; i++) {
-      const a = (Math.PI * 2 * i) / count + Math.random() * 0.7;
-      const reach = 22 + Math.random() * 54;
+      const a = (Math.PI * 2 * i) / count + Math.random() * 0.9;
+      const reach = 10 + Math.random() * 34;
       setTimeout(
-        () => one(x, y, 11 + Math.random() * 20, Math.cos(a) * reach, Math.sin(a) * reach - 14,
-                  (Math.random() - 0.5) * 150, 700 + Math.random() * 500),
-        i * 26,
+        () => one(x, y, 3 + Math.random() * 5,
+                  Math.cos(a) * reach, Math.sin(a) * reach + 6 + Math.random() * 14,
+                  (Math.random() - 0.5) * 200, 700 + Math.random() * 520),
+        i * 14,
       );
     }
   }
@@ -263,8 +336,13 @@ export const OVERLAY = `(() => {
       t += 1;
       const x = window.innerWidth - 58;
       const y = window.innerHeight * 0.42 + Math.sin(t / 2.4) * 46;
+      trail(x, y);
       cursor.style.transform = "translate(" + x + "px, " + y + "px)";
-      if (t % 2 === 0) spark(x - 8 + Math.random() * 16, y + 12 + Math.random() * 20, 5);
+      // A speck or two while it hovers. Any more and a wand doing nothing is
+      // the busiest thing on the page.
+      one(x - 6 + Math.random() * 12, y + 14 + Math.random() * 18,
+          3 + Math.random() * 3, (Math.random() - 0.5) * 10, 16 + Math.random() * 14,
+          (Math.random() - 0.5) * 140, 900 + Math.random() * 500);
     }, 900);
   }
 
@@ -329,6 +407,7 @@ export const OVERLAY = `(() => {
   picker.setAttribute("data-wand", "");
 
   card.append(cName, cSub, drop, row, picker);
+  card.setAttribute("data-wand", "");
   root.appendChild(card);
 
   /** Files chosen for this job, held in the page until the composer wants them. */
@@ -533,11 +612,12 @@ export const OVERLAY = `(() => {
       // Re-attach if the page's own rendering swept the overlay away.
       if (!cursor.isConnected) root.appendChild(cursor);
       if (!hud.isConnected) root.appendChild(hud);
+      trail(x, y);
       cursor.style.transform = "translate(" + x + "px, " + y + "px)";
       if (!act) return;
       ping();
-      spark(x, y, 14);
-      setTimeout(() => spark(x, y, 8), 160);
+      spark(x, y, 18);
+      setTimeout(() => spark(x, y, 10), 170);
       // A quick pulse on top of the travel, done with a timer because a
       // keyframe animation would need a stylesheet.
       cursor.style.transition = "transform .12s ease";

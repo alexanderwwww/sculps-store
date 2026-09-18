@@ -153,6 +153,12 @@ await until("pictures land on disk", async () => {
   const files = await readdir(join(out, "e2e")).catch(() => []);
   return files.some((f) => f.endsWith(".png"));
 });
+// One per prompt, and not one extra: with every image on the page now a
+// candidate, the attached reference must not be saved as a result.
+await until("exactly one picture per prompt, the reference not among them", async () => {
+  const files = (await readdir(join(out, "e2e")).catch(() => [])).filter((f) => f.endsWith(".png"));
+  return files.length === 2;
+}, 20000);
 await until("and it says it is done", async () => /ready|saved/.test(log));
 
 console.log("\nthe references:");

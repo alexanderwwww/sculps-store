@@ -187,12 +187,8 @@ const SITES = {
     attach: ['button[aria-label*="Open upload" i]', 'button[aria-label*="upload" i]', 'button[aria-label*="Add files" i]', 'uploader-button button', 'button.upload-card-button'],
     /** And then the menu item inside it. */
     attachItem: ['button[aria-label*="Upload file" i]', 'text=Upload files', 'text=Μεταφόρτωση αρχείων'],
-    images: [
-      'img[src^="https://lh3.googleusercontent.com"]',
-      'main img[src^="https://"]',
-      'img[src^="blob:"]',
-      'img[src^="data:image"]',
-    ],
+    /* Same reasoning as ChatGPT's: big, on the page, and not there before. */
+    images: ["img"],
   },
   chatgpt: {
     name: "ChatGPT",
@@ -221,14 +217,22 @@ const SITES = {
      * anything that was on screen before the prompt went out is excluded
      * already — so the composer thumbnail and the avatars cannot get in.
      */
-    images: [
-      'img[alt="Generated image" i]',
-      'img[src*="oaiusercontent"]',
-      'main img[src^="https://"]',
-      'main img[src^="blob:"]',
-      'img[src^="blob:"]',
-      'img[src^="data:image"]',
-    ],
+    /*
+     * Anything on the page big enough to be a picture.
+     *
+     * Three versions of this have gone stale in a week — the CDN host, the
+     * alt text, then `main`, when ChatGPT started serving the result through
+     * its own API path from a container that isn't main. Each time the
+     * picture was on the screen and the app sat there saying "still waiting".
+     *
+     * So it stops trying to describe where a result comes from. Every image
+     * on the page is a candidate; the size filter throws out the avatars and
+     * the icons, and everything that was on screen before the prompt went out
+     * — the composer thumbnail, the reference, every earlier answer — is
+     * excluded by name. What is left can only be new and can only be big,
+     * which is the actual definition of the thing being looked for.
+     */
+    images: ["img"],
   },
 };
 
@@ -751,6 +755,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     await page.evaluate(
       ({ sels, min }) =>
         sels.flatMap((s) => Array.from(document.querySelectorAll(s)))
+          .filter((el) => !el.closest("[data-wand]"))
           .filter((el) => el.naturalWidth >= min && el.naturalHeight >= min)
           .map((el) => el.src),
       { sels: site.images, min: MIN_PIXELS },
@@ -799,6 +804,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     const urls = await page.evaluate(
       ({ sels, min }) =>
         sels.flatMap((s) => Array.from(document.querySelectorAll(s)))
+          .filter((el) => !el.closest("[data-wand]"))
           .filter((el) => el.naturalWidth >= min && el.naturalHeight >= min)
           .map((el) => el.src),
       { sels: site.images, min: MIN_PIXELS },

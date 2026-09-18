@@ -21,7 +21,7 @@ const check = (n, ok, d = "") => { console.log(`${ok ? "  PASS" : "  FAIL"}  ${n
 await w.point(p.locator("#prompt-textarea"));
 await p.waitForTimeout(300);
 const one = await p.evaluate(() => window.__osc);
-check("one landing rings once (a full arpeggio)", one === 16, `${one} tones`);
+check("one landing rings once (an arpeggio and a scatter of bells)", one === 28, `${one} tones`);
 
 // Twenty sparkles land in that same burst; none of them may ring again.
 await p.waitForTimeout(200);
@@ -33,7 +33,7 @@ await p.waitForTimeout(900);
 await w.point(p.locator("[data-testid=send-button]"));
 await p.waitForTimeout(300);
 const two = await p.evaluate(() => window.__osc);
-check("the next landing rings again", two === 32, `${two} tones`);
+check("the next landing rings again", two === 56, `${two} tones`);
 
 // Quiet while it waits — a chime every two seconds for four minutes is a tap.
 await w.idle(true);

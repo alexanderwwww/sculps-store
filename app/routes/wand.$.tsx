@@ -209,17 +209,47 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
     return { ok: true, sent: cmd };
   }
   if (name === "wand_queue_set") {
-    const prompts = Array.isArray(args.prompts) ? args.prompts.map(String).filter(Boolean) : [];
+    /*
+     * An MCP client is free to hand a list over as a JSON string, and this one
+     * does. Taking only a real array meant `refs` was quietly dropped — the
+     * job ran, the reference was never attached, and the picture came back
+     * wrong with nothing anywhere saying why.
+     */
+    const list = (v: unknown): string[] => {
+      if (Array.isArray(v)) return v.map(String).filter(Boolean);
+      if (typeof v === "string" && v.trim()) {
+        try {
+          const parsed = JSON.parse(v);
+          if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+        } catch {
+          // Not JSON: one url, or several separated by commas or newlines.
+        }
+        return v.split(/[\s,]+/).map((x) => x.trim()).filter(Boolean);
+      }
+      return [];
+    };
+    const obj = (v: unknown): Record<string, unknown> | null => {
+      if (v && typeof v === "object" && !Array.isArray(v)) return v as Record<string, unknown>;
+      if (typeof v === "string" && v.trim().startsWith("{")) {
+        try {
+          const parsed = JSON.parse(v);
+          if (parsed && typeof parsed === "object") return parsed;
+        } catch { /* leave it out rather than guess */ }
+      }
+      return null;
+    };
+
+    const prompts = list(args.prompts);
     if (!prompts.length) return { ok: false, error: "a job with no prompts is not a job" };
     const job = {
       id: `job-${Date.now()}`,
       name: String(args.name ?? "Untitled"),
       site: args.site === "gemini" ? "gemini" : "chatgpt",
       sameChat: Boolean(args.sameChat),
-      ...(Array.isArray(args.refs) && args.refs.length ? { refs: args.refs.map(String) } : {}),
+      ...(list(args.refs).length ? { refs: list(args.refs) } : {}),
       ...(args.wait ? { wait: Number(args.wait) } : {}),
       ...(args.url ? { url: String(args.url) } : {}),
-      ...(args.selectors && typeof args.selectors === "object" ? { selectors: args.selectors } : {}),
+      ...(obj(args.selectors) ? { selectors: obj(args.selectors) } : {}),
       prompts,
     };
     await write(env, "queue", job);
