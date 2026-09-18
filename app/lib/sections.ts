@@ -366,6 +366,26 @@ export const SECTIONS: SectionDef[] = [
     blocks: null,
   },
   {
+    /**
+     * The other six things this shop sells, on the page for the seventh.
+     *
+     * A one-product store never needed this. A store with a Reaper, an
+     * archway and a projector does: the yard is the purchase, not the object,
+     * and nobody buys a yard one page at a time. It builds itself from what
+     * the store has live, so adding a product puts it in front of every other
+     * product without anybody editing seven pages.
+     */
+    type: "recommendations",
+    label: "Goes with this",
+    hint: "The rest of the range, built from what the store sells",
+    fields: [
+      heading,
+      subheading,
+      { name: "ctaLabel", label: "Button label", kind: "text" },
+    ],
+    blocks: null,
+  },
+  {
     type: "closing_cta",
     label: "Closing CTA",
     hint: "Last call to buy",

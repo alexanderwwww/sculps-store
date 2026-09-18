@@ -196,6 +196,7 @@ function Section({
     case "reviews":       return <><Reviews section={section} page={page} /><PayLater page={page} /></>;
     case "photo_banner":  return <PhotoBanner section={section} page={page} storeParam={storeParam} />;
     case "split_picks":   return <HersHis section={section} />;
+    case "recommendations": return <Recommends section={section} page={page} storeParam={storeParam} />;
     case "closing_cta":   return <Closing section={section} page={page} storeParam={storeParam} />;
     default:              return null;
   }
@@ -1218,6 +1219,66 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
 
 
 /* ---------------------------------------------------------------- closing */
+
+/**
+ * The rest of the range, on the page for one of them.
+ *
+ * Nobody decorates a yard one object at a time — they buy the Reaper, then
+ * want the archway it stands beside and the projector behind both. A store
+ * with seven products that never mentions the other six on a product page is
+ * a store where every visit is worth one item.
+ *
+ * It builds itself from what the shop has live, so a new product appears on
+ * every other product's page the moment it goes active. Each card adds to the
+ * cart in place rather than navigating: a visitor who came for the Reaper
+ * should leave with two things, not lose their place looking at a third.
+ */
+function Recommends({
+  section,
+  page,
+  storeParam = "",
+}: {
+  section: LoadedSection;
+  page: LoadedProductPage;
+  storeParam?: string;
+}) {
+  const drawer = useCartDrawer();
+  const items = page.addOnProducts;
+  if (!items.length) return null;
+  const v = section.values;
+  const cta = has(v, "ctaLabel") ? val(v, "ctaLabel") : "Add";
+
+  return (
+    <section className="cb-section cb-recs" id="more">
+      <div className="cb-wrap">
+        <Head section={section} />
+        <ul className="cb-recs__grid">
+          {items.map((p) => (
+            <li className="cb-rec" key={p.id}>
+              <a className="cb-rec__pic" href={`/products/${p.handle}${storeParam}`}>
+                {p.imageUrl ? <img src={p.imageUrl} alt={p.title} loading="lazy" /> : <span />}
+              </a>
+              <div className="cb-rec__body">
+                <a className="cb-rec__name" href={`/products/${p.handle}${storeParam}`}>{p.title}</a>
+                <span className="cb-rec__price">
+                  From {formatMoney(p.fromCents, page.store.currency)}
+                </span>
+              </div>
+              <form
+                method="post"
+                action={`/cart/add${storeParam}`}
+                onSubmit={(e) => { if (drawer) { e.preventDefault(); drawer.add(p.variantId); } }}
+              >
+                <input type="hidden" name="variantId" value={p.variantId} />
+                <button type="submit" className="cb-btn cb-btn--sm">{cta}</button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
 
 function Closing({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
   const v = section.values;

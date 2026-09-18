@@ -63,6 +63,21 @@ export interface LoadedProductPage {
    * with it. A storefront that wants one row per product de-dupes itself.
    */
   addOns: VariantRow[];
+  /**
+   * One row per other product the store sells, cheapest option first, with
+   * the picture and the price a card needs. `addOns` is every variant and is
+   * what the cart drawer wants; this is the product-level view a "goes with
+   * this" row wants, so neither has to de-duplicate the other's shape.
+   */
+  addOnProducts: {
+    id: string;
+    title: string;
+    handle: string;
+    imageUrl: string | null;
+    fromCents: number;
+    /** the variant an Add button adds — the default, or the cheapest */
+    variantId: string;
+  }[];
   sections: LoadedSection[];
   reviews: ReviewRow[];
 }
@@ -152,7 +167,7 @@ export async function loadProductPage(
   // Everything else the store has live, every variant — the cart drawer's
   // add-ons. A store selling a single product simply has none.
   const otherProducts = await db
-    .select({ id: products.id })
+    .select({ id: products.id, title: products.title, handle: products.handle })
     .from(products)
     .where(and(eq(products.storeId, store.id), eq(products.status, "active"), ne(products.id, product.id)))
     .orderBy(asc(products.createdAt));
@@ -167,7 +182,21 @@ export async function loadProductPage(
       ).sort((a, b) => (productOrder.get(a.productId) ?? 0) - (productOrder.get(b.productId) ?? 0) || a.position - b.position)
     : [];
 
-  return { store, nav, product, variants: variantRows, addOns, sections: loaded, reviews: publishedReviews };
+  const addOnProducts = otherProducts.map((p) => {
+    const mine = addOns.filter((v) => v.productId === p.id);
+    const cheapest = mine.reduce<VariantRow | null>((low, v) => (!low || v.priceCents < low.priceCents ? v : low), null);
+    const pick = mine.find((v) => v.isDefault) ?? cheapest;
+    return {
+      id: p.id,
+      title: p.title,
+      handle: p.handle,
+      imageUrl: mine.find((v) => v.imageUrl)?.imageUrl ?? null,
+      fromCents: cheapest?.priceCents ?? 0,
+      variantId: pick?.id ?? "",
+    };
+  }).filter((p) => p.variantId);
+
+  return { store, nav, product, variants: variantRows, addOns, addOnProducts, sections: loaded, reviews: publishedReviews };
 }
 
 /**

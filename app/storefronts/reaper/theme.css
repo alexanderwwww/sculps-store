@@ -62,3 +62,75 @@
 /* The steps band is ink with a lime swipe under its heading. Orange there
    instead, or the one green thing on the page is a leftover from another shop. */
 .cb-steps-s .cb-head h2 { background: linear-gradient(to top, var(--action) 0 26%, transparent 26%); }
+
+/* ------------------------------------------------------------- goes with this */
+
+/*
+ * Seven products means the yard is the purchase, not the object. This row is
+ * the shop's own range, laid out so it reads as a set rather than a list of
+ * links: one picture each, one price, one button that adds without taking
+ * anybody off the page they are already reading.
+ */
+.cb-recs__grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: clamp(14px, 2vw, 22px);
+}
+.cb-rec {
+  display: grid; gap: 12px; align-content: start;
+  border: var(--key) solid var(--hair); border-radius: var(--r);
+  padding: 14px; background: var(--paper);
+  transition: box-shadow .16s ease, transform .16s ease, border-color .16s ease;
+}
+.cb-rec:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: var(--action); }
+.cb-rec__pic {
+  display: block; aspect-ratio: 1; border-radius: calc(var(--r) - 6px);
+  overflow: hidden; background: var(--cream);
+}
+.cb-rec__pic img { width: 100%; height: 100%; object-fit: cover; }
+.cb-rec__body { display: grid; gap: 3px; }
+.cb-rec__name { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+.cb-rec__price { font-size: 14px; color: var(--dim); }
+.cb-rec .cb-btn--sm { width: 100%; }
+
+/* ----------------------------------------------------------------- the wall */
+
+/*
+ * Ceiling Buddy's review wall is three drifting columns sized for one product.
+ * With seven, the wall is doing more work — it is the only place a visitor
+ * sees the whole range in use — so it gets the height to be worth stopping at.
+ */
+.cb-wallgrid { max-height: min(1100px, 132vh); }
+.cb-wallcol { gap: 20px; }
+.cb-wallcol__pass { gap: 20px; }
+
+/* ------------------------------------------------------------ october only */
+
+/*
+ * The season, on a page that stays white.
+ *
+ * The temptation with Halloween is to paint everything black and orange, and
+ * the result always looks like a party-supplies aisle — busy, cheap, and hard
+ * to read. The atmosphere goes into three places instead: the rail at the very
+ * top, the heading underlines, and the moment something is hovered. The rest
+ * of the page stays a clean shop, because that is what people buy from.
+ */
+.cb-ann {
+  background:
+    radial-gradient(120% 200% at 12% 120%, rgba(245,130,31,.35) 0%, transparent 55%),
+    radial-gradient(120% 200% at 78% -40%, rgba(245,130,31,.22) 0%, transparent 55%),
+    #0B0B0C;
+}
+
+/* The one bar that says how long is left. Orange on black, and it moves —
+   because a deadline that sits still stops being one. */
+.cb-ticker { background: var(--action); color: #140A02; }
+
+/* A heading's swipe gets a torn lower edge rather than a ruled one. */
+.cb-head h2 {
+  background: linear-gradient(to top, var(--action-soft) 0 26%, transparent 26%);
+}
+
+/* The buy button is the brightest thing on the page and should feel lit. */
+.cb .cb-btn { box-shadow: 0 6px 22px -10px rgba(245, 130, 31, .85); }
+.cb .cb-btn:hover { box-shadow: 0 10px 30px -10px rgba(245, 130, 31, 1); }

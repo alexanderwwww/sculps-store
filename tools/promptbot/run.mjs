@@ -9,6 +9,7 @@
  * when Google changes their page.
  */
 import { chromium } from "playwright";
+import { attachWand } from "./wand.mjs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -109,6 +110,11 @@ const context = browser.contexts()[0] ?? (await browser.newContext());
 const page = await context.newPage();
 await page.goto(site.url, { waitUntil: "domcontentloaded" });
 
+// The wand, the panel and the Escape key. Everything below reports through it,
+// so nothing is typed into your browser that you didn't watch happen.
+const wand = await attachWand(page);
+await wand.say("Starting", `${blocks.length} prompt${blocks.length === 1 ? "" : "s"} to send.`);
+
 // A logged-out page has no box to type in, and saying so beats a timeout.
 if (!(await find(page, site.ask, 20000))) {
   console.error(
@@ -124,15 +130,23 @@ console.log(`${blocks.length} prompt${blocks.length === 1 ? "" : "s"} → ${opt.
 let saved = 0;
 for (let i = 0; i < blocks.length; i++) {
   const n = i + 1;
+  if (await wand.stopped()) { console.log("\nStopped — you pressed Escape."); break; }
   console.log(`[${n}/${blocks.length}] sending…`);
+  await wand.say(`Prompt ${n} of ${blocks.length}`, blocks[i].slice(0, 120) + (blocks[i].length > 120 ? "…" : ""));
 
   if (opt.fresh && i > 0) {
     const nw = await find(page, site.fresh, 5000);
-    if (nw) { await nw.click().catch(() => {}); await page.waitForTimeout(1500); }
+    if (nw) {
+      await wand.point(nw);
+      await nw.click().catch(() => {});
+      await page.waitForTimeout(1500);
+      await wand.reattach();
+    }
   }
 
   const box = await find(page, site.ask, 20000);
   if (!box) { console.log(`   no message box, skipping`); continue; }
+  await wand.point(box);
   await box.click();
   // Typed rather than pasted: these editors are rich-text widgets that often
   // ignore a programmatic value set, and a paste needs clipboard permission.
@@ -140,9 +154,11 @@ for (let i = 0; i < blocks.length; i++) {
   await page.keyboard.insertText(blocks[i]);
   await page.waitForTimeout(400);
 
+  if (await wand.stopped()) { console.log("\nStopped — you pressed Escape."); break; }
   const send = await find(page, site.send, 5000);
-  if (send) await send.click().catch(() => page.keyboard.press("Enter"));
+  if (send) { await wand.point(send); await send.click().catch(() => page.keyboard.press("Enter")); }
   else await page.keyboard.press("Enter");
+  await wand.say(`Prompt ${n} of ${blocks.length}`, "Waiting for the pictures…");
 
   // Wait for pictures to appear and then stop appearing — a generation that
   // returns four images writes them one at a time.
@@ -161,7 +177,12 @@ for (let i = 0; i < blocks.length; i++) {
     );
     const fresh = urls.filter((u) => !seen.has(u));
     fresh.forEach((u) => seen.add(u));
-    if (fresh.length) { quiet = 0; process.stdout.write(`   ${seen.size} image${seen.size === 1 ? "" : "s"}\r`); }
+    if (await wand.stopped()) break;
+    if (fresh.length) {
+      quiet = 0;
+      process.stdout.write(`   ${seen.size} image${seen.size === 1 ? "" : "s"}\r`);
+      await wand.say(`Prompt ${n} of ${blocks.length}`, `${seen.size} image${seen.size === 1 ? "" : "s"} so far…`);
+    }
     else if (seen.size) { quiet += 2; if (quiet >= 8) break; }
   }
 
@@ -189,8 +210,12 @@ for (let i = 0; i < blocks.length; i++) {
     saved++;
   }
   console.log(`   saved ${seen.size} → ${opt.out}`);
+  await wand.say(`Prompt ${n} of ${blocks.length}`, `Saved ${seen.size} to ${opt.out}.`);
 }
 
 console.log(`\nDone. ${saved} image${saved === 1 ? "" : "s"} in ${opt.out}`);
+await wand.say("Done", `${saved} image${saved === 1 ? "" : "s"} saved to ${opt.out}.`);
+// A moment to read the panel before the overlay goes with the connection.
+await page.waitForTimeout(2500);
 // The browser is yours — leave it open, just let go of it.
 await browser.close();
