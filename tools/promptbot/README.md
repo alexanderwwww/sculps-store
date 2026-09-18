@@ -22,7 +22,35 @@ terms say not to automate them; nothing here hides that it's a browser doing
 the typing, so treat it as a tool that will stop working one day, not a
 pipeline to build on.
 
-## One-time setup
+## The easy way
+
+Double-click **`wand.command`**.
+
+It checks what's installed, opens a Chrome with the debug port on (its own
+profile — your everyday Chrome and its tabs are untouched), waits for you to be
+logged in, then runs the wand over `prompts.txt`. If something's missing it says
+which thing rather than failing halfway.
+
+The first double-click installs what it needs and takes a couple of minutes.
+Every one after that is instant.
+
+Edit `prompts.txt` before you run it: one prompt per block, a blank line between
+blocks. To use ChatGPT instead, run `SITE=chatgpt ./wand.command` in Terminal.
+
+**macOS will refuse the first double-click** with "cannot be opened because it is
+from an unidentified developer". Right-click the file → Open → Open. Once only.
+
+## What you see
+
+A 🪄 flies across the Chrome window to the message box, sparks, types the
+prompt, flies to the send button, sparks. A black panel bottom-right says which
+prompt is in flight and how many pictures have landed. Then it moves to the next
+one on its own — it does not stop to ask.
+
+**Press Esc in the browser to stop.** The panel goes red and nothing further is
+typed. No confirm, no undo.
+
+## The long way, if you'd rather drive
 
 ```bash
 cd tools/promptbot
