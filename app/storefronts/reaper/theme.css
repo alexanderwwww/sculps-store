@@ -70,7 +70,7 @@
 
 /* The steps band is ink with a lime swipe under its heading. Orange there
    instead, or the one green thing on the page is a leftover from another shop. */
-.cb-steps-s .cb-head h2 { background: linear-gradient(to top, var(--action) 0 26%, transparent 26%); }
+/* (the swipe under a heading is gone — see the bottom of this file) */
 
 /* ------------------------------------------------------------- goes with this */
 
@@ -134,12 +134,7 @@
    because a deadline that sits still stops being one. */
 .cb-ticker { background: var(--action); color: #140A02; }
 
-/* The swipe under a heading is the brand orange itself at a low weight. It
-   used to be a pale tan, which on a white page reads as a stain rather than
-   as a highlighter. */
-.cb-head h2 {
-  background: linear-gradient(to top, rgba(245, 130, 31, .28) 0 24%, transparent 24%);
-}
+/* (the swipe under a heading is gone — see the bottom of this file) */
 
 /* The buy button is the brightest thing on the page and should feel lit. */
 .cb .cb-btn { box-shadow: 0 6px 22px -10px rgba(245, 130, 31, .85); }
@@ -1191,3 +1186,16 @@
  * creating one.
  */
 .cb { overflow-x: clip; overflow-y: visible; }
+
+/* ------------------------------------------------------- section headings */
+
+/*
+ * No swipe under a heading. Ever, on any store here.
+ *
+ * It is a highlighter stripe behind the last line of a title, and it reads as
+ * a mistake — a stray block of colour sitting under words for no reason
+ * anybody can name. The heading carries itself on weight and size.
+ */
+.cb-head h2,
+.cb-head .cb-h2,
+.cb-steps-s .cb-head h2 { background: none; }
