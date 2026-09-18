@@ -100,6 +100,7 @@ function log(line) {
   note(line.replace(/\x1b\[[0-9;]*m/g, ""));
 }
 let lastOrder = 0;
+let baselined = false;
 let orderAt = 0;
 /**
  * Fetch that cannot hang.
@@ -130,9 +131,23 @@ async function obey() {
   if (Date.now() - orderAt < 2000) return;
   orderAt = Date.now();
   const o = await getJson(CONTROL);
-  if (!o?.cmd || !(Number(o.at) > lastOrder)) return;
-  // Orders older than this launch are history, not instructions.
-  if (Number(o.at) < startedAt) { lastOrder = Number(o.at); return; }
+  /*
+   * Whatever was sitting there when we started is history, not an
+   * instruction — but "when we started" cannot be judged by comparing the
+   * server's clock to this Mac's. They are never the same, and a Mac a minute
+   * behind ignores every order it is ever given.
+   *
+   * So the first read is a baseline, whatever it holds, and only a later
+   * change counts as somebody saying something. Note the baseline is taken
+   * even when there is no order stored at all, or the first real order would
+   * be swallowed as if it had always been there.
+   */
+  if (!baselined) {
+    baselined = true;
+    lastOrder = Number(o?.at) || 0;
+    return;
+  }
+  if (!o?.cmd || !Number(o.at) || Number(o.at) <= lastOrder) return;
   lastOrder = Number(o.at);
   const did = await wand.order(o.cmd);
   console.log(`\r\x1b[K  \x1b[35mClaude: ${o.cmd}\x1b[0m${did ? "" : " (nothing to do)"}`);
@@ -639,16 +654,16 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       await wait(2200 + fromCard * 900);
       ok = (await blobCount(page)) > before;
     }
-    console.log(ok
+    log(ok
       ? `  attached ${fromCard} (from the card)`
       : `  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
   } else if (refs.length) {
     await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
     const how = await putFiles(page, refs, wand, label);
     if (how) {
-      console.log(`  attached ${refs.length} (${how})`);
+      log(`  attached ${refs.length} (${how})`);
     } else {
-      console.log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
+      log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
       await wand.say(label, `${n} of ${total} — couldn't attach, sending anyway`);
       await wait(1000);
     }
@@ -722,14 +737,23 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   await wand.idle(true);
   // How long to wait for pictures. A job can set its own, because a site that
   // is slow today is a queue edit rather than a new app.
-  const deadline = Date.now() + (jobWait || opt.wait) * 1000;
+  let deadline = Date.now() + (jobWait || opt.wait) * 1000;
   const seen = new Set();
   let quiet = 0;
   while (Date.now() < deadline) {
     await wait(2000);
     await obey();
-    if (await holdIfPaused(`waiting for pictures from ${site.name}`)) return 0;
-    if (await wand.stopped()) return 0;
+    // Paused here waits and then carries on with this same prompt. It used to
+    // return, which counted the prompt as finished with nothing saved — so a
+    // pause in the middle of a picture quietly lost it.
+    // Time spent paused is given back, or a two minute think while it is
+    // held would eat the whole window the picture had to arrive in.
+    const held = Date.now();
+    if (await holdIfPaused(`waiting for pictures from ${site.name}`)) {
+      if (await wand.stopped()) break;
+    }
+    deadline += Date.now() - held;
+    if (await wand.stopped()) break;
     const urls = await page.evaluate(
       ({ sels, min }) =>
         sels.flatMap((s) => Array.from(document.querySelectorAll(s)))
@@ -818,17 +842,17 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
         .catch(() => null);
       if (buf) {
         how = "photographed";
-        console.log(`  \x1b[33m~~ had to photograph one — Gemini refused the file\x1b[0m`);
+        log(`  \x1b[33m~~ had to photograph one — ${site.name} refused the file\x1b[0m`);
       }
     }
 
     if (!buf) {
-      console.log(`  \x1b[31m!! couldn't save one of the pictures\x1b[0m`);
+      log(`  \x1b[31m!! couldn't save one of the pictures\x1b[0m`);
       continue;
     }
 
     saved++;
-    console.log(`  \x1b[2m${how}\x1b[0m ${url.slice(0, 70)}`);
+    log(`  \x1b[2m${how}\x1b[0m ${url.slice(0, 70)}`);
     // Up it goes as well as down. A picture that only exists in a folder on
     // one laptop has to be found, downloaded and re-uploaded by hand before
     // the shop can use it; one that is also here can be put on a product the
@@ -1070,7 +1094,7 @@ while (true) {
   // whatever the queue named.
   const inCard = await wand.fileCount();
   const refs = inCard ? [] : picked.length ? picked : await fetchRefs(job.refs, join(dir, "reference"));
-  if (inCard) console.log(`  ${inCard} picture${inCard === 1 ? "" : "s"} from the card`);
+  if (inCard) log(`  ${inCard} picture${inCard === 1 ? "" : "s"} from the card`);
 
   await wand.running();
   let total = 0;
