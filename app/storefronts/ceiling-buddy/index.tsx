@@ -26,7 +26,6 @@ const has = (v: Vals, ...keys: string[]) => keys.some((k) => val(v, k) !== "");
 /** The store's own logo, in R2. Chrome, not content — it never changes per page. */
 const LOGO = "/media/3958921693410617.webp";
 /** The cut-out, on its transparent background — the only shot that can float. */
-const HERO = "/media/69a1b0cad0438d42.webp";
 
 /* ------------------------------------------------------------------ icons */
 
@@ -839,9 +838,15 @@ function LockScreen({ section, page }: { section: LoadedSection; page: LoadedPro
           ))}
         </div>
 
-        <figure className="cb-lock__hero">
-          <img src={HERO} alt="" />
-        </figure>
+        {/* The photo inside the phone is this shop's product, not the
+            template's. It was a hardcoded Ceiling Buddy still, which meant a
+            borrowing store showed a snack tray with somebody else's logo on it
+            in the middle of its own page. */}
+        {(page.product.images ?? []).find((x) => x.url) ? (
+          <figure className="cb-lock__hero">
+            <img src={(page.product.images ?? []).find((x) => x.url)!.url} alt="" />
+          </figure>
+        ) : null}
 
         <div className="cb-lock__stories">
           {stories.map((b) => (
@@ -936,7 +941,7 @@ function InTheBox({ section }: { section: LoadedSection }) {
   const v = section.values;
   return (
     <section className="cb-section cb-section--sky">
-      <div className="cb-wrap cb-box">
+      <div className={`cb-wrap cb-box${has(v, "image") ? "" : " cb-box--wide"}`}>
         {has(v, "image") ? (
           <div className="cb-box__pic">
             <img src={val(v, "image")} alt="" loading="lazy" />
@@ -945,11 +950,22 @@ function InTheBox({ section }: { section: LoadedSection }) {
         <div>
           <h2 className="cb-h2">{val(v, "heading")}</h2>
           {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
-          <ul>
-            {items.map((b) => (
-              <li key={b.id}>{IcoCheck}{val(b.values, "title")}</li>
+          {/* Each line already carries a description in the data and the
+              template was throwing it away, so a box with five real things in
+              it rendered as five small pills. Numbered rows instead: what it
+              is, and what it is for. */}
+          <ol className="cb-box__list">
+            {items.map((b, i) => (
+              <li key={b.id}>
+                <span className="cb-box__n">{i + 1}</span>
+                <span className="cb-box__txt">
+                  <b>{val(b.values, "title")}</b>
+                  {has(b.values, "text") ? <span>{val(b.values, "text")}</span> : null}
+                </span>
+                <span className="cb-box__tick">{IcoCheck}</span>
+              </li>
             ))}
-          </ul>
+          </ol>
         </div>
       </div>
     </section>

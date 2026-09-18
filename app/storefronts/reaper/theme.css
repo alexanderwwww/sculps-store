@@ -507,3 +507,68 @@
 .cb-tier[aria-checked="true"] .cb-tier__dot { border-color: var(--action); }
 .cb-tier[aria-checked="true"] .cb-tier__dot::after { background: var(--action); }
 .cb-tier[aria-checked="true"] .cb-tier__price { color: #B3120F; }
+
+/* ------------------------------------------------------------- in the box */
+
+/*
+ * A packing list, not a row of pills. Every line here already had a
+ * description sitting unused in the data; giving each one a number, a name and
+ * that description turns "five small buttons" into the thing somebody actually
+ * wants to read before they spend two hundred dollars — what is in the carton.
+ */
+.cb-box__list {
+  list-style: none; counter-reset: none;
+  margin: 24px 0 0; padding: 0;
+  display: grid; gap: 10px;
+}
+.cb-box__list li {
+  display: grid;
+  grid-template-columns: 34px 1fr 20px;
+  align-items: center; gap: 14px;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1.5px solid var(--hair);
+  border-radius: 14px;
+}
+.cb-box__n {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--ink); color: var(--cream);
+  font-family: var(--display); font-weight: 800; font-size: 15px;
+}
+.cb-box__txt { display: grid; gap: 2px; min-width: 0; }
+.cb-box__txt b {
+  font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -.02em;
+}
+.cb-box__txt span { font-size: 14px; color: var(--dim); }
+.cb-box__tick svg { width: 20px; height: 20px; color: #1FA34A; }
+
+@media (max-width: 430px) {
+  .cb-box__list li { grid-template-columns: 28px 1fr 18px; gap: 11px; padding: 12px 13px; }
+  .cb-box__n { width: 28px; height: 28px; font-size: 13px; }
+  .cb-box__txt b { font-size: 15.5px; }
+}
+
+/* ------------------------------------------------------------------ specs */
+
+/*
+ * The template's spec sheet is a thin single column that reads as a receipt.
+ * Two columns and a warm tint on every other row turn the same six facts into
+ * something that looks like it came off the back of the carton — which is what
+ * a spec sheet is for.
+ */
+.cb-specs { max-width: 860px; display: grid; grid-template-columns: 1fr 1fr; }
+.cb-spec { padding: 17px 22px; font-size: 15.5px; }
+.cb-spec:nth-child(4n + 1), .cb-spec:nth-child(4n) { background: var(--cream); }
+.cb-spec dt { letter-spacing: .01em; }
+.cb-spec dd { font-weight: 800; letter-spacing: -.02em; font-size: 16px; }
+@media (max-width: 700px) {
+  .cb-specs { grid-template-columns: 1fr; }
+  .cb-spec:nth-child(4n), .cb-spec:nth-child(4n + 1) { background: transparent; }
+  .cb-spec:nth-child(odd) { background: var(--cream); }
+}
+
+/* Until the carton has been photographed there is nothing in the left column,
+   so the list takes the whole width instead of sitting in half of it. */
+.cb-box--wide { grid-template-columns: minmax(0, 1fr); }
+.cb-box--wide .cb-box__list { max-width: 720px; }
