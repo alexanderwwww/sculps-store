@@ -1,0 +1,14 @@
+{
+  "note": "Claude publishes the live version of this. The wand reads it every run, so a new job appears in the menu without anybody downloading anything.",
+  "jobs": [
+    {
+      "id": "example",
+      "name": "What the menu calls it",
+      "refs": ["https://.../a-photo-of-the-product.jpg"],
+      "prompts": [
+        "First prompt. The wand sends this, waits for pictures, saves them.",
+        "Second prompt. And so on."
+      ]
+    }
+  ]
+}

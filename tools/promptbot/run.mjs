@@ -52,7 +52,7 @@ const MIN_PIXELS = 320;
 /* -------------------------------------------------------------------- args */
 
 function args(argv) {
-  const out = { site: "gemini", prompts: "prompts.txt", out: "./images", wait: 180, port: 9222, fresh: false };
+  const out = { site: "gemini", prompts: "prompts.txt", out: "./images", refs: "./reference", wait: 180, port: 9222, fresh: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--fresh") out.fresh = true;
@@ -105,7 +105,7 @@ await mkdir(opt.out, { recursive: true });
  * thing itself. Anything dropped in the reference folder rides along with
  * every prompt in the run; an empty folder changes nothing.
  */
-const REF_DIR = join(new URL(".", import.meta.url).pathname, "reference");
+const REF_DIR = opt.refs;
 const refs = await readdir(REF_DIR)
   .then((names) =>
     names
