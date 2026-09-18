@@ -111,6 +111,49 @@ export const OVERLAY = `(() => {
     setTimeout(() => s.remove(), life + 60);
   }
 
+  /**
+   * A very light chime when the wand lands on something.
+   *
+   * Synthesised rather than loaded: a file would have to be hosted, fetched
+   * and allowed past the page's own content policy, and all of that for a
+   * third of a second of bell. Two sine tones a fifth apart, a quick decay,
+   * and a gain low enough that it sits under whatever else is playing.
+   *
+   * Browsers refuse to make noise until somebody has interacted with the
+   * page, which is exactly right here — the first sound arrives after the
+   * Submit button, never before.
+   */
+  let audio = null;
+  let lastPing = 0;
+  function ping() {
+    const now = Date.now();
+    // One per burst, not one per sparkle: twenty at once is a smashed window.
+    if (now - lastPing < 400) return;
+    lastPing = now;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      audio = audio || new Ctx();
+      if (audio.state === "suspended") audio.resume();
+      const t = audio.currentTime;
+      // A fifth, struck together and let go — the shape of a small bell.
+      for (const [hz, when, level] of [[1318.5, 0, 0.05], [1975.5, 0.045, 0.032]]) {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(hz, t + when);
+        gain.gain.setValueAtTime(0, t + when);
+        gain.gain.linearRampToValueAtTime(level, t + when + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + when + 0.42);
+        osc.connect(gain).connect(audio.destination);
+        osc.start(t + when);
+        osc.stop(t + when + 0.45);
+      }
+    } catch {
+      // No audio on this page is not a reason for anything else to stop.
+    }
+  }
+
   /** A burst of them, thrown outward from wherever the wand just landed. */
   function spark(x, y, n) {
     const count = n || 9;
@@ -356,6 +399,7 @@ export const OVERLAY = `(() => {
       if (!hud.isConnected) root.appendChild(hud);
       cursor.style.transform = "translate(" + x + "px, " + y + "px)";
       if (!act) return;
+      ping();
       spark(x, y, 14);
       setTimeout(() => spark(x, y, 8), 160);
       // A quick pulse on top of the travel, done with a timer because a
