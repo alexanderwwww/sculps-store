@@ -127,3 +127,86 @@ how to use it" — that is a real product difference and it is also the demo:
 you type a sentence into Claude and forty product photographs appear.
 
 Build order stays the same: the store first, then the API swap, then this.
+
+## Getting it to paying customers — the honest route
+
+### What already exists
+
+More than it looks. The hard part — the thing people would pay for — is done:
+the wand, the card, the queue, batching, reference handling, the folder that
+opens at the end. That is the product. Everything below is plumbing.
+
+### What is missing, in build order
+
+1. **Swap the engine.** Browser automation out, official image API in. The UX
+   does not change at all; only what happens after Submit. Biggest single job,
+   and the one that turns this from a private tool into something sellable.
+2. **Bring your own key.** A settings panel with one field. The customer pastes
+   their API key, the app stores it in the macOS keychain, and generation is
+   billed to them. This is the whole reason the economics work — no cost of
+   goods, no credit ledger, no refunds for somebody else's bad output.
+3. **A licence check.** A key on first launch, verified against a small
+   endpoint, cached locally so an outage never bricks somebody's afternoon.
+   Fail open on network error, never closed.
+4. **Sign and notarise.** Apple Developer Program. Without it every customer
+   meets the same Gatekeeper wall, three times, and half of them give up.
+5. **An installer.** A `.dmg` with the app and an arrow pointing at
+   Applications. Nothing else.
+6. **The page.** One video above the fold, one price, one button.
+7. **Payments.** Stripe subscription; on payment, email a licence key.
+
+### What it costs to start
+
+- Apple Developer Program: about $99 a year
+- A domain: about $12
+- Licence endpoint: free tier of anything
+- Image generation: **zero — the customer pays their own API bill**
+- Stripe: their usual cut per transaction
+
+Call it a bit over a hundred dollars to be selling. That number is the reason
+to try it: the downside is a weekend and a hundred dollars, and the upside is
+recurring revenue with no cost of goods.
+
+### Pricing
+
+Price against what they would otherwise do, not against other apps. The
+alternative is paying a photographer or a freelancer per shoot, which is an
+order of magnitude more than any monthly fee. Pick a number where one sale a
+month pays for it — that is the only argument that ever has to be made, and it
+makes itself.
+
+Monthly only at first. Annual plans are for after churn is understood.
+
+### The route to market
+
+**The product is the advert.** What made Alex react was watching it work. That
+reaction is the entire marketing plan.
+
+- **Screen recordings.** No voiceover, no face, no explanation. Drop a product
+  photo on the card, hit Submit, speed it up, cut to the folder full of images.
+  Thirty seconds. The satisfying-process format, which is the cheapest
+  distribution that exists.
+- **Same format every time.** Different product each video — a candle, a
+  hoodie, a phone case, a garden gnome. The format becomes recognisable, which
+  is what an algorithm rewards and what a brand actually is.
+- **Where:** TikTok, Reels, Shorts. All three, same file. Post daily for a
+  month before judging anything.
+- **The hook is the problem, not the tool:** "I needed forty product photos by
+  Friday." Nobody searches for a wand; everybody has that Friday.
+- **Communities second, carefully.** Dropshipping, Etsy and small-business
+  forums are full of exactly this person, and all of them ban plain
+  advertising. Answer questions, show the output, link only when asked.
+- **Paid ads last**, if at all, and only against a video that already worked
+  organically. Boosting something unproven is how the hundred dollars becomes
+  a thousand.
+
+### First 90 days, realistically
+
+- **Weeks 1–3:** engine swap, key field, licence check. This is the real work.
+- **Week 4:** notarise, build the installer, put up the page, wire Stripe.
+- **Weeks 5–12:** post every day. Ten videos will do nothing. The eleventh
+  might. Judge on the month, not the video.
+
+The failure mode is not the build — it is making six videos, seeing nothing,
+and stopping. The store comes first regardless: it pays this month, this does
+not.
