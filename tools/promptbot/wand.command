@@ -40,7 +40,7 @@ Install Chrome, then double-click this again."
 # same as loading new prompts.
 #
 # Your own edits win: a prompts.txt you changed is never overwritten.
-if git -C ../.. rev-parse --git-dir >/dev/null 2>&1; then
+if git rev-parse --git-dir >/dev/null 2>&1 && [ -d ../../.git ]; then
   if git -C ../.. diff --quiet -- tools/promptbot/prompts.txt 2>/dev/null; then
     say "Checking for new prompts…"
     git -C ../.. pull --quiet --ff-only 2>/dev/null \
