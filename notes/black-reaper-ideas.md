@@ -34,3 +34,11 @@ sighing.
 
 Variants worth trying: the 13-foot ghost, the Scream, the reaper archway.
 Whichever is funniest is whichever is biggest.
+
+## Standing rule: no placeholder data. Ever.
+
+Not on the live site, not on a preview URL, not "we'll swap it later", not
+behind a flag. No invented reviews, no filler names, no lorem, no example
+products. If a section has nothing real to show it stays empty until it does.
+
+This has been said more than once and does not need to be raised again.
