@@ -867,3 +867,144 @@
 .cb-card--msg .cb-card__thread { padding: 12px 12px 0; gap: 5px; }
 .cb-card--msg .cb-card__when { display: block; padding: 8px 14px 0; font-size: 11.5px; color: var(--dimmer); text-align: center; }
 .cb-card__theirs, .cb-card__mine { font-size: 14px; line-height: 1.35; }
+
+/* =======================================================================
+   The announcement bar, the savings, and the shape of the buy box
+   =======================================================================
+   Three things asked for and one thing noticed.
+
+   The bar was thin and quiet, and the offer riding it was a pale blue
+   borrowed from another shop's logo — a colour this store uses nowhere else,
+   which made it read as decoration rather than as money. It is thicker,
+   heavier, and the offer is neon green, because green is the only colour on
+   a shopping page that already means "this is worth something" and nothing
+   else here is green.
+
+   And the noticed thing: every number in the buy box was competing. Price,
+   saving, per-unit, flag, badge — five weights, five colours, no order. They
+   are ranked now: the price is the loudest, the saving is the only green, and
+   everything else steps back to grey. ==================================== */
+
+.cb {
+  --neon: #D6FF4F;        /* the saving, and only the saving */
+  --neon-ink: #17400A;    /* dark green, for type on the neon */
+}
+
+/* ------------------------------------------------------------- the bar */
+
+.cb-ann__t i {
+  font-weight: 800;
+  font-size: 13.5px;
+  letter-spacing: .005em;
+  padding: 21px 22px;
+  color: rgba(255, 255, 255, .92);
+}
+.cb-ann__t i::after { margin-left: 22px; background: rgba(255, 255, 255, .34); }
+.cb-ann__t i svg { opacity: .85; }
+
+/* The offer. Neon on black is the loudest thing this page will ever do, and
+   it is spent on the one line that is worth money to read. */
+.cb-ann__t i[data-pill] {
+  color: var(--neon-ink);
+  background: var(--neon);
+  font-weight: 900;
+  letter-spacing: -.005em;
+  padding: 8px 18px;
+  margin: 6px 16px;
+}
+.cb-ann__t i[data-pill] code { font-weight: 800; letter-spacing: .12em; }
+.cb-ann__t i[data-logo] img { height: 26px; }
+
+/* --------------------------------------------------- the saving, in green */
+
+.cb-buy .cb-price__off {
+  background: var(--neon);
+  color: var(--neon-ink);
+  font-weight: 900;
+  font-size: 14px;
+  padding: 7px 14px;
+}
+.cb-buy .cb-price__off svg { color: var(--neon-ink); }
+
+.cb-tier__under b {
+  background: var(--neon);
+  color: var(--neon-ink);
+  font-weight: 900;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+/* ------------------------------------------------------- the bundle box */
+
+/*
+ * Cuter, and by cuter: softer corners, a little lift on the one that is
+ * chosen, and the per-unit price in a chip of its own so it reads as a fact
+ * about the row rather than as more small print under a big number.
+ */
+.cb-tiers { gap: 10px; }
+.cb-tier {
+  border-radius: 18px;
+  padding: 14px 16px;
+  transition: border-color .15s ease, background .15s ease, box-shadow .18s ease, transform .18s ease;
+}
+.cb-tier:hover { transform: translateY(-1px); }
+.cb-tier[aria-checked="true"] {
+  padding: 13.5px 15.5px;
+  background: linear-gradient(180deg, rgba(245,130,31,.10) 0%, rgba(245,130,31,.045) 100%);
+  box-shadow: 0 8px 22px -14px rgba(233, 118, 26, .9);
+}
+.cb-tier__pic { border-radius: 12px; }
+.cb-tier__each {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 11.5px; font-weight: 700; color: var(--dim);
+  background: var(--tint);
+  border-radius: 999px; padding: 3px 9px;
+}
+.cb-tier[aria-checked="true"] .cb-tier__each { background: #fff; color: var(--ink); }
+
+/* The flags: a dot on the popular one so it reads as a marker rather than as
+   a second button, and the best value keeps its green. */
+.cb-tier__flag {
+  top: -10px; left: 14px;
+  padding: 4px 11px;
+  font-size: 10px; letter-spacing: .08em;
+  border-radius: 999px;
+}
+.cb-tier__flag--best { background: var(--neon); color: var(--neon-ink); right: 14px; left: auto; }
+
+/* ------------------------------------------------ the shape of it all */
+
+/*
+ * Proportion, which was the real problem: the picture, the words and the
+ * offer were three columns of different rhythms sharing a row. One scale for
+ * the gaps, one surface behind the photograph so portrait and landscape both
+ * sit still in it, and a thumbnail strip that reads as a strip.
+ */
+.cb-buy__grid { gap: clamp(26px, 3.4vw, 52px); }
+.cb-gal { position: sticky; top: 92px; align-self: start; }
+.cb-gal__main {
+  /* Square, and capped. Four-by-five looked better on its own and pushed the
+     offer off the bottom of the screen, which is the only thing the shape of
+     this box is actually for. */
+  aspect-ratio: 1 / 1;
+  max-height: 520px;
+  background: var(--tint);
+  border: 1px solid var(--hair);
+  border-radius: 22px;
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.cb-gal__main img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+.cb-gal__strip { gap: 8px; margin-top: 10px; }
+.cb-gal__thumb {
+  width: 62px; height: 62px;
+  border-radius: 12px;
+  border: 1.5px solid var(--hair);
+  background: var(--tint);
+  overflow: hidden;
+}
+.cb-gal__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.cb-gal__thumb[aria-current="true"] { border-color: var(--action); box-shadow: 0 0 0 2px var(--action); }
+
+@media (max-width: 900px) { .cb-gal { position: static; } }
