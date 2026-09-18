@@ -16,7 +16,7 @@ set -u
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
 BUILD="8"
 WORK="$HOME/Library/Application Support/Magic Wand/$BUILD"
-OUT="$HOME/Pictures/Magic Wand"
+OUT="$HOME/Downloads/Magic Wand"
 PORT=9222
 PROFILE="$HOME/.magicwand-chrome"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"

@@ -80,7 +80,7 @@ PRESS ESC IN THE BROWSER TO STOP. Nothing more gets typed.
 
 WHERE THE PICTURES GO
 
-   Pictures -> Magic Wand -> (a folder per job)
+   Downloads -> Magic Wand -> (a folder per job)
 
 It opens that folder when it finishes.
 
