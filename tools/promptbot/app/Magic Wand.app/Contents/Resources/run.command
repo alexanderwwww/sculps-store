@@ -14,8 +14,11 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="12"
-WORK="$HOME/Library/Application Support/Magic Wand/$BUILD"
+BUILD="13"
+# One working directory, not one per build. The browser engine underneath it
+# is a hundred megabytes and there is no reason to fetch it again because a
+# script changed.
+WORK="$HOME/Library/Application Support/Magic Wand/runtime"
 OUT="$HOME/Downloads/Magic Wand"
 PORT=9222
 PROFILE="$HOME/.magicwand-chrome"

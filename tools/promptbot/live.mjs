@@ -487,7 +487,9 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
 
   await wand.say(label, `${n} of ${total} — waiting for the pictures…`);
   await wand.idle(true);
-  const deadline = Date.now() + opt.wait * 1000;
+  // How long to wait for pictures. A job can set its own, because a site that
+  // is slow today is a queue edit rather than a new app.
+  const deadline = Date.now() + (jobWait || opt.wait) * 1000;
   const seen = new Set();
   let quiet = 0;
   while (Date.now() < deadline) {
@@ -601,6 +603,9 @@ async function makeZip(dir, slug) {
   return ok ? out : null;
 }
 
+/** Seconds to wait for pictures, when the running job asked for its own. */
+let jobWait = 0;
+
 /** The zip the "Get the zip" button reaches for, from the last finished job. */
 let lastZip = null;
 let spinner = 0;
@@ -628,7 +633,21 @@ while (true) {
   // Everything about the job, before any of it runs.
   const label = job.name || job.id;
 
-  // A job can name the site it wants.
+  /*
+   * A job can rewrite the site it runs on.
+   *
+   * Everything this app knows about ChatGPT and Gemini is a handful of CSS
+   * selectors, and those change whenever either company ships a redesign —
+   * which used to mean a new app, downloaded and dragged into Applications,
+   * for a one-line fix. A job can carry its own now:
+   *
+   *   "selectors": { "send": ["button#new-thing"], "images": ["img.result"] }
+   *
+   * They merge in front of the built-in ones for the length of the job, so a
+   * broken selector is a thing Claude fixes in the queue while the app stays
+   * exactly where it is. The same goes for "url" — the address of a specific
+   * chat to work in rather than the site's front page.
+   */
   const wanted = job.site && SITES[job.site] ? SITES[job.site] : null;
   if (wanted && wanted !== site) {
     console.log(`\r\x1b[K  switching to ${wanted.name}…`);
@@ -647,6 +666,28 @@ while (true) {
       continue;
     }
     console.log(`  now on ${site.name}`);
+  }
+
+  jobWait = Number(job.wait) > 0 ? Number(job.wait) : 0;
+
+  // Selector overrides, for this job only: the built-in list is restored by
+  // the copy taken here as soon as the job is done with.
+  const baseSite = site;
+  if (job.selectors && typeof job.selectors === "object") {
+    const over = {};
+    for (const [k, v] of Object.entries(job.selectors)) if (Array.isArray(v) && v.length) over[k] = v;
+    if (Object.keys(over).length) {
+      site = { ...site, ...over };
+      console.log(`  \x1b[2musing the queue's own selectors for ${Object.keys(over).join(", ")}\x1b[0m`);
+    }
+  }
+
+  // And a chat to work in, rather than whatever tab happened to be open.
+  if (job.url) {
+    console.log(`  opening the chat the job named`);
+    await page.goto(job.url, { waitUntil: "domcontentloaded" }).catch(() => {});
+    await page.waitForTimeout(1500);
+    await wand.reattach();
   }
   console.log(`\r\x1b[K`);
   console.log(`\x1b[1m${label}\x1b[0m  \x1b[2m(${site.name})\x1b[0m`);
@@ -721,6 +762,7 @@ while (true) {
     if (got) lastZip = (await makeZip(dir, slug)) ?? dir;
   }
 
+  site = baseSite;
   done.add(job.id);
   await writeFile(DONE_FILE, [...done].join("\n"));
   await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);

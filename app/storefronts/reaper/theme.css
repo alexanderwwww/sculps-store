@@ -651,3 +651,57 @@
 /* The row still has to fit. Below this the header hands over to the burger,
    which the template already draws. */
 @media (max-width: 1180px) { .cb-nav { gap: 17px; } .cb-nav a { font-size: 14px; } }
+
+/* =======================================================================
+   Crisp
+   =======================================================================
+   The bundle box is the best-looking thing on this page and it is not an
+   accident: a hard two-pixel ink outline, a black lid with the offer written
+   across it, square-ish corners and no shadow. Everything reads as one
+   object. The rest of the page was softer — hairline borders, big radii,
+   drop shadows — so next to the bundle it looks unfinished.
+   So the rest of the page borrows the bundle's rules. One outline weight, one
+   radius, a black lid wherever a section has a title that belongs to a panel,
+   and no shadows anywhere. ==================================================== */
+
+.cb { --edge: 2px solid var(--ink); }
+
+/* ------- the carton list takes the bundle's shape exactly */
+.cb-box__list {
+  border: var(--edge); border-radius: 18px; overflow: hidden;
+  gap: 0; background: var(--paper);
+}
+.cb-box__list li {
+  border: 0; border-radius: 0; border-bottom: 1px solid var(--hair);
+  padding: 15px 18px;
+}
+.cb-box__list li:last-child { border-bottom: 0; }
+.cb-box__list li:nth-child(odd) { background: var(--cream); }
+
+/* ------- the spec sheet gets the hard outline and loses its shadow */
+.cb-specs {
+  border: var(--edge); border-radius: 18px; box-shadow: none;
+}
+.cb-spec { border-bottom: 1px solid var(--hair); }
+.cb-spec:nth-child(2n) { border-left: 1px solid var(--hair); }
+
+/* ------- the tiles, the gallery and the cards: same outline, same radius */
+.cb-rec, .cb-gal__main, .cb-gal__thumb, .cb-card {
+  border: var(--edge) !important;
+  box-shadow: none !important;
+}
+.cb-rec { border-radius: 18px; }
+.cb-rec:hover { transform: none; border-color: var(--action) !important; }
+.cb-gal__main { border-radius: 20px; }
+.cb-gal__thumb { border-radius: 12px; }
+.cb-gal__thumb[aria-current="true"] { box-shadow: inset 0 0 0 2px var(--action) !important; border-color: var(--action) !important; }
+.cb-card { border-radius: 16px; }
+
+/* ------- the buttons stop floating */
+.cb .cb-btn { box-shadow: none; border-width: 2px; }
+.cb .cb-btn:hover { box-shadow: none; background: #E4741A; }
+.cb .cb-btn--ghost { border-width: 2px; }
+
+/* ------- and the section headings lose the highlighter for a hard rule */
+.cb-head .cb-h2 { background: none; }
+.cb-head { position: relative; }
