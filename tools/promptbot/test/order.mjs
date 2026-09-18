@@ -1,0 +1,21 @@
+/** Orders from Claude drive the panel exactly as the buttons do. */
+import { chromium } from "playwright";
+import { attachWand } from "../wand.mjs";
+let fails = 0;
+const check = (what, ok, extra = "") => { if (!ok) fails++; console.log(`  ${ok ? "\x1b[32mPASS" : "\x1b[31mFAIL"}\x1b[0m  ${what}${extra ? " — " + extra : ""}`); };
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+const page = await b.newPage();
+await page.setContent("<title>t</title><main>hello</main>");
+const wand = await attachWand(page);
+await wand.running();
+check("pause is obeyed", (await wand.order("pause")) && (await wand.paused()));
+check("continue is obeyed", (await wand.order("continue")) && !(await wand.paused()));
+check("pictures pauses and asks for the card", (await wand.order("pictures")) && (await wand.paused()) && (await wand.wantsCard()));
+await wand.order("continue");
+await wand.ask("job", "sub");
+check("continue on an open card is a yes", (await wand.order("continue")) && (await wand.answer()) === "run");
+check("nonsense is refused", (await wand.order("dance")) === false);
+check("stop is obeyed", (await wand.order("stop")) && (await wand.stopped()));
+await b.close();
+console.log(fails ? `\n${fails} FAILED\n` : "\nall passed\n");
+process.exit(fails ? 1 : 0);

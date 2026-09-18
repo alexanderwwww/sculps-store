@@ -14,7 +14,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="14"
+BUILD="15"
 # One working directory, not one per build. The browser engine underneath it
 # is a hundred megabytes and there is no reason to fetch it again because a
 # script changed.
@@ -79,6 +79,14 @@ mkdir -p "$WORK" "$OUT" || die "Couldn't create $WORK"
 # an updated app picks up new code without reinstalling anything.
 cp "$BUNDLE"/*.mjs "$BUNDLE/package.json" "$WORK/" 2>/dev/null
 cd "$WORK" || die "Couldn't open $WORK"
+
+# Every launch is a clean slate for the queue. The list of finished jobs
+# exists so a run that ends normally isn't offered again in the same sitting;
+# kept across launches it became a trap — a job written down as done by
+# mistake was refused forever, and the app sat there saying "waiting" over
+# work it had been told to do. The job card has a Skip button for the case
+# where you really are finished with one.
+rm -f "$WORK/.done-jobs"
 
 if [ ! -d node_modules ]; then
   say "Setting up. A couple of minutes, once only."

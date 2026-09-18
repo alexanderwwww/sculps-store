@@ -29,6 +29,34 @@ import { promisify } from "node:util";
 
 const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.dev/media/wand-queue.json";
 const POLL_MS = 6000;
+/**
+ * Orders from Claude, separate from the queue.
+ *
+ * The queue says what to draw. This says what to do right now — continue,
+ * pause, stop, ask for pictures — and it is read every couple of seconds
+ * wherever the runner is, including in the middle of waiting for a picture.
+ * Each order carries the time it was written, and one is obeyed once: the
+ * file staying on the server is not the same order being given again.
+ */
+const CONTROL = process.env.CONTROL || "https://kerberos.gardenbuddystore.workers.dev/media/wand-control.json";
+let lastOrder = 0;
+let orderAt = 0;
+async function obey() {
+  if (Date.now() - orderAt < 2000) return;
+  orderAt = Date.now();
+  let o = null;
+  try {
+    const res = await fetch(`${CONTROL}?t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) o = await res.json();
+  } catch { return; }
+  if (!o?.cmd || !(Number(o.at) > lastOrder)) return;
+  // Orders older than this launch are history, not instructions.
+  if (Number(o.at) < startedAt) { lastOrder = Number(o.at); return; }
+  lastOrder = Number(o.at);
+  const did = await wand.order(o.cmd);
+  console.log(`\r\x1b[K  \x1b[35mClaude: ${o.cmd}\x1b[0m${did ? "" : " (nothing to do)"}`);
+}
+const startedAt = Date.now();
 const MIN_PIXELS = 320;
 
 const SITES = {
@@ -494,6 +522,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   let quiet = 0;
   while (Date.now() < deadline) {
     await page.waitForTimeout(2000);
+    await obey();
     if (await wand.stopped()) return 0;
     const urls = await page.evaluate(
       ({ sels, min }) =>
@@ -603,12 +632,46 @@ async function makeZip(dir, slug) {
   return ok ? out : null;
 }
 
+/**
+ * Wait for a yes or a no, from wherever one can come from.
+ *
+ * The card in the corner of the page is the first choice. It is polled rather
+ * than awaited, because anything awaited inside a chat page dies when the
+ * page re-renders — and it re-renders all the time. If the overlay itself
+ * has gone (a navigation threw it out), it is put back and the card shown
+ * again; nobody's click is ever lost to that. The macOS dialog is only for a
+ * page the overlay cannot draw on at all.
+ *
+ * And a failure to ask is never an answer. The old code turned a dead
+ * dialog, a dead promise, a closed window into "skip", wrote the job down as
+ * done and then waited forever for the job it had just thrown away. This
+ * returns only what a person pressed.
+ */
+async function decision(label, sub, summary) {
+  if (!wand.mounted) return ask(label, summary);
+  for (;;) {
+    await obey();
+    if (await wand.stopped()) return "skip";
+    if (!(await wand.present())) { await wand.reattach(); await wand.ask(label, sub); }
+    else if (!(await wand.asking())) {
+      const a = await wand.answer();
+      if (a === "run" || a === "skip") return a;
+      // Card not on screen and no answer: it was never shown, or the page
+      // replaced it. Show it again.
+      await wand.ask(label, sub);
+    }
+    await page.waitForTimeout(400);
+  }
+}
+
 /** Seconds to wait for pictures, when the running job asked for its own. */
 let jobWait = 0;
 
 /** The zip the "Get the zip" button reaches for, from the last finished job. */
 let lastZip = null;
 let spinner = 0;
+/** Jobs we've already explained are finished, so it is said once. */
+const saidDone = new Set();
 while (true) {
   if (await wand.stopped()) { console.log("\nStopped from the panel. Everything saved is on your Desktop.\n"); break; }
 
@@ -618,6 +681,11 @@ while (true) {
     if (res.ok) job = await res.json();
   } catch { /* a moment offline is not a reason to quit */ }
 
+  if (job?.id && done.has(job.id) && !saidDone.has(job.id)) {
+    saidDone.add(job.id);
+    console.log(`\r\x1b[K  \x1b[2m"${job.name || job.id}" already ran on this Mac — waiting for the next job.\x1b[0m`);
+    console.log(`  \x1b[2m(to run it again: quit, delete "${join(process.cwd(), DONE_FILE)}", reopen)\x1b[0m`);
+  }
   if (!job?.id || done.has(job.id) || !job.prompts?.length) {
     // The button on the finished panel. Reveals the zip in Finder with the
     // file selected, so it can be dragged straight out.
@@ -626,7 +694,7 @@ while (true) {
       else await run("open", [opt.out]).catch(() => {});
     }
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
-    await page.waitForTimeout(POLL_MS);
+    for (let t = 0; t < POLL_MS; t += 2000) { await obey(); await page.waitForTimeout(2000); }
     continue;
   }
 
@@ -705,10 +773,11 @@ while (true) {
 
   // The card in the corner of the page, when the overlay is there to show it.
   // The macOS dialog stays as the fallback for a page that won't take it.
-  let answer = wand.mounted
-    ? await wand.ask(label, `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`)
-    : await ask(label, summary);
-  if (answer === null) answer = await ask(label, summary);
+  let answer = await decision(
+    label,
+    `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`,
+    summary,
+  );
 
   // Picking is not the decision — after choosing, it asks again with the
   // chosen file named, so the last thing before anything runs is still a yes.
@@ -761,14 +830,17 @@ while (true) {
     while (await wand.paused()) {
       if (await wand.stopped()) break;
       if (await wand.wantsCard()) {
-        const answer = await wand.ask(label, `Paused at ${i + 1} of ${job.prompts.length} — drop the pictures to use from here`);
+        const sub = `Paused at ${i + 1} of ${job.prompts.length} — drop the pictures to use from here`;
+        await wand.ask(label, sub);
+        const answer = await decision(label, sub, sub);
         if (answer === "skip") { await wand.running(); break; }
         const got = await wand.fileCount();
         if (got) { card = got; live = []; console.log(`\r\x1b[K  ${got} new picture${got === 1 ? "" : "s"} from here on`); }
         await wand.running();
         break;
       }
-      process.stdout.write(`\r  paused at ${i + 1}/${job.prompts.length} — press Continue   `);
+      process.stdout.write(`\r  paused at ${i + 1}/${job.prompts.length} — press Continue, or tell Claude   `);
+      await obey();
       await page.waitForTimeout(700);
     }
     if (await wand.stopped()) break;

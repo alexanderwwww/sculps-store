@@ -382,7 +382,7 @@ export const OVERLAY = `(() => {
       if (t === "drop") take(e.dataTransfer?.files ?? []);
     }),
   );
-  bGo.addEventListener("click", () => { card.style.display = "none"; decide?.("run"); decide = null; });
+  bGo.addEventListener("click", () => { card.style.display = "none"; state.answer = "run"; decide?.("run"); decide = null; });
 
   /* --------------------------------------------------- the finished panel */
 
@@ -417,7 +417,7 @@ export const OVERLAY = `(() => {
   bOpen.addEventListener("click", () => { state.open = true; doneCard.style.display = "none"; });
   bClose.addEventListener("click", () => { doneCard.style.display = "none"; });
 
-  bSkip.addEventListener("click", () => { card.style.display = "none"; decide?.("skip"); decide = null; });
+  bSkip.addEventListener("click", () => { card.style.display = "none"; state.answer = "skip"; decide?.("skip"); decide = null; });
 
   bPause.addEventListener("click", () => (state.paused ? resume() : pause()));
   bStop.addEventListener("click", halt);
@@ -432,20 +432,47 @@ export const OVERLAY = `(() => {
   window.__wand = {
     stopped: () => state.stopped,
     paused: () => state.paused,
+    /** An order from Claude, applied exactly as if the button had been pressed. */
+    order(what) {
+      if (what === "pause" && !state.paused && !state.stopped) pause();
+      else if (what === "continue" && state.paused) resume();
+      // "continue" on a card that is still asking is a yes: the job runs.
+      else if (what === "continue" && card.style.display === "block") bGo.click();
+      else if (what === "stop") halt();
+      else if (what === "pictures") { if (!state.paused) pause(); state.wantsCard = true; }
+      else return false;
+      hint.textContent = "Claude sent: " + what;
+      return true;
+    },
     /** True once, when Add pictures has been pressed. */
     wantsCard() { const v = state.wantsCard; state.wantsCard = false; return v; },
     /** The panel's own buttons, for a run that starts already going. */
     running() { if (!state.stopped) { state.paused = false; css(bar, { display: "flex" }); bPause.textContent = "Pause"; } },
-    /** Put the job on screen and hand back what the person clicked. */
+    /**
+     * Put the job on screen. Returns at once; the runner asks answer()
+     * until somebody has pressed something.
+     *
+     * This used to hand back a promise that resolved on the click, and a
+     * promise held open inside the page dies the moment the page changes —
+     * which a chat site does constantly. The runner read that death as "the
+     * person said no", wrote the job down as done, and then waited forever
+     * for a job it had just thrown away. Nothing here can die now: the
+     * answer is a value the page holds until it is read.
+     */
     ask(name, sub) {
       if (!card.isConnected) root.appendChild(card);
       cName.textContent = name;
       cSub.textContent = sub;
       state.files = [];
+      state.answer = null;
       showThumbs();
       card.style.display = "block";
-      return new Promise((resolve) => { decide = resolve; });
+      return true;
     },
+    /** What was pressed on the card, once, or null while it is still open. */
+    answer() { const v = state.answer ?? null; state.answer = null; return v; },
+    /** Whether the card is still on screen waiting for a press. */
+    asking: () => card.style.display === "block",
     /** How many pictures are waiting in the card. */
     fileCount: () => state.files.length,
     /** Show what a finished job produced, with a way to go and see it. */
@@ -543,6 +570,7 @@ export async function attachWand(page) {
     paused: () => safe(() => page.evaluate(() => window.__wand?.paused() ?? false), false),
     wantsCard: () => safe(() => page.evaluate(() => window.__wand?.wantsCard() ?? false), false),
     running: () => safe(() => page.evaluate(() => window.__wand?.running())),
+    order: (what) => safe(() => page.evaluate((w) => window.__wand?.order(w) ?? false, what), false),
     /** Wrap a programmatic Escape so the stop key doesn't hear our own. */
     deafen: (ms = 1500) => safe(() => page.evaluate((v) => window.__wand?.deafen(v), ms)),
     say: (t, b) => safe(() => page.evaluate(([a, c]) => window.__wand?.say(a, c), [t, b])),
@@ -558,7 +586,11 @@ export async function attachWand(page) {
       await page.waitForTimeout(act ? 540 : 260);
     },
     /** Show the card and wait. Null when the overlay isn't there to show it. */
-    ask: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.ask(a, b), [name, sub]), null),
+    ask: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.ask(a, b) ?? null, [name, sub]), null),
+    answer: () => safe(() => page.evaluate(() => window.__wand?.answer() ?? null), null),
+    asking: () => safe(() => page.evaluate(() => window.__wand?.asking() ?? false), false),
+    /** Whether the overlay is actually in the page right now. */
+    present: () => safe(() => page.evaluate(() => Boolean(window.__wand)), false),
     fileCount: () => safe(() => page.evaluate(() => window.__wand?.fileCount() ?? 0), 0),
     give: (sels, mode) => safe(() => page.evaluate(([s, m]) => window.__wand?.give(s, m), [sels, mode]), false),
     done: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.done(a, b), [name, sub])),

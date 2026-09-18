@@ -21,7 +21,7 @@ await page.waitForTimeout(200);
 check("ignores Escape sent by the code", (await wand.paused()) === false);
 
 console.log("\nthe card:");
-const pending = wand.ask("Reaper Archway — 8 shots", "8 prompts — drop the product photo below");
+await wand.ask("Reaper Archway — 8 shots", "8 prompts — drop the product photo below");
 await page.waitForTimeout(400);
 check("card is on screen", await page.evaluate(() => {
   const c = [...document.documentElement.children].find((e) => e.textContent.includes("Reaper Archway"));
@@ -38,7 +38,9 @@ check("thumbnail appears once a picture is added", await wand.fileCount() === 1,
 await page.screenshot({ path: `${SP}/card.png` });
 
 await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent === "Submit").click());
-check("Submit resolves the question", (await pending) === "run");
+check("Submit records the answer", (await wand.answer()) === "run");
+check("and the answer is read once", (await wand.answer()) === null);
+
 check("card hides itself again", await page.evaluate(() => {
   const c = [...document.documentElement.children].find((e) => e.textContent.includes("Reaper Archway"));
   return getComputedStyle(c).display === "none";
@@ -57,6 +59,13 @@ console.log("\nthe stop key still works for a person:");
 await page.keyboard.press("Escape");
 await page.waitForTimeout(200);
 check("a real Escape pauses it", await wand.paused());
+
+console.log("\nthe thing that was actually broken:");
+// The thing that was actually broken: a page that re-renders under the card.
+await wand.ask("Reaper Archway — 8 shots", "again");
+await page.evaluate(() => { document.body.innerHTML = "<main>rerendered</main>"; });
+await page.waitForTimeout(200);
+check("a re-render does not turn silence into an answer", (await wand.answer()) === null);
 
 await browser.close();
 console.log(fails ? `\n${fails} FAILED\n` : "\nall passed\n");
