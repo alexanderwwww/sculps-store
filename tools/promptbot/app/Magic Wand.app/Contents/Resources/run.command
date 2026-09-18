@@ -121,7 +121,11 @@ read -r
 
 node live.mjs --site "$SITE" --out "$OUT"
 
-say "Your pictures are in: $OUT"
+printf "\n\033[1m========================================\033[0m\n"
+printf "\033[1m  YOUR PICTURES ARE IN:\033[0m\n"
+printf "\033[1m  %s\033[0m\n" "$OUT"
+printf "\033[1m========================================\033[0m\n"
+echo "(Finder is opening it now. It is also in your Downloads.)"
 open "$OUT" 2>/dev/null
 echo "Press any key to close."
 read -r -n 1

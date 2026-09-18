@@ -404,6 +404,25 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
   if (send) { await wand.point(send); await send.click().catch(() => page.keyboard.press("Enter")); }
   else await page.keyboard.press("Enter");
 
+  /**
+   * Everything already on screen before the prompt goes out.
+   *
+   * The attached reference shows as a thumbnail in the composer, and it is a
+   * blob url over the size threshold like any generated picture — so it was
+   * being collected as a result and then failing to save, once per prompt,
+   * with a red line each time. Anything present before the send is not a
+   * result of the send.
+   */
+  const already = new Set(
+    await page.evaluate(
+      ({ sels, min }) =>
+        sels.flatMap((s) => Array.from(document.querySelectorAll(s)))
+          .filter((el) => el.naturalWidth >= min && el.naturalHeight >= min)
+          .map((el) => el.src),
+      { sels: site.images, min: MIN_PIXELS },
+    ).catch(() => []),
+  );
+
   await wand.say(label, `${n} of ${total} — waiting for the pictures…`);
   await wand.idle(true);
   const deadline = Date.now() + opt.wait * 1000;
@@ -419,7 +438,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
           .map((el) => el.src),
       { sels: site.images, min: MIN_PIXELS },
     ).catch(() => []);
-    const fresh = urls.filter((u) => !seen.has(u));
+    const fresh = urls.filter((u) => !seen.has(u) && !already.has(u));
     fresh.forEach((u) => seen.add(u));
     if (fresh.length) { quiet = 0; await wand.say(label, `${n} of ${total} — ${seen.size} image${seen.size === 1 ? "" : "s"}…`); }
     else if (seen.size) { quiet += 2; if (quiet >= 8) break; }
