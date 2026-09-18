@@ -77,21 +77,44 @@ export const OVERLAY = `(() => {
     css(cursor, { opacity: ".25" });
   }, true);
 
-  function spark(x, y) {
+  /**
+   * One spark: a dot that grows, drifts and fades.
+   *
+   * Each one takes its own direction and its own size, because a burst where
+   * every piece does the same thing reads as a graphic rather than magic.
+   */
+  function one(x, y, size, dx, dy, spin, life) {
     const s = css(document.createElement("div"), {
       position: "fixed", zIndex: String(Number(TOP) - 1), pointerEvents: "none",
-      left: x + "px", top: y + "px", width: "18px", height: "18px",
-      margin: "-9px 0 0 -9px", borderRadius: "50%",
-      background: "radial-gradient(circle, #FFFFFF 0%, #C9A0FF 45%, rgba(201,160,255,0) 70%)",
-      transition: "transform .55s ease-out, opacity .55s ease-out",
-      transform: "scale(.4)", opacity: "1",
+      left: x + "px", top: y + "px", width: size + "px", height: size + "px",
+      margin: (-size / 2) + "px 0 0 " + (-size / 2) + "px", borderRadius: "50%",
+      background: "radial-gradient(circle, #FFFFFF 0%, #E6D4FF 35%, #C9A0FF 55%, rgba(201,160,255,0) 72%)",
+      transition: "transform " + life + "ms cubic-bezier(.16,.8,.3,1), opacity " + life + "ms ease-out",
+      transform: "translate(0,0) scale(.25) rotate(0deg)", opacity: "1",
     });
     root.appendChild(s);
     // Two frames, so the browser has a start value to transition away from.
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      css(s, { transform: "scale(2.1)", opacity: "0" });
+      css(s, {
+        transform: "translate(" + dx + "px, " + dy + "px) scale(" + (1.6 + Math.random()) + ") rotate(" + spin + "deg)",
+        opacity: "0",
+      });
     }));
-    setTimeout(() => s.remove(), 700);
+    setTimeout(() => s.remove(), life + 60);
+  }
+
+  /** A burst of them, thrown outward from wherever the wand just landed. */
+  function spark(x, y, n) {
+    const count = n || 9;
+    for (let i = 0; i < count; i++) {
+      const a = (Math.PI * 2 * i) / count + Math.random() * 0.7;
+      const reach = 22 + Math.random() * 54;
+      setTimeout(
+        () => one(x, y, 7 + Math.random() * 13, Math.cos(a) * reach, Math.sin(a) * reach - 12,
+                  (Math.random() - 0.5) * 220, 620 + Math.random() * 420),
+        i * 26,
+      );
+    }
   }
 
   /**
@@ -111,7 +134,7 @@ export const OVERLAY = `(() => {
       const x = window.innerWidth - 58;
       const y = window.innerHeight * 0.42 + Math.sin(t / 2.4) * 46;
       cursor.style.transform = "translate(" + x + "px, " + y + "px)";
-      if (t % 3 === 0) spark(x - 6 + Math.random() * 12, y + 14 + Math.random() * 16);
+      if (t % 2 === 0) spark(x - 8 + Math.random() * 16, y + 12 + Math.random() * 20, 5);
     }, 900);
   }
 
@@ -325,7 +348,8 @@ export const OVERLAY = `(() => {
       if (!hud.isConnected) root.appendChild(hud);
       cursor.style.transform = "translate(" + x + "px, " + y + "px)";
       if (!act) return;
-      spark(x, y);
+      spark(x, y, 14);
+      setTimeout(() => spark(x, y, 8), 160);
       // A quick pulse on top of the travel, done with a timer because a
       // keyframe animation would need a stylesheet.
       cursor.style.transition = "transform .12s ease";
