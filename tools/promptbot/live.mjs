@@ -62,18 +62,23 @@ let said = "";
 let sayAt = 0;
 function report(state, extra = {}) {
   const now = Date.now();
-  const same = state === said;
-  if (same && now - sayAt < 5000) return;
-  said = state;
+  // Keyed on everything, not just the state word: two different errors inside
+  // five seconds are two different things to say, and dropping the second one
+  // shows the wrong cause on the board.
+  const key = state + JSON.stringify(extra);
+  if (key === said && now - sayAt < 5000) return;
+  said = key;
   sayAt = now;
   const stop = new AbortController();
-  setTimeout(() => stop.abort(), 5000);
+  // Cleared on the way out: an abort timer nobody clears keeps the process
+  // alive for its full length after everything else has finished.
+  const timer = setTimeout(() => stop.abort(), 5000);
   fetch(`${WAND}/status`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ state, build: BUILD, site: site?.name, ...extra, tail: tail.slice(-20) }),
     signal: stop.signal,
-  }).catch(() => {});
+  }).catch(() => {}).finally(() => clearTimeout(timer));
 }
 
 /**
@@ -85,13 +90,13 @@ function report(state, extra = {}) {
 function sendShot(dir, name, bytes) {
   const job = dir.split("/").filter(Boolean).pop() || "run";
   const stop = new AbortController();
-  setTimeout(() => stop.abort(), 30000);
+  const timer = setTimeout(() => stop.abort(), 30000);
   fetch(`${WAND}/shot?job=${encodeURIComponent(job)}&name=${encodeURIComponent(name)}`, {
     method: "POST",
     headers: { "content-type": "image/png" },
     body: bytes,
     signal: stop.signal,
-  }).catch(() => {});
+  }).catch(() => {}).finally(() => clearTimeout(timer));
 }
 
 /** Printed and reported in one go, so the two can never disagree. */
@@ -142,6 +147,10 @@ async function obey() {
    * even when there is no order stored at all, or the first real order would
    * be swallowed as if it had always been there.
    */
+  // A failed read is not a baseline. Taking one from a null answer set the
+  // mark to zero, and the next successful poll then replayed whatever order
+  // was last left on the server — yesterday's "stop", at launch.
+  if (o === null) return;
   if (!baselined) {
     baselined = true;
     lastOrder = Number(o?.at) || 0;
@@ -153,7 +162,6 @@ async function obey() {
   log(`\r\x1b[K  \x1b[35mClaude: ${o.cmd}\x1b[0m${did ? "" : " (nothing to do)"}`);
   report(did ? `did: ${o.cmd}` : `ignored: ${o.cmd}`, { order: o.cmd, obeyed: did });
 }
-const startedAt = Date.now();
 const BUILD = process.env.WAND_BUILD || "dev";
 const MIN_PIXELS = 320;
 
@@ -434,17 +442,23 @@ async function fetchRefs(urls, dir) {
   await mkdir(dir, { recursive: true });
   const out = [];
   for (let i = 0; i < urls.length; i++) {
-    try {
-      const stop = new AbortController();
-      const timer = setTimeout(() => stop.abort(), 20000);
-      const res = await fetch(urls[i], { signal: stop.signal }).finally(() => clearTimeout(timer));
-      if (!res.ok) { log(`  \x1b[31m!! reference ${i + 1} came back ${res.status}\x1b[0m`); continue; }
-      const ext = (urls[i].split(".").pop() ?? "jpg").split("?")[0].slice(0, 4);
-      const path = join(dir, `ref-${i + 1}.${ext}`);
-      await writeFile(path, Buffer.from(await res.arrayBuffer()));
-      out.push(path);
-    } catch {
-      log(`  \x1b[31m!! reference ${i + 1} wouldn't download\x1b[0m`);
+    for (let go = 1; go <= 3; go++) {
+      try {
+        const stop = new AbortController();
+        const timer = setTimeout(() => stop.abort(), 20000);
+        const res = await fetch(urls[i], { signal: stop.signal }).finally(() => clearTimeout(timer));
+        if (!res.ok) throw new Error(String(res.status));
+        const ext = (urls[i].split(".").pop() ?? "jpg").split("?")[0].slice(0, 4);
+        const path = join(dir, `ref-${i + 1}.${ext}`);
+        await writeFile(path, Buffer.from(await res.arrayBuffer()));
+        out.push(path);
+        break;
+      } catch (e) {
+        // A blip on the host must not cost a whole job, so it is tried three
+        // times before it counts as unreachable.
+        if (go === 3) log(`  \x1b[31m!! reference ${i + 1} wouldn't download (${String(e).slice(0, 40)})\x1b[0m`);
+        else await wait(2000 * go);
+      }
     }
   }
   return out;
@@ -652,9 +666,16 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    * limited — and pointless, because the model can already see them further
    * up the same chat.
    */
-  const skipRefs = sameChat && n > 1;
+  /*
+   * Skipping the attach is only safe once the pictures are demonstrably in
+   * the thread. Two ways it was wrong: if prompt one's attach failed, every
+   * prompt after it ran with no reference while printing "already in this
+   * chat"; and pictures dropped mid-run through Add pictures were thrown
+   * away, so the rest of the job kept drawing the old product.
+   */
+  const skipRefs = sameChat && attachedInChat && !freshRefs;
   if (skipRefs && (fromCard || refs.length)) {
-    console.log(`  \x1b[2mreferences already in this chat\x1b[0m`);
+    log(`  \x1b[2mreferences already in this chat\x1b[0m`);
   }
 
   // Pictures before words: both sites disable send while an upload is running.
@@ -672,6 +693,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       await wait(2200 + fromCard * 900);
       ok = (await blobCount(page)) > before;
     }
+    if (ok) { attachedInChat = true; freshRefs = false; }
     log(ok
       ? `  attached ${fromCard} (from the card)`
       : `  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
@@ -679,6 +701,8 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
     const how = await putFiles(page, refs, wand, label);
     if (how) {
+      attachedInChat = true;
+      freshRefs = false;
       log(`  attached ${refs.length} (${how})`);
     } else {
       log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
@@ -978,6 +1002,18 @@ async function decision(label, sub, summary) {
 /** Seconds to wait for pictures, when the running job asked for its own. */
 let jobWait = 0;
 
+/**
+ * Whether this conversation has the reference pictures in it already, and
+ * whether newer ones are waiting to replace them. Both are reset for every
+ * job, and `freshRefs` is set the moment somebody drops pictures mid-run.
+ */
+let attachedInChat = false;
+let freshRefs = false;
+
+/** The site the runner belongs to between jobs, by name, so a job's own
+ *  overrides can always be undone. */
+let siteName = Object.keys(SITES).find((k) => SITES[k] === site) ?? "gemini";
+
 /** The zip the "Get the zip" button reaches for, from the last finished job. */
 let lastZip = null;
 let spinner = 0;
@@ -1081,7 +1117,7 @@ while (true) {
 
   // Selector overrides, for this job only: the built-in list is restored by
   // the copy taken here as soon as the job is done with.
-  const baseSite = site;
+  siteName = Object.keys(SITES).find((k) => SITES[k] === site) ?? siteName;
   if (job.selectors && typeof job.selectors === "object") {
     const over = {};
     for (const [k, v] of Object.entries(job.selectors)) if (Array.isArray(v) && v.length) over[k] = v;
@@ -1143,6 +1179,17 @@ while (true) {
     continue;
   }
 
+  /*
+   * Written down as run before it runs, not after.
+   *
+   * It used to be recorded at the end, inside the same try that now catches
+   * everything — so a throw two prompts in re-offered the whole job and
+   * re-sent every prompt already sent, forever, spending the quota each time.
+   * Once somebody has said yes, this job has had its turn.
+   */
+  done.add(job.id);
+  await writeFile(DONE_FILE, [...done].join("\n")).catch(() => {});
+
   await wand.say(label, "Starting…");
 
   // A folder per job, named after the job. Forty pictures in one directory is
@@ -1167,13 +1214,12 @@ while (true) {
     log(`  \x1b[31m!! none of the ${job.refs.length} reference pictures would download — not running\x1b[0m`);
     report("error", { job: label, error: "the job's reference pictures could not be downloaded" });
     await wand.done("Couldn't get the references", "Nothing was run. The pictures the job points at didn't download.");
-    // Written down, or it is offered again every six seconds forever.
-    done.add(job.id);
-    await writeFile(DONE_FILE, [...done].join("\n"));
     continue;
   }
 
   await wand.running();
+  attachedInChat = false;
+  freshRefs = false;
   let total = 0;
   let live = refs;
   let card = inCard;
@@ -1192,7 +1238,15 @@ while (true) {
         const answer = await decision(label, sub, sub);
         if (answer === "skip") { await wand.running(); break; }
         const got = await wand.fileCount();
-        if (got) { card = got; live = []; console.log(`\r\x1b[K  ${got} new picture${got === 1 ? "" : "s"} from here on`); }
+        if (got) {
+          card = got;
+          live = [];
+          // New pictures beat whatever is already up the thread, even in a
+          // conversation that has references in it — that is the whole point
+          // of handing it more.
+          freshRefs = true;
+          log(`\r\x1b[K  ${got} new picture${got === 1 ? "" : "s"} from here on`);
+        }
         await wand.running();
         break;
       }
@@ -1214,9 +1268,6 @@ while (true) {
     if (got) lastZip = (await makeZip(dir, slug)) ?? dir;
   }
 
-  site = baseSite;
-  done.add(job.id);
-  await writeFile(DONE_FILE, [...done].join("\n"));
   await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);
 
   // The panel, with the number and a button that opens the folder — because
@@ -1252,6 +1303,10 @@ while (true) {
   log(`  \x1b[31m!! ${first}\x1b[0m`);
   report("error", { error: first });
   await wait(3000);
+ } finally {
+  // A job's selector and url overrides belong to that job. Leaked by a throw,
+  // they would quietly rewrite every job that came after it.
+  site = SITES[siteName] ?? site;
  }
 }
 
