@@ -32,6 +32,25 @@ Get it from https://nodejs.org (the big green LTS button), then double-click thi
 [ -f "$CHROME" ] || die "Google Chrome isn't in your Applications folder.
 Install Chrome, then double-click this again."
 
+# --- whatever Claude wrote last ------------------------------------------
+#
+# This is the whole connection. Claude can't reach your browser from where it
+# runs, but it can write prompts into this branch. Pulling first means what you
+# double-click is whatever it wrote last, and asking it for new shots is the
+# same as loading new prompts.
+#
+# Your own edits win: a prompts.txt you changed is never overwritten.
+if git -C ../.. rev-parse --git-dir >/dev/null 2>&1; then
+  if git -C ../.. diff --quiet -- tools/promptbot/prompts.txt 2>/dev/null; then
+    say "Checking for new prompts…"
+    git -C ../.. pull --quiet --ff-only 2>/dev/null \
+      && echo "Up to date." \
+      || echo "Couldn't reach GitHub — using the prompts already here."
+  else
+    echo "You've edited prompts.txt, so it's left alone."
+  fi
+fi
+
 [ -f "$PROMPTS" ] || die "There's no $PROMPTS next to this file.
 Make one: a plain text file, one prompt per block, a blank line between blocks."
 
