@@ -1199,3 +1199,61 @@
 .cb-head h2,
 .cb-head .cb-h2,
 .cb-steps-s .cb-head h2 { background: none; }
+
+/* ------------------------------------------------ the picture, uncropped */
+
+/*
+ * Nothing in the gallery is cut any more.
+ *
+ * The thumbnails used object-fit: cover, which takes a 1024x1536 studio shot
+ * of a figure and shows you the middle of its robe. On a strip of eight, that
+ * is eight pictures of grey fabric — the one place on the page where a
+ * customer is choosing which photograph to look at, and every choice looked
+ * identical.
+ *
+ * Both the main frame and the strip use contain now, on a soft surface, so a
+ * tall shot letterboxes instead of losing its head and its feet. The frame is
+ * bigger with it: a square that fits a portrait photograph whole is worth the
+ * height it costs.
+ */
+.cb-gal__main {
+  aspect-ratio: 1 / 1;
+  max-height: 620px;
+  background: var(--tint);
+  border-radius: 20px;
+  padding: 0;
+}
+.cb-gal__main img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 14px;
+}
+
+.cb-gal__strip {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.cb-gal__thumb {
+  width: 100%; height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  background: var(--tint);
+  border: 1.5px solid var(--hair);
+  overflow: hidden;
+  padding: 0;
+}
+.cb-gal__thumb img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.cb-gal__thumb[aria-current="true"] {
+  border-color: var(--action);
+  box-shadow: 0 0 0 2px var(--action);
+}
+
+@media (max-width: 520px) {
+  .cb-gal__strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
