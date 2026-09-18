@@ -25,7 +25,12 @@ export function PhoneChat({
   /** The name in the contact header. */
   brand: string;
   /** The avatar beside every reply. */
-  logo: string;
+  /**
+   * The avatar in the thread. Null when the store has no mark yet — the row
+   * keeps its space and shows nothing, because borrowing another shop's logo
+   * to fill the gap is worse than an empty circle.
+   */
+  logo: string | null;
   /** Class prefix, so each theme styles the same markup its own way. */
   prefix: string;
 }) {
@@ -177,7 +182,7 @@ export function PhoneChat({
       </div>
 
       <div className={c("__head")}>
-        <img className={`${c("__av")} ${c("__av--lg")}`} src={logo} alt="" />
+        {logo ? <img className={`${c("__av")} ${c("__av--lg")}`} src={logo} alt="" /> : <span className={`${c("__av")} ${c("__av--lg")}`} />}
         <div className={c("__name")}>{brand}</div>
       </div>
 
@@ -201,7 +206,7 @@ export function PhoneChat({
           {answered ? (
           <>
             <div className={`${c("__row")} ${c("__row--in")}`} data-in="">
-              <img className={c("__av")} src={logo} alt="" />
+              {logo ? <img className={c("__av")} src={logo} alt="" /> : <span className={c("__av")} />}
               <div className={c("__stack")}>
                 <p className={`${c("__b")} ${c("__b--in")}`}>{val(b.values, "answer")}</p>
                 {/* The photograph is the answer; the words above it are the
@@ -225,7 +230,7 @@ export function PhoneChat({
 
       {typing ? (
         <div className={`${c("__row")} ${c("__row--in")} ${c("__typing")}`} aria-hidden="true">
-          <img className={c("__av")} src={logo} alt="" />
+          {logo ? <img className={c("__av")} src={logo} alt="" /> : <span className={c("__av")} />}
           <span><i /><i /><i /></span>
         </div>
       ) : null}

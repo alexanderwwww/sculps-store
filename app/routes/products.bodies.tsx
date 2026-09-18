@@ -31,6 +31,10 @@ import {
 import { data as withHeaders } from "react-router";
 import { BodiesProduct, slug } from "~/storefronts/bodies";
 import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
+import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
+import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
+import reaperThemeHref from "~/storefronts/reaper/theme.css?url";
+import { reaperBrand } from "~/storefronts/reaper/brand";
 
 export function meta({ data: loaded }: Route.MetaArgs) {
   if (!loaded?.variant) return [{ title: "Not found" }];
@@ -132,6 +136,33 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
 export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
   const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload } = loaderData;
+
+  /**
+   * Black Reaper sells seven things off one template, so a product page here
+   * is the same page the home route renders — just loaded by handle. Nothing
+   * about the chrome differs, which is why it reuses the component rather
+   * than owning a second copy of it.
+   */
+  if (page.store.slug === "reaper") {
+    return (
+      <>
+        <link rel="stylesheet" href={ceilingBuddyThemeHref} />
+        <link rel="stylesheet" href={reaperThemeHref} />
+        {favicon ? <link rel="icon" href={favicon} /> : null}
+        {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
+        {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
+        {liveReload ? <script dangerouslySetInnerHTML={{ __html: liveReload }} /> : null}
+        <CeilingBuddyStorefront
+          page={page}
+          storeParam={storeParam}
+          publishableKey={publishableKey}
+          paypalClientId={paypalClientId}
+          brand={reaperBrand(page)}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />

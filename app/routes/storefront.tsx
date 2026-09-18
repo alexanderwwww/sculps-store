@@ -31,6 +31,8 @@ import bodiesThemeHref from "~/storefronts/bodies/theme.css?url";
 import { CeilingBuddyStorefront } from "~/storefronts/ceiling-buddy";
 import ceilingBuddyThemeHref from "~/storefronts/ceiling-buddy/theme.css?url";
 import { XeroStorefront } from "~/storefronts/xero";
+import reaperThemeHref from "~/storefronts/reaper/theme.css?url";
+import { reaperBrand } from "~/storefronts/reaper/brand";
 import xeroThemeHref from "~/storefronts/xero/theme.css?url";
 
 /**
@@ -42,6 +44,12 @@ const GARDEN_BUDDY = "garden-buddy";
 const BODIES = "bodies";
 const CEILING_BUDDY = "ceiling-buddy";
 const XERO = "xero";
+/**
+ * Black Reaper wears Ceiling Buddy's theme with a second stylesheet over the
+ * top of it. That store's CSS is written against tokens, so the whole
+ * eighteen-section template comes across and only the colours change.
+ */
+const REAPER = "reaper";
 
 export function links() {
   return [
@@ -316,10 +324,11 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  if (store.slug === CEILING_BUDDY) {
+  if (store.slug === CEILING_BUDDY || store.slug === REAPER) {
     return (
       <>
         <link rel="stylesheet" href={ceilingBuddyThemeHref} />
+        {store.slug === REAPER ? <link rel="stylesheet" href={reaperThemeHref} /> : null}
         {head}
         <CeilingBuddyStorefront
           page={page}
@@ -327,6 +336,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
           offer={offer}
+          brand={store.slug === REAPER ? reaperBrand(page) : undefined}
         />
       </>
     );

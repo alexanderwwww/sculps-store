@@ -1,111 +1,156 @@
 /**
- * Black Reaper — store six.
+ * Black Reaper — store five.
  *
- * A seasonal store that is dead on November 1st, so nothing here is built to
- * last: it is built to be read at night, on a phone, by someone who just
- * watched a video of a yard.
+ * This is not a new theme. It is Ceiling Buddy's theme with the lights turned
+ * off. That store's stylesheet is written almost entirely against tokens, so
+ * a shop selling five-metre inflatable ghouls can borrow every one of its
+ * eighteen sections, its phone-frame FAQ and its cart drawer, and change
+ * nothing but the colours. Loaded after ceiling-buddy/theme.css, which is
+ * where all the structure still lives.
  *
- * Black and orange. The competitor's entire category is blue — every LED
- * Halloween product defaults to it — so warm against their cold is the whole
- * differentiator, and the reason not to drift toward purple or green.
+ * Why black and orange and nothing else: Halloween is the one season with a
+ * palette everybody already knows. Adding a third colour to it does not make
+ * the page more festive, it makes it look like a party-supplies catalogue.
+ * The orange is the action colour and the *only* saturated thing on the page,
+ * so every orange pixel is either a price or a button. The product photos are
+ * lit black-on-black; a dark page makes each one read as a thing glowing in
+ * somebody's yard at night, which is the entire product.
  */
-:root{
-  --bg:#0B0B0C;
-  --bg-2:#141416;
-  --card:#1A1A1D;
-  --line:rgba(255,255,255,.09);
-  --ink:#F7F2E7;
-  --ink-2:#A7A29A;
-  --ink-3:#6E6A64;
-  --orange:#F5821F;
-  --orange-ink:#140A02;
-  --cream:#F7F2E7;
-  --gut:clamp(1rem,4vw,4rem);
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);-webkit-font-smoothing:antialiased}
-body{
-  overflow-x:hidden;color:var(--ink);letter-spacing:-.011em;
-  font-family:system-ui,-apple-system,'SF Pro Display','Segoe UI',Helvetica,sans-serif;
-}
-a{color:inherit;text-decoration:none}
-button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
-img{max-width:100%}
 
-/* ------------------------------------------------------------------ chrome */
-.br-hdr{
-  position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:1.2rem;
-  padding:.75rem var(--gut);
-  background:rgba(11,11,12,.88);border-bottom:1px solid var(--line);
-  backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);
-}
-.br-hdr__logo{height:2.3rem;width:auto;display:block}
-.br-nav{display:flex;gap:1.4rem;margin-left:auto;font-size:.92rem;color:var(--ink-2)}
-.br-nav a:hover{color:var(--ink)}
-@media (max-width:820px){ .br-nav{display:none} }
-.br-cart{
-  margin-left:1rem;position:relative;display:inline-flex;align-items:center;justify-content:center;
-  width:2.4rem;height:2.4rem;border-radius:999px;border:1px solid var(--line);background:var(--card);
-}
-.br-cart svg{width:1.15rem;height:1.15rem}
+.cb {
+  --paper: #0B0B0C;        /* the night the yard is lit against */
+  --paper-2: #121214;      /* the quietest possible band */
+  --cream: #17171A;        /* a surface, one step up from the band */
 
-/* The deadline. It is real, it never moves, and it is the reason the store
-   converts — so it sits above everything and is never dressed up as a timer. */
-.br-cut{
-  background:var(--orange);color:var(--orange-ink);
-  padding:.55rem var(--gut);text-align:center;
-  font:700 .82rem/1.4 system-ui,sans-serif;letter-spacing:.02em;
+  --sky: #F5821F;          /* the logo's orange */
+  --amber: #F5821F;
+  --action: #F5821F;       /* the action colour, and the only saturated one */
+  --action-soft: rgba(245, 130, 31, 0.16);
+  --ink: #F7F2E7;          /* bone, not white — white on black is a screen */
+
+  --dim: rgba(247, 242, 231, 0.62);
+  --dimmer: rgba(247, 242, 231, 0.38);
+
+  /* On a dark page a drop shadow is invisible, so the lift has to come from
+     a lighter hairline instead. Same one border weight, same restraint. */
+  --hair: rgba(247, 242, 231, 0.14);
+  --lift: 0 1px 2px rgba(0,0,0,.5), 0 10px 26px -16px rgba(0,0,0,.8);
+  --lift-lg: 0 1px 3px rgba(0,0,0,.5), 0 28px 60px -30px rgba(0,0,0,.9);
+  --pop: var(--lift);
+  --pop-sm: var(--lift);
+
+  --night: #0B0B0C;        /* the night chapter and the page are one place now */
 }
 
-/* -------------------------------------------------------------------- hero */
-.br-hero{padding:clamp(2rem,5vw,4rem) var(--gut) 0;display:grid;gap:2.2rem;grid-template-columns:1fr}
-@media (min-width:960px){ .br-hero{grid-template-columns:1.15fr .85fr;align-items:start;gap:3rem} }
-.br-shot{border-radius:1.2rem;overflow:hidden;background:var(--bg-2);aspect-ratio:4/5}
-.br-shot img{width:100%;height:100%;object-fit:cover;display:block}
-.br-buy h1{font:800 clamp(2.2rem,5vw,3.4rem)/1.03 system-ui,sans-serif;letter-spacing:-.035em;margin:0 0 .5rem}
-.br-buy__sub{font-size:1.05rem;line-height:1.55;color:var(--ink-2);margin:0 0 1.4rem;max-width:44ch}
-.br-price{font:800 2rem/1 system-ui,sans-serif;letter-spacing:-.03em;margin:0 0 1.2rem}
-.br-price s{font-size:1.1rem;font-weight:500;color:var(--ink-3);margin-left:.6rem}
+/* -------------------------------------------------- what tokens can't reach */
 
-.br-opts{display:grid;gap:.5rem;margin:0 0 1.2rem}
-.br-opt{
-  display:block;padding:.9rem 1.1rem;border-radius:.9rem;cursor:pointer;
-  border:1px solid var(--line);background:var(--card);transition:border-color .16s,background .16s;
+/*
+ * Ceiling Buddy's button is a black fill with white text, and both of those
+ * are written literally because a black button on white paper never needed to
+ * change. Here the fill is orange, so the label has to go dark or it vanishes.
+ */
+.cb .cb-btn {
+  background: var(--action);
+  border-color: var(--action);
+  color: #140A02;
 }
-.br-opt.is-on{border-color:var(--orange);background:#241608}
-.br-opt input{position:absolute;opacity:0;pointer-events:none}
-.br-opt__row{display:flex;align-items:baseline;gap:.6rem}
-.br-opt__name{font-size:.98rem;font-weight:700}
-.br-opt__price{margin-left:auto;font-size:.98rem;font-weight:700}
-.br-opt__note{display:block;margin-top:.25rem;font-size:.78rem;color:var(--orange)}
-
-.br-btn{
-  display:block;width:100%;padding:1rem 1.2rem;border-radius:.9rem;text-align:center;
-  background:var(--orange);color:var(--orange-ink);
-  font:800 1.02rem/1 system-ui,sans-serif;letter-spacing:-.01em;
-  transition:filter .16s;
+.cb .cb-btn:hover { background: #FF9330; }
+.cb .cb-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--hair);
 }
-.br-btn:hover{filter:brightness(1.08)}
-.br-btn[disabled]{opacity:.45;cursor:default}
-.br-bullets{margin:1.3rem 0 0;padding:0;list-style:none;display:grid;gap:.55rem}
-.br-bullets li{font-size:.88rem;line-height:1.5;color:var(--ink-2);padding-left:1.1rem;position:relative}
-.br-bullets li::before{content:"";position:absolute;left:0;top:.6em;width:.36rem;height:.36rem;border-radius:999px;background:var(--orange)}
+.cb .cb-btn--ghost:hover { background: rgba(247, 242, 231, 0.07); }
 
-/* ------------------------------------------------------------------ others */
-.br-more{padding:clamp(3rem,7vw,5.5rem) var(--gut)}
-.br-more h2{font:800 clamp(1.6rem,3.6vw,2.4rem)/1.1 system-ui,sans-serif;letter-spacing:-.03em;margin:0 0 1.6rem}
-.br-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr))}
-.br-card{border:1px solid var(--line);border-radius:1.1rem;overflow:hidden;background:var(--card);display:block}
-.br-card__shot{aspect-ratio:1;background:var(--bg-2)}
-.br-card__shot img{width:100%;height:100%;object-fit:cover;display:block}
-.br-card__body{padding:.95rem 1.05rem 1.15rem}
-.br-card__name{font-size:1rem;font-weight:700;letter-spacing:-.02em}
-.br-card__price{margin-top:.35rem;font-size:.95rem;color:var(--ink-2)}
+/* The ticker was amber-on-ink. Inverted, it is the loudest strip on the page. */
+.cb-ticker { background: var(--action); color: #140A02; border-bottom-color: transparent; }
 
-/* ------------------------------------------------------------------ footer */
-.br-foot{padding:3rem var(--gut) 2.5rem;border-top:1px solid var(--line);background:var(--bg-2)}
-.br-foot__cols{display:flex;flex-wrap:wrap;gap:2.5rem}
-.br-foot h4{font:700 .76rem/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);margin:0 0 .8rem}
-.br-foot a{display:block;font-size:.9rem;color:var(--ink-2);margin-bottom:.5rem}
-.br-foot a:hover{color:var(--ink)}
-.br-foot__sign{margin-top:2.5rem;font-size:.85rem;color:var(--ink-3)}
+/* A white page could underline a heading with a pale wash. A dark one can't —
+   16% orange behind bone type is legible where a light tint would be mud. */
+.cb-head h2 {
+  background: linear-gradient(to top, var(--action-soft) 0 28%, transparent 28%);
+}
+
+/*
+ * Every product photo here is a dark object shot at night. Left alone they sit
+ * on the page as grey rectangles with visible edges; a faint bone ring gives
+ * each one a frame to end at.
+ */
+.cb img { background: transparent; }
+
+/* The sticky header is a white wash on a white page. Here it has to be the
+   page's own black, or it floats over the yard photos as a grey band. */
+.cb-header { background: rgba(11, 11, 12, 0.86); border-bottom-color: var(--hair); }
+
+/* No mark yet, so the store's name is the mark: set in the display face,
+   tight and bone-coloured, at the size the logo would have occupied. */
+.cb-logo b {
+  font-family: var(--display); font-weight: 800; font-size: 25px;
+  letter-spacing: -0.04em; color: var(--ink); text-transform: uppercase;
+}
+.cb-logo b::first-letter { color: var(--action); }
+.cb-footer__brand b { color: #fff; display: block; margin-bottom: 14px; }
+
+/* The footer is ink-on-ink now that the ink is bone. Give it the one band
+   colour so it still separates from the last section above it. */
+.cb-footer { background: var(--paper-2); color: var(--dim); border-top-color: var(--hair); }
+.cb-footer__col h3 { color: var(--ink); }
+.cb-footer__col a:hover { color: var(--action); }
+
+/* ------------------------------------------------ dark fills on a dark page */
+
+/*
+ * The template paints a handful of sections in the ink colour with white text
+ * on top — a black band breaking up a white page. Inverting the palette turns
+ * every one of those into a cream band with white text on it, which is the
+ * one thing that cannot be read. They become the panel colour instead: a step
+ * up from the page, still dark, still a break in the rhythm.
+ */
+.cb-steps-s,
+.cb-vs__side--us,
+.cb-band,
+.cb-last,
+.cb-for__it[data-i="0"] {
+  background: var(--cream);
+  color: var(--ink);
+  border-color: var(--hair);
+}
+.cb-steps-s .cb-head h2 {
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  background: linear-gradient(to top, var(--action-soft) 0 26%, transparent 26%);
+}
+.cb-steps-s .cb-lede,
+.cb-step p { color: var(--dim); }
+
+/* Small solid pills that were ink-on-white. Orange reads on black; bone does
+   not, because bone is already the body text. */
+.cb-badge, .cb-opt__flag--pop, .cb-up__add {
+  background: var(--action); color: #140A02;
+}
+
+/* The option card's selected state was a warm off-white wash. */
+.cb-opt[aria-checked="true"] { background: rgba(245, 130, 31, 0.10); }
+.cb-opt__dot { background: transparent; border-color: var(--hair); }
+.cb-up:hover { background: rgba(245, 130, 31, 0.10); }
+
+/* Photo wells were ink-coloured so an image had something to sit on while it
+   loaded. On this page that well is the page. */
+.cb-tile, .cb-wall__i, .cb-vid__frame { background: var(--paper-2); }
+
+/* The bar that slides up from the bottom once the buy box scrolls away, and
+   the footer's fine print, were both white washes. */
+.cb-sticky { background: rgba(11, 11, 12, 0.94); border-top-color: var(--hair); }
+.cb-footer__bar { color: var(--dimmer); }
+.cb-specgrid__it:hover { background: var(--cream); }
+.cb-card, .cb-card--fb, .cb-card--ig, .cb-card--tt { background: var(--cream); color: var(--ink); }
+
+/* The photo banner's button is white on purpose, because a dark button
+   disappears into a night photo. Orange does the same job and belongs here. */
+.cb .cb-bn__btn.cb-bn__btn { background: var(--action); color: #140A02; }
+.cb .cb-bn__btn.cb-bn__btn:hover { background: #FF9330; }
+
+/* Until the store has a mark, the thread's avatar is an empty circle. On a
+   white default that circle is white-on-white and invisible; here it would be
+   a bright dot in the middle of a dark phone. Make it a hole instead. */
+.cb-chat__av { background: rgba(247, 242, 231, 0.10); }

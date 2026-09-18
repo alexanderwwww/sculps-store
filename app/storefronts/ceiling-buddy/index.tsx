@@ -116,6 +116,7 @@ export function CeilingBuddyStorefront({
   publishableKey = null,
   paypalClientId = null,
   offer = null,
+  brand = BRAND,
 }: {
   page: LoadedProductPage;
   storeParam?: string;
@@ -123,6 +124,8 @@ export function CeilingBuddyStorefront({
   paypalClientId?: string | null;
   /** The live code the bar is shouting about, straight from the database. */
   offer?: { code: string; kind: string; value: number } | null;
+  /** Mark, links and rail. Omitted, this is Ceiling Buddy. */
+  brand?: CbBrand;
 }) {
   const { sections } = page;
   const buyBox = sections.find((s) => s.type === "buy_box");
@@ -146,7 +149,7 @@ export function CeilingBuddyStorefront({
       />
 
       <div className="cb">
-        <Header page={page} storeParam={storeParam} offer={offer} />
+        <Header page={page} storeParam={storeParam} offer={offer} brand={brand} />
         <main id="MainContent" role="main">
           {sections.map((s) => (
             // A plain block wrapper carrying the attribute the theme editor
@@ -181,7 +184,7 @@ function Section({
     case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
-    case "product_grid":  return <LockScreen section={section} />;
+    case "product_grid":  return <LockScreen section={section} page={page} />;
     case "trust_icons":   return <TrustBand section={section} />;
     case "three_steps":   return <Steps section={section} />;
     case "benefits":      return <Benefits section={section} />;
@@ -200,21 +203,46 @@ function Section({
 
 /* ----------------------------------------------------------------- header */
 
-const NAV = [
+const NAV: readonly (readonly [string, string])[] = [
   ["How it works", "#how"],
   ["Real nights", "#proof"],
   ["Reviews", "#reviews"],
   ["FAQ", "#faq"],
-] as const;
+];
+
+/**
+ * The three things a second store wearing this template has to change: the
+ * mark in the header, the links beside it, and the promises on the moving
+ * rail. Everything else is structure and belongs to the template.
+ *
+ * They live here as defaults rather than as constants read straight out of
+ * the components, so Ceiling Buddy keeps exactly what it had and a borrower
+ * passes its own without a second copy of the file existing.
+ */
+export interface CbBrand {
+  /** The header mark. Null renders the store name as a wordmark instead. */
+  logo: string | null;
+  nav: readonly (readonly [string, string])[];
+  /** The promises that ride the announcement rail, in order. */
+  rail: readonly string[];
+}
+
+const BRAND: CbBrand = {
+  logo: LOGO,
+  nav: NAV,
+  rail: ["Free US shipping", "30 nights to change your mind", "1-year warranty", "Ships in 3-5 business days"],
+};
 
 function Header({
   page,
   storeParam,
   offer,
+  brand,
 }: {
   page: LoadedProductPage;
   storeParam: string;
   offer: { code: string; kind: string; value: number } | null;
+  brand: CbBrand;
 }) {
   const drawer = useCartDrawer();
   const [menu, setMenu] = useState(false);
@@ -230,15 +258,15 @@ function Header({
   }, [menu]);
   return (
     <>
-      <Announce offer={offer} currency={page.store.currency} />
+      <Announce offer={offer} currency={page.store.currency} brand={brand} />
       <header className="cb-header">
         <div className="cb-wrap cb-header__in">
           <a className="cb-logo" href={href("/")} aria-label={page.store.name}>
-            <img src={LOGO} alt={page.store.name} />
+            {brand.logo ? <img src={brand.logo} alt={page.store.name} /> : <b>{page.store.name}</b>}
           </a>
           <nav className="cb-nav">
-            {NAV.map(([label, to]) => (
-              <a key={to} href={to}>{label}</a>
+            {brand.nav.map(([label, to]) => (
+              <a key={to} href={to.startsWith("#") ? to : href(to)}>{label}</a>
             ))}
           </nav>
           <div className="cb-header__right">
@@ -263,13 +291,13 @@ function Header({
         <div className="cb-menu__veil" onClick={() => setMenu(false)} />
         <div className="cb-menu__panel">
           <div className="cb-menu__head">
-            <img src={LOGO} alt={page.store.name} />
+            {brand.logo ? <img src={brand.logo} alt={page.store.name} /> : <b>{page.store.name}</b>}
             <button type="button" className="cb-menu__x" onClick={() => setMenu(false)} aria-label="Close menu">
               {IcoClose}
             </button>
           </div>
-          {NAV.map(([label, to]) => (
-            <a key={to} href={to} onClick={() => setMenu(false)}>{label}</a>
+          {brand.nav.map(([label, to]) => (
+            <a key={to} href={to.startsWith("#") ? to : href(to)} onClick={() => setMenu(false)}>{label}</a>
           ))}
           <a href={href("/cart")} onClick={() => setMenu(false)}>Cart</a>
           <button type="button" className="cb-btn" onClick={() => { setMenu(false); document.getElementById("buy")?.scrollIntoView({ behavior: "smooth" }); }}>
@@ -284,9 +312,11 @@ function Header({
 function Announce({
   offer,
   currency,
+  brand,
 }: {
   offer: { code: string; kind: string; value: number } | null;
   currency: string;
+  brand: CbBrand;
 }) {
   const amount =
     offer && offer.kind === "fixed"
@@ -303,7 +333,7 @@ function Announce({
   // The pill says the offer and nothing else. The logo rides the rail on its
   // own, turning as it goes — a mark rolling past is brand; a mark crammed
   // into the offer is clutter.
-  const mark = { key: "mark", logo: true, node: <img src={LOGO} alt="" /> };
+  const mark = { key: "mark", logo: true, node: brand.logo ? <img src={brand.logo} alt="" /> : <b>{brand.rail[0]}</b> };
   const pill = (key: string) => ({
     key,
     pill: true,
@@ -315,24 +345,25 @@ function Announce({
     ),
   });
 
+  // Four promises and one icon each, in the order the store gave them.
+  const icons = [IcoTruck, IcoReturn, IcoShield, IcoBolt];
+  const say = (i: number, key: string) => ({ key, node: <>{icons[i]} {brand.rail[i]}</> });
   const items: { key: string; node: React.ReactNode; pill?: boolean; logo?: boolean }[] = [
-    { key: "ship", node: <>{IcoTruck} Free US shipping</> },
+    say(0, "ship"),
     ...(offer && amount ? [pill("code")] : []),
     { ...mark, key: "mark1" },
-    { key: "ret", node: <>{IcoReturn} 30 nights to change your mind</> },
-    { key: "war", node: <>{IcoShield} 1-year warranty</> },
+    say(1, "ret"),
+    say(2, "war"),
     ...(offer && amount ? [pill("code2")] : []),
     { ...mark, key: "mark2" },
-    { key: "fast", node: <>{IcoBolt} Ships in 3-5 business days</> },
+    say(3, "fast"),
   ];
 
   return (
     <div
       className="cb-ann"
       aria-label={
-        amount
-          ? `${amount} with code ${offer!.code}. Free US shipping, 30 nights to change your mind, 1 year warranty.`
-          : "Free US shipping, 30 nights to change your mind, 1 year warranty"
+        amount ? `${amount} with code ${offer!.code}. ${brand.rail.join(". ")}.` : brand.rail.join(". ")
       }
     >
       <div className="cb-ann__t" aria-hidden="true">
@@ -514,9 +545,9 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
           {has(v, "reassurance") ? <div className="cb-reassure">{val(v, "reassurance")}</div> : null}
 
           <div className="cb-ship">
-            <span>{IcoTruck} Free US shipping</span>
-            <span>{IcoReturn} 30-day returns</span>
-            <span>{IcoShield} 1-year warranty</span>
+            {promises(page).map((text, i) => (
+              <span key={text}>{[IcoTruck, IcoReturn, IcoShield][i]} {text}</span>
+            ))}
           </div>
         </div>
       </div>
@@ -660,7 +691,22 @@ function ProofWall({ section }: { section: LoadedSection }) {
  * the mapping documented in the seed: `note` says which side a row belongs to
  * and when, `image` is the story screenshot.
  */
-function LockScreen({ section }: { section: LoadedSection }) {
+/**
+ * The three promises repeated under the buy button and along the bottom bar.
+ *
+ * They were written into the markup, which meant a second store wearing this
+ * template promised a one-year warranty it had never offered. They come from
+ * the Trust icons section now — one place the shop already edits — and fall
+ * back to what Ceiling Buddy always said.
+ */
+function promises(page: LoadedProductPage): string[] {
+  const titles = (page.sections.find((x) => x.type === "trust_icons")?.blocks ?? [])
+    .map((b) => val(b.values, "title"))
+    .filter(Boolean);
+  return titles.length >= 3 ? titles.slice(0, 3) : ["Free US shipping", "30-day returns", "1-year warranty"];
+}
+
+function LockScreen({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   const v = section.values;
 
   // Artwork wins on a wide screen — a finished picture of this scene beats
@@ -694,9 +740,9 @@ function LockScreen({ section }: { section: LoadedSection }) {
         </div>
 
         <div className="cb-lock__notif">
-          <img src={LOGO} alt="" />
+          <img src={page.store.logoUrl ?? LOGO} alt="" />
           <div>
-            <b>Ceiling Buddy<i>now</i></b>
+            <b>{page.store.name}<i>now</i></b>
             {has(v, "footnote") ? <p>{val(v, "footnote")}</p> : null}
           </div>
         </div>
@@ -895,8 +941,10 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
     <section className="cb-ugc" id="ugc">
       <div className="cb-wrap">
         <div className="cb-head">
-          <h2 className="cb-h2">See it working</h2>
-          <p className="cb-lede">Shot on a phone, in a real bedroom, with the lights off.</p>
+          <h2 className="cb-h2">{has(section.values, "heading") ? val(section.values, "heading") : "See it working"}</h2>
+          {has(section.values, "subheading") ? (
+            <p className="cb-lede">{val(section.values, "subheading")}</p>
+          ) : null}
         </div>
 
         <div className="cb-proof">
@@ -923,7 +971,7 @@ function ProofAndAnswers({ section, page }: { section: LoadedSection; page: Load
           ) : null}
         </div>
 
-        {asked.length ? <PhoneChat blocks={asked} email={page.store.contactEmail} brand="Ceiling Buddy" logo={LOGO} prefix="cb" /> : null}
+        {asked.length ? <PhoneChat blocks={asked} email={page.store.contactEmail} brand={page.store.name} logo={page.store.logoUrl} prefix="cb" /> : null}
         </div>
       </div>
     </section>
@@ -984,14 +1032,14 @@ function PayLater({ page }: { page: LoadedProductPage }) {
  * when the row carries them — a number drawn from nothing is a number we made
  * up, so a post with no engagement recorded simply shows none.
  */
-function SocialCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
+function SocialCard({ r, logo }: { r: LoadedProductPage["reviews"][number]; logo: string | null }) {
   const when = sinceText(r.reviewedOn);
   const val = (x: string | null) => (x ?? "").trim();
 
   if (r.channel === "notification") {
     return (
       <article className="cb-card cb-card--notif">
-        <img className="cb-card__app" src={LOGO} alt="" />
+        {logo ? <img className="cb-card__app" src={logo} alt="" /> : null}
         <div className="cb-card__notif">
           <b>{r.name}<i>{when === "today" ? "now" : when}</i></b>
           <p>{r.body}</p>
@@ -1156,7 +1204,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
             {[0, 1].map((pass) => (
               <div className="cb-wallcol__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
                 {rows.filter((_, i) => i % 3 === col).map((r) => (
-                  <SocialCard key={`${pass}-${r.id}`} r={r} />
+                  <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
                 ))}
               </div>
             ))}
@@ -1179,7 +1227,7 @@ function Closing({ section, page, storeParam = "" }: { section: LoadedSection; p
   return (
     <section className="cb-section cb-close">
       <div className="cb-wrap cb-close__in">
-        <img src={LOGO} alt="" />
+        <img src={page.store.logoUrl ?? LOGO} alt="" />
         <h2 className="cb-h2">{val(v, "heading")}</h2>
         {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
         {buy ? (
@@ -1393,7 +1441,7 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
       {/* One last offer, made properly, before the small print. */}
       <section className="cb-last">
         <div className="cb-wrap cb-last__in">
-          <img className="cb-last__logo" src={LOGO} alt="" />
+          <img className="cb-last__logo" src={page.store.logoUrl ?? LOGO} alt="" />
           <h2 className="cb-h2">Your ceiling is the biggest screen you own</h2>
           {buy ? (
             <form
@@ -1403,7 +1451,7 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
             >
               <input type="hidden" name="variantId" value={buy.id} />
               <button type="submit" className="cb-btn">
-                Get Ceiling Buddy — {formatMoney(buy.priceCents, page.store.currency)}
+                Get {page.store.name} — {formatMoney(buy.priceCents, page.store.currency)}
               </button>
             </form>
           ) : null}
@@ -1418,9 +1466,8 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
       <footer className="cb-footer">
         <div className="cb-wrap cb-footer__cols">
           <div className="cb-footer__brand">
-            <img src={LOGO} alt={page.store.name} />
-            <p>A tray, a projector and a strip of warm light. Made for people who watch
-            lying down.</p>
+            {page.store.logoUrl ? <img src={page.store.logoUrl} alt={page.store.name} /> : <b className="cb-h3">{page.store.name}</b>}
+            {page.store.metaDescription ? <p>{page.store.metaDescription}</p> : null}
           </div>
 
           {page.nav.footer.length ? (
@@ -1437,7 +1484,7 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
           <div className="cb-footer__col">
             <h3>The store</h3>
             <ul>
-              <li><a href={href("/")}>Ceiling Buddy</a></li>
+              <li><a href={href("/")}>{page.store.name}</a></li>
               <li><a href="#how">How it works</a></li>
               <li><a href="#reviews">Reviews</a></li>
               <li><a href="#faq">Questions</a></li>
@@ -1457,7 +1504,7 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
 
         <div className="cb-wrap cb-footer__bar">
           <span>© 2026 {page.store.name}</span>
-          <span>Free US shipping · 30-night returns · 1-year warranty</span>
+          <span>{promises(page).join(" · ")}</span>
         </div>
       </footer>
     </>
