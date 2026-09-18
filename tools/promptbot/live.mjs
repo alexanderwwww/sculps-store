@@ -82,7 +82,7 @@ function report(state, extra = {}) {
  * Fire and forget, with a deadline: the run is not held up by an upload, and
  * a failed one costs nothing because the picture is on the disk either way.
  */
-function send(dir, name, bytes) {
+function sendShot(dir, name, bytes) {
   const job = dir.split("/").filter(Boolean).pop() || "run";
   const stop = new AbortController();
   setTimeout(() => stop.abort(), 30000);
@@ -833,7 +833,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // one laptop has to be found, downloaded and re-uploaded by hand before
     // the shop can use it; one that is also here can be put on a product the
     // moment it exists.
-    send(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`, buf);
+    sendShot(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`, buf);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
     await writeFile(join(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`), buf);
