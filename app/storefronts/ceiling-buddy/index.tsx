@@ -1175,6 +1175,9 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
   // print a number that is simply false.
   const rated = rows.filter((r) => r.rating > 0);
   const mean = rated.length ? rated.reduce((n, r) => n + r.rating, 0) / rated.length : 0;
+  // Sideways or up: which way the wall moves is the shop's choice, because it
+  // depends on how many reviews there are and how tall the page already is.
+  const across = val(section.values, "direction").toLowerCase().startsWith("acr");
   return (
     <section className="cb-revs-s" id="reviews">
       <div className="cb-wrap">
@@ -1193,25 +1196,49 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
         </div>
       </div>
 
-      {/* Columns, drifting vertically, alternate directions.
-          Moving sideways, a short notification beside a tall Instagram post
-          leaves ragged holes at every height change. Stacked in columns the
-          cards pack tight against each other and the difference in size stops
-          being a gap and starts being texture. Each column is printed twice so
-          its loop has no seam; the copy is hidden from screen readers. */}
-      <div className="cb-wallgrid">
-        {[0, 1, 2].map((col) => (
-          <div className="cb-wallcol" data-col={col} key={col}>
-            {[0, 1].map((pass) => (
-              <div className="cb-wallcol__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
-                {rows.filter((_, i) => i % 3 === col).map((r) => (
-                  <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
-                ))}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+      {across ? (
+        /* Rows, sliding sideways, alternate directions.
+           Vertical columns let cards of different heights pack tight, which
+           is why the other store uses them. Sideways they cannot, so each row
+           fixes its own height and the cards fill it — a wall of evenly sized
+           postcards passing by, which is the shape a phone reads best because
+           it never asks anyone to scroll past it.
+           Each row is printed twice so the loop has no seam; the copy is
+           hidden from screen readers. */
+        <div className="cb-rail">
+          {[0, 1, 2].map((row) => (
+            <div className="cb-rail__row" data-row={row} key={row}>
+              {[0, 1].map((pass) => (
+                <div className="cb-rail__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+                  {rows.filter((_, i) => i % 3 === row).map((r) => (
+                    <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Columns, drifting vertically, alternate directions.
+           Moving sideways, a short notification beside a tall Instagram post
+           leaves ragged holes at every height change. Stacked in columns the
+           cards pack tight against each other and the difference in size stops
+           being a gap and starts being texture. Each column is printed twice so
+           its loop has no seam; the copy is hidden from screen readers. */
+        <div className="cb-wallgrid">
+          {[0, 1, 2].map((col) => (
+            <div className="cb-wallcol" data-col={col} key={col}>
+              {[0, 1].map((pass) => (
+                <div className="cb-wallcol__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+                  {rows.filter((_, i) => i % 3 === col).map((r) => (
+                    <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

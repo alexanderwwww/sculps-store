@@ -243,7 +243,16 @@ export const SECTIONS: SectionDef[] = [
     type: "reviews",
     label: "Reviews",
     hint: "Pulled from the Reviews screen — one source of truth",
-    fields: [heading, subheading],
+    fields: [
+      heading,
+      subheading,
+      {
+        name: "direction",
+        label: "Which way the wall moves",
+        kind: "text",
+        help: "Put across here for rows sliding sideways. Anything else, or blank, and it drifts upwards in columns.",
+      },
+    ],
     blocks: null,
     externalSource: "reviews",
   },

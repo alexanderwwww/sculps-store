@@ -134,3 +134,65 @@
 /* The buy button is the brightest thing on the page and should feel lit. */
 .cb .cb-btn { box-shadow: 0 6px 22px -10px rgba(245, 130, 31, .85); }
 .cb .cb-btn:hover { box-shadow: 0 10px 30px -10px rgba(245, 130, 31, 1); }
+
+/* --------------------------------------------------------------- the rail */
+
+/*
+ * Reviews as rows sliding sideways rather than columns drifting up.
+ *
+ * The other store stacks them vertically because cards of different heights
+ * pack tight that way. Sideways they cannot, so each row fixes its height and
+ * the cards fill it — a band of evenly sized postcards passing by. The reason
+ * to want that is the phone: a vertical wall is something a thumb has to get
+ * past, and a horizontal one plays itself while the page stays still.
+ *
+ * Three rows, alternating direction, at speeds that don't divide into each
+ * other — otherwise they sync up after a few seconds and the whole thing
+ * reads as one block sliding rather than a room full of people talking.
+ */
+.cb-rail {
+  display: grid;
+  gap: clamp(12px, 1.6vw, 18px);
+  padding: clamp(6px, 1vw, 12px) 0 clamp(10px, 1.4vw, 18px);
+  /* The rows run wider than the page; this is what stops a sideways scrollbar. */
+  overflow: hidden;
+  /* Faded at both ends, so a card entering isn't a card appearing. */
+  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+}
+
+.cb-rail__row {
+  display: flex;
+  width: max-content;
+  gap: clamp(12px, 1.6vw, 18px);
+  animation: cb-slide 64s linear infinite;
+  will-change: transform;
+}
+.cb-rail__pass { display: flex; gap: clamp(12px, 1.6vw, 18px); }
+
+/* Two passes side by side and a loop that travels exactly half the width:
+   the second pass arrives where the first began, so there is no seam. */
+@keyframes cb-slide {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+.cb-rail__row[data-row="1"] { animation-direction: reverse; animation-duration: 79s; }
+.cb-rail__row[data-row="2"] { animation-duration: 53s; }
+
+/* Stop it while somebody is reading one. */
+.cb-rail:hover .cb-rail__row,
+.cb-rail:focus-within .cb-rail__row { animation-play-state: paused; }
+
+/* Every card the same width, so the rows stay level and the eye can track
+   along one instead of climbing over it. */
+.cb-rail .cb-card {
+  width: clamp(230px, 24vw, 290px);
+  flex: 0 0 auto;
+  align-self: start;
+}
+.cb-rail .cb-card img { width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-rail__row { animation: none; }
+  .cb-rail { overflow-x: auto; }
+}
