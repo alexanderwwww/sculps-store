@@ -16,6 +16,7 @@ import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { PhoneChat } from "../shared/phone-chat";
+import { ProductExpress } from "../garden-buddy/product-express";
 import { embedFor, isOwnVideo } from "./embeds";
 
 type Vals = Record<string, string>;
@@ -160,7 +161,7 @@ export function CeilingBuddyStorefront({
             // Every section here is block-level anyway, so a block wrapper
             // changes nothing about the layout.
             <div key={s.id} data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} />
             </div>
           ))}
         </main>
@@ -176,14 +177,16 @@ function Section({
   page,
   storeParam,
   brand,
+  publishableKey,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
   storeParam: string;
   brand: CbBrand;
+  publishableKey: string | null;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <LockScreen section={section} page={page} />;
@@ -389,7 +392,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -546,6 +549,27 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
               {has(v, "bundleNote") ? (
                 <div className="cb-bundle__foot">{val(v, "bundleNote")}</div>
               ) : null}
+            </div>
+          ) : null}
+
+          {/* Apple Pay, before the buttons.
+              One tap on the bundle, one on the sheet, and it is paid — no
+              cart, no checkout page, no typing an address. It draws itself
+              only when the browser actually has a wallet, so nothing appears
+              that cannot take money. */}
+          {chosen && publishableKey ? (
+            <div className="cb-wallet">
+              <ProductExpress
+                publishableKey={publishableKey}
+                currency={currency}
+                variantId={chosen.id}
+                amountCents={chosen.priceCents}
+                label={`${page.product.title} — ${chosen.label}`}
+                storeName={page.store.name}
+                shippingCents={0}
+                storeParam={storeParam}
+                onReady={() => {}}
+              />
             </div>
           ) : null}
 

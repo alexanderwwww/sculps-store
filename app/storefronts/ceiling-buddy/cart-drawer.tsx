@@ -53,7 +53,13 @@ const IcoClose = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
 );
 
-/** The store's logo, so the drawer is obviously this shop and not a template. */
+/**
+ * The fallback mark, for a store that has not uploaded one.
+ *
+ * It used to be the only mark: the drawer said "so it is obviously this shop
+ * and not a template" and then hard-coded one shop's logo into the template,
+ * so every borrower's cart opened under somebody else's name.
+ */
 const LOGO = "/media/3958921693410617.webp";
 
 export function CartDrawerProvider({
@@ -160,7 +166,7 @@ export function CartDrawerProvider({
         <div className="cb-drawer__veil" onClick={() => setOpen(false)} />
         <div className="cb-drawer__panel">
           <div className="cb-drawer__head">
-            <img className="cb-drawer__logo" src={LOGO} alt={page.store.name} />
+            <img className="cb-drawer__logo" src={page.store.logoUrl ?? LOGO} alt={page.store.name} />
             <h3>Your cart</h3>
             <button type="button" className="cb-drawer__x" onClick={() => setOpen(false)} aria-label="Close">
               {IcoClose}
