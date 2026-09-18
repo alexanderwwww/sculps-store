@@ -12,35 +12,69 @@ Not the browser automation. The workflow:
 
 That is a product. People pay for it.
 
-## Why the current build cannot be the one you sell
+## The engine: their own Gemini and ChatGPT subscriptions
+
+Decided. The customer's existing subscription does the generating — nothing
+extra to buy, the free tier works, and there is no API bill for anybody. That
+is a real advantage and it is most of the pitch.
+
+It makes two things true that the rest of this file has to be read against:
+
+- **No cost of goods at all**, for you or them. Almost the whole subscription
+  is margin.
+- **The product depends on somebody else's web page not changing.** Which is
+  survivable, but only if it is designed for from the start — see below.
+
+Say the account risk plainly in the terms: automating those sites is against
+their rules and an account can be suspended for it. Customers should choose
+that knowingly rather than find out.
+
+## What the old version got wrong
 
 It drives Gemini and ChatGPT's websites. Three problems, all fatal at scale:
 
-1. **It breaks on their schedule, not yours.** One layout change and every
-   customer's copy stops working on the same morning. Support burns the margin.
-2. **Their terms forbid it.** Selling a tool whose only function is automating
-   their site is the thing that gets a cease-and-desist, and it arrives after
-   you have taken money and have customers.
-3. **It cannot scale past one machine.** Every customer needs their own Chrome,
-   their own login, their own laptop awake.
+The selectors — which button to click, which box to type in — are written into
+the app. So the day Google moves a button, every customer's copy breaks at the
+same moment and the only fix is shipping a new build and hoping they install
+it. That is what makes browser automation unsellable, and it is fixable.
 
-Fine as a private tool. Not a business.
+## The fix: serve the selectors, don't ship them
 
-## The version that is a business
+Exactly the mechanism already built for prompts. The app fetches a small
+config on launch:
 
-Same app, same wand, same card, same queue. Different engine: the official
-image APIs instead of a browser. Nothing about how it feels changes.
+    {"gemini": {"ask": [...], "send": [...], "file": [...]},
+     "chatgpt": {...}}
 
-That fixes all three at once — it is permitted, it does not break when a page
-changes, and it can run without a browser at all.
+When Google changes their page: open the site, find the new selector, push one
+line. Every customer is working again within the hour, having installed
+nothing and noticed nothing.
 
-**Two ways to charge, and the first is much easier:**
+That is the difference between "the product died on a Tuesday" and "it was odd
+for an hour". It is also a reason the subscription keeps being paid — the fee
+buys somebody watching for breakage, which is a real service and worth saying
+on the page.
 
-- **Bring your own key.** They paste an API key, you charge a flat monthly fee
-  for the app. No payment risk, no credit accounting, no support for somebody
-  else's outage. Ship this first.
-- **Credits.** You buy generation wholesale and resell it. Better margins,
-  much more work: billing, abuse, refunds when a model returns rubbish.
+Three more things that follow from the same decision:
+
+- **Version the config**, so an old build never gets selectors it cannot use.
+- **Report failures home** — an anonymous ping when an attach or a send finds
+  nothing. The first customer to break is the alarm, not a support email.
+- **Keep the fallback chain.** Paste, drop, file dialog: three ways to attach
+  already, so one broken selector degrades instead of stopping.
+
+## Keeping customers' accounts safe
+
+The automation should behave like a person, because a tool that hammers the
+site gets its users banned and the bans are what kill the product:
+
+- One prompt at a time, waiting for each to finish. Already true.
+- The approval gate before each batch. Already true.
+- No parallel tabs, no overnight unattended runs, no retry storms.
+- A sane daily ceiling, so nobody leaves it running for eight hours.
+
+Human-paced is not only safer, it is the honest version of the pitch: it does
+what you would have done, while you do something else.
 
 ## Price
 
