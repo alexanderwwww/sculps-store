@@ -26,8 +26,27 @@ say "Black Reaper — image wand"
 
 # --- the things that have to exist ---------------------------------------
 
-command -v node >/dev/null 2>&1 || die "Node isn't installed.
-Get it from https://nodejs.org (the big green LTS button), then double-click this again."
+if ! command -v node >/dev/null 2>&1; then
+  # Homebrew installs node somewhere the Finder's PATH doesn't reach, so a
+  # perfectly good install looks missing when the script is double-clicked.
+  for candidate in /usr/local/bin /opt/homebrew/bin; do
+    [ -x "$candidate/node" ] && PATH="$candidate:$PATH"
+  done
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  printf "\n\033[31mNode isn't installed — the wand needs it to run.\033[0m\n\n"
+  echo "Opening nodejs.org for you. Click the big green LTS button, then"
+  echo "double-click the .pkg it downloads and click through the installer."
+  echo "It's signed by Apple, so there's no security warning on that one."
+  echo
+  echo "When it's finished, double-click wand.command again."
+  sleep 2
+  open "https://nodejs.org/en/download" 2>/dev/null
+  echo "Press any key to close."
+  read -r -n 1
+  exit 1
+fi
 
 [ -f "$CHROME" ] || die "Google Chrome isn't in your Applications folder.
 Install Chrome, then double-click this again."
@@ -35,20 +54,39 @@ Install Chrome, then double-click this again."
 # --- whatever Claude wrote last ------------------------------------------
 #
 # This is the whole connection. Claude can't reach your browser from where it
-# runs, but it can write prompts into this branch. Pulling first means what you
-# double-click is whatever it wrote last, and asking it for new shots is the
-# same as loading new prompts.
+# runs, but it can write prompts where this can fetch them, so a double-click
+# runs whatever it wrote last and "give me the Scream shots" and "load new
+# prompts" become the same action.
 #
-# Your own edits win: a prompts.txt you changed is never overwritten.
+# Two ways in, because this folder ships both inside the repo and on its own.
+# Either way your own typing wins: a prompts.txt you have edited is never
+# replaced, and a fetch that fails leaves what's already here alone.
+FEED="https://kerberos.gardenbuddystore.workers.dev/media/prompts.txt"
+
 if git rev-parse --git-dir >/dev/null 2>&1 && [ -d ../../.git ]; then
   if git -C ../.. diff --quiet -- tools/promptbot/prompts.txt 2>/dev/null; then
-    say "Checking for new prompts…"
+    say "Checking for new prompts..."
     git -C ../.. pull --quiet --ff-only 2>/dev/null \
       && echo "Up to date." \
-      || echo "Couldn't reach GitHub — using the prompts already here."
+      || echo "Couldn't reach GitHub - using the prompts already here."
   else
     echo "You've edited prompts.txt, so it's left alone."
   fi
+elif [ ! -f .prompts-edited ]; then
+  say "Checking for new prompts..."
+  # Into a temp file first: a half-downloaded feed must never become the
+  # prompts we then type into somebody's browser.
+  if curl -fsS --max-time 10 "$FEED" -o .prompts-new 2>/dev/null && [ -s .prompts-new ]; then
+    if cmp -s .prompts-new "$PROMPTS" 2>/dev/null; then
+      echo "Up to date."
+    else
+      mv .prompts-new "$PROMPTS"
+      echo "New prompts loaded."
+    fi
+  else
+    echo "Couldn't reach the feed - using the prompts already here."
+  fi
+  rm -f .prompts-new
 fi
 
 [ -f "$PROMPTS" ] || die "There's no $PROMPTS next to this file.
