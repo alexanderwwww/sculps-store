@@ -495,15 +495,16 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                       : null;
                 const off = savedPercent(x.priceCents, x.compareAtCents);
                 const save = savedAmount(x.priceCents, x.compareAtCents);
-                // How many of the thing you get. The decision in this box is
-                // almost never about features — it is "one or two" — so the
-                // count is the biggest thing on the card.
-                const count = /^(\d+)|^one\b/i.test(x.label)
-                  ? (x.label.match(/^(\d+)/)?.[1] ?? "1")
-                  : /^two\b/i.test(x.label) ? "2"
-                  : /^three\b/i.test(x.label) ? "3"
-                  : null;
-                const extra = /\+/.test(x.label);
+                // How many units this row is, read off the label. It drives
+                // the per-unit price, which is the number that actually makes
+                // a multi-buy feel like a deal — "$129" is a bigger spend than
+                // "$99" and only "$64.50 each" explains why it isn't.
+                const qty = /^(\d+)\s/.test(x.label)
+                  ? Number(x.label.match(/^(\d+)/)![1])
+                  : /^two\b/i.test(x.label) ? 2
+                  : /^three\b/i.test(x.label) ? 3
+                  : /^four\b/i.test(x.label) ? 4
+                  : 1;
                 return (
                   <button
                     key={x.id}
@@ -515,25 +516,29 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                   >
                     {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}
 
-                    {/* The picture, repeated. Two reapers is two pictures of a
-                        reaper — the quantity draws itself and nobody has to
-                        read a number to understand the offer. */}
-                    <span className="cb-tier__pics" data-n={count ?? "1"}>
-                      {x.imageUrl ? (
-                        Array.from({ length: Math.min(Number(count) || 1, 3) }).map((_, k) => (
-                          <img key={k} src={x.imageUrl!} alt="" loading="lazy" />
-                        ))
-                      ) : (
-                        <span className="cb-tier__n">{count ? `×${count}` : "×1"}</span>
-                      )}
-                      {extra ? <span className="cb-tier__plus">+</span> : null}
+                    <span className="cb-tier__dot" aria-hidden="true" />
+
+                    {x.imageUrl ? (
+                      <span className="cb-tier__pic"><img src={x.imageUrl} alt="" loading="lazy" /></span>
+                    ) : null}
+
+                    <span className="cb-tier__main">
+                      <span className="cb-tier__name">{x.label}</span>
+                      <span className="cb-tier__under">
+                        {x.compareAtCents ? <s>{formatMoney(x.compareAtCents, currency)}</s> : null}
+                        {save ? <b>Save {formatMoney(save, currency)}</b> : null}
+                        {!save && x.sublabel ? <span>{x.sublabel}</span> : null}
+                      </span>
                     </span>
 
-                    <span className="cb-tier__name">{x.label}</span>
-                    <span className="cb-tier__price">{formatMoney(x.priceCents, currency)}</span>
-                    {x.compareAtCents ? <s className="cb-tier__was">{formatMoney(x.compareAtCents, currency)}</s> : null}
-                    {save ? <span className="cb-tier__save">Save {formatMoney(save, currency)}</span> : null}
-                    {x.sublabel && !save ? <span className="cb-tier__sub">{x.sublabel}</span> : null}
+                    <span className="cb-tier__right">
+                      <span className="cb-tier__price">{formatMoney(x.priceCents, currency)}</span>
+                      {qty > 1 ? (
+                        <span className="cb-tier__each">
+                          {formatMoney(Math.round(x.priceCents / qty), currency)} each
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                 );
               })}
@@ -555,8 +560,14 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
               }}
             >
               <input type="hidden" name="variantId" value={picked} />
+              {/* The price rides the button.
+                  Somebody who has just chosen between three bundles is holding
+                  a number in their head; putting it on the button they are
+                  about to press is the cheapest possible way to confirm they
+                  are buying what they think they are. */}
               <button type="submit" className="cb-btn" disabled={!picked}>
                 {val(v, "ctaLabel") || "Add to cart"}
+                {chosen ? <span className="cb-btn__p">{formatMoney(chosen.priceCents, currency)}</span> : null}
               </button>
             </form>
             {/* Straight to the checkout with this bundle and nothing else.
