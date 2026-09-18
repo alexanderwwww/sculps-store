@@ -1349,6 +1349,83 @@ function Score({ page }: { page: LoadedProductPage }) {
   );
 }
 
+
+/* ------------------------------------------------------- the review wall */
+
+/**
+ * A review, as the thing it actually was.
+ *
+ * Two shapes only, because two is what a person recognises without reading:
+ * a post, and a thread. A post is what somebody wrote publicly with their
+ * name on it; a thread is what they said privately to one person, which is
+ * the more convincing of the two and the reason it is worth building a second
+ * card for.
+ *
+ * Photographs go on some cards and not others, and the widths vary. Both are
+ * deliberate: a row where every card is the same size and carries the same
+ * furniture stops reading as a collection of real things and starts reading
+ * as a grid somebody generated — which, at that point, it may as well be.
+ */
+function RvPost({ r }: { r: LoadedProductPage["reviews"][number] }) {
+  const when = sinceText(r.reviewedOn);
+  const where =
+    r.channel === "instagram" ? "Instagram" :
+    r.channel === "tiktok" ? "TikTok" :
+    r.channel === "notification" ? "Shipping" : "Facebook";
+  const handle = r.name.startsWith("@") ? r.name : `@${r.name.toLowerCase().replace(/[^a-z]+/g, "").slice(0, 14)}`;
+  return (
+    <article className={`rv-card rv-post${r.imageUrl ? " rv-card--pic" : ""}`}>
+      <header className="rv-post__head">
+        <span className="rv-av" data-seed={r.name.length % 6}>{r.name.replace("@", "").charAt(0).toUpperCase()}</span>
+        <span className="rv-post__who">
+          <b>{r.name.replace("@", "")}{r.verified ? <i className="rv-tick">{IcoVerified}</i> : null}</b>
+          <span>{handle} · {where}</span>
+        </span>
+        {r.rating > 0 ? (
+          <span className="rv-stars" aria-label={`${r.rating} out of 5`}>
+            {[0, 1, 2, 3, 4].map((n) => (
+              <span key={n} style={{ opacity: n < r.rating ? 1 : 0.2 }}>{IcoStar}</span>
+            ))}
+          </span>
+        ) : null}
+      </header>
+      <p className="rv-post__body">{r.body}</p>
+      {r.imageUrl ? (
+        <div className="rv-shot"><img src={r.imageUrl} alt="" loading="lazy" /></div>
+      ) : null}
+      <footer className="rv-post__foot">
+        <span className="rv-like">{IcoHeart}{r.likes != null ? r.likes.toLocaleString("en-US") : 0}</span>
+        <span className="rv-reply">Reply</span>
+        <span className="rv-when">{when}</span>
+      </footer>
+    </article>
+  );
+}
+
+/** The private one: a thread, with the photo inside a bubble where there is one. */
+function RvThread({ r }: { r: LoadedProductPage["reviews"][number] }) {
+  const lines = r.body.split(String.fromCharCode(10)).filter(Boolean);
+  return (
+    <article className="rv-card rv-thread">
+      <header className="rv-thread__head">
+        <span className="rv-back" aria-hidden="true">‹</span>
+        <span className="rv-av rv-av--sm" data-seed={r.name.length % 6}>{r.name.charAt(0).toUpperCase()}</span>
+        <b>{r.name}</b>
+        <span className="rv-thread__tag">iMessage</span>
+      </header>
+      <div className="rv-thread__body">
+        {lines.map((line, i) => (
+          <p className={i % 2 ? "rv-mine" : "rv-theirs"} key={line}>{line}</p>
+        ))}
+        {r.imageUrl ? (
+          <span className="rv-bubbleshot"><img src={r.imageUrl} alt="" loading="lazy" /></span>
+        ) : null}
+      </div>
+      <div className="rv-thread__field">iMessage</div>
+    </article>
+  );
+}
+
 function Reviews({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   const rows = page.reviews;
   if (!rows.length) return null;
@@ -1378,20 +1455,19 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
       </div>
 
       {across ? (
-        /* Rows, sliding sideways, alternate directions.
-           Vertical columns let cards of different heights pack tight, which
-           is why the other store uses them. Sideways they cannot, so each row
-           fixes its own height and the cards fill it — a wall of evenly sized
-           postcards passing by, which is the shape a phone reads best because
-           it never asks anyone to scroll past it.
-           Each row is printed twice so the loop has no seam; the copy is
-           hidden from screen readers. */
-        <div className="cb-rail">
-          <div className="cb-rail__row" data-row="0">
+        /* One track, sliding sideways, with the whole set printed twice inside
+           it so the loop has no seam — the copy is hidden from anything that
+           reads the page aloud. Cards come in two shapes and several widths on
+           purpose: a row where every card is the same size and carries the
+           same furniture stops reading as a collection of real things. */
+        <div className="rv">
+          <div className="rv-track">
             {[0, 1].map((pass) => (
-              <div className="cb-rail__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
-                {rows.map((r) => (
-                  <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
+              <div className="rv-pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+                {rows.map((r, i) => (
+                  r.channel === "imessage"
+                    ? <RvThread key={`${pass}-${r.id}`} r={r} />
+                    : <RvPost key={`${pass}-${r.id}`} r={r} />
                 ))}
               </div>
             ))}
