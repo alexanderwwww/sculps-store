@@ -57,11 +57,18 @@ export const OVERLAY = `(() => {
   hud.append(title, body, hint);
   root.appendChild(hud);
 
-  const state = { stopped: false };
+  const state = { stopped: false, deaf: 0 };
 
   // Captured on the way down, so a page that swallows keys can't eat it.
+  //
+  // The deaf window exists because the runner sometimes has to send Escape itself, to
+  // close a file dialog that opened on a button that turned out to be the
+  // wrong one. Playwright's keypresses are indistinguishable from a person's
+  // — that is the point of them — so the stop has to be deafened around the
+  // few milliseconds where one is sent on purpose. Without this the tool
+  // stopped itself mid-run and looked, from the outside, like a ghost.
   window.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || state.stopped) return;
+    if (e.key !== "Escape" || state.stopped || Date.now() < state.deaf) return;
     state.stopped = true;
     css(title, { color: "#FF6B5A" });
     title.textContent = "Stopped";
@@ -108,8 +115,165 @@ export const OVERLAY = `(() => {
     }, 900);
   }
 
+
+  /* ------------------------------------------------------------- the card */
+
+  /*
+   * The job, as a panel in the corner of the page you are already looking at.
+   *
+   * A macOS dialog works, but it takes over the screen and it cannot show you
+   * the picture you just chose. This sits over the page, holds the reference
+   * image, and keeps the decision in the same place as the thing being
+   * decided. Dropping a file straight onto it also means the picture never
+   * leaves the browser: it goes from this panel into the composer as a File
+   * object, with no round trip through disk.
+   */
+  const card = css(document.createElement("div"), {
+    position: "fixed", zIndex: TOP, right: "18px", top: "18px",
+    width: "330px", padding: "16px", borderRadius: "16px",
+    background: "rgba(14,14,17,.97)", color: "#F7F2E7",
+    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)",
+    display: "none",
+  });
+  const cName = css(document.createElement("div"), {
+    fontSize: "15px", fontWeight: "700", letterSpacing: "-.01em", marginBottom: "3px",
+  });
+  const cSub = css(document.createElement("div"), { opacity: ".55", fontSize: "12px", marginBottom: "12px" });
+  const drop = css(document.createElement("div"), {
+    border: "1.5px dashed rgba(247,242,231,.28)", borderRadius: "12px",
+    padding: "16px 12px", textAlign: "center", cursor: "pointer",
+    transition: "border-color .15s, background .15s", marginBottom: "12px",
+    minHeight: "78px", display: "grid", placeItems: "center", gap: "6px",
+  });
+  const dropText = css(document.createElement("div"), { opacity: ".6", fontSize: "12.5px" });
+  dropText.textContent = "Drop the product photo here";
+  const thumbs = css(document.createElement("div"), { display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center" });
+  drop.append(dropText, thumbs);
+
+  const row = css(document.createElement("div"), { display: "flex", gap: "8px" });
+  const mkBtn = (text, primary) => {
+    const b = css(document.createElement("button"), {
+      flex: "1", padding: "10px 12px", borderRadius: "10px", border: "0",
+      cursor: "pointer", fontSize: "13.5px", fontWeight: "600",
+      font: 'inherit', fontFamily: "inherit",
+      background: primary ? "#C9A0FF" : "rgba(247,242,231,.10)",
+      color: primary ? "#140A02" : "#F7F2E7",
+    });
+    b.textContent = text;
+    return b;
+  };
+  const bSkip = mkBtn("Skip", false);
+  bSkip.setAttribute("data-wand", "");
+  const bGo = mkBtn("Submit", true);
+  bGo.setAttribute("data-wand", "");
+  row.append(bSkip, bGo);
+
+  const picker = css(document.createElement("input"), { display: "none" });
+  picker.type = "file";
+  picker.accept = "image/*";
+  picker.multiple = true;
+  picker.setAttribute("data-wand", "");
+
+  card.append(cName, cSub, drop, row, picker);
+  root.appendChild(card);
+
+  /** Files chosen for this job, held in the page until the composer wants them. */
+  state.files = [];
+  let decide = null;
+
+  function showThumbs() {
+    thumbs.replaceChildren();
+    for (const f of state.files) {
+      const img = css(document.createElement("img"), {
+        width: "46px", height: "46px", objectFit: "cover", borderRadius: "8px",
+      });
+      img.src = URL.createObjectURL(f);
+      img.title = "Click to remove";
+      css(img, { cursor: "pointer" });
+      img.addEventListener("click", (e) => {
+        e.stopPropagation();
+        state.files = state.files.filter((x) => x !== f);
+        showThumbs();
+      });
+      thumbs.appendChild(img);
+    }
+    dropText.textContent = state.files.length
+      ? state.files.length + (state.files.length === 1 ? " picture ready" : " pictures ready") +
+        (state.files.length >= MAX ? " (that's the ten)" : "  ·  click to add more")
+      : "Drop your pictures here, or click to choose  ·  up to ten";
+  }
+
+  /** Ten is the cap. Past that the thumbnails stop being readable and the
+      model stops paying attention to the later ones anyway. */
+  const MAX = 10;
+  function take(list) {
+    const files = [...list].filter((f) => f.type.startsWith("image/"));
+    if (!files.length) return;
+    state.files = [...state.files, ...files].slice(0, MAX);
+    showThumbs();
+  }
+
+  drop.addEventListener("click", () => picker.click());
+  picker.addEventListener("change", () => take(picker.files));
+  ["dragenter", "dragover"].forEach((t) =>
+    drop.addEventListener(t, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      css(drop, { borderColor: "#C9A0FF", background: "rgba(201,160,255,.10)" });
+    }),
+  );
+  ["dragleave", "drop"].forEach((t) =>
+    drop.addEventListener(t, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      css(drop, { borderColor: "rgba(247,242,231,.28)", background: "transparent" });
+      if (t === "drop") take(e.dataTransfer?.files ?? []);
+    }),
+  );
+  bGo.addEventListener("click", () => { card.style.display = "none"; decide?.("run"); decide = null; });
+  bSkip.addEventListener("click", () => { card.style.display = "none"; decide?.("skip"); decide = null; });
+
   window.__wand = {
     stopped: () => state.stopped,
+    /** Put the job on screen and hand back what the person clicked. */
+    ask(name, sub) {
+      if (!card.isConnected) root.appendChild(card);
+      cName.textContent = name;
+      cSub.textContent = sub;
+      state.files = [];
+      showThumbs();
+      card.style.display = "block";
+      return new Promise((resolve) => { decide = resolve; });
+    },
+    /** How many pictures are waiting in the card. */
+    fileCount: () => state.files.length,
+    /**
+     * Push the card's pictures into the composer, as a paste or a drag.
+     * They never touch the disk: the File objects go straight from the panel
+     * that received them to the element that wants them.
+     */
+    give(sels, mode) {
+      if (!state.files.length) return false;
+      const box = sels.map((s) => document.querySelector(s)).find(Boolean);
+      if (!box) return false;
+      const dt = new DataTransfer();
+      for (const f of state.files) dt.items.add(f);
+      if (mode === "paste") {
+        box.focus?.();
+        box.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt }));
+        return true;
+      }
+      const targets = [];
+      for (let el = box; el && targets.length < 8; el = el.parentElement) targets.push(el);
+      targets.push(document.body, document.documentElement);
+      for (const t of targets) {
+        for (const type of ["dragenter", "dragover", "drop"]) {
+          t.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+        }
+      }
+      return true;
+    },
+    /** Ignore Escape for a moment, while the runner sends one on purpose. */
+    deafen(ms) { state.deaf = Date.now() + (ms || 1500); },
     idle(on) { on ? startIdle() : stopIdle(); },
     to(x, y, act) {
       stopIdle();
@@ -160,6 +324,8 @@ export async function attachWand(page) {
   return {
     mounted,
     stopped: () => safe(() => page.evaluate(() => window.__wand?.stopped() ?? false), false),
+    /** Wrap a programmatic Escape so the stop key doesn't hear our own. */
+    deafen: (ms = 1500) => safe(() => page.evaluate((v) => window.__wand?.deafen(v), ms)),
     say: (t, b) => safe(() => page.evaluate(([a, c]) => window.__wand?.say(a, c), [t, b])),
     /** Drift and sparkle at the edge while something slow is happening. */
     idle: (on) => safe(() => page.evaluate((v) => window.__wand?.idle(v), on)),
@@ -172,6 +338,10 @@ export async function attachWand(page) {
       // Long enough that the travel reads as movement rather than a jump.
       await page.waitForTimeout(act ? 540 : 260);
     },
+    /** Show the card and wait. Null when the overlay isn't there to show it. */
+    ask: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.ask(a, b), [name, sub]), null),
+    fileCount: () => safe(() => page.evaluate(() => window.__wand?.fileCount() ?? 0), 0),
+    give: (sels, mode) => safe(() => page.evaluate(([s, m]) => window.__wand?.give(s, m), [sels, mode]), false),
     reattach: () => safe(() => page.evaluate(OVERLAY)),
   };
 }

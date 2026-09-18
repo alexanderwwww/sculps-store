@@ -8,7 +8,10 @@ import { readFile } from "node:fs/promises";
 import { basename, extname } from "node:path";
 
 const SP = "/tmp/claude-0/-home-user-sculps-store/4b2cba19-2b7c-5b69-876f-e326d34c8f06/scratchpad/wtest";
-const site = { ask: ["#prompt-textarea"], file: ['input[type="file"]'] };
+const live = await readFile("/home/user/sculps-store/tools/promptbot/live.mjs", "utf8");
+const fileSel = live.match(/file: \[(.+?)\]/)[1].replace(/['"]/g, "");
+const site = { ask: ["#prompt-textarea"], file: [fileSel] };
+console.log(`(composer file input selector under test: ${fileSel})`);
 const REF = [`${SP}/ref.webp`];
 
 const browser = await chromium.launch({

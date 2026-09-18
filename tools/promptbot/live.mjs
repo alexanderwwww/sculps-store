@@ -37,7 +37,7 @@ const SITES = {
     ask: ['div.ql-editor[contenteditable="true"]', 'rich-textarea div[contenteditable="true"]', "textarea"],
     send: ['button[aria-label*="Send" i]', 'button[aria-label*="Submit" i]', "button.send-button"],
     fresh: ['button[aria-label*="New chat" i]', 'a[aria-label*="New chat" i]'],
-    file: ['input[type="file"]'],
+    file: ['input[type="file"]:not([data-wand])'],
     /** The paperclip. Gemini only puts a file input in the page once this is open. */
     attach: ['button[aria-label*="Open upload" i]', 'button[aria-label*="upload" i]', 'button[aria-label*="Add files" i]', 'uploader-button button', 'button.upload-card-button'],
     /** And then the menu item inside it. */
@@ -50,7 +50,7 @@ const SITES = {
     ask: ['div#prompt-textarea[contenteditable="true"]', "textarea#prompt-textarea", "textarea"],
     send: ['button[data-testid="send-button"]', 'button[aria-label*="Send" i]'],
     fresh: ['a[href="/"]', 'button[aria-label*="New chat" i]'],
-    file: ['input[type="file"]'],
+    file: ['input[type="file"]:not([data-wand])'],
     attach: ['button[aria-label*="Upload" i]', 'button[aria-label*="Attach" i]', 'button[data-testid="composer-plus-btn"]'],
     attachItem: [],
     images: ['img[src*="oaiusercontent"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
@@ -61,7 +61,20 @@ const opt = { site: "gemini", out: "./images", port: 9222, wait: 240 };
 for (let i = 2; i < process.argv.length; i += 2) opt[process.argv[i].slice(2)] = process.argv[i + 1];
 opt.port = Number(opt.port);
 opt.wait = Number(opt.wait);
-const site = SITES[opt.site] ?? SITES.gemini;
+/**
+ * Which site is in front of us right now.
+ *
+ * It starts as the one chosen at launch and can change per job, because the
+ * point of the queue is that the decision lives with whoever is writing the
+ * prompts. ChatGPT refuses things Gemini will draw and the reverse is just as
+ * true, so "try this one on the other machine" has to be a property of the
+ * job rather than something you restart for.
+ *
+ * Switching needs you signed into both in that Chrome window. If you aren't,
+ * it says so and leaves the job for later rather than typing into a login
+ * page.
+ */
+let site = SITES[opt.site] ?? SITES.gemini;
 
 const run = promisify(execFile);
 
@@ -227,7 +240,7 @@ async function putFiles(page, paths, wand, label) {
   const plus = async () => {
     const target = await box?.boundingBox().catch(() => null);
     if (!target) return null;
-    const buttons = await page.locator("button").all().catch(() => []);
+    const buttons = await page.locator("button:not([data-wand])").all().catch(() => []);
     for (const b of buttons) {
       const r = await b.boundingBox().catch(() => null);
       if (!r) continue;
@@ -295,7 +308,10 @@ async function putFiles(page, paths, wand, label) {
       if ((await blobCount(page)) > before) return "chosen";
     } catch {
       // No dialog appeared — that button was something else. Close whatever
-      // it opened before trying the next way.
+      // it opened before trying the next way, with the stop key deafened:
+      // Playwright's Escape is indistinguishable from a person's, so without
+      // this the tool hears its own keypress and stops itself mid-run.
+      await wand?.deafen(2000);
       await page.keyboard.press("Escape").catch(() => {});
       await page.waitForTimeout(400);
     }
@@ -337,7 +353,7 @@ async function blobCount(page) {
   return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
 }
 
-async function runPrompt(text, refs, label, n, total, dir) {
+async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
   await wand.reattach();
   await wand.say(label, `${n} of ${total} — sending…`);
 
@@ -347,7 +363,24 @@ async function runPrompt(text, refs, label, n, total, dir) {
   if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await page.waitForTimeout(1600); await wand.reattach(); }
 
   // Pictures before words: both sites disable send while an upload is running.
-  if (refs.length) {
+  if (fromCard) {
+    // Straight from the panel that received them — no disk, no file dialog.
+    await wand.say(label, `${n} of ${total} — attaching ${fromCard}…`);
+    const before = await blobCount(page);
+    const box0 = await find(page, site.ask, 8000);
+    if (box0) await box0.click().catch(() => {});
+    await wand.give(site.ask, "paste");
+    await page.waitForTimeout(2200 + fromCard * 900);
+    let ok = (await blobCount(page)) > before;
+    if (!ok) {
+      await wand.give(site.ask, "drop");
+      await page.waitForTimeout(2200 + fromCard * 900);
+      ok = (await blobCount(page)) > before;
+    }
+    console.log(ok
+      ? `  attached ${fromCard} (from the card)`
+      : `  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
+  } else if (refs.length) {
     await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
     const how = await putFiles(page, refs, wand, label);
     if (how) {
@@ -435,8 +468,29 @@ while (true) {
 
   // Everything about the job, before any of it runs.
   const label = job.name || job.id;
+
+  // A job can name the site it wants.
+  const wanted = job.site && SITES[job.site] ? SITES[job.site] : null;
+  if (wanted && wanted !== site) {
+    console.log(`\r\x1b[K  switching to ${wanted.name}…`);
+    const was = site;
+    site = wanted;
+    await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
+    await wand.reattach();
+    if (!(await find(page, site.ask, 20000))) {
+      // Not signed in there. Put it back and leave the job alone — it will be
+      // offered again once that tab is logged in.
+      console.log(`  \x1b[31mnot signed into ${site.name} in this Chrome — sign in and it'll come back\x1b[0m`);
+      site = was;
+      await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
+      await wand.reattach();
+      await page.waitForTimeout(POLL_MS);
+      continue;
+    }
+    console.log(`  now on ${site.name}`);
+  }
   console.log(`\r\x1b[K`);
-  console.log(`\x1b[1m${label}\x1b[0m`);
+  console.log(`\x1b[1m${label}\x1b[0m  \x1b[2m(${site.name})\x1b[0m`);
   console.log(`${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"}${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}:`);
   job.prompts.forEach((p, i) => {
     const first = p.trim().split("\n")[0];
@@ -449,7 +503,12 @@ while (true) {
     `${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}\n\n` +
     job.prompts.map((p, i) => `${i + 1}. ${p.trim().split("\n")[0].slice(0, 70)}…`).join("\n");
 
-  let answer = await ask(label, summary);
+  // The card in the corner of the page, when the overlay is there to show it.
+  // The macOS dialog stays as the fallback for a page that won't take it.
+  let answer = wand.mounted
+    ? await wand.ask(label, `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`)
+    : await ask(label, summary);
+  if (answer === null) answer = await ask(label, summary);
 
   // Picking is not the decision — after choosing, it asks again with the
   // chosen file named, so the last thing before anything runs is still a yes.
@@ -481,14 +540,17 @@ while (true) {
   const slug = label.replace(/\W+/g, "-").replace(/^-|-$/g, "").toLowerCase();
   const dir = join(opt.out, slug);
   await mkdir(dir, { recursive: true });
-  // A picture chosen in the Finder wins over anything the queue named: the
-  // person choosing is the one who knows which photo is the right one.
-  const refs = picked.length ? picked : await fetchRefs(job.refs, join(dir, "reference"));
+  // Three places a reference can come from, in order of who knew best: the
+  // picture dropped on the card just now, one chosen in the Finder, then
+  // whatever the queue named.
+  const inCard = await wand.fileCount();
+  const refs = inCard ? [] : picked.length ? picked : await fetchRefs(job.refs, join(dir, "reference"));
+  if (inCard) console.log(`  ${inCard} picture${inCard === 1 ? "" : "s"} from the card`);
 
   let total = 0;
   for (let i = 0; i < job.prompts.length; i++) {
     if (await wand.stopped()) break;
-    const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length, dir);
+    const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length, dir, inCard);
     total += got;
     console.log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
   }

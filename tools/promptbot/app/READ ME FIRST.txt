@@ -51,17 +51,25 @@ prompts and queues them.
 
 WHEN A JOB ARRIVES
 
-A dialog comes to the front with the job name and the prompts:
+A panel appears in the top-right corner of the browser with the job
+name and a box under it:
 
-     [ Skip ]     [ Pick image... ]     [ Run it ]
+     Drop your pictures here, or click to choose  ·  up to ten
 
-   Pick image...   opens Finder. Choose the product photo you want it
-                   to copy. It then asks again with your file named,
-                   so the last thing before anything runs is still a yes.
+     [ Skip ]                            [ Submit ]
 
-   Run it          starts. One prompt at a time: it attaches your photo,
-                   types the full prompt, sends, waits for the pictures
-                   to finish, saves them, opens a fresh chat, next one.
+   Drag your product photos onto that box, or click it to browse.
+   Thumbnails appear. Click a thumbnail to take it back out.
+
+   Submit          starts. One prompt at a time: it attaches your
+                   pictures, types the full prompt, sends, waits for
+                   the pictures to finish generating, saves them,
+                   opens a fresh chat, next one.
+
+   Skip            leaves that job alone.
+
+You don't have to add pictures — Submit with an empty box and it runs
+on the words alone.
 
 The wand flies to whatever it's about to click and sparkles. While it
 waits for a generation it drifts down the right-hand edge, so you can
@@ -79,7 +87,7 @@ It opens that folder when it finishes.
 
 WATCH FOR THIS ON THE FIRST PROMPT
 
-   attached 1 (chosen)     <- good, your photo went in
+   attached 1 (from the card)   <- good, your photo went in
    !! nothing attached     <- red. Tell Claude, don't let it run on.
 
 
