@@ -78,25 +78,33 @@ export const OVERLAY = `(() => {
   }, true);
 
   /**
-   * One spark: a dot that grows, drifts and fades.
+   * One sparkle: a four-pointed star that grows, spins, drifts and fades.
    *
-   * Each one takes its own direction and its own size, because a burst where
-   * every piece does the same thing reads as a graphic rather than magic.
+   * These were round dots with a soft gradient, which is a bubble. A sparkle
+   * has points — the long vertical and horizontal spikes with the pinched
+   * waist between them are the whole reason the shape reads as magic rather
+   * than as a loading indicator. Drawn with a clip-path so it stays a real
+   * star at any size and needs no image.
    */
+  const STAR = "polygon(50% 0%, 60% 38%, 100% 50%, 60% 62%, 50% 100%, 40% 62%, 0% 50%, 40% 38%)";
+
   function one(x, y, size, dx, dy, spin, life) {
     const s = css(document.createElement("div"), {
       position: "fixed", zIndex: String(Number(TOP) - 1), pointerEvents: "none",
       left: x + "px", top: y + "px", width: size + "px", height: size + "px",
-      margin: (-size / 2) + "px 0 0 " + (-size / 2) + "px", borderRadius: "50%",
-      background: "radial-gradient(circle, #FFFFFF 0%, #E6D4FF 35%, #C9A0FF 55%, rgba(201,160,255,0) 72%)",
+      margin: (-size / 2) + "px 0 0 " + (-size / 2) + "px",
+      background: "radial-gradient(circle at 50% 50%, #FFFFFF 0%, #FFF3C4 34%, #FFD76B 62%, #F5A623 100%)",
+      clipPath: STAR,
+      WebkitClipPath: STAR,
+      filter: "drop-shadow(0 0 6px rgba(255, 214, 107, .95))",
       transition: "transform " + life + "ms cubic-bezier(.16,.8,.3,1), opacity " + life + "ms ease-out",
-      transform: "translate(0,0) scale(.25) rotate(0deg)", opacity: "1",
+      transform: "translate(0,0) scale(.15) rotate(0deg)", opacity: "1",
     });
     root.appendChild(s);
     // Two frames, so the browser has a start value to transition away from.
     requestAnimationFrame(() => requestAnimationFrame(() => {
       css(s, {
-        transform: "translate(" + dx + "px, " + dy + "px) scale(" + (1.6 + Math.random()) + ") rotate(" + spin + "deg)",
+        transform: "translate(" + dx + "px, " + dy + "px) scale(" + (1.1 + Math.random() * 0.9) + ") rotate(" + spin + "deg)",
         opacity: "0",
       });
     }));
@@ -110,8 +118,8 @@ export const OVERLAY = `(() => {
       const a = (Math.PI * 2 * i) / count + Math.random() * 0.7;
       const reach = 22 + Math.random() * 54;
       setTimeout(
-        () => one(x, y, 7 + Math.random() * 13, Math.cos(a) * reach, Math.sin(a) * reach - 12,
-                  (Math.random() - 0.5) * 220, 620 + Math.random() * 420),
+        () => one(x, y, 11 + Math.random() * 20, Math.cos(a) * reach, Math.sin(a) * reach - 14,
+                  (Math.random() - 0.5) * 150, 700 + Math.random() * 500),
         i * 26,
       );
     }
