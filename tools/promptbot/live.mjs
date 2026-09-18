@@ -102,7 +102,12 @@ const SITES = {
     attach: ['button[aria-label*="Open upload" i]', 'button[aria-label*="upload" i]', 'button[aria-label*="Add files" i]', 'uploader-button button', 'button.upload-card-button'],
     /** And then the menu item inside it. */
     attachItem: ['button[aria-label*="Upload file" i]', 'text=Upload files', 'text=Μεταφόρτωση αρχείων'],
-    images: ['img[src^="https://lh3.googleusercontent.com"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
+    images: [
+      'img[src^="https://lh3.googleusercontent.com"]',
+      'main img[src^="https://"]',
+      'img[src^="blob:"]',
+      'img[src^="data:image"]',
+    ],
   },
   chatgpt: {
     name: "ChatGPT",
@@ -116,9 +121,29 @@ const SITES = {
     attach: ['button[aria-label*="Upload" i]', 'button[aria-label*="Attach" i]', 'button[data-testid="composer-plus-btn"]'],
     // The plus opens a menu; the first item is the one that takes a file.
     attachItem: ['text=Add photos & files', 'text=Upload from computer', 'text=Add photos and files'],
-    // Finished pictures come back from a signed CDN host whose subdomain
-    // changes, and the alt text is the one part of it that does not.
-    images: ['img[alt="Generated image" i]', 'img[src*="oaiusercontent"]', 'img[src*="oaistatic"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
+    /*
+     * Finished pictures, found by where they are rather than where they came
+     * from.
+     *
+     * Every version of this that named a host went stale: the CDN subdomain
+     * rotates, the alt text changes with a redesign, and lately the picture
+     * is served straight off chatgpt.com through an API path that matches
+     * nothing. Meanwhile the run sat there saying "still waiting" with the
+     * picture on the screen in front of it.
+     *
+     * A picture in the conversation, big enough to be a picture, is a result.
+     * The named ones stay in front because they are exact when they work, and
+     * anything that was on screen before the prompt went out is excluded
+     * already — so the composer thumbnail and the avatars cannot get in.
+     */
+    images: [
+      'img[alt="Generated image" i]',
+      'img[src*="oaiusercontent"]',
+      'main img[src^="https://"]',
+      'main img[src^="blob:"]',
+      'img[src^="blob:"]',
+      'img[src^="data:image"]',
+    ],
   },
 };
 
