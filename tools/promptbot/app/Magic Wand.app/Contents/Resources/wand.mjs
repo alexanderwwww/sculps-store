@@ -116,7 +116,7 @@ export const OVERLAY = `(() => {
    *
    * Synthesised rather than loaded: a file would have to be hosted, fetched
    * and allowed past the page's own content policy, and all of that for a
-   * third of a second of bell. Two sine tones a fifth apart, a quick decay,
+   * third of a second of bell. A rising eight-note arpeggio, each note doubled and detuned,
    * and a gain low enough that it sits under whatever else is playing.
    *
    * Browsers refuse to make noise until somebody has interacted with the
@@ -140,22 +140,30 @@ export const OVERLAY = `(() => {
       // on top — a small bell rather than a single ping. Still quiet enough to
       // sit under whatever else is playing.
       for (const [hz, when, level] of [
-        [1046.5, 0,     0.055],
-        [1318.5, 0.055, 0.050],
-        [1568.0, 0.105, 0.042],
-        [2093.0, 0.150, 0.026],
-        [2637.0, 0.195, 0.016],
+        [783.99,  0,     0.048],
+        [1046.5,  0.045, 0.055],
+        [1318.5,  0.090, 0.050],
+        [1568.0,  0.135, 0.044],
+        [2093.0,  0.180, 0.030],
+        [2637.0,  0.225, 0.020],
+        [3136.0,  0.270, 0.013],
+        [4186.0,  0.315, 0.008],
       ]) {
-        const osc = audio.createOscillator();
-        const gain = audio.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(hz, t + when);
-        gain.gain.setValueAtTime(0, t + when);
-        gain.gain.linearRampToValueAtTime(level, t + when + 0.012);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + when + 0.55);
-        osc.connect(gain).connect(audio.destination);
-        osc.start(t + when);
-        osc.stop(t + when + 0.58);
+        // Two oscillators per note, a few cents apart: one sine for the body
+        // and a much quieter triangle above it for the shimmer. The detune is
+        // what stops it sounding like a phone notification.
+        for (const [shape, mul, cut] of [["sine", 1, 1], ["triangle", 1.002, 0.34]]) {
+          const osc = audio.createOscillator();
+          const gain = audio.createGain();
+          osc.type = shape;
+          osc.frequency.setValueAtTime(hz * mul, t + when);
+          gain.gain.setValueAtTime(0, t + when);
+          gain.gain.linearRampToValueAtTime(level * cut, t + when + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + when + 0.62);
+          osc.connect(gain).connect(audio.destination);
+          osc.start(t + when);
+          osc.stop(t + when + 0.66);
+        }
       }
     } catch {
       // No audio on this page is not a reason for anything else to stop.

@@ -73,10 +73,10 @@ await page.waitForTimeout(300);
 check("panel is on screen", await page.evaluate(() =>
   [...document.documentElement.children].some(
     (e) => e.textContent.includes("5 pictures saved") && getComputedStyle(e).display !== "none")));
-check("Open the folder is there", await page.evaluate(() =>
-  [...document.querySelectorAll("button")].some((b) => b.textContent === "Open the folder")));
+check("Get the zip is there", await page.evaluate(() =>
+  [...document.querySelectorAll("button")].some((b) => b.textContent === "Get the zip")));
 await page.screenshot({ path: join(SP, "done.png") });
-await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent === "Open the folder").click());
+await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent === "Get the zip").click());
 check("clicking it is reported back", await wand.wantsFolder());
 check("and only reported once", (await wand.wantsFolder()) === false);
 

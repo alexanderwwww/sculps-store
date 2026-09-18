@@ -350,6 +350,22 @@ async function putFiles(page, paths, wand, label) {
  * before and after is a cheap, language-proof answer to a question that
  * otherwise only gets answered by the pictures coming out wrong.
  */
+/**
+ * The same picture, asked for at full size.
+ *
+ * Google's image URLs carry their size in the path — `=w512-h512-rw`. Left
+ * alone you save the thumbnail; sometimes the thumbnail is refused and the
+ * whole generation falls through to a screenshot. `=d` asks for the download,
+ * `=s0` for the unresized original.
+ */
+function originals(url) {
+  const out = [];
+  const cut = url.replace(/=[-\w]+$/, "");
+  if (cut !== url) out.push(`${cut}=d`, `${cut}=s0`);
+  out.push(url);
+  return [...new Set(out)];
+}
+
 async function blobCount(page) {
   return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
 }
@@ -467,11 +483,20 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
     const url = urls[k];
     let buf = null;
 
+    let how = null;
+
     if (!/^(blob|data):/.test(url)) {
-      buf = await context.request
-        .get(url, { headers: { referer: page.url() } })
-        .then((r) => (r.ok() ? r.body() : null))
-        .catch(() => null);
+      // Google hands back a display URL with the size baked into it —
+      // ...=w512-h512-rw. Asking for that is asking for a thumbnail, and on
+      // some of them it is refused outright, which is how a screenshot ended
+      // up standing in for a real generation. Ask for the original first.
+      for (const want of originals(url)) {
+        buf = await context.request
+          .get(want, { headers: { referer: page.url() } })
+          .then((r) => (r.ok() ? r.body() : null))
+          .catch(() => null);
+        if (buf) { how = "downloaded"; break; }
+      }
     }
 
     if (!buf) {
@@ -482,17 +507,22 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
         for (let j = 0; j < bytes.length; j++) s += String.fromCharCode(bytes[j]);
         return btoa(s);
       }, url).catch(() => null);
-      if (b64) buf = Buffer.from(b64, "base64");
+      if (b64) { buf = Buffer.from(b64, "base64"); how = "page-fetched"; }
     }
 
     if (!buf) {
       // Last resort, and the one that cannot be refused: take a picture of the
-      // picture. Lossier than the original, and far better than nothing.
+      // picture. Lossier than the original, so it says so out loud — a folder
+      // full of silent screenshots is worse than a folder that is short.
       buf = await page
         .locator(`img[src="${url.replace(/["\\]/g, "\\$&")}"]`)
         .first()
         .screenshot()
         .catch(() => null);
+      if (buf) {
+        how = "photographed";
+        console.log(`  \x1b[33m~~ had to photograph one — Gemini refused the file\x1b[0m`);
+      }
     }
 
     if (!buf) {
@@ -501,6 +531,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
     }
 
     saved++;
+    console.log(`  \x1b[2m${how}\x1b[0m ${url.slice(0, 70)}`);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
     await writeFile(join(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`), buf);
