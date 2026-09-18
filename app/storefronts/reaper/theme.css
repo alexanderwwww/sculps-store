@@ -196,3 +196,140 @@
   .cb-rail__row { animation: none; }
   .cb-rail { overflow-x: auto; }
 }
+
+/* ------------------------------------------------------------ the bundles */
+
+/*
+ * The offer, as a box rather than three loose rows.
+ *
+ * Three rows with radio buttons read as a form — something to get through
+ * before buying. The same three rows inside a bordered box with a title
+ * across the top read as an offer, which is what they are. That framing is
+ * worth more than any amount of styling on the rows themselves.
+ *
+ * The picture is the point. Nobody buys "Two Reapers + Projector"; they buy a
+ * photograph of a yard with two reapers and a projector in it, and decide in
+ * about a second whether that is the yard they want.
+ */
+.cb-bundle {
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin: 18px 0 16px;
+  background: var(--paper);
+}
+.cb-bundle__lid {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  text-align: center;
+}
+.cb-bundle .cb-opts { gap: 0; padding: 0; }
+.cb-bundle__foot {
+  border-top: 1px solid var(--hair);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--dim);
+  text-align: center;
+}
+
+/* Each option: picture, name, price. The whole row is the target — a 16px
+   circle is a hard thing to hit with a thumb and an easy thing to miss. */
+.cb-bundle .cb-opt {
+  display: grid;
+  grid-template-columns: 22px 74px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 13px 14px;
+  border: 0;
+  border-top: 1px solid var(--hair);
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: background .14s ease;
+}
+.cb-bundle .cb-opt:first-of-type { border-top: 0; }
+.cb-bundle .cb-opt:hover { background: rgba(245, 130, 31, .06); }
+
+/* The chosen one is bigger and warmer. The option you want people to take
+   should look like the answer, not like one of three equal questions. */
+.cb-bundle .cb-opt[aria-checked="true"] {
+  background: rgba(245, 130, 31, .10);
+  box-shadow: inset 3px 0 0 var(--action);
+  padding-block: 17px;
+}
+.cb-bundle .cb-opt[aria-checked="true"] .cb-opt__pic { width: 88px; height: 88px; }
+.cb-bundle .cb-opt[aria-checked="true"] .cb-opt__t { font-size: 17px; }
+
+.cb-bundle .cb-opt__pic {
+  width: 74px; height: 74px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--cream);
+  border: 1px solid var(--hair);
+  transition: width .16s ease, height .16s ease;
+}
+.cb-bundle .cb-opt__pic img { width: 100%; height: 100%; object-fit: cover; }
+
+.cb-bundle .cb-opt__dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--hair); background: transparent;
+  display: grid; place-items: center;
+}
+.cb-bundle .cb-opt[aria-checked="true"] .cb-opt__dot {
+  border-color: var(--action); background: var(--action);
+}
+.cb-bundle .cb-opt[aria-checked="true"] .cb-opt__dot::after {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; background: #140A02;
+}
+
+.cb-bundle .cb-opt__t { display: block; font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -.02em; }
+.cb-bundle .cb-opt__s { display: block; font-size: 13px; color: var(--dim); margin-top: 1px; }
+.cb-bundle .cb-opt__save { display: block; font-size: 13px; font-weight: 700; color: var(--action); margin-top: 2px; }
+.cb-bundle .cb-opt__p { text-align: right; font-family: var(--display); }
+.cb-bundle .cb-opt__p b { display: block; font-size: 19px; font-weight: 800; letter-spacing: -.03em; }
+.cb-bundle .cb-opt__p s { font-size: 13px; color: var(--dimmer); }
+
+/* The flag sits on the lid line rather than floating over the row. */
+.cb-bundle .cb-opt__flag {
+  position: absolute; top: -9px; right: 12px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px;
+}
+.cb-bundle .cb-opt--flagged { position: relative; }
+
+@media (max-width: 420px) {
+  .cb-bundle .cb-opt { grid-template-columns: 20px 58px 1fr auto; gap: 9px; padding: 11px 11px; }
+  .cb-bundle .cb-opt__pic { width: 58px; height: 58px; }
+  .cb-bundle .cb-opt[aria-checked="true"] .cb-opt__pic { width: 68px; height: 68px; }
+}
+
+/*
+ * Without pictures the row still reserved a column for one, which squeezed
+ * "Two Reapers + Projector" into three lines. The columns size to what is
+ * actually there: the picture takes its own width when it exists and nothing
+ * when it doesn't.
+ */
+.cb-bundle .cb-opt { grid-template-columns: 22px auto 1fr auto; }
+.cb-bundle .cb-opt__t,
+.cb-bundle .cb-opt__s,
+.cb-bundle .cb-opt__save { text-wrap: balance; }
+.cb-bundle .cb-opt > span:nth-child(3) { min-width: 0; }
+
+/* The flag was stretching the full width of the row because it is a grid
+   child. Taken out of the flow it goes back to being a pill. */
+.cb-bundle .cb-opt__flag {
+  position: absolute;
+  top: -1px; right: 0;
+  border-radius: 0 0 0 10px;
+  z-index: 1;
+}
+.cb-bundle .cb-opt--flagged { padding-top: 20px; }
+.cb-bundle .cb-opt[aria-checked="true"].cb-opt--flagged { padding-top: 24px; }

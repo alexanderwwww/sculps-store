@@ -56,6 +56,18 @@ export const SECTIONS: SectionDef[] = [
       { name: "badge", label: "Badge above heading", kind: "text" },
       { name: "ctaLabel", label: "Button label", kind: "text" },
       { name: "reassurance", label: "Line under the button", kind: "text" },
+      {
+        name: "bundleTitle",
+        label: "Bundle box title",
+        kind: "text",
+        help: "The line across the top of the bundle box, e.g. Choose your yard. Blank and the box has no lid.",
+      },
+      {
+        name: "bundleNote",
+        label: "Bundle box footnote",
+        kind: "text",
+        help: "One line under the options — the deadline, the shipping promise, whatever earns the click.",
+      },
     ],
     blocks: {
       label: "Product image",

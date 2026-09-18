@@ -457,7 +457,16 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
             </div>
           ) : null}
 
+          {/* An actual box, with a lid.
+              Three loose rows read as a form to fill in. Put a title across
+              the top and a line along the bottom and the same three rows read
+              as an offer — which is what they are, and the difference is worth
+              more than any amount of styling on the rows themselves. */}
           {variants.length > 1 ? (
+            <div className="cb-bundle">
+              {has(v, "bundleTitle") ? (
+                <div className="cb-bundle__lid">{val(v, "bundleTitle")}</div>
+              ) : null}
             <div className="cb-opts" role="radiogroup" aria-label="Choose a bundle">
               {variants.map((x, i) => {
                 const on = x.id === picked;
@@ -509,6 +518,10 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                   </button>
                 );
               })}
+            </div>
+              {has(v, "bundleNote") ? (
+                <div className="cb-bundle__foot">{val(v, "bundleNote")}</div>
+              ) : null}
             </div>
           ) : null}
 
