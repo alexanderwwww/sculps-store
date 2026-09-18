@@ -129,7 +129,7 @@ const p2 = await page.evaluate(() => {
 });
 check("wand moves while idle", p1 !== p2, `${p1} then ${p2}`);
 await wand.idle(false);
-check("escape stops it", await (async () => { await page.keyboard.press("Escape"); return wand.stopped(); })());
+check("escape pauses it", await (async () => { await page.keyboard.press("Escape"); return wand.paused(); })());
 
 await page.screenshot({ path: `${SP}/proof.png` });
 await browser.close();

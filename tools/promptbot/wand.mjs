@@ -53,11 +53,40 @@ export const OVERLAY = `(() => {
   });
   title.textContent = "Ready";
   body.textContent = "Waiting.";
-  hint.textContent = "Press Esc to stop";
-  hud.append(title, body, hint);
+  hint.textContent = "Press Esc to pause";
+
+  /*
+   * The controls. They live on the panel rather than in the Terminal because
+   * the Terminal is behind the browser window by the time any of this is
+   * running, and a control you have to go and find is a control you don't
+   * use. Pointer events are turned back on for this row only — the rest of
+   * the panel stays transparent to the mouse so it never sits between you and
+   * the page underneath.
+   */
+  const bar = css(document.createElement("div"), {
+    display: "none", gap: "7px", marginTop: "10px", pointerEvents: "auto",
+  });
+  const smallBtn = (text, primary) => {
+    const b = css(document.createElement("button"), {
+      flex: "1", padding: "8px 10px", borderRadius: "9px", border: "0",
+      cursor: "pointer", fontSize: "12.5px", fontWeight: "700",
+      fontFamily: "inherit",
+      background: primary ? "#C9A0FF" : "rgba(247,242,231,.12)",
+      color: primary ? "#140A02" : "#F7F2E7",
+    });
+    b.textContent = text;
+    b.setAttribute("data-wand", "");
+    return b;
+  };
+  const bPause = smallBtn("Pause", true);
+  const bMore = smallBtn("Add pictures", false);
+  const bStop = smallBtn("Stop", false);
+  bar.append(bPause, bMore, bStop);
+
+  hud.append(title, body, hint, bar);
   root.appendChild(hud);
 
-  const state = { stopped: false, deaf: 0 };
+  const state = { stopped: false, paused: false, deaf: 0, wantsCard: false };
 
   // Captured on the way down, so a page that swallows keys can't eat it.
   //
@@ -67,15 +96,49 @@ export const OVERLAY = `(() => {
   // — that is the point of them — so the stop has to be deafened around the
   // few milliseconds where one is sent on purpose. Without this the tool
   // stopped itself mid-run and looked, from the outside, like a ghost.
+  /*
+   * Escape pauses. It used to stop, and stopping meant quitting the app and
+   * starting the whole run again — so the one key you reach for when
+   * something looks wrong was also the most expensive key on the keyboard.
+   * Now it holds: nothing more is typed, everything already saved stays
+   * saved, and the two buttons under the panel decide what happens next.
+   */
   window.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || state.stopped || Date.now() < state.deaf) return;
+    if (state.paused) return;
+    pause();
+  }, true);
+
+  function pause() {
+    state.paused = true;
+    css(title, { color: "#FFC24D" });
+    title.textContent = "Paused";
+    body.textContent = "Nothing is being typed. Everything saved so far is safe.";
+    hint.textContent = "";
+    css(cursor, { opacity: ".25" });
+    css(bar, { display: "flex" });
+    bPause.textContent = "Continue";
+  }
+
+  function resume() {
+    state.paused = false;
+    css(title, { color: "#C9A0FF" });
+    title.textContent = "Running";
+    body.textContent = "Carrying on where it stopped.";
+    css(cursor, { opacity: "1" });
+    bPause.textContent = "Pause";
+  }
+
+  function halt() {
     state.stopped = true;
+    state.paused = false;
     css(title, { color: "#FF6B5A" });
     title.textContent = "Stopped";
-    body.textContent = "You pressed Escape. Nothing more will be typed.";
-    hint.textContent = "Close the Terminal window, or start it again.";
+    body.textContent = "Nothing more will be typed. Everything saved is on your Desktop.";
+    hint.textContent = "";
     css(cursor, { opacity: ".25" });
-  }, true);
+    css(bar, { display: "none" });
+  }
 
   /**
    * One sparkle: a four-pointed star that grows, spins, drifts and fades.
@@ -356,8 +419,23 @@ export const OVERLAY = `(() => {
 
   bSkip.addEventListener("click", () => { card.style.display = "none"; decide?.("skip"); decide = null; });
 
+  bPause.addEventListener("click", () => (state.paused ? resume() : pause()));
+  bStop.addEventListener("click", halt);
+  // Pausing to hand it more pictures is the whole reason pause exists: a run
+  // that has moved on to the next product needs the next product's reference,
+  // and that used to mean killing it and starting again.
+  bMore.addEventListener("click", () => {
+    if (!state.paused) pause();
+    state.wantsCard = true;
+  });
+
   window.__wand = {
     stopped: () => state.stopped,
+    paused: () => state.paused,
+    /** True once, when Add pictures has been pressed. */
+    wantsCard() { const v = state.wantsCard; state.wantsCard = false; return v; },
+    /** The panel's own buttons, for a run that starts already going. */
+    running() { if (!state.stopped) { state.paused = false; css(bar, { display: "flex" }); bPause.textContent = "Pause"; } },
     /** Put the job on screen and hand back what the person clicked. */
     ask(name, sub) {
       if (!card.isConnected) root.appendChild(card);
@@ -429,7 +507,9 @@ export const OVERLAY = `(() => {
       }, 130);
     },
     say(t, b) {
-      if (state.stopped) return;
+      // A paused panel says Paused until somebody presses Continue; a status
+      // line arriving late from the runner must not talk over it.
+      if (state.stopped || state.paused) return;
       if (!hud.isConnected) root.appendChild(hud);
       title.textContent = t;
       body.textContent = b;
@@ -460,6 +540,9 @@ export async function attachWand(page) {
   return {
     mounted,
     stopped: () => safe(() => page.evaluate(() => window.__wand?.stopped() ?? false), false),
+    paused: () => safe(() => page.evaluate(() => window.__wand?.paused() ?? false), false),
+    wantsCard: () => safe(() => page.evaluate(() => window.__wand?.wantsCard() ?? false), false),
+    running: () => safe(() => page.evaluate(() => window.__wand?.running())),
     /** Wrap a programmatic Escape so the stop key doesn't hear our own. */
     deafen: (ms = 1500) => safe(() => page.evaluate((v) => window.__wand?.deafen(v), ms)),
     say: (t, b) => safe(() => page.evaluate(([a, c]) => window.__wand?.say(a, c), [t, b])),

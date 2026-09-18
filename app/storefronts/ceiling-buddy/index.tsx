@@ -584,6 +584,18 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
             </div>
           ) : null}
 
+          {/* In stock, and the only green thing above the fold. It reads the
+              real number on the chosen bundle rather than being written into
+              the page, so it cannot promise stock that isn't there. */}
+          {chosen && chosen.available > 0 ? (
+            <p className="cb-stock">
+              <i aria-hidden="true" />
+              {chosen.available <= 20
+                ? `Only ${chosen.available} left — ships today`
+                : "In stock — ships today"}
+            </p>
+          ) : null}
+
           <div className="cb-acts">
             <form
               method="post"
@@ -1237,6 +1249,15 @@ function SocialCard({ r, logo }: { r: LoadedProductPage["reviews"][number]; logo
           {r.verified ? <span className="cb-card__ok">{IcoVerified} Verified buyer</span> : null}
         </span>
       </header>
+      {/* The stars were in the data and never on the card, which is the one
+          thing somebody scanning a wall of reviews actually reads. */}
+      {r.rating > 0 ? (
+        <span className="cb-card__stars" aria-label={`${r.rating} out of 5`}>
+          {[0, 1, 2, 3, 4].map((n) => (
+            <span key={n} style={{ opacity: n < r.rating ? 1 : 0.22 }}>{IcoStar}</span>
+          ))}
+        </span>
+      ) : null}
       <p className="cb-card__body">{r.body}</p>
       {r.imageUrl ? (
         <div className="cb-card__pic">
@@ -1312,6 +1333,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
   return (
     <section className="cb-revs-s" id="reviews">
       <div className="cb-wrap">
+        {has(section.values, "heading") ? <Head section={section} /> : null}
         <div className="cb-revs__head">
           {rated.length ? <span className="cb-revs__score">{mean.toFixed(1)}</span> : null}
           {rated.length ? (

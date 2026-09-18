@@ -610,7 +610,7 @@ let jobWait = 0;
 let lastZip = null;
 let spinner = 0;
 while (true) {
-  if (await wand.stopped()) { console.log("\nStopped — you pressed Escape.\n"); break; }
+  if (await wand.stopped()) { console.log("\nStopped from the panel. Everything saved is on your Desktop.\n"); break; }
 
   let job = null;
   try {
@@ -747,10 +747,32 @@ while (true) {
   const refs = inCard ? [] : picked.length ? picked : await fetchRefs(job.refs, join(dir, "reference"));
   if (inCard) console.log(`  ${inCard} picture${inCard === 1 ? "" : "s"} from the card`);
 
+  await wand.running();
   let total = 0;
+  let live = refs;
+  let card = inCard;
   for (let i = 0; i < job.prompts.length; i++) {
     if (await wand.stopped()) break;
-    const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length, dir, inCard, Boolean(job.sameChat));
+    // Paused holds here rather than unwinding the run, so Continue picks up on
+    // the very next prompt with everything — the folder, the zip, the count —
+    // exactly where it was. Add pictures reopens the card mid-run, and
+    // whatever is dropped there becomes the reference from that prompt on,
+    // which is how one run covers a second product.
+    while (await wand.paused()) {
+      if (await wand.stopped()) break;
+      if (await wand.wantsCard()) {
+        const answer = await wand.ask(label, `Paused at ${i + 1} of ${job.prompts.length} — drop the pictures to use from here`);
+        if (answer === "skip") { await wand.running(); break; }
+        const got = await wand.fileCount();
+        if (got) { card = got; live = []; console.log(`\r\x1b[K  ${got} new picture${got === 1 ? "" : "s"} from here on`); }
+        await wand.running();
+        break;
+      }
+      process.stdout.write(`\r  paused at ${i + 1}/${job.prompts.length} — press Continue   `);
+      await page.waitForTimeout(700);
+    }
+    if (await wand.stopped()) break;
+    const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, Boolean(job.sameChat));
     total += got;
     console.log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
     // The zip is rebuilt after every prompt rather than once at the end.

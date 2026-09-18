@@ -25,7 +25,16 @@
   --amber: #F5821F;
   --action: #F5821F;
   --action-soft: rgba(245, 130, 31, 0.15);
-  --cream: #FFF7EE;        /* the logo's warm off-white, on surfaces only */
+  /* White, not the warm off-white the logo uses. A tan page makes every
+     product photograph look slightly yellow and every white card look dirty;
+     where a surface has to separate itself it does it with the coolest
+     possible grey instead. */
+  --cream: #FFFFFF;
+  --tint: #F4F5F7;
+  /* Green earns its place on one thing only: whether it is in stock and when
+     it lands. Orange is the button, red is the saving, green is the yes. */
+  --go: #0F9D58;
+  --go-soft: #E8F6EE;
 }
 
 /* -------------------------------------------------- what tokens can't reach */
@@ -126,9 +135,11 @@
    because a deadline that sits still stops being one. */
 .cb-ticker { background: var(--action); color: #140A02; }
 
-/* A heading's swipe gets a torn lower edge rather than a ruled one. */
+/* The swipe under a heading is the brand orange itself at a low weight. It
+   used to be a pale tan, which on a white page reads as a stain rather than
+   as a highlighter. */
 .cb-head h2 {
-  background: linear-gradient(to top, var(--action-soft) 0 26%, transparent 26%);
+  background: linear-gradient(to top, rgba(245, 130, 31, .28) 0 24%, transparent 24%);
 }
 
 /* The buy button is the brightest thing on the page and should feel lit. */
@@ -223,9 +234,11 @@
   width: 100%;
   max-width: none;
   padding: 14px 16px;
-  border: 1.5px solid var(--ink);
-  border-radius: var(--r);
-  background: var(--cream);
+  border: 1.5px solid #B9D3EE;
+  border-radius: 16px;
+  /* PayPal's own blue, at the lightest weight that still reads as theirs.
+     A beige box beside a blue logo looks like the logo was dropped on it. */
+  background: linear-gradient(180deg, #F2F8FF 0%, #E9F2FD 100%);
 }
 .cb-pay4--under .cb-pp--word { height: 22px; width: auto; flex: 0 0 auto; }
 .cb-pay4--under p { margin: 0; font-size: 15px; flex: 1 1 200px; }
@@ -658,3 +671,124 @@
 
 /* The row still has to fit. Below this the header hands over to the burger,
    which the template already draws. */
+
+/* =======================================================================
+   The top of the page, tightened
+   =======================================================================
+   The bundle was below the fold. Somebody landing on this page saw a
+   photograph, a headline the size of a poster, and had to scroll before they
+   found out there was an offer at all — which is the one thing on the page
+   that makes them spend more than they planned to.
+   So everything above the bundle gives up height: the title drops a size, the
+   picture is capped rather than square, and the gaps close. Nothing is
+   removed; it just stops taking up a screen and a half. ==================== */
+
+.cb-buy { padding-top: 26px; }
+.cb-buy__grid { align-items: start; gap: clamp(24px, 3vw, 44px); }
+
+/* The photograph is capped by height, not shape, so a tall product photo
+   can't push the offer off the screen on its own. */
+.cb-gal__main { max-height: 560px; }
+.cb-gal__main img { width: 100%; height: 100%; object-fit: contain; }
+
+.cb-buy .cb-badge { margin-bottom: 10px; padding: 6px 13px; font-size: 12px; }
+.cb-buy .cb-h1 {
+  font-size: clamp(30px, 3.1vw, 40px);
+  line-height: 1.0;
+  margin: 0 0 8px;
+}
+.cb-score { margin-bottom: 8px; }
+.cb-buy .cb-lede { font-size: 15.5px; margin: 0 0 12px; max-width: 46ch; }
+.cb-buy .cb-price { margin: 0 0 4px; }
+.cb-buy .cb-price__now { font-size: clamp(32px, 3.4vw, 40px); }
+.cb-bundle { margin: 14px 0 14px; }
+.cb-bundle__lid { padding-bottom: 8px; }
+.cb-tiers { gap: 9px; }
+.cb-tier { padding: 13px 16px; }
+.cb-tier[aria-checked="true"] { padding: 12.5px 15.5px; }
+.cb-tier__name { font-size: 16.5px; }
+.cb-tier__price { font-size: 20px; }
+
+/* ---------------------------------------------------------- the buttons */
+
+/*
+ * Two buttons that do different jobs should not look the same weight. Add to
+ * cart is the orange one and it is allowed to glow; Buy now is the same shape
+ * in solid ink, which reads as the faster, more serious of the two rather
+ * than as an outline nobody presses.
+ */
+.cb-acts { display: grid; gap: 9px; margin-top: 12px; }
+.cb .cb-btn {
+  border-radius: 999px;
+  padding: 15px 22px;
+  font-size: 16.5px;
+  background: linear-gradient(180deg, #FF9134 0%, #F5821F 55%, #E9761A 100%);
+  border-color: #E9761A;
+  box-shadow: 0 6px 18px -8px rgba(233, 118, 26, .9);
+}
+.cb .cb-btn:hover {
+  background: linear-gradient(180deg, #FF9A42 0%, #F58A2C 55%, #E4741A 100%);
+  box-shadow: 0 10px 24px -8px rgba(233, 118, 26, 1);
+}
+.cb .cb-btn--ghost {
+  background: var(--ink); color: #fff; border-color: var(--ink);
+  box-shadow: none;
+}
+.cb .cb-btn--ghost:hover { background: #24272C; color: #fff; }
+
+/* -------------------------------------------------------------- in stock */
+
+/*
+ * The green line. It answers the two questions somebody asks between choosing
+ * a bundle and pressing the button — is it there, and will it arrive in time —
+ * and green is the only colour that answers both without a word being read.
+ */
+.cb-ticks { margin-top: 12px; gap: 6px; }
+.cb-ticks li { font-size: 14px; color: var(--ink); }
+.cb-ticks li svg { color: var(--go); }
+.cb-stock {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 2px 0 0;
+  font-size: 13.5px; font-weight: 600; color: #0B6E3F;
+  background: var(--go-soft); border: 1px solid #BFE6CF;
+  border-radius: 999px; padding: 6px 13px;
+}
+.cb-stock i {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--go);
+  box-shadow: 0 0 0 3px rgba(15, 157, 88, .22);
+}
+
+/* ---------------------------------------------------------- the review wall */
+
+/*
+ * A wall of white cards on a white page is a wall of nothing. The section
+ * gets the coolest possible grey behind it so the cards become objects, the
+ * score becomes a headline rather than a caption, and the stars — which were
+ * in the data and not on the cards — carry the colour.
+ */
+.cb-revs-s { background: var(--tint); padding: clamp(48px, 6vw, 78px) 0; }
+.cb-revs__head {
+  display: flex; align-items: baseline; justify-content: center;
+  gap: 12px; margin-bottom: 26px;
+}
+.cb-revs__score {
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(34px, 4vw, 46px); letter-spacing: -.04em;
+}
+.cb-revs__stars svg, .cb-card__stars svg { width: 16px; height: 16px; }
+.cb-revs__stars, .cb-card__stars { color: #F5A623; display: inline-flex; gap: 2px; }
+.cb-revs__of { font-size: 14.5px; color: var(--dim); }
+.cb-card__stars { margin: 0 0 8px; }
+
+.cb-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 10px -4px rgba(16, 18, 22, .12);
+}
+/* The initial in the circle takes the brand colour rather than grey, so a row
+   of cards has something moving through it other than text. */
+.cb-card__av {
+  background: linear-gradient(180deg, #FFB067 0%, #F5821F 100%);
+  color: #221000; font-weight: 800;
+}
+.cb-card__ok { color: #0B6E3F; }
+.cb-card__ok svg { color: var(--go); }

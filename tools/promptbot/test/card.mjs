@@ -18,7 +18,7 @@ console.log("\nthe Escape shield:");
 await wand.deafen(2000);
 await page.keyboard.press("Escape");
 await page.waitForTimeout(200);
-check("ignores Escape sent by the code", (await wand.stopped()) === false);
+check("ignores Escape sent by the code", (await wand.paused()) === false);
 
 console.log("\nthe card:");
 const pending = wand.ask("Reaper Archway — 8 shots", "8 prompts — drop the product photo below");
@@ -56,7 +56,7 @@ check("it landed as a paste", await page.evaluate(() =>
 console.log("\nthe stop key still works for a person:");
 await page.keyboard.press("Escape");
 await page.waitForTimeout(200);
-check("a real Escape stops it", await wand.stopped());
+check("a real Escape pauses it", await wand.paused());
 
 await browser.close();
 console.log(fails ? `\n${fails} FAILED\n` : "\nall passed\n");
