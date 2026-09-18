@@ -162,7 +162,7 @@ try {
 }
 
 const context = browser.contexts()[0] ?? (await browser.newContext());
-const page = await context.newPage();
+let page = null;
 
 /*
  * The waiting job decides which site opens.
@@ -180,7 +180,26 @@ try {
   }
 } catch { /* offline: whatever was asked for at launch stands */ }
 
-await page.goto(site.url, { waitUntil: "domcontentloaded" });
+/*
+ * A chat that is already open is the one to work in.
+ *
+ * Opening a fresh tab throws away the thread that holds the reference
+ * picture and everything drawn so far, which is exactly what you do not want
+ * when a laptop lid closed halfway through forty-four shots. So the tabs are
+ * searched for this site first, and only if there isn't one does a new one
+ * get opened.
+ */
+const host = new URL(site.url).host;
+for (const open of context.pages()) {
+  try { if (new URL(open.url()).host === host) { page = open; break; } } catch { /* about:blank */ }
+}
+if (page) {
+  console.log(`\n\x1b[2mpicking up the ${site.name} tab you already have open\x1b[0m`);
+  await page.bringToFront().catch(() => {});
+} else {
+  page = await context.newPage();
+  await page.goto(site.url, { waitUntil: "domcontentloaded" });
+}
 
 if (!(await find(page, site.ask, 20000))) {
   console.error(`\nCouldn't find the message box — check you're signed into ${site.name} in that Chrome.\n`);
@@ -390,14 +409,20 @@ async function blobCount(page) {
   return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
 }
 
-async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
+async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = false) {
   await wand.reattach();
   await wand.say(label, `${n} of ${total} — sending…`);
 
   // A fresh chat per prompt: several shots of one product in one thread makes
   // each picture a reply to the last rather than an answer to the prompt.
-  const nw = await find(page, site.fresh, 4000);
-  if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await page.waitForTimeout(1600); await wand.reattach(); }
+  //
+  // A job can ask to stay put instead. That is for picking a run back up: the
+  // thread already holds the reference picture and everything drawn so far,
+  // and starting a new chat for shot twenty-five would throw all of it away.
+  if (!sameChat) {
+    const nw = await find(page, site.fresh, 4000);
+    if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await page.waitForTimeout(1600); await wand.reattach(); }
+  }
 
   // Pictures before words: both sites disable send while an upload is running.
   if (fromCard) {
@@ -684,7 +709,7 @@ while (true) {
   let total = 0;
   for (let i = 0; i < job.prompts.length; i++) {
     if (await wand.stopped()) break;
-    const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length, dir, inCard);
+    const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length, dir, inCard, Boolean(job.sameChat));
     total += got;
     console.log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
     // The zip is rebuilt after every prompt rather than once at the end.
