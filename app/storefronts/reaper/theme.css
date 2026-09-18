@@ -124,12 +124,11 @@
  * top, the heading underlines, and the moment something is hovered. The rest
  * of the page stays a clean shop, because that is what people buy from.
  */
-.cb-ann {
-  background:
-    radial-gradient(120% 200% at 12% 120%, rgba(245,130,31,.35) 0%, transparent 55%),
-    radial-gradient(120% 200% at 78% -40%, rgba(245,130,31,.22) 0%, transparent 55%),
-    #0B0B0C;
-}
+/* Flat black. The two orange washes that used to sit behind this made the
+   green pill look like it was lit from underneath, and a bar whose whole job
+   is to carry one bright offer past your eye has no business having a mood of
+   its own. */
+.cb-ann { background: #0B0B0C; }
 
 /* The one bar that says how long is left. Orange on black, and it moves —
    because a deadline that sits still stops being one. */
@@ -885,7 +884,16 @@
    are ranked now: the price is the loudest, the saving is the only green, and
    everything else steps back to grey. ==================================== */
 
-.cb {
+/*
+ * On the root, not on .cb.
+ *
+ * The announcement bar is rendered outside the storefront's own wrapper, so a
+ * colour defined on .cb simply did not exist there — the rule using it was
+ * thrown away as invalid and the bar quietly kept the old blue it was meant
+ * to be replacing. Anything the bar needs has to live where the bar can see
+ * it.
+ */
+:root, .cb {
   --neon: #D6FF4F;        /* the saving, and only the saving */
   --neon-ink: #17400A;    /* dark green, for type on the neon */
 }
