@@ -12,7 +12,6 @@
 cd "$(dirname "$0")" || exit 1
 set -u
 
-SITE="${SITE:-gemini}"
 PROMPTS="${PROMPTS:-prompts.txt}"
 OUT="${OUT:-./images}"
 PORT=9222
@@ -23,6 +22,32 @@ say() { printf "\n\033[1m%s\033[0m\n" "$1"; }
 die() { printf "\n\033[31m%s\033[0m\n\n" "$1"; echo "Press any key to close."; read -r -n 1; exit 1; }
 
 say "Black Reaper — image wand"
+
+# --- which one ------------------------------------------------------------
+#
+# This used to be an environment variable, which meant ChatGPT was only
+# reachable by someone willing to open Terminal. Both sites are free and they
+# fail differently — one refuses a prompt the other answers — so running both
+# is often the point rather than a fallback.
+if [ -z "${SITE:-}" ]; then
+  echo
+  echo "  1   Gemini"
+  echo "  2   ChatGPT"
+  echo "  3   Both — every prompt through each, saved separately"
+  echo
+  printf "Which one? [1] "
+  read -r pick
+  case "${pick:-1}" in
+    2) SITE="chatgpt" ;;
+    3) SITE="both" ;;
+    *) SITE="gemini" ;;
+  esac
+fi
+
+case "$SITE" in
+  chatgpt) HOME_URL="https://chatgpt.com/" ;;
+  *)       HOME_URL="https://gemini.google.com/app" ;;
+esac
 
 # --- the things that have to exist ---------------------------------------
 
@@ -108,7 +133,7 @@ else
   say "Opening Chrome…"
   # Its own profile directory, so this never touches your everyday Chrome.
   "$CHROME" --remote-debugging-port=$PORT --user-data-dir="$PROFILE" \
-    "https://gemini.google.com/app" >/dev/null 2>&1 &
+    "$HOME_URL" >/dev/null 2>&1 &
 
   printf "Waiting for it"
   for _ in $(seq 1 30); do
@@ -125,15 +150,28 @@ Almost always this means a normal Chrome was still running. Quit Chrome
 completely — Cmd+Q, not just closing the window — and double-click this again."
 fi
 
-say "Log into $SITE in that Chrome window if it isn't already."
+if [ "$SITE" = "both" ]; then
+  say "Log into BOTH Gemini and ChatGPT in that Chrome window."
+  echo "Open a tab for each. It needs both signed in before it starts."
+else
+  say "Log into $SITE in that Chrome window if it isn't already."
+fi
 echo "Then come back here and press Return to start. The wand appears in the browser."
 echo "Press Esc in the browser at any point to stop it."
 read -r
 
 # --- go -------------------------------------------------------------------
 
-node run.mjs --site "$SITE" --prompts "$PROMPTS" --out "$OUT"
-
-say "Your images are in: $OUT"
+if [ "$SITE" = "both" ]; then
+  # Separate folders, because the whole reason to run both is to compare them.
+  node run.mjs --site gemini  --prompts "$PROMPTS" --out "$OUT/gemini"
+  echo
+  say "Gemini done. Now ChatGPT."
+  node run.mjs --site chatgpt --prompts "$PROMPTS" --out "$OUT/chatgpt"
+  say "Your images are in: $OUT/gemini and $OUT/chatgpt"
+else
+  node run.mjs --site "$SITE" --prompts "$PROMPTS" --out "$OUT"
+  say "Your images are in: $OUT"
+fi
 echo "Press any key to close."
 read -r -n 1
