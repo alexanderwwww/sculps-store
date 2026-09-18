@@ -1491,3 +1491,66 @@
   .cb-ugcw__pass { gap: 13px; padding-right: 13px; }
   .cb-clip { width: 180px; border-radius: 22px; }
 }
+
+/* ---------------------------------------------------------- the glow plate
+ *
+ * A picture that arrives already lit does not want a card around it. Any
+ * border, any pale panel, and the glow stops being light in a dark street and
+ * becomes a photo pinned to a wall. So there is no frame here at all: the
+ * band goes darker than the page, the image sits on it with its own edges
+ * feathered away, and a wash of its colour is thrown behind it so the light
+ * looks like it is coming off the picture rather than ending at it.
+ */
+.cb-lock--art {
+  display: none;
+  position: relative;
+  isolation: isolate;
+  padding: clamp(28px, 6vw, 72px) 16px clamp(16px, 3vw, 36px);
+  background: radial-gradient(120% 80% at 50% 30%, #0d1a33 0%, #060a16 55%, #04060e 100%);
+  overflow: clip;
+}
+
+/* The wash. Two soft lamps in the colours the artwork is lit with, sitting
+ * behind the image so its edges have somewhere to disappear into. */
+.cb-lock--art::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10%;
+  z-index: 0;
+  background:
+    radial-gradient(38% 34% at 50% 44%, rgba(64, 232, 192, 0.30), transparent 70%),
+    radial-gradient(52% 46% at 50% 62%, rgba(32, 120, 220, 0.24), transparent 72%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.cb-lock--art img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  height: auto;
+  /* No radius, no border, no shadow — the feather is the edge treatment. */
+  -webkit-mask-image: radial-gradient(76% 72% at 50% 50%, #000 58%, transparent 100%);
+          mask-image: radial-gradient(76% 72% at 50% 50%, #000 58%, transparent 100%);
+}
+
+@media (min-width: 760px) {
+  .cb-lock--art { display: block; }
+}
+
+/*
+ * The frame grows to meet the photographs.
+ *
+ * Every shot on this product is a tall figure — eight and a half feet of it —
+ * and a square frame letterboxing a 2:3 portrait wastes a third of its own
+ * width on empty tint while the thing being sold sits small in the middle.
+ * A 4:5 box the height of most of the viewport gives the reaper the room he
+ * was photographed in, and `contain` still guarantees nothing is cropped.
+ */
+.cb-gal__main {
+  aspect-ratio: 4 / 5;
+  max-height: min(760px, 78vh);
+}
+.cb-gal__main img { padding: 8px; }
