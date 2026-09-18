@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>            <string>Magic Wand</string>
+  <key>CFBundleDisplayName</key>     <string>Magic Wand</string>
+  <key>CFBundleIdentifier</key>      <string>com.blackreaper.magicwand</string>
+  <key>CFBundleVersion</key>         <string>1.0</string>
+  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundlePackageType</key>     <string>APPL</string>
+  <key>CFBundleExecutable</key>      <string>MagicWand</string>
+  <key>CFBundleIconFile</key>        <string>wand.icns</string>
+  <key>LSMinimumSystemVersion</key>  <string>11.0</string>
+  <!-- It draws nothing of its own; the work happens in Chrome and a Terminal
+       window. Without this it would claim a blank window in the Dock. -->
+  <key>LSBackgroundOnly</key>        <false/>
+  <key>NSHighResolutionCapable</key> <true/>
+</dict>
+</plist>

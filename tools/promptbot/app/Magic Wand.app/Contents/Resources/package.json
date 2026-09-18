@@ -1,0 +1,7 @@
+{
+  "name": "promptbot",
+  "private": true,
+  "type": "module",
+  "description": "Types prompts into your own logged-in Gemini or ChatGPT and saves the images.",
+  "dependencies": { "playwright": "^1.47.0" }
+}
