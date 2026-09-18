@@ -572,3 +572,41 @@
    so the list takes the whole width instead of sitting in half of it. */
 .cb-box--wide { grid-template-columns: minmax(0, 1fr); }
 .cb-box--wide .cb-box__list { max-width: 720px; }
+
+/* ------------------------------------------------- goes with this, rebuilt */
+
+/*
+ * The template fills the row with as many tiles as fit, which with seven
+ * products left one stranded on a line of its own — a grid that looks like it
+ * broke. A fixed three across puts six in two clean rows, and the tiles get
+ * the size to be looked at rather than skimmed past.
+ *
+ * On a phone they turn into one row that scrolls and snaps, because six stacked
+ * cards is a page of scrolling between the reviews and the checkout.
+ */
+.cb-recs__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 24px);
+}
+.cb-rec {
+  border-radius: 20px; padding: 16px;
+  border-color: var(--hair);
+}
+.cb-rec__pic { aspect-ratio: 4 / 3; border-radius: 14px; }
+.cb-rec__name { font-size: 17.5px; }
+.cb-rec__price { font-size: 14.5px; color: var(--ink); font-weight: 600; }
+
+@media (max-width: 900px) { .cb-recs__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+@media (max-width: 620px) {
+  .cb-recs__grid {
+    display: flex; gap: 12px;
+    overflow-x: auto; scroll-snap-type: x mandatory;
+    margin-inline: calc(var(--gut, 16px) * -1);
+    padding-inline: var(--gut, 16px);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cb-recs__grid::-webkit-scrollbar { display: none; }
+  .cb-rec { flex: 0 0 62%; scroll-snap-align: start; }
+}

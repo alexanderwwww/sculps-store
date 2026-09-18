@@ -167,7 +167,7 @@ export async function loadProductPage(
   // Everything else the store has live, every variant — the cart drawer's
   // add-ons. A store selling a single product simply has none.
   const otherProducts = await db
-    .select({ id: products.id, title: products.title, handle: products.handle })
+    .select({ id: products.id, title: products.title, handle: products.handle, images: products.images })
     .from(products)
     .where(and(eq(products.storeId, store.id), eq(products.status, "active"), ne(products.id, product.id)))
     .orderBy(asc(products.createdAt));
@@ -190,7 +190,11 @@ export async function loadProductPage(
       id: p.id,
       title: p.title,
       handle: p.handle,
-      imageUrl: mine.find((v) => v.imageUrl)?.imageUrl ?? null,
+      // A variant picture first, because it shows the exact thing the Add
+      // button adds. Most products don't have one, and falling straight to
+      // null drew a row of empty tiles while the product's own photographs
+      // sat one field away.
+      imageUrl: mine.find((v) => v.imageUrl)?.imageUrl ?? (p.images ?? []).find((x) => x.url)?.url ?? null,
       fromCents: cheapest?.priceCents ?? 0,
       variantId: pick?.id ?? "",
     };

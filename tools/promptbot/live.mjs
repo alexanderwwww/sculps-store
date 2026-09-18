@@ -49,12 +49,15 @@ const SITES = {
     name: "ChatGPT",
     url: "https://chatgpt.com/",
     ask: ['div#prompt-textarea[contenteditable="true"]', "textarea#prompt-textarea", "textarea"],
-    send: ['button[data-testid="send-button"]', 'button[aria-label*="Send" i]'],
+    send: ['button[data-testid="send-button"]', 'button[data-testid="composer-submit-button"]', 'button[aria-label*="Send" i]'],
     fresh: ['a[href="/"]', 'button[aria-label*="New chat" i]'],
     file: ['input[type="file"]:not([data-wand])'],
     attach: ['button[aria-label*="Upload" i]', 'button[aria-label*="Attach" i]', 'button[data-testid="composer-plus-btn"]'],
-    attachItem: [],
-    images: ['img[src*="oaiusercontent"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
+    // The plus opens a menu; the first item is the one that takes a file.
+    attachItem: ['text=Add photos & files', 'text=Upload from computer', 'text=Add photos and files'],
+    // Finished pictures come back from a signed CDN host whose subdomain
+    // changes, and the alt text is the one part of it that does not.
+    images: ['img[alt="Generated image" i]', 'img[src*="oaiusercontent"]', 'img[src*="oaistatic"]', 'img[src^="blob:"]', 'img[src^="data:image"]'],
   },
 };
 
@@ -541,6 +544,21 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
 
 /* ------------------------------------------------------------------- loop */
 
+/**
+ * Everything saved for this job so far, as one file on the Desktop.
+ *
+ * Zipped with -j so the pictures sit at the archive's root rather than behind
+ * a chain of folders, and rewritten rather than appended so it always matches
+ * what is actually on disk. Returns null if zip isn't there to run, in which
+ * case the loose folder is what the button opens.
+ */
+async function makeZip(dir, slug) {
+  const out = join(process.env.HOME ?? ".", "Desktop", `${slug}.zip`);
+  await rm(out, { force: true }).catch(() => {});
+  const ok = await run("zip", ["-qrj", out, dir], { cwd: opt.out }).then(() => true).catch(() => false);
+  return ok ? out : null;
+}
+
 /** The zip the "Get the zip" button reaches for, from the last finished job. */
 let lastZip = null;
 let spinner = 0;
@@ -652,6 +670,13 @@ while (true) {
     const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length, dir, inCard);
     total += got;
     console.log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
+    // The zip is rebuilt after every prompt rather than once at the end.
+    // A free account runs out of generations partway through a long job, and
+    // building the archive only on the last line meant everything that had
+    // already been drawn stayed locked in a folder nobody could find, with a
+    // button that opened nothing. Now whatever is finished is on the Desktop
+    // the moment it is finished.
+    if (got) lastZip = (await makeZip(dir, slug)) ?? dir;
   }
 
   done.add(job.id);
@@ -669,22 +694,12 @@ while (true) {
    * making it here rather than asking the chat site for one is the difference
    * between it existing and it being promised.
    */
-  let zipPath = null;
-  if (total) {
-    zipPath = join(process.env.HOME ?? ".", "Desktop", `${slug}.zip`);
-    await rm(zipPath, { force: true }).catch(() => {});
-    // Zipped from inside the folder so the archive has the pictures at its
-    // root rather than a chain of directories to click through.
-    const ok = await run("zip", ["-qrj", zipPath, dir], { cwd: opt.out })
-      .then(() => true)
-      .catch(() => false);
-    if (ok) {
-      await rm(dir, { recursive: true, force: true }).catch(() => {});
-      console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} → ${zipPath.replace(process.env.HOME ?? "", "~")}\x1b[0m\n`);
-    } else {
-      zipPath = null;
-      console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);
-    }
+  const zipPath = total ? await makeZip(dir, slug) : null;
+  if (zipPath) {
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
+    console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} → ${zipPath.replace(process.env.HOME ?? "", "~")}\x1b[0m\n`);
+  } else if (total) {
+    console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);
   }
 
   lastZip = zipPath ?? (total ? dir : null);
@@ -692,7 +707,7 @@ while (true) {
     total ? `${total} picture${total === 1 ? "" : "s"} ready` : "Nothing came back",
     total
       ? (zipPath ?? dir).replace(process.env.HOME ?? "", "~")
-      : "Gemini returned no images for this one.",
+      : `${site.name} returned no images for this one.`,
   );
 }
 

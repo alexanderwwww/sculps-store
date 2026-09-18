@@ -14,7 +14,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="9"
+BUILD="10"
 WORK="$HOME/Library/Application Support/Magic Wand/$BUILD"
 OUT="$HOME/Downloads/Magic Wand"
 PORT=9222
