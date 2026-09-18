@@ -14,7 +14,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="10"
+BUILD="11"
 WORK="$HOME/Library/Application Support/Magic Wand/$BUILD"
 OUT="$HOME/Downloads/Magic Wand"
 PORT=9222
@@ -89,8 +89,20 @@ fi
 # properly belongs to the job — Claude knows which one it wants for a given
 # batch, and asking meant restarting to change your mind. It opens on Gemini
 # and a job can say chatgpt, at which point it switches itself.
+# The site comes from the job that is waiting, not from a default here.
+# Opening Gemini and then switching once the job arrived meant a run aimed at
+# ChatGPT still put a Gemini tab in front of you first, which looks like the
+# app ignoring what it was told.
 SITE="gemini"
-HOME_URL="https://gemini.google.com/app"
+QUEUE_URL="https://kerberos.gardenbuddystore.workers.dev/media/wand-queue.json"
+if curl -s --max-time 5 "$QUEUE_URL" 2>/dev/null | grep -q '"site"[[:space:]]*:[[:space:]]*"chatgpt"'; then
+  SITE="chatgpt"
+fi
+if [ "$SITE" = "chatgpt" ]; then
+  HOME_URL="https://chatgpt.com/"
+else
+  HOME_URL="https://gemini.google.com/app"
+fi
 
 if curl -s --max-time 2 "http://localhost:$PORT/json/version" >/dev/null 2>&1; then
   say "Chrome is already open and ready."
@@ -111,7 +123,7 @@ A normal Chrome was still running. Quit it properly - Cmd+Q, not the red dot -
 then open Magic Wand again."
 fi
 
-say "Sign into Gemini in that Chrome window if you aren't already."
+say "Sign into $SITE in that Chrome window if you aren't already."
 echo
 echo "Sign into ChatGPT in a second tab as well, and Claude can send a job to"
 echo "either one without you doing anything."

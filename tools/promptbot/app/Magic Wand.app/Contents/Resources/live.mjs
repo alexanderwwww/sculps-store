@@ -163,6 +163,23 @@ try {
 
 const context = browser.contexts()[0] ?? (await browser.newContext());
 const page = await context.newPage();
+
+/*
+ * The waiting job decides which site opens.
+ *
+ * Starting on Gemini and switching later meant a run written for ChatGPT
+ * still opened a Gemini tab first, waited for a sign-in there, and only then
+ * moved — which from the outside is the app doing the opposite of what it was
+ * told. One look at the queue before anything opens fixes it.
+ */
+try {
+  const res = await fetch(`${QUEUE}?t=${Date.now()}`, { cache: "no-store" });
+  if (res.ok) {
+    const first = await res.json();
+    if (first?.site && SITES[first.site] && !done.has(first.id)) site = SITES[first.site];
+  }
+} catch { /* offline: whatever was asked for at launch stands */ }
+
 await page.goto(site.url, { waitUntil: "domcontentloaded" });
 
 if (!(await find(page, site.ask, 20000))) {
