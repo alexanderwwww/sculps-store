@@ -1,0 +1,244 @@
+/**
+ * The Magic Wand's own back end: a status board, an order desk, and an MCP
+ * server, all on one secret path.
+ *
+ * Until now the app read a file Claude had uploaded and nothing came back the
+ * other way. That works for telling it what to do and is useless for finding
+ * out what it did — every problem arrived as a photograph of a screen, which
+ * is a slow way to debug a program. Now the app posts what it is doing after
+ * every step, and Claude reads it.
+ *
+ * Three ways in, the same four things underneath:
+ *
+ *   GET  /wand/<key>/status   what the app is doing, and its last lines
+ *   POST /wand/<key>/status   the app saying so
+ *   GET  /wand/<key>/order    the app asking whether it has been told anything
+ *   POST /wand/<key>/order    continue, pause, stop, pictures, skip
+ *   GET  /wand/<key>/queue    the job
+ *   POST /wand/<key>/queue    a new job
+ *   POST /wand/<key>/mcp      the same four as MCP tools, for claude.ai
+ *
+ * The key in the path is the whole of the authentication, which is the right
+ * amount for a channel whose worst case is somebody typing a prompt into a
+ * chat window that is already open on somebody's own laptop. It is not in the
+ * repository's public surface anywhere else, and rotating it is editing one
+ * line here.
+ */
+import type { Route } from "./+types/wand.$";
+
+/** Rotating this invalidates every client at once, which is the point. */
+const KEY = "0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu";
+
+const FILES = {
+  status: "wand-status.json",
+  order: "wand-control.json",
+  queue: "wand-queue.json",
+} as const;
+
+type Slot = keyof typeof FILES;
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      // Read from a browser, from node, and from Claude's own fetcher.
+      "access-control-allow-origin": "*",
+      "access-control-allow-headers": "content-type",
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      // Never a stale answer: the whole value of this is that it is current.
+      "cache-control": "no-store",
+    },
+  });
+
+async function read(env: Env, slot: Slot) {
+  const obj = await env.MEDIA?.get(FILES[slot]);
+  if (!obj) return null;
+  try {
+    return JSON.parse(await obj.text());
+  } catch {
+    return null;
+  }
+}
+
+async function write(env: Env, slot: Slot, value: unknown) {
+  await env.MEDIA?.put(FILES[slot], JSON.stringify(value, null, 2), {
+    httpMetadata: { contentType: "application/json", cacheControl: "no-store" },
+  });
+}
+
+/* ------------------------------------------------------------------- MCP */
+
+/**
+ * The four tools, described the way an MCP client expects them.
+ *
+ * They are deliberately the same four things the plain URLs do. An MCP server
+ * that can do more than the app it fronts is a second app to keep in step.
+ */
+const TOOLS = [
+  {
+    name: "wand_status",
+    description:
+      "What Magic Wand is doing right now on Alex's Mac: the job, which prompt it is on, " +
+      "whether it is running, paused or waiting for approval, how many pictures it has " +
+      "saved, and the last lines it printed. Read this before answering anything about " +
+      "whether the wand is working.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "wand_order",
+    description:
+      "Tell Magic Wand what to do right now. 'continue' also says yes to a job that is " +
+      "waiting for approval. The app obeys within two seconds wherever it is, including " +
+      "in the middle of waiting for a picture.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cmd: { type: "string", enum: ["continue", "pause", "stop", "pictures", "skip"] },
+      },
+      required: ["cmd"],
+    },
+  },
+  {
+    name: "wand_queue_get",
+    description: "The job Magic Wand is currently being offered, or running.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "wand_queue_set",
+    description:
+      "Give Magic Wand a new job. Replaces whatever was queued. `sameChat: true` keeps " +
+      "every prompt in one conversation instead of starting a new chat for each. " +
+      "`selectors` overrides the app's idea of where the buttons and pictures are on " +
+      "that site, for this job only — which is how a site redesign gets fixed without a " +
+      "new version of the app.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        site: { type: "string", enum: ["chatgpt", "gemini"] },
+        prompts: { type: "array", items: { type: "string" } },
+        sameChat: { type: "boolean" },
+        wait: { type: "number" },
+        url: { type: "string" },
+        selectors: { type: "object" },
+      },
+      required: ["name", "prompts"],
+    },
+  },
+] as const;
+
+async function callTool(env: Env, name: string, args: Record<string, unknown>) {
+  if (name === "wand_status") {
+    return (await read(env, "status")) ?? { state: "no report yet — the app has not been opened since this was added" };
+  }
+  if (name === "wand_queue_get") {
+    return (await read(env, "queue")) ?? { queued: null };
+  }
+  if (name === "wand_order") {
+    const cmd = String(args.cmd ?? "");
+    if (!["continue", "pause", "stop", "pictures", "skip"].includes(cmd)) {
+      return { ok: false, error: `not an order: ${cmd}` };
+    }
+    await write(env, "order", { cmd, at: Date.now() });
+    return { ok: true, sent: cmd };
+  }
+  if (name === "wand_queue_set") {
+    const prompts = Array.isArray(args.prompts) ? args.prompts.map(String).filter(Boolean) : [];
+    if (!prompts.length) return { ok: false, error: "a job with no prompts is not a job" };
+    const job = {
+      id: `job-${Date.now()}`,
+      name: String(args.name ?? "Untitled"),
+      site: args.site === "gemini" ? "gemini" : "chatgpt",
+      sameChat: Boolean(args.sameChat),
+      ...(args.wait ? { wait: Number(args.wait) } : {}),
+      ...(args.url ? { url: String(args.url) } : {}),
+      ...(args.selectors && typeof args.selectors === "object" ? { selectors: args.selectors } : {}),
+      prompts,
+    };
+    await write(env, "queue", job);
+    return { ok: true, queued: job.id, prompts: prompts.length };
+  }
+  return { ok: false, error: `no such tool: ${name}` };
+}
+
+/** JSON-RPC, the three methods a client needs before it can call anything. */
+async function mcp(env: Env, body: any) {
+  const id = body?.id ?? null;
+  const reply = (result: unknown) => ({ jsonrpc: "2.0", id, result });
+
+  if (body?.method === "initialize") {
+    return reply({
+      protocolVersion: "2024-11-05",
+      capabilities: { tools: {} },
+      serverInfo: { name: "magic-wand", version: "1.0.0" },
+    });
+  }
+  if (body?.method === "notifications/initialized") return null;
+  if (body?.method === "tools/list") return reply({ tools: TOOLS });
+  if (body?.method === "tools/call") {
+    const out = await callTool(env, body?.params?.name ?? "", body?.params?.arguments ?? {});
+    // Every MCP client can read text; only some read structured content.
+    return reply({ content: [{ type: "text", text: JSON.stringify(out, null, 2) }] });
+  }
+  return { jsonrpc: "2.0", id, error: { code: -32601, message: "method not found" } };
+}
+
+/* ----------------------------------------------------------------- routes */
+
+function parse(splat: string | undefined) {
+  const parts = (splat ?? "").split("/").filter(Boolean);
+  return { key: parts[0] ?? "", what: parts[1] ?? "" };
+}
+
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const { key, what } = parse(params["*"]);
+  if (key !== KEY) throw new Response("Not found", { status: 404 });
+  const env = context.cloudflare.env;
+
+  if (what === "status") return json((await read(env, "status")) ?? { state: "never reported" });
+  if (what === "order") return json((await read(env, "order")) ?? { cmd: "", at: 0 });
+  if (what === "queue") return json((await read(env, "queue")) ?? {});
+  if (what === "mcp") {
+    // A GET on the MCP endpoint is a client checking it is there.
+    return json({ ok: true, server: "magic-wand", tools: TOOLS.map((t) => t.name) });
+  }
+  throw new Response("Not found", { status: 404 });
+}
+
+export async function action({ params, request, context }: Route.ActionArgs) {
+  const { key, what } = parse(params["*"]);
+  if (request.method === "OPTIONS") return json({ ok: true });
+  if (key !== KEY) throw new Response("Not found", { status: 404 });
+  const env = context.cloudflare.env;
+
+  let body: any = null;
+  try {
+    body = await request.json();
+  } catch {
+    body = null;
+  }
+
+  if (what === "mcp") {
+    const out = await mcp(env, body);
+    // A notification gets no reply at all, which is not the same as an empty one.
+    return out ? json(out) : new Response(null, { status: 202 });
+  }
+
+  if (what === "status") {
+    // Whatever the app says, plus when it said it — so a stale board is
+    // obvious rather than convincing.
+    await write(env, "status", { ...(body ?? {}), at: Date.now() });
+    return json({ ok: true });
+  }
+  if (what === "order") {
+    const cmd = String(body?.cmd ?? "");
+    await write(env, "order", { cmd, at: Date.now() });
+    return json({ ok: true, sent: cmd });
+  }
+  if (what === "queue") {
+    await write(env, "queue", body ?? {});
+    return json({ ok: true });
+  }
+  throw new Response("Not found", { status: 404 });
+}

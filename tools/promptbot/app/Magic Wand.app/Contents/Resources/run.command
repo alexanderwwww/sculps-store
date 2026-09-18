@@ -14,7 +14,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="18"
+BUILD="19"
 # One working directory, not one per build. The browser engine underneath it
 # is a hundred megabytes and there is no reason to fetch it again because a
 # script changed.
@@ -105,7 +105,7 @@ fi
 # ChatGPT still put a Gemini tab in front of you first, which looks like the
 # app ignoring what it was told.
 SITE="gemini"
-QUEUE_URL="https://kerberos.gardenbuddystore.workers.dev/media/wand-queue.json"
+QUEUE_URL="https://kerberos.gardenbuddystore.workers.dev/wand/0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu/queue"
 if curl -s --max-time 5 "$QUEUE_URL" 2>/dev/null | grep -q '"site"[[:space:]]*:[[:space:]]*"chatgpt"'; then
   SITE="chatgpt"
 fi
@@ -142,7 +142,7 @@ echo
 echo "Then press Return here and leave this window open."
 read -r
 
-node live.mjs --site "$SITE" --out "$OUT"
+WAND_BUILD="$BUILD" node live.mjs --site "$SITE" --out "$OUT"
 
 printf "\n\033[1m========================================\033[0m\n"
 printf "\033[1m  YOUR PICTURES ARE ON THE DESKTOP\033[0m\n"

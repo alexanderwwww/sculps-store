@@ -27,7 +27,7 @@ import { execFile } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { promisify } from "node:util";
 
-const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.dev/media/wand-queue.json";
+const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.dev/wand/0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu/queue";
 const POLL_MS = 6000;
 /**
  * Orders from Claude, separate from the queue.
@@ -38,7 +38,49 @@ const POLL_MS = 6000;
  * Each order carries the time it was written, and one is obeyed once: the
  * file staying on the server is not the same order being given again.
  */
-const CONTROL = process.env.CONTROL || "https://kerberos.gardenbuddystore.workers.dev/media/wand-control.json";
+const WAND = process.env.WAND || "https://kerberos.gardenbuddystore.workers.dev/wand/0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu";
+const CONTROL = process.env.CONTROL || `${WAND}/order`;
+
+/**
+ * Saying, out loud, what it is doing.
+ *
+ * Every problem with this app so far arrived as a photograph of a screen,
+ * because nothing came back from the Mac. It posts a line after every step
+ * now — the job, the prompt it is on, what it is waiting for, and the last
+ * few things it printed — so the answer to "what is he waiting for" is a
+ * question Claude can answer by looking instead of by guessing.
+ *
+ * It is fire-and-forget on purpose. A status board that can hold up the run
+ * it is reporting on is worse than no status board.
+ */
+const tail = [];
+function note(line) {
+  tail.push(line);
+  if (tail.length > 40) tail.shift();
+}
+let said = "";
+let sayAt = 0;
+function report(state, extra = {}) {
+  const now = Date.now();
+  const same = state === said;
+  if (same && now - sayAt < 5000) return;
+  said = state;
+  sayAt = now;
+  const stop = new AbortController();
+  setTimeout(() => stop.abort(), 5000);
+  fetch(`${WAND}/status`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ state, build: BUILD, site: site?.name, ...extra, tail: tail.slice(-20) }),
+    signal: stop.signal,
+  }).catch(() => {});
+}
+
+/** Printed and reported in one go, so the two can never disagree. */
+function log(line) {
+  console.log(line);
+  note(line.replace(/\x1b\[[0-9;]*m/g, ""));
+}
 let lastOrder = 0;
 let orderAt = 0;
 /**
@@ -78,6 +120,7 @@ async function obey() {
   console.log(`\r\x1b[K  \x1b[35mClaude: ${o.cmd}\x1b[0m${did ? "" : " (nothing to do)"}`);
 }
 const startedAt = Date.now();
+const BUILD = process.env.WAND_BUILD || "dev";
 const MIN_PIXELS = 320;
 
 /**
@@ -595,7 +638,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
 
   const box = await find(page, site.ask, 20000);
   if (!box) {
-    console.log(`  \x1b[31m!! no message box on ${site.name} — is it signed in and on a chat page?\x1b[0m`);
+    log(`  \x1b[31m!! no message box on ${site.name} — is it signed in and on a chat page?\x1b[0m`);
     return 0;
   }
   await wand.point(box);
@@ -651,12 +694,13 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     await wait(1200);
   }
   if ((await typed()).trim().length > 8) {
-    console.log(`  \x1b[31m!! ${site.name} would not send it — skipping this one\x1b[0m`);
+    log(`  \x1b[31m!! ${site.name} would not send it — skipping this one\x1b[0m`);
     return 0;
   }
-  console.log(`  \x1b[2msent\x1b[0m`);
+  log(`  \x1b[2msent\x1b[0m`);
 
   await wand.say(label, `${n} of ${total} — waiting for the pictures…`);
+  report("waiting for pictures", { job: label, prompt: `${n} of ${total}` });
   await wand.idle(true);
   // How long to wait for pictures. A job can set its own, because a site that
   // is slow today is a queue edit rather than a new app.
@@ -686,10 +730,13 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       // further away each. Two minutes, then move on and say so.
       quiet += 2;
       if (quiet >= 120) {
-        console.log(`  \x1b[33mno picture after two minutes — moving on\x1b[0m`);
+        log(`  \x1b[33mno picture after two minutes — moving on\x1b[0m`);
         break;
       }
-      if (quiet % 30 === 0) await wand.say(label, `${n} of ${total} — still waiting (${quiet}s)`);
+      if (quiet % 30 === 0) {
+        await wand.say(label, `${n} of ${total} — still waiting (${quiet}s)`);
+        report("waiting for pictures", { job: label, prompt: `${n} of ${total}`, seconds: quiet, waitingFor: `an image on ${site.name} matching the job's selectors` });
+      }
     }
   }
 
@@ -802,7 +849,8 @@ async function holdIfPaused(what = "") {
   let said = false;
   while (await wand.paused()) {
     if (await wand.stopped()) return true;
-    if (!said) { console.log(`\r\x1b[K  \x1b[33mpaused${what ? " — " + what : ""}. Press Continue, or tell Claude.\x1b[0m`); said = true; }
+    if (!said) { log(`\r\x1b[K  \x1b[33mpaused${what ? " — " + what : ""}. Press Continue, or tell Claude.\x1b[0m`); said = true; }
+    report("paused", { where: what });
     await obey();
     await wait(600);
   }
@@ -844,6 +892,7 @@ async function decision(label, sub, summary) {
     // as a Terminal that has crashed.
     if (beat++ % 5 === 0) {
       process.stdout.write(`\r\x1b[K  waiting for you — press Submit on the card in Chrome, or tell Claude "go"   `);
+      report("waiting for approval", { job: label, waitingFor: 'someone to press Submit, or the order "continue"' });
     }
     await wait(400);
   }
@@ -877,6 +926,7 @@ while (true) {
       else await run("open", [opt.out]).catch(() => {});
     }
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
+    report("idle", { waitingFor: "a job in the queue" });
     for (let t = 0; t < POLL_MS; t += 2000) { await obey(); await wait(2000); }
     continue;
   }
@@ -1029,7 +1079,8 @@ while (true) {
     if (await wand.stopped()) break;
     const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, Boolean(job.sameChat));
     total += got;
-    console.log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
+    log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
+    report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total });
     // The zip is rebuilt after every prompt rather than once at the end.
     // A free account runs out of generations partway through a long job, and
     // building the archive only on the last line meant everything that had
@@ -1064,6 +1115,7 @@ while (true) {
   }
 
   lastZip = zipPath ?? (total ? dir : null);
+  report("finished", { job: label, saved: total, zip: lastZip });
   await wand.done(
     total ? `${total} picture${total === 1 ? "" : "s"} ready` : "Nothing came back",
     total

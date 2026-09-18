@@ -35,6 +35,9 @@ export default [
   // browser — not a scanner — is the one asking.
   route("seen", "routes/seen.tsx"),
   route("media/:key", "routes/media.$key.tsx"),
+  // The Magic Wand's status board, order desk and MCP server. Everything
+  // behind it is guarded by the key in the path.
+  route("wand/*", "routes/wand.$.tsx"),
   route("webhooks/stripe", "routes/webhooks.stripe.tsx"),
 
   // Admin. Sign-in lives outside the layout so it is reachable when signed out.
