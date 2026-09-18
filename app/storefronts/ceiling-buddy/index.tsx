@@ -1285,17 +1285,15 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
            Each row is printed twice so the loop has no seam; the copy is
            hidden from screen readers. */
         <div className="cb-rail">
-          {[0, 1, 2].map((row) => (
-            <div className="cb-rail__row" data-row={row} key={row}>
-              {[0, 1].map((pass) => (
-                <div className="cb-rail__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
-                  {rows.filter((_, i) => i % 3 === row).map((r) => (
-                    <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          ))}
+          <div className="cb-rail__row" data-row="0">
+            {[0, 1].map((pass) => (
+              <div className="cb-rail__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+                {rows.map((r) => (
+                  <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         /* Columns, drifting vertically, alternate directions.

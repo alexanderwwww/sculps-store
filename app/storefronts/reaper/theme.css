@@ -176,8 +176,10 @@
   from { transform: translate3d(0, 0, 0); }
   to   { transform: translate3d(-50%, 0, 0); }
 }
-.cb-rail__row[data-row="1"] { animation-direction: reverse; animation-duration: 79s; }
-.cb-rail__row[data-row="2"] { animation-duration: 53s; }
+/* One row, so it can afford to be slower and taller: every card passing is a
+   card somebody actually reads, rather than one of three competing for the
+   same glance. */
+.cb-rail__row { animation-duration: 78s; }
 
 /* Stop it while somebody is reading one. */
 .cb-rail:hover .cb-rail__row,
@@ -186,7 +188,7 @@
 /* Every card the same width, so the rows stay level and the eye can track
    along one instead of climbing over it. */
 .cb-rail .cb-card {
-  width: clamp(230px, 24vw, 290px);
+  width: clamp(250px, 26vw, 320px);
   flex: 0 0 auto;
   align-self: start;
 }
