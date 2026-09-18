@@ -40,10 +40,14 @@ INSTALL
 
 EVERY TIME
 
-Open Magic Wand. Pick 1 for Gemini or 2 for ChatGPT. A Chrome window
-opens — its own, your normal Chrome and your tabs are untouched.
-Sign in there if you aren't already. Press Return in the black window
-and leave it open.
+Open Magic Wand. A Chrome window opens — its own, your normal Chrome
+and your tabs are untouched. Sign into Gemini there.
+
+Open a second tab and sign into ChatGPT too. Then Claude can send a
+job to either one without asking you: it says which site it wants and
+the wand switches itself.
+
+Press Return in the black window and leave it open.
 
 Then tell Claude what you want, in plain words. Claude writes the
 prompts and queues them.
@@ -57,6 +61,9 @@ name and a box under it:
      Drop your pictures here, or click to choose  ·  up to ten
 
      [ Skip ]                            [ Submit ]
+
+The panel says which site the job is going to, so you always know
+where it's about to type.
 
    Drag your product photos onto that box, or click it to browse.
    Thumbnails appear. Click a thumbnail to take it back out.

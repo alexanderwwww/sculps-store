@@ -83,16 +83,14 @@ if [ ! -d node_modules ]; then
   npx --yes playwright install chromium || die "Couldn't fetch the browser engine."
 fi
 
-echo
-echo "  1   Gemini"
-echo "  2   ChatGPT"
-echo
-printf "Which one? [1] "
-read -r pick
-case "${pick:-1}" in
-  2) SITE="chatgpt"; HOME_URL="https://chatgpt.com/" ;;
-  *) SITE="gemini";  HOME_URL="https://gemini.google.com/app" ;;
-esac
+# No question here any more.
+#
+# It used to ask which site to use, which made a decision at launch that
+# properly belongs to the job — Claude knows which one it wants for a given
+# batch, and asking meant restarting to change your mind. It opens on Gemini
+# and a job can say chatgpt, at which point it switches itself.
+SITE="gemini"
+HOME_URL="https://gemini.google.com/app"
 
 if curl -s --max-time 2 "http://localhost:$PORT/json/version" >/dev/null 2>&1; then
   say "Chrome is already open and ready."
@@ -113,9 +111,12 @@ A normal Chrome was still running. Quit it properly - Cmd+Q, not the red dot -
 then open Magic Wand again."
 fi
 
-say "Sign into $SITE in that Chrome window if you aren't already."
+say "Sign into Gemini in that Chrome window if you aren't already."
+echo
+echo "Sign into ChatGPT in a second tab as well, and Claude can send a job to"
+echo "either one without you doing anything."
+echo
 echo "Then press Return here and leave this window open."
-echo "From then on, jobs arrive as a dialog with a Run it button."
 read -r
 
 node live.mjs --site "$SITE" --out "$OUT"
