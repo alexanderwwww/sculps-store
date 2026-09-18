@@ -239,6 +239,44 @@ async function putFiles(page, paths, wand, label) {
     return null;
   };
 
+  /**
+   * Hand the files to the page as a real DataTransfer, either as a paste or
+   * as a full drag. Built here rather than at the top because it closes over
+   * the files we just read.
+   */
+  const deliver = (mode) =>
+    page.evaluate(({ files, sels, mode }) => {
+      const dt = new DataTransfer();
+      for (const f of files) {
+        const bin = atob(f.data);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        dt.items.add(new File([bytes], f.name, { type: f.type }));
+      }
+
+      const box = sels.map((s) => document.querySelector(s)).find(Boolean);
+      if (!box) return false;
+
+      if (mode === "paste") {
+        box.focus?.();
+        box.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt }));
+        return true;
+      }
+
+      // Walk up from the text box and hit every ancestor, plus the document.
+      // Which element carries the drop handler is an implementation detail
+      // that changes; the ancestor chain does not.
+      const targets = [];
+      for (let el = box; el && targets.length < 8; el = el.parentElement) targets.push(el);
+      targets.push(document.body, document.documentElement);
+      for (const t of targets) {
+        for (const type of ["dragenter", "dragover", "drop"]) {
+          t.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+        }
+      }
+      return true;
+    }, { files, sels: site.ask, mode }).catch(() => false);
+
   // 1 — let Chrome open its own file dialog and answer it.
   //
   // This is the only route that works the way a person does: the page opens

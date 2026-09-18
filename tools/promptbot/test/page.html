@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Fake composer</title>
+<style>body{font:15px system-ui;padding:40px;background:#111;color:#eee}
+.bar{display:flex;align-items:center;gap:10px;border:1px solid #444;border-radius:28px;padding:10px 14px;max-width:700px}
+button{width:36px;height:36px;border-radius:50%;border:0;background:#333;color:#fff;font-size:20px;cursor:pointer}
+.ask{flex:1;min-height:24px;outline:0}
+#shots img{max-width:420px;display:block;margin:12px 0;border:1px solid #333}</style></head><body>
+<h2>composer</h2>
+<div class="bar">
+  <button id="plus">+</button>
+  <input type="file" id="f" multiple hidden>
+  <div class="ask" id="prompt-textarea" contenteditable="true" data-ph="Ask..."></div>
+  <button data-testid="send-button">&#8593;</button>
+</div>
+<div id="shots"></div>
+<script>
+// Stands in for the real thing: a plus that opens the file dialog, and a
+// composer that accepts a paste or a drop, each one showing a blob thumbnail
+// exactly the way Gemini and ChatGPT do.
+const show = (files, how) => {
+  for (const f of files) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    img.dataset.how = how;
+    document.getElementById('shots').appendChild(img);
+  }
+  document.title = 'got ' + how;
+};
+plus.onclick = () => f.click();
+f.onchange = () => show(f.files, 'input');
+const box = document.getElementById('prompt-textarea');
+box.addEventListener('paste', e => { const fs=[...(e.clipboardData?.files||[])]; if(fs.length){e.preventDefault();show(fs,'paste');} });
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { const fs=[...(e.dataTransfer?.files||[])]; if(fs.length){e.preventDefault();show(fs,'drop');} });
+document.querySelector('[data-testid=send-button]').onclick = () => {
+  const p = document.createElement('div'); p.className='sent'; p.textContent = box.textContent;
+  document.getElementById('shots').appendChild(p);
+  // A real generated picture would turn up here; a big canvas stands in.
+  setTimeout(() => {
+    const c = document.createElement('canvas'); c.width=700; c.height=700;
+    const g = c.getContext('2d'); g.fillStyle='#4a2'; g.fillRect(0,0,700,700);
+    c.toBlob(b => { const i=document.createElement('img'); i.src=URL.createObjectURL(b); i.id='generated'; document.getElementById('shots').appendChild(i); });
+  }, 1500);
+};
+</script></body></html>
