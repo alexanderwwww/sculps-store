@@ -150,7 +150,8 @@ async function obey() {
   if (!o?.cmd || !Number(o.at) || Number(o.at) <= lastOrder) return;
   lastOrder = Number(o.at);
   const did = await wand.order(o.cmd);
-  console.log(`\r\x1b[K  \x1b[35mClaude: ${o.cmd}\x1b[0m${did ? "" : " (nothing to do)"}`);
+  log(`\r\x1b[K  \x1b[35mClaude: ${o.cmd}\x1b[0m${did ? "" : " (nothing to do)"}`);
+  report(did ? `did: ${o.cmd}` : `ignored: ${o.cmd}`, { order: o.cmd, obeyed: did });
 }
 const startedAt = Date.now();
 const BUILD = process.env.WAND_BUILD || "dev";
@@ -334,7 +335,7 @@ try {
   process.exit(1);
 }
 
-const context = browser.contexts()[0] ?? (await browser.newContext());
+let context = browser.contexts()[0] ?? (await browser.newContext());
 let page = null;
 
 /*
@@ -953,7 +954,38 @@ let lastZip = null;
 let spinner = 0;
 /** Jobs we've already explained are finished, so it is said once. */
 const saidDone = new Set();
+/**
+ * Nothing in here may kill the app quietly.
+ *
+ * The loop touches a browser somebody else is using: tabs close, Chrome
+ * quits, a page navigates while it is being read. Every one of those throws,
+ * and an uncaught throw ends the process — the Terminal window is behind the
+ * browser by then, so all anybody sees is an app that stopped. Worse, the
+ * status board stops with it, so from here it looks identical to a hang.
+ *
+ * So the whole turn is wrapped: the error is reported, printed, and the loop
+ * goes round again. If Chrome itself has gone, it reconnects rather than
+ * giving up.
+ */
+process.on("unhandledRejection", (e) => {
+  log(`  \x1b[31m!! ${String(e).split("\n")[0]}\x1b[0m`);
+  report("error", { error: String(e).split("\n")[0] });
+});
+
 while (true) {
+ try {
+  if (!browser.isConnected()) {
+    log("  \x1b[33mChrome went away — reconnecting…\x1b[0m");
+    report("reconnecting", { waitingFor: "Chrome on the debug port" });
+    try {
+      browser = await chromium.connectOverCDP(`http://localhost:${opt.port}`);
+      context = browser.contexts()[0] ?? (await browser.newContext());
+      page = null;
+    } catch {
+      await wait(4000);
+      continue;
+    }
+  }
   await ensurePage();
   if (await wand.stopped()) { console.log("\nStopped from the panel. Everything saved is on your Desktop.\n"); break; }
 
@@ -1169,6 +1201,13 @@ while (true) {
       ? (zipPath ?? dir).replace(process.env.HOME ?? "", "~")
       : `${site.name} returned no images for this one.`,
   );
+ } catch (e) {
+  // Whatever it was, it is not a reason to disappear.
+  const first = String(e?.stack ?? e).split("\n").slice(0, 2).join(" ");
+  log(`  \x1b[31m!! ${first}\x1b[0m`);
+  report("error", { error: first });
+  await wait(3000);
+ }
 }
 
 await browser.close();
