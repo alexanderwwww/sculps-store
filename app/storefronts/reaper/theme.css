@@ -233,114 +233,127 @@
 .cb-pay4--under .cb-pay4__small { flex: 1 0 100%; font-size: 12px; color: var(--dim); }
 
 /* ------------------------------------------------------------ the bundles */
-
 /*
- * Rows in a bordered box, each one a small card of its own.
+ * The bundle box, third time.
  *
- * Two numbers do the work here and only one of them is the price. "$129" is a
- * bigger spend than "$99" and nothing about it says deal; "$64.50 each" is
- * what makes two of something feel cheaper than one. So every multi-row
- * carries its per-unit figure, on the right, under the total.
+ * What was wrong with it: a black bar across the top with the offer written
+ * in capitals, a hard outline around everything, and three rows that each
+ * looked like a button. Three heavy things stacked on top of each other, and
+ * the eye has nowhere to land.
  *
- * The saving goes in red rather than the brand colour. Red is the one colour
- * on a shopping page that already means "this number went down", and spending
- * the brand orange on it wastes the orange — which has one job here, and that
- * is the button.
+ * What a bundle box is actually for is making the middle row the obvious
+ * answer. So: no lid, no outline around the set, the title in small grey type
+ * above it the way a form label sits above a field. The rows are white and
+ * almost weightless until one is chosen, and the chosen one is the only
+ * saturated thing — an orange ring, a warm fill, a flag on its top edge and a
+ * red saving. Everything else steps back so that one row is the page.
  *
- * The chosen row is ringed in ink and lifted onto white while the others sit
- * flat and grey. A tick or a filled circle is a state; a ring is a decision.
+ * Two numbers, and only one of them is the price. "$199" is a bigger spend
+ * than "$129" and nothing about it says deal; "$99.50 each" is what makes two
+ * of something feel cheaper than one, so it sits under the total in every row
+ * that is more than one.
  */
 .cb-bundle {
-  border: 2px solid var(--ink);
-  border-radius: 18px;
-  overflow: hidden;
-  margin: 18px 0 14px;
-  background: var(--paper);
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  margin: 22px 0 18px;
+  background: transparent;
 }
 .cb-bundle__lid {
-  background: var(--ink); color: var(--paper);
-  font-family: var(--display); font-weight: 800; font-size: 13px;
-  letter-spacing: .07em; text-transform: uppercase;
-  padding: 12px 16px; text-align: left;
+  background: transparent; color: var(--dim);
+  font-family: var(--body); font-weight: 600; font-size: 12.5px;
+  letter-spacing: .04em; text-transform: uppercase;
+  padding: 0 2px 10px; text-align: left;
 }
-.cb-bundle__lid em { color: var(--action); font-style: normal; }
+.cb-bundle__lid em { color: var(--action); font-style: normal; font-weight: 700; }
 .cb-bundle__foot {
-  padding: 10px 16px 14px; font-size: 12.5px; color: var(--dim); text-align: center;
+  padding: 10px 2px 0; font-size: 12.5px; color: var(--dim); text-align: left;
 }
 
-.cb-tiers { display: grid; gap: 10px; padding: 12px; }
+.cb-tiers { display: grid; gap: 11px; padding: 0; }
 
 .cb-tier {
   position: relative;
   display: grid;
-  grid-template-columns: 22px auto 1fr auto;
+  grid-template-columns: 22px 1fr auto;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
   width: 100%;
-  padding: 14px 14px;
+  padding: 16px 18px;
   border: 1.5px solid var(--hair);
-  border-radius: 13px;
+  border-radius: 16px;
   background: var(--paper);
   cursor: pointer;
   text-align: left;
-  transition: border-color .14s ease, box-shadow .14s ease;
+  transition: border-color .15s ease, background .15s ease;
 }
-.cb-tier:hover { border-color: rgba(20, 22, 26, .3); }
+.cb-tier:hover { border-color: rgba(20, 22, 26, .26); }
 
-/* The chosen one is ringed, not ticked. */
+/* The one that is chosen is the only saturated thing in the set. */
 .cb-tier[aria-checked="true"] {
-  border-color: var(--ink);
-  box-shadow: inset 0 0 0 1.5px var(--ink);
+  border-color: var(--action);
+  border-width: 2px;
+  padding: 15.5px 17.5px;
+  background: rgba(245, 130, 31, .06);
 }
 
 .cb-tier__dot {
-  width: 22px; height: 22px; border-radius: 50%;
-  border: 2px solid rgba(20, 22, 26, .3);
+  width: 21px; height: 21px; border-radius: 50%;
+  border: 2px solid rgba(20, 22, 26, .26);
   display: grid; place-items: center;
+  background: #fff;
 }
-.cb-tier[aria-checked="true"] .cb-tier__dot { border-color: var(--ink); }
+.cb-tier[aria-checked="true"] .cb-tier__dot { border-color: var(--action); }
 .cb-tier[aria-checked="true"] .cb-tier__dot::after {
-  content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--ink);
+  content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--action);
 }
 
+/* A picture only if a variant has one; the row reads fine without. */
 .cb-tier__pic {
-  width: 52px; height: 52px; border-radius: 9px; overflow: hidden;
+  width: 46px; height: 46px; border-radius: 10px; overflow: hidden;
   background: var(--cream); border: 1px solid var(--hair);
 }
 .cb-tier__pic img { width: 100%; height: 100%; object-fit: cover; }
 
-.cb-tier__main { min-width: 0; display: grid; gap: 3px; }
+.cb-tier__main { min-width: 0; display: grid; gap: 4px; }
 .cb-tier__name {
   font-family: var(--display); font-weight: 700; font-size: 17px;
   letter-spacing: -.02em; line-height: 1.15;
 }
-.cb-tier__under { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
-.cb-tier__under s { font-size: 14px; color: var(--dimmer); }
-.cb-tier__under b { font-size: 14px; font-weight: 700; color: #D62020; }
+.cb-tier__under { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.cb-tier__under s { font-size: 13.5px; color: var(--dimmer); }
+.cb-tier__under b {
+  font-size: 12px; font-weight: 800; letter-spacing: .02em;
+  color: #B3120F; background: #FDE3E3;
+  border-radius: 999px; padding: 3px 9px;
+}
 .cb-tier__under span { font-size: 13.5px; color: var(--dim); }
 
-.cb-tier__right { text-align: right; display: grid; gap: 1px; }
+.cb-tier__right { text-align: right; display: grid; gap: 2px; }
 .cb-tier__price {
-  font-family: var(--display); font-weight: 800; font-size: 21px; letter-spacing: -.035em;
+  font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -.04em;
 }
-.cb-tier__each { font-size: 13px; color: var(--dim); }
+.cb-tier__each { font-size: 12.5px; color: var(--dim); }
 
-/* The pills sit on the row's own top edge. */
+/* The flag rides the row's own top edge, tucked in from the corner. */
 .cb-tier__flag {
-  position: absolute; top: -10px; left: 14px;
-  font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  position: absolute; top: -9px; left: 16px;
+  font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
   padding: 3px 10px; border-radius: 999px;
-  background: var(--action); color: #140A02; white-space: nowrap;
+  background: var(--ink); color: var(--cream); white-space: nowrap;
 }
-.cb-tier__flag--best { left: auto; right: 14px; background: #1FA34A; color: #fff; }
-.cb-tier--flagged { margin-top: 4px; }
+.cb-tier[aria-checked="true"] .cb-tier__flag { background: var(--action); color: #140A02; }
+.cb-tier__flag--best { left: auto; right: 16px; background: #1FA34A; color: #fff; }
+.cb-tier--flagged { margin-top: 5px; }
 
-@media (max-width: 400px) {
-  .cb-tier { grid-template-columns: 20px auto 1fr auto; gap: 9px; padding: 12px 11px; }
-  .cb-tier__pic { width: 44px; height: 44px; }
-  .cb-tier__name { font-size: 15px; }
-  .cb-tier__price { font-size: 18px; }
-  .cb-tier__under s, .cb-tier__under b { font-size: 13px; }
+@media (max-width: 430px) {
+  .cb-tier { grid-template-columns: 20px 1fr auto; gap: 10px; padding: 14px 13px; }
+  .cb-tier[aria-checked="true"] { padding: 13.5px 12.5px; }
+  .cb-tier__pic { width: 40px; height: 40px; }
+  .cb-tier__name { font-size: 15.5px; }
+  .cb-tier__price { font-size: 19px; }
+  .cb-tier__under s { font-size: 12.5px; }
 }
 
 /* The price on the button, and the three ticks under it. */
@@ -499,14 +512,9 @@
  * one row that is switched on is unmistakable from across the room — which is
  * the whole job of a bundle box.
  */
-.cb-tier[aria-checked="true"] {
-  border-color: var(--action);
-  box-shadow: inset 0 0 0 1.5px var(--action);
-  background: rgba(245, 130, 31, .07);
-}
-.cb-tier[aria-checked="true"] .cb-tier__dot { border-color: var(--action); }
-.cb-tier[aria-checked="true"] .cb-tier__dot::after { background: var(--action); }
-.cb-tier[aria-checked="true"] .cb-tier__price { color: #B3120F; }
+/* Superseded by the rebuilt bundle box further down; the ring is drawn by a
+   real border there rather than an inset shadow, so the row keeps its shape
+   when it is chosen. Red belongs to the saving, never to the price. */
 
 /* ------------------------------------------------------------- in the box */
 
@@ -650,58 +658,3 @@
 
 /* The row still has to fit. Below this the header hands over to the burger,
    which the template already draws. */
-@media (max-width: 1180px) { .cb-nav { gap: 17px; } .cb-nav a { font-size: 14px; } }
-
-/* =======================================================================
-   Crisp
-   =======================================================================
-   The bundle box is the best-looking thing on this page and it is not an
-   accident: a hard two-pixel ink outline, a black lid with the offer written
-   across it, square-ish corners and no shadow. Everything reads as one
-   object. The rest of the page was softer — hairline borders, big radii,
-   drop shadows — so next to the bundle it looks unfinished.
-   So the rest of the page borrows the bundle's rules. One outline weight, one
-   radius, a black lid wherever a section has a title that belongs to a panel,
-   and no shadows anywhere. ==================================================== */
-
-.cb { --edge: 2px solid var(--ink); }
-
-/* ------- the carton list takes the bundle's shape exactly */
-.cb-box__list {
-  border: var(--edge); border-radius: 18px; overflow: hidden;
-  gap: 0; background: var(--paper);
-}
-.cb-box__list li {
-  border: 0; border-radius: 0; border-bottom: 1px solid var(--hair);
-  padding: 15px 18px;
-}
-.cb-box__list li:last-child { border-bottom: 0; }
-.cb-box__list li:nth-child(odd) { background: var(--cream); }
-
-/* ------- the spec sheet gets the hard outline and loses its shadow */
-.cb-specs {
-  border: var(--edge); border-radius: 18px; box-shadow: none;
-}
-.cb-spec { border-bottom: 1px solid var(--hair); }
-.cb-spec:nth-child(2n) { border-left: 1px solid var(--hair); }
-
-/* ------- the tiles, the gallery and the cards: same outline, same radius */
-.cb-rec, .cb-gal__main, .cb-gal__thumb, .cb-card {
-  border: var(--edge) !important;
-  box-shadow: none !important;
-}
-.cb-rec { border-radius: 18px; }
-.cb-rec:hover { transform: none; border-color: var(--action) !important; }
-.cb-gal__main { border-radius: 20px; }
-.cb-gal__thumb { border-radius: 12px; }
-.cb-gal__thumb[aria-current="true"] { box-shadow: inset 0 0 0 2px var(--action) !important; border-color: var(--action) !important; }
-.cb-card { border-radius: 16px; }
-
-/* ------- the buttons stop floating */
-.cb .cb-btn { box-shadow: none; border-width: 2px; }
-.cb .cb-btn:hover { box-shadow: none; background: #E4741A; }
-.cb .cb-btn--ghost { border-width: 2px; }
-
-/* ------- and the section headings lose the highlighter for a hard rule */
-.cb-head .cb-h2 { background: none; }
-.cb-head { position: relative; }
