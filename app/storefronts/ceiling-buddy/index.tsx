@@ -604,6 +604,16 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
               </button>
             </form>
           </div>
+
+          {/* The three promises, as ticks, under the buttons.
+              They come from the Trust icons section rather than being written
+              here, so they say what the rest of the shop says and change in
+              one place. */}
+          <ul className="cb-ticks">
+            {promises(page).map((t) => (
+              <li key={t}>{IcoCheck}<span>{t}</span></li>
+            ))}
+          </ul>
           {chosen ? (
             <div className="cb-pay4__line">
               {IcoPaypal}
