@@ -120,7 +120,7 @@ async function fetchRefs(urls, dir) {
   return out;
 }
 
-async function runPrompt(text, refs, label, n, total) {
+async function runPrompt(text, refs, label, n, total, dir) {
   await wand.reattach();
   await wand.say(label, `${n} of ${total} — sending…`);
 
@@ -171,7 +171,6 @@ async function runPrompt(text, refs, label, n, total) {
     else if (seen.size) { quiet += 2; if (quiet >= 8) break; }
   }
 
-  const slug = label.replace(/\W+/g, "-").toLowerCase();
   let saved = 0;
   for (const url of seen) {
     const b64 = await page.evaluate(async (u) => {
@@ -183,8 +182,10 @@ async function runPrompt(text, refs, label, n, total) {
     }, url).catch(() => null);
     if (!b64) continue;
     saved++;
+    // Numbered by prompt then by picture, so the folder reads in the order the
+    // shots were asked for rather than the order they happened to finish.
     await writeFile(
-      join(opt.out, `${slug}-${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`),
+      join(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`),
       Buffer.from(b64, "base64"),
     );
   }
@@ -229,19 +230,25 @@ while (true) {
   }
 
   await wand.say(label, "Starting…");
-  const refs = await fetchRefs(job.refs, join(opt.out, "_refs", job.id));
+
+  // A folder per job, named after the job. Forty pictures in one directory is
+  // a pile; seven folders of five is a shoot.
+  const slug = label.replace(/\W+/g, "-").replace(/^-|-$/g, "").toLowerCase();
+  const dir = join(opt.out, slug);
+  await mkdir(dir, { recursive: true });
+  const refs = await fetchRefs(job.refs, join(dir, "reference"));
 
   let total = 0;
   for (let i = 0; i < job.prompts.length; i++) {
     if (await wand.stopped()) break;
-    const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length);
+    const got = await runPrompt(job.prompts[i], refs, label, i + 1, job.prompts.length, dir);
     total += got;
     console.log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
   }
 
   done.add(job.id);
   await writeFile(DONE_FILE, [...done].join("\n"));
-  console.log(`\n\x1b[1m${total} image${total === 1 ? "" : "s"} saved to ${opt.out}\x1b[0m\n`);
+  console.log(`\n\x1b[1m${total} image${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);
   await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);
 }
 
