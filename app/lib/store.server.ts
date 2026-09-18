@@ -75,7 +75,19 @@ export interface LoadedProductPage {
 export async function loadProductPage(
   db: DB,
   store: StoreRow,
-  options: { themeId?: string; includeHidden?: boolean } = {},
+  options: {
+    themeId?: string;
+    includeHidden?: boolean;
+    /**
+     * Which product page to load, by the page's handle.
+     *
+     * This was written for a shop that sells one thing, so it took the first
+     * product page it found and stopped. A store with seven products has
+     * seven of them, and picking whichever came back first would have served
+     * the same page at every address. Omitted, it keeps the old behaviour.
+     */
+    handle?: string;
+  } = {},
 ): Promise<LoadedProductPage | null> {
   // Which theme answers: the one being previewed in the editor, otherwise the
   // store's live theme. Falling back to any product page keeps stores seeded
@@ -90,14 +102,15 @@ export async function loadProductPage(
         .limit(1)
     )[0]?.id;
 
+  const scope = [eq(pages.storeId, store.id), eq(pages.kind, "product")];
+  if (themeId) scope.push(eq(pages.themeId, themeId));
+  if (options.handle) scope.push(eq(pages.handle, options.handle));
+
   const [page] = await db
     .select()
     .from(pages)
-    .where(
-      themeId
-        ? and(eq(pages.storeId, store.id), eq(pages.kind, "product"), eq(pages.themeId, themeId))
-        : and(eq(pages.storeId, store.id), eq(pages.kind, "product")),
-    )
+    .where(and(...scope))
+    .orderBy(asc(pages.handle))
     .limit(1);
   if (!page || !page.productId) return null;
 

@@ -55,17 +55,29 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const store = await resolveStore(context.db, context.hostname, url);
   if (!store) throw new Response("Not found", { status: 404 });
 
-  // Every other store keeps the old Shopify-shaped redirect to the root.
-  if (store.slug !== "bodies") {
+  /**
+   * Two shapes of shop share this address.
+   *
+   * bodies sells one board in four colours, so the handle picks a *variant*
+   * of a single page. Black Reaper sells seven different things, so the
+   * handle picks the *page*. Everything below — pixel, tracking, headers,
+   * payment keys — is the same either way, which is why this is one route
+   * with two openings rather than two routes.
+   */
+  const perProduct = store.slug === "reaper";
+  if (!perProduct && store.slug !== "bodies") {
+    // Every other store keeps the old Shopify-shaped redirect to the root.
     return new Response(null, { status: 301, headers: { Location: `/${url.search}` } });
   }
 
-  const page = await loadProductPage(context.db, store);
+  const page = await loadProductPage(context.db, store, perProduct ? { handle: params.handle } : {});
   if (!page) throw new Response("Not found", { status: 404 });
   const admin = await currentUser(context.db, request).catch(() => null);
   const liveReload = admin ? liveReloadScript() : null;
 
-  const variant = page.variants.find((v) => slug(v.label) === params.handle);
+  const variant = perProduct
+    ? (page.variants.find((v) => v.isDefault) ?? page.variants[0] ?? null)
+    : page.variants.find((v) => slug(v.label) === params.handle);
   if (!variant) {
     // A renamed colourway keeps its old address alive.
     const renamed: Record<string, string> = { "lilac-heat": "strawberry-milk" };
