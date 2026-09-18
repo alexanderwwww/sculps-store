@@ -478,7 +478,7 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
               {has(v, "bundleTitle") ? (
                 <div className="cb-bundle__lid">{val(v, "bundleTitle")}</div>
               ) : null}
-            <div className="cb-opts" role="radiogroup" aria-label="Choose a bundle">
+            <div className="cb-tiers" role="radiogroup" aria-label="Choose a bundle">
               {variants.map((x, i) => {
                 const on = x.id === picked;
                 // The flags are worked out here, never typed into the data:
@@ -494,38 +494,46 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
                       ? ["pop", "Most popular"] as const
                       : null;
                 const off = savedPercent(x.priceCents, x.compareAtCents);
+                const save = savedAmount(x.priceCents, x.compareAtCents);
+                // How many of the thing you get. The decision in this box is
+                // almost never about features — it is "one or two" — so the
+                // count is the biggest thing on the card.
+                const count = /^(\d+)|^one\b/i.test(x.label)
+                  ? (x.label.match(/^(\d+)/)?.[1] ?? "1")
+                  : /^two\b/i.test(x.label) ? "2"
+                  : /^three\b/i.test(x.label) ? "3"
+                  : null;
+                const extra = /\+/.test(x.label);
                 return (
                   <button
                     key={x.id}
                     type="button"
                     role="radio"
                     aria-checked={on}
-                    className={`cb-opt${flag ? " cb-opt--flagged" : ""}`}
+                    className={`cb-tier${flag ? " cb-tier--flagged" : ""}`}
                     onClick={() => setPicked(x.id)}
                   >
-                    {flag ? <span className={`cb-opt__flag cb-opt__flag--${flag[0]}`}>{flag[1]}</span> : null}
-                    <span className="cb-opt__dot" />
-                    {/* What this option actually is. The bundles differ by what
-                        is in the box, and a line of text is a poor way to say
-                        that when a picture can. */}
-                    {x.imageUrl ? (
-                      <span className="cb-opt__pic">
-                        <img src={x.imageUrl} alt="" loading="lazy" />
-                      </span>
-                    ) : null}
-                    <span>
-                      <span className="cb-opt__t">{x.label}</span>
-                      {x.sublabel ? <span className="cb-opt__s">{x.sublabel}</span> : null}
-                      {savedAmount(x.priceCents, x.compareAtCents) ? (
-                        <span className="cb-opt__save">
-                          Save {formatMoney(savedAmount(x.priceCents, x.compareAtCents)!, currency)}
-                        </span>
-                      ) : null}
+                    {flag ? <span className={`cb-tier__flag cb-tier__flag--${flag[0]}`}>{flag[1]}</span> : null}
+
+                    {/* The picture, repeated. Two reapers is two pictures of a
+                        reaper — the quantity draws itself and nobody has to
+                        read a number to understand the offer. */}
+                    <span className="cb-tier__pics" data-n={count ?? "1"}>
+                      {x.imageUrl ? (
+                        Array.from({ length: Math.min(Number(count) || 1, 3) }).map((_, k) => (
+                          <img key={k} src={x.imageUrl!} alt="" loading="lazy" />
+                        ))
+                      ) : (
+                        <span className="cb-tier__n">{count ? `×${count}` : "×1"}</span>
+                      )}
+                      {extra ? <span className="cb-tier__plus">+</span> : null}
                     </span>
-                    <span className="cb-opt__p">
-                      <b>{formatMoney(x.priceCents, currency)}</b>
-                      {x.compareAtCents ? <s>{formatMoney(x.compareAtCents, currency)}</s> : null}
-                    </span>
+
+                    <span className="cb-tier__name">{x.label}</span>
+                    <span className="cb-tier__price">{formatMoney(x.priceCents, currency)}</span>
+                    {x.compareAtCents ? <s className="cb-tier__was">{formatMoney(x.compareAtCents, currency)}</s> : null}
+                    {save ? <span className="cb-tier__save">Save {formatMoney(save, currency)}</span> : null}
+                    {x.sublabel && !save ? <span className="cb-tier__sub">{x.sublabel}</span> : null}
                   </button>
                 );
               })}
