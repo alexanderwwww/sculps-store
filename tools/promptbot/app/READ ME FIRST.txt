@@ -87,10 +87,16 @@ PRESS ESC IN THE BROWSER TO STOP. Nothing more gets typed.
 
 WHERE THE PICTURES GO
 
-   Downloads -> Magic Wand -> (a folder per job)
+When a job finishes, the panel in the browser says how many came back
+and shows a button:
 
-When a job finishes, a panel says how many were saved and has a
-button that opens the folder. It opens it for you anyway.
+     [ Close ]                        [ Get the zip ]
+
+Press it and Finder opens with one zip file selected, on your Desktop,
+named after the job. All the pictures are inside it, no folders to
+click through.
+
+Nothing is left lying around in Downloads.
 
 
 WATCH FOR THIS ON THE FIRST PROMPT

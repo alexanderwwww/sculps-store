@@ -510,6 +510,8 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0) {
 
 /* ------------------------------------------------------------------- loop */
 
+/** The zip the "Get the zip" button reaches for, from the last finished job. */
+let lastZip = null;
 let spinner = 0;
 while (true) {
   if (await wand.stopped()) { console.log("\nStopped — you pressed Escape.\n"); break; }
@@ -521,7 +523,12 @@ while (true) {
   } catch { /* a moment offline is not a reason to quit */ }
 
   if (!job?.id || done.has(job.id) || !job.prompts?.length) {
-    if (await wand.wantsFolder()) await run("open", [opt.out]).catch(() => {});
+    // The button on the finished panel. Reveals the zip in Finder with the
+    // file selected, so it can be dragged straight out.
+    if (await wand.wantsFolder()) {
+      if (lastZip) await run("open", ["-R", lastZip]).catch(() => {});
+      else await run("open", [opt.out]).catch(() => {});
+    }
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
     await page.waitForTimeout(POLL_MS);
     continue;
@@ -649,15 +656,13 @@ while (true) {
     }
   }
 
+  lastZip = zipPath ?? (total ? dir : null);
   await wand.done(
-    total ? `${total} picture${total === 1 ? "" : "s"} — zipped` : "Nothing came back",
+    total ? `${total} picture${total === 1 ? "" : "s"} ready` : "Nothing came back",
     total
       ? (zipPath ?? dir).replace(process.env.HOME ?? "", "~")
       : "Gemini returned no images for this one.",
   );
-  // Reveal the zip itself in Finder, selected, rather than opening a folder.
-  if (zipPath) await run("open", ["-R", zipPath]).catch(() => {});
-  else if (total) await run("open", [dir]).catch(() => {});
 }
 
 await browser.close();

@@ -318,10 +318,11 @@ export const OVERLAY = `(() => {
   /*
    * What happened, and a way to go and look at it.
    *
-   * The runner saves every picture as it arrives, but "it saved them" is a
-   * claim, and a claim about a folder you cannot see is worth very little.
-   * This says the number and opens the folder, so the answer is the folder
-   * itself rather than a sentence about it.
+   * The runner writes one zip when the job finishes, and this is the button
+   * that fetches it. "It saved them" is a claim; a file appearing in Finder,
+   * selected, when you press a button is not. The button only exists once
+   * there is something behind it — nothing on this panel is ever a promise
+   * about work still running.
    */
   const doneCard = css(document.createElement("div"), {
     position: "fixed", zIndex: TOP, right: "18px", top: "18px",
@@ -333,7 +334,7 @@ export const OVERLAY = `(() => {
   const dName = css(document.createElement("div"), { fontSize: "15px", fontWeight: "700", marginBottom: "3px" });
   const dSub = css(document.createElement("div"), { opacity: ".6", fontSize: "12px", marginBottom: "12px" });
   const dRow = css(document.createElement("div"), { display: "flex", gap: "8px" });
-  const bOpen = mkBtn("Open the folder", true);
+  const bOpen = mkBtn("Get the zip", true);
   const bClose = mkBtn("Close", false);
   bOpen.setAttribute("data-wand", "");
   bClose.setAttribute("data-wand", "");
