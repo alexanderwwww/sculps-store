@@ -201,6 +201,7 @@ function Section({
     case "photo_banner":  return <PhotoBanner section={section} page={page} storeParam={storeParam} />;
     case "split_picks":   return <HersHis section={section} />;
     case "recommendations": return <Recommends section={section} page={page} storeParam={storeParam} />;
+    case "ugc_wall":      return <UgcWall section={section} />;
     case "closing_cta":   return <Closing section={section} page={page} storeParam={storeParam} />;
     default:              return null;
   }
@@ -1423,6 +1424,50 @@ function RvThread({ r }: { r: LoadedProductPage["reviews"][number] }) {
       </div>
       <div className="rv-thread__field">iMessage</div>
     </article>
+  );
+}
+
+
+/**
+ * The wall of vertical clips.
+ *
+ * Six phone-shaped pictures of the thing standing in somebody else's garden,
+ * sliding past on their own. It is the only section on the page where the
+ * shop says nothing — no claim, no price, no button — because a photograph
+ * taken by somebody who paid for it argues better than a sentence can, and
+ * putting a sentence next to it only invites the reader to doubt both.
+ *
+ * Built as one track printed twice, like the review wall, so the loop has no
+ * seam. The glass is real backdrop blur where the browser has it and a flat
+ * tint where it does not, which is the difference between a nice effect and a
+ * broken section.
+ */
+function UgcWall({ section }: { section: LoadedSection }) {
+  const clips = section.blocks.filter((b) => has(b.values, "image"));
+  if (!clips.length) return null;
+  return (
+    <section className="cb-ugcw" id="clips">
+      <div className="cb-wrap">
+        <Head section={section} />
+      </div>
+      <div className="cb-ugcw__rail">
+        <div className="cb-ugcw__track">
+          {[0, 1].map((pass) => (
+            <div className="cb-ugcw__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
+              {clips.map((b) => (
+                <figure className="cb-clip" key={`${pass}-${b.id}`}>
+                  <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
+                  <span className="cb-clip__glass" aria-hidden="true" />
+                  {has(b.values, "caption") ? (
+                    <figcaption>{val(b.values, "caption")}</figcaption>
+                  ) : null}
+                </figure>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

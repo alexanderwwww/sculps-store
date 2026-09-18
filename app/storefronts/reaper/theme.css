@@ -1405,3 +1405,89 @@
   .rv-pass { gap: 14px; padding-right: 14px; }
   .rv-pass .rv-card { width: 268px !important; }
 }
+
+/* =======================================================================
+   The wall of clips
+   =======================================================================
+   Vertical, phone-shaped, moving on their own, under glass. The only
+   section on the page where the shop says nothing. ==================== */
+
+.cb-ugcw {
+  background:
+    radial-gradient(90% 120% at 50% 0%, #14203A 0%, #0A0C12 62%),
+    #0A0C12;
+  color: #fff;
+  padding: clamp(52px, 6vw, 84px) 0 clamp(56px, 6vw, 88px);
+  overflow: hidden;
+}
+.cb-ugcw .cb-head h2, .cb-ugcw .cb-h2 { color: #fff; }
+.cb-ugcw .cb-head p { color: rgba(255,255,255,.55); }
+
+.cb-ugcw__rail {
+  margin-top: 34px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.cb-ugcw__track { display: flex; width: max-content; animation: cb-clips 46s linear infinite; }
+.cb-ugcw__pass { display: flex; gap: 20px; padding-right: 20px; }
+@keyframes cb-clips { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .cb-ugcw__track { animation: none; } }
+
+/*
+ * The glass.
+ *
+ * A rim of light down one edge, a soft sheen across the top, and a real
+ * backdrop blur behind the caption where the browser supports one. Where it
+ * does not, the same rule falls back to a flat dark tint — the caption stays
+ * readable either way, which is the whole job. A glass effect that is
+ * unreadable without blur support is not an effect, it is a bug.
+ */
+.cb-clip {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(200px, 20vw, 268px);
+  aspect-ratio: 9 / 16;
+  margin: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  background: #0E1118;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow:
+    0 34px 70px -34px rgba(0,0,0,.95),
+    inset 0 1px 0 rgba(255,255,255,.22);
+  animation: cb-clipbob 9s ease-in-out infinite;
+}
+.cb-ugcw__pass .cb-clip:nth-child(6n + 1) { animation-delay: -0.6s; }
+.cb-ugcw__pass .cb-clip:nth-child(6n + 2) { animation-delay: -3.2s; }
+.cb-ugcw__pass .cb-clip:nth-child(6n + 3) { animation-delay: -6.1s; }
+.cb-ugcw__pass .cb-clip:nth-child(6n + 4) { animation-delay: -1.9s; }
+.cb-ugcw__pass .cb-clip:nth-child(6n + 5) { animation-delay: -7.4s; }
+.cb-ugcw__pass .cb-clip:nth-child(6n)     { animation-delay: -4.5s; }
+@keyframes cb-clipbob { 50% { transform: translateY(-10px); } }
+@media (prefers-reduced-motion: reduce) { .cb-clip { animation: none; } }
+
+.cb-clip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* The sheen: one diagonal highlight across the top corner, nothing more. */
+.cb-clip__glass {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.06) 22%, transparent 42%),
+    linear-gradient(to top, rgba(6,8,14,.72) 0%, transparent 38%);
+}
+
+.cb-clip figcaption {
+  position: absolute; left: 12px; right: 12px; bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 12.5px; font-weight: 600; color: #fff;
+  background: rgba(14, 17, 24, .58);
+  border: 1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+@media (max-width: 520px) {
+  .cb-ugcw__pass { gap: 13px; padding-right: 13px; }
+  .cb-clip { width: 180px; border-radius: 22px; }
+}

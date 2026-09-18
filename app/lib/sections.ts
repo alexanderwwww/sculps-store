@@ -407,6 +407,28 @@ export const SECTIONS: SectionDef[] = [
     blocks: null,
   },
   {
+    /**
+     * The wall of vertical clips.
+     *
+     * Everything else on a product page is the shop talking. This is the
+     * bit where it stops: six phone-shaped pictures of the thing in somebody
+     * else's garden, moving past on their own. It carries no copy beyond a
+     * heading because the pictures are the argument.
+     */
+    type: "ugc_wall",
+    label: "UGC wall",
+    hint: "Vertical phone clips, moving on their own",
+    fields: [heading, subheading],
+    blocks: {
+      label: "Clips",
+      addLabel: "Add a clip",
+      fields: [
+        { name: "image", label: "Picture", kind: "image" },
+        { name: "caption", label: "Caption", kind: "text" },
+      ],
+    },
+  },
+  {
     type: "closing_cta",
     label: "Closing CTA",
     hint: "Last call to buy",
