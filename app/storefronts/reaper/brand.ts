@@ -25,5 +25,11 @@ export function reaperBrand(page: LoadedProductPage): CbBrand {
       "30 days to send it back",
       "Lit, staked and standing in a minute",
     ],
+    marquee: [
+      "Up in a minute",
+      "Lit from the inside",
+      "Back in the garage by November",
+      "The house the street talks about",
+    ],
   };
 }

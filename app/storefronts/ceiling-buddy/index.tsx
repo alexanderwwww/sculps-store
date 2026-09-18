@@ -160,7 +160,7 @@ export function CeilingBuddyStorefront({
             // Every section here is block-level anyway, so a block wrapper
             // changes nothing about the layout.
             <div key={s.id} data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} />
             </div>
           ))}
         </main>
@@ -175,17 +175,19 @@ function Section({
   section,
   page,
   storeParam,
+  brand,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
   storeParam: string;
+  brand: CbBrand;
 }) {
   switch (section.type) {
     case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <LockScreen section={section} page={page} />;
-    case "trust_icons":   return <TrustBand section={section} />;
+    case "trust_icons":   return <TrustBand section={section} brand={brand} />;
     case "three_steps":   return <Steps section={section} />;
     case "benefits":      return <Benefits section={section} />;
     case "features":      return <Features section={section} />;
@@ -226,12 +228,15 @@ export interface CbBrand {
   nav: readonly (readonly [string, string])[];
   /** The promises that ride the announcement rail, in order. */
   rail: readonly string[];
+  /** Four short lines for the strip under the buy box. */
+  marquee: readonly string[];
 }
 
 const BRAND: CbBrand = {
   logo: LOGO,
   nav: NAV,
   rail: ["Free US shipping", "30 nights to change your mind", "1-year warranty", "Ships in 3-5 business days"],
+  marquee: ["Watch lying down", "Snacks included, sort of", "Your ceiling is free", "Works outside too"],
 };
 
 function Header({
@@ -579,8 +584,10 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
 /* Theme chrome: the three promises, repeated. Not a section — it is the strip
    that separates the buy box from the rest of the page. */
 
-function Marquee() {
-  const line = ["Watch lying down", "Snacks included, sort of", "Your ceiling is free", "Works outside too"];
+function Marquee({ brand }: { brand: CbBrand }) {
+  // Four short lines, the store's own. They were written into this file, so
+  // every shop borrowing the template told visitors their ceiling was free.
+  const line = brand.marquee;
   return (
     <div className="cb-marq" aria-hidden="true">
       <div className="cb-marq__t">
@@ -594,12 +601,12 @@ function Marquee() {
 
 /* ------------------------------------------------------------ trust band */
 
-function TrustBand({ section }: { section: LoadedSection }) {
+function TrustBand({ section, brand }: { section: LoadedSection; brand: CbBrand }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
   return (
     <>
-      <Marquee />
+      <Marquee brand={brand} />
       <section className="cb-band">
         <div className="cb-wrap cb-band__in">
           {items.map((b, i) => (
