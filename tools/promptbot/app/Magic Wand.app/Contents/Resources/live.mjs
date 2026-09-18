@@ -24,6 +24,7 @@ import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
+import { rm } from "node:fs/promises";
 import { promisify } from "node:util";
 
 const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.dev/media/wand-queue.json";
@@ -617,16 +618,46 @@ while (true) {
 
   done.add(job.id);
   await writeFile(DONE_FILE, [...done].join("\n"));
-  console.log(`\n\x1b[1m${total} image${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);
   await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);
 
   // The panel, with the number and a button that opens the folder — because
   // a folder you can see beats a sentence saying the folder exists.
+  /**
+   * One zip on the Desktop, and the loose folder thrown away.
+   *
+   * Saving into a folder per job meant a Downloads directory slowly filling
+   * with directories nobody could find again. A single file, on the Desktop,
+   * named after the job, is the thing somebody can actually point at — and
+   * making it here rather than asking the chat site for one is the difference
+   * between it existing and it being promised.
+   */
+  let zipPath = null;
+  if (total) {
+    zipPath = join(process.env.HOME ?? ".", "Desktop", `${slug}.zip`);
+    await rm(zipPath, { force: true }).catch(() => {});
+    // Zipped from inside the folder so the archive has the pictures at its
+    // root rather than a chain of directories to click through.
+    const ok = await run("zip", ["-qrj", zipPath, dir], { cwd: opt.out })
+      .then(() => true)
+      .catch(() => false);
+    if (ok) {
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+      console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} → ${zipPath.replace(process.env.HOME ?? "", "~")}\x1b[0m\n`);
+    } else {
+      zipPath = null;
+      console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);
+    }
+  }
+
   await wand.done(
-    total ? `${total} picture${total === 1 ? "" : "s"} saved` : "Nothing came back",
-    total ? dir.replace(process.env.HOME ?? "", "~") : "Gemini returned no images for this one.",
+    total ? `${total} picture${total === 1 ? "" : "s"} — zipped` : "Nothing came back",
+    total
+      ? (zipPath ?? dir).replace(process.env.HOME ?? "", "~")
+      : "Gemini returned no images for this one.",
   );
-  if (total) await run("open", [dir]).catch(() => {});
+  // Reveal the zip itself in Finder, selected, rather than opening a folder.
+  if (zipPath) await run("open", ["-R", zipPath]).catch(() => {});
+  else if (total) await run("open", [dir]).catch(() => {});
 }
 
 await browser.close();

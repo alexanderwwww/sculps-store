@@ -136,18 +136,26 @@ export const OVERLAY = `(() => {
       audio = audio || new Ctx();
       if (audio.state === "suspended") audio.resume();
       const t = audio.currentTime;
-      // A fifth, struck together and let go — the shape of a small bell.
-      for (const [hz, when, level] of [[1318.5, 0, 0.05], [1975.5, 0.045, 0.032]]) {
+      // A rising third and a fifth, struck in quick succession with a shimmer
+      // on top — a small bell rather than a single ping. Still quiet enough to
+      // sit under whatever else is playing.
+      for (const [hz, when, level] of [
+        [1046.5, 0,     0.055],
+        [1318.5, 0.055, 0.050],
+        [1568.0, 0.105, 0.042],
+        [2093.0, 0.150, 0.026],
+        [2637.0, 0.195, 0.016],
+      ]) {
         const osc = audio.createOscillator();
         const gain = audio.createGain();
         osc.type = "sine";
         osc.frequency.setValueAtTime(hz, t + when);
         gain.gain.setValueAtTime(0, t + when);
         gain.gain.linearRampToValueAtTime(level, t + when + 0.012);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + when + 0.42);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + when + 0.55);
         osc.connect(gain).connect(audio.destination);
         osc.start(t + when);
-        osc.stop(t + when + 0.45);
+        osc.stop(t + when + 0.58);
       }
     } catch {
       // No audio on this page is not a reason for anything else to stop.
