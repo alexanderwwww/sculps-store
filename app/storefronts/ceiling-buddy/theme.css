@@ -209,19 +209,17 @@
 .cb-price { display: flex; align-items: baseline; gap: 10px; margin: 16px 0 2px; flex-wrap: wrap; }
 .cb-price__now { font-family: var(--display); font-size: clamp(30px, 3.4vw, 38px); font-weight: 600; }
 .cb-price__was { font-size: 17px; color: var(--dimmer); text-decoration: line-through; }
-.cb-price__off {
-  display: none;
-}
 /* The price itself carries the brand's red — it is the loudest number here. */
 .cb-price__now { color: var(--ink); }
-/* The headline number: how many dollars come off, not a percentage. */
-.cb-price__save {
-  display: inline-flex; align-items: center; gap: 7px; margin-top: 10px;
+/* How many dollars come off, sitting on the price's own line. Dollars, never
+   a percentage: it is the figure somebody can actually picture. */
+.cb-price__off {
+  display: inline-flex; align-items: center; gap: 7px;
   font-family: var(--display); font-weight: 600; font-size: 14px;
   color: #0A2C44; background: #B0DDF9;
-  border-radius: 999px; padding: 6px 13px; white-space: nowrap; font-size: 14px;
+  border-radius: 999px; padding: 6px 13px; white-space: nowrap;
 }
-.cb-price__save svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.cb-price__off svg { width: 15px; height: 15px; flex: 0 0 auto; }
 
 .cb-opts { display: grid; gap: 9px; margin: 20px 0; }
 .cb-opt {

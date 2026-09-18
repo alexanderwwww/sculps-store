@@ -409,7 +409,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
     () => (variants.find((x) => x.isDefault) ?? variants[0])?.id ?? "",
   );
   const chosen = variants.find((x) => x.id === picked) ?? variants[0] ?? null;
-  const off = chosen ? savedPercent(chosen.priceCents, chosen.compareAtCents) : null;
+  // Always the dollars, never the percentage: "Save $59" is a number somebody
+  // can picture, and "Save 23%" is arithmetic homework.
+  const off = chosen ? savedAmount(chosen.priceCents, chosen.compareAtCents) : null;
   const currency = page.store.currency;
   const main = shots[shot];
 
@@ -453,6 +455,11 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
         <div>
           {has(v, "badge") ? <div className="cb-badge">{val(v, "badge")}</div> : null}
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
+          {/* The score, before the price.
+              Whoever is about to look at a number wants to know first whether
+              anybody else paid it. It reads off the same reviews the wall
+              below is built from, so it can never disagree with them. */}
+          <Score page={page} />
           {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
 
           {chosen ? (
@@ -461,13 +468,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
               {chosen.compareAtCents ? (
                 <s className="cb-price__was">{formatMoney(chosen.compareAtCents, currency)}</s>
               ) : null}
-              {off ? <span className="cb-price__off">Save {off}%</span> : null}
-            </div>
-          ) : null}
-          {chosen && savedAmount(chosen.priceCents, chosen.compareAtCents) ? (
-            <div className="cb-price__save">
-              {IcoTag}
-              You save {formatMoney(savedAmount(chosen.priceCents, chosen.compareAtCents)!, currency)}
+              {off ? (
+                <span className="cb-price__off">{IcoTag} Save {formatMoney(off, currency)}</span>
+              ) : null}
             </div>
           ) : null}
 
@@ -1244,6 +1247,30 @@ function sinceText(when: Date | string | null): string {
   if (days < 14) return "last week";
   if (days < 60) return `${Math.round(days / 7)} weeks ago`;
   return `${Math.round(days / 30)} months ago`;
+}
+
+/**
+ * The star line under the product title.
+ *
+ * Nothing is typed in: it averages the published, rated reviews and links to
+ * them, so a shop that has not written any yet simply doesn't get a score
+ * rather than getting an invented one.
+ */
+function Score({ page }: { page: LoadedProductPage }) {
+  const rated = page.reviews.filter((r) => r.rating > 0);
+  if (!rated.length) return null;
+  const mean = rated.reduce((n, r) => n + r.rating, 0) / rated.length;
+  return (
+    <a className="cb-score" href="#reviews">
+      <span className="cb-score__stars" aria-hidden="true">
+        {[0, 1, 2, 3, 4].map((n) => (
+          <span key={n} style={{ opacity: n < Math.round(mean) ? 1 : 0.26 }}>{IcoStar}</span>
+        ))}
+      </span>
+      <b>{mean.toFixed(1)}</b>
+      <span>{rated.length} reviews</span>
+    </a>
+  );
 }
 
 function Reviews({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
