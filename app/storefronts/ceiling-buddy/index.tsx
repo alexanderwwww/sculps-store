@@ -193,7 +193,7 @@ function Section({
     case "who_its_for":   return <WhoFor section={section} />;
     case "whats_in_the_box": return <InTheBox section={section} />;
     case "specifications": return <Specs section={section} />;
-    case "reviews":       return <><Reviews section={section} page={page} /><PayLater page={page} /></>;
+    case "reviews":       return <Reviews section={section} page={page} />;
     case "photo_banner":  return <PhotoBanner section={section} page={page} storeParam={storeParam} />;
     case "split_picks":   return <HersHis section={section} />;
     case "recommendations": return <Recommends section={section} page={page} storeParam={storeParam} />;
@@ -434,6 +434,12 @@ function BuyBox({ section, page, storeParam = "" }: { section: LoadedSection; pa
               ))}
             </div>
           ) : null}
+
+          {/* Under the pictures, not tucked beside the price.
+              Four payments is a reason to look at a $299 product at all, so it
+              belongs where the looking happens — directly under the thing
+              being looked at, at full width, with PayPal's own mark on it. */}
+          <PayLater page={page} wide />
         </div>
 
         <div>
@@ -1008,13 +1014,13 @@ const PAYPAL_WORDMARK = "/media/cda7704463471358.svg";
 
 const IcoPaypal = <img className="cb-pp" src={PAYPAL_MARK} alt="PayPal" />;
 
-function PayLater({ page }: { page: LoadedProductPage }) {
+function PayLater({ page, wide = false }: { page: LoadedProductPage; wide?: boolean }) {
   const buy = page.variants.find((v) => v.isDefault) ?? page.variants[0] ?? null;
   if (!buy) return null;
   const each = Math.round(buy.priceCents / 4);
   return (
-    <section className="cb-pay4">
-      <div className="cb-wrap cb-pay4__in">
+    <section className={`cb-pay4${wide ? " cb-pay4--under" : ""}`}>
+      <div className={`${wide ? "" : "cb-wrap "}cb-pay4__in`}>
         <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
         <p>
           Pay in 4. <b>{formatMoney(each, page.store.currency)}</b> today, then three more —

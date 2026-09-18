@@ -333,3 +333,36 @@
 }
 .cb-bundle .cb-opt--flagged { padding-top: 20px; }
 .cb-bundle .cb-opt[aria-checked="true"].cb-opt--flagged { padding-top: 24px; }
+
+/* ------------------------------------------------------- pay in four */
+
+/*
+ * The instalment banner, directly under the pictures.
+ *
+ * It used to sit far down the page beside the reviews, which is after the
+ * decision has already been made. At $299 the question "can I actually afford
+ * this today" is asked while looking at the photograph, so the answer belongs
+ * there — full width, PayPal's own mark, no ambiguity about who is offering it.
+ */
+.cb-pay4--under {
+  margin-top: 14px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.cb-pay4--under .cb-pay4__in {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: none;
+  padding: 14px 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r);
+  background: var(--cream);
+}
+.cb-pay4--under .cb-pp--word { height: 22px; width: auto; flex: 0 0 auto; }
+.cb-pay4--under p { margin: 0; font-size: 15px; flex: 1 1 200px; }
+.cb-pay4--under p b { font-weight: 800; }
+.cb-pay4--under .cb-pay4__small { flex: 1 0 100%; font-size: 12px; color: var(--dim); }

@@ -9,9 +9,9 @@
  * history and redirect to the root.
  */
 import type { Route } from "./+types/products.bodies";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { resolveStore, loadProductPage } from "~/lib/store.server";
-import { metaConfig } from "~/db/schema";
+import { metaConfig, discounts } from "~/db/schema";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { pixelScript } from "~/lib/meta.server";
@@ -90,6 +90,15 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     throw new Response("Not found", { status: 404 });
   }
 
+  // The code the announcement rail is shouting about. It was only loaded on
+  // the home route, so every product page — which is where people actually
+  // land — ran the rail without it.
+  const [offer] = await context.db
+    .select({ code: discounts.code, kind: discounts.kind, value: discounts.value })
+    .from(discounts)
+    .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true)))
+    .limit(1);
+
   const [meta] = await context.db
     .select({ pixelId: metaConfig.pixelId })
     .from(metaConfig)
@@ -129,13 +138,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     .catch(() => null);
 
   return withHeaders(
-    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload },
+    { store, page, variant, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload, offer: offer ?? null },
     { headers },
   );
 }
 
 export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
-  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload } = loaderData;
+  const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload, offer } = loaderData;
 
   /**
    * Black Reaper sells seven things off one template, so a product page here
@@ -157,6 +166,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
           storeParam={storeParam}
           publishableKey={publishableKey}
           paypalClientId={paypalClientId}
+          offer={offer}
           brand={reaperBrand(page)}
         />
       </>
