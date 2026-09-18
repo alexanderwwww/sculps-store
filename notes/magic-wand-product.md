@@ -83,3 +83,47 @@ an advert, which is the cheapest distribution there is.
 5. Credits and MCP only once people are paying.
 
 The store first. This is the better idea and the slower money.
+
+## The distribution architecture
+
+The shape Alex described, which is the right one:
+
+    website  ->  download  ->  app installs  ->  registers itself with Claude
+                                             ->  user talks to Claude, work happens
+
+**How the pieces fit**
+
+1. **Website.** One page, one download button, one price. Nothing else.
+2. **The app** ships as a signed, notarised `.dmg`. Drag to Applications, done.
+3. **On first launch it registers itself as an MCP server** with Claude Desktop
+   — MCP is an open protocol and Claude Desktop reads local servers out of a
+   config file, so the installer adds its own entry rather than asking anybody
+   to edit JSON. Claude restarts, the tools are there.
+4. **A skill ships inside it**, so Claude already knows the workflow: how to
+   write prompts for product photography, how many shots a listing needs, what
+   to attach. The customer says "forty images for this product" and it happens.
+5. **The app does the generating** — through the official image APIs, not a
+   browser (see above for why that matters).
+
+**What actually makes this hard, in order**
+
+- **Notarisation.** Every customer will hit the same Gatekeeper wall Alex hit,
+  three times, unless the app is signed and notarised by Apple. That needs a
+  paid developer account and a build step. It is not optional for something
+  people pay for — the first support email is always this.
+- **Licensing.** Something has to check whether this copy is paid for, and do
+  it without a server outage bricking somebody's afternoon.
+- **The config write.** Editing another app's configuration file from an
+  installer is doable and has to be careful: merge, never overwrite, and leave
+  it valid if the customer already has other servers configured.
+- **Claude Desktop must be installed.** The app should detect and say so
+  plainly rather than failing silently.
+
+**What makes this good rather than merely possible**
+
+The MCP angle is the moat, not the wand. Anyone can write a script that calls
+an image API. Very few can say "it plugs into Claude, and Claude already knows
+how to use it" — that is a real product difference and it is also the demo:
+you type a sentence into Claude and forty product photographs appear.
+
+Build order stays the same: the store first, then the API swap, then this.
