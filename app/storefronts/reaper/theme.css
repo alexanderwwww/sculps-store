@@ -1174,3 +1174,20 @@
   .cb-tier__price { font-size: 19px; }
   .cb-tier__each { font-size: 12px; }
 }
+
+/* ------------------------------------------ the picture follows you down */
+
+/*
+ * The buy box is twice the height of the photograph beside it, so the right
+ * hand column scrolls on alone and the product disappears off the top while
+ * somebody is still choosing a bundle — deciding about a thing they can no
+ * longer see.
+ *
+ * Making the gallery sticky was not enough on its own. The storefront's own
+ * wrapper carries overflow-x: hidden to stop the marquees widening the page,
+ * and per spec a hidden axis forces the other axis to `auto` — which quietly
+ * turns that wrapper into a scroll container and leaves position: sticky with
+ * nothing to stick to. `clip` hides the overflow the same way without
+ * creating one.
+ */
+.cb { overflow-x: clip; overflow-y: visible; }
