@@ -495,7 +495,10 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
           <PayLater page={page} wide />
         </div>
 
-        <div>
+        {/* The right-hand column. `cb-buy__side` exists so a phone can reorder
+            it — price and buttons first, the reading matter after — without
+            moving anything on a desktop, where it all fits anyway. */}
+        <div className="cb-buy__side">
           {has(v, "badge") ? <div className="cb-badge">{val(v, "badge")}</div> : null}
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.

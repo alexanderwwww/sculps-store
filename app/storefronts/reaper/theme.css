@@ -2132,3 +2132,68 @@
   /* A swag needs room to hang; on a phone it is a smaller one. */
   .cb-revs-s .cb-wrap::before { top: -24px; height: 44px; background-size: 168px 44px; }
 }
+
+/* ------------------------------------------- the fold, measured and rebuilt
+ *
+ * Every picture in the gallery is square now, so the frame no longer has to
+ * cap its own height to keep a portrait shot from running off the screen —
+ * and that cap was costing the page twice. It pinned the frame at 648px
+ * inside a 701px column, leaving 53px of the column unused and 97px of white
+ * between the picture and the bundle box; and it left the buy button sitting
+ * on the fold line at a laptop's 900px.
+ *
+ * So: a narrower fixed right column, a tighter gutter, and a frame that takes
+ * the width it is given. The frame grows to 728px, the picture grows with it,
+ * and the Add to cart button comes up onto the first screen.
+ */
+@media (min-width: 900px) {
+  .cb-buy__grid {
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 32px;
+  }
+  .cb-gal__main {
+    max-height: none;
+    width: 100%;
+  }
+  /* The strip is a way back to a picture, not a second gallery. It was 78px
+     of height for eight chips; 44px is still a comfortable target. */
+  .cb-gal__thumb { width: 46px; height: 46px; border-radius: 9px; }
+  .cb-gal__strip { margin-top: 6px; padding-bottom: 2px; }
+}
+
+/*
+ * The same offer, three times, before anybody has seen the price.
+ *
+ * "Pay in 4" sits under the gallery AND in the right-hand column AND again in
+ * the trust row. On a phone the one under the gallery is 105px of the first
+ * screen, which is why the price lands below the fold and the Add to cart
+ * button is a screen and a half further down. The right-hand copy stays,
+ * beside the price, where a payment plan actually means something.
+ */
+.cb-pay4--under { display: none; }
+
+/*
+ * On a phone, the money comes first.
+ *
+ * The column reads badge, title, score, lede, price, bundle box, then the
+ * buttons — which is the right order to read and the wrong order to buy. On a
+ * 390 screen it put the price at 769px and Add to cart at 1316, a screen and a
+ * half below the fold, so somebody arriving from an advert had to scroll past
+ * everything to find out what it costs and how to get one.
+ *
+ * Flex order moves the price and the buttons up under the title. Nothing moves
+ * on a desktop, where the whole column is on screen at once.
+ */
+@media (max-width: 720px) {
+  .cb-buy__side { display: flex; flex-direction: column; }
+  .cb-buy__side > .cb-badge { order: 1; }
+  .cb-buy__side > .cb-h1 { order: 2; }
+  .cb-buy__side > .cb-score { order: 3; }
+  .cb-buy__side > .cb-price { order: 4; }
+  .cb-buy__side > .cb-acts { order: 5; }
+  .cb-buy__side > .cb-lede { order: 6; }
+  /* Everything not named keeps its place, after the block above. */
+  .cb-buy__side > * { order: 7; }
+  .cb-buy__side > .cb-price { margin-top: 10px; }
+  .cb-buy__side > .cb-acts { margin-bottom: 18px; }
+}

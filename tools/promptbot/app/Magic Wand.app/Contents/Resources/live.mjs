@@ -797,7 +797,11 @@ await wand.say("Waiting", `Connected to ${site.name}. Tell Claude what you want.
 
 async function fetchRefs(urls, dir) {
   if (!urls?.length) return [];
-  await mkdir(dir, { recursive: true });
+  // Its own fallback. A caller that forgets the folder used to take the whole
+  // run down inside mkdir, before a single picture was drawn, with an error
+  // that named node's internals rather than this file.
+  const into = dir || join(opt.out, "reference");
+  await mkdir(into, { recursive: true });
   const out = [];
   for (let i = 0; i < urls.length; i++) {
     for (let go = 1; go <= 3; go++) {
@@ -807,7 +811,7 @@ async function fetchRefs(urls, dir) {
         const res = await fetch(urls[i], { signal: stop.signal }).finally(() => clearTimeout(timer));
         if (!res.ok) throw new Error(String(res.status));
         const ext = (urls[i].split(".").pop() ?? "jpg").split("?")[0].slice(0, 4);
-        const path = join(dir, `ref-${i + 1}.${ext}`);
+        const path = join(into, `ref-${i + 1}.${ext}`);
         await writeFile(path, Buffer.from(await res.arrayBuffer()));
         out.push(path);
         break;
@@ -1850,11 +1854,23 @@ while (true) {
   for (let i = startAt; i < flatPrompts.length; i++) {
     // This part's own pictures, attached when the part opens and never again.
     const mine = parts[belongs[i]]?.refs ?? [];
+    try {
     if (opensPart[i] && parts.length > 1) {
-      live = mine.length ? await fetchRefs(mine) : [];
+      // fetchRefs(urls, dir) — the folder it saves into is not optional, and
+      // leaving it off crashed the whole run on the first part before a single
+      // picture was drawn. Each part keeps its references in its own folder.
+      live = mine.length
+        ? await fetchRefs(mine, join(dir, "reference", String(belongs[i] + 1))).catch(() => [])
+        : [];
       attachedInChat = false;
       freshRefs = Boolean(live.length);
       if (parts[belongs[i]]?.name) log(`\n\x1b[1m${parts[belongs[i]].name}\x1b[0m`);
+    }
+    } catch (e) {
+      // A part that cannot fetch its picture draws without one and says so,
+      // rather than ending the job for the three parts behind it.
+      log(`  \x1b[31m!! couldn't set this part up — ${String(e?.message ?? e).slice(0, 80)}\x1b[0m`);
+      live = [];
     }
     if (await wand.stopped()) break;
     // Paused holds here rather than unwinding the run, so Continue picks up on
