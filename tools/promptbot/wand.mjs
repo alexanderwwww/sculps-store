@@ -36,21 +36,41 @@ export const OVERLAY = `(() => {
   cursor.textContent = "\\u{1FA84}";
   root.appendChild(cursor);
 
+  /*
+   * One place, top centre, small.
+   *
+   * These panels used to sit in two different corners — the status bottom
+   * right, the job card and the finished card top right — so the screen had
+   * two boxes on it in different places and the page itself was behind both
+   * of them. Alex, looking at a shot he could not see past: "put all the
+   * widget in the middle of the screen and up, and smaller elements, because
+   * I want to see what's happening."
+   *
+   * So everything is one narrow strip at the top centre now, out of the way
+   * of the picture and out of the way of the site's own controls, which live
+   * in the corners.
+   */
+  const TOP_CENTRE = {
+    position: "fixed", zIndex: TOP, top: "10px",
+    left: "50%", transform: "translateX(-50%)",
+  };
   const hud = css(document.createElement("div"), {
-    position: "fixed", zIndex: TOP, right: "18px", bottom: "18px",
-    maxWidth: "340px", padding: "13px 15px", borderRadius: "14px",
-    background: "rgba(12,12,14,.94)", color: "#F7F2E7", pointerEvents: "none",
-    font: '500 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    boxShadow: "0 10px 40px -12px rgba(0,0,0,.75)",
+    ...TOP_CENTRE,
+    maxWidth: "min(420px, 92vw)", padding: "7px 12px", borderRadius: "10px",
+    background: "rgba(12,12,14,.92)", color: "#F7F2E7", pointerEvents: "none",
+    font: '500 11.5px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    boxShadow: "0 8px 28px -10px rgba(0,0,0,.7)",
+    display: "flex", alignItems: "baseline", gap: "9px", whiteSpace: "nowrap",
   });
   const title = css(document.createElement("div"), {
-    fontSize: "12px", letterSpacing: ".04em", textTransform: "uppercase",
-    color: "#C9A0FF", marginBottom: "5px", fontWeight: "700",
+    fontSize: "10px", letterSpacing: ".06em", textTransform: "uppercase",
+    color: "#C9A0FF", fontWeight: "700", flex: "0 0 auto",
   });
-  const body = css(document.createElement("div"), { opacity: ".9" });
-  const hint = css(document.createElement("div"), {
-    marginTop: "8px", opacity: ".5", fontSize: "11.5px",
+  const body = css(document.createElement("div"), {
+    opacity: ".9", overflow: "hidden", textOverflow: "ellipsis", minWidth: "0",
   });
+  // The keyboard hint had a line of its own on a panel that is now one line.
+  const hint = css(document.createElement("div"), { display: "none" });
   title.textContent = "Ready";
   body.textContent = "Waiting.";
   hint.textContent = "Press Esc to pause";
@@ -64,13 +84,13 @@ export const OVERLAY = `(() => {
    * the page underneath.
    */
   const bar = css(document.createElement("div"), {
-    display: "none", gap: "7px", marginTop: "10px", pointerEvents: "auto",
+    display: "none", gap: "6px", pointerEvents: "auto", flex: "0 0 auto",
   });
   const smallBtn = (text, primary) => {
     const b = css(document.createElement("button"), {
-      flex: "1", padding: "8px 10px", borderRadius: "9px", border: "0",
-      cursor: "pointer", fontSize: "12.5px", fontWeight: "700",
-      fontFamily: "inherit",
+      padding: "4px 9px", borderRadius: "7px", border: "0",
+      cursor: "pointer", fontSize: "11px", fontWeight: "700",
+      fontFamily: "inherit", lineHeight: "1.3",
       background: primary ? "#C9A0FF" : "rgba(247,242,231,.12)",
       color: primary ? "#140A02" : "#F7F2E7",
     });
@@ -80,8 +100,22 @@ export const OVERLAY = `(() => {
   };
   const bPause = smallBtn("Pause", true);
   const bMore = smallBtn("Add pictures", false);
+  /*
+   * There is no Stop button on the panel any more.
+   *
+   * It sat next to Pause, one word apart, on a strip that is on screen for
+   * hours — and it did not mean "stop this job", it meant the app was done
+   * for the day. Alex: "get rid of the two stupid stopping symbols. You can
+   * add a stop, but it should only stop the app if I want to stop it."
+   *
+   * Quitting is what the Terminal window and its close box are for, and
+   * abandoning one job is something Claude does from here without anybody
+   * hunting for a button. Esc still pauses, which is the control that is
+   * actually wanted mid-run and is not destructive.
+   */
   const bStop = smallBtn("Stop", false);
-  bar.append(bPause, bMore, bStop);
+  bStop.style.display = "none";
+  bar.append(bPause, bMore);
 
   hud.append(title, body, hint, bar);
   root.appendChild(hud);
@@ -371,8 +405,9 @@ export const OVERLAY = `(() => {
    * object, with no round trip through disk.
    */
   const card = css(document.createElement("div"), {
-    position: "fixed", zIndex: TOP, right: "18px", top: "18px",
-    width: "330px", padding: "16px", borderRadius: "16px",
+    position: "fixed", zIndex: TOP, top: "10px",
+    left: "50%", transform: "translateX(-50%)",
+    width: "min(360px, 92vw)", padding: "11px 13px", borderRadius: "12px",
     background: "rgba(14,14,17,.97)", color: "#F7F2E7",
     font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)",
@@ -497,8 +532,9 @@ export const OVERLAY = `(() => {
    * about work still running.
    */
   const doneCard = css(document.createElement("div"), {
-    position: "fixed", zIndex: TOP, right: "18px", top: "18px",
-    width: "330px", padding: "16px", borderRadius: "16px",
+    position: "fixed", zIndex: TOP, top: "10px",
+    left: "50%", transform: "translateX(-50%)",
+    width: "min(360px, 92vw)", padding: "11px 13px", borderRadius: "12px",
     background: "rgba(14,14,17,.97)", color: "#F7F2E7",
     font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)", display: "none",

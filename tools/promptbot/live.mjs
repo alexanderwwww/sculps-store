@@ -1848,7 +1848,25 @@ while (true) {
     continue;
   }
   await ensurePage();
-  if (await wand.stopped()) { console.log("\nStopped from the panel. Everything saved is on your Desktop.\n"); break; }
+  /*
+   * Stop no longer ends the app.
+   *
+   * This line used to `break` the outer loop, which is the whole process — so
+   * pressing Stop, or Claude sending one to abandon a job, quit Magic Wand
+   * without saying so. From the outside the window simply went quiet and the
+   * next job sat in the queue forever waiting for an app that was no longer
+   * there. It cost a relaunch every single time.
+   *
+   * Stop means "drop what you are doing", never "shut down". The job loop
+   * below already ends the current run on it; here the flag is cleared and
+   * the app goes back to waiting, which is the only state it should ever end
+   * a job in.
+   */
+  if (await wand.stopped()) {
+    await wand.order("continue").catch(() => {});
+    log(`\r\x1b[K  \x1b[2mstopped — back to waiting\x1b[0m`);
+    report("idle", { waitingFor: "a job in the queue" });
+  }
 
   // A moment offline is not a reason to quit.
   const job = await getJson(QUEUE);
@@ -2314,6 +2332,9 @@ while (true) {
   }
 
   lastZip = zipPath ?? (total ? dir : null);
+  // Whatever ended this job, the app is not stopped — the next job must not
+  // inherit the flag and end before it starts.
+  await wand.order("continue").catch(() => {});
   report("finished", { job: label, saved: total, zip: lastZip });
   await wand.done(
     total ? `${total} picture${total === 1 ? "" : "s"} ready` : "Nothing came back",
