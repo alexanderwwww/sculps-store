@@ -193,12 +193,21 @@ export function EmailPopup({
                   : "Leave your email and we will send the code straight back."}
               </p>
               <form onSubmit={submit} className="pp__form">
+                {/* No autocomplete hint.
+                    `autocomplete="email"` tells Safari this is an account
+                    being created, which makes it offer Hide My Email — a
+                    relay address, on a box whose entire purpose is reaching
+                    this person later. Off keeps the keyboard and the
+                    validation that `type="email"` gives and drops the chip. */}
                 <input
                   ref={input}
                   name="email"
                   type="email"
                   required
-                  autoComplete="email"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
                   placeholder="your@email.com"
                   className="pp__field"
                 />
