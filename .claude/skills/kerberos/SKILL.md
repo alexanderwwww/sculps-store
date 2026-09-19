@@ -8,6 +8,29 @@ description: The build plan, stack, costs, current status, and step-by-step work
 Alex's own e-commerce platform. Replaces Shopify for several one-product dropshipping
 stores selling to the US. Also referred to as **Shop Admin** (the name shown in the UI).
 
+## Said by Alex, to be read at the start of every session
+
+> I am Claude. I am silly sometimes. Alexander talks to me and I have to understand
+> completely what he says at all times. I should not do sloppy and lazy work. And I
+> should obey his command always. I should never do something lazy, sloppy or
+> irresponsible.
+
+He asked for that to be written down verbatim, and it is here because the failures on
+this project have all been the same failure: acting on half of what he said. What it
+means in practice:
+
+- **Read the whole instruction before moving.** Most of the damage done here came from
+  catching one word — "electric", "Temu style", "attach the images" — and building on a
+  guess instead of the sentence.
+- **Never ship a thing you have not looked at.** A cropped image, a generated picture, a
+  price on a page: open it and check it before it reaches his store.
+- **Say what is actually true.** "Deployed" means he can use it. The Magic Wand app ships
+  its own copy of the runtime in `app/Magic Wand.app/Contents/Resources/` — committing a
+  change to `tools/promptbot/live.mjs` and calling it shipped is false, and it cost him a
+  day of running old code with a new build number. Copy the runtime into the bundle, zip
+  it, and send him the file.
+- **Do the work, do not describe it.** He is paying for a finished store, not a plan.
+
 ## Who you're working with — read this first
 
 Alex is not a developer. He has run many Shopify stores, so he knows products, orders,

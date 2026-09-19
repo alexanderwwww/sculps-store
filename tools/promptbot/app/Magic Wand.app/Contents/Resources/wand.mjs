@@ -86,7 +86,7 @@ export const OVERLAY = `(() => {
   hud.append(title, body, hint, bar);
   root.appendChild(hud);
 
-  const state = { stopped: false, paused: false, deaf: 0, wantsCard: false };
+  const state = { stopped: false, paused: false, deaf: 0, wantsCard: false, epoch: Date.now() };
 
   // Captured on the way down, so a page that swallows keys can't eat it.
   //
@@ -522,6 +522,21 @@ export const OVERLAY = `(() => {
   window.__wand = {
     stopped: () => state.stopped,
     paused: () => state.paused,
+    /** Which mount this is. A new number means the page reloaded under us. */
+    epoch: () => state.epoch,
+    /**
+     * Put a state back after a reload.
+     *
+     * Pause and Stop lived only in the page, so any navigation — a fresh chat,
+     * a goto, the reader pressing reload — quietly cleared them and the run
+     * carried on typing. The runner keeps its own copy now and hands it back
+     * here whenever it finds a new mount.
+     */
+    restore: (s) => {
+      if (!s) return;
+      if (s.stopped) halt();
+      else if (s.paused) pause();
+    },
     /** An order from Claude, applied exactly as if the button had been pressed. */
     order(what) {
       if (what === "pause" && !state.paused && !state.stopped) pause();
@@ -683,6 +698,8 @@ export async function attachWand(page) {
     mounted,
     stopped: () => safe(() => page.evaluate(() => window.__wand?.stopped() ?? false), false),
     paused: () => safe(() => page.evaluate(() => window.__wand?.paused() ?? false), false),
+    epoch: () => safe(() => page.evaluate(() => window.__wand?.epoch() ?? 0), 0),
+    restore: (s) => safe(() => page.evaluate((v) => window.__wand?.restore(v), s)),
     wantsCard: () => safe(() => page.evaluate(() => window.__wand?.wantsCard() ?? false), false),
     running: () => safe(() => page.evaluate(() => window.__wand?.running())),
     order: (what) => safe(() => page.evaluate((w) => window.__wand?.order(w) ?? false, what), false),
