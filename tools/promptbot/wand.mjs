@@ -121,6 +121,17 @@ export const OVERLAY = `(() => {
   }
 
   function resume() {
+    /*
+     * Continue un-stops as well as un-pauses.
+     *
+     * The stopped flag was set by Stop and then cleared by nothing at all —
+     * not by Continue, not by the next job, not by anything but quitting.
+     * Every job after a Stop broke out of its prompt loop on the first line,
+     * finished with nothing, and the app sat there looking wedged while the
+     * queue filled up behind it. Stop meant "this app is over" when everyone
+     * using it, me included, read it as "stop this job".
+     */
+    state.stopped = false;
     state.paused = false;
     css(title, { color: "#C9A0FF" });
     title.textContent = "Running";
@@ -514,7 +525,7 @@ export const OVERLAY = `(() => {
     /** An order from Claude, applied exactly as if the button had been pressed. */
     order(what) {
       if (what === "pause" && !state.paused && !state.stopped) pause();
-      else if ((what === "continue" || what === "go" || what === "run") && state.paused) resume();
+      else if ((what === "continue" || what === "go" || what === "run") && (state.paused || state.stopped)) resume();
       // "continue" on a card that is still asking is a yes: the job runs.
       else if ((what === "continue" || what === "go" || what === "run") && card.isConnected && card.style.display === "block") bGo.click();
       else if (what === "stop") halt();
@@ -527,7 +538,17 @@ export const OVERLAY = `(() => {
     /** True once, when Add pictures has been pressed. */
     wantsCard() { const v = state.wantsCard; state.wantsCard = false; return v; },
     /** The panel's own buttons, for a run that starts already going. */
-    running() { if (!state.stopped) { state.paused = false; css(bar, { display: "flex" }); bPause.textContent = "Pause"; } },
+    /*
+     * A new job starting is itself a reason to be un-stopped. The runner calls
+     * this the moment a job is approved, so a Stop that ended the last one
+     * cannot silently swallow the next one.
+     */
+    running() {
+      state.stopped = false;
+      state.paused = false;
+      css(bar, { display: "flex" });
+      bPause.textContent = "Pause";
+    },
     /**
      * Put the job on screen. Returns at once; the runner asks answer()
      * until somebody has pressed something.
