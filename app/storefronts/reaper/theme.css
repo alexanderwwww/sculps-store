@@ -1594,3 +1594,30 @@
   .cb-gal__strip { flex-wrap: wrap; overflow: visible; gap: 8px; }
   .cb-gal__thumb { width: 62px; height: 62px; border-radius: 11px; }
 }
+
+/* The template caps images at the 1200px wrap. A band that is meant to run
+ * edge to edge has to opt out of that, or it sits in the middle of the page
+ * with the section's own black showing down both sides. */
+.cb-lock--art img { max-width: none; margin: 0; }
+
+/* ------------------------------------------------- the selling panel, bled
+ *
+ * One made image doing the job of a whole section: what it is, what is in the
+ * box, how big, how fast to put up. It arrives already laid out and already
+ * dark at the edges, so the page gives it the full width and gets out of the
+ * way — no padding, no rounded corners, no fixed height cropping the callouts
+ * off the sides.
+ */
+.cb-night {
+  padding: 0;
+  background: #000;
+}
+.cb-night img {
+  max-width: none;
+  width: 100%;
+  height: auto;
+  max-height: 88vh;
+  border-radius: 0;
+  margin: 0;
+  object-fit: contain;
+}
