@@ -103,15 +103,26 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     return Response.json({ clientSecret: intent.clientSecret, amountCents: cart.totalCents, error: null });
   } catch (error) {
+    /*
+     * A store with no Stripe connected is not a server failure.
+     *
+     * It came back as a 500, which put a red line in the browser console on
+     * every single checkout load before a key was ever pasted, and would have
+     * put the same line into error monitoring for as long as the store went
+     * unconnected. The page already says the right thing on screen; the
+     * status should agree with it. 503 is the honest one — the payment
+     * service is not available yet, come back. A real Stripe outage or a
+     * malformed reply is still a 500, because that one is ours to look at.
+     */
+    const notSetUp = error instanceof PaymentsNotConfigured;
     return Response.json(
       {
         clientSecret: null,
-        error:
-          error instanceof PaymentsNotConfigured
-            ? error.message
-            : `Payments are not available right now: ${error instanceof Error ? error.message : "Stripe did not answer."}`,
+        error: notSetUp
+          ? error.message
+          : `Payments are not available right now: ${error instanceof Error ? error.message : "Stripe did not answer."}`,
       },
-      { status: 500 },
+      { status: notSetUp ? 503 : 500 },
     );
   }
 }
