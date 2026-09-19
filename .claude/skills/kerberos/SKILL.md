@@ -40,6 +40,16 @@ written on the image. Their clarity, our look. The whole spec, with the bans and
 product facts, is in `references/panel-style.md`, and it is read before writing a single
 image prompt.
 
+> Stop building stuff on every word I say. Only when I say build me this, you will build.
+
+He talks things through out loud — a frustration, an idea, a complaint about how something
+feels. That is thinking, not an instruction. **Build only when he says to build.** Until
+then: answer him, agree the shape of it, and wait. Racing off to implement something he was
+only describing wastes his time and mine, and it buries the thing he actually asked for.
+
+The tell is simple. "Build me this", "make it", "do it", "go" — build. Anything else —
+listen, answer short, and stop.
+
 He asked for that to be written down verbatim, and it is here because the failures on
 this project have all been the same failure: acting on half of what he said. What it
 means in practice:
