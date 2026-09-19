@@ -1621,3 +1621,42 @@
   margin: 0;
   object-fit: contain;
 }
+
+/* ------------------------------------------------------------ thin bundles
+ *
+ * The bundle box was taller than the buy button it sits above. Two things did
+ * it: a fanned stack of thumbnails setting the row height, and a name column
+ * narrow enough that "Two Reapers + Projector" wrapped over three lines. One
+ * small picture and a wider name column put each option back on two lines, so
+ * all three choices are visible without scrolling — which is the only reason
+ * the box exists.
+ */
+.cb-tier {
+  padding: 9px 12px;
+  gap: 10px;
+  border-radius: 13px;
+}
+.cb-tier__pic {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border-width: 1px;
+}
+.cb-tier__pics .cb-tier__pic + .cb-tier__pic { margin-left: -12px; }
+.cb-tier__name {
+  font-size: 15px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.cb-tier__main { gap: 2px; }
+.cb-tier__under { gap: 6px; }
+.cb-tier__under s { font-size: 12.5px; }
+.cb-tier__save { font-size: 12.5px; }
+.cb-tier__price { font-size: 19px; line-height: 1.1; }
+.cb-tier__each { font-size: 12px; }
+.cb-tiers { gap: 8px; }
+
+@media (min-width: 760px) {
+  .cb-tier__pic { width: 42px; height: 42px; }
+  .cb-tier__name { font-size: 16px; }
+}

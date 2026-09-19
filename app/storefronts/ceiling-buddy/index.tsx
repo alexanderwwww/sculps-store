@@ -533,12 +533,14 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
 
                     <span className="cb-tier__dot" aria-hidden="true" />
 
-                    {/* One thumbnail per unit, overlapped like cards in a hand.
-                        A two-pack row that shows one picture is indistinguishable
-                        from a one-pack row at a glance; two pictures say what
-                        the words underneath say, faster. The variant's own
-                        photograph wins when it has one, the product's first
-                        otherwise, so a row is never empty. */}
+                    {/* One picture per row, and a small one.
+                        It used to print a thumbnail per unit, fanned out like
+                        cards in a hand, on the theory that two pictures say
+                        "two of them" faster than the words do. They do not —
+                        the words already say it, and the fan made every row
+                        tall enough to wrap its own name over three lines. A
+                        bundle box that runs half the page reads as clutter,
+                        not as choice. The quantity is in the title. */}
                     {(() => {
                       // A listing graphic is the right lead photograph and the
                       // wrong thumbnail: at forty-eight pixels its banner type
@@ -554,12 +556,10 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
                         imgs.find((i) => i.url)?.url;
                       if (!pic) return null;
                       return (
-                        <span className={`cb-tier__pics cb-tier__pics--${Math.min(qty, 3)}`}>
-                          {Array.from({ length: Math.min(qty, 3) }).map((_, k) => (
-                            <span className="cb-tier__pic" key={k}>
-                              <img src={pic} alt="" loading="lazy" />
-                            </span>
-                          ))}
+                        <span className="cb-tier__pics cb-tier__pics--1">
+                          <span className="cb-tier__pic">
+                            <img src={pic} alt="" loading="lazy" />
+                          </span>
                         </span>
                       );
                     })()}
