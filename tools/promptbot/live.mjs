@@ -149,6 +149,9 @@ async function getJson(url) {
 async function obey() {
   if (Date.now() - orderAt < 2000) return;
   orderAt = Date.now();
+  // Every heartbeat is also the moment to notice the overlay was replaced by a
+  // navigation and to hand its Pause or Stop back to it.
+  await syncWand(wand).catch(() => {});
   const o = await getJson(CONTROL);
   /*
    * Whatever was sitting there when we started is history, not an
@@ -226,6 +229,61 @@ const MIN_PIXELS = 320;
  */
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Every image the browser has actually loaded, kept by url.
+ *
+ * This is the strongest way to get a generation onto the disk and it was
+ * missing. Gemini's host refuses a script request and often refuses node's
+ * too, which is how the app ended up photographing the screen and baking its
+ * own overlay into product photographs. The browser is not refused — it is
+ * the one displaying the picture — so the bytes are already in hand before
+ * anybody asks for them.
+ *
+ * Bounded: the biggest few hundred images, oldest dropped first, so a long run
+ * cannot eat the machine's memory.
+ */
+/**
+ * Pause and Stop, kept here as well as in the page.
+ *
+ * The overlay is re-injected on every navigation with its flags cleared, so a
+ * paused run that hit a fresh chat, a goto or a reload came back un-paused and
+ * carried on typing. This is the copy that survives; `syncWand` puts it back
+ * whenever it notices a new mount.
+ */
+const held = { paused: false, stopped: false };
+let lastEpoch = 0;
+async function syncWand(w) {
+  if (!w) return;
+  const epoch = await w.epoch().catch(() => 0);
+  if (epoch && epoch !== lastEpoch) {
+    lastEpoch = epoch;
+    if (held.paused || held.stopped) await w.restore(held).catch(() => {});
+  }
+  held.paused = await w.paused().catch(() => held.paused);
+  held.stopped = await w.stopped().catch(() => held.stopped);
+}
+
+const CAPTURED = new Map();
+const CAPTURE_MAX = 240;
+const watched = new WeakSet();
+function watchImages(target) {
+  if (!target || watched.has(target)) return;
+  watched.add(target);
+  target.on("response", async (res) => {
+    try {
+      const type = res.headers()["content-type"] ?? "";
+      if (!type.startsWith("image/")) return;
+      const body = await res.body().catch(() => null);
+      // Thumbnails and icons are not generations.
+      if (!body || body.length < 20_000) return;
+      CAPTURED.set(res.url(), body);
+      while (CAPTURED.size > CAPTURE_MAX) CAPTURED.delete(CAPTURED.keys().next().value);
+    } catch {
+      /* a body we cannot read is simply not captured */
+    }
+  });
+}
+
 const SITES = {
   gemini: {
     name: "Gemini",
@@ -240,6 +298,14 @@ const SITES = {
     attachItem: ['button[aria-label*="Upload file" i]', 'text=Upload files', 'text=Μεταφόρτωση αρχείων'],
     /* Same reasoning as ChatGPT's: big, on the page, and not there before. */
     images: ["img"],
+    /** Where an answer can appear. A picture outside these is not a result. */
+    results: ["model-response img", ".response-container img", "img"],
+    /** Our own turn. The reference comes back re-rendered here after a send,
+     *  bigger than the threshold and with a brand new src — which the old
+     *  code happily saved as the generation and then moved on. */
+    mine: ["user-query", ".user-query-container", '[data-test-id="user-query"]'],
+    /** Still drawing. Leaving while this is up is leaving before the picture. */
+    busy: ['button[aria-label*="Stop" i]', 'mat-icon[data-mat-icon-name="stop"]'],
     /**
      * Gemini's own download button, on the image card.
      *
@@ -267,6 +333,12 @@ const SITES = {
     fresh: ['button[data-testid="create-new-chat-button"]', 'a[data-testid="create-new-chat-button"]', 'button[aria-label*="New chat" i]', 'a[aria-label*="New chat" i]', 'a[href="/"]'],
     file: ['input[type="file"]:not([data-wand])'],
     attach: ['button[aria-label*="Upload" i]', 'button[aria-label*="Attach" i]', 'button[data-testid="composer-plus-btn"]'],
+    /** Where an answer can appear. */
+    results: ['[data-message-author-role="assistant"] img', "img"],
+    /** Our own turn — never a result. */
+    mine: ['[data-message-author-role="user"]'],
+    /** Still drawing. */
+    busy: ['button[data-testid="stop-button"]', 'button[aria-label*="Stop" i]'],
     // The plus opens a menu; the first item is the one that takes a file.
     /**
      * The menu item inside the plus.
@@ -479,6 +551,7 @@ if (!(await find(page, site.ask, 20000))) {
   console.log(`Sign in, or open a chat, in that Chrome window. This keeps looking.\n`);
 }
 
+watchImages(page);
 let wand = await attachWand(page);
 await mkdir(opt.out, { recursive: true });
 
@@ -546,7 +619,8 @@ async function ensurePage() {
       // never matched the page and every check here reloaded it, forever.
       // So the pin follows where the site actually put us, or lets go.
       await page.bringToFront().catch(() => {});
-      wand = await attachWand(page);
+        watchImages(page);
+  wand = await attachWand(page);
       // Only a page with a message box in it is somewhere this app can work,
       // and that has to be settled before the pin is allowed to move. A
       // signed-out session answers a chat address with a login page, and
@@ -567,7 +641,8 @@ async function ensurePage() {
       return true;
     }
     await page.bringToFront().catch(() => {});
-    wand = await attachWand(page);
+      watchImages(page);
+  wand = await attachWand(page);
     return Boolean(await find(page, site.ask, 15000));
   }
 
@@ -586,6 +661,7 @@ async function ensurePage() {
     await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
   }
   await page.bringToFront().catch(() => {});
+    watchImages(page);
   wand = await attachWand(page);
   return Boolean(await find(page, site.ask, 15000));
 }
@@ -610,6 +686,7 @@ async function switchSite(name) {
   if (!page) { site = was; return false; }
   await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
   await page.bringToFront().catch(() => {});
+    watchImages(page);
   wand = await attachWand(page);
   if (!(await find(page, site.ask, 20000))) {
     // Not signed in there. Everything goes back the way it was — the site,
@@ -617,7 +694,8 @@ async function switchSite(name) {
     console.log(`  \x1b[31mnot signed into ${site.name} in this Chrome — sign in and it'll come back\x1b[0m`);
     site = was;
     await page.goto(hadPin ?? site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
-    wand = await attachWand(page);
+      watchImages(page);
+  wand = await attachWand(page);
     return false;
   }
   // The chat belonged to the old site.
@@ -670,6 +748,7 @@ async function goTo(url) {
   navGen += 1;
   await wait(1200);
   await page.bringToFront().catch(() => {});
+    watchImages(page);
   wand = await attachWand(page);
   if (!(await find(page, site.ask, 20000))) {
     console.log(`  \x1b[31mno message box at ${u.href} — is it signed in?\x1b[0m`);
@@ -1032,12 +1111,18 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    */
   const already = new Set(
     await page.evaluate(
-      ({ sels, min }) =>
+      ({ sels }) =>
         sels.flatMap((s) => Array.from(document.querySelectorAll(s)))
           .filter((el) => !el.closest("[data-wand]"))
-          .filter((el) => el.naturalWidth >= min && el.naturalHeight >= min)
-          .map((el) => el.src),
-      { sels: site.images, min: MIN_PIXELS },
+          .map((el) => {
+            // Stamped, not just noted. The old snapshot filtered by decoded
+            // size, so a picture from an earlier prompt that had not finished
+            // loading when we looked was left out — and then arrived a moment
+            // later and was written down as the answer to this one.
+            el.dataset.wandOld = "1";
+            return el.currentSrc || el.src;
+          }),
+      { sels: site.images },
     ).catch(() => []),
   );
 
@@ -1046,8 +1131,21 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   // looks like on each site.
   const urlBeforeSend = page.url();
   const typed = async () => (await box.textContent().catch(() => "")) || (await box.inputValue().catch(() => "")) || "";
+  // Wait for the last answer to finish before sending the next prompt. While a
+  // generation runs, the send button is a Stop button in the same place — so
+  // sending early did not send, it cancelled.
+  if (site.busy?.length) {
+    const until = Date.now() + 90_000;
+    while (Date.now() < until) {
+      const busy = await page.locator(site.busy.join(",")).first().isVisible().catch(() => false);
+      if (!busy) break;
+      await wand.say(label, `${n} of ${total} — waiting for the last one to finish…`);
+      await wait(1500);
+      await obey();
+    }
+  }
   const send = await find(page, site.send, 5000);
-  if (send) { await wand.point(send); await send.click().catch(() => {}); }
+  if (send) { await wand.point(send); await send.click({ timeout: 4000 }).catch(() => {}); }
   await wait(900);
 
   for (let tries = 0; tries < 2 && (await typed()).trim().length > 8; tries++) {
@@ -1123,17 +1221,38 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     deadline += Date.now() - held;
     if (await wand.stopped()) break;
     const urls = await page.evaluate(
-      ({ sels, min }) =>
+      ({ sels, mine, min }) =>
         sels.flatMap((s) => Array.from(document.querySelectorAll(s)))
           .filter((el) => !el.closest("[data-wand]"))
+          // Not something that was on screen before we sent.
+          .filter((el) => !el.dataset.wandOld)
+          // And never our own message. Both sites re-render the attached
+          // reference inside the sent turn with a fresh src, which is big and
+          // new and looked exactly like an answer — so prompt one of every job
+          // with a reference "succeeded" by saving the photograph we had just
+          // handed in, and moved on before the real picture existed.
+          .filter((el) => !mine.some((m) => el.closest(m)))
           .filter((el) => el.naturalWidth >= min && el.naturalHeight >= min)
-          .map((el) => el.src),
-      { sels: site.images, min: MIN_PIXELS },
+          .map((el) => el.currentSrc || el.src),
+      { sels: site.results ?? site.images, mine: site.mine ?? [], min: MIN_PIXELS },
     ).catch(() => []);
     const fresh = urls.filter((u) => !seen.has(u) && !already.has(u));
     fresh.forEach((u) => seen.add(u));
+    /**
+     * Is it still drawing?
+     *
+     * ChatGPT streams blurred partial renders into the same element on its way
+     * to the finished picture. Eight seconds of stillness between two partials
+     * is ordinary, and the old code read that as "done" — saved the blurred
+     * one, moved to the next prompt, and then its send hit the Stop button
+     * that occupies the same corner while a generation is running. That is one
+     * prompt lost and the picture for it killed.
+     */
+    const busy = site.busy?.length
+      ? await page.locator(site.busy.join(",")).first().isVisible().catch(() => false)
+      : false;
     if (fresh.length) { quiet = 0; await wand.say(label, `${n} of ${total} — ${seen.size} image${seen.size === 1 ? "" : "s"}…`); }
-    else if (seen.size) { quiet += 2; if (quiet >= 8) break; }
+    else if (seen.size) { quiet += 2; if (quiet >= 8 && !busy) break; }
     else {
       // Nothing at all yet. Four minutes of that is the site having refused
       // the prompt, or having asked a question back — either way, standing
@@ -1175,7 +1294,14 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
 
     let how = null;
 
-    if (!/^(blob|data):/.test(url)) {
+    // What the browser already loaded, before anybody is asked for it again.
+    // No request to replay, no cookies to carry, no content policy to refuse.
+    for (const want of [url, ...originals(url)]) {
+      const hit = CAPTURED.get(want);
+      if (hit && hit.length > 2048) { buf = hit; how = "captured"; break; }
+    }
+
+    if (!buf && !/^(blob|data):/.test(url)) {
       // Google hands back a display URL with the size baked into it —
       // ...=w512-h512-rw. Asking for that is asking for a thumbnail, and on
       // some of them it is refused outright, which is how a screenshot ended
@@ -1183,7 +1309,15 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       for (const want of originals(url)) {
         buf = await context.request
           .get(want, { headers: { referer: page.url() } })
-          .then((r) => (r.ok() ? r.body() : null))
+          .then(async (r) => {
+            // A sign-in page and an error body both arrive as a cheerful 200.
+            // They were being written to disk as PNGs, counted as saved, and
+            // uploaded to the shop.
+            const type = r.headers()["content-type"] ?? "";
+            if (!r.ok() || !type.startsWith("image/")) return null;
+            const body = await r.body();
+            return body && body.length > 2048 ? body : null;
+          })
           .catch(() => null);
         if (buf) { how = "downloaded"; break; }
       }
@@ -1191,7 +1325,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
 
     if (!buf) {
       const b64 = await page.evaluate(async (u) => {
-        const r = await fetch(u);
+        // Fifteen seconds, then give up. This had no timeout at all, so a
+        // stalled request held the whole run still with nothing on screen to
+        // say why.
+        const r = await fetch(u, { signal: AbortSignal.timeout(15_000) });
+        const type = r.headers.get("content-type") ?? "";
+        if (!r.ok || !type.startsWith("image/")) return null;
         const bytes = new Uint8Array(await r.arrayBuffer());
         let s = "";
         for (let j = 0; j < bytes.length; j++) s += String.fromCharCode(bytes[j]);
@@ -1220,17 +1359,22 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
         // there first and fall back to anywhere on the page.
         const card = shot.locator("xpath=ancestor::*[self::div or self::article][3]");
         for (const sel of site.save) {
-          for (const where of [card, page]) {
+          for (const where of [card]) {
             const btn = where.locator(sel).first();
             if (!(await btn.count().catch(() => 0))) continue;
-            const got = await Promise.all([
-              page.waitForEvent("download", { timeout: 15000 }).catch(() => null),
-              btn.click({ timeout: 3000 }).catch(() => null),
-            ]).then(([d]) => d);
+            // Wait for a download only once a click has actually landed.
+            // Waiting fifteen seconds after every candidate meant eight
+            // candidates could cost two minutes per picture before the app
+            // fell back to photographing the screen.
+            const coming = page.waitForEvent("download", { timeout: 6000 }).catch(() => null);
+            const clicked = await btn.click({ timeout: 2000 }).then(() => true).catch(() => false);
+            if (!clicked) continue;
+            const got = await coming;
             if (!got) continue;
             const tmp = await got.path().catch(() => null);
-            if (!tmp) continue;
-            const bytes = await readFile(tmp).catch(() => null);
+            const bytes = tmp ? await readFile(tmp).catch(() => null) : null;
+            // The temporary file is ours to clear up; they were piling up.
+            await got.delete().catch(() => {});
             if (bytes && bytes.length > 2048) return bytes;
           }
         }
@@ -1243,11 +1387,14 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       // Last resort, and the one that cannot be refused: take a picture of the
       // picture. Lossier than the original, so it says so out loud — a folder
       // full of silent screenshots is worse than a folder that is short.
-      buf = await page
-        .locator(`img[src="${url.replace(/["\\]/g, "\\$&")}"]`)
-        .first()
-        .screenshot()
-        .catch(() => null);
+      const shot = page.locator(`img[src="${url.replace(/["\\]/g, "\\$&")}"]`).first();
+      // Hide our own cursor, panel and sparkles first. A screenshot composites
+      // everything that overlaps the picture, which is how this app's own
+      // overlay ended up inside product photographs on a live shop.
+      await page.evaluate(() => document.querySelectorAll("[data-wand]").forEach((e) => (e.style.visibility = "hidden"))).catch(() => {});
+      await shot.scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {});
+      buf = await shot.screenshot({ animations: "disabled", timeout: 5000 }).catch(() => null);
+      await page.evaluate(() => document.querySelectorAll("[data-wand]").forEach((e) => (e.style.visibility = ""))).catch(() => {});
       if (buf) {
         how = "photographed";
         log(`  \x1b[33m~~ had to photograph one — ${site.name} refused the file\x1b[0m`);
@@ -1275,7 +1422,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // one laptop has to be found, downloaded and re-uploaded by hand before
     // the shop can use it; one that is also here can be put on a product the
     // moment it exists.
-    sendShot(dir, `${stem}.png`, buf);
+    // Only a real file is offered to the shop. A photograph of a browser
+    // window is kept on disk, named as one, and never uploaded — it has been
+    // put on a live product page twice and that is twice too many.
+    if (how !== "photographed") sendShot(dir, `${stem}.png`, buf);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
     await writeFile(join(dir, `${stem}.png`), buf);
@@ -1605,6 +1755,11 @@ while (true) {
     log(`  \x1b[31m!! none of the ${job.refs.length} reference pictures would download — not running\x1b[0m`);
     report("error", { job: label, error: "the job's reference pictures could not be downloaded" });
     await wand.done("Couldn't get the references", "Nothing was run. The pictures the job points at didn't download.");
+    // And let it be run again. It was written into the done list before it
+    // started, so the promise in that sentence was not being kept: the job was
+    // gone for good the moment its references failed.
+    done.delete(job.id);
+    await writeFile(DONE_FILE, [...done].join("\n")).catch(() => {});
     continue;
   }
 
@@ -1662,11 +1817,23 @@ while (true) {
      * HOLDS and says which prompt and why, so a person can look at the tab.
      * The queue keeps its place either way — nothing is consumed unseen.
      */
-    let got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true);
+    /**
+     * Wrapped, because a throw here used to end the job in silence.
+     *
+     * The job is written to the done list before it runs, so an exception in
+     * prompt three walked out of the loop, was logged at the bottom of the
+     * file, and the next pass skipped the job as finished. Prompts four to
+     * forty never existed. A click that cannot land, a page that closed, a
+     * reference file that moved — any of them did it.
+     */
+    const attempt = () =>
+      runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true)
+        .catch((e) => { log(`  \x1b[31m!! that prompt threw — ${String(e).slice(0, 90)}\x1b[0m`); return 0; });
+    let got = await attempt();
     if (!got && !(await wand.stopped())) {
       log(`  \x1b[33mnothing came back — running that one again\x1b[0m`);
       report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total, note: "retrying — the first attempt produced no picture" });
-      got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true);
+      got = await attempt();
     }
     if (!got && !(await wand.stopped())) {
       dry += 1;
