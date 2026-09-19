@@ -102,7 +102,7 @@ function KneelerFonts() {
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
       />
-      <link rel="stylesheet" href={kneelerHref} />
+      <link rel="stylesheet" href={kneelerHref} precedence="high" />
     </>
   );
 }
@@ -1229,7 +1229,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         <>
           <BuddyFonts />
           {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
-          <link rel="stylesheet" href={buddyHref} />
+          <link rel="stylesheet" href={buddyHref} precedence="high" />
           <div className={`gb-co-sec ${CHECKOUT_SKIN[store.slug] ?? ""}`.trim()}>
             <div className="gb-co__pane">
               <div className="gb-co__pane-in">
@@ -1309,7 +1309,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       <>
         <BuddyFonts />
         {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
-        <link rel="stylesheet" href={buddyHref} />
+        <link rel="stylesheet" href={buddyHref} precedence="high" />
         <PayBoot />
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         {/* Two halves of the screen. OnePage lays out both of them, because

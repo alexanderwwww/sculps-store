@@ -119,7 +119,7 @@ export default function StandalonePage({ loaderData }: Route.ComponentProps) {
     return (
       <>
         {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
-        <link rel="stylesheet" href={buddyHref} />
+        <link rel="stylesheet" href={buddyHref} precedence="high" />
         <Header page={chrome} storeParam={storeParam} />
         <div className="gb gb-page-sec">
           <article className="gb-wrap gb-page">

@@ -121,7 +121,7 @@ export default function Mower({ loaderData }: Route.ComponentProps) {
   const { page, variant, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId } = loaderData;
   return (
     <>
-      <link rel="stylesheet" href={gardenBuddyThemeHref} />
+      <link rel="stylesheet" href={gardenBuddyThemeHref} precedence="high" />
       {favicon ? <link rel="icon" href={favicon} /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}

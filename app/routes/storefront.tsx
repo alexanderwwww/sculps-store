@@ -70,7 +70,7 @@ function KneelerAssets() {
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
       />
-      <link rel="stylesheet" href={themeHref} />
+      <link rel="stylesheet" href={themeHref} precedence="high" />
     </>
   );
 }
@@ -302,7 +302,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..800&family=Instrument+Sans:wght@400;500;600&family=Jost:wght@800&display=swap"
         />
-        <link rel="stylesheet" href={bodiesThemeHref} />
+        <link rel="stylesheet" href={bodiesThemeHref} precedence="high" />
         {head}
         <BodiesHome
           page={page}
@@ -317,7 +317,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
   if (store.slug === XERO) {
     return (
       <>
-        <link rel="stylesheet" href={xeroThemeHref} />
+        <link rel="stylesheet" href={xeroThemeHref} precedence="high" />
         {head}
         <XeroStorefront page={page} storeParam={storeParam} />
       </>
@@ -327,8 +327,8 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
   if (store.slug === CEILING_BUDDY || store.slug === REAPER) {
     return (
       <>
-        <link rel="stylesheet" href={ceilingBuddyThemeHref} />
-        {store.slug === REAPER ? <link rel="stylesheet" href={reaperThemeHref} /> : null}
+        <link rel="stylesheet" href={ceilingBuddyThemeHref} precedence="high" />
+        {store.slug === REAPER ? <link rel="stylesheet" href={reaperThemeHref} precedence="high" /> : null}
         {head}
         <CeilingBuddyStorefront
           page={page}
@@ -345,7 +345,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
   if (store.slug === GARDEN_BUDDY) {
     return (
       <>
-        <link rel="stylesheet" href={gardenBuddyThemeHref} />
+        <link rel="stylesheet" href={gardenBuddyThemeHref} precedence="high" />
         {head}
         <GardenBuddyStorefront
           page={page}

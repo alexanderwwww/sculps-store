@@ -165,8 +165,8 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
   if (page.store.slug === "reaper") {
     return (
       <>
-        <link rel="stylesheet" href={ceilingBuddyThemeHref} />
-        <link rel="stylesheet" href={reaperThemeHref} />
+        <link rel="stylesheet" href={ceilingBuddyThemeHref} precedence="high" />
+        <link rel="stylesheet" href={reaperThemeHref} precedence="high" />
         {favicon ? <link rel="icon" href={favicon} /> : null}
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
@@ -191,7 +191,7 @@ export default function BodiesColourway({ loaderData }: Route.ComponentProps) {
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..800&family=Instrument+Sans:wght@400;500;600&family=Jost:wght@800&display=swap"
       />
-      <link rel="stylesheet" href={bodiesThemeHref} />
+      <link rel="stylesheet" href={bodiesThemeHref} precedence="high" />
       {favicon ? <link rel="icon" href={favicon} /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}

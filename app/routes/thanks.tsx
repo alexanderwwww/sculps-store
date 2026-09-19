@@ -314,7 +314,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap"
         />
-        <link rel="stylesheet" href={buddyHref} />
+        <link rel="stylesheet" href={buddyHref} precedence="high" />
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
         <div className={`gb-co-sec${skin ? ` ${skin}` : ""}`}>
           <div className="gb-co__pane">
