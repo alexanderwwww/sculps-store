@@ -14,7 +14,7 @@
 set -u
 
 BUNDLE="$(cd "$(dirname "$0")" && pwd)"
-BUILD="27"
+BUILD="28"
 # One working directory, not one per build. The browser engine underneath it
 # is a hundred megabytes and there is no reason to fetch it again because a
 # script changed.
@@ -139,8 +139,19 @@ echo
 echo "Sign into ChatGPT in a second tab as well, and Claude can send a job to"
 echo "either one without you doing anything."
 echo
-echo "Then press Return here and leave this window open."
-read -r
+echo "Leave this window open. Starting now."
+echo
+
+# No "press Return to continue" here any more.
+#
+# Chrome opens after this window and takes the screen, so the prompt asking
+# for a keypress was behind it. From the front the app looked started: dock
+# icon lit, Chrome up, no wand anywhere and nothing on the status board,
+# because node had not been reached. Twenty-five minutes went into looking
+# for a bug in the app that was a hidden question in a covered window.
+#
+# Waiting for a sign-in is something the app already does properly, out
+# loud, on the board Claude can read. So it just starts.
 
 WAND_BUILD="$BUILD" node live.mjs --site "$SITE" --out "$OUT"
 
