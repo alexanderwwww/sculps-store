@@ -15,6 +15,7 @@ import { readFile } from "node:fs/promises";
 import { strict as assert } from "node:assert";
 
 const src = await readFile(new URL("../live.mjs", import.meta.url), "utf8");
+const overlay = await readFile(new URL("../wand.mjs", import.meta.url), "utf8");
 
 /* 1. Every call matches the declaration it calls.
  *
@@ -70,7 +71,13 @@ function countArgs(text, open) {
       i++;
       continue;
     }
-    if (ch === "'" || ch === '"' || ch === "`") { quote = ch; continue; }
+    if (ch === "'" || ch === '"' || ch === "`") {
+      // A string is an argument. Without this the scanner read say("a", "b")
+      // as a call with nothing in it.
+      if (depth === 1) { seen = true; trailing = false; }
+      quote = ch;
+      continue;
+    }
     if ("([{".includes(ch)) { depth++; continue; }
     if (")]}".includes(ch)) {
       depth--;
@@ -146,6 +153,16 @@ const must = [
   [src.includes("nothing came back — running that one again"), "an empty prompt is retried"],
   // The brief and the references have to reach every part.
   [src.includes("opensPart[i] && job.brief"), "the brief is prefixed to the first prompt of a part"],
+  // The overlay covered Gemini's own Download button, which is the one path
+  // that gets a real file — the app was blocking the control it needed.
+  [(overlay.match(/pointerEvents: "none"/g) ?? []).length >= 4, "the card and the finished panel do not take the page's clicks"],
+  [overlay.includes('pointerEvents: "auto"'), "the parts that take input opt back in"],
+  // "Could not ask" was answered as "not paused", which lost the pause.
+  [overlay.includes("window.__wand.paused() : null"), "an unreachable overlay reports null, not false"],
+  // addInitScript cannot be removed; it was registered every 400ms.
+  [overlay.includes("registered.has(page)"), "the overlay script is registered once per page"],
+  // A fresh mount mid-job read "Ready / Waiting." with no buttons.
+  [overlay.includes("if (s.running)"), "a restored panel comes back running, with its caption"],
 ];
 for (const [ok, what] of must) assert.ok(ok, `broken rule: ${what}`);
 

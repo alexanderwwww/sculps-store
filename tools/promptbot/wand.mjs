@@ -86,7 +86,7 @@ export const OVERLAY = `(() => {
   hud.append(title, body, hint, bar);
   root.appendChild(hud);
 
-  const state = { stopped: false, paused: false, deaf: 0, wantsCard: false, epoch: Date.now() };
+  const state = { stopped: false, paused: false, running: false, deaf: 0, wantsCard: false, epoch: Date.now() };
 
   // Captured on the way down, so a page that swallows keys can't eat it.
   //
@@ -377,12 +377,23 @@ export const OVERLAY = `(() => {
     font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)",
     display: "none",
+    /* Transparent to the mouse.
+     *
+     * These panels sit at the top right of the page at the highest z-index
+     * there is, and they had no pointer-events rule — so they took the clicks
+     * meant for whatever was under them. Under them, on Gemini, is the
+     * per-image Download button: the one path that gets a real file. The app
+     * was covering the control it needed and then photographing the screen
+     * because the download "failed". The children that take input turn this
+     * back on for themselves. */
+    pointerEvents: "none",
   });
   const cName = css(document.createElement("div"), {
     fontSize: "15px", fontWeight: "700", letterSpacing: "-.01em", marginBottom: "3px",
   });
   const cSub = css(document.createElement("div"), { opacity: ".55", fontSize: "12px", marginBottom: "12px" });
   const drop = css(document.createElement("div"), {
+    pointerEvents: "auto",
     border: "1.5px dashed rgba(247,242,231,.28)", borderRadius: "12px",
     padding: "16px 12px", textAlign: "center", cursor: "pointer",
     transition: "border-color .15s, background .15s", marginBottom: "12px",
@@ -393,7 +404,7 @@ export const OVERLAY = `(() => {
   const thumbs = css(document.createElement("div"), { display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center" });
   drop.append(dropText, thumbs);
 
-  const row = css(document.createElement("div"), { display: "flex", gap: "8px" });
+  const row = css(document.createElement("div"), { display: "flex", gap: "8px", pointerEvents: "auto" });
   const mkBtn = (text, primary) => {
     const b = css(document.createElement("button"), {
       flex: "1", padding: "10px 12px", borderRadius: "10px", border: "0",
@@ -491,10 +502,13 @@ export const OVERLAY = `(() => {
     background: "rgba(14,14,17,.97)", color: "#F7F2E7",
     font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)", display: "none",
+    // Same reason as the card above: it stays on screen until somebody closes
+    // it, and until then it was eating the clicks meant for the page.
+    pointerEvents: "none",
   });
   const dName = css(document.createElement("div"), { fontSize: "15px", fontWeight: "700", marginBottom: "3px" });
   const dSub = css(document.createElement("div"), { opacity: ".6", fontSize: "12px", marginBottom: "12px" });
-  const dRow = css(document.createElement("div"), { display: "flex", gap: "8px" });
+  const dRow = css(document.createElement("div"), { display: "flex", gap: "8px", pointerEvents: "auto" });
   const bOpen = mkBtn("Get the zip", true);
   const bClose = mkBtn("Close", false);
   bOpen.setAttribute("data-wand", "");
@@ -534,8 +548,27 @@ export const OVERLAY = `(() => {
      */
     restore: (s) => {
       if (!s) return;
+      // A fresh mount after a navigation is "Ready / Waiting." with no
+      // buttons — mid-job. That is the app looking dead. The caption and the
+      // running flag come back with the state.
+      if (s.running) {
+        state.running = true;
+        css(bar, { display: "flex" });
+      }
+      if (s.title) {
+        title.textContent = s.title;
+        body.textContent = s.body || "";
+      }
       if (s.stopped) halt();
       else if (s.paused) pause();
+      else if (s.running) {
+        // Un-pause without rewriting the caption we just restored.
+        state.stopped = false;
+        state.paused = false;
+        css(title, { color: "#C9A0FF" });
+        bPause.textContent = "Pause";
+        css(bar, { display: "flex" });
+      }
     },
     /** An order from Claude, applied exactly as if the button had been pressed. */
     order(what) {
@@ -561,6 +594,9 @@ export const OVERLAY = `(() => {
     running() {
       state.stopped = false;
       state.paused = false;
+      state.running = true;
+      // The finished panel is about the last job, not this one.
+      doneCard.style.display = "none";
       css(bar, { display: "flex" });
       bPause.textContent = "Pause";
     },
@@ -680,8 +716,22 @@ export const OVERLAY = `(() => {
  * reports whether the overlay is really there, because one that silently
  * fails to draw is worse than none — the run looks broken when it isn't.
  */
+/**
+ * Pages this overlay has already been registered on.
+ *
+ * `addInitScript` cannot be removed once added, and `attachWand` is called
+ * from eight places — one of them every 400ms while a card is on screen. A
+ * card left up for two minutes registered three hundred copies of the same
+ * thirty-kilobyte script, and every navigation after that parsed and ran all
+ * of them.
+ */
+const registered = new WeakSet();
+
 export async function attachWand(page) {
-  await page.addInitScript(OVERLAY).catch(() => {});
+  if (!registered.has(page)) {
+    registered.add(page);
+    await page.addInitScript(OVERLAY).catch(() => {});
+  }
   let mounted = false;
   try {
     mounted = Boolean(await page.evaluate(OVERLAY));
@@ -696,8 +746,16 @@ export async function attachWand(page) {
 
   return {
     mounted,
-    stopped: () => safe(() => page.evaluate(() => window.__wand?.stopped() ?? false), false),
-    paused: () => safe(() => page.evaluate(() => window.__wand?.paused() ?? false), false),
+    /**
+     * null means "could not ask", which is not the same as "no".
+     *
+     * These used to fall back to false, so a page mid-navigation, a closed
+     * tab or an overlay that had not mounted yet all answered "not paused" —
+     * and the runner, which keeps its own copy, then wrote that false over
+     * the truth. That is the whole of "I pressed Pause and it kept going".
+     */
+    stopped: () => safe(() => page.evaluate(() => (window.__wand ? window.__wand.stopped() : null)), null),
+    paused: () => safe(() => page.evaluate(() => (window.__wand ? window.__wand.paused() : null)), null),
     epoch: () => safe(() => page.evaluate(() => window.__wand?.epoch() ?? 0), 0),
     restore: (s) => safe(() => page.evaluate((v) => window.__wand?.restore(v), s)),
     wantsCard: () => safe(() => page.evaluate(() => window.__wand?.wantsCard() ?? false), false),

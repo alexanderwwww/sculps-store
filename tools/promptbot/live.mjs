@@ -273,17 +273,41 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * carried on typing. This is the copy that survives; `syncWand` puts it back
  * whenever it notices a new mount.
  */
-const held = { paused: false, stopped: false };
+const held = { paused: false, stopped: false, running: false, title: "Ready", body: "Waiting." };
+let sayUntil = 0;
 let lastEpoch = 0;
 async function syncWand(w) {
   if (!w) return;
   const epoch = await w.epoch().catch(() => 0);
   if (epoch && epoch !== lastEpoch) {
+    // A new mount knows nothing at all. Push the whole state into it and read
+    // nothing back this turn — a blank mount's "not paused" would otherwise
+    // become the truth, which is how a pause pressed a second before a
+    // navigation used to disappear for good.
     lastEpoch = epoch;
-    if (held.paused || held.stopped) await w.restore(held).catch(() => {});
+    await w.restore(held).catch(() => {});
+    return;
   }
-  held.paused = await w.paused().catch(() => held.paused);
-  held.stopped = await w.stopped().catch(() => held.stopped);
+  const paused = await w.paused();
+  const stopped = await w.stopped();
+  // null is "could not ask", and it changes nothing.
+  if (paused !== null) held.paused = paused;
+  if (stopped !== null) held.stopped = stopped;
+}
+
+/**
+ * Say something, and remember having said it.
+ *
+ * The caption lives in the page, so a navigation wipes it and the panel reads
+ * "Ready / Waiting." in the middle of a job. Keeping the last thing said here
+ * means the next mount gets it back with the rest of the state.
+ */
+async function say(title, body, urgent = false) {
+  if (!urgent && Date.now() < sayUntil) return;
+  sayUntil = Date.now() + 600;
+  held.title = title;
+  held.body = body;
+  await wand.say(title, body);
 }
 
 const CAPTURED = new Map();
@@ -800,7 +824,7 @@ async function switchSite(name) {
   navGen += 1;
   siteName = name;
   console.log(`  now on ${site.name}`);
-  await wand.say("Waiting", `On ${site.name}. Tell Claude what you want.`);
+  await say("Waiting", `On ${site.name}. Tell Claude what you want.`);
   return true;
 }
 
@@ -860,14 +884,14 @@ async function goTo(url) {
   }
   pinnedChat = landed;
   console.log(`  \x1b[2mpinned to ${landed}\x1b[0m`);
-  await wand.say("Waiting", `In the chat Claude named. Tell Claude what you want.`);
+  await say("Waiting", `In the chat Claude named. Tell Claude what you want.`);
   return true;
 }
 
 console.log(`\n\x1b[1mConnected to ${site.name}.\x1b[0m`);
 console.log(`Tell Claude what you want. It shows up here and you press Return to run it.`);
 console.log(`Esc in the browser stops whatever is running.\n`);
-await wand.say("Waiting", `Connected to ${site.name}. Tell Claude what you want.`);
+await say("Waiting", `Connected to ${site.name}. Tell Claude what you want.`);
 
 async function fetchRefs(urls, dir) {
   if (!urls?.length) return [];
@@ -1100,7 +1124,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   if (await holdIfPaused(`before ${n} of ${total}`)) return 0;
   if (!(await ensurePage())) { console.log(`  \x1b[31m!! lost the ${site.name} tab\x1b[0m`); return 0; }
   await wand.reattach();
-  await wand.say(label, `${n} of ${total} — sending…`);
+  await say(label, `${n} of ${total} — sending…`);
 
   /*
    * One chat for the whole run, unless the job says otherwise.
@@ -1144,7 +1168,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   // Pictures before words: both sites disable send while an upload is running.
   if (fromCard && !skipRefs) {
     // Straight from the panel that received them — no disk, no file dialog.
-    await wand.say(label, `${n} of ${total} — attaching ${fromCard}…`);
+    await say(label, `${n} of ${total} — attaching ${fromCard}…`);
     const before = await blobCount(page);
     const box0 = await find(page, site.ask, 8000);
     if (box0) await box0.click().catch(() => {});
@@ -1161,7 +1185,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       ? `  attached ${fromCard} (from the card)`
       : `  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
   } else if (refs.length && !skipRefs) {
-    await wand.say(label, `${n} of ${total} — attaching ${refs.length}…`);
+    await say(label, `${n} of ${total} — attaching ${refs.length}…`);
     const how = await putFiles(page, refs, wand, label);
     if (how) {
       attachedInChat = true;
@@ -1169,7 +1193,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       log(`  attached ${refs.length} (${how})`);
     } else {
       log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
-      await wand.say(label, `${n} of ${total} — couldn't attach, sending anyway`);
+      await say(label, `${n} of ${total} — couldn't attach, sending anyway`);
       await wait(1000);
     }
   }
@@ -1240,7 +1264,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     while (Date.now() < until) {
       const busy = await page.locator(site.busy.join(",")).first().isVisible().catch(() => false);
       if (!busy) break;
-      await wand.say(label, `${n} of ${total} — waiting for the last one to finish…`);
+      await say(label, `${n} of ${total} — waiting for the last one to finish…`);
       await wait(1500);
       await obey();
     }
@@ -1290,7 +1314,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     }
   }
 
-  await wand.say(label, `${n} of ${total} — waiting for the pictures…`);
+  await say(label, `${n} of ${total} — waiting for the pictures…`);
   report("waiting for pictures", { job: label, prompt: `${n} of ${total}` });
   await wand.idle(true);
   // How long to wait for pictures. A job can set its own, because a site that
@@ -1308,6 +1332,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // reference photographs once.
     if (navGen !== myGen) {
       log(`  \x1b[33mmoved away while waiting — this one gets nothing\x1b[0m`);
+      // The drifting cursor was started before this loop and only stopped at
+      // the bottom of it, so leaving here left it sparkling forever on a run
+      // that had moved on.
+      await wand.idle(false);
       return 0;
     }
     // Paused here waits and then carries on with this same prompt. It used to
@@ -1315,11 +1343,11 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // pause in the middle of a picture quietly lost it.
     // Time spent paused is given back, or a two minute think while it is
     // held would eat the whole window the picture had to arrive in.
-    const held = Date.now();
+    const heldAt = Date.now();
     if (await holdIfPaused(`waiting for pictures from ${site.name}`)) {
       if (await wand.stopped()) break;
     }
-    deadline += Date.now() - held;
+    deadline += Date.now() - heldAt;
     if (await wand.stopped()) break;
     const urls = await page.evaluate(
       ({ sels, mine, min }) =>
@@ -1352,7 +1380,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     const busy = site.busy?.length
       ? await page.locator(site.busy.join(",")).first().isVisible().catch(() => false)
       : false;
-    if (fresh.length) { quiet = 0; await wand.say(label, `${n} of ${total} — ${seen.size} image${seen.size === 1 ? "" : "s"}…`); }
+    if (fresh.length) { quiet = 0; await say(label, `${n} of ${total} — ${seen.size} image${seen.size === 1 ? "" : "s"}…`); }
     else if (seen.size) { quiet += 2; if (quiet >= 8 && !busy) break; }
     else {
       // Nothing at all yet. Four minutes of that is the site having refused
@@ -1364,8 +1392,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
         log(`  \x1b[33mno picture after two minutes — moving on\x1b[0m`);
         break;
       }
+      // Every six seconds on the panel, every thirty to the status board: the
+      // person watching needs to see it move, the board does not.
+      if (quiet % 6 === 0) await say(label, `${n} of ${total} — still waiting (${quiet}s)`, true);
       if (quiet % 30 === 0) {
-        await wand.say(label, `${n} of ${total} — still waiting (${quiet}s)`);
         report("waiting for pictures", { job: label, prompt: `${n} of ${total}`, seconds: quiet, waitingFor: `an image on ${site.name} matching the job's selectors` });
       }
     }
@@ -1391,6 +1421,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   const urls = [...seen];
   for (let k = 0; k < urls.length; k++) {
     const url = urls[k];
+    // Orders are heard here too. The save phase can run for most of a minute
+    // across three pictures, and nothing in it used to look up.
+    await obey();
+    if (held.stopped) break;
     let buf = null;
 
     let how = null;
@@ -1821,7 +1855,7 @@ while (true) {
   done.add(job.id);
   await writeFile(DONE_FILE, [...done].join("\n")).catch(() => {});
 
-  await wand.say(label, "Starting…");
+  await say(label, "Starting…", true);
 
   // A folder per job, named after the job. Forty pictures in one directory is
   // a pile; seven folders of five is a shoot.
@@ -1853,6 +1887,7 @@ while (true) {
     continue;
   }
 
+  held.running = true;
   await wand.running();
   attachedInChat = false;
   freshRefs = false;
@@ -2024,7 +2059,7 @@ while (true) {
       // Hold on this one. Continue moves to the next prompt; the queue is
       // still whole, and whoever presses it has seen the screen.
       await wand.order("pause");
-      await wand.say(label, `${i + 1} of ${flatPrompts.length} — no picture. Press Continue when the tab looks right.`);
+      await say(label, `${i + 1} of ${flatPrompts.length} — no picture. Press Continue when the tab looks right.`);
       while (await wand.paused()) {
         if (await wand.stopped()) break;
         await obey();
@@ -2052,7 +2087,7 @@ while (true) {
 
   // Finished: nothing left to pick up.
   await rm(progressFile, { force: true }).catch(() => {});
-  await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);
+  await say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`, true);
 
   // The panel, with the number and a button that opens the folder — because
   // a folder you can see beats a sentence saying the folder exists.
