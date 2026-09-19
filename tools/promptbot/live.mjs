@@ -240,6 +240,22 @@ const SITES = {
     attachItem: ['button[aria-label*="Upload file" i]', 'text=Upload files', 'text=Μεταφόρτωση αρχείων'],
     /* Same reasoning as ChatGPT's: big, on the page, and not there before. */
     images: ["img"],
+    /**
+     * Gemini's own download button, on the image card.
+     *
+     * Its image host refuses a script request and often refuses node's too,
+     * and the fallback was a photograph of the screen — which bakes the
+     * composer bar, the model picker and this app's own overlay into what is
+     * supposed to be a product photograph. Those are unusable, and worse,
+     * they look usable. Clicking the button the site puts there itself gets
+     * the real file, because a click is a click.
+     */
+    save: [
+      'button[aria-label*="Download" i]',
+      'button[aria-label*="Λήψη" i]',
+      'button[data-test-id="download-button"]',
+      'button[aria-label*="Save image" i]',
+    ],
   },
   chatgpt: {
     name: "ChatGPT",
@@ -1149,6 +1165,45 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       if (b64) { buf = Buffer.from(b64, "base64"); how = "page-fetched"; }
     }
 
+    /**
+     * The site's own download button.
+     *
+     * Before giving up and photographing the screen, hover the picture and
+     * press the button the site puts there for exactly this. It is a real
+     * click, so no content policy applies to it, and what lands is the file
+     * the model produced rather than a picture of a browser window. This is
+     * the one that has to work: a screenshot carries the composer bar, the
+     * model picker and this app's own overlay, and those have gone onto a
+     * live shop more than once.
+     */
+    if (!buf && Array.isArray(site.save) && site.save.length) {
+      buf = await (async () => {
+        const shot = page.locator(`img[src="${url.replace(/["\\]/g, "\\$&")}"]`).first();
+        if (!(await shot.count())) return null;
+        await shot.hover({ timeout: 2000 }).catch(() => {});
+        // The control usually lives in the card around the picture, so look
+        // there first and fall back to anywhere on the page.
+        const card = shot.locator("xpath=ancestor::*[self::div or self::article][3]");
+        for (const sel of site.save) {
+          for (const where of [card, page]) {
+            const btn = where.locator(sel).first();
+            if (!(await btn.count().catch(() => 0))) continue;
+            const got = await Promise.all([
+              page.waitForEvent("download", { timeout: 15000 }).catch(() => null),
+              btn.click({ timeout: 3000 }).catch(() => null),
+            ]).then(([d]) => d);
+            if (!got) continue;
+            const tmp = await got.path().catch(() => null);
+            if (!tmp) continue;
+            const bytes = await readFile(tmp).catch(() => null);
+            if (bytes && bytes.length > 2048) return bytes;
+          }
+        }
+        return null;
+      })().catch(() => null);
+      if (buf) how = "saved";
+    }
+
     if (!buf) {
       // Last resort, and the one that cannot be refused: take a picture of the
       // picture. Lossier than the original, so it says so out loud — a folder
@@ -1171,14 +1226,24 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
 
     saved++;
     log(`  \x1b[2m${how}\x1b[0m ${url.slice(0, 70)}`);
+    /**
+     * A photograph is named as one.
+     *
+     * These carry the composer bar, the model picker and this app's own
+     * overlay burned into them, and they have gone onto a live shop and been
+     * seen by the owner before anybody noticed. A file called
+     * `03-01-SCREENSHOT.png` cannot be mistaken for a product photograph at a
+     * glance, which is the whole point.
+     */
+    const stem = `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}${how === "photographed" ? "-SCREENSHOT" : ""}`;
     // Up it goes as well as down. A picture that only exists in a folder on
     // one laptop has to be found, downloaded and re-uploaded by hand before
     // the shop can use it; one that is also here can be put on a product the
     // moment it exists.
-    sendShot(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`, buf);
+    sendShot(dir, `${stem}.png`, buf);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
-    await writeFile(join(dir, `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}.png`), buf);
+    await writeFile(join(dir, `${stem}.png`), buf);
   }
   return saved;
 }
