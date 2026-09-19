@@ -1284,7 +1284,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    * context — same cookies, same session, no policy in the way. Blob and data
    * URLs only exist inside the page, so those still go through it. And if
    * both fail there is always the picture on screen, which can simply be
-   * photographed.
+   * a real file or nothing at all.
    */
   let saved = 0;
   const urls = [...seen];
@@ -1383,23 +1383,22 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       if (buf) how = "saved";
     }
 
-    if (!buf) {
-      // Last resort, and the one that cannot be refused: take a picture of the
-      // picture. Lossier than the original, so it says so out loud — a folder
-      // full of silent screenshots is worse than a folder that is short.
-      const shot = page.locator(`img[src="${url.replace(/["\\]/g, "\\$&")}"]`).first();
-      // Hide our own cursor, panel and sparkles first. A screenshot composites
-      // everything that overlaps the picture, which is how this app's own
-      // overlay ended up inside product photographs on a live shop.
-      await page.evaluate(() => document.querySelectorAll("[data-wand]").forEach((e) => (e.style.visibility = "hidden"))).catch(() => {});
-      await shot.scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {});
-      buf = await shot.screenshot({ animations: "disabled", timeout: 5000 }).catch(() => null);
-      await page.evaluate(() => document.querySelectorAll("[data-wand]").forEach((e) => (e.style.visibility = ""))).catch(() => {});
-      if (buf) {
-        how = "photographed";
-        log(`  \x1b[33m~~ had to photograph one — ${site.name} refused the file\x1b[0m`);
-      }
-    }
+    /**
+     * No screenshots. Ever.
+     *
+     * There used to be a last resort here that photographed the picture on
+     * screen when the file could not be fetched. It is gone, and it is not
+     * coming back. What it produced was a picture of a browser window — the
+     * composer bar, the model picker, this app's own overlay — and those went
+     * onto a live shop twice and had to be cropped back out by hand. A missing
+     * picture is a prompt to run again; a screenshot is a mistake that looks
+     * like a success, which is worse.
+     *
+     * Everything above this line is a real file: the bytes the browser itself
+     * loaded, the file the host serves, or the one its own download button
+     * hands over. If none of those worked, this prompt produced nothing and
+     * says so, and the run retries it.
+     */
 
     if (!buf) {
       log(`  \x1b[31m!! couldn't save one of the pictures\x1b[0m`);
@@ -1417,15 +1416,13 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
      * `03-01-SCREENSHOT.png` cannot be mistaken for a product photograph at a
      * glance, which is the whole point.
      */
-    const stem = `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}${how === "photographed" ? "-SCREENSHOT" : ""}`;
+    const stem = `${String(n).padStart(2, "0")}-${String(saved).padStart(2, "0")}`;
     // Up it goes as well as down. A picture that only exists in a folder on
     // one laptop has to be found, downloaded and re-uploaded by hand before
     // the shop can use it; one that is also here can be put on a product the
     // moment it exists.
-    // Only a real file is offered to the shop. A photograph of a browser
-    // window is kept on disk, named as one, and never uploaded — it has been
-    // put on a live product page twice and that is twice too many.
-    if (how !== "photographed") sendShot(dir, `${stem}.png`, buf);
+    // Every file that reaches this line is a real one, so every one goes up.
+    sendShot(dir, `${stem}.png`, buf);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
     await writeFile(join(dir, `${stem}.png`), buf);
@@ -1780,12 +1777,42 @@ while (true) {
    * `newChat: "each"`.
    */
   const perPrompt = job.newChat === "each";
-  const sameChat = (i) => (perPrompt ? false : !(job.newChat && i === 0));
+  /**
+   * A job in parts: one product at a time, the way a person does it.
+   *
+   * Each part brings its own pictures and its own prompts. The app opens a
+   * chat, attaches that product's pictures once, draws that product, then
+   * starts a clean chat for the next one. No attaching all five products to
+   * every prompt, and no thread full of things it is not being asked to draw.
+   *
+   * A job with no parts is treated as one part, so nothing older changes.
+   */
+  const parts = Array.isArray(job.parts) && job.parts.length
+    ? job.parts.map((p) => ({ name: p.name ?? "", refs: p.refs ?? [], prompts: p.prompts ?? [] })).filter((p) => p.prompts.length)
+    : [{ name: "", refs: job.refs ?? [], prompts: job.prompts ?? [] }];
+  /** Which part each prompt belongs to, flattened. */
+  const belongs = parts.flatMap((p, pi) => p.prompts.map(() => pi));
+  /** The first prompt of a part starts its own chat and brings its own pictures. */
+  const opensPart = parts.flatMap((p) => p.prompts.map((_, i) => i === 0));
+  const sameChat = (i) => (perPrompt ? false : !(opensPart[i] && (parts.length > 1 || job.newChat)));
   /** Prompts in a row that produced nothing. Two means the site, not the prompt. */
   let dry = 0;
   let live = refs;
   let card = inCard;
-  for (let i = 0; i < job.prompts.length; i++) {
+  const flatPrompts = parts.flatMap((p) => p.prompts);
+  // The standing instruction goes in front of the first prompt of every part,
+  // so each product gets the brief without it being retyped into every line.
+  const textFor = (i) =>
+    opensPart[i] && job.brief ? `${job.brief}\n\n${flatPrompts[i]}` : flatPrompts[i];
+  for (let i = 0; i < flatPrompts.length; i++) {
+    // This part's own pictures, attached when the part opens and never again.
+    const mine = parts[belongs[i]]?.refs ?? [];
+    if (opensPart[i] && parts.length > 1) {
+      live = mine.length ? await fetchRefs(mine) : [];
+      attachedInChat = false;
+      freshRefs = Boolean(live.length);
+      if (parts[belongs[i]]?.name) log(`\n\x1b[1m${parts[belongs[i]].name}\x1b[0m`);
+    }
     if (await wand.stopped()) break;
     // Paused holds here rather than unwinding the run, so Continue picks up on
     // the very next prompt with everything — the folder, the zip, the count —
@@ -1795,7 +1822,7 @@ while (true) {
     while (await wand.paused()) {
       if (await wand.stopped()) break;
       if (await wand.wantsCard()) {
-        const sub = `Paused at ${i + 1} of ${job.prompts.length} — drop the pictures to use from here`;
+        const sub = `Paused at ${i + 1} of ${flatPrompts.length} — drop the pictures to use from here`;
         await wand.ask(label, sub);
         const answer = await decision(label, sub, sub);
         if (answer === "skip") { await wand.running(); break; }
@@ -1812,7 +1839,7 @@ while (true) {
         await wand.running();
         break;
       }
-      process.stdout.write(`\r  paused at ${i + 1}/${job.prompts.length} — press Continue, or tell Claude   `);
+      process.stdout.write(`\r  paused at ${i + 1}/${flatPrompts.length} — press Continue, or tell Claude   `);
       await obey();
       await wait(700);
     }
@@ -1841,19 +1868,19 @@ while (true) {
      * reference file that moved — any of them did it.
      */
     const attempt = () =>
-      runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, sameChat(i))
+      runPrompt(textFor(i), live, label, i + 1, flatPrompts.length, dir, card, sameChat(i))
         .catch((e) => { log(`  \x1b[31m!! that prompt threw — ${String(e).slice(0, 90)}\x1b[0m`); return 0; });
     let got = await attempt();
     if (!got && !(await wand.stopped())) {
       log(`  \x1b[33mnothing came back — running that one again\x1b[0m`);
-      report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total, note: "retrying — the first attempt produced no picture" });
+      report("running", { job: label, prompt: `${i + 1} of ${flatPrompts.length}`, saved: total, note: "retrying — the first attempt produced no picture" });
       got = await attempt();
     }
     if (!got && !(await wand.stopped())) {
       dry += 1;
-      const why = `Prompt ${i + 1} of ${job.prompts.length} produced no picture, twice. Look at the tab — the site may be asking something, out of generations, or refusing the prompt.`;
+      const why = `Prompt ${i + 1} of ${flatPrompts.length} produced no picture, twice. Look at the tab — the site may be asking something, out of generations, or refusing the prompt.`;
       log(`  \x1b[31m!! ${why}\x1b[0m`);
-      report("needs a look", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total, error: why });
+      report("needs a look", { job: label, prompt: `${i + 1} of ${flatPrompts.length}`, saved: total, error: why });
       // Two empty prompts in a row is the site, not the prompt. Stop rather
       // than burn the rest of the queue against a wall.
       if (dry >= 2) {
@@ -1863,7 +1890,7 @@ while (true) {
       // Hold on this one. Continue moves to the next prompt; the queue is
       // still whole, and whoever presses it has seen the screen.
       await wand.order("pause");
-      await wand.say(label, `${i + 1} of ${job.prompts.length} — no picture. Press Continue when the tab looks right.`);
+      await wand.say(label, `${i + 1} of ${flatPrompts.length} — no picture. Press Continue when the tab looks right.`);
       while (await wand.paused()) {
         if (await wand.stopped()) break;
         await obey();
@@ -1875,8 +1902,8 @@ while (true) {
       dry = 0;
     }
     total += got;
-    log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
-    report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total });
+    log(`  [${i + 1}/${flatPrompts.length}] ${got} image${got === 1 ? "" : "s"}`);
+    report("running", { job: label, prompt: `${i + 1} of ${flatPrompts.length}`, saved: total });
     // The zip is rebuilt after every prompt rather than once at the end.
     // A free account runs out of generations partway through a long job, and
     // building the archive only on the last line meant everything that had

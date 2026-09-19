@@ -186,13 +186,18 @@ const TOOLS = [
   {
     name: "wand_queue_set",
     description:
-      "Give Magic Wand a new job. Replaces whatever was queued. Every prompt runs in the "
-      + "one chat the app is already on, which is what keeps the reference picture and "
-      + "the style consistent across a long run. `newChat: true` asks for a fresh thread "
-      + "per prompt instead — only worth it for a genuinely different product. " +
-      "`selectors` overrides the app's idea of where the buttons and pictures are on " +
-      "that site, for this job only — which is how a site redesign gets fixed without a " +
-      "new version of the app.",
+      "Give Magic Wand a new job. Replaces whatever was queued.\n\n" +
+      "The way to give it work is `parts`: one entry per product, each with its own " +
+      "`refs` and its own `prompts`. The app then works the way a person does — opens a " +
+      "chat, attaches THAT product's pictures once, runs THAT product's prompts, then " +
+      "moves to the next part and starts again. No attaching every picture to every " +
+      "prompt, and no thread full of products it is not drawing.\n\n" +
+      "`brief` is the standing instruction — the products, the sizes, the house rules, " +
+      "the style — and it is put in front of the first prompt of every part, so a prompt " +
+      "can be one line instead of forty.\n\n" +
+      "`prompts` at the top level is still accepted for a single-product job. `newChat` " +
+      "opens a clean thread for the job (a part always starts its own). `selectors` " +
+      "overrides where the buttons are on that site, for this job only.",
     inputSchema: {
       type: "object",
       properties: {
@@ -200,6 +205,28 @@ const TOOLS = [
         site: { type: "string", enum: ["chatgpt", "gemini"] },
         prompts: { type: "array", items: { type: "string" } },
         newChat: { type: "boolean" },
+        brief: {
+          type: "string",
+          description:
+            "The standing instruction, put in front of the first prompt of every part: " +
+            "what the products are, their real sizes, the rules that never change, and " +
+            "the named styles. Write it once instead of retyping it into every prompt.",
+        },
+        parts: {
+          type: "array",
+          description:
+            "One per product. The app attaches that part's refs once, in its own chat, " +
+            "then runs that part's prompts, then moves on.",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              refs: { type: "array", items: { type: "string" } },
+              prompts: { type: "array", items: { type: "string" } },
+            },
+            required: ["prompts"],
+          },
+        },
         refs: {
           type: "array",
           items: { type: "string" },
@@ -211,7 +238,7 @@ const TOOLS = [
         url: { type: "string" },
         selectors: { type: "object" },
       },
-      required: ["name", "prompts"],
+      required: ["name"],
     },
   },
   {
@@ -288,21 +315,52 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
       return null;
     };
 
+    /** A job given in parts: one product at a time, pictures and prompts together. */
+    const parts = ((): { name: string; refs: string[]; prompts: string[] }[] => {
+      const raw = Array.isArray(args.parts)
+        ? args.parts
+        : typeof args.parts === "string" && args.parts.trim().startsWith("[")
+          ? (() => { try { return JSON.parse(args.parts as string); } catch { return []; } })()
+          : [];
+      return (raw as unknown[])
+        .map((p, i) => {
+          const o = (p ?? {}) as Record<string, unknown>;
+          return {
+            name: String(o.name ?? `Part ${i + 1}`),
+            refs: list(o.refs),
+            prompts: list(o.prompts),
+          };
+        })
+        .filter((p) => p.prompts.length);
+    })();
+
     const prompts = list(args.prompts);
-    if (!prompts.length) return { ok: false, error: "a job with no prompts is not a job" };
+    if (!prompts.length && !parts.length) {
+      return { ok: false, error: "a job with no prompts is not a job" };
+    }
     const job = {
       id: `job-${Date.now()}`,
       name: String(args.name ?? "Untitled"),
       site: args.site === "gemini" ? "gemini" : "chatgpt",
       newChat: Boolean(args.newChat),
+      ...(args.brief ? { brief: String(args.brief) } : {}),
       ...(list(args.refs).length ? { refs: list(args.refs) } : {}),
       ...(args.wait ? { wait: Number(args.wait) } : {}),
       ...(args.url ? { url: String(args.url) } : {}),
       ...(obj(args.selectors) ? { selectors: obj(args.selectors) } : {}),
-      prompts,
+      ...(parts.length ? { parts } : {}),
+      // Flattened as well, so an older app that has never heard of parts still
+      // runs the whole job rather than nothing at all.
+      prompts: prompts.length ? prompts : parts.flatMap((p) => p.prompts),
     };
     await write(env, "queue", job);
-    return { ok: true, queued: job.id, prompts: prompts.length };
+    return {
+      ok: true,
+      queued: job.id,
+      ...(parts.length
+        ? { parts: parts.map((p) => `${p.name}: ${p.prompts.length} prompts, ${p.refs.length} pictures`) }
+        : { prompts: job.prompts.length }),
+    };
   }
   return { ok: false, error: `no such tool: ${name}` };
 }
