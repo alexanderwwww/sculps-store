@@ -2345,3 +2345,38 @@
     grid-row: 2;
   }
 }
+
+/*
+ * Phone: the picture goes edge to edge, the eight sit in one row under it.
+ *
+ * Alex: "For the mobile, the small thumbnails of the item should be like under
+ * the full bleed picture."
+ *
+ * Eight 56px squares need 497px of width and a phone has 334 inside its
+ * margins, so they wrapped onto a second row — two ragged rows where the
+ * marketplaces have one. Eight equal columns of whatever width there is
+ * cannot wrap. And the frame breaks its margins so the product is as big as
+ * the phone allows, which is the whole point of the square.
+ */
+@media (max-width: 899px) {
+  .cb-gal__main {
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    border-radius: 0;
+  }
+  .cb-gal__strip {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-auto-flow: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .cb-gal__thumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+  }
+}
