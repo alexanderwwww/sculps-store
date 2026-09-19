@@ -1425,8 +1425,38 @@ function RvPost({ r }: { r: LoadedProductPage["reviews"][number] }) {
 }
 
 /** The private one: a thread, with the photo inside a bubble where there is one. */
-function RvThread({ r }: { r: LoadedProductPage["reviews"][number] }) {
+function RvThread({ r, gallery }: { r: LoadedProductPage["reviews"][number]; gallery: string[] }) {
   const lines = r.body.split(String.fromCharCode(10)).filter(Boolean);
+
+  /*
+   * A thread is more pictures than words.
+   *
+   * It used to print every line and then hang one photograph off the end,
+   * which reads as a transcript with an attachment. Real threads about a
+   * thing on somebody's lawn are the other way round — short bursts of typing
+   * and then picture, picture, picture, because the pictures are the point
+   * and they are what makes the card worth stopping on.
+   *
+   * The card's own photograph leads, and the rest come off the product
+   * gallery, picked by the review's id so a given card always shows the same
+   * ones rather than reshuffling on every render.
+   */
+  const pool = [r.imageUrl, ...gallery].filter(Boolean) as string[];
+  const seed = r.id.split("").reduce((n, c) => n + c.charCodeAt(0), 0);
+  const shots = Array.from(new Set(pool)).slice(0, 8);
+  const pics = shots.length
+    ? Array.from({ length: Math.max(2, Math.min(3, shots.length)) }, (_, i) => shots[(seed + i * 3) % shots.length])
+    : [];
+
+  // Interleaved, so the run never ends on a wall of text.
+  const beats: Array<{ kind: "line"; value: string; i: number } | { kind: "pic"; value: string }> = [];
+  lines.forEach((line, i) => {
+    beats.push({ kind: "line", value: line, i });
+    const pic = pics[Math.floor(i / 2)];
+    if (i % 2 === 1 && pic) beats.push({ kind: "pic", value: pic });
+  });
+  for (const extra of pics.slice(Math.ceil(lines.length / 2))) beats.push({ kind: "pic", value: extra });
+
   return (
     <article className="rv-card rv-thread">
       <header className="rv-thread__head">
@@ -1436,12 +1466,15 @@ function RvThread({ r }: { r: LoadedProductPage["reviews"][number] }) {
         <span className="rv-thread__tag">iMessage</span>
       </header>
       <div className="rv-thread__body">
-        {lines.map((line, i) => (
-          <p className={i % 2 ? "rv-mine" : "rv-theirs"} key={line}>{line}</p>
-        ))}
-        {r.imageUrl ? (
-          <span className="rv-bubbleshot"><img src={r.imageUrl} alt="" loading="lazy" /></span>
-        ) : null}
+        {beats.map((b, n) =>
+          b.kind === "line" ? (
+            <p className={b.i % 2 ? "rv-mine" : "rv-theirs"} key={`l${n}`}>{b.value}</p>
+          ) : (
+            <span className={`rv-bubbleshot${n % 3 === 0 ? " rv-bubbleshot--mine" : ""}`} key={`p${n}`}>
+              <img src={b.value} alt="" loading="lazy" />
+            </span>
+          ),
+        )}
       </div>
       <div className="rv-thread__field">iMessage</div>
     </article>
@@ -1532,7 +1565,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
               <div className="rv-pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
                 {rows.map((r, i) => (
                   r.channel === "imessage"
-                    ? <RvThread key={`${pass}-${r.id}`} r={r} />
+                    ? <RvThread key={`${pass}-${r.id}`} r={r} gallery={(page.product.images ?? []).filter((i) => i.url && i.kind !== "graphic").map((i) => i.url)} />
                     : <RvPost key={`${pass}-${r.id}`} r={r} />
                 ))}
               </div>

@@ -1736,3 +1736,8 @@
 @media (prefers-reduced-motion: reduce) {
   .cb-revs-s::after { animation: none; }
 }
+
+/* A thread that is mostly pictures needs them to sit on both sides, the way
+ * a real one does, or the column reads as a single person posting. */
+.rv-bubbleshot--mine { margin-left: auto; }
+.rv-thread__body .rv-bubbleshot + .rv-bubbleshot { margin-top: 6px; }
