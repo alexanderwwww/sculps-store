@@ -252,11 +252,7 @@ async function obey() {
      * the attached flag are both cleared.
      */
     else if (cmd === "newchat") {
-      const nw = await find(page, site.fresh, 4000);
-      if (nw) {
-        await wand.point(nw);
-        await nw.click({ timeout: 4000 }).catch(() => {});
-        await wait(1600);
+      if (await freshChat("couldn't open a new chat")) {
         watchImages(page);
         wand = await attachWand(page);
         pinnedChat = null;
@@ -427,7 +423,29 @@ const SITES = {
     url: "https://gemini.google.com/app",
     ask: ['div.ql-editor[contenteditable="true"]', 'rich-textarea div[contenteditable="true"]', "textarea"],
     send: ['button[aria-label*="Send" i]', 'button[aria-label*="Submit" i]', "button.send-button"],
-    fresh: ['button[aria-label*="New chat" i]', 'a[aria-label*="New chat" i]'],
+    /*
+     * Starting a fresh conversation.
+     *
+     * The aria-label was the whole list, and when Gemini renamed that control
+     * the order came back "nothing to do" — quietly, while every prompt in a
+     * newChat:"each" job kept landing in one long conversation. Gemini then
+     * answers from what it drew before instead of from the words it was just
+     * given: a rewritten prompt comes back as the old picture with the old
+     * mistakes on it, which reads as the rewrite being ignored.
+     *
+     * So: the test id first, then the side-nav button it lives in, then the
+     * label in either English or the user's own language, and the home link
+     * last — that one always opens a new conversation even if it is slower.
+     */
+    fresh: [
+      'button[data-test-id="new-chat-button"]',
+      '[data-test-id="new-chat-button"]',
+      'side-nav-action-button[data-test-id="new-chat-button"] button',
+      'button[aria-label*="New chat" i]',
+      'a[aria-label*="New chat" i]',
+      'button[aria-label*="Νέα συνομιλία" i]',
+      'a[href="/app"]',
+    ],
     file: ['input[type="file"]:not([data-wand])'],
     /** The paperclip. Gemini only puts a file input in the page once this is open. */
     attach: ['button[aria-label*="Open upload" i]', 'button[aria-label*="upload" i]', 'button[aria-label*="Add files" i]', 'uploader-button button', 'button.upload-card-button'],
@@ -711,6 +729,42 @@ if (!(await find(page, site.ask, 20000))) {
 
 watchImages(page);
 let wand = await attachWand(page);
+
+/*
+ * A new conversation, guaranteed.
+ *
+ * Clicking the site's own New chat control is the good path — it is instant
+ * and it keeps the tab. But that control gets renamed, and when the selector
+ * stopped matching the failure was silent: a job asking for a fresh chat per
+ * prompt quietly ran every prompt in one long conversation, where the model
+ * answers from the picture it drew last rather than from the words it was
+ * just handed. A rewritten prompt then comes back as the old picture with the
+ * old mistakes still on it, and nothing anywhere says why.
+ *
+ * So when the button cannot be found we go to the site's own address instead.
+ * It costs a page load and it always works. Returns false only when even that
+ * failed, and then it says so out loud rather than reporting nothing to do.
+ */
+async function freshChat(why = "couldn't start a new chat") {
+  const nw = await find(page, site.fresh, 4000);
+  if (nw) {
+    await wand.point(nw);
+    await nw.click({ timeout: 4000 }).catch(() => {});
+    await wait(1600);
+    await wand.reattach().catch(() => {});
+    return true;
+  }
+  try {
+    await page.goto(site.url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await wait(2200);
+    await wand.reattach().catch(() => {});
+    log(`\r\x1b[K  \x1b[2mnew chat by reloading ${site.name}\x1b[0m`);
+    return true;
+  } catch (e) {
+    log(`\r\x1b[K  \x1b[31m!! ${why}: ${String(e?.message ?? e).split("\n")[0]}\x1b[0m`);
+    return false;
+  }
+}
 await mkdir(opt.out, { recursive: true });
 
 /**
@@ -1238,8 +1292,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    * A job can still ask for a fresh chat when it is genuinely a new product.
    */
   if (!sameChat) {
-    const nw = await find(page, site.fresh, 4000);
-    if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await wait(1600); await wand.reattach(); }
+    await freshChat("carrying on in the same chat");
     // Nothing from the old thread carries over, references included.
     attachedInChat = false;
   }
