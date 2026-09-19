@@ -2275,3 +2275,47 @@
   .cb-gal__strip { display: flex; grid-template-columns: none; gap: 7px; }
   .cb-gal__thumb { width: 56px; height: 56px; }
 }
+
+/*
+ * Desktop: the thumbnails stand beside the picture, not under it.
+ *
+ * Alex: "On the desktop they can be on the left side of the big picture. Make
+ * them fit. It's just eight. Like seven, they will be on the side and one will
+ * be the big one."
+ *
+ * Under the picture, the row costs 70px of height at the exact point the page
+ * is trying to get the price and the Add to cart button above the fold. Beside
+ * it, it costs nothing — the column of thumbnails is shorter than the square
+ * frame it sits next to, so the fold is unchanged and the whole set is in view
+ * at once.
+ *
+ * The strip comes second in the markup, because on a phone that is the right
+ * order. Here it is placed into the first column explicitly rather than
+ * reordered, so the reading order the screen reader follows stays the one the
+ * markup gives.
+ */
+@media (min-width: 900px) {
+  .cb-gal {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+  .cb-gal__main { grid-column: 2; grid-row: 1; }
+  .cb-gal__strip {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-top: 0;
+  }
+  .cb-gal__thumb { width: 62px; height: 62px; }
+  /* Anything else in the gallery column — the four-payments line — sits under
+     both, full width, rather than being pulled into the thumbnail column. */
+  .cb-gal > *:not(.cb-gal__main):not(.cb-gal__strip) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
