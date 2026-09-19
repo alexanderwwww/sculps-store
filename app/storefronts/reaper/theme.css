@@ -2157,7 +2157,6 @@
   }
   /* The strip is a way back to a picture, not a second gallery. It was 78px
      of height for eight chips; 44px is still a comfortable target. */
-  .cb-gal__thumb { width: 46px; height: 46px; border-radius: 9px; }
   .cb-gal__strip { margin-top: 6px; padding-bottom: 2px; }
 }
 
@@ -2196,4 +2195,83 @@
   .cb-buy__side > * { order: 7; }
   .cb-buy__side > .cb-price { margin-top: 10px; }
   .cb-buy__side > .cb-acts { margin-bottom: 18px; }
+}
+
+/*
+ * The carousel, the way a marketplace does it.
+ *
+ * Alex, holding up AliExpress: "A simple square, small simple square
+ * thumbnails. Again, the small thumbnails of the carousel. That's how they
+ * sell."
+ *
+ * What was here before was a square frame with the picture inset by 14px and a
+ * strip of eight thumbnails stretched across the full width, each one also
+ * inset. Two things came of that: the product was smaller than the frame it
+ * was in, and the thumbnails were wide rectangles of mostly background, which
+ * is exactly the row a shopper cannot read at a glance. A marketplace does the
+ * opposite — the picture fills its frame edge to edge, and the thumbnails are
+ * small fixed squares sitting at the left, so the row reads as a row of
+ * products rather than a stretched strip.
+ */
+.cb-gal__main {
+  aspect-ratio: 1 / 1;
+  /* Big. The frame is as wide as its column and as tall as it is wide, and
+     nothing caps it below that — a listing image earns the room it takes. */
+  max-height: none;
+  width: 100%;
+  background: var(--tint);
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+}
+/* Edge to edge. Every listing image is square, so nothing is ever cropped by
+   this — it only stops the frame from adding a margin the picture did not ask
+   for and shrinking the product inside it. */
+.cb-gal__main img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  padding: 0;
+}
+
+/*
+ * Fixed small squares at the left, not a strip stretched to the width. Eight
+ * across a 560px column made each thumbnail 60px of a rectangle; at a fixed
+ * 64px they are square, they are the same size on every product however many
+ * pictures it has, and a product with twelve pictures wraps to a second row
+ * instead of shaving every thumbnail down to a sliver.
+ */
+.cb-gal__strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.cb-gal__thumb {
+  flex: 0 0 auto;
+  width: 64px; height: 64px;
+  aspect-ratio: auto;
+  border-radius: 10px;
+  background: var(--tint);
+  border: 1.5px solid var(--hair);
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color .12s ease;
+}
+.cb-gal__thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  padding: 0;
+}
+.cb-gal__thumb:hover { border-color: var(--action); }
+.cb-gal__thumb[aria-current="true"] {
+  border-color: var(--action);
+  border-width: 2px;
+  box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  /* Still squares, just smaller ones, and still a left-aligned row. */
+  .cb-gal__strip { display: flex; grid-template-columns: none; gap: 7px; }
+  .cb-gal__thumb { width: 56px; height: 56px; }
 }
