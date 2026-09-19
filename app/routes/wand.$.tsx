@@ -144,8 +144,10 @@ const TOOLS = [
   {
     name: "wand_queue_set",
     description:
-      "Give Magic Wand a new job. Replaces whatever was queued. `sameChat: true` keeps " +
-      "every prompt in one conversation instead of starting a new chat for each. " +
+      "Give Magic Wand a new job. Replaces whatever was queued. Every prompt runs in the "
+      + "one chat the app is already on, which is what keeps the reference picture and "
+      + "the style consistent across a long run. `newChat: true` asks for a fresh thread "
+      + "per prompt instead — only worth it for a genuinely different product. " +
       "`selectors` overrides the app's idea of where the buttons and pictures are on " +
       "that site, for this job only — which is how a site redesign gets fixed without a " +
       "new version of the app.",
@@ -155,7 +157,7 @@ const TOOLS = [
         name: { type: "string" },
         site: { type: "string", enum: ["chatgpt", "gemini"] },
         prompts: { type: "array", items: { type: "string" } },
-        sameChat: { type: "boolean" },
+        newChat: { type: "boolean" },
         refs: {
           type: "array",
           items: { type: "string" },
@@ -245,7 +247,7 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
       id: `job-${Date.now()}`,
       name: String(args.name ?? "Untitled"),
       site: args.site === "gemini" ? "gemini" : "chatgpt",
-      sameChat: Boolean(args.sameChat),
+      newChat: Boolean(args.newChat),
       ...(list(args.refs).length ? { refs: list(args.refs) } : {}),
       ...(args.wait ? { wait: Number(args.wait) } : {}),
       ...(args.url ? { url: String(args.url) } : {}),

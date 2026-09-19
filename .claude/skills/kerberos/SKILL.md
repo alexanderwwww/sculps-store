@@ -222,3 +222,38 @@ pick up. Don't re-explain the project to him.
   any new storefront.
 - `references/product-ideas.md` — parked and live product ideas, including
   Ceiling Buddy's locked design, pricing and sourcing route.
+
+## The master buy-box image recipe
+
+Every product page, every store. The gallery is **always square (1:1)** and
+always `object-fit: contain` — a cropped product photograph is a photograph
+the buyer has to guess at, and the buy box is where guessing costs the sale.
+
+At most **one or two** white-background studio shots in the buy box. Everything
+else is real life: phone photos, Temu-style listing graphics, Meta-ads style.
+A gallery of eight white cut-outs reads as a catalogue, not as a thing people
+own.
+
+The order, using the Black Reaper as the worked example:
+
+1. Temu style + a clean real-life phone shot, combined. The strongest frame.
+2. Clean white-background product shot.
+3. The product and its box arriving — phone/UGC style.
+4. More clean product shots.
+5. Temu-style explanation graphic (callouts, size, what it does).
+6. The clean product in real life.
+7. Real life.
+8. Real life.
+
+Roughly this for each product; the exact mix shifts a little per product and
+per store.
+
+**Plus a `clean_shots` section further down the page** — the plain grid, white
+ground, every piece including the parts that arrive flat and unassembled. It is
+the boring section on purpose: it answers "what is actually in the box" for
+somebody with their card already out. That is where the white-background shots
+live, not in the buy box.
+
+**Bundle tier thumbnails use `contain` too.** `cover` on a 48px square turns an
+eight-and-a-half-foot figure into a swatch of grey robe, and three tiers of
+swatch is exactly why the bundles read as weak.

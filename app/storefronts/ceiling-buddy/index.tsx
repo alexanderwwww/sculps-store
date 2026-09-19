@@ -188,6 +188,7 @@ function Section({
     case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
+    case "clean_shots":         return <CleanShots section={section} />;
     case "product_grid":  return <LockScreen section={section} page={page} />;
     case "trust_icons":   return <TrustBand section={section} brand={brand} />;
     case "three_steps":   return <Steps section={section} />;
@@ -796,6 +797,40 @@ function Features({ section }: { section: LoadedSection }) {
 }
 
 /* ------------------------------------------------------------- proof wall */
+
+/* ----------------------------------------------------------- clean shots */
+/**
+ * Every piece, on a plain background, with nothing happening.
+ *
+ * The rest of the page sells the night: the thing lit, on a lawn, with people
+ * reacting to it. None of that answers the question somebody asks with their
+ * card already out — what is actually in the box, and what does it look like
+ * before I put it together. So this is the boring section on purpose. Plain
+ * ground, whole object in frame, `contain` so nothing is cropped, and the
+ * caption underneath rather than written across the picture.
+ */
+function CleanShots({ section }: { section: LoadedSection }) {
+  const shots = section.blocks.filter((b) => has(b.values, "image"));
+  if (!shots.length) return null;
+  return (
+    <section className="cb-clean" id="clean-shots">
+      <div className="cb-head">
+        <h2>{val(section.values, "heading")}</h2>
+        {has(section.values, "subheading") ? <p>{val(section.values, "subheading")}</p> : null}
+      </div>
+      <div className="cb-clean__grid">
+        {shots.map((b) => (
+          <figure className="cb-clean__cell" key={b.id}>
+            <div className="cb-clean__pic">
+              <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
+            </div>
+            {has(b.values, "caption") ? <figcaption>{val(b.values, "caption")}</figcaption> : null}
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function ProofWall({ section }: { section: LoadedSection }) {
   const shot = section.blocks.find((b) => has(b.values, "image"));

@@ -1550,7 +1550,65 @@
  * was photographed in, and `contain` still guarantees nothing is cropped.
  */
 .cb-gal__main {
-  aspect-ratio: 4 / 5;
-  max-height: min(760px, 78vh);
+  /* Square, always. A product photograph that is cropped to fit a frame is a
+   * photograph the customer has to guess at, and the buy box is the one place
+   * on the page where guessing costs the sale. Square plus `contain` fits a
+   * portrait and a landscape shot whole, with no shape changing under the
+   * thumbnails as you click along the strip. */
+  aspect-ratio: 1 / 1;
+  max-height: min(680px, 72vh);
 }
 .cb-gal__main img { padding: 8px; }
+
+/*
+ * Bundle thumbnails show the whole thing.
+ *
+ * `cover` on a 48px square took a photograph of an eight-and-a-half-foot
+ * figure and handed back a swatch of its robe. Three tiers of grey swatch is
+ * why the bundles read as weak: the customer cannot see that two of them means
+ * two reapers. `contain` on a white tile shrinks the figure instead of
+ * cropping it, and a little padding keeps it off the border.
+ */
+.cb-tier__pic img {
+  object-fit: contain;
+  padding: 3px;
+}
+
+/* ------------------------------------------------------------ clean shots
+ *
+ * A plain grid, deliberately quiet. The pictures here are studio shots on
+ * white, so the section sits on white too and the only borders are hairlines:
+ * anything heavier turns a clean product photograph into a card, and eight
+ * cards in a row is a catalogue page.
+ */
+.cb-clean {
+  padding: clamp(36px, 6vw, 72px) 20px clamp(28px, 5vw, 56px);
+  background: #fff;
+}
+.cb-clean__grid {
+  max-width: 1120px;
+  margin: 22px auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 2vw, 20px);
+}
+@media (min-width: 720px) { .cb-clean__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+.cb-clean__cell { margin: 0; }
+.cb-clean__pic {
+  aspect-ratio: 1 / 1;
+  border: 1.5px solid var(--hair);
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+}
+/* contain, always — this is the section whose entire job is showing the whole
+ * object, including the parts that arrive flat and unassembled. */
+.cb-clean__pic img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+.cb-clean__cell figcaption {
+  margin-top: 8px;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--dim);
+  text-align: center;
+}

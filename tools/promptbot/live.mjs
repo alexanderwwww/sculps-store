@@ -645,18 +645,26 @@ async function blobCount(page) {
   return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
 }
 
-async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = false) {
+async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = true) {
   if (await holdIfPaused(`before ${n} of ${total}`)) return 0;
   if (!(await ensurePage())) { console.log(`  \x1b[31m!! lost the ${site.name} tab\x1b[0m`); return 0; }
   await wand.reattach();
   await wand.say(label, `${n} of ${total} — sending…`);
 
-  // A fresh chat per prompt: several shots of one product in one thread makes
-  // each picture a reply to the last rather than an answer to the prompt.
-  //
-  // A job can ask to stay put instead. That is for picking a run back up: the
-  // thread already holds the reference picture and everything drawn so far,
-  // and starting a new chat for shot twenty-five would throw all of it away.
+  /*
+   * One chat for the whole run, unless the job says otherwise.
+   *
+   * This used to be the other way round — a fresh thread per prompt — on the
+   * theory that a picture drawn in a thread full of earlier pictures becomes a
+   * reply to the last one rather than an answer to the prompt. In practice the
+   * cost of that was much worse: the reference photograph had to be attached
+   * forty-four times, the run left forty-four chats behind, and the model lost
+   * everything it had already been told about the product between every shot.
+   *
+   * Staying put keeps the reference, the corrections and the house style in
+   * view, which is what actually makes shot twenty-five look like shot one.
+   * A job can still ask for a fresh chat when it is genuinely a new product.
+   */
   if (!sameChat) {
     const nw = await find(page, site.fresh, 4000);
     if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await wait(1600); await wand.reattach(); }
@@ -1261,7 +1269,7 @@ while (true) {
       await wait(700);
     }
     if (await wand.stopped()) break;
-    const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, Boolean(job.sameChat));
+    const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true);
     total += got;
     log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
     report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total });
