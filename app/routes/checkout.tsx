@@ -84,7 +84,7 @@ const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
  * default warm grey. The layout is shared — this is one class on the
  * wrapper and a block of variables, not a second checkout to keep working.
  */
-const CHECKOUT_SKIN: Record<string, string> = { reaper: "gb-co-sec--night" };
+const CHECKOUT_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper" };
 
 /**
  * The other skin's stylesheet and fonts used to be declared here, which meant

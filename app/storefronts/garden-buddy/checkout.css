@@ -357,94 +357,45 @@
 @keyframes gb-co-sweep { from { transform: translate3d(-100%, 0, 0); } to { transform: translate3d(100%, 0, 0); } }
 
 /* ======================================================================
- * The night skin.
+ * The reaper skin.
  *
- * Same checkout, different light. Nothing about the layout moves — this is
- * the palette and a few surfaces, because a second checkout is a second
- * checkout to keep working and the one thing that must never break is the
- * page where the money happens.
+ * White and grey, the shape every buyer has already been through a hundred
+ * times. That familiarity is the feature: a checkout is not the place to
+ * have a look, and the only thing this page owes anybody is being obvious.
  *
- * The left half stays near-white. That is deliberate and it is the whole
- * judgement here: a dark form is harder to fill in, browser autofill paints
- * its own light backgrounds into your fields, and card entry is the last
- * place to be clever. The theme lives on the summary rail, the header and
- * the buttons — the parts that are read rather than typed into.
+ * A dark version of this existed for about an hour and was wrong. Dark forms
+ * are harder to fill in, browser autofill paints its own light backgrounds
+ * into the fields regardless, and nobody has ever abandoned a cart because
+ * the summary rail was grey.
+ *
+ * So the store's colour appears in exactly two places — the mark in the
+ * header and the button you press — and everything else gets out of the way.
  * ====================================================================== */
 
-.gb-co-sec--night {
+.gb-co-sec--reaper {
   --paper: #FFFFFF;
-  --sand: #F3F3F0;
-  --brown: #0B0B0C;
-  --lime: #D6FF4F;
-  --lime-2: #C6F03A;
-  --lime-ink: #17400A;
-  --leaf: #5C8C1E;
+  --sand: #F6F6F4;
+  --brown: #1A1A18;
+  /* orange, the shop's own, standing in for Garden Buddy's lime */
+  --lime: #F5821F;
+  --lime-2: #E4740F;
+  --lime-ink: #FFFFFF;
+  --leaf: #1FA34A;
   --ink: #14140F;
-  --dim: #66665E;
-  --line: rgba(11, 11, 12, .14);
-  --field: rgba(11, 11, 12, .24);
-  /* the right half — the night, instead of the default grey */
-  --rail: #0B0B0C;
+  --dim: #6B6B63;
+  --line: rgba(20, 20, 15, .13);
+  --field: rgba(20, 20, 15, .22);
+  --rail: #F5F5F5;
   --yellow: #F5821F;
   --font-h: "Archivo", system-ui, "Segoe UI", sans-serif;
   --font-b: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* The summary rail goes dark, so everything printed on it has to invert. */
-.gb-co-sec--night .gb-co__rail,
-.gb-co-sec--night .gb-co__summary { color: #F7F2E7; }
-.gb-co-sec--night .gb-co__rail a { color: #F7F2E7; }
-.gb-co-sec--night .gb-co__line-name,
-.gb-co-sec--night .gb-co__line-total,
-.gb-co-sec--night .gb-co__grand b,
-.gb-co-sec--night .gb-co__grand span { color: #F7F2E7; }
-.gb-co-sec--night .gb-co__line-sub,
-.gb-co-sec--night .gb-co__rail .gb-co__note { color: rgba(247, 242, 231, .56); }
-.gb-co-sec--night .gb-co__rail hr,
-.gb-co-sec--night .gb-co__rail .gb-co__rule { border-color: rgba(255, 255, 255, .12); }
-
-/* Every total on the dark rail. `--ink` is near-black, which on this
- * background is a number you cannot read — and the subtotal is the one a
- * buyer actually checks against what they expected to pay. */
-.gb-co-sec--night .gb-co__tot { color: rgba(247, 242, 231, .6); }
-.gb-co-sec--night .gb-co__tot b { color: #F7F2E7; }
-.gb-co-sec--night .gb-co__tot--free b { color: var(--lime); }
-.gb-co-sec--night .gb-co__totals { color: #F7F2E7; }
-
-/* Line thumbnails sit on their own tile so a cut-out product does not
- * disappear into a black rail. */
-.gb-co-sec--night .gb-co__line-pic,
-.gb-co-sec--night .gb-co__thumb {
-  background: rgba(255, 255, 255, .06);
-  border-color: rgba(255, 255, 255, .12);
-}
-
-/* The discount box, on the dark. */
-.gb-co-sec--night .gb-co__rail input[type="text"] {
-  background: rgba(255, 255, 255, .06);
-  border-color: rgba(255, 255, 255, .18);
-  color: #F7F2E7;
-}
-.gb-co-sec--night .gb-co__rail input[type="text"]::placeholder { color: rgba(247, 242, 231, .35); }
-
-/* The header bar carries the mark on black, which is where the shop's own
- * colour belongs — above the form, not inside it. */
-.gb-co-sec--night header { background: #0B0B0C; }
-.gb-co-sec--night .gb-co__wordmark { color: #F7F2E7; }
-.gb-co-sec--night .gb-co__crumb { color: rgba(247, 242, 231, .55); }
-.gb-co-sec--night .gb-co__crumb a { color: rgba(247, 242, 231, .8); }
-.gb-co-sec--night .gb-co__crumb [aria-current="step"] { color: var(--lime); }
-
-/* Pay button: neon with dark ink, the same pair the storefront uses, so the
- * last button of the journey looks like the first one. */
-.gb-co-sec--night .gb-co__btn {
-  background: var(--lime);
-  color: var(--lime-ink);
-}
-.gb-co-sec--night .gb-co__btn:hover { background: var(--lime-2); }
-
-@media (max-width: 900px) {
-  /* Folded to the top on a phone, the summary is the first thing seen, so it
-   * keeps the dark and the page opens on the shop rather than on a form. */
-  .gb-co-sec--night .gb-co__summary { background: var(--rail); }
-}
+/* The mark sits on black, the way it does everywhere else on the shop. It is
+ * the one piece of the brand this page carries, and it belongs above the
+ * form rather than inside it. */
+.gb-co-sec--reaper header { background: #0B0B0C; }
+.gb-co-sec--reaper .gb-co__wordmark { color: #F7F2E7; }
+.gb-co-sec--reaper .gb-co__crumb { color: rgba(247, 242, 231, .55); }
+.gb-co-sec--reaper .gb-co__crumb a { color: rgba(247, 242, 231, .82); }
+.gb-co-sec--reaper .gb-co__crumb [aria-current="step"] { color: #F5821F; }
