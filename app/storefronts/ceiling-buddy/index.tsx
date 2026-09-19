@@ -866,15 +866,25 @@ function LockScreen({ section, page }: { section: LoadedSection; page: LoadedPro
   const side = (b: (typeof rows)[number]) => val(b.values, "note").split(" ")[0];
   const when = (b: (typeof rows)[number]) => val(b.values, "note").split(" ").slice(1).join(" ");
 
+  /*
+   * When there is artwork, the artwork is the whole section.
+   *
+   * The built-in version draws the scene out of divs on a coloured panel,
+   * which is right for a shop that has no photograph of it. Once a real one
+   * exists, showing both means the same idea twice — and the panel around the
+   * picture turns a night scene into a postcard sitting on a blue card.
+   */
+  if (art) {
+    return (
+      <section className="cb-lock cb-lock--art">
+        <img src={art} alt={alt} />
+      </section>
+    );
+  }
+
   return (
     <>
-      {art ? (
-        <section className="cb-lock cb-lock--art">
-          <img src={art} alt={alt} />
-        </section>
-      ) : null}
-
-    <section className={`cb-lock${art ? " cb-lock--small" : ""}`}>
+    <section className="cb-lock">
       <div className="cb-lock__in">
         <div className="cb-lock__clock">
           {has(v, "subheading") ? <span>{val(v, "subheading")}</span> : null}

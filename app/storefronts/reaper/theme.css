@@ -1492,52 +1492,34 @@
   .cb-clip { width: 180px; border-radius: 22px; }
 }
 
-/* ---------------------------------------------------------- the glow plate
+/* ------------------------------------------------------ the night, full bleed
  *
- * A picture that arrives already lit does not want a card around it. Any
- * border, any pale panel, and the glow stops being light in a dark street and
- * becomes a photo pinned to a wall. So there is no frame here at all: the
- * band goes darker than the page, the image sits on it with its own edges
- * feathered away, and a wash of its colour is thrown behind it so the light
- * looks like it is coming off the picture rather than ending at it.
+ * One photograph, edge to edge, and nothing else in the section.
+ *
+ * It used to be a picture centred on a dark panel with a wash of colour
+ * behind it. That is a postcard pinned to a board: the frame announces that
+ * you are looking at an image of a night, instead of letting the page go
+ * dark and be one. So the band has no padding, no background of its own and
+ * no maximum width — the photograph is the section, and the only shaping is
+ * a height cap so it cannot eat a whole desktop screen.
  */
 .cb-lock--art {
-  display: none;
-  position: relative;
-  isolation: isolate;
-  padding: clamp(28px, 6vw, 72px) 16px clamp(16px, 3vw, 36px);
-  background: radial-gradient(120% 80% at 50% 30%, #0d1a33 0%, #060a16 55%, #04060e 100%);
-  overflow: clip;
-}
-
-/* The wash. Two soft lamps in the colours the artwork is lit with, sitting
- * behind the image so its edges have somewhere to disappear into. */
-.cb-lock--art::before {
-  content: "";
-  position: absolute;
-  inset: -20% -10%;
-  z-index: 0;
-  background:
-    radial-gradient(38% 34% at 50% 44%, rgba(64, 232, 192, 0.30), transparent 70%),
-    radial-gradient(52% 46% at 50% 62%, rgba(32, 120, 220, 0.24), transparent 72%);
-  filter: blur(40px);
-  pointer-events: none;
-}
-
-.cb-lock--art img {
-  position: relative;
-  z-index: 1;
   display: block;
-  width: min(100%, 560px);
-  margin: 0 auto;
-  height: auto;
-  /* No radius, no border, no shadow — the feather is the edge treatment. */
-  -webkit-mask-image: radial-gradient(76% 72% at 50% 50%, #000 58%, transparent 100%);
-          mask-image: radial-gradient(76% 72% at 50% 50%, #000 58%, transparent 100%);
+  padding: 0;
+  margin: 0;
+  background: #000;
+  line-height: 0;
 }
-
-@media (min-width: 760px) {
-  .cb-lock--art { display: block; }
+.cb-lock--art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 88vh;
+  object-fit: cover;
+  /* A 16:9 scene cropped to a phone would keep the middle and lose both the
+   * crowd and the sky the messages sit in, so on a narrow screen it keeps its
+   * whole width and simply gets shorter. */
+  object-position: center;
 }
 
 /*
@@ -1574,3 +1556,41 @@
   padding: 3px;
 }
 
+
+/* ------------------------------------------------------- smaller thumbnails
+ *
+ * Eight tiles across a phone is a row of postage stamps that still manages to
+ * take up a third of the screen above the price. The strip is a way back to a
+ * picture you have already seen, not a second gallery, so it can be small and
+ * quiet — and on a phone it scrolls sideways instead of wrapping, which keeps
+ * the buy button where the thumb expects it.
+ */
+.cb-gal__strip {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 6px;
+  margin-top: 8px;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.cb-gal__strip::-webkit-scrollbar { display: none; }
+
+.cb-gal__thumb {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  aspect-ratio: auto;
+  border-radius: 9px;
+  border-width: 1px;
+}
+.cb-gal__thumb img { padding: 2px; }
+.cb-gal__thumb[aria-current="true"] { border-width: 2px; }
+
+@media (min-width: 760px) {
+  /* Back to a fitted row on a desktop, where the width is not the scarce thing. */
+  .cb-gal__strip { flex-wrap: wrap; overflow: visible; gap: 8px; }
+  .cb-gal__thumb { width: 62px; height: 62px; border-radius: 11px; }
+}
