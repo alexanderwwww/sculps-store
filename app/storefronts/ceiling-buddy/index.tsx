@@ -15,6 +15,7 @@ import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
+import { EmailPopup } from "./popup";
 import { PhoneChat } from "../shared/phone-chat";
 import { ProductExpress } from "../garden-buddy/product-express";
 import { embedFor, isOwnVideo } from "./embeds";
@@ -166,6 +167,12 @@ export function CeilingBuddyStorefront({
         </main>
         <Footer page={page} storeParam={storeParam} />
         <StickyBuy page={page} storeParam={storeParam} />
+        {/* Last, so it can never be what somebody reaches before the price. */}
+        <EmailPopup
+          storeParam={storeParam}
+          heading="Before you go"
+          body="Take the code and it comes off at checkout."
+        />
       </div>
     </CartDrawerProvider>
   );
@@ -1633,7 +1640,14 @@ function Recommends({
     <section className="cb-section cb-recs" id="more">
       <div className="cb-wrap">
         <Head section={section} />
-        <ul className="cb-recs__grid">
+        {/* A rail, not a grid.
+            Six of these as full cards with a full-width orange button each ran
+            longer than the product being sold, and a cross-sell that occupies
+            more of the page than the thing it is attached to stops reading as
+            a suggestion and starts reading as a second shop. Small square
+            picture, name, price, one discreet add — and sideways, so the
+            number of them costs no height at all. */}
+        <ul className="cb-recs__rail">
           {items.map((p) => (
             <li className="cb-rec" key={p.id}>
               <a className="cb-rec__pic" href={`/products/${p.handle}${storeParam}`}>
@@ -1642,7 +1656,7 @@ function Recommends({
               <div className="cb-rec__body">
                 <a className="cb-rec__name" href={`/products/${p.handle}${storeParam}`}>{p.title}</a>
                 <span className="cb-rec__price">
-                  From {formatMoney(p.fromCents, page.store.currency)}
+                  {formatMoney(p.fromCents, page.store.currency)}
                 </span>
               </div>
               <form
@@ -1651,7 +1665,7 @@ function Recommends({
                 onSubmit={(e) => { if (drawer) { e.preventDefault(); drawer.add(p.variantId); } }}
               >
                 <input type="hidden" name="variantId" value={p.variantId} />
-                <button type="submit" className="cb-btn cb-btn--sm">{cta}</button>
+                <button type="submit" className="cb-rec__add" aria-label={`${cta} ${p.title}`}>{cta}</button>
               </form>
             </li>
           ))}

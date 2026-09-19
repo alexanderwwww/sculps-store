@@ -5,7 +5,7 @@
  * Stripe rather than trusting the redirect, because a redirect can be typed
  * into the address bar by anyone.
  */
-import { Link, data } from "react-router";
+import { Link, data, useFetcher } from "react-router";
 import { CheckoutHeader, CheckoutFooter } from "~/storefronts/garden-buddy/checkout-chrome";
 import buddyHref from "~/storefronts/garden-buddy/checkout.css?url";
 import type { Route } from "./+types/thanks";
@@ -19,6 +19,7 @@ import { metaConfig } from "~/db/schema";
 import { pixelScript, purchasePixelScript } from "~/lib/meta.server";
 import { readVisitorSession } from "~/lib/visitor.server";
 import { formatMoney } from "~/lib/money";
+import { offerForOrder, takeOffer, declineOffer } from "~/lib/upsell.server";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
 
 export function links() {
@@ -137,7 +138,33 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   const nav = store.slug === "garden-buddy" ? await storeNav(context.db, store.id) : null;
 
+  /*
+   * The one upsell that cannot cost a sale.
+   *
+   * The money has already moved and the order is safe, so an offer here can
+   * only add. It is only worth showing because the card is still on file:
+   * taking it is a button, not a second checkout. A failure to find one is
+   * normal and silent — a shop with one product, or an order that already
+   * holds everything cheap, simply gets no card.
+   */
+  const offer =
+    paymentStatus === "paid"
+      ? await offerForOrder(context.db, loaded.order.id).catch(() => null)
+      : null;
+
   return data({
+    offer: offer
+      ? {
+          variantId: offer.variantId,
+          title: offer.productTitle,
+          label: offer.variantLabel,
+          imageUrl: offer.imageUrl,
+          normal: formatMoney(offer.normalCents, loaded.order.currency),
+          price: formatMoney(offer.offerCents, loaded.order.currency),
+          saving: formatMoney(offer.savingCents, loaded.order.currency),
+        }
+      : null,
+    orderId: loaded.order.id,
     pixel,
     store: { name: store.name, slug: store.slug, contactEmail: store.contactEmail, logoUrl: store.logoUrl },
     footerLinks: nav?.footer ?? [],
@@ -160,8 +187,106 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }, headers ? { headers } : undefined);
 }
 
+/**
+ * Taking the offer, or saying no to it.
+ *
+ * Both answers are a POST to this same page so the whole thing works with
+ * JavaScript switched off, and both re-render with the card gone. The price
+ * is never read from the form: the server looks the offer up again and
+ * charges what it decides, because a price that arrives with the request is
+ * a price the customer can choose.
+ */
+export async function action({ request, context }: Route.ActionArgs) {
+  const url = new URL(request.url);
+  const store = await resolveStore(context.db, context.hostname, url);
+  if (!store) throw new Response("No store for this domain.", { status: 404 });
+
+  const form = await request.formData();
+  const orderId = String(form.get("orderId") ?? "");
+  const loaded = await loadOrder(context.db, orderId);
+  if (!loaded || loaded.order.storeId !== store.id) {
+    throw new Response("Order not found.", { status: 404 });
+  }
+
+  if (form.get("intent") === "decline") {
+    await declineOffer(context.db, orderId);
+    return data({ taken: false, error: null as string | null });
+  }
+
+  const result = await takeOffer(
+    context.db,
+    context.cloudflare.env,
+    orderId,
+    String(form.get("variantId") ?? ""),
+  );
+  return data(
+    result.ok
+      ? { taken: true, error: null as string | null }
+      : { taken: false, error: result.reason },
+  );
+}
+
+/**
+ * The card itself.
+ *
+ * Deliberately plain: a picture, a name, what it costs here against what it
+ * costs everywhere else, and one button. Anything more — a countdown, a
+ * second offer, a modal that has to be dismissed — turns a free add-on into
+ * the thing somebody remembers about the shop.
+ */
+function OfferCard({
+  offer,
+  orderId,
+}: {
+  offer: NonNullable<Route.ComponentProps["loaderData"]["offer"]>;
+  orderId: string;
+}) {
+  const fetcher = useFetcher<{ taken: boolean; error: string | null }>();
+  const busy = fetcher.state !== "idle";
+  const done = fetcher.data?.taken;
+  const gone = fetcher.data && !fetcher.data.taken && !fetcher.data.error;
+
+  if (gone) return null;
+  if (done) {
+    return (
+      <section className="up up--done">
+        <p><b>Added to your order.</b> It ships with everything else — nothing more to pay.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="up">
+      <p className="up__kicker">Add to this order before it ships</p>
+      <div className="up__row">
+        {offer.imageUrl ? (
+          <span className="up__pic"><img src={offer.imageUrl} alt="" /></span>
+        ) : null}
+        <div className="up__body">
+          <b className="up__name">{offer.title}</b>
+          <span className="up__label">{offer.label}</span>
+          <span className="up__price">
+            {offer.price} <s>{offer.normal}</s> <em>Save {offer.saving}</em>
+          </span>
+        </div>
+      </div>
+      {fetcher.data?.error ? <p className="up__err">{fetcher.data.error}</p> : null}
+      <fetcher.Form method="post" className="up__acts">
+        <input type="hidden" name="orderId" value={orderId} />
+        <input type="hidden" name="variantId" value={offer.variantId} />
+        <button type="submit" className="up__yes" disabled={busy}>
+          {busy ? "Adding…" : "Add it — one tap, card already on file"}
+        </button>
+        <button type="submit" name="intent" value="decline" className="up__no" disabled={busy}>
+          No thanks
+        </button>
+      </fetcher.Form>
+    </section>
+  );
+}
+
 export default function Thanks({ loaderData }: Route.ComponentProps) {
-  const { store, order, items, pixel, footerLinks } = loaderData;
+  const { store, order, items, pixel, footerLinks, offer, orderId } = loaderData;
   const paid = order.paymentStatus === "paid";
 
   /* Garden Buddy: the last page a paying customer sees is the store's own,
@@ -215,6 +340,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
                   <span>Total</span>
                   <b>{order.total}</b>
                 </div>
+                {paid && offer ? <OfferCard offer={offer} orderId={orderId} /> : null}
                 {store.contactEmail ? (
                   <p className="gb-co__note">
                     Any questions, reply to your receipt or write to {store.contactEmail} and quote #{order.number}.
@@ -275,6 +401,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
             <strong>Total</strong>
             <strong>{order.total}</strong>
           </div>
+          {paid && offer ? <OfferCard offer={offer} orderId={orderId} /> : null}
 
           {store.contactEmail ? (
             <p className="gk-quiet" style={{ marginTop: 20 }}>

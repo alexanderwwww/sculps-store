@@ -729,3 +729,58 @@ body {
   margin: 0;
   font-size: 13px;
 }
+
+/* ------------------------------------------------- the post-purchase offer
+ *
+ * Shown under a receipt, so it has to look like part of the receipt rather
+ * than an advert that followed somebody home. A hairline box, the product,
+ * the two numbers, one button. No countdown, no modal, nothing that has to
+ * be dismissed — the order is already safe and this can only add to it, so
+ * pressure here buys nothing and costs the goodwill of the sale just made.
+ */
+.up {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1.5px solid var(--gk-line, rgba(0,0,0,.12));
+  border-radius: 14px;
+  background: #fff;
+}
+.up__kicker {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gk-quiet, #6b6b6b);
+}
+.up__row { display: flex; gap: 12px; align-items: center; }
+.up__pic {
+  flex: 0 0 auto; width: 62px; height: 62px;
+  border-radius: 10px; overflow: hidden;
+  background: rgba(0,0,0,.04);
+}
+.up__pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.up__body { display: grid; gap: 2px; min-width: 0; }
+.up__name { font-size: 16px; line-height: 1.2; }
+.up__label { font-size: 13px; color: var(--gk-quiet, #6b6b6b); }
+.up__price { font-size: 15px; font-weight: 700; }
+.up__price s { font-weight: 400; color: var(--gk-quiet, #6b6b6b); margin-left: 4px; }
+.up__price em { font-style: normal; color: #1FA34A; margin-left: 6px; font-size: 13.5px; }
+
+.up__acts { display: grid; gap: 8px; margin-top: 14px; }
+.up__yes {
+  appearance: none; border: 0; cursor: pointer;
+  padding: 13px 16px; border-radius: 999px;
+  background: #F5821F; color: #fff;
+  font: inherit; font-weight: 700; font-size: 15px;
+}
+.up__yes[disabled] { opacity: .6; cursor: default; }
+.up__no {
+  appearance: none; border: 0; background: none; cursor: pointer;
+  padding: 4px; font: inherit; font-size: 13.5px;
+  color: var(--gk-quiet, #6b6b6b); text-decoration: underline;
+}
+.up__err { margin: 10px 0 0; font-size: 13.5px; color: #C8321B; }
+
+.up--done { background: #F3FBF4; border-color: #BFE6C6; }
+.up--done p { margin: 0; font-size: 14.5px; }

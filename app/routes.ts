@@ -20,6 +20,7 @@ export default [
   route("checkout/diag", "routes/checkout.diag.tsx"),
   route("push/log", "routes/push.log.tsx"),
   route("thanks", "routes/thanks.tsx"),
+  route("subscribe", "routes/subscribe.tsx"),
   // The store's second product. The root sells the first one.
   route("mower", "routes/mower.tsx"),
   route("pages/:handle", "routes/pages.$handle.tsx"),
