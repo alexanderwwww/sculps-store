@@ -1660,3 +1660,35 @@
   .cb-tier__pic { width: 42px; height: 42px; }
   .cb-tier__name { font-size: 16px; }
 }
+
+/* -------------------------------------------------- the reviews, after dark
+ *
+ * The wall is dark and the cards are dark, and on a flat near-black ground
+ * that reads as a settings screen rather than as a Halloween night. Two very
+ * soft lamps fix it without a single pumpkin or cobweb: warm orange low on
+ * the left, the colour of a porch light, and the lantern's cold blue high on
+ * the right. They are the two colours already in every photograph on this
+ * page, so the section belongs to the product rather than to the season in
+ * general — which is the difference between atmosphere and decoration.
+ */
+.cb-revs-s {
+  position: relative;
+  isolation: isolate;
+  background: #0B0B0C;
+  overflow: clip;
+}
+.cb-revs-s::before {
+  content: "";
+  position: absolute;
+  inset: -30% -10%;
+  z-index: -1;
+  background:
+    radial-gradient(46% 52% at 14% 88%, rgba(245, 130, 31, 0.16), transparent 70%),
+    radial-gradient(42% 48% at 88% 10%, rgba(62, 170, 255, 0.14), transparent 72%);
+  filter: blur(30px);
+  pointer-events: none;
+}
+/* The score and the heading sit on the dark now, not on the old tint. */
+.cb-revs-s .cb-head h2,
+.cb-revs__score { color: #F7F2E7; }
+.cb-revs__of { color: rgba(247, 242, 231, .5); }
