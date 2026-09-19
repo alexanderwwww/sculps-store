@@ -90,3 +90,34 @@ Both units, in this order: **3 FT / 0.9 M**.
 - **the same line of text printed twice**
 - a glow, a gradient or a soft shadow behind type; torn paper; blood splatter frames;
   starbursts; ribbons
+
+## Photography — the part that decides whether it reads as real
+
+> "The images you make for the Halloween movie theater are very nice, bro. Why don't you
+> do this style the same just with text? Realistic as fuck." — Alex, 20 Sep
+
+The UGC shots came out photographic and the panels came out like adverts, from the same
+model on the same day. The difference was not the word "realistic" — it was that the UGC
+prompts **named the specific imperfection**. A model given "make it look real" makes a
+clean advert. A model given "a wheelie bin in the corner of the frame" makes a photograph.
+
+So every panel, not just the UGC, is built on this:
+
+- **A real, named place.** A brick colonial in New England with wet leaves. A stucco house
+  in Nevada with a gravel yard. Never "a house".
+- **Imperfect framing.** Off centre, part of the product clipped, a parked car or a bin or
+  a porch pillar in the frame, shot from a doorway or a car window or a blanket on the
+  grass.
+- **Real phone behaviour.** Grain heavy in the shadows and gone in the highlights, a
+  streetlight flare, a blown-out porch bulb, mild motion blur on anything moving, night
+  mode smearing the edges.
+- **Ordinary life in shot.** Recycling boxes, a hosepipe, a bike on its side, a delivery
+  box on the step, a dog, shoes kicked off on the grass.
+- **Weather and season that belong to that place** on that night, and never the same
+  twice between two pictures.
+
+Then the panel furniture goes on top — the chips, the headline, the icon rows. The
+picture underneath is a photograph somebody took; the type is what we added.
+
+**Never** "cinematic", "studio", "product photography", "8k", "hyperrealistic". Those
+words produce the advert look every time.
