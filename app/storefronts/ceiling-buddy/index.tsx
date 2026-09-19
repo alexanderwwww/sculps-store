@@ -467,6 +467,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
               <img
                 src={val(main.values, "image")}
                 alt={val(main.values, "alt") || page.product.title}
+                /* This one shows whichever thumbnail was last pressed, so the
+                   editor must not tie it to a field — see matchMedia. */
+                data-ed-live="1"
               />
             ) : null}
             <div className="cb-gal__glow" />

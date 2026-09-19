@@ -171,6 +171,14 @@ function matchMedia(root: Element, used: Set<Element>, value: string): HTMLEleme
   if (!want) return null;
   for (const node of Array.from(root.querySelectorAll<HTMLElement>("img, video, source"))) {
     if (used.has(node)) continue;
+    // A picture whose `src` the storefront changes by itself can never carry a
+    // mark. The gallery's big frame is one: it shows whichever thumbnail was
+    // last pressed, so it matched picture one at load, kept that mark, and
+    // then pressing it swapped picture one however many shots along you were.
+    // Wrong picture replaced, from a click that looked exactly right. The
+    // thumbnails stay one-to-one with the blocks, so they carry the marks and
+    // the frame carries none.
+    if (node.hasAttribute("data-ed-live")) continue;
     if (node.getAttribute("src") === want) return node;
   }
   return null;

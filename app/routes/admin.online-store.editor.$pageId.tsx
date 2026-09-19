@@ -622,6 +622,11 @@ export default function ThemeEditor({ loaderData, actionData }: Route.ComponentP
         const node = event.target as Element | null;
         const picture = node?.closest?.("[data-ed-media]");
         if (picture && hit.field) {
+          // The gallery's thumbnails are buttons: without this the storefront's
+          // own handler also ran, the big frame changed to the picture being
+          // swapped, and the library opened over a gallery that had moved under
+          // it. In the editor a press on a picture means one thing.
+          event.stopPropagation();
           const frame = frameRef.current;
           const box = picture.getBoundingClientRect();
           const outer = frame?.getBoundingClientRect();
