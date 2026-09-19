@@ -1767,6 +1767,20 @@ while (true) {
   attachedInChat = false;
   freshRefs = false;
   let total = 0;
+  /**
+   * One conversation, entered fresh.
+   *
+   * `newChat: true` used to mean a brand new thread for every single prompt.
+   * So the long first message that teaches the model the five products, their
+   * sizes and the house style was left behind the moment prompt two ran, the
+   * references were pasted again on all fifteen — nine pictures each time —
+   * and every shot after the first was drawn by a model that had never been
+   * told anything. It now means: open a clean thread for the first prompt and
+   * stay in it. A job that genuinely wants a thread per prompt asks for
+   * `newChat: "each"`.
+   */
+  const perPrompt = job.newChat === "each";
+  const sameChat = (i) => (perPrompt ? false : !(job.newChat && i === 0));
   /** Prompts in a row that produced nothing. Two means the site, not the prompt. */
   let dry = 0;
   let live = refs;
@@ -1827,7 +1841,7 @@ while (true) {
      * reference file that moved — any of them did it.
      */
     const attempt = () =>
-      runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true)
+      runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, sameChat(i))
         .catch((e) => { log(`  \x1b[31m!! that prompt threw — ${String(e).slice(0, 90)}\x1b[0m`); return 0; });
     let got = await attempt();
     if (!got && !(await wand.stopped())) {
