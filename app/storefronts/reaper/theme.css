@@ -2065,3 +2065,6 @@
   .cb-rec2__hit { font-size: 14.5px; }
   .cb-rec2__price { font-size: 13.5px; }
 }
+
+/* "From" sits quieter than the number it qualifies. */
+.cb-rec2__price em { font-style: normal; font-weight: 500; color: var(--dim); }

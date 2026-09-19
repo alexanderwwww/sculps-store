@@ -75,6 +75,8 @@ export interface LoadedProductPage {
     handle: string;
     imageUrl: string | null;
     fromCents: number;
+    /** True when that price is a floor — the product sells in more than one size. */
+    fromMany: boolean;
     /** the variant an Add button adds — the default, or the cheapest */
     variantId: string;
   }[];
@@ -209,10 +211,18 @@ export async function loadProductPage(
         (p.images ?? []).find((x) => x.url && x.kind !== "graphic")?.url ??
         (p.images ?? []).find((x) => x.url)?.url ??
         null,
-      // The price of the variant the Add button adds, and the one the product
-      // page leads with — not the cheapest on the shelf. Quoting $79.99 here
-      // and landing on $129.99 is a price shock at exactly the wrong moment.
-      fromCents: (pick ?? cheapest)?.priceCents ?? 0,
+      /**
+       * The cheapest way to own one, shown as "From".
+       *
+       * This quoted whichever bundle the product page defaults to, so a card
+       * for the Black Reaper said $199.00 — the two-pack — while one reaper is
+       * $129.00. A shopper comparing two shops sees the dearer number and
+       * leaves. The card says the entry price and the word "From" carries the
+       * rest, which is both cheaper-sounding and true.
+       */
+      fromCents: (cheapest ?? pick)?.priceCents ?? 0,
+      /** Whether that price is a floor rather than the only price. */
+      fromMany: (mine?.length ?? 0) > 1,
       variantId: pick?.id ?? "",
     };
   }).filter((p) => p.variantId);

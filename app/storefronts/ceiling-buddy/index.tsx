@@ -1702,6 +1702,11 @@ function Recommends({
                 {p.title}
               </a>
               <span className="cb-rec2__price">
+                {/* "From", when the product sells in more than one size. The
+                    card used to print whichever bundle the product page
+                    defaults to, so the reaper card said $199.00 when one
+                    reaper is $129.00 — the dearer number, on the comparison. */}
+                {p.fromMany ? <em>From </em> : null}
                 {formatMoney(p.fromCents, page.store.currency)}
               </span>
               <form
