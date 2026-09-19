@@ -3944,7 +3944,16 @@ function OnePage({
     );
   }
 
-  const scratch = (
+  /**
+   * Off for the Reaper.
+   *
+   * The card draws a percentage — 5 to 30 — and writes it over whatever code
+   * the cart already has. This shop's discounts are in dollars, and its live
+   * code is $20 off, so a customer who scratched a 5 on a $199 order had $20
+   * quietly turned into $9.95 and would have been right to be angry about it.
+   * An untested giveaway is not a launch-day feature.
+   */
+  const scratch = store.slug === "reaper" ? null : (
     <ScratchCard
       odds={scratchOdds}
       applied={cart.discount?.code ?? null}

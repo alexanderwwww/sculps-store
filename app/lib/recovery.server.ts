@@ -16,7 +16,7 @@
  */
 import { and, eq, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { carts, stores, products, variants } from "~/db/schema";
+import { carts, stores, products, variants, discounts } from "~/db/schema";
 import { sendAbandonEmail, emailReady, type EmailLine } from "./email.server";
 
 /** What a cart's `items` json actually holds, as far as this file cares. */
@@ -94,6 +94,18 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
     const total = lines.reduce((sum, line) => sum + line.lineTotalCents, 0);
     const site = `https://${store.domain}`;
 
+    // The shop's own live code, in dollars. Read per store rather than
+    // hardcoded, so turning the offer off in the admin turns it off in the
+    // email too, and so the code in the email is one that actually works.
+    const [liveRow] = await db
+      .select()
+      .from(discounts)
+      .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed")))
+      .limit(1);
+    const live = liveRow && Number(liveRow.value) > 0
+      ? { code: liveRow.code, offCents: Number(liveRow.value) }
+      : null;
+
     // Claim it first. If the send fails the cart is still marked — one
     // attempt is the promise, and a failed send is recorded in the reasons
     // rather than retried into somebody's inbox on the next pass.
@@ -113,8 +125,12 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
       totalCents: total,
       // The token puts her cart back exactly as she left it.
       recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}`,
-      discountCode: kind === "checkout" ? "COMEBACK10" : null,
-      discountPercent: kind === "checkout" ? 10 : null,
+      // The shop's own live code, read from the database. It used to send
+      // "COMEBACK10, 10% off" — a percentage, which this shop does not do,
+      // and a code no row anywhere ever created, so anyone who tried it was
+      // told it was invalid. A dead code is worse than no code.
+      discountCode: kind === "checkout" ? (live?.code ?? null) : null,
+      discountOffCents: kind === "checkout" ? (live?.offCents ?? null) : null,
       // The cart's own photo when it has one, otherwise the store's hero —
       // an email about a product with no product in it is a wasted send.
       imageUrl: absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,

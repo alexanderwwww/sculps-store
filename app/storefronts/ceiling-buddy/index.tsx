@@ -532,6 +532,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
                   : /^two\b/i.test(x.label) ? 2
                   : /^three\b/i.test(x.label) ? 3
                   : /^four\b/i.test(x.label) ? 4
+                  // "Both — one at each end" is two of them. Without this the
+                  // row divided $469 by one and claimed $469.00 each.
+                  : /^both\b/i.test(x.label) ? 2
                   : 1;
                 return (
                   <button
@@ -601,9 +604,13 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
                     */}
                     <span className="cb-tier__right">
                       <span className="cb-tier__price">{formatMoney(x.priceCents, currency)}</span>
-                      <span className="cb-tier__each">
-                        {formatMoney(Math.round(x.priceCents / qty), currency)} each
-                      </span>
+                      {/* Only on a multi-buy. "$259.00" above "$259.00 each"
+                          is the same number twice and reads as a mistake. */}
+                      {qty > 1 ? (
+                        <span className="cb-tier__each">
+                          {formatMoney(Math.round(x.priceCents / qty), currency)} each
+                        </span>
+                      ) : null}
                     </span>
                   </button>
                 );
@@ -1285,8 +1292,11 @@ function SocialCard({ r, logo }: { r: LoadedProductPage["reviews"][number]; logo
             thrown away and rebuilt with every handler on it. */}
         {r.likes != null ? <div className="cb-card__likes">{r.likes.toLocaleString("en-US")} likes</div> : null}
         <p className="cb-card__cap"><b>{r.name}</b> {r.body}</p>
+        {/* No number. This shop does not count anything at anybody — the
+            invitation is enough, and a tally is the thing that reads as
+            invented the moment one of them looks too round. */}
         {r.replies != null ? (
-          <div className="cb-card__more">View all {r.replies} comments</div>
+          <div className="cb-card__more">View all comments</div>
         ) : null}
         {/* `title` is the comment list: handle|text|likes, one per line. */}
         {(r.title ?? "").split(String.fromCharCode(10)).filter(Boolean).map((line) => {
@@ -1333,7 +1343,7 @@ function SocialCard({ r, logo }: { r: LoadedProductPage["reviews"][number]; logo
             {r.likes.toLocaleString("en-US")}
           </span>
         ) : null}
-        {r.replies != null ? <span className="cb-card__when">{r.replies} comments</span> : null}
+        {r.replies != null ? <span className="cb-card__when">Comments</span> : null}
       </footer>
       <div className="cb-card__acts cb-card__acts--fb">
         <span>{IcoThumb2} Like</span>
@@ -1919,7 +1929,7 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
           <h2 className="cb-h2">
             {has(closing?.values ?? {}, "heading")
               ? val(closing!.values, "heading")
-              : "Your ceiling is the biggest screen you own"}
+              : `Put the ${page.product.title.replace(/^The /i, "")} up this weekend`}
           </h2>
           {buy ? (
             <form
@@ -1929,7 +1939,11 @@ function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: str
             >
               <input type="hidden" name="variantId" value={buy.id} />
               <button type="submit" className="cb-btn">
-                Get {page.store.name} — {formatMoney(buy.priceCents, page.store.currency)}
+                {/* The product, not the shop. This said "Get Black Reaper" at
+                    the bottom of the zombie, the projector and the archways —
+                    the last line before the card comes out naming the wrong
+                    thing. */}
+                Get the {page.product.title.replace(/^The /i, "")} — {formatMoney(buy.priceCents, page.store.currency)}
               </button>
             </form>
           ) : null}

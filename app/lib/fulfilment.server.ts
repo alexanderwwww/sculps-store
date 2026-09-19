@@ -6,9 +6,9 @@
  * returning from Stripe, and the webhook — must do exactly the same thing, and
  * must do it only once however many times they fire.
  */
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { orders, orderEvents, stores, variants } from "~/db/schema";
+import { orders, orderEvents, stores, variants, discounts } from "~/db/schema";
 import { loadOrder, recordOrderEvent } from "./admin.server";
 import { sendOrderConfirmation, sendMerchantNewOrder, emailReady, orderReference } from "./email.server";
 import { metaSettings, sendPurchase } from "./meta.server";
@@ -59,6 +59,16 @@ export async function afterPaymentConfirmed(
         : `Discount ${order.discountCode} was charged at the discounted price but could not be recorded: ${result.reason}`,
     );
   }
+
+  // The shop's live repeat-purchase code, if it has one switched on.
+  const [giftRow] = await db
+    .select()
+    .from(discounts)
+    .where(and(eq(discounts.storeId, store.id), eq(discounts.active, true), eq(discounts.kind, "fixed")))
+    .limit(1);
+  const gift = giftRow && Number(giftRow.value) > 0
+    ? { code: giftRow.code, offCents: Number(giftRow.value) }
+    : null;
 
   // 1. The sound on his phone.
   //
@@ -114,9 +124,12 @@ export async function afterPaymentConfirmed(
         shipCity: order.city,
         shipRegion: order.region,
         reference: orderReference(store.slug, order.number),
-        // The standing thank-you. In dollars, never a percentage.
-        giftCode: "GET10",
-        giftLabel: "$10 off your next one.",
+        // The standing thank-you, read out of the shop's own discounts. It
+        // used to print "GET10" on every receipt — a code nothing in this
+        // system has ever created, so the one person who tried to use it was
+        // told it was invalid. No live code, no gift block.
+        giftCode: gift?.code ?? null,
+        giftLabel: gift ? `$${(gift.offCents / 100).toFixed(0)} off your next one.` : null,
       });
     } else {
       // Say so on the timeline rather than leaving a silent gap that looks

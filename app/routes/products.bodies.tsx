@@ -38,8 +38,18 @@ import { reaperBrand } from "~/storefronts/reaper/brand";
 
 export function meta({ data: loaded }: Route.MetaArgs) {
   if (!loaded?.variant) return [{ title: "Not found" }];
-  const title = `${loaded.variant.label} — ${loaded.store.name}`;
-  const description = loaded.variant.sublabel ?? "Pilates at home.";
+  // The product, not the bundle the buy box happens to default to. This was
+  // putting "Two Reapers" and "Haunted House" in the browser tab, the Google
+  // result and the Meta link preview — and every one of those pages carried
+  // another shop's tagline as its description, which to a cold buyer reads as
+  // a scam page.
+  const product = loaded.page?.product ?? null;
+  const title = `${product?.title ?? loaded.variant.label} — ${loaded.store.name}`;
+  const plain = (product?.description ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const description =
+    (plain.length > 160 ? `${plain.slice(0, 157).trimEnd()}…` : plain) ||
+    loaded.variant.sublabel ||
+    `${product?.title ?? loaded.store.name} from ${loaded.store.name}.`;
   return [
     { title },
     { name: "description", content: description },

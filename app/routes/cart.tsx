@@ -45,7 +45,7 @@ export function meta({ data }: Route.MetaArgs) {
  * customer who lands there goes back to the product with the drawer open,
  * which is where they already were.
  */
-const DRAWER_STORES = new Set(["garden-buddy", "ceiling-buddy"]);
+const DRAWER_STORES = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);

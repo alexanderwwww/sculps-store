@@ -209,7 +209,10 @@ export async function loadProductPage(
         (p.images ?? []).find((x) => x.url && x.kind !== "graphic")?.url ??
         (p.images ?? []).find((x) => x.url)?.url ??
         null,
-      fromCents: cheapest?.priceCents ?? 0,
+      // The price of the variant the Add button adds, and the one the product
+      // page leads with — not the cheapest on the shelf. Quoting $79.99 here
+      // and landing on $129.99 is a price shock at exactly the wrong moment.
+      fromCents: (pick ?? cheapest)?.priceCents ?? 0,
       variantId: pick?.id ?? "",
     };
   }).filter((p) => p.variantId);

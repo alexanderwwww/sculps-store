@@ -678,7 +678,8 @@ export interface AbandonInput extends BrandFields {
   recoverUrl: string;
   /** only on the checkout one — a cart abandon gets no discount */
   discountCode?: string | null;
-  discountPercent?: number | null;
+  /** The saving, in cents. Dollars only — this shop never says "%". */
+  discountOffCents?: number | null;
   /** the hero image of what she left, absolute URL */
   imageUrl?: string | null;
 }
@@ -715,7 +716,8 @@ function abandonedBody(
     totalCents: number;
     recoverUrl: string;
     discountCode?: string | null;
-    discountPercent?: number | null;
+    /** The saving, in cents. Dollars only — this shop never says "%". */
+  discountOffCents?: number | null;
     imageUrl?: string | null;
   },
 ): string {
@@ -776,10 +778,10 @@ ${input.lines
 </td></tr></table>
 
 ${
-  input.discountCode && input.discountPercent
+  input.discountCode && input.discountOffCents
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
 <td style="padding:18px;background:${ink};border-radius:14px;text-align:center">
-<div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${accent}">Take ${input.discountPercent}% off</div>
+<div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${accent}">Take $${((input.discountOffCents ?? 0) / 100).toFixed(0)} off</div>
 <div style="margin-top:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:26px;font-weight:800;letter-spacing:.08em;color:#ffffff">${esc(input.discountCode)}</div>
 <div style="margin-top:6px;font-size:12px;color:#A9B0BE">Applied automatically when you tap below</div>
 </td></tr></table>`
@@ -799,7 +801,7 @@ ${button(input.kind === "checkout" ? "Finish my order" : "Take me back to it", i
 This is the only reminder we send. Changed your mind? Ignore it and we will leave you alone.
 </p>`,
     input.kind === "checkout"
-      ? `Your order is one tap from done${input.discountCode ? ` — and here is ${input.discountPercent}% off` : ""}`
+      ? `Your order is one tap from done${input.discountCode ? ` — and here is $${((input.discountOffCents ?? 0) / 100).toFixed(0)} off` : ""}`
       : "Your cart is still saved",
   );
 }
@@ -833,8 +835,8 @@ export async function sendAbandonEmail(
       (line) => `${line.label} x ${line.quantity} — ${formatMoney(line.lineTotalCents, input.currency)}`,
     ),
     ``,
-    input.discountCode && input.discountPercent
-      ? `Use ${input.discountCode} for ${input.discountPercent}% off.`
+    input.discountCode && input.discountOffCents
+      ? `Use ${input.discountCode} for $${((input.discountOffCents ?? 0) / 100).toFixed(0)} off.`
       : ``,
     `Pick it up here: ${input.recoverUrl}`,
     ``,
@@ -904,8 +906,11 @@ ${link ? button("Track my parcel", link, accent) : ""}`,
       lines,
       totalCents: 9999,
       recoverUrl: input.domain ? `https://${input.domain}/` : "#",
-      discountCode: kind === "abandoned_checkout" ? "COMEBACK10" : null,
-      discountPercent: kind === "abandoned_checkout" ? 10 : null,
+      // Preview only. The real send reads the shop's live code out of the
+      // database — a hardcoded one errors at checkout, which is worse than
+      // sending no code at all.
+      discountCode: null,
+      discountOffCents: null,
     });
   }
 
