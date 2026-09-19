@@ -268,7 +268,23 @@ const SITES = {
     file: ['input[type="file"]:not([data-wand])'],
     attach: ['button[aria-label*="Upload" i]', 'button[aria-label*="Attach" i]', 'button[data-testid="composer-plus-btn"]'],
     // The plus opens a menu; the first item is the one that takes a file.
-    attachItem: ['text=Add photos & files', 'text=Upload from computer', 'text=Add photos and files'],
+    /**
+     * The menu item inside the plus.
+     *
+     * ChatGPT renames these with every redesign, and a miss used to stall the
+     * whole run on a thirty-second click that could never land. More spellings
+     * here, and the attach step gives up quickly rather than holding the job:
+     * the reference is usually already in the chat anyway.
+     */
+    attachItem: [
+      'text=Add photos & files',
+      'text=Add photos and files',
+      'text=Upload from computer',
+      'text=Upload files',
+      'text=Upload file',
+      '[role="menuitem"]:has-text("Upload")',
+      '[role="menuitem"]:has-text("photos")',
+    ],
     /*
      * Finished pictures, found by where they are rather than where they came
      * from.
