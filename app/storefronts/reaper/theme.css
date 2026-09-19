@@ -2386,3 +2386,60 @@
     border-radius: 8px;
   }
 }
+
+/* --------------------------------------------------- shipping, returns, terms
+ *
+ * The pages nobody visits until they are about to spend money, and then read
+ * every word of. They get the shop's type and the shop's dark ground rather
+ * than a browser default, because a policy page that looks like it belongs to
+ * a different website is the same as not having one.
+ */
+
+.cb-legal {
+  max-width: 720px;
+  padding: 56px 20px 72px;
+}
+.cb-legal h1 {
+  font-size: clamp(34px, 6vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -.02em;
+  margin: 0 0 8px;
+}
+.cb-legal h2 {
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+  margin: 34px 0 10px;
+}
+.cb-legal p,
+.cb-legal li {
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: rgba(20, 22, 26, .82);
+}
+.cb-legal p { margin: 0 0 14px; }
+.cb-legal ul { margin: 0 0 14px; padding-left: 20px; }
+.cb-legal li { margin-bottom: 8px; }
+.cb-legal strong { color: var(--ink); font-weight: 700; }
+
+/* An email address in the middle of a sentence, not a default blue link. */
+.cb-legal a {
+  color: #B3430C;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.cb-legal a:hover { text-decoration-thickness: 2px; }
+
+.cb-legal__meta {
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(20, 22, 26, .14);
+  font-size: 13.5px;
+  color: rgba(20, 22, 26, .52);
+}
+
+@media (max-width: 599px) {
+  .cb-legal { padding: 36px 16px 56px; }
+  .cb-legal h2 { margin-top: 28px; }
+}

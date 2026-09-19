@@ -30,6 +30,8 @@ export default [
   // address. Every other store still redirects its old Shopify links home.
   route("products/:handle", "routes/products.bodies.tsx"),
   route("collections/:handle", "routes/collections.$handle.tsx"),
+  route("sitemap.xml", "routes/sitemap[.]xml.ts"),
+  route("robots.txt", "routes/robots[.]txt.ts"),
   route("password", "routes/password.tsx"),
   route("vitals", "routes/vitals.tsx"),
   // The storefront heartbeat: who is on the site right now, and proof that a

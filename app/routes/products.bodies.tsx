@@ -50,13 +50,65 @@ export function meta({ data: loaded }: Route.MetaArgs) {
     (plain.length > 160 ? `${plain.slice(0, 157).trimEnd()}…` : plain) ||
     loaded.variant.sublabel ||
     `${product?.title ?? loaded.store.name} from ${loaded.store.name}.`;
-  return [
+  const domain = loaded.store.domain;
+  const handle = product?.handle ?? loaded.variant.label;
+  const url = domain ? `https://${domain}/products/${handle}` : null;
+  const image = product?.images?.[0]?.url;
+  const imageUrl = image && domain ? (image.startsWith("http") ? image : `https://${domain}${image}`) : null;
+
+  const tags: Record<string, string>[] = [
     { title },
     { name: "description", content: description },
+    // Its own address, not the shop's front door.
+    //
+    // Every product page used to declare no canonical at all while the home
+    // route declared one for "/". Seven pages selling seven different things
+    // with nothing saying which address each belongs to is how a shop ends up
+    // with one page indexed and six treated as noise — and this shop is about
+    // to pay for the traffic that lands on them.
+    ...(url ? [{ tagName: "link", rel: "canonical", href: url }] : []),
     { property: "og:title", content: title },
     { property: "og:description", content: description },
     { property: "og:type", content: "product" },
+    { property: "og:site_name", content: loaded.store.name },
+    ...(url ? [{ property: "og:url", content: url }] : []),
+    // The link preview in a message, a post or an ad. Without it the platform
+    // picks whatever image it finds first, which on this shop is the logo.
+    ...(imageUrl ? [{ property: "og:image", content: imageUrl }] : []),
+    { name: "twitter:card", content: "summary_large_image" },
   ];
+
+  /*
+   * What the product actually is, in the form the engines read.
+   *
+   * Price, stock and the name in one block, so a search result can carry them
+   * and a shopping surface can list the thing at all. Written from the same
+   * values the page renders, never a second hand-kept copy.
+   */
+  if (product && url) {
+    const price = loaded.variant.priceCents;
+    const schema: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.title,
+      description,
+      url,
+      brand: { "@type": "Brand", name: loaded.store.name },
+    };
+    if (imageUrl) schema.image = [imageUrl];
+    if (typeof price === "number") {
+      schema.offers = {
+        "@type": "Offer",
+        url,
+        priceCurrency: loaded.store.currency ?? "USD",
+        price: (price / 100).toFixed(2),
+        availability: "https://schema.org/InStock",
+      };
+    }
+    tags.push({ "script:ld+json": schema } as unknown as Record<string, string>);
+  }
+
+  return tags;
 }
 
 /** Forward the loader's headers (no-store, cookies) onto the document response. */

@@ -18,8 +18,11 @@ import { pages } from "~/db/schema";
 import { Header, Footer } from "~/storefronts/garden-buddy";
 import kneelerHref from "~/storefronts/garden-kneeler/theme.css?url";
 import buddyHref from "~/storefronts/garden-buddy/theme.css?url";
+import ceilingBuddyHref from "~/storefronts/ceiling-buddy/theme.css?url";
+import reaperHref from "~/storefronts/reaper/theme.css?url";
 
 const GARDEN_BUDDY = "garden-buddy";
+const REAPER = "reaper";
 
 export function links() {
   return [
@@ -132,6 +135,92 @@ export default function StandalonePage({ loaderData }: Route.ComponentProps) {
           </article>
         </div>
         <Footer page={chrome} storeParam={storeParam} />
+      </>
+    );
+  }
+
+  /*
+   * Black Reaper wears its own shop.
+   *
+   * These pages used to fall through to the plain fallback below, which is
+   * the right thing for a store with no theme of its own and the wrong thing
+   * here: a customer clicking Returns from a black Halloween storefront landed
+   * on a cream page in a serif face with unstyled blue links and no way back
+   * except the wordmark. Stripe and Meta both open these links while they are
+   * deciding whether the shop is real, and so does anybody about to spend
+   * three hundred dollars.
+   *
+   * It borrows the shop's own header and footer classes rather than inventing
+   * a second set, so it keeps matching when the theme changes.
+   */
+  if (store.slug === REAPER) {
+    const home = `/${storeParam}`;
+    return (
+      <>
+        {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
+        <link rel="stylesheet" href={ceilingBuddyHref} precedence="high" />
+        <link rel="stylesheet" href={reaperHref} precedence="high" />
+        <div className="cb">
+          <header className="cb-header">
+            <div className="cb-wrap cb-header__in">
+              <a className="cb-logo" href={home} aria-label={store.name}>
+                {store.logoUrl ? <img src={store.logoUrl} alt={store.name} /> : <b>{store.name}</b>}
+              </a>
+              <nav className="cb-nav">
+                {nav.main.map((l) => (
+                  <a key={l.href + l.label} href={`${l.href}${storeParam}`}>{l.label}</a>
+                ))}
+              </nav>
+            </div>
+          </header>
+
+          <article className="cb-wrap cb-legal">
+            <h1>{page.title}</h1>
+            <Body body={page.body} />
+            <p className="cb-legal__meta">
+              Last updated {updated}
+              {store.contactEmail ? ` · Questions: ${store.contactEmail}` : ""}
+            </p>
+          </article>
+
+          <footer className="cb-footer">
+            <div className="cb-wrap cb-footer__cols">
+              <div className="cb-footer__brand">
+                {store.logoUrl ? <img src={store.logoUrl} alt={store.name} /> : <b className="cb-h3">{store.name}</b>}
+              </div>
+              {nav.footer.length ? (
+                <nav className="cb-footer__col" aria-label="Footer">
+                  <h3>Help</h3>
+                  <ul>
+                    {nav.footer.map((l) => (
+                      <li key={l.href + l.label}><a href={`${l.href}${storeParam}`}>{l.label}</a></li>
+                    ))}
+                  </ul>
+                </nav>
+              ) : null}
+              <div className="cb-footer__col">
+                <h3>The store</h3>
+                <ul>
+                  {nav.main.map((l) => (
+                    <li key={l.href + l.label}><a href={`${l.href}${storeParam}`}>{l.label}</a></li>
+                  ))}
+                </ul>
+              </div>
+              {store.contactEmail ? (
+                <div className="cb-footer__col">
+                  <h3>Talk to a person</h3>
+                  <ul>
+                    <li><a href={`mailto:${store.contactEmail}`}>{store.contactEmail}</a></li>
+                    <li>Same-day replies, most days</li>
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+            <div className="cb-wrap cb-footer__bar">
+              <span>© 2026 {store.name}</span>
+            </div>
+          </footer>
+        </div>
       </>
     );
   }
