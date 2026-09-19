@@ -1653,25 +1653,34 @@ function Recommends({
             a suggestion and starts reading as a second shop. Small square
             picture, name, price, one discreet add — and sideways, so the
             number of them costs no height at all. */}
-        <ul className="cb-recs__rail">
+        {/* One tile, one tap.
+            The sideways rail asked people to aim at a 13px product name — on a
+            phone a thumb that misses by four pixels lands on the list instead
+            and nothing happens, which reads as a dead link. The whole tile is
+            the link now: the anchor is stretched over the card with ::after,
+            so anywhere on the picture, the name or the white space around them
+            goes to the product. The add sits above it on its own layer, so the
+            one place that must not navigate still does not. */}
+        <ul className="cb-recs__grid2">
           {items.map((p) => (
-            <li className="cb-rec" key={p.id}>
-              <a className="cb-rec__pic" href={`/products/${p.handle}${storeParam}`}>
+            <li className="cb-rec2" key={p.id}>
+              <span className="cb-rec2__pic">
                 {p.imageUrl ? <img src={p.imageUrl} alt={p.title} loading="lazy" /> : <span />}
+              </span>
+              <a className="cb-rec2__hit" href={`/products/${p.handle}${storeParam}`}>
+                {p.title}
               </a>
-              <div className="cb-rec__body">
-                <a className="cb-rec__name" href={`/products/${p.handle}${storeParam}`}>{p.title}</a>
-                <span className="cb-rec__price">
-                  {formatMoney(p.fromCents, page.store.currency)}
-                </span>
-              </div>
+              <span className="cb-rec2__price">
+                {formatMoney(p.fromCents, page.store.currency)}
+              </span>
               <form
+                className="cb-rec2__form"
                 method="post"
                 action={`/cart/add${storeParam}`}
                 onSubmit={(e) => { if (drawer) { e.preventDefault(); drawer.add(p.variantId); } }}
               >
                 <input type="hidden" name="variantId" value={p.variantId} />
-                <button type="submit" className="cb-rec__add" aria-label={`${cta} ${p.title}`}>{cta}</button>
+                <button type="submit" className="cb-rec2__add" aria-label={`${cta} ${p.title}`}>{cta}</button>
               </form>
             </li>
           ))}

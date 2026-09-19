@@ -201,7 +201,14 @@ export async function loadProductPage(
       // button adds. Most products don't have one, and falling straight to
       // null drew a row of empty tiles while the product's own photographs
       // sat one field away.
-      imageUrl: mine.find((v) => v.imageUrl)?.imageUrl ?? (p.images ?? []).find((x) => x.url)?.url ?? null,
+      // A photograph, never a spec panel. The gallery holds both, and the
+      // annotated diagrams are unreadable at tile size — a cross-sell tile
+      // covered in callout text reads as an advert for a different website.
+      imageUrl:
+        mine.find((v) => v.imageUrl)?.imageUrl ??
+        (p.images ?? []).find((x) => x.url && x.kind !== "graphic")?.url ??
+        (p.images ?? []).find((x) => x.url)?.url ??
+        null,
       fromCents: cheapest?.priceCents ?? 0,
       variantId: pick?.id ?? "",
     };

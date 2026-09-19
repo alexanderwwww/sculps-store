@@ -1474,3 +1474,94 @@
 }
 .cb-chat__typing { margin-bottom: 12px; }
 .cb-chat__photo { margin: 0; }
+
+/* --------------------------------------------- goes with this, rebuilt again
+ *
+ * Two problems, one shape. The rail was a row of small squares that read as a
+ * strip of thumbnails rather than products, and its only tap targets were the
+ * picture and a two-line name — which on a phone means a thumb that lands
+ * anywhere else does nothing at all, and a link that does nothing is worse
+ * than no link.
+ *
+ * So: a proper grid of proper tiles, and the anchor stretched across the whole
+ * tile. Anywhere on the card goes to the product. The add button is lifted
+ * onto its own layer above that sheet, because it is the single spot that must
+ * not navigate.
+ */
+.cb-recs__grid2 {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(14px, 1.8vw, 22px);
+}
+@media (max-width: 1000px) { .cb-recs__grid2 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .cb-recs__grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+
+.cb-rec2 {
+  position: relative;
+  /* A column, not a grid of rows: the names are one or two lines depending on
+     the product, and with rows the buttons in a line sat at different heights.
+     The form takes the leftover space above it, so every Add lands level. */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--hair);
+  background: var(--card, #fff);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.cb-rec2:hover { transform: translateY(-2px); box-shadow: var(--lift); border-color: var(--action); }
+
+.cb-rec2__pic {
+  display: block;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--tint);
+}
+.cb-rec2__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* The link is the tile. The text sits where it always did; the sheet that
+   catches the tap is the ::after, stretched to the card's edges. */
+.cb-rec2__hit {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.cb-rec2__hit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.cb-rec2__price { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+
+/* Above the sheet, so the add is still an add. */
+.cb-rec2__form { position: relative; z-index: 1; margin-top: auto; padding-top: 2px; }
+.cb-rec2__add {
+  appearance: none;
+  width: 100%;
+  padding: 9px 0;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cb-rec2__add:hover { background: var(--ink); color: #fff; }
+
+@media (max-width: 720px) {
+  .cb-rec2 { padding: 8px 8px 10px; border-radius: 16px; }
+  .cb-rec2__hit { font-size: 14.5px; }
+  .cb-rec2__price { font-size: 13.5px; }
+}
