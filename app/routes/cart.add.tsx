@@ -37,12 +37,41 @@ async function add(
   const store = await resolveStore(context.db, context.hostname, url);
   if (!store) throw new Response("No store for this domain.", { status: 404 });
 
-  const back = new URL("/cart", url.origin);
+  /**
+   * Where a no-JavaScript add comes back to.
+   *
+   * This used to be /cart for everybody. On a store whose cart is a drawer,
+   * /cart bounces to the shop front — so a customer whose click landed before
+   * the page had finished waking up pressed Add to cart and was thrown onto
+   * the home page. From their seat the button simply does not work, which is
+   * exactly what it was called.
+   *
+   * So: back to the page they were standing on, with the drawer told to open.
+   * Only ever a path on this same site — a Referer is somebody else's string
+   * and is never trusted with a redirect.
+   */
+  const referer = request.headers.get("referer") ?? "";
+  let back = new URL("/cart", url.origin);
+  try {
+    const from = new URL(referer, url.origin);
+    if (from.origin === url.origin && !/^\/(cart|checkout|thanks)/.test(from.pathname)) {
+      back = new URL(from.pathname + from.search, url.origin);
+      back.searchParams.set("cart", "1");
+    }
+  } catch {
+    /* no referer, or a malformed one: the default stands */
+  }
   if (url.searchParams.get("store")) back.searchParams.set("store", url.searchParams.get("store")!);
   // "Buy now" skips the cart: the line goes in and the customer lands on the
   // checkout, where Apple Pay is the first thing on the screen.
   const wantsCheckout = url.searchParams.get("next") === "checkout";
-  if (wantsCheckout) back.pathname = "/checkout";
+  if (wantsCheckout) {
+    // Straight to the till, carrying nothing but the store.
+    const to = new URL("/checkout", url.origin);
+    const store = url.searchParams.get("store");
+    if (store) to.searchParams.set("store", store);
+    back = to;
+  }
 
   if (!variantId) {
     return new Response(null, { status: 302, headers: { Location: back.toString() } });

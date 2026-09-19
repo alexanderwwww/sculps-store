@@ -95,6 +95,24 @@ export function CartDrawerProvider({
     reload();
   }, [reload]);
 
+  /**
+   * ?cart=1 — an add that happened without JavaScript.
+   *
+   * The form posts, the server puts the line in and sends the customer back
+   * to the page they were on with this flag. Opening the drawer here is what
+   * makes that path look identical to the instant one, instead of looking
+   * like the button did nothing. The flag is then wiped from the address bar
+   * so a refresh does not reopen it forever.
+   */
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("cart") !== "1") return;
+    setOpen(true);
+    reload();
+    url.searchParams.delete("cart");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, [reload]);
+
   const add = useCallback(
     (variantId: string) => {
       if (!variantId) return;
