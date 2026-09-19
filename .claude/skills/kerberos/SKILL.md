@@ -29,6 +29,17 @@ speed comes from understanding the sentence the first time, not from skipping st
   sale, the image on the page, the app working on his Mac — and solve that, not the
   literal words. But never invent scope he did not ask for.
 
+> They feel stable. They understand in the first three seconds why they are there and
+> what this thing does, and they stop questioning and start imagining the feeling. It's
+> full of text, it looks like crap, but it offers clarity. I want that on our website,
+> with the beauty and aesthetics we try to achieve.
+
+That is how every carousel and thumbnail image is made from now on: a **panel**, not a
+photograph — product cut out and huge, spec chips or a feature column, every fact
+written on the image. Their clarity, our look. The whole spec, with the bans and the
+product facts, is in `references/panel-style.md`, and it is read before writing a single
+image prompt.
+
 He asked for that to be written down verbatim, and it is here because the failures on
 this project have all been the same failure: acting on half of what he said. What it
 means in practice:
