@@ -2068,3 +2068,67 @@
 
 /* "From" sits quieter than the number it qualifies. */
 .cb-rec2__price em { font-style: normal; font-weight: 500; color: var(--dim); }
+
+/* ------------------------------------------- the review wall, dressed up
+ *
+ * It was already black with bats drifting in it. What it lacked was the one
+ * thing every real Halloween porch has: a string of lights. So a swag of warm
+ * bulbs hangs across the top of the section, the orange glow underneath is
+ * warmer and lower, and the cards sit on it like paper on a dark table rather
+ * than like boxes floating in space.
+ *
+ * The rule is the same as the bats: it is a night that happens to be decorated,
+ * never a clip-art page. Nothing here sits in front of a word you must read.
+ */
+.cb-revs-s::before {
+  /* Warmer, and weighted to the floor of the section so the cards at the top
+     stay legible and the bottom feels like it is lit from a porch. */
+  background:
+    radial-gradient(60% 46% at 50% 108%, rgba(245, 130, 31, 0.26), transparent 72%),
+    radial-gradient(40% 44% at 10% 84%, rgba(255, 92, 0, 0.14), transparent 72%),
+    radial-gradient(38% 42% at 92% 12%, rgba(120, 60, 200, 0.12), transparent 74%);
+}
+
+/* The string of lights: one swag, drawn once, hung from the top edge. */
+.cb-revs-s .cb-wrap { position: relative; }
+.cb-revs-s .cb-wrap::before {
+  content: "";
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: -34px;
+  height: 64px;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--lights);
+  background-repeat: repeat-x;
+  background-size: 240px 64px;
+  opacity: .9;
+}
+.cb-revs-s {
+  --lights: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 64'><path d='M0 6c40 34 80 34 120 0s80-34 120 0' fill='none' stroke='%23241a12' stroke-width='3'/><g><circle cx='30' cy='22' r='5.5' fill='%23F5821F'/><circle cx='60' cy='28' r='5.5' fill='%23FFC24A'/><circle cx='90' cy='22' r='5.5' fill='%23F5821F'/><circle cx='120' cy='8' r='5.5' fill='%23FFC24A'/><circle cx='150' cy='22' r='5.5' fill='%23F5821F'/><circle cx='180' cy='28' r='5.5' fill='%23FFC24A'/><circle cx='210' cy='22' r='5.5' fill='%23F5821F'/></g></svg>");
+}
+/* A slow, shallow breath, so it reads as filament rather than as a blinking
+   decoration. Off for anyone who asked for less movement. */
+@keyframes porchlights { to { opacity: .62; } }
+.cb-revs-s .cb-wrap::before { animation: porchlights 4.2s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .cb-revs-s .cb-wrap::before { animation: none; } }
+
+/* The cards, on the dark. */
+.cb-revs-s .rv-post,
+.cb-revs-s .cb-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(2px);
+}
+.cb-revs-s .rv-post__name,
+.cb-revs-s .cb-card__who { color: #F7F2E7; }
+/* The verified tick takes the shop's orange instead of a borrowed blue. */
+.cb-revs-s .rv-post__tick svg,
+.cb-revs-s .cb-card__tick svg { color: var(--action); }
+
+@media (max-width: 720px) {
+  /* A swag needs room to hang; on a phone it is a smaller one. */
+  .cb-revs-s .cb-wrap::before { top: -24px; height: 44px; background-size: 168px 44px; }
+}
