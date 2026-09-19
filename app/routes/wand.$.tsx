@@ -28,6 +28,29 @@ import type { Route } from "./+types/wand.$";
 
 /** Rotating this invalidates every client at once, which is the point. */
 const KEY = "0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu";
+/** Every word the app will act on. A `goto <url>` is validated separately. */
+const ORDERS = ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin"];
+/** The only places a goto may point. An order is a URL the app opens blind. */
+const CHAT_HOSTS = new Set(["chatgpt.com", "chat.openai.com", "gemini.google.com"]);
+
+/**
+ * Why an order cannot be stored, or null when it can.
+ *
+ * One check for both doors — the MCP tool and the plain POST that order.sh
+ * uses. Validating only the tool left the allow-list decorative: a goto to
+ * anywhere at all went straight through the other route and was opened in a
+ * signed-in Chrome before the app could refuse it.
+ */
+function orderError(cmd: string): string | null {
+  if (ORDERS.includes(cmd)) return null;
+  if (cmd.startsWith("goto ")) {
+    let parsed: URL;
+    try { parsed = new URL(cmd.slice(5).trim()); } catch { return `not a URL: ${cmd.slice(5).trim()}`; }
+    if (!CHAT_HOSTS.has(parsed.host)) return `not a chat site the app knows: ${parsed.host}`;
+    return null;
+  }
+  return `not an order: ${cmd}`;
+}
 
 const FILES = {
   status: "wand-status.json",
@@ -126,14 +149,33 @@ const TOOLS = [
     name: "wand_order",
     description:
       "Tell Magic Wand what to do right now. 'continue' also says yes to a job that is " +
-      "waiting for approval. The app obeys within two seconds wherever it is, including " +
+      "waiting for approval. 'chatgpt' and 'gemini' move the app to that site, live, and " +
+      "drop whichever chat it was pinned to. 'unpin' lets it leave the chat it is loyal to " +
+      "without changing site. The app obeys within two seconds wherever it is, including " +
       "in the middle of waiting for a picture.",
     inputSchema: {
       type: "object",
       properties: {
-        cmd: { type: "string", enum: ["continue", "pause", "stop", "pictures", "skip"] },
+        cmd: {
+          type: "string",
+          enum: ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin"],
+        },
       },
       required: ["cmd"],
+    },
+  },
+  {
+    name: "wand_goto",
+    description:
+      "Send Magic Wand to one specific chat and keep it there. The app opens the URL, " +
+      "switches site if the address belongs to the other one, and pins itself to that " +
+      "conversation: every prompt from then on lands in it, and a closed tab is reopened " +
+      "on the same chat rather than on whatever tab was nearest. Use it to put a run back " +
+      "in the thread that already holds the reference pictures.",
+    inputSchema: {
+      type: "object",
+      properties: { url: { type: "string" } },
+      required: ["url"],
     },
   },
   {
@@ -204,9 +246,14 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
   }
   if (name === "wand_order") {
     const cmd = String(args.cmd ?? "");
-    if (!["continue", "pause", "stop", "pictures", "skip"].includes(cmd)) {
-      return { ok: false, error: `not an order: ${cmd}` };
-    }
+    if (!ORDERS.includes(cmd)) return { ok: false, error: `not an order: ${cmd}` };
+    await write(env, "order", { cmd, at: Date.now() });
+    return { ok: true, sent: cmd };
+  }
+  if (name === "wand_goto") {
+    const cmd = `goto ${String(args.url ?? "").trim()}`;
+    const bad = orderError(cmd);
+    if (bad) return { ok: false, error: bad };
     await write(env, "order", { cmd, at: Date.now() });
     return { ok: true, sent: cmd };
   }
@@ -387,7 +434,9 @@ export async function action({ params, request, context }: Route.ActionArgs) {
     return json({ ok: true });
   }
   if (what === "order") {
-    const cmd = String(body?.cmd ?? "");
+    const cmd = String(body?.cmd ?? "").trim();
+    const bad = orderError(cmd);
+    if (bad) return json({ ok: false, error: bad }, 400);
     await write(env, "order", { cmd, at: Date.now() });
     return json({ ok: true, sent: cmd });
   }

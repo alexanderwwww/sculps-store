@@ -38,7 +38,17 @@ const POLL_MS = 6000;
  * Each order carries the time it was written, and one is obeyed once: the
  * file staying on the server is not the same order being given again.
  */
-const WAND = process.env.WAND || "https://kerberos.gardenbuddystore.workers.dev/wand/0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu";
+/*
+ * Where the app says what it is doing.
+ *
+ * A test run must never land here. The suites point QUEUE and CONTROL at a
+ * local fake but had no reason to think about this one, so every `node
+ * test/endtoend.mjs` quietly overwrote the real status board with "site: Fake,
+ * build: dev" — and anyone reading the board, Claude included, was looking at
+ * a test instead of at the Mac. A run with its sites injected is by
+ * definition not the real thing, so it reports nowhere unless told to.
+ */
+const WAND = process.env.WAND || (process.env.WAND_SITES ? "" : "https://kerberos.gardenbuddystore.workers.dev/wand/0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu");
 const CONTROL = process.env.CONTROL || `${WAND}/order`;
 
 /**
@@ -65,6 +75,7 @@ function report(state, extra = {}) {
   // Keyed on everything, not just the state word: two different errors inside
   // five seconds are two different things to say, and dropping the second one
   // shows the wrong cause on the board.
+  if (!WAND) return;
   const key = state + JSON.stringify(extra);
   if (key === said && now - sayAt < 5000) return;
   said = key;
@@ -88,6 +99,9 @@ function report(state, extra = {}) {
  * a failed one costs nothing because the picture is on the disk either way.
  */
 function sendShot(dir, name, bytes) {
+  // Same reason as report(): a test's fake pictures do not belong in the
+  // shop's shot store, where Claude reads them back as real work.
+  if (!WAND) return;
   const job = dir.split("/").filter(Boolean).pop() || "run";
   const stop = new AbortController();
   const timer = setTimeout(() => stop.abort(), 30000);
@@ -158,10 +172,47 @@ async function obey() {
   }
   if (!o?.cmd || !Number(o.at) || Number(o.at) <= lastOrder) return;
   lastOrder = Number(o.at);
-  const did = await wand.order(o.cmd);
+  const cmd = String(o.cmd);
+
+  // Where to be is the runner's business; the page only knows its own buttons.
+  let did = false;
+  try {
+    if (cmd === "chatgpt" || cmd === "gemini") did = await switchSite(cmd);
+    else if (cmd.startsWith("goto ")) did = await goTo(cmd.slice(5).trim());
+    // No navGen bump: unpin moves nothing. Counting it as a move abandoned
+    // the picture that was already being drawn in the chat we are still in.
+    else if (cmd === "unpin") { pinnedChat = null; did = true; }
+    else did = await wand.order(cmd);
+  } catch (e) {
+    // Chrome going away in the middle of a goto is the usual one. The order
+    // is spent either way; the job it interrupted is not.
+    log(`\r\x1b[K  \x1b[31m!! ${cmd}: ${String(e?.message ?? e).split("\n")[0]}\x1b[0m`);
+  }
   log(`\r\x1b[K  \x1b[35mClaude: ${o.cmd}\x1b[0m${did ? "" : " (nothing to do)"}`);
   report(did ? `did: ${o.cmd}` : `ignored: ${o.cmd}`, { order: o.cmd, obeyed: did });
 }
+/*
+ * The chat this run belongs to.
+ *
+ * Without it the app is loyal to a tab rather than to a conversation, and a
+ * tab is a thing that closes. `ensurePage` then grabbed whatever ChatGPT tab
+ * was most recently opened and carried on there, so a run told to work in one
+ * chat quietly finished somewhere else — which is exactly what it looks like
+ * from outside when four pictures end up in four threads.
+ *
+ * Pinned, the address is the thing being followed. A closed tab is reopened on
+ * the same conversation, and a job that named a chat keeps working in it for
+ * its whole length rather than for its first prompt.
+ */
+let pinnedChat = null;
+/**
+ * Bumped by anything that moves the app somewhere else on purpose — a site
+ * switch, a goto, an unpin. A prompt that was waiting for its pictures when
+ * that happened is looking at a different conversation now, and whatever is
+ * there is not its answer.
+ */
+let navGen = 0;
+
 const BUILD = process.env.WAND_BUILD || "dev";
 const MIN_PIXELS = 320;
 
@@ -411,12 +462,83 @@ await mkdir(opt.out, { recursive: true });
  * other open tab on the same site, and only opens a new one when there is
  * nothing to work with. The overlay follows the page it finds.
  */
+/**
+ * The conversation part of a chat URL, so query strings do not split a match.
+ *
+ * Google's account prefix is dropped with it. `/u/1/app/<id>` and
+ * `/app/<id>` are the same conversation seen from two signed-in accounts, and
+ * treating them as different ones meant a pinned chat was reopened in a loop
+ * on any Mac with more than one Google account.
+ */
+function chatKey(u) {
+  try {
+    const x = new URL(u);
+    return x.host + x.pathname.replace(/^\/u\/\d+/, "");
+  } catch { return null; }
+}
+
+/** Is this the site's own front page rather than a conversation in it? */
+function isFront(u) {
+  const k = chatKey(u);
+  return !k || k === chatKey(site.url);
+}
+
 async function ensurePage() {
   const host = new URL(site.url).host;
   const ok = (pg) => {
     if (!pg || pg.isClosed()) return false;
     try { return new URL(pg.url()).host === host; } catch { return false; }
   };
+
+  // A pinned chat outranks the tab we happen to be holding. The old code
+  // returned early on any live tab of the right host, which is how a run
+  // drifted out of the conversation it was told to work in and never came
+  // back — the drift was invisible because nothing was ever "lost".
+  if (pinnedChat) {
+    const want = chatKey(pinnedChat);
+    if (ok(page) && chatKey(page.url()) === want) return true;
+
+    const onChat = context.pages().filter((pg) => ok(pg) && chatKey(pg.url()) === want);
+    if (onChat.length) {
+      page = onChat[onChat.length - 1];
+      console.log(`\r\x1b[K  \x1b[2mback on the chat this job belongs to\x1b[0m`);
+    } else {
+      console.log(`\r\x1b[K  \x1b[2mreopening the chat this job belongs to\x1b[0m`);
+      if (!ok(page)) page = await context.newPage().catch(() => null);
+      if (!page) return false;
+      await page.goto(pinnedChat, { waitUntil: "domcontentloaded" }).catch(() => {});
+      await wait(1200);
+      // A site is free to answer a chat address with a different one — a
+      // deleted thread goes to the front page, another account's goes to
+      // /u/1/, chat.openai.com goes to chatgpt.com. Left as it was, the pin
+      // never matched the page and every check here reloaded it, forever.
+      // So the pin follows where the site actually put us, or lets go.
+      await page.bringToFront().catch(() => {});
+      wand = await attachWand(page);
+      // Only a page with a message box in it is somewhere this app can work,
+      // and that has to be settled before the pin is allowed to move. A
+      // signed-out session answers a chat address with a login page, and
+      // re-pinning to that made every prompt for the rest of the morning fail
+      // with "no message box" while the app insisted it was pinned.
+      const usable = Boolean(await find(page, site.ask, 15000));
+      if (!usable) return false;
+      const landed = chatKey(page.url());
+      if (landed !== want) {
+        if (!isFront(page.url())) {
+          console.log(`\r\x1b[K  \x1b[2mthe chat moved — following it\x1b[0m`);
+          pinnedChat = page.url();
+        } else {
+          console.log(`\r\x1b[K  \x1b[33mthat chat is gone — carrying on without it\x1b[0m`);
+          pinnedChat = null;
+        }
+      }
+      return true;
+    }
+    await page.bringToFront().catch(() => {});
+    wand = await attachWand(page);
+    return Boolean(await find(page, site.ask, 15000));
+  }
+
   if (ok(page)) return true;
 
   const found = context.pages().filter(ok);
@@ -434,6 +556,88 @@ async function ensurePage() {
   await page.bringToFront().catch(() => {});
   wand = await attachWand(page);
   return Boolean(await find(page, site.ask, 15000));
+}
+
+/**
+ * Move to the other chat site, live.
+ *
+ * Switching used to be a thing only a queued job could ask for, which meant
+ * "enough of ChatGPT, open Gemini" had to be phrased as a job with prompts in
+ * it. It is an order now, obeyed wherever the app is — mid-wait included —
+ * and it drops the pinned chat, because the chat belonged to the old site.
+ */
+async function switchSite(name) {
+  const wanted = SITES[name];
+  if (!wanted) return false;
+  if (wanted === site) { console.log(`  already on ${site.name}`); return true; }
+  console.log(`\r\x1b[K  switching to ${wanted.name}…`);
+  const was = site;
+  const hadPin = pinnedChat;
+  site = wanted;
+  if (!page || page.isClosed()) page = await context.newPage().catch(() => null);
+  if (!page) { site = was; return false; }
+  await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
+  await page.bringToFront().catch(() => {});
+  wand = await attachWand(page);
+  if (!(await find(page, site.ask, 20000))) {
+    // Not signed in there. Everything goes back the way it was — the site,
+    // and the chat we were in, not just the site's front page.
+    console.log(`  \x1b[31mnot signed into ${site.name} in this Chrome — sign in and it'll come back\x1b[0m`);
+    site = was;
+    await page.goto(hadPin ?? site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
+    wand = await attachWand(page);
+    return false;
+  }
+  // The chat belonged to the old site.
+  pinnedChat = null;
+  navGen += 1;
+  siteName = name;
+  console.log(`  now on ${site.name}`);
+  await wand.say("Waiting", `On ${site.name}. Tell Claude what you want.`);
+  return true;
+}
+
+/** Open one specific chat and stay in it. */
+async function goTo(url) {
+  let u;
+  try { u = new URL(url); } catch { console.log(`  \x1b[31mnot a URL: ${url}\x1b[0m`); return false; }
+  // The site is whichever one the address belongs to — nobody should have
+  // to say "chatgpt" and then paste a chatgpt.com link.
+  const owner = Object.keys(SITES).find((k) => {
+    try { return new URL(SITES[k].url).host === u.host; } catch { return false; }
+  });
+  // By name, not by object: a job's selector overrides make `site` a copy,
+  // and comparing the copy to the original threw the overrides away on every
+  // goto — the one feature that lets a broken selector be fixed from the queue.
+  if (owner && owner !== siteName) {
+    site = SITES[owner];
+    siteName = owner;
+  }
+  if (!page || page.isClosed()) page = await context.newPage().catch(() => null);
+  if (!page) return false;
+  await page.goto(u.href, { waitUntil: "domcontentloaded" }).catch(() => {});
+  // The tab has moved, whether or not the destination turns out to be usable.
+  // A prompt waiting for pictures is now looking at a different conversation
+  // either way, and it has to be told even when the goto then fails.
+  navGen += 1;
+  await wait(1200);
+  await page.bringToFront().catch(() => {});
+  wand = await attachWand(page);
+  if (!(await find(page, site.ask, 20000))) {
+    console.log(`  \x1b[31mno message box at ${u.href} — is it signed in?\x1b[0m`);
+    return false;
+  }
+  // Pinned to where the site put us, which is not always what was asked for.
+  const landed = page.url();
+  if (isFront(landed)) {
+    console.log(`  \x1b[33m${u.href} opened the front page — nothing to pin to\x1b[0m`);
+    pinnedChat = null;
+    return false;
+  }
+  pinnedChat = landed;
+  console.log(`  \x1b[2mpinned to ${landed}\x1b[0m`);
+  await wand.say("Waiting", `In the chat Claude named. Tell Claude what you want.`);
+  return true;
 }
 
 console.log(`\n\x1b[1mConnected to ${site.name}.\x1b[0m`);
@@ -645,18 +849,26 @@ async function blobCount(page) {
   return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
 }
 
-async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = false) {
+async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = true) {
   if (await holdIfPaused(`before ${n} of ${total}`)) return 0;
   if (!(await ensurePage())) { console.log(`  \x1b[31m!! lost the ${site.name} tab\x1b[0m`); return 0; }
   await wand.reattach();
   await wand.say(label, `${n} of ${total} — sending…`);
 
-  // A fresh chat per prompt: several shots of one product in one thread makes
-  // each picture a reply to the last rather than an answer to the prompt.
-  //
-  // A job can ask to stay put instead. That is for picking a run back up: the
-  // thread already holds the reference picture and everything drawn so far,
-  // and starting a new chat for shot twenty-five would throw all of it away.
+  /*
+   * One chat for the whole run, unless the job says otherwise.
+   *
+   * This used to be the other way round — a fresh thread per prompt — on the
+   * theory that a picture drawn in a thread full of earlier pictures becomes a
+   * reply to the last one rather than an answer to the prompt. In practice the
+   * cost of that was much worse: the reference photograph had to be attached
+   * forty-four times, the run left forty-four chats behind, and the model lost
+   * everything it had already been told about the product between every shot.
+   *
+   * Staying put keeps the reference, the corrections and the house style in
+   * view, which is what actually makes shot twenty-five look like shot one.
+   * A job can still ask for a fresh chat when it is genuinely a new product.
+   */
   if (!sameChat) {
     const nw = await find(page, site.fresh, 4000);
     if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await wait(1600); await wand.reattach(); }
@@ -762,6 +974,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     ).catch(() => []),
   );
 
+  // Where the tab was before the message went, so the pin can be taken from
+  // the address *changing* rather than from a guess about what a chat URL
+  // looks like on each site.
+  const urlBeforeSend = page.url();
   const typed = async () => (await box.textContent().catch(() => "")) || (await box.inputValue().catch(() => "")) || "";
   const send = await find(page, site.send, 5000);
   if (send) { await wand.point(send); await send.click().catch(() => {}); }
@@ -779,6 +995,35 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   }
   log(`  \x1b[2msent\x1b[0m`);
 
+  // The first message to land is what turns "a tab" into "this chat": from
+  // here on the run is loyal to the address, not to the window. A fresh
+  // thread per prompt asks not to be pinned, since it will never be back.
+  if (sameChat && !pinnedChat) {
+    // A fresh page only becomes a conversation once the site assigns it an
+    // address, and that takes a moment after the send. Waiting a fixed 800ms
+    // and then trusting whatever the URL was pinned front pages on slow days
+    // and the multi-account /u/1/app on Gemini every day.
+    // Only the first prompt gets to wait for it. A site that has not given
+    // this thread an address by then is one that never will, and three seconds
+    // on every prompt after that is a job running a third slower for nothing.
+    const budget = n === 1 ? 3000 : 0;
+    let here = page.url();
+    for (let t = 0; t < budget && chatKey(here) === chatKey(urlBeforeSend); t += 400) {
+      await wait(400);
+      here = page.url();
+    }
+    if (chatKey(here) !== chatKey(urlBeforeSend) && !isFront(here)) {
+      pinnedChat = here;
+      log(`  \x1b[2mpinned to this chat\x1b[0m`);
+      report("running", { chat: here });
+    } else if (!isFront(urlBeforeSend)) {
+      // Already in a conversation before the send — that is the one.
+      pinnedChat = urlBeforeSend;
+      log(`  \x1b[2mpinned to this chat\x1b[0m`);
+      report("running", { chat: urlBeforeSend });
+    }
+  }
+
   await wand.say(label, `${n} of ${total} — waiting for the pictures…`);
   report("waiting for pictures", { job: label, prompt: `${n} of ${total}` });
   await wand.idle(true);
@@ -787,9 +1032,18 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   let deadline = Date.now() + (jobWait || opt.wait) * 1000;
   const seen = new Set();
   let quiet = 0;
+  const myGen = navGen;
   while (Date.now() < deadline) {
     await wait(2000);
     await obey();
+    // Sent somewhere else while waiting — by a site switch or a goto. The
+    // pictures in the new place belong to whatever was drawn there, not to
+    // this prompt, and harvesting them as its answer filled a zip with the
+    // reference photographs once.
+    if (navGen !== myGen) {
+      log(`  \x1b[33mmoved away while waiting — this one gets nothing\x1b[0m`);
+      return 0;
+    }
     // Paused here waits and then carries on with this same prompt. It used to
     // return, which counted the prompt as finished with nothing saved — so a
     // pause in the middle of a picture quietly lost it.
@@ -1101,22 +1355,9 @@ while (true) {
    */
   const wanted = job.site && SITES[job.site] ? SITES[job.site] : null;
   if (wanted && wanted !== site) {
-    console.log(`\r\x1b[K  switching to ${wanted.name}…`);
-    const was = site;
-    site = wanted;
-    await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
-    await wand.reattach();
-    if (!(await find(page, site.ask, 20000))) {
-      // Not signed in there. Put it back and leave the job alone — it will be
-      // offered again once that tab is logged in.
-      console.log(`  \x1b[31mnot signed into ${site.name} in this Chrome — sign in and it'll come back\x1b[0m`);
-      site = was;
-      await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
-      await wand.reattach();
-      await wait(POLL_MS);
-      continue;
-    }
-    console.log(`  now on ${site.name}`);
+    // Not signed in there: leave the job alone — it is offered again once
+    // that tab is logged in.
+    if (!(await switchSite(job.site))) { await wait(POLL_MS); continue; }
   }
 
   jobWait = Number(job.wait) > 0 ? Number(job.wait) : 0;
@@ -1136,9 +1377,9 @@ while (true) {
   // And a chat to work in, rather than whatever tab happened to be open.
   if (job.url) {
     console.log(`  opening the chat the job named`);
-    await page.goto(job.url, { waitUntil: "domcontentloaded" }).catch(() => {});
-    await wait(1500);
-    await wand.reattach();
+    await goTo(String(job.url));
+  } else if (job.newChat) {
+    pinnedChat = null;
   }
   console.log(`\r\x1b[K`);
   console.log(`\x1b[1m${label}\x1b[0m  \x1b[2m(${site.name})\x1b[0m`);
@@ -1182,6 +1423,15 @@ while (true) {
     done.add(job.id);
     await writeFile(DONE_FILE, [...done].join("\n"));
     console.log(`Skipped.\n`);
+    continue;
+  }
+
+  // The card can sit on screen for minutes, and live orders are obeyed the
+  // whole time it is — including "gemini" on a job written for ChatGPT. Left
+  // unchecked the job then ran on the wrong site with the other one's
+  // selectors merged in, which looks exactly like a site redesign.
+  if (wanted && siteName !== job.site && !(await switchSite(job.site))) {
+    await wait(POLL_MS);
     continue;
   }
 
@@ -1261,7 +1511,7 @@ while (true) {
       await wait(700);
     }
     if (await wand.stopped()) break;
-    const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, Boolean(job.sameChat));
+    const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true);
     total += got;
     log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
     report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total });
