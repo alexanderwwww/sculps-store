@@ -288,6 +288,9 @@ async function syncWand(w) {
 
 const CAPTURED = new Map();
 const CAPTURE_MAX = 240;
+/** …and at most this many bytes of them. */
+const CAPTURE_BYTES = 400 * 1024 * 1024;
+let capturedBytes = 0;
 const watched = new WeakSet();
 function watchImages(target) {
   if (!target || watched.has(target)) return;
@@ -300,7 +303,15 @@ function watchImages(target) {
       // Thumbnails and icons are not generations.
       if (!body || body.length < 20_000) return;
       CAPTURED.set(res.url(), body);
-      while (CAPTURED.size > CAPTURE_MAX) CAPTURED.delete(CAPTURED.keys().next().value);
+      capturedBytes += body.length;
+      // Bounded by weight as well as by count: two hundred four-megabyte
+      // renders is most of a laptop's memory, and the count alone would have
+      // allowed it.
+      while (CAPTURED.size > CAPTURE_MAX || capturedBytes > CAPTURE_BYTES) {
+        const oldest = CAPTURED.keys().next().value;
+        capturedBytes -= CAPTURED.get(oldest)?.length ?? 0;
+        CAPTURED.delete(oldest);
+      }
     } catch {
       /* a body we cannot read is simply not captured */
     }
@@ -517,12 +528,27 @@ async function find(page, list, timeout = 15000) {
   return null;
 }
 
+/**
+ * Chrome, waited for rather than demanded.
+ *
+ * The app starts Chrome and this script at almost the same moment, so losing
+ * that race by half a second used to print "nothing listening on port 9222"
+ * and quit — which reads, from the Dock, as an app that does not work. It
+ * tries for a minute now, and says what it is waiting for while it does.
+ */
 let browser;
-try {
-  browser = await chromium.connectOverCDP(`http://localhost:${opt.port}`);
-} catch {
-  console.error(`\nNothing listening on port ${opt.port}. Start Chrome with the debug port first.\n`);
-  process.exit(1);
+for (let go = 1; ; go++) {
+  try {
+    browser = await chromium.connectOverCDP(`http://localhost:${opt.port}`);
+    break;
+  } catch {
+    if (go === 1) console.log(`\nWaiting for Chrome on port ${opt.port}…`);
+    if (go > 30) {
+      console.error(`\nNothing listening on port ${opt.port} after a minute. Start Chrome with the debug port first.\n`);
+      process.exit(1);
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
 }
 
 let context = browser.contexts()[0] ?? (await browser.newContext());
@@ -664,13 +690,17 @@ async function ensurePage() {
       return true;
     }
     await page.bringToFront().catch(() => {});
-      watchImages(page);
-  wand = await attachWand(page);
+    watchImages(page);
+    wand = await attachWand(page);
     return Boolean(await find(page, site.ask, 15000));
   }
 
   if (ok(page)) return true;
 
+  // Asking a dead context for its pages throws; that is the same closed-browser
+  // case, and it is the loop's job to wait for Chrome, not this function's to
+  // die of it.
+  if (!(await alive()) && !(await reconnect("Chrome is not answering"))) return false;
   const found = context.pages().filter(ok);
   // The last one is the most recently opened, which is the one a chat site
   // puts a new conversation in.
@@ -680,13 +710,57 @@ async function ensurePage() {
     console.log(`\r\x1b[K  \x1b[2mmoved to your other ${site.name} tab\x1b[0m`);
   } else {
     console.log(`\r\x1b[K  \x1b[2mno ${site.name} tab open — opening one\x1b[0m`);
-    page = await context.newPage();
+    page = await context.newPage().catch(() => null);
+    if (!page) {
+      // The browser is gone, whatever it claims. Reconnect and try once more;
+      // if Chrome really is not there, say so and let the loop wait for it
+      // rather than throwing the run away.
+      if (!(await reconnect("Chrome is not answering"))) return false;
+      page = await context.newPage().catch(() => null);
+      if (!page) return false;
+    }
     await page.goto(site.url, { waitUntil: "domcontentloaded" }).catch(() => {});
   }
   await page.bringToFront().catch(() => {});
-    watchImages(page);
+  watchImages(page);
   wand = await attachWand(page);
   return Boolean(await find(page, site.ask, 15000));
+}
+
+/**
+ * Get back to Chrome.
+ *
+ * `browser.isConnected()` can still say yes while the window it described is
+ * gone — quit Chrome and reopen it and the old CDP session survives just long
+ * enough to hand out a context whose every call throws "Target page, context
+ * or browser has been closed". That exact error ended a run on the owner's
+ * machine, out of `ensurePage`, where nothing was catching it.
+ *
+ * So reconnecting is a function rather than a branch of the main loop, and
+ * anything that touches the browser can ask for it.
+ */
+async function reconnect(why = "Chrome went away") {
+  log(`  \x1b[33m${why} — reconnecting…\x1b[0m`);
+  report("reconnecting", { waitingFor: "Chrome on the debug port" });
+  try {
+    browser = await chromium.connectOverCDP(`http://localhost:${opt.port}`);
+    context = browser.contexts()[0] ?? (await browser.newContext());
+    page = null;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Is this connection actually usable, or only pretending to be? */
+async function alive() {
+  if (!browser?.isConnected()) return false;
+  try {
+    context.pages();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -1607,17 +1681,9 @@ process.on("unhandledRejection", (e) => {
 
 while (true) {
  try {
-  if (!browser.isConnected()) {
-    log("  \x1b[33mChrome went away — reconnecting…\x1b[0m");
-    report("reconnecting", { waitingFor: "Chrome on the debug port" });
-    try {
-      browser = await chromium.connectOverCDP(`http://localhost:${opt.port}`);
-      context = browser.contexts()[0] ?? (await browser.newContext());
-      page = null;
-    } catch {
-      await wait(4000);
-      continue;
-    }
+  if (!(await alive()) && !(await reconnect())) {
+    await wait(4000);
+    continue;
   }
   await ensurePage();
   if (await wand.stopped()) { console.log("\nStopped from the panel. Everything saved is on your Desktop.\n"); break; }
@@ -1840,7 +1906,16 @@ while (true) {
   let startAt = 0;
   try {
     const seen = JSON.parse(await readFile(progressFile, "utf8"));
-    if (seen?.id === job.id && Number.isInteger(seen.next) && seen.next > 0 && seen.next < flatPrompts.length) {
+    if (
+      seen?.id === job.id &&
+      Number.isInteger(seen.next) &&
+      seen.next > 0 &&
+      seen.next < flatPrompts.length &&
+      // Two jobs with the same name share a folder, so the count has to match
+      // as well as the id — otherwise a resume can start past the end of a
+      // shorter job and draw nothing at all.
+      seen.of === flatPrompts.length
+    ) {
       startAt = seen.next;
       log(`  \x1b[2mpicking up at ${startAt + 1} of ${flatPrompts.length}\x1b[0m`);
     }
@@ -1972,7 +2047,7 @@ while (true) {
     if (got) lastZip = (await makeZip(dir, slug)) ?? dir;
     // Written after every prompt, so whatever kills the app next costs one
     // prompt rather than the rest of the job.
-    await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1 })).catch(() => {});
+    await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1, of: flatPrompts.length })).catch(() => {});
   }
 
   // Finished: nothing left to pick up.

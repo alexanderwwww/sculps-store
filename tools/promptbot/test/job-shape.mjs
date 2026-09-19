@@ -128,3 +128,25 @@ assert.equal(flatJob.parts.length, 1, "a job with no parts is one part");
 assert.deepEqual(flatJob.opens, [true, false], "and still opens once");
 
 console.log(`ok — ${checked} call sites, job shape sound`);
+
+/* 3. The rules the app must never break again, checked in the source itself.
+ *
+ * These are not style preferences. Each one is a thing that reached the owner's
+ * live shop or killed a run, and the comment beside it says which.
+ */
+const must = [
+  // A photograph of a browser window went onto a product page twice.
+  [/\.screenshot\(/.test(src) === false, "no screenshot fallback may exist in live.mjs"],
+  // A 200 that is not an image was written to disk as a PNG and uploaded.
+  [src.includes('type.startsWith("image/")'), "downloads are checked for an image content-type"],
+  // Chrome closing ended a run out of ensurePage.
+  [src.includes("async function reconnect("), "there is a reconnect() the whole file can use"],
+  [/page = await context\.newPage\(\)\.catch/.test(src), "opening a tab cannot throw out of ensurePage"],
+  // An empty prompt was consumed and the run walked on.
+  [src.includes("nothing came back — running that one again"), "an empty prompt is retried"],
+  // The brief and the references have to reach every part.
+  [src.includes("opensPart[i] && job.brief"), "the brief is prefixed to the first prompt of a part"],
+];
+for (const [ok, what] of must) assert.ok(ok, `broken rule: ${what}`);
+
+console.log(`ok — ${must.length} standing rules hold`);
