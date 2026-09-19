@@ -29,7 +29,7 @@ import type { Route } from "./+types/wand.$";
 /** Rotating this invalidates every client at once, which is the point. */
 const KEY = "0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu";
 /** Every word the app will act on. A `goto <url>` is validated separately. */
-const ORDERS = ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin", "newchat"];
+const ORDERS = ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin", "newchat", "requeue", "update"];
 /** The only places a goto may point. An order is a URL the app opens blind. */
 const CHAT_HOSTS = new Set(["chatgpt.com", "chat.openai.com", "gemini.google.com"]);
 
@@ -49,6 +49,15 @@ function orderError(cmd: string): string | null {
     if (!CHAT_HOSTS.has(parsed.host)) return `not a chat site the app knows: ${parsed.host}`;
     return null;
   }
+  /*
+   * "redo 7" — draw shot seven again, with whatever the queue now says shot
+   * seven is, and carry on from where the run had got to.
+   *
+   * This is the order that removes the restart. A bad picture used to mean
+   * stop, requeue, relaunch; now it is one line sent while the run is still
+   * going, and the next thing the app does is redraw that one shot.
+   */
+  if (/^redo \d+$/.test(cmd)) return null;
   return `not an order: ${cmd}`;
 }
 
@@ -56,6 +65,15 @@ const FILES = {
   status: "wand-status.json",
   order: "wand-control.json",
   queue: "wand-queue.json",
+  /*
+   * The app's own code, and the build number it belongs to.
+   *
+   * This is what stops a fix costing a relaunch. The runner reads this every
+   * few seconds; when the build is not the one it is running, it pulls the
+   * files named here, writes them next to itself and exits with a code its
+   * launcher restarts on. From the outside the app blinks and comes back new.
+   */
+  runtime: "wand-runtime.json",
 } as const;
 
 /** Where finished pictures land, so they come back here instead of only to a Desktop. */
@@ -273,7 +291,8 @@ async function callTool(env: Env, name: string, args: Record<string, unknown>) {
   }
   if (name === "wand_order") {
     const cmd = String(args.cmd ?? "");
-    if (!ORDERS.includes(cmd)) return { ok: false, error: `not an order: ${cmd}` };
+    const bad = orderError(cmd);
+    if (bad) return { ok: false, error: bad };
     await write(env, "order", { cmd, at: Date.now() });
     return { ok: true, sent: cmd };
   }
@@ -416,6 +435,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (what === "status") return json((await read(env, "status")) ?? { state: "never reported" });
   if (what === "order") return json((await read(env, "order")) ?? { cmd: "", at: 0 });
   if (what === "queue") return json((await read(env, "queue")) ?? {});
+  if (what === "runtime") return json((await read(env, "runtime")) ?? { build: "" });
   if (what === "shots") {
     const shots = await listShots(env);
     return json({ count: shots.length, shots });
@@ -500,6 +520,10 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   }
   if (what === "queue") {
     await write(env, "queue", body ?? {});
+    return json({ ok: true });
+  }
+  if (what === "runtime") {
+    await write(env, "runtime", body ?? {});
     return json({ ok: true });
   }
   throw new Response("Not found", { status: 404 });

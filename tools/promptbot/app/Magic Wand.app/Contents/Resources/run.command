@@ -153,7 +153,26 @@ echo
 # Waiting for a sign-in is something the app already does properly, out
 # loud, on the board Claude can read. So it just starts.
 
-WAND_BUILD="$BUILD" node live.mjs --site "$SITE" --out "$OUT"
+# The restart loop.
+#
+# This is what lets a fix reach the app without anybody closing it. The runner
+# checks what build the shop says is current; when it is behind, it writes the
+# new scripts next to itself and exits 97, and this loop starts it again a
+# second later with the new code. Chrome stays open, the queue stays where it
+# was, and from the outside the window blinks once.
+#
+# Any other exit code ends the sitting, the way it always did.
+RUN_BUILD="$BUILD"
+while true; do
+  WAND_BUILD="$RUN_BUILD" node live.mjs --site "$SITE" --out "$OUT"
+  CODE=$?
+  [ "$CODE" = "97" ] || break
+  # The build number the new code belongs to is written beside it, so the
+  # restarted process does not announce itself as the old one.
+  if [ -f "$WORK/build.txt" ]; then RUN_BUILD="$(cat "$WORK/build.txt")"; fi
+  printf "\n\033[35mUpdated. Starting again.\033[0m\n\n"
+  sleep 1
+done
 
 printf "\n\033[1m========================================\033[0m\n"
 printf "\033[1m  YOUR PICTURES ARE ON THE DESKTOP\033[0m\n"

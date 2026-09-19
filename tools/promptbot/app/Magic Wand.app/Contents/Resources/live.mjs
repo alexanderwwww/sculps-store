@@ -28,7 +28,16 @@ import { rm } from "node:fs/promises";
 import { promisify } from "node:util";
 
 const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.dev/wand/0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu/queue";
-const POLL_MS = 6000;
+/*
+ * How long the app is ever allowed to sit still.
+ *
+ * This was six seconds, and with a two-second order throttle on top of it a
+ * correction could take ten seconds to land. The whole point of the wire
+ * between Claude and this app is that a wrong picture is caught while it is
+ * still on screen, so both numbers come down to where the app answers inside
+ * a second and a half.
+ */
+const POLL_MS = 1200;
 /**
  * Orders from Claude, separate from the queue.
  *
@@ -50,6 +59,54 @@ const POLL_MS = 6000;
  */
 const WAND = process.env.WAND || (process.env.WAND_SITES ? "" : "https://kerberos.gardenbuddystore.workers.dev/wand/0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu");
 const CONTROL = process.env.CONTROL || `${WAND}/order`;
+const RUNTIME = process.env.RUNTIME || (WAND ? `${WAND}/runtime` : "");
+
+/**
+ * The app updating itself, with nobody closing anything.
+ *
+ * This is the whole answer to the complaint that every fix costs a relaunch.
+ * The runner asks the shop what the current build is; when that is not the
+ * build it is running, it fetches the files named there, writes them next to
+ * itself, and exits with 97 — a code its launcher treats as "go round again".
+ * From the outside the window blinks and the app is new, mid-sitting, with the
+ * queue and the Chrome window both untouched.
+ *
+ * Two rules keep it from being a way to break the app remotely: it only ever
+ * writes files whose names it already knows, and a file that does not look
+ * like the script it replaces is thrown away rather than written.
+ */
+async function selfUpdate(loud = false) {
+  if (!RUNTIME) return false;
+  const now = await getJson(RUNTIME);
+  if (!now?.build || String(now.build) === String(BUILD)) {
+    if (loud) log(`\r\x1b[K  \x1b[2malready on build ${BUILD}\x1b[0m`);
+    return false;
+  }
+  const want = now.files && typeof now.files === "object" ? now.files : {};
+  const allowed = ["live.mjs", "wand.mjs"];
+  const got = [];
+  for (const name of allowed) {
+    const url = want[name];
+    if (typeof url !== "string" || !/^https:\/\//.test(url)) continue;
+    const text = await fetch(url).then((r) => (r.ok ? r.text() : "")).catch(() => "");
+    // A truncated download is worse than no download: it replaces a working
+    // app with a file that will not parse, and the restart loop then spins.
+    if (text.length < 2000 || !text.includes("export") && !text.includes("async function")) continue;
+    got.push([name, text]);
+  }
+  if (got.length !== allowed.length) {
+    log(`\r\x1b[K  \x1b[33mbuild ${now.build} is out but its files did not come down cleanly — staying on ${BUILD}\x1b[0m`);
+    return false;
+  }
+  for (const [name, text] of got) await writeFile(join(process.cwd(), name), text).catch(() => {});
+  // The launcher reads this on the way back round, so the restarted process
+  // reports the build it is actually running rather than the one it replaced.
+  await writeFile(join(process.cwd(), "build.txt"), String(now.build)).catch(() => {});
+  log(`\r\x1b[K  \x1b[35mbuild ${now.build} — updating and restarting\x1b[0m`);
+  report("updating", { from: BUILD, to: String(now.build) });
+  await wait(400);
+  process.exit(97);
+}
 
 /**
  * Saying, out loud, what it is doing.
@@ -147,7 +204,7 @@ async function getJson(url) {
 }
 
 async function obey() {
-  if (Date.now() - orderAt < 2000) return;
+  if (Date.now() - orderAt < 700) return;
   orderAt = Date.now();
   // Every heartbeat is also the moment to notice the overlay was replaced by a
   // navigation and to hand its Pause or Stop back to it.
@@ -208,6 +265,14 @@ async function obey() {
         did = true;
       }
     }
+    else if (/^redo \d+$/.test(cmd)) {
+      const n = Number(cmd.slice(5));
+      if (n >= 1) { redoAt = n - 1; reload = true; did = true; }
+    }
+    // Claude has rewritten the job that is running. Re-read it and use the new
+    // words from the next shot on.
+    else if (cmd === "requeue") { reload = true; did = true; }
+    else if (cmd === "update") { did = await selfUpdate(true); }
     else did = await wand.order(cmd);
   } catch (e) {
     // Chrome going away in the middle of a goto is the usual one. The order
@@ -240,6 +305,20 @@ let pinnedChat = null;
 let navGen = 0;
 
 const BUILD = process.env.WAND_BUILD || "dev";
+/** No cards, no Submit, no waiting on a person. Set WAND_ASK=1 to get them back. */
+const AUTO = process.env.WAND_ASK !== "1";
+/**
+ * A shot Claude has asked for again, while the run is still going.
+ *
+ * `redo 7` sets this to 6 (zero-based). The prompt loop notices it at the top
+ * of its next turn, jumps back to that shot, redraws it with whatever the
+ * queue now says shot seven is, and carries on from where it had got to. No
+ * stop, no requeue, no relaunch — which is the only reason any of the rest of
+ * this file is worth reading.
+ */
+let redoAt = null;
+/** Set when Claude rewrites the running job. The loop picks up the new words. */
+let reload = false;
 const MIN_PIXELS = 320;
 
 /**
@@ -1401,7 +1480,11 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       ? await page.locator(site.busy.join(",")).first().isVisible().catch(() => false)
       : false;
     if (fresh.length) { quiet = 0; await say(label, `${n} of ${total} — ${seen.size} image${seen.size === 1 ? "" : "s"}…`); }
-    else if (seen.size) { quiet += 2; if (quiet >= 8 && !busy) break; }
+    // Done the moment the site stops working, not eight seconds after it.
+    // The partial-render problem `busy` solves is still solved — this only
+    // removes the idle padding that was added on top of it, which was four
+    // wasted seconds on every one of thirty-two shots.
+    else if (seen.size) { quiet += 2; if (quiet >= 4 && !busy) break; }
     else {
       // Nothing at all yet. Four minutes of that is the site having refused
       // the prompt, or having asked a question back — either way, standing
@@ -1660,6 +1743,21 @@ async function holdIfPaused(what = "") {
  * rather than baked in, and the card is redrawn whenever the answer changes.
  */
 async function decision(label, sub, summary) {
+  /*
+   * There is no longer anything to decide.
+   *
+   * Claude writes the job and Claude is watching it draw, so a card asking a
+   * second time for permission it already has only means the app sits still
+   * until somebody walks past. A job that arrives is a job that runs, and a
+   * job that turns out wrong is corrected mid-run with "redo" rather than
+   * refused before it starts. The panel still says what is happening; it just
+   * does not ask.
+   */
+  if (AUTO) {
+    await say(label, typeof sub === "function" ? sub() : sub);
+    await wand.running().catch(() => {});
+    return "run";
+  }
   const line = () => (typeof sub === "function" ? sub() : sub);
   let shown = line();
   if (!wand.mounted) {
@@ -1769,7 +1867,10 @@ while (true) {
     }
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
     report("idle", { waitingFor: "a job in the queue" });
-    for (let t = 0; t < POLL_MS; t += 2000) { await obey(); await wait(2000); }
+    await obey();
+    // Idle is the safe moment to become a newer app.
+    await selfUpdate().catch(() => {});
+    await wait(POLL_MS);
     continue;
   }
 
@@ -2002,6 +2103,10 @@ while (true) {
   // Where an interrupted run got to, and whether it was interrupted at all.
   let stoppedEarly = flatPrompts.length > startAt;
   let resumeAt = startAt;
+  /** Where to carry on from after a redo sent the loop backwards, and which
+      shot it was sent back for. */
+  let redoReturn = null;
+  let redoDoing = null;
   for (let i = startAt; i < flatPrompts.length; i++) {
     // This part's own pictures, attached when the part opens and never again.
     const mine = parts[belongs[i]]?.refs ?? [];
@@ -2054,6 +2159,46 @@ while (true) {
       await wait(700);
     }
     if (await wand.stopped()) break;
+
+    /*
+     * Claude changed something while this was running.
+     *
+     * Two shapes, one mechanism. "requeue" means the words for the shots not
+     * yet drawn have been rewritten — re-read them and carry on. "redo 7"
+     * means shot seven came out wrong and has been rewritten — go back and
+     * draw it again, then carry on from where we were. Neither stops the run,
+     * and neither needs the app closed, which is the entire point.
+     */
+    if (reload) {
+      reload = false;
+      const now = await getJson(QUEUE);
+      if (now?.id === job.id && Array.isArray(now.prompts) && now.prompts.length) {
+        for (let k = 0; k < flatPrompts.length && k < now.prompts.length; k++) {
+          flatPrompts[k] = now.prompts[k];
+        }
+        log(`\r\x1b[K  \x1b[35mtook Claude's rewrite\x1b[0m`);
+      }
+      if (redoAt != null && redoAt < flatPrompts.length && redoAt < i) {
+        const back = redoAt;
+        redoAt = null;
+        log(`\r\x1b[K  \x1b[35mredrawing ${back + 1} of ${flatPrompts.length}\x1b[0m`);
+        // Where to come back to once that one shot is done. Without it the run
+        // would carry on forwards from the redone shot and draw everything
+        // after it a second time.
+        redoReturn = i;
+        redoDoing = back;
+        i = back - 1;        // `continue` still runs the loop's ++
+        continue;
+      }
+    }
+    // The redone shot is finished. Pick the run back up where it was.
+    if (redoDoing != null && i > redoDoing) {
+      const on = redoReturn;
+      redoDoing = null;
+      redoReturn = null;
+      if (on != null && on > i) { i = on - 1; continue; }
+    }
+
     /**
      * A prompt is never thrown away for nothing.
      *
