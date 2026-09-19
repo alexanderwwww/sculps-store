@@ -2326,8 +2326,14 @@
     grid-column: 1;
     grid-row: 1;
     display: grid;
+    /* ONE column. An earlier rule in this file still set
+       `grid-template-columns: repeat(8, minmax(0, 1fr))`, and setting only the
+       rows here left both in force — eight columns and eight rows inside a
+       93px track, so every thumbnail came out a vertical sliver. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: repeat(8, minmax(0, 1fr));
     grid-auto-rows: minmax(0, 1fr);
+    grid-auto-flow: row;
     gap: 8px;
     margin-top: 0;
     height: 100%;
