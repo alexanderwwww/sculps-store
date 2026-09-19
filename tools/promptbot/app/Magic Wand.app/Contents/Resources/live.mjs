@@ -500,10 +500,16 @@ async function ask(title, body) {
     const { stdout } = await run("osascript", ["-e", script]);
     if (/Pick image/.test(stdout)) return "pick";
     if (/Run it/.test(stdout)) return "run";
+    // An hour with nobody at the Mac is not a decision. `gave up:true` came
+    // back as Skip, which wrote the job into .done-jobs and refused it for
+    // the rest of the sitting — the job was never seen, let alone declined.
+    if (/gave up:true/.test(stdout)) return "wait";
     return "skip";
   } catch {
-    // Cancel, a timeout, or no osascript at all — none of which mean yes.
-    return "skip";
+    // Cancel, or no osascript at all (this runs on a Mac, but a shell without
+    // it is a broken install, not a no). Neither means yes, and neither means
+    // throw the job away: it comes back round on the next poll.
+    return "wait";
   }
 }
 
@@ -1122,6 +1128,18 @@ async function blobCount(page) {
 
 async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = true) {
   if (await holdIfPaused(`before ${n} of ${total}`)) return 0;
+  /*
+   * A prompt that opens a new chat must let go of the old one FIRST.
+   *
+   * The pin outranks whatever tab we hold, so with the previous part's
+   * address still pinned, `ensurePage` dragged the tab back into that
+   * conversation, the "new chat" click below opened a thread the pin
+   * immediately abandoned, and every prompt after the first in a part ran
+   * in the part before it — with `attachedInChat` still true, so it printed
+   * "references already in this chat" over the wrong product's references.
+   * Four-part jobs came back with four sets of the first product.
+   */
+  if (!sameChat) pinnedChat = null;
   if (!(await ensurePage())) { console.log(`  \x1b[31m!! lost the ${site.name} tab\x1b[0m`); return 0; }
   await wand.reattach();
   await say(label, `${n} of ${total} — sending…`);
@@ -1143,6 +1161,8 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   if (!sameChat) {
     const nw = await find(page, site.fresh, 4000);
     if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await wait(1600); await wand.reattach(); }
+    // Nothing from the old thread carries over, references included.
+    attachedInChat = false;
   }
 
   /*
@@ -1578,7 +1598,17 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
 async function makeZip(dir, slug) {
   const out = join(process.env.HOME ?? ".", "Desktop", `${slug}.zip`);
   await rm(out, { force: true }).catch(() => {});
-  const ok = await run("zip", ["-qrj", out, dir], { cwd: opt.out }).then(() => true).catch(() => false);
+  // `dir` is already absolute, so running zip from `opt.out` pointed it at a
+  // path under the output folder that does not exist and the zip was never
+  // written — every job said "on the Desktop" and left nothing there.
+  // `dir` is absolute, so the old `cwd: opt.out` pointed zip at a path under
+  // the output folder that does not exist and nothing was ever written — every
+  // job said "on the Desktop" and left nothing there. And the zip is the
+  // pictures: the references that were fed in and the resume file are
+  // bookkeeping, and shipping them back looked like duplicate output.
+  const ok = await run("zip", ["-qrj", out, dir, "-x", "*/reference/*", "*/progress.json"])
+    .then(() => true)
+    .catch(() => false);
   return ok ? out : null;
 }
 
@@ -1829,9 +1859,17 @@ while (true) {
   }
 
   if (answer !== "run") {
-    done.add(job.id);
-    await writeFile(DONE_FILE, [...done].join("\n"));
-    console.log(`Skipped.\n`);
+    // Only a pressed Skip retires a job. Anything else — a dialog that timed
+    // out, a Mac with no osascript — leaves it in the queue to be offered
+    // again, rather than silently losing the work.
+    if (answer === "skip") {
+      done.add(job.id);
+      await writeFile(DONE_FILE, [...done].join("\n"));
+      console.log(`Skipped.\n`);
+    } else {
+      console.log(`No answer — it'll come back round.\n`);
+      await wait(POLL_MS);
+    }
     continue;
   }
 
@@ -1961,6 +1999,9 @@ while (true) {
   // so each product gets the brief without it being retyped into every line.
   const textFor = (i) =>
     opensPart[i] && job.brief ? `${job.brief}\n\n${flatPrompts[i]}` : flatPrompts[i];
+  // Where an interrupted run got to, and whether it was interrupted at all.
+  let stoppedEarly = flatPrompts.length > startAt;
+  let resumeAt = startAt;
   for (let i = startAt; i < flatPrompts.length; i++) {
     // This part's own pictures, attached when the part opens and never again.
     const mine = parts[belongs[i]]?.refs ?? [];
@@ -2082,11 +2123,30 @@ while (true) {
     if (got) lastZip = (await makeZip(dir, slug)) ?? dir;
     // Written after every prompt, so whatever kills the app next costs one
     // prompt rather than the rest of the job.
+    resumeAt = i + 1;
     await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1, of: flatPrompts.length })).catch(() => {});
+    if (i === flatPrompts.length - 1) stoppedEarly = false;
+    else stoppedEarly = true;
   }
 
-  // Finished: nothing left to pick up.
-  await rm(progressFile, { force: true }).catch(() => {});
+  /*
+   * Only a run that reached the last prompt has nothing left to pick up.
+   *
+   * Every `break` above — Stop, or a stretch of prompts that drew nothing —
+   * landed here too and deleted the resume file, while the job stayed in
+   * .done-jobs. So the one case the resume file exists for, an interrupted
+   * job, was the one case it was thrown away: re-queueing started from
+   * prompt one and spent the whole quota again. Stopping now keeps the
+   * place and puts the job back on the queue's side of the line.
+   */
+  const finished = !stoppedEarly && !(await wand.stopped());
+  if (finished) {
+    await rm(progressFile, { force: true }).catch(() => {});
+  } else {
+    done.delete(job.id);
+    await writeFile(DONE_FILE, [...done].join("\n")).catch(() => {});
+    log(`  \x1b[2mstopped at ${resumeAt} of ${flatPrompts.length} — send it again and it carries on\x1b[0m`);
+  }
   await say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`, true);
 
   // The panel, with the number and a button that opens the folder — because
