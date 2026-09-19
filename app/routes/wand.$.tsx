@@ -29,7 +29,7 @@ import type { Route } from "./+types/wand.$";
 /** Rotating this invalidates every client at once, which is the point. */
 const KEY = "0ikn4sXuXNntr2Im2Mil7zRxLBmlCWtu";
 /** Every word the app will act on. A `goto <url>` is validated separately. */
-const ORDERS = ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin"];
+const ORDERS = ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin", "newchat"];
 /** The only places a goto may point. An order is a URL the app opens blind. */
 const CHAT_HOSTS = new Set(["chatgpt.com", "chat.openai.com", "gemini.google.com"]);
 
@@ -158,7 +158,7 @@ const TOOLS = [
       properties: {
         cmd: {
           type: "string",
-          enum: ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin"],
+          enum: ["continue", "pause", "stop", "pictures", "skip", "chatgpt", "gemini", "unpin", "newchat"],
         },
       },
       required: ["cmd"],

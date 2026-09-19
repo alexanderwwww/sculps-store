@@ -185,6 +185,29 @@ async function obey() {
     // No navGen bump: unpin moves nothing. Counting it as a move abandoned
     // the picture that was already being drawn in the chat we are still in.
     else if (cmd === "unpin") { pinnedChat = null; did = true; }
+    /**
+     * A clean slate on the site it is already on.
+     *
+     * A long thread drifts: twenty pictures in, the model is answering the
+     * last picture rather than the prompt. This opens a fresh conversation
+     * and lets the run carry on into it — no new job, no restart, and the
+     * next prompt re-attaches whatever that part needs because the pin and
+     * the attached flag are both cleared.
+     */
+    else if (cmd === "newchat") {
+      const nw = await find(page, site.fresh, 4000);
+      if (nw) {
+        await wand.point(nw);
+        await nw.click({ timeout: 4000 }).catch(() => {});
+        await wait(1600);
+        watchImages(page);
+        wand = await attachWand(page);
+        pinnedChat = null;
+        attachedInChat = false;
+        navGen++;
+        did = true;
+      }
+    }
     else did = await wand.order(cmd);
   } catch (e) {
     // Chrome going away in the middle of a goto is the usual one. The order
@@ -1800,11 +1823,31 @@ while (true) {
   let live = refs;
   let card = inCard;
   const flatPrompts = parts.flatMap((p) => p.prompts);
+  /**
+   * Where this job got to, on disk, next to its pictures.
+   *
+   * A job is written into the done list before it runs, so a crash, a closed
+   * Chrome or a quit app used to lose everything that was left — the job came
+   * back as "already run" and the last thirty prompts were never drawn. The
+   * index of the next prompt is saved after every one, and a job that finds
+   * its own progress file picks up there instead of at the beginning.
+   */
+  const progressFile = join(dir, "progress.json");
+  let startAt = 0;
+  try {
+    const seen = JSON.parse(await readFile(progressFile, "utf8"));
+    if (seen?.id === job.id && Number.isInteger(seen.next) && seen.next > 0 && seen.next < flatPrompts.length) {
+      startAt = seen.next;
+      log(`  \x1b[2mpicking up at ${startAt + 1} of ${flatPrompts.length}\x1b[0m`);
+    }
+  } catch {
+    /* no progress yet, which is the normal case */
+  }
   // The standing instruction goes in front of the first prompt of every part,
   // so each product gets the brief without it being retyped into every line.
   const textFor = (i) =>
     opensPart[i] && job.brief ? `${job.brief}\n\n${flatPrompts[i]}` : flatPrompts[i];
-  for (let i = 0; i < flatPrompts.length; i++) {
+  for (let i = startAt; i < flatPrompts.length; i++) {
     // This part's own pictures, attached when the part opens and never again.
     const mine = parts[belongs[i]]?.refs ?? [];
     if (opensPart[i] && parts.length > 1) {
@@ -1911,8 +1954,13 @@ while (true) {
     // button that opened nothing. Now whatever is finished is on the Desktop
     // the moment it is finished.
     if (got) lastZip = (await makeZip(dir, slug)) ?? dir;
+    // Written after every prompt, so whatever kills the app next costs one
+    // prompt rather than the rest of the job.
+    await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1 })).catch(() => {});
   }
 
+  // Finished: nothing left to pick up.
+  await rm(progressFile, { force: true }).catch(() => {});
   await wand.say("Waiting", `${label}: ${total} saved. Tell Claude what's next.`);
 
   // The panel, with the number and a button that opens the folder — because
