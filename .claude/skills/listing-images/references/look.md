@@ -1,59 +1,83 @@
 # The look
 
-Their clarity. Our aesthetic. Both, never one.
+Their clarity, their loudness, our taste. All three.
 
-The competitors' panels are ugly — six neon colours, a glow on everything, torn-paper
-edges, slashed blood frames, filled cartoon icons in five colours. We copy the
-**structure**, not the styling.
+> "I don't like your style, bro. Bigger text, more colour, like the image I sent you with
+> the loungers. More colour text, you know, play like that." — Alex, 19 Sep
 
-## Ground
+## What that corrected
 
-**Black and deep charcoal**, with real depth — night, warm practical light in the frame,
-shadows that mean something. Never flat grey, never a gradient wash, never a colour
-filter laid over the whole image.
+The first pass was too tasteful: flat white type, one orange accent, everything restrained.
+It looked designed and it did not stop a thumb. A marketplace panel is **loud on purpose**
+— the headline is enormous, the colour is doing work, and you can read it at the size of a
+postage stamp.
 
-A clean, bright, evenly lit daylight ground is correct for the size panel and the
-in-the-box panel, where the job is measurement, not atmosphere.
-
-## Colour
-
-**One accent colour, and only one.** For Black Reaper it is warm pumpkin orange. Chips,
-icon circles, underlines, beams, numbers — all of it the same one colour.
-
-Everything else stays photographic. Any red or green light in the picture comes **from
-the product itself**, never from a filter.
-
-For a new store, pick the accent from the brand and then never use a second one.
+Loud is not messy. Every loud thing is on a grid, and the product is never buried.
 
 ## Type
 
-Heavy condensed sans. **ALL CAPS** for headlines and labels. **Flat white.**
+**Big. Then bigger.** The headline is the second biggest thing in the frame after the
+product — a third of the width at least, often half, heavy condensed caps, filling its
+line edge to edge rather than floating in the middle of empty space.
 
-A headline is two to four words. A label is one to three. A feature line is one plain
-sentence.
+Three weights of information and no more:
 
-Never: an outline, a drop shadow, a gradient, a glow, a coloured box or circle or blob
-behind the words, or type laid across the product's face.
+1. **The headline** — huge, caps, two to four words.
+2. **The label** — bold caps, clearly smaller but still big enough to read at thumbnail
+   size.
+3. **The line** — one plain sentence, the only small text allowed, used sparingly.
 
-Type sits in a dark or empty corner, or in its own clean band at the top. In a panel with
-a chip row, the chips are the band.
+A headline can be **two colours in one line** — the noun in white, the number or the
+verb in the accent. That is the trick from the marketplace ads and it is worth using.
+
+Type still never crosses the product.
+
+## Colour
+
+Three colours, and they are **filled, not outlined**:
+
+- **Warm pumpkin orange** — the lead. Headline accents, step numbers, the main chips.
+- **Acid green** — the second voice. One or two elements per panel, never next to orange
+  in the same block.
+- **Deep violet** — the third, for depth: a block behind a label, a band behind a row.
+
+They are Halloween colours and they belong to the season. What is banned is the
+six-colour rainbow: three colours used with intent, not every colour available.
+
+- **Chips are filled blocks** with the icon and the text knocked out in white or black.
+- **Labels can sit on a coloured block** when the picture behind them is busy.
+- **Numbers are huge and coloured**, never small and grey.
+
+The ground stays black and deep charcoal with real night depth. The colour sits on top of
+it in solid, confident shapes.
 
 ## Icons
 
-**Thin white line icons** inside a plain circle or a plain square. That is the whole
-vocabulary.
+**White line icons, one stroke weight, one size**, sitting inside the filled colour
+blocks. Never emoji. Never five-colour cartoon icons. The icon is there to be recognised
+in a glance, not admired.
 
-Never emoji. Never filled cartoon icons. Never more than one colour.
+## Lighting and the product
+
+Cinematic: one clear key light on the product, deep falloff behind it, a real contact
+shadow where it meets a surface. It must look photographed, never pasted.
+
+**The product photograph attached to the chat is the product.** Its shape, colour and
+details never change. If the reference shows a white projector with a ground stake, every
+panel shows that exact white projector with that exact stake.
 
 ## Measurements
 
-A thin white line with small end ticks. The figure in small caps, beside the line, never
-on top of it. A flat grey human silhouette at the same scale whenever a size needs to be
-felt rather than read.
+A thin white line with small end ticks, the figure **large** and in the accent colour, a
+flat grey human silhouette at the same scale.
 
-Both units, always, in this order: **3 FT / 0.9 M**.
+**Scale must be true.** A 16.4 ft product next to a person is nearly three of them
+stacked — the silhouette's head reaches its waist, no higher. A drawn size that lies is
+worse than no size panel at all.
 
-## Never, in any image
+Both units, in this order: **3 FT / 0.9 M**.
+
+## Still never, in any image
 
 - a price, a currency symbol, a percentage, a discount
 - a SHOP NOW or BUY or CLICK HERE button
@@ -63,6 +87,6 @@ Both units, always, in this order: **3 FT / 0.9 M**.
 - a superhero, or any trademarked character, costume, film or brand
 - a competitor's name or product
 - any word that was not written into the prompt
-
-The trademark ban is not decorative. A Superman cape reached a generated image on this
-project and would have gone into a paid Meta ad.
+- **the same line of text printed twice**
+- a glow, a gradient or a soft shadow behind type; torn paper; blood splatter frames;
+  starbursts; ribbons
