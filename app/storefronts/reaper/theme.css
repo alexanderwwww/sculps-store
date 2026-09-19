@@ -2295,10 +2295,21 @@
  * markup gives.
  */
 @media (min-width: 900px) {
+  /*
+   * The column is sized so the thumbnails end exactly where the picture ends.
+   *
+   * A fixed 62px column left the strip short of the square's bottom edge on a
+   * wide screen and overflowing it on a narrow one, which is the ragged look
+   * Alex called out. The width is solved instead: with a column `c`, a gap `g`
+   * and a gallery width `W`, the square picture is `W - c - g` tall, and eight
+   * thumbnails with seven gaps between them need `8c + 7g` of height. Setting
+   * those equal gives `c = (W - 8g) / 9`, which is the line below with g = 8px.
+   * The strip now finishes flush with the picture at every window width.
+   */
   .cb-gal {
     display: grid;
-    grid-template-columns: 62px minmax(0, 1fr);
-    gap: 12px;
+    grid-template-columns: calc((100% - 64px) / 9) minmax(0, 1fr);
+    gap: 8px;
     align-items: start;
   }
   .cb-gal__main { grid-column: 2; grid-row: 1; }
@@ -2311,7 +2322,11 @@
     gap: 8px;
     margin-top: 0;
   }
-  .cb-gal__thumb { width: 62px; height: 62px; }
+  .cb-gal__thumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
   /* Anything else in the gallery column — the four-payments line — sits under
      both, full width, rather than being pulled into the thumbnail column. */
   .cb-gal > *:not(.cb-gal__main):not(.cb-gal__strip) {
