@@ -1817,95 +1817,140 @@
 }
 
 
+
 /* ------------------------------------------------------------- the pop-up
  *
- * A card in the corner, not a sheet of glass over the product. The veil
- * catches a click; it does not darken the page into unusability, because
- * hiding the thing somebody came to look at is a strange way to sell it.
+ * Centred, because a card in the corner is something the eye files as an
+ * advert and skips. In the middle it is the only thing on screen, which is
+ * the whole point of interrupting somebody — if it is not worth the middle
+ * of the screen it is not worth showing at all.
  *
- * The number leads. Everything else on the card is arranged around making
- * "$20 off" the first thing read and the button the first thing pressed.
+ * Two halves on a desktop: the photograph on the left doing the selling,
+ * the offer on the right doing the asking. On a phone the picture becomes a
+ * band across the top, because a phone has no room for two of anything.
  */
 .pp__veil {
   position: fixed; inset: 0; z-index: 90;
-  background: rgba(0, 0, 0, .06);
+  background: rgba(6, 6, 8, .62);
+  backdrop-filter: blur(3px);
+  animation: pp-veil .2s ease-out;
 }
+@keyframes pp-veil { from { opacity: 0; } }
+
 .pp {
   position: fixed;
   z-index: 91;
-  right: 20px;
-  bottom: 20px;
-  width: min(380px, calc(100vw - 32px));
-  border-radius: 20px;
-  overflow: hidden;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(760px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  border-radius: 22px;
   background: #0B0B0C;
   color: #F7F2E7;
   border: 1px solid rgba(255,255,255,.1);
-  box-shadow: 0 34px 80px -30px rgba(0,0,0,.85);
-  animation: pp-in .22s ease-out;
+  box-shadow: 0 50px 110px -30px rgba(0,0,0,.9);
+  animation: pp-in .24s cubic-bezier(.2,.8,.3,1);
+  display: grid;
+  grid-template-columns: 1fr;
 }
-@keyframes pp-in { from { opacity: 0; transform: translateY(12px); } }
-@media (prefers-reduced-motion: reduce) { .pp { animation: none; } }
+@keyframes pp-in { from { opacity: 0; transform: translate(-50%, -46%) scale(.97); } }
+@media (prefers-reduced-motion: reduce) { .pp, .pp__veil { animation: none; } }
 
-/* The product they are already looking at, as a band across the top. Cheap
- * to add and it is the difference between this card and every other email
- * box on the internet. */
-.pp__shot { display: block; height: 124px; overflow: hidden; background: #111; }
-/* Top of the frame, not the middle. A product photographed standing has its
- * face at the top, and a centre crop of a tall figure is a band of robe. */
-.pp__shot img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; display: block; }
+@media (min-width: 720px) {
+  .pp { grid-template-columns: 300px 1fr; }
+}
 
-.pp__in { padding: 18px 20px 16px; }
+/* The photograph. Full height of the card on a desktop, a band on a phone.
+ * Always a real picture of the product, never a listing graphic — a panel
+ * of callout boxes shrunk to this size is mush. */
+.pp__shot {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: #111;
+  height: 150px;
+}
+.pp__shot img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  display: block;
+}
+/* A wash into the card so the picture ends without a hard seam. */
+.pp__shot::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 45%, rgba(11,11,12,.85) 100%);
+}
+@media (min-width: 720px) {
+  .pp__shot { height: auto; }
+  .pp__shot::after { background: linear-gradient(to right, transparent 55%, rgba(11,11,12,.75) 100%); }
+}
+
+.pp__in { padding: clamp(20px, 3vw, 32px); display: grid; align-content: center; gap: 0; }
+
+.pp__logo {
+  height: 30px; width: auto;
+  display: block; margin: 0 0 16px;
+  object-fit: contain; object-position: left center;
+}
 
 .pp__x {
-  position: absolute; top: 10px; right: 12px; z-index: 2;
+  position: absolute; top: 12px; right: 14px; z-index: 3;
   appearance: none; border: 0; cursor: pointer;
-  width: 30px; height: 30px; border-radius: 50%;
-  background: rgba(0,0,0,.45);
-  color: rgba(247,242,231,.8);
-  font-size: 19px; line-height: 1; padding: 0;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(0,0,0,.5);
+  color: rgba(247,242,231,.85);
+  font-size: 20px; line-height: 1; padding: 0;
   backdrop-filter: blur(6px);
 }
+.pp__x:hover { background: rgba(0,0,0,.75); }
 
-/* The amount, set like a price because that is what it is. */
+/* The amount, set like a price, because that is what it is. */
 .pp__amount {
   display: block;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 46px;
-  line-height: .95;
-  letter-spacing: -.03em;
+  font-size: clamp(54px, 7vw, 76px);
+  line-height: .9;
+  letter-spacing: -.035em;
   color: var(--neon);
 }
 .pp__amount em {
   font-style: normal;
-  font-size: 22px;
+  font-size: clamp(22px, 2.4vw, 30px);
   letter-spacing: -.01em;
   color: #F7F2E7;
-  margin-left: 4px;
+  margin-left: 6px;
 }
-.pp__h { display: block; font-family: var(--display); font-size: 22px; letter-spacing: -.01em; }
-.pp__b { margin: 8px 0 14px; font-size: 13.5px; line-height: 1.45; color: rgba(247,242,231,.62); }
+.pp__h { display: block; font-family: var(--display); font-size: 28px; letter-spacing: -.02em; }
+.pp__b {
+  margin: 12px 0 20px;
+  font-size: 14.5px; line-height: 1.5;
+  color: rgba(247,242,231,.62);
+  max-width: 38ch;
+}
 
-.pp__form { display: grid; gap: 8px; }
+.pp__form { display: grid; gap: 10px; }
 .pp__field {
   appearance: none; width: 100%;
-  padding: 13px 14px; border-radius: 12px;
+  padding: 15px 16px; border-radius: 13px;
   border: 1px solid rgba(255,255,255,.16);
   background: rgba(255,255,255,.05);
-  color: #F7F2E7; font: inherit; font-size: 15px;
+  color: #F7F2E7; font: inherit; font-size: 16px;
 }
 .pp__field::placeholder { color: rgba(247,242,231,.32); }
 .pp__field:focus-visible { outline: 2px solid var(--neon); outline-offset: 1px; border-color: transparent; }
 
-/* Dark ink on the neon, always. The inherited button colour was white,
- * which on this green is a button you have to squint at. */
+/* Dark ink on the neon, always. Inherited white on this green is a button
+ * you have to squint at. */
 .pp__go {
   appearance: none; border: 0; cursor: pointer; width: 100%;
-  padding: 13px 16px; border-radius: 999px;
+  padding: 15px 18px; border-radius: 999px;
   background: var(--neon);
   color: #17400A;
-  font: inherit; font-weight: 800; font-size: 15px;
+  font: inherit; font-weight: 800; font-size: 16px;
   letter-spacing: -.01em;
 }
 .pp__go:hover { filter: brightness(1.06); }
@@ -1913,25 +1958,19 @@
 
 .pp__no {
   appearance: none; border: 0; background: none; cursor: pointer;
-  display: block; margin: 12px auto 0; padding: 2px;
+  display: block; margin: 14px 0 0; padding: 2px;
   font: inherit; font-size: 12.5px;
   color: rgba(247,242,231,.4); text-decoration: underline;
 }
-.pp__err { margin: 10px 0 0; font-size: 13px; color: #FF8A7A; }
+.pp__err { margin: 12px 0 0; font-size: 13.5px; color: #FF8A7A; }
 
-.pp__done { display: grid; gap: 10px; justify-items: start; }
+.pp__done { display: grid; gap: 12px; justify-items: start; }
 .pp__done .pp__b { margin: 0; }
-.pp__done .pp__go { margin-top: 4px; }
+.pp__done .pp__go { margin-top: 6px; }
 .pp__code {
   display: inline-block;
-  padding: 9px 15px; border-radius: 10px;
+  padding: 11px 18px; border-radius: 11px;
   background: var(--neon); color: #17400A;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-weight: 700; font-size: 18px; letter-spacing: .08em;
-}
-
-@media (max-width: 560px) {
-  .pp { right: 8px; left: 8px; bottom: 8px; width: auto; }
-  .pp__shot { height: 104px; }
-  .pp__amount { font-size: 40px; }
+  font-weight: 700; font-size: 20px; letter-spacing: .1em;
 }

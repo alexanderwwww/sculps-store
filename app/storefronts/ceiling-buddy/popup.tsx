@@ -55,12 +55,14 @@ export function EmailPopup({
   storeParam = "",
   offer = null,
   photo = null,
+  logo = null,
   productName = null,
 }: {
   storeParam?: string;
   /** The shop's live discount, so the card can name the amount up front. */
   offer?: { code: string; kind: string; value: number } | null;
   photo?: string | null;
+  logo?: string | null;
   productName?: string | null;
 }) {
   const [open, setOpen] = useState(false);
@@ -157,6 +159,7 @@ export function EmailPopup({
         ) : null}
 
         <div className="pp__in">
+          {logo ? <img className="pp__logo" src={logo} alt="" /> : null}
           {state === "done" ? (
             <div className="pp__done">
               <b className="pp__h">It is yours.</b>

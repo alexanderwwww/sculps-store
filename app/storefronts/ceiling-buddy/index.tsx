@@ -171,7 +171,12 @@ export function CeilingBuddyStorefront({
         <EmailPopup
           storeParam={storeParam}
           offer={offer}
-          photo={photo?.src ?? null}
+          /* The first real photograph of this product, never a listing
+             graphic — a panel full of callout boxes shrunk into a card is
+             unreadable, and never the buy box's own shot, which on several
+             products is a phone picture of a screen. */
+          photo={(page.product.images ?? []).find((i) => i.url && i.kind !== "graphic")?.url ?? null}
+          logo={page.store.logoUrl ?? null}
           productName={page.product.title}
         />
       </div>
