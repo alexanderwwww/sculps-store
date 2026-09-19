@@ -4,24 +4,25 @@
  * Every rule here exists because the opposite is what makes people hate
  * these things:
  *
+ *   It says what it is worth. The first version said "take the code", which
+ *   is not an offer — it is an errand. It leads with the number now, in
+ *   dollars, because a saving somebody can picture is the only reason to
+ *   give an address to a shop they have known for twenty seconds.
+ *
+ *   It shows the thing. A photograph of what they are already looking at
+ *   costs nothing and stops the card reading as a generic newsletter box
+ *   bolted onto any website.
+ *
  *   It waits. Nothing appears until somebody has been on the page long
- *   enough to be interested, or has moved to leave. A pop-up that lands
- *   before the page has been read is an interruption with nothing behind it.
+ *   enough to be interested, or has moved to leave.
  *
- *   It asks once. Closing it, or giving an address, is remembered in the
- *   browser for a month. Being asked twice is what turns a small annoyance
- *   into a reason to go somewhere else.
+ *   It asks once. Closing it, or giving an address, is remembered for a
+ *   month. Being asked twice is what turns an annoyance into a reason to
+ *   leave.
  *
- *   It never blocks the buy button. It is a card in the corner on a desktop
- *   and a sheet at the bottom on a phone, not a sheet of glass over the
- *   product, and Escape or a click outside closes it.
- *
- *   It gives the code straight back. Somebody typing an address into a box
- *   on a product page wants the thing and is looking for a reason. A code
- *   that arrives tomorrow is no reason at all.
- *
- *   It stays away from checkout. Interrupting somebody who is already
- *   paying is the only version of this that can actually cost money.
+ *   It never blocks the buy button, and it stays away from checkout —
+ *   interrupting somebody who is already paying is the only version of this
+ *   that can genuinely cost money.
  */
 import { useEffect, useRef, useState } from "react";
 
@@ -36,8 +37,8 @@ function alreadyAsked(): boolean {
     if (!raw) return false;
     return Date.now() - Number(raw) < MONTH;
   } catch {
-    // Private windows throw on localStorage. Erring towards "asked" means the
-    // worst case is nobody sees it, rather than everybody seeing it forever.
+    // Private windows throw. Erring towards "asked" means the worst case is
+    // nobody sees it, rather than everybody seeing it on every page.
     return true;
   }
 }
@@ -46,18 +47,21 @@ function remember() {
   try {
     window.localStorage.setItem(KEY, String(Date.now()));
   } catch {
-    /* nothing to do; the session will simply not remember */
+    /* the session simply will not remember */
   }
 }
 
 export function EmailPopup({
-  heading = "Before you go",
-  body = "Take the code and it comes off at checkout.",
   storeParam = "",
+  offer = null,
+  photo = null,
+  productName = null,
 }: {
-  heading?: string;
-  body?: string;
   storeParam?: string;
+  /** The shop's live discount, so the card can name the amount up front. */
+  offer?: { code: string; kind: string; value: number } | null;
+  photo?: string | null;
+  productName?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<"ask" | "sending" | "done" | "error">("ask");
@@ -65,15 +69,20 @@ export function EmailPopup({
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
+  const amount =
+    offer && offer.kind === "fixed" && offer.value > 0
+      ? `$${(offer.value / 100).toFixed(0)}`
+      : null;
+
   useEffect(() => {
     if (alreadyAsked()) return;
-    // Checkout is somebody in the middle of paying. Nothing interrupts that.
+    // Somebody in the middle of paying is not interrupted. Ever.
     if (/\/(checkout|thanks)/.test(window.location.pathname)) return;
 
-    let done = false;
+    let fired = false;
     const show = () => {
-      if (done) return;
-      done = true;
+      if (fired) return;
+      fired = true;
       setOpen(true);
     };
 
@@ -114,7 +123,11 @@ export function EmailPopup({
         method: "POST",
         body: new URLSearchParams({ email: String(email ?? "") }),
       });
-      const json = (await res.json()) as { ok: boolean; error: string | null; code: string | null };
+      const json = (await res.json()) as {
+        ok: boolean;
+        error: string | null;
+        code: string | null;
+      };
       if (!json.ok) {
         setError(json.error ?? "That did not work. Try again?");
         setState("error");
@@ -134,43 +147,67 @@ export function EmailPopup({
   return (
     <>
       <div className="pp__veil" onClick={close} aria-hidden="true" />
-      <aside className="pp" role="dialog" aria-label={heading}>
+      <aside className="pp" role="dialog" aria-label={amount ? `${amount} off` : "Offer"}>
         <button className="pp__x" onClick={close} aria-label="Close">×</button>
-        {state === "done" ? (
-          <div className="pp__done">
-            <b>Here it is.</b>
-            {code ? (
-              <>
-                <span className="pp__code">{code}</span>
-                <p>Enter it at checkout. It is already on your email too.</p>
-              </>
-            ) : (
-              <p>You are on the list — we will send the next one first.</p>
-            )}
-            <button className="pp__go" onClick={close}>Back to shopping</button>
-          </div>
-        ) : (
-          <>
-            <b className="pp__h">{heading}</b>
-            <p className="pp__b">{body}</p>
-            <form onSubmit={submit} className="pp__form">
-              <input
-                ref={input}
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="your@email.com"
-                className="pp__in"
-              />
-              <button type="submit" className="pp__go" disabled={state === "sending"}>
-                {state === "sending" ? "One moment…" : "Send me the code"}
+
+        {photo ? (
+          <span className="pp__shot" aria-hidden="true">
+            <img src={photo} alt="" />
+          </span>
+        ) : null}
+
+        <div className="pp__in">
+          {state === "done" ? (
+            <div className="pp__done">
+              <b className="pp__h">It is yours.</b>
+              {code ? (
+                <>
+                  <span className="pp__code">{code}</span>
+                  <p className="pp__b">
+                    Put it in at checkout{amount ? ` and ${amount} comes straight off` : ""}. It is in
+                    your inbox too.
+                  </p>
+                </>
+              ) : (
+                <p className="pp__b">You are on the list — we will send the next one first.</p>
+              )}
+              <button className="pp__go" onClick={close}>
+                {productName ? `Back to the ${productName}` : "Back to shopping"}
               </button>
-            </form>
-            {error ? <p className="pp__err">{error}</p> : null}
-            <button className="pp__no" onClick={close}>No thanks</button>
-          </>
-        )}
+            </div>
+          ) : (
+            <>
+              {amount ? (
+                <span className="pp__amount">
+                  {amount} <em>off</em>
+                </span>
+              ) : (
+                <b className="pp__h">Before you go</b>
+              )}
+              <p className="pp__b">
+                {amount
+                  ? "Drop your email and the code is yours. It comes off at checkout — no minimum, no waiting for it to arrive."
+                  : "Leave your email and we will send the code straight back."}
+              </p>
+              <form onSubmit={submit} className="pp__form">
+                <input
+                  ref={input}
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="your@email.com"
+                  className="pp__field"
+                />
+                <button type="submit" className="pp__go" disabled={state === "sending"}>
+                  {state === "sending" ? "One moment…" : amount ? `Send me the ${amount} code` : "Send me the code"}
+                </button>
+              </form>
+              {error ? <p className="pp__err">{error}</p> : null}
+              <button className="pp__no" onClick={close}>No thanks, I will pay full price</button>
+            </>
+          )}
+        </div>
       </aside>
     </>
   );

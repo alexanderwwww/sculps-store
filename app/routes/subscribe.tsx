@@ -33,6 +33,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   // A pop-up cannot be allowed to invent a discount. It offers whichever
   // code the shop already has switched on, so turning the offer off is one
   // toggle in the admin rather than a deploy.
+  // Read before the write, because the card wants to name the amount.
   const [live] = await context.db
     .select()
     .from(discounts)
@@ -46,7 +47,14 @@ export async function action({ request, context }: Route.ActionArgs) {
     sessionId: session,
   }).catch(() => null);
 
-  return data({ ok: true, error: null, code: live?.code ?? null });
+  // The amount goes back with the code so the card can say what it is worth
+  // in dollars. "Take the code" is not an offer; "$20 off" is.
+  const offer =
+    live && live.kind === "fixed" && Number(live.value) > 0
+      ? `$${(Number(live.value) / 100).toFixed(0)}`
+      : null;
+
+  return data({ ok: true, error: null, code: live?.code ?? null, offer });
 }
 
 /** Nothing to look at: the pop-up posts here and stays where it is. */

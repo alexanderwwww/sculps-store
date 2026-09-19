@@ -170,8 +170,9 @@ export function CeilingBuddyStorefront({
         {/* Last, so it can never be what somebody reaches before the price. */}
         <EmailPopup
           storeParam={storeParam}
-          heading="Before you go"
-          body="Take the code and it comes off at checkout."
+          offer={offer}
+          photo={photo?.src ?? null}
+          productName={page.product.title}
         />
       </div>
     </CartDrawerProvider>
