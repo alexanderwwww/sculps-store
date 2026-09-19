@@ -606,10 +606,26 @@ async function goTo(url) {
   const owner = Object.keys(SITES).find((k) => {
     try { return new URL(SITES[k].url).host === u.host; } catch { return false; }
   });
+  /*
+   * An address this app does not know is refused before the tab moves.
+   *
+   * The shop's end of the wire checks this, but the shop is not the only
+   * thing that can write an order — a shell script with the key writes one
+   * straight into the store — so the check has to exist at the end that
+   * actually opens the page. Without it a goto to anywhere at all was
+   * obeyed: the page opened in a signed-in Chrome, a message box was found,
+   * and the next prompt was typed into a stranger's site. It also left the
+   * pin on a host `ensurePage` can never match, so every poll afterwards
+   * opened one more tab, forever.
+   */
+  if (!owner) {
+    console.log(`  \x1b[31m${u.host} is not ChatGPT or Gemini — not going there\x1b[0m`);
+    return false;
+  }
   // By name, not by object: a job's selector overrides make `site` a copy,
   // and comparing the copy to the original threw the overrides away on every
   // goto — the one feature that lets a broken selector be fixed from the queue.
-  if (owner && owner !== siteName) {
+  if (owner !== siteName) {
     site = SITES[owner];
     siteName = owner;
   }
@@ -1222,7 +1238,18 @@ async function holdIfPaused(what = "") {
  * done and then waited forever for the job it had just thrown away. This
  * returns only what a person pressed.
  */
+/**
+ * The card, held up until somebody answers it.
+ *
+ * `sub` is a sentence with the site's name in it, and the site can change
+ * while the card is on screen — an order moves the app to Gemini, and the
+ * card carries on saying ChatGPT. Pressing Submit on that is agreeing to
+ * something that is no longer true. So the line is rebuilt from a function
+ * rather than baked in, and the card is redrawn whenever the answer changes.
+ */
 async function decision(label, sub, summary) {
+  const line = () => (typeof sub === "function" ? sub() : sub);
+  let shown = line();
   if (!wand.mounted) {
     // The overlay could not be drawn, so the macOS dialog is the gate. It can
     // sit there for an hour, and silence for an hour is the thing this whole
@@ -1241,13 +1268,20 @@ async function decision(label, sub, summary) {
       await wait(1000);
       continue;
     }
-    if (!(await wand.present())) { await wand.reattach(); await wand.ask(label, sub); }
+    // The site moved under the card. Redraw it so the thing being agreed to
+    // is the thing that will happen.
+    if (line() !== shown) {
+      shown = line();
+      await wand.ask(label, shown);
+      report("waiting for approval", { job: label, site: site.name, waitingFor: shown });
+    }
+    if (!(await wand.present())) { await wand.reattach(); await wand.ask(label, shown); }
     else if (!(await wand.asking())) {
       const a = await wand.answer();
       if (a === "run" || a === "skip") return a;
       // Card not on screen and no answer: it was never shown, or the page
       // replaced it. Show it again.
-      await wand.ask(label, sub);
+      await wand.ask(label, shown);
     }
     // Said out loud, because a Terminal with nothing moving in it is the same
     // as a Terminal that has crashed.
@@ -1399,7 +1433,8 @@ while (true) {
   // The macOS dialog stays as the fallback for a page that won't take it.
   let answer = await decision(
     label,
-    `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`,
+    // A function, not a string: the site can change while this is on screen.
+    () => `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`,
     summary,
   );
 

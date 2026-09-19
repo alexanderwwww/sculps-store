@@ -221,7 +221,16 @@ export const products = pgTable(
      * carousel reads these, so changing a product's pictures is a product
      * task, not a theme task.
      */
-    images: jsonb("images").$type<{ url: string; alt: string }[]>().notNull().default([]),
+    /*
+     * `kind` marks a picture that is a made listing graphic — banner type,
+     * callouts, arrows — rather than a photograph. It leads the gallery well
+     * and thumbnails terribly, so the places that need a small clean picture
+     * of the product can skip it.
+     */
+    images: jsonb("images")
+      .$type<{ url: string; alt: string; kind?: "photo" | "graphic" }[]>()
+      .notNull()
+      .default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("products_store_handle_idx").on(t.storeId, t.handle)],

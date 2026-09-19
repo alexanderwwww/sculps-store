@@ -540,7 +540,18 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
                         photograph wins when it has one, the product's first
                         otherwise, so a row is never empty. */}
                     {(() => {
-                      const pic = x.imageUrl || (page.product.images ?? []).find((i) => i.url)?.url;
+                      // A listing graphic is the right lead photograph and the
+                      // wrong thumbnail: at forty-eight pixels its banner type
+                      // and callouts are grey mush, and three rows of mush is
+                      // what makes a bundle look cheap. Those images carry
+                      // `kind: "graphic"`, so the tile can take the first plain
+                      // photograph of the product and fall back to anything at
+                      // all rather than render an empty row.
+                      const imgs = page.product.images ?? [];
+                      const pic =
+                        x.imageUrl ||
+                        imgs.find((i) => i.url && i.kind !== "graphic")?.url ||
+                        imgs.find((i) => i.url)?.url;
                       if (!pic) return null;
                       return (
                         <span className={`cb-tier__pics cb-tier__pics--${Math.min(qty, 3)}`}>
