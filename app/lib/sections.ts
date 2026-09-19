@@ -115,20 +115,6 @@ export const SECTIONS: SectionDef[] = [
     },
   },
   {
-    type: "clean_shots",
-    label: "Clean product shots",
-    hint: "Plain-background photos so buyers see exactly what arrives",
-    fields: [heading, subheading],
-    blocks: {
-      label: "Shot",
-      addLabel: "Add a shot",
-      fields: [
-        { name: "image", label: "Photo", kind: "image" },
-        { name: "caption", label: "Caption", kind: "text" },
-      ],
-    },
-  },
-  {
     type: "social_proof_images",
     label: "Social proof images",
     hint: "Photos from real customers",
