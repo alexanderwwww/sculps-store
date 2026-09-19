@@ -818,6 +818,24 @@ async function putFiles(page, paths, wand, label) {
       return true;
     }, { files, sels: site.ask, mode }).catch(() => false);
 
+  /**
+   * Did the thumbnails appear yet?
+   *
+   * Each route used to be followed by a flat sleep long enough for the worst
+   * case — fourteen seconds with ten pictures — and then one check. An upload
+   * that landed in a second still cost the full fourteen, four times over, on
+   * every prompt of the job. This asks every 250ms and returns the moment the
+   * count rises, so the fast case is fast and the slow case is unchanged.
+   */
+  const landed = async (was, capMs) => {
+    const until = Date.now() + capMs;
+    while (Date.now() < until) {
+      await wait(250);
+      if ((await blobCount(page)) > was) return true;
+    }
+    return false;
+  };
+
   // 1 — let Chrome open its own file dialog and answer it.
   //
   // This is the only route that works the way a person does: the page opens
@@ -829,11 +847,15 @@ async function putFiles(page, paths, wand, label) {
       const [chooser] = await Promise.all([
         page.waitForEvent("filechooser", { timeout: 6000 }),
         wand?.point(clip),
-        clip.click(),
+        // Its own short timeout. This used to be a bare click, which carries
+        // Playwright's thirty-second default — so a button that turned out not
+        // to be the paperclip held the entire run still for half a minute,
+        // once per prompt, while the dialog it was waiting for had already
+        // timed out at six seconds.
+        clip.click({ timeout: 4000 }),
       ]);
       await chooser.setFiles(paths);
-      await wait(2500 + files.length * 1200);
-      if ((await blobCount(page)) > before) return "chosen";
+      if (await landed(before, 2500 + files.length * 1200)) return "chosen";
     } catch {
       // No dialog appeared — that button was something else. Close whatever
       // it opened before trying the next way, with the stop key deafened:
@@ -848,22 +870,19 @@ async function putFiles(page, paths, wand, label) {
   // 2 — paste it in, the way you'd paste a screenshot
   if (box) await box.click().catch(() => {});
   await deliver("paste");
-  await wait(2200 + files.length * 900);
-  if ((await blobCount(page)) > before) return "pasted";
+  if (await landed(before, 2200 + files.length * 900)) return "pasted";
 
   // 3 — drop, everywhere that might be listening
   await wand?.say(label, "attaching — another way…");
   await deliver("drop");
-  await wait(2200 + files.length * 900);
-  if ((await blobCount(page)) > before) return "dropped";
+  if (await landed(before, 2200 + files.length * 900)) return "dropped";
 
   // 4 — a real file input, if the page keeps one
   const input = page.locator(site.file).first();
   if (await input.count().then((c) => c > 0).catch(() => false)) {
     await wand?.say(label, "attaching — last way…");
     await input.setInputFiles(paths).catch(() => {});
-    await wait(2500 + files.length * 1200);
-    if ((await blobCount(page)) > before) return "uploaded";
+    if (await landed(before, 2500 + files.length * 1200)) return "uploaded";
   }
 
   return null;
@@ -1593,6 +1612,8 @@ while (true) {
   attachedInChat = false;
   freshRefs = false;
   let total = 0;
+  /** Prompts in a row that produced nothing. Two means the site, not the prompt. */
+  let dry = 0;
   let live = refs;
   let card = inCard;
   for (let i = 0; i < job.prompts.length; i++) {
@@ -1627,7 +1648,51 @@ while (true) {
       await wait(700);
     }
     if (await wand.stopped()) break;
-    const got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true);
+    /**
+     * A prompt is never thrown away for nothing.
+     *
+     * This used to take whatever came back — including zero — log it and walk
+     * on to the next line. So a site that refused the send, or asked a
+     * question back, or simply took longer than the window, cost a prompt
+     * silently, and a whole run could march through forty lines and produce an
+     * empty folder while the panel counted happily upwards. That is what the
+     * owner watched happen, and he was right to call it what it was.
+     *
+     * Now: one straight retry, and if the second attempt is empty too the run
+     * HOLDS and says which prompt and why, so a person can look at the tab.
+     * The queue keeps its place either way — nothing is consumed unseen.
+     */
+    let got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true);
+    if (!got && !(await wand.stopped())) {
+      log(`  \x1b[33mnothing came back — running that one again\x1b[0m`);
+      report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total, note: "retrying — the first attempt produced no picture" });
+      got = await runPrompt(job.prompts[i], live, label, i + 1, job.prompts.length, dir, card, job.newChat ? false : true);
+    }
+    if (!got && !(await wand.stopped())) {
+      dry += 1;
+      const why = `Prompt ${i + 1} of ${job.prompts.length} produced no picture, twice. Look at the tab — the site may be asking something, out of generations, or refusing the prompt.`;
+      log(`  \x1b[31m!! ${why}\x1b[0m`);
+      report("needs a look", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total, error: why });
+      // Two empty prompts in a row is the site, not the prompt. Stop rather
+      // than burn the rest of the queue against a wall.
+      if (dry >= 2) {
+        await wand.done("Stopped — nothing is coming back", why);
+        break;
+      }
+      // Hold on this one. Continue moves to the next prompt; the queue is
+      // still whole, and whoever presses it has seen the screen.
+      await wand.order("pause");
+      await wand.say(label, `${i + 1} of ${job.prompts.length} — no picture. Press Continue when the tab looks right.`);
+      while (await wand.paused()) {
+        if (await wand.stopped()) break;
+        await obey();
+        await wait(700);
+      }
+      if (await wand.stopped()) break;
+      await wand.running();
+    } else if (got) {
+      dry = 0;
+    }
     total += got;
     log(`  [${i + 1}/${job.prompts.length}] ${got} image${got === 1 ? "" : "s"}`);
     report("running", { job: label, prompt: `${i + 1} of ${job.prompts.length}`, saved: total });
