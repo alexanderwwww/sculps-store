@@ -84,7 +84,14 @@ Both units, in this order: **3 FT / 0.9 M**.
 - stars, a rating, a number of reviews, a number of sales
 - a brand logo, a watermark, a social-media interface
 - clouds, or the sky as the subject
-- a superhero, or any trademarked character, costume, film or brand
+- a superhero, or any trademarked character, costume, film or brand — and the ban has to
+  be **named**, not implied. "No trademarked characters" produced Superman on a
+  trick-or-treater and Casper on a cinema screen. The prompt says: no Casper, no Disney,
+  no Pixar, no superhero, nothing from any studio, nothing anybody could name — a plain
+  sheet-ghost with dot eyes, plain rounded pumpkins, bats, a moon.
+- another company's branding on any object in the frame: batteries, coolers, cans, grills,
+  tools, clothing. All of it plain and unbranded. This one also has to be said out loud or
+  a Duracell turns up on a battery tray.
 - a competitor's name or product
 - any word that was not written into the prompt
 - **the same line of text printed twice**
