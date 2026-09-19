@@ -683,6 +683,28 @@ export interface AbandonInput extends BrandFields {
   imageUrl?: string | null;
 }
 
+/**
+ * How long is left to have it for the night itself.
+ *
+ * Shipping has to land before the 31st to be worth anything, so the cut-off
+ * is the 20th — and the sentence changes shape as it closes, because "11
+ * days left" and "last day" are different arguments. Outside the season it
+ * returns nothing and the email simply does not carry the line.
+ */
+function seasonalDeadline(now = new Date()): string | null {
+  const year = now.getUTCFullYear();
+  const cutoff = Date.UTC(year, 9, 20, 23, 59, 59); // 20 October
+  const opens = Date.UTC(year, 8, 1); // 1 September
+  const t = now.getTime();
+  if (t < opens || t > cutoff) return null;
+
+  const days = Math.ceil((cutoff - t) / 86_400_000);
+  if (days <= 1) return "Last day to order for Halloween";
+  if (days <= 3) return `${days} days left to order for Halloween`;
+  if (days <= 10) return `Order within ${days} days to have it for Halloween`;
+  return "Order by October 20 to have it for Halloween";
+}
+
 function abandonedBody(
   input: BrandFields & {
     storeName: string;
@@ -706,6 +728,18 @@ function abandonedBody(
       ? "You got all the way to payment and stopped. Nothing is lost — everything is exactly where you left it."
       : "We saved it for you. One tap and it's yours.";
 
+  /*
+   * The deadline, when there is one.
+   *
+   * A recovery email's real job is answering "why now", and for a seasonal
+   * product the honest answer is a date rather than a discount: nobody wants
+   * a lawn decoration in November. The line only appears while it is true —
+   * after the cut-off it says nothing rather than something false, because a
+   * shop that keeps promising a date it has missed is a shop nobody believes
+   * the second time.
+   */
+  const deadline = seasonalDeadline();
+
   return shell(
     brand,
     `<div style="text-align:center">
@@ -713,7 +747,14 @@ function abandonedBody(
 ${input.kind === "checkout" ? "Almost yours" : "Still waiting"}
 </div>
 <h1 style="margin:10px 0 10px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">${heading}</h1>
-<p style="margin:0 0 24px;font-size:15.5px;line-height:1.6;color:#6E7480">${lead}</p>
+<p style="margin:0 0 ${deadline ? "18px" : "24px"};font-size:15.5px;line-height:1.6;color:#6E7480">${lead}</p>
+${
+  deadline
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px"><tr><td style="background:#0B0B0C;border-radius:999px;padding:9px 18px">
+<span style="font-size:13px;font-weight:800;letter-spacing:.02em;color:#D6FF4F">${esc(deadline)}</span>
+</td></tr></table>`
+    : ""
+}
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0;border-radius:14px">

@@ -77,7 +77,14 @@ const GARDEN_BUDDY = "garden-buddy";
  * leaving a store out of here is how a customer ends up paying on a page that
  * looks like a different shop.
  */
-const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy"]);
+const BRANDED_CHECKOUT = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
+
+/**
+ * A store that wants the split checkout in its own colours rather than the
+ * default warm grey. The layout is shared — this is one class on the
+ * wrapper and a block of variables, not a second checkout to keep working.
+ */
+const CHECKOUT_SKIN: Record<string, string> = { reaper: "gb-co-sec--night" };
 
 /**
  * The other skin's stylesheet and fonts used to be declared here, which meant
@@ -1223,7 +1230,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
           <BuddyFonts />
           {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
           <link rel="stylesheet" href={buddyHref} />
-          <div className="gb-co-sec">
+          <div className={`gb-co-sec ${CHECKOUT_SKIN[store.slug] ?? ""}`.trim()}>
             <div className="gb-co__pane">
               <div className="gb-co__pane-in">
                 <CheckoutHeader store={store} home={home} />
@@ -1308,7 +1315,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
         {/* Two halves of the screen. OnePage lays out both of them, because
             the same pieces have to sit in different places on a phone: the
             summary folds to the top, the suggestions fall below the form. */}
-        <div className="gb-co-sec">{left}</div>
+        <div className={`gb-co-sec ${CHECKOUT_SKIN[store.slug] ?? ""}`.trim()}>{left}</div>
       </>
     );
   }
