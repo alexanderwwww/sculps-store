@@ -136,7 +136,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       ? { "Set-Cookie": `kerberos_cart=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${url.protocol === "https:" ? "; Secure" : ""}` }
       : undefined;
 
-  const nav = store.slug === "garden-buddy" ? await storeNav(context.db, store.id) : null;
+  const nav = ["garden-buddy", "ceiling-buddy", "reaper"].includes(store.slug)
+    ? await storeNav(context.db, store.id)
+    : null;
 
   /*
    * The one upsell that cannot cost a sale.
@@ -285,14 +287,25 @@ function OfferCard({
   );
 }
 
+/** Stores whose receipt wears their own checkout skin rather than the default. */
+const BRANDED_THANKS = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
+const THANKS_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper" };
+
 export default function Thanks({ loaderData }: Route.ComponentProps) {
   const { store, order, items, pixel, footerLinks, offer, orderId } = loaderData;
   const paid = order.paymentStatus === "paid";
 
   /* Garden Buddy: the last page a paying customer sees is the store's own,
      laid out like the checkout they just left — not the other store's. */
-  if (store.slug === "garden-buddy") {
+  /* Every branded store, not just one.
+     The receipt is the highest-trust moment in the whole funnel and the page
+     the post-purchase offer lives on — and the Reaper's was wearing the
+     Garden Kneeler's serif type and olive palette, which reads as "did that
+     go through, or did I just get had". The checkout already knows how to
+     wear each store's skin; this page now does it the same way. */
+  if (BRANDED_THANKS.has(store.slug)) {
     const home = `/?store=${store.slug}`;
+    const skin = THANKS_SKIN[store.slug] ?? "";
     return (
       <>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -303,7 +316,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
         />
         <link rel="stylesheet" href={buddyHref} />
         {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
-        <div className="gb-co-sec">
+        <div className={`gb-co-sec${skin ? ` ${skin}` : ""}`}>
           <div className="gb-co__pane">
             <div className="gb-co__pane-in">
               <CheckoutHeader store={store} home={home} />

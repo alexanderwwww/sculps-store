@@ -10,7 +10,7 @@
  * chrome and live here in code. Nothing on this page is invented — a section
  * with no content renders nothing rather than a placeholder.
  */
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
@@ -111,6 +111,22 @@ const FEATURE_ICONS = [
 
 /* ------------------------------------------------------------------- page */
 
+/**
+ * Which bundle the customer picked.
+ *
+ * The buy box kept this to itself, so the sticky bar, the closing button and
+ * the footer button all added whichever row happened to be the default. Pick
+ * "Two Reapers + Projector", scroll down, tap the bar that follows you the
+ * whole way — and you were sold the $199 default instead. One of those is a
+ * wrong order shipped; the other is a customer who notices and stops
+ * trusting the page. It lives here now, and every button adds the same thing.
+ */
+const PickedCtx = createContext<{ id: string; set: (id: string) => void } | null>(null);
+function usePicked(fallback: string) {
+  const ctx = useContext(PickedCtx);
+  return { id: ctx?.id || fallback, set: ctx?.set ?? (() => {}) };
+}
+
 export function CeilingBuddyStorefront({
   page,
   storeParam = "",
@@ -135,7 +151,12 @@ export function CeilingBuddyStorefront({
     ? { src: val(firstShot.values, "image"), alt: val(firstShot.values, "alt") }
     : null;
 
+  const firstVariant =
+    (page.variants.find((x) => x.isDefault) ?? page.variants[0])?.id ?? "";
+  const [pickedId, setPickedId] = useState(firstVariant);
+
   return (
+    <PickedCtx.Provider value={{ id: pickedId, set: setPickedId }}>
     <CartDrawerProvider
       page={page}
       storeParam={storeParam}
@@ -181,6 +202,7 @@ export function CeilingBuddyStorefront({
         />
       </div>
     </CartDrawerProvider>
+    </PickedCtx.Provider>
   );
 }
 
@@ -427,9 +449,8 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
     : section.blocks.filter((b) => has(b.values, "image"));
   const [shot, setShot] = useState(0);
   const variants = page.variants;
-  const [picked, setPicked] = useState(
-    () => (variants.find((x) => x.isDefault) ?? variants[0])?.id ?? "",
-  );
+  const fallbackId = (variants.find((x) => x.isDefault) ?? variants[0])?.id ?? "";
+  const { id: picked, set: setPicked } = usePicked(fallbackId);
   const chosen = variants.find((x) => x.id === picked) ?? variants[0] ?? null;
   // Always the dollars, never the percentage: "Save $59" is a number somebody
   // can picture, and "Save 23%" is arithmetic homework.
@@ -1703,7 +1724,14 @@ function Recommends({
 function Closing({ section, page, storeParam = "" }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string }) {
   const v = section.values;
   const drawer = useCartDrawer();
-  const buy = page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
+  // What the customer picked in the buy box, not what the shop defaults to.
+  const fallback = (page.variants.find((x) => x.isDefault) ?? page.variants[0])?.id ?? "";
+  const { id: pickedId } = usePicked(fallback);
+  const buy =
+    page.variants.find((x) => x.id === pickedId) ??
+    page.variants.find((x) => x.isDefault) ??
+    page.variants[0] ??
+    null;
   if (!has(v, "heading")) return null;
   return (
     <section className="cb-section cb-close">
@@ -1869,7 +1897,14 @@ function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storePa
   const drawer = useCartDrawer();
   const [on, setOn] = useState(false);
   const seen = useRef(false);
-  const buy = page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
+  // What the customer picked in the buy box, not what the shop defaults to.
+  const fallback = (page.variants.find((x) => x.isDefault) ?? page.variants[0])?.id ?? "";
+  const { id: pickedId } = usePicked(fallback);
+  const buy =
+    page.variants.find((x) => x.id === pickedId) ??
+    page.variants.find((x) => x.isDefault) ??
+    page.variants[0] ??
+    null;
 
   // Appears once the buy box has scrolled off, the way the sticky bar on the
   // other stores does. No buy box on the page means no bar.
@@ -1916,7 +1951,14 @@ function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storePa
 function Footer({ page, storeParam }: { page: LoadedProductPage; storeParam: string }) {
   const href = (p: string) => `${p}${storeParam}`;
   const drawer = useCartDrawer();
-  const buy = page.variants.find((x) => x.isDefault) ?? page.variants[0] ?? null;
+  // What the customer picked in the buy box, not what the shop defaults to.
+  const fallback = (page.variants.find((x) => x.isDefault) ?? page.variants[0])?.id ?? "";
+  const { id: pickedId } = usePicked(fallback);
+  const buy =
+    page.variants.find((x) => x.id === pickedId) ??
+    page.variants.find((x) => x.isDefault) ??
+    page.variants[0] ??
+    null;
   // The last offer said one store's line no matter whose page it was on. It
   // borrows the Closing CTA's heading, which the shop already writes.
   const closing = page.sections.find((x) => x.type === "closing_cta");

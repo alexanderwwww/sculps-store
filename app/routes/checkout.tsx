@@ -3652,6 +3652,19 @@ function OnePage({
           <div className="gb-co__pane-in">
             {chrome?.header}
             {stopped}
+            {/* The summary lives in the right-hand rail, which a phone does
+                not have — so on a phone this page was the error and nothing
+                else: no product, no price, no total. Whatever the state of
+                the card form, somebody must always be able to see what they
+                are here to buy. */}
+            <details className="gb-co__msum" open>
+              <summary>
+                <svg className="gb-co__msum-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6" /></svg>
+                Order summary
+                <span className="gb-co__msum-total">{money(total)}</span>
+              </summary>
+              <div className="gb-co__msum-body">{summary}</div>
+            </details>
           </div>
           {chrome?.footer}
         </div>

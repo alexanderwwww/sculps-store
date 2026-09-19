@@ -83,4 +83,7 @@ export default [
       route("stores/new", "routes/admin.stores.new.tsx"),
     ]),
   ]),
+  // Last, so it only ever sees a path nothing else claimed: a bare product
+  // handle from an ad or a pasted link, moved to its real address.
+  route("*", "routes/handle.$.tsx"),
 ] satisfies RouteConfig;
