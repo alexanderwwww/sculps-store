@@ -1491,6 +1491,14 @@ function RvThread({ r, gallery }: { r: LoadedProductPage["reviews"][number]; gal
    * gallery, picked by the review's id so a given card always shows the same
    * ones rather than reshuffling on every render.
    */
+  /*
+   * Only ever photographs that a customer took.
+   *
+   * This used to fall back to the product gallery, and the gallery is now
+   * eight marketing panels with headlines printed across them. A thread that
+   * texts you an advert is the single most obvious tell that a review wall is
+   * made up, and it was doing it on every product at once.
+   */
   const pool = [r.imageUrl, ...gallery].filter(Boolean) as string[];
   const seed = r.id.split("").reduce((n, c) => n + c.charCodeAt(0), 0);
   const shots = Array.from(new Set(pool)).slice(0, 8);
@@ -1586,6 +1594,11 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
   // Sideways or up: which way the wall moves is the shop's choice, because it
   // depends on how many reviews there are and how tall the page already is.
   const across = val(section.values, "direction").toLowerCase().startsWith("acr");
+  /* The pictures a thread is allowed to send: the ones other customers put on
+     their own reviews, and nothing from the product gallery. */
+  const threadPool = Array.from(
+    new Set(rows.map((r) => r.imageUrl).filter(Boolean) as string[]),
+  );
   return (
     <section className="cb-revs-s" id="reviews">
       <div className="cb-wrap">
@@ -1615,7 +1628,7 @@ function Reviews({ section, page }: { section: LoadedSection; page: LoadedProduc
               <div className="rv-pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
                 {rows.map((r, i) => (
                   r.channel === "imessage"
-                    ? <RvThread key={`${pass}-${r.id}`} r={r} gallery={(page.product.images ?? []).filter((i) => i.url && i.kind !== "graphic").map((i) => i.url)} />
+                    ? <RvThread key={`${pass}-${r.id}`} r={r} gallery={threadPool} />
                     : <RvPost key={`${pass}-${r.id}`} r={r} />
                 ))}
               </div>
