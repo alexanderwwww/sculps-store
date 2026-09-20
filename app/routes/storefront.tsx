@@ -4,7 +4,6 @@ import { resolveStore, loadProductPage } from "~/lib/store.server";
 import { providerForStore } from "~/lib/payments.server";
 import { paypalFor } from "~/lib/paypal.server";
 import { currentUser } from "~/lib/auth.server";
-import { liveReloadScript } from "~/lib/live-reload";
 import { pages, metaConfig, themes, discounts } from "~/db/schema";
 import { passwordCookieValid } from "~/lib/password.server";
 import { and, eq } from "drizzle-orm";
@@ -149,8 +148,6 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   }
 
   const page = await loadProductPage(context.db, store, { themeId, includeHidden });
-  // Signed-in admins see changes the moment they deploy.
-  const liveReload = admin && !isThumb ? liveReloadScript() : null;
 
   // The browser pixel. Only rendered when this store actually has one, so a
   // store without Meta gets no third-party script at all.
@@ -259,11 +256,11 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   const paypalClientId = await paypalFor(context.db, context.cloudflare.env, store.id)
     .then((client) => client?.clientId ?? null)
     .catch(() => null);
-  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, liveReload, offer: offer ?? null }, { headers });
+  return withHeaders({ store, page: page ?? null, pixel, vitals, storeParam, favicon: store.faviconUrl, publishableKey, paypalClientId, offer: offer ?? null }, { headers });
 }
 
 export default function Storefront({ loaderData }: Route.ComponentProps) {
-  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, liveReload, offer } = loaderData;
+  const { store, page, pixel, vitals, storeParam, favicon, publishableKey, paypalClientId, offer } = loaderData;
 
   if (!page) {
     return (
@@ -289,8 +286,7 @@ export default function Storefront({ loaderData }: Route.ComponentProps) {
       {favicon ? <link rel="icon" href={favicon} /> : null}
       {pixel ? <script dangerouslySetInnerHTML={{ __html: pixel }} /> : null}
       {vitals ? <script dangerouslySetInnerHTML={{ __html: vitals }} /> : null}
-      {liveReload ? <script dangerouslySetInnerHTML={{ __html: liveReload }} /> : null}
-    </>
+          </>
   );
 
   if (store.slug === BODIES) {
