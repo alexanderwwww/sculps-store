@@ -22,6 +22,7 @@ import { chromium } from "playwright";
 import { attachWand } from "./wand.mjs";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { basename, extname } from "node:path";
 import { join } from "node:path";
@@ -679,7 +680,20 @@ opt.wait = Number(opt.wait);
  * hand. A preference stated out loud should outlive the process that heard
  * it.
  */
-const SITE_FILE = ".site";
+/*
+ * Beside this file, not beside whatever folder the app happened to start in.
+ *
+ * This was the bare name ".site", which resolves against the working
+ * directory -- and that is not the same place twice. Launched from Finder a
+ * Mac app gets "/" or the bundle; launched from a terminal it gets wherever
+ * you were standing. So the choice was written to one place and looked for in
+ * another, and every restart forgot it and opened the default site again.
+ *
+ * The runtime folder holds this very file, so deriving the path from
+ * import.meta.url puts the note next to the code that reads it, wherever that
+ * turns out to be.
+ */
+const SITE_FILE = fileURLToPath(new URL(".site", import.meta.url));
 let siteRemembered = null;
 try {
   const saved = readFileSync(SITE_FILE, "utf8").trim();
@@ -687,6 +701,7 @@ try {
 } catch {
   /* nothing remembered yet, which is the normal first run */
 }
+if (siteRemembered) console.log(`  \x1b[2mopening ${SITES[siteRemembered].name}, as last ordered\x1b[0m`);
 let site = SITES[opt.site] ?? (siteRemembered ? SITES[siteRemembered] : null) ?? SITES.gemini;
 // A remembered site is a held site: a job's own "site" must not undo a choice
 // the owner made out loud, whether they made it a minute ago or last week.
