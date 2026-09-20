@@ -1098,35 +1098,32 @@ function InTheBox({ section }: { section: LoadedSection }) {
   const items = section.blocks.filter((b) => has(b.values, "title"));
   if (!items.length) return null;
   const v = section.values;
+  const shot = has(v, "image") ? val(v, "image") : "";
+  /* The old layout put a small flat-lay in one column and a list of pills in
+     the other, so the one section that answers "what actually turns up at my
+     door" read like a footnote. It is a full-bleed stage now: the carton at
+     the size it deserves, and the packing list counted off across the bottom
+     of it. */
   return (
-    <section className="cb-section cb-section--sky">
-      <div className={`cb-wrap cb-box${has(v, "image") ? "" : " cb-box--wide"}`}>
-        {has(v, "image") ? (
-          <div className="cb-box__pic">
-            <img src={val(v, "image")} alt="" loading="lazy" />
-          </div>
-        ) : null}
-        <div>
-          <h2 className="cb-h2">{val(v, "heading")}</h2>
-          {has(v, "subheading") ? <p className="cb-lede">{val(v, "subheading")}</p> : null}
-          {/* Each line already carries a description in the data and the
-              template was throwing it away, so a box with five real things in
-              it rendered as five small pills. Numbered rows instead: what it
-              is, and what it is for. */}
-          <ol className="cb-box__list">
-            {items.map((b, i) => (
-              <li key={b.id}>
-                <span className="cb-box__n">{i + 1}</span>
-                <span className="cb-box__txt">
-                  <b>{val(b.values, "title")}</b>
-                  {has(b.values, "text") ? <span>{val(b.values, "text")}</span> : null}
-                </span>
-                <span className="cb-box__tick">{IcoCheck}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+    <section className="cb-carton">
+      <div className="cb-carton__head">
+        <h2 className="cb-carton__h">{val(v, "heading")}</h2>
+        {has(v, "subheading") ? <p className="cb-carton__sub">{val(v, "subheading")}</p> : null}
       </div>
+      {shot ? (
+        <div className="cb-carton__stage">
+          <img src={shot} alt="" loading="lazy" />
+        </div>
+      ) : null}
+      <ol className="cb-carton__list">
+        {items.map((b, i) => (
+          <li key={b.id}>
+            <span className="cb-carton__n">{String(i + 1).padStart(2, "0")}</span>
+            <b>{val(b.values, "title")}</b>
+            {has(b.values, "text") ? <span>{val(b.values, "text")}</span> : null}
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }

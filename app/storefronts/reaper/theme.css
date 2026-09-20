@@ -2724,3 +2724,104 @@
  */
 .cb-opt[aria-checked="true"] { background: #FFFFFF; }
 .cb-up:hover { background: #F4F4F6; }
+
+/* ------------------------------------------------- the carton, full bleed */
+
+/*
+ * "In the box" was a thumbnail beside a column of pills, which is a strange
+ * way to answer the one question every buyer has before they pay: what turns
+ * up at my door. It is a stage now — black, full width, the carton lit on it
+ * at the size of a real product shot, with the packing list counted off
+ * underneath. The number is the ornament; nothing else needs to be.
+ */
+.cb-carton {
+  background: #0B0B0C;
+  color: #FFFFFF;
+  padding: 64px 0 56px;
+  margin: 0;
+}
+.cb-carton__head {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.cb-carton__h {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: .95;
+  font-size: clamp(38px, 7vw, 76px);
+  margin: 0;
+  text-transform: uppercase;
+}
+.cb-carton__sub {
+  margin: 14px 0 0;
+  max-width: 54ch;
+  font-size: 17px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, .62);
+}
+.cb-carton__stage {
+  margin: 34px auto 0;
+  max-width: 1320px;
+  padding: 0 20px;
+}
+.cb-carton__stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+}
+.cb-carton__list {
+  list-style: none;
+  margin: 40px auto 0;
+  padding: 0 20px;
+  max-width: 1320px;
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, .16);
+}
+.cb-carton__list li {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 24px 22px 26px 0;
+  border-right: 1px solid rgba(255, 255, 255, .12);
+}
+.cb-carton__list li:last-child { border-right: 0; }
+.cb-carton__n {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: .12em;
+  color: var(--neon, #D6FF4F);
+}
+.cb-carton__list b {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+.cb-carton__list span {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, .58);
+}
+
+@media (max-width: 760px) {
+  .cb-carton { padding: 44px 0 40px; }
+  .cb-carton__stage { margin-top: 24px; padding: 0; }
+  .cb-carton__list {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 28px;
+  }
+  .cb-carton__list li {
+    padding: 18px 16px 20px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+  }
+  .cb-carton__list li:nth-child(even) { border-right: 0; }
+  .cb-carton__list b { font-size: 16.5px; }
+  .cb-carton__list span { font-size: 13.5px; }
+}
