@@ -1735,9 +1735,19 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     log(`  \x1b[33m!! typing was interrupted (${String(e?.message ?? e).slice(0, 60)}) — checking what landed\x1b[0m`);
   }
   await wait(400);
-  if (!typedIn && (await typed()).trim().length < 8) {
-    log(`  \x1b[31m!! the prompt did not reach the box — skipping this one\x1b[0m`);
-    return 0;
+  if (!typedIn) {
+    // Read the box directly rather than through typed(), which is declared
+    // further down this function: calling it here threw "cannot access before
+    // initialization" on the one path this guard exists for, turning a
+    // recoverable interruption into a thrown prompt.
+    const landedText =
+      (await box.textContent().catch(() => "")) ||
+      (await box.inputValue().catch(() => "")) ||
+      "";
+    if (landedText.trim().length < 8) {
+      log(`  \x1b[31m!! the prompt did not reach the box — skipping this one\x1b[0m`);
+      return 0;
+    }
   }
 
   /*
@@ -2652,11 +2662,32 @@ while (true) {
       shot it was sent back for. */
   let redoReturn = null;
   let redoDoing = null;
+  /** Which part the previous prompt belonged to, so a change can be noticed. */
+  let lastPart = -1;
   for (let i = startAt; i < flatPrompts.length; i++) {
     // This part's own pictures, attached when the part opens and never again.
     const mine = parts[belongs[i]]?.refs ?? [];
     try {
-    if (opensPart[i] && parts.length > 1) {
+    /*
+     * Load a part's pictures whenever the part CHANGES, not only when its
+     * first prompt runs.
+     *
+     * Two ways that went wrong. A job resumed in the middle of part three
+     * never sees that part's first prompt, so `live` kept the job-level refs
+     * -- empty for a parts job -- and the rest of the run was drawn with no
+     * reference, or worse, attached the wrong set. And a `redo` that jumps
+     * back into an earlier part loads that part's pictures, then returns to
+     * where it was without ever loading the pictures back, so everything
+     * after it was drawn with the redone product's references.
+     *
+     * Asking "am I in a different part than the last prompt was" answers both.
+     *
+     * The old guard was also parts.length > 1, so a job with exactly one part
+     * never fetched its pictures at all.
+     */
+    const partChanged = belongs[i] !== lastPart;
+    lastPart = belongs[i];
+    if (partChanged && (parts.length > 1 || (mine.length && !refs.length))) {
       // fetchRefs(urls, dir) — the folder it saves into is not optional, and
       // leaving it off crashed the whole run on the first part before a single
       // picture was drawn. Each part keeps its references in its own folder.
@@ -2852,7 +2883,30 @@ while (true) {
    */
   const zipPath = total ? await makeZip(dir, slug) : null;
   if (zipPath) {
-    await rm(dir, { recursive: true, force: true }).catch(() => {});
+    /*
+     * Keep the place of an unfinished job.
+     *
+     * progress.json lives in this folder, and the branch above has just
+     * decided -- for a job that was stopped part way -- to keep it so that
+     * sending the job again carries on instead of starting over. Then this
+     * deleted the folder it is in, unconditionally, fifteen lines later. So
+     * the one case the resume file exists for was the one case it was thrown
+     * away: re-queueing began at prompt one and spent the whole quota again,
+     * which is exactly what keeping it was meant to prevent.
+     *
+     * A finished job has already removed its own progress file, so there is
+     * nothing to save and the folder goes as before.
+     */
+    if (finished) {
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+    } else {
+      const keep = await readFile(progressFile, "utf8").catch(() => null);
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+      if (keep !== null) {
+        await mkdir(dir, { recursive: true }).catch(() => {});
+        await writeFile(progressFile, keep).catch(() => {});
+      }
+    }
     console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} → ${zipPath.replace(process.env.HOME ?? "", "~")}\x1b[0m\n`);
   } else if (total) {
     console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);

@@ -237,6 +237,77 @@ export const OVERLAY = `(() => {
   hud.append(meter, title, body, hint, bar);
   root.appendChild(hud);
 
+  /*
+   * The panel assembles itself when it appears.
+   *
+   * It used to be simply present: one frame absent, the next frame there,
+   * which on a page that is already busy reads as a glitch rather than as
+   * something arriving. Now it pours into place -- squat and wide and
+   * over-blurred at first, as a drop of liquid is before it settles, then
+   * springing to its proper shape while the blur tightens and a cool ring of
+   * light swells around it and fades.
+   *
+   * Three properties only -- transform, filter and box-shadow -- all of which
+   * the compositor can animate without touching layout, so a page doing real
+   * work underneath is not interrupted by the thing that watches it.
+   */
+  /*
+   * A slow breath of light around the rim while something is happening.
+   *
+   * The meter says it is working; this says it from the corner of your eye,
+   * without having to read anything. It is one interval on box-shadow, which
+   * the compositor handles, and it is stopped outright when the panel is not
+   * running so an idle app costs nothing.
+   */
+  let glowTimer = null;
+  let restingShadow = null;
+  function glow(colour) {
+    if (restingShadow === null) restingShadow = hud.style.boxShadow;
+    if (glowTimer) clearInterval(glowTimer);
+    if (!colour) { hud.style.boxShadow = restingShadow; glowTimer = null; return; }
+    let up = true;
+    hud.style.transition = hud.style.transition || "box-shadow 1.5s ease";
+    glowTimer = setInterval(() => {
+      const spread = up ? 26 : 8;
+      const alpha = up ? ".34" : ".14";
+      hud.style.boxShadow =
+        "inset 0 1px 0 rgba(255,255,255,.42)," +
+        "inset 0 -1px 0 rgba(0,0,0,.34)," +
+        "0 0 " + spread + "px 2px " + colour + Math.round(Number(alpha) * 255).toString(16).padStart(2, "0") + "," +
+        "0 1px 2px rgba(0,0,0,.45)," +
+        "0 14px 40px -14px rgba(0,0,0,.70)";
+      up = !up;
+    }, 1500);
+  }
+
+  function assemble() {
+    const settled = hud.style.boxShadow;
+    hud.style.transition = "none";
+    hud.style.opacity = "0";
+    hud.style.transform = "translateX(-50%) translateY(-10px) scale(.86, .62)";
+    hud.style.filter = "blur(9px)";
+    // Two frames: one to have the start state painted, one to leave it.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      hud.style.transition =
+        "transform .62s cubic-bezier(.16,1.24,.3,1)," +
+        "opacity .34s ease," +
+        "filter .46s ease," +
+        "box-shadow .7s ease";
+      hud.style.opacity = "1";
+      hud.style.transform = "translateX(-50%) translateY(0) scale(1, 1)";
+      hud.style.filter = "blur(0px)";
+      // The ring swells with the spring, then falls back to the resting rim.
+      hud.style.boxShadow =
+        "inset 0 1px 0 rgba(255,255,255,.55)," +
+        "inset 0 -1px 0 rgba(0,0,0,.34)," +
+        "0 0 0 1px rgba(201,160,255,.45)," +
+        "0 0 34px 6px rgba(201,160,255,.34)," +
+        "0 14px 40px -14px rgba(0,0,0,.70)";
+      setTimeout(() => { hud.style.boxShadow = settled; }, 620);
+    }));
+  }
+  assemble();
+
   const state = { stopped: false, paused: false, running: false, deaf: 0, wantsCard: false, epoch: Date.now() };
 
   // Captured on the way down, so a page that swallows keys can't eat it.
@@ -270,6 +341,7 @@ export const OVERLAY = `(() => {
     css(bar, { display: "flex" });
     meterTint("#FFC24D");
     meterMode("idle");
+    glow(null);
     bPause.textContent = "Continue";
   }
 
@@ -301,6 +373,7 @@ export const OVERLAY = `(() => {
     css(title, { color: "#FF6B5A" });
     meterTint("#FF6B5A");
     meterMode("off");
+    glow(null);
     title.textContent = "Stopped";
     body.textContent = "Nothing more will be typed. Everything saved is on your Desktop.";
     hint.textContent = "";
@@ -757,6 +830,19 @@ export const OVERLAY = `(() => {
       // The finished panel is about the last job, not this one.
       doneCard.style.display = "none";
       css(bar, { display: "flex" });
+      /*
+       * Start the meter here, which is the one place it was missing.
+       *
+       * It was only ever started by resume(), so on an ordinary run the bars
+       * sat flat at their resting height from beginning to end — the panel
+       * looked exactly as it does when nothing is happening, and the one
+       * question it exists to answer went unanswered unless you happened to
+       * press Pause and then Continue.
+       */
+      css(title, { color: "#C9A0FF" });
+      meterTint("#C9A0FF");
+      meterMode("run");
+      glow("#C9A0FF");
       bPause.textContent = "Pause";
     },
     /**
@@ -843,30 +929,45 @@ export const OVERLAY = `(() => {
        * So: try the targets one at a time, stop at the first whose drop is
        * accepted, and release the drag on the way out however it went.
        */
-      const targets = [];
-      for (let el = box; el && targets.length < 8; el = el.parentElement) targets.push(el);
-      targets.push(document.body, document.documentElement);
       const release = (t) => {
         for (const type of ["dragleave", "dragend"]) {
           t.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
         }
       };
-      let handled = false;
-      for (const t of targets) {
+      const dropOn = (t) => {
         t.dispatchEvent(new DragEvent("dragenter", { bubbles: true, cancelable: true, dataTransfer: dt }));
         t.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: dt }));
         const ev = new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt });
         t.dispatchEvent(ev);
-        // A handler that takes the files calls preventDefault on the drop.
-        // That is the only signal available that somebody was listening.
-        if (ev.defaultPrevented) { handled = true; release(t); break; }
         release(t);
-      }
-      // Whatever happened above, nothing is being dragged any more. Say so on
-      // the document too, because the curtain usually listens there.
+        // A handler that takes the files calls preventDefault on the drop.
+        // It is the only signal available, and not every handler bothers.
+        return ev.defaultPrevented;
+      };
+
+      // The events bubble, so one drop on the message box is already seen by
+      // every ancestor between it and the document. Walking those ancestors
+      // and dropping on each in turn -- which is what this did -- hands the
+      // same files to the same listener once per level: two pictures became
+      // twenty. One drop, where a person would make it.
+      let handled = dropOn(box);
+      // Only if nothing anywhere claimed them, try the document once. A page
+      // that listens on window rather than on the composer needs this, and it
+      // cannot double-deliver because the first drop was not taken.
+      if (!handled) handled = dropOn(document.documentElement);
+      // Nothing is being dragged any more, whatever happened above. The
+      // site's "drop a file here" curtain listens here for the end of it.
       release(document.documentElement);
       release(document.body);
-      return handled || true;
+      // The files are deliberately KEPT. Pictures dropped on the card are
+      // meant to be the reference "from this prompt on", so a run that uses
+      // them for one prompt and then forgets them would be the bug, not the
+      // fix. Re-delivery is prevented by dropping once rather than once per
+      // ancestor, and by the runner's own record of what a chat already holds.
+      // Honestly: whether anybody took them. This used to return handled-or-
+      // true, which is true always, so a delivery into a page with no
+      // listener was reported as a success and the caller had no way to know.
+      return handled;
     },
     /** Ignore Escape for a moment, while the runner sends one on purpose. */
     deafen(ms) { state.deaf = Date.now() + (ms || 1500); },
@@ -965,7 +1066,10 @@ export async function attachWand(page) {
       const y = box.y + Math.min(box.height / 2, 40);
       await safe(() => page.evaluate(([a, b, c]) => window.__wand?.to(a, b, c), [x, y, act]));
       // Long enough that the travel reads as movement rather than a jump.
-      await page.waitForTimeout(act ? 540 : 260);
+      // Wrapped like everything else here: on a page that is closing or
+      // navigating this rejects, and point() was the one method in this
+      // object whose page work could throw out into the runner.
+      await safe(() => page.waitForTimeout(act ? 540 : 260));
     },
     /** Show the card and wait. Null when the overlay isn't there to show it. */
     ask: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.ask(a, b) ?? null, [name, sub]), null),
