@@ -1985,7 +1985,24 @@ while (true) {
       else await run("open", [opt.out]).catch(() => {});
     }
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
-    report("idle", { waitingFor: "a job in the queue" });
+    /*
+     * Say WHY a job on the queue is not being run.
+     *
+     * "Waiting for a job in the queue" was reported whether the queue was
+     * empty or held a job this build had just refused, and four separate bugs
+     * hid behind that one sentence for a day: a job whose prompts sat inside
+     * its parts, a job already in the done list, a job with no id. Whoever is
+     * watching — a person at the app or Claude reading the status — should be
+     * told which of those it is, because each has a different fix.
+     */
+    const why = !job?.id
+      ? "a job in the queue"
+      : done.has(job.id)
+        ? `"${job.name || job.id}" already ran on this Mac — delete .done-jobs to run it again`
+        : !hasWork
+          ? `"${job.name || job.id}" has no prompts in it — nothing to draw`
+          : "a job in the queue";
+    report("idle", { waitingFor: why, ...(job?.id ? { refused: job.id } : {}) });
     await obey();
     // Idle is the safe moment to become a newer app.
     await selfUpdate().catch(() => {});
