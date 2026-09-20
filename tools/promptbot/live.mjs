@@ -865,14 +865,26 @@ async function ensurePage() {
   // die of it.
   if (!(await alive()) && !(await reconnect("Chrome is not answering"))) return false;
   const found = context.pages().filter(ok);
-  // The last one is the most recently opened, which is the one a chat site
-  // puts a new conversation in.
-  const next = found[found.length - 1] ?? null;
+  // A tab that is inside a conversation beats one sitting on the front page.
+  //
+  // With no pin to go back to, this used to take the most recent tab whatever
+  // was in it, and if none was usable it opened the front page — which on
+  // Gemini IS a new chat. Mid-run that threw away the references and
+  // everything the model had been told about the product, silently, and the
+  // next picture came back drawn by a model that had never seen the brief.
+  // So: prefer a tab already in a conversation, and only ever open the front
+  // page when there is genuinely nothing else.
+  const inChat = found.filter((pg) => { try { return !isFront(pg.url()); } catch { return false; } });
+  const pool = inChat.length ? inChat : found;
+  const next = pool[pool.length - 1] ?? null;
   if (next) {
     page = next;
     console.log(`\r\x1b[K  \x1b[2mmoved to your other ${site.name} tab\x1b[0m`);
   } else {
-    console.log(`\r\x1b[K  \x1b[2mno ${site.name} tab open — opening one\x1b[0m`);
+    // Loud, not quiet: this is the one path that legitimately starts a new
+    // conversation without being asked, so it should never again be something
+    // only noticed later by looking at the pictures.
+    console.log(`\r\x1b[K  \x1b[33mno ${site.name} conversation left open — starting a new chat\x1b[0m`);
     page = await context.newPage().catch(() => null);
     if (!page) {
       // The browser is gone, whatever it claims. Reconnect and try once more;
@@ -1448,7 +1460,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // Only the first prompt gets to wait for it. A site that has not given
     // this thread an address by then is one that never will, and three seconds
     // on every prompt after that is a job running a third slower for nothing.
-    const budget = n === 1 ? 3000 : 0;
+    // A later prompt gets the same patience when there is still no pin. The
+    // budget was zero for every prompt after the first, so a run whose first
+    // send did not produce an address within three seconds went the whole way
+    // unpinned — and an unpinned run is one tab hiccup away from carrying on
+    // in a brand new chat, which is the bug this pair of changes closes.
+    const budget = n === 1 || !pinnedChat ? 3000 : 0;
     let here = page.url();
     for (let t = 0; t < budget && chatKey(here) === chatKey(urlBeforeSend); t += 400) {
       await wait(400);
