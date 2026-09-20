@@ -3102,3 +3102,74 @@ html, body { margin: 0; }
   .cb-sticky__v { display: none; }
   .cb-sticky .cb-btn { flex: 0 0 auto; padding: 12px 18px; font-size: 14.5px; }
 }
+
+/* The clip rail is a scroller, not a marquee: a keyframed transform cannot
+   be dragged, because the animation and the finger are moving the same
+   pixels. Scrolling is a thing every phone already knows how to do, so the
+   rail can be thrown by hand and the drift is added to scrollLeft in JS. */
+.cb-ugcw__rail {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  cursor: grab;
+}
+.cb-ugcw__rail::-webkit-scrollbar { display: none; }
+.cb-ugcw__rail:active { cursor: grabbing; }
+.cb-ugcw__track { animation: none; width: max-content; }
+
+/* Pay in 4, inside the bundle box, under the rows it is the quarter of. */
+.cb-bundle__p4 {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(11, 11, 12, .09);
+  font-size: 13.5px; color: rgba(11, 11, 12, .72);
+}
+.cb-bundle__p4 b { color: var(--ink); font-weight: 700; }
+.cb-bundle__p4 .cb-pp--word { height: 14px; width: auto; display: block; flex: 0 0 auto; }
+
+/* ---- the drawer's upsell: a row you swipe, not a stack you scroll past ---
+ *
+ * Three full-width rows between the cart line and the total pushed Checkout
+ * off the bottom of a phone, so the drawer opened on a wall of things to buy
+ * instead of on the button. Laid sideways they cost one card's height, the
+ * button stays on screen, and the extras are still there for anyone who
+ * wants to look -- which is the polite version of the same offer.
+ */
+.cb-ups {
+  display: block;
+  padding: 12px 0 6px;
+}
+.cb-ups__h { padding: 0 16px 8px; }
+.cb-ups__row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 16px 6px;
+  scroll-snap-type: x proximity;
+}
+.cb-ups__row::-webkit-scrollbar { display: none; }
+.cb .cb-ups__row .cb-up {
+  flex: 0 0 auto;
+  width: 168px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  padding: 10px;
+  scroll-snap-align: start;
+  text-align: left;
+  align-content: start;
+}
+.cb .cb-ups__row .cb-up__pic { width: 100%; height: 92px; border-radius: 10px; }
+.cb .cb-ups__row .cb-up__pic img { object-fit: cover; }
+.cb .cb-ups__row .cb-up__txt { gap: 1px; }
+.cb .cb-ups__row .cb-up__txt b {
+  font-size: 13.5px; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.cb .cb-ups__row .cb-up__txt i { font-size: 11.5px; }
+.cb .cb-ups__row .cb-up__add { margin-left: 0; justify-self: start; font-size: 12.5px; padding: 5px 11px; }

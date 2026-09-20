@@ -257,6 +257,9 @@ export function CartDrawerProvider({
           {lines.length && (upsell || extras.length) ? (
             <div className="cb-ups">
               <div className="cb-ups__h">Add to your order</div>
+              {/* Sideways. Stacked, three of these stood between the cart line
+                  and the Checkout button and pushed it off a phone screen. */}
+              <div className="cb-ups__row">
 
               {upsell ? (
                 <button type="button" className="cb-up" onClick={() => swap(upsell.id)} disabled={busy}>
@@ -293,6 +296,7 @@ export function CartDrawerProvider({
                   <span className="cb-up__add">+{formatMoney(x.fromCents, currency)}</span>
                 </button>
               ))}
+              </div>
             </div>
           ) : null}
 

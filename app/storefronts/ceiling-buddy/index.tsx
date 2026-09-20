@@ -514,7 +514,6 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
               Four payments is a reason to look at a $299 product at all, so it
               belongs where the looking happens — directly under the thing
               being looked at, at full width, with PayPal's own mark on it. */}
-          <PayLater page={page} wide />
         </div>
 
         {/* The right-hand column. `cb-buy__side` exists so a phone can reorder
@@ -669,6 +668,20 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
                 );
               })}
             </div>
+              {/* Four payments, of this bundle, not of the default one.
+                  It reads `chosen`, so picking the pair changes the figure in
+                  the same breath as the price above it -- which is the only
+                  version of this line worth printing. A number that says
+                  $49.75 while the row above says $299 is worse than nothing. */}
+              {chosen ? (
+                <div className="cb-bundle__p4">
+                  <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
+                  <span>
+                    or 4 interest-free payments of{" "}
+                    <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
+                  </span>
+                </div>
+              ) : null}
               {has(v, "bundleNote") ? (
                 <div className="cb-bundle__foot">{val(v, "bundleNote")}</div>
               ) : null}
@@ -1854,13 +1867,65 @@ function RvThread({ r, gallery }: { r: LoadedProductPage["reviews"][number]; gal
  */
 function UgcWall({ section }: { section: LoadedSection }) {
   const clips = section.blocks.filter((b) => has(b.values, "image"));
+  const rail = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * The rail drifts, and you can also just grab it.
+   *
+   * It used to be a CSS marquee: a track translated forever by a keyframe.
+   * That cannot be dragged -- a transform and a finger fight over the same
+   * pixels -- and at the speed it ran, reaching the clip you wanted meant
+   * waiting for it. So the rail is an ordinary horizontal scroller now, which
+   * a finger and a trackpad both already know how to move, and the drift is a
+   * pixel added to scrollLeft each frame.
+   *
+   * It only runs while the rail is actually on screen, and any touch of it
+   * stops the drift for a few seconds so it never pulls away from somebody
+   * reading. The clips are printed twice, so when the drift passes the half
+   * way mark it jumps back a lap and the loop has no seam.
+   */
+  useEffect(() => {
+    const el = rail.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const SPEED = 0.55;          // px per frame, about 33px a second
+    const RESUME_AFTER = 2500;   // how long a touch holds it still
+    let raf = 0;
+    let visible = false;
+    let idleAt = 0;
+
+    const step = () => {
+      raf = requestAnimationFrame(step);
+      if (!visible || Date.now() < idleAt) return;
+      const lap = el.scrollWidth / 2;
+      if (lap > 0 && el.scrollLeft >= lap) el.scrollLeft -= lap;
+      el.scrollLeft += SPEED;
+    };
+
+    const hold = () => { idleAt = Date.now() + RESUME_AFTER; };
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 });
+    io.observe(el);
+    for (const type of ["pointerdown", "touchstart", "wheel"] as const) {
+      el.addEventListener(type, hold, { passive: true });
+    }
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+      for (const type of ["pointerdown", "touchstart", "wheel"] as const) {
+        el.removeEventListener(type, hold);
+      }
+    };
+  }, [clips.length]);
+
   if (!clips.length) return null;
   return (
     <section className="cb-ugcw" id="clips">
       <div className="cb-wrap">
         <Head section={section} />
       </div>
-      <div className="cb-ugcw__rail">
+      <div className="cb-ugcw__rail" ref={rail}>
         <div className="cb-ugcw__track">
           {[0, 1].map((pass) => (
             <div className="cb-ugcw__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
