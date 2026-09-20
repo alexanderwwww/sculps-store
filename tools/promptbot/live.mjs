@@ -2043,24 +2043,35 @@ while (true) {
   }
   console.log(`\r\x1b[K`);
   console.log(`\x1b[1m${label}\x1b[0m  \x1b[2m(${site.name})\x1b[0m`);
-  console.log(`${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"}${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}:`);
-  job.prompts.forEach((p, i) => {
-    const first = p.trim().split("\n")[0];
+  /*
+   * The summary printed before a run has to read a parts job too.
+   *
+   * It listed job.prompts directly, which a parts job does not have, so the
+   * very first line after the gate threw and the job died on the launch pad
+   * with a TypeError instead of drawing anything.
+   */
+  const listed = job.prompts?.length
+    ? job.prompts
+    : (job.parts ?? []).flatMap((part) => part.prompts ?? []);
+  const refCount = job.refs?.length ?? (job.parts ?? []).reduce((n, part) => n + (part.refs?.length ?? 0), 0);
+  console.log(`${listed.length} prompt${listed.length === 1 ? "" : "s"}${refCount ? `, ${refCount} reference image${refCount === 1 ? "" : "s"}` : ""}:`);
+  listed.forEach((p, i) => {
+    const first = String(p).trim().split("\n")[0];
     console.log(`  ${i + 1}. ${first.slice(0, 92)}${first.length > 92 ? "…" : ""}`);
   });
   console.log();
 
   const summary =
-    `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"}` +
-    `${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}\n\n` +
-    job.prompts.map((p, i) => `${i + 1}. ${p.trim().split("\n")[0].slice(0, 70)}…`).join("\n");
+    `${listed.length} prompt${listed.length === 1 ? "" : "s"}` +
+    `${refCount ? `, ${refCount} reference image${refCount === 1 ? "" : "s"}` : ""}\n\n` +
+    listed.map((p, i) => `${i + 1}. ${String(p).trim().split("\n")[0].slice(0, 70)}…`).join("\n");
 
   // The card in the corner of the page, when the overlay is there to show it.
   // The macOS dialog stays as the fallback for a page that won't take it.
   let answer = await decision(
     label,
     // A function, not a string: the site can change while this is on screen.
-    () => `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`,
+    () => `${listed.length} prompt${listed.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`,
     summary,
   );
 
