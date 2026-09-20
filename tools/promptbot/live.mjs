@@ -1419,6 +1419,13 @@ async function putFiles(page, paths, wand, label) {
       ]);
       await chooser.setFiles(paths);
       if ((await landed(before, 2500 + files.length * 1200, files.length)) >= files.length) return "chosen";
+      // Partial here too: wait for the rest instead of trying another way and
+      // delivering the ones that already arrived a second time.
+      if ((await blobCount(page)) - before > 0) {
+        if ((await landed(before, 9000, files.length)) >= files.length) return "chosen";
+        log(`  \x1b[33m!! only part of the set arrived through the file picker\x1b[0m`);
+        return null;
+      }
     } catch {
       // No dialog appeared — that button was something else. Close whatever
       // it opened before trying the next way, with the stop key deafened:
@@ -1430,15 +1437,42 @@ async function putFiles(page, paths, wand, label) {
     }
   }
 
+  /*
+   * A route that delivered SOME of the files is not a route to give up on.
+   *
+   * Each way in was tried in turn and the next one was started whenever the
+   * full set had not arrived yet. But an upload in flight is not a failure:
+   * paste would land the first picture, the check would run out while the
+   * second was still going, and then the drop route delivered BOTH of them
+   * again — so the composer held the brand mark twice and the product once.
+   * That is the duplicate logo, and it survived every fix aimed at the drop
+   * code because the duplicate was never made there.
+   *
+   * So a partial delivery is waited on, never repeated. Only a route that
+   * moved nothing at all hands over to the next one.
+   */
+  const got = async () => Math.max(0, (await blobCount(page)) - before);
+
   // 2 — paste it in, the way you'd paste a screenshot
   if (box) await box.click().catch(() => {});
   await deliver("paste");
   if ((await landed(before, 2200 + files.length * 900, files.length)) >= files.length) return "pasted";
+  if (await got()) {
+    // Something is on its way. Give it room rather than sending it twice.
+    if ((await landed(before, 9000, files.length)) >= files.length) return "pasted";
+    log(`  \x1b[33m!! ${await got()} of ${files.length} arrived by pasting and the rest did not follow\x1b[0m`);
+    return null;
+  }
 
   // 3 — drop, everywhere that might be listening
   await wand?.say(label, "attaching — another way…");
   await deliver("drop");
   if ((await landed(before, 2200 + files.length * 900, files.length)) >= files.length) return "dropped";
+  if (await got()) {
+    if ((await landed(before, 9000, files.length)) >= files.length) return "dropped";
+    log(`  \x1b[33m!! ${await got()} of ${files.length} arrived by dropping and the rest did not follow\x1b[0m`);
+    return null;
+  }
 
   // 4 — a real file input, if the page keeps one
   const input = page.locator(site.file).first();
