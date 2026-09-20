@@ -2591,6 +2591,30 @@ while (true) {
   // A moment offline is not a reason to quit.
   const job = await getJson(QUEUE);
 
+  /*
+   * A job with work in it but no id used to be dropped without a word.
+   *
+   * The gate below asks for `job.id` before it will run anything, and the
+   * status it reports when there is none is "a job in the queue" -- the same
+   * sentence it reports when the queue is genuinely empty. So a job posted
+   * straight to the endpoint rather than through the tool that stamps an id
+   * sat there for an hour looking exactly like nothing at all, while every
+   * Continue sent to it was answered "nothing to do".
+   *
+   * An id is only ever used as a name to remember the job by, so there is no
+   * reason to refuse work for want of one. When a job arrives without it, one
+   * is derived from the job itself: the same job gets the same id every time,
+   * which is what the done-list needs, and a different job gets a different
+   * one.
+   */
+  if (job && !job.id) {
+    const seed = JSON.stringify([job.name ?? "", job.site ?? "", job.prompts ?? [], job.parts ?? []]);
+    let h = 5381;
+    for (let i = 0; i < seed.length; i++) h = ((h * 33) ^ seed.charCodeAt(i)) >>> 0;
+    job.id = `${(job.name || "job").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${h.toString(36)}`;
+    log(`\r\x1b[K  \x1b[2mthe queued job carried no id — calling it ${job.id}\x1b[0m`);
+  }
+
   if (job?.id && done.has(job.id) && !saidDone.has(job.id)) {
     saidDone.add(job.id);
     console.log(`\r\x1b[K  \x1b[2m"${job.name || job.id}" already ran on this Mac — waiting for the next job.\x1b[0m`);
@@ -2625,8 +2649,10 @@ while (true) {
      * watching — a person at the app or Claude reading the status — should be
      * told which of those it is, because each has a different fix.
      */
-    const why = !job?.id
+    const why = !job
       ? "a job in the queue"
+      : !job.id
+        ? "a job that has no id and could not be given one"
       : done.has(job.id)
         ? `"${job.name || job.id}" already ran on this Mac — delete .done-jobs to run it again`
         : !hasWork

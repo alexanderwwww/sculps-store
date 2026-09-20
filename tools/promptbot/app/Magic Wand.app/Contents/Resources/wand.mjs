@@ -17,7 +17,7 @@
 
 /** Injected on every page load. Calling it twice is a no-op. */
 export const OVERLAY = `(() => {
-  if (window.__wand) return true;
+  if (window.__wand) { try { window.__wand.retheme(true); } catch {} return true; }
 
   const css = (el, s) => { for (const k in s) el.style[k] = s[k]; return el; };
   const root = document.documentElement;
@@ -54,17 +54,292 @@ export const OVERLAY = `(() => {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
   };
+
+  /*
+   * One glass material, used by every panel and button this overlay draws.
+   *
+   * It comes in two weights, because glass takes its look from what is behind
+   * it and the pages this runs on are not one colour: ChatGPT is charcoal,
+   * Gemini is near white. A smoked glass on a white page was a flat grey bar
+   * -- the dark base over white just made grey, the white highlights had
+   * nothing to stand against, and nothing about it read as a surface. So the
+   * page is sampled and the material picked to match: smoked over dark
+   * pages, frosted over light ones, the same construction either way.
+   *
+   * The construction, back to front, in one element:
+   *   backdrop  blur, saturate, and a small lift in contrast and brightness,
+   *             so what is behind bleeds through with more body, not less;
+   *   body      a near-neutral base -- charcoal or milk -- with no hue at all;
+   *   specular  an elliptical highlight up by the top-left corner, which is
+   *             what makes a flat rectangle read as a curved surface lit from
+   *             above-left, plus a second fainter one offset inward, the
+   *             refraction you see inside thick glass;
+   *   grazing   a diagonal fall-off from the lit corner to the dark one;
+   *   rims      inset hairlines, bright on the top and left edges where the
+   *             light lands, dark on the bottom and right where it does not;
+   *   depth     two outer shadows, one tight where it meets the page and one
+   *             wide and soft, because either alone reads as a sticker.
+   * On top of that, one sheen layer per panel: a positioned child with no
+   * pointer events that the entrance sweeps across the surface, and that
+   * costs nothing at rest.
+   *
+   * Everything is white or black at some alpha. No purple, no blue, nothing.
+   */
+  const DARK = {
+    text: "#F5F5F7",
+    ink: "#F2F2F4",                    // the running title and the meter
+    line: "rgba(255,255,255,.28)",     // the drop zone's dashed edge
+    lineHot: "rgba(255,255,255,.92)",
+    wash: "rgba(255,255,255,.10)",
+    glass: {
+      background:
+        "radial-gradient(120% 95% at 14% -12%, rgba(255,255,255,.42) 0%, rgba(255,255,255,.14) 30%, rgba(255,255,255,0) 62%)," +
+        "radial-gradient(80% 60% at 36% 18%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 70%)," +
+        "linear-gradient(155deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 46%, rgba(0,0,0,.14) 100%)," +
+        "linear-gradient(to bottom, rgba(0,0,0,0) 58%, rgba(0,0,0,.20) 100%)," +
+        "rgba(22,22,24,.54)",
+      backdropFilter: "blur(28px) saturate(190%) contrast(1.06) brightness(1.08)",
+      border: "0.5px solid",
+      borderColor: "rgba(255,255,255,.36) rgba(255,255,255,.16) rgba(255,255,255,.10) rgba(255,255,255,.30)",
+    },
+    sheen:
+      "linear-gradient(90deg, rgba(255,255,255,0) 22%, rgba(255,255,255,.20) 42%, rgba(255,255,255,.55) 50%, rgba(255,255,255,.20) 58%, rgba(255,255,255,0) 78%)",
+    rim:
+      "inset 0 1px 0 rgba(255,255,255,.58)," +
+      "inset 1px 0 0 rgba(255,255,255,.20)," +
+      "inset 0 -1px 0 rgba(0,0,0,.45)," +
+      "inset -1px 0 0 rgba(0,0,0,.22)," +
+      "inset 0 12px 28px -16px rgba(255,255,255,.22)",
+    drop:
+      "0 1px 1.5px rgba(0,0,0,.48)," +
+      "0 22px 54px -16px rgba(0,0,0,.66)",
+    halo: (up) => (up ? "0 0 34px 6px rgba(255,255,255,.16)" : "0 0 10px 0 rgba(255,255,255,.05)"),
+    bloom: "0 0 48px 14px rgba(255,255,255,.22)",
+    key: {
+      background: "linear-gradient(to bottom, #FFFFFF 0%, #F6F6F8 48%, #E8E8EC 100%)",
+      border: "0.5px solid rgba(255,255,255,.95)",
+      boxShadow:
+        "inset 0 1px 0 #FFFFFF, inset 0 -1px 0 rgba(0,0,0,.10)," +
+        "0 1px 1.5px rgba(0,0,0,.42), 0 8px 18px -8px rgba(0,0,0,.55)",
+      color: "#111113",
+    },
+    ghost: {
+      background:
+        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 60%)," +
+        "linear-gradient(to bottom, rgba(255,255,255,.14) 0%, rgba(255,255,255,.04) 60%, rgba(0,0,0,.10) 100%)",
+      border: "0.5px solid rgba(255,255,255,.24)",
+      boxShadow:
+        "inset 0 1px 0 rgba(255,255,255,.42), inset 1px 0 0 rgba(255,255,255,.10)," +
+        "inset 0 -1px 0 rgba(0,0,0,.28), 0 1px 1px rgba(0,0,0,.30)",
+      color: "#F5F5F7",
+    },
+  };
+  const LIGHT = {
+    text: "#111113",
+    ink: "#1C1C1E",
+    line: "rgba(0,0,0,.22)",
+    lineHot: "rgba(0,0,0,.70)",
+    wash: "rgba(0,0,0,.05)",
+    glass: {
+      background:
+        "radial-gradient(120% 95% at 14% -12%, rgba(255,255,255,.98) 0%, rgba(255,255,255,.50) 30%, rgba(255,255,255,0) 62%)," +
+        "radial-gradient(80% 60% at 36% 18%, rgba(255,255,255,.40) 0%, rgba(255,255,255,0) 70%)," +
+        "linear-gradient(155deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 46%, rgba(0,0,0,.06) 100%)," +
+        "linear-gradient(to bottom, rgba(0,0,0,0) 58%, rgba(0,0,0,.08) 100%)," +
+        "rgba(250,250,252,.64)",
+      backdropFilter: "blur(26px) saturate(180%) contrast(1.03) brightness(1.02)",
+      border: "0.5px solid",
+      borderColor: "rgba(255,255,255,.98) rgba(255,255,255,.60) rgba(0,0,0,.06) rgba(255,255,255,.92)",
+    },
+    sheen:
+      "linear-gradient(90deg, rgba(0,0,0,0) 22%, rgba(0,0,0,.04) 40%, rgba(255,255,255,.95) 50%, rgba(0,0,0,.04) 60%, rgba(0,0,0,0) 78%)",
+    rim:
+      "inset 0 1px 0 rgba(255,255,255,1)," +
+      "inset 1px 0 0 rgba(255,255,255,.70)," +
+      "inset 0 -1px 0 rgba(0,0,0,.10)," +
+      "inset -1px 0 0 rgba(0,0,0,.05)," +
+      "inset 0 12px 28px -16px rgba(255,255,255,.90)",
+    drop:
+      "0 0 0 0.5px rgba(0,0,0,.12)," +
+      "0 1px 1.5px rgba(0,0,0,.16)," +
+      "0 22px 54px -16px rgba(0,0,0,.30)",
+    halo: (up) => (up ? "0 0 30px 4px rgba(0,0,0,.12)" : "0 0 8px 0 rgba(0,0,0,.03)"),
+    bloom: "0 0 44px 12px rgba(0,0,0,.14)",
+    key: {
+      background: "linear-gradient(to bottom, #3C3C41 0%, #232326 48%, #151517 100%)",
+      border: "0.5px solid rgba(0,0,0,.85)",
+      boxShadow:
+        "inset 0 1px 0 rgba(255,255,255,.30), inset 0 -1px 0 rgba(0,0,0,.50)," +
+        "0 1px 1.5px rgba(0,0,0,.30), 0 8px 18px -8px rgba(0,0,0,.45)",
+      color: "#F5F5F7",
+    },
+    ghost: {
+      background:
+        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 60%)," +
+        "linear-gradient(to bottom, rgba(255,255,255,.70) 0%, rgba(255,255,255,.30) 60%, rgba(0,0,0,.03) 100%)",
+      border: "0.5px solid rgba(255,255,255,.90)",
+      boxShadow:
+        "inset 0 1px 0 #FFFFFF, inset 0 -1px 0 rgba(0,0,0,.08)," +
+        "0 0 0 0.5px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.10)",
+      color: "#111113",
+    },
+  };
+
+  let theme = "dark";
+  const P = () => (theme === "light" ? LIGHT : DARK);
+  /*
+   * The resting shadow always carries an empty halo slot between the rims
+   * and the drop, so the breathing glow and the entrance bloom animate to and
+   * from it shadow-for-shadow instead of snapping -- a box-shadow only
+   * interpolates against a list of the same length.
+   */
+  const NO_HALO = "0 0 0 0 rgba(0,0,0,0)";
+  const restShadow = () => P().rim + "," + NO_HALO + "," + P().drop;
+
+  /* Every surface that has been given the material, so a theme change can
+     redo all of them together. */
+  const SURFACES = [];
+  function applyMaterial(el, kind) {
+    if (!SURFACES.some((s) => s.el === el)) SURFACES.push({ el, kind });
+    const p = P();
+    if (kind !== "panel") {
+      css(el, kind === "key" ? p.key : p.ghost);
+      return el;
+    }
+    css(el, p.glass);
+    el.style.WebkitBackdropFilter = p.glass.backdropFilter;
+    css(el, { color: p.text, boxShadow: restShadow(), overflow: "hidden" });
+    if (!el.__sheen) {
+      // The sheen sits between the panel's own background and its content:
+      // a negative z-index inside the panel's stacking context, which the
+      // fixed position and z-index already establish.
+      el.__sheen = css(document.createElement("i"), {
+        position: "absolute", left: "0", top: "0", width: "100%", height: "100%",
+        display: "block", borderRadius: "inherit", pointerEvents: "none", zIndex: "-1",
+        opacity: "0", transform: "translateX(-130%) skewX(-20deg)",
+      });
+      el.prepend(el.__sheen);
+    }
+    el.__sheen.style.background = p.sheen;
+    return el;
+  }
+
+  /*
+   * Which weight of glass this page wants.
+   *
+   * The colour under the pill is what matters, and on a chat site that is
+   * rarely the body -- it is some container the app paints. So the stack of
+   * elements under a few points near the top of the page is walked, ours
+   * skipped, and the first one with an opaque background decides. Body and
+   * html come next, then the page's declared colour scheme, then the OS's.
+   * Failing all of that: dark, which is what these sites mostly are.
+   */
+  function pageIsLight() {
+    const lum = (str) => {
+      const m = /rgba?\\(([^)]+)\\)/.exec(str || "");
+      if (!m) return null;
+      const p = m[1].split(/[\\s,\\/]+/).filter(Boolean).map(Number);
+      if (p.length < 3 || p.slice(0, 3).some((n) => !Number.isFinite(n))) return null;
+      if (p.length >= 4 && p[3] < .5) return null;
+      const c = p.slice(0, 3).map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+      return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+    };
+    const ours = (el) => [hud, card, doneCard, cursor].some((o) => o.contains(el));
+    try {
+      const w = window.innerWidth;
+      for (const [x, y] of [[w / 2, 46], [w * .3, 46], [w * .7, 46], [w / 2, 130]]) {
+        for (const el of document.elementsFromPoint(x, y)) {
+          if (ours(el)) continue;
+          const L = lum(getComputedStyle(el).backgroundColor);
+          if (L !== null) return L > .5;
+        }
+      }
+    } catch {}
+    for (const el of [document.body, root]) {
+      if (!el) continue;
+      const L = lum(getComputedStyle(el).backgroundColor);
+      if (L !== null) return L > .5;
+    }
+    const scheme = String(getComputedStyle(root).colorScheme || "");
+    if (/dark/.test(scheme)) return false;
+    if (/light/.test(scheme)) return true;
+    try { return window.matchMedia("(prefers-color-scheme: light)").matches; } catch { return false; }
+  }
+
+  /*
+   * The liquid entrance, for any panel that appears.
+   *
+   * A bead arrives from just above, tall and narrow, drops and spreads wider
+   * and flatter than it will finish, springs back a touch too tall, and
+   * settles -- the second, smaller overshoot in the other axis is what makes
+   * it wobble like something with mass rather than snap like a spring. While
+   * it settles a sheen sweeps across the surface, and the blur clears last of
+   * all, because the shape arriving before the focus does is the whole
+   * effect; matching the two turns it into a fade.
+   *
+   * Driven by the Web Animations API rather than transitions, so the four
+   * things it animates -- transform, opacity, filter and the sheen's
+   * transform -- run on the compositor and never touch the inline styles
+   * the breathing glow writes to. Under 900ms, start to still.
+   */
+  function liquidIn(el, round) {
+    if (round) el.style.borderRadius = round;
+    for (const a of el.__anims || []) a.cancel();
+    const rest = "translateX(-50%) translateY(0) scale(1, 1)";
+    el.style.transformOrigin = "50% 0%";
+    el.style.transform = rest;
+    el.style.opacity = "1";
+    el.style.filter = "none";
+    const anims = [];
+    anims.push(el.animate([
+      { transform: "translateX(-50%) translateY(-14px) scale(.70, 1.16)", easing: "cubic-bezier(.2,.9,.3,1)", offset: 0 },
+      { transform: "translateX(-50%) translateY(2px) scale(1.055, .90)", easing: "cubic-bezier(.3,.6,.3,1)", offset: .34 },
+      { transform: "translateX(-50%) translateY(-1px) scale(.985, 1.035)", easing: "cubic-bezier(.3,.6,.3,1)", offset: .64 },
+      { transform: "translateX(-50%) translateY(0) scale(1.006, .995)", easing: "ease-out", offset: .84 },
+      { transform: rest, offset: 1 },
+    ], { duration: 860, fill: "none" }));
+    anims.push(el.animate([
+      { opacity: 0, offset: 0 },
+      { opacity: 1, offset: .2 },
+      { opacity: 1, offset: 1 },
+    ], { duration: 860, easing: "ease-out", fill: "none" }));
+    anims.push(el.animate([
+      { filter: "blur(16px) saturate(170%)", easing: "cubic-bezier(.2,.8,.2,1)", offset: 0 },
+      { filter: "blur(3px) saturate(150%)", easing: "ease-out", offset: .45 },
+      { filter: "blur(.6px) saturate(115%)", easing: "ease-out", offset: .8 },
+      { filter: "blur(0px) saturate(100%)", offset: 1 },
+    ], { duration: 880, fill: "none" }));
+    // A bloom of light in the halo slot that fades as the shape settles.
+    const p = P();
+    anims.push(el.animate([
+      { boxShadow: p.rim + "," + p.bloom + "," + p.drop, offset: 0 },
+      { boxShadow: p.rim + "," + p.bloom + "," + p.drop, offset: .3 },
+      { boxShadow: restShadow(), offset: 1 },
+    ], { duration: 820, easing: "ease-out", fill: "none" }));
+    const sheen = el.__sheen;
+    if (sheen) {
+      anims.push(sheen.animate([
+        { transform: "translateX(-130%) skewX(-20deg)", opacity: 0, offset: 0 },
+        { transform: "translateX(-70%) skewX(-20deg)", opacity: 1, offset: .22 },
+        { transform: "translateX(70%) skewX(-20deg)", opacity: 1, offset: .78 },
+        { transform: "translateX(130%) skewX(-20deg)", opacity: 0, offset: 1 },
+      ], { duration: 560, delay: 300, easing: "cubic-bezier(.3,.5,.2,1)", fill: "none" }));
+    }
+    el.__anims = anims;
+  }
   const hud = css(document.createElement("div"), {
     ...TOP_CENTRE,
-    maxWidth: "min(420px, 92vw)", padding: "7px 12px", borderRadius: "10px",
-    background: "rgba(12,12,14,.92)", color: "#F7F2E7", pointerEvents: "none",
-    font: '500 11.5px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    boxShadow: "0 8px 28px -10px rgba(0,0,0,.7)",
-    display: "flex", alignItems: "baseline", gap: "9px", whiteSpace: "nowrap",
+    maxWidth: "min(420px, 92vw)", padding: "9px 15px", borderRadius: "999px",
+    // The glass itself goes on just below, once the element exists.
+    pointerEvents: "none",
+    font: '590 11.5px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+    letterSpacing: ".005em",
+    display: "flex", alignItems: "center", gap: "10px", whiteSpace: "nowrap",
   });
+  applyMaterial(hud, "panel");
   const title = css(document.createElement("div"), {
     fontSize: "10px", letterSpacing: ".06em", textTransform: "uppercase",
-    color: "#C9A0FF", fontWeight: "700", flex: "0 0 auto",
+    color: "rgba(255,255,255,.92)", fontWeight: "700", flex: "0 0 auto",
   });
   const body = css(document.createElement("div"), {
     opacity: ".9", overflow: "hidden", textOverflow: "ellipsis", minWidth: "0",
@@ -86,14 +361,35 @@ export const OVERLAY = `(() => {
   const bar = css(document.createElement("div"), {
     display: "none", gap: "6px", pointerEvents: "auto", flex: "0 0 auto",
   });
+  /*
+   * Buttons are the same glass, pill-shaped, and they press.
+   *
+   * The primary is a key: solid light -- white falling to a pale grey with a
+   * bright lip along the top -- on the smoked glass, and its negative, a
+   * near-black key, on the frosted. The other is cut from the panel's own
+   * material. Both sink on press: a touch smaller and a touch darker, on
+   * transform and filter only, so the press costs the page nothing.
+   */
+  function pressable(b) {
+    css(b, {
+      transition: "transform .14s cubic-bezier(.2,.7,.2,1), filter .14s ease",
+      transformOrigin: "50% 50%",
+    });
+    const down = () => css(b, { transform: "scale(.96)", filter: "brightness(.84)" });
+    const up = () => css(b, { transform: "scale(1)", filter: "none" });
+    b.addEventListener("mousedown", down);
+    b.addEventListener("touchstart", down, { passive: true });
+    for (const t of ["mouseup", "mouseleave", "touchend", "touchcancel", "blur"]) b.addEventListener(t, up);
+    return b;
+  }
   const smallBtn = (text, primary) => {
     const b = css(document.createElement("button"), {
-      padding: "4px 9px", borderRadius: "7px", border: "0",
+      padding: "5px 12px", borderRadius: "999px",
       cursor: "pointer", fontSize: "11px", fontWeight: "700",
       fontFamily: "inherit", lineHeight: "1.3",
-      background: primary ? "#C9A0FF" : "rgba(247,242,231,.12)",
-      color: primary ? "#140A02" : "#F7F2E7",
     });
+    applyMaterial(b, primary ? "key" : "ghost");
+    pressable(b);
     b.textContent = text;
     b.setAttribute("data-wand", "");
     return b;
@@ -117,8 +413,112 @@ export const OVERLAY = `(() => {
   bStop.style.display = "none";
   bar.append(bPause, bMore);
 
-  hud.append(title, body, hint, bar);
+  /*
+   * A small meter, so the panel is alive rather than merely present.
+   *
+   * Five thin bars that rise and fall while the app is working and settle to
+   * a flat resting line when it is not. It is not a progress bar and it is
+   * not decoration for its own sake: across a room it answers the only
+   * question anybody has of this panel — is it still going, or has it stopped
+   * and not said so.
+   *
+   * Driven by one timer and CSS transforms, nothing else. No animation
+   * frames, no layout, so a page doing real work underneath is not slowed by
+   * a thing watching it.
+   */
+  const meter = css(document.createElement("div"), {
+    display: "flex", alignItems: "flex-end", gap: "2px",
+    height: "13px", flex: "0 0 auto", pointerEvents: "none",
+  });
+  const bars = [];
+  for (let i = 0; i < 5; i++) {
+    const b = css(document.createElement("i"), {
+      display: "block", width: "2.5px", height: "13px", borderRadius: "2px",
+      transformOrigin: "bottom",
+      transform: "scaleY(.18)",
+      // Lit from the same direction as the pill, so it reads as part of the
+      // same moulded surface rather than five stickers laid on top.
+      background: "linear-gradient(to top, rgba(255,255,255,.45), rgba(255,255,255,.95))",
+      boxShadow: "0 0 6px rgba(255,255,255,.34)",
+      transition: "transform .22s cubic-bezier(.2,.9,.25,1), opacity .3s ease",
+      opacity: ".5",
+    });
+    bars.push(b);
+    meter.appendChild(b);
+  }
+  let meterTimer = null;
+  const meterStop = () => { if (meterTimer) { clearInterval(meterTimer); meterTimer = null; } };
+  function meterMode(mode) {
+    meterStop();
+    if (mode === "run") {
+      let t = 0;
+      meterTimer = setInterval(() => {
+        t += 1;
+        bars.forEach((b, i) => {
+          // Offset sines rather than random numbers: a random meter twitches,
+          // this one travels, which is what reads as something running.
+          const v = 0.22 + 0.78 * Math.abs(Math.sin((t * 0.45) + i * 0.7));
+          b.style.transform = \`scaleY(\${v.toFixed(3)})\`;
+          b.style.opacity = "1";
+        });
+      }, 160);
+      return;
+    }
+    const flat = mode === "idle" ? 0.16 : 0.1;
+    const dim = mode === "idle" ? ".45" : ".28";
+    bars.forEach((b) => { b.style.transform = \`scaleY(\${flat})\`; b.style.opacity = dim; });
+  }
+  function meterTint(colour) {
+    bars.forEach((b) => {
+      b.style.background = \`linear-gradient(to top, \${colour}88, \${colour})\`;
+      b.style.boxShadow = \`0 0 6px \${colour}73\`;
+    });
+  }
+  meterMode("idle");
+
+  hud.append(meter, title, body, hint, bar);
   root.appendChild(hud);
+
+  /*
+   * A slow breath of light around the rim while something is happening.
+   *
+   * The meter says it is working; this says it from the corner of your eye,
+   * without having to read anything. One interval on box-shadow, which the
+   * compositor handles, stopped outright when the panel is not running so an
+   * idle app costs nothing.
+   *
+   * The breath is written into the halo slot of the full resting shadow --
+   * rims, halo, drop -- rather than replacing it, so the glass keeps its
+   * edges while it glows. Plain light, no hue: on the smoked glass a soft
+   * white bloom, on the frosted a soft dark one, since white on white is
+   * nothing. About two and a half seconds a breath, eased both ways.
+   */
+  let glowTimer = null;
+  function glow(on) {
+    if (glowTimer) clearInterval(glowTimer);
+    glowTimer = null;
+    if (!on) {
+      hud.style.transition = "box-shadow .9s ease";
+      hud.style.boxShadow = restShadow();
+      return;
+    }
+    let up = true;
+    const breathe = () => {
+      const p = P();
+      hud.style.transition = "box-shadow 1.2s cubic-bezier(.45,.05,.55,.95)";
+      hud.style.boxShadow = p.rim + "," + p.halo(up) + "," + p.drop;
+      up = !up;
+    };
+    breathe();
+    glowTimer = setInterval(breathe, 1200);
+  }
+
+  function assemble() {
+    // The pill uses the same entrance as the cards, so the whole overlay
+    // behaves like one piece of software rather than three.
+    liquidIn(hud, "999px");
+  }
+  assemble();
 
   const state = { stopped: false, paused: false, running: false, deaf: 0, wantsCard: false, epoch: Date.now() };
 
@@ -151,6 +551,9 @@ export const OVERLAY = `(() => {
     hint.textContent = "";
     css(cursor, { opacity: ".25" });
     css(bar, { display: "flex" });
+    meterTint("#FFC24D");
+    meterMode("idle");
+    glow(null);
     bPause.textContent = "Continue";
   }
 
@@ -167,10 +570,13 @@ export const OVERLAY = `(() => {
      */
     state.stopped = false;
     state.paused = false;
-    css(title, { color: "#C9A0FF" });
+    css(title, { color: P().ink });
     title.textContent = "Running";
     body.textContent = "Carrying on where it stopped.";
     css(cursor, { opacity: "1" });
+    meterTint(P().ink);
+    meterMode("run");
+    glow(true);
     bPause.textContent = "Pause";
   }
 
@@ -178,6 +584,9 @@ export const OVERLAY = `(() => {
     state.stopped = true;
     state.paused = false;
     css(title, { color: "#FF6B5A" });
+    meterTint("#FF6B5A");
+    meterMode("off");
+    glow(null);
     title.textContent = "Stopped";
     body.textContent = "Nothing more will be typed. Everything saved is on your Desktop.";
     hint.textContent = "";
@@ -407,10 +816,8 @@ export const OVERLAY = `(() => {
   const card = css(document.createElement("div"), {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
-    width: "min(360px, 92vw)", padding: "11px 13px", borderRadius: "12px",
-    background: "rgba(14,14,17,.97)", color: "#F7F2E7",
-    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)",
+    width: "min(360px, 92vw)", padding: "14px 16px", borderRadius: "20px",
+    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
     display: "none",
     /* Transparent to the mouse.
      *
@@ -423,6 +830,7 @@ export const OVERLAY = `(() => {
      * back on for themselves. */
     pointerEvents: "none",
   });
+  applyMaterial(card, "panel");
   const cName = css(document.createElement("div"), {
     fontSize: "15px", fontWeight: "700", letterSpacing: "-.01em", marginBottom: "3px",
   });
@@ -442,12 +850,18 @@ export const OVERLAY = `(() => {
   const row = css(document.createElement("div"), { display: "flex", gap: "8px", pointerEvents: "auto" });
   const mkBtn = (text, primary) => {
     const b = css(document.createElement("button"), {
-      flex: "1", padding: "10px 12px", borderRadius: "10px", border: "0",
-      cursor: "pointer", fontSize: "13.5px", fontWeight: "600",
-      font: 'inherit', fontFamily: "inherit",
-      background: primary ? "#C9A0FF" : "rgba(247,242,231,.10)",
-      color: primary ? "#140A02" : "#F7F2E7",
+      flex: "1", padding: "11px 14px", borderRadius: "999px",
+      cursor: "pointer",
+      /*
+       * The order matters here. The font shorthand resets size and weight,
+       * so setting it after them -- which this did -- silently threw away the
+       * 13.5px at weight 600 declared on the line above. It goes first now.
+       */
+      font: '600 13.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
     });
+    // Same keys as the pill's, at card size: see pressable and smallBtn.
+    applyMaterial(b, primary ? "key" : "ghost");
+    pressable(b);
     b.textContent = text;
     return b;
   };
@@ -508,13 +922,13 @@ export const OVERLAY = `(() => {
   ["dragenter", "dragover"].forEach((t) =>
     drop.addEventListener(t, (e) => {
       e.preventDefault(); e.stopPropagation();
-      css(drop, { borderColor: "#C9A0FF", background: "rgba(201,160,255,.10)" });
+      css(drop, { borderColor: P().lineHot, background: P().wash });
     }),
   );
   ["dragleave", "drop"].forEach((t) =>
     drop.addEventListener(t, (e) => {
       e.preventDefault(); e.stopPropagation();
-      css(drop, { borderColor: "rgba(247,242,231,.28)", background: "transparent" });
+      css(drop, { borderColor: P().line, background: "transparent" });
       if (t === "drop") take(e.dataTransfer?.files ?? []);
     }),
   );
@@ -534,14 +948,14 @@ export const OVERLAY = `(() => {
   const doneCard = css(document.createElement("div"), {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
-    width: "min(360px, 92vw)", padding: "11px 13px", borderRadius: "12px",
-    background: "rgba(14,14,17,.97)", color: "#F7F2E7",
-    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)", display: "none",
+    width: "min(360px, 92vw)", padding: "14px 16px", borderRadius: "20px",
+    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+    display: "none",
     // Same reason as the card above: it stays on screen until somebody closes
     // it, and until then it was eating the clicks meant for the page.
     pointerEvents: "none",
   });
+  applyMaterial(doneCard, "panel");
   const dName = css(document.createElement("div"), { fontSize: "15px", fontWeight: "700", marginBottom: "3px" });
   const dSub = css(document.createElement("div"), { opacity: ".6", fontSize: "12px", marginBottom: "12px" });
   const dRow = css(document.createElement("div"), { display: "flex", gap: "8px", pointerEvents: "auto" });
@@ -569,8 +983,38 @@ export const OVERLAY = `(() => {
     state.wantsCard = true;
   });
 
+  /*
+   * Pick the glass for this page, and pick again when the page may have
+   * changed -- a chat site navigates without reloading, and a light page can
+   * become a dark one under a pill that was cut for the other. Throttled,
+   * because the runner calls in often and one look a second and a half is
+   * plenty. The amber and red of a paused or stopped title are states, not
+   * decoration, and are left alone.
+   */
+  let rethemedAt = 0;
+  function retheme(force) {
+    const now = Date.now();
+    if (!force && now - rethemedAt < 1500) return;
+    rethemedAt = now;
+    let light = false;
+    try { light = pageIsLight(); } catch { light = false; }
+    const next = light ? "light" : "dark";
+    if (!force && next === theme) return;
+    theme = next;
+    for (const s of SURFACES) applyMaterial(s.el, s.kind);
+    if (!state.paused && !state.stopped) {
+      css(title, { color: P().ink });
+      meterTint(P().ink);
+    }
+    css(drop, { borderColor: P().line });
+    if (glowTimer) glow(true);
+  }
+  retheme(true);
+
   window.__wand = {
     stopped: () => state.stopped,
+    /** Look at the page again and re-cut the glass for it if it changed. */
+    retheme: (force) => retheme(force),
     paused: () => state.paused,
     /** Which mount this is. A new number means the page reloaded under us. */
     epoch: () => state.epoch,
@@ -601,7 +1045,7 @@ export const OVERLAY = `(() => {
         // Un-pause without rewriting the caption we just restored.
         state.stopped = false;
         state.paused = false;
-        css(title, { color: "#C9A0FF" });
+        css(title, { color: P().ink });
         bPause.textContent = "Pause";
         css(bar, { display: "flex" });
       }
@@ -634,6 +1078,20 @@ export const OVERLAY = `(() => {
       // The finished panel is about the last job, not this one.
       doneCard.style.display = "none";
       css(bar, { display: "flex" });
+      /*
+       * Start the meter here, which is the one place it was missing.
+       *
+       * It was only ever started by resume(), so on an ordinary run the bars
+       * sat flat at their resting height from beginning to end — the panel
+       * looked exactly as it does when nothing is happening, and the one
+       * question it exists to answer went unanswered unless you happened to
+       * press Pause and then Continue.
+       */
+      retheme();
+      css(title, { color: P().ink });
+      meterTint(P().ink);
+      meterMode("run");
+      glow(true);
       bPause.textContent = "Pause";
     },
     /**
@@ -655,12 +1113,15 @@ export const OVERLAY = `(() => {
       if (!card.isConnected) root.appendChild(card);
       if (!hud.isConnected) root.appendChild(hud);
       if (!cursor.isConnected) root.appendChild(cursor);
+      retheme();
       cName.textContent = name;
       cSub.textContent = sub;
       state.files = [];
       state.answer = null;
       showThumbs();
       card.style.display = "block";
+      // Pours in, like the pill does. It used to simply be there.
+      liquidIn(card, "20px");
       return true;
     },
     /** What was pressed on the card, once, or null while it is still open. */
@@ -679,10 +1140,12 @@ export const OVERLAY = `(() => {
     /** Show what a finished job produced, with a way to go and see it. */
     done(name, sub) {
       if (!doneCard.isConnected) root.appendChild(doneCard);
+      retheme();
       dName.textContent = name;
       dSub.textContent = sub;
       state.open = false;
       doneCard.style.display = "block";
+      liquidIn(doneCard, "20px");
     },
     /** True once Open the folder has been clicked. */
     wantsFolder() { const v = state.open; state.open = false; return v; },
@@ -702,15 +1165,63 @@ export const OVERLAY = `(() => {
         box.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt }));
         return true;
       }
-      const targets = [];
-      for (let el = box; el && targets.length < 8; el = el.parentElement) targets.push(el);
-      targets.push(document.body, document.documentElement);
-      for (const t of targets) {
-        for (const type of ["dragenter", "dragover", "drop"]) {
+      /*
+       * One drop, on the first thing that accepts it, and always let go
+       * afterwards.
+       *
+       * This fired dragenter, dragover and drop at the composer and nine of
+       * its ancestors in turn, and never sent dragleave or dragend at all.
+       * Two things came of that. The site's own "drop a file here" curtain
+       * opens on dragenter and closes on dragleave, so it was left hanging
+       * over the entire page — and every click after that landed on the
+       * curtain instead of the button underneath, which is a thirty second
+       * timeout and a prompt thrown away. And because the drop was repeated
+       * down the whole chain, a site listening on more than one of those
+       * elements took the same files several times over: ten thumbnails in
+       * the composer from one pair of pictures.
+       *
+       * So: try the targets one at a time, stop at the first whose drop is
+       * accepted, and release the drag on the way out however it went.
+       */
+      const release = (t) => {
+        for (const type of ["dragleave", "dragend"]) {
           t.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
         }
-      }
-      return true;
+      };
+      const dropOn = (t) => {
+        t.dispatchEvent(new DragEvent("dragenter", { bubbles: true, cancelable: true, dataTransfer: dt }));
+        t.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: dt }));
+        const ev = new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt });
+        t.dispatchEvent(ev);
+        release(t);
+        // A handler that takes the files calls preventDefault on the drop.
+        // It is the only signal available, and not every handler bothers.
+        return ev.defaultPrevented;
+      };
+
+      // The events bubble, so one drop on the message box is already seen by
+      // every ancestor between it and the document. Walking those ancestors
+      // and dropping on each in turn -- which is what this did -- hands the
+      // same files to the same listener once per level: two pictures became
+      // twenty. One drop, where a person would make it.
+      let handled = dropOn(box);
+      // Only if nothing anywhere claimed them, try the document once. A page
+      // that listens on window rather than on the composer needs this, and it
+      // cannot double-deliver because the first drop was not taken.
+      if (!handled) handled = dropOn(document.documentElement);
+      // Nothing is being dragged any more, whatever happened above. The
+      // site's "drop a file here" curtain listens here for the end of it.
+      release(document.documentElement);
+      release(document.body);
+      // The files are deliberately KEPT. Pictures dropped on the card are
+      // meant to be the reference "from this prompt on", so a run that uses
+      // them for one prompt and then forgets them would be the bug, not the
+      // fix. Re-delivery is prevented by dropping once rather than once per
+      // ancestor, and by the runner's own record of what a chat already holds.
+      // Honestly: whether anybody took them. This used to return handled-or-
+      // true, which is true always, so a delivery into a page with no
+      // listener was reported as a success and the caller had no way to know.
+      return handled;
     },
     /** Ignore Escape for a moment, while the runner sends one on purpose. */
     deafen(ms) { state.deaf = Date.now() + (ms || 1500); },
@@ -740,6 +1251,7 @@ export const OVERLAY = `(() => {
       // line arriving late from the runner must not talk over it.
       if (state.stopped || state.paused) return;
       if (!hud.isConnected) root.appendChild(hud);
+      retheme();
       title.textContent = t;
       body.textContent = b;
     },
@@ -809,7 +1321,10 @@ export async function attachWand(page) {
       const y = box.y + Math.min(box.height / 2, 40);
       await safe(() => page.evaluate(([a, b, c]) => window.__wand?.to(a, b, c), [x, y, act]));
       // Long enough that the travel reads as movement rather than a jump.
-      await page.waitForTimeout(act ? 540 : 260);
+      // Wrapped like everything else here: on a page that is closing or
+      // navigating this rejects, and point() was the one method in this
+      // object whose page work could throw out into the runner.
+      await safe(() => page.waitForTimeout(act ? 540 : 260));
     },
     /** Show the card and wait. Null when the overlay isn't there to show it. */
     ask: (name, sub) => safe(() => page.evaluate(([a, b]) => window.__wand?.ask(a, b) ?? null, [name, sub]), null),

@@ -21,6 +21,9 @@
 import { chromium } from "playwright";
 import { attachWand } from "./wand.mjs";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { basename, extname } from "node:path";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -38,6 +41,19 @@ const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.de
  * a second and a half.
  */
 const POLL_MS = 1200;
+/**
+ * The smallest thing that can be one of our pictures.
+ *
+ * A generation from either site is megabytes. Everything else a chat page
+ * holds — logos, avatars, sidebar artwork, promotional tiles — measured
+ * nineteen to thirty-eight kilobytes when they were being filed as Halloween
+ * panels, so this sits well clear of both.
+ *
+ * It has to be enforced everywhere a picture can enter. The network capture
+ * had a floor and the save path had its own of two kilobytes, so a stray that
+ * the capture rejected was quietly downloaded instead and saved anyway.
+ */
+const MIN_PICTURE = 150_000;
 /**
  * Orders from Claude, separate from the queue.
  *
@@ -155,7 +171,7 @@ function report(state, extra = {}) {
  * Fire and forget, with a deadline: the run is not held up by an upload, and
  * a failed one costs nothing because the picture is on the disk either way.
  */
-function sendShot(dir, name, bytes) {
+function sendShot(dir, name, bytes, kind = "png") {
   // Same reason as report(): a test's fake pictures do not belong in the
   // shop's shot store, where Claude reads them back as real work.
   if (!WAND) return;
@@ -164,7 +180,9 @@ function sendShot(dir, name, bytes) {
   const timer = setTimeout(() => stop.abort(), 30000);
   fetch(`${WAND}/shot?job=${encodeURIComponent(job)}&name=${encodeURIComponent(name)}`, {
     method: "POST",
-    headers: { "content-type": "image/png" },
+    // The real type, not always PNG: a JPEG served as image/png is a file
+    // the shop then has to guess about.
+    headers: { "content-type": `image/${kind === "jpg" ? "jpeg" : kind}` },
     body: bytes,
     signal: stop.signal,
   }).catch(() => {}).finally(() => clearTimeout(timer));
@@ -237,7 +255,19 @@ async function obey() {
   // Where to be is the runner's business; the page only knows its own buttons.
   let did = false;
   try {
-    if (cmd === "chatgpt" || cmd === "gemini") did = await switchSite(cmd);
+    if (cmd === "chatgpt" || cmd === "gemini") {
+      did = await switchSite(cmd);
+      // An order names the site on purpose, usually because the other one is
+      // rate limited. That choice outranks whatever "site" the queued jobs
+      // happen to carry, which otherwise switched straight back on the next
+      // job and looked like the app changing sites by itself.
+      if (did) {
+        siteHeld = cmd;
+        // To disk, so a restart or an update does not undo it.
+        writeFile(SITE_FILE, cmd).catch(() => {});
+        log(`  \x1b[2mstaying on ${site.name} until you say otherwise\x1b[0m`);
+      }
+    }
     else if (cmd.startsWith("goto ")) did = await goTo(cmd.slice(5).trim());
     // No navGen bump: unpin moves nothing. Counting it as a move abandoned
     // the picture that was already being drawn in the chat we are still in.
@@ -252,15 +282,13 @@ async function obey() {
      * the attached flag are both cleared.
      */
     else if (cmd === "newchat") {
-      const nw = await find(page, site.fresh, 4000);
-      if (nw) {
-        await wand.point(nw);
-        await nw.click({ timeout: 4000 }).catch(() => {});
-        await wait(1600);
+      if (await freshChat("couldn't open a new chat")) {
         watchImages(page);
         wand = await attachWand(page);
         pinnedChat = null;
         attachedInChat = false;
+        // A new conversation holds no pictures, so nothing is a duplicate in it.
+        chatRefs = new Set();
         navGen++;
         did = true;
       }
@@ -273,7 +301,36 @@ async function obey() {
     // words from the next shot on.
     else if (cmd === "requeue") { reload = true; did = true; }
     else if (cmd === "update") { did = await selfUpdate(true); }
-    else did = await wand.order(cmd);
+    else {
+      did = await wand.order(cmd);
+      /*
+       * An order from Claude is obeyed whether or not the page can hear it.
+       *
+       * Pause, Continue and Stop live in the overlay, and the runner reads
+       * the overlay to know which state it is in. When a navigation throws
+       * the overlay out, order() reaches nothing -- and the held state keeps
+       * whatever it last saw. A run paused at that moment stayed paused for
+       * good: every Continue was delivered to a page that no longer had an
+       * overlay on it, the runner went on believing it was paused, and the
+       * app sat there unreachable with its own buttons gone too.
+       *
+       * So the three that decide whether work happens are applied to the
+       * runner's own state as well, after one attempt to put the overlay
+       * back. The page is where they are SHOWN; it is not where they are
+       * decided.
+       */
+      if (!did && (cmd === "continue" || cmd === "pause" || cmd === "stop")) {
+        await wand.reattach().catch(() => {});
+        did = await wand.order(cmd);
+        if (!did) {
+          if (cmd === "continue") { held.paused = false; held.stopped = false; }
+          if (cmd === "pause") held.paused = true;
+          if (cmd === "stop") { held.stopped = true; held.paused = false; }
+          did = true;
+          log(`  \x1b[33m!! the panel could not be reached — ${cmd} applied anyway\x1b[0m`);
+        }
+      }
+    }
   } catch (e) {
     // Chrome going away in the middle of a goto is the usual one. The order
     // is spent either way; the job it interrupted is not.
@@ -296,6 +353,32 @@ async function obey() {
  * its whole length rather than for its first prompt.
  */
 let pinnedChat = null;
+/** A site named by an order, which a job's own "site" is not allowed to undo. */
+let siteHeld = null;
+/**
+ * The reference pictures this conversation already holds, by their contents.
+ *
+ * Parts of a job share pictures — every product's part carries the same brand
+ * mark — and they were re-uploaded for each one, so a five product run put the
+ * same file up five times. That is five uploads of quota, five more thumbnails
+ * in the composer to scroll past, and five more chances to trip the site's
+ * limit on how many files one message may carry.
+ *
+ * Keyed on the bytes rather than the path, because each part downloads its
+ * copy into its own folder: the same picture arrives under five different
+ * names. Emptied whenever the conversation changes, since a new chat holds
+ * nothing.
+ */
+let chatRefs = new Set();
+function refKey(path) {
+  try {
+    return createHash("sha1").update(readFileSync(path)).digest("hex");
+  } catch {
+    // Unreadable means "cannot prove it is a duplicate", and the safe answer
+    // to that is to attach it.
+    return `unreadable:${path}:${Math.random()}`;
+  }
+}
 /**
  * Bumped by anything that moves the app somewhere else on purpose — a site
  * switch, a goto, an unpin. A prompt that was waiting for its pictures when
@@ -403,8 +486,19 @@ function watchImages(target) {
       const type = res.headers()["content-type"] ?? "";
       if (!type.startsWith("image/")) return;
       const body = await res.body().catch(() => null);
-      // Thumbnails and icons are not generations.
-      if (!body || body.length < 20_000) return;
+      /*
+       * Thumbnails and icons are not generations — and neither is most of
+       * what a chat page loads.
+       *
+       * The floor was twenty kilobytes, which let through every logo, avatar,
+       * sidebar preview and stray photograph the page happened to fetch. On
+       * ChatGPT those arrived in the middle of a run and were saved as the
+       * second capture of a prompt: a run of ours came back with an agency
+       * logo and a photograph of somebody's office filed as Halloween
+       * pictures. A real generation from either site is hundreds of kilobytes
+       * at least, so the floor is where it should always have been.
+       */
+      if (!body || body.length < MIN_PICTURE) return;
       CAPTURED.set(res.url(), body);
       capturedBytes += body.length;
       // Bounded by weight as well as by count: two hundred four-megabyte
@@ -426,8 +520,34 @@ const SITES = {
     name: "Gemini",
     url: "https://gemini.google.com/app",
     ask: ['div.ql-editor[contenteditable="true"]', 'rich-textarea div[contenteditable="true"]', "textarea"],
+    /** The box the prompt and its attachments live in, and nothing above it. */
+    composer: ["input-area-v2", ".input-area-container", "input-container", "form"],
+    /** Anything that is part of the conversation rather than the composer. */
+    thread: ["model-response", ".response-container", "user-query", ".conversation-container"],
     send: ['button[aria-label*="Send" i]', 'button[aria-label*="Submit" i]', "button.send-button"],
-    fresh: ['button[aria-label*="New chat" i]', 'a[aria-label*="New chat" i]'],
+    /*
+     * Starting a fresh conversation.
+     *
+     * The aria-label was the whole list, and when Gemini renamed that control
+     * the order came back "nothing to do" — quietly, while every prompt in a
+     * newChat:"each" job kept landing in one long conversation. Gemini then
+     * answers from what it drew before instead of from the words it was just
+     * given: a rewritten prompt comes back as the old picture with the old
+     * mistakes on it, which reads as the rewrite being ignored.
+     *
+     * So: the test id first, then the side-nav button it lives in, then the
+     * label in either English or the user's own language, and the home link
+     * last — that one always opens a new conversation even if it is slower.
+     */
+    fresh: [
+      'button[data-test-id="new-chat-button"]',
+      '[data-test-id="new-chat-button"]',
+      'side-nav-action-button[data-test-id="new-chat-button"] button',
+      'button[aria-label*="New chat" i]',
+      'a[aria-label*="New chat" i]',
+      'button[aria-label*="Νέα συνομιλία" i]',
+      'a[href="/app"]',
+    ],
     file: ['input[type="file"]:not([data-wand])'],
     /** The paperclip. Gemini only puts a file input in the page once this is open. */
     attach: ['button[aria-label*="Open upload" i]', 'button[aria-label*="upload" i]', 'button[aria-label*="Add files" i]', 'uploader-button button', 'button.upload-card-button'],
@@ -464,6 +584,8 @@ const SITES = {
     name: "ChatGPT",
     url: "https://chatgpt.com/",
     ask: ['div#prompt-textarea[contenteditable="true"]', "textarea#prompt-textarea", "textarea"],
+    composer: ['form[data-type="unified-composer"]', "form"],
+    thread: ['[data-message-author-role]', "article"],
     send: ['button[data-testid="send-button"]', 'button[data-testid="composer-submit-button"]', 'button[aria-label*="Send" i]'],
     // The button first, the logo link only as a fallback: clicking the logo
     // is a full page load, which throws the overlay out and costs a second.
@@ -474,6 +596,33 @@ const SITES = {
     results: ['[data-message-author-role="assistant"] img', "img"],
     /** Our own turn — never a result. */
     mine: ['[data-message-author-role="user"]'],
+    /**
+     * Things that sit over the page and swallow every click.
+     *
+     * The upload limit banner and the "drop a file here" curtain both do it,
+     * and while either is up the app is not being refused by the site — it
+     * simply cannot reach anything. Naming them means they can be cleared
+     * rather than waited out.
+     */
+    /*
+     * Only things that genuinely cover the page.
+     *
+     * [role="alert"] was in this list and it should never have been: the site
+     * keeps polite, harmless alert nodes around, so the app decided the page
+     * was blocked on every single prompt, failed to "clear" something that
+     * was not in the way, and opened a clean chat each time — which is the
+     * new chat per picture that this whole app exists to avoid.
+     *
+     * Named states only, and even then the decision below is made by trying
+     * the composer rather than by trusting this list.
+     */
+    blocked: ['text=Unable to upload', 'text=uploads at a time', 'text=Drop any file here'],
+    dismiss: [
+      '[role="alert"] button',
+      'button[aria-label*="Dismiss" i]',
+      'button[aria-label*="Close" i]',
+      'button:has(svg[aria-label*="close" i])',
+    ],
     /** Still drawing. */
     busy: ['button[data-testid="stop-button"]', 'button[aria-label*="Stop" i]'],
     // The plus opens a menu; the first item is the one that takes a file.
@@ -556,7 +705,42 @@ opt.wait = Number(opt.wait);
  * it says so and leaves the job for later rather than typing into a login
  * page.
  */
-let site = SITES[opt.site] ?? SITES.gemini;
+/**
+ * The site to work on, remembered across restarts.
+ *
+ * An order naming a site was held in memory only, so every update and every
+ * restart forgot it and fell back to the built-in default. The owner has no
+ * Gemini quota left; the app kept reopening Gemini anyway, once per restart,
+ * and each time it was a run wasted and a thing to notice and correct by
+ * hand. A preference stated out loud should outlive the process that heard
+ * it.
+ */
+/*
+ * Beside this file, not beside whatever folder the app happened to start in.
+ *
+ * This was the bare name ".site", which resolves against the working
+ * directory -- and that is not the same place twice. Launched from Finder a
+ * Mac app gets "/" or the bundle; launched from a terminal it gets wherever
+ * you were standing. So the choice was written to one place and looked for in
+ * another, and every restart forgot it and opened the default site again.
+ *
+ * The runtime folder holds this very file, so deriving the path from
+ * import.meta.url puts the note next to the code that reads it, wherever that
+ * turns out to be.
+ */
+const SITE_FILE = fileURLToPath(new URL(".site", import.meta.url));
+let siteRemembered = null;
+try {
+  const saved = readFileSync(SITE_FILE, "utf8").trim();
+  if (SITES[saved]) siteRemembered = saved;
+} catch {
+  /* nothing remembered yet, which is the normal first run */
+}
+if (siteRemembered) console.log(`  \x1b[2mopening ${SITES[siteRemembered].name}, as last ordered\x1b[0m`);
+let site = SITES[opt.site] ?? (siteRemembered ? SITES[siteRemembered] : null) ?? SITES.gemini;
+// A remembered site is a held site: a job's own "site" must not undo a choice
+// the owner made out loud, whether they made it a minute ago or last week.
+if (siteRemembered && !opt.site) siteHeld = siteRemembered;
 
 const run = promisify(execFile);
 
@@ -687,10 +871,29 @@ let page = null;
  * get opened.
  */
 const host = new URL(site.url).host;
-for (const open of context.pages()) {
-  try { if (new URL(open.url()).host === host) { page = open; break; } } catch { /* about:blank */ }
-}
-if (page) {
+/*
+ * The conversation this app was in when it last stopped, remembered on disk
+ * beside the site choice. An update or a crash used to lose the pin, and the
+ * run then carried on in whichever tab came first -- on the front page, that
+ * is a new chat with nothing in the log to say so.
+ */
+const CHAT_FILE = fileURLToPath(new URL(".chat", import.meta.url));
+let chatRemembered = null;
+try { chatRemembered = readFileSync(CHAT_FILE, "utf8").trim() || null; } catch { /* first run */ }
+const tabsHere = context.pages().filter((pg) => { try { return new URL(pg.url()).host === host; } catch { return false; } });
+// The tab already on the remembered conversation first; otherwise the LAST
+// tab that is inside a conversation, which is how ensurePage() chooses too --
+// taking the first one here and the last one there is how a run changed
+// chats across a restart without anybody asking.
+page =
+  (chatRemembered && tabsHere.find((pg) => chatKey(pg.url()) === chatKey(chatRemembered))) ||
+  [...tabsHere].reverse().find((pg) => !isFront(pg.url())) ||
+  tabsHere[tabsHere.length - 1] ||
+  null;
+if (page && chatRemembered && chatKey(page.url()) === chatKey(chatRemembered)) {
+  pinnedChat = page.url();
+  console.log(`\n\x1b[2mback in the ${site.name} chat from last time\x1b[0m`);
+} else if (page) {
   console.log(`\n\x1b[2mpicking up the ${site.name} tab you already have open\x1b[0m`);
   await page.bringToFront().catch(() => {});
 } else {
@@ -711,6 +914,42 @@ if (!(await find(page, site.ask, 20000))) {
 
 watchImages(page);
 let wand = await attachWand(page);
+
+/*
+ * A new conversation, guaranteed.
+ *
+ * Clicking the site's own New chat control is the good path — it is instant
+ * and it keeps the tab. But that control gets renamed, and when the selector
+ * stopped matching the failure was silent: a job asking for a fresh chat per
+ * prompt quietly ran every prompt in one long conversation, where the model
+ * answers from the picture it drew last rather than from the words it was
+ * just handed. A rewritten prompt then comes back as the old picture with the
+ * old mistakes still on it, and nothing anywhere says why.
+ *
+ * So when the button cannot be found we go to the site's own address instead.
+ * It costs a page load and it always works. Returns false only when even that
+ * failed, and then it says so out loud rather than reporting nothing to do.
+ */
+async function freshChat(why = "couldn't start a new chat") {
+  const nw = await find(page, site.fresh, 4000);
+  if (nw) {
+    await wand.point(nw);
+    await nw.click({ timeout: 4000 }).catch(() => {});
+    await wait(1600);
+    await wand.reattach().catch(() => {});
+    return true;
+  }
+  try {
+    await page.goto(site.url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await wait(2200);
+    await wand.reattach().catch(() => {});
+    log(`\r\x1b[K  \x1b[2mnew chat by reloading ${site.name}\x1b[0m`);
+    return true;
+  } catch (e) {
+    log(`\r\x1b[K  \x1b[31m!! ${why}: ${String(e?.message ?? e).split("\n")[0]}\x1b[0m`);
+    return false;
+  }
+}
 await mkdir(opt.out, { recursive: true });
 
 /**
@@ -746,7 +985,7 @@ function isFront(u) {
   return !k || k === chatKey(site.url);
 }
 
-async function ensurePage() {
+async function ensurePage({ create = true } = {}) {
   const host = new URL(site.url).host;
   const ok = (pg) => {
     if (!pg || pg.isClosed()) return false;
@@ -766,8 +1005,10 @@ async function ensurePage() {
       page = onChat[onChat.length - 1];
       console.log(`\r\x1b[K  \x1b[2mback on the chat this job belongs to\x1b[0m`);
     } else {
+      if (!create) return false;
       console.log(`\r\x1b[K  \x1b[2mreopening the chat this job belongs to\x1b[0m`);
-      if (!ok(page)) page = await context.newPage().catch(() => null);
+      let opened = null;
+      if (!ok(page)) { page = await context.newPage().catch(() => null); opened = page; }
       if (!page) return false;
       await page.goto(pinnedChat, { waitUntil: "domcontentloaded" }).catch(() => {});
       await wait(1200);
@@ -785,7 +1026,21 @@ async function ensurePage() {
       // re-pinning to that made every prompt for the rest of the morning fail
       // with "no message box" while the app insisted it was pinned.
       const usable = Boolean(await find(page, site.ask, 15000));
-      if (!usable) return false;
+      if (!usable) {
+        /*
+         * One attempt, then let go.
+         *
+         * This returned with the pin kept and the tab it had just opened left
+         * open, so the next call -- about a second later while idle -- opened
+         * another, and another, for as long as the address kept answering
+         * with a sign-in page. A tab every sixteen seconds is what "keeps
+         * opening tabs" looked like from the outside.
+         */
+        console.log(`\r\x1b[K  \x1b[33mthat chat cannot be reached right now — letting go of it\x1b[0m`);
+        pinnedChat = null;
+        if (opened) { await opened.close().catch(() => {}); page = null; }
+        return false;
+      }
       const landed = chatKey(page.url());
       if (landed !== want) {
         if (!isFront(page.url())) {
@@ -811,14 +1066,27 @@ async function ensurePage() {
   // die of it.
   if (!(await alive()) && !(await reconnect("Chrome is not answering"))) return false;
   const found = context.pages().filter(ok);
-  // The last one is the most recently opened, which is the one a chat site
-  // puts a new conversation in.
-  const next = found[found.length - 1] ?? null;
+  // A tab that is inside a conversation beats one sitting on the front page.
+  //
+  // With no pin to go back to, this used to take the most recent tab whatever
+  // was in it, and if none was usable it opened the front page — which on
+  // Gemini IS a new chat. Mid-run that threw away the references and
+  // everything the model had been told about the product, silently, and the
+  // next picture came back drawn by a model that had never seen the brief.
+  // So: prefer a tab already in a conversation, and only ever open the front
+  // page when there is genuinely nothing else.
+  const inChat = found.filter((pg) => { try { return !isFront(pg.url()); } catch { return false; } });
+  const pool = inChat.length ? inChat : found;
+  const next = pool[pool.length - 1] ?? null;
   if (next) {
     page = next;
     console.log(`\r\x1b[K  \x1b[2mmoved to your other ${site.name} tab\x1b[0m`);
   } else {
-    console.log(`\r\x1b[K  \x1b[2mno ${site.name} tab open — opening one\x1b[0m`);
+    // Loud, not quiet: this is the one path that legitimately starts a new
+    // conversation without being asked, so it should never again be something
+    // only noticed later by looking at the pictures.
+    if (!create) return false;
+    console.log(`\r\x1b[K  \x1b[33mno ${site.name} conversation left open — starting a new chat\x1b[0m`);
     page = await context.newPage().catch(() => null);
     if (!page) {
       // The browser is gone, whatever it claims. Reconnect and try once more;
@@ -978,6 +1246,82 @@ console.log(`Tell Claude what you want. It shows up here and you press Return to
 console.log(`Esc in the browser stops whatever is running.\n`);
 await say("Waiting", `Connected to ${site.name}. Tell Claude what you want.`);
 
+/**
+ * Clear anything sitting over the page, and say what it was.
+ *
+ * Two states used to stall a run with no explanation. The site's upload limit
+ * banner, which appears after too many files and covers the top of the page;
+ * and its "drop a file here" curtain, which opens on a drag and stays open
+ * until something tells it the drag ended. Neither is a refusal and neither
+ * clears itself, so the app sat there timing out on clicks and reporting that
+ * the site might be "out of generations".
+ *
+ * Runs before every prompt. Cheap when there is nothing to clear, and when
+ * there is, it says so on the panel and in the status rather than leaving it
+ * to be found in a screenshot.
+ */
+async function clearBlockers(label = "") {
+  if (!site.blocked?.length) return false;
+  let found = null;
+  for (const sel of site.blocked) {
+    const hit = await page.locator(sel).first().isVisible().catch(() => false);
+    if (hit) { found = sel; break; }
+  }
+  if (!found) return false;
+
+  log(`  \x1b[33m!! something is covering the page (${found}) — clearing it\x1b[0m`);
+  report("running", { job: label, problem: `clearing a blocker on ${site.name}: ${found}` });
+
+  // The curtain listens for the end of a drag, so tell it the drag ended.
+  await page.evaluate(() => {
+    const dt = new DataTransfer();
+    for (const el of [document.documentElement, document.body]) {
+      for (const type of ["dragleave", "dragend"]) {
+        el.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+      }
+    }
+  }).catch(() => {});
+
+  // A banner has a dismiss control; press it if one is on screen.
+  for (const sel of site.dismiss ?? []) {
+    const btn = page.locator(sel).first();
+    if (await btn.isVisible().catch(() => false)) {
+      await btn.click({ timeout: 2500 }).catch(() => {});
+      break;
+    }
+  }
+
+  // And Escape, deafened so the app does not hear its own keypress as a stop.
+  await wand?.deafen(1500);
+  await page.keyboard.press("Escape").catch(() => {});
+  await wait(800);
+
+  /*
+   * The test is whether the composer can be used, not whether a banner is
+   * still on screen.
+   *
+   * A notice can sit in a corner all day without being in the way of
+   * anything. Asking the page directly — is the message box there, and is
+   * the point in the middle of it actually the message box rather than
+   * something on top of it — is the only question that matters, and it is
+   * the one that decides whether a clean chat is worth the cost.
+   */
+  const usable = await page.evaluate((sels) => {
+    for (const sel of sels) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 8 || r.height < 8) continue;
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (top && (el.contains(top) || top.contains(el))) return true;
+    }
+    return false;
+  }, site.ask).catch(() => true);
+
+  if (!usable) log(`  \x1b[33m!! the message box still cannot be reached\x1b[0m`);
+  return !usable;
+}
+
 async function fetchRefs(urls, dir) {
   if (!urls?.length) return [];
   // Its own fallback. A caller that forgets the folder used to take the whole
@@ -1116,13 +1460,29 @@ async function putFiles(page, paths, wand, label) {
    * every prompt of the job. This asks every 250ms and returns the moment the
    * count rises, so the fast case is fast and the slow case is unchanged.
    */
-  const landed = async (was, capMs) => {
+  /*
+   * Every file, not the first one.
+   *
+   * This returned the moment the count moved AT ALL, so handing the composer
+   * two pictures — a brand mark and the product — was called a success as soon
+   * as the first thumbnail appeared. The second was still uploading, the
+   * prompt was sent without it, and the model drew from the brand mark alone
+   * and invented the product. The log said "attached 2" the whole time,
+   * because it printed how many it had been given rather than how many
+   * arrived.
+   *
+   * So: wait for all of them, and tell the caller how many actually made it.
+   */
+  const landed = async (was, capMs, want = 1) => {
     const until = Date.now() + capMs;
+    let best = 0;
     while (Date.now() < until) {
       await wait(250);
-      if ((await blobCount(page)) > was) return true;
+      const now = (await blobCount(page)) - was;
+      if (now > best) best = now;
+      if (best >= want) return best;
     }
-    return false;
+    return best;
   };
 
   // 1 — let Chrome open its own file dialog and answer it.
@@ -1144,7 +1504,14 @@ async function putFiles(page, paths, wand, label) {
         clip.click({ timeout: 4000 }),
       ]);
       await chooser.setFiles(paths);
-      if (await landed(before, 2500 + files.length * 1200)) return "chosen";
+      if ((await landed(before, 2500 + files.length * 1200, files.length)) >= files.length) return "chosen";
+      // Partial here too: wait for the rest instead of trying another way and
+      // delivering the ones that already arrived a second time.
+      if ((await blobCount(page)) - before > 0) {
+        if ((await landed(before, 9000, files.length)) >= files.length) return "chosen";
+        log(`  \x1b[33m!! only part of the set arrived through the file picker\x1b[0m`);
+        return null;
+      }
     } catch {
       // No dialog appeared — that button was something else. Close whatever
       // it opened before trying the next way, with the stop key deafened:
@@ -1156,22 +1523,49 @@ async function putFiles(page, paths, wand, label) {
     }
   }
 
+  /*
+   * A route that delivered SOME of the files is not a route to give up on.
+   *
+   * Each way in was tried in turn and the next one was started whenever the
+   * full set had not arrived yet. But an upload in flight is not a failure:
+   * paste would land the first picture, the check would run out while the
+   * second was still going, and then the drop route delivered BOTH of them
+   * again — so the composer held the brand mark twice and the product once.
+   * That is the duplicate logo, and it survived every fix aimed at the drop
+   * code because the duplicate was never made there.
+   *
+   * So a partial delivery is waited on, never repeated. Only a route that
+   * moved nothing at all hands over to the next one.
+   */
+  const got = async () => Math.max(0, (await blobCount(page)) - before);
+
   // 2 — paste it in, the way you'd paste a screenshot
   if (box) await box.click().catch(() => {});
   await deliver("paste");
-  if (await landed(before, 2200 + files.length * 900)) return "pasted";
+  if ((await landed(before, 2200 + files.length * 900, files.length)) >= files.length) return "pasted";
+  if (await got()) {
+    // Something is on its way. Give it room rather than sending it twice.
+    if ((await landed(before, 9000, files.length)) >= files.length) return "pasted";
+    log(`  \x1b[33m!! ${await got()} of ${files.length} arrived by pasting and the rest did not follow\x1b[0m`);
+    return null;
+  }
 
   // 3 — drop, everywhere that might be listening
   await wand?.say(label, "attaching — another way…");
   await deliver("drop");
-  if (await landed(before, 2200 + files.length * 900)) return "dropped";
+  if ((await landed(before, 2200 + files.length * 900, files.length)) >= files.length) return "dropped";
+  if (await got()) {
+    if ((await landed(before, 9000, files.length)) >= files.length) return "dropped";
+    log(`  \x1b[33m!! ${await got()} of ${files.length} arrived by dropping and the rest did not follow\x1b[0m`);
+    return null;
+  }
 
   // 4 — a real file input, if the page keeps one
   const input = page.locator(site.file).first();
   if (await input.count().then((c) => c > 0).catch(() => false)) {
     await wand?.say(label, "attaching — last way…");
     await input.setInputFiles(paths).catch(() => {});
-    if (await landed(before, 2500 + files.length * 1200)) return "uploaded";
+    if ((await landed(before, 2500 + files.length * 1200, files.length)) >= files.length) return "uploaded";
   }
 
   return null;
@@ -1201,8 +1595,63 @@ function originals(url) {
   return [...new Set(out)];
 }
 
+/**
+ * How many pictures are attached to the message being written -- and only
+ * those.
+ *
+ * This counted every blob: image on the whole page. On ChatGPT that was
+ * harmless, because its finished pictures arrive as https URLs. Gemini's
+ * finished pictures are blob: URLs, so from the second prompt on the page
+ * always held at least one -- the picture it had just drawn -- and every
+ * check built on this count went wrong on Gemini and nowhere else. The
+ * "something left over in the composer" check saw the previous answer and
+ * opened a clean chat before every single prompt, which is the new chat per
+ * picture that four separate reports were about.
+ *
+ * So the count is taken inside the composer: the element the prompt is typed
+ * into, and the form or container it sits in. Nothing in the thread above it
+ * is counted, whatever URL scheme it uses.
+ */
 async function blobCount(page) {
-  return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
+  return page.evaluate(([askSelectors, composerSelectors, threadSelectors]) => {
+    let box = null;
+    for (const sel of askSelectors) { box = document.querySelector(sel); if (box) break; }
+    if (!box) return 0;
+    /*
+     * The composer, found by name where the site gives it one.
+     *
+     * A fixed six-level walk was the previous answer, and an audit that ran
+     * it against a Gemini-shaped page showed it reaching the conversation
+     * whenever the composer sat fewer than five elements below the container
+     * it shares with the thread -- a margin of one or two levels that any
+     * markup change would erase. So: the site's own composer element first,
+     * and only failing that a walk that refuses to climb into any ancestor
+     * holding a thread node.
+     */
+    let root = null;
+    for (const sel of composerSelectors ?? []) {
+      const hit = box.closest(sel);
+      if (hit && hit !== document.body && !threadSelectors.some((t) => hit.querySelector(t))) { root = hit; break; }
+    }
+    if (!root) {
+      root = box;
+      while (root.parentElement && root.parentElement !== document.body) {
+        const up = root.parentElement;
+        if (threadSelectors.some((t) => up.querySelector(t))) break;
+        root = up;
+      }
+    }
+    // Distinct files, not elements: a composer may draw a thumbnail and a
+    // preview of the same attachment, and two elements for one file must not
+    // read as a duplicate upload. A genuine second upload has its own URL.
+    const seen = new Set();
+    for (const el of root.querySelectorAll('img[src^="blob:"], video[src^="blob:"]')) {
+      if (el.closest("[data-wand]")) continue;
+      if (threadSelectors.some((t) => el.closest(t))) continue;
+      seen.add(el.currentSrc || el.src);
+    }
+    return seen.size;
+  }, [site.ask, site.composer ?? [], site.thread ?? []]).catch(() => 0);
 }
 
 async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = true) {
@@ -1238,10 +1687,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    * A job can still ask for a fresh chat when it is genuinely a new product.
    */
   if (!sameChat) {
-    const nw = await find(page, site.fresh, 4000);
-    if (nw) { await wand.point(nw); await nw.click().catch(() => {}); await wait(1600); await wand.reattach(); }
+    await freshChat("carrying on in the same chat");
     // Nothing from the old thread carries over, references included.
     attachedInChat = false;
+    chatRefs = new Set();
   }
 
   /*
@@ -1259,9 +1708,46 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    * chat"; and pictures dropped mid-run through Add pictures were thrown
    * away, so the rest of the job kept drawing the old product.
    */
-  const skipRefs = sameChat && attachedInChat && !freshRefs;
+  // Not a constant: a clean chat started below invalidates it. It was const,
+  // and a prompt that opened a fresh chat then skipped attaching because the
+  // old chat had had references — sending the very first prompt of a new
+  // conversation with nothing attached.
+  let skipRefs = sameChat && attachedInChat && !freshRefs;
   if (skipRefs && (fromCard || refs.length)) {
     log(`  \x1b[2mreferences already in this chat\x1b[0m`);
+  }
+
+  /*
+   * Clear the page before anything else is attempted on it.
+   *
+   * This lived inside the branch that attaches references, so a prompt that
+   * was reusing the references already in the chat never ran it — and those
+   * are most of the prompts in a run. The upload banner and the drop curtain
+   * block a click whether or not this particular prompt is uploading
+   * anything, so the check belongs in front of both branches.
+   *
+   * Left-over thumbnails are dealt with in the same place: a failed attach
+   * leaves its pictures behind and the next attempt adds to them rather than
+   * replacing them, which is how two references became twenty.
+   */
+  const blockedStill = await clearBlockers(label);
+  const leftOver = skipRefs ? 0 : await blobCount(page).catch(() => 0);
+  if (blockedStill || leftOver > 0) {
+    log(blockedStill
+      ? `  \x1b[33m!! the page is still blocked — starting a clean chat\x1b[0m`
+      : `  \x1b[33m!! ${leftOver} picture${leftOver === 1 ? "" : "s"} left over in the box — starting a clean chat\x1b[0m`);
+    if (await freshChat("couldn't clear the page")) {
+      watchImages(page);
+      wand = await attachWand(page);
+      pinnedChat = null;
+      attachedInChat = false;
+      freshRefs = Boolean(refs.length);
+      // Nothing is in this conversation yet, so this prompt's pictures go in.
+      skipRefs = false;
+      chatRefs = new Set();
+      navGen++;
+      await wait(1200);
+    }
   }
 
   // Pictures before words: both sites disable send while an upload is running.
@@ -1284,17 +1770,147 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       ? `  attached ${fromCard} (from the card)`
       : `  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
   } else if (refs.length && !skipRefs) {
-    await say(label, `${n} of ${total} — attaching ${refs.length}…`);
-    const how = await putFiles(page, refs, wand, label);
-    if (how) {
-      attachedInChat = true;
-      freshRefs = false;
-      log(`  attached ${refs.length} (${how})`);
-    } else {
-      log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
-      await say(label, `${n} of ${total} — couldn't attach, sending anyway`);
-      await wait(1000);
+    /*
+     * A prompt that needs references is never sent without them.
+     *
+     * The old rule was to log "sending with NO reference image" and send it
+     * anyway, which is the worst of both: the site spends a generation, the
+     * quota is gone, and the picture that comes back was drawn from nothing —
+     * a box with an invented product on it, a reaper that is not the reaper.
+     * It looks like a bad prompt rather than a missing file, so the hours go
+     * into rewriting words that were never the problem.
+     *
+     * Attaching is retried, and if the pictures still are not all in the
+     * composer the prompt is REFUSED. Nothing is sent, the reason is said out
+     * loud, and the run moves on rather than burning the quota on an image
+     * that cannot be used.
+     */
+    // Counted as a difference, not a total: the composer can already hold
+    // something, and comparing a raw count against the number of files being
+    // sent would call that a success without either of them arriving.
+    /*
+     * Start from an empty composer.
+     *
+     * A failed attach leaves its thumbnails behind, and the next attempt adds
+     * to them rather than replacing them: one screenshot showed ten pictures
+     * queued in the composer from a job that only ever needed two. The model
+     * then gets the same brand mark eight times and a product photo buried
+     * among them, and the site is slower with every one. If anything is
+     * already sitting there before this prompt's own pictures go in, the
+     * cleanest answer is a fresh conversation, which costs one page load.
+     */
+    /*
+     * Only the pictures this conversation does not already hold.
+     *
+     * Every part of a job carries the brand mark, so without this the same
+     * file goes up once per product: five uploads of one picture, five more
+     * thumbnails in the composer, and five steps closer to the site's limit
+     * on files per message.
+     */
+    const fresh = refs.filter((r) => !chatRefs.has(refKey(r)));
+    if (fresh.length < refs.length) {
+      log(`  \x1b[2m${refs.length - fresh.length} of ${refs.length} already in this chat — not sending ${refs.length - fresh.length === 1 ? "it" : "them"} again\x1b[0m`);
     }
+    const startCount = await blobCount(page).catch(() => 0);
+    const landedSoFar = async () => {
+      const now = await blobCount(page).catch(() => startCount);
+      return Math.max(0, now - startCount);
+    };
+    let how = null;
+    let landedCount = 0;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await say(label, `${n} of ${total} — attaching ${fresh.length}${attempt > 1 ? ` (try ${attempt})` : ""}…`);
+      how = await putFiles(page, fresh, wand, label);
+      landedCount = await landedSoFar();
+      if (landedCount >= fresh.length) break;
+      /*
+       * Never attach again on top of a partial one.
+       *
+       * The routes inside putFiles stopped re-delivering, but THIS loop still
+       * called the whole of putFiles a second time when the set was short --
+       * so the one picture that had arrived was joined by both of them again.
+       * That is the duplicate brand mark, made here rather than in any of the
+       * places it was hunted for.
+       *
+       * Something in the composer means the delivery worked and the rest is
+       * either slow or lost. Wait for slow; refuse if lost. Only a completely
+       * empty composer is worth another attempt.
+       */
+      if (landedCount > 0) {
+        log(`  \x1b[33m!! ${landedCount} of ${fresh.length} attached — waiting for the rest rather than sending them again\x1b[0m`);
+        for (let t = 0; t < 12 && landedCount < fresh.length; t++) {
+          await wait(1000);
+          landedCount = await landedSoFar();
+        }
+        break;
+      }
+      /*
+       * Most short attachments are simply slow, not lost: the second file is
+       * still uploading when the check runs out. So the first answer to a
+       * short count is to wait and look again, not to attach anything else.
+       *
+       * If a retry does send the files a second time the composer may end up
+       * holding a duplicate, and that is deliberately accepted. The model
+       * seeing one of the references twice costs nothing; the model never
+       * seeing it at all is what ruins the picture.
+       */
+      // Nothing arrived at all. That is worth another go.
+      await wait(2000);
+      landedCount = await landedSoFar();
+      if (landedCount >= fresh.length) { how = how ?? "waited"; break; }
+      if (attempt < 3) {
+        log(`  \x1b[33m!! nothing attached — trying again\x1b[0m`);
+      }
+    }
+    if (fresh.length && (!how || landedCount < fresh.length)) {
+      log(`  \x1b[31m!! only ${landedCount} of ${fresh.length} reference pictures would attach — NOT sending this one\x1b[0m`);
+      await say(label, `${n} of ${total} — references wouldn't attach, skipped`);
+      report("waiting for pictures", {
+        job: label,
+        prompt: `${n} of ${total}`,
+        problem: `only ${landedCount} of ${fresh.length} reference pictures attached — prompt not sent`,
+      });
+      await wait(1200);
+      return 0;
+    }
+    // Past the gate above, every reference is in the composer. The count is
+    // the measured one, because the old line printed how many files it had
+    // been handed and said "attached 2" all afternoon while attaching one.
+    /*
+     * One last count before the words go in.
+     *
+     * Everything above tries to make a duplicate impossible; this checks. If
+     * the composer holds more than it was given, something delivered twice --
+     * and drawing from it would put the brand mark on the box twice and bury
+     * the product, which is the failure this is all for. A clean chat costs
+     * one page load and the prompt comes round again with an empty composer.
+     */
+    const inBox = await blobCount(page).catch(() => -1);
+    const expected = startCount + fresh.length;
+    if (inBox > expected) {
+      log(`  \x1b[31m!! ${inBox} pictures in the box and only ${expected} were sent — something delivered twice, starting clean\x1b[0m`);
+      report("waiting for pictures", {
+        job: label,
+        prompt: `${n} of ${total}`,
+        problem: `${inBox} attachments where ${expected} were expected — prompt not sent`,
+      });
+      if (await freshChat("couldn't clear the duplicates")) {
+        watchImages(page);
+        wand = await attachWand(page);
+        pinnedChat = null;
+        attachedInChat = false;
+        chatRefs = new Set();
+        navGen++;
+      }
+      return 0;
+    }
+
+    attachedInChat = true;
+    freshRefs = false;
+    // Remember them by their contents, so no part of this job sends the same
+    // picture into this conversation a second time.
+    for (const r of fresh) chatRefs.add(refKey(r));
+    if (fresh.length) log(`  attached ${landedCount} (${how})`);
   }
 
   const box = await find(page, site.ask, 20000);
@@ -1303,10 +1919,62 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     return 0;
   }
   await wand.point(box);
-  await box.click();
+  /*
+   * Focusing the composer must never be able to end the prompt.
+   *
+   * This was a bare click: no timeout, so Playwright's default thirty seconds,
+   * and no catch, so it THREW. Anything that covers the box for half a minute
+   * — the upload overlay after two files, a tooltip, one of the site's own
+   * notices — took the whole prompt down with a locator timeout. The run
+   * tried it twice and then declared the picture impossible, which is what
+   * "produced no picture, twice" was: not a refusal by the site and not a
+   * rate limit, just a click that could not land on a covered element.
+   *
+   * Three ways in, each brief, and none of them fatal. A normal click; then a
+   * forced one, which ignores what is on top; then focus set directly on the
+   * element, which needs no hit test at all. If all three fail the typing
+   * below still runs — the composer is usually focused already.
+   */
+  let focused = false;
+  for (const attempt of [
+    () => box.click({ timeout: 4000 }),
+    () => box.click({ timeout: 3000, force: true }),
+    () => box.evaluate((el) => el.focus?.()),
+  ]) {
+    try { await attempt(); focused = true; break; } catch { /* try the next way */ }
+  }
+  if (!focused) log(`  \x1b[33m!! couldn't focus the message box — typing anyway\x1b[0m`);
   await box.fill("").catch(() => {});
-  await page.keyboard.insertText(text);
+  /*
+   * Typing cannot be allowed to end the prompt either.
+   *
+   * insertText throws if the page navigates or the composer is replaced while
+   * it runs, and an unguarded throw here loses the prompt exactly the way the
+   * unguarded focus click did. The read-back below already tells us whether
+   * the words arrived, so a failure here just falls through to that.
+   */
+  let typedIn = true;
+  try {
+    await page.keyboard.insertText(text);
+  } catch (e) {
+    typedIn = false;
+    log(`  \x1b[33m!! typing was interrupted (${String(e?.message ?? e).slice(0, 60)}) — checking what landed\x1b[0m`);
+  }
   await wait(400);
+  if (!typedIn) {
+    // Read the box directly rather than through typed(), which is declared
+    // further down this function: calling it here threw "cannot access before
+    // initialization" on the one path this guard exists for, turning a
+    // recoverable interruption into a thrown prompt.
+    const landedText =
+      (await box.textContent().catch(() => "")) ||
+      (await box.inputValue().catch(() => "")) ||
+      "";
+    if (landedText.trim().length < 8) {
+      log(`  \x1b[31m!! the prompt did not reach the box — skipping this one\x1b[0m`);
+      return 0;
+    }
+  }
 
   /*
    * Sending, and then checking that it went.
@@ -1368,8 +2036,27 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       await obey();
     }
   }
+  /*
+   * Wait for the send control to come alive before pressing it.
+   *
+   * Both sites disable it while an upload is still running, and with two
+   * pictures attached that is a second or two after the thumbnails appear.
+   * The old code found the button, clicked a disabled one -- which does
+   * nothing at all -- pressed Return twice into a composer that would not
+   * accept it either, and gave up with "would not send it, skipping this
+   * one". A whole prompt lost to being half a second early.
+   */
   const send = await find(page, site.send, 5000);
-  if (send) { await wand.point(send); await send.click({ timeout: 4000 }).catch(() => {}); }
+  if (send) {
+    for (let t = 0; t < 30; t++) {
+      const ready = await send.isEnabled().catch(() => true);
+      if (ready) break;
+      if (t === 0) log(`  \x1b[2mwaiting for the upload to finish before sending\x1b[0m`);
+      await wait(700);
+    }
+    await wand.point(send);
+    await send.click({ timeout: 4000 }).catch(() => {});
+  }
   await wait(900);
 
   for (let tries = 0; tries < 2 && (await typed()).trim().length > 8; tries++) {
@@ -1395,7 +2082,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // Only the first prompt gets to wait for it. A site that has not given
     // this thread an address by then is one that never will, and three seconds
     // on every prompt after that is a job running a third slower for nothing.
-    const budget = n === 1 ? 3000 : 0;
+    // A later prompt gets the same patience when there is still no pin. The
+    // budget was zero for every prompt after the first, so a run whose first
+    // send did not produce an address within three seconds went the whole way
+    // unpinned — and an unpinned run is one tab hiccup away from carrying on
+    // in a brand new chat, which is the bug this pair of changes closes.
+    const budget = n === 1 || !pinnedChat ? 3000 : 0;
     let here = page.url();
     for (let t = 0; t < budget && chatKey(here) === chatKey(urlBeforeSend); t += 400) {
       await wait(400);
@@ -1403,11 +2095,13 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     }
     if (chatKey(here) !== chatKey(urlBeforeSend) && !isFront(here)) {
       pinnedChat = here;
+      writeFile(CHAT_FILE, here).catch(() => {});
       log(`  \x1b[2mpinned to this chat\x1b[0m`);
       report("running", { chat: here });
     } else if (!isFront(urlBeforeSend)) {
       // Already in a conversation before the send — that is the one.
       pinnedChat = urlBeforeSend;
+      writeFile(CHAT_FILE, urlBeforeSend).catch(() => {});
       log(`  \x1b[2mpinned to this chat\x1b[0m`);
       report("running", { chat: urlBeforeSend });
     }
@@ -1536,7 +2230,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // No request to replay, no cookies to carry, no content policy to refuse.
     for (const want of [url, ...originals(url)]) {
       const hit = CAPTURED.get(want);
-      if (hit && hit.length > 2048) { buf = hit; how = "captured"; break; }
+      if (hit && hit.length >= MIN_PICTURE) { buf = hit; how = "captured"; break; }
     }
 
     if (!buf && !/^(blob|data):/.test(url)) {
@@ -1554,7 +2248,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
             const type = r.headers()["content-type"] ?? "";
             if (!r.ok() || !type.startsWith("image/")) return null;
             const body = await r.body();
-            return body && body.length > 2048 ? body : null;
+            return body && body.length >= MIN_PICTURE ? body : null;
           })
           .catch(() => null);
         if (buf) { how = "downloaded"; break; }
@@ -1574,7 +2268,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
         for (let j = 0; j < bytes.length; j++) s += String.fromCharCode(bytes[j]);
         return btoa(s);
       }, url).catch(() => null);
-      if (b64) { buf = Buffer.from(b64, "base64"); how = "page-fetched"; }
+      // The third way in needs the same floor as the other two, or a stray
+      // the capture and the request both refused arrives through this one.
+      if (b64) {
+        const got = Buffer.from(b64, "base64");
+        if (got.length >= MIN_PICTURE) { buf = got; how = "page-fetched"; }
+      }
     }
 
     /**
@@ -1643,6 +2342,25 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       continue;
     }
 
+    /*
+     * Is this actually a picture, and which kind?
+     *
+     * Everything here was written out as .png whatever the bytes were, so a
+     * JPEG went to the shop claiming to be a PNG and anything that was not an
+     * image at all was saved as one. The first bytes of a file say what it
+     * is; nothing else needs to be decoded to find out.
+     */
+    const kind =
+      buf.length > 12 && buf[0] === 0x89 && buf[1] === 0x50 ? "png"
+      : buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 ? "jpg"
+      : buf.length > 12 && buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP" ? "webp"
+      : buf.toString("ascii", 0, 3) === "GIF" ? "gif"
+      : null;
+    if (!kind) {
+      log(`  \x1b[31m!! what came back is not an image (${buf.length} bytes) — not saving it\x1b[0m`);
+      continue;
+    }
+
     saved++;
     log(`  \x1b[2m${how}\x1b[0m ${url.slice(0, 70)}`);
     /**
@@ -1660,10 +2378,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // the shop can use it; one that is also here can be put on a product the
     // moment it exists.
     // Every file that reaches this line is a real one, so every one goes up.
-    sendShot(dir, `${stem}.png`, buf);
+    sendShot(dir, `${stem}.${kind}`, buf, kind);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
-    await writeFile(join(dir, `${stem}.png`), buf);
+    await writeFile(join(dir, `${stem}.${kind}`), buf);
   }
   return saved;
 }
@@ -1847,7 +2565,9 @@ while (true) {
     await wait(4000);
     continue;
   }
-  await ensurePage();
+  // Idle is for waiting, not for opening tabs. With a job to run the page is
+  // secured at the top of runPrompt; here a missing tab is simply reported.
+  await ensurePage({ create: false });
   /*
    * Stop no longer ends the app.
    *
@@ -1871,12 +2591,47 @@ while (true) {
   // A moment offline is not a reason to quit.
   const job = await getJson(QUEUE);
 
+  /*
+   * A job with work in it but no id used to be dropped without a word.
+   *
+   * The gate below asks for `job.id` before it will run anything, and the
+   * status it reports when there is none is "a job in the queue" -- the same
+   * sentence it reports when the queue is genuinely empty. So a job posted
+   * straight to the endpoint rather than through the tool that stamps an id
+   * sat there for an hour looking exactly like nothing at all, while every
+   * Continue sent to it was answered "nothing to do".
+   *
+   * An id is only ever used as a name to remember the job by, so there is no
+   * reason to refuse work for want of one. When a job arrives without it, one
+   * is derived from the job itself: the same job gets the same id every time,
+   * which is what the done-list needs, and a different job gets a different
+   * one.
+   */
+  if (job && !job.id) {
+    const seed = JSON.stringify([job.name ?? "", job.site ?? "", job.prompts ?? [], job.parts ?? []]);
+    let h = 5381;
+    for (let i = 0; i < seed.length; i++) h = ((h * 33) ^ seed.charCodeAt(i)) >>> 0;
+    job.id = `${(job.name || "job").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${h.toString(36)}`;
+    log(`\r\x1b[K  \x1b[2mthe queued job carried no id — calling it ${job.id}\x1b[0m`);
+  }
+
   if (job?.id && done.has(job.id) && !saidDone.has(job.id)) {
     saidDone.add(job.id);
     console.log(`\r\x1b[K  \x1b[2m"${job.name || job.id}" already ran on this Mac — waiting for the next job.\x1b[0m`);
     console.log(`  \x1b[2m(to run it again: quit, delete "${join(process.cwd(), DONE_FILE)}", reopen)\x1b[0m`);
   }
-  if (!job?.id || done.has(job.id) || !job.prompts?.length) {
+  /*
+   * A job in parts keeps its prompts inside those parts.
+   *
+   * This gate asked only for a top-level "prompts", so every parts job was
+   * read off the queue, judged empty and dropped without a word — the app sat
+   * there reporting "waiting for a job in the queue" with the job already in
+   * front of it. The rest of the runner has understood parts all along; only
+   * the door did not.
+   */
+  const hasWork = Boolean(job?.prompts?.length) ||
+    (Array.isArray(job?.parts) && job.parts.some((p) => p?.prompts?.length));
+  if (!job?.id || done.has(job.id) || !hasWork) {
     // The button on the finished panel. Reveals the zip in Finder with the
     // file selected, so it can be dragged straight out.
     if (await wand.wantsFolder()) {
@@ -1884,7 +2639,26 @@ while (true) {
       else await run("open", [opt.out]).catch(() => {});
     }
     process.stdout.write(`\r  waiting${".".repeat((spinner++ % 3) + 1)}   `);
-    report("idle", { waitingFor: "a job in the queue" });
+    /*
+     * Say WHY a job on the queue is not being run.
+     *
+     * "Waiting for a job in the queue" was reported whether the queue was
+     * empty or held a job this build had just refused, and four separate bugs
+     * hid behind that one sentence for a day: a job whose prompts sat inside
+     * its parts, a job already in the done list, a job with no id. Whoever is
+     * watching — a person at the app or Claude reading the status — should be
+     * told which of those it is, because each has a different fix.
+     */
+    const why = !job
+      ? "a job in the queue"
+      : !job.id
+        ? "a job that has no id and could not be given one"
+      : done.has(job.id)
+        ? `"${job.name || job.id}" already ran on this Mac — delete .done-jobs to run it again`
+        : !hasWork
+          ? `"${job.name || job.id}" has no prompts in it — nothing to draw`
+          : "a job in the queue";
+    report("idle", { waitingFor: why, ...(job?.id ? { refused: job.id } : {}) });
     await obey();
     // Idle is the safe moment to become a newer app.
     await selfUpdate().catch(() => {});
@@ -1911,7 +2685,9 @@ while (true) {
    * chat to work in rather than the site's front page.
    */
   const wanted = job.site && SITES[job.site] ? SITES[job.site] : null;
-  if (wanted && wanted !== site) {
+  if (wanted && wanted !== site && siteHeld && SITES[siteHeld] === site) {
+    log(`  \x1b[2mthis job asks for ${wanted.name}; staying on ${site.name} as ordered\x1b[0m`);
+  } else if (wanted && wanted !== site) {
     // Not signed in there: leave the job alone — it is offered again once
     // that tab is logged in.
     if (!(await switchSite(job.site))) { await wait(POLL_MS); continue; }
@@ -1940,24 +2716,35 @@ while (true) {
   }
   console.log(`\r\x1b[K`);
   console.log(`\x1b[1m${label}\x1b[0m  \x1b[2m(${site.name})\x1b[0m`);
-  console.log(`${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"}${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}:`);
-  job.prompts.forEach((p, i) => {
-    const first = p.trim().split("\n")[0];
+  /*
+   * The summary printed before a run has to read a parts job too.
+   *
+   * It listed job.prompts directly, which a parts job does not have, so the
+   * very first line after the gate threw and the job died on the launch pad
+   * with a TypeError instead of drawing anything.
+   */
+  const listed = job.prompts?.length
+    ? job.prompts
+    : (job.parts ?? []).flatMap((part) => part.prompts ?? []);
+  const refCount = job.refs?.length ?? (job.parts ?? []).reduce((n, part) => n + (part.refs?.length ?? 0), 0);
+  console.log(`${listed.length} prompt${listed.length === 1 ? "" : "s"}${refCount ? `, ${refCount} reference image${refCount === 1 ? "" : "s"}` : ""}:`);
+  listed.forEach((p, i) => {
+    const first = String(p).trim().split("\n")[0];
     console.log(`  ${i + 1}. ${first.slice(0, 92)}${first.length > 92 ? "…" : ""}`);
   });
   console.log();
 
   const summary =
-    `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"}` +
-    `${job.refs?.length ? `, ${job.refs.length} reference image${job.refs.length === 1 ? "" : "s"}` : ""}\n\n` +
-    job.prompts.map((p, i) => `${i + 1}. ${p.trim().split("\n")[0].slice(0, 70)}…`).join("\n");
+    `${listed.length} prompt${listed.length === 1 ? "" : "s"}` +
+    `${refCount ? `, ${refCount} reference image${refCount === 1 ? "" : "s"}` : ""}\n\n` +
+    listed.map((p, i) => `${i + 1}. ${String(p).trim().split("\n")[0].slice(0, 70)}…`).join("\n");
 
   // The card in the corner of the page, when the overlay is there to show it.
   // The macOS dialog stays as the fallback for a page that won't take it.
   let answer = await decision(
     label,
     // A function, not a string: the site can change while this is on screen.
-    () => `${job.prompts.length} prompt${job.prompts.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`,
+    () => `${listed.length} prompt${listed.length === 1 ? "" : "s"} on ${site.name} — drop your pictures below`,
     summary,
   );
 
@@ -1996,7 +2783,7 @@ while (true) {
   // whole time it is — including "gemini" on a job written for ChatGPT. Left
   // unchecked the job then ran on the wrong site with the other one's
   // selectors merged in, which looks exactly like a site redesign.
-  if (wanted && siteName !== job.site && !(await switchSite(job.site))) {
+  if (wanted && siteName !== job.site && !(siteHeld && SITES[siteHeld] === site) && !(await switchSite(job.site))) {
     await wait(POLL_MS);
     continue;
   }
@@ -2079,7 +2866,26 @@ while (true) {
   const belongs = parts.flatMap((p, pi) => p.prompts.map(() => pi));
   /** The first prompt of a part starts its own chat and brings its own pictures. */
   const opensPart = parts.flatMap((p) => p.prompts.map((_, i) => i === 0));
-  const sameChat = (i) => (perPrompt ? false : !(opensPart[i] && (parts.length > 1 || job.newChat)));
+  /*
+   * One conversation for the whole job, parts included.
+   *
+   * Each part used to open a fresh chat, so a job covering five products
+   * opened five chats -- and a chat per product is the behaviour this app was
+   * built to get away from. It existed for a reason: a part's own pictures
+   * had to be the ones nearest the prompt, and the only way to guarantee that
+   * was to start with nothing.
+   *
+   * That reason is gone. The runner now remembers what a conversation already
+   * holds, by content, so a part attaches only the pictures the chat has not
+   * seen -- its product photograph, with the brand mark already up the thread.
+   * Its own picture is still the most recent one when it draws.
+   *
+   * A job can still ask for a chat per part with "chatPerPart": true, and
+   * newChat: "each" is unchanged.
+   */
+  const chatPerPart = job.chatPerPart === true;
+  const sameChat = (i) =>
+    perPrompt ? false : !(opensPart[i] && ((parts.length > 1 && chatPerPart) || job.newChat));
   /** Prompts in a row that produced nothing. Two means the site, not the prompt. */
   let dry = 0;
   let live = refs;
@@ -2095,6 +2901,27 @@ while (true) {
    * its own progress file picks up there instead of at the beginning.
    */
   const progressFile = join(dir, "progress.json");
+  /*
+   * What the saved place belongs to, exactly.
+   *
+   * The id and the prompt count were the whole test, and a rewritten job kept
+   * inheriting a stale position: prompts one and two were declared already
+   * done and the run began in the middle, so two of five products were never
+   * drawn and the folder came back short with nothing saying why. Rewriting a
+   * prompt is the most common thing that happens to a job between two runs,
+   * and it is exactly the case where the old place is meaningless.
+   *
+   * So the fingerprint covers the prompts themselves. Change a word in any of
+   * them and the run starts at the beginning, which is the only safe answer.
+   */
+  const signature = `${flatPrompts.length}:${flatPrompts
+    .map((t) => {
+      let h = 0;
+      const str = String(t);
+      for (let k = 0; k < str.length; k++) h = (h * 31 + str.charCodeAt(k)) | 0;
+      return h.toString(36);
+    })
+    .join(",")}`;
   let startAt = 0;
   try {
     const seen = JSON.parse(await readFile(progressFile, "utf8"));
@@ -2106,10 +2933,14 @@ while (true) {
       // Two jobs with the same name share a folder, so the count has to match
       // as well as the id — otherwise a resume can start past the end of a
       // shorter job and draw nothing at all.
-      seen.of === flatPrompts.length
+      seen.of === flatPrompts.length &&
+      seen.sig === signature
     ) {
       startAt = seen.next;
       log(`  \x1b[2mpicking up at ${startAt + 1} of ${flatPrompts.length}\x1b[0m`);
+    }
+    else if (seen?.next > 0) {
+      log(`  \x1b[2mthis job was rewritten since it last ran — starting from the beginning\x1b[0m`);
     }
   } catch {
     /* no progress yet, which is the normal case */
@@ -2125,11 +2956,32 @@ while (true) {
       shot it was sent back for. */
   let redoReturn = null;
   let redoDoing = null;
+  /** Which part the previous prompt belonged to, so a change can be noticed. */
+  let lastPart = -1;
   for (let i = startAt; i < flatPrompts.length; i++) {
     // This part's own pictures, attached when the part opens and never again.
     const mine = parts[belongs[i]]?.refs ?? [];
     try {
-    if (opensPart[i] && parts.length > 1) {
+    /*
+     * Load a part's pictures whenever the part CHANGES, not only when its
+     * first prompt runs.
+     *
+     * Two ways that went wrong. A job resumed in the middle of part three
+     * never sees that part's first prompt, so `live` kept the job-level refs
+     * -- empty for a parts job -- and the rest of the run was drawn with no
+     * reference, or worse, attached the wrong set. And a `redo` that jumps
+     * back into an earlier part loads that part's pictures, then returns to
+     * where it was without ever loading the pictures back, so everything
+     * after it was drawn with the redone product's references.
+     *
+     * Asking "am I in a different part than the last prompt was" answers both.
+     *
+     * The old guard was also parts.length > 1, so a job with exactly one part
+     * never fetched its pictures at all.
+     */
+    const partChanged = belongs[i] !== lastPart;
+    lastPart = belongs[i];
+    if (partChanged && (parts.length > 1 || (mine.length && !refs.length))) {
       // fetchRefs(urls, dir) — the folder it saves into is not optional, and
       // leaving it off crashed the whole run on the first part before a single
       // picture was drawn. Each part keeps its references in its own folder.
@@ -2287,7 +3139,7 @@ while (true) {
     // Written after every prompt, so whatever kills the app next costs one
     // prompt rather than the rest of the job.
     resumeAt = i + 1;
-    await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1, of: flatPrompts.length })).catch(() => {});
+    await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1, of: flatPrompts.length, sig: signature })).catch(() => {});
     if (i === flatPrompts.length - 1) stoppedEarly = false;
     else stoppedEarly = true;
   }
@@ -2325,7 +3177,30 @@ while (true) {
    */
   const zipPath = total ? await makeZip(dir, slug) : null;
   if (zipPath) {
-    await rm(dir, { recursive: true, force: true }).catch(() => {});
+    /*
+     * Keep the place of an unfinished job.
+     *
+     * progress.json lives in this folder, and the branch above has just
+     * decided -- for a job that was stopped part way -- to keep it so that
+     * sending the job again carries on instead of starting over. Then this
+     * deleted the folder it is in, unconditionally, fifteen lines later. So
+     * the one case the resume file exists for was the one case it was thrown
+     * away: re-queueing began at prompt one and spent the whole quota again,
+     * which is exactly what keeping it was meant to prevent.
+     *
+     * A finished job has already removed its own progress file, so there is
+     * nothing to save and the folder goes as before.
+     */
+    if (finished) {
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+    } else {
+      const keep = await readFile(progressFile, "utf8").catch(() => null);
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+      if (keep !== null) {
+        await mkdir(dir, { recursive: true }).catch(() => {});
+        await writeFile(progressFile, keep).catch(() => {});
+      }
+    }
     console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} → ${zipPath.replace(process.env.HOME ?? "", "~")}\x1b[0m\n`);
   } else if (total) {
     console.log(`\n\x1b[1m${total} picture${total === 1 ? "" : "s"} saved to ${dir}\x1b[0m\n`);
