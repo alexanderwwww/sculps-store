@@ -54,6 +54,93 @@ export const OVERLAY = `(() => {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
   };
+
+  /*
+   * One glass surface, used by every panel this overlay draws.
+   *
+   * The status pill was given glass and the two cards were left as flat dark
+   * slabs, so the app looked like two different pieces of software depending
+   * on which one happened to be on screen. They are the same material now,
+   * and there is one place to change it.
+   *
+   * What makes it read as glass rather than as a translucent rectangle:
+   * the blur SATURATES and brightens, so colour behind it bleeds through
+   * instead of going grey; a hard band of white across the top quarter where
+   * the light catches, gone by the middle; a shadow pooled along the bottom;
+   * and the rim drawn from the inside on all four sides, bright above and
+   * dark below, so it has thickness. Two outer shadows -- one tight contact,
+   * one wide and soft -- because either alone reads as a sticker.
+   *
+   * No colour of its own. Glass takes what is behind it.
+   */
+  const GLASS = {
+    background:
+      "linear-gradient(to bottom," +
+        "rgba(255,255,255,.26) 0%," +
+        "rgba(255,255,255,.10) 22%," +
+        "rgba(255,255,255,.03) 52%," +
+        "rgba(255,255,255,.01) 76%," +
+        "rgba(0,0,0,.16) 100%)," +
+      "rgba(28,28,30,.46)",
+    backdropFilter: "blur(30px) saturate(200%) brightness(1.10)",
+    WebkitBackdropFilter: "blur(30px) saturate(200%) brightness(1.10)",
+    border: "0.5px solid rgba(255,255,255,.30)",
+    color: "#F7F2E7",
+    boxShadow:
+      "inset 0 1px 0 rgba(255,255,255,.50)," +
+      "inset 0 -1px 0 rgba(0,0,0,.30)," +
+      "inset 1px 0 0 rgba(255,255,255,.12)," +
+      "inset -1px 0 0 rgba(255,255,255,.12)," +
+      "0 1px 2px rgba(0,0,0,.40)," +
+      "0 16px 44px -16px rgba(0,0,0,.66)",
+  };
+
+  /*
+   * The liquid entrance, for any panel that appears.
+   *
+   * A bead arrives, spreads wider and flatter than it will finish, then
+   * settles back as the blur clears. The clearing deliberately lags the
+   * shape: matching the two durations turns the whole thing into a fade and
+   * loses the effect entirely.
+   *
+   * Only transform, filter and opacity, which the compositor animates without
+   * touching layout — a page doing real work underneath is not interrupted by
+   * the thing watching it.
+   */
+  function liquidIn(el, round) {
+    const settled = el.style.boxShadow;
+    el.style.transition = "none";
+    el.style.opacity = "0";
+    el.style.transform = "translateX(-50%) translateY(-6px) scale(.34, 1.14)";
+    el.style.filter = "blur(14px) saturate(140%)";
+    el.style.borderRadius = "999px";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transition =
+        "transform .34s cubic-bezier(.22,.9,.2,1)," +
+        "opacity .2s ease," +
+        "filter .5s cubic-bezier(.3,.8,.3,1)," +
+        "box-shadow .8s ease";
+      el.style.opacity = "1";
+      el.style.transform = "translateX(-50%) translateY(0) scale(1.06, .82)";
+      el.style.filter = "blur(2px) saturate(200%)";
+      el.style.boxShadow =
+        "inset 0 1px 0 rgba(255,255,255,.75)," +
+        "inset 0 -1px 0 rgba(0,0,0,.28)," +
+        "0 0 0 1px rgba(255,255,255,.30)," +
+        "0 0 40px 10px rgba(255,255,255,.16)," +
+        "0 16px 44px -16px rgba(0,0,0,.66)";
+      setTimeout(() => {
+        el.style.transition =
+          "transform .5s cubic-bezier(.2,.7,.2,1)," +
+          "filter .42s ease," +
+          "box-shadow .8s ease";
+        el.style.transform = "translateX(-50%) translateY(0) scale(1, 1)";
+        el.style.filter = "blur(0px) saturate(100%)";
+        el.style.borderRadius = round;
+        el.style.boxShadow = settled;
+      }, 330);
+    }));
+  }
   const hud = css(document.createElement("div"), {
     ...TOP_CENTRE,
     maxWidth: "min(420px, 92vw)", padding: "9px 15px", borderRadius: "999px",
@@ -72,53 +159,11 @@ export const OVERLAY = `(() => {
      * the light. And two inset shadows — a bright one along the top edge and
      * a dark one along the bottom — which give it thickness.
      */
-    /*
-     * Glass with a machined edge.
-     *
-     * Three things separate this from a translucent rectangle. The blur
-     * saturates as well as blurs, so colour behind it bleeds through instead
-     * of going grey — that alone is most of what reads as glass. A specular
-     * band is painted across the top third and a darker one pooled at the
-     * bottom, which is how a curved surface catches a light source above it.
-     * And the edge is drawn twice: a bright hairline along the top inside and
-     * a dark one along the bottom inside, so the rim has thickness and the
-     * thing looks turned out of a solid rather than printed on the page.
-     *
-     * The shadow is two: a tight contact shadow that sits it ON the page, and
-     * a wide soft one that lifts it off. One alone reads as a sticker.
-     */
-    /*
-     * Glass made of light, not of colour.
-     *
-     * The tint was violet and it made the panel look like a brand badge stuck
-     * on the page. Real frosted glass has no colour of its own: it takes
-     * whatever is behind it, brightens it, and adds a highlight where the
-     * light falls. So the only pigment left here is a trace of neutral
-     * charcoal to hold the text, and everything else is white at very low
-     * alpha -- a strong band across the top where the light catches, fading
-     * out by the middle, and a shadow pooling along the bottom edge.
-     */
-    background:
-      "linear-gradient(to bottom," +
-        "rgba(255,255,255,.26) 0%," +
-        "rgba(255,255,255,.10) 22%," +
-        "rgba(255,255,255,.03) 52%," +
-        "rgba(255,255,255,.01) 76%," +
-        "rgba(0,0,0,.16) 100%)," +
-      "rgba(28,28,30,.46)",
-    backdropFilter: "blur(30px) saturate(200%) brightness(1.10)",
-    WebkitBackdropFilter: "blur(30px) saturate(200%) brightness(1.10)",
-    border: "0.5px solid rgba(255,255,255,.30)",
-    color: "#F7F2E7", pointerEvents: "none",
+    // The shared surface, defined once near the top of this file.
+    ...GLASS,
+    pointerEvents: "none",
     font: '590 11.5px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
     letterSpacing: ".005em",
-    boxShadow:
-      "inset 0 1px 0 rgba(255,255,255,.50)," +
-      "inset 0 -1px 0 rgba(0,0,0,.30)," +
-      "inset 1px 0 0 rgba(255,255,255,.12)," +
-      "inset -1px 0 0 rgba(255,255,255,.12)," +
-      "0 1px 2px rgba(0,0,0,.40)," +
-      "0 16px 44px -16px rgba(0,0,0,.66)",
     display: "flex", alignItems: "center", gap: "10px", whiteSpace: "nowrap",
   });
   const title = css(document.createElement("div"), {
@@ -299,58 +344,9 @@ export const OVERLAY = `(() => {
   }
 
   function assemble() {
-    const settled = hud.style.boxShadow;
-    const R = hud.style.borderRadius || "999px";
-    hud.style.transition = "none";
-    hud.style.opacity = "0";
-    // A bead of liquid: narrow, tall for its width, and very round.
-    hud.style.transform = "translateX(-50%) translateY(-6px) scale(.34, 1.14)";
-    hud.style.filter = "blur(14px) saturate(140%)";
-    hud.style.borderRadius = "999px";
-
-    /*
-     * It spreads, rather than growing.
-     *
-     * A single scale from small to full size is the same motion as a dialog
-     * and reads as one. Liquid does something else: it arrives as a bead,
-     * flattens as it spreads sideways past where it will end up, and settles
-     * back. So the width and the height are animated against each other --
-     * wide and thin at the overshoot, then easing to square -- while the blur
-     * clears the way surface tension resolves, from soft to sharp, slightly
-     * behind the shape. That lag is most of the effect; matching the two
-     * durations makes it look like a fade again.
-     */
-    const frame = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn));
-    frame(() => {
-      hud.style.transition =
-        "transform .34s cubic-bezier(.22,.9,.2,1)," +
-        "opacity .2s ease," +
-        "filter .5s cubic-bezier(.3,.8,.3,1)," +
-        "box-shadow .8s ease";
-      hud.style.opacity = "1";
-      // Overshoot: spread wider and flatter than it will finish.
-      hud.style.transform = "translateX(-50%) translateY(0) scale(1.06, .82)";
-      hud.style.filter = "blur(2px) saturate(200%)";
-      // The rim catches the light as it spreads, the way water does.
-      hud.style.boxShadow =
-        "inset 0 1px 0 rgba(255,255,255,.75)," +
-        "inset 0 -1px 0 rgba(0,0,0,.28)," +
-        "0 0 0 1px rgba(255,255,255,.30)," +
-        "0 0 40px 10px rgba(255,255,255,.16)," +
-        "0 16px 44px -16px rgba(0,0,0,.66)";
-
-      // Settle: the two axes come back together and the blur finishes last.
-      setTimeout(() => {
-        hud.style.transition =
-          "transform .5s cubic-bezier(.2,.7,.2,1)," +
-          "filter .42s ease," +
-          "box-shadow .8s ease";
-        hud.style.transform = "translateX(-50%) translateY(0) scale(1, 1)";
-        hud.style.filter = "blur(0px) saturate(100%)";
-        hud.style.borderRadius = R;
-        hud.style.boxShadow = settled;
-      }, 330);
-    });
+    // The pill uses the same entrance as the cards, so the whole overlay
+    // behaves like one piece of software rather than three.
+    liquidIn(hud, "999px");
   }
   assemble();
 
@@ -649,10 +645,9 @@ export const OVERLAY = `(() => {
   const card = css(document.createElement("div"), {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
-    width: "min(360px, 92vw)", padding: "11px 13px", borderRadius: "12px",
-    background: "rgba(14,14,17,.97)", color: "#F7F2E7",
-    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)",
+    width: "min(360px, 92vw)", padding: "14px 16px", borderRadius: "20px",
+    ...GLASS,
+    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
     display: "none",
     /* Transparent to the mouse.
      *
@@ -684,11 +679,24 @@ export const OVERLAY = `(() => {
   const row = css(document.createElement("div"), { display: "flex", gap: "8px", pointerEvents: "auto" });
   const mkBtn = (text, primary) => {
     const b = css(document.createElement("button"), {
-      flex: "1", padding: "10px 12px", borderRadius: "10px", border: "0",
-      cursor: "pointer", fontSize: "13.5px", fontWeight: "600",
-      font: 'inherit', fontFamily: "inherit",
-      background: primary ? "rgba(255,255,255,.92)" : "rgba(247,242,231,.10)",
-      color: primary ? "#140A02" : "#F7F2E7",
+      flex: "1", padding: "11px 14px", borderRadius: "999px",
+      cursor: "pointer",
+      /*
+       * The order matters here. The font shorthand resets size and weight,
+       * so setting it after them -- which this did -- silently threw away the
+       * 13.5px at weight 600 declared on the line above. It goes first now.
+       */
+      font: '600 13.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+      // Cut from the same glass: a hairline rim and the same top sheen, so
+      // they read as pressed out of the panel rather than dropped onto it.
+      border: primary ? "0.5px solid rgba(255,255,255,.55)" : "0.5px solid rgba(255,255,255,.22)",
+      background: primary
+        ? "linear-gradient(to bottom, rgba(255,255,255,1), rgba(236,236,238,.94))"
+        : "linear-gradient(to bottom, rgba(255,255,255,.22), rgba(255,255,255,.05))",
+      boxShadow: primary
+        ? "inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(0,0,0,.28)"
+        : "inset 0 1px 0 rgba(255,255,255,.30)",
+      color: primary ? "#111113" : "#F7F2E7",
     });
     b.textContent = text;
     return b;
@@ -776,10 +784,10 @@ export const OVERLAY = `(() => {
   const doneCard = css(document.createElement("div"), {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
-    width: "min(360px, 92vw)", padding: "11px 13px", borderRadius: "12px",
-    background: "rgba(14,14,17,.97)", color: "#F7F2E7",
-    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    boxShadow: "0 18px 60px -18px rgba(0,0,0,.85)", display: "none",
+    width: "min(360px, 92vw)", padding: "14px 16px", borderRadius: "20px",
+    ...GLASS,
+    font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+    display: "none",
     // Same reason as the card above: it stays on screen until somebody closes
     // it, and until then it was eating the clicks meant for the page.
     pointerEvents: "none",
@@ -916,6 +924,8 @@ export const OVERLAY = `(() => {
       state.answer = null;
       showThumbs();
       card.style.display = "block";
+      // Pours in, like the pill does. It used to simply be there.
+      liquidIn(card, "20px");
       return true;
     },
     /** What was pressed on the card, once, or null while it is still open. */
@@ -938,6 +948,7 @@ export const OVERLAY = `(() => {
       dSub.textContent = sub;
       state.open = false;
       doneCard.style.display = "block";
+      liquidIn(doneCard, "20px");
     },
     /** True once Open the folder has been clicked. */
     wantsFolder() { const v = state.open; state.open = false; return v; },

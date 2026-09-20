@@ -101,3 +101,49 @@ and the app attaches that part's pictures once. A parts job has no top-level `pr
 POSTing a new job REPLACES whatever was queued, even if it has not run yet. Queue one
 job, wait for it, then queue the next. Two jobs sent back to back means the first is
 silently lost.
+
+## Hard rules for the app itself
+
+These were each learned by shipping the opposite. Do not re-derive them.
+
+**Never upload the same picture twice.** Not once per part, not once per retry, not
+once per drop target. It burns quota, fills the composer, trips the site's cap of 20
+files per message, and buries the product among copies of the brand mark. Three
+separate causes produced this, and all three are now guarded:
+- the drop route dispatching at every ancestor (events bubble — drop once),
+- a delivery route being retried while the first one was still uploading,
+- the retry loop calling the whole attach again on a partial.
+After attaching, the composer is counted: **more pictures than were sent means the
+prompt is not drawn at all.** Never relax that check.
+
+**A prompt whose references did not all arrive is never sent.** An image drawn without
+its reference comes back as a plausible picture of the wrong thing, which reads as a bad
+prompt — so hours go into rewriting words that were never the problem. If a render shows
+something that is not the product, suspect the attachment before the prompt.
+
+**ChatGPT only.** There is no Gemini quota. The choice is stored beside the runtime file
+(`import.meta.url`, never a bare relative path — the working directory differs between a
+Finder launch and a terminal launch) and an order outranks a job's own `site`.
+
+**Run `node check.mjs` before publishing a build.** It compiles the emitted overlay,
+looks for Node values leaked into it, and loads the runner far enough to catch a `let`
+used before its declaration. Each of those three shipped broken at least once and none
+of them is caught by `node --check`.
+
+**The overlay is a template literal.** Every backtick and `${` inside `OVERLAY` — including
+ones in comments — must be escaped. `node --check` reports a line nowhere near the cause.
+
+**The queue holds exactly one job.** A second POST replaces the first silently.
+
+## The panel
+
+One glass surface (`GLASS`) and one entrance (`liquidIn`) shared by the status pill and
+both cards, so the overlay is one piece of software rather than three. Glass has **no
+colour of its own** — no violet, no brand tint. It takes what is behind it: a saturating,
+brightening blur, a hard white band across the top quarter, a shadow pooled at the
+bottom, and the rim drawn from the inside on all four sides for thickness.
+
+It opens like liquid: a bead arrives, spreads wider and flatter than it will finish, then
+settles back as the blur clears — the clearing lagging the shape, because matching the
+durations turns it into a fade. Transform, filter and opacity only, so the page underneath
+is never slowed by the thing watching it.
