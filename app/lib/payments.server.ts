@@ -104,6 +104,8 @@ export interface PaymentProvider {
    * Optional: only the card processors have anything to register.
    */
   registerApplePayDomain?(domain: string): Promise<{ ok: true; domains: string[] } | { ok: false; reason: string }>;
+  /** Every domain this account may show Apple Pay on. Null when it cannot be read. */
+  applePayDomains?(): Promise<string[] | null>;
 }
 
 export class PaymentsNotConfigured extends Error {
@@ -327,6 +329,17 @@ class StripeProvider implements PaymentProvider {
       return { ok: true, account: currency };
     } catch (error) {
       return { ok: false, reason: error instanceof Error ? error.message : "Stripe refused the key." };
+    }
+  }
+
+  /** Every domain the account has claimed, or null if the key cannot read them. */
+  async applePayDomains(): Promise<string[] | null> {
+    try {
+      const list = await this.call("apple_pay/domains");
+      if (!Array.isArray(list?.data)) return null;
+      return list.data.map((d: { domain_name?: string }) => d.domain_name ?? "").filter(Boolean);
+    } catch {
+      return null;
     }
   }
 

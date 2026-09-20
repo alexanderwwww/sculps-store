@@ -67,6 +67,18 @@ export async function loader({ context, request }: Route.LoaderArgs) {
    * cannot answer is simply left out — nothing here ever shows a zero it
    * guessed at.
    */
+  /* Whether Apple will draw its button here at all. Apple only allows it on
+     a domain the account has claimed, so a shop with keys, a webhook and no
+     claim shows Google Pay and silently no Apple Pay -- which looks like a
+     bug in the checkout and is not one. Reading it costs one call and turns
+     the question into something the screen answers. */
+  const storeDomain = (store.domain ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
+  const applePayDomains = stripeRow?.secretKeyEnc
+    ? await providerForStore(context.db, context.cloudflare.env, store.id)
+        .then((p) => (p.applePayDomains ? p.applePayDomains() : null))
+        .catch(() => null)
+    : null;
+
   const [stripeBalance, paypalBalance] = await Promise.all([
     stripeRow?.secretKeyEnc
       ? providerForStore(context.db, context.cloudflare.env, store.id)
@@ -90,6 +102,10 @@ export async function loader({ context, request }: Route.LoaderArgs) {
       hasSecret: Boolean(stripeRow?.secretKeyEnc),
       hasWebhook: Boolean(stripeRow?.webhookSecretEnc),
       connectedAt: stripeRow?.connectedAt ? new Date(stripeRow.connectedAt).toISOString() : null,
+      /** null when the key cannot read them; [] when the account has claimed none. */
+      applePayDomains,
+      domain: storeDomain,
+      applePayOn: Boolean(storeDomain && applePayDomains?.includes(storeDomain)),
     },
     paypal: {
       clientId: paypalRow?.publishableKey ?? "",
@@ -342,16 +358,32 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
               </fetcher.Form>
               {/* Apple will not draw its button on a domain the merchant has
                   not claimed, which is why Apple Pay goes missing rather than
-                  failing. One press claims this store's domain with Stripe,
-                  which hosts Apple's verification file for us. */}
+                  failing. One press claims this store's domain with Stripe. */}
               <fetcher.Form method="post">
                 <QuietAction type="submit" name="intent" value="apple-pay" disabled={busy || !stripe.hasSecret}>
-                  {busy ? "Working…" : "Turn on Apple Pay"}
+                  {busy ? "Working…" : stripe.applePayOn ? "Re-check Apple Pay" : "Turn on Apple Pay"}
                 </QuietAction>
               </fetcher.Form>
               <QuietAction type="button" onClick={() => setEditStripe((open) => !open)}>
                 {editStripe ? "Hide keys" : stripe.hasSecret ? "Change keys" : "Add keys"}
               </QuietAction>
+            </div>
+
+            {/* Said plainly, because "the Apple Pay button is missing" and
+                "this domain is not claimed" look nothing alike from the
+                outside and are the same fact. */}
+            <div style={{ fontSize: 13, opacity: 0.75, marginTop: 10 }}>
+              {!stripe.hasSecret
+                ? null
+                : stripe.applePayDomains === null
+                  ? "Apple Pay · this key cannot read the account's domains, so the status is unknown."
+                  : stripe.applePayOn
+                    ? `Apple Pay · on for ${stripe.domain}. Stripe lists ${stripe.applePayDomains.join(", ")}.`
+                    : `Apple Pay · ${stripe.domain} is NOT registered, so Apple will not draw the button anywhere. ${
+                        stripe.applePayDomains.length
+                          ? `Stripe currently lists ${stripe.applePayDomains.join(", ")}.`
+                          : "This account has claimed no domains yet."
+                      }`}
               <span style={{ flex: 1 }} />
               <fetcher.Form method="post">
                 <QuietAction type="submit" name="intent" value="stripe-remove" disabled={busy || !stripe.hasSecret} style={{ color: "var(--critical)" }}>

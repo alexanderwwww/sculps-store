@@ -2976,11 +2976,19 @@ html, body { margin: 0; }
 @media (max-width: 900px) {
   .cb-header,
   .cb-sticky,
-  .cb-sticky.is-on,
-  .cb-chat__head {
+  .cb-sticky.is-on {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     background: rgba(255, 255, 255, .97);
+  }
+  /* The chat header belongs to the phone drawn around it, so it keeps iOS's
+     dark bar -- it just paints it flat instead of blurring what is behind.
+     Turning it white put the shop's logo on a pale slab inside a black
+     handset, which is the grey smudge that appeared on the mark. */
+  .cb-chat__head {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #1C1C1E;
   }
   .cb-hh__msg, .cb-hh__msg.is-mine { animation: none; }
 }
