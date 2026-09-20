@@ -245,6 +245,7 @@ function Section({
     case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
+    case "yard_plan":     return <YardPlan section={section} page={page} />;
     case "tier_ladder":   return <TierLadder section={section} />;
     case "install_weekend": return <InstallWeekend section={section} />;
     case "weather_plan":  return <WeatherPlan section={section} />;
@@ -2393,6 +2394,95 @@ function PhotoBanner({
   );
 }
 
+
+
+/**
+ * The yard, from above, with a number on every piece.
+ *
+ * A list of what is in a build tells you what you own. It does not tell you
+ * what the yard looks like, and at this price that is the question. So the
+ * plan is drawn: the house, the driveway, the path and the sidewalk, with a
+ * numbered marker wherever a piece stands, and the same numbers down the side
+ * saying what each one is and why it is there rather than somewhere else.
+ *
+ * It is drawn in the page rather than photographed, which means it is sharp on
+ * any screen, weighs nothing, and -- the part that matters -- it follows the
+ * bundle chosen in the buy box. Pick Night of the Dead and six more markers
+ * appear. A buyer comparing two builds can see the difference as a shape
+ * instead of reading two lists and holding them in their head.
+ */
+function YardPlan({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
+  const spots = section.blocks.filter((b) => has(b.values, "title"));
+  const variants = page.variants;
+  const fallbackId = (variants.find((x) => x.isDefault) ?? variants[0])?.id ?? "";
+  const { id: picked } = usePicked(fallbackId);
+  if (!spots.length || !variants.length) return null;
+
+  // Which build is on screen: its position in the bundle list, one-based.
+  const tier = Math.max(1, variants.findIndex((v) => v.id === picked) + 1);
+  const shown = spots.filter((b) => Number(val(b.values, "from") || "1") <= tier);
+  const chosen = variants.find((v) => v.id === picked) ?? variants[0];
+
+  return (
+    <section className="cb-yard" id="plan">
+      <div className="cb-wrap">
+        {has(section.values, "heading") ? <Head section={section} /> : null}
+
+        <p className="cb-yard__which">
+          Showing <b>{chosen?.label}</b>. Change the build above and the plan changes with it.
+        </p>
+
+        <div className="cb-yard__grid">
+          <div className="cb-yard__map">
+            <svg viewBox="0 0 400 300" className="cb-yard__svg" role="img" aria-label="Overhead plan of the yard">
+              {/* The ground, the road, the concrete. Flat colour, no texture. */}
+              <rect x="0" y="0" width="400" height="300" fill="#12131A" />
+              <rect x="0" y="276" width="400" height="24" fill="#1D1F28" />
+              <rect x="0" y="268" width="400" height="8" fill="#2A2D38" />
+              <rect x="296" y="92" width="72" height="176" fill="#2A2D38" />
+              {/* The house: body, porch, door, garage. */}
+              <rect x="52" y="14" width="296" height="78" rx="3" fill="#232630" stroke="#3A3E4C" strokeWidth="1.5" />
+              <rect x="160" y="78" width="96" height="22" rx="2" fill="#2B2F3A" stroke="#3A3E4C" strokeWidth="1.5" />
+              <rect x="198" y="86" width="20" height="14" fill="#F5821F" opacity="0.85" />
+              <rect x="286" y="20" width="58" height="66" rx="2" fill="#1C1F27" stroke="#3A3E4C" strokeWidth="1.5" />
+              {/* The path from the door to the sidewalk. */}
+              <path d="M198 100 L190 268 L226 268 L218 100 Z" fill="#2A2D38" />
+              {/* The lawn edge, so the plan reads as a plot and not a diagram. */}
+              <rect x="10" y="100" width="380" height="164" rx="4" fill="none" stroke="#2E3240" strokeWidth="1" strokeDasharray="4 5" />
+
+              {shown.map((b) => {
+                const x = Number(val(b.values, "x") || "0");
+                const y = Number(val(b.values, "y") || "0");
+                const n = val(b.values, "n");
+                return (
+                  <g key={b.id} className="cb-yard__mark">
+                    <circle cx={x} cy={y} r="11" fill="#F5821F" />
+                    <text x={x} y={y + 4} textAnchor="middle" className="cb-yard__num">{n}</text>
+                  </g>
+                );
+              })}
+            </svg>
+            <div className="cb-yard__key">
+              <span>House</span><span>Driveway</span><span>Path</span><span>Sidewalk</span>
+            </div>
+          </div>
+
+          <ol className="cb-yard__list">
+            {shown.map((b) => (
+              <li className="cb-yard__item" key={b.id}>
+                <span className="cb-yard__n">{val(b.values, "n")}</span>
+                <span className="cb-yard__txt">
+                  <b>{val(b.values, "title")}</b>
+                  <i>{val(b.values, "text")}</i>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* ------------------------------------------- the big-build sections
  *

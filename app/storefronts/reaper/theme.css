@@ -3328,3 +3328,54 @@ html, body { margin: 0; }
 .cb-two__b { margin: 0; font-size: 14.5px; line-height: 1.6; color: rgba(11, 11, 12, .78); }
 .cb-two__note { margin: 16px 0 0; font-size: 13.5px; color: rgba(11, 11, 12, .58); }
 @media (max-width: 640px) { .cb-two__grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- the yard, from above ----------------------------------------- */
+.cb-yard { background: #0B0B0C; color: #F7F2E7; padding: clamp(44px, 5.5vw, 78px) 0; }
+.cb-yard .cb-head h2, .cb-yard .cb-h2 { color: #fff; }
+.cb-yard .cb-head p, .cb-yard .cb-lede { color: rgba(247, 242, 231, .58); }
+.cb-yard__which {
+  margin: 0 0 16px; font-size: 13.5px; color: rgba(247, 242, 231, .58);
+}
+.cb-yard__which b { color: var(--action); font-weight: 700; }
+.cb-yard__grid {
+  display: grid; gap: 20px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: start;
+}
+.cb-yard__map {
+  background: #12131A;
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 16px;
+  padding: 10px;
+  position: sticky; top: 90px;
+}
+.cb-yard__svg { display: block; width: 100%; height: auto; border-radius: 10px; }
+.cb-yard__num {
+  font-family: var(--display); font-weight: 800; font-size: 12px; fill: #140A02;
+}
+.cb-yard__key {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  padding: 9px 4px 2px;
+  font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: rgba(247, 242, 231, .40);
+}
+.cb-yard__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.cb-yard__item {
+  display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start;
+  padding: 12px 0; border-top: 1px solid rgba(255, 255, 255, .09);
+}
+.cb-yard__item:first-child { border-top: 0; }
+.cb-yard__n {
+  width: 26px; height: 26px; border-radius: 999px;
+  display: grid; place-items: center;
+  background: var(--action); color: #140A02;
+  font-family: var(--display); font-weight: 800; font-size: 13px;
+}
+.cb-yard__txt { display: grid; gap: 3px; min-width: 0; }
+.cb-yard__txt b { font-size: 14.5px; font-weight: 700; color: #F7F2E7; }
+.cb-yard__txt i { font-style: normal; font-size: 13.5px; line-height: 1.5; color: rgba(247, 242, 231, .68); }
+
+@media (max-width: 860px) {
+  .cb-yard__grid { grid-template-columns: minmax(0, 1fr); }
+  .cb-yard__map { position: static; }
+}
