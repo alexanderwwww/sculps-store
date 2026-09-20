@@ -44,7 +44,8 @@ export async function mountPinMap(
   const pin = document.createElement("div");
   pin.className = "gb-map__pin";
   pin.innerHTML = '<span class="gb-map__dot"></span>';
-  const marker = new maplibre.Marker({ element: pin, anchor: "bottom", draggable: opts.draggable ?? false })
+  const marker = new maplibre.Marker({ element: pin, /* A dot marks its own centre; only a pin hangs from its point. */
+    anchor: "center", draggable: opts.draggable ?? false })
     .setLngLat([lon, lat])
     .addTo(map);
   return {

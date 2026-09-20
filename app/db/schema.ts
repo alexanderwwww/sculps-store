@@ -693,6 +693,8 @@ export const reviews = pgTable(
     reviewedOn: timestamp("reviewed_on", { withTimezone: true }),
     country: text("country"),
     imageUrl: text("image_url"),
+    /** The reviewer's profile picture, one of the shop's own face files. */
+    avatarUrl: text("avatar_url"),
     verified: boolean("verified").notNull().default(false),
     /** "customer" | "supplier_listing" | "draft" — required, never defaulted */
     source: text("source").notNull(),

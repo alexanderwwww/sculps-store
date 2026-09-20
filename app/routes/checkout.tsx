@@ -3407,7 +3407,7 @@ function OnePage({
        */
       const payment = elements.create("payment", {
         layout: { type: "accordion", defaultCollapsed: false, radios: true, spacedAccordionItems: true },
-        wallets: { applePay: "auto", googlePay: "auto" },
+        wallets: { applePay: "auto", googlePay: "never" },
       });
       if (cardRef.current) payment.mount(cardRef.current);
 
@@ -3461,9 +3461,13 @@ function OnePage({
                  * Safari. Insisting on a wallet the browser cannot show is
                  * the one difference between the two.
                  */
+                /* Google Pay is off by choice, not by accident: the shop
+                   takes Apple Pay through Stripe and PayPal through PayPal's
+                   own buttons, and a third wallet in the row is one more
+                   brand arguing for the same tap. */
                 paymentMethods: {
                   applePay: typeof (window as any).ApplePaySession !== "undefined" ? "always" : "never",
-                  googlePay: "always",
+                  googlePay: "never",
                   link: "auto",
                 },
                 emailRequired: true,

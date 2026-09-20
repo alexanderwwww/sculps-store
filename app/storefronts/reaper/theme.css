@@ -3173,3 +3173,27 @@ html, body { margin: 0; }
 }
 .cb .cb-ups__row .cb-up__txt i { font-size: 11.5px; }
 .cb .cb-ups__row .cb-up__add { margin-left: 0; justify-self: start; font-size: 12.5px; padding: 5px 11px; }
+
+/* The popup's button is neon, and its label has to be the dark green that
+   was always intended: the panel sets a cream colour on itself and the
+   button was inheriting it, which put near-white type on a near-yellow
+   pill. Scoped through the dialog so nothing in the cascade can take it
+   back. */
+.pp .pp__go,
+.pp .pp__go:hover,
+.pp .pp__go[disabled] { color: #17400A; }
+.pp .pp__code { color: #17400A; }
+
+/* Standing on its own, with no bundle box around it, the line needs its own
+   frame rather than the box's top edge. */
+.cb-bundle__p4--bare {
+  border: 1px solid rgba(11, 11, 12, .10);
+  border-radius: 12px;
+  margin-top: 10px;
+}
+@media (max-width: 720px) {
+  .cb-buy__side > .cb-bundle__p4--bare { order: 7; }
+}
+
+/* A photograph in the avatar slot: same circle, no gradient, no letter. */
+.cb-rv__av--pic { object-fit: cover; background: #EDEDF0; }

@@ -431,11 +431,18 @@
 /* The pin: a solid dot in the shop's own colour, on a white ring, with a
    small stem -- the shape of every map pin anybody has ever tapped. */
 .gb-map__pin { background: none; border: 0; }
+/* The blue dot, the way Find My and Maps draw "you are here": a solid iOS
+   blue disc on a white ring, with a soft halo bleeding out of it. It replaced
+   an orange teardrop -- a pin says "a place on a list", a dot says "this
+   spot", and this map is showing one address, not a search result. */
 .gb-map__dot {
-  display: block; width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
-  background: var(--lime); border: 3px solid #fff;
-  transform: rotate(-45deg);
-  box-shadow: 0 6px 14px -4px rgba(0,0,0,.45);
+  display: block; width: 18px; height: 18px; border-radius: 50%;
+  background: #007AFF;
+  border: 3px solid #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, .10),
+    0 1px 4px rgba(0, 0, 0, .35),
+    0 0 0 9px rgba(0, 122, 255, .18);
 }
 .gb-map .maplibregl-ctrl-attrib { font-size: 9px; opacity: .6; }
 .gb-map .maplibregl-ctrl-bottom-right { z-index: 1; }

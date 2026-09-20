@@ -101,7 +101,7 @@ export function ProductExpress(props: Props) {
         layout: { overflow: "never" },
         paymentMethods: {
           applePay: typeof (window as any).ApplePaySession !== "undefined" ? "always" : "never",
-          googlePay: "always",
+          googlePay: "never",
           link: "never",
         },
       });

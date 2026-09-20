@@ -15,6 +15,7 @@ import type { LoadedProductPage, LoadedSection } from "~/lib/store.server";
 import { formatMoney, savedAmount, savedPercent } from "~/lib/money";
 import { SPEC_PENDING } from "~/lib/sections";
 import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
+import { PayPalExpress } from "../garden-buddy/paypal-express";
 import { EmailPopup } from "./popup";
 import { PhoneChat } from "../shared/phone-chat";
 import { ProductExpress } from "../garden-buddy/product-express";
@@ -199,7 +200,7 @@ export function CeilingBuddyStorefront({
             // Every section here is block-level anyway, so a block wrapper
             // changes nothing about the layout.
             <div key={s.id} data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} offer={offer} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />
             </div>
           ))}
         </main>
@@ -229,6 +230,7 @@ function Section({
   storeParam,
   brand,
   publishableKey,
+  paypalClientId,
   offer,
 }: {
   section: LoadedSection;
@@ -236,10 +238,11 @@ function Section({
   storeParam: string;
   brand: CbBrand;
   publishableKey: string | null;
+  paypalClientId: string | null;
   offer: { code: string; kind: string; value: number } | null;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} offer={offer} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <LockScreen section={section} page={page} />;
@@ -455,7 +458,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", publishableKey = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, paypalClientId = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; paypalClientId?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -545,6 +548,20 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
               {off ? (
                 <span className="cb-price__off">{IcoTag} Save {formatMoney(off, currency)}</span>
               ) : null}
+            </div>
+          ) : null}
+
+          {/* Pay in 4 lives inside the bundle box, under the rows it is a
+              quarter of. A product sold one way has no bundle box, so the
+              line would vanish entirely -- it goes under the price instead,
+              which is the same place relative to the number it divides. */}
+          {chosen && variants.length <= 1 ? (
+            <div className="cb-bundle__p4 cb-bundle__p4--bare">
+              <img className="cb-pp cb-pp--word" src={PAYPAL_WORDMARK} alt="PayPal" />
+              <span>
+                or 4 interest-free payments of{" "}
+                <b>{formatMoney(Math.round(chosen.priceCents / 4), currency)}</b>
+              </span>
             </div>
           ) : null}
 
@@ -705,6 +722,29 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
                 shippingCents={0}
                 storeParam={storeParam}
                 onReady={() => {}}
+              />
+            </div>
+          ) : null}
+
+          {/* PayPal's own buttons, under Apple Pay's.
+              Stripe draws Apple Pay; PayPal draws PayPal, Venmo and Pay Later
+              from its own SDK, which is the only way to get its full row. Two
+              wallets, no Google Pay, and the plain buttons underneath for
+              everybody else. */}
+          {paypalClientId && chosen ? (
+            <div className="cb-wallet cb-wallet--pp">
+              <PayPalExpress
+                clientId={paypalClientId}
+                currency={currency}
+                storeParam={storeParam}
+                /* PayPal prices the cart, not a button, so the chosen bundle
+                   has to be in the cart before PayPal is asked for a total. */
+                beforeCreate={async () => {
+                  await fetch(`/cart/add${storeParam}`, {
+                    method: "POST",
+                    body: new URLSearchParams({ variantId: chosen.id, replace: "1" }),
+                  });
+                }}
               />
             </div>
           ) : null}
@@ -1678,13 +1718,13 @@ function Thrilled({ page }: { page: LoadedProductPage }) {
   ).slice(0, 2);
   if (names.length < 2) return null;
 
-  // Real photographs when the shop has them, initials until then. They are
-  // looked up by the product's handle, so dropping two files in with the
-  // right names is the whole job — no code change, no list to keep in step.
-  const faces = [
-    `/media/${page.product.handle}-av-1.webp`,
-    `/media/${page.product.handle}-av-2.webp`,
-  ].map((src) => (avatarHandles.has(page.product.handle) ? src : null));
+  /* The two people this row names have faces on the wall below, so it wears
+     theirs rather than a pair of files kept in step by hand. Falls back to
+     the old per-product override, then to an initial. */
+  const faces = names.map((first) => {
+    const match = page.reviews.find((r) => (r.name ?? "").trim().split(/\s+/)[0] === first && r.avatarUrl);
+    return match?.avatarUrl ?? null;
+  });
 
   // A stable number from the id. Same product, same number, every time.
   let n = 0;
@@ -2044,7 +2084,11 @@ function RvCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
   return (
     <article className="cb-rv">
       <header className="cb-rv__top">
-        <span className="cb-rv__av" data-seed={seed}>{initial}</span>
+        {r.avatarUrl ? (
+          <img className="cb-rv__av cb-rv__av--pic" src={r.avatarUrl} alt="" loading="lazy" decoding="async" />
+        ) : (
+          <span className="cb-rv__av" data-seed={seed}>{initial}</span>
+        )}
         <span className="cb-rv__who">
           <b>
             {name}
