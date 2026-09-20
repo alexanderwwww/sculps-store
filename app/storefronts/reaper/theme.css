@@ -2499,3 +2499,117 @@
   .cb-legal { padding: 36px 16px 56px; }
   .cb-legal h2 { margin-top: 28px; }
 }
+
+/* ------------------------------------------- who else has one, above the title
+ *
+ * The question a stranger from an advert asks before the price is not "is it
+ * good" but "am I the first". The score answers the first; this answers the
+ * second, which is the one that stops people scrolling past.
+ */
+.cb-thrilled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--border, rgba(20,22,26,.12));
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.3;
+  color: rgba(20, 22, 26, .68);
+  width: fit-content;
+  max-width: 100%;
+}
+.cb-thrilled b { color: var(--ink); font-weight: 700; }
+
+/* Overlapping initials rather than invented faces: it says who without
+   pretending to a photograph of somebody who does not exist. */
+.cb-thrilled__faces { display: inline-flex; flex: none; }
+.cb-thrilled__face {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  background: #B3430C;
+  border: 2px solid #fff;
+}
+.cb-thrilled__face + .cb-thrilled__face { margin-left: -9px; background: #14161A; }
+
+@media (max-width: 599px) {
+  .cb-thrilled { font-size: 12.5px; padding: 7px 11px 7px 7px; gap: 8px; }
+  .cb-thrilled__face { width: 23px; height: 23px; font-size: 11px; }
+}
+
+/* ------------------------------------------------- the code, beside the price
+ *
+ * The same code the top bar shouts, repeated where the money is. The bar is
+ * the part people have learned to read past; this is the part they are
+ * looking at while they decide.
+ */
+.cb-coupon {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--border, rgba(20,22,26,.12));
+  border-left: 3px solid #B3430C;
+  border-radius: 10px;
+  background: #FDF6F1;
+}
+.cb-coupon__tag { color: #B3430C; flex: none; margin-top: 1px; }
+.cb-coupon__tag svg { display: block; }
+.cb-coupon__in { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cb-coupon__amount {
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.cb-coupon__line {
+  font-size: 13px;
+  color: rgba(20, 22, 26, .66);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* The code is the button. Asking somebody to select and copy a code on a
+   phone is asking most of them not to bother. */
+.cb-coupon__code {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px dashed rgba(20, 22, 26, .3);
+  background: #fff;
+  border-radius: 7px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.cb-coupon__code:hover { border-color: #B3430C; }
+.cb-coupon__code code {
+  font-weight: 800;
+  letter-spacing: .08em;
+  font-size: 12.5px;
+}
+.cb-coupon__code span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #B3430C;
+}
+
+@media (max-width: 599px) {
+  .cb-coupon { padding: 10px 12px; }
+  .cb-coupon__amount { font-size: 14px; }
+  .cb-coupon__line { font-size: 12.5px; }
+}

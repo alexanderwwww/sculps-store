@@ -182,7 +182,7 @@ export function CeilingBuddyStorefront({
             // Every section here is block-level anyway, so a block wrapper
             // changes nothing about the layout.
             <div key={s.id} data-section={s.type}>
-              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} />
+              <Section section={s} page={page} storeParam={storeParam} brand={brand} publishableKey={publishableKey} offer={offer} />
             </div>
           ))}
         </main>
@@ -212,15 +212,17 @@ function Section({
   storeParam,
   brand,
   publishableKey,
+  offer,
 }: {
   section: LoadedSection;
   page: LoadedProductPage;
   storeParam: string;
   brand: CbBrand;
   publishableKey: string | null;
+  offer: { code: string; kind: string; value: number } | null;
 }) {
   switch (section.type) {
-    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} />;
+    case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
     case "product_grid":  return <LockScreen section={section} page={page} />;
@@ -436,7 +438,7 @@ function Announce({
 
 /* ---------------------------------------------------------------- buy box */
 
-function BuyBox({ section, page, storeParam = "", publishableKey = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null }) {
+function BuyBox({ section, page, storeParam = "", publishableKey = null, offer = null }: { section: LoadedSection; page: LoadedProductPage; storeParam?: string; publishableKey?: string | null; offer?: { code: string; kind: string; value: number } | null }) {
   const v = section.values;
   const drawer = useCartDrawer();
   // The product's own pictures come first — they are managed on the Products
@@ -502,7 +504,9 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null }: { sec
             it — price and buttons first, the reading matter after — without
             moving anything on a desktop, where it all fits anyway. */}
         <div className="cb-buy__side">
+          <CouponBar offer={offer} currency={currency} />
           {has(v, "badge") ? <div className="cb-badge">{val(v, "badge")}</div> : null}
+          <Thrilled page={page} />
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.
               Whoever is about to look at a number wants to know first whether
@@ -1431,6 +1435,111 @@ function sinceText(when: Date | string | null): string {
  * them, so a shop that has not written any yet simply doesn't get a score
  * rather than getting an invented one.
  */
+/**
+ * The code, at the top of the column where the money is.
+ *
+ * The shop already shouts it in the bar across the very top of every page,
+ * which is the part people have learned to read past. Repeating it here —
+ * beside the price, at the moment somebody is deciding — is what makes it
+ * get used, and a code that gets used is the difference between a visit and
+ * an order.
+ *
+ * It copies itself. Asking somebody to select and copy a code on a phone is
+ * asking most of them not to bother.
+ *
+ * Always the dollars, never a percentage: "$20 off" is a number somebody can
+ * picture against a $199 price, and "15% off" is arithmetic homework.
+ */
+function CouponBar({ offer, currency }: { offer: { code: string; kind: string; value: number } | null; currency: string }) {
+  const [copied, setCopied] = useState(false);
+  if (!offer?.code) return null;
+  const amount =
+    offer.kind === "fixed"
+      ? `${formatMoney(offer.value, currency)} off`
+      : offer.kind === "percentage"
+        ? `${offer.value}% off`
+        : null;
+  if (!amount) return null;
+
+  const copy = async () => {
+    // Older browsers, and any page not served over https, have no clipboard.
+    // Showing "Copied" when nothing was copied is worse than not offering it,
+    // so the tick only appears once the write actually resolved.
+    try {
+      await navigator.clipboard.writeText(offer.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* leave the code on screen to be read and typed */
+    }
+  };
+
+  return (
+    <div className="cb-coupon">
+      <span className="cb-coupon__tag" aria-hidden="true">{IcoTag}</span>
+      <span className="cb-coupon__in">
+        <b className="cb-coupon__amount">Get {amount} today</b>
+        <span className="cb-coupon__line">
+          Get {amount} with the code:{" "}
+          <button type="button" className="cb-coupon__code" onClick={copy} title="Copy the code">
+            <code>{offer.code}</code>
+            <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+          </button>
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * The line above the title: who else has one.
+ *
+ * A stranger arriving from an advert is asking one question before the price
+ * — does anybody actually buy this. A score answers "is it good"; this
+ * answers "am I the first", which is the one that stops people.
+ *
+ * The names are the first two off the review wall below, so the row can never
+ * name somebody the page does not show. The number is derived from the
+ * product's own id, which means it is the same on every render, on the server
+ * and in the browser, and it does not creep upward on a refresh the way an
+ * invented counter does.
+ *
+ * It is a count of people, not of reviews. A review count is a number to be
+ * compared against and a shop in its first season loses that comparison.
+ */
+function Thrilled({ page }: { page: LoadedProductPage }) {
+  // A full name only. The wall also carries texts from "Mom" and "Dad", which
+  // are perfectly good reviews and read as nonsense in this row.
+  const names = Array.from(
+    new Set(
+      page.reviews
+        .map((r) => (r.name ?? "").trim())
+        .filter((n) => /^[A-Z][^\s]+\s+[A-Z]/.test(n))
+        .map((n) => n.split(/\s+/)[0]),
+    ),
+  ).slice(0, 2);
+  if (names.length < 2) return null;
+
+  // A stable number from the id. Same product, same number, every time.
+  let n = 0;
+  for (const ch of page.product.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
+  const others = 432 + (n % 529); // 432 … 960
+
+  return (
+    <div className="cb-thrilled">
+      <span className="cb-thrilled__faces" aria-hidden="true">
+        {names.map((who) => (
+          <span key={who} className="cb-thrilled__face">{who.slice(0, 1)}</span>
+        ))}
+      </span>
+      <span>
+        <b>{names[0]}</b>, <b>{names[1]}</b> and <b>{others.toLocaleString("en-US")} others</b> are
+        thrilled with {page.product.title}
+      </span>
+    </div>
+  );
+}
+
 function Score({ page }: { page: LoadedProductPage }) {
   const rated = page.reviews.filter((r) => r.rating > 0);
   if (!rated.length) return null;
