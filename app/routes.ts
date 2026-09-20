@@ -5,6 +5,8 @@ export default [
   // arrived on, not by the path.
   index("routes/storefront.tsx"),
   route("healthz", "routes/healthz.ts"),
+  // Apple Pay will not show until Stripe can fetch this from the live domain.
+  route(".well-known/apple-developer-merchantid-domain-association", "routes/apple-pay-domain.ts"),
 
   // Storefront buying flow. Same Worker, same hostname rules as the storefront.
   route("cart", "routes/cart.tsx"),
