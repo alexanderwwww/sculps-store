@@ -68,3 +68,36 @@ and that slug is how the pictures are fetched.
 Re-queue that **one** prompt as its own job with no `newChat`, so it runs in the chat that
 already holds the reference. Say what was wrong and what to do instead, in that order. One
 bad picture costs one prompt, not a whole run.
+
+## Which site, and why it matters
+
+**Alex has no Gemini quota. Everything runs on ChatGPT** unless he says otherwise.
+
+The app remembers the site it was told to use, in a `.site` file beside the runtime,
+and an order naming a site outranks whatever `site` a queued job carries. Send
+`{"cmd":"chatgpt"}` once and it holds across restarts and updates. Before build 52 it
+was held in memory only, so every update reopened Gemini and burned a run.
+
+Still set `"site": "chatgpt"` on every job. Belt and braces, and it is one line.
+
+## References are not optional
+
+From build 52 the app REFUSES to send a prompt whose reference pictures did not all
+reach the composer. It retries, waits for slow uploads, and then skips the prompt with
+a red line and a `problem` on the status rather than drawing from nothing.
+
+This matters because of how the failure used to look. A prompt sent without its
+references comes back as a plausible picture of the wrong thing — a box with an
+invented product on it, a figure that is not the product — so it reads as a bad prompt.
+A whole afternoon went into rewriting words that were never the problem. **If a render
+comes back showing something that is not the product, suspect the attachment before the
+prompt.**
+
+For per-product references use `parts`: each part carries its own `refs` and `prompts`,
+and the app attaches that part's pictures once. A parts job has no top-level `prompts`.
+
+## The queue holds exactly one job
+
+POSTing a new job REPLACES whatever was queued, even if it has not run yet. Queue one
+job, wait for it, then queue the next. Two jobs sent back to back means the first is
+silently lost.

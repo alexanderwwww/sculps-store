@@ -21,6 +21,7 @@
 import { chromium } from "playwright";
 import { attachWand } from "./wand.mjs";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { basename, extname } from "node:path";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -256,7 +257,12 @@ async function obey() {
       // rate limited. That choice outranks whatever "site" the queued jobs
       // happen to carry, which otherwise switched straight back on the next
       // job and looked like the app changing sites by itself.
-      if (did) { siteHeld = cmd; log(`  \x1b[2mstaying on ${site.name} until you say otherwise\x1b[0m`); }
+      if (did) {
+        siteHeld = cmd;
+        // To disk, so a restart or an update does not undo it.
+        writeFile(SITE_FILE, cmd).catch(() => {});
+        log(`  \x1b[2mstaying on ${site.name} until you say otherwise\x1b[0m`);
+      }
     }
     else if (cmd.startsWith("goto ")) did = await goTo(cmd.slice(5).trim());
     // No navGen bump: unpin moves nothing. Counting it as a move abandoned
@@ -607,7 +613,28 @@ opt.wait = Number(opt.wait);
  * it says so and leaves the job for later rather than typing into a login
  * page.
  */
-let site = SITES[opt.site] ?? SITES.gemini;
+/**
+ * The site to work on, remembered across restarts.
+ *
+ * An order naming a site was held in memory only, so every update and every
+ * restart forgot it and fell back to the built-in default. The owner has no
+ * Gemini quota left; the app kept reopening Gemini anyway, once per restart,
+ * and each time it was a run wasted and a thing to notice and correct by
+ * hand. A preference stated out loud should outlive the process that heard
+ * it.
+ */
+const SITE_FILE = ".site";
+let siteRemembered = null;
+try {
+  const saved = readFileSync(SITE_FILE, "utf8").trim();
+  if (SITES[saved]) siteRemembered = saved;
+} catch {
+  /* nothing remembered yet, which is the normal first run */
+}
+let site = SITES[opt.site] ?? (siteRemembered ? SITES[siteRemembered] : null) ?? SITES.gemini;
+// A remembered site is a held site: a job's own "site" must not undo a choice
+// the owner made out loud, whether they made it a minute ago or last week.
+if (siteRemembered && !opt.site) siteHeld = siteRemembered;
 
 const run = promisify(execFile);
 
@@ -1413,20 +1440,36 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
      * loud, and the run moves on rather than burning the quota on an image
      * that cannot be used.
      */
+    // Counted as a difference, not a total: the composer can already hold
+    // something, and comparing a raw count against the number of files being
+    // sent would call that a success without either of them arriving.
+    const startCount = await blobCount(page).catch(() => 0);
+    const landedSoFar = async () => {
+      const now = await blobCount(page).catch(() => startCount);
+      return Math.max(0, now - startCount);
+    };
     let how = null;
     let landedCount = 0;
     for (let attempt = 1; attempt <= 3; attempt++) {
       await say(label, `${n} of ${total} — attaching ${refs.length}${attempt > 1 ? ` (try ${attempt})` : ""}…`);
       how = await putFiles(page, refs, wand, label);
-      landedCount = how ? (await blobCount(page).catch(() => refs.length)) : 0;
-      if (how && landedCount >= refs.length) break;
+      landedCount = how ? await landedSoFar() : 0;
+      if (landedCount >= refs.length) break;
+      /*
+       * Most short attachments are simply slow, not lost: the second file is
+       * still uploading when the check runs out. So the first answer to a
+       * short count is to wait and look again, not to attach anything else.
+       *
+       * If a retry does send the files a second time the composer may end up
+       * holding a duplicate, and that is deliberately accepted. The model
+       * seeing one of the references twice costs nothing; the model never
+       * seeing it at all is what ruins the picture.
+       */
+      await wait(3000);
+      landedCount = await landedSoFar();
+      if (landedCount >= refs.length) { how = how ?? "waited"; break; }
       if (attempt < 3) {
         log(`  \x1b[33m!! ${landedCount} of ${refs.length} reference pictures attached — trying again\x1b[0m`);
-        // Clear the half-loaded set so the retry starts from nothing rather
-        // than stacking a second copy of the one that did arrive.
-        await wand?.deafen(1500);
-        await page.keyboard.press("Escape").catch(() => {});
-        await wait(1500);
       }
     }
     if (!how || landedCount < refs.length) {
@@ -1440,18 +1483,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       await wait(1200);
       return 0;
     }
-    {
-      attachedInChat = true;
-      freshRefs = false;
-      /*
-       * Count what is actually in the composer, not what we handed it.
-       *
-       * This printed refs.length unconditionally, so a run that attached one
-       * of two pictures still said "attached 2" and the missing product photo
-       * was invisible in the log for a whole afternoon.
-       */
-      log(`  attached ${refs.length} (${how})`);
-    }
+    // Past the gate above, every reference is in the composer. The count is
+    // the measured one, because the old line printed how many files it had
+    // been handed and said "attached 2" all afternoon while attaching one.
+    attachedInChat = true;
+    freshRefs = false;
+    log(`  attached ${landedCount} (${how})`);
   }
 
   const box = await find(page, site.ask, 20000);
