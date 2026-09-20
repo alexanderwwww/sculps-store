@@ -2720,7 +2720,26 @@ while (true) {
   const belongs = parts.flatMap((p, pi) => p.prompts.map(() => pi));
   /** The first prompt of a part starts its own chat and brings its own pictures. */
   const opensPart = parts.flatMap((p) => p.prompts.map((_, i) => i === 0));
-  const sameChat = (i) => (perPrompt ? false : !(opensPart[i] && (parts.length > 1 || job.newChat)));
+  /*
+   * One conversation for the whole job, parts included.
+   *
+   * Each part used to open a fresh chat, so a job covering five products
+   * opened five chats -- and a chat per product is the behaviour this app was
+   * built to get away from. It existed for a reason: a part's own pictures
+   * had to be the ones nearest the prompt, and the only way to guarantee that
+   * was to start with nothing.
+   *
+   * That reason is gone. The runner now remembers what a conversation already
+   * holds, by content, so a part attaches only the pictures the chat has not
+   * seen -- its product photograph, with the brand mark already up the thread.
+   * Its own picture is still the most recent one when it draws.
+   *
+   * A job can still ask for a chat per part with "chatPerPart": true, and
+   * newChat: "each" is unchanged.
+   */
+  const chatPerPart = job.chatPerPart === true;
+  const sameChat = (i) =>
+    perPrompt ? false : !(opensPart[i] && ((parts.length > 1 && chatPerPart) || job.newChat));
   /** Prompts in a row that produced nothing. Two means the site, not the prompt. */
   let dry = 0;
   let live = refs;
