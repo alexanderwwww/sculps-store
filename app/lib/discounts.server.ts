@@ -140,7 +140,8 @@ export function applyDiscount(
 export function discountLabel(discount: DiscountRow, currency = "USD"): string {
   if (discount.kind === "free_shipping") return "Free shipping";
   if (discount.kind === "percentage") return `${discount.value}% off`;
-  return `${formatMoney(discount.value, currency)} off`;
+  // "$5 off", never "$5.00 off" -- whole-dollar amounts drop the cents.
+  return `${formatMoney(discount.value, currency).replace(/[.,]00\b/, "")} off`;
 }
 
 export type DiscountStatus = "active" | "scheduled" | "expired" | "limit reached" | "inactive";

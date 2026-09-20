@@ -41,10 +41,10 @@ function draw(): number {
   return SCRATCH_PRIZES[0]!.percent;
 }
 
-const codeFor = () => {
+const codeFor = (prefix = "LUCKY") => {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return `LUCKY${Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("")}`;
+  return `${prefix}${Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("")}`;
 };
 
 export interface ScratchPlay {
@@ -154,7 +154,7 @@ export async function claimExtraFor(
   if (already?.kind === "fixed") base = Math.max(0, already.value);
   else if (already?.kind === "percentage") base = Math.round((Math.min(100, Math.max(0, already.value)) / 100) * subtotalCents);
   const amountCents = base + CLAIM_EXTRA_CENTS;
-  const code = codeFor();
+  const code = codeFor("EXTRA");
 
   const [discount] = await db
     .insert(discounts)
