@@ -237,7 +237,14 @@ async function obey() {
   // Where to be is the runner's business; the page only knows its own buttons.
   let did = false;
   try {
-    if (cmd === "chatgpt" || cmd === "gemini") did = await switchSite(cmd);
+    if (cmd === "chatgpt" || cmd === "gemini") {
+      did = await switchSite(cmd);
+      // An order names the site on purpose, usually because the other one is
+      // rate limited. That choice outranks whatever "site" the queued jobs
+      // happen to carry, which otherwise switched straight back on the next
+      // job and looked like the app changing sites by itself.
+      if (did) { siteHeld = cmd; log(`  \x1b[2mstaying on ${site.name} until you say otherwise\x1b[0m`); }
+    }
     else if (cmd.startsWith("goto ")) did = await goTo(cmd.slice(5).trim());
     // No navGen bump: unpin moves nothing. Counting it as a move abandoned
     // the picture that was already being drawn in the chat we are still in.
@@ -292,6 +299,8 @@ async function obey() {
  * its whole length rather than for its first prompt.
  */
 let pinnedChat = null;
+/** A site named by an order, which a job's own "site" is not allowed to undo. */
+let siteHeld = null;
 /**
  * Bumped by anything that moves the app somewhere else on purpose — a site
  * switch, a goto, an unpin. A prompt that was waiting for its pictures when
@@ -1981,7 +1990,9 @@ while (true) {
    * chat to work in rather than the site's front page.
    */
   const wanted = job.site && SITES[job.site] ? SITES[job.site] : null;
-  if (wanted && wanted !== site) {
+  if (wanted && wanted !== site && siteHeld && SITES[siteHeld] === site) {
+    log(`  \x1b[2mthis job asks for ${wanted.name}; staying on ${site.name} as ordered\x1b[0m`);
+  } else if (wanted && wanted !== site) {
     // Not signed in there: leave the job alone — it is offered again once
     // that tab is logged in.
     if (!(await switchSite(job.site))) { await wait(POLL_MS); continue; }
@@ -2066,7 +2077,7 @@ while (true) {
   // whole time it is — including "gemini" on a job written for ChatGPT. Left
   // unchecked the job then ran on the wrong site with the other one's
   // selectors merged in, which looks exactly like a site redesign.
-  if (wanted && siteName !== job.site && !(await switchSite(job.site))) {
+  if (wanted && siteName !== job.site && !(siteHeld && SITES[siteHeld] === site) && !(await switchSite(job.site))) {
     await wait(POLL_MS);
     continue;
   }
