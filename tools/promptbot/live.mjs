@@ -22,6 +22,7 @@ import { chromium } from "playwright";
 import { attachWand } from "./wand.mjs";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { basename, extname } from "node:path";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -285,6 +286,8 @@ async function obey() {
         wand = await attachWand(page);
         pinnedChat = null;
         attachedInChat = false;
+        // A new conversation holds no pictures, so nothing is a duplicate in it.
+        chatRefs = new Set();
         navGen++;
         did = true;
       }
@@ -322,6 +325,30 @@ async function obey() {
 let pinnedChat = null;
 /** A site named by an order, which a job's own "site" is not allowed to undo. */
 let siteHeld = null;
+/**
+ * The reference pictures this conversation already holds, by their contents.
+ *
+ * Parts of a job share pictures — every product's part carries the same brand
+ * mark — and they were re-uploaded for each one, so a five product run put the
+ * same file up five times. That is five uploads of quota, five more thumbnails
+ * in the composer to scroll past, and five more chances to trip the site's
+ * limit on how many files one message may carry.
+ *
+ * Keyed on the bytes rather than the path, because each part downloads its
+ * copy into its own folder: the same picture arrives under five different
+ * names. Emptied whenever the conversation changes, since a new chat holds
+ * nothing.
+ */
+let chatRefs = new Set();
+function refKey(path) {
+  try {
+    return createHash("sha1").update(readFileSync(path)).digest("hex");
+  } catch {
+    // Unreadable means "cannot prove it is a duplicate", and the safe answer
+    // to that is to attach it.
+    return `unreadable:${path}:${Math.random()}`;
+  }
+}
 /**
  * Bumped by anything that moves the app somewhere else on purpose — a site
  * switch, a goto, an unpin. A prompt that was waiting for its pictures when
@@ -541,7 +568,19 @@ const SITES = {
      * simply cannot reach anything. Naming them means they can be cleared
      * rather than waited out.
      */
-    blocked: ['text=Unable to upload', 'text=uploads at a time', 'text=Drop any file here', '[role="alert"]'],
+    /*
+     * Only things that genuinely cover the page.
+     *
+     * [role="alert"] was in this list and it should never have been: the site
+     * keeps polite, harmless alert nodes around, so the app decided the page
+     * was blocked on every single prompt, failed to "clear" something that
+     * was not in the way, and opened a clean chat each time — which is the
+     * new chat per picture that this whole app exists to avoid.
+     *
+     * Named states only, and even then the decision below is made by trying
+     * the composer rather than by trusting this list.
+     */
+    blocked: ['text=Unable to upload', 'text=uploads at a time', 'text=Drop any file here'],
     dismiss: [
       '[role="alert"] button',
       'button[aria-label*="Dismiss" i]',
@@ -1171,12 +1210,30 @@ async function clearBlockers(label = "") {
   await page.keyboard.press("Escape").catch(() => {});
   await wait(800);
 
-  let still = false;
-  for (const sel of site.blocked) {
-    if (await page.locator(sel).first().isVisible().catch(() => false)) { still = true; break; }
-  }
-  if (still) log(`  \x1b[33m!! it is still there — the next prompt starts a clean chat\x1b[0m`);
-  return still;
+  /*
+   * The test is whether the composer can be used, not whether a banner is
+   * still on screen.
+   *
+   * A notice can sit in a corner all day without being in the way of
+   * anything. Asking the page directly — is the message box there, and is
+   * the point in the middle of it actually the message box rather than
+   * something on top of it — is the only question that matters, and it is
+   * the one that decides whether a clean chat is worth the cost.
+   */
+  const usable = await page.evaluate((sels) => {
+    for (const sel of sels) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 8 || r.height < 8) continue;
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (top && (el.contains(top) || top.contains(el))) return true;
+    }
+    return false;
+  }, site.ask).catch(() => true);
+
+  if (!usable) log(`  \x1b[33m!! the message box still cannot be reached\x1b[0m`);
+  return !usable;
 }
 
 async function fetchRefs(urls, dir) {
@@ -1458,6 +1515,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     await freshChat("carrying on in the same chat");
     // Nothing from the old thread carries over, references included.
     attachedInChat = false;
+    chatRefs = new Set();
   }
 
   /*
@@ -1511,6 +1569,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       freshRefs = Boolean(refs.length);
       // Nothing is in this conversation yet, so this prompt's pictures go in.
       skipRefs = false;
+      chatRefs = new Set();
       navGen++;
       await wait(1200);
     }
@@ -1565,6 +1624,18 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
      * already sitting there before this prompt's own pictures go in, the
      * cleanest answer is a fresh conversation, which costs one page load.
      */
+    /*
+     * Only the pictures this conversation does not already hold.
+     *
+     * Every part of a job carries the brand mark, so without this the same
+     * file goes up once per product: five uploads of one picture, five more
+     * thumbnails in the composer, and five steps closer to the site's limit
+     * on files per message.
+     */
+    const fresh = refs.filter((r) => !chatRefs.has(refKey(r)));
+    if (fresh.length < refs.length) {
+      log(`  \x1b[2m${refs.length - fresh.length} of ${refs.length} already in this chat — not sending ${refs.length - fresh.length === 1 ? "it" : "them"} again\x1b[0m`);
+    }
     const startCount = await blobCount(page).catch(() => 0);
     const landedSoFar = async () => {
       const now = await blobCount(page).catch(() => startCount);
@@ -1573,10 +1644,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     let how = null;
     let landedCount = 0;
     for (let attempt = 1; attempt <= 3; attempt++) {
-      await say(label, `${n} of ${total} — attaching ${refs.length}${attempt > 1 ? ` (try ${attempt})` : ""}…`);
-      how = await putFiles(page, refs, wand, label);
+      await say(label, `${n} of ${total} — attaching ${fresh.length}${attempt > 1 ? ` (try ${attempt})` : ""}…`);
+      how = await putFiles(page, fresh, wand, label);
       landedCount = how ? await landedSoFar() : 0;
-      if (landedCount >= refs.length) break;
+      if (landedCount >= fresh.length) break;
       /*
        * Most short attachments are simply slow, not lost: the second file is
        * still uploading when the check runs out. So the first answer to a
@@ -1589,18 +1660,18 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
        */
       await wait(3000);
       landedCount = await landedSoFar();
-      if (landedCount >= refs.length) { how = how ?? "waited"; break; }
+      if (landedCount >= fresh.length) { how = how ?? "waited"; break; }
       if (attempt < 3) {
-        log(`  \x1b[33m!! ${landedCount} of ${refs.length} reference pictures attached — trying again\x1b[0m`);
+        log(`  \x1b[33m!! ${landedCount} of ${fresh.length} reference pictures attached — trying again\x1b[0m`);
       }
     }
-    if (!how || landedCount < refs.length) {
-      log(`  \x1b[31m!! only ${landedCount} of ${refs.length} reference pictures would attach — NOT sending this one\x1b[0m`);
+    if (fresh.length && (!how || landedCount < fresh.length)) {
+      log(`  \x1b[31m!! only ${landedCount} of ${fresh.length} reference pictures would attach — NOT sending this one\x1b[0m`);
       await say(label, `${n} of ${total} — references wouldn't attach, skipped`);
       report("waiting for pictures", {
         job: label,
         prompt: `${n} of ${total}`,
-        problem: `only ${landedCount} of ${refs.length} reference pictures attached — prompt not sent`,
+        problem: `only ${landedCount} of ${fresh.length} reference pictures attached — prompt not sent`,
       });
       await wait(1200);
       return 0;
@@ -1610,7 +1681,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // been handed and said "attached 2" all afternoon while attaching one.
     attachedInChat = true;
     freshRefs = false;
-    log(`  attached ${landedCount} (${how})`);
+    // Remember them by their contents, so no part of this job sends the same
+    // picture into this conversation a second time.
+    for (const r of fresh) chatRefs.add(refKey(r));
+    if (fresh.length) log(`  attached ${landedCount} (${how})`);
   }
 
   const box = await find(page, site.ask, 20000);
