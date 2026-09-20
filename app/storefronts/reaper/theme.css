@@ -1626,13 +1626,20 @@
 
 /* Three across, square, equal. Square because every one of these was shot
    square, and a row of three that each crop differently reads as a mistake. */
+/* Wider than the text it sits between.
+ *
+ * At the page's reading width three squares come out about 370px each, which
+ * is a contact sheet. These are the only photographs on the page with nothing
+ * written on them — the argument that it is a real object on a real lawn — so
+ * they get the room to make it. The gap tightens as they grow, because three
+ * big pictures want to read as one band rather than three cards. */
 .cb-night__row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  max-width: var(--wrap);
+  gap: 8px;
+  max-width: 1680px;
   margin: 0 auto;
-  padding: 0 clamp(14px, 3vw, 28px);
+  padding: 0 clamp(10px, 1.6vw, 20px);
 }
 .cb-night__row--1 { grid-template-columns: minmax(0, 1fr); }
 .cb-night__row--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
