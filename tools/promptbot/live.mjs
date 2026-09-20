@@ -1475,9 +1475,45 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
    * chat"; and pictures dropped mid-run through Add pictures were thrown
    * away, so the rest of the job kept drawing the old product.
    */
-  const skipRefs = sameChat && attachedInChat && !freshRefs;
+  // Not a constant: a clean chat started below invalidates it. It was const,
+  // and a prompt that opened a fresh chat then skipped attaching because the
+  // old chat had had references — sending the very first prompt of a new
+  // conversation with nothing attached.
+  let skipRefs = sameChat && attachedInChat && !freshRefs;
   if (skipRefs && (fromCard || refs.length)) {
     log(`  \x1b[2mreferences already in this chat\x1b[0m`);
+  }
+
+  /*
+   * Clear the page before anything else is attempted on it.
+   *
+   * This lived inside the branch that attaches references, so a prompt that
+   * was reusing the references already in the chat never ran it — and those
+   * are most of the prompts in a run. The upload banner and the drop curtain
+   * block a click whether or not this particular prompt is uploading
+   * anything, so the check belongs in front of both branches.
+   *
+   * Left-over thumbnails are dealt with in the same place: a failed attach
+   * leaves its pictures behind and the next attempt adds to them rather than
+   * replacing them, which is how two references became twenty.
+   */
+  const blockedStill = await clearBlockers(label);
+  const leftOver = skipRefs ? 0 : await blobCount(page).catch(() => 0);
+  if (blockedStill || leftOver > 0) {
+    log(blockedStill
+      ? `  \x1b[33m!! the page is still blocked — starting a clean chat\x1b[0m`
+      : `  \x1b[33m!! ${leftOver} picture${leftOver === 1 ? "" : "s"} left over in the box — starting a clean chat\x1b[0m`);
+    if (await freshChat("couldn't clear the page")) {
+      watchImages(page);
+      wand = await attachWand(page);
+      pinnedChat = null;
+      attachedInChat = false;
+      freshRefs = Boolean(refs.length);
+      // Nothing is in this conversation yet, so this prompt's pictures go in.
+      skipRefs = false;
+      navGen++;
+      await wait(1200);
+    }
   }
 
   // Pictures before words: both sites disable send while an upload is running.
@@ -1529,23 +1565,6 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
      * already sitting there before this prompt's own pictures go in, the
      * cleanest answer is a fresh conversation, which costs one page load.
      */
-    // Anything covering the page is cleared first: a click cannot land through
-    // the upload banner or the drop curtain, and neither goes away by itself.
-    const stuck = await clearBlockers(label);
-    const stale = await blobCount(page).catch(() => 0);
-    if (stuck || stale > 0) {
-      log(stuck
-        ? `  \x1b[33m!! the page is still blocked — starting a clean chat\x1b[0m`
-        : `  \x1b[33m!! ${stale} picture${stale === 1 ? "" : "s"} left over in the box — starting a clean chat\x1b[0m`);
-      if (await freshChat("couldn't clear the composer")) {
-        watchImages(page);
-        wand = await attachWand(page);
-        pinnedChat = null;
-        attachedInChat = false;
-        navGen++;
-        await wait(1200);
-      }
-    }
     const startCount = await blobCount(page).catch(() => 0);
     const landedSoFar = async () => {
       const now = await blobCount(page).catch(() => startCount);
