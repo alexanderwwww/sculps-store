@@ -3057,3 +3057,59 @@
 @media (max-width: 720px) {
   .cb-buy__side > .cb-coupon { order: 1; }
 }
+
+/* ------------------------------------------- the rest of the phone budget
+ *
+ * The reviews were the worst of it, but they were not the only place doing
+ * the same thing. Everything below is the same trade made again: a blur, a
+ * mask over a moving track, or a per-card bob that promotes every card to its
+ * own compositor layer. On a desktop each is invisible; on a phone they add
+ * up to the same video memory that killed the tab.
+ *
+ * One rule throughout: a layer may move OR it may be blurred or masked, and a
+ * thing that moves does it on one element, not on each of its children.
+ */
+
+/* The clip rail: one sliding layer, and the eight clips ride it still. The
+   mask over a moving track is an offscreen copy of the whole rail; two
+   painted gradient ends do the same job for nothing. */
+.cb-ugcw__rail {
+  mask-image: none;
+  -webkit-mask-image: none;
+  position: relative;
+  overflow: clip;
+}
+.cb-clip {
+  animation: none;
+  will-change: auto;
+}
+/* Eight captions, eight backdrop-filters, eight offscreen buffers. The
+   caption sits on a photograph that is already dark at the bottom, so a flat
+   translucent white reads identically and costs one paint. */
+.cb-clip figcaption,
+.cb-tile figcaption {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(255, 255, 255, .92);
+}
+
+/* The header and the sticky buy bar are pinned, so their blur is recomputed
+   against whatever scrolls underneath them -- every frame, the whole width of
+   the screen, at three device pixels per CSS pixel. Opaque on a phone. */
+@media (max-width: 900px) {
+  .cb-header,
+  .cb-sticky,
+  .cb-sticky.is-on,
+  .cb-chat__head {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, .97);
+  }
+}
+
+/* The message bubbles in the hero conversation bobbed on their own clocks.
+   Five bubbles, five layers, for a movement nobody has ever mentioned. */
+@media (max-width: 900px) {
+  .cb-hh__msg,
+  .cb-hh__msg.is-mine { animation: none; }
+}

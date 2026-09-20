@@ -504,7 +504,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
                   aria-label={`Photo ${i + 1}`}
                   onClick={() => setShot(i)}
                 >
-                  <img src={val(b.values, "image")} alt="" loading="lazy" />
+                  <Pic src={val(b.values, "image")} size="t200" alt="" loading="lazy" />
                 </button>
               ))}
             </div>
@@ -627,7 +627,7 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
                       return (
                         <span className="cb-tier__pics cb-tier__pics--1">
                           <span className="cb-tier__pic">
-                            <img src={pic} alt="" loading="lazy" />
+                            <Pic src={pic} size="t200" alt="" loading="lazy" />
                           </span>
                         </span>
                       );
@@ -1333,6 +1333,50 @@ const PAYPAL_WORDMARK = "/media/cda7704463471358.svg";
 
 const IcoPaypal = <img className="cb-pp" src={PAYPAL_MARK} alt="PayPal" />;
 
+/* ----------------------------------------------------------- small copies */
+
+/**
+ * The same picture, at the size it is actually drawn.
+ *
+ * Every panel in this shop is authored at 1024 square, which is right for the
+ * gallery and absurd for a sixty-two pixel thumbnail: eight of them used to
+ * cost a megabyte to draw a strip the width of a thumb. Two smaller copies of
+ * every image live beside the original in storage -- `-t200` for anything
+ * drawn at thumbnail size, `-w640` for cards -- so the phone downloads five
+ * kilobytes instead of a hundred and twenty.
+ *
+ * `onError` is the whole safety net: an image uploaded after those copies
+ * were made has no small version, the request 404s once, and the tag falls
+ * back to the original. Nothing ever renders broken, so this can be used
+ * without knowing which images have copies and which do not.
+ */
+function shrink(url: string, size: "t200" | "w640"): string {
+  const u = (url ?? "").trim();
+  if (!u.startsWith("/media/") || !/\.(webp|png|jpe?g)$/i.test(u)) return u;
+  return u.replace(/\.(webp|png|jpe?g)$/i, `-${size}.webp`);
+}
+
+function Pic({
+  src,
+  size,
+  ...rest
+}: { src: string; size: "t200" | "w640" } & Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src">) {
+  const small = shrink(src, size);
+  return (
+    <img
+      {...rest}
+      src={small}
+      onError={(event) => {
+        const el = event.currentTarget;
+        if (small !== src && !el.dataset.full) {
+          el.dataset.full = "1";
+          el.src = src;
+        }
+      }}
+    />
+  );
+}
+
 function PayLater({ page, wide = false }: { page: LoadedProductPage; wide?: boolean }) {
   const buy = page.variants.find((v) => v.isDefault) ?? page.variants[0] ?? null;
   if (!buy) return null;
@@ -1432,7 +1476,7 @@ function SocialCard({ r, logo }: { r: LoadedProductPage["reviews"][number]; logo
         </header>
         {r.imageUrl ? (
           <div className="cb-card__pic">
-            <img src={r.imageUrl} alt="" loading="lazy" />
+            <Pic src={r.imageUrl} size="w640" alt="" loading="lazy" />
           </div>
         ) : null}
         <div className="cb-card__acts">{IcoHeart}{IcoComment}{IcoSend}</div>
@@ -1483,7 +1527,7 @@ function SocialCard({ r, logo }: { r: LoadedProductPage["reviews"][number]; logo
       <p className="cb-card__body">{r.body}</p>
       {r.imageUrl ? (
         <div className="cb-card__pic">
-          <img src={r.imageUrl} alt="" loading="lazy" />
+          <Pic src={r.imageUrl} size="w640" alt="" loading="lazy" />
         </div>
       ) : null}
       <footer>
@@ -1712,7 +1756,7 @@ function RvPost({ r }: { r: LoadedProductPage["reviews"][number] }) {
       </header>
       <p className="rv-post__body">{r.body}</p>
       {r.imageUrl ? (
-        <div className="rv-shot"><img src={r.imageUrl} alt="" loading="lazy" /></div>
+        <div className="rv-shot"><Pic src={r.imageUrl} size="w640" alt="" loading="lazy" /></div>
       ) : null}
       <footer className="rv-post__foot">
         <span className="rv-like">{IcoHeart}{r.likes != null ? r.likes.toLocaleString("en-US") : 0}</span>
@@ -1817,7 +1861,7 @@ function UgcWall({ section }: { section: LoadedSection }) {
             <div className="cb-ugcw__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
               {clips.map((b) => (
                 <figure className="cb-clip" key={`${pass}-${b.id}`}>
-                  <img src={val(b.values, "image")} alt={val(b.values, "caption")} loading="lazy" />
+                  <Pic src={val(b.values, "image")} size="w640" alt={val(b.values, "caption")} loading="lazy" />
                   <span className="cb-clip__glass" aria-hidden="true" />
                   {has(b.values, "caption") ? (
                     <figcaption>{val(b.values, "caption")}</figcaption>
