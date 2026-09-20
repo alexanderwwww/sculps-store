@@ -72,18 +72,41 @@ export const OVERLAY = `(() => {
      * the light. And two inset shadows — a bright one along the top edge and
      * a dark one along the bottom — which give it thickness.
      */
+    /*
+     * Glass with a machined edge.
+     *
+     * Three things separate this from a translucent rectangle. The blur
+     * saturates as well as blurs, so colour behind it bleeds through instead
+     * of going grey — that alone is most of what reads as glass. A specular
+     * band is painted across the top third and a darker one pooled at the
+     * bottom, which is how a curved surface catches a light source above it.
+     * And the edge is drawn twice: a bright hairline along the top inside and
+     * a dark one along the bottom inside, so the rim has thickness and the
+     * thing looks turned out of a solid rather than printed on the page.
+     *
+     * The shadow is two: a tight contact shadow that sits it ON the page, and
+     * a wide soft one that lifts it off. One alone reads as a sticker.
+     */
     background:
-      "linear-gradient(to bottom, rgba(255,255,255,.14), rgba(255,255,255,.04) 42%, rgba(0,0,0,.10))," +
-      "rgba(20,20,26,.55)",
-    backdropFilter: "blur(22px) saturate(180%)",
-    WebkitBackdropFilter: "blur(22px) saturate(180%)",
-    border: "0.5px solid rgba(255,255,255,.22)",
+      "linear-gradient(to bottom," +
+        "rgba(255,255,255,.20) 0%," +
+        "rgba(255,255,255,.07) 34%," +
+        "rgba(255,255,255,.02) 58%," +
+        "rgba(0,0,0,.14) 100%)," +
+      "rgba(22,22,28,.52)",
+    backdropFilter: "blur(26px) saturate(190%) brightness(1.06)",
+    WebkitBackdropFilter: "blur(26px) saturate(190%) brightness(1.06)",
+    border: "0.5px solid rgba(255,255,255,.26)",
     color: "#F7F2E7", pointerEvents: "none",
-    font: '500 11.5px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    font: '590 11.5px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+    letterSpacing: ".005em",
     boxShadow:
-      "inset 0 1px 0 rgba(255,255,255,.35)," +
-      "inset 0 -1px 0 rgba(0,0,0,.28)," +
-      "0 10px 34px -12px rgba(0,0,0,.65)",
+      "inset 0 1px 0 rgba(255,255,255,.42)," +
+      "inset 0 -1px 0 rgba(0,0,0,.34)," +
+      "inset 1px 0 0 rgba(255,255,255,.10)," +
+      "inset -1px 0 0 rgba(255,255,255,.10)," +
+      "0 1px 2px rgba(0,0,0,.45)," +
+      "0 14px 40px -14px rgba(0,0,0,.70)",
     display: "flex", alignItems: "center", gap: "10px", whiteSpace: "nowrap",
   });
   const title = css(document.createElement("div"), {
@@ -148,7 +171,70 @@ export const OVERLAY = `(() => {
   bStop.style.display = "none";
   bar.append(bPause, bMore);
 
-  hud.append(title, body, hint, bar);
+  /*
+   * A small meter, so the panel is alive rather than merely present.
+   *
+   * Five thin bars that rise and fall while the app is working and settle to
+   * a flat resting line when it is not. It is not a progress bar and it is
+   * not decoration for its own sake: across a room it answers the only
+   * question anybody has of this panel — is it still going, or has it stopped
+   * and not said so.
+   *
+   * Driven by one timer and CSS transforms, nothing else. No animation
+   * frames, no layout, so a page doing real work underneath is not slowed by
+   * a thing watching it.
+   */
+  const meter = css(document.createElement("div"), {
+    display: "flex", alignItems: "flex-end", gap: "2px",
+    height: "13px", flex: "0 0 auto", pointerEvents: "none",
+  });
+  const bars = [];
+  for (let i = 0; i < 5; i++) {
+    const b = css(document.createElement("i"), {
+      display: "block", width: "2.5px", height: "13px", borderRadius: "2px",
+      transformOrigin: "bottom",
+      transform: "scaleY(.18)",
+      // Lit from the same direction as the pill, so it reads as part of the
+      // same moulded surface rather than five stickers laid on top.
+      background: "linear-gradient(to top, rgba(201,160,255,.55), #C9A0FF)",
+      boxShadow: "0 0 6px rgba(201,160,255,.45)",
+      transition: "transform .22s cubic-bezier(.2,.9,.25,1), opacity .3s ease",
+      opacity: ".5",
+    });
+    bars.push(b);
+    meter.appendChild(b);
+  }
+  let meterTimer = null;
+  const meterStop = () => { if (meterTimer) { clearInterval(meterTimer); meterTimer = null; } };
+  function meterMode(mode) {
+    meterStop();
+    if (mode === "run") {
+      let t = 0;
+      meterTimer = setInterval(() => {
+        t += 1;
+        bars.forEach((b, i) => {
+          // Offset sines rather than random numbers: a random meter twitches,
+          // this one travels, which is what reads as something running.
+          const v = 0.22 + 0.78 * Math.abs(Math.sin((t * 0.45) + i * 0.7));
+          b.style.transform = \`scaleY(\${v.toFixed(3)})\`;
+          b.style.opacity = "1";
+        });
+      }, 160);
+      return;
+    }
+    const flat = mode === "idle" ? 0.16 : 0.1;
+    const dim = mode === "idle" ? ".45" : ".28";
+    bars.forEach((b) => { b.style.transform = \`scaleY(\${flat})\`; b.style.opacity = dim; });
+  }
+  function meterTint(colour) {
+    bars.forEach((b) => {
+      b.style.background = \`linear-gradient(to top, \${colour}88, \${colour})\`;
+      b.style.boxShadow = \`0 0 6px \${colour}73\`;
+    });
+  }
+  meterMode("idle");
+
+  hud.append(meter, title, body, hint, bar);
   root.appendChild(hud);
 
   const state = { stopped: false, paused: false, running: false, deaf: 0, wantsCard: false, epoch: Date.now() };
@@ -182,6 +268,8 @@ export const OVERLAY = `(() => {
     hint.textContent = "";
     css(cursor, { opacity: ".25" });
     css(bar, { display: "flex" });
+    meterTint("#FFC24D");
+    meterMode("idle");
     bPause.textContent = "Continue";
   }
 
@@ -202,6 +290,8 @@ export const OVERLAY = `(() => {
     title.textContent = "Running";
     body.textContent = "Carrying on where it stopped.";
     css(cursor, { opacity: "1" });
+    meterTint("#C9A0FF");
+    meterMode("run");
     bPause.textContent = "Pause";
   }
 
@@ -209,6 +299,8 @@ export const OVERLAY = `(() => {
     state.stopped = true;
     state.paused = false;
     css(title, { color: "#FF6B5A" });
+    meterTint("#FF6B5A");
+    meterMode("off");
     title.textContent = "Stopped";
     body.textContent = "Nothing more will be typed. Everything saved is on your Desktop.";
     hint.textContent = "";
