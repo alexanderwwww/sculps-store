@@ -17,7 +17,7 @@
 
 /** Injected on every page load. Calling it twice is a no-op. */
 export const OVERLAY = `(() => {
-  if (window.__wand) return true;
+  if (window.__wand) { try { window.__wand.retheme(true); } catch {} return true; }
 
   const css = (el, s) => { for (const k in s) el.style[k] = s[k]; return el; };
   const root = document.documentElement;
@@ -56,116 +56,287 @@ export const OVERLAY = `(() => {
   };
 
   /*
-   * One glass surface, used by every panel this overlay draws.
+   * One glass material, used by every panel and button this overlay draws.
    *
-   * The status pill was given glass and the two cards were left as flat dark
-   * slabs, so the app looked like two different pieces of software depending
-   * on which one happened to be on screen. They are the same material now,
-   * and there is one place to change it.
+   * It comes in two weights, because glass takes its look from what is behind
+   * it and the pages this runs on are not one colour: ChatGPT is charcoal,
+   * Gemini is near white. A smoked glass on a white page was a flat grey bar
+   * -- the dark base over white just made grey, the white highlights had
+   * nothing to stand against, and nothing about it read as a surface. So the
+   * page is sampled and the material picked to match: smoked over dark
+   * pages, frosted over light ones, the same construction either way.
    *
-   * What makes it read as glass rather than as a translucent rectangle:
-   * the blur SATURATES and brightens, so colour behind it bleeds through
-   * instead of going grey; a hard band of white across the top quarter where
-   * the light catches, gone by the middle; a shadow pooled along the bottom;
-   * and the rim drawn from the inside on all four sides, bright above and
-   * dark below, so it has thickness. Two outer shadows -- one tight contact,
-   * one wide and soft -- because either alone reads as a sticker.
+   * The construction, back to front, in one element:
+   *   backdrop  blur, saturate, and a small lift in contrast and brightness,
+   *             so what is behind bleeds through with more body, not less;
+   *   body      a near-neutral base -- charcoal or milk -- with no hue at all;
+   *   specular  an elliptical highlight up by the top-left corner, which is
+   *             what makes a flat rectangle read as a curved surface lit from
+   *             above-left, plus a second fainter one offset inward, the
+   *             refraction you see inside thick glass;
+   *   grazing   a diagonal fall-off from the lit corner to the dark one;
+   *   rims      inset hairlines, bright on the top and left edges where the
+   *             light lands, dark on the bottom and right where it does not;
+   *   depth     two outer shadows, one tight where it meets the page and one
+   *             wide and soft, because either alone reads as a sticker.
+   * On top of that, one sheen layer per panel: a positioned child with no
+   * pointer events that the entrance sweeps across the surface, and that
+   * costs nothing at rest.
    *
-   * No colour of its own. Glass takes what is behind it.
+   * Everything is white or black at some alpha. No purple, no blue, nothing.
    */
-  const GLASS = {
-    background:
-      "linear-gradient(to bottom," +
-        "rgba(255,255,255,.26) 0%," +
-        "rgba(255,255,255,.10) 22%," +
-        "rgba(255,255,255,.03) 52%," +
-        "rgba(255,255,255,.01) 76%," +
-        "rgba(0,0,0,.16) 100%)," +
-      "rgba(28,28,30,.46)",
-    backdropFilter: "blur(30px) saturate(200%) brightness(1.10)",
-    WebkitBackdropFilter: "blur(30px) saturate(200%) brightness(1.10)",
-    border: "0.5px solid rgba(255,255,255,.30)",
-    color: "#F7F2E7",
-    boxShadow:
-      "inset 0 1px 0 rgba(255,255,255,.50)," +
-      "inset 0 -1px 0 rgba(0,0,0,.30)," +
-      "inset 1px 0 0 rgba(255,255,255,.12)," +
-      "inset -1px 0 0 rgba(255,255,255,.12)," +
-      "0 1px 2px rgba(0,0,0,.40)," +
-      "0 16px 44px -16px rgba(0,0,0,.66)",
+  const DARK = {
+    text: "#F5F5F7",
+    ink: "#F2F2F4",                    // the running title and the meter
+    line: "rgba(255,255,255,.28)",     // the drop zone's dashed edge
+    lineHot: "rgba(255,255,255,.92)",
+    wash: "rgba(255,255,255,.10)",
+    glass: {
+      background:
+        "radial-gradient(120% 95% at 14% -12%, rgba(255,255,255,.42) 0%, rgba(255,255,255,.14) 30%, rgba(255,255,255,0) 62%)," +
+        "radial-gradient(80% 60% at 36% 18%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 70%)," +
+        "linear-gradient(155deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 46%, rgba(0,0,0,.14) 100%)," +
+        "linear-gradient(to bottom, rgba(0,0,0,0) 58%, rgba(0,0,0,.20) 100%)," +
+        "rgba(22,22,24,.54)",
+      backdropFilter: "blur(28px) saturate(190%) contrast(1.06) brightness(1.08)",
+      border: "0.5px solid",
+      borderColor: "rgba(255,255,255,.36) rgba(255,255,255,.16) rgba(255,255,255,.10) rgba(255,255,255,.30)",
+    },
+    sheen:
+      "linear-gradient(90deg, rgba(255,255,255,0) 22%, rgba(255,255,255,.20) 42%, rgba(255,255,255,.55) 50%, rgba(255,255,255,.20) 58%, rgba(255,255,255,0) 78%)",
+    rim:
+      "inset 0 1px 0 rgba(255,255,255,.58)," +
+      "inset 1px 0 0 rgba(255,255,255,.20)," +
+      "inset 0 -1px 0 rgba(0,0,0,.45)," +
+      "inset -1px 0 0 rgba(0,0,0,.22)," +
+      "inset 0 12px 28px -16px rgba(255,255,255,.22)",
+    drop:
+      "0 1px 1.5px rgba(0,0,0,.48)," +
+      "0 22px 54px -16px rgba(0,0,0,.66)",
+    halo: (up) => (up ? "0 0 34px 6px rgba(255,255,255,.16)" : "0 0 10px 0 rgba(255,255,255,.05)"),
+    bloom: "0 0 48px 14px rgba(255,255,255,.22)",
+    key: {
+      background: "linear-gradient(to bottom, #FFFFFF 0%, #F6F6F8 48%, #E8E8EC 100%)",
+      border: "0.5px solid rgba(255,255,255,.95)",
+      boxShadow:
+        "inset 0 1px 0 #FFFFFF, inset 0 -1px 0 rgba(0,0,0,.10)," +
+        "0 1px 1.5px rgba(0,0,0,.42), 0 8px 18px -8px rgba(0,0,0,.55)",
+      color: "#111113",
+    },
+    ghost: {
+      background:
+        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 60%)," +
+        "linear-gradient(to bottom, rgba(255,255,255,.14) 0%, rgba(255,255,255,.04) 60%, rgba(0,0,0,.10) 100%)",
+      border: "0.5px solid rgba(255,255,255,.24)",
+      boxShadow:
+        "inset 0 1px 0 rgba(255,255,255,.42), inset 1px 0 0 rgba(255,255,255,.10)," +
+        "inset 0 -1px 0 rgba(0,0,0,.28), 0 1px 1px rgba(0,0,0,.30)",
+      color: "#F5F5F7",
+    },
   };
+  const LIGHT = {
+    text: "#111113",
+    ink: "#1C1C1E",
+    line: "rgba(0,0,0,.22)",
+    lineHot: "rgba(0,0,0,.70)",
+    wash: "rgba(0,0,0,.05)",
+    glass: {
+      background:
+        "radial-gradient(120% 95% at 14% -12%, rgba(255,255,255,.98) 0%, rgba(255,255,255,.50) 30%, rgba(255,255,255,0) 62%)," +
+        "radial-gradient(80% 60% at 36% 18%, rgba(255,255,255,.40) 0%, rgba(255,255,255,0) 70%)," +
+        "linear-gradient(155deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 46%, rgba(0,0,0,.06) 100%)," +
+        "linear-gradient(to bottom, rgba(0,0,0,0) 58%, rgba(0,0,0,.08) 100%)," +
+        "rgba(250,250,252,.64)",
+      backdropFilter: "blur(26px) saturate(180%) contrast(1.03) brightness(1.02)",
+      border: "0.5px solid",
+      borderColor: "rgba(255,255,255,.98) rgba(255,255,255,.60) rgba(0,0,0,.06) rgba(255,255,255,.92)",
+    },
+    sheen:
+      "linear-gradient(90deg, rgba(0,0,0,0) 22%, rgba(0,0,0,.04) 40%, rgba(255,255,255,.95) 50%, rgba(0,0,0,.04) 60%, rgba(0,0,0,0) 78%)",
+    rim:
+      "inset 0 1px 0 rgba(255,255,255,1)," +
+      "inset 1px 0 0 rgba(255,255,255,.70)," +
+      "inset 0 -1px 0 rgba(0,0,0,.10)," +
+      "inset -1px 0 0 rgba(0,0,0,.05)," +
+      "inset 0 12px 28px -16px rgba(255,255,255,.90)",
+    drop:
+      "0 0 0 0.5px rgba(0,0,0,.12)," +
+      "0 1px 1.5px rgba(0,0,0,.16)," +
+      "0 22px 54px -16px rgba(0,0,0,.30)",
+    halo: (up) => (up ? "0 0 30px 4px rgba(0,0,0,.12)" : "0 0 8px 0 rgba(0,0,0,.03)"),
+    bloom: "0 0 44px 12px rgba(0,0,0,.14)",
+    key: {
+      background: "linear-gradient(to bottom, #3C3C41 0%, #232326 48%, #151517 100%)",
+      border: "0.5px solid rgba(0,0,0,.85)",
+      boxShadow:
+        "inset 0 1px 0 rgba(255,255,255,.30), inset 0 -1px 0 rgba(0,0,0,.50)," +
+        "0 1px 1.5px rgba(0,0,0,.30), 0 8px 18px -8px rgba(0,0,0,.45)",
+      color: "#F5F5F7",
+    },
+    ghost: {
+      background:
+        "radial-gradient(110% 90% at 16% -14%, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 60%)," +
+        "linear-gradient(to bottom, rgba(255,255,255,.70) 0%, rgba(255,255,255,.30) 60%, rgba(0,0,0,.03) 100%)",
+      border: "0.5px solid rgba(255,255,255,.90)",
+      boxShadow:
+        "inset 0 1px 0 #FFFFFF, inset 0 -1px 0 rgba(0,0,0,.08)," +
+        "0 0 0 0.5px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.10)",
+      color: "#111113",
+    },
+  };
+
+  let theme = "dark";
+  const P = () => (theme === "light" ? LIGHT : DARK);
+  /*
+   * The resting shadow always carries an empty halo slot between the rims
+   * and the drop, so the breathing glow and the entrance bloom animate to and
+   * from it shadow-for-shadow instead of snapping -- a box-shadow only
+   * interpolates against a list of the same length.
+   */
+  const NO_HALO = "0 0 0 0 rgba(0,0,0,0)";
+  const restShadow = () => P().rim + "," + NO_HALO + "," + P().drop;
+
+  /* Every surface that has been given the material, so a theme change can
+     redo all of them together. */
+  const SURFACES = [];
+  function applyMaterial(el, kind) {
+    if (!SURFACES.some((s) => s.el === el)) SURFACES.push({ el, kind });
+    const p = P();
+    if (kind !== "panel") {
+      css(el, kind === "key" ? p.key : p.ghost);
+      return el;
+    }
+    css(el, p.glass);
+    el.style.WebkitBackdropFilter = p.glass.backdropFilter;
+    css(el, { color: p.text, boxShadow: restShadow(), overflow: "hidden" });
+    if (!el.__sheen) {
+      // The sheen sits between the panel's own background and its content:
+      // a negative z-index inside the panel's stacking context, which the
+      // fixed position and z-index already establish.
+      el.__sheen = css(document.createElement("i"), {
+        position: "absolute", left: "0", top: "0", width: "100%", height: "100%",
+        display: "block", borderRadius: "inherit", pointerEvents: "none", zIndex: "-1",
+        opacity: "0", transform: "translateX(-130%) skewX(-20deg)",
+      });
+      el.prepend(el.__sheen);
+    }
+    el.__sheen.style.background = p.sheen;
+    return el;
+  }
+
+  /*
+   * Which weight of glass this page wants.
+   *
+   * The colour under the pill is what matters, and on a chat site that is
+   * rarely the body -- it is some container the app paints. So the stack of
+   * elements under a few points near the top of the page is walked, ours
+   * skipped, and the first one with an opaque background decides. Body and
+   * html come next, then the page's declared colour scheme, then the OS's.
+   * Failing all of that: dark, which is what these sites mostly are.
+   */
+  function pageIsLight() {
+    const lum = (str) => {
+      const m = /rgba?\\(([^)]+)\\)/.exec(str || "");
+      if (!m) return null;
+      const p = m[1].split(/[\\s,\\/]+/).filter(Boolean).map(Number);
+      if (p.length < 3 || p.slice(0, 3).some((n) => !Number.isFinite(n))) return null;
+      if (p.length >= 4 && p[3] < .5) return null;
+      const c = p.slice(0, 3).map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); });
+      return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+    };
+    const ours = (el) => [hud, card, doneCard, cursor].some((o) => o.contains(el));
+    try {
+      const w = window.innerWidth;
+      for (const [x, y] of [[w / 2, 46], [w * .3, 46], [w * .7, 46], [w / 2, 130]]) {
+        for (const el of document.elementsFromPoint(x, y)) {
+          if (ours(el)) continue;
+          const L = lum(getComputedStyle(el).backgroundColor);
+          if (L !== null) return L > .5;
+        }
+      }
+    } catch {}
+    for (const el of [document.body, root]) {
+      if (!el) continue;
+      const L = lum(getComputedStyle(el).backgroundColor);
+      if (L !== null) return L > .5;
+    }
+    const scheme = String(getComputedStyle(root).colorScheme || "");
+    if (/dark/.test(scheme)) return false;
+    if (/light/.test(scheme)) return true;
+    try { return window.matchMedia("(prefers-color-scheme: light)").matches; } catch { return false; }
+  }
 
   /*
    * The liquid entrance, for any panel that appears.
    *
-   * A bead arrives, spreads wider and flatter than it will finish, then
-   * settles back as the blur clears. The clearing deliberately lags the
-   * shape: matching the two durations turns the whole thing into a fade and
-   * loses the effect entirely.
+   * A bead arrives from just above, tall and narrow, drops and spreads wider
+   * and flatter than it will finish, springs back a touch too tall, and
+   * settles -- the second, smaller overshoot in the other axis is what makes
+   * it wobble like something with mass rather than snap like a spring. While
+   * it settles a sheen sweeps across the surface, and the blur clears last of
+   * all, because the shape arriving before the focus does is the whole
+   * effect; matching the two turns it into a fade.
    *
-   * Only transform, filter and opacity, which the compositor animates without
-   * touching layout — a page doing real work underneath is not interrupted by
-   * the thing watching it.
+   * Driven by the Web Animations API rather than transitions, so the four
+   * things it animates -- transform, opacity, filter and the sheen's
+   * transform -- run on the compositor and never touch the inline styles
+   * the breathing glow writes to. Under 900ms, start to still.
    */
   function liquidIn(el, round) {
-    const settled = el.style.boxShadow;
-    el.style.transition = "none";
-    el.style.opacity = "0";
-    el.style.transform = "translateX(-50%) translateY(-6px) scale(.34, 1.14)";
-    el.style.filter = "blur(14px) saturate(140%)";
-    el.style.borderRadius = "999px";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      el.style.transition =
-        "transform .34s cubic-bezier(.22,.9,.2,1)," +
-        "opacity .2s ease," +
-        "filter .5s cubic-bezier(.3,.8,.3,1)," +
-        "box-shadow .8s ease";
-      el.style.opacity = "1";
-      el.style.transform = "translateX(-50%) translateY(0) scale(1.06, .82)";
-      el.style.filter = "blur(2px) saturate(200%)";
-      el.style.boxShadow =
-        "inset 0 1px 0 rgba(255,255,255,.75)," +
-        "inset 0 -1px 0 rgba(0,0,0,.28)," +
-        "0 0 0 1px rgba(255,255,255,.30)," +
-        "0 0 40px 10px rgba(255,255,255,.16)," +
-        "0 16px 44px -16px rgba(0,0,0,.66)";
-      setTimeout(() => {
-        el.style.transition =
-          "transform .5s cubic-bezier(.2,.7,.2,1)," +
-          "filter .42s ease," +
-          "box-shadow .8s ease";
-        el.style.transform = "translateX(-50%) translateY(0) scale(1, 1)";
-        el.style.filter = "blur(0px) saturate(100%)";
-        el.style.borderRadius = round;
-        el.style.boxShadow = settled;
-      }, 330);
-    }));
+    if (round) el.style.borderRadius = round;
+    for (const a of el.__anims || []) a.cancel();
+    const rest = "translateX(-50%) translateY(0) scale(1, 1)";
+    el.style.transformOrigin = "50% 0%";
+    el.style.transform = rest;
+    el.style.opacity = "1";
+    el.style.filter = "none";
+    const anims = [];
+    anims.push(el.animate([
+      { transform: "translateX(-50%) translateY(-14px) scale(.70, 1.16)", easing: "cubic-bezier(.2,.9,.3,1)", offset: 0 },
+      { transform: "translateX(-50%) translateY(2px) scale(1.055, .90)", easing: "cubic-bezier(.3,.6,.3,1)", offset: .34 },
+      { transform: "translateX(-50%) translateY(-1px) scale(.985, 1.035)", easing: "cubic-bezier(.3,.6,.3,1)", offset: .64 },
+      { transform: "translateX(-50%) translateY(0) scale(1.006, .995)", easing: "ease-out", offset: .84 },
+      { transform: rest, offset: 1 },
+    ], { duration: 860, fill: "none" }));
+    anims.push(el.animate([
+      { opacity: 0, offset: 0 },
+      { opacity: 1, offset: .2 },
+      { opacity: 1, offset: 1 },
+    ], { duration: 860, easing: "ease-out", fill: "none" }));
+    anims.push(el.animate([
+      { filter: "blur(16px) saturate(170%)", easing: "cubic-bezier(.2,.8,.2,1)", offset: 0 },
+      { filter: "blur(3px) saturate(150%)", easing: "ease-out", offset: .45 },
+      { filter: "blur(.6px) saturate(115%)", easing: "ease-out", offset: .8 },
+      { filter: "blur(0px) saturate(100%)", offset: 1 },
+    ], { duration: 880, fill: "none" }));
+    // A bloom of light in the halo slot that fades as the shape settles.
+    const p = P();
+    anims.push(el.animate([
+      { boxShadow: p.rim + "," + p.bloom + "," + p.drop, offset: 0 },
+      { boxShadow: p.rim + "," + p.bloom + "," + p.drop, offset: .3 },
+      { boxShadow: restShadow(), offset: 1 },
+    ], { duration: 820, easing: "ease-out", fill: "none" }));
+    const sheen = el.__sheen;
+    if (sheen) {
+      anims.push(sheen.animate([
+        { transform: "translateX(-130%) skewX(-20deg)", opacity: 0, offset: 0 },
+        { transform: "translateX(-70%) skewX(-20deg)", opacity: 1, offset: .22 },
+        { transform: "translateX(70%) skewX(-20deg)", opacity: 1, offset: .78 },
+        { transform: "translateX(130%) skewX(-20deg)", opacity: 0, offset: 1 },
+      ], { duration: 560, delay: 300, easing: "cubic-bezier(.3,.5,.2,1)", fill: "none" }));
+    }
+    el.__anims = anims;
   }
   const hud = css(document.createElement("div"), {
     ...TOP_CENTRE,
     maxWidth: "min(420px, 92vw)", padding: "9px 15px", borderRadius: "999px",
-    /*
-     * Liquid glass.
-     *
-     * The pill was a flat dark slab, which on a bright page looks like a bug
-     * report and on a dark one disappears. Glass instead: it takes its colour
-     * from whatever is behind it, so it belongs to the page it is sitting on
-     * without ever being mistaken for part of it.
-     *
-     * The recipe is three layers in one element. A blur that also lifts the
-     * saturation, so colour bleeds through the way it does through real
-     * frosted glass rather than going grey. A top-to-bottom sheen painted
-     * into the background, which is what reads as a curved surface catching
-     * the light. And two inset shadows — a bright one along the top edge and
-     * a dark one along the bottom — which give it thickness.
-     */
-    // The shared surface, defined once near the top of this file.
-    ...GLASS,
+    // The glass itself goes on just below, once the element exists.
     pointerEvents: "none",
     font: '590 11.5px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
     letterSpacing: ".005em",
     display: "flex", alignItems: "center", gap: "10px", whiteSpace: "nowrap",
   });
+  applyMaterial(hud, "panel");
   const title = css(document.createElement("div"), {
     fontSize: "10px", letterSpacing: ".06em", textTransform: "uppercase",
     color: "rgba(255,255,255,.92)", fontWeight: "700", flex: "0 0 auto",
@@ -190,21 +361,35 @@ export const OVERLAY = `(() => {
   const bar = css(document.createElement("div"), {
     display: "none", gap: "6px", pointerEvents: "auto", flex: "0 0 auto",
   });
+  /*
+   * Buttons are the same glass, pill-shaped, and they press.
+   *
+   * The primary is a key: solid light -- white falling to a pale grey with a
+   * bright lip along the top -- on the smoked glass, and its negative, a
+   * near-black key, on the frosted. The other is cut from the panel's own
+   * material. Both sink on press: a touch smaller and a touch darker, on
+   * transform and filter only, so the press costs the page nothing.
+   */
+  function pressable(b) {
+    css(b, {
+      transition: "transform .14s cubic-bezier(.2,.7,.2,1), filter .14s ease",
+      transformOrigin: "50% 50%",
+    });
+    const down = () => css(b, { transform: "scale(.96)", filter: "brightness(.84)" });
+    const up = () => css(b, { transform: "scale(1)", filter: "none" });
+    b.addEventListener("mousedown", down);
+    b.addEventListener("touchstart", down, { passive: true });
+    for (const t of ["mouseup", "mouseleave", "touchend", "touchcancel", "blur"]) b.addEventListener(t, up);
+    return b;
+  }
   const smallBtn = (text, primary) => {
     const b = css(document.createElement("button"), {
       padding: "5px 12px", borderRadius: "999px",
-      // The buttons are glass too, cut from the same surface: a hairline
-      // edge and the same top sheen, so they read as pressed out of the pill
-      // rather than dropped onto it.
-      border: primary ? "0.5px solid rgba(255,255,255,.45)" : "0.5px solid rgba(255,255,255,.20)",
       cursor: "pointer", fontSize: "11px", fontWeight: "700",
       fontFamily: "inherit", lineHeight: "1.3",
-      background: primary
-        ? "linear-gradient(to bottom, rgba(255,255,255,1), rgba(238,238,240,.92))"
-        : "linear-gradient(to bottom, rgba(255,255,255,.20), rgba(255,255,255,.04))",
-      boxShadow: "inset 0 1px 0 rgba(255,255,255,.35)",
-      color: primary ? "#140A02" : "#F7F2E7",
     });
+    applyMaterial(b, primary ? "key" : "ghost");
+    pressable(b);
     b.textContent = text;
     b.setAttribute("data-wand", "");
     return b;
@@ -295,52 +480,37 @@ export const OVERLAY = `(() => {
   root.appendChild(hud);
 
   /*
-   * The panel assembles itself when it appears.
-   *
-   * It used to be simply present: one frame absent, the next frame there,
-   * which on a page that is already busy reads as a glitch rather than as
-   * something arriving. Now it pours into place -- squat and wide and
-   * over-blurred at first, as a drop of liquid is before it settles, then
-   * springing to its proper shape while the blur tightens and a cool ring of
-   * light swells around it and fades.
-   *
-   * Three properties only -- transform, filter and box-shadow -- all of which
-   * the compositor can animate without touching layout, so a page doing real
-   * work underneath is not interrupted by the thing that watches it.
-   */
-  /*
    * A slow breath of light around the rim while something is happening.
    *
    * The meter says it is working; this says it from the corner of your eye,
-   * without having to read anything. It is one interval on box-shadow, which
-   * the compositor handles, and it is stopped outright when the panel is not
-   * running so an idle app costs nothing.
+   * without having to read anything. One interval on box-shadow, which the
+   * compositor handles, stopped outright when the panel is not running so an
+   * idle app costs nothing.
+   *
+   * The breath is written into the halo slot of the full resting shadow --
+   * rims, halo, drop -- rather than replacing it, so the glass keeps its
+   * edges while it glows. Plain light, no hue: on the smoked glass a soft
+   * white bloom, on the frosted a soft dark one, since white on white is
+   * nothing. About two and a half seconds a breath, eased both ways.
    */
   let glowTimer = null;
-  let restingShadow = null;
   function glow(on) {
-    if (restingShadow === null) restingShadow = hud.style.boxShadow;
     if (glowTimer) clearInterval(glowTimer);
-    if (!on) { hud.style.boxShadow = restingShadow; glowTimer = null; return; }
-    /*
-     * A halo of plain light that swells and falls, about as slow as breathing.
-     *
-     * White rather than a colour, because the panel is glass and glass does
-     * not glow in a hue of its own -- it catches whatever light is around it.
-     * Two states on box-shadow and a long ease between them, which the
-     * compositor does on its own.
-     */
+    glowTimer = null;
+    if (!on) {
+      hud.style.transition = "box-shadow .9s ease";
+      hud.style.boxShadow = restShadow();
+      return;
+    }
     let up = true;
-    glowTimer = setInterval(() => {
-      hud.style.transition = "box-shadow 1.6s cubic-bezier(.4,0,.3,1)";
-      hud.style.boxShadow =
-        "inset 0 1px 0 rgba(255,255,255," + (up ? ".62" : ".50") + ")," +
-        "inset 0 -1px 0 rgba(0,0,0,.30)," +
-        "0 0 " + (up ? "30px 4px" : "12px 1px") + " rgba(255,255,255," + (up ? ".20" : ".08") + ")," +
-        "0 1px 2px rgba(0,0,0,.40)," +
-        "0 16px 44px -16px rgba(0,0,0,.66)";
+    const breathe = () => {
+      const p = P();
+      hud.style.transition = "box-shadow 1.2s cubic-bezier(.45,.05,.55,.95)";
+      hud.style.boxShadow = p.rim + "," + p.halo(up) + "," + p.drop;
       up = !up;
-    }, 1600);
+    };
+    breathe();
+    glowTimer = setInterval(breathe, 1200);
   }
 
   function assemble() {
@@ -400,12 +570,13 @@ export const OVERLAY = `(() => {
      */
     state.stopped = false;
     state.paused = false;
-    css(title, { color: "rgba(255,255,255,.92)" });
+    css(title, { color: P().ink });
     title.textContent = "Running";
     body.textContent = "Carrying on where it stopped.";
     css(cursor, { opacity: "1" });
-    meterTint("rgba(255,255,255,.92)");
+    meterTint(P().ink);
     meterMode("run");
+    glow(true);
     bPause.textContent = "Pause";
   }
 
@@ -646,7 +817,6 @@ export const OVERLAY = `(() => {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
     width: "min(360px, 92vw)", padding: "14px 16px", borderRadius: "20px",
-    ...GLASS,
     font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
     display: "none",
     /* Transparent to the mouse.
@@ -660,6 +830,7 @@ export const OVERLAY = `(() => {
      * back on for themselves. */
     pointerEvents: "none",
   });
+  applyMaterial(card, "panel");
   const cName = css(document.createElement("div"), {
     fontSize: "15px", fontWeight: "700", letterSpacing: "-.01em", marginBottom: "3px",
   });
@@ -687,17 +858,10 @@ export const OVERLAY = `(() => {
        * 13.5px at weight 600 declared on the line above. It goes first now.
        */
       font: '600 13.5px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
-      // Cut from the same glass: a hairline rim and the same top sheen, so
-      // they read as pressed out of the panel rather than dropped onto it.
-      border: primary ? "0.5px solid rgba(255,255,255,.55)" : "0.5px solid rgba(255,255,255,.22)",
-      background: primary
-        ? "linear-gradient(to bottom, rgba(255,255,255,1), rgba(236,236,238,.94))"
-        : "linear-gradient(to bottom, rgba(255,255,255,.22), rgba(255,255,255,.05))",
-      boxShadow: primary
-        ? "inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(0,0,0,.28)"
-        : "inset 0 1px 0 rgba(255,255,255,.30)",
-      color: primary ? "#111113" : "#F7F2E7",
     });
+    // Same keys as the pill's, at card size: see pressable and smallBtn.
+    applyMaterial(b, primary ? "key" : "ghost");
+    pressable(b);
     b.textContent = text;
     return b;
   };
@@ -758,13 +922,13 @@ export const OVERLAY = `(() => {
   ["dragenter", "dragover"].forEach((t) =>
     drop.addEventListener(t, (e) => {
       e.preventDefault(); e.stopPropagation();
-      css(drop, { borderColor: "rgba(255,255,255,.92)", background: "rgba(255,255,255,.10)" });
+      css(drop, { borderColor: P().lineHot, background: P().wash });
     }),
   );
   ["dragleave", "drop"].forEach((t) =>
     drop.addEventListener(t, (e) => {
       e.preventDefault(); e.stopPropagation();
-      css(drop, { borderColor: "rgba(247,242,231,.28)", background: "transparent" });
+      css(drop, { borderColor: P().line, background: "transparent" });
       if (t === "drop") take(e.dataTransfer?.files ?? []);
     }),
   );
@@ -785,13 +949,13 @@ export const OVERLAY = `(() => {
     position: "fixed", zIndex: TOP, top: "10px",
     left: "50%", transform: "translateX(-50%)",
     width: "min(360px, 92vw)", padding: "14px 16px", borderRadius: "20px",
-    ...GLASS,
     font: '500 13px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
     display: "none",
     // Same reason as the card above: it stays on screen until somebody closes
     // it, and until then it was eating the clicks meant for the page.
     pointerEvents: "none",
   });
+  applyMaterial(doneCard, "panel");
   const dName = css(document.createElement("div"), { fontSize: "15px", fontWeight: "700", marginBottom: "3px" });
   const dSub = css(document.createElement("div"), { opacity: ".6", fontSize: "12px", marginBottom: "12px" });
   const dRow = css(document.createElement("div"), { display: "flex", gap: "8px", pointerEvents: "auto" });
@@ -819,8 +983,38 @@ export const OVERLAY = `(() => {
     state.wantsCard = true;
   });
 
+  /*
+   * Pick the glass for this page, and pick again when the page may have
+   * changed -- a chat site navigates without reloading, and a light page can
+   * become a dark one under a pill that was cut for the other. Throttled,
+   * because the runner calls in often and one look a second and a half is
+   * plenty. The amber and red of a paused or stopped title are states, not
+   * decoration, and are left alone.
+   */
+  let rethemedAt = 0;
+  function retheme(force) {
+    const now = Date.now();
+    if (!force && now - rethemedAt < 1500) return;
+    rethemedAt = now;
+    let light = false;
+    try { light = pageIsLight(); } catch { light = false; }
+    const next = light ? "light" : "dark";
+    if (!force && next === theme) return;
+    theme = next;
+    for (const s of SURFACES) applyMaterial(s.el, s.kind);
+    if (!state.paused && !state.stopped) {
+      css(title, { color: P().ink });
+      meterTint(P().ink);
+    }
+    css(drop, { borderColor: P().line });
+    if (glowTimer) glow(true);
+  }
+  retheme(true);
+
   window.__wand = {
     stopped: () => state.stopped,
+    /** Look at the page again and re-cut the glass for it if it changed. */
+    retheme: (force) => retheme(force),
     paused: () => state.paused,
     /** Which mount this is. A new number means the page reloaded under us. */
     epoch: () => state.epoch,
@@ -851,7 +1045,7 @@ export const OVERLAY = `(() => {
         // Un-pause without rewriting the caption we just restored.
         state.stopped = false;
         state.paused = false;
-        css(title, { color: "rgba(255,255,255,.92)" });
+        css(title, { color: P().ink });
         bPause.textContent = "Pause";
         css(bar, { display: "flex" });
       }
@@ -893,8 +1087,9 @@ export const OVERLAY = `(() => {
        * question it exists to answer went unanswered unless you happened to
        * press Pause and then Continue.
        */
-      css(title, { color: "rgba(255,255,255,.92)" });
-      meterTint("rgba(255,255,255,.92)");
+      retheme();
+      css(title, { color: P().ink });
+      meterTint(P().ink);
       meterMode("run");
       glow(true);
       bPause.textContent = "Pause";
@@ -918,6 +1113,7 @@ export const OVERLAY = `(() => {
       if (!card.isConnected) root.appendChild(card);
       if (!hud.isConnected) root.appendChild(hud);
       if (!cursor.isConnected) root.appendChild(cursor);
+      retheme();
       cName.textContent = name;
       cSub.textContent = sub;
       state.files = [];
@@ -944,6 +1140,7 @@ export const OVERLAY = `(() => {
     /** Show what a finished job produced, with a way to go and see it. */
     done(name, sub) {
       if (!doneCard.isConnected) root.appendChild(doneCard);
+      retheme();
       dName.textContent = name;
       dSub.textContent = sub;
       state.open = false;
@@ -1054,6 +1251,7 @@ export const OVERLAY = `(() => {
       // line arriving late from the runner must not talk over it.
       if (state.stopped || state.paused) return;
       if (!hud.isConnected) root.appendChild(hud);
+      retheme();
       title.textContent = t;
       body.textContent = b;
     },
