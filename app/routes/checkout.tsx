@@ -1789,6 +1789,122 @@ function ContactFields({
 }
 
 /**
+ * The street box, with suggestions underneath as it is typed -- the part of
+ * Shopify's checkout people miss most on a plain form. Pick one and the city,
+ * state and ZIP fill themselves and the map pins it, no lookup needed.
+ *
+ * The inputs are uncontrolled, so a pick writes the DOM boxes as well as the
+ * form state; the browser's own autofill keeps working because nothing about
+ * the input itself changed.
+ */
+type Suggestion = { address1: string; city: string; region: string; postalCode: string; country: string; lat: number; lon: number; label: string };
+
+function AddressCell({
+  cn,
+  country,
+  error,
+  onValue,
+  onTouch,
+}: {
+  cn: CN;
+  country: string;
+  error?: string;
+  onValue: (field: string, value: string) => void;
+  onTouch: (field: string) => void;
+}) {
+  const [list, setList] = useState<Suggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const timer = useRef<number | null>(null);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const seq = useRef(0);
+
+  const ask = (q: string) => {
+    if (timer.current) window.clearTimeout(timer.current);
+    if (q.trim().length < 4) { setList([]); setOpen(false); return; }
+    timer.current = window.setTimeout(async () => {
+      const n = ++seq.current;
+      try {
+        const res = await fetch(`/checkout/suggest?q=${encodeURIComponent(q)}&country=${encodeURIComponent(country)}`);
+        const rows = (await res.json()) as Suggestion[];
+        if (n !== seq.current) return;
+        setList(rows); setOpen(rows.length > 0); setActive(-1);
+      } catch { /* the box still works as a plain box */ }
+    }, 220);
+  };
+
+  const pick = (sug: Suggestion) => {
+    const form = boxRef.current?.closest("form");
+    const put = (name: string, value: string) => {
+      const el = form?.querySelector(`[name="${name}"]`) as HTMLInputElement | null;
+      if (el) el.value = value;
+      onValue(name, value);
+    };
+    put("address1", sug.address1);
+    put("city", sug.city);
+    put("postalCode", sug.postalCode);
+    put("region", sug.region);
+    onTouch("address1");
+    setOpen(false); setList([]);
+    // The map gets the point straight from the pick; nothing to look up.
+    window.dispatchEvent(new CustomEvent("kb:pin", { detail: sug }));
+    form?.querySelector<HTMLInputElement>('[name="address2"]')?.focus();
+  };
+
+  useEffect(() => {
+    const away = (e: MouseEvent) => { if (!boxRef.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, []);
+
+  const listId = "address1-suggest";
+  return (
+    <div ref={boxRef} className="gb-sug">
+      <Cell
+        cn={cn}
+        name="address1"
+        label="Address"
+        autoComplete="address-line1"
+        autoCapitalize="words"
+        enterKeyHint="next"
+        error={error}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        onValue={(f, v) => { onValue(f, v); ask(v); }}
+        onTouch={onTouch}
+        onFocus={() => { if (list.length) setOpen(true); }}
+        onKeyDown={(e) => {
+          if (!open) return;
+          if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, list.length - 1)); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+          else if (e.key === "Enter" && active >= 0) { e.preventDefault(); pick(list[active]!); }
+          else if (e.key === "Escape") setOpen(false);
+        }}
+      />
+      {open ? (
+        <ul id={listId} className="gb-sug__list" role="listbox">
+          {list.map((sug, i) => (
+            <li
+              key={sug.label}
+              role="option"
+              aria-selected={i === active}
+              className={`gb-sug__item${i === active ? " is-active" : ""}`}
+              onMouseDown={(e) => { e.preventDefault(); pick(sug); }}
+              onMouseEnter={() => setActive(i)}
+            >
+              <b>{sug.address1}</b>
+              <span>{[sug.city, sug.region, sug.postalCode].filter(Boolean).join(", ")}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * Delivery: country first, because it decides what the two boxes under the
  * city are called and whether the state box is a list or a plain line.
  *
@@ -1861,15 +1977,7 @@ function DeliveryFields({
         ) : null}
 
         <Row cn={cn} cols={1}>
-          <Cell
-            {...common}
-            name="address1"
-            label="Address"
-            autoComplete="address-line1"
-            autoCapitalize="words"
-            enterKeyHint="next"
-            error={shownError("address1")}
-          />
+          <AddressCell {...common} country={country} error={shownError("address1")} />
         </Row>
 
         <Row cn={cn} cols={1}>
@@ -2426,8 +2534,23 @@ function MapCard({ values }: { values: Record<string, string> }) {
     .join(", ");
   const enough = Boolean((values.address1 ?? "").trim() && ((values.city ?? "").trim() || (values.postalCode ?? "").trim()));
 
+  // A suggestion picked in the address box carries its own point.
+  const pinnedFor = useRef<string | null>(null);
+  useEffect(() => {
+    const onPin = (e: Event) => {
+      const d = (e as CustomEvent<{ lat: number; lon: number; label: string; address1: string; city: string; region: string; postalCode: string; country: string }>).detail;
+      pinnedFor.current = [d.address1, d.city, d.region, d.postalCode, d.country || "US"].map((v) => (v ?? "").trim()).filter(Boolean).join(", ");
+      if (timer.current) window.clearTimeout(timer.current);
+      setPoint({ lat: d.lat, lon: d.lon, label: d.label });
+      setState("found");
+    };
+    window.addEventListener("kb:pin", onPin);
+    return () => window.removeEventListener("kb:pin", onPin);
+  }, []);
+
   useEffect(() => {
     if (!enough) { setState("idle"); return; }
+    if (pinnedFor.current === line) return;
     if (timer.current) window.clearTimeout(timer.current);
     setState("looking");
     timer.current = window.setTimeout(async () => {

@@ -533,3 +533,16 @@
 .gb-map--blank .gb-map__canvas { display: none; }
 .gb-map--blank .gb-map__foot { border-top: 0; }
 .gb-map--blank .gb-map__addr { white-space: normal; font-weight: 500; color: var(--dim); }
+
+/* ------------------------------------------------ address suggestions */
+.gb-sug { position: relative; }
+.gb-sug__list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30;
+  margin: 0; padding: 6px; list-style: none;
+  background: #fff; border: 1px solid var(--field); border-radius: var(--r);
+  box-shadow: 0 18px 40px -18px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.06);
+}
+.gb-sug__item { display: flex; flex-direction: column; gap: 1px; padding: 9px 12px; border-radius: calc(var(--r) - 4px); cursor: pointer; }
+.gb-sug__item b { font-weight: 600; color: var(--ink); font-size: 15px; }
+.gb-sug__item span { color: var(--dim); font-size: 13px; }
+.gb-sug__item.is-active { background: rgba(0,0,0,.05); }

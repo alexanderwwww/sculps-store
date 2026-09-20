@@ -13,6 +13,7 @@ export default [
   // Checkout posts the email here the moment it is completed, so the cart has
   // a person on it before an order exists.
   route("checkout/geocode", "routes/checkout.geocode.tsx"),
+  route("checkout/suggest", "routes/checkout.suggest.tsx"),
   route("checkout/identify", "routes/checkout.identify.tsx"),
   route("checkout/intent", "routes/checkout.intent.tsx"),
   route("checkout/pay", "routes/checkout.pay.tsx"),
