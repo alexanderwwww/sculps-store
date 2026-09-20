@@ -17,7 +17,7 @@
 import { and, eq, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { DB } from "~/db/client";
 import { carts, stores, products, variants, discounts } from "~/db/schema";
-import { sendAbandonEmail, emailReady, type EmailLine } from "./email.server";
+import { sendAbandonEmail, sendComebackEmail, emailReady, type EmailLine } from "./email.server";
 
 /** What a cart's `items` json actually holds, as far as this file cares. */
 interface CartLine {
@@ -114,7 +114,52 @@ export async function runRecovery(db: DB, env: Env, now = new Date()): Promise<R
       .set({ recoveryEmailedAt: new Date(), recoveryStage: kind })
       .where(and(eq(carts.id, cart.id), isNull(carts.recoveryEmailedAt)));
 
-    const result = await sendAbandonEmail(env, kind, {
+    /*
+     * A cart that reached payment and stopped gets the come-back: thirty
+     * dollars off, on a code minted for this cart alone, single use. Minted
+     * rather than the store's public code because the number in this email
+     * has to be bigger than the one she already saw, or there is no reason
+     * to come back -- and because a code that any visitor can type is not an
+     * offer, it is a price.
+     */
+    const COMEBACK_CENTS = 3000;
+    let comeback: string | null = null;
+    if (kind === "checkout") {
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const bytes = crypto.getRandomValues(new Uint8Array(6));
+      comeback = "BACK" + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+      await db.insert(discounts).values({
+        storeId: store.id,
+        code: comeback,
+        kind: "fixed",
+        value: COMEBACK_CENTS,
+        appliesTo: "order",
+        usageLimit: 1,
+        oncePerCustomer: true,
+        active: true,
+      });
+    }
+
+    const result = comeback
+      ? await sendComebackEmail(env, {
+          to: cart.email as string,
+          customerName: null,
+          storeName: store.name,
+          fromAddress: store.emailFrom,
+          replyTo: store.contactEmail,
+          currency: store.currency,
+          lines,
+          totalCents: total,
+          recoverUrl: `${site}/cart?recover=${encodeURIComponent(cart.token)}`,
+          discountCode: comeback,
+          discountOffCents: COMEBACK_CENTS,
+          imageUrl: absolute(site, firstImage(cart.items as CartLine[])) ?? EMAIL_HERO,
+          domain: store.domain,
+          logoUrl: "/media/em-967546d2b092584a.jpg",
+          brandColor: store.brandColor,
+          accentColor: store.accentColor,
+        })
+      : await sendAbandonEmail(env, kind, {
       to: cart.email as string,
       customerName: null,
       storeName: store.name,

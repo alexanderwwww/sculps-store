@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { makeDb } from "../app/db/client";
 import { domains, stores } from "../app/db/schema";
 import { runRecovery } from "../app/lib/recovery.server";
+import { runAftercare } from "../app/lib/aftercare.server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -118,6 +119,12 @@ export default {
           console.log(
             `recovery ${event.cron} · considered ${summary.considered} · sent ${summary.sent} · failed ${summary.failed}`,
             ...summary.reasons,
+          );
+          // The emails after the box lands: delivered-and-setup, then the review ask.
+          const after = await runAftercare(db, env);
+          console.log(
+            `aftercare ${event.cron} · delivered ${after.delivered} · reviews ${after.reviews} · failed ${after.failed}`,
+            ...after.reasons,
           );
         } catch (error) {
           console.error("recovery run failed", error);

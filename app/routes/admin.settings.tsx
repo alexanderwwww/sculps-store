@@ -2157,6 +2157,9 @@ function NotificationsPane({
           ["confirmation", "Order confirmation", "Sent the moment payment is captured"],
           ["shipping", "Shipping confirmation", "Sent when you add a tracking number"],
           ["refund", "Refund notification", "Sent when you issue a refund"],
+          ["delivered", "Delivered — the setup guide", "Sent a few days after shipping, with the steps for what was in the box"],
+          ["review", "How is it going?", "Sent four days after that, asking for a review"],
+          ["comeback", "Come back — $30 off", "Sent to a cart that reached payment and stopped"],
         ].map(([kind, name, note]) => (
           <div key={kind} style={listRow}>
             <span style={listRowMain}>

@@ -440,6 +440,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let paymentsReady = true;
   let paymentsMessage: string | null = null;
   let publishableKey: string | null = null;
+  /*
+   * ?preview=1 draws the whole checkout with no payment provider behind it.
+   *
+   * The form is hidden until a provider is connected, correctly: a page that
+   * cannot take money must not look like it can. But that also hid every
+   * change to the checkout from the person who has to approve it until the
+   * day the keys went in. In preview the fields, the map and the offer all
+   * render; the payment box stays empty because there is no key to mount
+   * Stripe with, and nothing can be charged. It is a way to look, not to pay.
+   */
+  const preview = url.searchParams.get("preview") === "1";
 
   // PayPal is a second, independent provider — a store can have it, Stripe,
   // or both. Its absence must never take the card path down.
@@ -591,6 +602,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     upsells,
     cart,
     paymentsReady,
+    preview,
     paymentsMessage,
     publishableKey,
     /**
@@ -1243,7 +1255,7 @@ function fieldForMessage(message: string): string | null {
 /* --------------------------------------------------------------- the page */
 
 export default function Checkout({ loaderData }: Route.ComponentProps) {
-  const { store, cart, paymentsReady, paymentsMessage, publishableKey, paypalClientId, pixel, footerLinks, photo } =
+  const { store, cart, paymentsReady, preview, paymentsMessage, publishableKey, paypalClientId, pixel, footerLinks, photo } =
     loaderData;
   const storeParam = `?store=${store.slug}`;
   const buddy = BRANDED_CHECKOUT.has(store.slug);
@@ -1308,6 +1320,7 @@ export default function Checkout({ loaderData }: Route.ComponentProps) {
       cart={cart}
       money={money}
       paymentsReady={paymentsReady}
+      preview={preview}
       paymentsMessage={paymentsMessage}
       publishableKey={publishableKey}
       paypalClientId={paypalClientId}
@@ -2978,6 +2991,7 @@ function OnePage({
   cart,
   money,
   paymentsReady,
+  preview = false,
   paymentsMessage,
   publishableKey,
   paypalClientId,
@@ -2994,6 +3008,7 @@ function OnePage({
   cart: Awaited<ReturnType<typeof loader>>["cart"];
   money: (cents: number) => string;
   paymentsReady: boolean;
+  preview?: boolean;
   paymentsMessage: string | null;
   publishableKey: string | null;
   paypalClientId: string | null;
@@ -3819,7 +3834,7 @@ function OnePage({
 
   /* No intent, no form. A page that cannot take money does not draw a box
      that looks like it can. */
-  if (!paymentsReady || !publishableKey) {
+  if ((!paymentsReady || !publishableKey) && !preview) {
     const stopped = (
       <div>
         <h2 className={cn.h2} style={buddy ? undefined : { marginTop: 0 }}>
