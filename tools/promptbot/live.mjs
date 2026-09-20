@@ -1966,7 +1966,18 @@ while (true) {
     console.log(`\r\x1b[K  \x1b[2m"${job.name || job.id}" already ran on this Mac — waiting for the next job.\x1b[0m`);
     console.log(`  \x1b[2m(to run it again: quit, delete "${join(process.cwd(), DONE_FILE)}", reopen)\x1b[0m`);
   }
-  if (!job?.id || done.has(job.id) || !job.prompts?.length) {
+  /*
+   * A job in parts keeps its prompts inside those parts.
+   *
+   * This gate asked only for a top-level "prompts", so every parts job was
+   * read off the queue, judged empty and dropped without a word — the app sat
+   * there reporting "waiting for a job in the queue" with the job already in
+   * front of it. The rest of the runner has understood parts all along; only
+   * the door did not.
+   */
+  const hasWork = Boolean(job?.prompts?.length) ||
+    (Array.isArray(job?.parts) && job.parts.some((p) => p?.prompts?.length));
+  if (!job?.id || done.has(job.id) || !hasWork) {
     // The button on the finished panel. Reveals the zip in Finder with the
     // file selected, so it can be dragged straight out.
     if (await wand.wantsFolder()) {
