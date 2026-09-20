@@ -46,7 +46,8 @@ import {
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
 import { scratchPlayFor, SCRATCH_PRIZES, claimExtraFor } from "~/lib/scratch.server";
 import { CLAIM_EXTRA_CENTS } from "~/lib/claim";
-import leafletHref from "leaflet/dist/leaflet.css?url";
+import mapCssHref from "maplibre-gl/dist/maplibre-gl.css?url";
+import type { PinMap } from "~/lib/map.client";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { paypalFor } from "~/lib/paypal.server";
@@ -2414,7 +2415,7 @@ function useScratchSound() {
  */
 function MapCard({ values }: { values: Record<string, string> }) {
   const boxRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<{ map: unknown; marker: unknown; L: typeof import("leaflet") } | null>(null);
+  const mapRef = useRef<PinMap | null>(null);
   const [point, setPoint] = useState<{ lat: number; lon: number; label: string } | null>(null);
   const [state, setState] = useState<"idle" | "looking" | "found" | "none">("idle");
   const timer = useRef<number | null>(null);
@@ -2444,32 +2445,21 @@ function MapCard({ values }: { values: Record<string, string> }) {
     if (!point || !boxRef.current) return;
     let alive = true;
     (async () => {
-      const L = (await import("leaflet")).default;
-      if (!alive || !boxRef.current) return;
-      if (!mapRef.current) {
-        const map = L.map(boxRef.current, { zoomControl: false, attributionControl: true, dragging: true, scrollWheelZoom: false });
-        map.attributionControl.setPrefix(false);
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          maxZoom: 19,
-        }).addTo(map);
-        const icon = L.divIcon({ className: "gb-map__pin", html: '<span class="gb-map__dot"></span>', iconSize: [28, 28], iconAnchor: [14, 28] });
-        const marker = L.marker([point.lat, point.lon], { icon, draggable: true }).addTo(map);
-        mapRef.current = { map, marker, L };
-      }
-      const { map, marker } = mapRef.current as { map: import("leaflet").Map; marker: import("leaflet").Marker };
-      marker.setLatLng([point.lat, point.lon]);
-      map.setView([point.lat, point.lon], 16, { animate: true });
+      if (mapRef.current) { mapRef.current.setPoint(point.lat, point.lon, 16); return; }
+      const { mountPinMap } = await import("~/lib/map.client");
+      if (!alive || !boxRef.current || mapRef.current) return;
+      mapRef.current = await mountPinMap(boxRef.current, point.lat, point.lon, { draggable: true, zoom: 16 });
     })();
     return () => { alive = false; };
   }, [point]);
+  useEffect(() => () => { mapRef.current?.destroy(); mapRef.current = null; }, []);
 
   if (!enough) return null;
   // No blank canvas: until there is a pin, the card is just its one line.
   const blank = !point;
   return (
     <div className={`gb-map${blank ? " gb-map--blank" : ""}`}>
-      <link rel="stylesheet" href={leafletHref} precedence="high" />
+      <link rel="stylesheet" href={mapCssHref} precedence="high" />
       <div ref={boxRef} className="gb-map__canvas" aria-hidden="true" />
       <div className="gb-map__foot">
         <span className="gb-map__addr">

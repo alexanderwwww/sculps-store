@@ -433,7 +433,9 @@
   transform: rotate(-45deg);
   box-shadow: 0 6px 14px -4px rgba(0,0,0,.45);
 }
-.gb-map .leaflet-control-attribution { font-size: 9px; opacity: .6; }
+.gb-map .maplibregl-ctrl-attrib { font-size: 9px; opacity: .6; }
+.gb-map .maplibregl-ctrl-bottom-right { z-index: 1; }
+.gb-map .maplibregl-canvas { outline: none; }
 @media (min-width: 900px) { .gb-map__canvas { height: 200px; } }
 
 /* ------------------------------------------------------------- the claim */

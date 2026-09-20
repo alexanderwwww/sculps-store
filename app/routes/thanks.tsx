@@ -21,7 +21,7 @@ import { readVisitorSession } from "~/lib/visitor.server";
 import { formatMoney } from "~/lib/money";
 import { offerForOrder, takeOffer, declineOffer } from "~/lib/upsell.server";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
-import leafletHref from "leaflet/dist/leaflet.css?url";
+import mapCssHref from "maplibre-gl/dist/maplibre-gl.css?url";
 import { useEffect, useRef, useState } from "react";
 import { geocodeAddress, addressLine } from "~/lib/geocode.server";
 
@@ -300,18 +300,9 @@ function ArrivalCard({
     if (stage !== "done" || !pin || !mapBox.current || mapRef.current) return;
     let alive = true;
     (async () => {
-      const L = (await import("leaflet")).default;
+      const { mountPinMap } = await import("~/lib/map.client");
       if (!alive || !mapBox.current) return;
-      const map = L.map(mapBox.current, { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false });
-      map.attributionControl.setPrefix(false);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        maxZoom: 19,
-      }).addTo(map);
-      const icon = L.divIcon({ className: "gb-map__pin", html: '<span class="gb-map__dot"></span>', iconSize: [28, 28], iconAnchor: [14, 28] });
-      L.marker([pin.lat, pin.lon], { icon }).addTo(map);
-      map.setView([pin.lat, pin.lon], 15);
-      mapRef.current = map;
+      mapRef.current = await mountPinMap(mapBox.current, pin.lat, pin.lon, { draggable: false, interactive: false, zoom: 15 });
     })();
     return () => { alive = false; };
   }, [stage, pin]);
@@ -359,7 +350,7 @@ function ArrivalCard({
       </p>
       {pin ? (
         <div className="gb-th__map">
-          <link rel="stylesheet" href={leafletHref} precedence="high" />
+          <link rel="stylesheet" href={mapCssHref} precedence="high" />
           <div ref={mapBox} className="gb-th__map-canvas" aria-hidden="true" />
           <div className="gb-th__map-foot">
             <span className="gb-th__map-k">Shipping to</span>
