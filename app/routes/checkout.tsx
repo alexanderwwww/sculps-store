@@ -2448,6 +2448,7 @@ function MapCard({ values }: { values: Record<string, string> }) {
       if (!alive || !boxRef.current) return;
       if (!mapRef.current) {
         const map = L.map(boxRef.current, { zoomControl: false, attributionControl: true, dragging: true, scrollWheelZoom: false });
+        map.attributionControl.setPrefix(false);
         L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
           maxZoom: 19,
@@ -2488,7 +2489,9 @@ function MapCard({ values }: { values: Record<string, string> }) {
  * customer on the tap: no code to copy, nothing to type. The amount is what
  * the server says it minted -- this component only shows it.
  */
-function ClaimPopup({ money, applied }: { money: (cents: number) => string; applied: string | null }) {
+function ClaimPopup({ money: moneyRaw, applied }: { money: (cents: number) => string; applied: string | null }) {
+  // "$5 off", never "$5.00 off" -- the shop's rule for every discount it shows.
+  const money = (cents: number) => moneyRaw(cents).replace(/[.,]00\b/, "");
   const fetcher = useFetcher<ActionReply>();
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState<{ amountCents: number; extraCents: number } | null>(null);

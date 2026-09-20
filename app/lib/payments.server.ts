@@ -10,7 +10,7 @@
  */
 import { eq, and } from "drizzle-orm";
 import type { DB } from "~/db/client";
-import { paymentProviders } from "~/db/schema";
+import { paymentProviders, stores } from "~/db/schema";
 import { decryptSecret } from "./crypto.server";
 
 export interface PaymentIntent {
@@ -133,7 +133,24 @@ export async function providerForStore(
     );
   }
 
-  return new StripeProvider(secretKey, row.publishableKey, row.capture === "manual");
+  /*
+   * What the customer sees on their bank statement.
+   *
+   * Two stores on one Stripe account share one descriptor, and "BLACK REAPER"
+   * on the statement of somebody who bought a garden kneeler is a chargeback
+   * waiting to happen. Stripe lets each charge carry a suffix after the
+   * account's own prefix, so every charge names the store it came from.
+   * Letters, digits and spaces only, and short enough to fit beside the
+   * prefix inside Stripe's twenty-two character limit.
+   */
+  const [named] = await db.select({ name: stores.name }).from(stores).where(eq(stores.id, storeId)).limit(1);
+  const suffix = (named?.name ?? "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 10) || null;
+  return new StripeProvider(secretKey, row.publishableKey, row.capture === "manual", suffix);
 }
 
 /** True when checkout can run, without throwing — for showing the state. */
@@ -153,6 +170,7 @@ class StripeProvider implements PaymentProvider {
     private readonly secretKey: string,
     readonly publishableKey: string | null,
     private readonly manualCapture: boolean,
+    private readonly descriptorSuffix: string | null = null,
   ) {}
 
   private async call(path: string, body?: Record<string, string>, idempotencyKey?: string): Promise<any> {
@@ -190,6 +208,7 @@ class StripeProvider implements PaymentProvider {
       "automatic_payment_methods[enabled]": "true",
       capture_method: this.manualCapture ? "manual" : "automatic",
       description: input.orderReference,
+      ...(this.descriptorSuffix ? { statement_descriptor_suffix: this.descriptorSuffix } : {}),
       /*
        * Keep the card on file for a later charge.
        *
@@ -274,6 +293,7 @@ class StripeProvider implements PaymentProvider {
         customer,
         payment_method: method,
         off_session: "true",
+        ...(this.descriptorSuffix ? { statement_descriptor_suffix: this.descriptorSuffix } : {}),
         confirm: "true",
         description: input.description,
       };

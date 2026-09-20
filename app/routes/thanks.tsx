@@ -303,6 +303,7 @@ function ArrivalCard({
       const L = (await import("leaflet")).default;
       if (!alive || !mapBox.current) return;
       const map = L.map(mapBox.current, { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false });
+      map.attributionControl.setPrefix(false);
       L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
         maxZoom: 19,
