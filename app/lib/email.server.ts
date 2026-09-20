@@ -13,6 +13,7 @@
 import type { DB } from "~/db/client";
 import { recordOrderEvent } from "./admin.server";
 import { formatMoney } from "./money";
+import { reaperProduct, type ReaperProductGuide } from "./emails/reaper-products";
 
 export interface EmailLine {
   label: string;
@@ -855,6 +856,427 @@ export async function sendAbandonEmail(
   });
 }
 
+/* -------------------------------------------------------- after delivery --
+   Three messages with a physical-world reason to exist. The parcel is on
+   the mat, so here is how to put the thing up; a few nights have passed, so
+   how is it going; the cart was left, so here is a reason to come back. The
+   product facts come from `emails/reaper-products.ts`, which reads like the
+   product page because it was written from it. */
+
+/** A line on a delivered order, by product handle. `label` is the variant as bought. */
+export interface DeliveredProductLine {
+  handle: string;
+  label?: string | null;
+  quantity: number;
+}
+
+/** A small headed block: "Set it up", "Worth knowing", "If you are wondering". */
+function guideHeading(text: string, accent: string): string {
+  return `<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent};margin:0 0 10px">${esc(text)}</div>`;
+}
+
+/** Numbered steps, table-based so the numbers line up in Outlook. */
+function numberedSteps(steps: string[], ink: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${steps
+    .map(
+      (step, i) => `<tr>
+<td width="30" valign="top" style="padding:0 0 10px"><div style="width:24px;height:24px;line-height:24px;border-radius:999px;background:${ink};color:#ffffff;font-size:12.5px;font-weight:800;text-align:center">${i + 1}</div></td>
+<td valign="top" style="padding:2px 0 10px 6px;font-size:15px;line-height:1.5;color:${ink}">${esc(step)}</td>
+</tr>`,
+    )
+    .join("")}</table>`;
+}
+
+/**
+ * One product's section of the delivered email.
+ *
+ * A product that is not in the map still gets its name and a line saying
+ * to reply if anything is missing. An email that says nothing about the
+ * thing that arrived would be worse than the plain shipping notice.
+ */
+function productGuideBlock(
+  line: DeliveredProductLine,
+  guide: ReaperProductGuide | null,
+  ink: string,
+  accent: string,
+): string {
+  const title = guide?.name ?? line.label ?? line.handle;
+  const qty = line.quantity > 1 ? `<span style="color:#8C8678;font-weight:600"> &times;${line.quantity}</span>` : "";
+
+  if (!guide) {
+    return `<div style="margin:0 0 18px">
+<h2 style="margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-.02em;color:${ink}">${esc(title)}${qty}</h2>
+<p style="margin:0;font-size:15px;line-height:1.55;color:#6E7480">Everything is in the box. If anything is missing or looks wrong, reply to this email and a person will sort it.</p>
+</div>`;
+  }
+
+  return `<div style="margin:0 0 18px">
+<h2 style="margin:0 0 14px;font-size:20px;font-weight:800;letter-spacing:-.02em;color:${ink}">${esc(title)}${qty}</h2>
+${guideHeading("Set it up", accent)}
+${numberedSteps(guide.setupSteps, ink)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;background:#F7F5F0;border-radius:14px"><tr><td style="padding:16px 18px">
+${guideHeading("Worth knowing", accent)}
+${guide.setupTips
+  .map(
+    (tip) =>
+      `<div style="padding:0 0 8px;font-size:14px;line-height:1.55;color:${ink}"><span style="color:${accent};font-weight:800">&ndash;</span>&nbsp; ${esc(tip)}</div>`,
+  )
+  .join("")}
+</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px"><tr><td>
+${guideHeading("If you are wondering", accent)}
+${guide.faq
+  .map(
+    (item) =>
+      `<div style="padding:0 0 10px"><div style="font-size:14.5px;font-weight:700;line-height:1.45;color:${ink}">${esc(item.q)}</div><div style="font-size:14px;line-height:1.55;color:#6E7480">${esc(item.a)}</div></div>`,
+  )
+  .join("")}
+</td></tr></table>
+</div>`;
+}
+
+/** The plain-text twin of productGuideBlock. */
+function productGuideText(line: DeliveredProductLine, guide: ReaperProductGuide | null): string[] {
+  const title = guide?.name ?? line.label ?? line.handle;
+  if (!guide) return [title.toUpperCase(), `Everything is in the box. Reply if anything is missing.`, ``];
+  return [
+    title.toUpperCase(),
+    ``,
+    `Set it up`,
+    ...guide.setupSteps.map((step, i) => `${i + 1}. ${step}`),
+    ``,
+    `Worth knowing`,
+    ...guide.setupTips.map((tip) => `- ${tip}`),
+    ``,
+    ...guide.faq.flatMap((item) => [`Q: ${item.q}`, `A: ${item.a}`]),
+    ``,
+  ];
+}
+
+function deliveredBody(
+  input: BrandFields & {
+    storeName: string;
+    customerName: string;
+    products: DeliveredProductLine[];
+  },
+): string {
+  const accent = input.accentColor || "#E8B33C";
+  const ink = input.brandColor || "#16223A";
+  const first = (input.customerName || "").split(" ")[0] || "there";
+  const guides = input.products.map((line) => ({ line, guide: reaperProduct(line.handle) }));
+  const lead = guides[0]?.guide;
+
+  // The product's own photo leads, unless the caller had a better one.
+  const brand = brandOf({ ...input, heroImageUrl: input.heroImageUrl ?? lead?.image ?? null });
+  const names = guides.map(({ line, guide }) => guide?.name ?? line.label ?? line.handle);
+  const what = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+
+  return shell(
+    brand,
+    `<div style="text-align:center;margin:0 0 24px">
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">Delivered</div>
+<h1 style="margin:10px 0 8px;font-size:28px;line-height:1.14;font-weight:800;letter-spacing:-.03em;color:${ink}">It&rsquo;s at your door, ${esc(first)}.</h1>
+<p style="margin:0;font-size:15.5px;line-height:1.6;color:#6E7480">${esc(what)} ${names.length === 1 ? "has" : "have"} landed. Here is how to have it up before dark.</p>
+</div>
+${guides
+  .map(({ line, guide }) => productGuideBlock(line, guide, ink, accent))
+  .join('<div style="height:1px;background:#EEEAE0;margin:8px 0 22px"></div>')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;background:${ink};border-radius:14px">
+<tr><td style="padding:18px 22px">
+<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:${accent}">Something missing or broken?</div>
+<div style="margin-top:8px;font-size:14.5px;line-height:1.65;color:#E7EAF0">Reply to this email with a photo. A person reads it the same day, and a replacement part is the usual answer.</div>
+</td></tr></table>`,
+    `${what} has arrived. Here is the setup.`,
+    true,
+  );
+}
+
+/**
+ * Sent when the order is marked delivered.
+ *
+ * The parcel is on the mat and the customer is holding a box with no
+ * instructions worth reading. This is the instruction sheet, per product,
+ * with the two or three things people otherwise reply to ask.
+ */
+export async function sendDeliveredSetupEmail(
+  db: DB,
+  env: Env,
+  orderId: string,
+  input: BrandFields & {
+    to: string;
+    customerName: string;
+    storeName: string;
+    fromAddress: string | null;
+    replyTo: string | null;
+    orderNumber: number;
+    products: DeliveredProductLine[];
+  },
+): Promise<boolean> {
+  const from = input.fromAddress || "orders@resend.dev";
+  const guides = input.products.map((line) => ({ line, guide: reaperProduct(line.handle) }));
+  const first = (input.customerName || "").split(" ")[0] || "there";
+
+  const text = [
+    `It's at your door, ${first}.`,
+    ``,
+    `Order #${input.orderNumber} has been delivered. Here is how to set it up.`,
+    ``,
+    ...guides.flatMap(({ line, guide }) => productGuideText(line, guide)),
+    `Something missing or broken? Reply to this email with a photo.`,
+  ].join("\n");
+
+  const result = await send(env, {
+    from: `${input.storeName} <${from}>`,
+    to: input.to,
+    replyTo: input.replyTo,
+    subject: `It's at your door. Here's the setup.`,
+    html: deliveredBody(input),
+    text,
+  });
+
+  await recordOrderEvent(
+    db,
+    orderId,
+    result.ok ? "email:delivered" : "email:failed",
+    result.ok
+      ? `Delivery and setup email sent to ${input.to}`
+      : `Delivery and setup email could NOT be sent to ${input.to} · ${result.reason}`,
+    result.ok ? { id: result.id } : { reason: result.reason },
+  );
+
+  return result.ok;
+}
+
+function reviewBody(
+  input: BrandFields & {
+    storeName: string;
+    customerName: string;
+    productHandle: string;
+    productLabel?: string | null;
+    reviewUrl: string;
+  },
+): string {
+  const accent = input.accentColor || "#E8B33C";
+  const ink = input.brandColor || "#16223A";
+  const guide = reaperProduct(input.productHandle);
+  const name = guide?.name ?? input.productLabel ?? input.productHandle;
+  const first = (input.customerName || "").split(" ")[0] || "there";
+  const ask = guide?.reviewAsk ?? `Tell us how ${name} is doing.`;
+  const brand = brandOf({ ...input, heroImageUrl: input.heroImageUrl ?? guide?.image ?? null });
+
+  return shell(
+    brand,
+    `<div style="text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">A few nights in</div>
+<h1 style="margin:10px 0 10px;font-size:28px;line-height:1.14;font-weight:800;letter-spacing:-.03em;color:${ink}">How is it going, ${esc(first)}?</h1>
+<p style="margin:0 0 6px;font-size:15.5px;line-height:1.6;color:#6E7480">${esc(ask)}</p>
+<p style="margin:0;font-size:15.5px;line-height:1.6;color:#6E7480">Two lines is plenty. A photo from the street is better.</p>
+</div>
+${button(`Review ${name}`, input.reviewUrl, accent)}
+<p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8C8678;text-align:center">If something is not right, reply to this email instead and a person will fix it first.</p>`,
+    ask,
+    true,
+  );
+}
+
+/**
+ * Sent a few days after delivery. One ask, one link, straight to the
+ * product page's reviews. Anything wrong is steered to a reply, so a
+ * problem lands in the inbox and not on the page.
+ */
+export async function sendReviewRequestEmail(
+  db: DB,
+  env: Env,
+  orderId: string,
+  input: BrandFields & {
+    to: string;
+    customerName: string;
+    storeName: string;
+    fromAddress: string | null;
+    replyTo: string | null;
+    orderNumber: number;
+    productHandle: string;
+    productLabel?: string | null;
+    /** Absolute. Defaults to the product page on the store's domain, at #reviews. */
+    reviewUrl?: string | null;
+  },
+): Promise<boolean> {
+  const from = input.fromAddress || "orders@resend.dev";
+  const guide = reaperProduct(input.productHandle);
+  const name = guide?.name ?? input.productLabel ?? input.productHandle;
+  const reviewUrl =
+    input.reviewUrl ||
+    (input.domain ? `https://${input.domain}/pages/${encodeURIComponent(input.productHandle)}#reviews` : null);
+
+  if (!reviewUrl) {
+    await recordOrderEvent(
+      db,
+      orderId,
+      "email:skipped",
+      `Review request not sent to ${input.to}: the store has no domain to link the review page on.`,
+    );
+    return false;
+  }
+
+  const first = (input.customerName || "").split(" ")[0] || "there";
+  const text = [
+    `How is it going, ${first}?`,
+    ``,
+    guide?.reviewAsk ?? `Tell us how ${name} is doing.`,
+    ``,
+    `Leave a review here: ${reviewUrl}`,
+    ``,
+    `If something is not right, reply to this email instead and a person will fix it first.`,
+  ].join("\n");
+
+  const result = await send(env, {
+    from: `${input.storeName} <${from}>`,
+    to: input.to,
+    replyTo: input.replyTo,
+    subject: `How is ${name} doing?`,
+    html: reviewBody({ ...input, reviewUrl }),
+    text,
+  });
+
+  await recordOrderEvent(
+    db,
+    orderId,
+    result.ok ? "email:review" : "email:failed",
+    result.ok
+      ? `Review request sent to ${input.to}`
+      : `Review request could NOT be sent to ${input.to} · ${result.reason}`,
+    result.ok ? { id: result.id } : { reason: result.reason },
+  );
+
+  return result.ok;
+}
+
+export interface ComebackInput extends BrandFields {
+  to: string;
+  customerName: string | null;
+  storeName: string;
+  fromAddress: string | null;
+  replyTo: string | null;
+  currency: string;
+  lines: EmailLine[];
+  totalCents: number;
+  /** the link that puts the cart back exactly as she left it */
+  recoverUrl: string;
+  /** The code the caller created for this cart. The email never invents one. */
+  discountCode: string;
+  /** What it takes off, in cents. Defaults to $30. Dollars only, never "%". */
+  discountOffCents?: number | null;
+  /** the hero image of what she left, absolute URL */
+  imageUrl?: string | null;
+  /** the handle of the product she left, so the message can name it properly */
+  productHandle?: string | null;
+}
+
+function comebackBody(input: ComebackInput): string {
+  const accent = input.accentColor || "#E8B33C";
+  const ink = input.brandColor || "#16223A";
+  const guide = reaperProduct(input.productHandle);
+  const brand = brandOf({ ...input, heroImageUrl: input.imageUrl ?? guide?.image ?? input.heroImageUrl ?? null });
+  const off = Math.round((input.discountOffCents ?? 3000) / 100);
+  const deadline = seasonalDeadline();
+  const name = guide?.name ?? input.lines[0]?.label ?? "it";
+
+  return shell(
+    brand,
+    `<div style="text-align:center">
+<div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${accent}">Still in your cart</div>
+<h1 style="margin:10px 0 10px;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.03em;color:${ink}">$${off} off, if you still want it.</h1>
+<p style="margin:0 0 ${deadline ? "18px" : "24px"};font-size:15.5px;line-height:1.6;color:#6E7480">You left ${esc(name)} in your cart. It is still there, and this code takes $${off} off it. No minimum.</p>
+${
+  deadline
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px"><tr><td style="background:#0B0B0C;border-radius:999px;padding:9px 18px">
+<span style="font-size:13px;font-weight:800;letter-spacing:.02em;color:#D6FF4F">${esc(deadline)}</span>
+</td></tr></table>`
+    : ""
+}
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F5F0;border-radius:14px">
+<tr><td style="padding:18px 20px">
+${input.lines
+  .map(
+    (line) =>
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="font-size:16px;font-weight:700;line-height:1.4;color:${ink}">${esc(line.label)}${line.quantity > 1 ? `<span style="color:#8C8678;font-weight:600"> &times;${line.quantity}</span>` : ""}</td>
+<td width="90" style="text-align:right;font-size:16px;font-weight:800;white-space:nowrap;color:${ink}">${formatMoney(line.lineTotalCents, input.currency)}</td>
+</tr></table>`,
+  )
+  .join('<div style="height:1px;background:#E6E1D6;margin:12px 0"></div>')}
+<div style="height:1px;background:#E6E1D6;margin:14px 0"></div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="font-size:13px;color:#8C8678;font-weight:600">Free shipping included</td>
+<td style="text-align:right;font-size:13px;color:#8C8678">Total <strong style="color:${ink};font-size:15px">${formatMoney(input.totalCents, input.currency)}</strong></td>
+</tr></table>
+</td></tr></table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
+<td style="padding:18px;background:${ink};border-radius:14px;text-align:center">
+<div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${accent}">Take $${off} off</div>
+<div style="margin-top:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:26px;font-weight:800;letter-spacing:.08em;color:#ffffff">${esc(input.discountCode)}</div>
+<div style="margin-top:6px;font-size:12px;color:#A9B0BE">Paste it at checkout, or tap below and it is applied for you</div>
+</td></tr></table>
+
+${button("Take me back to it", input.recoverUrl, accent)}
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:26px;border-top:1px solid #EEEAE0">
+<tr>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Free shipping</strong>on every order</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">30-day returns</strong>no questions</td>
+<td width="33%" style="padding:18px 6px 0;text-align:center;font-size:12px;line-height:1.5;color:#6E7480"><strong style="display:block;color:${ink};font-size:13px">Secure checkout</strong>Apple&nbsp;Pay &amp; card</td>
+</tr></table>
+
+<p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#A3A79E;text-align:center">
+This is the last one we send about this cart. Changed your mind? Ignore it and we will leave you alone.
+</p>`,
+    `$${off} off ${name}, still in your cart`,
+  );
+}
+
+/**
+ * The come-back email: an abandoned cart, a fixed dollar code the caller has
+ * already created, the lines she left and the picture of the thing.
+ *
+ * No db and no order id, because there is no order. Same shape as
+ * sendAbandonEmail: returns the send result rather than throwing, since
+ * this runs on a schedule with nobody watching.
+ */
+export async function sendComebackEmail(
+  env: Env,
+  input: ComebackInput,
+): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+  const from = input.fromAddress || "orders@resend.dev";
+  const off = Math.round((input.discountOffCents ?? 3000) / 100);
+  const guide = reaperProduct(input.productHandle);
+  const name = guide?.name ?? input.lines[0]?.label ?? "it";
+
+  const text = [
+    input.customerName ? `Hi ${input.customerName},` : `Hi,`,
+    ``,
+    `You left ${name} in your cart. It is still there, and this code takes $${off} off it.`,
+    ``,
+    ...input.lines.map((line) => `${line.label} x ${line.quantity} — ${formatMoney(line.lineTotalCents, input.currency)}`),
+    ``,
+    `Code: ${input.discountCode}`,
+    `Pick it up here: ${input.recoverUrl}`,
+    ``,
+    `This is the last one we send about this cart.`,
+  ].join("\n");
+
+  return send(env, {
+    from: `${input.storeName} <${from}>`,
+    to: input.to,
+    replyTo: input.replyTo,
+    subject: `$${off} off, if you still want it`,
+    html: comebackBody(input),
+    text,
+  });
+}
+
 /** The templates with example values, for Settings → Preview. Nothing is sent. */
 export function previewEmail(
   kind: string,
@@ -911,6 +1333,46 @@ ${link ? button("Track my parcel", link, accent) : ""}`,
       // sending no code at all.
       discountCode: null,
       discountOffCents: null,
+    });
+  }
+
+  // The after-delivery set, with sample lines drawn from the real product
+  // map so what he previews is the exact wording a customer gets.
+  if (kind === "delivered") {
+    return deliveredBody({
+      ...input,
+      customerName: "Alex",
+      products: [
+        { handle: "black-reaper", label: "The Black Reaper", quantity: 1 },
+        { handle: "crawling-zombie", label: "The Crawling Zombie", quantity: 2 },
+      ],
+    });
+  }
+
+  if (kind === "review") {
+    return reviewBody({
+      ...input,
+      customerName: "Alex",
+      productHandle: "black-reaper",
+      reviewUrl: input.domain ? `https://${input.domain}/pages/black-reaper#reviews` : "#",
+    });
+  }
+
+  if (kind === "comeback") {
+    const reaper = reaperProduct("black-reaper");
+    return comebackBody({
+      ...input,
+      to: "",
+      customerName: "Alex",
+      fromAddress: null,
+      replyTo: null,
+      lines: [{ label: reaper?.name ?? "The Black Reaper", quantity: 1, lineTotalCents: 12900 }],
+      totalCents: 12900,
+      recoverUrl: input.domain ? `https://${input.domain}/cart` : "#",
+      // Preview only. The real send is handed a code the caller created.
+      discountCode: "COMEBACK30",
+      discountOffCents: 3000,
+      productHandle: "black-reaper",
     });
   }
 

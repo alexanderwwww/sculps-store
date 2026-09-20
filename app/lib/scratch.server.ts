@@ -102,3 +102,83 @@ export async function scratchPlayFor(
 
   return { percent, code };
 }
+
+/* ------------------------------------------------------------- the claim */
+
+/**
+ * "Claim an extra $5 off." One tap, one time, per cart.
+ *
+ * Not a game: the customer already has the shop's discounts and does not
+ * need to be made to work for five dollars. The pop-up asks once, the tap
+ * claims it, and the code is applied for them.
+ *
+ * "Extra" has to mean extra. The cart holds one code at a time, so if one is
+ * already applied the claim does not replace it with a smaller one -- that
+ * would be a five dollar penalty dressed as a gift. Instead a new single-use
+ * code is minted worth what they already had PLUS five dollars, in cents,
+ * and that replaces the old one. A percentage they already had is turned
+ * into its dollar value on today's subtotal first. Dollars only: the number
+ * has to be pictureable, and a percent is not.
+ */
+export const CLAIM_EXTRA_CENTS = 500;
+
+export interface ClaimPlay {
+  /** the code now applied to the cart */
+  code: string;
+  /** what that code is worth in total, cents */
+  amountCents: number;
+  /** the five dollars on top of whatever was already there */
+  extraCents: number;
+}
+
+export async function claimExtraFor(
+  db: ReturnType<typeof makeDb>,
+  storeId: string,
+  cartToken: string,
+  // `kind` is whatever the discounts row holds; only two of its values matter here.
+  already: { kind: string; value: number } | null,
+  subtotalCents: number,
+): Promise<ClaimPlay> {
+  const [existing] = await db
+    .select({ amountCents: scratchPlays.amountCents, code: scratchPlays.code })
+    .from(scratchPlays)
+    .where(and(eq(scratchPlays.storeId, storeId), eq(scratchPlays.cartToken, cartToken)))
+    .limit(1);
+  if (existing && existing.amountCents) {
+    return { code: existing.code, amountCents: existing.amountCents, extraCents: CLAIM_EXTRA_CENTS };
+  }
+
+  // What they walked in with, as dollars, so the new code never pays less.
+  let base = 0;
+  if (already?.kind === "fixed") base = Math.max(0, already.value);
+  else if (already?.kind === "percentage") base = Math.round((Math.min(100, Math.max(0, already.value)) / 100) * subtotalCents);
+  const amountCents = base + CLAIM_EXTRA_CENTS;
+  const code = codeFor();
+
+  const [discount] = await db
+    .insert(discounts)
+    .values({
+      storeId,
+      code,
+      kind: "fixed",
+      value: amountCents,
+      appliesTo: "order",
+      usageLimit: 1,
+      oncePerCustomer: true,
+      active: true,
+    })
+    .returning({ id: discounts.id });
+
+  try {
+    await db.insert(scratchPlays).values({ storeId, cartToken, percent: 0, amountCents, code, discountId: discount?.id ?? null });
+  } catch {
+    // Two tabs claimed at once. The first one written is the one that counts.
+    const [won] = await db
+      .select({ amountCents: scratchPlays.amountCents, code: scratchPlays.code })
+      .from(scratchPlays)
+      .where(and(eq(scratchPlays.storeId, storeId), eq(scratchPlays.cartToken, cartToken)))
+      .limit(1);
+    if (won && won.amountCents) return { code: won.code, amountCents: won.amountCents, extraCents: CLAIM_EXTRA_CENTS };
+  }
+  return { code, amountCents, extraCents: CLAIM_EXTRA_CENTS };
+}

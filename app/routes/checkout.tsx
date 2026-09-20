@@ -44,7 +44,8 @@ import {
   saveCart,
 } from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
-import { scratchPlayFor, SCRATCH_PRIZES } from "~/lib/scratch.server";
+import { scratchPlayFor, SCRATCH_PRIZES, claimExtraFor, CLAIM_EXTRA_CENTS } from "~/lib/scratch.server";
+import leafletHref from "leaflet/dist/leaflet.css?url";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
 import { paypalFor } from "~/lib/paypal.server";
@@ -648,6 +649,33 @@ export async function action({ request, context }: Route.ActionArgs) {
    * this cart asks for one, and the same cart always gets the same answer
    * back — scratching reveals it, it never decides it.
    */
+  /*
+   * "Claim an extra $5 off." The pop-up's one button. The code is minted on
+   * the server, worth whatever the cart already had plus five dollars, and
+   * applied here -- the browser learns what it got, it never decides it.
+   */
+  if (formIntent === "claim") {
+    let cartToken = token;
+    let setCookie: string | null = null;
+    if (!cartToken) {
+      cartToken = newCartToken();
+      setCookie = cartCookie(cartToken, url);
+    }
+    const current = cart.discount ? await findDiscount(context.db, store.id, cart.discount.code) : null;
+    const play = await claimExtraFor(
+      context.db,
+      store.id,
+      cartToken,
+      current ? { kind: current.kind, value: current.value } : null,
+      cart.subtotalCents,
+    );
+    await setCartDiscount(context.db, store.id, cartToken, play.code);
+    return Response.json(
+      { claim: play },
+      setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined,
+    );
+  }
+
   if (formIntent === "scratch") {
     let cartToken = token;
     let setCookie: string | null = null;
@@ -1106,6 +1134,7 @@ type ActionReply =
   | { error: string }
   | { discountError?: string | null; protection?: boolean; added?: boolean }
   | { scratch: { percent: number; code: string } }
+  | { claim: { code: string; amountCents: number; extraCents: number } }
   | {
       ok: true;
       orderId: string;
@@ -2355,6 +2384,163 @@ function useScratchSound() {
   }, []);
 
   return { scratch, win, prime };
+}
+
+/* ------------------------------------------------------------ map card */
+
+/**
+ * The address, on a map, with a pin -- the card at the top of a delivery
+ * app's checkout. It does one job: the customer sees that the shop knows
+ * where their house is. That is worth more than any trust badge.
+ *
+ * Leaflet is loaded only in the browser and only once an address is worth
+ * looking up. The tiles are the Apple-looking ones; the geocoding goes
+ * through this shop's own Worker, so nothing about the customer leaves for a
+ * third party from the browser.
+ */
+function MapCard({ values }: { values: Record<string, string> }) {
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<{ map: unknown; marker: unknown; L: typeof import("leaflet") } | null>(null);
+  const [point, setPoint] = useState<{ lat: number; lon: number; label: string } | null>(null);
+  const [state, setState] = useState<"idle" | "looking" | "found" | "none">("idle");
+  const timer = useRef<number | null>(null);
+
+  const line = [values.address1, values.city, values.region, values.postalCode, values.country || "US"]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean)
+    .join(", ");
+  const enough = Boolean((values.address1 ?? "").trim() && ((values.city ?? "").trim() || (values.postalCode ?? "").trim()));
+
+  useEffect(() => {
+    if (!enough) { setState("idle"); return; }
+    if (timer.current) window.clearTimeout(timer.current);
+    setState("looking");
+    timer.current = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/checkout/geocode?q=${encodeURIComponent(line)}`);
+        const p = (await res.json()) as { lat: number; lon: number; label: string } | null;
+        if (p) { setPoint(p); setState("found"); } else setState("none");
+      } catch { setState("none"); }
+    }, 700);
+    return () => { if (timer.current) window.clearTimeout(timer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line, enough]);
+
+  useEffect(() => {
+    if (!point || !boxRef.current) return;
+    let alive = true;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (!alive || !boxRef.current) return;
+      if (!mapRef.current) {
+        const map = L.map(boxRef.current, { zoomControl: false, attributionControl: true, dragging: true, scrollWheelZoom: false });
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          maxZoom: 19,
+        }).addTo(map);
+        const icon = L.divIcon({ className: "gb-map__pin", html: '<span class="gb-map__dot"></span>', iconSize: [28, 28], iconAnchor: [14, 28] });
+        const marker = L.marker([point.lat, point.lon], { icon, draggable: true }).addTo(map);
+        mapRef.current = { map, marker, L };
+      }
+      const { map, marker } = mapRef.current as { map: import("leaflet").Map; marker: import("leaflet").Marker };
+      marker.setLatLng([point.lat, point.lon]);
+      map.setView([point.lat, point.lon], 16, { animate: true });
+    })();
+    return () => { alive = false; };
+  }, [point]);
+
+  if (!enough) return null;
+  return (
+    <div className="gb-map">
+      <link rel="stylesheet" href={leafletHref} precedence="high" />
+      <div ref={boxRef} className="gb-map__canvas" aria-hidden="true" />
+      <div className="gb-map__foot">
+        <span className="gb-map__addr">
+          {state === "looking" ? "Finding it on the map…" : state === "none" ? "We couldn't place that address yet — check the street and city." : values.address1}
+        </span>
+        {state === "found" ? <span className="gb-map__hint">Drag the pin to adjust</span> : null}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------- the claim */
+
+/**
+ * "Claim an extra $5 off." A pop-up, once per cart, one button.
+ *
+ * It waits a beat so it is not the first thing on the page, it never comes
+ * back once it has been answered either way, and it is applied for the
+ * customer on the tap: no code to copy, nothing to type. The amount is what
+ * the server says it minted -- this component only shows it.
+ */
+function ClaimPopup({ money, applied }: { money: (cents: number) => string; applied: string | null }) {
+  const fetcher = useFetcher<ActionReply>();
+  const [open, setOpen] = useState(false);
+  const [done, setDone] = useState<{ amountCents: number; extraCents: number } | null>(null);
+  const KEY = "reaper-claim";
+
+  useEffect(() => {
+    try {
+      const seen = window.localStorage.getItem(KEY);
+      if (seen) return;
+    } catch { /* private mode: it can show once per load, which is fine */ }
+    const t = window.setTimeout(() => setOpen(true), 2200);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const d = fetcher.data;
+    if (d && "claim" in d && d.claim) {
+      setDone({ amountCents: d.claim.amountCents, extraCents: d.claim.extraCents });
+      try { window.localStorage.setItem(KEY, "claimed"); } catch { /* fine */ }
+      const t = window.setTimeout(() => setOpen(false), 1800);
+      return () => window.clearTimeout(t);
+    }
+  }, [fetcher.data]);
+
+  const dismiss = () => {
+    setOpen(false);
+    try { window.localStorage.setItem(KEY, "dismissed"); } catch { /* fine */ }
+  };
+
+  if (!open) return null;
+  const busy = fetcher.state !== "idle";
+  return (
+    <div className="gb-claim" role="dialog" aria-modal="true" aria-labelledby="gb-claim-h">
+      <div className="gb-claim__veil" onClick={busy ? undefined : dismiss} />
+      <div className="gb-claim__card">
+        <button type="button" className="gb-claim__x" aria-label="No thanks" onClick={dismiss} disabled={busy}>×</button>
+        <div className="gb-claim__mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="56" height="56">
+            <path d="M32 6c-4 0-6 3-6 6 0 0-14 2-14 20 0 16 10 26 20 26s20-10 20-26c0-18-14-20-14-20 0-3-2-6-6-6z" fill="#F5821F"/>
+            <path d="M22 30l6 6-6 6M42 30l-6 6 6 6M22 48c6-4 14-4 20 0" fill="none" stroke="#0B0B0C" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        {done ? (
+          <>
+            <h2 id="gb-claim-h" className="gb-claim__h">{money(done.extraCents)} off, on the house.</h2>
+            <p className="gb-claim__p">Applied to this order — {money(done.amountCents)} off in total. Nothing to type.</p>
+          </>
+        ) : (
+          <>
+            <p className="gb-claim__kicker">Before you pay</p>
+            <h2 id="gb-claim-h" className="gb-claim__h">Claim an extra {money(CLAIM_EXTRA_CENTS)} off.</h2>
+            <p className="gb-claim__p">
+              {applied ? "On top of the discount already on this order." : "Applied straight to this order."} One tap, once.
+            </p>
+            <fetcher.Form method="post">
+              <input type="hidden" name="intent" value="claim" />
+              <button type="submit" className="gb-claim__btn" disabled={busy}>
+                {busy ? "Claiming…" : `Claim ${money(CLAIM_EXTRA_CENTS)} off`}
+              </button>
+            </fetcher.Form>
+            <button type="button" className="gb-claim__no" onClick={dismiss} disabled={busy}>No thanks</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function ScratchCard({
@@ -3885,6 +4071,7 @@ function OnePage({
             onField={onField}
             onBlur={onBlur}
           />
+          {buddy ? <MapCard values={values} /> : null}
         </>,
       )}
 
@@ -3966,7 +4153,9 @@ function OnePage({
    * quietly turned into $9.95 and would have been right to be angry about it.
    * An untested giveaway is not a launch-day feature.
    */
-  const scratch = store.slug === "reaper" ? null : (
+  const scratch = store.slug === "reaper" ? (
+    <ClaimPopup money={money} applied={cart.discount?.code ?? null} />
+  ) : (
     <ScratchCard
       odds={scratchOdds}
       applied={cart.discount?.code ?? null}

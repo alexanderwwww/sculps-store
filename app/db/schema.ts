@@ -1032,8 +1032,10 @@ export const scratchPlays = pgTable(
       .references(() => stores.id, { onDelete: "cascade" }),
     /** the cart token — one card per cart */
     cartToken: text("cart_token").notNull(),
-    /** percent off that was drawn */
+    /** percent off that was drawn — 0 for a play that drew dollars instead */
     percent: integer("percent").notNull(),
+    /** dollars off that was drawn, in cents; null for a percentage play */
+    amountCents: integer("amount_cents"),
     /** the single-use code this play created */
     code: text("code").notNull(),
     discountId: uuid("discount_id").references(() => discounts.id, { onDelete: "set null" }),

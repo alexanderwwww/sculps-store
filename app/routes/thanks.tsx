@@ -21,6 +21,9 @@ import { readVisitorSession } from "~/lib/visitor.server";
 import { formatMoney } from "~/lib/money";
 import { offerForOrder, takeOffer, declineOffer } from "~/lib/upsell.server";
 import themeHref from "~/storefronts/garden-kneeler/theme.css?url";
+import leafletHref from "leaflet/dist/leaflet.css?url";
+import { useEffect, useRef, useState } from "react";
+import { geocodeAddress, addressLine } from "~/lib/geocode.server";
 
 export function links() {
   return [
@@ -154,7 +157,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       ? await offerForOrder(context.db, loaded.order.id).catch(() => null)
       : null;
 
+  /*
+   * The pin. The delivery app's receipt shows the house on a map, and that
+   * is the moment the customer stops wondering whether the address went
+   * through. Looked up on the server so nothing about the order leaves the
+   * browser; cached at the edge; and a lookup that fails just means no map.
+   */
+  const pin =
+    paymentStatus === "paid" && loaded.order.address1
+      ? await geocodeAddress(addressLine(loaded.order)).catch(() => null)
+      : null;
+
   return data({
+    pin,
+    shipEstimate: store.shipEstimate ?? null,
+    /** the offer is good for twenty minutes from now; the clock runs in the browser */
+    offerUntil: Date.now() + 20 * 60 * 1000,
     offer: offer
       ? {
           variantId: offer.variantId,
@@ -236,10 +254,150 @@ export async function action({ request, context }: Route.ActionArgs) {
  * second offer, a modal that has to be dismissed — turns a free add-on into
  * the thing somebody remembers about the shop.
  */
+/* -------------------------------------------------------------- arrival */
+
+/**
+ * The two seconds after paying, and then the status.
+ *
+ * Copied from the best delivery apps because they have measured it: a full
+ * screen "Sending order…" that resolves to a tick, then a ring with the
+ * window inside it, then the house on a map. The order was already safe
+ * before this page loaded; the theatre is for the customer, who has just
+ * handed over money and is looking for the moment it lands.
+ */
+function ArrivalCard({
+  paid,
+  number,
+  shipEstimate,
+  pin,
+  address,
+}: {
+  paid: boolean;
+  number: number;
+  shipEstimate: string | null;
+  pin: { lat: number; lon: number; label: string } | null;
+  address: string;
+}) {
+  const [stage, setStage] = useState<"sending" | "sent" | "done">(paid ? "sending" : "done");
+  const mapBox = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<unknown>(null);
+
+  useEffect(() => {
+    if (!paid) return;
+    // Once per order: a refresh should not replay the moment.
+    let seen = false;
+    try { seen = window.sessionStorage.getItem(`sent-${number}`) === "1"; } catch { /* fine */ }
+    if (seen) { setStage("done"); return; }
+    const a = window.setTimeout(() => setStage("sent"), 1400);
+    const b = window.setTimeout(() => {
+      setStage("done");
+      try { window.sessionStorage.setItem(`sent-${number}`, "1"); } catch { /* fine */ }
+    }, 2600);
+    return () => { window.clearTimeout(a); window.clearTimeout(b); };
+  }, [paid, number]);
+
+  useEffect(() => {
+    if (stage !== "done" || !pin || !mapBox.current || mapRef.current) return;
+    let alive = true;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (!alive || !mapBox.current) return;
+      const map = L.map(mapBox.current, { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false });
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      const icon = L.divIcon({ className: "gb-map__pin", html: '<span class="gb-map__dot"></span>', iconSize: [28, 28], iconAnchor: [14, 28] });
+      L.marker([pin.lat, pin.lon], { icon }).addTo(map);
+      map.setView([pin.lat, pin.lon], 15);
+      mapRef.current = map;
+    })();
+    return () => { alive = false; };
+  }, [stage, pin]);
+
+  if (stage !== "done") {
+    return (
+      <div className="gb-th__moment" role="status" aria-live="polite">
+        {stage === "sending" ? (
+          <>
+            <span className="gb-th__spin" aria-hidden="true" />
+            <p>Sending order…</p>
+          </>
+        ) : (
+          <>
+            <span className="gb-th__tick" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="30" height="30"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </span>
+            <p>Order sent</p>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // The window inside the ring is the store's own shipping estimate, which
+  // is the only number this page is allowed to promise.
+  const window_ = shipEstimate || "On its way";
+  return (
+    <div className="gb-th__arrive">
+      <div className="gb-th__ring" aria-hidden="true">
+        <svg viewBox="0 0 120 120" width="150" height="150">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(20,20,15,.10)" strokeWidth="10" />
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#F5821F" strokeWidth="10" strokeLinecap="round"
+            strokeDasharray="326.7" strokeDashoffset="240" transform="rotate(-90 60 60)" className="gb-th__arc" />
+        </svg>
+        <div className="gb-th__ring-in">
+          <b>{window_}</b>
+          <span>{paid ? "packing now" : "confirming"}</span>
+        </div>
+      </div>
+      <h1 className="gb-th__h">{paid ? "We've got your order." : "We have your order."}</h1>
+      <p className="gb-th__sub">
+        Order <strong>#{number}</strong>
+        {paid ? " — a human is on it. Your receipt is on its way." : " — the payment is still being confirmed. You will get an email once it clears."}
+      </p>
+      {pin ? (
+        <div className="gb-th__map">
+          <link rel="stylesheet" href={leafletHref} precedence="high" />
+          <div ref={mapBox} className="gb-th__map-canvas" aria-hidden="true" />
+          <div className="gb-th__map-foot">
+            <span className="gb-th__map-k">Shipping to</span>
+            <span className="gb-th__map-addr">{address}</span>
+          </div>
+        </div>
+      ) : address ? (
+        <p className="gb-co__note">Shipping to: <strong style={{ color: "var(--ink)" }}>{address}</strong></p>
+      ) : null}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ add more */
+
+/**
+ * "Add more for less." The offer, with a clock on it.
+ *
+ * The countdown is real: the offer the server made is good for the length of
+ * this visit, and the clock says so. It is not a trick -- the same product
+ * costs full price tomorrow, which is exactly what the number is for.
+ */
+function Countdown({ until }: { until: number }) {
+  const [left, setLeft] = useState(() => Math.max(0, until - Date.now()));
+  useEffect(() => {
+    const t = window.setInterval(() => setLeft(Math.max(0, until - Date.now())), 1000);
+    return () => window.clearInterval(t);
+  }, [until]);
+  const m = Math.floor(left / 60000);
+  const s = Math.floor((left % 60000) / 1000);
+  return <span className="gb-th__clock">{m}:{String(s).padStart(2, "0")} left</span>;
+}
+
 function OfferCard({
   offer,
   orderId,
+  until,
 }: {
+  until?: number;
   offer: NonNullable<Route.ComponentProps["loaderData"]["offer"]>;
   orderId: string;
 }) {
@@ -259,7 +417,10 @@ function OfferCard({
 
   return (
     <section className="up">
-      <p className="up__kicker">Add to this order before it ships</p>
+      <p className="up__kicker">
+        Add more for less
+        {until ? <Countdown until={until} /> : null}
+      </p>
       <div className="up__row">
         {offer.imageUrl ? (
           <span className="up__pic"><img src={offer.imageUrl} alt="" /></span>
@@ -292,7 +453,7 @@ const BRANDED_THANKS = new Set(["garden-buddy", "ceiling-buddy", "reaper"]);
 const THANKS_SKIN: Record<string, string> = { reaper: "gb-co-sec--reaper" };
 
 export default function Thanks({ loaderData }: Route.ComponentProps) {
-  const { store, order, items, pixel, footerLinks, offer, orderId } = loaderData;
+  const { store, order, items, pixel, footerLinks, offer, orderId, pin, shipEstimate, offerUntil } = loaderData;
   const paid = order.paymentStatus === "paid";
 
   /* Garden Buddy: the last page a paying customer sees is the store's own,
@@ -321,23 +482,13 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
             <div className="gb-co__pane-in">
               <CheckoutHeader store={store} home={home} />
               <section className="gb-co__sec">
-                <h1 className="gb-co__h2" style={{ fontSize: 24 }}>
-                  {paid ? "Thank you — your order is in." : "We have your order."}
-                </h1>
-                <p style={{ fontSize: 16, margin: "0 0 14px" }}>
-                  Order <strong>#{order.number}</strong>
-                  {paid ? (
-                    <> — a receipt is on its way to {order.email}.</>
-                  ) : (
-                    <> — the payment is still being confirmed. You will get an email once it clears.</>
-                  )}
-                </p>
-                {order.address ? (
+                <ArrivalCard paid={paid} number={order.number} shipEstimate={shipEstimate} pin={pin} address={order.address} />
+                {order.address && store.contactEmail ? (
                   <p className="gb-co__note" style={{ margin: "0 0 18px" }}>
-                    Shipping to: <strong style={{ color: "var(--ink)" }}>{order.address}</strong>
-                    {store.contactEmail ? ` — wrong? Email ${store.contactEmail} right away and quote #${order.number}.` : ""}
+                    Wrong address? Email {store.contactEmail} right away and quote #{order.number}.
                   </p>
                 ) : null}
+                <p className="gb-th__k">Order details</p>
                 <ul className="gb-co__lines">
                   {items.map((item) => (
                     <li className="gb-co__line" key={item.id}>
@@ -353,7 +504,7 @@ export default function Thanks({ loaderData }: Route.ComponentProps) {
                   <span>Total</span>
                   <b>{order.total}</b>
                 </div>
-                {paid && offer ? <OfferCard offer={offer} orderId={orderId} /> : null}
+                {paid && offer ? <OfferCard offer={offer} orderId={orderId} until={offerUntil} /> : null}
                 {store.contactEmail ? (
                   <p className="gb-co__note">
                     Any questions, reply to your receipt or write to {store.contactEmail} and quote #{order.number}.

@@ -399,3 +399,131 @@
 .gb-co-sec--reaper .gb-co__crumb { color: rgba(247, 242, 231, .55); }
 .gb-co-sec--reaper .gb-co__crumb a { color: rgba(247, 242, 231, .82); }
 .gb-co-sec--reaper .gb-co__crumb [aria-current="step"] { color: #F5821F; }
+
+/* ------------------------------------------------------------- map card */
+
+/*
+ * The address on a map, above the fields that produce it. It is the card at
+ * the top of a delivery app's checkout: not decoration, the one thing on the
+ * page that proves the shop knows where the house is.
+ */
+.gb-map {
+  margin: 12px 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--sand);
+}
+.gb-map__canvas { height: 168px; width: 100%; background: #E9EEF3; }
+.gb-map__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px; line-height: 1.3;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+}
+.gb-map__addr { font-weight: 600; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-map__hint { color: var(--dim); white-space: nowrap; font-size: 12.5px; }
+/* The pin: a solid dot in the shop's own colour, on a white ring, with a
+   small stem -- the shape of every map pin anybody has ever tapped. */
+.gb-map__pin { background: none; border: 0; }
+.gb-map__dot {
+  display: block; width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
+  background: var(--lime); border: 3px solid #fff;
+  transform: rotate(-45deg);
+  box-shadow: 0 6px 14px -4px rgba(0,0,0,.45);
+}
+.gb-map .leaflet-control-attribution { font-size: 9px; opacity: .6; }
+@media (min-width: 900px) { .gb-map__canvas { height: 200px; } }
+
+/* ------------------------------------------------------------- the claim */
+
+/*
+ * "Claim an extra $5 off." A pop-up, once, one button. Dark card in the
+ * store's own colours over a dimmed page, sized so the button is under the
+ * thumb on a phone. It pours in rather than appears; it never nags.
+ */
+.gb-claim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center; }
+.gb-claim__veil { position: absolute; inset: 0; background: rgba(10, 10, 12, .62); backdrop-filter: blur(4px); animation: gbClaimVeil .28s ease both; }
+.gb-claim__card {
+  position: relative; z-index: 1;
+  width: min(480px, calc(100% - 20px));
+  margin: 0 0 10px;
+  padding: 22px 20px 18px;
+  border-radius: 22px;
+  background: #0B0B0C;
+  color: #F7F2E7;
+  border: 1px solid rgba(245, 130, 31, .35);
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.08);
+  text-align: center;
+  animation: gbClaimIn .52s cubic-bezier(.2, 1.1, .3, 1) both;
+}
+.gb-claim__x {
+  position: absolute; top: 10px; right: 12px;
+  width: 34px; height: 34px; border-radius: 50%; border: 0;
+  background: rgba(255,255,255,.08); color: #F7F2E7; font-size: 22px; line-height: 1; cursor: pointer;
+}
+.gb-claim__mark { margin: 2px auto 8px; width: 56px; height: 56px; filter: drop-shadow(0 8px 18px rgba(245,130,31,.45)); }
+.gb-claim__kicker { margin: 0 0 4px; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: #F5821F; font-weight: 700; }
+.gb-claim__h { margin: 0 0 6px; font-family: var(--display, Poppins, Inter, sans-serif); font-weight: 800; font-size: 26px; line-height: 1.05; letter-spacing: -.02em; }
+.gb-claim__p { margin: 0 0 16px; font-size: 15px; line-height: 1.4; color: rgba(247,242,231,.78); }
+.gb-claim__btn {
+  width: 100%; padding: 15px 18px; border: 0; border-radius: 999px; cursor: pointer;
+  background: #F5821F; color: #0B0B0C;
+  font-weight: 800; font-size: 17px; letter-spacing: -.01em;
+  box-shadow: 0 10px 26px -10px rgba(245,130,31,.7);
+}
+.gb-claim__btn:disabled { opacity: .7; cursor: default; }
+.gb-claim__no { margin-top: 10px; background: none; border: 0; color: rgba(247,242,231,.55); font-size: 13.5px; cursor: pointer; text-decoration: underline; }
+@keyframes gbClaimVeil { from { opacity: 0 } to { opacity: 1 } }
+@keyframes gbClaimIn { from { opacity: 0; transform: translateY(28px) scale(.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
+@media (min-width: 720px) { .gb-claim { place-items: center; } .gb-claim__card { margin: 0; } }
+
+/* --------------------------------------------------------- the arrival */
+
+/*
+ * The receipt page, done the way a delivery app does it: the moment the
+ * order lands, then a ring with the window in it, then the house on a map.
+ */
+.gb-th__moment {
+  min-height: 46vh; display: grid; place-content: center; justify-items: center; gap: 14px;
+  text-align: center; font-size: 17px; font-weight: 600; color: var(--ink);
+  animation: gbFade .3s ease both;
+}
+.gb-th__moment p { margin: 0; }
+.gb-th__spin {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 3px solid rgba(20,20,15,.12); border-top-color: var(--ink);
+  animation: gbSpin .8s linear infinite;
+}
+.gb-th__tick {
+  width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--ink); color: #fff;
+  animation: gbPop .38s cubic-bezier(.2,1.2,.3,1) both;
+}
+.gb-th__arrive { text-align: center; padding: 6px 0 4px; animation: gbFade .4s ease both; }
+.gb-th__ring { position: relative; width: 150px; height: 150px; margin: 0 auto 10px; }
+.gb-th__ring svg { display: block; }
+.gb-th__arc { animation: gbArc 1.1s cubic-bezier(.2,.8,.2,1) both; }
+.gb-th__ring-in {
+  position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 2px;
+}
+.gb-th__ring-in b { font-family: var(--display, Poppins, Inter, sans-serif); font-size: 20px; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; max-width: 96px; }
+.gb-th__ring-in span { font-size: 12px; color: var(--dim); }
+.gb-th__h { margin: 4px 0 4px; font-family: var(--display, Poppins, Inter, sans-serif); font-size: 26px; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
+.gb-th__sub { margin: 0 0 16px; font-size: 15px; color: var(--dim); }
+.gb-th__sub strong { color: var(--ink); }
+.gb-th__map { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--sand); margin: 0 0 14px; text-align: left; }
+.gb-th__map-canvas { height: 190px; background: #E9EEF3; }
+.gb-th__map-foot { padding: 10px 14px; background: var(--paper); border-top: 1px solid var(--line); display: grid; gap: 1px; }
+.gb-th__map-k { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.gb-th__map-addr { font-size: 14px; font-weight: 600; color: var(--ink); }
+.gb-th__k { margin: 18px 0 8px; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+.gb-th__clock {
+  float: right; font-variant-numeric: tabular-nums; font-weight: 800;
+  background: var(--ink); color: #fff; border-radius: 999px; padding: 3px 10px; font-size: 12.5px;
+}
+@keyframes gbSpin { to { transform: rotate(360deg) } }
+@keyframes gbPop { from { transform: scale(.4); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+@keyframes gbFade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes gbArc { from { stroke-dashoffset: 326.7 } to { stroke-dashoffset: 240 } }
