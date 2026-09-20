@@ -2559,71 +2559,168 @@
   .cb-thrilled__face { width: 23px; height: 23px; font-size: 11px; }
 }
 
-/* ------------------------------------------------- the code, beside the price
+/* ---------------------------------------- the code and the crowd, above the title
  *
- * The same code the top bar shouts, repeated where the money is. The bar is
- * the part people have learned to read past; this is the part they are
- * looking at while they decide.
+ * Two full-width strips, square-cornered, stacked: the offer, then the proof.
+ * Square because they sit directly above a title and a price that are
+ * themselves flush left — round corners here made them read as two floating
+ * widgets pasted onto the column instead of part of it.
+ *
+ * Never beige. This shop is black, bone and pumpkin, and the saving is neon.
  */
 .cb-coupon {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin: 0 0 14px;
-  padding: 11px 14px;
-  border: 1px solid var(--border, rgba(20,22,26,.12));
-  border-left: 3px solid #B3430C;
-  border-radius: 10px;
-  background: #FDF6F1;
+  margin: 0;
+  padding: 10px 13px;
+  background: #F4F4F6;
+  border: 1px solid rgba(20, 22, 26, .08);
+  border-radius: 0;
 }
-.cb-coupon__tag { color: #B3430C; flex: none; margin-top: 1px; }
-.cb-coupon__tag svg { display: block; }
-.cb-coupon__in { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.cb-coupon__amount {
-  font-size: 14.5px;
-  font-weight: 800;
-  letter-spacing: -.01em;
-  color: var(--ink);
+.cb-coupon__tag {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  margin-top: 4px;
+  color: rgba(20, 22, 26, .45);
 }
-.cb-coupon__line {
-  font-size: 13px;
-  color: rgba(20, 22, 26, .66);
-  display: flex;
+.cb-coupon__tag svg { width: 100%; height: 100%; display: block; }
+.cb-coupon__in { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+
+/* The saving, in the colour this shop keeps for savings and nothing else. */
+.cb-coupon__pill {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
+  background: var(--neon, #D6FF4F);
+  color: var(--neon-ink, #17400A);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.005em;
+  white-space: nowrap;
 }
 
-/* The code is the button. Asking somebody to select and copy a code on a
-   phone is asking most of them not to bother. */
+.cb-coupon__line {
+  font-size: 12px;
+  color: rgba(20, 22, 26, .58);
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* The code and the copy are one target: on a phone the thing somebody aims
+   at is the code itself, not a small word beside it. */
 .cb-coupon__code {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border: 1px dashed rgba(20, 22, 26, .3);
-  background: #fff;
-  border-radius: 7px;
-  padding: 3px 8px;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  margin: -2px 0;
+  border-radius: 4px;
   cursor: pointer;
   font: inherit;
   color: var(--ink);
 }
-.cb-coupon__code:hover { border-color: #B3430C; }
+.cb-coupon__code:hover { background: rgba(20, 22, 26, .06); }
+.cb-coupon__code:active { transform: translateY(1px); }
 .cb-coupon__code code {
   font-weight: 800;
-  letter-spacing: .08em;
-  font-size: 12.5px;
+  letter-spacing: .06em;
+  font-size: 12px;
+  color: var(--ink);
 }
-.cb-coupon__code span {
-  font-size: 11px;
+.cb-coupon__do {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--neon-ink, #17400A);
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
-  color: #B3430C;
 }
+.cb-coupon__do svg { width: 12px; height: 12px; flex: none; }
+.cb-coupon__did:empty { display: none; }
+
+/* ------------------------------------------------------- who else has one
+ *
+ * The strip directly under the code. A stranger from an advert asks "am I
+ * the first" before they ask "is it good"; the score answers the second and
+ * this answers the first, which is the one that stops people scrolling.
+ */
+.cb-thrilled {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  padding: 8px 13px;
+  /* The same grey as the strip above it. Two tones stacked read as two
+     separate widgets; one tone reads as one block with a line through it. */
+  background: #F4F4F6;
+  border: 1px solid rgba(20, 22, 26, .08);
+  border-top: 0;
+  border-radius: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: rgba(20, 22, 26, .6);
+}
+.cb-thrilled__say b { color: var(--ink); font-weight: 700; }
+
+.cb-thrilled__faces { display: inline-flex; flex: none; }
+.cb-thrilled__face {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  border: 2px solid #F4F4F6;
+  background: #E6E6EA;
+}
+/* Until the photographs are in, initials — which say who without pretending
+   to a photograph of somebody who does not exist. */
+.cb-thrilled__face--letter {
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fff;
+  background: #B3430C;
+}
+.cb-thrilled__face + .cb-thrilled__face { margin-left: -10px; }
+.cb-thrilled__face--letter + .cb-thrilled__face--letter { background: #14161A; }
+
+.cb-thrilled__tick {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  color: #1D9BF0;
+  vertical-align: -2px;
+  margin-left: 2px;
+}
+.cb-thrilled__tick svg { width: 100%; height: 100%; display: block; }
 
 @media (max-width: 599px) {
-  .cb-coupon { padding: 10px 12px; }
-  .cb-coupon__amount { font-size: 14px; }
-  .cb-coupon__line { font-size: 12.5px; }
+  .cb-coupon { padding: 9px 11px; gap: 9px; }
+  .cb-thrilled { padding: 8px 11px; font-size: 12px; }
+  .cb-thrilled__face { width: 24px; height: 24px; }
 }
+
+/* ------------------------------------------------------------- no beige
+ *
+ * A hard rule for this shop: no warm cream surfaces anywhere. The palette is
+ * black, bone and pumpkin orange, and a beige panel dropped into it reads as
+ * a different website's furniture that wandered in.
+ *
+ * `--cream` is already redefined as pure white at the top of this file, so
+ * everything going through the token is fine. These two are the places the
+ * base template hard-codes a warm tint instead, and they land on the two
+ * things a buyer looks at hardest: the bundle they picked, and the add-on
+ * they are hovering.
+ */
+.cb-opt[aria-checked="true"] { background: #FFFFFF; }
+.cb-up:hover { background: #F4F4F6; }

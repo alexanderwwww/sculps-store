@@ -58,6 +58,9 @@ const IcoChat = (
 const IcoTag = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3.5 11.6V4.5a1 1 0 0 1 1-1h7.1a1 1 0 0 1 .7.3l8 8a1 1 0 0 1 0 1.4l-7.1 7.1a1 1 0 0 1-1.4 0l-8-8a1 1 0 0 1-.3-.7z" /><circle cx="8" cy="8" r="1.5" /></svg>
 );
+const IcoCopy = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>
+);
 const IcoBurger = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
 );
@@ -1458,12 +1461,11 @@ function sinceText(when: Date | string | null): string {
 function CouponBar({ offer, currency }: { offer: { code: string; kind: string; value: number } | null; currency: string }) {
   const [copied, setCopied] = useState(false);
   if (!offer?.code) return null;
+  // "$20 off", not "$20.00 off". The cents are noise on a round number and
+  // this line has to be read at a glance.
+  const money = formatMoney(offer.value, currency).replace(/[.,]00\b/, "");
   const amount =
-    offer.kind === "fixed"
-      ? `${formatMoney(offer.value, currency)} off`
-      : offer.kind === "percentage"
-        ? `${offer.value}% off`
-        : null;
+    offer.kind === "fixed" ? `${money} off` : offer.kind === "percentage" ? `${offer.value}% off` : null;
   if (!amount) return null;
 
   const copy = async () => {
@@ -1483,18 +1485,26 @@ function CouponBar({ offer, currency }: { offer: { code: string; kind: string; v
     <div className="cb-coupon">
       <span className="cb-coupon__tag" aria-hidden="true">{IcoTag}</span>
       <span className="cb-coupon__in">
-        <b className="cb-coupon__amount">Get {amount} today</b>
+        <span className="cb-coupon__pill">Get {amount} today</span>
         <span className="cb-coupon__line">
           Get {amount} with the code:{" "}
+          {/* The code and the copy are one target. On a phone the thing
+              somebody aims at is the code itself. */}
           <button type="button" className="cb-coupon__code" onClick={copy} title="Copy the code">
             <code>{offer.code}</code>
-            <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+            <span className="cb-coupon__do" aria-live="polite">
+              {copied ? IcoCheck : IcoCopy}
+              <span className="cb-coupon__did">{copied ? "Copied" : ""}</span>
+            </span>
           </button>
         </span>
       </span>
     </div>
   );
 }
+
+/** Products whose two profile photographs have been uploaded. */
+const avatarHandles = new Set<string>([]);
 
 /**
  * The line above the title: who else has one.
@@ -1525,6 +1535,14 @@ function Thrilled({ page }: { page: LoadedProductPage }) {
   ).slice(0, 2);
   if (names.length < 2) return null;
 
+  // Real photographs when the shop has them, initials until then. They are
+  // looked up by the product's handle, so dropping two files in with the
+  // right names is the whole job — no code change, no list to keep in step.
+  const faces = [
+    `/media/${page.product.handle}-av-1.webp`,
+    `/media/${page.product.handle}-av-2.webp`,
+  ].map((src) => (avatarHandles.has(page.product.handle) ? src : null));
+
   // A stable number from the id. Same product, same number, every time.
   let n = 0;
   for (const ch of page.product.id) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
@@ -1533,13 +1551,19 @@ function Thrilled({ page }: { page: LoadedProductPage }) {
   return (
     <div className="cb-thrilled">
       <span className="cb-thrilled__faces" aria-hidden="true">
-        {names.map((who) => (
-          <span key={who} className="cb-thrilled__face">{who.slice(0, 1)}</span>
-        ))}
+        {names.map((who, i) => {
+          const face = faces[i];
+          return face ? (
+            <img key={who} className="cb-thrilled__face" src={face} alt="" loading="lazy" />
+          ) : (
+            <span key={who} className="cb-thrilled__face cb-thrilled__face--letter">{who.slice(0, 1)}</span>
+          );
+        })}
       </span>
-      <span>
-        <b>{names[0]}</b>, <b>{names[1]}</b> and <b>{others.toLocaleString("en-US")} others</b> are
-        thrilled with {page.product.title}
+      <span className="cb-thrilled__say">
+        <b>{names[0]}</b>, <b>{names[1]}</b>
+        <span className="cb-thrilled__tick" aria-label="Verified buyers">{IcoVerified}</span> and{" "}
+        <b>{others.toLocaleString("en-US")} others</b> are thrilled with {page.product.title}
       </span>
     </div>
   );
