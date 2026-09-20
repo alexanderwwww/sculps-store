@@ -56,11 +56,35 @@ export const OVERLAY = `(() => {
   };
   const hud = css(document.createElement("div"), {
     ...TOP_CENTRE,
-    maxWidth: "min(420px, 92vw)", padding: "7px 12px", borderRadius: "10px",
-    background: "rgba(12,12,14,.92)", color: "#F7F2E7", pointerEvents: "none",
+    maxWidth: "min(420px, 92vw)", padding: "9px 15px", borderRadius: "999px",
+    /*
+     * Liquid glass.
+     *
+     * The pill was a flat dark slab, which on a bright page looks like a bug
+     * report and on a dark one disappears. Glass instead: it takes its colour
+     * from whatever is behind it, so it belongs to the page it is sitting on
+     * without ever being mistaken for part of it.
+     *
+     * The recipe is three layers in one element. A blur that also lifts the
+     * saturation, so colour bleeds through the way it does through real
+     * frosted glass rather than going grey. A top-to-bottom sheen painted
+     * into the background, which is what reads as a curved surface catching
+     * the light. And two inset shadows — a bright one along the top edge and
+     * a dark one along the bottom — which give it thickness.
+     */
+    background:
+      "linear-gradient(to bottom, rgba(255,255,255,.14), rgba(255,255,255,.04) 42%, rgba(0,0,0,.10))," +
+      "rgba(20,20,26,.55)",
+    backdropFilter: "blur(22px) saturate(180%)",
+    WebkitBackdropFilter: "blur(22px) saturate(180%)",
+    border: "0.5px solid rgba(255,255,255,.22)",
+    color: "#F7F2E7", pointerEvents: "none",
     font: '500 11.5px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    boxShadow: "0 8px 28px -10px rgba(0,0,0,.7)",
-    display: "flex", alignItems: "baseline", gap: "9px", whiteSpace: "nowrap",
+    boxShadow:
+      "inset 0 1px 0 rgba(255,255,255,.35)," +
+      "inset 0 -1px 0 rgba(0,0,0,.28)," +
+      "0 10px 34px -12px rgba(0,0,0,.65)",
+    display: "flex", alignItems: "center", gap: "10px", whiteSpace: "nowrap",
   });
   const title = css(document.createElement("div"), {
     fontSize: "10px", letterSpacing: ".06em", textTransform: "uppercase",
@@ -88,10 +112,17 @@ export const OVERLAY = `(() => {
   });
   const smallBtn = (text, primary) => {
     const b = css(document.createElement("button"), {
-      padding: "4px 9px", borderRadius: "7px", border: "0",
+      padding: "5px 12px", borderRadius: "999px",
+      // The buttons are glass too, cut from the same surface: a hairline
+      // edge and the same top sheen, so they read as pressed out of the pill
+      // rather than dropped onto it.
+      border: primary ? "0.5px solid rgba(201,160,255,.55)" : "0.5px solid rgba(255,255,255,.20)",
       cursor: "pointer", fontSize: "11px", fontWeight: "700",
       fontFamily: "inherit", lineHeight: "1.3",
-      background: primary ? "#C9A0FF" : "rgba(247,242,231,.12)",
+      background: primary
+        ? "linear-gradient(to bottom, rgba(255,255,255,.30), rgba(255,255,255,0)), #C9A0FF"
+        : "linear-gradient(to bottom, rgba(255,255,255,.18), rgba(255,255,255,.02))",
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,.35)",
       color: primary ? "#140A02" : "#F7F2E7",
     });
     b.textContent = text;

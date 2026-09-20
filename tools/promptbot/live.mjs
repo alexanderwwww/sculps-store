@@ -1398,9 +1398,49 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       ? `  attached ${fromCard} (from the card)`
       : `  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
   } else if (refs.length && !skipRefs) {
-    await say(label, `${n} of ${total} — attaching ${refs.length}…`);
-    const how = await putFiles(page, refs, wand, label);
-    if (how) {
+    /*
+     * A prompt that needs references is never sent without them.
+     *
+     * The old rule was to log "sending with NO reference image" and send it
+     * anyway, which is the worst of both: the site spends a generation, the
+     * quota is gone, and the picture that comes back was drawn from nothing —
+     * a box with an invented product on it, a reaper that is not the reaper.
+     * It looks like a bad prompt rather than a missing file, so the hours go
+     * into rewriting words that were never the problem.
+     *
+     * Attaching is retried, and if the pictures still are not all in the
+     * composer the prompt is REFUSED. Nothing is sent, the reason is said out
+     * loud, and the run moves on rather than burning the quota on an image
+     * that cannot be used.
+     */
+    let how = null;
+    let landedCount = 0;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await say(label, `${n} of ${total} — attaching ${refs.length}${attempt > 1 ? ` (try ${attempt})` : ""}…`);
+      how = await putFiles(page, refs, wand, label);
+      landedCount = how ? (await blobCount(page).catch(() => refs.length)) : 0;
+      if (how && landedCount >= refs.length) break;
+      if (attempt < 3) {
+        log(`  \x1b[33m!! ${landedCount} of ${refs.length} reference pictures attached — trying again\x1b[0m`);
+        // Clear the half-loaded set so the retry starts from nothing rather
+        // than stacking a second copy of the one that did arrive.
+        await wand?.deafen(1500);
+        await page.keyboard.press("Escape").catch(() => {});
+        await wait(1500);
+      }
+    }
+    if (!how || landedCount < refs.length) {
+      log(`  \x1b[31m!! only ${landedCount} of ${refs.length} reference pictures would attach — NOT sending this one\x1b[0m`);
+      await say(label, `${n} of ${total} — references wouldn't attach, skipped`);
+      report("waiting for pictures", {
+        job: label,
+        prompt: `${n} of ${total}`,
+        problem: `only ${landedCount} of ${refs.length} reference pictures attached — prompt not sent`,
+      });
+      await wait(1200);
+      return 0;
+    }
+    {
       attachedInChat = true;
       freshRefs = false;
       /*
@@ -1410,16 +1450,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
        * of two pictures still said "attached 2" and the missing product photo
        * was invisible in the log for a whole afternoon.
        */
-      const really = await blobCount(page).catch(() => null);
-      if (really !== null && really < refs.length) {
-        log(`  \x1b[33m!! only ${really} of ${refs.length} reference pictures attached (${how}) — the rest did not make it\x1b[0m`);
-      } else {
-        log(`  attached ${refs.length} (${how})`);
-      }
-    } else {
-      log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
-      await say(label, `${n} of ${total} — couldn't attach, sending anyway`);
-      await wait(1000);
+      log(`  attached ${refs.length} (${how})`);
     }
   }
 
