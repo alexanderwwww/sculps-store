@@ -230,6 +230,20 @@ This is the evidence that wins a processor review.
 a thing someone can picture and a percentage is arithmetic. The `discounts`
 table supports both; only use `kind: "fixed"`.
 
+**6b. Never beige. Any store, any surface.** Alex's hard rule, stated 20 Sep 2026.
+No warm cream panels, no sand backgrounds, no #FDF6F1-style tints behind a card or
+a banner. When a block needs to sit back from white, use a neutral grey (#F4F4F6).
+Bone-white *type* on a black ground is the Halloween palette and is fine; a beige
+*surface* is not. Garden Buddy's sand identity predates the rule and is its own
+brand — do not repaint that store, but never introduce beige anywhere new.
+
+**6c. Product pictures are square 1:1, full stop.** The storefront carousel is a
+1:1 frame with eight thumbnails down the side; a portrait image deforms the whole
+thing. Shop Admin squares every upload in the browser before it is sent — white
+ground, centred, scaled to fit, nothing cropped, already-square files untouched.
+Never remove that. White because a supplier cut-out on white extends its own
+background seamlessly.
+
 **7. Honesty is enforced by the system.** Never generate fake reviews. Never invent
 specification numbers. An empty spec field renders as a visible "spec pending" placeholder
 on the live page — not a guess, not a hidden gap.
