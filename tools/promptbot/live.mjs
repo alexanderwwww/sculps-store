@@ -1202,13 +1202,29 @@ async function putFiles(page, paths, wand, label) {
    * every prompt of the job. This asks every 250ms and returns the moment the
    * count rises, so the fast case is fast and the slow case is unchanged.
    */
-  const landed = async (was, capMs) => {
+  /*
+   * Every file, not the first one.
+   *
+   * This returned the moment the count moved AT ALL, so handing the composer
+   * two pictures — a brand mark and the product — was called a success as soon
+   * as the first thumbnail appeared. The second was still uploading, the
+   * prompt was sent without it, and the model drew from the brand mark alone
+   * and invented the product. The log said "attached 2" the whole time,
+   * because it printed how many it had been given rather than how many
+   * arrived.
+   *
+   * So: wait for all of them, and tell the caller how many actually made it.
+   */
+  const landed = async (was, capMs, want = 1) => {
     const until = Date.now() + capMs;
+    let best = 0;
     while (Date.now() < until) {
       await wait(250);
-      if ((await blobCount(page)) > was) return true;
+      const now = (await blobCount(page)) - was;
+      if (now > best) best = now;
+      if (best >= want) return best;
     }
-    return false;
+    return best;
   };
 
   // 1 — let Chrome open its own file dialog and answer it.
@@ -1230,7 +1246,7 @@ async function putFiles(page, paths, wand, label) {
         clip.click({ timeout: 4000 }),
       ]);
       await chooser.setFiles(paths);
-      if (await landed(before, 2500 + files.length * 1200)) return "chosen";
+      if ((await landed(before, 2500 + files.length * 1200, files.length)) >= files.length) return "chosen";
     } catch {
       // No dialog appeared — that button was something else. Close whatever
       // it opened before trying the next way, with the stop key deafened:
@@ -1245,19 +1261,19 @@ async function putFiles(page, paths, wand, label) {
   // 2 — paste it in, the way you'd paste a screenshot
   if (box) await box.click().catch(() => {});
   await deliver("paste");
-  if (await landed(before, 2200 + files.length * 900)) return "pasted";
+  if ((await landed(before, 2200 + files.length * 900, files.length)) >= files.length) return "pasted";
 
   // 3 — drop, everywhere that might be listening
   await wand?.say(label, "attaching — another way…");
   await deliver("drop");
-  if (await landed(before, 2200 + files.length * 900)) return "dropped";
+  if ((await landed(before, 2200 + files.length * 900, files.length)) >= files.length) return "dropped";
 
   // 4 — a real file input, if the page keeps one
   const input = page.locator(site.file).first();
   if (await input.count().then((c) => c > 0).catch(() => false)) {
     await wand?.say(label, "attaching — last way…");
     await input.setInputFiles(paths).catch(() => {});
-    if (await landed(before, 2500 + files.length * 1200)) return "uploaded";
+    if ((await landed(before, 2500 + files.length * 1200, files.length)) >= files.length) return "uploaded";
   }
 
   return null;
@@ -1374,7 +1390,19 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     if (how) {
       attachedInChat = true;
       freshRefs = false;
-      log(`  attached ${refs.length} (${how})`);
+      /*
+       * Count what is actually in the composer, not what we handed it.
+       *
+       * This printed refs.length unconditionally, so a run that attached one
+       * of two pictures still said "attached 2" and the missing product photo
+       * was invisible in the log for a whole afternoon.
+       */
+      const really = await blobCount(page).catch(() => null);
+      if (really !== null && really < refs.length) {
+        log(`  \x1b[33m!! only ${really} of ${refs.length} reference pictures attached (${how}) — the rest did not make it\x1b[0m`);
+      } else {
+        log(`  attached ${refs.length} (${how})`);
+      }
     } else {
       log(`  \x1b[31m!! nothing attached — sending with NO reference image\x1b[0m`);
       await say(label, `${n} of ${total} — couldn't attach, sending anyway`);
@@ -2226,6 +2254,27 @@ while (true) {
    * its own progress file picks up there instead of at the beginning.
    */
   const progressFile = join(dir, "progress.json");
+  /*
+   * What the saved place belongs to, exactly.
+   *
+   * The id and the prompt count were the whole test, and a rewritten job kept
+   * inheriting a stale position: prompts one and two were declared already
+   * done and the run began in the middle, so two of five products were never
+   * drawn and the folder came back short with nothing saying why. Rewriting a
+   * prompt is the most common thing that happens to a job between two runs,
+   * and it is exactly the case where the old place is meaningless.
+   *
+   * So the fingerprint covers the prompts themselves. Change a word in any of
+   * them and the run starts at the beginning, which is the only safe answer.
+   */
+  const signature = `${flatPrompts.length}:${flatPrompts
+    .map((t) => {
+      let h = 0;
+      const str = String(t);
+      for (let k = 0; k < str.length; k++) h = (h * 31 + str.charCodeAt(k)) | 0;
+      return h.toString(36);
+    })
+    .join(",")}`;
   let startAt = 0;
   try {
     const seen = JSON.parse(await readFile(progressFile, "utf8"));
@@ -2237,10 +2286,14 @@ while (true) {
       // Two jobs with the same name share a folder, so the count has to match
       // as well as the id — otherwise a resume can start past the end of a
       // shorter job and draw nothing at all.
-      seen.of === flatPrompts.length
+      seen.of === flatPrompts.length &&
+      seen.sig === signature
     ) {
       startAt = seen.next;
       log(`  \x1b[2mpicking up at ${startAt + 1} of ${flatPrompts.length}\x1b[0m`);
+    }
+    else if (seen?.next > 0) {
+      log(`  \x1b[2mthis job was rewritten since it last ran — starting from the beginning\x1b[0m`);
     }
   } catch {
     /* no progress yet, which is the normal case */
@@ -2418,7 +2471,7 @@ while (true) {
     // Written after every prompt, so whatever kills the app next costs one
     // prompt rather than the rest of the job.
     resumeAt = i + 1;
-    await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1, of: flatPrompts.length })).catch(() => {});
+    await writeFile(progressFile, JSON.stringify({ id: job.id, next: i + 1, of: flatPrompts.length, sig: signature })).catch(() => {});
     if (i === flatPrompts.length - 1) stoppedEarly = false;
     else stoppedEarly = true;
   }
