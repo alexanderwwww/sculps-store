@@ -1695,8 +1695,29 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     for (let attempt = 1; attempt <= 3; attempt++) {
       await say(label, `${n} of ${total} — attaching ${fresh.length}${attempt > 1 ? ` (try ${attempt})` : ""}…`);
       how = await putFiles(page, fresh, wand, label);
-      landedCount = how ? await landedSoFar() : 0;
+      landedCount = await landedSoFar();
       if (landedCount >= fresh.length) break;
+      /*
+       * Never attach again on top of a partial one.
+       *
+       * The routes inside putFiles stopped re-delivering, but THIS loop still
+       * called the whole of putFiles a second time when the set was short --
+       * so the one picture that had arrived was joined by both of them again.
+       * That is the duplicate brand mark, made here rather than in any of the
+       * places it was hunted for.
+       *
+       * Something in the composer means the delivery worked and the rest is
+       * either slow or lost. Wait for slow; refuse if lost. Only a completely
+       * empty composer is worth another attempt.
+       */
+      if (landedCount > 0) {
+        log(`  \x1b[33m!! ${landedCount} of ${fresh.length} attached — waiting for the rest rather than sending them again\x1b[0m`);
+        for (let t = 0; t < 12 && landedCount < fresh.length; t++) {
+          await wait(1000);
+          landedCount = await landedSoFar();
+        }
+        break;
+      }
       /*
        * Most short attachments are simply slow, not lost: the second file is
        * still uploading when the check runs out. So the first answer to a
@@ -1707,11 +1728,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
        * seeing one of the references twice costs nothing; the model never
        * seeing it at all is what ruins the picture.
        */
-      await wait(3000);
+      // Nothing arrived at all. That is worth another go.
+      await wait(2000);
       landedCount = await landedSoFar();
       if (landedCount >= fresh.length) { how = how ?? "waited"; break; }
       if (attempt < 3) {
-        log(`  \x1b[33m!! ${landedCount} of ${fresh.length} reference pictures attached — trying again\x1b[0m`);
+        log(`  \x1b[33m!! nothing attached — trying again\x1b[0m`);
       }
     }
     if (fresh.length && (!how || landedCount < fresh.length)) {
@@ -1728,6 +1750,35 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // Past the gate above, every reference is in the composer. The count is
     // the measured one, because the old line printed how many files it had
     // been handed and said "attached 2" all afternoon while attaching one.
+    /*
+     * One last count before the words go in.
+     *
+     * Everything above tries to make a duplicate impossible; this checks. If
+     * the composer holds more than it was given, something delivered twice --
+     * and drawing from it would put the brand mark on the box twice and bury
+     * the product, which is the failure this is all for. A clean chat costs
+     * one page load and the prompt comes round again with an empty composer.
+     */
+    const inBox = await blobCount(page).catch(() => -1);
+    const expected = startCount + fresh.length;
+    if (inBox > expected) {
+      log(`  \x1b[31m!! ${inBox} pictures in the box and only ${expected} were sent — something delivered twice, starting clean\x1b[0m`);
+      report("waiting for pictures", {
+        job: label,
+        prompt: `${n} of ${total}`,
+        problem: `${inBox} attachments where ${expected} were expected — prompt not sent`,
+      });
+      if (await freshChat("couldn't clear the duplicates")) {
+        watchImages(page);
+        wand = await attachWand(page);
+        pinnedChat = null;
+        attachedInChat = false;
+        chatRefs = new Set();
+        navGen++;
+      }
+      return 0;
+    }
+
     attachedInChat = true;
     freshRefs = false;
     // Remember them by their contents, so no part of this job sends the same
