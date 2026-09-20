@@ -408,8 +408,19 @@ function watchImages(target) {
       const type = res.headers()["content-type"] ?? "";
       if (!type.startsWith("image/")) return;
       const body = await res.body().catch(() => null);
-      // Thumbnails and icons are not generations.
-      if (!body || body.length < 20_000) return;
+      /*
+       * Thumbnails and icons are not generations — and neither is most of
+       * what a chat page loads.
+       *
+       * The floor was twenty kilobytes, which let through every logo, avatar,
+       * sidebar preview and stray photograph the page happened to fetch. On
+       * ChatGPT those arrived in the middle of a run and were saved as the
+       * second capture of a prompt: a run of ours came back with an agency
+       * logo and a photograph of somebody's office filed as Halloween
+       * pictures. A real generation from either site is hundreds of kilobytes
+       * at least, so the floor is where it should always have been.
+       */
+      if (!body || body.length < 150_000) return;
       CAPTURED.set(res.url(), body);
       capturedBytes += body.length;
       // Bounded by weight as well as by count: two hundred four-megabyte
