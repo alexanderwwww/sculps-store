@@ -1497,7 +1497,31 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     return 0;
   }
   await wand.point(box);
-  await box.click();
+  /*
+   * Focusing the composer must never be able to end the prompt.
+   *
+   * This was a bare click: no timeout, so Playwright's default thirty seconds,
+   * and no catch, so it THREW. Anything that covers the box for half a minute
+   * — the upload overlay after two files, a tooltip, one of the site's own
+   * notices — took the whole prompt down with a locator timeout. The run
+   * tried it twice and then declared the picture impossible, which is what
+   * "produced no picture, twice" was: not a refusal by the site and not a
+   * rate limit, just a click that could not land on a covered element.
+   *
+   * Three ways in, each brief, and none of them fatal. A normal click; then a
+   * forced one, which ignores what is on top; then focus set directly on the
+   * element, which needs no hit test at all. If all three fail the typing
+   * below still runs — the composer is usually focused already.
+   */
+  let focused = false;
+  for (const attempt of [
+    () => box.click({ timeout: 4000 }),
+    () => box.click({ timeout: 3000, force: true }),
+    () => box.evaluate((el) => el.focus?.()),
+  ]) {
+    try { await attempt(); focused = true; break; } catch { /* try the next way */ }
+  }
+  if (!focused) log(`  \x1b[33m!! couldn't focus the message box — typing anyway\x1b[0m`);
   await box.fill("").catch(() => {});
   await page.keyboard.insertText(text);
   await wait(400);
