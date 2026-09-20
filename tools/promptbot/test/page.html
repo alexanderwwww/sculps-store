@@ -9,6 +9,7 @@ button{width:36px;height:36px;border-radius:50%;border:0;background:#333;color:#
   <button id="plus">+</button>
   <input type="file" id="f" multiple hidden>
   <div class="ask" id="prompt-textarea" contenteditable="true" data-ph="Ask..."></div>
+  <span id="attachments"></span>
   <button data-testid="send-button">&#8593;</button>
 </div>
 <div id="shots"></div>
@@ -21,7 +22,11 @@ const show = (files, how) => {
     const img = document.createElement('img');
     img.src = URL.createObjectURL(f);
     img.dataset.how = how;
-    document.getElementById('shots').appendChild(img);
+    img.style.maxWidth = '40px';
+    // Attachments sit IN the composer, as they do on both real sites. Only a
+    // finished picture goes into the thread below. The count the runner uses
+    // is scoped to the composer, so this is what lets the suite exercise it.
+    document.getElementById('attachments').appendChild(img);
   }
   document.title = 'got ' + how;
 };

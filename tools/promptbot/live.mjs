@@ -520,6 +520,10 @@ const SITES = {
     name: "Gemini",
     url: "https://gemini.google.com/app",
     ask: ['div.ql-editor[contenteditable="true"]', 'rich-textarea div[contenteditable="true"]', "textarea"],
+    /** The box the prompt and its attachments live in, and nothing above it. */
+    composer: ["input-area-v2", ".input-area-container", "input-container", "form"],
+    /** Anything that is part of the conversation rather than the composer. */
+    thread: ["model-response", ".response-container", "user-query", ".conversation-container"],
     send: ['button[aria-label*="Send" i]', 'button[aria-label*="Submit" i]', "button.send-button"],
     /*
      * Starting a fresh conversation.
@@ -580,6 +584,8 @@ const SITES = {
     name: "ChatGPT",
     url: "https://chatgpt.com/",
     ask: ['div#prompt-textarea[contenteditable="true"]', "textarea#prompt-textarea", "textarea"],
+    composer: ['form[data-type="unified-composer"]', "form"],
+    thread: ['[data-message-author-role]', "article"],
     send: ['button[data-testid="send-button"]', 'button[data-testid="composer-submit-button"]', 'button[aria-label*="Send" i]'],
     // The button first, the logo link only as a fallback: clicking the logo
     // is a full page load, which throws the overlay out and costs a second.
@@ -865,10 +871,29 @@ let page = null;
  * get opened.
  */
 const host = new URL(site.url).host;
-for (const open of context.pages()) {
-  try { if (new URL(open.url()).host === host) { page = open; break; } } catch { /* about:blank */ }
-}
-if (page) {
+/*
+ * The conversation this app was in when it last stopped, remembered on disk
+ * beside the site choice. An update or a crash used to lose the pin, and the
+ * run then carried on in whichever tab came first -- on the front page, that
+ * is a new chat with nothing in the log to say so.
+ */
+const CHAT_FILE = fileURLToPath(new URL(".chat", import.meta.url));
+let chatRemembered = null;
+try { chatRemembered = readFileSync(CHAT_FILE, "utf8").trim() || null; } catch { /* first run */ }
+const tabsHere = context.pages().filter((pg) => { try { return new URL(pg.url()).host === host; } catch { return false; } });
+// The tab already on the remembered conversation first; otherwise the LAST
+// tab that is inside a conversation, which is how ensurePage() chooses too --
+// taking the first one here and the last one there is how a run changed
+// chats across a restart without anybody asking.
+page =
+  (chatRemembered && tabsHere.find((pg) => chatKey(pg.url()) === chatKey(chatRemembered))) ||
+  [...tabsHere].reverse().find((pg) => !isFront(pg.url())) ||
+  tabsHere[tabsHere.length - 1] ||
+  null;
+if (page && chatRemembered && chatKey(page.url()) === chatKey(chatRemembered)) {
+  pinnedChat = page.url();
+  console.log(`\n\x1b[2mback in the ${site.name} chat from last time\x1b[0m`);
+} else if (page) {
   console.log(`\n\x1b[2mpicking up the ${site.name} tab you already have open\x1b[0m`);
   await page.bringToFront().catch(() => {});
 } else {
@@ -960,7 +985,7 @@ function isFront(u) {
   return !k || k === chatKey(site.url);
 }
 
-async function ensurePage() {
+async function ensurePage({ create = true } = {}) {
   const host = new URL(site.url).host;
   const ok = (pg) => {
     if (!pg || pg.isClosed()) return false;
@@ -980,8 +1005,10 @@ async function ensurePage() {
       page = onChat[onChat.length - 1];
       console.log(`\r\x1b[K  \x1b[2mback on the chat this job belongs to\x1b[0m`);
     } else {
+      if (!create) return false;
       console.log(`\r\x1b[K  \x1b[2mreopening the chat this job belongs to\x1b[0m`);
-      if (!ok(page)) page = await context.newPage().catch(() => null);
+      let opened = null;
+      if (!ok(page)) { page = await context.newPage().catch(() => null); opened = page; }
       if (!page) return false;
       await page.goto(pinnedChat, { waitUntil: "domcontentloaded" }).catch(() => {});
       await wait(1200);
@@ -999,7 +1026,21 @@ async function ensurePage() {
       // re-pinning to that made every prompt for the rest of the morning fail
       // with "no message box" while the app insisted it was pinned.
       const usable = Boolean(await find(page, site.ask, 15000));
-      if (!usable) return false;
+      if (!usable) {
+        /*
+         * One attempt, then let go.
+         *
+         * This returned with the pin kept and the tab it had just opened left
+         * open, so the next call -- about a second later while idle -- opened
+         * another, and another, for as long as the address kept answering
+         * with a sign-in page. A tab every sixteen seconds is what "keeps
+         * opening tabs" looked like from the outside.
+         */
+        console.log(`\r\x1b[K  \x1b[33mthat chat cannot be reached right now — letting go of it\x1b[0m`);
+        pinnedChat = null;
+        if (opened) { await opened.close().catch(() => {}); page = null; }
+        return false;
+      }
       const landed = chatKey(page.url());
       if (landed !== want) {
         if (!isFront(page.url())) {
@@ -1044,6 +1085,7 @@ async function ensurePage() {
     // Loud, not quiet: this is the one path that legitimately starts a new
     // conversation without being asked, so it should never again be something
     // only noticed later by looking at the pictures.
+    if (!create) return false;
     console.log(`\r\x1b[K  \x1b[33mno ${site.name} conversation left open — starting a new chat\x1b[0m`);
     page = await context.newPage().catch(() => null);
     if (!page) {
@@ -1571,22 +1613,45 @@ function originals(url) {
  * is counted, whatever URL scheme it uses.
  */
 async function blobCount(page) {
-  return page.evaluate((askSelectors) => {
+  return page.evaluate(([askSelectors, composerSelectors, threadSelectors]) => {
     let box = null;
     for (const sel of askSelectors) { box = document.querySelector(sel); if (box) break; }
     if (!box) return 0;
-    // The composer is the nearest form, or failing that a few levels up: far
-    // enough to include the attachment strip, never far enough to reach the
-    // conversation.
-    let root = box.closest("form");
+    /*
+     * The composer, found by name where the site gives it one.
+     *
+     * A fixed six-level walk was the previous answer, and an audit that ran
+     * it against a Gemini-shaped page showed it reaching the conversation
+     * whenever the composer sat fewer than five elements below the container
+     * it shares with the thread -- a margin of one or two levels that any
+     * markup change would erase. So: the site's own composer element first,
+     * and only failing that a walk that refuses to climb into any ancestor
+     * holding a thread node.
+     */
+    let root = null;
+    for (const sel of composerSelectors ?? []) {
+      const hit = box.closest(sel);
+      if (hit && hit !== document.body && !threadSelectors.some((t) => hit.querySelector(t))) { root = hit; break; }
+    }
     if (!root) {
       root = box;
-      for (let k = 0; k < 6 && root.parentElement && root.parentElement !== document.body; k++) root = root.parentElement;
+      while (root.parentElement && root.parentElement !== document.body) {
+        const up = root.parentElement;
+        if (threadSelectors.some((t) => up.querySelector(t))) break;
+        root = up;
+      }
     }
-    // A composer root that has swallowed the whole page is not a composer.
-    if (root === document.body || root === document.documentElement) root = box.parentElement ?? box;
-    return root.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length;
-  }, site.ask).catch(() => 0);
+    // Distinct files, not elements: a composer may draw a thumbnail and a
+    // preview of the same attachment, and two elements for one file must not
+    // read as a duplicate upload. A genuine second upload has its own URL.
+    const seen = new Set();
+    for (const el of root.querySelectorAll('img[src^="blob:"], video[src^="blob:"]')) {
+      if (el.closest("[data-wand]")) continue;
+      if (threadSelectors.some((t) => el.closest(t))) continue;
+      seen.add(el.currentSrc || el.src);
+    }
+    return seen.size;
+  }, [site.ask, site.composer ?? [], site.thread ?? []]).catch(() => 0);
 }
 
 async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = true) {
@@ -2030,11 +2095,13 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     }
     if (chatKey(here) !== chatKey(urlBeforeSend) && !isFront(here)) {
       pinnedChat = here;
+      writeFile(CHAT_FILE, here).catch(() => {});
       log(`  \x1b[2mpinned to this chat\x1b[0m`);
       report("running", { chat: here });
     } else if (!isFront(urlBeforeSend)) {
       // Already in a conversation before the send — that is the one.
       pinnedChat = urlBeforeSend;
+      writeFile(CHAT_FILE, urlBeforeSend).catch(() => {});
       log(`  \x1b[2mpinned to this chat\x1b[0m`);
       report("running", { chat: urlBeforeSend });
     }
@@ -2498,7 +2565,9 @@ while (true) {
     await wait(4000);
     continue;
   }
-  await ensurePage();
+  // Idle is for waiting, not for opening tabs. With a job to run the page is
+  // secured at the top of runPrompt; here a missing tab is simply reported.
+  await ensurePage({ create: false });
   /*
    * Stop no longer ends the app.
    *

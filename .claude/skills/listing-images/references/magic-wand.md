@@ -125,7 +125,7 @@ something that is not the product, suspect the attachment before the prompt.
 (`import.meta.url`, never a bare relative path — the working directory differs between a
 Finder launch and a terminal launch) and an order outranks a job's own `site`.
 
-**Run `node check.mjs` before publishing a build.** It compiles the emitted overlay,
+**Run `node check.mjs` AND `node test/harness.mjs` (in `tools/promptbot/`) before publishing a build.** The harness drives the real attach code against `test/page.html` in Chromium and must print `all passed` -- it is the only thing that proves the attachment count is scoped to the composer. It compiles the emitted overlay,
 looks for Node values leaked into it, and loads the runner far enough to catch a `let`
 used before its declaration. Each of those three shipped broken at least once and none
 of them is caught by `node --check`.

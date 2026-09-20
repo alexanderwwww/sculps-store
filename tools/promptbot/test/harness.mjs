@@ -9,7 +9,10 @@ import { basename, extname } from "node:path";
 
 const SP = "/tmp/claude-0/-home-user-sculps-store/4b2cba19-2b7c-5b69-876f-e326d34c8f06/scratchpad/wtest";
 const live = await readFile("/home/user/sculps-store/tools/promptbot/live.mjs", "utf8");
-const fileSel = live.match(/file: \[(.+?)\]/)[1].replace(/['"]/g, "");
+// The selector array runs to the closing "]," of its line, and the selector
+// itself contains brackets -- a lazy match to the first "]" cut it to the
+// broken "input[type=file", which was then handed to the code under test.
+const fileSel = live.match(/file: \[(.*?)\],?\s*\n/)[1].replace(/['"]/g, "");
 const site = { ask: ["#prompt-textarea"], file: [fileSel] };
 console.log(`(composer file input selector under test: ${fileSel})`);
 const REF = [`${SP}/ref.webp`];
@@ -19,7 +22,10 @@ const browser = await chromium.launch({
   args: ["--ignore-certificate-errors"],
 });
 const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });
-await page.goto(`file://${SP}/page.html`);
+// The fixture is the one in the repo, not a copy made some earlier day: a
+// stale copy in the scratch folder kept the suite testing an old page long
+// after test/page.html had changed, and its failures pointed at the runner.
+await page.goto(`file:///home/user/sculps-store/tools/promptbot/test/page.html`);
 
 const wand = await attachWand(page);
 
