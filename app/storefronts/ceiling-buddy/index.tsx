@@ -504,8 +504,13 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
             it — price and buttons first, the reading matter after — without
             moving anything on a desktop, where it all fits anyway. */}
         <div className="cb-buy__side">
+          {/* The code and the crowd, and then the title.
+              The pill that used to sit here said "Save $59 on the pair",
+              which is the same saving the price line says two inches below
+              with the actual price beside it. Said twice it reads as a shop
+              repeating itself; said once, next to the number it comes off,
+              it reads as the offer. */}
           <CouponBar offer={offer} currency={currency} />
-          {has(v, "badge") ? <div className="cb-badge">{val(v, "badge")}</div> : null}
           <Thrilled page={page} />
           <h1 className="cb-h1">{val(v, "heading") || page.product.title}</h1>
           {/* The score, before the price.

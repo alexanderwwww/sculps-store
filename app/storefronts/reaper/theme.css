@@ -2217,15 +2217,22 @@
 }
 
 /*
- * The same offer, three times, before anybody has seen the price.
+ * "Pay in 4", under the gallery on a desktop and nowhere on a phone.
  *
- * "Pay in 4" sits under the gallery AND in the right-hand column AND again in
- * the trust row. On a phone the one under the gallery is 105px of the first
- * screen, which is why the price lands below the fold and the Add to cart
- * button is a screen and a half further down. The right-hand copy stays,
- * beside the price, where a payment plan actually means something.
+ * It belongs under the pictures: four payments is a reason to look at a $299
+ * product at all, and that is where the looking happens. But on a phone the
+ * gallery, the banner and the price are one column, so those 105px are 105px
+ * of the first screen — the price lands below the fold and Add to cart is a
+ * screen and a half further down.
+ *
+ * On a desktop the gallery and the price are side by side, so the banner
+ * costs the price nothing and it comes back. On a phone the copy beside the
+ * price carries it instead, which is the one that was always doing the work.
  */
 .cb-pay4--under { display: none; }
+@media (min-width: 900px) {
+  .cb-pay4--under { display: block; }
+}
 
 /*
  * On a phone, the money comes first.
