@@ -97,6 +97,13 @@ export interface PaymentProvider {
   readIntent(intentId: string): Promise<PaymentIntent>;
   /** Proves the secret key works, without charging anyone. */
   testConnection(): Promise<{ ok: true; account: string } | { ok: false; reason: string }>;
+  /**
+   * Tell the processor this domain may show Apple Pay. Apple will not draw
+   * the button on a site the merchant has not claimed, which is why the
+   * button is missing rather than broken when this has never been called.
+   * Optional: only the card processors have anything to register.
+   */
+  registerApplePayDomain?(domain: string): Promise<{ ok: true; domains: string[] } | { ok: false; reason: string }>;
 }
 
 export class PaymentsNotConfigured extends Error {
@@ -320,6 +327,36 @@ class StripeProvider implements PaymentProvider {
       return { ok: true, account: currency };
     } catch (error) {
       return { ok: false, reason: error instanceof Error ? error.message : "Stripe refused the key." };
+    }
+  }
+
+  /**
+   * Claim a domain for Apple Pay, then read back every domain on the account.
+   *
+   * Apple's rule is that the button only appears on a domain the merchant has
+   * registered and which serves Apple's verification file. Stripe hosts that
+   * file for us, so registering here is the whole of it -- and registering a
+   * domain that is already registered is not an error worth surfacing, so a
+   * duplicate is folded back into the list.
+   */
+  async registerApplePayDomain(
+    domain: string,
+  ): Promise<{ ok: true; domains: string[] } | { ok: false; reason: string }> {
+    try {
+      try {
+        await this.call("apple_pay/domains", { domain_name: domain });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        // Already claimed by this account: nothing to do, and not a failure.
+        if (!/already|exists/i.test(message)) throw error;
+      }
+      const list = await this.call("apple_pay/domains");
+      const domains: string[] = Array.isArray(list?.data)
+        ? list.data.map((d: { domain_name?: string }) => d.domain_name ?? "").filter(Boolean)
+        : [];
+      return { ok: true, domains };
+    } catch (error) {
+      return { ok: false, reason: error instanceof Error ? error.message : "Stripe refused the request." };
     }
   }
 

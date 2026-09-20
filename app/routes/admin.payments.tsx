@@ -178,6 +178,24 @@ export async function action({ context, request }: Route.ActionArgs) {
     }
   }
 
+  if (intent === "apple-pay") {
+    try {
+      const provider = await providerForStore(context.db, env, store.id);
+      if (!provider.registerApplePayDomain) {
+        return { error: "This provider does not do Apple Pay." };
+      }
+      // The shop's own domain, never one typed into the form: a registration
+      // is a claim on somebody's traffic and it should only ever be ours.
+      const domain = (store.domain ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim();
+      if (!domain) return { error: "This store has no domain yet, so there is nothing to register." };
+      const result = await provider.registerApplePayDomain(domain);
+      if (!result.ok) return { error: `Stripe refused the domain: ${result.reason}` };
+      return { ok: `Apple Pay is on for ${domain}. Stripe now lists ${result.domains.join(", ") || domain}.` };
+    } catch (error) {
+      return { error: error instanceof PaymentsNotConfigured ? error.message : "Stripe could not be reached." };
+    }
+  }
+
   if (intent === "stripe-remove") {
     const existing = await rowFor("stripe");
     if (existing) await context.db.delete(paymentProviders).where(eq(paymentProviders.id, existing.id));
@@ -321,6 +339,15 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
                 <PrimaryAction type="submit" name="intent" value="stripe-test" disabled={busy || !stripe.hasSecret}>
                   {busy ? "Testing…" : "Test connection"}
                 </PrimaryAction>
+              </fetcher.Form>
+              {/* Apple will not draw its button on a domain the merchant has
+                  not claimed, which is why Apple Pay goes missing rather than
+                  failing. One press claims this store's domain with Stripe,
+                  which hosts Apple's verification file for us. */}
+              <fetcher.Form method="post">
+                <QuietAction type="submit" name="intent" value="apple-pay" disabled={busy || !stripe.hasSecret}>
+                  {busy ? "Working…" : "Turn on Apple Pay"}
+                </QuietAction>
               </fetcher.Form>
               <QuietAction type="button" onClick={() => setEditStripe((open) => !open)}>
                 {editStripe ? "Hide keys" : stripe.hasSecret ? "Change keys" : "Add keys"}
