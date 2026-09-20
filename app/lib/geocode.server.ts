@@ -36,11 +36,30 @@ export function addressLine(a: {
     .join(", ");
 }
 
+/**
+ * The customer's line as typed, then looser: the same line without the
+ * country (a US street under a Greek country field is a real case), then the
+ * postcode with the country, then the postcode alone. First hit wins.
+ */
 export async function geocodeAddress(query: string): Promise<GeoPoint | null> {
   const q = query.trim().replace(/\s+/g, " ");
   if (q.length < 6) return null;
-  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=0&q=${encodeURIComponent(q)}`;
+  const parts = q.split(",").map((s) => s.trim()).filter(Boolean);
+  const postal = parts.find((s) => /^\d{4,5}(-\d{4})?$/.test(s) || /^[A-Z]\d[A-Z] ?\d[A-Z]\d$/i.test(s));
+  const country = parts.length > 1 ? parts[parts.length - 1] : null;
+  const attempts = [q];
+  if (country && parts.length > 2) attempts.push(parts.slice(0, -1).join(", "));
+  if (postal && country) attempts.push(`${postal}, ${country}`);
+  if (postal) attempts.push(postal);
+  for (const a of [...new Set(attempts)]) {
+    const p = await lookup(a);
+    if (p) return p;
+  }
+  return null;
+}
 
+async function lookup(q: string): Promise<GeoPoint | null> {
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=0&q=${encodeURIComponent(q)}`;
   // The edge cache, when there is one (Workers); a plain fetch otherwise.
   const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
   const key = new Request(`https://geocode.kerberos.internal/${encodeURIComponent(q.toLowerCase())}`);

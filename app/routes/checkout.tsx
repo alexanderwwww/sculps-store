@@ -2465,8 +2465,10 @@ function MapCard({ values }: { values: Record<string, string> }) {
   }, [point]);
 
   if (!enough) return null;
+  // No blank canvas: until there is a pin, the card is just its one line.
+  const blank = !point;
   return (
-    <div className="gb-map">
+    <div className={`gb-map${blank ? " gb-map--blank" : ""}`}>
       <link rel="stylesheet" href={leafletHref} precedence="high" />
       <div ref={boxRef} className="gb-map__canvas" aria-hidden="true" />
       <div className="gb-map__foot">

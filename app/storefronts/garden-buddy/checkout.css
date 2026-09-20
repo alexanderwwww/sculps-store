@@ -527,3 +527,6 @@
 @keyframes gbPop { from { transform: scale(.4); opacity: 0 } to { transform: scale(1); opacity: 1 } }
 @keyframes gbFade { from { opacity: 0 } to { opacity: 1 } }
 @keyframes gbArc { from { stroke-dashoffset: 326.7 } to { stroke-dashoffset: 240 } }
+
+.gb-map--blank .gb-map__canvas { display: none; }
+.gb-map--blank .gb-map__foot { border-top: 0; }
