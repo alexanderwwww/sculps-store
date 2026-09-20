@@ -3197,3 +3197,32 @@ html, body { margin: 0; }
 
 /* A photograph in the avatar slot: same circle, no gradient, no letter. */
 .cb-rv__av--pic { object-fit: cover; background: #EDEDF0; }
+
+/* On a phone the grid becomes a row you swipe.
+ *
+ * Six cards stacked is a long scroll through the middle of the page; the
+ * same six laid sideways is one card tall and reads as a feed. It is native
+ * horizontal scrolling with snap points -- no animation, no transform, no
+ * compositor layer -- so it costs nothing and cannot do what the old wall
+ * did. The desktop keeps the grid, where there is room for three across. */
+@media (max-width: 720px) {
+  .cb-rvg {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    padding: 2px 20px 6px;
+    margin: 0 -20px;
+  }
+  .cb-rvg::-webkit-scrollbar { display: none; }
+  .cb-rv {
+    flex: 0 0 82%;
+    scroll-snap-align: center;
+  }
+  /* Every card the same height, so the row has one edge instead of a ragged
+     one, and a short review does not leave a hole beside a long one. */
+  .cb-rv { min-height: 260px; }
+}
