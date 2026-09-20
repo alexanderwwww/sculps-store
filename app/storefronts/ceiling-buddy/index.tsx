@@ -764,7 +764,77 @@ function BuyBox({ section, page, storeParam = "", publishableKey = null, offer =
           </div>
         </div>
       </div>
+      <PayLaterToast
+        handle={page.product.handle}
+        amountCents={chosen ? chosen.priceCents : null}
+        currency={currency}
+      />
     </section>
+  );
+}
+
+/**
+ * "Pay in 4" said once, quietly, and then never again.
+ *
+ * The line under the gallery states the same thing permanently, which is the
+ * honest place for it -- but somebody reading a price of two hundred and
+ * ninety-nine dollars has already decided how they feel about it before they
+ * scroll far enough to find out they can pay fifty. So this waits a couple of
+ * seconds, slides a small bar in at the bottom with the real quarter of the
+ * bundle they are actually looking at, holds it long enough to read, and goes.
+ *
+ * It is per product because the number is: a quarter of the Reaper is not a
+ * quarter of the projector. It shows once per product per session, so a
+ * customer moving between pages sees the figure for each of them and never
+ * sees the same one twice.
+ */
+function PayLaterToast({
+  handle,
+  amountCents,
+  currency,
+}: {
+  handle: string;
+  amountCents: number | null;
+  currency: string;
+}) {
+  const [phase, setPhase] = useState<"idle" | "in" | "out">("idle");
+  const shown = useRef(false);
+
+  useEffect(() => {
+    if (shown.current || amountCents == null) return;
+    const key = `kb_pay4_${handle}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+    } catch {
+      /* private mode: it may show once per load, which is fine */
+    }
+    shown.current = true;
+    const enter = window.setTimeout(() => {
+      setPhase("in");
+      try { sessionStorage.setItem(key, "1"); } catch { /* fine */ }
+    }, 2200);
+    const leave = window.setTimeout(() => setPhase("out"), 8200);
+    const gone = window.setTimeout(() => setPhase("idle"), 8800);
+    return () => { window.clearTimeout(enter); window.clearTimeout(leave); window.clearTimeout(gone); };
+  }, [handle, amountCents]);
+
+  if (phase === "idle" || amountCents == null) return null;
+  const each = Math.round(amountCents / 4);
+  return (
+    <div className={`cb-p4t${phase === "out" ? " is-out" : ""}`} role="status">
+      <img className="cb-p4t__mark" src={PAYPAL_WORDMARK} alt="PayPal" />
+      <p className="cb-p4t__txt">
+        Or 4 interest-free payments of <b>{formatMoney(each, currency)}</b>
+      </p>
+      <button
+        type="button"
+        className="cb-p4t__x"
+        aria-label="Dismiss"
+        onClick={() => setPhase("out")}
+      >
+        &#215;
+      </button>
+    </div>
   );
 }
 

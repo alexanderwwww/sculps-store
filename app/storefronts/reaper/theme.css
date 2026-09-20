@@ -2825,3 +2825,235 @@
   .cb-carton__list b { font-size: 16.5px; }
   .cb-carton__list span { font-size: 13.5px; }
 }
+
+/* ------------------------------------------- the reviews, made ordinary
+ *
+ * This section used to be a night scene: a dark panel lit by three radial
+ * gradients under a 30px blur, six bats drifting on an animated
+ * background-position, a string of lights breathing on a second animated
+ * layer, a gradient mask over the moving track, and every one of the fifty-odd
+ * cards carrying its own bobbing animation, its own will-change and its own
+ * backdrop-filter.
+ *
+ * A laptop absorbs that. A phone does not. will-change promotes each card to
+ * its own compositor layer, and at three device pixels per CSS pixel fifty
+ * layers plus two blurs plus an animated multi-layer background is more video
+ * memory than iOS will hand a tab. It kills the tab, the browser reloads into
+ * the same wall, and the second kill is reported as "can't open this page".
+ *
+ * So: white, one moving layer instead of fifty, no blur of any kind, no mask,
+ * and cards a size somebody can actually read on a phone. The track still
+ * slides -- one transform on one element costs nothing -- and it slides at
+ * twice the speed it used to.
+ */
+.cb-revs-s {
+  background: #fff;
+  color: #0B0B0C;
+  overflow: clip;
+  isolation: auto;
+}
+/* The night: the blur wash, the bats, the string of lights. All gone. */
+.cb-revs-s::before,
+.cb-revs-s::after,
+.cb-revs-s .cb-wrap::before {
+  content: none;
+  display: none;
+  animation: none;
+  filter: none;
+  background: none;
+}
+
+.cb-revs-s .cb-head h2,
+.cb-revs-s .cb-h2,
+.cb-revs__score { color: #0B0B0C; }
+.cb-revs-s .cb-head p,
+.cb-revs-s .cb-lede,
+.cb-revs__of { color: rgba(11, 11, 12, .55); }
+
+/* ---- the sideways track: one layer, moving, and nothing else moving ---- */
+
+/* The mask went with the blurs: masking an element that animates forces the
+   compositor to keep an offscreen copy of the whole track. Two gradient ends
+   painted on top of white do the same job for nothing. */
+.cb-revs-s .rv {
+  mask-image: none;
+  -webkit-mask-image: none;
+  overflow: clip;
+  position: relative;
+}
+.cb-revs-s .rv::before { content: none; display: none; }   /* the hairline */
+.cb-revs-s .rv::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, #fff, rgba(255,255,255,0) 7%),
+    linear-gradient(270deg, #fff, rgba(255,255,255,0) 7%);
+}
+.cb-revs-s .rv-track { animation: rv-slide 46s linear infinite; }
+.cb-revs-s .rv-pass { gap: 14px; padding-right: 14px; }
+
+/* Paper, not glass, and not bobbing. One backdrop-filter is one offscreen
+   buffer and one will-change is one layer; there were fifty of each. */
+.cb-revs-s .rv-card,
+.cb-revs-s .rv-post,
+.cb-revs-s .cb-card {
+  background: #fff;
+  border: 1px solid rgba(11, 11, 12, .10);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(11, 11, 12, .05), 0 10px 26px -18px rgba(11, 11, 12, .22);
+  animation: none;
+  will-change: auto;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.cb-revs-s .rv-post__name,
+.cb-revs-s .cb-card__who,
+.cb-revs-s .rv-post__body,
+.cb-revs-s .cb-card__body,
+.cb-revs-s .rv-post p,
+.cb-revs-s .cb-card p { color: #0B0B0C; }
+.cb-revs-s .rv-post__when,
+.cb-revs-s .cb-card__when { color: rgba(11, 11, 12, .45); }
+
+/* Smaller. The old widths were built for a desktop row and left a phone
+   showing one and a half cards. */
+.cb-revs-s .rv-pass .rv-card:nth-child(6n + 1) { width: 252px; }
+.cb-revs-s .rv-pass .rv-card:nth-child(6n + 2) { width: 272px; }
+.cb-revs-s .rv-pass .rv-card:nth-child(6n + 3) { width: 236px; }
+.cb-revs-s .rv-pass .rv-card:nth-child(6n + 4) { width: 284px; }
+.cb-revs-s .rv-pass .rv-card:nth-child(6n + 5) { width: 244px; }
+.cb-revs-s .rv-pass .rv-card:nth-child(6n)     { width: 264px; }
+.cb-revs-s .rv-post { padding: 13px 13px 10px; font-size: 14px; }
+/* A review photo is an illustration of the review, not the point of it. */
+.cb-revs-s .rv-shot img,
+.cb-revs-s .cb-card img { max-height: 190px; object-fit: cover; width: 100%; }
+
+@media (max-width: 720px) {
+  .cb-revs-s .rv-track { animation-duration: 34s; }
+  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 1),
+  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 2),
+  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 3),
+  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 4),
+  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 5),
+  .cb-revs-s .rv-pass .rv-card:nth-child(6n)     { width: 224px; }
+  .cb-revs-s .rv-shot img,
+  .cb-revs-s .cb-card img { max-height: 150px; }
+}
+
+/* ---- the stacked wall, for the stores that use it instead ---- */
+.cb-revs-s .cb-wallgrid {
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+.cb-revs-s .cb-wallcol { will-change: auto; }
+
+/* The phone in the wall stays a phone. A screenshot of a text thread is
+   recognisable because it is dark with blue and grey bubbles; painting it
+   white turned it into a card with someone else's bubbles on it. Only this
+   one card keeps the dark -- and it is flat colour, so it costs nothing. */
+.cb-revs-s .rv-card.rv-thread {
+  background: #121317;
+  border-color: rgba(255, 255, 255, .10);
+  padding: 0;
+  overflow: hidden;
+}
+.cb-revs-s .rv-thread__head b,
+.cb-revs-s .rv-thread p { color: #fff; }
+.cb-revs-s .rv-thread__field { color: rgba(255, 255, 255, .38); }
+/* The review post, on the other hand, goes the whole way: a white card with
+   a hairline and a name in black, the way a social post reads on a feed. */
+.cb-revs-s .rv-card.rv-post { background: #fff; }
+
+/* --------------------------------------------------- the gallery, edge to edge
+ *
+ * Every panel in this shop is authored at 1024x1024 and the frame is already
+ * square, so `contain` was never letterboxing anything -- the pale border
+ * around each photograph was the frame's own padding and its tint showing
+ * through it. Nothing is cropped by taking them away, because the picture and
+ * the box are the same shape. The thumbnails follow: a square crop of a square
+ * picture is the picture.
+ */
+.cb-gal__main {
+  padding: 0;
+  background: #0B0B0C;
+  overflow: hidden;
+}
+.cb-gal__main img {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: cover;
+  display: block;
+}
+.cb-gal__thumb { background: #0B0B0C; }
+.cb-gal__thumb img { object-fit: cover; padding: 0; display: block; }
+
+/* ------------------------------------------ the buy column, in buying order
+ *
+ * The buttons used to sit above the bundle box, from a time when the price
+ * was below the fold and getting it on screen was the whole problem. It reads
+ * backwards: a shop that asks you to press Add to cart and only then shows you
+ * that two cost less than one is a shop arguing with its own offer.
+ *
+ * Every store in the world runs the same order, so this one does too: what it
+ * is, what people think of it, what it costs, which bundle, then the buttons,
+ * with the wallets directly under them. Nothing moves on a desktop, where the
+ * column is on screen all at once.
+ */
+@media (max-width: 720px) {
+  /* The catch-all goes last in the cascade but first here, so that anything
+     unnamed lands after the sequence rather than in the middle of it. */
+  .cb-buy__side > * { order: 20; }
+  .cb-buy__side > .cb-badge    { order: 1; }
+  .cb-buy__side > .cb-thrilled { order: 2; }
+  .cb-buy__side > .cb-h1       { order: 3; }
+  .cb-buy__side > .cb-score    { order: 4; }
+  .cb-buy__side > .cb-lede     { order: 5; }
+  .cb-buy__side > .cb-price    { order: 6; margin-top: 10px; }
+  .cb-buy__side > .cb-bundle   { order: 7; }
+  .cb-buy__side > .cb-stock    { order: 8; }
+  .cb-buy__side > .cb-acts     { order: 9; margin-bottom: 10px; }
+  .cb-buy__side > .cb-wallet   { order: 10; margin-bottom: 18px; }
+}
+
+/* ------------------------------------------------ the pay-in-4 whisper */
+.cb-p4t {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 20px);
+  padding: 10px 12px 10px 14px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(11, 11, 12, .10);
+  box-shadow: 0 10px 34px -12px rgba(11, 11, 12, .38);
+  animation: cb-p4t-in .34s cubic-bezier(.2, .8, .3, 1) both;
+}
+.cb-p4t.is-out { animation: cb-p4t-out .34s ease-in both; }
+@keyframes cb-p4t-in  { from { opacity: 0; transform: translate(-50%, 14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes cb-p4t-out { from { opacity: 1; transform: translate(-50%, 0); }  to { opacity: 0; transform: translate(-50%, 14px); } }
+@media (prefers-reduced-motion: reduce) { .cb-p4t, .cb-p4t.is-out { animation: none; } }
+.cb-p4t__mark { height: 15px; width: auto; display: block; flex: 0 0 auto; }
+.cb-p4t__txt { margin: 0; font-size: 13.5px; line-height: 1.3; color: #0B0B0C; }
+.cb-p4t__txt b { font-weight: 700; }
+.cb-p4t__x {
+  flex: 0 0 auto; width: 24px; height: 24px; border: 0; border-radius: 999px;
+  background: rgba(11, 11, 12, .06); color: rgba(11, 11, 12, .55);
+  font-size: 16px; line-height: 1; cursor: pointer;
+}
+
+/* Full bleed means no hairline either: the frame's own 1px border was the
+   last pale edge left around a 1024-square panel. */
+.cb-gal__main { border: 0; }
+/* The coupon bar renders as .cb-coupon, not .cb-badge, so it was falling
+   through to the catch-all and landing under the wallets. */
+@media (max-width: 720px) {
+  .cb-buy__side > .cb-coupon { order: 1; }
+}
