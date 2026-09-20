@@ -39,6 +39,19 @@ const QUEUE = process.env.QUEUE || "https://kerberos.gardenbuddystore.workers.de
  */
 const POLL_MS = 1200;
 /**
+ * The smallest thing that can be one of our pictures.
+ *
+ * A generation from either site is megabytes. Everything else a chat page
+ * holds — logos, avatars, sidebar artwork, promotional tiles — measured
+ * nineteen to thirty-eight kilobytes when they were being filed as Halloween
+ * panels, so this sits well clear of both.
+ *
+ * It has to be enforced everywhere a picture can enter. The network capture
+ * had a floor and the save path had its own of two kilobytes, so a stray that
+ * the capture rejected was quietly downloaded instead and saved anyway.
+ */
+const MIN_PICTURE = 150_000;
+/**
  * Orders from Claude, separate from the queue.
  *
  * The queue says what to draw. This says what to do right now — continue,
@@ -420,7 +433,7 @@ function watchImages(target) {
        * pictures. A real generation from either site is hundreds of kilobytes
        * at least, so the floor is where it should always have been.
        */
-      if (!body || body.length < 150_000) return;
+      if (!body || body.length < MIN_PICTURE) return;
       CAPTURED.set(res.url(), body);
       capturedBytes += body.length;
       // Bounded by weight as well as by count: two hundred four-megabyte
@@ -1654,7 +1667,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // No request to replay, no cookies to carry, no content policy to refuse.
     for (const want of [url, ...originals(url)]) {
       const hit = CAPTURED.get(want);
-      if (hit && hit.length > 2048) { buf = hit; how = "captured"; break; }
+      if (hit && hit.length >= MIN_PICTURE) { buf = hit; how = "captured"; break; }
     }
 
     if (!buf && !/^(blob|data):/.test(url)) {
@@ -1672,7 +1685,7 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
             const type = r.headers()["content-type"] ?? "";
             if (!r.ok() || !type.startsWith("image/")) return null;
             const body = await r.body();
-            return body && body.length > 2048 ? body : null;
+            return body && body.length >= MIN_PICTURE ? body : null;
           })
           .catch(() => null);
         if (buf) { how = "downloaded"; break; }
@@ -1692,7 +1705,12 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
         for (let j = 0; j < bytes.length; j++) s += String.fromCharCode(bytes[j]);
         return btoa(s);
       }, url).catch(() => null);
-      if (b64) { buf = Buffer.from(b64, "base64"); how = "page-fetched"; }
+      // The third way in needs the same floor as the other two, or a stray
+      // the capture and the request both refused arrives through this one.
+      if (b64) {
+        const got = Buffer.from(b64, "base64");
+        if (got.length >= MIN_PICTURE) { buf = got; how = "page-fetched"; }
+      }
     }
 
     /**
