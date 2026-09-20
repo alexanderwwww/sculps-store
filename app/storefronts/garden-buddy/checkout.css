@@ -394,7 +394,11 @@
 /* The mark sits on black, the way it does everywhere else on the shop. It is
  * the one piece of the brand this page carries, and it belongs above the
  * form rather than inside it. */
-.gb-co-sec--reaper header { background: #0B0B0C; }
+/* The logo, not a black slab with a logo in it. The mark carries its own
+   colour, so the page behind it can stay the page. */
+.gb-co-sec--reaper header { background: transparent; }
+.gb-co-sec--reaper .gb-co__logo-img { max-height: 58px; }
+.gb-co-sec--reaper .gb-co__bar-in { padding-bottom: 14px; }
 .gb-co-sec--reaper .gb-co__wordmark { color: #F7F2E7; }
 .gb-co-sec--reaper .gb-co__crumb { color: rgba(247, 242, 231, .55); }
 .gb-co-sec--reaper .gb-co__crumb a { color: rgba(247, 242, 231, .82); }
@@ -546,3 +550,9 @@
 .gb-sug__item b { font-weight: 600; color: var(--ink); font-size: 15px; }
 .gb-sug__item span { color: var(--dim); font-size: 13px; }
 .gb-sug__item.is-active { background: rgba(0,0,0,.05); }
+
+
+/* The browser's own 8px body margin was never reset, so every section on
+   every page sat eight pixels in from both edges -- the pale border down
+   the sides of the whole site. */
+html, body { margin: 0; }

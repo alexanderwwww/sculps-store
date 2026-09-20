@@ -2826,33 +2826,35 @@
   .cb-carton__list span { font-size: 13.5px; }
 }
 
-/* ------------------------------------------- the reviews, made ordinary
+/* =======================================================================
+ * The phone budget, and the reviews rebuilt on top of it.
  *
- * This section used to be a night scene: a dark panel lit by three radial
- * gradients under a 30px blur, six bats drifting on an animated
- * background-position, a string of lights breathing on a second animated
- * layer, a gradient mask over the moving track, and every one of the fifty-odd
- * cards carrying its own bobbing animation, its own will-change and its own
- * backdrop-filter.
+ * Everything in this block exists because of one fact: a compositor layer on
+ * a three-times-density phone screen is nine times the texture memory of the
+ * same box on a laptop, and iOS kills the tab rather than degrading. The old
+ * reviews section spent that budget forty times over -- a 30px blur wash, a
+ * six-layer background animating its own position, a mask over a moving
+ * track, and every card carrying a bob animation, a will-change and a
+ * backdrop-filter of its own.
  *
- * A laptop absorbs that. A phone does not. will-change promotes each card to
- * its own compositor layer, and at three device pixels per CSS pixel fifty
- * layers plus two blurs plus an animated multi-layer background is more video
- * memory than iOS will hand a tab. It kills the tab, the browser reloads into
- * the same wall, and the second kill is reported as "can't open this page".
- *
- * So: white, one moving layer instead of fifty, no blur of any kind, no mask,
- * and cards a size somebody can actually read on a phone. The track still
- * slides -- one transform on one element costs nothing -- and it slides at
- * twice the speed it used to.
- */
+ * One rule throughout: a thing may move, or it may be blurred or masked,
+ * never both, and never once per card.
+ * ======================================================================= */
+
+/* The browser's own 8px body margin was never reset, which is why every
+   section on the site sat eight pixels in from both edges. */
+html, body { margin: 0; }
+
+/* ---- the reviews: a plain grid of white cards that hold still ---------- */
+
 .cb-revs-s {
   background: #fff;
   color: #0B0B0C;
-  overflow: clip;
+  overflow: visible;
   isolation: auto;
+  padding: clamp(44px, 6vw, 76px) 0;
 }
-/* The night: the blur wash, the bats, the string of lights. All gone. */
+/* The night scene: the blur, the bats, the string of lights. All gone. */
 .cb-revs-s::before,
 .cb-revs-s::after,
 .cb-revs-s .cb-wrap::before {
@@ -2862,7 +2864,6 @@
   filter: none;
   background: none;
 }
-
 .cb-revs-s .cb-head h2,
 .cb-revs-s .cb-h2,
 .cb-revs__score { color: #0B0B0C; }
@@ -2870,143 +2871,132 @@
 .cb-revs-s .cb-lede,
 .cb-revs__of { color: rgba(11, 11, 12, .55); }
 
-/* ---- the sideways track: one layer, moving, and nothing else moving ---- */
-
-/* The mask went with the blurs: masking an element that animates forces the
-   compositor to keep an offscreen copy of the whole track. Two gradient ends
-   painted on top of white do the same job for nothing. */
-.cb-revs-s .rv {
-  mask-image: none;
-  -webkit-mask-image: none;
-  overflow: clip;
-  position: relative;
+.cb-revs__head {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 10px;
+  margin: 0 0 clamp(20px, 3vw, 30px);
 }
-.cb-revs-s .rv::before { content: none; display: none; }   /* the hairline */
-.cb-revs-s .rv::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, #fff, rgba(255,255,255,0) 7%),
-    linear-gradient(270deg, #fff, rgba(255,255,255,0) 7%);
-}
-.cb-revs-s .rv-track { animation: rv-slide 46s linear infinite; }
-.cb-revs-s .rv-pass { gap: 14px; padding-right: 14px; }
+.cb-revs__score { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 4vw, 40px); line-height: 1; }
+.cb-revs__of { font-size: 14px; }
 
-/* Paper, not glass, and not bobbing. One backdrop-filter is one offscreen
-   buffer and one will-change is one layer; there were fifty of each. */
-.cb-revs-s .rv-card,
-.cb-revs-s .rv-post,
-.cb-revs-s .cb-card {
+.cb-rvstars { display: inline-flex; gap: 2px; }
+.cb-rvstars svg { width: 16px; height: 16px; display: block; }
+.cb-rvstars > span { color: rgba(11, 11, 12, .18); line-height: 0; }
+.cb-rvstars > span.is-on { color: #F5A623; }
+
+.cb-rvg {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 640px) { .cb-rvg { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
+
+.cb-rv {
   background: #fff;
-  border: 1px solid rgba(11, 11, 12, .10);
-  border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(11, 11, 12, .05), 0 10px 26px -18px rgba(11, 11, 12, .22);
-  animation: none;
-  will-change: auto;
+  border: 1px solid rgba(11, 11, 12, .11);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.cb-rv__top { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; }
+.cb-rv__av {
+  width: 36px; height: 36px; border-radius: 999px;
+  display: grid; place-items: center;
+  font-family: var(--display); font-weight: 800; font-size: 15px; color: #fff;
+  background: linear-gradient(140deg, #4F8BFF, #2E63D6);
+}
+.cb-rv__av[data-seed="1"] { background: linear-gradient(140deg, #FFB067, #F5821F); }
+.cb-rv__av[data-seed="2"] { background: linear-gradient(140deg, #C4B5FD, #7C4DE8); }
+.cb-rv__av[data-seed="3"] { background: linear-gradient(140deg, #6EE7B7, #0FA36B); }
+.cb-rv__av[data-seed="4"] { background: linear-gradient(140deg, #FDA4AF, #E1364F); }
+.cb-rv__av[data-seed="5"] { background: linear-gradient(140deg, #FCD34D, #E08A00); }
+.cb-rv__who { display: grid; gap: 1px; min-width: 0; }
+.cb-rv__who b {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 14.5px; font-weight: 700; color: #0B0B0C;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cb-rv__tick { display: inline-flex; line-height: 0; color: #2E7CF6; }
+.cb-rv__tick svg { width: 14px; height: 14px; }
+.cb-rv__when { font-size: 12.5px; color: rgba(11, 11, 12, .45); }
+.cb-rv__t { margin: 0; font-size: 14.5px; font-weight: 700; color: #0B0B0C; }
+.cb-rv__b {
+  margin: 0; font-size: 14px; line-height: 1.5; color: rgba(11, 11, 12, .82);
+  /* Long ones are the honest ones, but six of them at full length is a wall.
+     Five lines is enough to believe it and short enough to scan. */
+  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* A fixed rectangle, filled. Without it one tall phone photograph is three
+   times the height of the card beside it and the row falls apart. */
+.cb-rv__shot {
+  margin-top: 3px;
+  width: 96px;
+  aspect-ratio: 1 / 1;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #F1F1F3;
+}
+.cb-rv__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cb-rvg__more {
+  display: block;
+  margin: clamp(18px, 3vw, 26px) auto 0;
+  padding: 12px 26px;
+  border: 1px solid rgba(11, 11, 12, .18);
+  border-radius: 999px;
+  background: #fff;
+  font-family: var(--display); font-weight: 700; font-size: 15px; color: #0B0B0C;
+  cursor: pointer;
+}
+.cb-rvg__more:hover { background: rgba(11, 11, 12, .04); }
+
+/* ---- the clip rail: one moving layer, and a caption with no box -------- */
+
+.cb-ugcw__rail { mask-image: none; -webkit-mask-image: none; position: relative; overflow: clip; }
+.cb-clip { animation: none; will-change: auto; }
+/* The grey pane over each clip read as a smear on a white page. The caption
+   is the picture's own caption now: light type on the photograph, which is
+   already dark where it sits. */
+.cb-clip__glass { display: none; }
+.cb-clip figcaption,
+.cb-tile figcaption {
+  background: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-}
-.cb-revs-s .rv-post__name,
-.cb-revs-s .cb-card__who,
-.cb-revs-s .rv-post__body,
-.cb-revs-s .cb-card__body,
-.cb-revs-s .rv-post p,
-.cb-revs-s .cb-card p { color: #0B0B0C; }
-.cb-revs-s .rv-post__when,
-.cb-revs-s .cb-card__when { color: rgba(11, 11, 12, .45); }
-
-/* Smaller. The old widths were built for a desktop row and left a phone
-   showing one and a half cards. */
-.cb-revs-s .rv-pass .rv-card:nth-child(6n + 1) { width: 252px; }
-.cb-revs-s .rv-pass .rv-card:nth-child(6n + 2) { width: 272px; }
-.cb-revs-s .rv-pass .rv-card:nth-child(6n + 3) { width: 236px; }
-.cb-revs-s .rv-pass .rv-card:nth-child(6n + 4) { width: 284px; }
-.cb-revs-s .rv-pass .rv-card:nth-child(6n + 5) { width: 244px; }
-.cb-revs-s .rv-pass .rv-card:nth-child(6n)     { width: 264px; }
-.cb-revs-s .rv-post { padding: 13px 13px 10px; font-size: 14px; }
-/* A review photo is an illustration of the review, not the point of it. */
-.cb-revs-s .rv-shot img,
-.cb-revs-s .cb-card img { max-height: 190px; object-fit: cover; width: 100%; }
-
-@media (max-width: 720px) {
-  .cb-revs-s .rv-track { animation-duration: 34s; }
-  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 1),
-  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 2),
-  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 3),
-  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 4),
-  .cb-revs-s .rv-pass .rv-card:nth-child(6n + 5),
-  .cb-revs-s .rv-pass .rv-card:nth-child(6n)     { width: 224px; }
-  .cb-revs-s .rv-shot img,
-  .cb-revs-s .cb-card img { max-height: 150px; }
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .85), 0 1px 3px rgba(0, 0, 0, .7);
+  font-weight: 600;
 }
 
-/* ---- the stacked wall, for the stores that use it instead ---- */
-.cb-revs-s .cb-wallgrid {
-  mask-image: none;
-  -webkit-mask-image: none;
+/* ---- the fixed chrome: opaque on a phone ------------------------------ */
+@media (max-width: 900px) {
+  .cb-header,
+  .cb-sticky,
+  .cb-sticky.is-on,
+  .cb-chat__head {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, .97);
+  }
+  .cb-hh__msg, .cb-hh__msg.is-mine { animation: none; }
 }
-.cb-revs-s .cb-wallcol { will-change: auto; }
 
-/* The phone in the wall stays a phone. A screenshot of a text thread is
-   recognisable because it is dark with blue and grey bubbles; painting it
-   white turned it into a card with someone else's bubbles on it. Only this
-   one card keeps the dark -- and it is flat colour, so it costs nothing. */
-.cb-revs-s .rv-card.rv-thread {
-  background: #121317;
-  border-color: rgba(255, 255, 255, .10);
-  padding: 0;
-  overflow: hidden;
-}
-.cb-revs-s .rv-thread__head b,
-.cb-revs-s .rv-thread p { color: #fff; }
-.cb-revs-s .rv-thread__field { color: rgba(255, 255, 255, .38); }
-/* The review post, on the other hand, goes the whole way: a white card with
-   a hairline and a name in black, the way a social post reads on a feed. */
-.cb-revs-s .rv-card.rv-post { background: #fff; }
-
-/* --------------------------------------------------- the gallery, edge to edge
- *
- * Every panel in this shop is authored at 1024x1024 and the frame is already
- * square, so `contain` was never letterboxing anything -- the pale border
- * around each photograph was the frame's own padding and its tint showing
- * through it. Nothing is cropped by taking them away, because the picture and
- * the box are the same shape. The thumbnails follow: a square crop of a square
- * picture is the picture.
- */
-.cb-gal__main {
-  padding: 0;
-  background: #0B0B0C;
-  overflow: hidden;
-}
-.cb-gal__main img {
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  object-fit: cover;
-  display: block;
-}
+/* ---- the gallery, edge to edge ---------------------------------------- */
+/* Every panel is authored 1024 square and the frame is already square, so the
+   pale border was the frame's own padding and its tint showing through it. */
+.cb-gal__main { padding: 0; border: 0; background: #0B0B0C; overflow: hidden; }
+.cb-gal__main img { width: 100%; height: 100%; padding: 0; object-fit: cover; display: block; }
 .cb-gal__thumb { background: #0B0B0C; }
 .cb-gal__thumb img { object-fit: cover; padding: 0; display: block; }
 
-/* ------------------------------------------ the buy column, in buying order
- *
- * The buttons used to sit above the bundle box, from a time when the price
- * was below the fold and getting it on screen was the whole problem. It reads
- * backwards: a shop that asks you to press Add to cart and only then shows you
- * that two cost less than one is a shop arguing with its own offer.
- *
- * Every store in the world runs the same order, so this one does too: what it
- * is, what people think of it, what it costs, which bundle, then the buttons,
- * with the wallets directly under them. Nothing moves on a desktop, where the
- * column is on screen all at once.
- */
+/* ---- the buy column, in buying order ---------------------------------- */
 @media (max-width: 720px) {
-  /* The catch-all goes last in the cascade but first here, so that anything
-     unnamed lands after the sequence rather than in the middle of it. */
   .cb-buy__side > * { order: 20; }
-  .cb-buy__side > .cb-badge    { order: 1; }
+  .cb-buy__side > .cb-coupon   { order: 1; }
   .cb-buy__side > .cb-thrilled { order: 2; }
   .cb-buy__side > .cb-h1       { order: 3; }
   .cb-buy__side > .cb-score    { order: 4; }
@@ -3018,98 +3008,36 @@
   .cb-buy__side > .cb-wallet   { order: 10; margin-bottom: 18px; }
 }
 
-/* ------------------------------------------------ the pay-in-4 whisper */
+/* ---- the pay-in-4 whisper: a small bar, once, beside the sticky -------- */
 .cb-p4t {
   position: fixed;
-  left: 50%;
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  z-index: 60;
-  display: flex;
+  left: 14px;
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  z-index: 59;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  max-width: calc(100vw - 20px);
-  padding: 10px 12px 10px 14px;
-  border-radius: 22px;
-  background: #fff;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .98);
   border: 1px solid rgba(11, 11, 12, .10);
-  box-shadow: 0 10px 34px -12px rgba(11, 11, 12, .38);
-  animation: cb-p4t-in .34s cubic-bezier(.2, .8, .3, 1) both;
+  box-shadow: 0 8px 24px -10px rgba(11, 11, 12, .32);
+  animation: cb-p4t-in .3s cubic-bezier(.2, .8, .3, 1) both;
 }
-.cb-p4t.is-out { animation: cb-p4t-out .34s ease-in both; }
-@keyframes cb-p4t-in  { from { opacity: 0; transform: translate(-50%, 14px); } to { opacity: 1; transform: translate(-50%, 0); } }
-@keyframes cb-p4t-out { from { opacity: 1; transform: translate(-50%, 0); }  to { opacity: 0; transform: translate(-50%, 14px); } }
+.cb-p4t.is-out { animation: cb-p4t-out .3s ease-in both; }
+@keyframes cb-p4t-in  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes cb-p4t-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(10px); } }
 @media (prefers-reduced-motion: reduce) { .cb-p4t, .cb-p4t.is-out { animation: none; } }
-.cb-p4t__mark { height: 15px; width: auto; display: block; flex: 0 0 auto; }
-.cb-p4t__txt { margin: 0; font-size: 13.5px; line-height: 1.3; color: #0B0B0C; }
-.cb-p4t__txt b { font-weight: 700; }
-.cb-p4t__x {
-  flex: 0 0 auto; width: 24px; height: 24px; border: 0; border-radius: 999px;
-  background: rgba(11, 11, 12, .06); color: rgba(11, 11, 12, .55);
-  font-size: 16px; line-height: 1; cursor: pointer;
-}
+.cb-p4t__mark { height: 13px; width: auto; display: block; }
+.cb-p4t__txt { font-size: 13px; font-weight: 700; color: #0B0B0C; white-space: nowrap; }
 
-/* Full bleed means no hairline either: the frame's own 1px border was the
-   last pale edge left around a 1024-square panel. */
-.cb-gal__main { border: 0; }
-/* The coupon bar renders as .cb-coupon, not .cb-badge, so it was falling
-   through to the catch-all and landing under the wallets. */
-@media (max-width: 720px) {
-  .cb-buy__side > .cb-coupon { order: 1; }
+/* The comment thread under a social post: two lines, small, grey, with the
+   handle in black -- the shape every app draws it in. */
+.cb-rv__cmts { display: grid; gap: 3px; margin-top: 1px; }
+.cb-rv__cmt {
+  margin: 0; font-size: 13px; line-height: 1.45;
+  color: rgba(11, 11, 12, .70);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-
-/* ------------------------------------------- the rest of the phone budget
- *
- * The reviews were the worst of it, but they were not the only place doing
- * the same thing. Everything below is the same trade made again: a blur, a
- * mask over a moving track, or a per-card bob that promotes every card to its
- * own compositor layer. On a desktop each is invisible; on a phone they add
- * up to the same video memory that killed the tab.
- *
- * One rule throughout: a layer may move OR it may be blurred or masked, and a
- * thing that moves does it on one element, not on each of its children.
- */
-
-/* The clip rail: one sliding layer, and the eight clips ride it still. The
-   mask over a moving track is an offscreen copy of the whole rail; two
-   painted gradient ends do the same job for nothing. */
-.cb-ugcw__rail {
-  mask-image: none;
-  -webkit-mask-image: none;
-  position: relative;
-  overflow: clip;
-}
-.cb-clip {
-  animation: none;
-  will-change: auto;
-}
-/* Eight captions, eight backdrop-filters, eight offscreen buffers. The
-   caption sits on a photograph that is already dark at the bottom, so a flat
-   translucent white reads identically and costs one paint. */
-.cb-clip figcaption,
-.cb-tile figcaption {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: rgba(255, 255, 255, .92);
-}
-
-/* The header and the sticky buy bar are pinned, so their blur is recomputed
-   against whatever scrolls underneath them -- every frame, the whole width of
-   the screen, at three device pixels per CSS pixel. Opaque on a phone. */
-@media (max-width: 900px) {
-  .cb-header,
-  .cb-sticky,
-  .cb-sticky.is-on,
-  .cb-chat__head {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: rgba(255, 255, 255, .97);
-  }
-}
-
-/* The message bubbles in the hero conversation bobbed on their own clocks.
-   Five bubbles, five layers, for a movement nobody has ever mentioned. */
-@media (max-width: 900px) {
-  .cb-hh__msg,
-  .cb-hh__msg.is-mine { animation: none; }
-}
+.cb-rv__cmt b { color: #0B0B0C; font-weight: 600; }
+.cb-rv__cmt i { font-style: normal; color: rgba(11, 11, 12, .40); margin-left: 6px; font-size: 12px; }

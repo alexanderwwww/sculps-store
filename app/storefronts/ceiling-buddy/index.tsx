@@ -798,24 +798,39 @@ function PayLaterToast({
   currency: string;
 }) {
   const [phase, setPhase] = useState<"idle" | "in" | "out">("idle");
-  const shown = useRef(false);
+  const fired = useRef(false);
 
   useEffect(() => {
-    if (shown.current || amountCents == null) return;
+    if (fired.current || amountCents == null) return;
     const key = `kb_pay4_${handle}`;
     try {
       if (sessionStorage.getItem(key)) return;
     } catch {
-      /* private mode: it may show once per load, which is fine */
+      /* private mode: once per load is fine */
     }
-    shown.current = true;
-    const enter = window.setTimeout(() => {
-      setPhase("in");
-      try { sessionStorage.setItem(key, "1"); } catch { /* fine */ }
-    }, 2200);
-    const leave = window.setTimeout(() => setPhase("out"), 8200);
-    const gone = window.setTimeout(() => setPhase("idle"), 8800);
-    return () => { window.clearTimeout(enter); window.clearTimeout(leave); window.clearTimeout(gone); };
+    const target = document.getElementById("buy");
+    if (!target) return;
+
+    let seen = false;
+    let leave = 0;
+    let gone = 0;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) { seen = true; return; }
+        // The moment the buy box leaves the top of the screen -- the same
+        // moment the sticky bar arrives -- and only then, and only once.
+        if (!seen || fired.current) return;
+        fired.current = true;
+        io.disconnect();
+        setPhase("in");
+        try { sessionStorage.setItem(key, "1"); } catch { /* fine */ }
+        leave = window.setTimeout(() => setPhase("out"), 4600);
+        gone = window.setTimeout(() => setPhase("idle"), 5100);
+      },
+      { threshold: 0 },
+    );
+    io.observe(target);
+    return () => { io.disconnect(); window.clearTimeout(leave); window.clearTimeout(gone); };
   }, [handle, amountCents]);
 
   if (phase === "idle" || amountCents == null) return null;
@@ -823,17 +838,7 @@ function PayLaterToast({
   return (
     <div className={`cb-p4t${phase === "out" ? " is-out" : ""}`} role="status">
       <img className="cb-p4t__mark" src={PAYPAL_WORDMARK} alt="PayPal" />
-      <p className="cb-p4t__txt">
-        Or 4 interest-free payments of <b>{formatMoney(each, currency)}</b>
-      </p>
-      <button
-        type="button"
-        className="cb-p4t__x"
-        aria-label="Dismiss"
-        onClick={() => setPhase("out")}
-      >
-        &#215;
-      </button>
+      <span className="cb-p4t__txt">4 &#215; {formatMoney(each, currency)}</span>
     </div>
   );
 }
@@ -1862,7 +1867,6 @@ function UgcWall({ section }: { section: LoadedSection }) {
               {clips.map((b) => (
                 <figure className="cb-clip" key={`${pass}-${b.id}`}>
                   <Pic src={val(b.values, "image")} size="w640" alt={val(b.values, "caption")} loading="lazy" />
-                  <span className="cb-clip__glass" aria-hidden="true" />
                   {has(b.values, "caption") ? (
                     <figcaption>{val(b.values, "caption")}</figcaption>
                   ) : null}
@@ -1876,84 +1880,152 @@ function UgcWall({ section }: { section: LoadedSection }) {
   );
 }
 
+/**
+ * The reviews, built to work.
+ *
+ * What was here before was a wall of cards drifting upward in three masked
+ * columns, or a track sliding sideways, each card drawn in the shape of the
+ * platform it was supposedly written on. It looked wonderful on a laptop and
+ * it was three separate problems on a phone: it cost more video memory than
+ * iOS gives a tab, photographs lazy-loaded into cards that had already slid
+ * past, and a moving card is a card nobody reads.
+ *
+ * This is the boring version, and the boring version is the one that works:
+ * a plain grid of white cards that hold still. Name, stars, date, what they
+ * wrote, and their photograph in a fixed rectangle so a portrait and a
+ * landscape shot sit in a row without one of them wrecking the line. Six to
+ * begin with, six more each time you ask -- which keeps the first paint small
+ * without hiding anything from anyone who wants to read them all.
+ */
 function Reviews({ section, page }: { section: LoadedSection; page: LoadedProductPage }) {
   const rows = page.reviews;
+  const [shown, setShown] = useState(6);
   if (!rows.length) return null;
   // Only the starred reviews count toward the score. A shipping notification
   // and an Instagram post carry no rating, and averaging their zeros in would
   // print a number that is simply false.
   const rated = rows.filter((r) => r.rating > 0);
   const mean = rated.length ? rated.reduce((n, r) => n + r.rating, 0) / rated.length : 0;
-  // Sideways or up: which way the wall moves is the shop's choice, because it
-  // depends on how many reviews there are and how tall the page already is.
-  const across = val(section.values, "direction").toLowerCase().startsWith("acr");
-  /* The pictures a thread is allowed to send: the ones other customers put on
-     their own reviews, and nothing from the product gallery. */
-  const threadPool = Array.from(
-    new Set(rows.map((r) => r.imageUrl).filter(Boolean) as string[]),
-  );
+  const visible = rows.slice(0, shown);
+
   return (
     <section className="cb-revs-s" id="reviews">
       <div className="cb-wrap">
         {has(section.values, "heading") ? <Head section={section} /> : null}
         <div className="cb-revs__head">
           {rated.length ? <span className="cb-revs__score">{mean.toFixed(1)}</span> : null}
-          {rated.length ? (
-            <span className="cb-revs__stars" aria-hidden="true">
-              {[0, 1, 2, 3, 4].map((n) => (
-                <span key={n} style={{ opacity: n < Math.round(mean) ? 1 : 0.28 }}>{IcoStar}</span>
-              ))}
-            </span>
-          ) : null}
+          {rated.length ? <Stars n={Math.round(mean)} /> : null}
           <span className="cb-revs__of">from verified buyers</span>
         </div>
-      </div>
 
-      {across ? (
-        /* One track, sliding sideways, with the whole set printed twice inside
-           it so the loop has no seam — the copy is hidden from anything that
-           reads the page aloud. Cards come in two shapes and several widths on
-           purpose: a row where every card is the same size and carries the
-           same furniture stops reading as a collection of real things. */
-        <div className="rv">
-          <div className="rv-track">
-            {[0, 1].map((pass) => (
-              <div className="rv-pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
-                {rows.map((r, i) => (
-                  r.channel === "imessage"
-                    ? <RvThread key={`${pass}-${r.id}`} r={r} gallery={threadPool} />
-                    : <RvPost key={`${pass}-${r.id}`} r={r} />
-                ))}
-              </div>
-            ))}
-          </div>
+        <div className="cb-rvg">
+          {visible.map((r) => <RvCard key={r.id} r={r} />)}
         </div>
-      ) : (
-        /* Columns, drifting vertically, alternate directions.
-           Moving sideways, a short notification beside a tall Instagram post
-           leaves ragged holes at every height change. Stacked in columns the
-           cards pack tight against each other and the difference in size stops
-           being a gap and starts being texture. Each column is printed twice so
-           its loop has no seam; the copy is hidden from screen readers. */
-        <div className="cb-wallgrid">
-          {[0, 1, 2].map((col) => (
-            <div className="cb-wallcol" data-col={col} key={col}>
-              {[0, 1].map((pass) => (
-                <div className="cb-wallcol__pass" key={pass} aria-hidden={pass === 1 ? true : undefined}>
-                  {rows.filter((_, i) => i % 3 === col).map((r) => (
-                    <SocialCard key={`${pass}-${r.id}`} r={r} logo={page.store.logoUrl} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+
+        {shown < rows.length ? (
+          <button type="button" className="cb-rvg__more" onClick={() => setShown((n) => n + 6)}>
+            Read more reviews
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }
 
+/** Five stars, as many of them lit as the rating says. */
+function Stars({ n }: { n: number }) {
+  return (
+    <span className="cb-rvstars" aria-label={`${n} out of 5`}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <span key={i} className={i < n ? "is-on" : undefined}>{IcoStar}</span>
+      ))}
+    </span>
+  );
+}
 
+/**
+ * One review. The photograph, when there is one, is given a fixed rectangle
+ * and cropped to fill it: the alternative is a row where one tall phone shot
+ * is three times the height of the card beside it.
+ */
+function RvCard({ r }: { r: LoadedProductPage["reviews"][number] }) {
+  const name = (r.name ?? "").trim() || "Verified buyer";
+  // A handle leads with @, and the letter underneath it is the one people
+  // actually read the account by.
+  const initial = (name.replace(/^@/, "").charAt(0) || "?").toUpperCase();
+  // A stable colour per person, so a name is the same colour on every page
+  // rather than changing on each render.
+  const seed = initial.charCodeAt(0) % 6;
+
+  /* Instagram rows carry their comment thread in `title`, one comment per
+     line as handle|what they said|likes. Printed raw it reads as a database
+     leaking onto the page, which is exactly how it looked. Parsed, it is the
+     most believable thing on the card: other people arguing under a
+     photograph is what a real post looks like. */
+  const comments =
+    r.title && r.title.includes("|")
+      ? r.title
+          .split("\n")
+          .map((line) => line.split("|"))
+          .filter((parts) => parts.length >= 2 && parts[0].trim() && parts[1].trim())
+          .map((parts) => ({
+            who: parts[0].trim(),
+            said: parts[1].trim(),
+            likes: Number(parts[2] ?? "") || 0,
+          }))
+      : [];
+  const heading = comments.length ? "" : (r.title ?? "").trim();
+
+  return (
+    <article className="cb-rv">
+      <header className="cb-rv__top">
+        <span className="cb-rv__av" data-seed={seed}>{initial}</span>
+        <span className="cb-rv__who">
+          <b>
+            {name}
+            {r.verified ? <span className="cb-rv__tick" aria-label="Verified">{IcoVerified}</span> : null}
+          </b>
+          <span className="cb-rv__when">{sinceText(r.reviewedOn)}</span>
+        </span>
+      </header>
+
+      {r.rating > 0 ? <Stars n={r.rating} /> : null}
+      {heading ? <p className="cb-rv__t">{heading}</p> : null}
+      {r.body ? <p className="cb-rv__b">{r.body}</p> : null}
+
+      {r.imageUrl ? (
+        /* A thumbnail, not a poster. Full width these were five hundred
+           pixels tall each and the section ran for pages; at this size the
+           photograph does its job -- proof that a real person owns one --
+           without burying the sentence that explains it. It loads the 200px
+           copy, so six of them cost less than one of the old ones. */
+        <div className="cb-rv__shot">
+          <Pic src={r.imageUrl} size="t200" alt="" loading="lazy" decoding="async" />
+        </div>
+      ) : null}
+
+      {comments.length ? (
+        <div className="cb-rv__cmts">
+          {comments.slice(0, 2).map((c) => (
+            <p className="cb-rv__cmt" key={c.who + c.said}>
+              <b>{c.who}</b> {c.said}
+              {c.likes ? <i>{countText(c.likes)}</i> : null}
+            </p>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+/** 3184 reads as 3.2k, which is how every app this imitates prints it. */
+function countText(n: number): string {
+  if (n >= 1000) {
+    const k = n / 1000;
+    return `${k >= 10 ? Math.round(k) : k.toFixed(1).replace(/\.0$/, "")}k`;
+  }
+  return String(n);
+}
 
 /* ---------------------------------------------------------------- closing */
 
