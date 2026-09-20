@@ -748,6 +748,60 @@ export default function ProductDetail({ loaderData, actionData }: Route.Componen
 
 /* --------------------------------------------------------- the pictures */
 
+/*
+ * Every product picture is square before it is ever uploaded.
+ *
+ * The storefront carousel is built on a 1:1 frame — eight thumbnails down the
+ * side of one big square. Drop a portrait photograph into it and the whole
+ * thing deforms: the big frame stretches, the thumbnails turn into slivers,
+ * and the page looks broken to every visitor. That is not something to
+ * remember not to do; the shop has to make it impossible.
+ *
+ * So the picture is drawn onto a square canvas before it leaves the browser,
+ * on WHITE, centred, scaled to fit without cropping. White because a supplier
+ * photograph already cut out on white then extends its own background
+ * seamlessly, which is the common case and the one that has to look perfect.
+ * Nothing is ever cut off — a tall picture gets white either side rather than
+ * losing its head.
+ *
+ * A picture that is already square passes through untouched, so nothing we
+ * generated is re-encoded and degraded on the way in.
+ */
+async function toSquare(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  // Anything the browser cannot decode goes up untouched rather than being
+  // dropped: a failed normalisation must never lose somebody's picture.
+  if (!bitmap) return file;
+  if (bitmap.width === bitmap.height) {
+    bitmap.close();
+    return file;
+  }
+
+  const side = Math.max(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = side;
+  canvas.height = side;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close();
+    return file;
+  }
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, side, side);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, (side - bitmap.width) / 2, (side - bitmap.height) / 2);
+  bitmap.close();
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/webp", 0.92),
+  );
+  if (!blob) return file;
+  const name = file.name.replace(/\.[^.]+$/, "") + ".webp";
+  return new File([blob], name, { type: "image/webp" });
+}
+
 /**
  * The product's pictures, the way Shopify's product page has them: a grid in
  * the order the storefront shows them, the first one being the thumbnail.
@@ -812,6 +866,29 @@ function ProductPictures({
     next.splice(to, 0, item);
     commit(next);
   };
+
+  /*
+   * Dragging a picture to where it should go.
+   *
+   * The arrows stay — they are the keyboard and the fine adjustment — but
+   * moving the fifth picture to the front took four clicks and four saves,
+   * and the order of the pictures IS the carousel. Picking one up and
+   * dropping it where you want it is the whole interaction.
+   *
+   * `dragFrom` is the picture being carried, `dragOver` the slot it would
+   * land in; the second one only draws the line, so nothing is written until
+   * the drop actually happens.
+   */
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const endDrag = () => {
+    setDragFrom(null);
+    setDragOver(null);
+  };
+  const drop = (to: number) => {
+    if (dragFrom !== null && dragFrom !== to) move(dragFrom, to);
+    endDrag();
+  };
   const remove = (index: number) => commit(images.filter((_, i) => i !== index));
   const add = (url: string) => {
     if (images.some((x) => x.url === url)) return;
@@ -855,13 +932,47 @@ function ProductPictures({
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ fontWeight: 650 }}>Pictures</div>
         <div style={{ fontSize: 12, color: "var(--ink-2)" }}>
-          {busy ? "Saving…" : save.data?.error || upload.data?.error || `${images.length} on the product · first one is the thumbnail`}
+          {busy
+            ? "Saving…"
+            : save.data?.error ||
+              upload.data?.error ||
+              `${images.length} on the product · drag to reorder · first one is the thumbnail`}
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(110px,1fr))", gap: 10 }}>
         {images.map((x, i) => (
-          <span key={x.url} style={tile}>
+          <span
+            key={x.url}
+            style={{
+              ...tile,
+              cursor: busy ? "default" : "grab",
+              opacity: dragFrom === i ? 0.35 : 1,
+              // The slot it would land in, marked on the edge it came from so
+              // the line reads as "it goes here", not "this one is selected".
+              boxShadow:
+                dragOver === i && dragFrom !== null && dragFrom !== i
+                  ? `inset ${dragFrom > i ? "3px" : "-3px"} 0 0 0 var(--accent, #0071e3)`
+                  : undefined,
+            }}
+            draggable={!busy}
+            onDragStart={(event) => {
+              setDragFrom(i);
+              event.dataTransfer.effectAllowed = "move";
+              // Firefox refuses to start a drag without data on it.
+              event.dataTransfer.setData("text/plain", String(i));
+            }}
+            onDragEnter={() => setDragOver(i)}
+            onDragOver={(event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              drop(i);
+            }}
+            onDragEnd={endDrag}
+          >
             <span style={pic(x.url)} />
             {i === 0 ? (
               <span style={{ position: "absolute", left: 6, top: 6, fontSize: 10, fontWeight: 650, padding: "2px 7px", borderRadius: 999, background: "rgba(0,0,0,.6)", color: "#fff" }}>
@@ -900,14 +1011,15 @@ function ProductPictures({
           type="file"
           accept="image/*"
           hidden
-          onChange={(event) => {
+          onChange={async (event) => {
             const file = event.target.files?.[0];
             event.target.value = "";
             if (!file) return;
+            const squared = await toSquare(file);
             const body = new FormData();
             body.set("intent", "upload");
             body.set("storeSlug", storeSlug);
-            body.set("file", file);
+            body.set("file", squared);
             upload.submit(body, { method: "post", action, encType: "multipart/form-data" });
           }}
         />

@@ -24,15 +24,23 @@ import reaperHref from "~/storefronts/reaper/theme.css?url";
 const GARDEN_BUDDY = "garden-buddy";
 const REAPER = "reaper";
 
-export function links() {
-  return [
-    {
-      rel: "stylesheet",
-      href: "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap",
-    },
-    { rel: "stylesheet", href: kneelerHref },
-  ];
-}
+/*
+ * No links() export here on purpose.
+ *
+ * It used to return the fallback layout's font and stylesheet for every
+ * store, while each branch below also rendered its own theme with a
+ * precedence. Those are two different mechanisms writing to the same <head>:
+ * React hoists the precedence ones to the top on the server and re-orders
+ * them on the client, so the head the browser was handed never matched the
+ * head React wanted, and every policy page of every store threw a hydration
+ * error and rebuilt itself on load.
+ *
+ * Each branch now declares exactly the stylesheets it uses, through one
+ * mechanism, in the order it wants them. A shop also stops paying to
+ * download another shop's theme.
+ */
+const KNEELER_FONT =
+  "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data) return [{ title: "Page" }];
@@ -83,6 +91,30 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
   };
 }
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/**
+ * "September 19, 2026", spelled out by hand.
+ *
+ * toLocaleDateString was doing this, and on the Workers runtime it returned
+ * an empty string: the server sent "Last updated " with no date, the browser
+ * filled one in, and React threw a hydration error on every policy page of
+ * every store. Worse than the error, the date was missing from the HTML a
+ * crawler reads — and "when was this last changed" is the one fact a policy
+ * page exists to carry.
+ *
+ * Read in UTC on both sides, so the string cannot drift with the reader's
+ * clock either.
+ */
+function longDate(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
+}
+
 /**
  * The body is written in the admin, by the person who owns the store, and it
  * is kept as the markup it was written in. It is our own content out of our
@@ -111,18 +143,14 @@ function Body({ body }: { body: string }) {
 
 export default function StandalonePage({ loaderData }: Route.ComponentProps) {
   const { store, nav, page, storeParam } = loaderData;
-  const updated = new Date(page.updatedAt).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const updated = longDate(page.updatedAt);
 
   if (store.slug === GARDEN_BUDDY) {
     const chrome = { store, nav } as Parameters<typeof Header>[0]["page"];
     return (
       <>
         {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
-        <link rel="stylesheet" href={buddyHref} precedence="high" />
+        <link rel="stylesheet" href={buddyHref} precedence="theme" />
         <Header page={chrome} storeParam={storeParam} />
         <div className="gb gb-page-sec">
           <article className="gb-wrap gb-page">
@@ -158,8 +186,8 @@ export default function StandalonePage({ loaderData }: Route.ComponentProps) {
     return (
       <>
         {store.faviconUrl ? <link rel="icon" href={store.faviconUrl} /> : null}
-        <link rel="stylesheet" href={ceilingBuddyHref} precedence="high" />
-        <link rel="stylesheet" href={reaperHref} precedence="high" />
+        <link rel="stylesheet" href={ceilingBuddyHref} precedence="theme" />
+        <link rel="stylesheet" href={reaperHref} precedence="theme-over" />
         <div className="cb">
           <header className="cb-header">
             <div className="cb-wrap cb-header__in">
@@ -226,7 +254,10 @@ export default function StandalonePage({ loaderData }: Route.ComponentProps) {
   }
 
   return (
-    <div className="gk">
+    <>
+      <link rel="stylesheet" href={KNEELER_FONT} precedence="theme" />
+      <link rel="stylesheet" href={kneelerHref} precedence="theme-over" />
+      <div className="gk">
       <header className="gk-header">
         <Link className="gk-logo" to={`/${storeParam}`} style={{ textDecoration: "none" }}>
           {store.name}
@@ -239,7 +270,8 @@ export default function StandalonePage({ loaderData }: Route.ComponentProps) {
           Last updated {updated}
           {store.contactEmail ? ` · Questions: ${store.contactEmail}` : ""}
         </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

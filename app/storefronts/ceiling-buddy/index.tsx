@@ -856,13 +856,43 @@ function Features({ section }: { section: LoadedSection }) {
 /* ------------------------------------------------------------- proof wall */
 
 function ProofWall({ section }: { section: LoadedSection }) {
-  const shot = section.blocks.find((b) => has(b.values, "image"));
-  if (!shot) return null;
-  // One photograph, edge to edge, nothing written on it. Six of them read as a
-  // contact sheet; one reads as the night.
+  /*
+   * Three photographs of the thing on somebody's lawn, and nothing written on
+   * them.
+   *
+   * It used to draw the first block only, which is why every shop ended up
+   * putting a made-up panel here — one image with the size, the box and the
+   * features printed across it. That panel is an advert, and it lands
+   * directly under the wall of customer clips, where the page has just
+   * stopped talking. Going straight back to selling there wastes the one
+   * stretch of the page a stranger already believes.
+   *
+   * So: up to three plain photographs, big. A row on a desktop, and on a
+   * phone one per screen, edge to edge, swiped — because a photograph of a
+   * sixteen-foot inflatable shown two inches wide proves nothing.
+   */
+  const shots = section.blocks.filter((b) => has(b.values, "image")).slice(0, 3);
+  if (!shots.length) return null;
+  const heading = val(section.values, "heading");
+  const sub = val(section.values, "subheading");
   return (
     <section className="cb-night" id="proof">
-      <img src={val(shot.values, "image")} alt={val(shot.values, "caption")} loading="lazy" />
+      {heading ? (
+        <div className="cb-wrap cb-night__head">
+          <h2 className="cb-h2">{heading}</h2>
+          {sub ? <p>{sub}</p> : null}
+        </div>
+      ) : null}
+      <div className={`cb-night__row cb-night__row--${shots.length}`}>
+        {shots.map((shot, i) => (
+          <img
+            key={`${val(shot.values, "image")}-${i}`}
+            src={val(shot.values, "image")}
+            alt={val(shot.values, "caption")}
+            loading="lazy"
+          />
+        ))}
+      </div>
     </section>
   );
 }
