@@ -120,7 +120,8 @@ export async function scratchPlayFor(
  * into its dollar value on today's subtotal first. Dollars only: the number
  * has to be pictureable, and a percent is not.
  */
-export const CLAIM_EXTRA_CENTS = 500;
+import { CLAIM_EXTRA_CENTS } from "./claim";
+export { CLAIM_EXTRA_CENTS };
 
 export interface ClaimPlay {
   /** the code now applied to the cart */

@@ -44,7 +44,8 @@ import {
   saveCart,
 } from "~/lib/cart.server";
 import { checkDiscount, findDiscount, normaliseCode } from "~/lib/discounts.server";
-import { scratchPlayFor, SCRATCH_PRIZES, claimExtraFor, CLAIM_EXTRA_CENTS } from "~/lib/scratch.server";
+import { scratchPlayFor, SCRATCH_PRIZES, claimExtraFor } from "~/lib/scratch.server";
+import { CLAIM_EXTRA_CENTS } from "~/lib/claim";
 import leafletHref from "leaflet/dist/leaflet.css?url";
 import { providerForStore, PaymentsNotConfigured, PAYABLE_INTENT_STATUSES } from "~/lib/payments.server";
 import { placeOrder, orderByPaymentRef } from "~/lib/admin.server";
