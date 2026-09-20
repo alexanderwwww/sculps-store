@@ -2312,17 +2312,33 @@ function StickyBuy({ page, storeParam = "" }: { page: LoadedProductPage; storePa
   }, []);
 
   if (!buy) return null;
+  /* A listing graphic is the wrong thumbnail at forty-four pixels: its banner
+     type turns to mush. Take the first plain photograph, and fall back to
+     whatever exists rather than leaving a hole. */
+  const imgs = page.product.images ?? [];
+  const pic =
+    buy.imageUrl ||
+    imgs.find((i) => i.url && i.kind !== "graphic")?.url ||
+    imgs.find((i) => i.url)?.url ||
+    null;
   return (
     <div className={`cb-sticky${on ? " is-on" : ""}`}>
       <div className="cb-wrap cb-sticky__in">
-        <div>
+        {pic ? (
+          <span className="cb-sticky__pic">
+            <Pic src={pic} size="t200" alt="" loading="lazy" />
+          </span>
+        ) : null}
+        <div className="cb-sticky__txt">
           <div className="cb-sticky__t">{page.product.title}</div>
           <div className="cb-sticky__p">
-            {formatMoney(buy.priceCents, page.store.currency)}
-            {buy.compareAtCents ? <s style={{ marginLeft: 8, opacity: 0.6 }}>{formatMoney(buy.compareAtCents, page.store.currency)}</s> : null}
+            <b>{formatMoney(buy.priceCents, page.store.currency)}</b>
+            {buy.compareAtCents ? <s>{formatMoney(buy.compareAtCents, page.store.currency)}</s> : null}
+            <span className="cb-sticky__v">{buy.label}</span>
           </div>
         </div>
         <form
+          className="cb-sticky__form"
           method="post"
           action={`/cart/add${storeParam}`}
           onSubmit={(e) => { if (drawer) { e.preventDefault(); drawer.add(buy.id); } }}
