@@ -301,7 +301,36 @@ async function obey() {
     // words from the next shot on.
     else if (cmd === "requeue") { reload = true; did = true; }
     else if (cmd === "update") { did = await selfUpdate(true); }
-    else did = await wand.order(cmd);
+    else {
+      did = await wand.order(cmd);
+      /*
+       * An order from Claude is obeyed whether or not the page can hear it.
+       *
+       * Pause, Continue and Stop live in the overlay, and the runner reads
+       * the overlay to know which state it is in. When a navigation throws
+       * the overlay out, order() reaches nothing -- and the held state keeps
+       * whatever it last saw. A run paused at that moment stayed paused for
+       * good: every Continue was delivered to a page that no longer had an
+       * overlay on it, the runner went on believing it was paused, and the
+       * app sat there unreachable with its own buttons gone too.
+       *
+       * So the three that decide whether work happens are applied to the
+       * runner's own state as well, after one attempt to put the overlay
+       * back. The page is where they are SHOWN; it is not where they are
+       * decided.
+       */
+      if (!did && (cmd === "continue" || cmd === "pause" || cmd === "stop")) {
+        await wand.reattach().catch(() => {});
+        did = await wand.order(cmd);
+        if (!did) {
+          if (cmd === "continue") { held.paused = false; held.stopped = false; }
+          if (cmd === "pause") held.paused = true;
+          if (cmd === "stop") { held.stopped = true; held.paused = false; }
+          did = true;
+          log(`  \x1b[33m!! the panel could not be reached — ${cmd} applied anyway\x1b[0m`);
+        }
+      }
+    }
   } catch (e) {
     // Chrome going away in the middle of a goto is the usual one. The order
     // is spent either way; the job it interrupted is not.
