@@ -245,6 +245,10 @@ function Section({
     case "buy_box":       return <BuyBox section={section} page={page} storeParam={storeParam} publishableKey={publishableKey} paypalClientId={paypalClientId} offer={offer} />;
     case "video_faq":     return <ProofAndAnswers section={section} page={page} />;
     case "social_proof_images": return <ProofWall section={section} />;
+    case "tier_ladder":   return <TierLadder section={section} />;
+    case "install_weekend": return <InstallWeekend section={section} />;
+    case "weather_plan":  return <WeatherPlan section={section} />;
+    case "start_smaller": return <StartSmaller section={section} />;
     case "product_grid":  return <LockScreen section={section} page={page} />;
     case "trust_icons":   return <TrustBand section={section} brand={brand} />;
     case "three_steps":   return <Steps section={section} />;
@@ -2384,6 +2388,159 @@ function PhotoBanner({
           ) : null}
           {has(v, "note") ? <p className="cb-bn__note">{val(v, "note")}</p> : null}
         </div>
+      </div>
+    </section>
+  );
+}
+
+
+/* ------------------------------------------- the big-build sections
+ *
+ * Four sections that exist on one page only: the build. Every other product
+ * here is an impulse at ninety-nine dollars, and an impulse needs a photograph
+ * and a price. Three and a half thousand dollars needs something else -- it
+ * needs the buyer to be able to stand in the thing before they own it, to see
+ * exactly how the middle price differs from the top one, to know what their
+ * Saturday looks like, and to know what happens when it rains, because it
+ * rains in October and they have already thought of that.
+ *
+ * All four are plain text and flat colour. Nothing animates and nothing blurs.
+ */
+
+/** A newline list in one value, e.g. the six rows of the ladder. */
+function lines(v: Record<string, string>, key: string): string[] {
+  return val(v, key).split("\n").map((l) => l.trim()).filter(Boolean);
+}
+
+/**
+ * The three builds, side by side, on the same counted rows.
+ *
+ * A bullet list per tier is unreadable across three columns: the eye cannot
+ * tell which line of one matches which line of another. The row labels live
+ * on the section and every tier answers them in the same order, so the
+ * comparison is a straight line across. On a phone the columns stack and each
+ * figure carries its own label, because there is no longer a header to look up.
+ */
+function TierLadder({ section }: { section: LoadedSection }) {
+  const labels = lines(section.values, "rows");
+  const tiers = section.blocks.filter((b) => has(b.values, "name"));
+  if (!tiers.length || !labels.length) return null;
+  return (
+    <section className="cb-ladder" id="builds">
+      <div className="cb-wrap">
+        {has(section.values, "heading") ? <Head section={section} /> : null}
+        <div className="cb-ladder__grid">
+          {tiers.map((t) => {
+            const vals = lines(t.values, "values");
+            return (
+              <article className="cb-ladder__col" key={t.id} data-top={val(t.values, "top") ? "1" : undefined}>
+                <h3 className="cb-ladder__name">{val(t.values, "name")}</h3>
+                <p className="cb-ladder__price">
+                  <b>{val(t.values, "price")}</b>
+                  {has(t.values, "was") ? <s>{val(t.values, "was")}</s> : null}
+                </p>
+                <dl className="cb-ladder__rows">
+                  {labels.map((label, i) => (
+                    <div className="cb-ladder__row" key={label}>
+                      <dt>{label}</dt>
+                      <dd>{vals[i] ?? "—"}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {has(t.values, "street") ? <p className="cb-ladder__street">{val(t.values, "street")}</p> : null}
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The weekend, in four parts.
+ *
+ * "Easy to install" is a claim. A Friday, a Saturday morning, a Saturday
+ * afternoon and a Sunday, each with the hours on it and what is actually in
+ * your hands, is a plan -- and a person deciding whether to spend this much is
+ * deciding whether they have the weekend, not whether it is easy.
+ */
+function InstallWeekend({ section }: { section: LoadedSection }) {
+  const steps = section.blocks.filter((b) => has(b.values, "title"));
+  if (!steps.length) return null;
+  return (
+    <section className="cb-week" id="install">
+      <div className="cb-wrap">
+        {has(section.values, "heading") ? <Head section={section} /> : null}
+        <ol className="cb-week__row">
+          {steps.map((b, i) => (
+            <li className="cb-week__step" key={b.id}>
+              <span className="cb-week__when">{val(b.values, "when") || `Step ${i + 1}`}</span>
+              <h3 className="cb-week__t">{val(b.values, "title")}</h3>
+              <p className="cb-week__b">{val(b.values, "text")}</p>
+            </li>
+          ))}
+        </ol>
+        {has(section.values, "note") ? <p className="cb-week__note">{val(section.values, "note")}</p> : null}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * What happens when the weather does what October does.
+ *
+ * Every objection to spending this on something that lives outdoors is a
+ * weather objection, and the honest answer to one of them is "take them down,
+ * it takes a minute". Saying that plainly is worth more than any promise that
+ * nothing ever goes wrong.
+ */
+function WeatherPlan({ section }: { section: LoadedSection }) {
+  const rows = section.blocks.filter((b) => has(b.values, "title"));
+  if (!rows.length) return null;
+  return (
+    <section className="cb-weather" id="weather">
+      <div className="cb-wrap">
+        {has(section.values, "heading") ? <Head section={section} /> : null}
+        <dl className="cb-weather__list">
+          {rows.map((b) => (
+            <div className="cb-weather__row" key={b.id}>
+              <dt>{val(b.values, "title")}</dt>
+              <dd>{val(b.values, "text")}</dd>
+            </div>
+          ))}
+        </dl>
+        {has(section.values, "promise") ? (
+          <p className="cb-weather__promise">{val(section.values, "promise")}</p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Permission to buy the smaller one.
+ *
+ * A page that only argues for the biggest build loses the person who cannot
+ * afford it this year, and that person buys the middle one and comes back --
+ * but only if somebody told them the pieces still match next October.
+ */
+function StartSmaller({ section }: { section: LoadedSection }) {
+  const ways = section.blocks.filter((b) => has(b.values, "title"));
+  if (!ways.length) return null;
+  return (
+    <section className="cb-two" id="either-way">
+      <div className="cb-wrap">
+        {has(section.values, "heading") ? <Head section={section} /> : null}
+        <div className="cb-two__grid">
+          {ways.map((b) => (
+            <article className="cb-two__card" key={b.id}>
+              <h3 className="cb-two__t">{val(b.values, "title")}</h3>
+              <p className="cb-two__b">{val(b.values, "text")}</p>
+            </article>
+          ))}
+        </div>
+        {has(section.values, "note") ? <p className="cb-two__note">{val(section.values, "note")}</p> : null}
       </div>
     </section>
   );
