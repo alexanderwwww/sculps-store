@@ -25,7 +25,21 @@ import { CartDrawerProvider, useCartDrawer } from "./cart-drawer";
 import { Screen } from "./screen";
 
 type Vals = Record<string, string>;
-const val = (v: Vals, k: string) => (v[k] ?? "").trim();
+/*
+ * Always a string, whatever is in the row.
+ *
+ * This trimmed the raw value, so one section value stored as an object
+ * instead of a string threw inside the render and turned every page that
+ * drew that section into "Something went wrong" -- the whole store, home
+ * page included, for hours. A storefront must not be that easy to take down
+ * from a data row: an object with a `value` is unwrapped, anything else is
+ * stringified, and a genuinely empty or missing value stays "".
+ */
+const val = (v: Vals, k: string): string => {
+  const raw: unknown = v[k];
+  const inner = raw && typeof raw === "object" && "value" in (raw as object) ? (raw as { value?: unknown }).value : raw;
+  return inner == null ? "" : String(inner).trim();
+};
 const has = (v: Vals, ...keys: string[]) => keys.some((k) => val(v, k) !== "");
 
 const M = "/media";
