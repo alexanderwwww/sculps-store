@@ -169,7 +169,7 @@ function report(state, extra = {}) {
  * Fire and forget, with a deadline: the run is not held up by an upload, and
  * a failed one costs nothing because the picture is on the disk either way.
  */
-function sendShot(dir, name, bytes) {
+function sendShot(dir, name, bytes, kind = "png") {
   // Same reason as report(): a test's fake pictures do not belong in the
   // shop's shot store, where Claude reads them back as real work.
   if (!WAND) return;
@@ -178,7 +178,9 @@ function sendShot(dir, name, bytes) {
   const timer = setTimeout(() => stop.abort(), 30000);
   fetch(`${WAND}/shot?job=${encodeURIComponent(job)}&name=${encodeURIComponent(name)}`, {
     method: "POST",
-    headers: { "content-type": "image/png" },
+    // The real type, not always PNG: a JPEG served as image/png is a file
+    // the shop then has to guess about.
+    headers: { "content-type": `image/${kind === "jpg" ? "jpeg" : kind}` },
     body: bytes,
     signal: stop.signal,
   }).catch(() => {}).finally(() => clearTimeout(timer));
@@ -1624,8 +1626,26 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
   }
   if (!focused) log(`  \x1b[33m!! couldn't focus the message box — typing anyway\x1b[0m`);
   await box.fill("").catch(() => {});
-  await page.keyboard.insertText(text);
+  /*
+   * Typing cannot be allowed to end the prompt either.
+   *
+   * insertText throws if the page navigates or the composer is replaced while
+   * it runs, and an unguarded throw here loses the prompt exactly the way the
+   * unguarded focus click did. The read-back below already tells us whether
+   * the words arrived, so a failure here just falls through to that.
+   */
+  let typedIn = true;
+  try {
+    await page.keyboard.insertText(text);
+  } catch (e) {
+    typedIn = false;
+    log(`  \x1b[33m!! typing was interrupted (${String(e?.message ?? e).slice(0, 60)}) — checking what landed\x1b[0m`);
+  }
   await wait(400);
+  if (!typedIn && (await typed()).trim().length < 8) {
+    log(`  \x1b[31m!! the prompt did not reach the box — skipping this one\x1b[0m`);
+    return 0;
+  }
 
   /*
    * Sending, and then checking that it went.
@@ -1972,6 +1992,25 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       continue;
     }
 
+    /*
+     * Is this actually a picture, and which kind?
+     *
+     * Everything here was written out as .png whatever the bytes were, so a
+     * JPEG went to the shop claiming to be a PNG and anything that was not an
+     * image at all was saved as one. The first bytes of a file say what it
+     * is; nothing else needs to be decoded to find out.
+     */
+    const kind =
+      buf.length > 12 && buf[0] === 0x89 && buf[1] === 0x50 ? "png"
+      : buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 ? "jpg"
+      : buf.length > 12 && buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP" ? "webp"
+      : buf.toString("ascii", 0, 3) === "GIF" ? "gif"
+      : null;
+    if (!kind) {
+      log(`  \x1b[31m!! what came back is not an image (${buf.length} bytes) — not saving it\x1b[0m`);
+      continue;
+    }
+
     saved++;
     log(`  \x1b[2m${how}\x1b[0m ${url.slice(0, 70)}`);
     /**
@@ -1989,10 +2028,10 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // the shop can use it; one that is also here can be put on a product the
     // moment it exists.
     // Every file that reaches this line is a real one, so every one goes up.
-    sendShot(dir, `${stem}.png`, buf);
+    sendShot(dir, `${stem}.${kind}`, buf, kind);
     // Numbered by prompt then by picture, so the folder reads in the order the
     // shots were asked for rather than the order they happened to finish.
-    await writeFile(join(dir, `${stem}.png`), buf);
+    await writeFile(join(dir, `${stem}.${kind}`), buf);
   }
   return saved;
 }
