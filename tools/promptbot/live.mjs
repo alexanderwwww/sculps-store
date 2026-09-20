@@ -531,6 +531,21 @@ const SITES = {
     results: ['[data-message-author-role="assistant"] img', "img"],
     /** Our own turn — never a result. */
     mine: ['[data-message-author-role="user"]'],
+    /**
+     * Things that sit over the page and swallow every click.
+     *
+     * The upload limit banner and the "drop a file here" curtain both do it,
+     * and while either is up the app is not being refused by the site — it
+     * simply cannot reach anything. Naming them means they can be cleared
+     * rather than waited out.
+     */
+    blocked: ['text=Unable to upload', 'text=uploads at a time', 'text=Drop any file here', '[role="alert"]'],
+    dismiss: [
+      '[role="alert"] button',
+      'button[aria-label*="Dismiss" i]',
+      'button[aria-label*="Close" i]',
+      'button:has(svg[aria-label*="close" i])',
+    ],
     /** Still drawing. */
     busy: ['button[data-testid="stop-button"]', 'button[aria-label*="Stop" i]'],
     // The plus opens a menu; the first item is the one that takes a file.
@@ -1104,6 +1119,64 @@ console.log(`Tell Claude what you want. It shows up here and you press Return to
 console.log(`Esc in the browser stops whatever is running.\n`);
 await say("Waiting", `Connected to ${site.name}. Tell Claude what you want.`);
 
+/**
+ * Clear anything sitting over the page, and say what it was.
+ *
+ * Two states used to stall a run with no explanation. The site's upload limit
+ * banner, which appears after too many files and covers the top of the page;
+ * and its "drop a file here" curtain, which opens on a drag and stays open
+ * until something tells it the drag ended. Neither is a refusal and neither
+ * clears itself, so the app sat there timing out on clicks and reporting that
+ * the site might be "out of generations".
+ *
+ * Runs before every prompt. Cheap when there is nothing to clear, and when
+ * there is, it says so on the panel and in the status rather than leaving it
+ * to be found in a screenshot.
+ */
+async function clearBlockers(label = "") {
+  if (!site.blocked?.length) return false;
+  let found = null;
+  for (const sel of site.blocked) {
+    const hit = await page.locator(sel).first().isVisible().catch(() => false);
+    if (hit) { found = sel; break; }
+  }
+  if (!found) return false;
+
+  log(`  \x1b[33m!! something is covering the page (${found}) — clearing it\x1b[0m`);
+  report("running", { job: label, problem: `clearing a blocker on ${site.name}: ${found}` });
+
+  // The curtain listens for the end of a drag, so tell it the drag ended.
+  await page.evaluate(() => {
+    const dt = new DataTransfer();
+    for (const el of [document.documentElement, document.body]) {
+      for (const type of ["dragleave", "dragend"]) {
+        el.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+      }
+    }
+  }).catch(() => {});
+
+  // A banner has a dismiss control; press it if one is on screen.
+  for (const sel of site.dismiss ?? []) {
+    const btn = page.locator(sel).first();
+    if (await btn.isVisible().catch(() => false)) {
+      await btn.click({ timeout: 2500 }).catch(() => {});
+      break;
+    }
+  }
+
+  // And Escape, deafened so the app does not hear its own keypress as a stop.
+  await wand?.deafen(1500);
+  await page.keyboard.press("Escape").catch(() => {});
+  await wait(800);
+
+  let still = false;
+  for (const sel of site.blocked) {
+    if (await page.locator(sel).first().isVisible().catch(() => false)) { still = true; break; }
+  }
+  if (still) log(`  \x1b[33m!! it is still there — the next prompt starts a clean chat\x1b[0m`);
+  return still;
+}
+
 async function fetchRefs(urls, dir) {
   if (!urls?.length) return [];
   // Its own fallback. A caller that forgets the folder used to take the whole
@@ -1454,9 +1527,14 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
      * already sitting there before this prompt's own pictures go in, the
      * cleanest answer is a fresh conversation, which costs one page load.
      */
+    // Anything covering the page is cleared first: a click cannot land through
+    // the upload banner or the drop curtain, and neither goes away by itself.
+    const stuck = await clearBlockers(label);
     const stale = await blobCount(page).catch(() => 0);
-    if (stale > 0) {
-      log(`  \x1b[33m!! ${stale} picture${stale === 1 ? "" : "s"} left over in the box — starting a clean chat\x1b[0m`);
+    if (stuck || stale > 0) {
+      log(stuck
+        ? `  \x1b[33m!! the page is still blocked — starting a clean chat\x1b[0m`
+        : `  \x1b[33m!! ${stale} picture${stale === 1 ? "" : "s"} left over in the box — starting a clean chat\x1b[0m`);
       if (await freshChat("couldn't clear the composer")) {
         watchImages(page);
         wand = await attachWand(page);
