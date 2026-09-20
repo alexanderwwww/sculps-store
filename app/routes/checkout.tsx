@@ -2038,7 +2038,7 @@ function Summary({
             <span>
               {cart.discount.code} · {cart.discount.label}
             </span>
-            <b>−{money(cart.discount.amountCents)}</b>
+            <b>−{money(cart.discount.amountCents).replace(/[.,]00\b/, "")}</b>
           </div>
         ) : null}
 
@@ -2416,7 +2416,7 @@ function useScratchSound() {
 function MapCard({ values }: { values: Record<string, string> }) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<PinMap | null>(null);
-  const [point, setPoint] = useState<{ lat: number; lon: number; label: string } | null>(null);
+  const [point, setPoint] = useState<{ lat: number; lon: number; label: string; approx?: boolean } | null>(null);
   const [state, setState] = useState<"idle" | "looking" | "found" | "none">("idle");
   const timer = useRef<number | null>(null);
 
@@ -2433,9 +2433,10 @@ function MapCard({ values }: { values: Record<string, string> }) {
     timer.current = window.setTimeout(async () => {
       try {
         const res = await fetch(`/checkout/geocode?q=${encodeURIComponent(line)}`);
-        const p = (await res.json()) as { lat: number; lon: number; label: string } | null;
-        if (p) { setPoint(p); setState("found"); } else setState("none");
-      } catch { setState("none"); }
+        const p = (await res.json()) as { lat: number; lon: number; label: string; approx?: boolean } | null;
+        if (p) { setPoint(p); setState("found"); }
+        else { setState("none"); setPoint(null); mapRef.current?.destroy(); mapRef.current = null; }
+      } catch { setState("none"); setPoint(null); mapRef.current?.destroy(); mapRef.current = null; }
     }, 700);
     return () => { if (timer.current) window.clearTimeout(timer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2465,7 +2466,7 @@ function MapCard({ values }: { values: Record<string, string> }) {
         <span className="gb-map__addr">
           {state === "looking" ? "Finding it on the map…" : state === "none" ? "We couldn't place that address yet — check the street and city." : values.address1}
         </span>
-        {state === "found" ? <span className="gb-map__hint">Drag the pin to adjust</span> : null}
+        {state === "found" ? <span className="gb-map__hint">{point?.approx ? "Roughly placed — drag the pin to your door" : "Drag the pin to adjust"}</span> : null}
       </div>
     </div>
   );

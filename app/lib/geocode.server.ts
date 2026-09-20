@@ -17,6 +17,8 @@ export interface GeoPoint {
   lon: number;
   /** what the geocoder understood, for the label under the pin */
   label: string;
+  /** true when only a looser query hit: the pin is near, not on, the door */
+  approx?: boolean;
 }
 
 const UA = "Kerberos storefront (blackreaper.us; hello@blackreaper.us)";
@@ -49,11 +51,14 @@ export async function geocodeAddress(query: string): Promise<GeoPoint | null> {
   const country = parts.length > 1 ? parts[parts.length - 1] : null;
   const attempts = [q];
   if (country && parts.length > 2) attempts.push(parts.slice(0, -1).join(", "));
+  // A postcode on its own is never tried: the geocoder will guess one on any
+  // continent. With its country it is at least the right neighbourhood.
   if (postal && country) attempts.push(`${postal}, ${country}`);
-  if (postal) attempts.push(postal);
+  let i = 0;
   for (const a of [...new Set(attempts)]) {
     const p = await lookup(a);
-    if (p) return p;
+    if (p) return i === 0 ? p : { ...p, approx: true };
+    i++;
   }
   return null;
 }

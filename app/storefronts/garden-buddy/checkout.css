@@ -532,3 +532,4 @@
 
 .gb-map--blank .gb-map__canvas { display: none; }
 .gb-map--blank .gb-map__foot { border-top: 0; }
+.gb-map--blank .gb-map__addr { white-space: normal; font-weight: 500; color: var(--dim); }
