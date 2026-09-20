@@ -1939,8 +1939,27 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
       await obey();
     }
   }
+  /*
+   * Wait for the send control to come alive before pressing it.
+   *
+   * Both sites disable it while an upload is still running, and with two
+   * pictures attached that is a second or two after the thumbnails appear.
+   * The old code found the button, clicked a disabled one -- which does
+   * nothing at all -- pressed Return twice into a composer that would not
+   * accept it either, and gave up with "would not send it, skipping this
+   * one". A whole prompt lost to being half a second early.
+   */
   const send = await find(page, site.send, 5000);
-  if (send) { await wand.point(send); await send.click({ timeout: 4000 }).catch(() => {}); }
+  if (send) {
+    for (let t = 0; t < 30; t++) {
+      const ready = await send.isEnabled().catch(() => true);
+      if (ready) break;
+      if (t === 0) log(`  \x1b[2mwaiting for the upload to finish before sending\x1b[0m`);
+      await wait(700);
+    }
+    await wand.point(send);
+    await send.click({ timeout: 4000 }).catch(() => {});
+  }
   await wait(900);
 
   for (let tries = 0; tries < 2 && (await typed()).trim().length > 8; tries++) {
