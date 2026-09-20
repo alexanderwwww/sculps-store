@@ -1553,8 +1553,40 @@ function originals(url) {
   return [...new Set(out)];
 }
 
+/**
+ * How many pictures are attached to the message being written -- and only
+ * those.
+ *
+ * This counted every blob: image on the whole page. On ChatGPT that was
+ * harmless, because its finished pictures arrive as https URLs. Gemini's
+ * finished pictures are blob: URLs, so from the second prompt on the page
+ * always held at least one -- the picture it had just drawn -- and every
+ * check built on this count went wrong on Gemini and nowhere else. The
+ * "something left over in the composer" check saw the previous answer and
+ * opened a clean chat before every single prompt, which is the new chat per
+ * picture that four separate reports were about.
+ *
+ * So the count is taken inside the composer: the element the prompt is typed
+ * into, and the form or container it sits in. Nothing in the thread above it
+ * is counted, whatever URL scheme it uses.
+ */
 async function blobCount(page) {
-  return page.evaluate(() => document.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length).catch(() => 0);
+  return page.evaluate((askSelectors) => {
+    let box = null;
+    for (const sel of askSelectors) { box = document.querySelector(sel); if (box) break; }
+    if (!box) return 0;
+    // The composer is the nearest form, or failing that a few levels up: far
+    // enough to include the attachment strip, never far enough to reach the
+    // conversation.
+    let root = box.closest("form");
+    if (!root) {
+      root = box;
+      for (let k = 0; k < 6 && root.parentElement && root.parentElement !== document.body; k++) root = root.parentElement;
+    }
+    // A composer root that has swallowed the whole page is not a composer.
+    if (root === document.body || root === document.documentElement) root = box.parentElement ?? box;
+    return root.querySelectorAll('img[src^="blob:"], video[src^="blob:"]').length;
+  }, site.ask).catch(() => 0);
 }
 
 async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameChat = true) {
