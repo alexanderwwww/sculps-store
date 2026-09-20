@@ -733,15 +733,48 @@ export const OVERLAY = `(() => {
         box.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: dt }));
         return true;
       }
+      /*
+       * One drop, on the first thing that accepts it, and always let go
+       * afterwards.
+       *
+       * This fired dragenter, dragover and drop at the composer and nine of
+       * its ancestors in turn, and never sent dragleave or dragend at all.
+       * Two things came of that. The site's own "drop a file here" curtain
+       * opens on dragenter and closes on dragleave, so it was left hanging
+       * over the entire page — and every click after that landed on the
+       * curtain instead of the button underneath, which is a thirty second
+       * timeout and a prompt thrown away. And because the drop was repeated
+       * down the whole chain, a site listening on more than one of those
+       * elements took the same files several times over: ten thumbnails in
+       * the composer from one pair of pictures.
+       *
+       * So: try the targets one at a time, stop at the first whose drop is
+       * accepted, and release the drag on the way out however it went.
+       */
       const targets = [];
       for (let el = box; el && targets.length < 8; el = el.parentElement) targets.push(el);
       targets.push(document.body, document.documentElement);
-      for (const t of targets) {
-        for (const type of ["dragenter", "dragover", "drop"]) {
+      const release = (t) => {
+        for (const type of ["dragleave", "dragend"]) {
           t.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
         }
+      };
+      let handled = false;
+      for (const t of targets) {
+        t.dispatchEvent(new DragEvent("dragenter", { bubbles: true, cancelable: true, dataTransfer: dt }));
+        t.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: dt }));
+        const ev = new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: dt });
+        t.dispatchEvent(ev);
+        // A handler that takes the files calls preventDefault on the drop.
+        // That is the only signal available that somebody was listening.
+        if (ev.defaultPrevented) { handled = true; release(t); break; }
+        release(t);
       }
-      return true;
+      // Whatever happened above, nothing is being dragged any more. Say so on
+      // the document too, because the curtain usually listens there.
+      release(document.documentElement);
+      release(document.body);
+      return handled || true;
     },
     /** Ignore Escape for a moment, while the runner sends one on purpose. */
     deafen(ms) { state.deaf = Date.now() + (ms || 1500); },

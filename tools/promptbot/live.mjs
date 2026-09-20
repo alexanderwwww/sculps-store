@@ -1443,6 +1443,29 @@ async function runPrompt(text, refs, label, n, total, dir, fromCard = 0, sameCha
     // Counted as a difference, not a total: the composer can already hold
     // something, and comparing a raw count against the number of files being
     // sent would call that a success without either of them arriving.
+    /*
+     * Start from an empty composer.
+     *
+     * A failed attach leaves its thumbnails behind, and the next attempt adds
+     * to them rather than replacing them: one screenshot showed ten pictures
+     * queued in the composer from a job that only ever needed two. The model
+     * then gets the same brand mark eight times and a product photo buried
+     * among them, and the site is slower with every one. If anything is
+     * already sitting there before this prompt's own pictures go in, the
+     * cleanest answer is a fresh conversation, which costs one page load.
+     */
+    const stale = await blobCount(page).catch(() => 0);
+    if (stale > 0) {
+      log(`  \x1b[33m!! ${stale} picture${stale === 1 ? "" : "s"} left over in the box — starting a clean chat\x1b[0m`);
+      if (await freshChat("couldn't clear the composer")) {
+        watchImages(page);
+        wand = await attachWand(page);
+        pinnedChat = null;
+        attachedInChat = false;
+        navGen++;
+        await wait(1200);
+      }
+    }
     const startCount = await blobCount(page).catch(() => 0);
     const landedSoFar = async () => {
       const now = await blobCount(page).catch(() => startCount);
