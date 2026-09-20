@@ -37,6 +37,11 @@ powered and what arrives in the box. Every one of those questions is a reason to
 
 - `references/panels.md` — the **eight** panels every product gets, and exactly how each
   is drawn. Read before writing a single image prompt.
+- `references/prompt-spine.md` — the shared body of every prompt: the permitted-word
+  list, the banned words, the anti-carryover paragraph, and the rules that were each
+  bought with a rejected render (truth about the product, how scale and people work,
+  the two-colour palette, the American setting, and how an image meant to run as an ad
+  differs). Read it with `panels.md`, before writing or correcting a prompt.
 - `references/look.md` — the ground, the one accent colour, the type, the icons, and the
   complete list of things that must never appear in an image.
 - `references/carousel.md` — the product-page layout: one square frame, a strip of small
