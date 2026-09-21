@@ -181,7 +181,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
           imageUrl: offer.imageUrl,
           normal: formatMoney(offer.normalCents, loaded.order.currency),
           price: formatMoney(offer.offerCents, loaded.order.currency),
-          saving: formatMoney(offer.savingCents, loaded.order.currency),
+          /* Whole dollars. The shop says "Save $15", never "Save $15.00" --
+             the price is exact, the saving is a headline. */
+          saving: formatMoney(
+            Math.round(offer.savingCents / 100) * 100,
+            loaded.order.currency,
+          ).replace(/([.,])00\b/, ""),
         }
       : null,
     orderId: loaded.order.id,

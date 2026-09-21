@@ -174,14 +174,11 @@ export function CartDrawerProvider({
      because a cart is the one place somebody is already buying. The test
      product is excluded by hand: it exists to prove the checkout works and
      it was being offered to customers as an add-on at fifty cents. */
-  const haveProducts = new Set(lines.map((l) => l.productTitle));
-  const shelf = (page.addOnProducts ?? [])
-    .filter((x) => (x.entryVariantId || x.variantId) && !haveProducts.has(x.title) && !/^test\b/i.test(x.title))
-    .map((x) => {
-      const compare = x.addCompareAtCents ?? 0;
-      return { ...x, compareCents: compare, saveCents: compare > x.addCents ? compare - x.addCents : 0 };
-    })
-    .sort((a, b) => b.saveCents - a.saveCents || a.addCents - b.addCents);
+  /* No shelf in here any more.
+     The drawer's job is to get somebody to Checkout; the offer belongs at
+     the checkout, where it is a one-time add to an order already being
+     paid for, and where it does not sit between a person and the button
+     they came to press. */
 
   // Swapping a bundle replaces the cart rather than adding a second one —
   // nobody wants the tray twice.
@@ -248,34 +245,6 @@ export function CartDrawerProvider({
             )}
           </div>
 
-          {/* Everything else the shop sells, sideways, with what each one
-              actually saves against its own full price. No invented numbers:
-              a tile only carries a banner when that variant has a compare-at
-              price above what it costs. */}
-          {shelf.length ? (
-            <div className="cb-shelf">
-              <div className="cb-shelf__h">Goes with this</div>
-              <div className="cb-shelf__row">
-                {shelf.map((x) => (
-                  <button type="button" className="cb-shelf__item" key={x.id} onClick={() => add(x.entryVariantId || x.variantId)} disabled={busy}>
-                    <span className="cb-shelf__pic">
-                      {x.imageUrl ? <img src={x.imageUrl} alt="" loading="lazy" /> : null}
-                      {/* Across the top of the photograph, so the saving is
-                          read first and the row costs no extra height. */}
-                      {x.saveCents > 0 ? (
-                        <span className="cb-shelf__flag">{off(x.saveCents, currency)} off</span>
-                      ) : null}
-                    </span>
-                    <span className="cb-shelf__t">{x.title}</span>
-                    <span className="cb-shelf__p">
-                      {x.compareCents > x.addCents ? <s>{money(x.compareCents, currency)}</s> : null}
-                      {money(x.addCents, currency)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
 
           {/* What they are about to pay, then the three ways to pay it.
               This sits above everything on offer: the decision already made

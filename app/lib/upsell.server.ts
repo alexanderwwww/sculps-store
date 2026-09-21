@@ -60,6 +60,9 @@ function discountFor(cents: number): number {
  * up here, and an offer that cannot be taken in one tap should not be shown
  * at all.
  */
+/** The least we will charge a card for a post-purchase add. */
+const MIN_OFFER_CENTS = 100;
+
 export async function offerForOrder(db: DB, orderId: string): Promise<PostPurchaseOffer | null> {
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
   if (!order || order.paymentStatus !== "paid" || !order.paymentRef) return null;
@@ -90,19 +93,30 @@ export async function offerForOrder(db: DB, orderId: string): Promise<PostPurcha
       !boughtVariants.has(r.variantId) &&
       !boughtTitles.has(r.productTitle) &&
       r.available > 0 &&
-      r.priceCents > 0,
+      r.priceCents > 0 &&
+      // A test row is not a thing to sell somebody who has just paid.
+      !/^test\b/i.test(r.productTitle) &&
+      // Nothing cheap enough that the floor below would price it above its
+      // own shelf price. At $0.50 this offered the item for $1.00 and then
+      // printed "Save -$0.50".
+      r.priceCents > MIN_OFFER_CENTS,
   );
   if (!pick) return null;
 
   const saving = discountFor(pick.priceCents);
+  const offerCents = Math.max(MIN_OFFER_CENTS, pick.priceCents - saving);
+  const savingCents = pick.priceCents - offerCents;
+  // An offer that saves nothing is not an offer. Say nothing instead.
+  if (savingCents <= 0) return null;
+
   return {
     variantId: pick.variantId,
     productTitle: pick.productTitle,
     variantLabel: pick.label,
     imageUrl: pick.variantImage ?? (pick.images ?? []).find((i) => i.url)?.url ?? null,
     normalCents: pick.priceCents,
-    offerCents: Math.max(100, pick.priceCents - saving),
-    savingCents: Math.min(saving, pick.priceCents - 100),
+    offerCents,
+    savingCents,
   };
 }
 
