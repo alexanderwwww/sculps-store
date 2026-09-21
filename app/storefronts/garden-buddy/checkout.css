@@ -213,6 +213,18 @@
 .gb-co__line-name { margin: 0; font-weight: 600; font-size: 13.5px; color: var(--ink); }
 .gb-co__line-sub { margin: 0; color: var(--dim); font-size: 12.5px; }
 .gb-co__line-total { margin: 0; font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+.gb-co__line-total { display: grid; justify-items: end; gap: 4px; }
+.gb-co__line-edit { display: inline-flex; align-items: center; gap: 4px; }
+.gb-co__line-edit button {
+  appearance: none; -webkit-appearance: none; background: #fff;
+  border: 1px solid var(--line); border-radius: 999px; color: var(--ink);
+  font-family: var(--font-b); font-size: 15px; font-weight: 700; line-height: 1;
+  width: 28px; height: 28px; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  touch-action: manipulation;
+}
+.gb-co__line-edit button:disabled { opacity: .45; cursor: default; }
+.gb-co__line-x { width: auto !important; padding: 0 10px !important; font-size: 12px !important; font-weight: 600 !important; color: var(--dim) !important; }
 
 /* ---- discount ---------------------------------------------------------- */
 .gb-co__disc { margin: 16px 0 0; }

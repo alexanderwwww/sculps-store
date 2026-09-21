@@ -2090,6 +2090,21 @@ function Summary({
   locked: boolean;
 }) {
   const buddy = cn === BUDDY;
+  /* Changing the order from the checkout.
+     The server has taken a quantity on POST /cart from the beginning -- zero
+     removes the line -- and neither the drawer nor this page ever offered it.
+     Somebody who reached the checkout with something they did not want had to
+     go back and could not get rid of it there either.
+
+     Locked means the payment is already open for this exact amount, so the
+     order cannot change underneath it. */
+  const lineFetcher = useFetcher();
+  const lineBusy = lineFetcher.state !== "idle";
+  const setQty = (variantId: string, quantity: number) =>
+    lineFetcher.submit(
+      { variantId, quantity: String(Math.max(0, quantity)) },
+      { method: "post", action: "/cart" },
+    );
   return (
     <>
       <ul className={cn.lines} style={cn.linesStyle}>
@@ -2126,6 +2141,28 @@ function Summary({
             </span>
             <span className={buddy ? "gb-co__line-total" : undefined} style={buddy ? undefined : { fontWeight: 700 }}>
               {money(line.lineTotalCents)}
+              {!locked ? (
+                <span className="gb-co__line-edit">
+                  <button
+                    type="button"
+                    onClick={() => setQty(line.variantId, line.quantity - 1)}
+                    disabled={lineBusy}
+                    aria-label={line.quantity > 1 ? `One fewer ${line.label}` : `Remove ${line.label}`}
+                  >&minus;</button>
+                  <button
+                    type="button"
+                    onClick={() => setQty(line.variantId, line.quantity + 1)}
+                    disabled={lineBusy || line.quantity >= 20}
+                    aria-label={`One more ${line.label}`}
+                  >+</button>
+                  <button
+                    type="button"
+                    className="gb-co__line-x"
+                    onClick={() => setQty(line.variantId, 0)}
+                    disabled={lineBusy}
+                  >Remove</button>
+                </span>
+              ) : null}
             </span>
           </li>
         ))}

@@ -147,6 +147,27 @@ export function CartDrawerProvider({
      route is a document request, so React Router answers it with HTML and
      `response.json()` throws. The code applied and the drawer still said it
      had failed. */
+  /* Changing what is in the cart.
+     The server has taken a quantity on POST /cart since the beginning -- zero
+     removes the line -- and no surface ever offered it. Somebody with two
+     things in their cart and one they did not want had no way to say so, on
+     the drawer or at the checkout. */
+  const lineFetcher = useFetcher();
+  const setQty = useCallback(
+    (variantId: string, quantity: number) => {
+      lineFetcher.submit(
+        { variantId, quantity: String(Math.max(0, quantity)) },
+        { method: "post", action: href("/cart") },
+      );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [storeParam],
+  );
+  const lineBusy = lineFetcher.state !== "idle";
+  useEffect(() => {
+    if (lineFetcher.state === "idle" && lineFetcher.data !== undefined) reload();
+  }, [lineFetcher.state, lineFetcher.data, reload]);
+
   const codeFetcher = useFetcher<{ ok: boolean; discountError: string | null }>();
   const codeBusy = codeFetcher.state !== "idle";
 
@@ -266,7 +287,21 @@ export function CartDrawerProvider({
                     <div className="cb-line__t">{l.label}</div>
                     {l.sublabel ? <div className="cb-line__s">{l.sublabel}</div> : null}
                     <div className="cb-line__row">
-                      <span className="cb-line__s">Qty {l.quantity}</span>
+                      <span className="cb-qty">
+                        <button
+                          type="button"
+                          onClick={() => setQty(l.variantId, l.quantity - 1)}
+                          disabled={lineBusy}
+                          aria-label={l.quantity > 1 ? `One fewer ${l.label}` : `Remove ${l.label}`}
+                        >&minus;</button>
+                        <b aria-live="polite">{l.quantity}</b>
+                        <button
+                          type="button"
+                          onClick={() => setQty(l.variantId, l.quantity + 1)}
+                          disabled={lineBusy || l.quantity >= 20}
+                          aria-label={`One more ${l.label}`}
+                        >+</button>
+                      </span>
                       <span className="cb-line__p">
                         {l.compareAtCents && l.compareAtCents > l.unitPriceCents ? (
                           <s>{money(l.compareAtCents * l.quantity, currency)}</s>
@@ -274,6 +309,12 @@ export function CartDrawerProvider({
                         {money(l.lineTotalCents, currency)}
                       </span>
                     </div>
+                    <button
+                      type="button"
+                      className="cb-line__x"
+                      onClick={() => setQty(l.variantId, 0)}
+                      disabled={lineBusy}
+                    >Remove</button>
                   </div>
                 </div>
               ))

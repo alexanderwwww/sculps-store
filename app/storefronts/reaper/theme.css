@@ -3623,9 +3623,9 @@ html, body { margin: 0; }
 
 /* The thing they are buying, at a size that says so. Scoped to the drawer
    so it outranks the base theme's 74px square, which loads after this. */
-.cb-drawer .cb-line { display: grid; grid-template-columns: clamp(84px, 13vh, 112px) 1fr; gap: 14px; align-items: start; padding: 14px 18px; }
+.cb-drawer .cb-line { display: grid; grid-template-columns: clamp(78px, 12vh, 96px) minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 18px; }
 .cb-drawer .cb-line__pic {
-  width: clamp(84px, 13vh, 112px); height: clamp(84px, 13vh, 112px);
+  width: clamp(78px, 12vh, 96px); height: clamp(78px, 12vh, 96px);
   border-radius: 10px; overflow: hidden;
   background: rgba(11, 11, 12, .05); border: 0; flex: 0 0 auto;
 }
@@ -3633,8 +3633,39 @@ html, body { margin: 0; }
 .cb-line__meta { display: grid; gap: 4px; min-width: 0; }
 .cb-line__t { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.25; }
 .cb-line__row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 4px; }
-.cb-line__p { font-family: var(--display); font-weight: 800; font-size: 17px; white-space: nowrap; }
-.cb-line__p s { margin-right: 7px; font-weight: 500; font-size: 14px; color: rgba(11, 11, 12, .42); }
+.cb-line__p { font-family: var(--display); font-weight: 800; font-size: 16px; white-space: nowrap; }
+.cb-line__p s { margin-right: 5px; font-weight: 500; font-size: 13px; color: rgba(11, 11, 12, .42); }
+
+/* Quantity stepper and remove. The cart could never take anything out of
+   itself — only the discount had a way off — so a line put in by mistake
+   stayed in until the cart was abandoned. */
+.cb-drawer .cb-line__row { align-items: center; min-width: 0; gap: 8px; }
+.cb-drawer .cb-qty {
+  display: inline-flex; align-items: center; gap: 2px;
+  border: 1.5px solid rgba(11, 11, 12, .16); border-radius: 999px;
+  background: #fff; padding: 2px;
+}
+.cb-drawer .cb-qty button {
+  appearance: none; -webkit-appearance: none; border: 0; background: transparent;
+  color: #0B0B0C; font-size: 18px; line-height: 1; font-weight: 700;
+  width: 30px; height: 30px; border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  touch-action: manipulation;
+}
+.cb-drawer .cb-qty button:active { background: rgba(11, 11, 12, .08); }
+.cb-drawer .cb-qty button:disabled { opacity: .4; cursor: default; }
+.cb-drawer .cb-qty b {
+  font-family: var(--display); font-weight: 800; font-size: 16px;
+  min-width: 20px; text-align: center;
+}
+.cb-drawer .cb-line__x {
+  justify-self: start; appearance: none; -webkit-appearance: none;
+  border: 0; background: transparent; padding: 6px 0 0;
+  font: inherit; font-size: 13px; font-weight: 600;
+  color: rgba(11, 11, 12, .5); text-decoration: underline;
+  text-underline-offset: 3px; cursor: pointer; touch-action: manipulation;
+}
+.cb-drawer .cb-line__x:disabled { opacity: .4; cursor: default; }
 
 .cb-drawer__saved { margin: -4px 0 10px; font-size: 13.5px; font-weight: 600; color: #0F7B3D; }
 
@@ -3747,15 +3778,19 @@ html, body { margin: 0; }
 }
 .cb-code__in::placeholder { text-transform: none; letter-spacing: 0; color: rgba(11, 11, 12, .42); }
 .cb-code__in:focus { outline: none; border-color: var(--action, #F5821F); }
+/* Solid ink, not an outline — a white button beside a white field read as
+   disabled. Ink rather than orange so it never competes with Checkout. */
 .cb-code__go {
-  flex: 0 0 auto; min-height: 44px; padding: 12px 18px;
-  border: 1px solid rgba(11, 11, 12, .18); border-radius: 8px;
-  background: none; cursor: pointer;
-  font-family: var(--display); font-weight: 700; font-size: 14px;
-  letter-spacing: .04em; text-transform: uppercase; color: #0B0B0C;
+  flex: 0 0 auto; min-height: 46px; padding: 12px 22px;
+  border: 0; border-radius: 8px;
+  background: #0B0B0C; color: #fff; cursor: pointer;
+  font-family: var(--display); font-weight: 800; font-size: 14px;
+  letter-spacing: .06em; text-transform: uppercase;
+  touch-action: manipulation; transition: background .14s ease, transform .1s ease;
 }
-.cb-code__go:hover { border-color: var(--action, #F5821F); color: var(--action, #F5821F); }
-.cb-code__go:disabled { opacity: .5; cursor: default; }
+.cb-code__go:hover { background: #1c1c1f; }
+.cb-code__go:active { transform: translateY(1px); }
+.cb-code__go:disabled { background: rgba(11, 11, 12, .32); cursor: default; }
 
 .cb-code--on {
   padding: 10px 12px; border-radius: 8px;
