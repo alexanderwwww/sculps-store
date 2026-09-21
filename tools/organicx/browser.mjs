@@ -330,14 +330,32 @@ const SIGNED_IN = {
  * This is the whole of the connect flow's detection. It never types anything
  * into a login form — it opens the page, waits, and looks.
  */
-export async function signedIn(page, platform) {
+export async function signedIn(page, platform, { navigate = true } = {}) {
   const spec = SIGNED_IN[platform];
   if (!spec) throw new Error(`no such platform: ${platform}`);
 
-  await page.goto(spec.url, { waitUntil: "domcontentloaded" }).catch(() => {});
-  await attach(page);
+  /*
+   * Load the page once, then look at it repeatedly.
+   *
+   * This used to navigate on every check, which is both slow and rude: eight
+   * checks meant eight full page loads of the same site in ninety seconds.
+   * Worse, page.goto with no timeout waits Playwright's default thirty
+   * seconds, so a slow or blocked load turned a ninety-second watch into five
+   * minutes of apparently doing nothing.
+   *
+   * Once the tab is on the site, signing in happens in that tab — so the
+   * check is just reading the DOM again.
+   */
+  if (navigate) {
+    await page
+      .goto(spec.url, { waitUntil: "domcontentloaded", timeout: 20000 })
+      .catch(() => {});
+    await attach(page);
+    await sleep(between(2500, 4200));
+  } else {
+    await sleep(between(600, 1200));
+  }
   await say(page, `checking whether you are signed in to ${platform}`);
-  await sleep(between(2500, 4200));
 
   const friction = await checkFriction(page);
   // "Log in to continue" on a page we expected to be signed in is not
@@ -359,7 +377,7 @@ export async function signedIn(page, platform) {
 export async function whoAmI(page, platform) {
   try {
     if (platform === "instagram") {
-      await page.goto("https://www.instagram.com/accounts/edit/", { waitUntil: "domcontentloaded" });
+      await page.goto("https://www.instagram.com/accounts/edit/", { waitUntil: "domcontentloaded", timeout: 20000 });
       await sleep(2200);
       const v = await page.inputValue('input[name="username"]').catch(() => null);
       return v ? `@${v}` : null;
@@ -369,7 +387,7 @@ export async function whoAmI(page, platform) {
       return href?.startsWith("/@") ? href.slice(1) : null;
     }
     if (platform === "youtube") {
-      await page.goto("https://www.youtube.com/account", { waitUntil: "domcontentloaded" });
+      await page.goto("https://www.youtube.com/account", { waitUntil: "domcontentloaded", timeout: 20000 });
       await sleep(2000);
       const t = await page.textContent("#channel-handle, yt-formatted-string#handle").catch(() => null);
       return t?.trim() || null;

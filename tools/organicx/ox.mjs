@@ -157,9 +157,21 @@ export async function connect(browser, only) {
      * gets signed into an hour from now is picked up on the next sweep
      * without anybody restarting anything.
      */
+    /*
+     * Eight tries, not twenty-four.
+     *
+     * Each try is a page load plus a settle plus five seconds — about ten
+     * seconds — so twenty-four was four minutes per platform and twelve
+     * before it did anything else. It does not need to camp there: it comes
+     * back every sweep, so a minute and a half is enough to catch somebody
+     * already signing in, and everybody else is caught later without them
+     * waiting on it.
+     */
     let result = { connected: false, friction: null };
-    for (let i = 0; i < 24; i++) {
-      result = await signedIn(page, platform);
+    for (let i = 0; i < 8; i++) {
+      // Navigate on the first look only; after that the tab is already there
+      // and signing in happens in it, so checking is reading the DOM again.
+      result = await signedIn(page, platform, { navigate: i === 0 });
       if (result.connected) break;
       await connection(page, platform, "waiting");
       await say(page, `sign in to ${platform} — I am watching this tab`);
