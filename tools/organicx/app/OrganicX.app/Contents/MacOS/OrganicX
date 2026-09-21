@@ -62,12 +62,24 @@ command -v ffmpeg >/dev/null 2>&1 || MISSING="$MISSING ffmpeg"
 command -v yt-dlp >/dev/null 2>&1 || MISSING="$MISSING yt-dlp"
 MISSING="${MISSING# }"
 if [ -n "$MISSING" ]; then
+  # Say where it looked, not just what it did not find. "Missing: ffmpeg" is
+  # the same sentence whether it is not installed or merely not on this
+  # app's PATH, and those need opposite fixes.
+  BREW_DIR="(no /opt/homebrew/bin)"
+  [ -d /opt/homebrew/bin ] && BREW_DIR="/opt/homebrew/bin exists"
+  LOCAL_DIR="(no /usr/local/bin)"
+  [ -d /usr/local/bin ] && LOCAL_DIR="/usr/local/bin exists"
+  say "PATH searched: $PATH"
+  say "brew: $(command -v brew || echo 'not found') · $BREW_DIR · $LOCAL_DIR"
   bail "Missing: $MISSING.
 
 Open Terminal and run:
 brew install $MISSING
 
-Then open OrganicX again."
+Then open OrganicX again.
+
+If you already installed them, run this in Terminal and send me what it says:
+which ffmpeg yt-dlp"
 fi
 
 # What was actually found, so a wrong answer is debuggable rather than a
